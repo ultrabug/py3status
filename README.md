@@ -3,6 +3,9 @@ py3status
 
 py3status extends the mighty i3status for enhanced i3bar customization on i3wm
 
+## Documentation
+See the [wiki](https://github.com/ultrabug/py3status/wiki) for up to date documentation.
+
 ## Requirements
 You must set the `output_format` to `i3bar` in the general section of your i3status.conf:
 
