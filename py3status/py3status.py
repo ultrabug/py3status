@@ -140,9 +140,15 @@ def inject(j):
 					if time() > result['cached_until']:
 						raise KeyError, 'cache timeout'
 				except KeyError:
+					# execute the method
 					meth = getattr(my_class, my_method)
 					index, result = meth(j)
-					result['cached_until'] = time() + CACHE_TIMEOUT
+
+					# respect user-defined cache timeout for this module
+					if not result.has_key('cached_until'):
+						result['cached_until'] = time() + CACHE_TIMEOUT
+
+					# validate the response
 					assert isinstance(result, dict), "user method didn't return a dict"
 					assert result.has_key('full_text'), "missing 'full_text' key"
 					assert result.has_key('name'), "missing 'name' key"
