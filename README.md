@@ -39,9 +39,10 @@ Usually you have your own i3status configuration, just point to it:
 You can see the help of py3status by issuing `py3status -h`:
 
     -c I3STATUS_CONF  path to i3status config file
-    -n INTERVAL       polling interval in seconds (default 1 sec)
-    -i INCLUDE_PATH   user-based class include directory
     -d                disable integrated transformations
+    -i INCLUDE_PATH   user-based class include directory
+    -n INTERVAL       polling interval in seconds (default 1 sec)
+    -t CACHE_TIMEOUT  injection cache timeout in seconds (default 60 sec)
 
 ## Update
 Just pull on your local clone to get the latest py3status:

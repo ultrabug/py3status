@@ -134,12 +134,21 @@ def inject(j):
 	for my_class in USER_CLASSES.keys():
 		for my_method in USER_CLASSES[my_class]:
 			try:
-				meth = getattr(my_class, my_method)
-				index, result = meth(j)
-				assert isinstance(result, dict), "user method didn't return a dict"
-				assert result.has_key('full_text'), "missing 'full_text' key"
-				assert result.has_key('name'), "missing 'name' key"
-				j.insert(index, result)
+				# handle a cache on user class methods results
+				try:
+					index, result = USER_CACHE[my_method]
+					if time() > result['cached_until']:
+						raise KeyError, 'cache timeout'
+				except KeyError:
+					meth = getattr(my_class, my_method)
+					index, result = meth(j)
+					result['cached_until'] = time() + CACHE_TIMEOUT
+					assert isinstance(result, dict), "user method didn't return a dict"
+					assert result.has_key('full_text'), "missing 'full_text' key"
+					assert result.has_key('name'), "missing 'name' key"
+				finally:
+					USER_CACHE[my_method] = (index, result)
+					j.insert(index, result)
 			except Exception, err:
 				syslog(LOG_ERR, "injection failed (%s)" % str(err))
 	return j
@@ -182,22 +191,25 @@ if __name__ == '__main__':
 		PARSER = argparse.ArgumentParser(add_help=True)
 		PARSER = argparse.ArgumentParser(version='0.1')
 		PARSER.add_argument('-c', action="store", dest="i3status_conf", type=str, default="/etc/i3status.conf", help="path to i3status config file")
-		PARSER.add_argument('-n', action="store", dest="interval", type=int, default=1, help="polling interval in seconds (default 1 sec)")
-		PARSER.add_argument('-i', action="store", dest="include_path", type=str, default='.i3/py3status', help="user-based class include directory")
 		PARSER.add_argument('-d', action="store_true", dest="disable_transform", help="disable integrated transformations")
+		PARSER.add_argument('-i', action="store", dest="include_path", type=str, default='.i3/py3status', help="user-based class include directory")
+		PARSER.add_argument('-n', action="store", dest="interval", type=int, default=1, help="polling interval in seconds (default 1 sec)")
+		PARSER.add_argument('-t', action="store", dest="cache_timeout", type=int, default=60, help="injection cache timeout in seconds (default 60 sec)")
 		OPTS = PARSER.parse_args()
 
 		# globals
-		I3STATUS_CONFIG_FILE = OPTS.i3status_conf
-		INTERVAL = OPTS.interval
+		CACHE_TIMEOUT = OPTS.cache_timeout
 		DISABLE_TRANSFORM = True if OPTS.disable_transform else False
-		INCLUDE_PATH = os.path.abspath( OPTS.include_path ) + '/'
+		I3STATUS_CONFIG_FILE = OPTS.i3status_conf
 		I3STATUS_CONFIG = i3status_config_reader()
+		INCLUDE_PATH = os.path.abspath( OPTS.include_path ) + '/'
+		INTERVAL = OPTS.interval
 
 		# py3status uses only the i3bar protocol
 		assert I3STATUS_CONFIG['output_format'] == 'i3bar', 'unsupported output_format'
 
 		# dynamic inclusion
+		USER_CACHE = {}
 		USER_CLASSES = {}
 		if INCLUDE_PATH and os.path.isdir(INCLUDE_PATH):
 			for fn in os.listdir(INCLUDE_PATH):
