@@ -1,7 +1,7 @@
 py3status
 =========
 
-py3status extends the mighty i3status for enhanced i3bar customization on i3wm
+py3status is an extensible i3status wrapper written in python
 
 ## Documentation
 See the [wiki](https://github.com/ultrabug/py3status/wiki) for up to date documentation.
@@ -22,9 +22,9 @@ Get into the cloned directory:
 
     $ cd .py3status
 
-And run the setup.sh as root or via sudo:
+And run the setup.py as root or via sudo:
 
-    $ sudo sh setup.sh
+    $ sudo python setup.py install
 
 ## Usage
 In your i3 config file, simply change the `status_command` with:
@@ -49,3 +49,4 @@ Just pull on your local clone to get the latest py3status:
 
     $ cd .py3status
     $ git pull
+    $ sudo python setup.py install

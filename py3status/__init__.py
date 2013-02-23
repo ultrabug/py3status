@@ -1,6 +1,27 @@
-#!/usr/bin/python
-
-""" py3status wraps the mighty i3status for enhanced i3bar customization. """
+# Copyright (c) 2013, Ultrabug
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
 # includes
 ################################################################################
@@ -89,7 +110,7 @@ def i3status(message_queue, stop_thread):
 	Execute i3status in a thread and send its output to a Queue to py3status
 	"""
 	from subprocess import Popen, PIPE
-	i3status_pipe = Popen(['i3status', '-c', I3STATUS_CONFIG_FILE], stdout=PIPE)
+	i3status_pipe = Popen(['i3status', '-c', I3STATUS_CONFIG_FILE], stdout=PIPE, stderr=PIPE)
 	message_queue.put(i3status_pipe.stdout.readline())
 	message_queue.put(i3status_pipe.stdout.readline())
 	while not stop_thread:
@@ -190,12 +211,15 @@ def load_from_file(filepath):
 
 # main stuff
 ################################################################################
-if __name__ == '__main__':
+def main():
 	try:
+		# global definition
+		global CACHE_TIMEOUT, DISABLE_TRANSFORM, I3STATUS_CONFIG_FILE
+		global I3STATUS_CONFIG, INCLUDE_PATH, INTERVAL, USER_CACHE, USER_CLASSES
+
 		# command line options
 		PARSER = argparse.ArgumentParser(description='The agile, python-powered, i3status wrapper')
 		PARSER = argparse.ArgumentParser(add_help=True)
-		PARSER = argparse.ArgumentParser(version='0.1')
 		PARSER.add_argument('-c', action="store", dest="i3status_conf", type=str, default="/etc/i3status.conf", help="path to i3status config file")
 		PARSER.add_argument('-d', action="store_true", dest="disable_transform", help="disable integrated transformations")
 		PARSER.add_argument('-i', action="store", dest="include_path", type=str, default='.i3/py3status', help="user-based class include directory")
@@ -254,3 +278,6 @@ if __name__ == '__main__':
 	except Exception, err:
 		syslog(LOG_ERR, "py3status error (%s)" % str(err))
 		sys.exit(1)
+
+if __name__ == '__main__':
+	main()
