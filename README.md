@@ -13,7 +13,7 @@ You must set the `output_format` to `i3bar` in the general section of your i3sta
         output_format = "i3bar"
     }
 
-## Installation
+## Installation (non Gentoo users)
 Just clone the repository:
 
     $ git clone git@github.com:ultrabug/py3status.git .py3status
@@ -25,6 +25,15 @@ Get into the cloned directory:
 And run the setup.py as root or via sudo:
 
     $ sudo python setup.py install
+
+## Installation (Gentoo users)
+Add the `ultrabug` overlay on layman:
+
+    $ sudo layman -a ultrabug
+
+Install py3status:
+
+    $ sudo emerge -a py3status
 
 ## Usage
 In your i3 config file, simply change the `status_command` with:
