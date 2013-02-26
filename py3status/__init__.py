@@ -163,7 +163,7 @@ def inject(j):
 				except KeyError:
 					# execute the method
 					meth = getattr(my_class, my_method)
-					index, result = meth(j)
+					index, result = meth(j, I3STATUS_CONFIG)
 
 					# respect user-defined cache timeout for this module
 					if not result.has_key('cached_until'):
