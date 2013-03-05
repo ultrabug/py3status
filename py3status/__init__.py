@@ -162,8 +162,12 @@ def inject(j):
 						raise KeyError, 'cache timeout'
 				except KeyError:
 					# execute the method
-					meth = getattr(my_class, my_method)
-					index, result = meth(j, I3STATUS_CONFIG)
+					try:
+						meth = getattr(my_class, my_method)
+						index, result = meth(j, I3STATUS_CONFIG)
+					except Exception, err:
+						syslog(LOG_ERR, "user method %s failed (%s)" % (my_method, str(err)))
+						index, result = (0, {'name': '', 'full_text': ''})
 
 					# respect user-defined cache timeout for this module
 					if not result.has_key('cached_until'):
