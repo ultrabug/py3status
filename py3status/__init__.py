@@ -191,9 +191,6 @@ def transform(j, **kwargs):
 		if item['name'] == 'time':
 			date = datetime.strptime(item['full_text'], I3STATUS_CONFIG['time_format']) + timedelta(seconds=kwargs['delta'])
 			item['full_text'] = date.strftime(I3STATUS_CONFIG['time_format'])
-		# run_watch modification, only when color is enabled on i3status
-		if item['name'] == 'run_watch' and I3STATUS_CONFIG['colors']:
-			item['full_text'] = item['full_text'].split(':')[0]
 	return j
 
 def load_from_file(filepath):
