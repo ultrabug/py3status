@@ -235,6 +235,7 @@ def main():
 		I3STATUS_CONFIG = i3status_config_reader()
 		INCLUDE_PATH = os.path.abspath( OPTS.include_path ) + '/'
 		INTERVAL = OPTS.interval
+		DELTA = 0
 
 		# py3status uses only the i3bar protocol
 		assert I3STATUS_CONFIG['output_format'] == 'i3bar', 'unsupported output_format'
