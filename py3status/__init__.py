@@ -40,11 +40,17 @@ from time import sleep
 from datetime import datetime
 from datetime import timedelta
 
-from Queue import Queue
-from Queue import Empty
-
 from syslog import syslog
 from syslog import LOG_ERR
+
+try:
+	# python3
+	from queue import Queue
+	from queue import Empty
+except ImportError:
+	# python2
+	from Queue import Queue
+	from Queue import Empty
 
 # functions
 ################################################################################
@@ -95,17 +101,17 @@ def i3status_config_reader():
 			in_time = False
 		if in_general and '=' in line:
 			key, value = line.split('=')[0].strip(), line.split('=')[1].strip()
-			if config.has_key(key):
+			if key in config:
 				if value in ['true', 'false']:
 					value = 'True' if value == 'true' else 'False'
 				config[key] = eval(value)
 		if in_time and '=' in line:
 			key, value = line.split('=')[0].strip(), line.split('=')[1].strip()
-			if config.has_key('time_' + key):
+			if 'time_' + key in config:
 				config['time_' + key] = eval(value)
 	return config
 
-def i3status(message_queue, stop_thread):
+def i3status(message_queue):
 	"""
 	Execute i3status in a thread and send its output to a Queue to py3status
 	"""
@@ -113,9 +119,9 @@ def i3status(message_queue, stop_thread):
 	i3status_pipe = Popen(['i3status', '-c', I3STATUS_CONFIG_FILE], stdout=PIPE, stderr=PIPE)
 	message_queue.put(i3status_pipe.stdout.readline())
 	message_queue.put(i3status_pipe.stdout.readline())
-	while not stop_thread:
+	while True:
 		line = i3status_pipe.stdout.readline()
-		if line != '':
+		if len(line) > 0:
 			message_queue.put(line)
 		else:
 			break
@@ -152,35 +158,37 @@ def inject(j):
 	then inject the result at the start of the json
 	"""
 	# inject our own functions' results
-	for my_class in USER_CLASSES.keys():
+	for my_class in list(USER_CLASSES.keys()):
 		for my_method in USER_CLASSES[my_class]:
 			try:
 				# handle a cache on user class methods results
 				try:
 					index, result = USER_CACHE[my_method]
 					if time() > result['cached_until']:
-						raise KeyError, 'cache timeout'
+						raise KeyError('cache timeout')
 				except KeyError:
 					# execute the method
 					try:
 						meth = getattr(my_class, my_method)
 						index, result = meth(j, I3STATUS_CONFIG)
-					except Exception, err:
+					except Exception:
+						err = sys.exc_info()[1]
 						syslog(LOG_ERR, "user method %s failed (%s)" % (my_method, str(err)))
 						index, result = (0, {'name': '', 'full_text': ''})
 
 					# respect user-defined cache timeout for this module
-					if not result.has_key('cached_until'):
+					if 'cached_until' not in result:
 						result['cached_until'] = time() + CACHE_TIMEOUT
 
 					# validate the response
 					assert isinstance(result, dict), "user method didn't return a dict"
-					assert result.has_key('full_text'), "missing 'full_text' key"
-					assert result.has_key('name'), "missing 'name' key"
+					assert 'full_text' in result, "missing 'full_text' key"
+					assert 'name' in result, "missing 'name' key"
 				finally:
 					USER_CACHE[my_method] = (index, result)
 					j.insert(index, result)
-			except Exception, err:
+			except Exception:
+				err = sys.exc_info()[1]
 				syslog(LOG_ERR, "injection failed (%s)" % str(err))
 	return j
 
@@ -253,9 +261,8 @@ def main():
 							USER_CLASSES[class_inst].append(method)
 
 		# run threaded i3status
-		STOP_THREAD = False
 		MESSAGE_QUEUE = Queue()
-		I3STATUS_THREAD = threading.Thread(target=i3status, name='i3status', args=(MESSAGE_QUEUE, STOP_THREAD, ))
+		I3STATUS_THREAD = threading.Thread(target=i3status, name='i3status', args=(MESSAGE_QUEUE, ))
 		I3STATUS_THREAD.start()
 
 		# main loop
@@ -263,6 +270,11 @@ def main():
 			try:
 				TS = time()
 				LINE = MESSAGE_QUEUE.get(timeout=INTERVAL)
+				try:
+					# python3
+					LINE = LINE.decode()
+				except UnicodeDecodeError:
+					pass
 				if LINE.startswith(',['):
 					sleep( INTERVAL - float( '{:.2}'.format( time()-TS ) ) )
 				process_line(LINE, delta=0)
@@ -275,9 +287,9 @@ def main():
 			except KeyboardInterrupt:
 				break
 
-		STOP_THREAD = True
 		I3STATUS_THREAD.join()
-	except Exception, err:
+	except Exception:
+		err = sys.exc_info()[1]
 		syslog(LOG_ERR, "py3status error (%s)" % str(err))
 		sys.exit(1)
 

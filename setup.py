@@ -14,7 +14,7 @@ def read(fname):
 
 setup(
 	name='py3status',
-	version='0.2',
+	version='0.3',
 	url='https://github.com/ultrabug/py3status/wiki',
 	download_url='https://github.com/ultrabug/py3status',
 	license='BSD',
@@ -34,8 +34,11 @@ setup(
 		'License :: OSI Approved :: BSD License',
 		'Operating System :: POSIX :: Linux',
 		'Programming Language :: Python',
+		'Programming Language :: Python :: 2.5',
 		'Programming Language :: Python :: 2.6',
 		'Programming Language :: Python :: 2.7',
+		'Programming Language :: Python :: 3',
+		'Programming Language :: Python :: 3.2',
 		'Topic :: Software Development :: Libraries :: Python Modules',
 		'Topic :: Desktop Environment :: Window Managers :: i3wm',
 		],
