@@ -35,6 +35,11 @@ Install py3status:
 
     $ sudo emerge -a py3status
 
+## Installation (Arch users)
+Thanks to @waaaaargh, py3status is present in the Arch User Repository using this URL:
+
+    https://aur.archlinux.org/packages/py3status-git/
+
 ## Usage
 In your i3 config file, simply change the `status_command` with:
 
