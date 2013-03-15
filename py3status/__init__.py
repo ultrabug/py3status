@@ -42,6 +42,7 @@ from datetime import timedelta
 
 from syslog import syslog
 from syslog import LOG_ERR
+from syslog import LOG_INFO
 
 try:
 	# python3
@@ -239,12 +240,13 @@ def main():
 
 		# globals
 		CACHE_TIMEOUT = OPTS.cache_timeout
+		DELTA = 0
 		DISABLE_TRANSFORM = True if OPTS.disable_transform else False
 		I3STATUS_CONFIG_FILE = OPTS.i3status_conf
 		I3STATUS_CONFIG = i3status_config_reader()
 		INCLUDE_PATH = os.path.abspath( OPTS.include_path ) + '/'
 		INTERVAL = OPTS.interval
-		DELTA = 0
+		STARTED = False
 
 		# py3status uses only the i3bar protocol
 		assert I3STATUS_CONFIG['output_format'] == 'i3bar', 'unsupported output_format'
@@ -278,13 +280,17 @@ def main():
 					pass
 				if LINE.startswith(',['):
 					sleep( INTERVAL - float( '{:.2}'.format( time()-TS ) ) )
+					STARTED = True
 				process_line(LINE, delta=0)
 				DELTA = 0
 			except Empty:
-				DELTA += INTERVAL
-				process_line(LINE, delta=DELTA)
-				if threading.active_count() < 2:
-					break
+				if STARTED:
+					DELTA += INTERVAL
+					process_line(LINE, delta=DELTA)
+					if threading.active_count() < 2:
+						break
+				else:
+					syslog(LOG_INFO, "py3status waiting for i3status")
 			except KeyboardInterrupt:
 				break
 
