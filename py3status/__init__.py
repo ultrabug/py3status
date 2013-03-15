@@ -158,8 +158,9 @@ def inject(j):
 	then inject the result at the start of the json
 	"""
 	# inject our own functions' results
-	for my_class in list(USER_CLASSES.keys()):
-		for my_method in USER_CLASSES[my_class]:
+	for fn in sorted( USER_CLASSES.keys() ):
+		my_class, my_methods = USER_CLASSES[fn]
+		for my_method in my_methods:
 			try:
 				# handle a cache on user class methods results
 				try:
@@ -255,10 +256,10 @@ def main():
 			for fn in os.listdir(INCLUDE_PATH):
 				module, class_inst = load_from_file(INCLUDE_PATH + fn)
 				if module and class_inst:
-					USER_CLASSES[class_inst] = []
+					USER_CLASSES[fn] = (class_inst, [])
 					for method in dir(class_inst):
 						if not method.startswith('__'):
-							USER_CLASSES[class_inst].append(method)
+							USER_CLASSES[fn][1].append(method)
 
 		# run threaded i3status
 		MESSAGE_QUEUE = Queue()
