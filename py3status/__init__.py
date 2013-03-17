@@ -40,6 +40,13 @@ from time import sleep
 from datetime import datetime
 from datetime import timedelta
 
+from signal import signal
+from signal import SIGUSR1
+
+from subprocess import Popen
+from subprocess import PIPE
+from subprocess import call
+
 from syslog import syslog
 from syslog import LOG_ERR
 from syslog import LOG_INFO
@@ -116,7 +123,6 @@ def i3status(message_queue):
 	"""
 	Execute i3status in a thread and send its output to a Queue to py3status
 	"""
-	from subprocess import Popen, PIPE
 	i3status_pipe = Popen(['i3status', '-c', I3STATUS_CONFIG_FILE], stdout=PIPE, stderr=PIPE)
 	message_queue.put(i3status_pipe.stdout.readline())
 	message_queue.put(i3status_pipe.stdout.readline())
@@ -238,10 +244,11 @@ def main():
 		PARSER.add_argument('-t', action="store", dest="cache_timeout", type=int, default=60, help="injection cache timeout in seconds (default 60 sec)")
 		OPTS = PARSER.parse_args()
 
-		# globals
+		# configuration and helper variables
 		CACHE_TIMEOUT = OPTS.cache_timeout
 		DELTA = 0
 		DISABLE_TRANSFORM = True if OPTS.disable_transform else False
+		FORCED = False
 		I3STATUS_CONFIG_FILE = OPTS.i3status_conf
 		I3STATUS_CONFIG = i3status_config_reader()
 		INCLUDE_PATH = os.path.abspath( OPTS.include_path ) + '/'
@@ -251,7 +258,7 @@ def main():
 		# py3status uses only the i3bar protocol
 		assert I3STATUS_CONFIG['output_format'] == 'i3bar', 'unsupported output_format'
 
-		# dynamic inclusion
+		# read user-written Py3status class files for dynamic inclusion
 		USER_CACHE = {}
 		USER_CLASSES = {}
 		if INCLUDE_PATH and os.path.isdir(INCLUDE_PATH):
@@ -263,34 +270,70 @@ def main():
 						if not method.startswith('__'):
 							USER_CLASSES[fn][1].append(method)
 
-		# run threaded i3status
+		# spawn a i3status process on a separate thread
+		# we will receive its output on a Queue which we will poll for messages
 		MESSAGE_QUEUE = Queue()
 		I3STATUS_THREAD = threading.Thread(target=i3status, name='i3status', args=(MESSAGE_QUEUE, ))
 		I3STATUS_THREAD.start()
 
+		# SIGUSR1 forces a refresh of the bar both for py3status and i3status,
+		# this mimics the USR1 signal handling of i3status (see man i3status)
+		def sig_handler(signum, frame):
+			"""
+			Raise a Warning level exception when a user sends a SIGUSR1 signal
+			"""
+			raise UserWarning("received USR1, forcing refresh")
+		signal(SIGUSR1, sig_handler)
+
 		# main loop
 		while True:
 			try:
+				# get a timestamp of now
 				TS = time()
+
+				# try to read i3status' output for at most INTERVAL seconds else
+				# raise the Empty exception
 				LINE = MESSAGE_QUEUE.get(timeout=INTERVAL)
 				try:
-					# python3
+					# python3 compatibility code
 					LINE = LINE.decode()
 				except UnicodeDecodeError:
 					pass
+
+				# i3status first output lines should be processed asap as only
+				# the following lines will be processed by py3status
 				if LINE.startswith(',['):
-					sleep( INTERVAL - float( '{:.2}'.format( time()-TS ) ) )
+					if not FORCED:
+						# add a calculated sleep honoring py3status refresh
+						# time of the bar every INTERVAL seconds
+						sleep( INTERVAL - float( '{:.2}'.format( time()-TS ) ) )
+					else:
+						# reset the SIGUSR1 flag forcing the refresh of the bar
+						FORCED = False
+					# flag i3status as started
 					STARTED = True
+
+				# process the output line and reset the time DELTA
 				process_line(LINE, delta=0)
 				DELTA = 0
 			except Empty:
+				# make sure i3status has started before modifying its output
 				if STARTED:
+					# the DELTA helps us adjust the clock without a syscall
 					DELTA += INTERVAL
 					process_line(LINE, delta=DELTA)
 					if threading.active_count() < 2:
+						# i3status died ? oups
 						break
 				else:
-					syslog(LOG_INFO, "py3status waiting for i3status")
+					syslog(LOG_INFO, "waiting for i3status")
+			except UserWarning:
+				# SIGUSR1 was received, we also force i3status to refresh by
+				# sending it a SIGUSR1 as well then we refresh the bar asap
+				msg = sys.exc_info()[1]
+				syslog(LOG_INFO, str(msg))
+				call(["killall", "-s", "USR1", "i3status"])
+				FORCED = True
 			except KeyboardInterrupt:
 				break
 
