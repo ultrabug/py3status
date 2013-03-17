@@ -16,11 +16,11 @@ You must set the `output_format` to `i3bar` in the general section of your i3sta
 ## Installation (non Gentoo users)
 Just clone the repository:
 
-    $ git clone git@github.com:ultrabug/py3status.git .py3status
+    $ git clone git@github.com:ultrabug/py3status.git py3status
 
 Get into the cloned directory:
 
-    $ cd .py3status
+    $ cd py3status
 
 And run the setup.py as root or via sudo:
 
@@ -58,9 +58,14 @@ You can see the help of py3status by issuing `py3status -h`:
     -n INTERVAL       polling interval in seconds (default 1 sec)
     -t CACHE_TIMEOUT  injection cache timeout in seconds (default 60 sec)
 
+## Control
+Just like i3status, you can force an update by sending a SIGUSR1 signal to py3status.
+
+    killall -USR1 py3status
+
 ## Update
 Just pull on your local clone to get the latest py3status:
 
-    $ cd .py3status
+    $ cd py3status
     $ git pull
     $ sudo python setup.py install
