@@ -333,6 +333,7 @@ def main():
 				msg = sys.exc_info()[1]
 				syslog(LOG_INFO, str(msg))
 				call(["killall", "-s", "USR1", "i3status"])
+				USER_CACHE = {}
 				FORCED = True
 			except KeyboardInterrupt:
 				break
