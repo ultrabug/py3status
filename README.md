@@ -54,7 +54,7 @@ You can see the help of py3status by issuing `py3status -h`:
 
     -c I3STATUS_CONF  path to i3status config file
     -d                disable integrated transformations
-    -i INCLUDE_PATH   user-based class include directory
+    -i INCLUDE_PATH   user-based class include directory (default .i3/py3status)
     -n INTERVAL       polling interval in seconds (default 1 sec)
     -t CACHE_TIMEOUT  injection cache timeout in seconds (default 60 sec)
 
