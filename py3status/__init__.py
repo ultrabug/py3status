@@ -206,11 +206,15 @@ def transform(j, **kwargs):
 	- update the 'time' object so that it's updated at INTERVAL seconds
 	- update the 'run_watch' objects so that we rely on the color instead of useless 'yes' or 'no' status
 	"""
-	for item in j:
-		# time modification
-		if item['name'] == 'time':
-			date = datetime.strptime(item['full_text'], I3STATUS_CONFIG['time_format']) + timedelta(seconds=kwargs['delta'])
-			item['full_text'] = date.strftime(I3STATUS_CONFIG['time_format'])
+	try:
+		for item in j:
+			# time modification
+			if item['name'] in [ 'time', 'tztime' ]:
+				date = datetime.strptime(item['full_text'], I3STATUS_CONFIG['time_format']) + timedelta(seconds=kwargs['delta'])
+				item['full_text'] = date.strftime(I3STATUS_CONFIG['time_format'])
+	except Exception:
+		err = sys.exc_info()[1]
+		syslog(LOG_ERR, "transformation failed (%s)" % (str(err)))
 	return j
 
 def load_from_file(filepath):
