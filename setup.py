@@ -14,7 +14,7 @@ def read(fname):
 
 setup(
 	name='py3status',
-	version='0.5',
+	version='0.6',
 	url='https://github.com/ultrabug/py3status/wiki',
 	download_url='https://github.com/ultrabug/py3status',
 	license='BSD',
