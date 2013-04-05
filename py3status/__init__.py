@@ -307,7 +307,7 @@ def main():
 				# i3status first output lines should be processed asap as only
 				# the following lines will be processed by py3status
 				if LINE.startswith(',['):
-					if not FORCED:
+					if not FORCED and I3STATUS_CONFIG['interval'] > INTERVAL:
 						# add a calculated sleep honoring py3status refresh
 						# time of the bar every INTERVAL seconds
 						sleep( INTERVAL - float( '{:.2}'.format( time()-TS ) ) )
