@@ -60,6 +60,7 @@ You can see the help of py3status by issuing `py3status -h`:
 
 ## Control
 Just like i3status, you can force an update by sending a SIGUSR1 signal to py3status.
+Note that this will also send a SIGUSR1 signal to i3status.
 
     killall -USR1 py3status
 
