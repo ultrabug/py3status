@@ -14,7 +14,7 @@ def read(fname):
 
 setup(
 	name='py3status',
-	version='0.6',
+	version='0.7',
 	url='https://github.com/ultrabug/py3status/wiki',
 	download_url='https://github.com/ultrabug/py3status',
 	license='BSD',
@@ -22,7 +22,6 @@ setup(
 	author_email='ultrabug@ultrabug.net',
 	description='py3status is an extensible i3status wrapper written in python',
 	long_description=read('README.md'),
-	zip_safe=False,
 	platforms='any',
 	packages=find_packages(),
 	entry_points={
