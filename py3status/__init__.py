@@ -93,6 +93,23 @@ def read_line():
     except KeyboardInterrupt:
         sys.exit()
 
+def print_output(prefix, output_list, modules_cache):
+    """
+    Merge current user-classes cache with i3status' output and display on i3bar
+    """
+    for module in modules_cache:
+        index, json = modules_cache[module]
+        for j in output_list:
+            if j['name'] == json['name']:
+                j.update(json)
+                break
+        else:
+            output_list.insert(index, json)
+
+    output = prefix+dumps(output_list)
+    print_line(output)
+    return output
+
 def i3status_config_reader(config_file):
     """
     i3status.conf reader so we can adapt our code to the i3status config
@@ -181,12 +198,13 @@ def process_line(line, **kwargs):
     """
     Main line processor logic
     """
+    j = []
+    prefix = ''
     if line.startswith('{') and 'version' in line:
         print_line(line.strip('\n'))
     elif line == '[\n':
         print_line(line.strip('\n'))
     else:
-        prefix = ''
         if line.startswith(','):
             line, prefix = line[1:], ','
         elif kwargs['delta'] > 0:
@@ -198,54 +216,7 @@ def process_line(line, **kwargs):
         else:
             j = loads(line)
 
-        # user-based injection and transformation
-        j = inject(j)
-
-        output = prefix+dumps(j)
-        print_line(output)
-        return output
-
-def inject(j):
-    """
-    Run on every user class included and execute every method on the json,
-    then inject the result at the start of the json
-    """
-    # inject our own functions' results
-    for class_name in sorted( USER_CLASSES.keys() ):
-        my_class, my_methods = USER_CLASSES[class_name]
-        for my_method in my_methods:
-            try:
-                # handle a cache on user class methods results
-                try:
-                    index, result = USER_CACHE[my_method]
-                    if time() > result['cached_until']:
-                        raise KeyError('cache timeout')
-                except KeyError:
-                    # execute the method
-                    try:
-                        meth = getattr(my_class, my_method)
-                        index, result = meth(j, I3STATUS_CONFIG)
-                    except Exception:
-                        err = sys.exc_info()[1]
-                        syslog(LOG_ERR, "user method %s failed (%s)" \
-                            % (my_method, str(err)))
-                        index, result = (0, {'name': '', 'full_text': ''})
-
-                    # respect user-defined cache timeout for this module
-                    if 'cached_until' not in result:
-                        result['cached_until'] = time() + CACHE_TIMEOUT
-
-                    # validate the response
-                    assert isinstance(result, dict), "user should return a dict"
-                    assert 'full_text' in result, "missing 'full_text' key"
-                    assert 'name' in result, "missing 'name' key"
-                finally:
-                    USER_CACHE[my_method] = (index, result)
-                    j.insert(index, result)
-            except Exception:
-                err = sys.exc_info()[1]
-                syslog(LOG_ERR, "injection failed (%s)" % str(err))
-    return j
+    return (prefix, j)
 
 def transform(j, **kwargs):
     """
@@ -267,18 +238,116 @@ def transform(j, **kwargs):
         syslog(LOG_ERR, "transformation failed (%s)" % (str(err)))
     return j
 
-def load_from_file(filepath):
+class UserModules(Thread):
     """
-    Load Py3status user class for later injection
+    This thread executes and caches all of the user's own Py3status classes.
+    We run it in a separate thread so that any delay introduced by an external
+    class doesn't affect the i3bar updating process.
     """
-    inst = None
-    expected_class = 'Py3status'
-    mod_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
-    if file_ext.lower() == '.py':
-        py_mod = imp.load_source(mod_name, filepath)
-        if hasattr(py_mod, expected_class):
-            inst = py_mod.Py3status()
-    return (mod_name, inst)
+    def __init__(self, cache_timeout, i3status_conf, include_path, interval):
+        """
+        set our useful properties
+        """
+        Thread.__init__(self)
+        self.cache = {}
+        self.cache_timeout = cache_timeout
+        self.classes = {}
+        self.i3status_conf = i3status_conf
+        self.include_path = include_path
+        self.interval = interval
+        self.i3status_json = {}
+        self.kill = False
+
+    @staticmethod
+    def load_from_file(filepath):
+        """
+        return Py3status user-written classes
+        """
+        inst = None
+        expected_class = 'Py3status'
+        mod_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
+        if file_ext.lower() == '.py':
+            py_mod = imp.load_source(mod_name, filepath)
+            if hasattr(py_mod, expected_class):
+                inst = py_mod.Py3status()
+        return (mod_name, inst)
+
+    def load_files(self):
+        """
+        read user-written Py3status class files for dynamic inclusion
+        """
+        if self.include_path and os.path.isdir(self.include_path):
+            for file_name in os.listdir(self.include_path):
+                try:
+                    module, class_inst = self.load_from_file(
+                        self.include_path + file_name
+                        )
+                    if module and class_inst:
+                        self.classes[file_name] = (class_inst, [])
+                        for method in dir(class_inst):
+                            if not method.startswith('__'):
+                                self.classes[file_name][1].append(method)
+                except Exception:
+                    err = sys.exc_info()[1]
+                    syslog(LOG_ERR, "loading %s failed (%s)" \
+                        % (file_name, str(err)))
+
+    def execute_classes(self):
+        """
+        run on every user class included and execute every method on the json,
+        then cache it for later usage
+        """
+        for class_name in sorted( self.classes.keys() ):
+            my_class, my_methods = self.classes[class_name]
+            for my_method in my_methods:
+                try:
+                    # handle a cache on user class methods results
+                    try:
+                        index, result = self.cache[my_method]
+                        if time() > result['cached_until']:
+                            raise KeyError('cache timeout')
+                    except KeyError:
+                        # execute the method
+                        try:
+                            meth = getattr(my_class, my_method)
+                            index, result = meth(
+                                self.i3status_json,
+                                self.i3status_conf,
+                                )
+                        except Exception:
+                            err = sys.exc_info()[1]
+                            syslog(LOG_ERR, "user method %s failed (%s)" \
+                                % (my_method, str(err)))
+                            index, result = (0, {'name': '', 'full_text': ''})
+
+                        # respect user-defined cache timeout for this module
+                        if 'cached_until' not in result:
+                            result['cached_until'] = time() + self.cache_timeout
+
+                        # validate the response
+                        assert isinstance(result, dict), "should return a dict"
+                        assert 'full_text' in result, "missing 'full_text' key"
+                        assert 'name' in result, "missing 'name' key"
+                    finally:
+                        self.cache[my_method] = (index, result)
+                except Exception:
+                    err = sys.exc_info()[1]
+                    syslog(LOG_ERR, "injection failed (%s)" % str(err))
+
+    def stop(self):
+        """
+        break this thread's loop
+        """
+        self.kill = True
+
+    def run(self):
+        """
+        periodically execute user classes
+        """
+        self.load_files()
+        while not self.kill:
+            self.execute_classes()
+            sleep(self.interval)
 
 # main stuff
 ################################################################################
@@ -327,17 +396,15 @@ def main():
         sys.exit(1)
 
     try:
-        USER_CACHE = {}
-        USER_CLASSES = {}
-        # read user-written Py3status class files for dynamic inclusion
-        if INCLUDE_PATH and os.path.isdir(INCLUDE_PATH):
-            for file_name in os.listdir(INCLUDE_PATH):
-                module, class_inst = load_from_file(INCLUDE_PATH + file_name)
-                if module and class_inst:
-                    USER_CLASSES[file_name] = (class_inst, [])
-                    for method in dir(class_inst):
-                        if not method.startswith('__'):
-                            USER_CLASSES[file_name][1].append(method)
+        # load user defined modules from a separate thread so that they cannot
+        # cause any delay in updating the i3bar
+        modules_thread = UserModules(
+            CACHE_TIMEOUT,
+            I3STATUS_CONFIG,
+            INCLUDE_PATH,
+            INTERVAL,
+            )
+        modules_thread.start()
 
         # spawn a i3status process on a separate thread
         # we will receive its output on a Queue which we will poll for messages
@@ -383,14 +450,25 @@ def main():
                         forced = False
 
                 # process the output line straight from i3status
-                process_line(line, delta=0)
+                prefix, output_list = process_line(line, delta=0)
+                if output_list:
+                    modules_thread.i3status_json = output_list
+                    print_output(
+                        prefix,
+                        output_list,
+                        modules_thread.cache
+                        )
             except Empty:
                 # make sure i3status has started before modifying its output
                 if i3status_thread.started or not i3status_thread.init:
-                    line = process_line(line, delta=INTERVAL)
-                    if threading.active_count() < 2:
-                        # i3status died ? oups
-                        break
+                    prefix, output_list = process_line(line, delta=INTERVAL)
+                    if output_list:
+                        modules_thread.i3status_json = output_list
+                        line = print_output(
+                            prefix,
+                            output_list,
+                            modules_thread.cache
+                            )
                 else:
                     syslog(LOG_INFO, "waiting for i3status")
             except UserWarning:
@@ -403,8 +481,13 @@ def main():
                 forced = True
             except KeyboardInterrupt:
                 break
+            finally:
+                if threading.active_count() < 3:
+                    # i3status or modules thread died ? oops
+                    break
 
         i3status_thread.stop()
+        modules_thread.stop()
     except Exception:
         err = sys.exc_info()[1]
         syslog(LOG_ERR, "py3status error (%s)" % str(err))
