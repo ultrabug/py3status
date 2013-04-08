@@ -343,7 +343,6 @@ class UserModules(Thread):
         clear user cache
         """
         self.cache = {}
-        print self.cache
 
     def run(self):
         """
