@@ -68,8 +68,6 @@ DISABLE_TRANSFORM = False
 I3STATUS_CONFIG = '/etc/i3status.conf'
 INCLUDE_PATH = '.i3/py3status'
 INTERVAL = 1
-USER_CACHE = {}
-USER_CLASSES = {}
 
 # functions
 ################################################################################
@@ -340,6 +338,13 @@ class UserModules(Thread):
         """
         self.kill = True
 
+    def clear(self):
+        """
+        clear user cache
+        """
+        self.cache = {}
+        print self.cache
+
     def run(self):
         """
         periodically execute user classes
@@ -358,7 +363,7 @@ def main():
     try:
         # global definition
         global CACHE_TIMEOUT, DISABLE_TRANSFORM
-        global I3STATUS_CONFIG, INCLUDE_PATH, INTERVAL, USER_CACHE, USER_CLASSES
+        global I3STATUS_CONFIG, INCLUDE_PATH, INTERVAL
 
         # command line options
         parser = argparse.ArgumentParser(
@@ -477,7 +482,7 @@ def main():
                 msg = sys.exc_info()[1]
                 syslog(LOG_INFO, str(msg))
                 call(["killall", "-s", "USR1", "i3status"])
-                USER_CACHE = {}
+                modules_thread.clear()
                 forced = True
             except KeyboardInterrupt:
                 break
