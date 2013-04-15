@@ -1,6 +1,3 @@
-"""
-:Requirements: libnotify, python-gobject
-"""
 from datetime import timedelta
 from gi.repository import Notify
 from time import time
@@ -27,39 +24,48 @@ class Py3status:
         if not self.pomo:
             self.rest -= 1
             timer = self.rest
-            full_text = 'Break time'
+            self.full_text = 'Break time'
             color = 'color_bad'
         else:
             self.pomo -= 1
             timer = self.pomo
-            full_text = 'Pomodoro'
+            self.full_text = 'Pomodoro'
             color = 'color_degraded'
 
         if not timer:
             # Pomodoro or Rest is finished, send notification
-            Notify.init('Pomodoro')
-            notification = Notify.Notification.new (
-                '<b>Attention:</b>',
-                '{} is finished'.format(full_text),
-                'dialog-information',
-            )
-            notification.show()
-            if not self.rest:
-                # Rest is finished, reinitialize data
-                self.nb_rest -= 1
-                self.pomo = POMO
-                self.rest = SHORT_REST
-                if not self.nb_rest:
-                    # Number of small rest reached, go for long rest
-                    self.rest = LONG_REST
-                    self.nb_rest = NB_REST
+            self.send_notification()
 
         response = {
             'cached_until' : time(),
             'color': i3status_config[color],
-            'full_text': '{}: {}'.format(
-                full_text, str(timedelta(seconds=timer))[2:]),
+            'self.full_text': '{}: {}'.format(
+                self.full_text, str(timedelta(seconds=timer))[2:]),
             'name': 'pomodoro',
         }
 
         return (0, response)
+
+    def send_notification(self):
+        """
+        :Requirements: libnotify, python-gobject
+        """
+
+        Notify.init('Pomodoro')
+        notification = Notify.Notification.new (
+            '<b>Attention:</b>',
+            '{} is finished'.format(self.full_text),
+            'dialog-information',
+        )
+        notification.show()
+
+        if not self.rest:
+            # Rest is finished, reinitialize data
+            self.nb_rest -= 1
+            self.pomo = POMO
+            self.rest = SHORT_REST
+
+        if not self.nb_rest:
+            # Number of small rest reached, go for long rest
+            self.rest = LONG_REST
+            self.nb_rest = NB_REST
