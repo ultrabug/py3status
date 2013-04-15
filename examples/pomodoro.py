@@ -15,12 +15,27 @@ class Py3status:
     pomo = POMO
     rest = SHORT_REST
     nb_rest = NB_REST
+    default_response = {
+        'full_text': '',
+        'name': 'pomodoro',
+    }
 
     def pomodoro(self, json, i3status_config):
         """
         This function will update a timer in the i3status bar for 25 minutes,
         then print a red "Break time" message for 5 minutes.
         """
+        status = self.get_status()
+
+        if status == 'stop':
+            self.pomo = POMO
+            self.rest = SHORT_REST
+            self.nb_rest = NB_REST
+            return self.default_response
+        elif status == 'pause':
+            return self.default_response
+
+        # Else run normally
         if not self.pomo:
             self.rest -= 1
             timer = self.rest
@@ -36,15 +51,27 @@ class Py3status:
             # Pomodoro or Rest is finished, send notification
             self.send_notification()
 
-        response = {
+        response = self.default_response.copy()
+        response.update({
             'cached_until' : time(),
             'color': i3status_config[color],
-            'self.full_text': '{}: {}'.format(
+            'full_text': '{}: {}'.format(
                 self.full_text, str(timedelta(seconds=timer))[2:]),
-            'name': 'pomodoro',
-        }
+        })
 
         return (0, response)
+
+    def get_status(self):
+        """
+        Read the watchdog file and get the status value. Value is modifying via
+        i3 key mapping.
+
+        Value can be:
+            * start
+            * pause
+            * stop (default)
+        """
+        pass
 
     def send_notification(self):
         """
