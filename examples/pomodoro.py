@@ -97,6 +97,9 @@ class Py3status:
             * pause
             * stop (default)
         """
+        if not os.path.isfile(LOG_FILE):
+            return 'stop'
+
         with open(LOG_FILE, 'r') as f:
             status = f.read()
 
