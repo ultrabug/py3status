@@ -1,11 +1,17 @@
 from datetime import timedelta
 from gi.repository import Notify
+import os.path
 from time import time
+#from time import sleep
+#from watchdog.observers import Observer
+#from watchdog.events import LoggingEventHandler
+
 
 POMO       = 1500  # 60 * 25
 SHORT_REST = 300   # 60 * 5
 LONG_REST  = 1800  # 60 * 30
 NB_REST    = 4
+WATCHDOG_FILE = os.path.join(os.path.expanduser('~'), '.i3', 'watchdog.log')
 
 
 class Py3status:
@@ -71,7 +77,10 @@ class Py3status:
             * pause
             * stop (default)
         """
-        pass
+        with open(WATCHDOG_FILE, 'r') as f:
+            status = f.read()
+
+        return status
 
     def send_notification(self):
         """
@@ -96,3 +105,16 @@ class Py3status:
             # Number of small rest reached, go for long rest
             self.rest = LONG_REST
             self.nb_rest = NB_REST
+
+
+#if __name__ == "__main__":
+    #event_handler = LoggingEventHandler()
+    #observer = Observer()
+    #observer.schedule(event_handler, path=WATCHDOG_FILE, recursive=True)
+    #observer.start()
+    #try:
+        #while True:
+            #sleep(1)
+    #except KeyboardInterrupt:
+        #observer.stop()
+    #observer.join()
