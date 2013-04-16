@@ -116,10 +116,10 @@ def i3status_config_reader(config_file):
     in_general = False
     config = {
         'colors': False,
-        'color_good': None,
-        'color_bad' : None,
-        'color_degraded' : None,
-        'color_separator': None,
+        'color_good': '#00FF00',
+        'color_bad' : '#FF0000',
+        'color_degraded' : '#FFFF00',
+        'color_separator': '#333333',
         'interval': 5,
         'output_format': None,
         'time_format': '%Y-%m-%d %H:%M:%S',
