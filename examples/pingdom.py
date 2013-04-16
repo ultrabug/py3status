@@ -14,13 +14,14 @@ class Py3status:
         response = {'full_text' : '', 'name' : 'pingdom_checks'}
 
         #NOTE: configure me !
-        APP_KEY = ''			# create an APP KEY on pingdom first
-        CACHE_TIMEOUT = 600		# update every 10 mins
-        CHECKS = []				# list of the checks' names you want added to your bar
-        LATENCY_THRESHOLD = 500	# when to colorize the output
-        LOGIN = ''				# pingdom login
-        PASSWORD = ''			# pingdom password
-        TIMEOUT = 3
+        APP_KEY = ''            # create an APP KEY on pingdom first
+        CACHE_TIMEOUT = 600     # update every 10 mins
+        CHECKS = []             # list of the checks' names you want added to your bar
+        LATENCY_THRESHOLD = 500 # when to colorize the output
+        LOGIN = ''              # pingdom login
+        PASSWORD = ''           # pingdom password
+        TIMEOUT = 5
+        POSITION = 0
 
         try:
             import requests
@@ -46,4 +47,4 @@ class Py3status:
         except Exception as e:
             pass
         finally:
-            return (0, response)
+            return (POSITION, response)
