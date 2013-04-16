@@ -292,12 +292,14 @@ class UserModules(Thread):
 
     def execute_classes(self):
         """
-        run on every user class included and execute every method on the json,
-        then cache it for later usage
+        Run on every user class included and execute every method on the json,
+        then cache it for later usage.
+        We exclude the 'kill' methods on the classes which are meant to be used
+        for convenience only.
         """
         for class_name in sorted( self.classes.keys() ):
             my_class, my_methods = self.classes[class_name]
-            for my_method in my_methods:
+            for my_method in [ m for m in my_methods if m not in ['kill'] ]:
                 try:
                     # handle a cache on user class methods results
                     try:
@@ -334,8 +336,13 @@ class UserModules(Thread):
 
     def stop(self):
         """
-        break this thread's loop
+        call any 'kill' method on Py3status modules and break this thread's loop
         """
+        for class_name in sorted( self.classes.keys() ):
+            my_class, my_methods = self.classes[class_name]
+            if 'kill' in my_methods:
+                kill_module = getattr(my_class, 'kill')
+                kill_module()
         self.kill = True
 
     def clear(self):
