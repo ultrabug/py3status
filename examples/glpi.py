@@ -19,6 +19,7 @@ class Py3status:
         MYSQL_HOST = ''
         MYSQL_PASSWD = ''
         MYSQL_USER = ''
+        POSITION = 0
 
         try:
             # You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
@@ -29,7 +30,7 @@ class Py3status:
                 user=MYSQL_USER,
                 passwd=MYSQL_PASSWD,
                 db=MYSQL_DB,
-                connect_timeout=1, # dont cause a lag on i3bar freshness
+                connect_timeout=5,
                 )
             mycr = mydb.cursor()
             mycr.execute('select count(*) from glpi_tickets where closedate is NULL and solvedate is NULL;')
@@ -46,4 +47,4 @@ class Py3status:
         except Exception as e:
             pass
         finally:
-            return (0, response)
+            return (POSITION, response)
