@@ -13,18 +13,10 @@ You must set the `output_format` to `i3bar` in the general section of your i3sta
         output_format = "i3bar"
     }
 
-## Installation (non Gentoo users)
-Just clone the repository:
+## Installation (all users)
+py3status is available on pypi:
 
-    $ git clone git@github.com:ultrabug/py3status.git py3status
-
-Get into the cloned directory:
-
-    $ cd py3status
-
-And run the setup.py as root or via sudo:
-
-    $ sudo python setup.py install
+    $ pip install py3status
 
 ## Installation (Gentoo users)
 Add the `ultrabug` overlay on layman:
@@ -63,10 +55,3 @@ Just like i3status, you can force an update by sending a SIGUSR1 signal to py3st
 Note that this will also send a SIGUSR1 signal to i3status.
 
     killall -USR1 py3status
-
-## Update
-Just pull on your local clone to get the latest py3status:
-
-    $ cd py3status
-    $ git pull
-    $ sudo python setup.py install
