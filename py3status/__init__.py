@@ -95,14 +95,19 @@ def print_output(prefix, output_list, modules_cache):
     """
     Merge current user-classes cache with i3status' output and display on i3bar
     """
-    for module in modules_cache:
-        index, json = modules_cache[module]
-        for j in output_list:
-            if j['name'] == json['name']:
-                j.update(json)
-                break
-        else:
-            output_list.insert(index, json)
+    inject = []
+    for class_name in sorted( modules_cache.keys() ):
+        for module in modules_cache[class_name]:
+            index, json = modules_cache[class_name][module]
+            for n, j in enumerate(output_list):
+                if j['name'] == json['name']:
+                    output_list.pop(n)
+                    break
+            inject.insert(index, json)
+
+    # inject back user classes in the right order
+    for i in reversed(inject):
+        output_list.insert(0, i)
 
     output = prefix+dumps(output_list)
     print_line(output)
@@ -282,6 +287,7 @@ class UserModules(Thread):
                         )
                     if module and class_inst:
                         self.classes[file_name] = (class_inst, [])
+                        self.cache[file_name] = {}
                         for method in dir(class_inst):
                             if not method.startswith('__'):
                                 self.classes[file_name][1].append(method)
@@ -303,7 +309,7 @@ class UserModules(Thread):
                 try:
                     # handle a cache on user class methods results
                     try:
-                        index, result = self.cache[my_method]
+                        index, result = self.cache[class_name][my_method]
                         if time() > result['cached_until']:
                             raise KeyError('cache timeout')
                     except KeyError:
@@ -329,7 +335,7 @@ class UserModules(Thread):
                         assert 'full_text' in result, "missing 'full_text' key"
                         assert 'name' in result, "missing 'name' key"
                     finally:
-                        self.cache[my_method] = (index, result)
+                        self.cache[class_name][my_method] = (index, result)
                 except Exception:
                     err = sys.exc_info()[1]
                     syslog(LOG_ERR, "injection failed (%s)" % str(err))
