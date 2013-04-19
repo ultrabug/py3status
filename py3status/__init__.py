@@ -103,11 +103,11 @@ def print_output(prefix, output_list, modules_cache):
                 if j['name'] == json['name']:
                     output_list.pop(n)
                     break
-            inject.insert(index, json)
+            inject.append( (index, json) )
 
     # inject back user classes in the right order
-    for i in reversed(inject):
-        output_list.insert(0, i)
+    for index, json in [ tup for tup in inject ]:
+        output_list.insert(index, json)
 
     output = prefix+dumps(output_list)
     print_line(output)
