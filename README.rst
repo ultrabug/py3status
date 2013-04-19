@@ -5,9 +5,7 @@ py3status is an extensible i3status wrapper written in python
 
 Documentation
 =========
-See the wiki for up to date documentation.
-
-https://github.com/ultrabug/py3status/wiki
+See the wiki for up to date documentation : https://github.com/ultrabug/py3status/wiki
 
 Requirements
 =========
