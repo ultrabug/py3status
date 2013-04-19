@@ -14,16 +14,18 @@ def read(fname):
 
 setup(
     name='py3status',
-    version='0.9',
-    url='https://github.com/ultrabug/py3status/wiki',
-    download_url='https://github.com/ultrabug/py3status',
-    license='BSD',
+    version='0.10',
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
     description='py3status is an extensible i3status wrapper written in python',
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
+    url='https://github.com/ultrabug/py3status',
+    download_url='https://github.com/ultrabug/py3status/tags',
+    license='BSD',
     platforms='any',
     packages=find_packages(),
+    include_package_data=True,
+    install_requires=[],
     entry_points={
         'console_scripts': [
             'py3status = py3status:main',
