@@ -133,7 +133,7 @@ def i3status_config_reader(config_file):
         line = line.strip(' \t\n\r')
         if line.startswith('general'):
             in_general = True
-        elif line.startswith('time'):
+        elif line.startswith('time') or line.startswith('tztime'):
             in_time = True
         elif line.startswith('}'):
             in_general = False
