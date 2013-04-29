@@ -355,7 +355,8 @@ class UserModules(Thread):
         """
         clear user cache
         """
-        self.cache = {}
+        for k in self.cache.keys():
+            self.cache[k] = {}
 
     def run(self):
         """
