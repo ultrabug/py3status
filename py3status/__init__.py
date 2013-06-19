@@ -51,6 +51,7 @@ from subprocess import call
 from syslog import syslog
 from syslog import LOG_ERR
 from syslog import LOG_INFO
+from syslog import LOG_WARNING
 
 try:
     # python3
@@ -410,7 +411,7 @@ def main():
             'i3status output_format should be set to "i3bar"'
     except Exception:
         err = sys.exc_info()[1]
-        syslog(LOG_ERR, "py3status init error (%s)" % str(err))
+        syslog(LOG_ERR, "initialization error (%s)" % str(err))
         sys.exit(1)
 
     try:
@@ -497,6 +498,8 @@ def main():
                 call(["killall", "-s", "USR1", "i3status"])
                 modules_thread.clear()
                 forced = True
+            except IOError:
+                syslog(LOG_WARNING, "ignored an IOError")
             except KeyboardInterrupt:
                 break
             finally:
@@ -508,7 +511,7 @@ def main():
         modules_thread.stop()
     except Exception:
         err = sys.exc_info()[1]
-        syslog(LOG_ERR, "py3status error (%s)" % str(err))
+        syslog(LOG_ERR, "fatal error (%s)" % str(err))
         sys.exit(2)
 
 if __name__ == '__main__':
