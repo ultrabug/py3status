@@ -399,7 +399,8 @@ def main():
         parser.add_argument('-d', action="store_true",
             dest="disable_transform", help="disable integrated transformations")
         parser.add_argument('-i', action="append", dest="include_paths",
-            help="user-written modules include directories")
+            help="include user-written modules from those directories \
+                (default .i3/py3status)")
         parser.add_argument('-n', action="store",
             dest="interval", type=int,
             default=INTERVAL, help="update interval in seconds (default 1 sec)")
