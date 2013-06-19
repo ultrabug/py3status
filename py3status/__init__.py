@@ -283,21 +283,29 @@ class UserModules(Thread):
         for include_path in self.include_paths:
             include_path = os.path.abspath(include_path) + '/'
             if os.path.isdir(include_path):
-                for file_name in os.listdir(include_path):
+                for f_name in os.listdir(include_path):
                     try:
                         module, class_inst = self.load_from_file(
-                            include_path + file_name
+                            include_path + f_name
                             )
                         if module and class_inst:
-                            self.classes[file_name] = (class_inst, [])
-                            self.cache[file_name] = {}
+                            self.classes[f_name] = (class_inst, [])
+                            self.cache[f_name] = {}
                             for method in dir(class_inst):
-                                if not method.startswith('__'):
-                                    self.classes[file_name][1].append(method)
+                                # ignore private methods
+                                if '_Py3status' in method:
+                                    continue
+                                try:
+                                    cl = eval("class_inst.%s.im_class" % method)
+                                    if 'Py3status' in str(cl):
+                                        self.classes[f_name][1].append(method)
+                                except:
+                                    # ignore non Py3status-wide methods
+                                    pass
                     except Exception:
                         err = sys.exc_info()[1]
                         syslog(LOG_ERR, "loading %s failed (%s)" \
-                            % (file_name, str(err)))
+                            % (f_name, str(err)))
 
     def execute_classes(self):
         """
