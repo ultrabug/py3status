@@ -67,7 +67,7 @@ except ImportError:
 CACHE_TIMEOUT = 60
 DISABLE_TRANSFORM = False
 I3STATUS_CONFIG = '/etc/i3status.conf'
-INCLUDE_PATH = '.i3/py3status'
+INCLUDE_PATHS = ['.i3/py3status/']
 INTERVAL = 1
 
 # functions
@@ -248,7 +248,7 @@ class UserModules(Thread):
     We run it in a separate thread so that any delay introduced by an external
     class doesn't affect the i3bar updating process.
     """
-    def __init__(self, cache_timeout, i3status_conf, include_path, interval):
+    def __init__(self, cache_timeout, i3status_conf, include_paths, interval):
         """
         set our useful properties
         """
@@ -257,7 +257,7 @@ class UserModules(Thread):
         self.cache_timeout = cache_timeout
         self.classes = {}
         self.i3status_conf = i3status_conf
-        self.include_path = include_path
+        self.include_paths = include_paths
         self.interval = interval
         self.i3status_json = {}
         self.kill = False
@@ -280,22 +280,24 @@ class UserModules(Thread):
         """
         read user-written Py3status class files for dynamic inclusion
         """
-        if self.include_path and os.path.isdir(self.include_path):
-            for file_name in os.listdir(self.include_path):
-                try:
-                    module, class_inst = self.load_from_file(
-                        self.include_path + file_name
-                        )
-                    if module and class_inst:
-                        self.classes[file_name] = (class_inst, [])
-                        self.cache[file_name] = {}
-                        for method in dir(class_inst):
-                            if not method.startswith('__'):
-                                self.classes[file_name][1].append(method)
-                except Exception:
-                    err = sys.exc_info()[1]
-                    syslog(LOG_ERR, "loading %s failed (%s)" \
-                        % (file_name, str(err)))
+        for include_path in self.include_paths:
+            include_path = os.path.abspath(include_path) + '/'
+            if os.path.isdir(include_path):
+                for file_name in os.listdir(include_path):
+                    try:
+                        module, class_inst = self.load_from_file(
+                            include_path + file_name
+                            )
+                        if module and class_inst:
+                            self.classes[file_name] = (class_inst, [])
+                            self.cache[file_name] = {}
+                            for method in dir(class_inst):
+                                if not method.startswith('__'):
+                                    self.classes[file_name][1].append(method)
+                    except Exception:
+                        err = sys.exc_info()[1]
+                        syslog(LOG_ERR, "loading %s failed (%s)" \
+                            % (file_name, str(err)))
 
     def execute_classes(self):
         """
@@ -377,7 +379,7 @@ def main():
     try:
         # global definition
         global CACHE_TIMEOUT, DISABLE_TRANSFORM
-        global I3STATUS_CONFIG, INCLUDE_PATH, INTERVAL
+        global I3STATUS_CONFIG, INCLUDE_PATHS, INTERVAL
 
         # command line options
         parser = argparse.ArgumentParser(
@@ -388,9 +390,8 @@ def main():
             default=I3STATUS_CONFIG, help="path to i3status config file")
         parser.add_argument('-d', action="store_true",
             dest="disable_transform", help="disable integrated transformations")
-        parser.add_argument('-i', action="store",
-            dest="include_path", type=str,
-            default=INCLUDE_PATH, help="user-based class include directory")
+        parser.add_argument('-i', action="append", dest="include_paths",
+            help="user-written modules include directories")
         parser.add_argument('-n', action="store",
             dest="interval", type=int,
             default=INTERVAL, help="update interval in seconds (default 1 sec)")
@@ -403,7 +404,8 @@ def main():
         CACHE_TIMEOUT = options.cache_timeout
         DISABLE_TRANSFORM = True if options.disable_transform else False
         I3STATUS_CONFIG = i3status_config_reader(options.i3status_conf)
-        INCLUDE_PATH = os.path.abspath( options.include_path ) + '/'
+        INCLUDE_PATHS = INCLUDE_PATHS \
+            if not options.include_paths else options.include_paths
         INTERVAL = options.interval
 
         # py3status uses only the i3bar protocol
@@ -420,7 +422,7 @@ def main():
         modules_thread = UserModules(
             CACHE_TIMEOUT,
             I3STATUS_CONFIG,
-            INCLUDE_PATH,
+            INCLUDE_PATHS,
             INTERVAL,
             )
         modules_thread.start()
