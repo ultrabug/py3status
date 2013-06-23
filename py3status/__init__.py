@@ -292,16 +292,14 @@ class UserModules(Thread):
                             self.classes[f_name] = (class_inst, [])
                             self.cache[f_name] = {}
                             for method in dir(class_inst):
-                                # ignore private methods
-                                if '_Py3status' in method:
+                                # exclude private and other decorated methods
+                                # such as @property or @staticmethod
+                                if method.startswith('_'):
                                     continue
-                                try:
-                                    cl = eval("class_inst.%s.im_class" % method)
-                                    if 'Py3status' in str(cl):
+                                else:
+                                    m_type = type(getattr(class_inst, method))
+                                    if 'method' in str(m_type):
                                         self.classes[f_name][1].append(method)
-                                except:
-                                    # ignore non Py3status-wide methods
-                                    pass
                     except Exception:
                         err = sys.exc_info()[1]
                         syslog(LOG_ERR, "loading %s failed (%s)" \
