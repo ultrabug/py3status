@@ -1,6 +1,10 @@
 class Py3status:
     """
-    Empty and basic py3status class
+    Empty and basic py3status class.
+
+    NOTE: py3status will NOT execute :
+        - methods starting with '_'
+        - methods decorated by @property and @staticmethod
     """
     def empty(self, json, i3status_config):
         """
