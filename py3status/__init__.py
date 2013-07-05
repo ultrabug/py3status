@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # includes
-################################################################################
+###############################################################################
 import os
 import imp
 import sys
@@ -63,21 +63,23 @@ except ImportError:
     from Queue import Empty
 
 # module globals and defaults
-################################################################################
+###############################################################################
 CACHE_TIMEOUT = 60
 DISABLE_TRANSFORM = False
 I3STATUS_CONFIG = '/etc/i3status.conf'
 INCLUDE_PATHS = ['.i3/py3status/']
 INTERVAL = 1
 
+
 # functions
-################################################################################
+###############################################################################
 def print_line(message):
     """
     Non-buffered printing to stdout
     """
     sys.stdout.write(message + '\n')
     sys.stdout.flush()
+
 
 def read_line():
     """
@@ -92,27 +94,29 @@ def read_line():
     except KeyboardInterrupt:
         sys.exit()
 
+
 def print_output(prefix, output_list, modules_cache):
     """
     Merge current user-classes cache with i3status' output and display on i3bar
     """
     inject = []
-    for class_name in sorted( modules_cache.keys() ):
+    for class_name in sorted(modules_cache.keys()):
         for module in modules_cache[class_name]:
             index, json = modules_cache[class_name][module]
             for n, j in enumerate(output_list):
                 if j['name'] == json['name']:
                     output_list.pop(n)
                     break
-            inject.append( (index, json) )
+            inject.append((index, json))
 
     # inject back user classes in the right order
-    for index, json in [ tup for tup in inject ]:
+    for index, json in [tup for tup in inject]:
         output_list.insert(index, json)
 
-    output = prefix+dumps(output_list)
+    output = prefix + dumps(output_list)
     print_line(output)
     return output
+
 
 def i3status_config_reader(config_file):
     """
@@ -123,13 +127,13 @@ def i3status_config_reader(config_file):
     config = {
         'colors': False,
         'color_good': '#00FF00',
-        'color_bad' : '#FF0000',
-        'color_degraded' : '#FFFF00',
+        'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
         'color_separator': '#333333',
         'interval': 5,
         'output_format': None,
         'time_format': '%Y-%m-%d %H:%M:%S',
-        }
+    }
     for line in open(config_file, 'r'):
         line = line.strip(' \t\n\r')
         if line.startswith('general'):
@@ -150,6 +154,7 @@ def i3status_config_reader(config_file):
             if 'time_' + key in config:
                 config['time_' + key] = eval(value)
     return config
+
 
 class I3status(Thread):
     """
@@ -180,7 +185,7 @@ class I3status(Thread):
             ['i3status', '-c', self.config_file],
             stdout=PIPE,
             stderr=PIPE,
-            )
+        )
         self.queue.put(i3status_pipe.stdout.readline())
         self.queue.put(i3status_pipe.stdout.readline())
         while not self.kill:
@@ -197,6 +202,7 @@ class I3status(Thread):
                     self.started = True
             else:
                 break
+
 
 def process_line(line, **kwargs):
     """
@@ -222,6 +228,7 @@ def process_line(line, **kwargs):
 
     return (prefix, j)
 
+
 def transform(j, **kwargs):
     """
     Integrated transformations:
@@ -230,9 +237,9 @@ def transform(j, **kwargs):
     try:
         for item in j:
             # time modification
-            if item['name'] in [ 'time', 'tztime' ]:
+            if item['name'] in ['time', 'tztime']:
                 time_format = I3STATUS_CONFIG['time_format']
-                date = datetime.strptime( item['full_text'], time_format ) \
+                date = datetime.strptime(item['full_text'], time_format) \
                     + timedelta(seconds=kwargs['delta'])
                 item['full_text'] = date.strftime(time_format)
                 if kwargs['delta'] > 0:
@@ -241,6 +248,7 @@ def transform(j, **kwargs):
         err = sys.exc_info()[1]
         syslog(LOG_ERR, "transformation failed (%s)" % (str(err)))
     return j
+
 
 class UserModules(Thread):
     """
@@ -287,7 +295,7 @@ class UserModules(Thread):
                     try:
                         module, class_inst = self.load_from_file(
                             include_path + f_name
-                            )
+                        )
                         if module and class_inst:
                             self.classes[f_name] = (class_inst, [])
                             self.cache[f_name] = {}
@@ -302,8 +310,8 @@ class UserModules(Thread):
                                         self.classes[f_name][1].append(method)
                     except Exception:
                         err = sys.exc_info()[1]
-                        syslog(LOG_ERR, "loading %s failed (%s)" \
-                            % (f_name, str(err)))
+                        syslog(LOG_ERR, "loading %s failed (%s)"
+                                        % (f_name, str(err)))
 
     def execute_classes(self):
         """
@@ -312,9 +320,9 @@ class UserModules(Thread):
         We exclude the 'kill' methods on the classes which are meant to be used
         for convenience only.
         """
-        for class_name in sorted( self.classes.keys() ):
+        for class_name in sorted(self.classes.keys()):
             my_class, my_methods = self.classes[class_name]
-            for my_method in [ m for m in my_methods if m not in ['kill'] ]:
+            for my_method in [m for m in my_methods if m not in ['kill']]:
                 try:
                     # handle a cache on user class methods results
                     try:
@@ -328,11 +336,11 @@ class UserModules(Thread):
                             index, result = meth(
                                 self.i3status_json,
                                 self.i3status_conf,
-                                )
+                            )
                         except Exception:
                             err = sys.exc_info()[1]
-                            syslog(LOG_ERR, "user method %s failed (%s)" \
-                                % (my_method, str(err)))
+                            syslog(LOG_ERR, "user method %s failed (%s)"
+                                            % (my_method, str(err)))
                             index, result = (0, {'name': '', 'full_text': ''})
 
                         # respect user-defined cache timeout for this module
@@ -353,7 +361,7 @@ class UserModules(Thread):
         """
         call any 'kill' method on Py3status modules and break this thread's loop
         """
-        for class_name in sorted( self.classes.keys() ):
+        for class_name in sorted(self.classes.keys()):
             my_class, my_methods = self.classes[class_name]
             if 'kill' in my_methods:
                 kill_module = getattr(my_class, 'kill')
@@ -376,8 +384,9 @@ class UserModules(Thread):
             self.execute_classes()
             sleep(self.interval)
 
+
 # main stuff
-################################################################################
+###############################################################################
 def main():
     """
     Main logic function
@@ -392,19 +401,28 @@ def main():
             description='The agile, python-powered, i3status wrapper')
         parser = argparse.ArgumentParser(add_help=True)
         parser.add_argument('-c', action="store",
-            dest="i3status_conf", type=str,
-            default=I3STATUS_CONFIG, help="path to i3status config file")
+                            dest="i3status_conf",
+                            type=str,
+                            default=I3STATUS_CONFIG,
+                            help="path to i3status config file")
         parser.add_argument('-d', action="store_true",
-            dest="disable_transform", help="disable integrated transformations")
-        parser.add_argument('-i', action="append", dest="include_paths",
-            help="include user-written modules from those directories \
-                (default .i3/py3status)")
+                            dest="disable_transform",
+                            help="disable integrated transformations")
+        parser.add_argument('-i', action="append",
+                            dest="include_paths",
+                            help="""include user-written modules from those
+                            directories(default .i3/py3status)""")
         parser.add_argument('-n', action="store",
-            dest="interval", type=int,
-            default=INTERVAL, help="update interval in seconds (default 1 sec)")
+                            dest="interval",
+                            type=int,
+                            default=INTERVAL,
+                            help="update interval in seconds (default 1 sec)")
         parser.add_argument('-t', action="store",
-            dest="cache_timeout", type=int, default=CACHE_TIMEOUT,
-            help="default injection cache timeout in seconds (default 60 sec)")
+                            dest="cache_timeout",
+                            type=int,
+                            default=CACHE_TIMEOUT,
+                            help="""default injection cache timeout in seconds
+                            (default 60 sec)""")
         options = parser.parse_args()
 
         # configuration and helper variables
@@ -431,7 +449,7 @@ def main():
             I3STATUS_CONFIG,
             INCLUDE_PATHS,
             INTERVAL,
-            )
+        )
         modules_thread.start()
 
         # spawn a i3status process on a separate thread
@@ -457,8 +475,8 @@ def main():
                 # get a timestamp of now
                 tst = time()
 
-                # try to read i3status' output for at most INTERVAL seconds else
-                # raise the Empty exception
+                # try to read i3status' output for at most INTERVAL seconds
+                # else raise the Empty exception
                 line = i3status_thread.queue.get(timeout=INTERVAL)
                 try:
                     # python3 compatibility code
@@ -472,7 +490,7 @@ def main():
                     if not forced and I3STATUS_CONFIG['interval'] > INTERVAL:
                         # add a calculated sleep honoring py3status refresh
                         # time of the bar every INTERVAL seconds
-                        sleep(INTERVAL - float( '{:.2}'.format( time()-tst ) ))
+                        sleep(INTERVAL - float('{:.2}'.format(time() - tst)))
                     else:
                         # reset the SIGUSR1 flag forcing the refresh of the bar
                         forced = False
@@ -485,7 +503,7 @@ def main():
                         prefix,
                         output_list,
                         modules_thread.cache
-                        )
+                    )
             except Empty:
                 # make sure i3status has started before modifying its output
                 if i3status_thread.started or not i3status_thread.init:
@@ -496,7 +514,7 @@ def main():
                             prefix,
                             output_list,
                             modules_thread.cache
-                            )
+                        )
                 else:
                     syslog(LOG_INFO, "waiting for i3status")
             except UserWarning:
