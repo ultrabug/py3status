@@ -148,7 +148,10 @@ def i3status_config_reader(config_file):
             if key in config:
                 if value in ['true', 'false']:
                     value = 'True' if value == 'true' else 'False'
-                config[key] = eval(value)
+                try:
+                    config[key] = eval(value)
+                except NameError:
+                    config[key] = value
         if in_time and '=' in line:
             key, value = line.split('=')[0].strip(), line.split('=')[1].strip()
             if 'time_' + key in config:
