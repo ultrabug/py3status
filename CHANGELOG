@@ -1,0 +1,71 @@
+version 0.13 (2013-06-24)
+* fix instancemethod detection wrt issue #11 thx to @lathan and @bloodred, inspired by pull request #12 by @drahier
+* add information about method execution in the empty_class example
+
+version 0.12 (2013-06-19)
+* update the readme and help
+* dont call private and special methods on Py3status classes
+* handle multiple include paths parameters
+* dont die on IOError upon suspend wrt issue #10 thx to @drahier
+* Merge pull request #9 from shahinism/master
+* Three new method added. (net_speed, traffic, ram_info), by Shahin Azad
+
+version 0.11 (2013-04-30)
+* Merge pull request #8 from edk141/pr-1
+* fix UserModules.clear(), by Ed Kellett
+* fix i3status config reader tztime detection
+
+version 0.10 (2013-04-19)
+* fix setup for pypi
+* fix issue #5 thx to @drahier for reporting
+* fix README wiki URL
+* stupid rst
+* update the README for rst, better MANIFEST
+* add MANIFEST.in and switch README.rst for pypi
+
+version 0.9 (2013-04-17)
+* respect positions on injected classes outputs
+* update readme for pypi installation
+* drop invalid classifier for pypi
+* set default i3status colors
+* pingdom module dont need to be aggressive on timeout anymore, add POSITION parameter
+* glpi module dont need to be aggressive on timeout anymore, add POSITION parameter
+* enhanced self key binding pomodoro example as discussed with Fandekasp
+* Handle killing of user-written modules nicely by calling their kill method if implemented upon exit of py3status, ignore kill methods execution when running normally
+* Merge pull request #4 from Fandekasp/pomodoro
+* handle case log file does not exists, by Adrien Lemaire
+* plugin now working with keys to start/stop/pause, by Adrien Lemaire
+* reading log file for value. Do I really need watchdog ?, by Adrien Lemaire
+* define watchdog values to listen, and their action, by Adrien Lemaire
+* separate code in send_notification method, by Adrien Lemaire
+* adding new pomodoro plugin, by Adrien Lemaire
+* drop useless print
+
+version 0.8 (2013-04-08)
+* major rewrite
+* handle SIGUSR1 for new threaded modules execution, drop useless globals
+* load user defined modules from a separate thread so that they cannot cause any delay in updating the i3bar
+* PEP8 identation and python3 compatible examples
+* adjust the readme help
+* major cleanup, better threading of i3status, enhanced main logic for better responsiveness, drop useless variables, respect PEP8 identation, more PEP8 variable cleanup
+
+version 0.7 thanks to @Detegr (2013-04-06)
+* add a note on the Control section
+* only adjust sleep interval if i3status interval is greater than ours
+* add Pingdom checks latency example module
+
+version 0.6 (2013-03-25)
+* fix time transformation thx to Lujeni
+* specify default folder for user defined classes
+* clear the user class cache when receiving SIGUSR1
+
+version 0.5 (2013-03-17)
+* add the Control section, cleanup install instructions
+* signal SIGUSR1 forces i3status and i3bar refresh, feature request by Michael Schaefer, add better comments
+
+version 0.4 (2013-03-15)
+* dont fail if i3status output comes slower than py3status message polling interval
+* iterate over user classes in a sorted manner to allow a predictive ordering of outputs
+* add Arch installation URL on the README thx to waaaaargh
+* python3 compatibility inspired by waaaaargh (Johannes Firlefanz)
+* add GLPI open tickets counter module example
