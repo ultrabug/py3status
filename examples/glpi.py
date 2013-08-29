@@ -1,3 +1,7 @@
+# You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
+import MySQLdb
+
+
 class Py3status:
     """
     This example class demonstrates how to display the current total number of
@@ -10,7 +14,7 @@ class Py3status:
     py3status automagically.
     """
     def count_glpi_open_tickets(self, json, i3status_config):
-        response = {'full_text' : '', 'name' : 'glpi_tickets'}
+        response = {'full_text': '', 'name': 'glpi_tickets'}
 
         # user-defined variables
         CRIT_THRESHOLD = 20
@@ -21,30 +25,28 @@ class Py3status:
         MYSQL_USER = ''
         POSITION = 0
 
-        try:
-            # You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
-            import MySQLdb
+        mydb = MySQLdb.connect(
+            host=MYSQL_HOST,
+            user=MYSQL_USER,
+            passwd=MYSQL_PASSWD,
+            db=MYSQL_DB,
+            connect_timeout=5,
+            )
+        mycr = mydb.cursor()
+        mycr.execute('''select count(*)
+                        from glpi_tickets
+                        where closedate is NULL and solvedate is NULL;''')
+        row = mycr.fetchone()
+        if row:
+            open_tickets = int(row[0])
+            if i3status_config['colors']:
+                if open_tickets > CRIT_THRESHOLD:
+                    response.update({'color': i3status_config['color_bad']})
+                elif open_tickets > WARN_THRESHOLD:
+                    response.update(
+                        {'color': i3status_config['color_degraded']}
+                    )
+            response['full_text'] = '%s tickets' % open_tickets
+        mydb.close()
 
-            mydb = MySQLdb.connect(
-                host=MYSQL_HOST,
-                user=MYSQL_USER,
-                passwd=MYSQL_PASSWD,
-                db=MYSQL_DB,
-                connect_timeout=5,
-                )
-            mycr = mydb.cursor()
-            mycr.execute('select count(*) from glpi_tickets where closedate is NULL and solvedate is NULL;')
-            row = mycr.fetchone()
-            if row:
-                open_tickets = int(row[0])
-                if i3status_config['colors']:
-                    if open_tickets > CRIT_THRESHOLD:
-                        response.update({'color': i3status_config['color_bad']})
-                    elif open_tickets > WARN_THRESHOLD:
-                        response.update({'color': i3status_config['color_degraded']})
-                response['full_text'] = '%s tickets' % open_tickets
-            mydb.close()
-        except Exception as e:
-            pass
-        finally:
-            return (POSITION, response)
+        return (POSITION, response)
