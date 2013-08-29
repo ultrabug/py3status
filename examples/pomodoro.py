@@ -1,56 +1,54 @@
 """
 Pomodoro countdown on i3bar originally written by @Fandekasp (Adrien Lemaire)
-
-Requires:
-    - libnotify
-    - python-gobject
-    - python-keybinder
 """
-from gi.repository import Notify
-from gi.repository import GObject as gobject
-
-#FIXME: keybinder gobject collides with Notify but its not blocking
-import keybinder
-import gtk
-
-from threading import Thread
+from subprocess import call
 from time import time
-from time import sleep
 
-KEY_PAUSE = '<Mod1>B' #Alt + B(reak)
-KEY_START = '<Mod1>P' #Alt + P(omodoro)
-KEY_STOP  = '<Mod1>R' #Alt + R(eset)
 MAX_BREAKS = 4
 POSITION = 0
 TIMER_POMODORO = 25 * 60
 TIMER_BREAK = 5 * 60
 TIMER_LONG_BREAK = 15 * 60
 
-pomo_thread = None
-gobject.threads_init()
 
-class Pomodoro(Thread):
+class Py3status:
     """
-    Handles Pomodoro and Break countdowns
     """
     def __init__(self):
+        self.__setup('stop')
+        self.alert = False
+        self.run = False
+
+    def on_click(self, json, i3status_config, event):
         """
-        Well, default values
+        Handles click events
         """
-        Thread.__init__(self)
-        self.kill = False
-        self.callback('stop')
+        if event['button'] == 1:
+            if self.status == 'stop':
+                self.status = 'start'
+            self.run = True
+
+        elif event['button'] == 2:
+            self.__setup('stop')
+            self.run = False
+
+        elif event['button'] == 3:
+            self.__setup('pause')
+            self.run = False
 
     @property
     def response(self):
         """
         Return the response full_text string
         """
-        return '%s (%d)' % (self.prefix, self.timer)
+        return {
+            'full_text': '{} ({})'.format(self.prefix, self.timer),
+            'name': 'pomodoro'
+        }
 
-    def callback(self, status):
+    def __setup(self, status):
         """
-        Called on a keybinder event
+        Setup a step
         """
         self.status = status
         if status == 'stop':
@@ -72,80 +70,51 @@ class Pomodoro(Thread):
                 self.breaks += 1
                 self.timer = TIMER_BREAK
 
-    def stop(self):
+    def __decrement(self):
         """
-        Exit nicely
+        Countdown handler
         """
-        self.kill = True
+        self.timer -= 1
+        if self.timer < 0:
+            self.alert = True
+            self.run = False
+            self.__i3_nagbar()
+            if self.status == 'start':
+                self.__setup('pause')
+                self.status = 'pause'
+            elif self.status == 'pause':
+                self.__setup('start')
+                self.status = 'start'
 
-    def notify(self):
+    def __i3_nagbar(self, level='warning'):
         """
-        Print a visual message
+        Make use of i3-nagbar to display warnings to the user.
         """
+        msg = '{} time is up !'.format(self.prefix)
         try:
-            Notify.init('')
-            notification = Notify.Notification.new (
-                '<b>Attention:</b>',
-                '{} is finished'.format(self.response),
-                'dialog-information',
-                )
-            notification.show()
-        except Exception as err:
+            call(
+                ['i3-nagbar', '-m', msg, '-t', level],
+                stdout=open('/dev/null', 'w'),
+                stderr=open('/dev/null', 'w')
+            )
+        except:
             pass
-
-    def run(self):
-        """
-        Infinite loop setting the keybinder and waiting for key events
-        """
-        bindings = {
-            'pause': KEY_PAUSE,
-            'start': KEY_START,
-            'stop' : KEY_STOP,
-            }
-        for status, keystr in bindings.items():
-            keybinder.bind(keystr, self.callback, status)
-
-        while not self.kill:
-            gtk.main_iteration(block=False)
-            if self.status != 'stop' and self.timer > 0:
-                self.timer -= 1
-                if self.timer == 0:
-                    self.notify()
-            sleep(1)
-
-        for status, keystr in bindings.items():
-            try:
-                keybinder.unbind(keystr)
-            except Exception as e:
-                pass
-
-class Py3status:
-    """
-    Main py3status class which spawns a thread for Pomodoro keybinder
-    """
-    def kill(self):
-        """
-        Exit nicely
-        """
-        pomo_thread.stop()
 
     def pomodoro(self, json, i3status_config):
         """
-        Pomodoro response handling
+        Pomodoro response handling and countdown
         """
-        response = {'full_text' : '', 'name' : 'pomodoro'}
+        if self.run:
+            self.__decrement()
 
-        global pomo_thread
+        response = self.response
+        if self.alert:
+            response['urgent'] = True
+            self.alert = False
 
-        if not pomo_thread:
-            pomo_thread = Pomodoro()
-            pomo_thread.start()
-        else:
-            response['full_text'] = pomo_thread.response
-
-        if pomo_thread.status == 'start':
+        if self.status == 'start':
             response['color'] = i3status_config['color_good']
-        elif pomo_thread.status == 'pause':
+        elif self.status == 'pause':
             response['color'] = i3status_config['color_degraded']
         else:
             response['color'] = i3status_config['color_bad']
