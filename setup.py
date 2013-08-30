@@ -14,7 +14,7 @@ def read(fname):
 
 setup(
     name='py3status',
-    version='0.13',
+    version='1.0',
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
     description='py3status is an extensible i3status wrapper written in python',
@@ -40,6 +40,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
     )

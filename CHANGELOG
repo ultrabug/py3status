@@ -1,3 +1,21 @@
+version 1.0 (2013-08-30)
+* total rewrite (yes, again)
+* support for i3bar click_events, they're dispatched to user-written py3status classes based on their name/instance
+* add support for on_click methods in user-written modules to handle i3bar click_events (see the pomodoro example)
+* default is to clear the method's cache (force a refresh) if you middle click (button 2) on a method's output and the module does not support click_events
+* rewrite pomodoro example to showcase the on_click usage
+* use i3-nagbar to display warnings/errors to the user and also log them to syslog
+* new user-written module output ordering mechanism is more intuitive as it uses strictly numeric then alphabetical sorting
+* use select/poll() to implement a non-blocking I/O reading mechanism on threads
+* new Events thread is responsible for reading i3bar JSONs and dispatching them to the correct user module (click_events)
+* each user-written module is started and executed in its own thread
+* remove the pointless -d option
+* add a --debug option to be verbose in syslog (useful for debugging your modules)
+* add a real CHANGELOG
+* add a proper LICENSE file
+* make sure all examples are PEP8 compatible
+* update the empty_class example to explain on_click and kill usage
+
 version 0.13 (2013-06-24)
 * fix instancemethod detection wrt issue #11 thx to @lathan and @bloodred, inspired by pull request #12 by @drahier
 * add information about method execution in the empty_class example
