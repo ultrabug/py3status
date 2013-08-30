@@ -1,282 +1,313 @@
-# Copyright (c) 2013, Ultrabug
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# * Redistributions of source code must retain the above copyright notice,
-#   this list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright notice,
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
-# includes
-###############################################################################
-import os
-import imp
-import sys
 import argparse
-import threading
-from threading import Thread
+import imp
+import os
+import select
+import sys
 
-from json import loads
-from json import dumps
-
-from time import time
-from time import sleep
-
+from contextlib import contextmanager
+from copy import deepcopy
 from datetime import datetime
-from datetime import timedelta
-
+from json import dumps, loads
 from signal import signal
 from signal import SIGUSR1
-
 from subprocess import Popen
 from subprocess import PIPE
 from subprocess import call
-
-from syslog import syslog
-from syslog import LOG_ERR
-from syslog import LOG_INFO
-from syslog import LOG_WARNING
-
-try:
-    # python3
-    from queue import Queue
-    from queue import Empty
-except ImportError:
-    # python2
-    from Queue import Queue
-    from Queue import Empty
-
-# module globals and defaults
-###############################################################################
-CACHE_TIMEOUT = 60
-DISABLE_TRANSFORM = False
-I3STATUS_CONFIG = '/etc/i3status.conf'
-INCLUDE_PATHS = ['.i3/py3status/']
-INTERVAL = 1
+from threading import Event, Thread
+from time import sleep, time
+from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
 
-# functions
-###############################################################################
-def print_line(message):
+@contextmanager
+def jsonify(string):
     """
-    Non-buffered printing to stdout
+    Transform the given string to a JSON in a context manager fashion.
     """
-    sys.stdout.write(message + '\n')
+    prefix = ''
+    if string.startswith(','):
+        prefix, string = ',', string[1:]
+    yield (prefix, loads(string))
+
+
+def print_line(line):
+    """
+    Print given line to stdout (i3bar).
+    """
+    sys.stdout.write('{}\n'.format(line))
     sys.stdout.flush()
 
 
-def read_line():
+class IOPoller:
     """
-    Interrupted respecting reader for stdin
+    This class implements a predictive and timing-out I/O reader
+    using select and the poll() mechanism for greater compatibility.
     """
-    try:
-        line = sys.stdin.readline().strip()
-        # i3status sends EOF, or an empty line
-        if not line:
-            sys.exit(3)
-        return line
-    except KeyboardInterrupt:
-        sys.exit()
+    def __init__(self, io, eventmask=select.POLLIN):
+        """
+        Our default is to read (POLLIN) the specified 'io' file descriptor.
+        """
+        self.io = io
+        self.poller = select.poll()
+        self.poller.register(io, eventmask)
 
-
-def print_output(prefix, output_list, modules_cache):
-    """
-    Merge current user-classes cache with i3status' output and display on i3bar
-    """
-    inject = []
-    for class_name in sorted(modules_cache.keys()):
-        for module in modules_cache[class_name]:
-            index, json = modules_cache[class_name][module]
-            for n, j in enumerate(output_list):
-                if j['name'] == json['name']:
-                    output_list.pop(n)
-                    break
-            inject.append((index, json))
-
-    # inject back user classes in the right order
-    for index, json in [tup for tup in inject]:
-        output_list.insert(index, json)
-
-    output = prefix + dumps(output_list)
-    print_line(output)
-    return output
-
-
-def i3status_config_reader(config_file):
-    """
-    i3status.conf reader so we can adapt our code to the i3status config
-    """
-    in_time = False
-    in_general = False
-    config = {
-        'colors': False,
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_separator': '#333333',
-        'interval': 5,
-        'output_format': None,
-        'time_format': '%Y-%m-%d %H:%M:%S',
-    }
-    for line in open(config_file, 'r'):
-        line = line.strip(' \t\n\r')
-        if line.startswith('general'):
-            in_general = True
-        elif line.startswith('time') or line.startswith('tztime'):
-            in_time = True
-        elif line.startswith('}'):
-            in_general = False
-            in_time = False
-        if in_general and '=' in line:
-            key, value = line.split('=')[0].strip(), line.split('=')[1].strip()
-            if key in config:
-                if value in ['true', 'false']:
-                    value = 'True' if value == 'true' else 'False'
-                try:
-                    config[key] = eval(value)
-                except NameError:
-                    config[key] = value
-        if in_time and '=' in line:
-            key, value = line.split('=')[0].strip(), line.split('=')[1].strip()
-            if 'time_' + key in config:
-                config['time_' + key] = eval(value)
-    return config
+    def readline(self, timeout=0.5):
+        """
+        Try to read our I/O for 'timeout' seconds, return None otherwise.
+        This makes calling and reading I/O non blocking !
+        """
+        poll_result = self.poller.poll(timeout)
+        if poll_result:
+            line = self.io.readline().strip()
+            try:
+                # python3 compatibility code
+                line = line.decode()
+            except (AttributeError, UnicodeDecodeError):
+                pass
+            return line
+        else:
+            return None
 
 
 class I3status(Thread):
     """
-    Run i3status in a thread and send its output to a Queue
+    This class is responsible for spawning i3status and reading its output.
     """
-    def __init__(self, config_file):
+    def __init__(self, lock, i3status_config_path):
         """
-        set our useful properties
+        Our output will be read asynchronously from 'last_output'.
         """
         Thread.__init__(self)
-        self.config_file = config_file
-        self.kill = False
-        self.queue = Queue()
-        self.init = True
-        self.started = False
+        self.i3status_config_path = i3status_config_path
+        self.config = self.i3status_config_reader()
+        self.error = None
+        self.last_output = None
+        self.last_output_ts = None
+        self.last_prefix = None
+        self.lock = lock
 
-    def stop(self):
+    def i3status_config_reader(self):
         """
-        break the i3status loop
+        Parse i3status.conf so we can adapt our code to the i3status config.
         """
-        self.kill = True
+        in_time = False
+        in_general = False
+        config = {
+            'colors': False,
+            'color_good': '#00FF00',
+            'color_bad': '#FF0000',
+            'color_degraded': '#FFFF00',
+            'color_separator': '#333333',
+            'interval': 5,
+            'output_format': None,
+            'time_format': '%Y-%m-%d %H:%M:%S',
+        }
+
+        # some ugly parsing
+        for line in open(self.i3status_config_path, 'r'):
+            line = line.strip(' \t\n\r')
+            if line.startswith('general'):
+                in_general = True
+            elif line.startswith('time') or line.startswith('tztime'):
+                in_time = True
+            elif line.startswith('}'):
+                in_general = False
+                in_time = False
+            if in_general and '=' in line:
+                key = line.split('=')[0].strip()
+                value = line.split('=')[1].strip()
+                if key in config:
+                    if value in ['true', 'false']:
+                        value = 'True' if value == 'true' else 'False'
+                    try:
+                        config[key] = eval(value)
+                    except NameError:
+                        config[key] = value
+            if in_time and '=' in line:
+                key = line.split('=')[0].strip()
+                value = line.split('=')[1].strip()
+                if 'time_' + key in config:
+                    config['time_' + key] = eval(value)
+
+        # py3status uses only the i3bar protocol
+        assert config['output_format'] == 'i3bar', \
+            'i3status output_format should be set to "i3bar" on {}'.format(
+                self.i3status_config_path
+            )
+
+        return config
+
+    def transform(self, delta):
+        """
+        Apply integrated transformations:
+            - adjust the 'time' object so that it's updated at interval seconds
+        """
+        json_list = deepcopy(self.last_output)
+        try:
+            time_format = self.config['time_format']
+            for item in json_list:
+                if item['name'] in ['time', 'tztime']:
+                    date = datetime.strptime(item['full_text'], time_format)
+                    date += delta
+                    item['full_text'] = date.strftime(time_format)
+                    item['transformed'] = True
+        except Exception:
+            err = sys.exc_info()[1]
+            syslog(LOG_ERR, "transformation failed ({})".format(err))
+        return json_list
 
     def run(self):
         """
-        run i3status and queue its output
+        Spawn i3status and poll its output.
         """
         i3status_pipe = Popen(
-            ['i3status', '-c', self.config_file],
+            ['i3status', '-c', self.i3status_config_path],
             stdout=PIPE,
             stderr=PIPE,
         )
-        self.queue.put(i3status_pipe.stdout.readline())
-        self.queue.put(i3status_pipe.stdout.readline())
-        while not self.kill:
-            line = i3status_pipe.stdout.readline()
-            if len(line) > 0:
-                self.queue.put(line)
-                try:
-                    line = line.decode()
-                except Exception:
-                    pass
-                if len(line) > 1 and line.startswith('['):
-                    self.init = False
-                elif line.startswith(',['):
-                    self.started = True
-            else:
-                break
+        self.poller_inp = IOPoller(i3status_pipe.stdout)
+        self.poller_err = IOPoller(i3status_pipe.stderr)
+
+        try:
+            # at first, poll very quickly to avoid delay in first i3bar display
+            timeout = 0.001
+
+            # loop on i3status output
+            while self.lock.is_set():
+                line = self.poller_inp.readline(timeout)
+                if line:
+                    if not line.startswith(','):
+                        if 'version' in line:
+                            header = loads(line)
+                            header.update({'click_events': True})
+                            line = dumps(header)
+                        print_line(line)
+                    else:
+                        timeout = 0.5
+                        with jsonify(line) as (prefix, json_list):
+                            self.last_output = json_list
+                            self.last_output_ts = datetime.utcnow()
+                            self.last_prefix = prefix
+                else:
+                    err = self.poller_err.readline(timeout)
+                    code = i3status_pipe.poll()
+                    if code is not None:
+                        if err:
+                            msg = 'i3status died and said: {}'.format(err)
+                        else:
+                            msg = 'i3status died with code {}'.format(code)
+                        raise IOError(msg)
+                    else:
+                        # poll is CPU intensive, breath a bit
+                        sleep(timeout)
+        except IOError:
+            err = sys.exc_info()[1]
+            self.error = err
 
 
-def process_line(line, **kwargs):
+class Events(Thread):
     """
-    Main line processor logic
+    This class is responsible for dispatching event JSONs sent by the i3bar.
     """
-    j = []
-    prefix = ''
-    if line.startswith('{') and 'version' in line:
-        print_line(line.strip('\n'))
-    elif line == '[\n':
-        print_line(line.strip('\n'))
-    else:
-        if line.startswith(','):
-            line, prefix = line[1:], ','
-        elif kwargs['delta'] > 0:
-            prefix = ','
-
-        # integrated transformations
-        if not DISABLE_TRANSFORM:
-            j = transform(loads(line), **kwargs)
-        else:
-            j = loads(line)
-
-    return (prefix, j)
-
-
-def transform(j, **kwargs):
-    """
-    Integrated transformations:
-    - update the 'time' object so that it's updated at INTERVAL seconds
-    """
-    try:
-        for item in j:
-            # time modification
-            if item['name'] in ['time', 'tztime']:
-                time_format = I3STATUS_CONFIG['time_format']
-                date = datetime.strptime(item['full_text'], time_format) \
-                    + timedelta(seconds=kwargs['delta'])
-                item['full_text'] = date.strftime(time_format)
-                if kwargs['delta'] > 0:
-                    item['transformed'] = True
-    except Exception:
-        err = sys.exc_info()[1]
-        syslog(LOG_ERR, "transformation failed (%s)" % (str(err)))
-    return j
-
-
-class UserModules(Thread):
-    """
-    This thread executes and caches all of the user's own Py3status classes.
-    We run it in a separate thread so that any delay introduced by an external
-    class doesn't affect the i3bar updating process.
-    """
-    def __init__(self, cache_timeout, i3status_conf, include_paths, interval):
+    def __init__(self, lock, config, modules):
         """
-        set our useful properties
+        We need to poll stdin to receive i3bar messages.
         """
         Thread.__init__(self)
-        self.cache = {}
-        self.cache_timeout = cache_timeout
-        self.classes = {}
-        self.i3status_conf = i3status_conf
-        self.include_paths = include_paths
-        self.interval = interval
-        self.i3status_json = {}
-        self.kill = False
+        self.config = config
+        self.lock = lock
+        self.modules = modules
+        self.poller_inp = IOPoller(sys.stdin)
+
+    def dispatch(self, module, obj, event):
+        """
+        Dispatch the event or enforce the default clear cache action.
+        """
+        if module.click_events:
+            # module accepts click_events, use it
+            module.click_event(event)
+            if self.config['debug']:
+                syslog(LOG_INFO, 'dispatching event {}'.format(event))
+        else:
+            # default button 2 action is to clear this method's cache
+            obj['cached_until'] = time()
+            if self.config['debug']:
+                syslog(LOG_INFO, 'dispatching default event {}'.format(event))
+
+    def run(self):
+        """
+        Wait for an i3bar JSON event, then find the right module to dispatch
+        the message to based on the 'name' and 'instance' of the event.
+
+        In case the module does NOT support click_events, the default
+        implementation is to clear the module's cache
+        when the MIDDLE button (2) is pressed on it.
+
+        Example event:
+        {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
+        """
+        while self.lock.is_set():
+            event = self.poller_inp.readline()
+            if not event or event == '[':
+                sleep(0.20)
+                continue
+            try:
+                with jsonify(event) as (prefix, event):
+                    if self.config['debug']:
+                        syslog(LOG_INFO, 'received event {}'.format(event))
+
+                    # setup default action on button 2 press
+                    default_event = False
+                    if 'button' in event and event['button'] == 2:
+                        default_event = True
+
+                    for module in self.modules:
+                        # skip modules not supporting click_events
+                        # unless we have a default_event set
+                        if not module.click_events and not default_event:
+                            continue
+
+                        # check for the method name/instance
+                        for obj in module.methods.values():
+                            if event['name'] == obj['name']:
+                                if 'instance' in event:
+                                    if event['instance'] == obj['instance']:
+                                        self.dispatch(module, obj, event)
+                                        break
+                                else:
+                                    self.dispatch(module, obj, event)
+                                    break
+            except Exception:
+                err = sys.exc_info()[1]
+                syslog(LOG_WARNING, 'event failed ({})'.format(err))
+
+
+class Module(Thread):
+    """
+    This class represents a user module (imported file).
+    It is reponsible for executing it every given interval and
+    caching its output based on user will.
+    """
+    def __init__(self, lock, config, include_path, f_name, i3_conf, i3_json):
+        """
+        We need quite some stuff to occupy ourselves don't we ?
+        """
+        Thread.__init__(self)
+        self.click_events = False
+        self.config = config
+        self.has_kill = False
+        self.i3status_conf = i3_conf
+        self.i3status_json = i3_json
+        self.last_output = []
+        self.lock = lock
+        self.methods = {}
+        self.module_class = None
+        #
+        self.load_methods(include_path, f_name)
 
     @staticmethod
     def load_from_file(filepath):
         """
-        return Py3status user-written classes
+        Return user-written class object from given path.
         """
         inst = None
         expected_class = 'Py3status'
@@ -287,117 +318,183 @@ class UserModules(Thread):
                 inst = py_mod.Py3status()
         return (mod_name, inst)
 
-    def load_files(self):
+    def clear_cache(self):
         """
-        read user-written Py3status class files for dynamic inclusion
+        Reset the cache for all methods of this module.
         """
-        for include_path in self.include_paths:
-            include_path = os.path.abspath(include_path) + '/'
-            if os.path.isdir(include_path):
-                for f_name in os.listdir(include_path):
-                    try:
-                        module, class_inst = self.load_from_file(
-                            include_path + f_name
-                        )
-                        if module and class_inst:
-                            self.classes[f_name] = (class_inst, [])
-                            self.cache[f_name] = {}
-                            for method in dir(class_inst):
-                                # exclude private and other decorated methods
-                                # such as @property or @staticmethod
-                                if method.startswith('_'):
-                                    continue
-                                else:
-                                    m_type = type(getattr(class_inst, method))
-                                    if 'method' in str(m_type):
-                                        self.classes[f_name][1].append(method)
-                    except Exception:
-                        err = sys.exc_info()[1]
-                        syslog(LOG_ERR, "loading %s failed (%s)"
-                                        % (f_name, str(err)))
+        for meth in self.methods:
+            self.methods[meth]['cached_until'] = time()
+            if self.config['debug']:
+                syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
 
-    def execute_classes(self):
+    def load_methods(self, include_path, f_name):
         """
-        Run on every user class included and execute every method on the json,
-        then cache it for later usage.
-        We exclude the 'kill' methods on the classes which are meant to be used
-        for convenience only.
+        Read the given user-written py3status class file and store its methods.
+        Those methods will be executed, so we will deliberately ignore:
+            - private methods starting with _
+            - decorated methods such as @property or @staticmethod
+            - 'on_click' methods as they'll be called upon a click_event
+            - 'kill' methods as they'll be called upon this thread's exit
         """
-        for class_name in sorted(self.classes.keys()):
-            my_class, my_methods = self.classes[class_name]
-            for my_method in [m for m in my_methods if m not in ['kill']]:
-                try:
-                    # handle a cache on user class methods results
-                    try:
-                        index, result = self.cache[class_name][my_method]
-                        if time() > result['cached_until']:
-                            raise KeyError('cache timeout')
-                    except KeyError:
-                        # execute the method
-                        try:
-                            meth = getattr(my_class, my_method)
-                            index, result = meth(
-                                self.i3status_json,
-                                self.i3status_conf,
-                            )
-                        except Exception:
-                            err = sys.exc_info()[1]
-                            syslog(LOG_ERR, "user method %s failed (%s)"
-                                            % (my_method, str(err)))
-                            index, result = (0, {'name': '', 'full_text': ''})
+        module, class_inst = self.load_from_file(include_path + f_name)
+        if module and class_inst:
+            self.module_class = class_inst
+            for method in sorted(dir(class_inst)):
+                if method.startswith('_'):
+                    continue
+                else:
+                    m_type = type(getattr(class_inst, method))
+                    if 'method' in str(m_type):
+                        if method == 'on_click':
+                            self.click_events = True
+                        elif method == 'kill':
+                            self.has_kill = True
+                        else:
+                            # the method_obj stores infos about each method
+                            # of this module.
+                            method_obj = {
+                                'cached_until': time(),
+                                'instance': None,
+                                'last_output': {
+                                    'name': method,
+                                    'full_text': ''
+                                },
+                                'method': method,
+                                'name': None,
+                                'position': 0
+                            }
+                            self.methods[method] = method_obj
 
-                        # respect user-defined cache timeout for this module
-                        if 'cached_until' not in result:
-                            result['cached_until'] = time() + self.cache_timeout
+        # done, syslog some debug info
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'module {} click_events={} has_kill={} methods={}'.format(
+                    f_name,
+                    self.click_events,
+                    self.has_kill,
+                    self.methods.keys()
+                )
+            )
 
-                        # validate the response
-                        assert isinstance(result, dict), "should return a dict"
-                        assert 'full_text' in result, "missing 'full_text' key"
-                        assert 'name' in result, "missing 'name' key"
-                    finally:
-                        self.cache[class_name][my_method] = (index, result)
-                except Exception:
-                    err = sys.exc_info()[1]
-                    syslog(LOG_ERR, "injection failed (%s)" % str(err))
-
-    def stop(self):
+    def click_event(self, event):
         """
-        call any 'kill' method on Py3status modules and break this thread's loop
+        Execute the 'on_click' method of this module with the given event.
         """
-        for class_name in sorted(self.classes.keys()):
-            my_class, my_methods = self.classes[class_name]
-            if 'kill' in my_methods:
-                kill_module = getattr(my_class, 'kill')
-                kill_module()
-        self.kill = True
-
-    def clear(self):
-        """
-        clear user cache
-        """
-        for k in self.cache.keys():
-            self.cache[k] = {}
+        try:
+            click_method = getattr(self.module_class, 'on_click')
+            click_method(
+                self.i3status_json,
+                self.i3status_conf,
+                event
+            )
+        except Exception:
+            err = sys.exc_info()[1]
+            msg = 'on_click failed with ({}) for event ({})'.format(err, event)
+            syslog(LOG_WARNING, msg)
 
     def run(self):
         """
-        periodically execute user classes
+        On a timely fashion, execute every method found for this module.
+        We will respect and set a cache timeout for each method if the user
+        didn't already do so.
+        We will execute the 'kill' method of the module when we terminate.
         """
-        self.load_files()
-        while not self.kill:
-            self.execute_classes()
-            sleep(self.interval)
+        while self.lock.is_set():
+            # don't be hasty mate, let's take it easy for now
+            sleep(self.config['interval'])
+
+            # execute each method of this module
+            for meth, obj in self.methods.items():
+                my_method = self.methods[meth]
+
+                # always check the lock
+                if not self.lock.is_set():
+                    break
+
+                # respect the cache set for this method
+                if time() < obj['cached_until']:
+                    continue
+
+                try:
+                    # execute method and get its output
+                    method = getattr(self.module_class, meth)
+                    position, result = method(
+                        self.i3status_json,
+                        self.i3status_conf
+                    )
+
+                    # validate the result
+                    assert isinstance(result, dict), "should return a dict"
+                    assert 'full_text' in result, "missing 'full_text' key"
+                    assert 'name' in result, "missing 'name' key"
+
+                    # initialize method object
+                    if my_method['name'] is None:
+                        my_method['name'] = result['name']
+                        if 'instance' in result:
+                            my_method['instance'] = result['instance']
+                        else:
+                            my_method['instance'] = result['name']
+
+                    # update method object cache
+                    if 'cached_until' in result:
+                        cached_until = result['cached_until']
+                    else:
+                        cached_until = time() + self.config['cache_timeout']
+                    my_method['cached_until'] = cached_until
+
+                    # update method object output
+                    my_method['last_output'] = result
+
+                    # update method object position
+                    my_method['position'] = position
+
+                    # debug info
+                    if self.config['debug']:
+                        syslog(
+                            LOG_INFO,
+                            'method {} returned {}'.format(meth, result)
+                        )
+                except Exception:
+                    err = sys.exc_info()[1]
+                    syslog(
+                        LOG_WARNING,
+                        'user method {} failed ({})'.format(meth, err)
+                    )
+
+        # check and execute the 'kill' method if present
+        if self.has_kill:
+            try:
+                kill_method = getattr(self.module_class, 'kill')
+                kill_method(self.i3status_json, self.i3status_conf)
+            except Exception:
+                # this would be stupid to die on exit
+                pass
 
 
-# main stuff
-###############################################################################
-def main():
+class Py3statusWrapper():
     """
-    Main logic function
+    This is the py3status wrapper.
     """
-    try:
-        # global definition
-        global CACHE_TIMEOUT, DISABLE_TRANSFORM
-        global I3STATUS_CONFIG, INCLUDE_PATHS, INTERVAL
+    def __init__(self):
+        """
+        Useful variables we'll need.
+        """
+        self.modules = []
+        self.lock = Event()
+
+    def get_config(self):
+        """
+        Create the py3status based on command line options we received.
+        """
+        # defaults
+        config = {
+            'cache_timeout': 60,
+            'i3status_config_path': '/etc/i3status.conf',
+            'include_paths': ['.i3/py3status/'],
+            'interval': 1
+        }
 
         # command line options
         parser = argparse.ArgumentParser(
@@ -406,143 +503,281 @@ def main():
         parser.add_argument('-c', action="store",
                             dest="i3status_conf",
                             type=str,
-                            default=I3STATUS_CONFIG,
+                            default=config['i3status_config_path'],
                             help="path to i3status config file")
-        parser.add_argument('-d', action="store_true",
-                            dest="disable_transform",
-                            help="disable integrated transformations")
+        parser.add_argument('--debug', action="store_true",
+                            help="be verbose in syslog")
         parser.add_argument('-i', action="append",
                             dest="include_paths",
                             help="""include user-written modules from those
-                            directories(default .i3/py3status)""")
+                            directories (default .i3/py3status)""")
         parser.add_argument('-n', action="store",
                             dest="interval",
                             type=int,
-                            default=INTERVAL,
+                            default=config['interval'],
                             help="update interval in seconds (default 1 sec)")
         parser.add_argument('-t', action="store",
                             dest="cache_timeout",
                             type=int,
-                            default=CACHE_TIMEOUT,
+                            default=config['cache_timeout'],
                             help="""default injection cache timeout in seconds
                             (default 60 sec)""")
         options = parser.parse_args()
 
-        # configuration and helper variables
-        CACHE_TIMEOUT = options.cache_timeout
-        DISABLE_TRANSFORM = True if options.disable_transform else False
-        I3STATUS_CONFIG = i3status_config_reader(options.i3status_conf)
-        INCLUDE_PATHS = INCLUDE_PATHS \
-            if not options.include_paths else options.include_paths
-        INTERVAL = options.interval
+        # override configuration and helper variables
+        config['cache_timeout'] = options.cache_timeout
+        config['debug'] = options.debug
+        config['i3status_config_path'] = options.i3status_conf
+        if options.include_paths:
+            config['include_paths'] = options.include_paths
+        config['interval'] = options.interval
 
-        # py3status uses only the i3bar protocol
-        assert I3STATUS_CONFIG['output_format'] == 'i3bar', \
-            'i3status output_format should be set to "i3bar"'
-    except Exception:
-        err = sys.exc_info()[1]
-        syslog(LOG_ERR, "initialization error (%s)" % str(err))
-        sys.exit(1)
+        # all done
+        return config
 
-    try:
-        # load user defined modules from a separate thread so that they cannot
-        # cause any delay in updating the i3bar
-        modules_thread = UserModules(
-            CACHE_TIMEOUT,
-            I3STATUS_CONFIG,
-            INCLUDE_PATHS,
-            INTERVAL,
+    def list_modules(self):
+        """
+        Search import directories and files through given include paths.
+        This method is a generator and loves to yield.
+        """
+        for include_path in sorted(self.config['include_paths']):
+            include_path = os.path.abspath(include_path) + '/'
+            if os.path.isdir(include_path):
+                for f_name in sorted(os.listdir(include_path)):
+                    if f_name.endswith('.py'):
+                        yield (include_path, f_name)
+
+    def setup(self):
+        """
+        Setup py3status and spawn i3status/events/modules threads.
+        """
+        # set the Event lock
+        self.lock.set()
+
+        # setup configuration
+        self.config = self.get_config()
+
+        # setup i3status thread
+        self.i3status_thread = I3status(
+            self.lock,
+            self.config['i3status_config_path']
         )
-        modules_thread.start()
+        self.i3status_thread.start()
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'i3status thread started with config {}'.format(
+                    self.i3status_thread.config
+                )
+            )
+        while not self.i3status_thread.last_output:
+            if not self.i3status_thread.is_alive():
+                err = self.i3status_thread.error
+                raise IOError(err)
+            sleep(0.1)
 
-        # spawn a i3status process on a separate thread
-        # we will receive its output on a Queue which we will poll for messages
-        i3status_thread = I3status(options.i3status_conf)
-        i3status_thread.start()
+        # setup input events thread
+        self.events_thread = Events(self.lock, self.config, self.modules)
+        self.events_thread.start()
+        if self.config['debug']:
+            syslog(LOG_INFO, 'events thread started')
 
+        # load and spawn modules threads
+        for include_path, f_name in self.list_modules():
+            try:
+                my_m = Module(
+                    self.lock,
+                    self.config,
+                    include_path,
+                    f_name,
+                    self.i3status_thread.config,
+                    self.i3status_thread.last_output
+                )
+                # only start and handle modules with available methods
+                if my_m.methods:
+                    my_m.start()
+                    self.modules.append(my_m)
+                elif self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'ignoring {} (no methods found)'.format(f_name)
+                    )
+            except Exception:
+                err = sys.exc_info()[1]
+                msg = 'loading {} failed ({})'.format(f_name, err)
+                self.i3_nagbar(msg, level='warning')
+
+    def i3_nagbar(self, msg, level='error'):
+        """
+        Make use of i3-nagbar to display errors and warnings to the user.
+        We also make sure to log anything to keep trace of it.
+        """
+        msg = 'py3status: {}. '.format(msg)
+        msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
+        try:
+            log_level = LOG_ERR if level == 'error' else LOG_WARNING
+            syslog(log_level, msg)
+            call(
+                ['i3-nagbar', '-m', msg, '-t', level],
+                stdout=open('/dev/null', 'w'),
+                stderr=open('/dev/null', 'w')
+            )
+        except:
+            pass
+
+    def stop(self):
+        """
+        Clear the Event lock, this will break all threads' loops.
+        """
+        try:
+            self.lock.clear()
+            if self.config['debug']:
+                syslog(LOG_INFO, 'lock cleared, exiting')
+        except:
+            pass
+
+    def sig_handler(self, signum, frame):
+        """
+        Raise a Warning level exception when a user sends a SIGUSR1 signal.
+        """
+        raise UserWarning("received USR1, forcing refresh")
+
+    def clear_modules_cache(self):
+        """
+        For every module, reset the 'cached_until' of all its methods.
+        """
+        for module in self.modules:
+            module.clear_cache()
+
+    def get_modules_output(self, json_list):
+        """
+        Iterate over user modules and their output. Return the list ordered
+        as the user asked.
+        If two modules specify the same output index/position, the sorting will
+        be alphabetical.
+        """
+        # prepopulate the list so that every usable index exists, thx @Lujeni
+        m_list = [
+            '' for value in range(sum([len(x.methods) for x in self.modules]))
+        ]
+        # append i3status json list to the modules' list
+        m_list += json_list
+        # run through modules/methods output and insert them in reverse order
+        for m in reversed(self.modules):
+            for meth in m.methods:
+                position = m.methods[meth]['position']
+                last_output = m.methods[meth]['last_output']
+                try:
+                    if m_list[position] == '':
+                        m_list[position] = last_output
+                    else:
+                        if '' in m_list:
+                            m_list.remove('')
+                        m_list.insert(position, last_output)
+                except IndexError:
+                    # out of range indexes get placed at the end of the output
+                    m_list.append(last_output)
+        # cleanup and return output list
+        m_list = list(filter(lambda a: a != '', m_list))
+        return m_list
+
+    def run(self):
+        """
+        Main py3status loop, continuously read from i3status and modules
+        and output it to i3bar for displaying.
+        """
         # SIGUSR1 forces a refresh of the bar both for py3status and i3status,
         # this mimics the USR1 signal handling of i3status (see man i3status)
-        def sig_handler(signum, frame):
-            """
-            Raise a Warning level exception when a user sends a SIGUSR1 signal
-            """
-            raise UserWarning("received USR1, forcing refresh")
-        signal(SIGUSR1, sig_handler)
-
-        # control variables
-        forced = False
+        signal(SIGUSR1, self.sig_handler)
 
         # main loop
         while True:
             try:
-                # get a timestamp of now
-                tst = time()
+                # check i3status thread
+                if not self.i3status_thread.is_alive():
+                    err = self.i3status_thread.error
+                    if not err:
+                        err = 'i3status died horribly'
+                    self.i3_nagbar(err)
+                    break
 
-                # try to read i3status' output for at most INTERVAL seconds
-                # else raise the Empty exception
-                line = i3status_thread.queue.get(timeout=INTERVAL)
-                try:
-                    # python3 compatibility code
-                    line = line.decode()
-                except UnicodeDecodeError:
-                    pass
+                # check events thread
+                if not self.events_thread.is_alive():
+                    # don't spam the user with i3-nagbar warnings
+                    if not hasattr(self.events_thread, 'i3_nagbar'):
+                        self.events_thread.i3_nagbar = True
+                        err = 'events thread died, click events are disabled'
+                        self.i3_nagbar(err, level='warning')
 
-                # i3status first output lines should be processed asap as only
-                # the following lines will be processed by py3status
-                if i3status_thread.started:
-                    if not forced and I3STATUS_CONFIG['interval'] > INTERVAL:
-                        # add a calculated sleep honoring py3status refresh
-                        # time of the bar every INTERVAL seconds
-                        sleep(INTERVAL - float('{:.2}'.format(time() - tst)))
-                    else:
-                        # reset the SIGUSR1 flag forcing the refresh of the bar
-                        forced = False
+                # get output from i3status
+                prefix = self.i3status_thread.last_prefix
+                json_list = self.i3status_thread.last_output
 
-                # process the output line straight from i3status
-                prefix, output_list = process_line(line, delta=0)
-                if output_list:
-                    modules_thread.i3status_json = output_list
-                    print_output(
-                        prefix,
-                        output_list,
-                        modules_thread.cache
-                    )
-            except Empty:
-                # make sure i3status has started before modifying its output
-                if i3status_thread.started or not i3status_thread.init:
-                    prefix, output_list = process_line(line, delta=INTERVAL)
-                    if output_list:
-                        modules_thread.i3status_json = output_list
-                        line = print_output(
-                            prefix,
-                            output_list,
-                            modules_thread.cache
-                        )
-                else:
-                    syslog(LOG_INFO, "waiting for i3status")
+                # transform output from i3status
+                delta = datetime.utcnow() - self.i3status_thread.last_output_ts
+                if delta.seconds > 0:
+                    json_list = self.i3status_thread.transform(delta)
+
+                # check and update modules threads
+                for module in self.modules:
+                    if not module.is_alive():
+                        # don't spam the user with i3-nagbar warnings
+                        if not hasattr(module, 'i3_nagbar'):
+                            module.i3_nagbar = True
+                            msg = 'output frozen for dead module(s) {}'.format(
+                                ','.join(module.methods.keys())
+                            )
+                            self.i3_nagbar(msg, level='warning')
+                        continue
+                    module.i3status_json = json_list
+
+                # construct the global output, modules first
+                if self.modules:
+                    json_list = self.get_modules_output(json_list)
+
+                # dump the line to stdout
+                print_line('{}{}'.format(prefix, dumps(json_list)))
+
+                # sleep a bit before doing this again
+                sleep(self.config['interval'])
             except UserWarning:
                 # SIGUSR1 was received, we also force i3status to refresh by
                 # sending it a SIGUSR1 as well then we refresh the bar asap
-                msg = sys.exc_info()[1]
-                syslog(LOG_INFO, str(msg))
-                call(["killall", "-s", "USR1", "i3status"])
-                modules_thread.clear()
-                forced = True
-            except IOError:
-                syslog(LOG_WARNING, "ignored an IOError")
-            except KeyboardInterrupt:
-                break
-            finally:
-                if threading.active_count() < 3:
-                    # i3status or modules thread died ? oops
-                    break
+                err = sys.exc_info()[1]
+                syslog(LOG_INFO, str(err))
+                try:
+                    call(["killall", "-s", "USR1", "i3status"])
+                    self.clear_modules_cache()
+                except Exception:
+                    err = sys.exc_info()[1]
+                    self.i3_nagbar('SIGUSR1 ({})'.format(err), level='warning')
 
-        i3status_thread.stop()
-        modules_thread.stop()
+def main():
+    try:
+        py3 = Py3statusWrapper()
+        py3.setup()
+    except KeyboardInterrupt:
+        err = sys.exc_info()[1]
+        py3.i3_nagbar('setup interrupted (KeyboardInterrupt)')
+        sys.exit(0)
     except Exception:
         err = sys.exc_info()[1]
-        syslog(LOG_ERR, "fatal error (%s)" % str(err))
+        py3.i3_nagbar('setup error ({})'.format(err))
+        py3.stop()
         sys.exit(2)
+
+    try:
+        py3.run()
+    except Exception:
+        err = sys.exc_info()[1]
+        py3.i3_nagbar('runtime error ({})'.format(err))
+        sys.exit(3)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        py3.stop()
+        sys.exit(0)
+
 
 if __name__ == '__main__':
     main()
