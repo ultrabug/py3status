@@ -513,7 +513,7 @@ class Py3statusWrapper():
                             directories (default .i3/py3status)""")
         parser.add_argument('-n', action="store",
                             dest="interval",
-                            type=int,
+                            type=float,
                             default=config['interval'],
                             help="update interval in seconds (default 1 sec)")
         parser.add_argument('-t', action="store",
