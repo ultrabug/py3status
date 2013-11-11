@@ -1,5 +1,6 @@
 import argparse
 import imp
+import locale
 import os
 import select
 import sys
@@ -752,8 +753,10 @@ class Py3statusWrapper():
                     err = sys.exc_info()[1]
                     self.i3_nagbar('SIGUSR1 ({})'.format(err), level='warning')
 
+
 def main():
     try:
+        locale.setlocale(locale.LC_ALL, '')
         py3 = Py3statusWrapper()
         py3.setup()
     except KeyboardInterrupt:
