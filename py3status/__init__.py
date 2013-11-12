@@ -137,23 +137,32 @@ class I3status(Thread):
 
         return config
 
-    def transform(self, delta):
+    def adjust_time(self, delta):
         """
-        Apply integrated transformations:
-            - adjust the 'time' object so that it's updated at interval seconds
+        Adjust the 'time' object so that it's updated at interval seconds
         """
         json_list = deepcopy(self.last_output)
         try:
             time_format = self.config['time_format']
             for item in json_list:
                 if item['name'] in ['time', 'tztime']:
-                    date = datetime.strptime(item['full_text'], time_format)
+                    i3status_time = item['full_text']
+                    # add mendatory items in i3status time format wrt issue #18
+                    for fmt in ['%Y', '%m', '%d']:
+                        if not fmt in time_format:
+                            time_format = '{} {}'.format(time_format, fmt)
+                            i3status_time = '{} {}'.format(
+                                i3status_time, datetime.now().strftime(fmt)
+                            )
+                    date = datetime.strptime(i3status_time, time_format)
                     date += delta
-                    item['full_text'] = date.strftime(time_format)
+                    item['full_text'] = date.strftime(
+                        self.config['time_format']
+                    )
                     item['transformed'] = True
         except Exception:
             err = sys.exc_info()[1]
-            syslog(LOG_ERR, "transformation failed ({})".format(err))
+            syslog(LOG_ERR, "i3status adjust_time failed ({})".format(err))
         return json_list
 
     def run(self):
@@ -717,7 +726,7 @@ class Py3statusWrapper():
                 # transform output from i3status
                 delta = datetime.utcnow() - self.i3status_thread.last_output_ts
                 if delta.seconds > 0:
-                    json_list = self.i3status_thread.transform(delta)
+                    json_list = self.i3status_thread.adjust_time(delta)
 
                 # check and update modules threads
                 for module in self.modules:
