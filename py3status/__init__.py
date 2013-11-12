@@ -185,7 +185,13 @@ class I3status(Thread):
             while self.lock.is_set():
                 line = self.poller_inp.readline(timeout)
                 if line:
-                    if not line.startswith(','):
+                    if line.startswith('[{'):
+                        with jsonify(line) as (prefix, json_list):
+                            self.last_output = json_list
+                            self.last_output_ts = datetime.utcnow()
+                            self.last_prefix = ','
+                        print_line(line)
+                    elif not line.startswith(','):
                         if 'version' in line:
                             header = loads(line)
                             header.update({'click_events': True})
