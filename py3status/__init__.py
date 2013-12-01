@@ -59,6 +59,9 @@ class IOPoller:
         poll_result = self.poller.poll(timeout)
         if poll_result:
             line = self.io.readline().strip()
+            if self.io == sys.stdin and line == '[':
+                # skip first event line wrt issue #19
+                line = self.io.readline().strip()
             try:
                 # python3 compatibility code
                 line = line.decode()
@@ -263,7 +266,7 @@ class Events(Thread):
         """
         while self.lock.is_set():
             event = self.poller_inp.readline()
-            if not event or event == '[':
+            if not event:
                 sleep(0.20)
                 continue
             try:
