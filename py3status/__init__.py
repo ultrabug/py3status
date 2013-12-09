@@ -34,8 +34,8 @@ def print_line(line):
     """
     Print given line to stdout (i3bar).
     """
-    sys.stdout.write('{}\n'.format(line))
-    sys.stdout.flush()
+    sys.__stdout__.write('{}\n'.format(line))
+    sys.__stdout__.flush()
 
 
 class IOPoller:
