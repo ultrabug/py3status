@@ -26,6 +26,8 @@ Requirements
 You **must** set the `output_format` to `i3bar` in the general section of your i3status.conf:
 ::
     general {
+        colors = true
+        interval = 5
         output_format = "i3bar"
     }
 
