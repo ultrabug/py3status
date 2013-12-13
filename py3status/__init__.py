@@ -320,6 +320,7 @@ class Module(Thread):
         self.lock = lock
         self.methods = {}
         self.module_class = None
+        self.module_name = f_name
         #
         self.load_methods(include_path, f_name)
 
@@ -389,7 +390,7 @@ class Module(Thread):
             syslog(
                 LOG_INFO,
                 'module {} click_events={} has_kill={} methods={}'.format(
-                    f_name,
+                    self.module_name,
                     self.click_events,
                     self.has_kill,
                     self.methods.keys()
