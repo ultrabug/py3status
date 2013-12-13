@@ -252,6 +252,22 @@ class Events(Thread):
             if self.config['debug']:
                 syslog(LOG_INFO, 'dispatching default event {}'.format(event))
 
+    def i3bar_click_events_module(self):
+        """
+        Detect the presence of the special i3bar_click_events.py module.
+
+        When py3status detects a module named 'i3bar_click_events.py',
+        it will dispatch i3status click events to this module so you can catch
+        them and trigger any function call based on the event.
+        """
+        for module in self.modules:
+            if not module.click_events:
+                continue
+            if module.module_name == 'i3bar_click_events.py':
+                return module
+        else:
+            return False
+
     def run(self):
         """
         Wait for an i3bar JSON event, then find the right module to dispatch
@@ -276,6 +292,7 @@ class Events(Thread):
 
                     # setup default action on button 2 press
                     default_event = False
+                    dispatched = False
                     if 'button' in event and event['button'] == 2:
                         default_event = True
 
@@ -291,10 +308,23 @@ class Events(Thread):
                                 if 'instance' in event:
                                     if event['instance'] == obj['instance']:
                                         self.dispatch(module, obj, event)
+                                        dispatched = True
                                         break
                                 else:
                                     self.dispatch(module, obj, event)
+                                    dispatched = True
                                     break
+
+                    # fall back to i3bar_click_events.py module if present
+                    if not dispatched:
+                        module = self.i3bar_click_events_module()
+                        if module:
+                            if self.config['debug']:
+                                syslog(
+                                    LOG_INFO,
+                                    'dispatching event to i3bar_click_events'
+                                )
+                            self.dispatch(module, obj, event)
             except Exception:
                 err = sys.exc_info()[1]
                 syslog(LOG_WARNING, 'event failed ({})'.format(err))
