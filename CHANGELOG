@@ -1,3 +1,20 @@
+version 1.1 (2013-12-15)
+* new generic click event handler using the special module file named i3bar_click_events.py which will be forwarded any orphan click event for action. this allows you to take action on clicks made on your i3status modules !
+* add the filename as the module_name property to the Module class
+* drop useless modes on examples
+* new example whoami displaying the currently logged in user
+* be more concrete in the i3status.conf example
+* add IRC information, join us on #py3status on freenode to share your ideas or ask for help
+* redirect stdout and stderr to null to suppress modules outputs, this prevents i3bar from frezzing when a user module prints something to stdout or stderr wrt issue #20
+* use base stdout for the output on i3bar
+* fix first event opening line wrt issue #19 thx to @lathan
+* fix delay on py3status start waiting for i3status, this caused a useless first refresh delay of py3status of i3status interval seconds, thx to @Edholm on issue #18
+* fix i3status time adjustment when format does not contain the necessary items to get an exact datetime wrt issue #18
+* fix respect user's locale for time transformation, thx to @Edholm on issue #18
+* new example module displaying Yahoo Weather forcast
+* Merge pull request #15 from alethiophile/master
+* Float update-time option, by Tom Hunt
+
 version 1.0 (2013-08-30)
 * total rewrite (yes, again)
 * support for i3bar click_events, they're dispatched to user-written py3status classes based on their name/instance

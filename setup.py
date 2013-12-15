@@ -5,6 +5,7 @@ py3status
 import os
 from setuptools import find_packages, setup
 
+
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
 # README file and 2) it's easier to type in the README file than to put a raw
@@ -14,7 +15,7 @@ def read(fname):
 
 setup(
     name='py3status',
-    version='1.0',
+    version='1.1',
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
     description='py3status is an extensible i3status wrapper written in python',
