@@ -41,6 +41,32 @@ class GetData:
         result = subprocess.check_output([cmd, arg])
         return result
 
+    def cpu(self):
+        """Get the cpu usage data from /proc/stat :
+        cpu  2255 34 2290 22625563 6290 127 456 0 0
+        - user: normal processes executing in user mode
+        - nice: niced processes executing in user mode
+        - system: processes executing in kernel mode
+        - idle: twiddling thumbs
+        - iowait: waiting for I/O to complete
+        - irq: servicing interrupts
+        - softirq: servicing softirqs
+        - steal: involuntary wait
+        - guest: running a normal guest
+        - guest_nice: running a niced guest
+        These numbers identify the amount of time the CPU has spent performing
+        different kinds of work.  Time units are in USER_HZ (typically hundredths of a
+        second)
+        """
+        with open('/proc/stat', 'r') as fd:
+            line = fd.readline()
+        cpu_data = line.split()
+        total_cpu_time = sum(map(int, cpu_data[1:]))
+        cpu_idle_time = int(cpu_data[4])
+
+        #return the cpu total&idle time
+        return total_cpu_time, cpu_idle_time
+
     def memory(self):
         """Execute 'free -m' command, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, and percentage
@@ -62,13 +88,40 @@ class Py3status:
     """
     System status in i3bar
     """
+    def __init__(self):
+        self.data = GetData()
+        self.cpu_total = 0
+        self.cpu_idle = 0
+
+    def cpuInfo(self, json, i3status_config):
+        """calculate the CPU status and return it.
+
+        """
+        response = {'full_text': '', 'name': 'cpu_usage'}
+        cpu_total, cpu_idle = self.data.cpu()
+        used_cpu_percent = 1 - float(cpu_idle-self.cpu_idle)/float(cpu_total-self.cpu_total)
+        self.cpu_total = cpu_total
+        self.cpu_idle = cpu_idle
+
+        if used_cpu_percent <= 40:
+            response['color'] = i3status_config['color_good']
+        elif used_cpu_percent <= 75:
+            response['color'] = i3status_config['color_degraded']
+        else:
+            response['color'] = i3status_config['color_bad']
+
+        response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
+        #cache the status for 10 seconds
+        response['cached_until'] = time() + 10
+
+        return (0, response)
+
     def ramInfo(self, json, i3status_config):
         """calculate the memory (RAM) status and return it.
 
         """
-        data = GetData()
         response = {'full_text': '', 'name': 'ram_info'}
-        total_mem, used_mem, used_mem_percent = data.memory()
+        total_mem, used_mem, used_mem_percent = self.data.memory()
 
         if used_mem_percent <= 40:
             response['color'] = i3status_config['color_good']
