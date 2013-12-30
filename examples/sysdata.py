@@ -111,7 +111,8 @@ class Py3status:
             response['color'] = i3status_config['color_bad']
 
         response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
-        response['cached_until'] = time()
+        #cache the status for 10 seconds
+        response['cached_until'] = time() + 10
 
         return (0, response)
 
@@ -133,4 +134,4 @@ class Py3status:
                                 (used_mem, total_mem, used_mem_percent)
         response['cached_until'] = time()
 
-        return (1, response)
+        return (0, response)
