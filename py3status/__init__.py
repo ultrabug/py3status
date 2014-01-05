@@ -342,6 +342,7 @@ class Module(Thread):
         """
         Thread.__init__(self)
         self.click_events = False
+        self.has_json_filter = False
         self.config = config
         self.has_kill = False
         self.i3status_conf = i3_conf
@@ -397,6 +398,8 @@ class Module(Thread):
                     if 'method' in str(m_type):
                         if method == 'on_click':
                             self.click_events = True
+                        elif method == 'json_filter':
+                            self.has_json_filter = True
                         elif method == 'kill':
                             self.has_kill = True
                         else:
@@ -419,9 +422,10 @@ class Module(Thread):
         if self.config['debug']:
             syslog(
                 LOG_INFO,
-                'module {} click_events={} has_kill={} methods={}'.format(
+                'module {} click_events={} has_json_filter={} has_kill={} methods={}'.format(
                     self.module_name,
                     self.click_events,
+                    self.has_json_filter,
                     self.has_kill,
                     self.methods.keys()
                 )
@@ -441,6 +445,22 @@ class Module(Thread):
         except Exception:
             err = sys.exc_info()[1]
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
+            syslog(LOG_WARNING, msg)
+
+    def json_filter(self, json_list):
+        """
+        Execute the 'json_filter' method of this module.
+        """
+        try:
+            filter_method = getattr(self.module_class, 'json_filter')
+            filter_method(
+                self.i3status_json,
+                self.i3status_conf,
+                json_list
+            )
+        except Exception:
+            err = sys.exc_info()[1]
+            msg = 'json_filter failed with ({}) for json_list ({})'.format(err, json_list)
             syslog(LOG_WARNING, msg)
 
     def run(self):
@@ -735,6 +755,16 @@ class Py3statusWrapper():
         m_list = list(filter(lambda a: a != '', m_list))
         return m_list
 
+    def apply_filters(self, json_list):
+        """
+        Iterate over user modules and apply their filters to json_list.
+        The filters will be applied in alphabetical order
+        """
+        # run through modules/methods output and insert them in reverse order
+        for m in reversed(self.modules):
+            if m.has_json_filter:
+                m.json_filter(json_list)
+
     def run(self):
         """
         Main py3status loop, continuously read from i3status and modules
@@ -788,6 +818,7 @@ class Py3statusWrapper():
                 # construct the global output, modules first
                 if self.modules:
                     json_list = self.get_modules_output(json_list)
+                    self.apply_filters(json_list)  # apply mafilter
 
                 # dump the line to stdout
                 print_line('{}{}'.format(prefix, dumps(json_list)))

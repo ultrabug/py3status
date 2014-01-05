@@ -78,7 +78,20 @@ class Py3status:
         """
         # CONFIGURE ME PLEASE, LOVE YOU BIG TIME !
         self.actions = {
+            "tztime": { 1: [external_command, 'orage', '-t'], },
+            "wireless wlp3s0": {
+                1: [external_command, 'sudo',
+                                      'systemctl',
+                                      'restart',
+                                      'netctl-auto@wlp3s0.service'],
+            },
+            "run_watch /var/run/vpnc/lrz": {
+                1: [external_command, 'lrz-connect'],
+            },
         }
+
+        # Return values
+        self.ret = {}
 
     def on_click(self, i3status_output_json, i3status_config, event):
         """
@@ -100,7 +113,7 @@ class Py3status:
                 'first element of the action list must be a function'
 
             # run the function with the possibly given arguments
-            func(*self.actions[key_name][button][1:])
+            self.ret[key_name] = func(*self.actions[key_name][button][1:])
 
     def i3bar_click_events(self, i3status_output_json, i3status_config):
         """
@@ -109,6 +122,20 @@ class Py3status:
         response = {'full_text': '', 'name': 'i3bar_click_events'}
         response['cached_until'] = time() + 3600
         return (-1, response)
+
+    def json_filter(self, i3status_output_json, i3status_config, json_list):
+        # Yellow while working
+        key = 'run_watch /var/run/vpnc/lrz'
+        if key in self.ret:
+            if self.ret[key].poll() == None:
+                elm = [i for i in json_list if i['name'] == 'run_watch']
+                elm = [i for i in elm if i['instance'] == '/var/run/vpnc/lrz']
+                elm[0]['color'] = "#FFFF00"
+
+        #Purple clock
+        for i, j in enumerate(json_list):
+            if j['name'] == 'tztime':
+                j['color'] = '#FF00FF'
 
 
 def external_command(*cmd):
@@ -120,7 +147,7 @@ def external_command(*cmd):
         output from being caught by the i3bar (this would freeze it).
         See issue #20 for more info.
     """
-    Popen(
+    return Popen(
         cmd,
         stdout=open('/dev/null', 'w'),
         stderr=open('/dev/null', 'w')
