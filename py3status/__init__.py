@@ -479,6 +479,9 @@ class Module(Thread):
                     assert 'full_text' in result, "missing 'full_text' key"
                     assert 'name' in result, "missing 'name' key"
 
+                    # validate the position
+                    assert isinstance(position, int), "position is not an int"
+
                     # initialize method object
                     if my_method['name'] is None:
                         my_method['name'] = result['name']
