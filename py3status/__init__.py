@@ -336,7 +336,7 @@ class Module(Thread):
     It is reponsible for executing it every given interval and
     caching its output based on user will.
     """
-    def __init__(self, lock, config, include_path, f_name, i3_conf, i3_json):
+    def __init__(self, lock, config, include_path, f_name, i3_thread):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
@@ -344,8 +344,7 @@ class Module(Thread):
         self.click_events = False
         self.config = config
         self.has_kill = False
-        self.i3status_conf = i3_conf
-        self.i3status_json = i3_json
+        self.i3status_thread = i3_thread
         self.last_output = []
         self.lock = lock
         self.methods = {}
@@ -434,8 +433,8 @@ class Module(Thread):
         try:
             click_method = getattr(self.module_class, 'on_click')
             click_method(
-                self.i3status_json,
-                self.i3status_conf,
+                self.i3status_thread.last_output,
+                self.i3status_thread.config,
                 event
             )
         except Exception:
@@ -470,8 +469,8 @@ class Module(Thread):
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
                     position, result = method(
-                        self.i3status_json,
-                        self.i3status_conf
+                        self.i3status_thread.last_output,
+                        self.i3status_thread.config
                     )
 
                     # validate the result
@@ -520,7 +519,10 @@ class Module(Thread):
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, 'kill')
-                kill_method(self.i3status_json, self.i3status_conf)
+                kill_method(
+                    self.i3status_thread.last_output,
+                    self.i3status_thread.config
+                )
             except Exception:
                 # this would be stupid to die on exit
                 pass
@@ -647,8 +649,7 @@ class Py3statusWrapper():
                     self.config,
                     include_path,
                     f_name,
-                    self.i3status_thread.config,
-                    self.i3status_thread.last_output
+                    self.i3status_thread
                 )
                 # only start and handle modules with available methods
                 if my_m.methods:
@@ -775,7 +776,7 @@ class Py3statusWrapper():
                 if delta.seconds > 0:
                     json_list = self.i3status_thread.adjust_time(delta)
 
-                # check and update modules threads
+                # check that every module thread is alive
                 for module in self.modules:
                     if not module.is_alive():
                         # don't spam the user with i3-nagbar warnings
@@ -785,8 +786,6 @@ class Py3statusWrapper():
                                 ','.join(module.methods.keys())
                             )
                             self.i3_nagbar(msg, level='warning')
-                        continue
-                    module.i3status_json = json_list
 
                 # construct the global output, modules first
                 if self.modules:
