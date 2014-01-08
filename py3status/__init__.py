@@ -450,9 +450,6 @@ class Module(Thread):
         We will execute the 'kill' method of the module when we terminate.
         """
         while self.lock.is_set():
-            # don't be hasty mate, let's take it easy for now
-            sleep(self.config['interval'])
-
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
@@ -514,6 +511,9 @@ class Module(Thread):
                         LOG_WARNING,
                         'user method {} failed ({})'.format(meth, err)
                     )
+
+            # don't be hasty mate, let's take it easy for now
+            sleep(self.config['interval'])
 
         # check and execute the 'kill' method if present
         if self.has_kill:
