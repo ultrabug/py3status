@@ -88,6 +88,8 @@ class I3status(Thread):
         self.last_output_ts = None
         self.last_prefix = None
         self.lock = lock
+        self.json_list = None
+        self.json_list_ts = None
 
     def i3status_config_reader(self):
         """
@@ -144,7 +146,7 @@ class I3status(Thread):
         """
         Adjust the 'time' object so that it's updated at interval seconds
         """
-        json_list = deepcopy(self.last_output)
+        json_list = deepcopy(self.json_list)
         try:
             time_format = self.config['time_format']
             for item in json_list:
@@ -167,6 +169,16 @@ class I3status(Thread):
             err = sys.exc_info()[1]
             syslog(LOG_ERR, "i3status adjust_time failed ({})".format(err))
         return json_list
+
+    def update_json_list(self):
+        """
+        Copy the last json list output from i3status so that any module
+        can modify it without altering the original output.
+        This is done so that any module's alteration of a i3status output json
+        will not be overwritten when the next i3status output gets polled.
+        """
+        self.json_list = deepcopy(self.last_output)
+        self.json_list_ts = deepcopy(self.last_output_ts)
 
     def run(self):
         """
@@ -193,6 +205,7 @@ class I3status(Thread):
                             self.last_output = json_list
                             self.last_output_ts = datetime.utcnow()
                             self.last_prefix = ','
+                            self.update_json_list()
                         print_line(line)
                     elif not line.startswith(','):
                         if 'version' in line:
@@ -433,7 +446,7 @@ class Module(Thread):
         try:
             click_method = getattr(self.module_class, 'on_click')
             click_method(
-                self.i3status_thread.last_output,
+                self.i3status_thread.json_list,
                 self.i3status_thread.config,
                 event
             )
@@ -466,7 +479,7 @@ class Module(Thread):
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
                     position, result = method(
-                        self.i3status_thread.last_output,
+                        self.i3status_thread.json_list,
                         self.i3status_thread.config
                     )
 
@@ -520,7 +533,7 @@ class Module(Thread):
             try:
                 kill_method = getattr(self.module_class, 'kill')
                 kill_method(
-                    self.i3status_thread.last_output,
+                    self.i3status_thread.json_list,
                     self.i3status_thread.config
                 )
             except Exception:
@@ -769,10 +782,10 @@ class Py3statusWrapper():
 
                 # get output from i3status
                 prefix = self.i3status_thread.last_prefix
-                json_list = self.i3status_thread.last_output
+                json_list = self.i3status_thread.json_list
 
                 # transform output from i3status
-                delta = datetime.utcnow() - self.i3status_thread.last_output_ts
+                delta = datetime.utcnow() - self.i3status_thread.json_list_ts
                 if delta.seconds > 0:
                     json_list = self.i3status_thread.adjust_time(delta)
 
@@ -793,6 +806,9 @@ class Py3statusWrapper():
 
                 # dump the line to stdout
                 print_line('{}{}'.format(prefix, dumps(json_list)))
+
+                # update i3status output
+                self.i3status_thread.update_json_list()
 
                 # sleep a bit before doing this again
                 sleep(self.config['interval'])
