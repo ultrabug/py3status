@@ -1,3 +1,13 @@
+version 1.2 (2014-01-12)
+* new module dpms.py allowing activation and deactivation of DPMS thx to André Doser
+* order i3status output updates to prevent it from overwritting any modification made on i3status json list by a user module, this avoids a possible user filter flapping on i3status modules
+* fix delay on first execution of each module which could be equal to py3status interval time before being executed
+* the real i3status thread output json list is passed to all modules as the i3status_output_json parameter, this allows any user module to change any of the i3status output by simply altering the given json on the list, inspired thx to @drestebon on issue #23
+* add validation for the position parameter
+* Merge pull request #21 from patrickshan/master
+* make cpu status cached for 10s and leave the output index to 0, by Patrick Shan
+* add cpu usage info to sysdata script, by Patrick Shan
+
 version 1.1 (2013-12-15)
 * new generic click event handler using the special module file named i3bar_click_events.py which will be forwarded any orphan click event for action. this allows you to take action on clicks made on your i3status modules !
 * add the filename as the module_name property to the Module class
