@@ -152,6 +152,11 @@ class I3status(Thread):
             for item in json_list:
                 if item['name'] in ['time', 'tztime']:
                     i3status_time = item['full_text'].encode('UTF-8', 'replace')
+                    try:
+                        # python3 compatibility code
+                        i3status_time = i3status_time.decode()
+                    except:
+                        pass
                     # add mendatory items in i3status time format wrt issue #18
                     for fmt in ['%Y', '%m', '%d']:
                         if not fmt in time_format:
