@@ -629,6 +629,13 @@ class Py3statusWrapper():
 
         # setup configuration
         self.config = self.get_config()
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'py3status started with config {}'.format(
+                    self.config
+                )
+            )
 
         # setup i3status thread
         self.i3status_thread = I3status(
