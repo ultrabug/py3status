@@ -76,12 +76,13 @@ class I3status(Thread):
     """
     This class is responsible for spawning i3status and reading its output.
     """
-    def __init__(self, lock, i3status_config_path):
+    def __init__(self, lock, i3status_config_path, standalone):
         """
         Our output will be read asynchronously from 'last_output'.
         """
         Thread.__init__(self)
         self.i3status_config_path = i3status_config_path
+        self.standalone = standalone
         self.config = self.i3status_config_reader()
         self.error = None
         self.last_output = None
@@ -109,30 +110,35 @@ class I3status(Thread):
         }
 
         # some ugly parsing
-        for line in open(self.i3status_config_path, 'r'):
-            line = line.strip(' \t\n\r')
-            if line.startswith('general'):
-                in_general = True
-            elif line.startswith('time') or line.startswith('tztime'):
-                in_time = True
-            elif line.startswith('}'):
-                in_general = False
-                in_time = False
-            if in_general and '=' in line:
-                key = line.split('=')[0].strip()
-                value = line.split('=')[1].strip()
-                if key in config:
-                    if value in ['true', 'false']:
-                        value = 'True' if value == 'true' else 'False'
-                    try:
-                        config[key] = eval(value)
-                    except NameError:
-                        config[key] = value
-            if in_time and '=' in line:
-                key = line.split('=')[0].strip()
-                value = line.split('=')[1].strip()
-                if 'time_' + key in config:
-                    config['time_' + key] = eval(value)
+        if os.path.isfile(self.i3status_config_path):
+            for line in open(self.i3status_config_path, 'r'):
+                line = line.strip(' \t\n\r')
+                if line.startswith('general'):
+                    in_general = True
+                elif line.startswith('time') or line.startswith('tztime'):
+                    in_time = True
+                elif line.startswith('}'):
+                    in_general = False
+                    in_time = False
+                if in_general and '=' in line:
+                    key = line.split('=')[0].strip()
+                    value = line.split('=')[1].strip()
+                    if key in config:
+                        if value in ['true', 'false']:
+                            value = 'True' if value == 'true' else 'False'
+                        try:
+                            config[key] = eval(value)
+                        except NameError:
+                            config[key] = value
+                if in_time and '=' in line:
+                    key = line.split('=')[0].strip()
+                    value = line.split('=')[1].strip()
+                    if 'time_' + key in config:
+                        config['time_' + key] = eval(value)
+
+        # force output format on standalone mode
+        if self.standalone:
+            config['output_format'] = 'i3bar'
 
         # py3status uses only the i3bar protocol
         assert config['output_format'] == 'i3bar', \
@@ -150,7 +156,7 @@ class I3status(Thread):
         try:
             time_format = self.config['time_format']
             for item in json_list:
-                if item['name'] in ['time', 'tztime']:
+                if 'name' in item and item['name'] in ['time', 'tztime']:
                     i3status_time = item['full_text'].encode('UTF-8', 'replace')
                     try:
                         # python3 compatibility code
@@ -239,6 +245,28 @@ class I3status(Thread):
         except IOError:
             err = sys.exc_info()[1]
             self.error = err
+
+    def mock(self):
+        """
+        Mock i3status behavior, used in standalone mode.
+        """
+        # mock thread is_alive() method
+        self.is_alive = lambda: True
+
+        # mock i3status base output
+        init_output = [
+            '{"click_events": true, "version": 1}',
+            '[',
+            '[]'
+        ]
+        for line in init_output:
+            print_line(line)
+
+        # mock i3status output parsing
+        self.last_output = []
+        self.last_output_ts = datetime.utcnow()
+        self.last_prefix = ','
+        self.update_json_list()
 
 
 class Events(Thread):
@@ -589,6 +617,8 @@ class Py3statusWrapper():
                             type=float,
                             default=config['interval'],
                             help="update interval in seconds (default 1 sec)")
+        parser.add_argument('-s', '--standalone', action="store_true",
+                            help="standalone mode, do not use i3status")
         parser.add_argument('-t', action="store",
                             dest="cache_timeout",
                             type=int,
@@ -604,6 +634,7 @@ class Py3statusWrapper():
         if options.include_paths:
             config['include_paths'] = options.include_paths
         config['interval'] = options.interval
+        config['standalone'] = options.standalone
 
         # all done
         return config
@@ -640,21 +671,26 @@ class Py3statusWrapper():
         # setup i3status thread
         self.i3status_thread = I3status(
             self.lock,
-            self.config['i3status_config_path']
+            self.config['i3status_config_path'],
+            self.config['standalone']
         )
-        self.i3status_thread.start()
+        if self.config['standalone']:
+            self.i3status_thread.mock()
+        else:
+            self.i3status_thread.start()
+            while not self.i3status_thread.last_output:
+                if not self.i3status_thread.is_alive():
+                    err = self.i3status_thread.error
+                    raise IOError(err)
+                sleep(0.1)
         if self.config['debug']:
             syslog(
                 LOG_INFO,
-                'i3status thread started with config {}'.format(
+                'i3status thread {} with config {}'.format(
+                    'started' if not self.config['standalone'] else 'mocked',
                     self.i3status_thread.config
                 )
             )
-        while not self.i3status_thread.last_output:
-            if not self.i3status_thread.is_alive():
-                err = self.i3status_thread.error
-                raise IOError(err)
-            sleep(0.1)
 
         # setup input events thread
         self.events_thread = Events(self.lock, self.config, self.modules)
