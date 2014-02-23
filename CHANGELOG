@@ -1,3 +1,10 @@
+version 1.3 (2014-02-23)
+* new standalone mode allowing to bypass i3status when you need a py3status-modules-only i3bar
+* debug mode add log info about py3status invocation config
+* pep8 cosmetics
+* python3 compatibility code wrt issue #24
+* make sure i3status_time encoding is UTF-8 wrt issue #24, thx to @zetok
+
 version 1.2 (2014-01-12)
 * new module dpms.py allowing activation and deactivation of DPMS thx to André Doser
 * order i3status output updates to prevent it from overwritting any modification made on i3status json list by a user module, this avoids a possible user filter flapping on i3status modules
