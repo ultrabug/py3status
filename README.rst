@@ -68,6 +68,7 @@ You can see the help of py3status by issuing `py3status -h`:
     -i INCLUDE_PATHS  include user-written modules from those directories
                       (default .i3/py3status)
     -n INTERVAL       update interval in seconds (default 1 sec)
+    -s, --standalone  standalone mode, do not use i3status
     -t CACHE_TIMEOUT  default injection cache timeout in seconds
                       (default 60 sec)
 
