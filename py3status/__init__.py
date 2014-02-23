@@ -105,7 +105,7 @@ class I3status(Thread):
             'color_separator': '#333333',
             'interval': 5,
             'output_format': None,
-            'time_format': '%Y-%m-%d %H:%M:%S',
+            'time_format': '%Y-%m-%d %H:%M:%S'
         }
 
         # some ugly parsing
