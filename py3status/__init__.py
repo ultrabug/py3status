@@ -700,8 +700,9 @@ class Py3statusWrapper():
             syslog(LOG_INFO, 'events thread started')
 
         # suppress modules' ouput wrt issue #20
-        sys.stdout = open('/dev/null', 'w')
-        sys.stderr = open('/dev/null', 'w')
+        if not self.config['debug']:
+            sys.stdout = open('/dev/null', 'w')
+            sys.stderr = open('/dev/null', 'w')
 
         # load and spawn modules threads
         for include_path, f_name in self.list_modules():
