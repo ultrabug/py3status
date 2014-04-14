@@ -779,27 +779,75 @@ class Py3statusWrapper():
         """
         # prepopulate the list so that every usable index exists, thx @Lujeni
         m_list = [
-            '' for value in range(sum([len(x.methods) for x in self.modules]))
+            '' for value in range(
+                sum([len(x.methods) for x in self.modules]) + len(json_list)
+            )
         ]
-        # append i3status json list to the modules' list
-        m_list += json_list
+
+        # debug the ordering matrix
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'ordering matrix {}'.format(list(range(len(m_list))))
+            )
+
         # run through modules/methods output and insert them in reverse order
         for m in reversed(self.modules):
             for meth in m.methods:
                 position = m.methods[meth]['position']
                 last_output = m.methods[meth]['last_output']
                 try:
+                    assert position in range(len(m_list))
                     if m_list[position] == '':
                         m_list[position] = last_output
                     else:
                         if '' in m_list:
                             m_list.remove('')
                         m_list.insert(position, last_output)
-                except IndexError:
+                except (AssertionError, IndexError):
                     # out of range indexes get placed at the end of the output
                     m_list.append(last_output)
-        # cleanup and return output list
-        m_list = list(filter(lambda a: a != '', m_list))
+                finally:
+                    if self.config['debug']:
+                        syslog(
+                            LOG_INFO,
+                            'ordering user module {} at position {}'.format(
+                                meth,
+                                m_list.index(last_output)
+                            )
+                        )
+
+        # append i3status json list to the modules' list in empty slots
+        for i3s_json in json_list:
+            for i in range(len(m_list)):
+                if m_list[i] == '':
+                    m_list[i] = i3s_json
+                    break
+            else:
+                # this should not happen !
+                m_list.append(i3s_json)
+
+            # debug i3status module's index
+            if self.config['debug']:
+                syslog(
+                    LOG_INFO,
+                    'ordering i3status module {} at position {}'.format(
+                        i3s_json['name'],
+                        m_list.index(i3s_json)
+                    )
+                )
+
+        # cleanup and return output list, we also remove empty outputs
+        m_list = list(filter(lambda a: a != '' and a['full_text'], m_list))
+
+        # log the final ordering in debug mode
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'ordering result {}'.format([m['name'] for m in m_list])
+            )
+
+        # return the ordered result
         return m_list
 
     def run(self):
