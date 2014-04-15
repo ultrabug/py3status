@@ -792,6 +792,7 @@ class Py3statusWrapper():
             )
 
         # run through modules/methods output and insert them in reverse order
+        debug_msg = ''
         for m in reversed(self.modules):
             for meth in m.methods:
                 position = m.methods[meth]['position']
@@ -808,16 +809,22 @@ class Py3statusWrapper():
                     # out of range indexes get placed at the end of the output
                     m_list.append(last_output)
                 finally:
+                    # debug user module's index
                     if self.config['debug']:
-                        syslog(
-                            LOG_INFO,
-                            'ordering user module {} at position {}'.format(
-                                meth,
-                                m_list.index(last_output)
-                            )
+                        debug_msg += '{}={} '.format(
+                            meth,
+                            m_list.index(last_output)
                         )
 
+        # debug the user modules ordering
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'ordering user modules positions {}'.format(debug_msg.strip())
+            )
+
         # append i3status json list to the modules' list in empty slots
+        debug_msg = ''
         for i3s_json in json_list:
             for i in range(len(m_list)):
                 if m_list[i] == '':
@@ -829,13 +836,19 @@ class Py3statusWrapper():
 
             # debug i3status module's index
             if self.config['debug']:
-                syslog(
-                    LOG_INFO,
-                    'ordering i3status module {} at position {}'.format(
-                        i3s_json['name'],
-                        m_list.index(i3s_json)
-                    )
+                debug_msg += '{}={} '.format(
+                    i3s_json['name'],
+                    m_list.index(i3s_json)
                 )
+
+        # debug i3status modules ordering
+        if self.config['debug']:
+            syslog(
+                LOG_INFO,
+                'ordering i3status modules positions {}'.format(
+                    debug_msg.strip()
+                )
+            )
 
         # cleanup and return output list, we also remove empty outputs
         m_list = list(filter(lambda a: a != '' and a['full_text'], m_list))
