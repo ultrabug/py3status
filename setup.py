@@ -15,11 +15,11 @@ def read(fname):
 
 setup(
     name='py3status',
-    version='1.3',
+    version='1.4',
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
     description='py3status is an extensible i3status wrapper written in python',
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     url='https://github.com/ultrabug/py3status',
     download_url='https://github.com/ultrabug/py3status/tags',
     license='BSD',
@@ -42,6 +42,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
     )

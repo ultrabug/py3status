@@ -1,3 +1,12 @@
+version 1.4 (2014-04-16)
+* new ordering mechanism with verbose logging. fixes rare cases where the modules methods were not always loaded in the same order and caused inconsistent ordering between reloads. thx to @guiniol for reporting/debugging and @IotaSpencer and @tasse for testing.
+* debug: dont catch print() on debug mode
+* debug: add position requested by modules
+* Merge pull request #25 from nawadanp/master
+* Add new module ns_checker.py, by @nawadanp
+* move README to markdown, change ordering
+* update the README with the new options from --help
+
 version 1.3 (2014-02-23)
 * new standalone mode allowing to bypass i3status when you need a py3status-modules-only i3bar
 * debug mode add log info about py3status invocation config
