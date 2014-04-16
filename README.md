@@ -11,13 +11,16 @@ No extra configuration file needed, just install & enjoy !
 
 ## Documentation
 See the wiki for up to date documentation:
-    https://github.com/ultrabug/py3status/wiki
+
+* https://github.com/ultrabug/py3status/wiki
 
 Learn how to write your own modules:
-    https://github.com/ultrabug/py3status/wiki/Write-your-own-modules
+
+* https://github.com/ultrabug/py3status/wiki/Write-your-own-modules
 
 Get help or share your ideas on IRC:
-    channel **#py3status** on **FreeNode**
+
+* channel **#py3status** on **FreeNode**
 
 ## Requirements
 You **must** set the `output_format` to `i3bar` in the general section of your i3status.conf:
