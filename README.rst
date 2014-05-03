@@ -28,7 +28,7 @@ Get help or share your ideas on IRC:
 Requirements
 ============
 You **must** set the `output_format` to `i3bar` in the general section of your i3status.conf:
-
+::
     general {
         colors = true
         interval = 5
@@ -38,35 +38,35 @@ You **must** set the `output_format` to `i3bar` in the general section of your i
 Usage
 =====
 In your i3 config file, simply switch from `i3status` to `py3status` in your `status_command`:
-
+::
     status_command py3status
 
 Usually you have your own i3status configuration, just point to it:
-
+::
     status_command py3status -c ~/.i3/i3status.conf
 
 Installation
 ============
 Pypi
 ----
-
+::
     $ pip install py3status
 
 Gentoo Linux
 ------------
-
+::
     $ sudo emerge -a py3status
 
 Arch Linux
 ----------
 Thanks to @waaaaargh, py3status is present in the Arch User Repository using this URL:
-
+::
     https://aur.archlinux.org/packages/py3status-git/
 
 Options
 =======
 You can see the help of py3status by issuing `py3status -h`:
-
+::
     -c I3STATUS_CONF  path to i3status config file
     --debug           be verbose in syslog
     -i INCLUDE_PATHS  include user-written modules from those directories
@@ -80,5 +80,5 @@ Control
 =======
 Just like i3status, you can force an update by sending a SIGUSR1 signal to py3status.
 Note that this will also send a SIGUSR1 signal to i3status.
-
+::
     killall -USR1 py3status
