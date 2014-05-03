@@ -49,11 +49,13 @@ Installation
 ============
 Pypi
 ----
+
 ::
     $ pip install py3status
 
 Gentoo Linux
 ------------
+
 ::
     $ sudo emerge -a py3status
 
