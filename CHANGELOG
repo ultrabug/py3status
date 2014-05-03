@@ -1,3 +1,9 @@
+version 1.5 (2014-05-03)
+* add --version parameter wrt issue #29
+* switch back to RST for the README wrt pypi and issue #30 thx to @Weishaupt
+* include modules, changelog and license to sources on pypi
+* rename the examples folder to modules and include it in the installed files
+
 version 1.4 (2014-04-16)
 * new ordering mechanism with verbose logging. fixes rare cases where the modules methods were not always loaded in the same order and caused inconsistent ordering between reloads. thx to @guiniol for reporting/debugging and @IotaSpencer and @tasse for testing.
 * debug: dont catch print() on debug mode
