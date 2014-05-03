@@ -1,2 +1,2 @@
-include *.rst
+include CHANGELOG LICENSE README.rst
 recursive-include modules *.py
