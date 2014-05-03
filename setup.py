@@ -19,7 +19,7 @@ setup(
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
     description='py3status is an extensible i3status wrapper written in python',
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     url='https://github.com/ultrabug/py3status',
     download_url='https://github.com/ultrabug/py3status/tags',
     license='BSD',
