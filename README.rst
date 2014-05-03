@@ -77,6 +77,7 @@ You can see the help of py3status by issuing `py3status -h`:
     -s, --standalone  standalone mode, do not use i3status
     -t CACHE_TIMEOUT  default injection cache timeout in seconds
                       (default 60 sec)
+    -v, --version     show py3status version and exit
 
 Control
 =======

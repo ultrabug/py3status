@@ -598,6 +598,14 @@ class Py3statusWrapper():
             'interval': 1
         }
 
+        # package version
+        try:
+            import pkg_resources
+            version = pkg_resources.get_distribution('py3status').version
+        except:
+            version = 'unknown'
+        config['version'] = version
+
         # command line options
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
@@ -626,7 +634,20 @@ class Py3statusWrapper():
                             default=config['cache_timeout'],
                             help="""default injection cache timeout in seconds
                             (default 60 sec)""")
+        parser.add_argument('-v', '--version', action="store_true",
+                            help="""show py3status version and exit""")
         options = parser.parse_args()
+
+        # only asked for version
+        if options.version:
+            from platform import python_version
+            print(
+                'py3status version {} (python {})'.format(
+                    config['version'],
+                    python_version()
+                )
+            )
+            sys.exit(0)
 
         # override configuration and helper variables
         config['cache_timeout'] = options.cache_timeout
