@@ -64,7 +64,7 @@ class GetData:
         'eth0') and grab received/transmitted bytes.
 
         """
-        net_data = self.execCMD('cat', '/proc/net/dev').split()
+        net_data = self.execCMD('cat', '/proc/net/dev').decode('utf-8').split()
         interface_index = net_data.index(self.net_interface + ':')
         received_bytes = int(net_data[interface_index + 1])
         transmitted_bytes = int(net_data[interface_index + 9])
