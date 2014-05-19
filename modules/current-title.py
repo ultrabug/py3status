@@ -2,7 +2,7 @@ import i3
 import time
 
 """
-Shows current window title.
+Py3status plugin - shows current window title.
 
 DEPENDENCIES:
     Depends on i3-py!
