@@ -42,6 +42,6 @@ class Py3status:
         window = find_focused(i3.get_tree())
 
         if window and "name" in window: 
-            response["full_text"] = len(window["name"]) > MAX_WIDTH and "..." + window["name"][-MAX_WIDTH:] or window["name"]
+            response["full_text"] = len(window["name"]) > MAX_WIDTH and "..." + window["name"][-(MAX_WIDTH-3):] or window["name"]
 
         return (0, response)
