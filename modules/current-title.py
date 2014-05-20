@@ -32,13 +32,20 @@ def find_focused(tree):
             return find_focused(tree["nodes"] + tree["floating_nodes"])
 
 class Py3status:
+    def __init__(self, *args, **kwargs):
+        self.text = ""
+        super(Py3status).__init__(*args, **kwargs)
+
     def currentTitle(self, json, i3status_config):
         window = find_focused(i3.get_tree())
 
-        if window and "name" in window: 
-            text = len(window["name"]) > MAX_WIDTH and "..." + window["name"][-(MAX_WIDTH-3):] or window["name"]
+        transformed = False
+        if window and "name" in window and window["name"] != self.text: 
+            self.text = len(window["name"]) > MAX_WIDTH and "..." + window["name"][-(MAX_WIDTH-3):] or window["name"]
+            transformed = True
 
-        return (0, {'full_text': text,
+        return (0, {'full_text': self.text,
+                    'transformed': transformed,
                     'name': 'current-title',
                     'cached_until': time.time() + CACHED_TIME,
                     })
