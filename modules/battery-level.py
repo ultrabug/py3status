@@ -5,10 +5,6 @@ import math
 
 """
 Module for displaying information about battery.
-
-@author shadowprince
-@version 1.0
-@license Eclipse Public License
 """
 
 CACHE_TIME = 30 # time to update battery
@@ -49,7 +45,7 @@ class Py3status:
         if full:
             response['full_text'] = "" if HIDE_WHEN_FULL else BLOCKS[-1]
         elif charging:
-            response['full_text'] = CHARGING_CHAR
+            response['full_text'] = CHARGING_CHARACTER
             response['color'] = COLOR_CHARGING
         else:
             response['full_text'] = character
