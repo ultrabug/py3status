@@ -8,16 +8,16 @@ DEPENDENCIES:
     Depends on i3-py!
     pip install i3-py
 
-CONFIG:
-    MAX_WIDTH - max title width
-    CACHED_TIME - in seconds
-
 If payload from server contains wierd utf-8 (for example one window have something bad in title) - plugin will give empty output UNTIL this window will be closed. I can't fix or workaround that in PLUGIN, problem is in i3-py library. 
+
+@author shadowprince
+@version 1.0
+@license Eclipse Public License
 """
 
 POSITION = 0
-MAX_WIDTH = 120
-CACHED_TIME = 0.5
+MAX_WIDTH = 120 # if width of title is greater, shrink it and add ...
+CACHED_TIME = 0.5 # maximum time to update indicator
 
 def find_focused(tree):
     if type(tree) == list:

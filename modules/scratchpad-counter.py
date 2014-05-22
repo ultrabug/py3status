@@ -3,10 +3,18 @@ import time
 import random
 from pprint import pprint
 
+"""
+Module showing amount of windows at the scratchpad.
+
+@author shadowprince
+@version 1.0
+@license Eclipse Public License
+"""
+
 CACHED_TIME = 1
 POSITION = 1
-HIDE_WHEN_NONE = True
-STRFORMAT = "{} ⌫"
+HIDE_WHEN_NONE = True # hide indicator when there is no windows
+STRFORMAT = "{} ⌫" # format of indicator. {} replaces with count of windows
 
 def find_scratch(tree):
     if tree["name"] == "__i3_scratch":
