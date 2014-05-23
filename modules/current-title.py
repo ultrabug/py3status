@@ -4,9 +4,8 @@ import time
 """
 Py3status plugin - shows current window title.
 
-DEPENDENCIES:
-    Depends on i3-py!
-    pip install i3-py
+DEPENDENCIES: Depends on i3-py:
+    # pip install i3-py
 
 If payload from server contains wierd utf-8 (for example one window have something bad in title) - plugin will give empty output UNTIL this window will be closed. I can't fix or workaround that in PLUGIN, problem is in i3-py library. 
 

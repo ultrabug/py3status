@@ -6,6 +6,10 @@ import math
 
 """
 Module for displaying information about battery.
+
+@author shadowprince
+@version 1.0
+@license Eclipse Public License
 """
 
 CACHE_TIME = 30 # time to update battery
