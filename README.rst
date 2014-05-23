@@ -1,6 +1,10 @@
 *********
 py3status
 *********
+|version|
+
+.. |version| image:: https://pypip.in/version/py3status/badge.png
+
 **py3status** is an extensible i3status wrapper written in python.
 
 Using py3status, you can take control of your i3bar easily by:
