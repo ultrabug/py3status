@@ -109,8 +109,11 @@ class Py3status:
             response['color'] = i3status_config['color_degraded']
         else:
             response['color'] = i3status_config['color_bad']
+        #cpu temp
+        cputemp=subprocess.check_output('sensors | grep "CPU Temp" | cut -f 2 -d "+" | cut -f 1 -d " "',shell=True)
+        cputemp=cputemp[:-1].decode('utf-8')
+        response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100) +" "+cputemp
 
-        response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
         #cache the status for 10 seconds
         response['cached_until'] = time() + 10
 
