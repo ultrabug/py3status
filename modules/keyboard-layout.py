@@ -17,7 +17,7 @@ CACHE_TIME = 10  # refresh time to update indicator
 
 # colors of layouts, check your command's output to match keys
 LANG_COLORS = {
-    'fr': '#668FBA',  # blue
+    'fr': '#268BD2',  # solarized blue
     'ru': '#F75252',  # red
     'ua': '#FCE94F',  # yellow
     'us': '#729FCF',  # light blue
