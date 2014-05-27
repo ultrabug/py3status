@@ -8,6 +8,10 @@
 # i3wm homepage: http://i3wm.org
 # py3status homepage: https://github.com/ultrabug/py3status
 
+# NOTE: If you want py3status to show you your CPU temperature, change value of CPUTEMP into True
+# in Py3status class - CPUInfo function 
+# and REMEMBER that you must install lm_sensors if you want CPU temp!
+
 # Copyright (C) <2013> <Shahin Azad [ishahinism at Gmail]>
 
 # This program is free software: you can redistribute it and/or modify
@@ -109,8 +113,15 @@ class Py3status:
             response['color'] = i3status_config['color_degraded']
         else:
             response['color'] = i3status_config['color_bad']
+        #cpu temp
+        CPUTEMP=False
+        if CPUTEMP:
+                cputemp=subprocess.check_output('sensors | grep "CPU Temp" | cut -f 2 -d "+" | cut -f 1 -d " "',shell=True)
+                cputemp=cputemp[:-1].decode('utf-8')
+                response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100) +" "+cputemp
+        else:
+             	response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
 
-        response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
         #cache the status for 10 seconds
         response['cached_until'] = time() + 10
 
