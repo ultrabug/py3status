@@ -1,15 +1,18 @@
+# -*- coding: utf-8 -*-
+
+import re
+
 from mpd import (MPDClient, CommandError)
 from socket import error as SocketError
-import time
-import re
+from time import time
 
 """
 Mpd - module to show information from mpd to your's bar! Settings listed above.
-DEPENDENCIES: python-mpd2 (NOT python2-mpd2):
+Reequires
+    - python-mpd2 (NOT python2-mpd2)
     # pip install python-mpd2
 
 @author shadowprince
-@version 1.0
 @license Eclipse Public License
 """
 
@@ -19,10 +22,10 @@ PORT = "6600"
 PASSWORD = None
 
 # time to update
-CACHED_TIME = 1
+CACHE_TIMEOUT = 1
 
 # position
-POSITION = 1
+POSITION = 0
 
 # if text length will be greater - it'll shrink it
 MAX_WIDTH = 120
@@ -39,7 +42,7 @@ STATE_CHARACTERS = {
 }
 
 """ format of result string
-can contain: 
+can contain:
     {state} - current state from STATE_CHARACTERS
     Track information:
     {track}, {artist}, {title}, {time}, {album}, {pos}
@@ -48,13 +51,13 @@ can contain:
 """
 STRFORMAT = "{state} №{pos}. {artist} - {title} [{time}] | {next_title}"
 
+
 class Py3status:
-    def __init__(self, *args, **kwargs):
-        self.text = ""
-        super(Py3status).__init__(*args, **kwargs)
+    def __init__(self):
+        self.text = ''
 
     def currentTrack(self, i3status_output_json, i3status_config):
-        try: 
+        try:
             c = MPDClient()
             c.connect(host=HOST, port=PORT)
             if PASSWORD:
@@ -104,9 +107,11 @@ class Py3status:
         else:
             transformed = False
 
-        return (POSITION, {
-                    'transformed': transformed,
-                    'full_text': self.text,
-                    'name': 'scratchpad-count', 
-                    'cached_until': time.time() + CACHED_TIME,
-                    })
+        response = {
+            'cached_until': time() + CACHE_TIMEOUT,
+            'full_text': self.text,
+            'name': 'scratchpad-count',
+            'transformed': transformed
+        }
+
+        return (POSITION, response)
