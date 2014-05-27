@@ -17,7 +17,7 @@ Requires:
 @license Eclipse Public License
 """
 
-CACHE_TIME = 30  # time to update battery
+CACHE_TIMEOUT = 30  # time to update battery
 HIDE_WHEN_FULL = False  # hide any information when battery is fully charged
 
 MODE = "bar"  # for primitive-one-char bar, or "text" for text percentage ouput
@@ -63,6 +63,6 @@ class Py3status:
         else:
             response['full_text'] = character
 
-        response['cached_until'] = time() + CACHE_TIME
+        response['cached_until'] = time() + CACHE_TIMEOUT
 
         return (0, response)

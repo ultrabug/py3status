@@ -13,7 +13,7 @@ Requires:
 @license Eclipse Public License
 """
 
-CACHE_TIME = 10  # refresh time to update indicator
+CACHE_TIMEOUT = 10  # refresh time to update indicator
 
 # colors of layouts, check your command's output to match keys
 LANG_COLORS = {
@@ -57,7 +57,7 @@ class Py3status:
         response = {
             'full_text': '',
             'name': 'keyboard-layout',
-            'cached_until': time() + CACHE_TIME
+            'cached_until': time() + CACHE_TIMEOUT
         }
 
         lang = self.command().strip()
