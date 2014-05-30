@@ -36,6 +36,9 @@ def xbklayout():
 def setxkbmap():
     """
     check using setxkbmap >= 1.3.0
+
+    Please read issue 33 for more information :
+        https://github.com/ultrabug/py3status/pull/33
     """
     q = check_output(['setxkbmap', '-query']).decode('utf-8')
     return q.replace(' ', '').split(':')[-1]
