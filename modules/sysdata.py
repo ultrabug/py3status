@@ -107,9 +107,9 @@ class Py3status:
         self.cpu_total = cpu_total
         self.cpu_idle = cpu_idle
 
-        if used_cpu_percent <= 40:
+        if used_cpu_percent <= 40/100.0:
             response['color'] = i3status_config['color_good']
-        elif used_cpu_percent <= 75:
+        elif used_cpu_percent <= 75/100.0:
             response['color'] = i3status_config['color_degraded']
         else:
             response['color'] = i3status_config['color_bad']
