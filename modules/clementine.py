@@ -19,8 +19,8 @@ class Py3status:
         Get the current song metadatas (artist - title)
         """
         track_id = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetCurrentTrack', shell=True)
-        metadatas = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetMetadata ' + track_id, shell=True)
-        lines = metadatas.split('\n')
+        metadatas = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetMetadata {}'.format(track_id.decode()), shell=True)
+        lines = metadatas.decode('utf-8').split('\n')
         lines = filter(None, lines)
  
         now_playing = ''
