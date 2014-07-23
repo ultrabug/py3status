@@ -590,11 +590,14 @@ class Py3statusWrapper():
         """
         Create the py3status based on command line options we received.
         """
+        # get home path
+        home_path = '{}{}'.format(os.path.expanduser('~'), '/')
+
         # defaults
         config = {
             'cache_timeout': 60,
             'i3status_config_path': '/etc/i3status.conf',
-            'include_paths': ['.i3/py3status/'],
+            'include_paths': ['{}{}'.format(home_path, '.i3/py3status/')],
             'interval': 1
         }
 
@@ -620,7 +623,7 @@ class Py3statusWrapper():
         parser.add_argument('-i', action="append",
                             dest="include_paths",
                             help="""include user-written modules from those
-                            directories (default .i3/py3status)""")
+                            directories (default ~/.i3/py3status)""")
         parser.add_argument('-n', action="store",
                             dest="interval",
                             type=float,
