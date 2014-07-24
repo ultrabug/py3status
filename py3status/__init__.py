@@ -591,13 +591,13 @@ class Py3statusWrapper():
         Create the py3status based on command line options we received.
         """
         # get home path
-        home_path = '{}{}'.format(os.path.expanduser('~'), '/')
+        home_path = os.path.expanduser('~')
 
         # defaults
         config = {
             'cache_timeout': 60,
             'i3status_config_path': '/etc/i3status.conf',
-            'include_paths': ['{}{}'.format(home_path, '.i3/py3status/')],
+            'include_paths': ['{}/.i3/py3status/'.format(home_path)],
             'interval': 1
         }
 
