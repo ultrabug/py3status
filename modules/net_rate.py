@@ -99,8 +99,6 @@ class Py3status:
         self.last_time = time()
         self.last_interface = None
 
-        super(Py3status).__init__(*args, **kwargs)
-
     def currentSpeed(self, json, i3status_config):
         ns = get_stat()
         deltas = {}
