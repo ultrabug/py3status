@@ -11,7 +11,7 @@ Module for displaying current network transfer rate.
 @license Eclipse Public License
 """
 
-CACHED_TIME = 5  # update time (in seconds)
+CACHED_TIME = 1  # update time (in seconds)
 POSITION = 0  # bar position
 
 DEVFILE = "/proc/net/dev"  # location of dev file under /proc
@@ -31,20 +31,23 @@ Placeholders:
 """
 FORMAT = "{interface}: {total}"
 
+PRECISION = 1  # amount of numbers after dot
+MULTIPLIER_TOP = 1024  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
+LEFT_ALIGN = len(str(MULTIPLIER_TOP)) + 1 + PRECISION  # == 6 characters (from MULTIPLIER_TOP + dot + PRECISION)
+
 """
 Format of total, up and down placeholders under FORMAT.
+As default, substitutes LEFT_ALIGN and PRECISION as %s and %s
 Placeholders:
     value - value (float)
     unit - unit (string)
 
 """
-VALUE_FORMAT = "{value:0.1f} {unit}"
-
-MULTIPLIER_TOP = 1024  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
+VALUE_FORMAT = "{value:%s.%sf} {unit}" % (LEFT_ALIGN, PRECISION)
 
 INITIAL_MULTI = 1024  # initial multiplier, if you want to get rid of first bytes, set to 1 to disable
 UNIT_MULTI = 1024  # value to divide if rate is greater than MULTIPLIER_TOP
-UNITS = ["kb/s", "mb/s", "gb/s"]  # list of units, first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
+UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]  # list of units, first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
 
 NO_CONNECTION = "! no data"  # when there is no data transmitted from the start of the plugin
 HIDE_IF_NO = False  # hide indicator if rate == 0
