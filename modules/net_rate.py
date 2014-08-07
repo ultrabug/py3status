@@ -11,8 +11,8 @@ Module for displaying current network transfer rate.
 @license Eclipse Public License
 """
 
-CACHED_TIME = 1  # update time (in seconds)
-POSITION = 1  # bar position
+CACHED_TIME = 5  # update time (in seconds)
+POSITION = 0  # bar position
 
 DEVFILE = "/proc/net/dev"  # location of dev file under /proc
 
