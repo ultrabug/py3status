@@ -11,7 +11,7 @@ Module for displaying current network transfer rate.
 @license Eclipse Public License
 """
 
-CACHED_TIME = 1  # update time (in seconds)
+CACHED_TIME = 2  # update time (in seconds)
 POSITION = 0  # bar position
 
 DEVFILE = "/proc/net/dev"  # location of dev file under /proc
@@ -33,7 +33,7 @@ FORMAT = "{interface}: {total}"
 
 PRECISION = 1  # amount of numbers after dot
 MULTIPLIER_TOP = 1024  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-LEFT_ALIGN = len(str(MULTIPLIER_TOP)) + 1 + PRECISION  # == 6 characters (from MULTIPLIER_TOP + dot + PRECISION)
+LEFT_ALIGN = len(str(MULTIPLIER_TOP)) + PRECISION  # == 5 characters (from MULTIPLIER_TOP + PRECISION)
 
 """
 Format of total, up and down placeholders under FORMAT.
