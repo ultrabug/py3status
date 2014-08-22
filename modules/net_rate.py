@@ -32,8 +32,8 @@ Placeholders:
 FORMAT = "{interface}: {total}"
 
 PRECISION = 1  # amount of numbers after dot
-MULTIPLIER_TOP = 1024  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-LEFT_ALIGN = len(str(MULTIPLIER_TOP)) + PRECISION  # == 5 characters (from MULTIPLIER_TOP + PRECISION)
+MULTIPLIER_TOP = 999  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
+LEFT_ALIGN = len(str(MULTIPLIER_TOP)) + 1 + PRECISION  # == 6 characters (from MULTIPLIER_TOP + dot + PRECISION)
 
 """
 Format of total, up and down placeholders under FORMAT.
@@ -53,10 +53,10 @@ NO_CONNECTION = "! no data"  # when there is no data transmitted from the start 
 HIDE_IF_NO = False  # hide indicator if rate == 0
 
 
-"""
-Get statistics from devfile in list of lists of words
-"""
 def get_stat():
+    """
+    Get statistics from devfile in list of lists of words
+    """
     def dev_filter(x):
         # get first word and remove trailing interface number
         x = x.strip().split(" ")[0][:-1]
@@ -83,10 +83,10 @@ def get_stat():
         return None
 
 
-"""
-Divide a value and return formatted string
-"""
 def divide_and_format(value):
+    """
+    Divide a value and return formatted string
+    """
     for i, unit in enumerate(UNITS):
         if value > MULTIPLIER_TOP:
             value /= UNIT_MULTI
