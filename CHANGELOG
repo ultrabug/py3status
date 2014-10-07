@@ -1,3 +1,25 @@
+version 1.6 (2014-10-07)
+* new vnstat module, by Vasiliy Horbachenko
+* new net_rate module, alternative module for tracking network rate, by Vasiliy Horbachenko
+* Fix include_paths default wrt issue #38, by Frank Haun
+* module clementine.py: Make python3 compatible, by Frank Haun
+* Update sysdata.py module, by @fhaun
+* rename the 'examples' folder to 'modules'
+* add an information note in the keyboard module
+* Merge pull request #34 from rayeshman/master
+* normalize the CACHE_TIMEOUT variable name
+* PEP8 and cleanup of scratchpad-counter module
+* PEP8 and normalization of mpd_status module
+* PEP8 and rename the current-title to window-title, normalization
+* switch french color to solarized blue on keyboard-layout module
+* rename current-keyboard-layout to keyboard-layout, PEP8 cleanup, implement check using setxkbmap for maximal compatibility, add french coloring
+* add optional CPU temperature to the sysdata module, by Rayeshman
+* new mpd_status module, by Vasiliy Horbachenko
+* add pypip badge for version
+* new scratchpad-counter module and current-title module for displaying current windows title, by Vasiliy Horbachenko
+* fix netdata module to work with python3 wrt issue #31
+* new clementine module displaying the current "artist - title" playing in Clementine, by François LASSERRE
+
 version 1.5 (2014-05-03)
 * add --version parameter wrt issue #29
 * switch back to RST for the README wrt pypi and issue #30 thx to @Weishaupt
