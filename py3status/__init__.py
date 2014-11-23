@@ -81,69 +81,103 @@ class I3status(Thread):
         Our output will be read asynchronously from 'last_output'.
         """
         Thread.__init__(self)
-        self.i3status_config_path = i3status_config_path
-        self.standalone = standalone
-        self.config = self.i3status_config_reader()
         self.error = None
+        self.i3status_config_path = i3status_config_path
+        self.i3status_module_names = [
+            'battery',
+            'cpu_temperature',
+            'cpu_usage',
+            'ddate',
+            'disk',
+            'ethernet',
+            'ipv6',
+            'load',
+            'path_exists',
+            'run_watch',
+            'time',
+            'tztime',
+            'volume',
+            'wireless'
+        ]
+        self.json_list = None
+        self.json_list_ts = None
         self.last_output = None
         self.last_output_ts = None
         self.last_prefix = None
         self.lock = lock
-        self.json_list = None
-        self.json_list_ts = None
+        self.standalone = standalone
+        self.time_format = '%Y-%m-%d %H:%M:%S'
+        #
+        self.config = self.i3status_config_reader()
 
     def i3status_config_reader(self):
         """
         Parse i3status.conf so we can adapt our code to the i3status config.
         """
-        in_time = False
-        in_general = False
         config = {
-            'colors': False,
-            'color_good': '#00FF00',
-            'color_bad': '#FF0000',
-            'color_degraded': '#FFFF00',
-            'color_separator': '#333333',
-            'interval': 5,
-            'output_format': None,
-            'time_format': '%Y-%m-%d %H:%M:%S'
+            'general': {
+                'color_bad': '#FF0000',
+                'color_degraded': '#FFFF00',
+                'color_good': '#00FF00',
+                'color_separator': '#333333',
+                'colors': False,
+                'interval': 5,
+                'output_format': 'i3bar'
+            },
+            'order': []
         }
 
         # some ugly parsing
-        if os.path.isfile(self.i3status_config_path):
-            for line in open(self.i3status_config_path, 'r'):
-                line = line.strip(' \t\n\r')
-                if line.startswith('general'):
-                    in_general = True
-                elif line.startswith('time') or line.startswith('tztime'):
-                    in_time = True
-                elif line.startswith('}'):
-                    in_general = False
-                    in_time = False
-                if in_general and '=' in line:
-                    key = line.split('=')[0].strip()
-                    value = line.split('=')[1].strip()
-                    if key in config:
-                        if value in ['true', 'false']:
-                            value = 'True' if value == 'true' else 'False'
-                        try:
-                            config[key] = eval(value)
-                        except NameError:
-                            config[key] = value
-                if in_time and '=' in line:
-                    key = line.split('=')[0].strip()
-                    value = line.split('=')[1].strip()
-                    if 'time_' + key in config:
-                        config['time_' + key] = eval(value)
+        in_section = False
+        section_name = ''
 
-        # force output format on standalone mode
-        if self.standalone:
-            config['output_format'] = 'i3bar'
+        for line in open(self.i3status_config_path, 'r'):
+            line = line.strip(' \t\n\r')
 
-        # py3status uses only the i3bar protocol
-        assert config['output_format'] == 'i3bar', \
-            'i3status output_format should be set to "i3bar" on {}'.format(
-                self.i3status_config_path
+            if not line or line.startswith('#'):
+                continue
+
+            if line.startswith('order'):
+                in_section = True
+                section_name = 'order'
+
+            if not in_section:
+                section_name = line.split('{')[0].strip()
+                if section_name not in config:
+                    config[section_name] = {}
+
+            if '{' in line:
+                in_section = True
+
+            if section_name and '=' in line:
+                line = line.split('}')[0].strip()
+
+                key = line.split('=')[0].strip()
+                value = line.split('=')[1].strip()
+                try:
+                    value = eval(value)
+                except NameError:
+                    pass
+
+                if section_name == 'order':
+                    config[section_name].append(value)
+                    line = '}'
+                else:
+                    config[section_name][key] = value
+
+                    # override time format
+                    if section_name in ['time', 'tztime'] and key == 'format':
+                        self.time_format = value
+
+            if '}' in line:
+                in_section = False
+                section_name = ''
+
+        # py3status only uses the i3bar protocol because it needs JSON output
+        if config['general']['output_format'] != 'i3bar':
+            raise RuntimeError(
+                'i3status output_format should '
+                'be set to "i3bar" on {}'.format(self.i3status_config_path)
             )
 
         return config
@@ -154,7 +188,7 @@ class I3status(Thread):
         """
         json_list = deepcopy(self.json_list)
         try:
-            time_format = self.config['time_format']
+            time_format = self.time_format
             for item in json_list:
                 if 'name' in item and item['name'] in ['time', 'tztime']:
                     i3status_time = item['full_text'].encode('UTF-8', 'replace')
@@ -172,9 +206,7 @@ class I3status(Thread):
                             )
                     date = datetime.strptime(i3status_time, time_format)
                     date += delta
-                    item['full_text'] = date.strftime(
-                        self.config['time_format']
-                    )
+                    item['full_text'] = date.strftime(self.time_format)
                     item['transformed'] = True
         except Exception:
             err = sys.exc_info()[1]
@@ -480,7 +512,7 @@ class Module(Thread):
             click_method = getattr(self.module_class, 'on_click')
             click_method(
                 self.i3status_thread.json_list,
-                self.i3status_thread.config,
+                self.i3status_thread.config['general'],
                 event
             )
         except Exception:
@@ -513,7 +545,7 @@ class Module(Thread):
                     method = getattr(self.module_class, meth)
                     position, result = method(
                         self.i3status_thread.json_list,
-                        self.i3status_thread.config
+                        self.i3status_thread.config['general']
                     )
 
                     # validate the result
@@ -568,7 +600,7 @@ class Module(Thread):
                 kill_method = getattr(self.module_class, 'kill')
                 kill_method(
                     self.i3status_thread.json_list,
-                    self.i3status_thread.config
+                    self.i3status_thread.config['general']
                 )
             except Exception:
                 # this would be stupid to die on exit
