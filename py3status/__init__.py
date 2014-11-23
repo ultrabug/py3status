@@ -14,6 +14,7 @@ from signal import SIGUSR1
 from subprocess import Popen
 from subprocess import PIPE
 from subprocess import call
+from tempfile import NamedTemporaryFile
 from threading import Event, Thread
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
@@ -82,7 +83,6 @@ class I3status(Thread):
         """
         Thread.__init__(self)
         self.error = None
-        self.i3status_config_path = i3status_config_path
         self.i3status_module_names = [
             'battery',
             'cpu_temperature',
@@ -108,9 +108,9 @@ class I3status(Thread):
         self.standalone = standalone
         self.time_format = '%Y-%m-%d %H:%M:%S'
         #
-        self.config = self.i3status_config_reader()
+        self.config = self.i3status_config_reader(i3status_config_path)
 
-    def i3status_config_reader(self):
+    def i3status_config_reader(self, i3status_config_path):
         """
         Parse i3status.conf so we can adapt our code to the i3status config.
         """
@@ -131,7 +131,7 @@ class I3status(Thread):
         in_section = False
         section_name = ''
 
-        for line in open(self.i3status_config_path, 'r'):
+        for line in open(i3status_config_path, 'r'):
             line = line.strip(' \t\n\r')
 
             if not line or line.startswith('#'):
@@ -177,7 +177,7 @@ class I3status(Thread):
         if config['general']['output_format'] != 'i3bar':
             raise RuntimeError(
                 'i3status output_format should '
-                'be set to "i3bar" on {}'.format(self.i3status_config_path)
+                'be set to "i3bar" on {}'.format(i3status_config_path)
             )
 
         return config
@@ -223,60 +223,85 @@ class I3status(Thread):
         self.json_list = deepcopy(self.last_output)
         self.json_list_ts = deepcopy(self.last_output_ts)
 
+    def write_tmp_i3status_config(self, tmpfile):
+        """
+        Given a temporary file descriptor, write a valid i3status config file
+        based on the parsed one from 'i3status_config_path'.
+        """
+        valid_section_names = self.i3status_module_names + ['general', 'order']
+        for section_name, conf in self.config.items():
+            if section_name == 'order':
+                for module_name in conf:
+                    tmpfile.write('order += "%s"\n' % module_name)
+                tmpfile.write('\n')
+            elif section_name.split(' ')[0] in valid_section_names:
+                tmpfile.write('%s {\n' % section_name)
+                for key, value in conf.items():
+                    tmpfile.write('    %s = "%s"\n' % (key, value))
+                tmpfile.write('}\n\n')
+        tmpfile.flush()
+
     def run(self):
         """
-        Spawn i3status and poll its output.
+        Spawn i3status using a self generated config file and poll its output.
         """
-        i3status_pipe = Popen(
-            ['i3status', '-c', self.i3status_config_path],
-            stdout=PIPE,
-            stderr=PIPE,
-        )
-        self.poller_inp = IOPoller(i3status_pipe.stdout)
-        self.poller_err = IOPoller(i3status_pipe.stderr)
+        with NamedTemporaryFile(prefix='py3status_') as tmpfile:
+            self.write_tmp_i3status_config(tmpfile)
+            syslog(
+                LOG_INFO,
+                'i3status spawned using config file {}'.format(tmpfile.name)
+            )
 
-        try:
-            # at first, poll very quickly to avoid delay in first i3bar display
-            timeout = 0.001
+            i3status_pipe = Popen(
+                ['i3status', '-c', tmpfile.name],
+                stdout=PIPE,
+                stderr=PIPE,
+            )
+            self.poller_inp = IOPoller(i3status_pipe.stdout)
+            self.poller_err = IOPoller(i3status_pipe.stderr)
 
-            # loop on i3status output
-            while self.lock.is_set():
-                line = self.poller_inp.readline(timeout)
-                if line:
-                    if line.startswith('[{'):
-                        with jsonify(line) as (prefix, json_list):
-                            self.last_output = json_list
-                            self.last_output_ts = datetime.utcnow()
-                            self.last_prefix = ','
-                            self.update_json_list()
-                        print_line(line)
-                    elif not line.startswith(','):
-                        if 'version' in line:
-                            header = loads(line)
-                            header.update({'click_events': True})
-                            line = dumps(header)
-                        print_line(line)
-                    else:
-                        timeout = 0.5
-                        with jsonify(line) as (prefix, json_list):
-                            self.last_output = json_list
-                            self.last_output_ts = datetime.utcnow()
-                            self.last_prefix = prefix
-                else:
-                    err = self.poller_err.readline(timeout)
-                    code = i3status_pipe.poll()
-                    if code is not None:
-                        if err:
-                            msg = 'i3status died and said: {}'.format(err)
+            try:
+                # at first, poll very quickly to avoid delay in first i3bar display
+                timeout = 0.001
+
+                # loop on i3status output
+                while self.lock.is_set():
+                    line = self.poller_inp.readline(timeout)
+                    if line:
+                        if line.startswith('[{'):
+                            with jsonify(line) as (prefix, json_list):
+                                self.last_output = json_list
+                                self.last_output_ts = datetime.utcnow()
+                                self.last_prefix = ','
+                                self.update_json_list()
+                            print_line(line)
+                        elif not line.startswith(','):
+                            if 'version' in line:
+                                header = loads(line)
+                                header.update({'click_events': True})
+                                line = dumps(header)
+                            print_line(line)
                         else:
-                            msg = 'i3status died with code {}'.format(code)
-                        raise IOError(msg)
+                            timeout = 0.5
+                            with jsonify(line) as (prefix, json_list):
+                                self.last_output = json_list
+                                self.last_output_ts = datetime.utcnow()
+                                self.last_prefix = prefix
                     else:
-                        # poll is CPU intensive, breath a bit
-                        sleep(timeout)
-        except IOError:
-            err = sys.exc_info()[1]
-            self.error = err
+                        err = self.poller_err.readline(timeout)
+                        code = i3status_pipe.poll()
+                        if code is not None:
+                            if err:
+                                msg = 'i3status died and said: {}'.format(err)
+                            else:
+                                msg = 'i3status died with code {}'.format(code)
+                            raise IOError(msg)
+                        else:
+                            # poll is CPU intensive, breath a bit
+                            sleep(timeout)
+            except IOError:
+                err = sys.exc_info()[1]
+                self.error = err
 
     def mock(self):
         """
