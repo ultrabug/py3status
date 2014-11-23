@@ -110,6 +110,13 @@ class I3status(Thread):
         #
         self.config = self.i3status_config_reader(i3status_config_path)
 
+    def valid_section_name(self, section_name):
+        """
+        Check if a given section name is a valid parameter for i3status.
+        """
+        valid_section_names = self.i3status_module_names + ['general', 'order']
+        return section_name.split(' ')[0] in valid_section_names
+
     def i3status_config_reader(self, i3status_config_path):
         """
         Parse i3status.conf so we can adapt our code to the i3status config.
@@ -124,7 +131,8 @@ class I3status(Thread):
                 'interval': 5,
                 'output_format': 'i3bar'
             },
-            'order': []
+            'order': [],
+            'py3_modules': []
         }
 
         # some ugly parsing
@@ -145,6 +153,8 @@ class I3status(Thread):
                 section_name = line.split('{')[0].strip()
                 if section_name not in config:
                     config[section_name] = {}
+                if not self.valid_section_name(section_name):
+                    config['py3_modules'].append(section_name)
 
             if '{' in line:
                 in_section = True
@@ -228,13 +238,14 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        valid_section_names = self.i3status_module_names + ['general', 'order']
         for section_name, conf in self.config.items():
-            if section_name == 'order':
+            if section_name == 'py3_modules':
+                continue
+            elif section_name == 'order':
                 for module_name in conf:
                     tmpfile.write('order += "%s"\n' % module_name)
                 tmpfile.write('\n')
-            elif section_name.split(' ')[0] in valid_section_names:
+            elif self.valid_section_name(section_name):
                 tmpfile.write('%s {\n' % section_name)
                 for key, value in conf.items():
                     tmpfile.write('    %s = "%s"\n' % (key, value))
@@ -261,7 +272,8 @@ class I3status(Thread):
             self.poller_err = IOPoller(i3status_pipe.stderr)
 
             try:
-                # at first, poll very quickly to avoid delay in first i3bar display
+                # at first, poll very quickly
+                # to avoid delay in first i3bar display
                 timeout = 0.001
 
                 # loop on i3status output
@@ -470,6 +482,20 @@ class Module(Thread):
                 inst = py_mod.Py3status()
         return (mod_name, inst)
 
+    @staticmethod
+    def load_from_namespace(module_name):
+        """
+        Load a py3status bundled module.
+        """
+        inst = None
+        name = 'py3status.modules.{}'.format(module_name)
+        py_mod = __import__(name)
+        components = name.split('.')
+        for comp in components[1:]:
+            py_mod = getattr(py_mod, comp)
+        inst = py_mod.Py3status()
+        return (module_name, inst)
+
     def clear_cache(self):
         """
         Reset the cache for all methods of this module.
@@ -488,7 +514,11 @@ class Module(Thread):
             - 'on_click' methods as they'll be called upon a click_event
             - 'kill' methods as they'll be called upon this thread's exit
         """
-        module, class_inst = self.load_from_file(include_path + f_name)
+        if include_path is not None:
+            module, class_inst = self.load_from_file(include_path + f_name)
+        else:
+            module, class_inst = self.load_from_namespace(f_name)
+
         if module and class_inst:
             self.module_class = class_inst
             for method in sorted(dir(class_inst)):
@@ -642,6 +672,7 @@ class Py3statusWrapper():
         """
         self.modules = []
         self.lock = Event()
+        self.py3_modules = []
 
     def get_config(self):
         """
@@ -785,7 +816,10 @@ class Py3statusWrapper():
             sys.stdout = open('/dev/null', 'w')
             sys.stderr = open('/dev/null', 'w')
 
-        # load and spawn modules threads
+        # get the list of py3status configured modules
+        self.py3_modules = self.i3status_thread.config['py3_modules']
+
+        # load and spawn external modules threads
         for include_path, f_name in self.list_modules():
             try:
                 my_m = Module(
@@ -808,6 +842,25 @@ class Py3statusWrapper():
                 err = sys.exc_info()[1]
                 msg = 'loading {} failed ({})'.format(f_name, err)
                 self.i3_nagbar(msg, level='warning')
+
+        # load and spawn i3status.conf configured modules threads
+        for module_name in self.py3_modules:
+            my_m = Module(
+                self.lock,
+                self.config,
+                None,
+                module_name,
+                self.i3status_thread
+            )
+            # only start and handle modules with available methods
+            if my_m.methods:
+                my_m.start()
+                self.modules.append(my_m)
+            elif self.config['debug']:
+                syslog(
+                    LOG_INFO,
+                    'ignoring {} (no methods found)'.format(f_name)
+                )
 
     def i3_nagbar(self, msg, level='error'):
         """
