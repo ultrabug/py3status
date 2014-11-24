@@ -757,7 +757,10 @@ class Py3statusWrapper():
 
     def list_modules(self):
         """
-        Search import directories and files through given include paths.
+        Search import directories and files through given include paths with
+        respect to i3status.conf configured py3status modules as they take
+        precedence over modules dynamically included from a local folder.
+
         This method is a generator and loves to yield.
         """
         for include_path in sorted(self.config['include_paths']):
@@ -765,6 +768,9 @@ class Py3statusWrapper():
             if os.path.isdir(include_path):
                 for f_name in sorted(os.listdir(include_path)):
                     if f_name.endswith('.py'):
+                        if self.py3_modules:
+                            if f_name.rstrip('.py') not in self.py3_modules:
+                                continue
                         yield (include_path, f_name)
 
     def setup(self):
@@ -823,6 +829,7 @@ class Py3statusWrapper():
         self.py3_modules = self.i3status_thread.config['py3_modules']
 
         # load and spawn external modules threads
+        # based on inclusion folder
         for include_path, f_name in self.list_modules():
             try:
                 my_m = Module(
@@ -848,22 +855,27 @@ class Py3statusWrapper():
 
         # load and spawn i3status.conf configured modules threads
         for module_name in self.py3_modules:
-            my_m = Module(
-                self.lock,
-                self.config,
-                None,
-                module_name,
-                self.i3status_thread
-            )
-            # only start and handle modules with available methods
-            if my_m.methods:
-                my_m.start()
-                self.modules.append(my_m)
-            elif self.config['debug']:
-                syslog(
-                    LOG_INFO,
-                    'ignoring {} (no methods found)'.format(f_name)
+            try:
+                my_m = Module(
+                    self.lock,
+                    self.config,
+                    None,
+                    module_name,
+                    self.i3status_thread
                 )
+                # only start and handle modules with available methods
+                if my_m.methods:
+                    my_m.start()
+                    self.modules.append(my_m)
+                elif self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'ignoring {} (no methods found)'.format(module_name)
+                    )
+            except Exception:
+                err = sys.exc_info()[1]
+                msg = 'loading {} failed ({})'.format(module_name, err)
+                self.i3_nagbar(msg, level='warning')
 
     def i3_nagbar(self, msg, level='error'):
         """
