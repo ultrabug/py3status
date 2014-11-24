@@ -110,12 +110,12 @@ class I3status(Thread):
         #
         self.config = self.i3status_config_reader(i3status_config_path)
 
-    def valid_section_name(self, section_name):
+    def valid_config_param(self, param_name):
         """
         Check if a given section name is a valid parameter for i3status.
         """
-        valid_section_names = self.i3status_module_names + ['general', 'order']
-        return section_name.split(' ')[0] in valid_section_names
+        valid_config_params = self.i3status_module_names + ['general', 'order']
+        return param_name.split(' ')[0] in valid_config_params
 
     def i3status_config_reader(self, i3status_config_path):
         """
@@ -153,8 +153,6 @@ class I3status(Thread):
                 section_name = line.split('{')[0].strip()
                 if section_name not in config:
                     config[section_name] = {}
-                if not self.valid_section_name(section_name):
-                    config['py3_modules'].append(section_name)
 
             if '{' in line:
                 in_section = True
@@ -172,6 +170,10 @@ class I3status(Thread):
                 if section_name == 'order':
                     config[section_name].append(value)
                     line = '}'
+
+                    # detect internal modules to be loaded dynamically
+                    if not self.valid_config_param(value):
+                        config['py3_modules'].append(value)
                 else:
                     config[section_name][key] = value
 
@@ -243,9 +245,10 @@ class I3status(Thread):
                 continue
             elif section_name == 'order':
                 for module_name in conf:
-                    tmpfile.write('order += "%s"\n' % module_name)
+                    if self.valid_config_param(module_name):
+                        tmpfile.write('order += "%s"\n' % module_name)
                 tmpfile.write('\n')
-            elif self.valid_section_name(section_name):
+            elif self.valid_config_param(section_name):
                 tmpfile.write('%s {\n' % section_name)
                 for key, value in conf.items():
                     tmpfile.write('    %s = "%s"\n' % (key, value))
