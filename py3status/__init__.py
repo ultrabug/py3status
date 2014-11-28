@@ -524,6 +524,13 @@ class Module(Thread):
 
         if module and class_inst:
             self.module_class = class_inst
+
+            # apply module configuration from i3status config
+            mod_config = self.i3status_thread.config.get(self.module_name, {})
+            for config, value in mod_config.items():
+                setattr(self.module_class, config, value)
+
+            # get the available methods for execution
             for method in sorted(dir(class_inst)):
                 if method.startswith('_'):
                     continue
