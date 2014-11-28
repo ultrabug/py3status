@@ -163,8 +163,14 @@ class I3status(Thread):
                 key = line.split('=')[0].strip()
                 value = line.split('=')[1].strip()
                 try:
-                    value = eval(value)
+                    e_value = eval(value)
+                    if isinstance(e_value, str) or isinstance(e_value, int):
+                        value = e_value
+                    else:
+                        raise ValueError()
                 except NameError:
+                    pass
+                except ValueError:
                     pass
 
                 if section_name == 'order':
