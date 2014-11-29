@@ -497,7 +497,7 @@ class Module(Thread):
         Load a py3status bundled module.
         """
         inst = None
-        name = 'py3status.modules.{}'.format(module_name)
+        name = 'py3status.modules.{}'.format(module_name.split(' ')[0])
         py_mod = __import__(name)
         components = name.split('.')
         for comp in components[1:]:
@@ -614,18 +614,31 @@ class Module(Thread):
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    position, result = method(
+                    response = method(
                         self.i3status_thread.json_list,
                         self.i3status_thread.config['general']
                     )
 
-                    # validate the result
-                    assert isinstance(result, dict), "should return a dict"
-                    assert 'full_text' in result, "missing 'full_text' key"
-                    assert 'name' in result, "missing 'name' key"
+                    if isinstance(response, dict):
+                        # this is a shiny new module giving a dict response
+                        position, result = None, response
+                        result['name'] = self.module_name.split(' ')[0]
+                        result['instance'] = ''.join(
+                            self.module_name.split(' ')[1:]
+                        )
+                    else:
+                        # this is an old school module reporting its position
+                        position, result = response
+                        if not isinstance(position, int):
+                            raise TypeError('position is not an int')
+                        if not isinstance(result, dict):
+                            raise TypeError('response should be a dict')
+                        if 'name' not in result:
+                            raise KeyError('missing "name" key in response')
 
-                    # validate the position
-                    assert isinstance(position, int), "position is not an int"
+                    # validate the response
+                    if not 'full_text' in result:
+                        raise KeyError('missing "full_text" key in response')
 
                     # initialize method object
                     if my_method['name'] is None:
