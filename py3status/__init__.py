@@ -131,6 +131,7 @@ class I3status(Thread):
                 'interval': 5,
                 'output_format': 'i3bar'
             },
+            'i3s_modules': [],
             'order': [],
             'py3_modules': []
         }
@@ -180,6 +181,8 @@ class I3status(Thread):
                     # detect internal modules to be loaded dynamically
                     if not self.valid_config_param(value):
                         config['py3_modules'].append(value)
+                    else:
+                        config['i3s_modules'].append(value)
                 else:
                     config[section_name][key] = value
 
@@ -241,13 +244,31 @@ class I3status(Thread):
         self.json_list = deepcopy(self.last_output)
         self.json_list_ts = deepcopy(self.last_output_ts)
 
+    def get_modules_output(self, json_list, py3_modules):
+        """
+        Return the final json list to be displayed on the i3bar by taking
+        into account every py3status configured module and i3status'.
+        Simply put, this method honors the initial 'order' configured by
+        the user in his i3status.conf.
+        """
+        ordered = []
+        for module in self.config['order']:
+            if module in py3_modules:
+                for method in py3_modules[module].methods.values():
+                    ordered.append(method['last_output'])
+            else:
+                for m, j in zip(self.config['i3s_modules'], json_list):
+                    if m == module:
+                        ordered.append(j)
+        return ordered
+
     def write_tmp_i3status_config(self, tmpfile):
         """
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
         for section_name, conf in self.config.items():
-            if section_name == 'py3_modules':
+            if section_name in ['i3s_modules', 'py3_modules']:
                 continue
             elif section_name == 'order':
                 for module_name in conf:
@@ -358,7 +379,7 @@ class Events(Thread):
         Thread.__init__(self)
         self.config = config
         self.lock = lock
-        self.modules = modules
+        self.modules = modules.values()
         self.poller_inp = IOPoller(sys.stdin)
 
     def dispatch(self, module, obj, event):
@@ -699,7 +720,7 @@ class Py3statusWrapper():
         """
         Useful variables we'll need.
         """
-        self.modules = []
+        self.modules = {}
         self.lock = Event()
         self.py3_modules = []
 
@@ -868,7 +889,7 @@ class Py3statusWrapper():
                 # only start and handle modules with available methods
                 if my_m.methods:
                     my_m.start()
-                    self.modules.append(my_m)
+                    self.modules[f_name] = my_m
                 elif self.config['debug']:
                     syslog(
                         LOG_INFO,
@@ -892,7 +913,7 @@ class Py3statusWrapper():
                 # only start and handle modules with available methods
                 if my_m.methods:
                     my_m.start()
-                    self.modules.append(my_m)
+                    self.modules[module_name] = my_m
                 elif self.config['debug']:
                     syslog(
                         LOG_INFO,
@@ -942,7 +963,7 @@ class Py3statusWrapper():
         """
         For every module, reset the 'cached_until' of all its methods.
         """
-        for module in self.modules:
+        for module in self.modules.values():
             module.clear_cache()
 
     def get_modules_output(self, json_list):
@@ -955,7 +976,8 @@ class Py3statusWrapper():
         # prepopulate the list so that every usable index exists, thx @Lujeni
         m_list = [
             '' for value in range(
-                sum([len(x.methods) for x in self.modules]) + len(json_list)
+                sum([len(x.methods) for x in self.modules.values()])
+                + len(json_list)
             )
         ]
 
@@ -968,7 +990,7 @@ class Py3statusWrapper():
 
         # run through modules/methods output and insert them in reverse order
         debug_msg = ''
-        for m in reversed(self.modules):
+        for m in reversed(self.modules.values()):
             for meth in m.methods:
                 position = m.methods[meth]['position']
                 last_output = m.methods[meth]['last_output']
@@ -1076,7 +1098,7 @@ class Py3statusWrapper():
                     json_list = self.i3status_thread.adjust_time(delta)
 
                 # check that every module thread is alive
-                for module in self.modules:
+                for module in self.modules.values():
                     if not module.is_alive():
                         # don't spam the user with i3-nagbar warnings
                         if not hasattr(module, 'i3_nagbar'):
@@ -1088,7 +1110,15 @@ class Py3statusWrapper():
 
                 # construct the global output, modules first
                 if self.modules:
-                    json_list = self.get_modules_output(json_list)
+                    if self.py3_modules:
+                        # new style i3status configured ordering
+                        json_list = self.i3status_thread.get_modules_output(
+                            json_list,
+                            self.modules
+                        )
+                    else:
+                        # old style ordering
+                        json_list = self.get_modules_output(json_list)
 
                 # dump the line to stdout
                 print_line('{}{}'.format(prefix, dumps(json_list)))
