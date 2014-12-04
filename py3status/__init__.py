@@ -805,19 +805,26 @@ class Py3statusWrapper():
     def list_modules(self):
         """
         Search import directories and files through given include paths with
-        respect to i3status.conf configured py3status modules as they take
-        precedence over modules dynamically included from a local folder.
+        respect to i3status.conf configured py3status modules.
+
+        User provided modules take precedence over py3status generic modules
+        but if none has been configured then we'll load every file present
+        as this is the legacy behavior.
 
         This method is a generator and loves to yield.
         """
         for include_path in sorted(self.config['include_paths']):
             include_path = os.path.abspath(include_path) + '/'
-            if os.path.isdir(include_path):
-                for f_name in sorted(os.listdir(include_path)):
-                    if f_name.endswith('.py'):
-                        if self.py3_modules:
-                            if f_name.rstrip('.py') not in self.py3_modules:
-                                continue
+            if not os.path.isdir(include_path):
+                continue
+
+            for f_name in sorted(os.listdir(include_path)):
+                if f_name.endswith('.py'):
+                    if self.py3_modules:
+                        mod_name = f_name.rstrip('.py')
+                        if mod_name in self.py3_modules:
+                            yield (include_path, f_name)
+                    else:
                         yield (include_path, f_name)
 
     def setup(self):
@@ -878,6 +885,7 @@ class Py3statusWrapper():
         # load and spawn external modules threads
         # based on inclusion folder
         for include_path, f_name in self.list_modules():
+            module_name = f_name.rstrip('.py')
             try:
                 my_m = Module(
                     self.lock,
@@ -889,7 +897,7 @@ class Py3statusWrapper():
                 # only start and handle modules with available methods
                 if my_m.methods:
                     my_m.start()
-                    self.modules[f_name] = my_m
+                    self.modules[module_name] = my_m
                 elif self.config['debug']:
                     syslog(
                         LOG_INFO,
@@ -902,6 +910,9 @@ class Py3statusWrapper():
 
         # load and spawn i3status.conf configured modules threads
         for module_name in self.py3_modules:
+            # ignore if the user already provided this module
+            if module_name in self.modules:
+                continue
             try:
                 my_m = Module(
                     self.lock,
