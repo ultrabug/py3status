@@ -1,6 +1,3 @@
-import i3
-from time import time
-
 """
 Py3status plugin - shows current window title.
 
@@ -17,9 +14,8 @@ I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 @license Eclipse Public License
 """
 
-CACHE_TIMEOUT = 0.5  # maximum time to update indicator
-MAX_WIDTH = 120  # if width of title is greater, shrink it and add '...'
-POSITION = 0
+import i3
+from time import time
 
 
 def find_focused(tree):
@@ -28,7 +24,6 @@ def find_focused(tree):
             res = find_focused(el)
             if res:
                 return res
-
     elif type(tree) == dict:
         if tree['focused']:
             return tree
@@ -37,6 +32,11 @@ def find_focused(tree):
 
 
 class Py3status:
+
+    # available configuration parameters
+    cache_timeout = 0.5
+    max_width = 120  # if width of title is greater, shrink it and add '...'
+
     def __init__(self):
         self.text = ''
 
@@ -45,14 +45,16 @@ class Py3status:
 
         transformed = False
         if window and 'name' in window and window['name'] != self.text:
-            self.text = len(window['name']) > MAX_WIDTH and "..." + window['name'][-(MAX_WIDTH-3):] or window['name']
+            self.text = (
+                len(window['name']) > self.max_width
+                and "..." + window['name'][-(self.max_width-3):]
+                or window['name']
+            )
             transformed = True
 
         response = {
-            'cached_until': time() + CACHE_TIMEOUT,
+            'cached_until': time() + self.cache_timeout,
             'full_text': self.text,
-            'name': 'window-title',
             'transformed': transformed
         }
-
-        return (POSITION, response)
+        return response
