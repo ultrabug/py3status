@@ -132,6 +132,7 @@ class I3status(Thread):
                 'output_format': 'i3bar'
             },
             'i3s_modules': [],
+            'on_click': {},
             'order': [],
             'py3_modules': []
         }
@@ -184,7 +185,30 @@ class I3status(Thread):
                     else:
                         config['i3s_modules'].append(value)
                 else:
-                    config[section_name][key] = value
+                    if not key.startswith('on_click'):
+                        config[section_name][key] = value
+                    else:
+                        # on_click special parameters
+                        try:
+                            button = int(key.split()[1])
+                            if button not in range(1, 6):
+                                raise ValueError(
+                                    'should be 1, 2, 3, 4 or 5'
+                                )
+                        except IndexError as e:
+                            raise IndexError(
+                                'missing "button id" for "on_click" '
+                                'parameter in section {}'.format(section_name)
+                            )
+                        except ValueError as e:
+                            raise ValueError(
+                                'invalid "button id" '
+                                'for "on_click" parameter '
+                                'in section {} ({})'.format(section_name, e)
+                            )
+                        on_c = config['on_click']
+                        on_c[section_name] = on_c.get(section_name, {})
+                        on_c[section_name][button] = value
 
                     # override time format
                     if section_name in ['time', 'tztime'] and key == 'format':
@@ -372,15 +396,16 @@ class Events(Thread):
     """
     This class is responsible for dispatching event JSONs sent by the i3bar.
     """
-    def __init__(self, lock, config, modules):
+    def __init__(self, lock, config, modules, on_click):
         """
         We need to poll stdin to receive i3bar messages.
         """
         Thread.__init__(self)
         self.config = config
         self.lock = lock
-        self.modules = modules.values()
+        self.modules = modules
         self.poller_inp = IOPoller(sys.stdin)
+        self.on_click = on_click
 
     def dispatch(self, module, obj, event):
         """
@@ -405,13 +430,64 @@ class Events(Thread):
         it will dispatch i3status click events to this module so you can catch
         them and trigger any function call based on the event.
         """
-        for module in self.modules:
+        for module in self.modules.values():
             if not module.click_events:
                 continue
             if module.module_name == 'i3bar_click_events.py':
                 return module
         else:
             return False
+
+    def refresh(self, module_name):
+        """
+        Force a cache expiration for all the methods of the given module.
+        """
+        module = self.modules.get(module_name)
+        if module is not None:
+            if self.config['debug']:
+                syslog(LOG_INFO, 'refresh module {}'.format(module_name))
+            for obj in module.methods.values():
+                obj['cached_until'] = time()
+
+    @staticmethod
+    def refresh_all(module_name):
+        """
+        Force a full refresh of py3status and i3status modules by sending
+        a SIGUSR1 signal to py3status.
+        """
+        Popen(['killall', '-USR1', 'py3status'])
+
+    def on_click_dispatcher(self, module_name, command):
+        """
+        Dispatch on_click config parameters to either:
+            - Our own methods for special py3status commands (listed below)
+            - The i3-msg program which is part of i3wm
+        """
+        py3_commands = ['refresh', 'refresh_all']
+        if command is None:
+            return
+        elif command in py3_commands:
+            # this is a py3status command handled by this class
+            method = getattr(self, command)
+            method(module_name)
+        else:
+            # this is a i3 message
+            self.i3_msg(module_name, command)
+
+    @staticmethod
+    def i3_msg(module_name, command):
+        """
+        Execute the given i3 message and log its output.
+        """
+        i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
+        syslog(
+            LOG_INFO,
+            'i3-msg module={} command="{}" stdout={}'.format(
+                module_name,
+                command,
+                i3_msg_pipe.stdout.read()
+            )
+        )
 
     def run(self):
         """
@@ -435,13 +511,28 @@ class Events(Thread):
                     if self.config['debug']:
                         syslog(LOG_INFO, 'received event {}'.format(event))
 
-                    # setup default action on button 2 press
+                    # usage variables
+                    button = event.get('button', 0)
                     default_event = False
                     dispatched = False
-                    if 'button' in event and event['button'] == 2:
+                    instance = event.get('instance', '')
+                    name = event.get('name', '')
+
+                    # guess the module config name
+                    module_name = '{} {}'.format(name, instance).strip()
+
+                    # execute any configured i3-msg command
+                    if self.on_click.get(module_name, {}).get(button):
+                        self.on_click_dispatcher(
+                            module_name,
+                            self.on_click[module_name].get(button)
+                        )
+                        dispatched = True
+                    # otherwise setup default action on button 2 press
+                    elif button == 2:
                         default_event = True
 
-                    for module in self.modules:
+                    for module in self.modules.values():
                         # skip modules not supporting click_events
                         # unless we have a default_event set
                         if not module.click_events and not default_event:
@@ -449,9 +540,9 @@ class Events(Thread):
 
                         # check for the method name/instance
                         for obj in module.methods.values():
-                            if event['name'] == obj['name']:
-                                if 'instance' in event:
-                                    if event['instance'] == obj['instance']:
+                            if name == obj['name']:
+                                if instance:
+                                    if instance == obj['instance']:
                                         self.dispatch(module, obj, event)
                                         dispatched = True
                                         break
@@ -869,7 +960,12 @@ class Py3statusWrapper():
             )
 
         # setup input events thread
-        self.events_thread = Events(self.lock, self.config, self.modules)
+        self.events_thread = Events(
+            self.lock,
+            self.config,
+            self.modules,
+            self.i3status_thread.config['on_click']
+        )
         self.events_thread.start()
         if self.config['debug']:
             syslog(LOG_INFO, 'events thread started')
