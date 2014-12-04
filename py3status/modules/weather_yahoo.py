@@ -1,47 +1,51 @@
 # -*- coding: utf-8 -*-
+"""
+Display current day + 3 days weather forecast as icons on your i3bar
+Based on Yahoo! Weather. forecast, thanks guys !
+    http://developer.yahoo.com/weather/
+
+Find your city code using:
+    http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
+
+The city_code in this example is for Paris, France => FRXX0076
+"""
+
 from time import time
 import requests
 
 
 class Py3status:
-    """
-    Display current day + 3 days weather forecast as icons on your i3bar
-    Based on Yahoo! Weather. forecast, thanks guys !
-    See: http://developer.yahoo.com/weather/
-    """
-    def __init__(self):
-        """
-        Basic configuration
-        Find your city code using:
-            http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
-        The city_code in this example is for Paris, France
-        """
-        self.cache_timeout = 1800
-        self.city_code = 'FRXX0076'
-        self.request_timeout = 10
+
+    # available configuration parameters
+    cache_timeout = 1800
+    city_code = 'FRXX0076'
+    forecast_days = 3
+    request_timeout = 10
 
     def _get_forecast(self):
         """
         Ask Yahoo! Weather. for a forecast
         """
-        r = requests.get(
-            'http://query.yahooapis.com/v1/public/yql?q=select item from weather.forecast where location="%s"&format=json' % self.city_code,
+        q = requests.get(
+            'http://query.yahooapis.com/v1/public/yql?q=' +
+            'select item from weather.forecast ' +
+            'where location="%s"&format=json' % self.city_code,
             timeout=self.request_timeout
         )
 
-        result = r.json()
-        status = r.status_code
+        r = q.json()
+        status = q.status_code
         forecasts = []
 
         if status == 200:
-            forecasts = result['query']['results']['channel']['item']['forecast']
+            forecasts = r['query']['results']['channel']['item']['forecast']
             # reset today
-            forecasts[0] = result['query']['results']['channel']['item']['condition']
+            forecasts[0] = r['query']['results']['channel']['item']['condition']
         else:
             raise Exception('got status {}'.format(status))
 
-        # return current today + 3 days forecast
-        return forecasts[:4]
+        # return current today + forecast_days days forecast
+        return forecasts[:self.forecast_days + 1]
 
     def _get_icon(self, forecast):
         """
@@ -93,9 +97,8 @@ class Py3status:
         """
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': '',
-            'name': 'weather_yahoo'
-            }
+            'full_text': ''
+        }
 
         forecasts = self._get_forecast()
         for forecast in forecasts:
@@ -103,4 +106,4 @@ class Py3status:
             response['full_text'] += '{} '.format(icon)
         response['full_text'] = response['full_text'].strip()
 
-        return (0, response)
+        return response
