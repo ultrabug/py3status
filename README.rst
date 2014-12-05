@@ -69,6 +69,12 @@ Thanks to @waaaaargh, py3status is present in the Arch User Repository using thi
 ::
     https://aur.archlinux.org/packages/py3status-git/
 
+Fedora
+------
+Using yum:
+::
+    $ yum install py3status
+
 Options
 =======
 You can see the help of py3status by issuing `py3status -h`:
