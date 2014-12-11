@@ -9,7 +9,8 @@ py3status
 
 Using py3status, you can take control of your i3bar easily by:
 
-- writing your own modules and have their output displayed on your bar
+- using one of the availables modules shipped with py3status
+- writing your own module and have their output displayed on your bar
 - handling click events on your i3bar and play with them in no time
 - seeing your clock tick every second whatever your i3status interval
 
@@ -21,6 +22,14 @@ See the wiki for up to date documentation:
 
 - https://github.com/ultrabug/py3status/wiki
 
+Learn how to easily **handle i3bar click events** directly from your i3status config:
+
+- https://github.com/ultrabug/py3status/wiki/Handle-click-events-directly-from-your-i3status-config
+
+Learn how to **extend your current i3status config** to easily interact with your i3bar:
+
+- https://github.com/ultrabug/py3status/wiki/Configure-your-modules-directly-from-your-current-i3status-config
+
 Learn how to write your own modules:
 
 - https://github.com/ultrabug/py3status/wiki/Write-your-own-modules
@@ -28,16 +37,6 @@ Learn how to write your own modules:
 Get help or share your ideas on IRC:
 
 - channel **#py3status** on **FreeNode**
-
-Requirements
-============
-You **must** set the `output_format` to `i3bar` in the general section of your i3status.conf:
-::
-    general {
-        colors = true
-        interval = 5
-        output_format = "i3bar"
-    }
 
 Usage
 =====
@@ -48,6 +47,12 @@ In your i3 config file, simply switch from `i3status` to `py3status` in your `st
 Usually you have your own i3status configuration, just point to it:
 ::
     status_command py3status -c ~/.i3/i3status.conf
+
+Available modules
+=================
+All the modules shipped with py3status are present in the sources in the `py3status/modules` folder.
+
+Most of them are **configurable directly from your current i3status.conf**, check them out to see all the configurable variables.
 
 Installation
 ============
@@ -91,7 +96,7 @@ You can see the help of py3status by issuing `py3status -h`:
 
 Control
 =======
-Just like i3status, you can force an update by sending a SIGUSR1 signal to py3status.
+Just like i3status, you can force an update of your i3bar by sending a SIGUSR1 signal to py3status.
 Note that this will also send a SIGUSR1 signal to i3status.
 ::
     killall -USR1 py3status
