@@ -91,7 +91,7 @@ class Py3status:
 
         return icons[code]
 
-    def weather_yahoo(self, json, i3status_config):
+    def weather_yahoo(self, i3s_output_list, i3s_config):
         """
         This method gets executed by py3status
         """

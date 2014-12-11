@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Simply output the currently logged in user in i3bar.
 
@@ -14,7 +15,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1800
 
-    def whoami(self, i3status_output_json, i3status_config):
+    def whoami(self, i3s_output_list, i3s_config):
         """
         We use the getpass module to get the current user.
         """

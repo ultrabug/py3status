@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Py3status plugin - shows current window title.
 
@@ -40,7 +41,7 @@ class Py3status:
     def __init__(self):
         self.text = ''
 
-    def window_title(self, i3_status_output_json, i3status_config):
+    def window_title(self, i3s_output_list, i3s_config):
         window = find_focused(i3.get_tree())
 
         transformed = False
