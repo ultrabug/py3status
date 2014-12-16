@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-
-import i3
-from time import time
-
 """
 Module showing amount of windows at the scratchpad.
 
@@ -10,10 +6,8 @@ Module showing amount of windows at the scratchpad.
 @license Eclipse Public License
 """
 
-CACHE_TIMEOUT = 5
-HIDE_WHEN_NONE = False  # hide indicator when there is no windows
-POSITION = 0
-STRFORMAT = "{} ⌫"  # format of indicator. {} replaces with count of windows
+import i3
+from time import time
 
 
 def find_scratch(tree):
@@ -28,6 +22,12 @@ def find_scratch(tree):
 
 
 class Py3status:
+
+    # available configuration parameters
+    cache_timeout = 5
+    format = "{} ⌫"  # format of indicator. {} replaces with count of windows
+    hide_when_none = False  # hide indicator when there is no windows
+
     def __init__(self):
         self.count = -1
 
@@ -41,10 +41,12 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': time() + CACHE_TIMEOUT,
-            'full_text': '' if HIDE_WHEN_NONE and count == 0 else STRFORMAT.format(count),
-            'name': 'scratchpad-counter',
+            'cached_until': time() + self.cache_timeout,
             'transformed': transformed
         }
+        if self.hide_when_none and count == 0:
+            response['full_text'] = ''
+        else:
+            response['full_text'] = self.format.format(count)
 
-        return (POSITION, response)
+        return response
