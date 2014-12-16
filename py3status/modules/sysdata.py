@@ -1,31 +1,14 @@
 # -*- coding: utf-8 -*-
+"""
+Sysdata is a module used to display system information (RAM usage)
+in i3bar (Linux systems).
 
-# sysdata
+NOTE: If you want py3status to show you your CPU temperature,
+change value of CPUTEMP into True in Py3status class - CPUInfo function
+and REMEMBER that you must install lm_sensors if you want CPU temp!
 
-# Sysdata is a module uses great Py3status (i3status wrapper) to
-# display system information (RAM usage) in i3bar (Linux systems).
-# For more information read:
-# i3wm homepage: http://i3wm.org
-# py3status homepage: https://github.com/ultrabug/py3status
-
-# NOTE: If you want py3status to show you your CPU temperature, change value of CPUTEMP into True
-# in Py3status class - CPUInfo function 
-# and REMEMBER that you must install lm_sensors if you want CPU temp!
-
-# Copyright (C) <2013> <Shahin Azad [ishahinism at Gmail]>
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+Copyright (C) <2013> <Shahin Azad [ishahinism at Gmail]>
+"""
 
 import subprocess
 from time import time
@@ -33,7 +16,6 @@ from time import time
 
 class GetData:
     """Get system status
-
     """
     def execCMD(self, cmd, arg):
         """Take a system command and its argument, then return the result.
@@ -59,8 +41,8 @@ class GetData:
         - guest: running a normal guest
         - guest_nice: running a niced guest
         These numbers identify the amount of time the CPU has spent performing
-        different kinds of work.  Time units are in USER_HZ (typically hundredths of a
-        second)
+        different kinds of work.  Time units are in USER_HZ
+        (typically hundredths of a second)
         """
         with open('/proc/stat', 'r') as fd:
             line = fd.readline()
@@ -89,60 +71,70 @@ class GetData:
 
 
 class Py3status:
-    """
-    System status in i3bar
-    """
+
+    # available configuration parameters
+    cache_timeout = 10
+    med_threshold = 40
+    high_threshold = 75
+
     def __init__(self):
         self.data = GetData()
         self.cpu_total = 0
         self.cpu_idle = 0
 
-    def cpuInfo(self, json, i3status_config):
-        """calculate the CPU status and return it.
-
+    def cpuInfo(self, i3s_output_list, i3s_config):
+        """Calculate the CPU status and return it.
         """
-        response = {'full_text': '', 'name': 'cpu_usage'}
+        response = {'full_text': ''}
         cpu_total, cpu_idle = self.data.cpu()
-        used_cpu_percent = 1 - float(cpu_idle-self.cpu_idle)/float(cpu_total-self.cpu_total)
+        used_cpu_percent = 1 - (
+            float(cpu_idle-self.cpu_idle)/float(cpu_total-self.cpu_total)
+            )
         self.cpu_total = cpu_total
         self.cpu_idle = cpu_idle
 
-        if used_cpu_percent <= 40/100.0:
-            response['color'] = i3status_config['color_good']
-        elif used_cpu_percent <= 75/100.0:
-            response['color'] = i3status_config['color_degraded']
+        if used_cpu_percent <= self.med_threshold/100.0:
+            response['color'] = i3s_config['color_good']
+        elif used_cpu_percent <= self.high_threshold/100.0:
+            response['color'] = i3s_config['color_degraded']
         else:
-            response['color'] = i3status_config['color_bad']
+            response['color'] = i3s_config['color_bad']
         #cpu temp
-        CPUTEMP=False
+        CPUTEMP = False
         if CPUTEMP:
-                cputemp=subprocess.check_output('sensors | grep "CPU Temp" | cut -f 2 -d "+" | cut -f 1 -d " "',shell=True)
-                cputemp=cputemp[:-1].decode('utf-8')
-                response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100) +" "+cputemp
+            cputemp = subprocess.check_output(
+                'sensors | grep "CPU Temp" | cut -f2 -d"+" | cut -f1 -d" "',
+                shell=True
+            )
+            cputemp = cputemp[:-1].decode('utf-8')
+            response['full_text'] = "CPU: %.2f%% %s" % (
+                used_cpu_percent*100,
+                cputemp
+            )
         else:
-             	response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
+            response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
+        response['cached_until'] = time() + self.cache_timeout
 
-        #cache the status for 10 seconds
-        response['cached_until'] = time() + 10
+        return response
 
-        return (0, response)
-
-    def ramInfo(self, json, i3status_config):
-        """calculate the memory (RAM) status and return it.
-
+    def ramInfo(self, i3s_output_list, i3s_config):
+        """Calculate the memory (RAM) status and return it.
         """
-        response = {'full_text': '', 'name': 'ram_info'}
+        response = {'full_text': ''}
         total_mem, used_mem, used_mem_percent = self.data.memory()
 
-        if used_mem_percent <= 40:
-            response['color'] = i3status_config['color_good']
-        elif used_mem_percent <= 75:
-            response['color'] = i3status_config['color_degraded']
+        if used_mem_percent <= self.med_threshold:
+            response['color'] = i3s_config['color_good']
+        elif used_mem_percent <= self.high_threshold:
+            response['color'] = i3s_config['color_degraded']
         else:
-            response['color'] = i3status_config['color_bad']
+            response['color'] = i3s_config['color_bad']
 
-        response['full_text'] = "RAM: %.2f/%.2f GB (%d%%)" % \
-                                (used_mem, total_mem, used_mem_percent)
-        response['cached_until'] = time()
+        response['full_text'] = "RAM: %.2f/%.2f GB (%d%%)" % (
+            used_mem,
+            total_mem,
+            used_mem_percent
+        )
+        response['cached_until'] = time() + self.cache_timeout
 
-        return (0, response)
+        return response
