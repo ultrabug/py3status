@@ -1,23 +1,54 @@
+"""
+Empty and basic py3status class.
+
+NOTE: py3status will NOT execute:
+    - methods starting with '_'
+    - methods decorated by @property and @staticmethod
+
+NOTE: reserved method names:
+    - 'kill' method for py3status exit notification
+    - 'on_click' method for click events from i3bar (read below please)
+"""
+
+# import your useful libs here
+from time import time
+
+
 class Py3status:
     """
-    Empty and basic py3status class.
+    The Py3status class name is mendatory.
 
-    NOTE: py3status will NOT execute:
-        - methods starting with '_'
-        - methods decorated by @property and @staticmethod
+    Below you list all the available configuration parameters and their
+    default value for your module which can be overwritten by users
+    directly from their i3status config.
 
-    NOTE: reserved method names:
-        - 'kill' method for py3status exit notification
-        - 'on_click' method for click events from i3bar
+    This examples features only one parameter which is 'cache_timeout'
+    and is set to 10 seconds (0 would mean no cache).
     """
-    def kill(self, i3status_output_json, i3status_config):
+
+    # available configuration parameters
+    cache_timeout = 10
+
+    def __init__(self):
+        """
+        This is the class constructor which will be executed once.
+        """
+        pass
+
+    def kill(self, i3s_output_list, i3s_config):
         """
         This method will be called upon py3status exit.
         """
         pass
 
-    def on_click(self, i3status_output_json, i3status_config, event):
+    def on_click(self, i3s_output_list, i3s_config, event):
         """
+        This method should only be used for ADVANCED and very specific usages.
+
+        Read the 'Handle click events directly from your i3status config'
+        article from the py3status wiki:
+            https://github.com/ultrabug/py3status/wiki/
+
         This method will be called when a click event occurs on this module's
         output on the i3bar.
 
@@ -26,7 +57,7 @@ class Py3status:
         """
         pass
 
-    def empty(self, i3status_output_json, i3status_config):
+    def empty(self, i3s_output_list, i3s_config):
         """
         This method will return an empty text message
         so it will NOT be displayed on your i3bar.
@@ -37,5 +68,8 @@ class Py3status:
         See the i3bar protocol spec for more information:
         http://i3wm.org/docs/i3bar-protocol.html
         """
-        response = {'full_text': '', 'name': 'empty', 'instance': 'first'}
-        return (0, response)
+        response = {
+            'cached_until': time() + self.cache_timeout,
+            'full_text': ''
+        }
+        return response
