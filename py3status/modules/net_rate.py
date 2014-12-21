@@ -1,9 +1,4 @@
 # -*- coding: utf8 -*-
-
-from __future__ import division  # python2 compatibility
-from time import time, sleep
-
-
 """
 Module for displaying current network transfer rate.
 
@@ -11,99 +6,67 @@ Module for displaying current network transfer rate.
 @license Eclipse Public License
 """
 
-CACHED_TIME = 2  # update time (in seconds)
-POSITION = 0  # bar position
-
-DEVFILE = "/proc/net/dev"  # location of dev file under /proc
-
-INTERFACES = []  # list of interfaces to track
-ALL_INTERFACES = True  # ignore INTERFACES, but not INTERFACES_BLACKLIST
-INTERFACES_BLACKLIST = ["lo"]  # list of interfaces to ignore
-
-"""
-Format of status string.
-
-Placeholders:
-    interface - name of interface
-    total - total rate
-    up - upload rate
-    down - download rate
-"""
-FORMAT = "{interface}: {total}"
-
-PRECISION = 1  # amount of numbers after dot
-MULTIPLIER_TOP = 999  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-LEFT_ALIGN = len(str(MULTIPLIER_TOP)) + 1 + PRECISION  # == 6 characters (from MULTIPLIER_TOP + dot + PRECISION)
-
-"""
-Format of total, up and down placeholders under FORMAT.
-As default, substitutes LEFT_ALIGN and PRECISION as %s and %s
-Placeholders:
-    value - value (float)
-    unit - unit (string)
-
-"""
-VALUE_FORMAT = "{value:%s.%sf} {unit}" % (LEFT_ALIGN, PRECISION)
+from __future__ import division  # python2 compatibility
+from time import time
 
 INITIAL_MULTI = 1024  # initial multiplier, if you want to get rid of first bytes, set to 1 to disable
+MULTIPLIER_TOP = 999  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
 UNIT_MULTI = 1024  # value to divide if rate is greater than MULTIPLIER_TOP
 UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]  # list of units, first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
 
-NO_CONNECTION = "! no data"  # when there is no data transmitted from the start of the plugin
-HIDE_IF_NO = False  # hide indicator if rate == 0
-
-
-def get_stat():
-    """
-    Get statistics from devfile in list of lists of words
-    """
-    def dev_filter(x):
-        # get first word and remove trailing interface number
-        x = x.strip().split(" ")[0][:-1]
-
-        if x in INTERFACES_BLACKLIST:
-            return False
-
-        if ALL_INTERFACES:
-            return True
-
-        if x in INTERFACES:
-            return True
-
-        return False
-
-    # read devfile, skip two header files
-    x = filter(dev_filter, open(DEVFILE).readlines()[2:])
-
-    try:
-        # split info into words, filter empty ones
-        return [list(filter(lambda x: x, _x.split(" "))) for _x in x]
-
-    except StopIteration:
-        return None
-
-
-def divide_and_format(value):
-    """
-    Divide a value and return formatted string
-    """
-    for i, unit in enumerate(UNITS):
-        if value > MULTIPLIER_TOP:
-            value /= UNIT_MULTI
-        else:
-            break
-
-    return VALUE_FORMAT.format(value=value, unit=unit)
-
 
 class Py3status:
-    def __init__(self, *args, **kwargs):
-        self.last_stat = get_stat()
-        self.last_time = time()
-        self.last_interface = None
+    """
+    Confiuration parameters:
+        - all_interfaces : ignore self.interfaces, but not self.interfaces_blacklist
+        - devfile : location of dev file under /proc
+        - format_no_connection : when there is no data transmitted from the start of the plugin
+        - hide_if_zero : hide indicator if rate == 0
+        - interfaces : comma separated list of interfaces to track
+        - interfaces_blacklist : comma separated list of interfaces to ignore
+        - precision : amount of numbers after dot
 
-    def currentSpeed(self, json, i3status_config):
-        ns = get_stat()
+    Format of status string placeholders:
+        interface - name of interface
+        total - total rate
+        up - upload rate
+        down - download rate
+    """
+
+    # available configuration parameters
+    all_interfaces = True
+    cache_timeout = 2
+    devfile = '/proc/net/dev'
+    format = "{interface}: {total}"
+    format_no_connection = ''
+    hide_if_zero = False
+    interfaces = ''
+    interfaces_blacklist = 'lo'
+    precision = 1
+
+    def __init__(self, *args, **kwargs):
+        """
+        Format of total, up and down placeholders under self.format.
+        As default, substitutes self.left_align and self.precision as %s and %s
+        Placeholders:
+            value - value (float)
+            unit - unit (string)
+        """
+        self.last_interface = None
+        self.last_stat = self._get_stat()
+        self.last_time = time()
+        # == 6 characters (from MULTIPLIER_TOP + dot + self.precision)
+        self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
+        self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
+
+    def currentSpeed(self, i3s_output_list, i3s_config):
+        # parse some configuration parameters
+        if not isinstance(self.interfaces, list):
+            self.interfaces = self.interfaces.split(',')
+        if not isinstance(self.interfaces_blacklist, list):
+            self.interfaces_blacklist = self.interfaces_blacklist.split(',')
+
+        ns = self._get_stat()
         deltas = {}
         try:
             # time from previous check
@@ -120,7 +83,7 @@ class Py3status:
                 deltas[new[0]] = {'total': up+down, 'up': up, 'down': down, }
 
             # update last_ info
-            self.last_stat = get_stat()
+            self.last_stat = self._get_stat()
             self.last_time = time()
 
             # get the interface with max rate
@@ -129,7 +92,7 @@ class Py3status:
             # if there is no rate - show last active interface, or hide
             if deltas[interface]['total'] == 0:
                 interface = self.last_interface
-                hide = HIDE_IF_NO
+                hide = self.hide_if_zero
             # if there is - update last_interface
             else:
                 self.last_interface = interface
@@ -141,23 +104,66 @@ class Py3status:
         except TypeError:
             delta = None
             interface = None
-            hide = HIDE_IF_NO
+            hide = self.hide_if_zero
 
-        return (POSITION, {
-                'transformed': True,
-                'full_text': "" if hide else
-                FORMAT.format(
-                    total=divide_and_format(delta['total']),
-                    up=divide_and_format(delta['up']),
-                    down=divide_and_format(delta['down']),
-                    interface=interface[:-1],
-                ) if interface else NO_CONNECTION,
-                'name': 'speed',
-                'cached_until': time() + CACHED_TIME,
-                })
+        return {
+            'cached_until': time() + self.cache_timeout,
+            'full_text': "" if hide else
+            self.format.format(
+                total=self._divide_and_format(delta['total']),
+                up=self._divide_and_format(delta['up']),
+                down=self._divide_and_format(delta['down']),
+                interface=interface[:-1],
+            ) if interface else self.format_no_connection
+        }
+
+    def _get_stat(self):
+        """
+        Get statistics from devfile in list of lists of words
+        """
+        def dev_filter(x):
+            # get first word and remove trailing interface number
+            x = x.strip().split(" ")[0][:-1]
+
+            if x in self.interfaces_blacklist:
+                return False
+
+            if self.all_interfaces:
+                return True
+
+            if x in self.interfaces:
+                return True
+
+            return False
+
+        # read devfile, skip two header files
+        x = filter(dev_filter, open(self.devfile).readlines()[2:])
+
+        try:
+            # split info into words, filter empty ones
+            return [list(filter(lambda x: x, _x.split(" "))) for _x in x]
+
+        except StopIteration:
+            return None
+
+    def _divide_and_format(self, value):
+        """
+        Divide a value and return formatted string
+        """
+        for i, unit in enumerate(UNITS):
+            if value > MULTIPLIER_TOP:
+                value /= UNIT_MULTI
+            else:
+                break
+
+        return self.value_format.format(value=value, unit=unit)
 
 if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
     x = Py3status()
     while True:
-        print(x.currentSpeed(1, 1))
+        print(x.currentSpeed([], {}))
         sleep(1)
