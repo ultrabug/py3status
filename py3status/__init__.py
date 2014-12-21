@@ -1041,7 +1041,7 @@ class Py3statusWrapper():
         try:
             log_level = LOG_ERR if level == 'error' else LOG_WARNING
             syslog(log_level, msg)
-            call(
+            Popen(
                 ['i3-nagbar', '-m', msg, '-t', level],
                 stdout=open('/dev/null', 'w'),
                 stderr=open('/dev/null', 'w')
