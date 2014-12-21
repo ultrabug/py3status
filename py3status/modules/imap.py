@@ -1,8 +1,4 @@
 # -*- coding: utf8 -*-
-
-from time import time
-import imaplib
-
 """
 Module displaying the number of unread messages
 on an IMAP inbox (configurable).
@@ -10,40 +6,39 @@ on an IMAP inbox (configurable).
 @author obb
 """
 
+import imaplib
+from time import time
+
 
 class Py3status:
 
-    def __init__(self):
-        self.service_name = 'Mail'
-        self.imap_server = '<IMAP_SERVER>'
-        self.port = '993'
+    # available configuration parameters
+    cache_timeout = 60
+    criterion = 'UNSEEN'
+    imap_server = '<IMAP_SERVER>'
+    mailbox = 'INBOX'
+    name = 'Mail'
+    password = '<PASSWORD>'
+    port = '993'
+    user = '<USERNAME>'
 
-        self.user = '<USERNAME>'
-        self.password = '<PASSWORD>'
-
-        self.mailbox = 'INBOX'
-        self.criterion = 'UNSEEN'
-
-        self.check_frequency = 60
-
-    def check_mail(self, json, i3status_config):
+    def check_mail(self, i3s_output_list, i3s_config):
         mail_count = self._get_mail_count()
 
         response = {
-            'name': self.service_name + '_checker',
-            'full_text': '{}: {}'.format(self.service_name, mail_count),
-            'cached_until': time() + self.check_frequency
+            'cached_until': time() + self.cache_timeout,
+            'full_text': '{}: {}'.format(self.name, mail_count)
         }
 
-        new_mail_color = i3status_config['color_good']
-        check_failed_color = i3status_config['color_bad']
+        new_mail_color = i3s_config['color_good']
+        check_failed_color = i3s_config['color_bad']
 
         if mail_count == 'N/A':
             response['color'] = check_failed_color
         elif mail_count != '0':
             response['color'] = new_mail_color
 
-        return (0, response)
+        return response
 
     def _get_mail_count(self):
         try:
@@ -56,3 +51,13 @@ class Py3status:
             return mail_count
         except:
             return 'N/A'
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.check_mail([], {}))
+        sleep(1)
