@@ -1,34 +1,48 @@
+# -*- coding: utf-8 -*-
+"""
+This module launch a simple query on each nameservers for the specified domain.
+Nameservers are dynamically retrieved. The FQDN is the only one mandatory parameter.
+It's also possible to add additional nameservers by appending them in nameservers list.
+
+The default resolver can be overwritten with my_resolver.nameservers parameter.
+
+Written and contributed by @nawadanp
+"""
+
 import dns.resolver
 import socket
 
 
 class Py3status:
     """
-    This module launch a simple query on each nameservers for the specified domain.
-    Nameservers are dynamically retrieved. The FQDN is the only one mandatory parameter.
-    It's also possible to add additional nameservers by appending them in nameservers list.
-
-    The default resolver can be overwritten with my_resolver.nameservers parameter.
-
-    Written and contributed by @nawadanp
+    Configuration parameters:
+        - domain : domain name to check
+        - lifetime : resolver lifetime
+        - nameservers : comma separated list of reference DNS nameservers
+        - resolvers : comma separated list of DNS resolvers to use
     """
-    def __init__(self):
-        self.domain = 'google.com'
-        self.lifetime = 0.3
-        self.resolver = []
-        self.nameservers = []
+    # available configuration parameters
+    domain = ''
+    lifetime = 0.3
+    nameservers = ''
+    resolvers = ''
 
-    def ns_checker(self, i3status_output_json, i3status_config):
-        response = {'full_text': '', 'name': 'ns_checker'}
-        position = 0
+    def ns_checker(self, i3s_output_list, i3s_config):
+        response = {'full_text': ''}
         counter = 0
         error = False
         nameservers = []
 
+        # parse some configuration parameters
+        if not isinstance(self.nameservers, list):
+            self.nameservers = self.nameservers.split(',')
+        if not isinstance(self.resolvers, list):
+            self.resolvers = self.resolvers.split(',')
+
         my_resolver = dns.resolver.Resolver()
         my_resolver.lifetime = self.lifetime
-        if self.resolver:
-            my_resolver.nameservers = self.resolver
+        if self.resolvers:
+            my_resolver.nameservers = self.resolvers
 
         my_ns = my_resolver.query(self.domain, 'NS')
 
@@ -49,9 +63,19 @@ class Py3status:
 
         if error:
             response['full_text'] = str(counter) + ' NS NOK'
-            response['color'] = i3status_config['color_bad']
+            response['color'] = i3s_config['color_bad']
         else:
             response['full_text'] = str(counter) + ' NS OK'
-            response['color'] = i3status_config['color_good']
+            response['color'] = i3s_config['color_good']
 
-        return (position, response)
+        return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.ns_checker([], {}))
+        sleep(1)
