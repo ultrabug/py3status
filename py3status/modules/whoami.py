@@ -28,3 +28,13 @@ class Py3status:
             'full_text': username
         }
         return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.whoami([], {}))
+        sleep(1)
