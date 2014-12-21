@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Empty and basic py3status class.
 
@@ -73,3 +74,13 @@ class Py3status:
             'full_text': ''
         }
         return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.empty([], {}))
+        sleep(1)
