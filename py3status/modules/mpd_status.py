@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
-
-import re
-
-from mpd import (MPDClient, CommandError)
-from socket import error as SocketError
-from time import time
-
 """
-Mpd - module to show information from mpd to your's bar! Settings listed above.
+Mpd - module to show information from mpd in your i3bar.
 Reequires
     - python-mpd2 (NOT python2-mpd2)
     # pip install python-mpd2
@@ -16,58 +9,62 @@ Reequires
 @license Eclipse Public License
 """
 
-# mpd settings
-HOST = "localhost"
-PORT = "6600"
-PASSWORD = None
+import re
+from mpd import (MPDClient, CommandError)
+from socket import error as SocketError
+from time import time
 
-# time to update
-CACHE_TIMEOUT = 1
-
-# position
-POSITION = 0
-
-# if text length will be greater - it'll shrink it
-MAX_WIDTH = 120
-
-# hide any indicator, if
-HIDE_WHEN_PAUSED = False
-HIDE_WHEN_STOPPED = True
-
-# state characters (or strings). Actual of them replaces {state} placeholder in STRFORMAT
+# state characters (or strings). Actual of them replaces {state} placeholder in self.format
 STATE_CHARACTERS = {
     "pause": "[pause]",
     "play": "[play]",
     "stop": "[stop]",
 }
 
-""" format of result string
-can contain:
-    {state} - current state from STATE_CHARACTERS
-    Track information:
-    {track}, {artist}, {title}, {time}, {album}, {pos}
-    In additional, information about next track also comes in, in analogue with current, but with next_ prefix,
-    like {next_title}
-"""
-STRFORMAT = "{state} №{pos}. {artist} - {title} [{time}] | {next_title}"
-
 
 class Py3status:
+    """
+    Configuration parameters:
+        - format : indicator text format
+        - hide_when_paused / hide_when_stopped : hide any indicator, if
+        - host : mpd host
+        - max_width : if text length will be greater - it'll shrink it
+        - password : mpd password
+        - port : mpd port
+
+    Format of result string can contain:
+        {state} - current state from STATE_CHARACTERS
+        Track information:
+        {track}, {artist}, {title}, {time}, {album}, {pos}
+        In additional, information about next track also comes in,
+        in analogue with current, but with next_ prefix, like {next_title}
+    """
+
+    # available configuration parameters
+    cache_timeout = 2
+    format = '{state} №{pos}. {artist} - {title} [{time}] | {next_title}'
+    hide_when_paused = False
+    hide_when_stopped = True
+    host = 'localhost'
+    max_width = 120
+    password = None
+    port = '6600'
+
     def __init__(self):
         self.text = ''
 
-    def currentTrack(self, i3status_output_json, i3status_config):
+    def current_track(self, i3s_output_list, i3s_config):
         try:
             c = MPDClient()
-            c.connect(host=HOST, port=PORT)
-            if PASSWORD:
-                c.password(PASSWORD)
+            c.connect(host=self.host, port=self.port)
+            if self.password:
+                c.password(self.password)
 
             status = c.status()
             song = int(status.get("song", 0))
             next_song = int(status.get("nextsong", 0))
 
-            if (status["state"] == "pause" and HIDE_WHEN_PAUSED) or (status["state"] == "stop" and HIDE_WHEN_STOPPED):
+            if (status["state"] == "pause" and self.hide_when_paused) or (status["state"] == "stop" and self.hide_when_stopped):
                 text = ""
             else:
                 try:
@@ -86,7 +83,7 @@ class Py3status:
                 for k, v in next_song.items():
                     format_args["next_{}".format(k)] = v
 
-                text = STRFORMAT
+                text = self.format
                 for k, v in format_args.items():
                     text = text.replace("{" + k + "}", v)
 
@@ -98,8 +95,8 @@ class Py3status:
             text = "Failed to authenticate to mpd!"
             c.disconnect()
 
-        if len(text) > MAX_WIDTH:
-            text = text[-MAX_WIDTH-3:] + "..."
+        if len(text) > self.max_width:
+            text = text[-self.max_width-3:] + "..."
 
         if self.text != text:
             transformed = True
@@ -108,10 +105,19 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': time() + CACHE_TIMEOUT,
+            'cached_until': time() + self.cache_timeout,
             'full_text': self.text,
-            'name': 'scratchpad-count',
             'transformed': transformed
         }
 
-        return (POSITION, response)
+        return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.current_track([], {}))
+        sleep(1)
