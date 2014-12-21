@@ -1,37 +1,40 @@
+# -*- coding: utf-8 -*-
+"""
+This example class demonstrates how to display the current total number of
+open tickets from GLPI in your i3bar.
+
+It features thresholds to colorize the output and forces a low timeout to
+limit the impact of a server connectivity problem on your i3bar freshness.
+
+Note that we don't have to implement a cache layer as it is handled by
+py3status automagically.
+"""
+
 # You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
 import MySQLdb
 
 
 class Py3status:
-    """
-    This example class demonstrates how to display the current total number of
-    open tickets from GLPI in your i3bar.
 
-    It features thresholds to colorize the output and forces a low timeout to
-    limit the impact of a server connectivity problem on your i3bar freshness.
+    # available configuration parameters
+    critical = 20
+    db = ''
+    host = ''
+    password = ''
+    timeout = 5
+    user = ''
+    warning = 15
 
-    Note that we don't have to implement a cache layer as it is handled by
-    py3status automagically.
-    """
-    def count_glpi_open_tickets(self, json, i3status_config):
-        response = {'full_text': '', 'name': 'glpi_tickets'}
-
-        # user-defined variables
-        CRIT_THRESHOLD = 20
-        WARN_THRESHOLD = 15
-        MYSQL_DB = ''
-        MYSQL_HOST = ''
-        MYSQL_PASSWD = ''
-        MYSQL_USER = ''
-        POSITION = 0
+    def count_glpi_open_tickets(self, i3s_output_list, i3s_config):
+        response = {'full_text': ''}
 
         mydb = MySQLdb.connect(
-            host=MYSQL_HOST,
-            user=MYSQL_USER,
-            passwd=MYSQL_PASSWD,
-            db=MYSQL_DB,
-            connect_timeout=5,
-            )
+            host=self.host,
+            user=self.user,
+            passwd=self.password,
+            db=self.db,
+            connect_timeout=self.timeout,
+        )
         mycr = mydb.cursor()
         mycr.execute('''select count(*)
                         from glpi_tickets
@@ -39,14 +42,24 @@ class Py3status:
         row = mycr.fetchone()
         if row:
             open_tickets = int(row[0])
-            if i3status_config['colors']:
-                if open_tickets > CRIT_THRESHOLD:
-                    response.update({'color': i3status_config['color_bad']})
-                elif open_tickets > WARN_THRESHOLD:
+            if i3s_config['colors']:
+                if open_tickets > self.critical:
+                    response.update({'color': i3s_config['color_bad']})
+                elif open_tickets > self.warning:
                     response.update(
-                        {'color': i3status_config['color_degraded']}
+                        {'color': i3s_config['color_degraded']}
                     )
             response['full_text'] = '%s tickets' % open_tickets
         mydb.close()
 
-        return (POSITION, response)
+        return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.count_glpi_open_tickets([], {}))
+        sleep(1)
