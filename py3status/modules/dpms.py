@@ -1,36 +1,37 @@
+# -*- coding: utf-8 -*-
+"""
+This module allows activation and deactivation
+of DPMS (Display Power Management Signaling)
+by clicking on 'DPMS' in the status bar.
+
+Written and contributed by @tasse:
+    Andre Doser <dosera AT tf.uni-freiburg.de>
+"""
+
 from os import system
 
 
 class Py3status:
-    """
-    This module allows activation and deactivation
-    of DPMS (Display Power Management Signaling)
-    by clicking on 'DPMS' in the status bar.
-
-    Written and contributed by @tasse:
-        Andre Doser <dosera AT tf.uni-freiburg.de>
-    """
     def __init__(self):
         """
         Detect current state on start.
         """
         self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
 
-    def dpms(self, i3status_output_json, i3status_config):
+    def dpms(self, i3s_output_list, i3s_config):
         """
         Display a colorful state of DPMS.
         """
-        result = {
-            'full_text': 'DPMS',
-            'name': 'dpms'
+        response = {
+            'full_text': 'DPMS'
         }
         if self.run:
-            result['color'] = i3status_config['color_good']
+            response['color'] = i3s_config['color_good']
         else:
-            result['color'] = i3status_config['color_bad']
-        return (0, result)
+            response['color'] = i3s_config['color_bad']
+        return response
 
-    def on_click(self, json, i3status_config, event):
+    def on_click(self, i3s_output_list, i3s_config, event):
         """
         Enable/Disable DPMS on left click.
         """
