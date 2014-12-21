@@ -293,6 +293,16 @@ class I3status(Thread):
                         ordered.append(j)
         return ordered
 
+    @staticmethod
+    def write_in_tmpfile(text, tmpfile):
+        """
+        Write the given text in the given tmpfile in python2 and python3.
+        """
+        try:
+            tmpfile.write(text)
+        except TypeError:
+            tmpfile.write(str.encode(text))
+
     def write_tmp_i3status_config(self, tmpfile):
         """
         Given a temporary file descriptor, write a valid i3status config file
@@ -304,13 +314,19 @@ class I3status(Thread):
             elif section_name == 'order':
                 for module_name in conf:
                     if self.valid_config_param(module_name):
-                        tmpfile.write('order += "%s"\n' % module_name)
-                tmpfile.write('\n')
+                        self.write_in_tmpfile(
+                            'order += "%s"\n' % module_name,
+                            tmpfile
+                        )
+                self.write_in_tmpfile('\n', tmpfile)
             elif self.valid_config_param(section_name):
-                tmpfile.write('%s {\n' % section_name)
+                self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
                 for key, value in conf.items():
-                    tmpfile.write('    %s = "%s"\n' % (key, value))
-                tmpfile.write('}\n\n')
+                    self.write_in_tmpfile(
+                        '    %s = "%s"\n' % (key, value),
+                        tmpfile
+                    )
+                self.write_in_tmpfile('}\n\n', tmpfile)
         tmpfile.flush()
 
     def run(self):
