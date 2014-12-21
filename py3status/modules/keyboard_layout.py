@@ -1,6 +1,4 @@
-from subprocess import check_output
-from time import time
-
+# -*- coding: utf-8 -*-
 """
 Module for showing current keyboard layout.
 
@@ -13,7 +11,8 @@ Requires:
 @license Eclipse Public License
 """
 
-CACHE_TIMEOUT = 10  # refresh time to update indicator
+from subprocess import check_output
+from time import time
 
 # colors of layouts, check your command's output to match keys
 LANG_COLORS = {
@@ -45,6 +44,11 @@ def setxkbmap():
 
 
 class Py3status:
+
+    # available configuration parameters
+    cache_timeout = 10
+    color = ''
+
     def __init__(self):
         """
         find the best implementation to get the keyboard's layout
@@ -56,18 +60,27 @@ class Py3status:
         else:
             self.command = xbklayout
 
-    def keyboard_layout(self, i3status_output_json, i3status_config):
+    def keyboard_layout(self, i3s_output_list, i3s_config):
         response = {
-            'full_text': '',
-            'name': 'keyboard-layout',
-            'cached_until': time() + CACHE_TIMEOUT
+            'cached_until': time() + self.cache_timeout,
+            'full_text': ''
         }
 
         lang = self.command().strip()
-        lang_color = LANG_COLORS.get(lang)
+        lang_color = self.color if self.color else LANG_COLORS.get(lang)
 
         response['full_text'] = lang or '??'
         if lang_color:
             response['color'] = lang_color
 
-        return (0, response)
+        return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.keyboard_layout([], {}))
+        sleep(1)
