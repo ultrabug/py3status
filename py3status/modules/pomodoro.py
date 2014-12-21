@@ -1,25 +1,26 @@
+# -*- coding: utf-8 -*-
 """
 Pomodoro countdown on i3bar originally written by @Fandekasp (Adrien Lemaire)
 """
+
 from subprocess import call
 from time import time
 
-MAX_BREAKS = 4
-POSITION = 0
-TIMER_POMODORO = 25 * 60
-TIMER_BREAK = 5 * 60
-TIMER_LONG_BREAK = 15 * 60
-
 
 class Py3status:
-    """
-    """
+
+    # available configuration parameters
+    max_breaks = 4
+
     def __init__(self):
         self.__setup('stop')
         self.alert = False
         self.run = False
+        self.timer_pomodoro = 25 * 60
+        self.timer_break = 5 * 60
+        self.timer_long_break = 15 * 60
 
-    def on_click(self, json, i3status_config, event):
+    def on_click(self, i3s_output_list, i3s_config, event):
         """
         Handles click events
         """
@@ -42,8 +43,7 @@ class Py3status:
         Return the response full_text string
         """
         return {
-            'full_text': '{} ({})'.format(self.prefix, self.timer),
-            'name': 'pomodoro'
+            'full_text': '{} ({})'.format(self.prefix, self.timer)
         }
 
     def __setup(self, status):
@@ -54,21 +54,21 @@ class Py3status:
         if status == 'stop':
             self.prefix = 'Pomodoro'
             self.status = 'stop'
-            self.timer = TIMER_POMODORO
+            self.timer = self.timer_pomodoro
             self.breaks = 1
 
         elif status == 'start':
             self.prefix = 'Pomodoro'
-            self.timer = TIMER_POMODORO
+            self.timer = self.timer_pomodoro
 
         elif status == 'pause':
             self.prefix = 'Break #%d' % self.breaks
-            if self.breaks > MAX_BREAKS:
-                self.timer = TIMER_LONG_BREAK
+            if self.breaks > self.max_breaks:
+                self.timer = self.timer_long_break
                 self.breaks = 1
             else:
                 self.breaks += 1
-                self.timer = TIMER_BREAK
+                self.timer = self.timer_break
 
     def __decrement(self):
         """
@@ -100,7 +100,7 @@ class Py3status:
         except:
             pass
 
-    def pomodoro(self, json, i3status_config):
+    def pomodoro(self, i3s_output_list, i3s_config):
         """
         Pomodoro response handling and countdown
         """
@@ -113,11 +113,21 @@ class Py3status:
             self.alert = False
 
         if self.status == 'start':
-            response['color'] = i3status_config['color_good']
+            response['color'] = i3s_config['color_good']
         elif self.status == 'pause':
-            response['color'] = i3status_config['color_degraded']
+            response['color'] = i3s_config['color_degraded']
         else:
-            response['color'] = i3status_config['color_bad']
+            response['color'] = i3s_config['color_bad']
 
         response['cached_until'] = time()
-        return (POSITION, response)
+        return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.pomodoro([], {}))
+        sleep(1)
