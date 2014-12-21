@@ -8,7 +8,7 @@ REQUIRE external program called "vnstat" installed and configured to work.
 """
 
 from __future__ import division  # python2 compatibility
-from time import time, sleep
+from time import time
 from subprocess import check_output
 
 
@@ -125,7 +125,11 @@ class Py3status:
         return response
 
 if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
     x = Py3status()
     while True:
-        print(x.currentSpeed(1, 1))
+        print(x.currentSpeed([], {}))
         sleep(1)

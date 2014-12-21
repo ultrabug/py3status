@@ -107,3 +107,13 @@ class Py3status:
         response['full_text'] = response['full_text'].strip()
 
         return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.weather_yahoo([], {}))
+        sleep(1)

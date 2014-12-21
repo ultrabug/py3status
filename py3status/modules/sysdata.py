@@ -138,3 +138,14 @@ class Py3status:
         response['cached_until'] = time() + self.cache_timeout
 
         return response
+
+if __name__ == "__main__":
+    """
+    Test this module by calling it directly.
+    """
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.cpuInfo([], {}))
+        print(x.ramInfo([], {}))
+        sleep(1)
