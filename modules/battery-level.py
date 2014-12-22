@@ -9,10 +9,8 @@ import subprocess
 
 """
 Module for displaying information about battery.
-
 Requires:
     - the 'acpi' command line
-
 @author shadowprince
 @license Eclipse Public License
 """
@@ -20,12 +18,11 @@ Requires:
 CACHE_TIMEOUT = 30  # time to update battery
 HIDE_WHEN_FULL = False  # hide any information when battery is fully charged
 
-MODE = "bar"  # for primitive-one-char bar, or "text" for text percentage ouput
+MODE = "ascii_bar"  # for primitive-one-char bar, or "XT
 
 BLOCKS = ["_", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]  # block for bar
 TEXT_FORMAT = "Battery: {}"  # text with "text" mode. percentage with % replaces {}
 
-CHARGING_CHARACTER = "⚡"
 
 # None means - get it from i3 config
 COLOR_BAD = None
@@ -46,6 +43,11 @@ class Py3status:
 
         if MODE == "bar":
             character = BLOCKS[int(math.ceil(proc/100*(len(BLOCKS) - 1)))]
+        if MODE == "ascii_bar":
+            battery_full = '█' * int(proc/10)
+            battery_empty = '⍀' * (10 - int(proc/10))
+
+            character = battery_full + battery_empty
         else:
             character = TEXT_FORMAT.format(str(proc) + "%")
 
@@ -65,4 +67,7 @@ class Py3status:
 
         response['cached_until'] = time() + CACHE_TIMEOUT
 
+        print proc
+
         return (0, response)
+        
