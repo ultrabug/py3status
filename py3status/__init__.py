@@ -437,16 +437,17 @@ class Events(Thread):
     """
     This class is responsible for dispatching event JSONs sent by the i3bar.
     """
-    def __init__(self, lock, config, modules, on_click):
+    def __init__(self, lock, config, modules, i3s_config):
         """
         We need to poll stdin to receive i3bar messages.
         """
         Thread.__init__(self)
         self.config = config
+        self.i3s_config = i3s_config
         self.lock = lock
         self.modules = modules
+        self.on_click = i3s_config['on_click']
         self.poller_inp = IOPoller(sys.stdin)
-        self.on_click = on_click
 
     def dispatch(self, module, obj, event):
         """
@@ -530,6 +531,42 @@ class Events(Thread):
             )
         )
 
+    def i3status_mod_guess(self, instance, name):
+        """
+        Some i3status modules output a name and instance that are different
+        from the configuration parameters in i3status.conf.
+
+        For example the 'disk' module will output with name 'disk_info' so
+        we try to be clever and figure it out here, case by case.
+        """
+        try:
+            # disk_info /home
+            if name == 'disk_info':
+                name = 'disk'
+
+            # /sys/class/power_supply/BAT0/uevent
+            elif name == 'battery':
+                instance = str([int(s) for s in instance if s.isdigit()][0])
+
+            # /sys/devices/platform/coretemp.0/temp1_input
+            elif name == 'cpu_temperature':
+                instance = str([int(s) for s in instance if s.isdigit()][0])
+
+            # run_watch /var/run/openvpn.pid
+            elif name == 'run_watch':
+                for k, v in self.i3s_config.items():
+                    if (
+                        k.startswith('run_watch')
+                        and isinstance(v, dict)
+                        and v.get('pidfile') == instance
+                    ):
+                        instance = k.split(' ', 1)[1]
+                        break
+        except:
+            pass
+        finally:
+            return (instance, name)
+
     def run(self):
         """
         Wait for an i3bar JSON event, then find the right module to dispatch
@@ -558,6 +595,16 @@ class Events(Thread):
                     dispatched = False
                     instance = event.get('instance', '')
                     name = event.get('name', '')
+
+                    # i3status module name guess
+                    instance, name = self.i3status_mod_guess(instance, name)
+                    if self.config['debug']:
+                        syslog(
+                            LOG_INFO,
+                            'trying to dispatch event to module "{}"'.format(
+                                '{} {}'.format(name, instance).strip()
+                            )
+                        )
 
                     # guess the module config name
                     module_name = '{} {}'.format(name, instance).strip()
@@ -1030,7 +1077,7 @@ class Py3statusWrapper():
             self.lock,
             self.config,
             self.modules,
-            self.i3status_thread.config['on_click']
+            self.i3status_thread.config
         )
         self.events_thread.start()
         if self.config['debug']:
