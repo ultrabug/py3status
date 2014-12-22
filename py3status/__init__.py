@@ -117,6 +117,26 @@ class I3status(Thread):
         valid_config_params = self.i3status_module_names + ['general', 'order']
         return param_name.split(' ')[0] in valid_config_params
 
+    @staticmethod
+    def eval_config_parameter(param):
+        """
+        Try to evaluate the given parameter as a string or integer and return
+        it properly. This is used to parse i3status configuration parameters
+        such as 'disk "/home" {}' or worse like '"cpu_temperature" 0 {}'.
+        """
+        try:
+            e_value = eval(param)
+            if isinstance(e_value, str) or isinstance(e_value, int):
+                param = e_value
+            else:
+                raise ValueError()
+        except NameError:
+            pass
+        except ValueError:
+            pass
+        finally:
+            return param
+
     def i3status_config_reader(self, i3status_config_path):
         """
         Parse i3status.conf so we can adapt our code to the i3status config.
@@ -164,16 +184,7 @@ class I3status(Thread):
 
                 key = line.split('=')[0].strip()
                 value = line.split('=')[1].strip()
-                try:
-                    e_value = eval(value)
-                    if isinstance(e_value, str) or isinstance(e_value, int):
-                        value = e_value
-                    else:
-                        raise ValueError()
-                except NameError:
-                    pass
-                except ValueError:
-                    pass
+                value = self.eval_config_parameter(value)
 
                 if section_name == 'order':
                     config[section_name].append(value)
@@ -186,6 +197,13 @@ class I3status(Thread):
                         config['i3s_modules'].append(value)
                 else:
                     if not key.startswith('on_click'):
+                        if ' ' in key:
+                            m, i = key.split(' ', 1)
+                            m = self.eval_config_parameter(m)
+                            i = self.eval_config_parameter(i)
+                            key = '{} {}'.format(m, i)
+                        else:
+                            key = self.eval_config_parameter(key)
                         config[section_name][key] = value
                     else:
                         # on_click special parameters
