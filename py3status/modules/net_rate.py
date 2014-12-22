@@ -55,9 +55,6 @@ class Py3status:
         self.last_interface = None
         self.last_stat = self._get_stat()
         self.last_time = time()
-        # == 6 characters (from MULTIPLIER_TOP + dot + self.precision)
-        self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
-        self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
 
     def currentSpeed(self, i3s_output_list, i3s_config):
         # parse some configuration parameters
@@ -65,6 +62,13 @@ class Py3status:
             self.interfaces = self.interfaces.split(',')
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(',')
+
+        # == 6 characters (from MULTIPLIER_TOP + dot + self.precision)
+        if self.precision > 0:
+            self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
+        else:
+            self.left_align = len(str(MULTIPLIER_TOP))
+        self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
 
         ns = self._get_stat()
         deltas = {}
