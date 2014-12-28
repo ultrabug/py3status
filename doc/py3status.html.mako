@@ -27,37 +27,117 @@ Instead, you should use your shell.</tt></pre>
 The goal of py3status is to fill this gap by allowing users to simply extend
 their i3bar while preserving their current i3status configuration. The main idea
 is to rely on i3status' strenghts without adding any configuration on the user's
-side. py3status is thus a wrapper script for i3status and you can
-<a href="https://github.com/ultrabug/py3status/wiki"> read more on the wiki</a>.
+side. py3status is thus a wrapper script for i3status and its configuration as
+explained <a href="https://github.com/ultrabug/py3status/wiki">on the wiki</a>.
 </p>
-
-<h2>Requirements</h2>
-
-<p>
-To acheive this, py3status uses the <a
-href="http://i3wm.org/docs/i3bar-protocol.html">i3bar protocol</a> so your
-i3status.conf should specify this as its output_format.
-</p>
-
-<pre><tt>general {
-    output_format = "i3bar"
-}</tt></pre>
 
 <h2>Usage</h2>
 
 <p>
 Using py3status is easy, no need to multi-pipe your scripts after i3status.
-Instead, just replace i3status in your current status_command by py3status.
-For example, if you're using your own i3status.conf, you need to change your
-i3 config file with:
+Instead just replace <i>i3status</i> in your current <b>status_command</b> by
+ <i>py3status</i>.
+For example, if your current status_command in your i3 config file resides in
+~/.i3/i3status.conf, you would change your i3 config to this:
 </p>
 
 <pre><tt>status_command py3status -c ~/.i3/i3status.conf</tt></pre>
 
-<h2>Display your own stuff</h2>
+<h2>Handle i3bar click events from your i3status.conf</h2>
 
 <p>
-py3status features a simple and straightfoward plugin system which you can use
+Py3status (since v2) is also wrapping and extending your i3status.conf and
+allows you directly handle all the i3bar click events on any of your configured
+modules whether they are i3status modules or py3status modules.
+</p>
+
+<p>
+To do so, all you have to do is add a new configuration parameter named
+<b>on_click [button number]</b> to your module config and py3status will then
+execute the given i3 command (using i3-msg). This means you can run simple
+tasks like executing a program or execute any other i3 specific command.
+</p>
+<p>Some examples below from i3status.conf:</p>
+
+<pre><tt>
+# reload the i3 config when I left click on the i3status time module
+# and restart i3 when I middle click on it
+time {
+	on_click 1 = "reload"
+	on_click 2 = "restart"
+}
+
+# run wicd-gtk GUI when I left click on the i3status ethernet module
+# and kill it when I right click on it
+ethernet eth0 {
+	# if you use %speed, i3status requires root privileges
+	format_up = "E: %ip"
+	format_down = ""
+	on_click 1 = "exec wicd-gtk"
+	on_click 3 = "exec killall wicd-gtk"
+}
+
+# run thunar when I left click on the / disk info module
+disk / {
+	format = "/ %free"
+	on_click 1 = "exec thunar /"
+}
+
+# open an URL on opera when I left click on the py3status weather_yahoo module
+weather_yahoo paris {
+	cache_timeout = 1800
+	city_code = "FRXX0076"
+	forecast_days = 2
+	on_click 1 = "exec opera http://www.meteo.fr"
+	request_timeout = 10
+}
+</tt></pre>
+
+<h2>Use py3status modules in your i3bar</h2>
+
+<p>
+Py3status (since v2) also comes with some configurable modules you can load and
+configure directly from your i3status.conf just like any other i3status module.
+<a 
+href="https://github.com/ultrabug/py3status/tree/master/py3status/modules">You 
+can see the list of the modules and their configuration parameters here.</a>
+</p>
+
+<p>
+To load a py3status module you just have to list it like any other i3status
+module using the <b>order +=</b> parameter. For example you could insert and 
+load the imap module like this:
+</p>
+
+<pre><tt>
+order += "disk /home"
+order += "disk /"
+order += "imap"
+order += "time"
+</tt></pre>
+
+<p>And then you could configure it like this:</p>
+
+<pre><tt>
+# configure the py3status imap module
+# and run thunderbird when I left click on it
+imap {
+	cache_timeout = 60
+    imap_server = 'imap.myprovider.com'
+    mailbox = 'INBOX'
+    name = 'Mail'
+    password = 'coconut'
+    port = '993'
+    user = 'mylogin'
+    on_click 1 = "exec thunderbird"
+}
+</tt></pre>
+
+
+<h2>Write your own modules and display your own stuff</h2>
+
+<p>
+Py3status features a simple and straightfoward module system which you can use
 to get your own output displayed on your i3bar. You can read more and view some
 examples <a
 href="https://github.com/ultrabug/py3status/wiki/Write-your-own-modules"> on the
