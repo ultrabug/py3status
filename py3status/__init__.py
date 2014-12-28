@@ -947,24 +947,24 @@ class Py3statusWrapper():
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
         parser = argparse.ArgumentParser(add_help=True)
-        parser.add_argument('-c', action="store",
+        parser.add_argument('-c', '--config', action="store",
                             dest="i3status_conf",
                             type=str,
                             help="path to i3status config file")
-        parser.add_argument('--debug', action="store_true",
+        parser.add_argument('-d', '--debug', action="store_true",
                             help="be verbose in syslog")
-        parser.add_argument('-i', action="append",
+        parser.add_argument('-i', '--include', action="append",
                             dest="include_paths",
                             help="""include user-written modules from those
                             directories (default ~/.i3/py3status)""")
-        parser.add_argument('-n', action="store",
+        parser.add_argument('-n', '--interval', action="store",
                             dest="interval",
                             type=float,
                             default=config['interval'],
                             help="update interval in seconds (default 1 sec)")
         parser.add_argument('-s', '--standalone', action="store_true",
                             help="standalone mode, do not use i3status")
-        parser.add_argument('-t', action="store",
+        parser.add_argument('-t', '--timeout', action="store",
                             dest="cache_timeout",
                             type=int,
                             default=config['cache_timeout'],
