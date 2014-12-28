@@ -28,7 +28,7 @@ Learn how to easily **handle i3bar click events** directly from your i3status co
 
 Learn how to **extend your current i3status config** to easily interact with your i3bar:
 
-- `Configure your modules directly from your current i3status config <https://github.com/ultrabug/py3status/wiki/Configure-your-modules-directly-from-your-current-i3status-config>`_
+- `Load and order py3status modules directly from your current i3status config <https://github.com/ultrabug/py3status/wiki/Load-and-order-py3status-modules-directly-from-your-current-i3status-config>`_
 
 Learn how to write your own modules:
 
