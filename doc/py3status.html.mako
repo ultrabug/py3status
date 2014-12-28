@@ -134,7 +134,7 @@ imap {
 </tt></pre>
 
 
-<h2>Write your own modules and display your own stuff</h2>
+<h2>Write your own modules to display your own stuff</h2>
 
 <p>
 Py3status features a simple and straightfoward module system which you can use
