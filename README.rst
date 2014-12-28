@@ -10,7 +10,7 @@ py3status
 Using py3status, you can take control of your i3bar easily by:
 
 - using one of the availables modules shipped with py3status
-- writing your own module and have their output displayed on your bar
+- writing your own modules and have their output displayed on your bar
 - handling click events on your i3bar and play with them in no time
 - seeing your clock tick every second whatever your i3status interval
 
@@ -18,21 +18,21 @@ No extra configuration file needed, just install & enjoy !
 
 Documentation
 =============
-See the wiki for up to date documentation:
+Up to date documentation:
 
-- https://github.com/ultrabug/py3status/wiki
+- `See the wiki <https://github.com/ultrabug/py3status/wiki>`_
 
 Learn how to easily **handle i3bar click events** directly from your i3status config:
 
-- https://github.com/ultrabug/py3status/wiki/Handle-click-events-directly-from-your-i3status-config
+- `Handle click events directly from your i3status config <https://github.com/ultrabug/py3status/wiki/Handle-click-events-directly-from-your-i3status-config>`_
 
 Learn how to **extend your current i3status config** to easily interact with your i3bar:
 
-- https://github.com/ultrabug/py3status/wiki/Configure-your-modules-directly-from-your-current-i3status-config
+- `Configure your modules directly from your current i3status config <https://github.com/ultrabug/py3status/wiki/Configure-your-modules-directly-from-your-current-i3status-config>`_
 
 Learn how to write your own modules:
 
-- https://github.com/ultrabug/py3status/wiki/Write-your-own-modules
+- `Write your own modules <https://github.com/ultrabug/py3status/wiki/Write-your-own-modules>`_
 
 Get help or share your ideas on IRC:
 
