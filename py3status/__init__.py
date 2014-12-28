@@ -124,18 +124,40 @@ class I3status(Thread):
         it properly. This is used to parse i3status configuration parameters
         such as 'disk "/home" {}' or worse like '"cpu_temperature" 0 {}'.
         """
+        params = param.split(' ')
+        result_list = list()
+
+        for p in params:
+            try:
+                e_value = eval(p)
+                if isinstance(e_value, str) or isinstance(e_value, int):
+                    p = str(e_value)
+                else:
+                    raise ValueError()
+            except (NameError, SyntaxError, ValueError):
+                pass
+            finally:
+                result_list.append(p)
+
+        return ' '.join(result_list)
+
+    @staticmethod
+    def eval_config_value(value):
+        """
+        Try to evaluate the given parameter as a string or integer and return
+        it properly. This is used to parse i3status configuration parameters
+        such as 'disk "/home" {}' or worse like '"cpu_temperature" 0 {}'.
+        """
         try:
-            e_value = eval(param)
+            e_value = eval(value)
             if isinstance(e_value, str) or isinstance(e_value, int):
-                param = e_value
+                value = e_value
             else:
                 raise ValueError()
-        except NameError:
-            pass
-        except ValueError:
+        except (NameError, ValueError):
             pass
         finally:
-            return param
+            return value
 
     def i3status_config_reader(self, i3status_config_path):
         """
@@ -173,6 +195,7 @@ class I3status(Thread):
 
             if not in_section:
                 section_name = line.split('{')[0].strip()
+                section_name = self.eval_config_parameter(section_name)
                 if section_name not in config:
                     config[section_name] = {}
 
@@ -183,8 +206,10 @@ class I3status(Thread):
                 line = line.split('}')[0].strip()
 
                 key = line.split('=')[0].strip()
+                key = self.eval_config_parameter(key)
+
                 value = line.split('=')[1].strip()
-                value = self.eval_config_parameter(value)
+                value = self.eval_config_value(value)
 
                 if section_name == 'order':
                     config[section_name].append(value)
@@ -197,13 +222,6 @@ class I3status(Thread):
                         config['i3s_modules'].append(value)
                 else:
                     if not key.startswith('on_click'):
-                        if ' ' in key:
-                            m, i = key.split(' ', 1)
-                            m = self.eval_config_parameter(m)
-                            i = self.eval_config_parameter(i)
-                            key = '{} {}'.format(m, i)
-                        else:
-                            key = self.eval_config_parameter(key)
                         config[section_name][key] = value
                     else:
                         # on_click special parameters
