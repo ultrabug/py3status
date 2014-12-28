@@ -542,7 +542,7 @@ class Events(Thread):
         i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
         syslog(
             LOG_INFO,
-            'i3-msg module={} command="{}" stdout={}'.format(
+            'i3-msg module="{}" command="{}" stdout={}'.format(
                 module_name,
                 command,
                 i3_msg_pipe.stdout.read()
@@ -1061,9 +1061,7 @@ class Py3statusWrapper():
         if self.config['debug']:
             syslog(
                 LOG_INFO,
-                'py3status started with config {}'.format(
-                    self.config
-                )
+                'py3status started with config {}'.format(self.config)
             )
 
         # setup i3status thread
