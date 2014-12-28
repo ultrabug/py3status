@@ -1226,7 +1226,7 @@ class Py3statusWrapper():
 
         # run through modules/methods output and insert them in reverse order
         debug_msg = ''
-        for m in reversed(self.modules.values()):
+        for m in reversed(list(self.modules.values())):
             for meth in m.methods:
                 position = m.methods[meth]['position']
                 last_output = m.methods[meth]['last_output']
