@@ -84,15 +84,20 @@ Options
 =======
 You can see the help of py3status by issuing `py3status -h`:
 ::
-    -c I3STATUS_CONF  path to i3status config file
-    --debug           be verbose in syslog
-    -i INCLUDE_PATHS  include user-written modules from those directories
-                      (default .i3/py3status)
-    -n INTERVAL       update interval in seconds (default 1 sec)
-    -s, --standalone  standalone mode, do not use i3status
-    -t CACHE_TIMEOUT  default injection cache timeout in seconds
-                      (default 60 sec)
-    -v, --version     show py3status version and exit
+    -h, --help            show this help message and exit
+    -c I3STATUS_CONF, --config I3STATUS_CONF
+                          path to i3status config file
+    -d, --debug           be verbose in syslog
+    -i INCLUDE_PATHS, --include INCLUDE_PATHS
+                          include user-written modules from those directories
+                          (default ~/.i3/py3status)
+    -n INTERVAL, --interval INTERVAL
+                          update interval in seconds (default 1 sec)
+    -s, --standalone      standalone mode, do not use i3status
+    -t CACHE_TIMEOUT, --timeout CACHE_TIMEOUT
+                          default injection cache timeout in seconds (default 60
+                          sec)
+    -v, --version         show py3status version and exit
 
 Control
 =======
