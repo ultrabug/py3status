@@ -50,7 +50,7 @@ Usually you have your own i3status configuration, just point to it:
 
 Available modules
 =================
-All the modules shipped with py3status are present in the sources in the `py3status/modules` folder.
+All the modules shipped with py3status are present in the sources in the `py3status/modules <https://github.com/ultrabug/py3status/tree/master/py3status/modules>`_ folder.
 
 Most of them are **configurable directly from your current i3status.conf**, check them out to see all the configurable variables.
 
