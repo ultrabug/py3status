@@ -27,7 +27,7 @@ Instead, you should use your shell.</tt></pre>
 <p>
 The goal of py3status is to fill this gap by allowing users to simply extend
 their i3bar while preserving their current i3status configuration. The main idea
-is to rely on i3status' strenghts without adding any configuration on the user's
+is to rely on i3status' strength without adding any configuration on the user's
 side. py3status is thus a wrapper script for i3status and its configuration as
 explained <a href="https://github.com/ultrabug/py3status/wiki">on the wiki</a>.
 </p>
@@ -64,33 +64,33 @@ tasks like executing a program or execute any other i3 specific command.
 # reload the i3 config when I left click on the i3status time module
 # and restart i3 when I middle click on it
 time {
-	on_click 1 = "reload"
-	on_click 2 = "restart"
+    on_click 1 = "reload"
+    on_click 2 = "restart"
 }
 
 # run wicd-gtk GUI when I left click on the i3status ethernet module
 # and kill it when I right click on it
 ethernet eth0 {
-	# if you use %speed, i3status requires root privileges
-	format_up = "E: %ip"
-	format_down = ""
-	on_click 1 = "exec wicd-gtk"
-	on_click 3 = "exec killall wicd-gtk"
+    # if you use %speed, i3status requires root privileges
+    format_up = "E: %ip"
+    format_down = ""
+    on_click 1 = "exec wicd-gtk"
+    on_click 3 = "exec killall wicd-gtk"
 }
 
 # run thunar when I left click on the / disk info module
 disk / {
-	format = "/ %free"
-	on_click 1 = "exec thunar /"
+    format = "/ %free"
+    on_click 1 = "exec thunar /"
 }
 
 # open an URL on opera when I left click on the py3status weather_yahoo module
 weather_yahoo paris {
-	cache_timeout = 1800
-	city_code = "FRXX0076"
-	forecast_days = 2
-	on_click 1 = "exec opera http://www.meteo.fr"
-	request_timeout = 10
+    cache_timeout = 1800
+    city_code = "FRXX0076"
+    forecast_days = 2
+    on_click 1 = "exec opera http://www.meteo.fr"
+    request_timeout = 10
 }
 </tt></pre>
 
@@ -123,7 +123,7 @@ order += "time"
 # configure the py3status imap module
 # and run thunderbird when I left click on it
 imap {
-	cache_timeout = 60
+    cache_timeout = 60
     imap_server = 'imap.myprovider.com'
     mailbox = 'INBOX'
     name = 'Mail'
@@ -138,7 +138,7 @@ imap {
 <h2>Write your own modules to display your own stuff</h2>
 
 <p>
-Py3status features a simple and straightfoward module system which you can use
+Py3status features a simple and straightforward module system which you can use
 to get your own output displayed on your i3bar. You can read more and view some
 examples <a
 href="https://github.com/ultrabug/py3status/wiki/Write-your-own-modules"> on the
