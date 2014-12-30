@@ -580,6 +580,22 @@ class Events(Thread):
                     ):
                         instance = k.split(' ', 1)[1]
                         break
+
+            # volume default.Master.0
+            elif name == 'volume':
+                device, mixer, mixer_idx = instance.split('.')
+                for k, v in self.i3s_config.items():
+                    if (
+                        k.startswith('volume')
+                        and isinstance(v, dict)
+                        and v.get('device') == device
+                        and v.get('mixer') == mixer
+                        and str(v.get('mixer_idx')) == mixer_idx
+                    ):
+                        instance = k.split(' ', 1)[1]
+                        break
+                else:
+                    instance = 'master'
         except:
             pass
         finally:
