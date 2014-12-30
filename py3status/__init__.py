@@ -691,7 +691,7 @@ class Module(Thread):
         self.lock = lock
         self.methods = {}
         self.module_class = None
-        self.module_name = f_name
+        self.module_name = f_name.rstrip('.py')
         #
         self.load_methods(include_path, f_name)
 
