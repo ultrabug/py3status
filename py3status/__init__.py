@@ -10,7 +10,7 @@ from copy import deepcopy
 from datetime import datetime
 from json import dumps, loads
 from signal import signal
-from signal import SIGUSR1
+from signal import SIGTERM, SIGUSR1
 from subprocess import Popen
 from subprocess import PIPE
 from subprocess import call
@@ -107,6 +107,7 @@ class I3status(Thread):
         self.lock = lock
         self.standalone = standalone
         self.time_format = '%Y-%m-%d %H:%M:%S'
+        self.tmpfile_path = None
         #
         self.config = self.i3status_config_reader(i3status_config_path)
 
@@ -383,6 +384,7 @@ class I3status(Thread):
             )
             self.poller_inp = IOPoller(i3status_pipe.stdout)
             self.poller_err = IOPoller(i3status_pipe.stderr)
+            self.tmpfile_path = tmpfile.name
 
             try:
                 # at first, poll very quickly
@@ -427,6 +429,13 @@ class I3status(Thread):
             except IOError:
                 err = sys.exc_info()[1]
                 self.error = err
+
+    def cleanup_tmpfile(self):
+        """
+        Cleanup i3status tmp configuration file.
+        """
+        if os.path.isfile(self.tmpfile_path):
+            os.remove(self.tmpfile_path)
 
     def mock(self):
         """
@@ -1202,6 +1211,7 @@ class Py3statusWrapper():
             self.lock.clear()
             if self.config['debug']:
                 syslog(LOG_INFO, 'lock cleared, exiting')
+            self.i3status_thread.cleanup_tmpfile()
         except:
             pass
 
@@ -1312,6 +1322,12 @@ class Py3statusWrapper():
         # return the ordered result
         return m_list
 
+    def terminate(self, signum, frame):
+        """
+        Received request to terminate (SIGTERM), exit nicely.
+        """
+        raise KeyboardInterrupt()
+
     def run(self):
         """
         Main py3status loop, continuously read from i3status and modules
@@ -1320,6 +1336,7 @@ class Py3statusWrapper():
         # SIGUSR1 forces a refresh of the bar both for py3status and i3status,
         # this mimics the USR1 signal handling of i3status (see man i3status)
         signal(SIGUSR1, self.sig_handler)
+        signal(SIGTERM, self.terminate)
 
         # main loop
         while True:
