@@ -14,6 +14,7 @@ version 2.0 (2015-01-04)
 * new imap mail checker module by @obb
 * add installation instructions for Fedora, by Jakub Jedelsky
 * backport code for issue #43 thx to @scotte
+* enhanced battery_level module with horizontal bar and click event thx to @AdamBSteele wrt issue #48 and #49
 * make i3-nagbar messages non blocking to py3status
 * cleaner debug logs
 * update README with new wiki links and new capabilities explanations
