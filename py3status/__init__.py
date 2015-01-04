@@ -538,7 +538,7 @@ class Events(Thread):
         We rate limit this command to 1/s for obvious abusive behavior.
         """
         if time() > (self.last_refresh_ts + 1):
-            call(['killall', '-s', 'USR1', '__init__.py'])
+            call(['killall', '-s', 'USR1', 'py3status'])
             self.last_refresh_ts = time()
 
     def on_click_dispatcher(self, module_name, command):
