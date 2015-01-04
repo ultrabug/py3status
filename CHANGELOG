@@ -1,3 +1,24 @@
+version 2.0 (2015-01-04)
+* two main highlights, see the wiki for more details :
+* 1- you can now load, run and order ALL (i3status and py3status) modules from your usual i3status.conf
+* 2- you can handle click events on ALL modules (i3status and py3status) directly from your usual i3status.conf thanks to the new on_click parameter
+* all modules have been changed to match v2 return dict, QA, config and standalone test code
+* implement full i3status.conf parsing wrt issue #44 thx to @tablet-mode
+* generate and use a temporary i3status config on the fly so that we can now extend it with our own modules without breaking i3status
+* move modules folder so we can install it as a module of py3status, all modules are now importable
+* handle loading, running and ordering of py3status modules directly configured from i3status.conf
+* user provided modules win over py3status importable modules
+* add handling of a special on_click parameter in i3status.conf allowing to send i3 messages and execute special py3status actions
+* implement an i3status module name and instance guesser in the event thread to dispatch click events from i3status modules
+* make sure every py3status command line parameter gets a short and long flag
+* new imap mail checker module by @obb
+* add installation instructions for Fedora, by Jakub Jedelsky
+* backport code for issue #43 thx to @scotte
+* make i3-nagbar messages non blocking to py3status
+* cleaner debug logs
+* update README with new wiki links and new capabilities explanations
+* update the i3wm.org documentation
+
 version 1.6 (2014-10-07)
 * new vnstat module, by Vasiliy Horbachenko
 * new net_rate module, alternative module for tracking network rate, by Vasiliy Horbachenko
