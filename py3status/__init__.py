@@ -511,6 +511,8 @@ class Events(Thread):
     def refresh(self, module_name):
         """
         Force a cache expiration for all the methods of the given module.
+
+        We rate limit the i3status refresh to 1/s for obvious abusive behavior.
         """
         module = self.modules.get(module_name)
         if module is not None:
@@ -518,6 +520,15 @@ class Events(Thread):
                 syslog(LOG_INFO, 'refresh module {}'.format(module_name))
             for obj in module.methods.values():
                 obj['cached_until'] = time()
+        else:
+            if time() > (self.last_refresh_ts + 1):
+                if self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'refresh i3status for module {}'.format(module_name)
+                    )
+                call(['killall', '-s', 'USR1', 'i3status'])
+                self.last_refresh_ts = time()
 
     def refresh_all(self, module_name):
         """
@@ -546,6 +557,10 @@ class Events(Thread):
         else:
             # this is a i3 message
             self.i3_msg(module_name, command)
+
+            # to make the bar more responsive to users we ask for a refresh
+            # of the module or of i3status if the module is an i3status one
+            self.refresh(module_name)
 
     @staticmethod
     def i3_msg(module_name, command):
