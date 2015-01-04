@@ -471,6 +471,7 @@ class Events(Thread):
         Thread.__init__(self)
         self.config = config
         self.i3s_config = i3s_config
+        self.last_refresh_ts = time()
         self.lock = lock
         self.modules = modules
         self.on_click = i3s_config['on_click']
@@ -518,13 +519,16 @@ class Events(Thread):
             for obj in module.methods.values():
                 obj['cached_until'] = time()
 
-    @staticmethod
-    def refresh_all(module_name):
+    def refresh_all(self, module_name):
         """
         Force a full refresh of py3status and i3status modules by sending
         a SIGUSR1 signal to py3status.
+
+        We rate limit this command to 1/s for obvious abusive behavior.
         """
-        Popen(['killall', '-USR1', 'py3status'])
+        if time() > (self.last_refresh_ts + 1):
+            call(['killall', '-s', 'USR1', '__init__.py'])
+            self.last_refresh_ts = time()
 
     def on_click_dispatcher(self, module_name, command):
         """
