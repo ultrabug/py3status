@@ -197,19 +197,29 @@ class I3status(Thread):
             if not in_section:
                 section_name = line.split('{')[0].strip()
                 section_name = self.eval_config_parameter(section_name)
-                if section_name not in config:
-                    config[section_name] = {}
+                if not section_name:
+                    continue
+                else:
+                    in_section = True
+                    if section_name not in config:
+                        config[section_name] = {}
 
             if '{' in line:
                 in_section = True
 
             if section_name and '=' in line:
-                line = line.split('}')[0].strip()
+                section_line = line
 
-                key = line.split('=')[0].strip()
+                # one liner cases
+                if line.endswith('}'):
+                    section_line = line.split('}')[0].strip()
+                if line.startswith(section_name + ' {'):
+                    section_line = line.split(section_name + ' {')[1].strip()
+
+                key = section_line.split('=')[0].strip()
                 key = self.eval_config_parameter(key)
 
-                value = line.split('=')[1].strip()
+                value = section_line.split('=')[1].strip()
                 value = self.eval_config_value(value)
 
                 if section_name == 'order':
@@ -251,7 +261,7 @@ class I3status(Thread):
                     if section_name in ['time', 'tztime'] and key == 'format':
                         self.time_format = value
 
-            if '}' in line:
+            if line.endswith('}'):
                 in_section = False
                 section_name = ''
 
