@@ -370,65 +370,73 @@ class I3status(Thread):
         """
         Spawn i3status using a self generated config file and poll its output.
         """
-        with NamedTemporaryFile(prefix='py3status_') as tmpfile:
-            self.write_tmp_i3status_config(tmpfile)
-            syslog(
-                LOG_INFO,
-                'i3status spawned using config file {}'.format(tmpfile.name)
-            )
+        try:
+            with NamedTemporaryFile(prefix='py3status_') as tmpfile:
+                self.write_tmp_i3status_config(tmpfile)
+                syslog(
+                    LOG_INFO,
+                    'i3status spawned using config file {}'.format(
+                        tmpfile.name
+                    )
+                )
 
-            i3status_pipe = Popen(
-                ['i3status', '-c', tmpfile.name],
-                stdout=PIPE,
-                stderr=PIPE,
-            )
-            self.poller_inp = IOPoller(i3status_pipe.stdout)
-            self.poller_err = IOPoller(i3status_pipe.stderr)
-            self.tmpfile_path = tmpfile.name
+                i3status_pipe = Popen(
+                    ['i3status', '-c', tmpfile.name],
+                    stdout=PIPE,
+                    stderr=PIPE,
+                )
+                self.poller_inp = IOPoller(i3status_pipe.stdout)
+                self.poller_err = IOPoller(i3status_pipe.stderr)
+                self.tmpfile_path = tmpfile.name
 
-            try:
-                # at first, poll very quickly
-                # to avoid delay in first i3bar display
-                timeout = 0.001
+                try:
+                    # at first, poll very quickly
+                    # to avoid delay in first i3bar display
+                    timeout = 0.001
 
-                # loop on i3status output
-                while self.lock.is_set():
-                    line = self.poller_inp.readline(timeout)
-                    if line:
-                        if line.startswith('[{'):
-                            with jsonify(line) as (prefix, json_list):
-                                self.last_output = json_list
-                                self.last_output_ts = datetime.utcnow()
-                                self.last_prefix = ','
-                                self.update_json_list()
-                            print_line(line)
-                        elif not line.startswith(','):
-                            if 'version' in line:
-                                header = loads(line)
-                                header.update({'click_events': True})
-                                line = dumps(header)
-                            print_line(line)
-                        else:
-                            timeout = 0.5
-                            with jsonify(line) as (prefix, json_list):
-                                self.last_output = json_list
-                                self.last_output_ts = datetime.utcnow()
-                                self.last_prefix = prefix
-                    else:
-                        err = self.poller_err.readline(timeout)
-                        code = i3status_pipe.poll()
-                        if code is not None:
-                            if err:
-                                msg = 'i3status died and said: {}'.format(err)
+                    # loop on i3status output
+                    while self.lock.is_set():
+                        line = self.poller_inp.readline(timeout)
+                        if line:
+                            if line.startswith('[{'):
+                                with jsonify(line) as (prefix, json_list):
+                                    self.last_output = json_list
+                                    self.last_output_ts = datetime.utcnow()
+                                    self.last_prefix = ','
+                                    self.update_json_list()
+                                print_line(line)
+                            elif not line.startswith(','):
+                                if 'version' in line:
+                                    header = loads(line)
+                                    header.update({'click_events': True})
+                                    line = dumps(header)
+                                print_line(line)
                             else:
-                                msg = 'i3status died with code {}'.format(code)
-                            raise IOError(msg)
+                                timeout = 0.5
+                                with jsonify(line) as (prefix, json_list):
+                                    self.last_output = json_list
+                                    self.last_output_ts = datetime.utcnow()
+                                    self.last_prefix = prefix
                         else:
-                            # poll is CPU intensive, breath a bit
-                            sleep(timeout)
-            except IOError:
-                err = sys.exc_info()[1]
-                self.error = err
+                            err = self.poller_err.readline(timeout)
+                            code = i3status_pipe.poll()
+                            if code is not None:
+                                msg = 'i3status died'
+                                if err:
+                                    msg += ' and said: {}'.format(err)
+                                else:
+                                    msg += ' with code {}'.format(code)
+                                raise IOError(msg)
+                            else:
+                                # poll is CPU intensive, breath a bit
+                                sleep(timeout)
+                except IOError:
+                    err = sys.exc_info()[1]
+                    self.error = err
+        except OSError:
+            # we cleanup the tmpfile ourselves so when the delete will occur
+            # it will usually raise an OSError: No such file or directory
+            pass
 
     def cleanup_tmpfile(self):
         """
