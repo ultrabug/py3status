@@ -1,3 +1,7 @@
+version 2.1 (2015-01-09)
+* fix i3status.conf parsing when config parameters contains brackets wrt issue #51 thx to @ZeiP
+* fix NamedTemporaryFile file delete throwing an OSError as we clean it up ourselves to be compatible with all python versions
+
 version 2.0 (2015-01-04)
 * two main highlights, see the wiki for more details :
 * 1- you can now load, run and order ALL (i3status and py3status) modules from your usual i3status.conf
