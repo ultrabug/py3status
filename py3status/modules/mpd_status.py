@@ -42,6 +42,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 2
+    color = None
     format = '{state} №{pos}. {artist} - {title} [{time}] | {next_title}'
     hide_when_paused = False
     hide_when_stopped = True
@@ -109,6 +110,9 @@ class Py3status:
             'full_text': self.text,
             'transformed': transformed
         }
+
+        if self.color:
+            response['color'] = self.color
 
         return response
 
