@@ -212,9 +212,11 @@ class I3status(Thread):
 
                 # one liner cases
                 if line.endswith('}'):
-                    section_line = line.split('}')[0].strip()
+                    section_line = section_line.split('}', -1)[0].strip()
                 if line.startswith(section_name + ' {'):
-                    section_line = line.split(section_name + ' {')[1].strip()
+                    section_line = section_line.split(
+                        section_name + ' {'
+                    )[1].strip()
 
                 key = section_line.split('=')[0].strip()
                 key = self.eval_config_parameter(key)
