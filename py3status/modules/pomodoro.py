@@ -11,14 +11,14 @@ class Py3status:
 
     # available configuration parameters
     max_breaks = 4
+    timer_break = 5 * 60
+    timer_long_break = 15 * 60
+    timer_pomodoro = 25 * 60
 
     def __init__(self):
         self.__setup('stop')
         self.alert = False
         self.run = False
-        self.timer_pomodoro = 25 * 60
-        self.timer_break = 5 * 60
-        self.timer_long_break = 15 * 60
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
