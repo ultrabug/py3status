@@ -9,10 +9,26 @@ Reequires
 @license Eclipse Public License
 """
 
-import re
+import string
 from mpd import (MPDClient, CommandError)
 from socket import error as SocketError
 from time import time
+
+
+class _DefaultFormatter(string.Formatter):
+    """
+    Custom implementation of string Formatter that returns
+    a default string of raising KeyError on missing
+    fields.
+    """
+    def __init__(self, default_value=""):
+        self._default_value = default_value
+
+    def get_value(self, *args, **kwargs):
+        try:
+            return super().get_value(*args, **kwargs)
+        except KeyError:
+            return self._default_value
 
 
 class Py3status:
@@ -104,17 +120,17 @@ class Py3status:
                 for k, v in next_song.items():
                     format_args["next_{}".format(k)] = v
 
-                needed_blocks = (block.strip() for block in self.fallback_if_empty.split(','))
-                needed_blocks = [block for block in needed_blocks if block]
-                if not needed_blocks or any(format_args.get(block, '').strip() for block in needed_blocks):
+                def_formatter = _DefaultFormatter()
+
+                needed_md = (md.strip() for md in self.fallback_if_empty.split(','))
+                needed_md = [md for md in needed_md if md]
+                if not needed_md or any(format_args.get(md, '').strip() for md in needed_md):
                     # we have enough metadata, we can use normal format
-                    text = self.format.format(**format_args)
+                    text = def_formatter.format(self.format, **format_args)
                 else:
                     # there is not the needed metadata, we use fallback format
-                    text = self.format_fallback.format(**format_args)
+                    text = def_formatter.format(self.format_fallback, **format_args)
 
-                for sub in re.findall(r"{\S+?}", text):
-                    text = text.replace(sub, "")
         except SocketError:
             text = "Failed to connect to mpd!"
         except CommandError:
