@@ -14,18 +14,14 @@ from mpd import (MPDClient, CommandError)
 from socket import error as SocketError
 from time import time
 
-# state characters (or strings). Actual of them replaces {state} placeholder in self.format
-STATE_CHARACTERS = {
-    "pause": "[pause]",
-    "play": "[play]",
-    "stop": "[stop]",
-}
-
 
 class Py3status:
     """
     Configuration parameters:
         - format : indicator text format
+        - state_play : label to display for "playing" state
+        - state_pause : label to display for "paused" state
+        - state_stop : label to display for "stopped" state
         - hide_when_paused / hide_when_stopped : hide any indicator, if
         - host : mpd host
         - max_width : if text length will be greater - it'll shrink it
@@ -33,7 +29,7 @@ class Py3status:
         - port : mpd port
 
     Format of result string can contain:
-        {state} - current state from STATE_CHARACTERS
+        {state} - current state (see state_{play,pause,stop} parameters)
         Track information:
         {track}, {artist}, {title}, {time}, {album}, {pos}
         In additional, information about next track also comes in,
@@ -44,6 +40,9 @@ class Py3status:
     cache_timeout = 2
     color = None
     format = '{state} №{pos}. {artist} - {title} [{time}] | {next_title}'
+    state_play = "[play]"
+    state_pause = "[pause]"
+    state_stop = "[stop]"
     hide_when_paused = False
     hide_when_stopped = True
     host = 'localhost'
@@ -54,6 +53,15 @@ class Py3status:
     def __init__(self):
         self.text = ''
 
+    def state_character(self, state):
+        if state == 'play':
+            return self.state_play
+        elif state == 'pause':
+            return self.state_pause
+        elif state == 'stop':
+            return self.state_stop
+        return '?'
+        
     def current_track(self, i3s_output_list, i3s_config):
         try:
             c = MPDClient()
@@ -65,7 +73,8 @@ class Py3status:
             song = int(status.get("song", 0))
             next_song = int(status.get("nextsong", 0))
 
-            if (status["state"] == "pause" and self.hide_when_paused) or (status["state"] == "stop" and self.hide_when_stopped):
+            state = status.get('state')
+            if (state == "pause" and self.hide_when_paused) or (state == "stop" and self.hide_when_stopped):
                 text = ""
             else:
                 try:
@@ -80,7 +89,7 @@ class Py3status:
                     next_song = {}
 
                 format_args = song
-                format_args["state"] = STATE_CHARACTERS.get(status.get("state", None))
+                format_args["state"] = self.state_character(state)
                 for k, v in next_song.items():
                     format_args["next_{}".format(k)] = v
 
@@ -115,6 +124,7 @@ class Py3status:
             response['color'] = self.color
 
         return response
+
 
 if __name__ == "__main__":
     """
