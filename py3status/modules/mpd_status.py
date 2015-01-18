@@ -19,27 +19,38 @@ class Py3status:
     """
     Configuration parameters:
         - format : indicator text format
+        - format_fallback : fallback indicator text format (see below)
         - state_play : label to display for "playing" state
         - state_pause : label to display for "paused" state
         - state_stop : label to display for "stopped" state
+        - fallback_if_empty : comma-separated list of metadata (see below)
         - hide_when_paused / hide_when_stopped : hide any indicator, if
         - host : mpd host
         - max_width : if text length will be greater - it'll shrink it
         - password : mpd password
         - port : mpd port
 
-    Format of result string can contain:
+    `format` parameter can contain:
         {state} - current state (see state_{play,pause,stop} parameters)
         Track information:
-        {track}, {artist}, {title}, {time}, {album}, {pos}
-        In additional, information about next track also comes in,
-        in analogue with current, but with next_ prefix, like {next_title}
+        {track}, {artist}, {title}, {time}, {album}, {pos}, {file}
+        In addition, information about the next track are also available,
+        similar to the above but prefixed with next_ as in: {next_title}
+    
+    `fallback_if_empty` contains a comma-separated list of the above blocks.
+        Example: 'artist,title'
+        If all these metadata are empty, `format_fallback` is used instead
+        of the usual `format`. This is useful if your songs are missing
+        metadata so you can display something else than an empty string.
+        Set this parameter to an empty string to disable the feature.
     """
 
     # available configuration parameters
     cache_timeout = 2
     color = None
     format = '{state} №{pos}. {artist} - {title} [{time}] | {next_title}'
+    format_fallback = '{state} №{pos}. {file} [{time}] | {next_title}'
+    fallback_if_empty = 'artist,title'
     state_play = "[play]"
     state_pause = "[pause]"
     state_stop = "[stop]"
@@ -93,9 +104,14 @@ class Py3status:
                 for k, v in next_song.items():
                     format_args["next_{}".format(k)] = v
 
-                text = self.format
-                for k, v in format_args.items():
-                    text = text.replace("{" + k + "}", v)
+                needed_blocks = (block.strip() for block in self.fallback_if_empty.split(','))
+                needed_blocks = [block for block in needed_blocks if block]
+                if not needed_blocks or any(format_args.get(block, '').strip() for block in needed_blocks):
+                    # we have enough metadata, we can use normal format
+                    text = self.format.format(**format_args)
+                else:
+                    # there is not the needed metadata, we use fallback format
+                    text = self.format_fallback.format(**format_args)
 
                 for sub in re.findall(r"{\S+?}", text):
                     text = text.replace(sub, "")
