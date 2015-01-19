@@ -58,20 +58,26 @@ class Py3status:
         self.time_remaining = ' '.join(acpi_list[4:])
         battery_full = False
 
-        if self.mode == "bar":
-            if charging:
-                full_text = CHARGING_CHARACTER
-            else:
-                full_text = BLOCKS[int(math.ceil(percent_charged/100*(len(BLOCKS) - 1)))]
-        elif self.mode == "ascii_bar":
-            full_part = FULL_BLOCK * int(percent_charged/10)
-            if charging:
-                empty_part = EMPTY_BLOCK_CHARGING * (10 - int(percent_charged/10))
-            else:
-                empty_part = EMPTY_BLOCK_DISCHARGING * (10 - int(percent_charged/10))
-            full_text = full_part + empty_part
+        # Format the bar character for both the bar mode and text format
+        full_part = FULL_BLOCK * int(percent_charged/10)
+        if charging:
+            bar = CHARGING_CHARACTER
+            empty_part = EMPTY_BLOCK_CHARGING * (10 - int(percent_charged/10))
         else:
-            full_text = self.format.format(str(percent_charged) + "%")
+            bar = BLOCKS[int(math.ceil(percent_charged/100*(len(BLOCKS) - 1)))]
+            empty_part = EMPTY_BLOCK_DISCHARGING * (10 - int(percent_charged/10))
+        ascii_bar = full_part + empty_part
+
+        if self.mode == "bar":
+            full_text = bar
+        elif self.mode == "ascii_bar":
+            full_text = ascii_bar
+        else:
+            # Support both named variables and a single variable
+            full_text = self.format.format(str(percent_charged) + "%",
+              percentage=str(percent_charged) + "%",
+              bar=bar,
+              ascii_bar=ascii_bar)
 
         response['full_text'] = full_text
 
