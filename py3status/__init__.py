@@ -1073,9 +1073,11 @@ class Py3statusWrapper():
                     os.environ.get('XDG_CONFIG_DIRS', '/etc/xdg')
                 )
             ]
-            i3status_config_files = filter(
-                os.path.isfile,
-                i3status_config_files
+            i3status_config_files = list(
+                filter(
+                    os.path.isfile,
+                    i3status_config_files
+                )
             )
 
             # if none of the default files exists, we will default
