@@ -742,7 +742,7 @@ class Module(Thread):
     It is reponsible for executing it every given interval and
     caching its output based on user will.
     """
-    def __init__(self, lock, config, include_path, f_name, i3_thread):
+    def __init__(self, lock, config, module, i3_thread, user_modules):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
@@ -755,37 +755,38 @@ class Module(Thread):
         self.lock = lock
         self.methods = {}
         self.module_class = None
-        self.module_name = f_name.rstrip('.py')
+        self.module_inst = ''.join(module.split(' ')[1:])
+        self.module_name = module.split(' ')[0]
         #
-        self.load_methods(include_path, f_name)
+        self.load_methods(module, user_modules)
 
     @staticmethod
     def load_from_file(filepath):
         """
         Return user-written class object from given path.
         """
-        inst = None
+        class_inst = None
         expected_class = 'Py3status'
-        mod_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
+        module_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
         if file_ext.lower() == '.py':
-            py_mod = imp.load_source(mod_name, filepath)
+            py_mod = imp.load_source(module_name, filepath)
             if hasattr(py_mod, expected_class):
-                inst = py_mod.Py3status()
-        return (mod_name, inst)
+                class_inst = py_mod.Py3status()
+        return class_inst
 
     @staticmethod
     def load_from_namespace(module_name):
         """
         Load a py3status bundled module.
         """
-        inst = None
-        name = 'py3status.modules.{}'.format(module_name.split(' ')[0])
+        class_inst = None
+        name = 'py3status.modules.{}'.format(module_name)
         py_mod = __import__(name)
         components = name.split('.')
         for comp in components[1:]:
             py_mod = getattr(py_mod, comp)
-        inst = py_mod.Py3status()
-        return (module_name, inst)
+        class_inst = py_mod.Py3status()
+        return class_inst
 
     def clear_cache(self):
         """
@@ -796,7 +797,7 @@ class Module(Thread):
             if self.config['debug']:
                 syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
 
-    def load_methods(self, include_path, f_name):
+    def load_methods(self, module, user_modules):
         """
         Read the given user-written py3status class file and store its methods.
         Those methods will be executed, so we will deliberately ignore:
@@ -805,16 +806,34 @@ class Module(Thread):
             - 'on_click' methods as they'll be called upon a click_event
             - 'kill' methods as they'll be called upon this thread's exit
         """
-        if include_path is not None:
-            module, class_inst = self.load_from_file(include_path + f_name)
+        # user provided modules take precedence over py3status provided modules
+        if self.module_name in user_modules:
+            include_path, f_name = user_modules[self.module_name]
+            syslog(
+                LOG_INFO,
+                'loading module "{}" from {}{}'.format(
+                    module,
+                    include_path,
+                    f_name
+                )
+            )
+            class_inst = self.load_from_file(include_path + f_name)
+        # load from py3status provided modules
         else:
-            module, class_inst = self.load_from_namespace(f_name)
+            syslog(
+                LOG_INFO,
+                'loading module "{}" from py3status.modules.{}'.format(
+                    module,
+                    self.module_name
+                )
+            )
+            class_inst = self.load_from_namespace(self.module_name)
 
-        if module and class_inst:
+        if class_inst:
             self.module_class = class_inst
 
             # apply module configuration from i3status config
-            mod_config = self.i3status_thread.config.get(self.module_name, {})
+            mod_config = self.i3status_thread.config.get(module, {})
             for config, value in mod_config.items():
                 setattr(self.module_class, config, value)
 
@@ -849,8 +868,8 @@ class Module(Thread):
         if self.config['debug']:
             syslog(
                 LOG_INFO,
-                'module {} click_events={} has_kill={} methods={}'.format(
-                    self.module_name,
+                'module "{}" click_events={} has_kill={} methods={}'.format(
+                    module,
                     self.click_events,
                     self.has_kill,
                     self.methods.keys()
@@ -904,10 +923,8 @@ class Module(Thread):
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
                         position, result = None, response
-                        result['name'] = self.module_name.split(' ')[0]
-                        result['instance'] = ''.join(
-                            self.module_name.split(' ')[1:]
-                        )
+                        result['name'] = self.module_name
+                        result['instance'] = self.module_inst
                     else:
                         # this is an old school module reporting its position
                         position, result = response
@@ -1090,7 +1107,7 @@ class Py3statusWrapper():
         # all done
         return config
 
-    def list_modules(self):
+    def get_user_modules(self):
         """
         Search import directories and files through given include paths with
         respect to i3status.conf configured py3status modules.
@@ -1101,19 +1118,63 @@ class Py3statusWrapper():
 
         This method is a generator and loves to yield.
         """
+        user_modules = dict()
         for include_path in sorted(self.config['include_paths']):
             include_path = os.path.abspath(include_path) + '/'
             if not os.path.isdir(include_path):
                 continue
 
             for f_name in sorted(os.listdir(include_path)):
-                if f_name.endswith('.py'):
-                    if self.py3_modules:
-                        mod_name = f_name.rstrip('.py')
-                        if mod_name in self.py3_modules:
-                            yield (include_path, f_name)
-                    else:
-                        yield (include_path, f_name)
+                if not f_name.endswith('.py'):
+                    continue
+
+                module_name = f_name.rstrip('.py')
+
+                if self.py3_modules:
+                    # i3status.conf based behaviour (using order += 'xx')
+                    for module in self.py3_modules:
+                        if module_name == module.split(' ')[0]:
+                            user_modules[module_name] = (include_path, f_name)
+                else:
+                    # legacy behaviour (load everything)
+                    user_modules[module_name] = (include_path, f_name)
+        return user_modules
+
+    def load_modules(self, modules_list, user_modules):
+        """
+        Load the given modules from the list (contains instance name) with
+        respect to the user provided modules dict.
+
+        modules_list: ['weather_yahoo paris', 'net_rate']
+        user_modules: {
+            'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py')
+        }
+        """
+        for module in modules_list:
+            # ignore already provided modules (prevents double inclusion)
+            if module in self.modules:
+                continue
+            try:
+                my_m = Module(
+                    self.lock,
+                    self.config,
+                    module,
+                    self.i3status_thread,
+                    user_modules
+                )
+                # only start and handle modules with available methods
+                if my_m.methods:
+                    my_m.start()
+                    self.modules[module] = my_m
+                elif self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'ignoring {} (no methods found)'.format(module)
+                    )
+            except Exception:
+                err = sys.exc_info()[1]
+                msg = 'loading {} failed ({})'.format(module, err)
+                self.i3_nagbar(msg, level='warning')
 
     def setup(self):
         """
@@ -1173,58 +1234,16 @@ class Py3statusWrapper():
         # get the list of py3status configured modules
         self.py3_modules = self.i3status_thread.config['py3_modules']
 
-        # load and spawn external modules threads
-        # based on inclusion folder
-        for include_path, f_name in self.list_modules():
-            module_name = f_name.rstrip('.py')
-            try:
-                my_m = Module(
-                    self.lock,
-                    self.config,
-                    include_path,
-                    f_name,
-                    self.i3status_thread
-                )
-                # only start and handle modules with available methods
-                if my_m.methods:
-                    my_m.start()
-                    self.modules[module_name] = my_m
-                elif self.config['debug']:
-                    syslog(
-                        LOG_INFO,
-                        'ignoring {} (no methods found)'.format(f_name)
-                    )
-            except Exception:
-                err = sys.exc_info()[1]
-                msg = 'loading {} failed ({})'.format(f_name, err)
-                self.i3_nagbar(msg, level='warning')
+        # get a dict of all user provided modules
+        user_modules = self.get_user_modules()
 
-        # load and spawn i3status.conf configured modules threads
-        for module_name in self.py3_modules:
-            # ignore if the user already provided this module
-            if module_name in self.modules:
-                continue
-            try:
-                my_m = Module(
-                    self.lock,
-                    self.config,
-                    None,
-                    module_name,
-                    self.i3status_thread
-                )
-                # only start and handle modules with available methods
-                if my_m.methods:
-                    my_m.start()
-                    self.modules[module_name] = my_m
-                elif self.config['debug']:
-                    syslog(
-                        LOG_INFO,
-                        'ignoring {} (no methods found)'.format(module_name)
-                    )
-            except Exception:
-                err = sys.exc_info()[1]
-                msg = 'loading {} failed ({})'.format(module_name, err)
-                self.i3_nagbar(msg, level='warning')
+        if self.py3_modules:
+            # load and spawn i3status.conf configured modules threads
+            self.load_modules(self.py3_modules, user_modules)
+        else:
+            # legacy behaviour code
+            # load and spawn user modules threads based on inclusion folders
+            self.load_modules(user_modules, user_modules)
 
     def i3_nagbar(self, msg, level='error'):
         """
