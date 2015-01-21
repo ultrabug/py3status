@@ -1169,11 +1169,13 @@ class Py3statusWrapper():
                 elif self.config['debug']:
                     syslog(
                         LOG_INFO,
-                        'ignoring {} (no methods found)'.format(module)
+                        'ignoring module "{}" (no methods found)'.format(
+                            module
+                        )
                     )
             except Exception:
                 err = sys.exc_info()[1]
-                msg = 'loading {} failed ({})'.format(module, err)
+                msg = 'loading module "{}" failed ({})'.format(module, err)
                 self.i3_nagbar(msg, level='warning')
 
     def setup(self):
