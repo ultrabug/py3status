@@ -1109,14 +1109,14 @@ class Py3statusWrapper():
 
     def get_user_modules(self):
         """
-        Search import directories and files through given include paths with
+        Search import directories and files through include paths with
         respect to i3status.conf configured py3status modules.
 
-        User provided modules take precedence over py3status generic modules
-        but if none has been configured then we'll load every file present
-        as this is the legacy behavior.
+        User provided modules take precedence over py3status generic modules.
 
-        This method is a generator and loves to yield.
+        If no module has been requested from i3status.conf, we'll load
+        every module present in the include paths
+        as this is the legacy behavior.
         """
         user_modules = dict()
         for include_path in sorted(self.config['include_paths']):
