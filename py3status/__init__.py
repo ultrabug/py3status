@@ -260,7 +260,10 @@ class I3status(Thread):
                         on_c[section_name][button] = value
 
                     # override time format
-                    if section_name.split(' ')[0] in ['time', 'tztime'] and key == 'format':
+                    if (
+                        section_name.split(' ')[0] in ['time', 'tztime']
+                        and key == 'format'
+                    ):
                         self.time_format = value
 
             if line.endswith('}'):
