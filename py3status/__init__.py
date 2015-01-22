@@ -1131,7 +1131,7 @@ class Py3statusWrapper():
                 if not f_name.endswith('.py'):
                     continue
 
-                module_name = f_name.rstrip('.py')
+                module_name = f_name[:-3]
 
                 if self.py3_modules:
                     # i3status.conf based behaviour (using order += 'xx')
