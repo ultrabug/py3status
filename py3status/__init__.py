@@ -1241,6 +1241,8 @@ class Py3statusWrapper():
 
         # get a dict of all user provided modules
         user_modules = self.get_user_modules()
+        if self.config['debug']:
+            syslog(LOG_INFO, 'user_modules={}'.format(user_modules))
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
