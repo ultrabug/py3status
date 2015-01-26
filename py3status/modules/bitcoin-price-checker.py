@@ -18,7 +18,7 @@ class Py3status:
     # btc-e, api,bitfinex, bitstamp, bitpay
     websites = 'btc-e, bitstamp'
     value = 'last'
-    cache_timeout = 5
+    cache_timeout = 120
 
     def __init__(self):
         self._hoster = {'https://btc-e.com/api/2/btc_usd/ticker': self._get_btce,
@@ -74,6 +74,7 @@ class Py3status:
                     'cached_until': time() + self.cache_timeout}
         rates = []
         cnt = 0
+        global lastPrices
         for url, f in self._hoster.items():
             rgx = re.search('.*//(.*)\..*', url).group(1)
             if rgx not in self.websites:
