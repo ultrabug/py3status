@@ -35,7 +35,7 @@ class Py3status:
 
         if mail_count == 'N/A':
             response['color'] = check_failed_color
-        elif mail_count != '0':
+        elif mail_count != 0:
             response['color'] = new_mail_color
 
         return response
