@@ -5,20 +5,23 @@ Module for displaying bitcoin prices.
 Written and contributed by @tasse:
     Andre Doser <doser.andre AT gmail.com>
 """
+# -*- coding: utf-8 -*-
+"""
+Module for displaying bitcoin prices.
+"""
 import json
 import urllib.request as ul
 from time import time
-from collections import defaultdict
 import re
 
-lastPrices = defaultdict(float)
+last_price = 0
 
 
 class Py3status:
     # btc-e, api,bitfinex, bitstamp, bitpay
-    websites = 'btc-e, bitstamp'
+    websites = 'btc-e'
     value = 'last'
-    cache_timeout = 120
+    cache_timeout = 1
 
     def __init__(self):
         self._hoster = {'https://btc-e.com/api/2/btc_usd/ticker': self._get_btce,
@@ -74,7 +77,6 @@ class Py3status:
                     'cached_until': time() + self.cache_timeout}
         rates = []
         cnt = 0
-        global lastPrices
         for url, f in self._hoster.items():
             rgx = re.search('.*//(.*)\..*', url).group(1)
             if rgx not in self.websites:
@@ -83,14 +85,17 @@ class Py3status:
             rates.append('{}: '.format(name)
                          + ('N/A' if rate == 'N/A'
                              else ('{:.2f}$'.format(float(rate)))))
-            lastPrices[f] = rate
             cnt += 1
         # don't color multiple sites
+        global last_price
         if cnt == 1:
-            if rate < lastPrices[f]:
+            if last_price == 0:
+                pass
+            elif rate < last_price:
                 response['color'] = i3s_config['color_bad']
-            elif rate > lastPrices[f]:
+            elif rate > last_price:
                 response['color'] = i3s_config['color_good']
+            last_price = rate
         response['full_text'] = ', '.join(rates)
         return response
 
