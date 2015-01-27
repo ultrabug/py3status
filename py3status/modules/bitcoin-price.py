@@ -55,13 +55,15 @@ class Py3status:
         response = {'full_text': '', 'name': 'bitcoin rates',
                     'cached_until': time() + self.cache_timeout}
         try:  # python 3
-            import urllib.request as ul
-        except:  # python 2
-            import urllib2 as ul
+            from urllib.request import urlopen
+            from urllib.error import URLError
+        except ImportError:  # python 2
+            from urllib2 import urlopen
+            from urllib2 import URLError
         # get the data from the bitcoincharts website
         try:
-            data = json.loads(ul.urlopen(self.url).read().decode())
-        except Exception:
+            data = json.loads(urlopen(self.url).read().decode())
+        except URLError:
             response['color'] = i3s_config['color_bad']
             response['full_text'] = 'Bitcoincharts not reachable'
             return response
@@ -74,7 +76,7 @@ class Py3status:
                 rate = self._get_price(data, market, self.field)
                 if i == self.color_index:  # coloration
                     color_rate = rate
-            except Exception:
+            except KeyError:
                 continue
             out = market[:-3] if rate else market  # market name
             out += ': '
