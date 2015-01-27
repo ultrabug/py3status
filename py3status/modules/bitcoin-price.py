@@ -7,7 +7,6 @@ Written and contributed by @tasse:
     Andre Doser <doser.andre AT gmail.com>
 """
 import json
-import urllib.request as ul
 from time import time
 
 last_price = 0
@@ -15,14 +14,15 @@ last_price = 0
 
 class Py3status:
     # possible markets see http://bitcoincharts.com/markets/list/
-    markets = 'btceEUR, btcdeEUR'
-    field = 'close'
-    cache_timeout = 900  # bitcoincharts: load max. every 15 min
-    symbols = True
+    cache_timeout = 900  # load max. every 15 min (according to bitcoincharts)
     color_index = -1
-    _url = 'http://api.bitcoincharts.com/v1/markets.json'
+    field = 'close'
+    markets = 'btceEUR, btcdeEUR'
+    symbols = True
+
     _map = {'EUR': '€', 'USD': '$', 'GBP': '£', 'YEN': '¥', 'CNY': '¥',
             'AUD': '$'}
+    _url = 'http://api.bitcoincharts.com/v1/markets.json'
 
     def _get_price(self, data, market, field):
         for m in data:
@@ -32,6 +32,10 @@ class Py3status:
     def get_rate(self, i3s_output_list, i3s_config):
         response = {'full_text': '', 'name': 'bitcoin rates',
                     'cached_until': time() + self.cache_timeout}
+        try:  # python 3
+            import urllib.request as ul
+        except:  # python 2
+            import urllib2 as ul
         # get the data from the bitcoincharts website
         try:
             data = json.loads(ul.urlopen(self._url).read().decode())
@@ -51,6 +55,7 @@ class Py3status:
             except Exception:
                 pass
             out = market[:-3] if rate else market  # market name
+            out += ': '
             out += 'N/A' if not rate else '{:.2f}'.format(rate)     # rate
             currency_sym = self._map.get(market[-3:], market[-3:])
             out += currency_sym if self.symbols else market
@@ -75,3 +80,4 @@ if __name__ == '__main__':
         print(x.get_rate([], {'color_good': 'green',
                               'color_bad': 'red'}))
         sleep(5)
+        break
