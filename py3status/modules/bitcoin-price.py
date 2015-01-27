@@ -68,7 +68,7 @@ class Py3status:
                 response['color'] = i3s_config['color_bad']
             elif color_rate > self.last_price:
                 response['color'] = i3s_config['color_good']
-            self.last_pricee = color_rate
+            self.last_price = color_rate
         response['full_text'] = ', '.join(rates)
         return response
 
