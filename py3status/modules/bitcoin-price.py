@@ -50,15 +50,14 @@ class Py3status:
                     color_rate = rate
             except Exception:
                 pass
-            rates.append('{}: '.format((market[:-3] if rate else market))
-                         + ('N/A' if not rate
-                            else ('{:.2f}{}'.format(
-                                rate,
-                                (self._map.get(market[-3:], market[-3:])
-                                    if self.symbols else market[-3:])))))
+            out = market[:-3] if rate else market  # market name
+            out += 'N/A' if not rate else '{:.2f}'.format(rate)     # rate
+            currency_sym = self._map.get(market[-3:], market[-3:])
+            out += currency_sym if self.symbols else market
+            rates.append(out)
         # don't color multiple sites if no color_index is given
         global last_price
-        if len(rates) == 1 or self.color_index >= -1:
+        if len(rates) == 1 or self.color_index > -1:
             if last_price == 0:
                 pass
             elif color_rate < last_price:
