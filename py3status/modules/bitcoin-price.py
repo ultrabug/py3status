@@ -15,10 +15,10 @@ last_price = 0
 class Py3status:
     # possible markets see http://bitcoincharts.com/markets/list/
     cache_timeout = 900  # load max. every 15 min (according to bitcoincharts)
-    color_index = -1
-    field = 'close'
-    markets = 'btceEUR, btcdeEUR'
-    symbols = True
+    color_index = -1  # color output according to which market?
+    field = 'close'  # see http://bitcoincharts.com/about/markets-api/
+    markets = 'btceEUR, btcdeEUR'  # comma separated
+    symbols = True  # convert USD -> $ etc.
 
     _map = {'EUR': '€', 'USD': '$', 'GBP': '£', 'YEN': '¥', 'CNY': '¥',
             'AUD': '$'}
