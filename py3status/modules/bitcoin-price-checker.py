@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Module for displaying bitcoin prices.
+Module for displaying bitcoin prices using 
+the API by www.bitcoincharts.com.
 
 Written and contributed by @tasse:
     Andre Doser <doser.andre AT gmail.com>
-"""
-# -*- coding: utf-8 -*-
-"""
-Module for displaying bitcoin prices.
 """
 import json
 import urllib.request as ul
@@ -18,77 +15,49 @@ last_price = 0
 
 
 class Py3status:
-    # btc-e, api,bitfinex, bitstamp, bitpay
-    websites = 'btc-e'
-    value = 'last'
-    cache_timeout = 120
-
-    def __init__(self):
-        self._hoster = {'https://btc-e.com/api/2/btc_usd/ticker': self._get_btce,
-                        'https://bitstamp.net/api/ticker/': self._get_bitstamp,
-                        'https://api.bitfinex.com/v1/pubticker/BTCUSD': self._get_bitfinex,
-                        'https://bitpay.com/api/rates': self._get_bitpay}
-
-    # returns the price for a given site in USD
-    # value is elem of {high, low, avg, last}
-    def _get_btce(self, url, value):
-        try:
-            data = json.loads(ul.urlopen(url).read().decode())
-            # default is 'last' price
-            value = data['ticker'].get(value, data['ticker']['last'])
-        except:
-            value = 'N/A'
-        return 'BTC-e', value
-
-    def _get_bitstamp(self, url, value):
-        # bitstamp API is different in the following
-        if value == 'avg':
-            value = 'vwap'
-        try:
-            data = json.loads(ul.urlopen(url).read().decode())
-            value = data.get(value, data['last'])
-        except:
-            value = 'N/A'
-        return 'BS', value
-
-    def _get_bitfinex(self, url, value):
-        # bitfinex API is different in the following
-        if value == 'avg':
-            value = 'mid'
-        if value == 'last':
-            value = 'last_price'
-        try:
-            data = json.loads(ul.urlopen(url).read().decode())
-            value = data.get(value, data['last_price'])
-        except:
-            value = 'N/A'
-        return 'BF', value
-
-    def _get_bitpay(self, url, value):
-        try:
-            data = json.loads(ul.urlopen(url).read().decode())
-            value = [x['rate'] for x in data if x['code'] == 'USD'][0]
-        except:
-            value = 'N/A'
-        return 'BP', value
+    # possible markets see http://bitcoincharts.com/markets/list/
+    markets = 'btceEUR, btcdeEUR'
+    field = 'close'
+    cache_timeout = 900  # bitcoincharts: load max. every 15 min
+    symbols = True
+    color_index = -1
+    _url = 'http://api.bitcoincharts.com/v1/markets.json'
+    _map = {'EUR': '€', 'USD': '$', 'GBP': '£', 'YEN': '¥', 'CNY': '¥',
+            'AUD': '$'}
+    # markets according to the following lists:
+    # 
+    def _get_price(self, data, market, field):
+        for m in data:
+            if m['symbol'] == market:
+                return m[field]
 
     def get_rate(self, i3s_output_list, i3s_config):
         response = {'full_text': '', 'name': 'bitcoin rates',
                     'cached_until': time() + self.cache_timeout}
-        rates = []
-        cnt = 0
-        for url, f in self._hoster.items():
-            rgx = re.search('.*//(.*)\..*', url).group(1)
-            if rgx not in self.websites:
-                continue
-            name, rate = f(url, self.value)
-            rates.append('{}: '.format(name)
-                         + ('N/A' if rate == 'N/A'
-                             else ('{:.2f}$'.format(float(rate)))))
-            cnt += 1
-        # don't color multiple sites
+        # get the data from the bitcoincharts website
+        try:
+            data = json.loads(ul.urlopen(self._url).read().decode())
+        except Exception:
+            response['color'] = i3s_config['color_bad']
+            response['full_text'] = 'Bitcoincharts not reachable'
+            return response
+        # get the rate for each market given
+        rates, markets = [], self.markets.split(",")
+        color_rate = None
+        for i, market in enumerate(markets):
+            market = market.strip()
+            try:
+                rate = self._get_price(data, market, self.field)
+                if i == self.color_index:
+                    color_rate = rate
+            except Exception:
+                pass
+            rates.append('{}: '.format((market[:-3] if rate else market))
+                        + ('N/A' if not rate
+                            else ('{:.2f}{}'.format(rate, (self._map.get(market[-3:], market[-3:]) if self.symbols else market[-3:])))))
+        # don't color multiple sites if no color_index is given
         global last_price
-        if cnt == 1:
+        if len(rates) == 1 or self.color_index >= -1:
             if last_price == 0:
                 pass
             elif rate < last_price:
@@ -105,4 +74,4 @@ if __name__ == '__main__':
     while True:
         print(x.get_rate([], {'color_good': 'green',
                               'color_bad': 'red'}))
-        sleep(1)
+        sleep(5)
