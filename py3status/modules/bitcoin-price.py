@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module for displaying bitcoin prices using 
+Module for displaying bitcoin prices using
 the API by www.bitcoincharts.com.
 
 Written and contributed by @tasse:
@@ -9,7 +9,6 @@ Written and contributed by @tasse:
 import json
 import urllib.request as ul
 from time import time
-import re
 
 last_price = 0
 
@@ -24,8 +23,7 @@ class Py3status:
     _url = 'http://api.bitcoincharts.com/v1/markets.json'
     _map = {'EUR': '€', 'USD': '$', 'GBP': '£', 'YEN': '¥', 'CNY': '¥',
             'AUD': '$'}
-    # markets according to the following lists:
-    # 
+
     def _get_price(self, data, market, field):
         for m in data:
             if m['symbol'] == market:
@@ -53,18 +51,21 @@ class Py3status:
             except Exception:
                 pass
             rates.append('{}: '.format((market[:-3] if rate else market))
-                        + ('N/A' if not rate
-                            else ('{:.2f}{}'.format(rate, (self._map.get(market[-3:], market[-3:]) if self.symbols else market[-3:])))))
+                         + ('N/A' if not rate
+                            else ('{:.2f}{}'.format(
+                                rate,
+                                (self._map.get(market[-3:], market[-3:])
+                                    if self.symbols else market[-3:])))))
         # don't color multiple sites if no color_index is given
         global last_price
         if len(rates) == 1 or self.color_index >= -1:
             if last_price == 0:
                 pass
-            elif rate < last_price:
+            elif color_rate < last_price:
                 response['color'] = i3s_config['color_bad']
-            elif rate > last_price:
+            elif color_rate > last_price:
                 response['color'] = i3s_config['color_good']
-            last_price = rate
+            last_price = color_rate
         response['full_text'] = ', '.join(rates)
         return response
 
