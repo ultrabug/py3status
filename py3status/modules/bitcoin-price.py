@@ -9,8 +9,6 @@ Written and contributed by @tasse:
 import json
 from time import time
 
-last_price = 0
-
 
 class Py3status:
     # possible markets see http://bitcoincharts.com/markets/list/
@@ -20,9 +18,11 @@ class Py3status:
     markets = 'btceEUR, btcdeEUR'  # comma separated
     symbols = True  # convert USD -> $ etc.
 
-    _map = {'EUR': '€', 'USD': '$', 'GBP': '£', 'YEN': '¥', 'CNY': '¥',
-            'AUD': '$'}
-    _url = 'http://api.bitcoincharts.com/v1/markets.json'
+    def __init__(self):
+        self.last_price = 0
+        self.currency_map = {'EUR': '€', 'USD': '$', 'GBP': '£',
+                             'YEN': '¥', 'CNY': '¥', 'AUD': '$'}
+        self.url = 'http://api.bitcoincharts.com/v1/markets.json'
 
     def _get_price(self, data, market, field):
         for m in data:
@@ -38,7 +38,7 @@ class Py3status:
             import urllib2 as ul
         # get the data from the bitcoincharts website
         try:
-            data = json.loads(ul.urlopen(self._url).read().decode())
+            data = json.loads(ul.urlopen(self.url).read().decode())
         except Exception:
             response['color'] = i3s_config['color_bad']
             response['full_text'] = 'Bitcoincharts not reachable'
@@ -57,19 +57,18 @@ class Py3status:
             out = market[:-3] if rate else market  # market name
             out += ': '
             out += 'N/A' if not rate else '{:.2f}'.format(rate)     # rate
-            currency_sym = self._map.get(market[-3:], market[-3:])
+            currency_sym = self.currency_map.get(market[-3:], market[-3:])
             out += currency_sym if self.symbols else market
             rates.append(out)
         # don't color multiple sites if no color_index is given
-        global last_price
         if len(rates) == 1 or self.color_index > -1:
-            if last_price == 0:
+            if self.last_price == 0:
                 pass
-            elif color_rate < last_price:
+            elif color_rate < self.last_price:
                 response['color'] = i3s_config['color_bad']
-            elif color_rate > last_price:
+            elif color_rate > self.last_price:
                 response['color'] = i3s_config['color_good']
-            last_price = color_rate
+            self.last_pricee = color_rate
         response['full_text'] = ', '.join(rates)
         return response
 
