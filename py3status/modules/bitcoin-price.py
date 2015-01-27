@@ -80,4 +80,3 @@ if __name__ == '__main__':
         print(x.get_rate([], {'color_good': 'green',
                               'color_bad': 'red'}))
         sleep(5)
-        break
