@@ -21,7 +21,7 @@ class Py3status:
     # btc-e, api,bitfinex, bitstamp, bitpay
     websites = 'btc-e'
     value = 'last'
-    cache_timeout = 1
+    cache_timeout = 120
 
     def __init__(self):
         self._hoster = {'https://btc-e.com/api/2/btc_usd/ticker': self._get_btce,
