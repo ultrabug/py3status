@@ -11,20 +11,42 @@ from time import time
 
 
 class Py3status:
-    # possible markets see http://bitcoincharts.com/markets/list/
-    cache_timeout = 900  # load max. every 15 min (according to bitcoincharts)
-    color_index = -1  # color output according to which market?
-    field = 'close'  # see http://bitcoincharts.com/about/markets-api/
-    markets = 'btceEUR, btcdeEUR'  # comma separated
-    symbols = True  # convert USD -> $ etc.
+    """
+    Configuration parameters:
+        - cache_timeout: Should be at least 15 min according to bitcoincharts.
+        - color_index  : Index of the market responsible for coloration,
+                         meaning that the output is going to be green if the
+                         price went up and red if it went down.
+                         default: -1 means no coloration,
+                                  except when only one market is selected
+        - field        : Field that is displayed per market,
+                         see http://bitcoincharts.com/about/markets-api/
+        - markets      : Comma-separated list of markets. Supported markets can
+                         be found at http://bitcoincharts.com/markets/list/
+        - symbols      : Try to match currency abbreviations to symbols,
+                         e.g. USD -> $, EUR -> € and so on
+    """
+    cache_timeout = 900
+    color_index = -1
+    field = 'closse'
+    markets = 'btceEUR, btcdeEUR'
+    symbols = True
 
     def __init__(self):
+        """
+        Initialize last_price, set the currency mapping
+        and the url containing the data.
+        """
         self.last_price = 0
         self.currency_map = {'EUR': '€', 'USD': '$', 'GBP': '£',
                              'YEN': '¥', 'CNY': '¥', 'AUD': '$'}
         self.url = 'http://api.bitcoincharts.com/v1/markets.json'
 
     def _get_price(self, data, market, field):
+        """
+        Given the data (in json format), returns the
+        field for a given market.
+        """
         for m in data:
             if m['symbol'] == market:
                 return m[field]
@@ -50,17 +72,18 @@ class Py3status:
             market = market.strip()
             try:
                 rate = self._get_price(data, market, self.field)
-                if i == self.color_index:
+                if i == self.color_index:  # coloration
                     color_rate = rate
             except Exception:
-                pass
+                continue
             out = market[:-3] if rate else market  # market name
             out += ': '
             out += 'N/A' if not rate else '{:.2f}'.format(rate)     # rate
             currency_sym = self.currency_map.get(market[-3:], market[-3:])
             out += currency_sym if self.symbols else market
             rates.append(out)
-        # don't color multiple sites if no color_index is given
+        # only colorize if an index is given or
+        # if only one market is selected
         if len(rates) == 1 or self.color_index > -1:
             if self.last_price == 0:
                 pass
@@ -73,6 +96,9 @@ class Py3status:
         return response
 
 if __name__ == '__main__':
+    """
+    Test this module by calling it directly.
+    """
     from time import sleep
     x = Py3status()
     while True:
