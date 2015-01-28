@@ -28,8 +28,8 @@ class Py3status:
     """
     cache_timeout = 900
     color_index = -1
-    field = 'closse'
-    markets = 'btceEUR, btcdeEUR'
+    field = 'close'
+    markets = 'btceUSD'
     symbols = True
 
     def __init__(self):
@@ -74,7 +74,8 @@ class Py3status:
             market = market.strip()
             try:
                 rate = self._get_price(data, market, self.field)
-                if i == self.color_index:  # coloration
+                # coloration
+                if i == self.color_index or len(markets) == 1:
                     color_rate = rate
             except KeyError:
                 continue
