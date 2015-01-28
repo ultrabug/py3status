@@ -30,6 +30,7 @@ class Py3status:
                          except when only one market is selected
         - field        : Field that is displayed per market,
                          see http://bitcoincharts.com/about/markets-api/
+        - hide_on_error: Display empty response if True, else an error message
         - markets      : Comma-separated list of markets. Supported markets can
                          be found at http://bitcoincharts.com/markets/list/
         - symbols      : Try to match currency abbreviations to symbols,
