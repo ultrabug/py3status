@@ -29,7 +29,7 @@ class Py3status:
     cache_timeout = 900
     color_index = -1
     field = 'close'
-    markets = 'btceUSD'
+    markets = 'btceUSD, btcdeEUR'
     symbols = True
 
     def __init__(self):
