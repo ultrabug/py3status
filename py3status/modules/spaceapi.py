@@ -23,6 +23,8 @@ class Py3status:
       - closed_text: text if space is closed, strftime parameters will be translated
       - closed_color: color if space is closed
     """
+
+    # available configuration parameters
     cache_timeout = 60
     url = 'http://status.chaospott.de/status.json'
     open_text = 'open since %H:%M'
@@ -30,50 +32,51 @@ class Py3status:
     closed_text = 'closed since %H:%M'
     closed_color = None
 
-    def __init__(self):
-        pass
-
     def check(self, i3s_output_list, i3s_config):
 
         response = {
-                'name': 'spaceapi',
-                'cached_until': time() + self.cache_timeout
-                }
+            'name': 'spaceapi',
+            'cached_until': time() + self.cache_timeout
+            }
 
         try:
-          if not self.open_color:
-              self.open_color = i3s_config['color_good']
+            # if color isn't set, set basic color schema
+            if not self.open_color:
+                self.open_color = i3s_config['color_good']
 
-          if not self.closed_color:
-              self.closed_color = ''
+            if not self.closed_color:
+                self.closed_color = ''
 
-          json_file=urllib.request.urlopen(self.url)
+            
+            # grab json file 
+            json_file=urllib.request.urlopen(self.url)
+            reader = codecs.getreader("utf-8")
+            data = json.load(reader(json_file))
+            json_file.close()
+            
+            
+            if(data['state']['open'] == True):
+                response['full_text'] = self.open_text
+                response['short_text'] = '%H:%M'
+                if self.open_color:
+                    response['color'] = self.open_color
+            else:
+                response['full_text'] = self.closed_text
+                response['short_text'] = ''
+                if self.closed_color:
+                    response['color'] = self.closed_color
 
-          reader = codecs.getreader("utf-8")
-          data = json.load(reader(json_file))
-          json_file.close()
-
-        
-          if(data['state']['open'] == True):
-            response['full_text'] = self.open_text
-            response['short_text'] = '%H:%M'
-            if self.open_color:
-              response['color'] = self.open_color
-          else:
-            response['full_text'] = self.closed_text
-            response['short_test'] = ''
-            if self.closed_color:
-              response['color'] = self.closed_color
-
-
-          dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
-          response['full_text'] = dt.strftime(response['full_text'])
+            # apply strftime to full and short text
+            dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
+            response['full_text'] = dt.strftime(response['full_text'])
+            response['short_text'] = dt.strftime(response['short_text'])
 
         except:
-          response['full_text'] = '';
+            response['full_text'] = '';
 
 
         return response
+
 if __name__ == "__main__":
     """
     Test this module by calling it directly.
@@ -81,5 +84,5 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     while True:
-        print(x.check([], {}))
+        print(x.check([], {'color_good': 'green'}))
         sleep(1)
