@@ -7,35 +7,34 @@ Author: @timmszigat
 License: WTFPL http://www.wtfpl.net/txt/copying/
 """
 
-from time import time
+import codecs
 import datetime
 import json
+from time import time
 import urllib.request
-import codecs
 
 class Py3status:
     """
     Configuration Parameters:
-      - cache_timeout: Set timeout between calls in seconds
-      - url: URL to SpaceAPI json file of your space
-      - open_text: text if space is open, strftime parmeters will be translated
-      - open_color: color if space is open
-      - closed_text: text if space is closed, strftime parameters will be translated
-      - closed_color: color if space is closed
+        - cache_timeout: Set timeout between calls in seconds
+        - closed_color: color if space is closed
+        - closed_text: text if space is closed, strftime parameters will be translated
+        - open_color: color if space is open
+        - open_text: text if space is open, strftime parmeters will be translated
+        - url: URL to SpaceAPI json file of your space
     """
 
     # available configuration parameters
     cache_timeout = 60
-    url = 'http://status.chaospott.de/status.json'
-    open_text = 'open since %H:%M'
-    open_color = None
-    closed_text = 'closed since %H:%M'
     closed_color = None
+    closed_text = 'closed since %H:%M'
+    open_color = None
+    open_text = 'open since %H:%M'
+    url = 'http://status.chaospott.de/status.json'
 
     def check(self, i3s_output_list, i3s_config):
 
         response = {
-            'name': 'spaceapi',
             'cached_until': time() + self.cache_timeout
             }
 
@@ -47,13 +46,11 @@ class Py3status:
             if not self.closed_color:
                 self.closed_color = ''
 
-            
             # grab json file 
             json_file=urllib.request.urlopen(self.url)
             reader = codecs.getreader("utf-8")
             data = json.load(reader(json_file))
             json_file.close()
-            
             
             if(data['state']['open'] == True):
                 response['full_text'] = self.open_text
@@ -73,7 +70,6 @@ class Py3status:
 
         except:
             response['full_text'] = '';
-
 
         return response
 
