@@ -1405,6 +1405,9 @@ class Py3statusWrapper():
         signal(SIGUSR1, self.sig_handler)
         signal(SIGTERM, self.terminate)
 
+        # initialize an empty json list output
+        previous_json_list = []
+
         # main loop
         while True:
             try:
@@ -1456,14 +1459,18 @@ class Py3statusWrapper():
                         # old style ordering
                         json_list = self.get_modules_output(json_list)
 
-                # dump the line to stdout
-                print_line('{}{}'.format(prefix, dumps(json_list)))
+                # dump the line to stdout on change
+                if json_list != previous_json_list:
+                    print_line('{}{}'.format(prefix, dumps(json_list)))
 
                 # update i3status output
                 self.i3status_thread.update_json_list()
 
-                # sleep a bit before doing this again
-                sleep(self.config['interval'])
+                # remember the last json list output
+                previous_json_list = json_list
+
+                # sleep a bit before doing this again to avoid killing the CPU
+                sleep(0.1)
             except UserWarning:
                 # SIGUSR1 was received, we also force i3status to refresh by
                 # sending it a SIGUSR1 as well then we refresh the bar asap
