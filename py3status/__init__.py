@@ -106,7 +106,6 @@ class I3status(Thread):
         self.last_prefix = None
         self.lock = lock
         self.standalone = standalone
-        self.time_format = '%Y-%m-%d %H:%M:%S'
         self.tmpfile_path = None
         #
         self.config = self.i3status_config_reader(i3status_config_path)
@@ -259,12 +258,13 @@ class I3status(Thread):
                         on_c[section_name] = on_c.get(section_name, {})
                         on_c[section_name][button] = value
 
-                    # override time format
+                    # store time and tztime formats
                     if (
                         section_name.split(' ')[0] in ['time', 'tztime']
                         and key == 'format'
                     ):
-                        self.time_format = value
+                        key_name = section_name.split(' ')[0] + '_format'
+                        setattr(self, key_name, value)
 
             if line.endswith('}'):
                 in_section = False
@@ -291,10 +291,12 @@ class I3status(Thread):
         Adjust the 'time' object so that it's updated at interval seconds
         """
         json_list = deepcopy(self.json_list)
+        default_time_format = '%Y-%m-%d %H:%M:%S'
         try:
-            time_format = self.time_format
             for item in json_list:
-                if 'name' in item and item['name'] in ['time', 'tztime']:
+                if item.get('name') in ['time', 'tztime']:
+                    key_name = item.get('name') + '_format'
+                    time_format = getattr(self, key_name, default_time_format)
                     i3status_time = item['full_text'].encode('UTF-8', 'replace')
                     try:
                         # python3 compatibility code
@@ -302,15 +304,16 @@ class I3status(Thread):
                     except:
                         pass
                     # add mendatory items in i3status time format wrt issue #18
+                    time_fmt = time_format
                     for fmt in ['%Y', '%m', '%d']:
                         if not fmt in time_format:
-                            time_format = '{} {}'.format(time_format, fmt)
+                            time_fmt = '{} {}'.format(time_format, fmt)
                             i3status_time = '{} {}'.format(
                                 i3status_time, datetime.now().strftime(fmt)
                             )
-                    date = datetime.strptime(i3status_time, time_format)
+                    date = datetime.strptime(i3status_time, time_fmt)
                     date += delta
-                    item['full_text'] = date.strftime(self.time_format)
+                    item['full_text'] = date.strftime(time_format)
                     item['transformed'] = True
         except Exception:
             err = sys.exc_info()[1]
