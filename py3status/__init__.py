@@ -1153,7 +1153,7 @@ class Py3statusWrapper():
         config['debug'] = options.debug
         if options.include_paths:
             config['include_paths'] = options.include_paths
-        config['interval'] = options.interval
+        config['interval'] = int(options.interval)
         config['standalone'] = options.standalone
 
         # i3status config file path setup or default detection
