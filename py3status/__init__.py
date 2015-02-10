@@ -1080,8 +1080,9 @@ class Py3statusWrapper():
         """
         Useful variables we'll need.
         """
-        self.modules = {}
+        self.last_refresh_ts = time()
         self.lock = Event()
+        self.modules = {}
         self.py3_modules = []
 
     def get_config(self):
@@ -1363,9 +1364,28 @@ class Py3statusWrapper():
 
     def sig_handler(self, signum, frame):
         """
-        Raise a Warning level exception when a user sends a SIGUSR1 signal.
+        SIGUSR1 was received, the user asks for an immediate refresh of the bar
+        so we force i3status to refresh by sending it a SIGUSR1
+        and we clear all py3status modules' cache.
+
+        To prevent abuse, we rate limit this function to 100ms.
         """
-        raise UserWarning("received USR1, forcing refresh")
+        if time() > (self.last_refresh_ts + 0.1):
+            syslog(LOG_INFO, 'received USR1, forcing refresh')
+
+            # send SIGUSR1 to i3status
+            call(['killall', '-s', 'USR1', 'i3status'])
+
+            # clear the cache of all modules
+            self.clear_modules_cache()
+
+            # reset the refresh timestamp
+            self.last_refresh_ts = time()
+        else:
+            syslog(
+                LOG_INFO,
+                'received USR1 but rate limit is in effect, calm down'
+            )
 
     def clear_modules_cache(self):
         """
