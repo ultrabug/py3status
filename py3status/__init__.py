@@ -542,7 +542,7 @@ class Events(Thread):
         """
         Force a cache expiration for all the methods of the given module.
 
-        We rate limit the i3status refresh to 1/s for obvious abusive behavior.
+        We rate limit the i3status refresh to 100ms for obvious abusive behavior.
         """
         module = self.modules.get(module_name)
         if module is not None:
@@ -551,7 +551,7 @@ class Events(Thread):
             for obj in module.methods.values():
                 obj['cached_until'] = time()
         else:
-            if time() > (self.last_refresh_ts + 1):
+            if time() > (self.last_refresh_ts + 0.1):
                 if self.config['debug']:
                     syslog(
                         LOG_INFO,
@@ -565,9 +565,9 @@ class Events(Thread):
         Force a full refresh of py3status and i3status modules by sending
         a SIGUSR1 signal to py3status.
 
-        We rate limit this command to 1/s for obvious abusive behavior.
+        We rate limit this command to 100ms for obvious abusive behavior.
         """
-        if time() > (self.last_refresh_ts + 1):
+        if time() > (self.last_refresh_ts + 0.1):
             call(['killall', '-s', 'USR1', 'py3status'])
             self.last_refresh_ts = time()
 
