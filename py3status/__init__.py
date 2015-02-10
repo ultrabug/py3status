@@ -7,7 +7,7 @@ import sys
 
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from json import dumps, loads
 from signal import signal
 from signal import SIGTERM, SIGUSR1
@@ -262,14 +262,6 @@ class I3status(Thread):
                         on_c[section_name] = on_c.get(section_name, {})
                         on_c[section_name][button] = value
 
-                    # store time and tztime formats
-                    if (
-                        section_name.split(' ')[0] in ['time', 'tztime']
-                        and key == 'format'
-                    ):
-                        key_name = section_name.split(' ')[0] + '_format'
-                        setattr(self, key_name, value)
-
             if line.endswith('}'):
                 in_section = False
                 section_name = ''
@@ -290,38 +282,114 @@ class I3status(Thread):
 
         return config
 
-    def adjust_time(self, delta):
+    def set_responses(self, json_list):
         """
-        Adjust the 'time' object so that it's updated at interval seconds
+        Set the given i3status responses on their respective configuration.
         """
-        json_list = deepcopy(self.json_list)
+        for index, item in enumerate(self.json_list):
+            conf_name = self.config['i3s_modules'][index]
+            self.config[conf_name]['response'] = item
+
+    def set_time_modules(self):
+        """
+        This method is executed only once after the first i3status output.
+
+        We parse all the i3status time and tztime modules and generate
+        a datetime for each of them while preserving (or defaulting) their
+        configured time format.
+
+        We also calculate a timedelta for each of them representing their
+        timezone offset. This is this delta that we'll be using from now on as
+        any future time or tztime update from i3status will be overwritten
+        thanks to our pre-parsed date here.
+        """
         default_time_format = '%Y-%m-%d %H:%M:%S'
-        try:
-            for item in json_list:
-                if item.get('name') in ['time', 'tztime']:
-                    key_name = item.get('name') + '_format'
-                    time_format = getattr(self, key_name, default_time_format)
-                    i3status_time = item['full_text'].encode('UTF-8', 'replace')
-                    try:
-                        # python3 compatibility code
-                        i3status_time = i3status_time.decode()
-                    except:
-                        pass
+        default_tztime_format = '%Y-%m-%d %H:%M:%S %Z'
+        utcnow = self.last_output_ts
+        #
+        for index, item in enumerate(self.json_list):
+            if item.get('name') in ['time', 'tztime']:
+                conf_name = self.config['i3s_modules'][index]
+                time_name = item.get('name')
+
+                # time and tztime have different defaults
+                if time_name == 'time':
+                    time_format = self.config.get(
+                        conf_name,
+                        {}
+                    ).get('format', default_time_format)
+                else:
+                    time_format = self.config.get(
+                        conf_name,
+                        {}
+                    ).get('format', default_tztime_format)
+
+                # parse i3status date
+                i3s_time = item['full_text'].encode('UTF-8', 'replace')
+                try:
+                    # python3 compatibility code
+                    i3s_time = i3s_time.decode()
+                except:
+                    pass
+
+                try:
                     # add mendatory items in i3status time format wrt issue #18
                     time_fmt = time_format
                     for fmt in ['%Y', '%m', '%d']:
                         if not fmt in time_format:
-                            time_fmt = '{} {}'.format(time_format, fmt)
-                            i3status_time = '{} {}'.format(
-                                i3status_time, datetime.now().strftime(fmt)
+                            time_fmt = '{} {}'.format(time_fmt, fmt)
+                            i3s_time = '{} {}'.format(
+                                i3s_time, datetime.now().strftime(fmt)
                             )
-                    date = datetime.strptime(i3status_time, time_fmt)
-                    date += delta
-                    item['full_text'] = date.strftime(time_format)
-                    item['transformed'] = True
-        except Exception:
-            err = sys.exc_info()[1]
-            syslog(LOG_ERR, "i3status adjust_time failed ({})".format(err))
+
+                    # get a datetime from the parsed string date
+                    date = datetime.strptime(i3s_time, time_fmt)
+
+                    # i3status output delay adjustment
+                    date += timedelta(seconds=1)
+                except Exception:
+                    err = sys.exc_info()[1]
+                    syslog(
+                        LOG_ERR,
+                        'i3status set_time_modules {} failed ({})'.format(
+                            conf_name,
+                            err
+                        )
+                    )
+                    date = datetime.now()
+                finally:
+                    self.config[conf_name]['date'] = date
+                    self.config[conf_name]['delta'] = date - utcnow
+                    self.config[conf_name]['time_format'] = time_format
+
+    def tick_time_modules(self, json_list, force):
+        """
+        Adjust the 'time' and 'tztime' objects from the given json_list so that
+        they are updated only at py3status interval seconds.
+
+        This method is used to overwrite any i3status time or tztime output
+        with respect to their parsed and timezone offset detected on start.
+        """
+        utcnow = datetime.utcnow()
+        #
+        for index, item in enumerate(json_list):
+            if item.get('name') in ['time', 'tztime']:
+                conf_name = self.config['i3s_modules'][index]
+                time_module = self.config[conf_name]
+                if force:
+                    date = utcnow + time_module['delta']
+                    time_module['date'] = date
+                else:
+                    date = time_module['date']
+                time_format = self.config[conf_name].get('time_format')
+
+                # set the full_text date on the json_list to be returned
+                item['full_text'] = date.strftime(time_format)
+                json_list[index] = item
+
+                # reset the full_text date on the config object for next
+                # iteration to be consistent with this one
+                time_module['response']['full_text'] = item['full_text']
         return json_list
 
     def update_json_list(self):
@@ -347,9 +415,7 @@ class I3status(Thread):
                 for method in py3_modules[module].methods.values():
                     ordered.append(method['last_output'])
             else:
-                for m, j in zip(self.config['i3s_modules'], json_list):
-                    if m == module:
-                        ordered.append(j)
+                ordered.append(self.config[module]['response'])
         return ordered
 
     @staticmethod
@@ -426,6 +492,10 @@ class I3status(Thread):
                                     self.last_output_ts = datetime.utcnow()
                                     self.last_prefix = ','
                                     self.update_json_list()
+                                    self.set_responses(json_list)
+                                    # on first i3status output, we parse
+                                    # the time and tztime modules
+                                    self.set_time_modules()
                                 print_line(line)
                             elif not line.startswith(','):
                                 if 'version' in line:
@@ -439,6 +509,8 @@ class I3status(Thread):
                                     self.last_output = json_list
                                     self.last_output_ts = datetime.utcnow()
                                     self.last_prefix = prefix
+                                    self.update_json_list()
+                                    self.set_responses(json_list)
                         else:
                             err = self.poller_err.readline(timeout)
                             code = i3status_pipe.poll()
@@ -1412,83 +1484,87 @@ class Py3statusWrapper():
         signal(SIGUSR1, self.sig_handler)
         signal(SIGTERM, self.terminate)
 
-        # initialize an empty json list output
+        # initialize usage variables
+        delta = 0
+        last_delta = -1
         previous_json_list = []
 
         # main loop
         while True:
-            try:
-                # check i3status thread
-                if not self.i3status_thread.is_alive():
-                    err = self.i3status_thread.error
-                    if not err:
-                        err = 'i3status died horribly'
-                    self.i3_nagbar(err)
-                    break
+            # check i3status thread
+            if not self.i3status_thread.is_alive():
+                err = self.i3status_thread.error
+                if not err:
+                    err = 'i3status died horribly'
+                self.i3_nagbar(err)
+                break
 
-                # check events thread
-                if not self.events_thread.is_alive():
+            # check events thread
+            if not self.events_thread.is_alive():
+                # don't spam the user with i3-nagbar warnings
+                if not hasattr(self.events_thread, 'i3_nagbar'):
+                    self.events_thread.i3_nagbar = True
+                    err = 'events thread died, click events are disabled'
+                    self.i3_nagbar(err, level='warning')
+
+            # check that every module thread is alive
+            for module in self.modules.values():
+                if not module.is_alive():
                     # don't spam the user with i3-nagbar warnings
-                    if not hasattr(self.events_thread, 'i3_nagbar'):
-                        self.events_thread.i3_nagbar = True
-                        err = 'events thread died, click events are disabled'
-                        self.i3_nagbar(err, level='warning')
-
-                # get output from i3status
-                prefix = self.i3status_thread.last_prefix
-                json_list = self.i3status_thread.json_list
-
-                # transform output from i3status
-                delta = datetime.utcnow() - self.i3status_thread.json_list_ts
-                if delta.seconds > 0:
-                    json_list = self.i3status_thread.adjust_time(delta)
-
-                # check that every module thread is alive
-                for module in self.modules.values():
-                    if not module.is_alive():
-                        # don't spam the user with i3-nagbar warnings
-                        if not hasattr(module, 'i3_nagbar'):
-                            module.i3_nagbar = True
-                            msg = 'output frozen for dead module(s) {}'.format(
-                                ','.join(module.methods.keys())
-                            )
-                            self.i3_nagbar(msg, level='warning')
-
-                # construct the global output, modules first
-                if self.modules:
-                    if self.py3_modules:
-                        # new style i3status configured ordering
-                        json_list = self.i3status_thread.get_modules_output(
-                            json_list,
-                            self.modules
+                    if not hasattr(module, 'i3_nagbar'):
+                        module.i3_nagbar = True
+                        msg = 'output frozen for dead module(s) {}'.format(
+                            ','.join(module.methods.keys())
                         )
-                    else:
-                        # old style ordering
-                        json_list = self.get_modules_output(json_list)
+                        self.i3_nagbar(msg, level='warning')
 
-                # dump the line to stdout on change
-                if json_list != previous_json_list:
-                    print_line('{}{}'.format(prefix, dumps(json_list)))
+            # get output from i3status
+            prefix = self.i3status_thread.last_prefix
+            json_list = deepcopy(self.i3status_thread.json_list)
 
-                # update i3status output
-                self.i3status_thread.update_json_list()
+            # transform time and tztime outputs from i3status
+            # every configured interval seconds
+            if (
+                int(delta) % self.config['interval'] == 0
+                and int(last_delta) != int(delta)
+            ):
+                delta = 0
+                last_delta = 0
+                json_list = self.i3status_thread.tick_time_modules(
+                    json_list,
+                    force=True
+                )
+            else:
+                json_list = self.i3status_thread.tick_time_modules(
+                    json_list,
+                    force=False
+                )
 
-                # remember the last json list output
-                previous_json_list = json_list
+            # construct the global output
+            if self.modules:
+                if self.py3_modules:
+                    # new style i3status configured ordering
+                    json_list = self.i3status_thread.get_modules_output(
+                        json_list,
+                        self.modules
+                    )
+                else:
+                    # old style ordering
+                    json_list = self.get_modules_output(json_list)
 
-                # sleep a bit before doing this again to avoid killing the CPU
-                sleep(0.1)
-            except UserWarning:
-                # SIGUSR1 was received, we also force i3status to refresh by
-                # sending it a SIGUSR1 as well then we refresh the bar asap
-                err = sys.exc_info()[1]
-                syslog(LOG_INFO, str(err))
-                try:
-                    call(["killall", "-s", "USR1", "i3status"])
-                    self.clear_modules_cache()
-                except Exception:
-                    err = sys.exc_info()[1]
-                    self.i3_nagbar('SIGUSR1 ({})'.format(err), level='warning')
+            # dump the line to stdout only on change
+            if json_list != previous_json_list:
+                print_line('{}{}'.format(prefix, dumps(json_list)))
+
+            # remember the last json list output
+            previous_json_list = deepcopy(json_list)
+
+            # reset i3status json_list and json_list_ts
+            self.i3status_thread.update_json_list()
+
+            # sleep a bit before doing this again to avoid killing the CPU
+            delta += 0.1
+            sleep(0.1)
 
 
 def main():
