@@ -227,6 +227,10 @@ class I3status(Thread):
                     config[section_name].append(value)
                     line = '}'
 
+                    # create an empty config for this module
+                    if value not in config:
+                        config[value] = {}
+
                     # detect internal modules to be loaded dynamically
                     if not self.valid_config_param(value):
                         config['py3_modules'].append(value)
