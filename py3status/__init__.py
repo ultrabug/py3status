@@ -1409,13 +1409,6 @@ class Py3statusWrapper():
             )
         ]
 
-        # debug the ordering matrix
-        if self.config['debug']:
-            syslog(
-                LOG_INFO,
-                'ordering matrix {}'.format(list(range(len(m_list))))
-            )
-
         # run through modules/methods output and insert them in reverse order
         debug_msg = ''
         for m in reversed(list(self.modules.values())):
@@ -1441,13 +1434,6 @@ class Py3statusWrapper():
                             m_list.index(last_output)
                         )
 
-        # debug the user modules ordering
-        if self.config['debug']:
-            syslog(
-                LOG_INFO,
-                'ordering user modules positions {}'.format(debug_msg.strip())
-            )
-
         # append i3status json list to the modules' list in empty slots
         debug_msg = ''
         for i3s_json in json_list:
@@ -1465,15 +1451,6 @@ class Py3statusWrapper():
                     i3s_json['name'],
                     m_list.index(i3s_json)
                 )
-
-        # debug i3status modules ordering
-        if self.config['debug']:
-            syslog(
-                LOG_INFO,
-                'ordering i3status modules positions {}'.format(
-                    debug_msg.strip()
-                )
-            )
 
         # cleanup and return output list, we also remove empty outputs
         m_list = list(filter(lambda a: a != '' and a['full_text'], m_list))
