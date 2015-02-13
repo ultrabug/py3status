@@ -415,7 +415,8 @@ class I3status(Thread):
                 for method in py3_modules[module].methods.values():
                     ordered.append(method['last_output'])
             else:
-                ordered.append(self.config[module]['response'])
+                if self.config.get(module, {}).get('response'):
+                    ordered.append(self.config[module]['response'])
         return ordered
 
     @staticmethod
