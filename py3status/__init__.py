@@ -105,6 +105,7 @@ class I3status(Thread):
         self.last_output_ts = None
         self.last_prefix = None
         self.lock = lock
+        self.ready = False
         self.standalone = standalone
         self.tmpfile_path = None
         #
@@ -488,6 +489,7 @@ class I3status(Thread):
                         line = self.poller_inp.readline(timeout)
                         if line:
                             if line.startswith('[{'):
+                                print_line(line)
                                 with jsonify(line) as (prefix, json_list):
                                     self.last_output = json_list
                                     self.last_output_ts = datetime.utcnow()
@@ -497,7 +499,7 @@ class I3status(Thread):
                                     # on first i3status output, we parse
                                     # the time and tztime modules
                                     self.set_time_modules()
-                                print_line(line)
+                                self.ready = True
                             elif not line.startswith(','):
                                 if 'version' in line:
                                     header = loads(line)
@@ -1287,7 +1289,7 @@ class Py3statusWrapper():
             self.i3status_thread.mock()
         else:
             self.i3status_thread.start()
-            while not self.i3status_thread.last_output:
+            while not self.i3status_thread.ready:
                 if not self.i3status_thread.is_alive():
                     err = self.i3status_thread.error
                     raise IOError(err)
