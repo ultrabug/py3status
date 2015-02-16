@@ -1523,8 +1523,10 @@ class Py3statusWrapper():
             # transform time and tztime outputs from i3status
             # every configured interval seconds
             if (
-                int(delta) % self.config['interval'] == 0
-                and int(last_delta) != int(delta)
+                self.config['interval'] <= 1 or (
+                    int(delta) % self.config['interval'] == 0
+                    and int(last_delta) != int(delta)
+                )
             ):
                 delta = 0
                 last_delta = 0
