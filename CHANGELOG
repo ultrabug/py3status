@@ -1,3 +1,15 @@
+version 2.3 (2015-02-17)
+* refactor the main loop for instant i3bar update on module or i3status output change wrt issue #59, handle correctly all and multiple time and tztime instances while updating them only on py3status interval thx to @protosphere and @abello
+* clear cache of user modules on click events by default for maximal i3bar responsiveness
+* fix issue #63 wrt SIGUSR1 spam error, cap it to 1 per 100ms anyway to avoid killing i3status thx to @abello
+* lower the click event refresh mechanism rate limit to 100ms
+* remove legacy module ordering spammy debug logs
+* new spaceapi module, by Timm Szigat
+* new module bitcoin-price-checker, by André Doser
+* fix typo in imap module thx to @tasse
+* fix i3status setup race condition reported by @tasse
+* fix time adjustement for short iteration timers thx to @guilbep
+
 version 2.2 (2015-01-23)
 * rewrite and cleanup the modules loading mechanism to handle correctly user provided modules instances wrt #57 thx to @wlcx and @Zopieux
 * fix module name parsing thx to @guiniol
