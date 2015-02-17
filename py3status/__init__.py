@@ -586,6 +586,11 @@ class Events(Thread):
         """
         Dispatch the event or enforce the default clear cache action.
         """
+        module_name = '{} {}'.format(
+            module.module_name,
+            module.module_inst
+        ).strip()
+        #
         if module.click_events:
             # module accepts click_events, use it
             module.click_event(event)
@@ -593,9 +598,12 @@ class Events(Thread):
                 syslog(LOG_INFO, 'dispatching event {}'.format(event))
         else:
             # default button 2 action is to clear this method's cache
-            obj['cached_until'] = time()
             if self.config['debug']:
                 syslog(LOG_INFO, 'dispatching default event {}'.format(event))
+
+        # to make the bar more responsive to users we ask for a refresh
+        # of the module or of i3status if the module is an i3status one
+        self.refresh(module_name)
 
     def i3bar_click_events_module(self):
         """
