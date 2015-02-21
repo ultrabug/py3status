@@ -5,6 +5,7 @@ import os
 import select
 import sys
 
+from collections import OrderedDict
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -846,7 +847,7 @@ class Module(Thread):
         self.i3status_thread = i3_thread
         self.last_output = []
         self.lock = lock
-        self.methods = {}
+        self.methods = OrderedDict()
         self.module_class = None
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
