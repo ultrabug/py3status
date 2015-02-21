@@ -43,12 +43,17 @@ class Py3status:
         p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
         p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
 
-        mac = p2.communicate()[0].strip().decode("utf-8")
+        macs = p2.communicate()[0].strip().decode("utf-8").split()
 
-        if mac != "":
-            cmd3 = shlex.split("hcitool name %s" % mac)
-            p3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE)
-            output += p3.communicate()[0].strip().decode("utf-8")
+        if macs != []:
+            names = []
+            for mac in macs:
+                cmd3 = shlex.split("hcitool name %s" % mac)
+                p3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE)
+                names.append(p3.communicate()[0].strip().decode("utf-8"))
+
+            output += "|".join(names)
+
             color = self.color_good or i3s_config['color_good']
         else:
             output += "OFF"
