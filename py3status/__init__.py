@@ -412,13 +412,13 @@ class I3status(Thread):
         the user in his i3status.conf.
         """
         ordered = []
-        for module in self.config['order']:
-            if module in py3_modules:
-                for method in py3_modules[module].methods.values():
+        for module_name in self.config['order']:
+            if module_name in py3_modules:
+                for method in py3_modules[module_name].methods.values():
                     ordered.append(method['last_output'])
             else:
-                if self.config.get(module, {}).get('response'):
-                    ordered.append(self.config[module]['response'])
+                if self.config.get(module_name, {}).get('response'):
+                    ordered.append(self.config[module_name]['response'])
         return ordered
 
     @staticmethod
