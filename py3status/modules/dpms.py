@@ -38,8 +38,8 @@ class Py3status:
         if event['button'] == 1:
             if self.run:
                 self.run = False
-                system("xset -dpms")
+                system("xset -dpms;xset s off")
             else:
                 self.run = True
-                system("xset +dpms")
+                system("xset +dpms;xset s on")
             system("killall -USR1 py3status")
