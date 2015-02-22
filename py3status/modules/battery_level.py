@@ -112,3 +112,10 @@ class Py3status:
                 stdout=open('/dev/null', 'w'),
                 stderr=open('/dev/null', 'w')
             )
+
+if __name__ == "__main__":
+    from time import sleep
+    x = Py3status()
+    while True:
+        print(x.battery_level([], {}))
+        sleep(1)
