@@ -6,15 +6,17 @@ Module for displaying bluetooth status
 
 Requires:
     - hcitool
-    - sed
 
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
 """
 
+import re
 import shlex
-import subprocess
+from subprocess import check_output
 from time import time
+
+BTMAC_RE = re.compile(r"[0-9A-F:]{17}")
 
 class Py3status:
     # configuration parameters
@@ -26,22 +28,16 @@ class Py3status:
         # The whole command:
         # hcitool name `hcitool con | sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'`
 
-        cmd1 = shlex.split("hcitool con")
-        cmd2 = shlex.split("sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'")
+        out = check_output(shlex.split("hcitool con"))
+        macs = re.findall(BTMAC_RE, out.decode("utf-8"))
         output = "BT: "
         color = self.color_bad or i3s_config['color_bad']
-
-        p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
-        p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
-
-        macs = p2.communicate()[0].strip().decode("utf-8").split()
 
         if macs != []:
             names = []
             for mac in macs:
-                cmd3 = shlex.split("hcitool name %s" % mac)
-                p3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE)
-                names.append(p3.communicate()[0].strip().decode("utf-8"))
+                out = check_output(shlex.split("hcitool name %s" % mac))
+                names.append(out.strip().decode("utf-8"))
 
             output += "|".join(names)
 
