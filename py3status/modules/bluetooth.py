@@ -23,6 +23,11 @@ class Py3status:
     cache_timeout = 10
     color_good = None
     color_bad = None
+    format_prefix = "BT: "
+    # both {name} and {mac} are accepted
+    format = "{name}"
+    format_no_conn_prefix = "BT: "
+    format_no_conn = "OFF"
     separator = '|'
 
     def bluetooth(self, i3s_output_list, i3s_config):
@@ -31,20 +36,29 @@ class Py3status:
 
         out = check_output(shlex.split("hcitool con"))
         macs = re.findall(BTMAC_RE, out.decode("utf-8"))
-        output = "BT: "
         color = self.color_bad or i3s_config['color_bad']
 
         if macs != []:
-            names = []
+            data = []
             for mac in macs:
                 out = check_output(shlex.split("hcitool name %s" % mac))
-                names.append(out.strip().decode("utf-8"))
+                fmt_str = self.format.format(
+                    name=out.strip().decode("utf-8"),
+                    mac=mac
+                )
+                data.append(fmt_str)
 
-            output += self.separator.join(names)
+            output = "{format_prefix}{data}".format(
+                format_prefix=self.format_prefix,
+                data=self.separator.join(data)
+            )
 
             color = self.color_good or i3s_config['color_good']
         else:
-            output += "OFF"
+            output = "{format_prefix}{format}".format(
+                format_prefix=self.format_no_conn_prefix,
+                format=self.format_no_conn
+            )
 
         response = {
             'cached_until': time() + self.cache_timeout,
