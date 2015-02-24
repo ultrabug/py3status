@@ -23,6 +23,7 @@ class Py3status:
     cache_timeout = 10
     color_good = None
     color_bad = None
+    separator = '|'
 
     def bluetooth(self, i3s_output_list, i3s_config):
         # The whole command:
@@ -39,7 +40,7 @@ class Py3status:
                 out = check_output(shlex.split("hcitool name %s" % mac))
                 names.append(out.strip().decode("utf-8"))
 
-            output += "|".join(names)
+            output += self.separator.join(names)
 
             color = self.color_good or i3s_config['color_good']
         else:
