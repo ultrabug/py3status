@@ -12,9 +12,9 @@ Requires:
 @license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
 """
 
-from time import time
-import subprocess
 import shlex
+import subprocess
+from time import time
 
 class Py3status:
     # configuration parameters
@@ -22,16 +22,7 @@ class Py3status:
     color_good = None
     color_bad = None
 
-    def __init__(self):
-        pass
-
-    def kill(self, i3s_output_list, i3s_config):
-        pass
-
-    def on_click(self, i3s_output_list, i3s_config, event):
-        pass
-
-    def get_status(self, i3s_output_list, i3s_config):
+    def bluetooth(self, i3s_output_list, i3s_config):
         # The whole command:
         # hcitool name `hcitool con | sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'`
 
@@ -78,5 +69,5 @@ if __name__ == "__main__":
         }
 
     while True:
-        print(x.get_status([], config))
+        print(x.bluetooth([], config))
         sleep(1)
