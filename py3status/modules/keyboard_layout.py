@@ -13,6 +13,8 @@ Requires:
 
 from subprocess import check_output
 from time import time
+import shlex
+import re
 
 # colors of layouts, check your command's output to match keys
 LANG_COLORS = {
@@ -22,6 +24,7 @@ LANG_COLORS = {
     'us': '#729FCF',  # light blue
 }
 
+LAYOUT_RE = re.compile(r".*layout:\s*(\w+).*", flags=re.DOTALL)
 
 def xbklayout():
     """
@@ -39,9 +42,9 @@ def setxkbmap():
     Please read issue 33 for more information :
         https://github.com/ultrabug/py3status/pull/33
     """
-    q = check_output(['setxkbmap', '-query']).decode('utf-8')
-    return q.replace(' ', '').split(':')[-1]
+    out = check_output(shlex.split("setxkbmap -query")).decode("utf-8")
 
+    return re.match(LAYOUT_RE, out).group(1)
 
 class Py3status:
 
