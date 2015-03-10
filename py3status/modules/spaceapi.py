@@ -38,7 +38,7 @@ class Py3status:
             'cached_until': time() + self.cache_timeout
             }
 
-        try:
+        if True:
             # if color isn't set, set basic color schema
             if not self.open_color:
                 self.open_color = i3s_config['color_good']
@@ -63,13 +63,14 @@ class Py3status:
                 if self.closed_color:
                     response['color'] = self.closed_color
 
-            # apply strftime to full and short text
-            dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
-            response['full_text'] = dt.strftime(response['full_text'])
-            response['short_text'] = dt.strftime(response['short_text'])
+            if not 'lastchange' in data['state']:
+                return response
 
-        except:
-            response['full_text'] = '';
+            else:
+                # apply strftime to full and short text
+                dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
+                response['full_text'] = dt.strftime(response['full_text'])
+                response['short_text'] = dt.strftime(response['short_text'])
 
         return response
 
