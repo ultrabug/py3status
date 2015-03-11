@@ -51,7 +51,7 @@ class Py3status:
     low_traffic = 400
     med_speed = 60
     med_traffic = 700
-    nic = 'eth0'
+    nic = 'wlp2s0'
 
     def __init__(self):
         self.old_transmitted = 0
@@ -119,7 +119,11 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.net_speed([], {}))
-        print(x.net_traffic([], {}))
+        print(x.net_speed([], config))
+        print(x.net_traffic([], config))
         sleep(1)

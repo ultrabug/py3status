@@ -13,6 +13,7 @@ import json
 from time import time
 import urllib.request
 
+
 class Py3status:
     """
     Configuration Parameters:
@@ -46,13 +47,13 @@ class Py3status:
             if not self.closed_color:
                 self.closed_color = ''
 
-            # grab json file 
-            json_file=urllib.request.urlopen(self.url)
+            # grab json file
+            json_file = urllib.request.urlopen(self.url)
             reader = codecs.getreader("utf-8")
             data = json.load(reader(json_file))
             json_file.close()
-            
-            if(data['state']['open'] == True):
+
+            if(data['state']['open'] is True):
                 response['full_text'] = self.open_text
                 response['short_text'] = '%H:%M'
                 if self.open_color:
@@ -69,7 +70,7 @@ class Py3status:
             response['short_text'] = dt.strftime(response['short_text'])
 
         except:
-            response['full_text'] = '';
+            response['full_text'] = ''
 
         return response
 
@@ -79,6 +80,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.check([], {'color_good': 'green'}))
+        print(x.check([], config))
         sleep(1)

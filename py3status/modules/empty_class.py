@@ -81,6 +81,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.empty([], {}))
+        print(x.empty([], config))
         sleep(1)

@@ -26,6 +26,7 @@ LANG_COLORS = {
 
 LAYOUT_RE = re.compile(r".*layout:\s*(\w+).*", flags=re.DOTALL)
 
+
 def xbklayout():
     """
     check using xkblayout-state (preferred method)
@@ -45,6 +46,7 @@ def setxkbmap():
     out = check_output(shlex.split("setxkbmap -query")).decode("utf-8")
 
     return re.match(LAYOUT_RE, out).group(1)
+
 
 class Py3status:
 
@@ -84,6 +86,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.keyboard_layout([], {}))
+        print(x.keyboard_layout([], config))
         sleep(1)
