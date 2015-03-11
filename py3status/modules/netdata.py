@@ -46,7 +46,7 @@ class Py3status:
         - nic : the network interface to monitor (defaults to eth0)
     """
     # available configuration parameters
-    cache_timeout = 0
+    cache_timeout = 2
     low_speed = 30
     low_traffic = 400
     med_speed = 60
@@ -57,17 +57,17 @@ class Py3status:
         self.old_transmitted = 0
         self.old_received = 0
 
-    def netSpeed(self, i3s_output_list, i3s_config):
-        """Calculate network speed ('eth0' interface) and return it.  You can
-        change the interface using 'self.nic' variable in
-        'GetData' class.
+    def net_speed(self, i3s_output_list, i3s_config):
+        """
+        Calculate network speed ('eth0' interface) and return it.
+        You can change the interface using 'nic' configuration parameter.
         """
         data = GetData(self.nic)
         response = {'full_text': ''}
 
         received_bytes, transmitted_bytes = data.netBytes()
-        dl_speed = (self.received_bytes - self.old_received) / 1024.
-        up_speed = (self.transmitted_bytes - self.old_transmitted) / 1024.
+        dl_speed = (received_bytes - self.old_received) / 1024.
+        up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
         if dl_speed < self.low_speed:
             response['color'] = i3s_config['color_bad']
@@ -85,9 +85,10 @@ class Py3status:
 
         return response
 
-    def traffic(self, i3s_output_list, i3s_config):
-        """Calculate networks used traffic. Same as 'netSpeed' method you can
-        change the interface.
+    def net_traffic(self, i3s_output_list, i3s_config):
+        """
+        Calculate networks used traffic.
+        You can change the interface using 'nic' configuration parameter.
         """
         data = GetData(self.nic)
         response = {'full_text': ''}
@@ -119,6 +120,6 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     while True:
-        print(x.netSpeed([], {}))
-        print(x.traffic([], {}))
+        print(x.net_speed([], {}))
+        print(x.net_traffic([], {}))
         sleep(1)
