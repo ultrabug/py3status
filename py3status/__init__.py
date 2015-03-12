@@ -8,7 +8,7 @@ import sys
 from collections import OrderedDict
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime
 from json import dumps, loads
 from signal import signal
 from signal import SIGTERM, SIGUSR1
@@ -346,9 +346,6 @@ class I3status(Thread):
 
                     # get a datetime from the parsed string date
                     date = datetime.strptime(i3s_time, time_fmt)
-
-                    # i3status output delay adjustment
-                    date += timedelta(seconds=1)
                 except Exception:
                     err = sys.exc_info()[1]
                     syslog(
@@ -373,6 +370,10 @@ class I3status(Thread):
         with respect to their parsed and timezone offset detected on start.
         """
         utcnow = datetime.utcnow()
+        # every whole minute, resync our time from i3status'
+        # this ensures we will catch any daylight savings time change
+        if utcnow.second == 0:
+            self.set_time_modules()
         #
         for index, item in enumerate(json_list):
             if item.get('name') in ['time', 'tztime']:
