@@ -28,9 +28,10 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 60
     closed_color = None
-    closed_text = 'closed since %H:%M'
+    closed_text = 'closed'
     open_color = None
-    open_text = 'open since %H:%M'
+    open_text = 'open'
+    time_text = ' since %H:%M'
     url = 'http://status.chaospott.de/status.json'
 
     def check(self, i3s_output_list, i3s_config):
@@ -54,20 +55,30 @@ class Py3status:
             json_file.close()
 
             if(data['state']['open'] is True):
-                response['full_text'] = self.open_text
-                response['short_text'] = '%H:%M'
                 if self.open_color:
                     response['color'] = self.open_color
+                if 'lastchange' in data['state'].keys():
+                    response['full_text'] = self.open_text + self.time_text
+                    response['short_text'] = '%H:%M'
+                else:
+                    response['full_text'] = self.open_text
+                    response['short_text'] = self.open_text
+
             else:
-                response['full_text'] = self.closed_text
-                response['short_text'] = ''
                 if self.closed_color:
                     response['color'] = self.closed_color
+                if 'lastchange' in data['state'].keys():
+                    response['full_text'] = self.closed_text + self.time_text
+                    response['short_text'] = ''
+                else:
+                    response['full_text'] = self.closed_text
+                    response['short_text'] = self.closed_text
 
-            # apply strftime to full and short text
-            dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
-            response['full_text'] = dt.strftime(response['full_text'])
-            response['short_text'] = dt.strftime(response['short_text'])
+            if 'lastchange' in data['state'].keys():
+                # apply strftime to full and short text
+                dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
+                response['full_text'] = dt.strftime(response['full_text'])
+                response['short_text'] = dt.strftime(response['short_text'])
 
         except:
             response['full_text'] = ''
