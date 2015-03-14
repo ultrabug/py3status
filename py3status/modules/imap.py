@@ -26,17 +26,21 @@ class Py3status:
         mail_count = self._get_mail_count()
 
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': '{}: {}'.format(self.name, mail_count)
+            'cached_until': time() + self.cache_timeout
         }
 
-        new_mail_color = i3s_config['color_good']
-        check_failed_color = i3s_config['color_bad']
+        new_mail_color = i3s_config['color_bad']
+        response['full_text'] = 'blaa'
 
         if mail_count == 'N/A':
-            response['color'] = check_failed_color
+            response['color'] = ''
+            response['full_text'] = mail_count
         elif mail_count != 0:
             response['color'] = new_mail_color
+            response['full_text'] = self.name
+        else:
+            response['color'] = new_mail_color
+            response['full_text'] = ''
 
         return response
 
