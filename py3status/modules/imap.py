@@ -45,10 +45,10 @@ class Py3status:
         try:
             mail_count = 0
             directories = self.mailbox.split(',')
+            connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
+            connection.login(self.user, self.password)
             
             for directory in directories:
-                connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
-                connection.login(self.user, self.password)
                 connection.select(directory)
                 unseen_response = connection.search(None, self.criterion)
                 connection.close()
