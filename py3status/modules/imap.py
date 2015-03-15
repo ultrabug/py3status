@@ -1,7 +1,8 @@
 # -*- coding: utf8 -*-
 """
 Module displaying the number of unread messages
-on an IMAP inbox (configurable).
+on an IMAP inbox (configurable, may also be a 
+comma-separated list of IMAP folders).
 
 @author obb
 """
@@ -42,13 +43,19 @@ class Py3status:
 
     def _get_mail_count(self):
         try:
-            connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
-            connection.login(self.user, self.password)
-            connection.select(self.mailbox)
-            unseen_response = connection.search(None, self.criterion)
-            mails = unseen_response[1][0].split()
-            mail_count = len(mails)
+            mail_count = 0
+            directories = self.mailbox.split(',')
+            
+            for directory in directories:
+                connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
+                connection.login(self.user, self.password)
+                connection.select(directory)
+                unseen_response = connection.search(None, self.criterion)
+                connection.close()
+                mails = unseen_response[1][0].split()
+                mail_count += len(mails)
             return mail_count
+
         except:
             return 'N/A'
 
