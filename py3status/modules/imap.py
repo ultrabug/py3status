@@ -16,6 +16,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 60
     criterion = 'UNSEEN'
+    hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
     mailbox = 'INBOX'
     name = 'Mail: %unseen'
@@ -40,8 +41,11 @@ class Py3status:
             response['color'] = new_mail_color
             response['full_text'] = self.name.replace('%unseen', str(mail_count))
         else:
-            response['color'] = new_mail_color
-            response['full_text'] = ''
+            response['color'] = ''
+            if self.hide_if_zero:
+                response['full_text'] = ''
+            else:
+                response['full_text'] = self.name.replace('%unseen', '0')
 
         return response
 
