@@ -18,7 +18,7 @@ class Py3status:
     criterion = 'UNSEEN'
     imap_server = '<IMAP_SERVER>'
     mailbox = 'INBOX'
-    name = 'Mail'
+    name = 'Mail: %unseen'
     password = '<PASSWORD>'
     port = '993'
     user = '<USERNAME>'
@@ -38,7 +38,7 @@ class Py3status:
             response['full_text'] = mail_count
         elif mail_count != 0:
             response['color'] = new_mail_color
-            response['full_text'] = self.name
+            response['full_text'] = self.name.replace('%unseen', str(mail_count))
         else:
             response['color'] = new_mail_color
             response['full_text'] = ''
