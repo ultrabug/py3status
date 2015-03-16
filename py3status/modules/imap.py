@@ -16,9 +16,11 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 60
     criterion = 'UNSEEN'
+    hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
     mailbox = 'INBOX'
-    name = 'Mail'
+    name = 'Mail: %unseen'
+    new_mail_color = ''
     password = '<PASSWORD>'
     port = '993'
     user = '<USERNAME>'
@@ -27,17 +29,24 @@ class Py3status:
         mail_count = self._get_mail_count()
 
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': '{}: {}'.format(self.name, mail_count)
+            'cached_until': time() + self.cache_timeout
         }
 
-        new_mail_color = i3s_config['color_good']
-        check_failed_color = i3s_config['color_bad']
+        if not self.new_mail_color:
+            self.new_mail_color = i3s_config['color_bad']
 
         if mail_count == 'N/A':
-            response['color'] = check_failed_color
+            response['color'] = ''
+            response['full_text'] = mail_count
         elif mail_count != 0:
-            response['color'] = new_mail_color
+            response['color'] = self.new_mail_color
+            response['full_text'] = self.name.replace('%unseen', str(mail_count))
+        else:
+            response['color'] = ''
+            if self.hide_if_zero:
+                response['full_text'] = ''
+            else:
+                response['full_text'] = self.name.replace('%unseen', '0')
 
         return response
 
