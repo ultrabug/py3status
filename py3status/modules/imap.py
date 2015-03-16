@@ -51,9 +51,10 @@ class Py3status:
             for directory in directories:
                 connection.select(directory)
                 unseen_response = connection.search(None, self.criterion)
-                connection.close()
                 mails = unseen_response[1][0].split()
                 mail_count += len(mails)
+
+            connection.close()
             return mail_count
 
         except:
