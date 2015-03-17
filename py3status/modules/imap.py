@@ -46,7 +46,7 @@ class Py3status:
             if self.hide_if_zero:
                 response['full_text'] = ''
             else:
-                response['full_text'] = self.name.replace('%unseen', '0')
+                response['full_text'] = self.name.format(unseen=mail_count)
 
         return response
 
