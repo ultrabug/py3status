@@ -6,6 +6,10 @@ Pomodoro countdown on i3bar originally written by @Fandekasp (Adrien Lemaire)
 from subprocess import call
 from time import time
 
+# PROGRESS_BAR_ITEMS = u"▁▃▄▅▆▇█"
+PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
+N_PROGRESS_BARS = 5
+
 
 class Py3status:
 
@@ -15,10 +19,11 @@ class Py3status:
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
 
-    def __init__(self):
+    def __init__(self, display_bar=True):
         self.__setup('stop')
         self.alert = False
         self.run = False
+        self.display_bar = display_bar
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -42,9 +47,27 @@ class Py3status:
         """
         Return the response full_text string
         """
-        return {
-            'full_text': '{} ({})'.format(self.prefix, self.timer)
-        }
+        if self.display_bar and self.status in ('start', 'pause'):
+            bar = u''
+            items_cnt = len(PROGRESS_BAR_ITEMS)
+            bar = u''
+            bar_val = float(self.timer) / self.time_window * N_PROGRESS_BARS
+            while bar_val > 0:
+                selector = int(bar_val * items_cnt)
+                selector = min(selector, items_cnt - 1)
+                bar += PROGRESS_BAR_ITEMS[selector]
+                bar_val -= 1
+
+            bar = bar.ljust(N_PROGRESS_BARS).encode('utf_8')
+        else:
+            bar = self.timer
+
+        if self.run:
+            text = '{} [{}]'.format(self.prefix, bar)
+        else:
+            text = '{} ({})'.format(self.prefix, bar)
+
+        return dict(full_text=text)
 
     def __setup(self, status):
         """
@@ -55,20 +78,24 @@ class Py3status:
             self.prefix = 'Pomodoro'
             self.status = 'stop'
             self.timer = self.timer_pomodoro
+            self.time_window = self.timer
             self.breaks = 1
 
         elif status == 'start':
             self.prefix = 'Pomodoro'
             self.timer = self.timer_pomodoro
+            self.time_window = self.timer
 
         elif status == 'pause':
             self.prefix = 'Break #%d' % self.breaks
             if self.breaks > self.max_breaks:
                 self.timer = self.timer_long_break
+                self.time_window = self.timer
                 self.breaks = 1
             else:
                 self.breaks += 1
                 self.timer = self.timer_break
+                self.time_window = self.timer
 
     def __decrement(self):
         """
