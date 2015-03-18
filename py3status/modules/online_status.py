@@ -38,9 +38,6 @@ class Py3status:
             return True
 
     def online_status(self, i3s_output_list, i3s_config):
-        self.offline_color = i3s_config['color_bad']
-        self.online_color = i3s_config['color_good']
-
         response = {
             'cached_until': time() + self.cache_timeout
         }
@@ -48,10 +45,10 @@ class Py3status:
         connected = self._connection_present()
         if connected:
             response['full_text'] = self.format_online
-            response['color'] = self.online_color
+            response['color'] = i3s_config['color_good']
         else:
             response['full_text'] = self.format_offline
-            response['color'] = self.offline_color
+            response['color'] = i3s_config['color_bad']
 
         return response
 
