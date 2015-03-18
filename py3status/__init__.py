@@ -1120,6 +1120,27 @@ class Py3statusWrapper():
             version = 'unknown'
         config['version'] = version
 
+        # i3status config file default detection
+        # respect i3status' file detection order wrt issue #43
+        i3status_config_file_candidates = [
+            '{}/.i3status.conf'.format(home_path),
+            '{}/.config/i3status/config'.format(
+                os.environ.get('XDG_CONFIG_HOME', home_path)
+            ),
+            '/etc/i3status.conf',
+            '{}/i3status/config'.format(
+                os.environ.get('XDG_CONFIG_DIRS', '/etc/xdg')
+            )
+        ]
+        for fn in i3status_config_file_candidates:
+            if os.path.isfile(fn):
+                i3status_config_file_default = fn
+                break
+        else:
+            # if none of the default files exists, we will default
+            # to ~/.i3/i3status.conf
+            i3status_config_file_default = '{}/.i3/i3status.conf'.format(home_path)
+
         # command line options
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
@@ -1127,6 +1148,7 @@ class Py3statusWrapper():
         parser.add_argument('-c', '--config', action="store",
                             dest="i3status_conf",
                             type=str,
+                            default=i3status_config_file_default,
                             help="path to i3status config file")
         parser.add_argument('-d', '--debug', action="store_true",
                             help="be verbose in syslog")
@@ -1169,36 +1191,7 @@ class Py3statusWrapper():
             config['include_paths'] = options.include_paths
         config['interval'] = int(options.interval)
         config['standalone'] = options.standalone
-
-        # i3status config file path setup or default detection
-        if options.i3status_conf:
-            config['i3status_config_path'] = options.i3status_conf
-        else:
-            # find i3status default config file
-            # respect i3status' file detection order wrt issue #43
-            i3status_config_files = [
-                '{}/.i3status.conf'.format(home_path),
-                '{}/.config/i3status/config'.format(
-                    os.environ.get('XDG_CONFIG_HOME', home_path)
-                ),
-                '/etc/i3status.conf',
-                '{}/i3status/config'.format(
-                    os.environ.get('XDG_CONFIG_DIRS', '/etc/xdg')
-                )
-            ]
-            i3status_config_files = list(
-                filter(
-                    os.path.isfile,
-                    i3status_config_files
-                )
-            )
-
-            # if none of the default files exists, we will default
-            # to ~/.i3/i3status.conf
-            config['i3status_config_path'] = (
-                i3status_config_files[0] if i3status_config_files
-                else '{}/.i3/i3status.conf'.format(home_path)
-            )
+        config['i3status_config_path'] = options.i3status_conf
 
         # all done
         return config
