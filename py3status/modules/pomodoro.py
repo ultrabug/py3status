@@ -8,22 +8,31 @@ from time import time
 
 # PROGRESS_BAR_ITEMS = u"▁▃▄▅▆▇█"
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
-N_PROGRESS_BARS = 5
 
 
 class Py3status:
+    """
+    Configuration parameters:
+        - max_breaks: maximum number of breaks
+        - timer_break: normal break time (seconds)
+        - timer_long_break: long break time (seconds)
+        - timer_pomodoro: pomodoro time (seconds)
+        - display_bar: display time in bars when True, otherwise in seconds
+        - num_progress_bars: number of progress bars
+    """
 
     # available configuration parameters
     max_breaks = 4
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
+    display_bar = True
+    num_progress_bars = 5
 
-    def __init__(self, display_bar=True):
+    def __init__(self):
         self.__setup('stop')
         self.alert = False
         self.run = False
-        self.display_bar = display_bar
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -51,14 +60,14 @@ class Py3status:
             bar = u''
             items_cnt = len(PROGRESS_BAR_ITEMS)
             bar = u''
-            bar_val = float(self.timer) / self.time_window * N_PROGRESS_BARS
+            bar_val = float(self.timer) / self.time_window * self.num_progress_bars
             while bar_val > 0:
                 selector = int(bar_val * items_cnt)
                 selector = min(selector, items_cnt - 1)
                 bar += PROGRESS_BAR_ITEMS[selector]
                 bar_val -= 1
 
-            bar = bar.ljust(N_PROGRESS_BARS).encode('utf_8')
+            bar = bar.ljust(self.num_progress_bars).encode('utf_8')
         else:
             bar = self.timer
 
