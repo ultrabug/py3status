@@ -22,7 +22,12 @@ class Py3status:
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
-        Handles click events
+        Handles click events:
+         - left click starts an inactive counter and pauses a running
+           Pomodoro
+         - middle click resets everything
+         - right click starts (and ends, if needed) a break
+
         """
         if event['button'] == 1:
             if self.status == 'stop':
