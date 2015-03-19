@@ -34,7 +34,10 @@ class Py3status:
             self.run = False
 
         elif event['button'] == 3:
-            self.__setup('break')
+            if self.status == 'break':
+                self.__setup('start')
+            else:
+                self.__setup('break')
             self.run = False
 
     @property
