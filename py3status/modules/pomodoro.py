@@ -27,7 +27,21 @@ class Py3status:
         if event['button'] == 1:
             if self.status == 'stop':
                 self.status = 'start'
-            self.run = True
+                self.run = True
+
+            elif self.status == 'break':
+                self.run = True
+
+            elif self.status == 'start':
+                if self.run:
+                    self.status = 'pause'
+                    self.run = False
+                else:
+                    self.run = True
+
+            elif self.status == 'pause':
+                self.status = 'start'
+                self.run = True
 
         elif event['button'] == 2:
             self.__setup('stop')
