@@ -26,7 +26,7 @@ class Py3status:
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
-    display_bar = True
+    display_bar = False
     num_progress_bars = 5
 
     def __init__(self):
