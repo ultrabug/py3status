@@ -13,21 +13,21 @@ PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
 class Py3status:
     """
     Configuration parameters:
+        - display_bar: display time in bars when True, otherwise in seconds
         - max_breaks: maximum number of breaks
+        - num_progress_bars: number of progress bars
         - timer_break: normal break time (seconds)
         - timer_long_break: long break time (seconds)
         - timer_pomodoro: pomodoro time (seconds)
-        - display_bar: display time in bars when True, otherwise in seconds
-        - num_progress_bars: number of progress bars
     """
 
     # available configuration parameters
+    display_bar = False
     max_breaks = 4
+    num_progress_bars = 5
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
-    display_bar = False
-    num_progress_bars = 5
 
     def __init__(self):
         self.__setup('stop')
