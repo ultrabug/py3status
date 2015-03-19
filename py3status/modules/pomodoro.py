@@ -34,7 +34,7 @@ class Py3status:
             self.run = False
 
         elif event['button'] == 3:
-            self.__setup('pause')
+            self.__setup('break')
             self.run = False
 
     @property
@@ -61,7 +61,7 @@ class Py3status:
             self.prefix = 'Pomodoro'
             self.timer = self.timer_pomodoro
 
-        elif status == 'pause':
+        elif status == 'break':
             self.prefix = 'Break #%d' % self.breaks
             if self.breaks > self.max_breaks:
                 self.timer = self.timer_long_break
@@ -80,9 +80,9 @@ class Py3status:
             self.run = False
             self.__i3_nagbar()
             if self.status == 'start':
-                self.__setup('pause')
-                self.status = 'pause'
-            elif self.status == 'pause':
+                self.__setup('break')
+                self.status = 'break'
+            elif self.status == 'break':
                 self.__setup('start')
                 self.status = 'start'
 
@@ -114,7 +114,7 @@ class Py3status:
 
         if self.status == 'start':
             response['color'] = i3s_config['color_good']
-        elif self.status == 'pause':
+        elif self.status == 'break':
             response['color'] = i3s_config['color_degraded']
         else:
             response['color'] = i3s_config['color_bad']
