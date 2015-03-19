@@ -4,7 +4,14 @@ Pomodoro countdown on i3bar originally written by @Fandekasp (Adrien Lemaire)
 """
 
 from subprocess import call
+from syslog import syslog, LOG_INFO
 from time import time
+
+try:
+    from pygame import mixer
+    mixer.init()
+except ImportError:
+    mixer = None
 
 # PROGRESS_BAR_ITEMS = u"▁▃▄▅▆▇█"
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
@@ -16,15 +23,21 @@ class Py3status:
         - display_bar: display time in bars when True, otherwise in seconds
         - max_breaks: maximum number of breaks
         - num_progress_bars: number of progress bars
-        - timer_break: normal break time (seconds)
-        - timer_long_break: long break time (seconds)
-        - timer_pomodoro: pomodoro time (seconds)
+        - sound_break_end: break end sound (file path)
+        - sound_pomodoro_end: pomodoro end sound (file path)
+        - sound_pomodoro_start: pomodoro start sound (file path)
+        - timer_break: normal break time (seconds) (requires pygame)
+        - timer_long_break: long break time (seconds) (requires pygame)
+        - timer_pomodoro: pomodoro time (seconds) (requires pygame)
     """
 
     # available configuration parameters
     display_bar = False
     max_breaks = 4
     num_progress_bars = 5
+    sound_break_end = None
+    sound_pomodoro_end = None
+    sound_pomodoro_start = None
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
@@ -41,6 +54,7 @@ class Py3status:
         if event['button'] == 1:
             if self.status == 'stop':
                 self.status = 'start'
+                self.__play_sound(self.sound_pomodoro_start)
             self.run = True
 
         elif event['button'] == 2:
@@ -60,7 +74,8 @@ class Py3status:
             bar = u''
             items_cnt = len(PROGRESS_BAR_ITEMS)
             bar = u''
-            bar_val = float(self.timer) / self.time_window * self.num_progress_bars
+            bar_val = float(self.timer) / self.time_window * \
+                self.num_progress_bars
             while bar_val > 0:
                 selector = int(bar_val * items_cnt)
                 selector = min(selector, items_cnt - 1)
@@ -118,9 +133,12 @@ class Py3status:
             if self.status == 'start':
                 self.__setup('pause')
                 self.status = 'pause'
+                self.__play_sound(self.sound_pomodoro_end)
+
             elif self.status == 'pause':
                 self.__setup('start')
                 self.status = 'start'
+                self.__play_sound(self.sound_break_end)
 
     def __i3_nagbar(self, level='warning'):
         """
@@ -157,6 +175,25 @@ class Py3status:
 
         response['cached_until'] = time()
         return response
+
+    def __play_sound(self, sound_fname):
+        """Play sound if required
+        """
+        if not sound_fname:
+            return
+
+        if not mixer:
+            syslog(LOG_INFO, "pomodoro module: the pygame library is required"
+                   " to play sounds")
+            return
+
+        try:
+            mixer.music.load(sound_fname)
+        except Exception as e:
+            return
+
+        mixer.music.play()
+
 
 if __name__ == "__main__":
     """
