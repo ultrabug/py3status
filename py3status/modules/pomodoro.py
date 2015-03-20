@@ -49,20 +49,42 @@ class Py3status:
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
-        Handles click events
+        Handles click events:
+            - left click starts an inactive counter and pauses a running
+              Pomodoro
+            - middle click resets everything
+            - right click starts (and ends, if needed) a break
+
         """
         if event['button'] == 1:
             if self.status == 'stop':
                 self.status = 'start'
                 self.__play_sound(self.sound_pomodoro_start)
-            self.run = True
+                self.run = True
+
+            elif self.status == 'break':
+                self.run = True
+
+            elif self.status == 'start':
+                if self.run:
+                    self.status = 'pause'
+                    self.run = False
+                else:
+                    self.run = True
+
+            elif self.status == 'pause':
+                self.status = 'start'
+                self.run = True
 
         elif event['button'] == 2:
             self.__setup('stop')
             self.run = False
 
         elif event['button'] == 3:
-            self.__setup('pause')
+            if self.status == 'break':
+                self.__setup('start')
+            else:
+                self.__setup('break')
             self.run = False
 
     @property
@@ -110,7 +132,7 @@ class Py3status:
             self.timer = self.timer_pomodoro
             self.time_window = self.timer
 
-        elif status == 'pause':
+        elif status == 'break':
             self.prefix = 'Break #%d' % self.breaks
             if self.breaks > self.max_breaks:
                 self.timer = self.timer_long_break
@@ -130,12 +152,13 @@ class Py3status:
             self.alert = True
             self.run = False
             self.__i3_nagbar()
+
             if self.status == 'start':
-                self.__setup('pause')
-                self.status = 'pause'
+                self.__setup('break')
+                self.status = 'break'
                 self.__play_sound(self.sound_pomodoro_end)
 
-            elif self.status == 'pause':
+            elif self.status == 'break':
                 self.__setup('start')
                 self.status = 'start'
                 self.__play_sound(self.sound_break_end)
@@ -168,7 +191,7 @@ class Py3status:
 
         if self.status == 'start':
             response['color'] = i3s_config['color_good']
-        elif self.status == 'pause':
+        elif self.status == 'break':
             response['color'] = i3s_config['color_degraded']
         else:
             response['color'] = i3s_config['color_bad']
