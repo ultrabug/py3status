@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 """
 Module displaying the number of unread messages
-on an IMAP inbox (configurable, may also be a 
+on an IMAP inbox (configurable, may also be a
 comma-separated list of IMAP folders).
 
 @author obb
@@ -33,7 +33,7 @@ class Py3status:
         }
 
         if not self.new_mail_color:
-            self.new_mail_color = i3s_config['color_bad']
+            self.new_mail_color = i3s_config['color_good']
 
         if mail_count == 'N/A':
             response['color'] = ''
@@ -56,7 +56,7 @@ class Py3status:
             directories = self.mailbox.split(',')
             connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
             connection.login(self.user, self.password)
-            
+
             for directory in directories:
                 connection.select(directory)
                 unseen_response = connection.search(None, self.criterion)
