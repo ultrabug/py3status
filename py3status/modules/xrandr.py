@@ -75,7 +75,7 @@ class Py3status:
 
     def _get_layout(self):
         """
-        Get the current outputs layout from xrandr and try to detect the
+        Get the outputs layout from xrandr and try to detect the
         currently active layout as best as we can on start.
         """
         connected = list()
@@ -88,7 +88,7 @@ class Py3status:
             }
         )
 
-        current = Popen(['xrandr', '--current'], stdout=PIPE)
+        current = Popen(['xrandr'], stdout=PIPE)
         for line in current.stdout.readlines():
             try:
                 # python3
