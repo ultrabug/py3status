@@ -1182,18 +1182,12 @@ class Py3statusWrapper():
                             (default 60 sec)""")
         parser.add_argument('-v', '--version', action="store_true",
                             help="""show py3status version and exit""")
-
-        parser.add_argument('cli_command', nargs='?',
-                            choices=[
-                                'list-modules',
-                            ])
-        parser.add_argument('cli_command_arg', nargs='?', help=argparse.SUPPRESS)
+        parser.add_argument('cli_command', nargs='*', help=argparse.SUPPRESS)
 
         options = parser.parse_args()
 
         if options.cli_command:
             config['cli_command'] = options.cli_command
-            config['cli_command_arg'] = options.cli_command_arg
 
         # only asked for version
         if options.version:
@@ -1299,11 +1293,8 @@ class Py3statusWrapper():
         # setup configuration
         self.config = self.get_config()
 
-        if 'cli_command' in self.config:
-            self.handle_cli_command(
-                self.config['cli_command'],
-                self.config['cli_command_arg']
-            )
+        if self.config.get('cli_command'):
+            self.handle_cli_command(self.config['cli_command'])
             sys.exit()
 
         if self.config['debug']:
@@ -1602,7 +1593,7 @@ class Py3statusWrapper():
             sleep(0.1)
 
     @staticmethod
-    def print_module_description(mod_name, mod_path):
+    def print_module_description(details, mod_name, mod_path):
         """Print module description extracted from its docstring.
         """
         if mod_name == '__init__':
@@ -1613,34 +1604,50 @@ class Py3statusWrapper():
             with open(path) as f:
                 module = ast.parse(f.read())
 
-            items = [i for i in module.body if isinstance(i, ast.Expr)]
-            if items:
-                ds = items[0].value.s
-                ds = ds.lstrip()
-                ds = ds.split('\n\n',1)[0]  # Filter only up to an empty line.
-                ds = ds.split('.', 1)[0]  # And the first dot
-                ds = ds.replace('\n', ' ')
-                print_stderr("  %-22s %s." % (mod_name, ds))
-
+            docstring = ast.get_docstring(module, clean=True)
+            if docstring:
+                short_description = docstring.split('\n')[0].rstrip('.')
+                print_stderr('  %-22s %s.' % (mod_name, short_description))
+                if details:
+                    for description in docstring.split('\n')[1:]:
+                        print_stderr(' ' * 25 + '%s' % description)
+                    print_stderr(' ' * 25 + '---')
             else:
-                print_stderr("  %-22s No docstring in %s" % (mod_name, path))
+                print_stderr('  %-22s No docstring in %s' % (mod_name, path))
+        except Exception:
+            print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
 
-        except Exception as e:
-            print_stderr("  %-22s Unable to parse %s" % (mod_name, path))
-
-    def handle_cli_command(self, cmd, cmd_arg):
+    def handle_cli_command(self, cmd):
         """Handle a command from the CLI.
         """
-        if cmd == 'list-modules':
+        # aliases
+        if cmd[0] in ['mod', 'module', 'modules']:
+            cmd[0] = 'modules'
+
+        # allowed cli commands
+        if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
+            try:
+                py3_modules_path = imp.find_module('py3status')[1]
+                py3_modules_path += '/modules/'
+                if os.path.isdir(py3_modules_path):
+                    self.config['include_paths'].append(py3_modules_path)
+            except:
+                print_stderr('Unable to locate py3status modules !')
+
+            details = cmd[1] == 'details'
             user_modules = self.get_user_modules()
-            print_stderr("Available modules:")
+
+            print_stderr('Available modules:')
             for mod_name, mod_path in sorted(user_modules.items()):
-                self.print_module_description(mod_name, mod_path)
-
-            sys.exit()
-
-        print_stderr("Error: unknown command")
-        sys.exit(1)
+                if mod_name == 'empty_class':
+                    continue
+                self.print_module_description(details, mod_name, mod_path)
+        elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
+            # TODO: to be implemented
+            pass
+        else:
+            print_stderr('Error: unknown command')
+            sys.exit(1)
 
 
 def main():
