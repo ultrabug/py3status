@@ -347,7 +347,7 @@ class I3status(Thread):
                     # add mendatory items in i3status time format wrt issue #18
                     time_fmt = time_format
                     for fmt in ['%Y', '%m', '%d']:
-                        if not fmt in time_format:
+                        if fmt not in time_format:
                             time_fmt = '{} {}'.format(time_fmt, fmt)
                             i3s_time = '{} {}'.format(
                                 i3s_time, datetime.now().strftime(fmt)
@@ -636,7 +636,7 @@ class Events(Thread):
         """
         Force a cache expiration for all the methods of the given module.
 
-        We rate limit the i3status refresh to 100ms for obvious abusive behavior.
+        We rate limit the i3status refresh to 100ms.
         """
         module = self.modules.get(module_name)
         if module is not None:
@@ -1040,7 +1040,7 @@ class Module(Thread):
                             raise KeyError('missing "name" key in response')
 
                     # validate the response
-                    if not 'full_text' in result:
+                    if 'full_text' not in result:
                         raise KeyError('missing "full_text" key in response')
 
                     # initialize method object
@@ -1148,7 +1148,9 @@ class Py3statusWrapper():
         else:
             # if none of the default files exists, we will default
             # to ~/.i3/i3status.conf
-            i3status_config_file_default = '{}/.i3/i3status.conf'.format(home_path)
+            i3status_config_file_default = '{}/.i3/i3status.conf'.format(
+                home_path
+            )
 
         # command line options
         parser = argparse.ArgumentParser(
