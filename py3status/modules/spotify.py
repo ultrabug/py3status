@@ -3,12 +3,11 @@
 This module displays the current "artist - title" playing in Spotify.
 
 Last modified: 2015-03-26
-Author: Pierre Guilbert LASSERRE <pierre@1000mercis.com>
+Author: Pierre Guilbert <pierre@1000mercis.com>
 License: GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
 from time import time
-from subprocess import check_output
 import dbus, dbus.proxies
 
 class Py3status:
