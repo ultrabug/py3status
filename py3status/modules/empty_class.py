@@ -7,29 +7,40 @@
 # NOTE: py3status will NOT execute:
 #     - methods starting with '_'
 #     - methods decorated by @property and @staticmethod
-# 
+#
 # NOTE: reserved method names:
 #     - 'kill' method for py3status exit notification
 #     - 'on_click' method for click events from i3bar (read below please)
 #
-# Do NOT use print on your modules: py3status will catch any output and discard 
-# it silently because this would break your i3bar (see issue #20 for details). 
-# Make sure you catch any output from any external program you may call 
-# from your module. Any output from an external program cannot be caught and 
-# silenced by py3status and will break your i3bar so please, redirect any 
-# stdout/stderr to /dev/null for example (see issue #20 for details). 
-# 
-# Fill in the following docstring: it will beparsed py3status to document
-# your module:
+# WARNING:
+#
+# Do NOT use print on your modules: py3status will catch any output and discard
+# it silently because this would break your i3bar (see issue #20 for details).
+# Make sure you catch any output from any external program you may call
+# from your module. Any output from an external program cannot be caught and
+# silenced by py3status and will break your i3bar so please, redirect any
+# stdout/stderr to /dev/null for example (see issue #20 for details).
+#
+# CONTRIBUTORS:
+#
+# Contributors are kindly requested to agree to contribute their code under
+# the BSD license to match py3status' one.
+#
+# Any contributor to this module should add his/her name to the @author
+# line, comma separated.
+#
+# DOCSTRING:
+#
+# Fill in the following docstring: it will be parsed by py3status to document
+# your module from the CLI.
 """
 One-line summary followed by an empty line.
 
 Multi-line description followed by an empty line.
 
 @author <your full name> <your email address>
-@license <ancronym>     (please favor BSD or GPLv3)
+@license BSD
 """
-# Any contributor to this module should add his/her name to the @author line, comma separated
 
 # import your useful libs here
 from time import time
@@ -98,6 +109,7 @@ class Py3status:
 if __name__ == "__main__":
     """
     Test this module by calling it directly.
+    This SHOULD work before contributing your module please.
     """
     from time import sleep
     x = Py3status()
