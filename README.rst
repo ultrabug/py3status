@@ -42,10 +42,12 @@ Usage
 =====
 In your i3 config file, simply switch from `i3status` to `py3status` in your `status_command`:
 ::
+
     status_command py3status
 
 Usually you have your own i3status configuration, just point to it:
 ::
+
     status_command py3status -c ~/.i3/i3status.conf
 
 Available modules
@@ -60,6 +62,7 @@ Pypi
 ----
 Using pip:
 ::
+
     $ pip install py3status
 
 NB: Debian users should use **pypi-install** from the *python-stdeb* package instead of pip.
@@ -68,24 +71,28 @@ Gentoo Linux
 ------------
 Using emerge:
 ::
+
     $ sudo emerge -a py3status
 
 Arch Linux
 ----------
 Thanks to @waaaaargh, py3status is present in the Arch User Repository using this URL:
 ::
+
     https://aur.archlinux.org/packages/py3status-git/
 
 Fedora
 ------
 Using yum:
 ::
+
     $ yum install py3status
 
 Options
 =======
 You can see the help of py3status by issuing `py3status -h`:
 ::
+
     -h, --help            show this help message and exit
     -c I3STATUS_CONF, --config I3STATUS_CONF
                           path to i3status config file
@@ -106,4 +113,5 @@ Control
 Just like i3status, you can force an update of your i3bar by sending a SIGUSR1 signal to py3status.
 Note that this will also send a SIGUSR1 signal to i3status.
 ::
+
     killall -USR1 py3status
