@@ -1068,8 +1068,7 @@ class Module(Thread):
                     if self.config['debug']:
                         syslog(
                             LOG_INFO,
-                            'method {} returned {} '.format(meth, result) +
-                            'for position {}'.format(position)
+                            'method {} returned {} '.format(meth, result)
                         )
                 except Exception:
                     err = sys.exc_info()[1]
