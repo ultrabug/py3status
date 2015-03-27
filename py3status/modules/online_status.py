@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module displaying if a connection to the internet is established.
+Display if a connection to the internet is established.
 
 @author obb
 """

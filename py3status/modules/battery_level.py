@@ -1,11 +1,11 @@
 # -*- coding: utf8 -*-
 """
-Module for displaying information about battery.
+Display the battery level.
 
 Requires:
     - the 'acpi' command line
 
-@author shadowprince and AdamBSteele
+@author shadowprince, AdamBSteele
 @license Eclipse Public License
 """
 

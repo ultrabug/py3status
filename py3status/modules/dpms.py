@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Activate or deactivate DPMS and screen blanking.
+
 This module allows activation and deactivation
 of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
-Written and contributed by @tasse:
-    Andre Doser <dosera AT tf.uni-freiburg.de>
+@author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
 
 from os import system

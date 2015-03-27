@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Mpd - module to show information from mpd in your i3bar.
-Reequires
+Display information from mpd.
+
+Requires:
     - python-mpd2 (NOT python2-mpd2)
     # pip install python-mpd2
 

@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 """
-This module displays bluetooth status.
+Display bluetooth status.
 
 Requires:
     - hcitool

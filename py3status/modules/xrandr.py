@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Control your screen(s) layout easily.
+
 This modules allows you to handle your screens outputs directly from your bar!
     - Detect and propose every possible screen combinations
     - Switch between combinations using click events and mouse scroll

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This module displays the current "artist - title" playing in Clementine.
+Display the current "artist - title" playing in Clementine.
 
-Last modified: 2014-03-23
-Author: Francois LASSERRE <choiz@me.com>
-License: GNU GPL http://www.gnu.org/licenses/gpl.html
+@author Francois LASSERRE <choiz@me.com>
+@license GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
 from time import time

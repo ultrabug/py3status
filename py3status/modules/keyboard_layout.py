@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module for showing current keyboard layout.
+Display the current keyboard layout.
 
 Requires:
     - xkblayout-state

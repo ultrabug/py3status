@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Simply output the currently logged in user in i3bar.
+Display the currently logged in user.
 
 Inspired by i3 FAQ:
     https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/

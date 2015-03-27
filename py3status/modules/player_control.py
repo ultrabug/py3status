@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
 """
-Control music/video players
+Control music/video players.
 
 Provides an icon to control simple functions of audio/video players:
  - start (left click)
@@ -54,7 +53,7 @@ class Py3status:
             if self.volume_tick is None:
                 return
 
-            self._change_volume(button=='up')
+            self._change_volume(button == 'up')
             return
 
         if self.status == 'play':

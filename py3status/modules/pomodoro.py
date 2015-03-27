@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Pomodoro countdown on i3bar originally written by @Fandekasp (Adrien Lemaire)
+Display and control a Pomodoro countdown.
+
+@author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto
 """
 
 from subprocess import call
@@ -212,7 +214,7 @@ class Py3status:
 
         try:
             mixer.music.load(sound_fname)
-        except Exception as e:
+        except Exception:
             return
 
         mixer.music.play()

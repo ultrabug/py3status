@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Display network information (Linux systems) in i3bar.
+Display network speed and bandwidth usage.
 
-Copyright (C) <2013> <Shahin Azad [ishahinism at Gmail]>
+@author Shahin Azad <ishahinism at Gmail>
 """
 
 import subprocess

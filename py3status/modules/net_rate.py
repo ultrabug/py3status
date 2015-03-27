@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 """
-Module for displaying current network transfer rate.
+Display the current network transfer rate.
 
 @author shadowprince
 @license Eclipse Public License

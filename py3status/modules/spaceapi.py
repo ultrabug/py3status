@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This module shows if your favorite hackerspace is open or not
+Display if your favorite hackerspace is open or not.
 
-Last modified: 2015-02-01
-Author: @timmszigat
-License: WTFPL http://www.wtfpl.net/txt/copying/
+@author timmszigat
+@license WTFPL <http://www.wtfpl.net/txt/copying/>
 """
 
 import codecs

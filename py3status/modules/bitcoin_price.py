@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Module for displaying bitcoin prices using
-the API by www.bitcoincharts.com.
+Display bitcoin prices using bitcoincharts.com.
 
-Written and contributed by @tasse:
-    Andre Doser <doser.andre AT gmail.com>
+@author Andre Doser <doser.andre AT gmail.com>
 """
 import json
 

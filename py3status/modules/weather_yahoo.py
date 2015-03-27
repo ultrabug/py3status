@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Display current day + 3 days weather forecast as icons on your i3bar
+Display Yahoo! Weather forecast as icons.
+
 Based on Yahoo! Weather. forecast, thanks guys !
     http://developer.yahoo.com/weather/
 

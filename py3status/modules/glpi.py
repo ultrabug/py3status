@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This example class demonstrates how to display the current total number of
-open tickets from GLPI in your i3bar.
+Display the total number of open tickets from GLPI.
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
-
-Note that we don't have to implement a cache layer as it is handled by
-py3status automagically.
 """
 
 # You need MySQL-python from http://pypi.python.org/pypi/MySQL-python

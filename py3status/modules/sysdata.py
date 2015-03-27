@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Sysdata is a module used to display system information (RAM usage)
-in i3bar (Linux systems).
+Display system RAM and CPU utilization.
 
 NOTE: If you want py3status to show you your CPU temperature,
 change value of CPUTEMP into True in Py3status class - CPUInfo function
 and REMEMBER that you must install lm_sensors if you want CPU temp!
 
-Copyright (C) <2013> <Shahin Azad [ishahinism at Gmail]>
+@author Shahin Azad <ishahinism at Gmail>
 """
 
 import subprocess

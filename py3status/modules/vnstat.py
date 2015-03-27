@@ -1,7 +1,9 @@
 # -*- coding: utf8 -*-
 """
-Module for displaying vnstat's statistics.
-REQUIRE external program called "vnstat" installed and configured to work.
+Display vnstat statistics.
+
+Requires:
+    - external program called "vnstat" installed and configured to work.
 
 @author shadowprince
 @license Eclipse Public License

@@ -1,8 +1,6 @@
 # -*- coding: utf8 -*-
 """
-Module displaying the number of unread messages
-on an IMAP inbox (configurable, may also be a
-comma-separated list of IMAP folders).
+Display the unread messages count from your IMAP account.
 
 @author obb
 """

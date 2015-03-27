@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module showing amount of windows at the scratchpad.
+Display the amount of windows in your i3 scratchpad.
 
 @author shadowprince
 @license Eclipse Public License
