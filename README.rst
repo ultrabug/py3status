@@ -62,6 +62,8 @@ Using pip:
 ::
     $ pip install py3status
 
+NB: Debian users should use **pypi-install** from the *python-stdeb* package instead of pip.
+
 Gentoo Linux
 ------------
 Using emerge:
