@@ -29,11 +29,13 @@ class Py3status:
     Configuration parameters:
         - debug: enable verbose logging (bool) (default: False)
         - supported_players: supported players (str) (whitespace separated list)
+        - volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
 
     """
 
-    supported_players = 'audacious'
     debug = False
+    supported_players = 'audacious'
+    volume_tick = 1
 
     def __init__(self):
         self.status = 'stop'
@@ -46,6 +48,13 @@ class Py3status:
         try:
             button = buttons[event['button']]
         except IndexError:
+            return
+
+        if button in ('up', 'down'):
+            if self.volume_tick is None:
+                return
+
+            self._change_volume(button=='up')
             return
 
         if self.status == 'play':
@@ -89,6 +98,13 @@ class Py3status:
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-u'])
+
+    def _change_volume(self, increase):
+        """Change volume using amixer
+        """
+        sign = '+' if increase else '-'
+        delta = "%d%%%s" % (self.volume_tick, sign)
+        self._run(('/usr/bin/amixer', '-q', 'sset', 'Master', delta))
 
     def _detect_running_player(self):
         """Detect running player process, if any
