@@ -153,17 +153,21 @@ class Py3status:
         if self.timer < 0:
             self.alert = True
             self.run = False
+            if self.status == 'start':
+                self.__play_sound(self.sound_pomodoro_end)
+
+            elif self.status == 'break':
+                self.__play_sound(self.sound_break_end)
+
             self.__i3_nagbar()
 
             if self.status == 'start':
                 self.__setup('break')
                 self.status = 'break'
-                self.__play_sound(self.sound_pomodoro_end)
 
             elif self.status == 'break':
                 self.__setup('start')
                 self.status = 'start'
-                self.__play_sound(self.sound_break_end)
 
     def __i3_nagbar(self, level='warning'):
         """
