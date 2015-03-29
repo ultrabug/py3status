@@ -85,11 +85,11 @@ class Py3status:
         output on the i3bar.
 
         Example 'event' json object:
-        {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
+        {'y': 13, 'x': 17, 'button': 1, 'name': 'example', 'instance': 'first'}
         """
         pass
 
-    def empty(self, i3s_output_list, i3s_config):
+    def example_method(self, i3s_output_list, i3s_config):
         """
         This method will return an empty text message
         so it will NOT be displayed on your i3bar.
@@ -114,8 +114,9 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     config = {
-        'color_good': '#00FF00',
         'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00'
     }
     while True:
         print(x.empty([], config))
