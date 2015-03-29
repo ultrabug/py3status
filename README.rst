@@ -14,7 +14,7 @@ Using py3status, you can take control of your i3bar easily by:
 - handling click events on your i3bar and play with them in no time
 - seeing your clock tick every second whatever your i3status interval
 
-No extra configuration file needed, just install & enjoy !
+**No extra configuration file needed**, just install & enjoy !
 
 Documentation
 =============
@@ -40,7 +40,7 @@ Get help or share your ideas on IRC:
 
 Usage
 =====
-In your i3 config file, simply switch from `i3status` to `py3status` in your `status_command`:
+In your i3 config file, simply switch from *i3status* to *py3status* in your *status_command*:
 ::
 
     status_command py3status
@@ -65,7 +65,7 @@ Using pip:
 
     $ pip install py3status
 
-NB: Debian users should use **pypi-install** from the *python-stdeb* package instead of pip.
+**NB: Debian users* should use **pypi-install** from the *python-stdeb* package instead of pip.
 
 Gentoo Linux
 ------------
