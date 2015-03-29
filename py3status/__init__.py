@@ -1638,8 +1638,6 @@ class Py3statusWrapper():
 
             print_stderr('Available modules:')
             for mod_name, mod_path in sorted(user_modules.items()):
-                if mod_name == 'empty_class':
-                    continue
                 self.print_module_description(details, mod_name, mod_path)
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
