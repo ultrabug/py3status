@@ -117,7 +117,7 @@ class Py3status:
             fn = os.path.join('/proc', pid, 'cmdline')
             try:
                 with open(fn, 'rb') as f:
-                    player_name = f.read().rstrip('\0')
+                    player_name = f.read().decode().rstrip('\0')
 
             except:
                 continue
