@@ -15,6 +15,7 @@ Provides an icon to control simple functions of audio/video players:
 
 from syslog import syslog, LOG_INFO
 from time import time, sleep
+import dbus
 import os
 import subprocess
 
@@ -33,7 +34,7 @@ class Py3status:
     """
 
     debug = False
-    supported_players = 'audacious'
+    supported_players = 'audacious vlc'
     volume_tick = 1
 
     def __init__(self):
@@ -83,6 +84,10 @@ class Py3status:
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-p'])
+        elif player_name == 'vlc':
+            player = self._get_vlc()
+            if player:
+                player.Play()
 
     def _stop(self):
         self.status = 'stop'
@@ -90,6 +95,10 @@ class Py3status:
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-s'])
+        elif player_name == 'vlc':
+            player = self._get_vlc()
+            if player:
+                player.Stop()
 
     def _pause(self):
         self.status = 'pause'
@@ -97,6 +106,10 @@ class Py3status:
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-u'])
+        elif player_name == 'vlc':
+            player = self._get_vlc()
+            if player:
+                player.Pause()
 
     def _change_volume(self, increase):
         """Change volume using amixer
@@ -134,6 +147,13 @@ class Py3status:
                 return player_name
 
         return None
+
+    def _get_vlc(self):
+        mpris = 'org.mpris.MediaPlayer2'
+        mpris_slash = '/' + mpris.replace('.', '/')
+        bus = dbus.SessionBus()
+        proxy = bus.get_object(mpris+'.vlc', mpris_slash)
+        return dbus.Interface(proxy, dbus_interface=mpris+'.Player')
 
     def player_control(self, i3s_output_list, i3s_config):
         return dict(
