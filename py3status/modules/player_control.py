@@ -114,10 +114,10 @@ class Py3status:
             if not pid.isdigit():
                 continue
 
-            fn = os.path.join('/proc', pid, 'cmdline')
+            fn = os.path.join('/proc', pid, 'comm')
             try:
                 with open(fn, 'rb') as f:
-                    player_name = f.read().decode().rstrip('\0')
+                    player_name = f.read().decode().rstrip()
 
             except:
                 continue
