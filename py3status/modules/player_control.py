@@ -28,7 +28,7 @@ class Py3status:
     """
     Configuration parameters:
         - debug: enable verbose logging (bool) (default: False)
-        - supported_players: supported players (str) (whitespace separated list)
+        - supported_players: supported players (str) (comma separated list)
         - volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
 
     """
@@ -37,7 +37,7 @@ class Py3status:
     pause_icon = u'❚❚'
     play_icon = u'▶'
     stop_icon = u'◼'
-    supported_players = 'audacious vlc'
+    supported_players = 'audacious,vlc'
     volume_tick = 1
 
     def __init__(self):
@@ -124,7 +124,7 @@ class Py3status:
     def _detect_running_player(self):
         """Detect running player process, if any
         """
-        supported_players = self.supported_players.split(' ')
+        supported_players = self.supported_players.split(',')
         running_players = []
         for pid in os.listdir('/proc'):
             if not pid.isdigit():
