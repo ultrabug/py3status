@@ -7,7 +7,7 @@ Provides an icon to control simple functions of audio/video players:
  - stop  (left click)
  - pause (middle click)
 
-@author Federico Ceratto <federico.ceratto@gmail.com>
+@author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
 """
 # Any contributor to this module should add his/her name to the @author
@@ -34,12 +34,15 @@ class Py3status:
     """
 
     debug = False
+    pause_icon = u'❚❚'
+    play_icon = u'▶'
+    stop_icon = u'◼'
     supported_players = 'audacious vlc'
     volume_tick = 1
 
     def __init__(self):
         self.status = 'stop'
-        self.icon = u'▶'
+        self.icon = self.play_icon
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -80,7 +83,7 @@ class Py3status:
 
     def _play(self):
         self.status = 'play'
-        self.icon = u'◼'
+        self.icon = self.stop_icon
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-p'])
@@ -91,7 +94,7 @@ class Py3status:
 
     def _stop(self):
         self.status = 'stop'
-        self.icon = u'▶'
+        self.icon = self.play_icon
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-s'])
@@ -102,7 +105,7 @@ class Py3status:
 
     def _pause(self):
         self.status = 'pause'
-        self.icon = u'❚❚'
+        self.icon = self.pause_icon
         player_name = self._detect_running_player()
         if player_name == 'audacious':
             self._run(['/usr/bin/audacious', '-u'])
