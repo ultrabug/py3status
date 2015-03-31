@@ -2,11 +2,15 @@
 """
 Display information about the current song playing on Spotify.
 
+Configuration parameters:
+    - cache_timeout : how often to update the bar
+    - format : see placeholders below
+
 Format of status string placeholders:
-    album - album name
-    artist - artiste name (first one)
-    time - time duration of the song
-    title - name of the song
+    {album} - album name
+    {artist} - artiste name (first one)
+    {time} - time duration of the song
+    {title} - name of the song
 
 i3status.conf example:
 
@@ -24,13 +28,10 @@ import dbus
 
 class Py3status:
     """
-    Configuration parameters:
-        - cache_timeout : how often to update the bar
-        - format : see placeholders below
     """
     # available configuration parameters
-    cache_timeout = 0
-    format = "{artist} : {title}"
+    cache_timeout = 5
+    format = '{artist} : {title}'
 
     def getText(self):
         """
@@ -51,7 +52,7 @@ class Py3status:
             return self.format.format(title=title,
                                       artist=artist, album=album, time=rtime)
         except Exception:
-            return "Spotify not running"
+            return 'Spotify not running'
 
     def spotify(self, i3s_output_list, i3s_config):
         """
