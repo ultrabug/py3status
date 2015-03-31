@@ -31,7 +31,7 @@ except ImportError:
     pass
 
 # Used in development
-enable_profiling = True
+enable_profiling = False
 
 
 def profile(thread_run_fn):
