@@ -1,33 +1,32 @@
 # -*- coding: utf-8 -*-
 """
-This module displays the current "artist - title" playing in Spotify.
+Display information about the current song playing on Spotify.
 
-Last modified: 2015-03-31
-Author: Pierre Guilbert <pierre@1000mercis.com>
+Format of status string placeholders:
+    album - album name
+    artist - artiste name (first one)
+    time - time duration of the song
+    title - name of the song
 
 i3status.conf example:
 
 spotify {
-        format = "{title} by {artist} -> {time}"
+    format = "{title} by {artist} -> {time}"
 }
 
-
+@author Pierre Guilbert <pierre@1000mercis.com>
 """
 
+from datetime import timedelta
 from time import time
 import dbus
 
 
 class Py3status:
-
     """
-    Confiuration parameters:
-        cache_timeout
-    Format of status string placeholders:
-        title - name of the song
-        artist - artiste name (first one)
-        album - album name
-        time - time duration of the song
+    Configuration parameters:
+        - cache_timeout : how often to update the bar
+        - format : see placeholders below
     """
     # available configuration parameters
     cache_timeout = 0
@@ -37,23 +36,20 @@ class Py3status:
         """
         Get the current song metadatas (artist - title)
         """
-
         bus = dbus.SessionBus()
-
         try:
             self.__bus = bus.get_object('com.spotify.qt', '/')
             self.player = dbus.Interface(
                 self.__bus, 'org.freedesktop.MediaPlayer2')
 
-            title = self.player.GetMetadata().get('xesam:title')
-            artist = self.player.GetMetadata().get('xesam:artist')[0]
             album = self.player.GetMetadata().get('xesam:album')
-            from datetime import timedelta
+            artist = self.player.GetMetadata().get('xesam:artist')[0]
             microtime = self.player.GetMetadata().get('mpris:length')
-            time = str(timedelta(microseconds=microtime))
+            rtime = str(timedelta(microseconds=microtime))
+            title = self.player.GetMetadata().get('xesam:title')
 
             return self.format.format(title=title,
-                                      artist=artist, album=album, time=time)
+                                      artist=artist, album=album, time=rtime)
         except Exception:
             return "Spotify not running"
 
@@ -61,12 +57,10 @@ class Py3status:
         """
         Get the current "artist - title" and return it.
         """
-        response = {'full_text': ''}
-
-        response['cached_until'] = time() + self.cache_timeout
-        response['full_text'] = self.getText(
-        ) or 'py3status module not working as expected'
-
+        response = {
+            'cached_until': time() + self.cache_timeout,
+            'full_text': self.getText()
+        }
         return response
 
 if __name__ == "__main__":
