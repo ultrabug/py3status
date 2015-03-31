@@ -38,6 +38,9 @@ One-line summary followed by an empty line.
 
 Multi-line description followed by an empty line.
 
+Configuration parameters:
+    - cache_timeout : how often we refresh this module in seconds
+
 @author <your full name> <your email address>
 @license BSD
 """
@@ -57,7 +60,6 @@ class Py3status:
     This examples features only one parameter which is 'cache_timeout'
     and is set to 10 seconds (0 would mean no cache).
     """
-
     # available configuration parameters
     cache_timeout = 10
 
