@@ -20,9 +20,14 @@ Configuration parameters:
 
 from syslog import syslog, LOG_INFO
 from time import time, sleep
-import dbus
 import os
 import subprocess
+
+try:
+    import dbus
+    dbus_available = True
+except:
+    dbus_available = False
 
 
 def log(msg):
@@ -146,6 +151,11 @@ class Py3status:
             if player_name in running_players:
                 if self.debug:
                     log('found player: %s' % player_name)
+
+                # those players need the dbus module
+                if player_name in ['vlc'] and not dbus_available:
+                    log('%s requires the dbus python module' % player_name)
+                    return None
 
                 return player_name
 
