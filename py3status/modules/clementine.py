@@ -11,9 +11,10 @@ from subprocess import check_output
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
-    cache_timeout = 0
+    cache_timeout = 5
 
     def _getMetadatas(self):
         """

@@ -70,7 +70,8 @@ class GetData:
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 10
     med_threshold = 40

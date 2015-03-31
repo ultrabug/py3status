@@ -22,7 +22,8 @@ def find_scratch(tree):
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 5
     format = "{} ⌫"  # format of indicator. {} replaces with count of windows

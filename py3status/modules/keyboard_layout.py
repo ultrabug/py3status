@@ -49,7 +49,8 @@ def setxkbmap():
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 10
     color = ''

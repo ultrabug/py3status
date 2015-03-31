@@ -8,6 +8,12 @@ Based on Yahoo! Weather. forecast, thanks guys !
 Find your city code using:
     http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
 
+Configuration parameters:
+    - cache_timeout : how often to check for new forecasts
+    - city_code : city code to use
+    - forecast_days : how many forecast days you want shown
+    - request_timeout : check timeout
+
 The city_code in this example is for Paris, France => FRXX0076
 """
 

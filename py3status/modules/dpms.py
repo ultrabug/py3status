@@ -13,6 +13,8 @@ from os import system
 
 
 class Py3status:
+    """
+    """
     def __init__(self):
         """
         Detect current state on start.

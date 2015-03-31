@@ -33,7 +33,8 @@ def find_focused(tree):
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 0.5
     max_width = 120  # if width of title is greater, shrink it and add '...'

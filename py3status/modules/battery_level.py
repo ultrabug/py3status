@@ -2,6 +2,12 @@
 """
 Display the battery level.
 
+Configuration parameters:
+    - color_* : None means - get it from i3status config
+    - format : text with "text" mode. percentage with % replaces {}
+    - hide_when_full : hide any information when battery is fully charged
+    - mode : for primitive-one-char bar, or "text" for text percentage ouput
+
 Requires:
     - the 'acpi' command line
 
@@ -24,13 +30,7 @@ FULL_BLOCK = '█'
 
 class Py3status:
     """
-    Configuration parameters:
-        - color_* : None means - get it from i3status config
-        - format : text with "text" mode. percentage with % replaces {}
-        - hide_when_full : hide any information when battery is fully charged
-        - mode : for primitive-one-char bar, or "text" for text percentage ouput
     """
-
     # available configuration parameters
     cache_timeout = 30
     color_bad = None

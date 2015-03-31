@@ -2,6 +2,16 @@
 """
 Display bluetooth status.
 
+Confiuration parameters:
+    - format : format when there is a connected device
+    - format_no_conn : format when there is no connected device
+    - format_no_conn_prefix : prefix when there is no connected device
+    - format_prefix : prefix when there is a connected device
+
+Format of status string placeholders
+    {name} : device name
+    {mac} : device MAC address
+
 Requires:
     - hcitool
 
@@ -20,15 +30,6 @@ BTMAC_RE = re.compile(r'[0-9A-F:]{17}')
 
 class Py3status:
     """
-    Confiuration parameters:
-        - format : format when there is a connected device
-        - format_no_conn : format when there is no connected device
-        - format_no_conn_prefix : prefix when there is no connected device
-        - format_prefix : prefix when there is a connected device
-
-    Format of status string placeholders
-        {name} : device name
-        {mac} : device MAC address
     """
     # available configuration parameters
     cache_timeout = 10

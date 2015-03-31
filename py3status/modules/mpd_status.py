@@ -2,6 +2,21 @@
 """
 Display information from mpd.
 
+Configuration parameters:
+    - format : indicator text format
+    - hide_when_paused / hide_when_stopped : hide any indicator, if
+    - host : mpd host
+    - max_width : if text length will be greater - it'll shrink it
+    - password : mpd password
+    - port : mpd port
+
+Format of result string can contain:
+    {state} - current state from STATE_CHARACTERS
+    Track information:
+    {track}, {artist}, {title}, {time}, {album}, {pos}
+    In additional, information about next track also comes in,
+    in analogue with current, but with next_ prefix, like {next_title}
+
 Requires:
     - python-mpd2 (NOT python2-mpd2)
     # pip install python-mpd2
@@ -25,22 +40,7 @@ STATE_CHARACTERS = {
 
 class Py3status:
     """
-    Configuration parameters:
-        - format : indicator text format
-        - hide_when_paused / hide_when_stopped : hide any indicator, if
-        - host : mpd host
-        - max_width : if text length will be greater - it'll shrink it
-        - password : mpd password
-        - port : mpd port
-
-    Format of result string can contain:
-        {state} - current state from STATE_CHARACTERS
-        Track information:
-        {track}, {artist}, {title}, {time}, {album}, {pos}
-        In additional, information about next track also comes in,
-        in analogue with current, but with next_ prefix, like {next_title}
     """
-
     # available configuration parameters
     cache_timeout = 2
     color = None

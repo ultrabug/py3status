@@ -8,6 +8,12 @@ It's also possible to add additional nameservers by appending them in nameserver
 
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 
+Configuration parameters:
+    - domain : domain name to check
+    - lifetime : resolver lifetime
+    - nameservers : comma separated list of reference DNS nameservers
+    - resolvers : comma separated list of DNS resolvers to use
+
 @author nawadanp
 """
 
@@ -17,11 +23,6 @@ import socket
 
 class Py3status:
     """
-    Configuration parameters:
-        - domain : domain name to check
-        - lifetime : resolver lifetime
-        - nameservers : comma separated list of reference DNS nameservers
-        - resolvers : comma separated list of DNS resolvers to use
     """
     # available configuration parameters
     domain = ''

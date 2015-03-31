@@ -2,6 +2,17 @@
 """
 Display and control a Pomodoro countdown.
 
+Configuration parameters:
+    - display_bar: display time in bars when True, otherwise in seconds
+    - max_breaks: maximum number of breaks
+    - num_progress_bars: number of progress bars
+    - sound_break_end: break end sound (file path)
+    - sound_pomodoro_end: pomodoro end sound (file path)
+    - sound_pomodoro_start: pomodoro start sound (file path)
+    - timer_break: normal break time (seconds) (requires pygame)
+    - timer_long_break: long break time (seconds) (requires pygame)
+    - timer_pomodoro: pomodoro time (seconds) (requires pygame)
+
 @author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto
 """
 
@@ -21,18 +32,7 @@ PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
 
 class Py3status:
     """
-    Configuration parameters:
-        - display_bar: display time in bars when True, otherwise in seconds
-        - max_breaks: maximum number of breaks
-        - num_progress_bars: number of progress bars
-        - sound_break_end: break end sound (file path)
-        - sound_pomodoro_end: pomodoro end sound (file path)
-        - sound_pomodoro_start: pomodoro start sound (file path)
-        - timer_break: normal break time (seconds) (requires pygame)
-        - timer_long_break: long break time (seconds) (requires pygame)
-        - timer_pomodoro: pomodoro time (seconds) (requires pygame)
     """
-
     # available configuration parameters
     display_bar = False
     max_breaks = 4

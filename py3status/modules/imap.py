@@ -2,6 +2,18 @@
 """
 Display the unread messages count from your IMAP account.
 
+Configuration parameters:
+    - cache_timeout : how often to run this check
+    - criterion : status of emails to check for
+    - hide_if_zero : don't show on bar if 0
+    - imap_server : IMAP server to connect to
+    - mailbox : name of the mailbox to check
+    - name : format to display
+    - new_mail_color : what color to output on new mail
+    - password : login password
+    - port : IMAP server port
+    - user : login user
+
 @author obb
 """
 
@@ -10,7 +22,8 @@ from time import time
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 60
     criterion = 'UNSEEN'
