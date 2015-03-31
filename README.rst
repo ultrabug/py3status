@@ -58,7 +58,7 @@ You can get a list and short description of all the available modules by using t
     $ py3status modules list
 
 
-To get more details about all the available modules, use:
+To get more details about all the available modules and their configuration, use:
 ::
 
     $ py3status modules details
