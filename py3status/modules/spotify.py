@@ -2,13 +2,10 @@
 """
 This module displays the current "artist - title" playing in Spotify.
 
-Last modified: 2015-03-26
+Last modified: 2015-03-31
 Author: Pierre Guilbert <pierre@1000mercis.com>
-License: GNU GPL http://www.gnu.org/licenses/gpl.html
 
-You could conf it in your i3status.conf like so:
-
-
+i3status.conf example:
 
 spotify {
         format = "{title} by {artist} -> {time}"
@@ -34,7 +31,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 0
-    format = "{title}: {album} : {artist} : {time}"
+    format = "{artist} : {title}"
 
     def getText(self):
         """
