@@ -23,6 +23,11 @@ from threading import Event, Thread
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
+try:
+    from setproctitle import setproctitle
+    setproctitle('py3status')
+except ImportError:
+    pass
 
 @contextmanager
 def jsonify(string):
