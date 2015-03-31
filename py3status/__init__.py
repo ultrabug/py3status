@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import argparse
 import ast
+import cProfile
 import imp
 import locale
 import os
@@ -28,6 +29,27 @@ try:
     setproctitle('py3status')
 except ImportError:
     pass
+
+# Used in development
+enable_profiling = True
+
+
+def profile(thread_run_fn):
+    if not enable_profiling:
+        return thread_run_fn
+
+    def wrapper_run(self):
+        """Wrap the Thread.run() method
+        """
+        profiler = cProfile.Profile()
+        try:
+            return profiler.runcall(thread_run_fn, self)
+        finally:
+            thread_id = getattr(self, 'ident', 'core')
+            profiler.dump_stats("py3status-%s.profile" % thread_id)
+
+    return wrapper_run
+
 
 @contextmanager
 def jsonify(string):
@@ -472,6 +494,7 @@ class I3status(Thread):
                 self.write_in_tmpfile('}\n\n', tmpfile)
         tmpfile.flush()
 
+    @profile
     def run(self):
         """
         Spawn i3status using a self generated config file and poll its output.
@@ -758,6 +781,7 @@ class Events(Thread):
         finally:
             return (instance, name)
 
+    @profile
     def run(self):
         """
         Wait for an i3bar JSON event, then find the right module to dispatch
@@ -1001,6 +1025,7 @@ class Module(Thread):
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
             syslog(LOG_WARNING, msg)
 
+    @profile
     def run(self):
         """
         On a timely fashion, execute every method found for this module.
@@ -1502,6 +1527,7 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
+    @profile
     def run(self):
         """
         Main py3status loop, continuously read from i3status and modules
