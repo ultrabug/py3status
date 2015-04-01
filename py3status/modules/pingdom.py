@@ -3,7 +3,7 @@
 Display the latest response time of the configured Pingdom checks.
 
 We also verify the status of the checks and colorize if needed.
-Pingdom API doc : https://www.pingdom.com/services/api-documentation-rest/
+Pingdom API doc : https://www.pingdom.com/features/api/documentation/
 
 Configuration parameters:
         - app_key : create an APP KEY on pingdom first
