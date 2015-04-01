@@ -25,9 +25,13 @@ class Py3status:
         """
         Display a colorful state of DPMS.
         """
+
+        self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
+
         response = {
             'full_text': 'DPMS'
         }
+
         if self.run:
             response['color'] = i3s_config['color_good']
         else:
