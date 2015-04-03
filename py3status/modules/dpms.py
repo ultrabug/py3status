@@ -43,4 +43,3 @@ class Py3status:
             else:
                 self.run = True
                 system("xset +dpms;xset s on")
-            system("killall -USR1 py3status")
