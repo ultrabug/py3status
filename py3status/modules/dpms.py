@@ -15,19 +15,17 @@ from os import system
 class Py3status:
     """
     """
-    def __init__(self):
-        """
-        Detect current state on start.
-        """
-        self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
-
     def dpms(self, i3s_output_list, i3s_config):
         """
         Display a colorful state of DPMS.
         """
+
+        self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
+
         response = {
             'full_text': 'DPMS'
         }
+
         if self.run:
             response['color'] = i3s_config['color_good']
         else:
