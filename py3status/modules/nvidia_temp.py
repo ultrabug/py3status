@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
-
 """
-Module for displaying NVIDIA GPU temperature
-
-Requires:
-    - nvidia-smi
+Display NVIDIA GPU temperature.
 
 Configuration parameters:
     - cache_timeout: how often we refresh this module in seconds
-    - color_good: the color used if everything is OK. 
     - color_bad: the color used if the temperature can't be read.
+    - color_good: the color used if everything is OK.
     - format_prefix: a prefix for the output.
     - format_units: the temperature units. Will appear at the end.
     - separator: the separator char between temperatures (only if more than one GPU)
+
+Requires:
+    - nvidia-smi
 
 @author jmdana <https://github.com/jmdana>
 @license BSD
@@ -25,11 +24,14 @@ from time import time
 
 TEMP_RE = re.compile(r"Current Temp\s+:\s+([0-9]+)")
 
+
 class Py3status:
+    """
+    """
     # configuration parameters
     cache_timeout = 10
-    color_good = None
     color_bad = None
+    color_good = None
     format_prefix = "GPU: "
     format_units = "°C"
     separator = '|'
@@ -66,7 +68,7 @@ class Py3status:
         response = {
             'cached_until': time() + self.cache_timeout,
             'color': color,
-            'full_text': output,
+            'full_text': output
         }
 
         return response
