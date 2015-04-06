@@ -24,6 +24,7 @@ class GetData:
         - `arg`: argument.
         """
         result = subprocess.check_output([cmd, arg])
+        result = result.decode('utf-8')
         return result
 
     def cpu(self):
@@ -60,8 +61,9 @@ class GetData:
         """
         # Run 'free -m' command and make a list from output.
         mem_data = self.execCMD('free', '-m').split()
-        total_mem = int(mem_data[7]) / 1024.
-        used_mem = int(mem_data[15]) / 1024.
+        mem_index = mem_data.index('Mem:')
+        total_mem = int(mem_data[mem_index + 1]) / 1024.
+        used_mem = int(mem_data[mem_index + 2]) / 1024.
         # Caculate percentage
         used_mem_percent = int(used_mem / (total_mem / 100))
 
