@@ -89,7 +89,7 @@ class Py3status:
         bill_amount = self._get_bill_amount()
 
         if bill_amount == 'csv_error':
-            response['full_text'] = 'Check your csv file'
+            response['full_text'] = 'Bad CSV file'
         elif bill_amount == 'key_error':
             response['full_text'] = 'Key not found in the bucket'
         elif bill_amount == 'bucket_error':
@@ -97,10 +97,10 @@ class Py3status:
         elif bill_amount == 'conn_error':
             response['full_text'] = 'Check your internet access'
         elif bill_amount is not False:
-            response['full_text'] = str(bill_amount) + "$"
+            response['full_text'] = str(bill_amount) + '$'
             response['color'] = i3s_config['color_good']
         else:
-            response['full_text'] = "Billing file not found in the bucket"
+            response['full_text'] = 'Global error - WTF exception'
 
         return response
 
