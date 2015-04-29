@@ -11,7 +11,7 @@ Configuration parameters:
     - aws_secret_access_key : Your AWS secret key
     - aws_account_id : the root ID of the AWS account. Can be find here https://console.aws.amazon.com/billing/home#/account
     - s3_bucket_name : the bucket where billing files are sent by AWS. Follow this article to activate this feature : http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
-    - billing_file : where the billing file must be stored
+    - billing_file : csv file location
     - cache_timeout : how often we refresh this module in seconds
 
 @author nawadanp
