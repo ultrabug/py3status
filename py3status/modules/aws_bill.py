@@ -40,46 +40,67 @@ class Py3status:
         # Format : 123456789012-aws-billing-csv-yyyy-mm.csv
         s3_file_key = self.aws_account_id + '-aws-billing-csv-' + \
             datetime.datetime.now().strftime(
-                "%Y") + '-' + datetime.datetime.now().strftime("%m") + '.csv'
+                '%Y') + '-' + datetime.datetime.now().strftime('%m') + '.csv'
         i = 0
 
-        # Connect to the bucket
-        conn = boto.connect_s3(
-            self.aws_access_key_id, self.aws_secret_access_key)
-        bucket = conn.get_bucket(self.s3_bucket_name)
+        # Connection to s3 service
+        try:
+            conn = boto.connect_s3(
+                self.aws_access_key_id, self.aws_secret_access_key)
+        except:
+            return 'conn_error'
+
+        # Connection to the bucket
+        try:
+            bucket = conn.get_bucket(self.s3_bucket_name)
+        except:
+            return 'bucket_error'
 
         # Fetch the objects keys and get the billing file
-        k = Key(bucket)
-        k.key = s3_file_key
         try:
+            k = Key(bucket)
+            k.key = s3_file_key
             k.get_contents_to_filename(self.billing_file)
+            k.close
         except:
-            return False
-        k.close
+            return 'key_error'
 
         # Parse the file and get the InvoiceTotal amount
-        with open(self.billing_file, 'rb') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if ''.join(row).find('InvoiceTotal') == -1:
-                    continue
-                i = i + 1
-                return row[-1]
+        try:
+            with open(self.billing_file, 'rb') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if ''.join(row).find('InvoiceTotal') == -1:
+                        continue
+                    i = i + 1
+                    return row[-1]
+        except:
+            return 'csv_error'
+
+        return False
 
     def aws_bill(self, i3s_output_list, i3s_config):
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': ''
+            'full_text': '',
+            'color': i3s_config['color_bad']
         }
 
         bill_amount = self._get_bill_amount()
 
-        if bill_amount:
+        if bill_amount == 'csv_error':
+            response['full_text'] = 'Check your csv file'
+        elif bill_amount == 'key_error':
+            response['full_text'] = 'Key not found in the bucket'
+        elif bill_amount == 'bucket_error':
+            response['full_text'] = 'Check the bucket name or your AWS keys'
+        elif bill_amount == 'conn_error':
+            response['full_text'] = 'Check your internet access'
+        elif bill_amount is not False:
             response['full_text'] = str(bill_amount) + "$"
             response['color'] = i3s_config['color_good']
         else:
             response['full_text'] = "Billing file not found in the bucket"
-            response['color'] = i3s_config['color_bad']
 
         return response
 
