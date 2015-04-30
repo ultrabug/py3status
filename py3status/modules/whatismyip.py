@@ -9,6 +9,7 @@ Configuration parameters:
     - format_online : what to display when online
     - hide_when_offline: hide the module output when offline (default False)
     - mode: default mode to display is 'ip' or 'status' (click to toggle)
+    - negative_cache_timeout: how often to check again when offline
     - timeout : how long before deciding we're offline
 
 @author ultrabug
@@ -31,6 +32,7 @@ class Py3status:
     format_online = '●'
     hide_when_offline = False
     mode = 'ip'
+    negative_cache_timeout = 2
     timeout = 5
 
     def on_click(self, i3s_output_list, i3s_config, event):
@@ -57,11 +59,12 @@ class Py3status:
         """
         """
         ip = self._get_my_ip()
-        response = {'cached_until': time() + self.cache_timeout}
+        response = {'cached_until': time() + self.negative_cache_timeout}
 
         if ip is None and self.hide_when_offline:
             response['full_text'] = ''
         elif ip is not None:
+            response['cached_until'] = time() + self.cache_timeout
             if self.mode == 'ip':
                 response['full_text'] = self.format.format(ip=ip)
             else:
