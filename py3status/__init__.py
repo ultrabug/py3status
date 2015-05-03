@@ -1060,14 +1060,7 @@ class Module(Thread):
                         result['name'] = self.module_name
                         result['instance'] = self.module_inst
                     else:
-                        # this is an old school module reporting its position
-                        position, result = response
-                        if not isinstance(position, int):
-                            raise TypeError('position is not an int')
-                        if not isinstance(result, dict):
-                            raise TypeError('response should be a dict')
-                        if 'name' not in result:
-                            raise KeyError('missing "name" key in response')
+                        raise TypeError('response should be a dict')
 
                     # validate the response
                     if 'full_text' not in result:
@@ -1247,26 +1240,18 @@ class Py3statusWrapper():
         respect to i3status.conf configured py3status modules.
 
         User provided modules take precedence over py3status generic modules.
-
-        If no module has been requested from i3status.conf, we'll load
-        every module present in the include paths
-        as this is the legacy behavior.
         """
         user_modules = dict()
         if not self.py3_modules:
             return user_modules
-
         for include_path in sorted(self.config['include_paths']):
             include_path = os.path.abspath(include_path) + '/'
             if not os.path.isdir(include_path):
                 continue
-
             for f_name in sorted(os.listdir(include_path)):
                 if not f_name.endswith('.py'):
                     continue
-
                 module_name = f_name[:-3]
-
                 # i3status.conf based behaviour (using order += 'xx')
                 for module in self.py3_modules:
                     if module_name == module.split(' ')[0]:
@@ -1382,10 +1367,6 @@ class Py3statusWrapper():
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
-        else:
-            # legacy behaviour code
-            # load and spawn user modules threads based on inclusion folders
-            self.load_modules(user_modules, user_modules)
 
     def i3_nagbar(self, msg, level='error'):
         """
