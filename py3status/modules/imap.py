@@ -47,13 +47,11 @@ class Py3status:
             self.new_mail_color = i3s_config['color_good']
 
         if mail_count == 'N/A':
-            response['color'] = ''
             response['full_text'] = mail_count
         elif mail_count != 0:
             response['color'] = self.new_mail_color
             response['full_text'] = self.name.format(unseen=mail_count)
         else:
-            response['color'] = ''
             if self.hide_if_zero:
                 response['full_text'] = ''
             else:
