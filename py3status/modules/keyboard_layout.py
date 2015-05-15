@@ -2,6 +2,9 @@
 """
 Display the current keyboard layout.
 
+Configuration parameters:
+    - cache_timeout: check for keyboard layout change every seconds
+
 Requires:
     - xkblayout-state
     or
