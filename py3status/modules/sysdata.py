@@ -2,14 +2,14 @@
 """
 Display system RAM and CPU utilization.
 
-Confiuration parameters:
+Configuration parameters:
     - format: output format string
-    - med_threshold: percent to consider CPU or RAM usage as 'medium load'
     - high_threshold: percent to consider CPU or RAM usage as 'high load'
+    - med_threshold: percent to consider CPU or RAM usage as 'medium load'
 
 Format of status string placeholders:
-    {cpu_usage}        - name of interface
     {cpu_temp}         - cpu temperature
+    {cpu_usage}        - cpu usage percentage
     {mem_total}        - total memory
     {mem_used}         - used memory
     {mem_used_percent} - used memory percentage
@@ -20,9 +20,9 @@ be available, provided by the 'lm-sensors' or 'lm_sensors' package.
 @author Shahin Azad <ishahinism at Gmail>, shrimpza
 """
 
+import re
 import subprocess
 from time import time
-
 
 class GetData:
     """
@@ -94,8 +94,6 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
-        import re
-        
         sensors = subprocess.check_output('sensors', shell=True);
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
@@ -109,10 +107,10 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = "CPU: {cpu_usage}% | Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
     cache_timeout = 10
-    med_threshold = 40
+    format = "CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
     high_threshold = 75
+    med_threshold = 40
 
     def __init__(self):
         self.data = GetData()
@@ -120,8 +118,6 @@ class Py3status:
         self.cpu_idle = 0
 
     def sysData(self, i3s_output_list, i3s_config):
-        #data = GetData()
-
         # get CPU usage info
         cpu_total, cpu_idle = self.data.cpu()
         cpu_usage = 1 - (
@@ -166,9 +162,9 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     config = {
-        'color_good': '#00FF00',
-        'color_degraded': '#FFFF00',
         'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00',
     }
 
     while True:
