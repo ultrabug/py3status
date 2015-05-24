@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Display your dropbox status.
+Displays dropboxd status.
 
 Configuration parameters:
     - format : Prefix text for the dropbox status
+
+Valid status values include:
+    - Dropbox isn't running!
+    - Starting...
+    - Downloading file list...
+    - Syncing "filename"
+    - Up to date
 
 Requires:
     - the 'dropbox-cli' command
