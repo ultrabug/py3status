@@ -9,7 +9,7 @@ Requires:
     - the 'dropbox-cli' command
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
-@license GNU GPL  http://www.gnu.org/licenses/gpl.html
+@license BSD 2-Clause License -- http://opensource.org/licenses/BSD-2-Clause
 """
 import subprocess
 
