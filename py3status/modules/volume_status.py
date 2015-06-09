@@ -1,6 +1,6 @@
 """
 Show current volume from amixer.
-Reads the current Master volume from amixer.
+Extend on the standard i3status volume module by adding color and threshold settings.
 Configuration parameters:
 	- format : format the output, available variables: {percentage}
 	- format_mute : format the output when the volume is muted
@@ -21,8 +21,8 @@ from subprocess import check_output
 
 
 class Py3status:
-	format = "{percentage}%"
-	format_mute = "mute"
+	format = "♪: {percentage}%"
+	format_muted = "♪: muted"
 	cache_timeout = 0
 
 	threshold_degraded = 50
@@ -74,7 +74,7 @@ class Py3status:
 
 		# call amixer
 		output = check_output(["amixer", "sget", self.channel]).decode()
-	
+
 		# get the current percentage value
 		perc = self._get_percentage(output)
 
@@ -85,7 +85,7 @@ class Py3status:
 		color = self._perc_to_color(perc)
 
 		# format the output
-		text = self._format_output(self.format_mute if muted else self.format, perc)
+		text = self._format_output(self.format_muted if muted else self.format, perc)
 
 		# if the text has been changed, update the cached text and
 		# set transformed to True
