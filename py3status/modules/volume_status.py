@@ -1,6 +1,6 @@
 """
-Show current volume from amixer.
-Extend on the standard i3status volume module by adding color and threshold settings.
+Display current sound volume using amixer.
+Expands on the standard i3status volume module by adding color and percentage threshold settings.
 Configuration parameters:
 	- format : format the output, available variables: {percentage}
 	- format_mute : format the output when the volume is muted
@@ -34,9 +34,11 @@ class Py3status:
 
 	channel = "Master"
 
+	# constructor
 	def __init__(self):
 		self.text = ""
 
+	# compares current volume to the thresholds, returns a color code
 	def _perc_to_color(self, string):
 		try:
 			value = int(string)
