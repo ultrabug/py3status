@@ -106,14 +106,14 @@ class Py3status:
                 bar += PROGRESS_BAR_ITEMS[selector]
                 bar_val -= 1
 
-            bar = bar.ljust(self.num_progress_bars).encode('utf_8')
+            bar = bar.ljust(self.num_progress_bars)
         else:
             bar = self.timer
 
         if self.run:
-            text = '{} [{}]'.format(self.prefix, bar)
+            text = u'{} [{}]'.format(self.prefix, bar)
         else:
-            text = '{} ({})'.format(self.prefix, bar)
+            text = u'{} ({})'.format(self.prefix, bar)
 
         return dict(full_text=text)
 
