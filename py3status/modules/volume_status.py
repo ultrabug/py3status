@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Display current sound volume using amixer.
 Expands on the standard i3status volume module by adding color and percentage threshold settings.
@@ -5,6 +7,9 @@ Expands on the standard i3status volume module by adding color and percentage th
 NOTE: 	If you want to refresh the module quicker than the i3status interval,
 	send a USR1 signal to py3status in the keybinding.
 	Example: killall -s USR1 py3status
+
+Dependencies:
+	alsa-utils (tested with alsa-utils 1.0.29-1)
 
 Configuration parameters:
 	- format : format the output, available variables: {percentage}
