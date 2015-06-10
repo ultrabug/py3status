@@ -1,6 +1,11 @@
 """
 Display current sound volume using amixer.
 Expands on the standard i3status volume module by adding color and percentage threshold settings.
+
+NOTE: 	If you want to refresh the module quicker than the i3status interval,
+	send a USR1 signal to py3status in the keybinding.
+	Example: killall -s USR1 py3status
+
 Configuration parameters:
 	- format : format the output, available variables: {percentage}
 	- format_mute : format the output when the volume is muted
@@ -60,15 +65,32 @@ class Py3status:
 
 	# return the current channel volume value as a string
 	def _get_percentage(self, output):
-		prog = re.compile(r"\[\d{1,3}%\]")
-		text = prog.findall(output)[0][1:-2]
-		return text
+
+		# attempt to find a percentage value in square brackets
+		p = re.compile(r"(?<=\[)\d{1,3}(?=%\])")
+		text = p.search(output).group()
+
+		# check if the parsed value is sane by checking if it's an integer
+		try:
+			int(text)
+			return text
+
+		# if not, show an error message in output
+		except ValueError:
+			return "Error: Can't parse amixer output."
 
 	# returns True if the channel is muted
 	def _get_muted(self, output):
-		prog = re.compile(r"\[\w{2,3}\]")
-		text = prog.findall(output)[0][1:-1]
-		return text == "off"
+		p = re.compile(r"(?<=\[)\w{2,3}(?=\])")
+		text = p.search(output).group()
+
+		# check if the parsed string is either "off" or "on"
+		if text in ["on", "off"]:
+			return text == "off"
+
+		# if not, return False
+		else:
+			return False
 
 	# this method is ran by py3status
 	# returns a response dict
