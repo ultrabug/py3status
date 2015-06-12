@@ -3,7 +3,7 @@ py3status
 *********
 |version|
 
-.. |version| image:: https://pypip.in/version/py3status/badge.png
+.. |version| image:: https://img.shields.io/pypi/v/py3status.svg
 
 **py3status** is an extensible i3status wrapper written in python.
 
