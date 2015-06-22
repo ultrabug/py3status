@@ -121,5 +121,5 @@ if __name__ == "__main__":
         'color_good': '#00FF00'
     }
     while True:
-        print(x.empty([], config))
+        print(x.example_method([], config))
         sleep(1)
