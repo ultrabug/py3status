@@ -11,38 +11,51 @@ Configuration parameters:
     - script_path   : script you want to show output of (compulsory)
     - color         : color of printed text
     - on_click      : read goo.gl/u10n0x
+    - format        : see placeholders below
+
+Format of status string placeholders:
+    {output} - output of script given by "script_path"
+
+i3status.conf example:
+
+external_script {
+    script_path = "/usr/bin/whoami"
+    format = "my name is {output}"
+    color = "#00FF00"
 
 @author frimdo ztracenastopa@centrum.cz
 """
- 
+
 import subprocess
 from time import time
- 
- 
+
+
 class Py3status:
     cache_timeout = 15
+    format = '{output}'
     color = None
     script_path = None
- 
+
     def external_script(self, i3s_output_list, i3s_config):
- 
+
         if self.script_path:
- 
+
             return_value = subprocess.check_output(self.script_path, shell=True, universal_newlines=True)
             response = {
                 'cached_until': time() + self.cache_timeout,
-                'full_text': return_value.rstrip(),
+                'full_text': self.format.format(
+                    output=return_value.rstrip()),
                 'color': self.color
                 }
- 
+
         else:
             response = {
                 'cached_until': time() + self.cache_timeout,
                 'full_text': ""
             }
- 
+
         return response
- 
+
 if __name__ == "__main__":
     from time import sleep
     x = Py3status()
@@ -52,5 +65,4 @@ if __name__ == "__main__":
     }
     while True:
         print(x.external_script([], config))
-        sleep(x.cache_timeout)
-
+        sleep(1)
