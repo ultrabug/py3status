@@ -96,7 +96,7 @@ Available modules:
                          
                          @author Andre Doser <dosera AT tf.uni-freiburg.de>
                          ---
-external_script          Display output of given script
+  external_script        Display output of given script.
 
                          
                          Display output of any executable script set by script_path
@@ -105,9 +105,8 @@ external_script          Display output of given script
                          
                          Configuration parameters:
                              - cache_timeout : how often we refresh this module in seconds
-                             - script_path   : script you want to show output of (compulsory)
                              - color         : color of printed text
-                             - on_click      : read goo.gl/u10n0x
+                             - script_path   : script you want to show output of (compulsory)
                          
                          @author frimdo ztracenastopa@centrum.cz
                          ---
@@ -360,15 +359,12 @@ external_script          Display output of given script
                          
                          @author Pierre Guilbert <pierre@1000mercis.com>
                          ---
-static_string            Display static text
-
-                         Display static text given by "text" parameter
+  static_string          Display static text.
 
                          Configuration parameters:
-                             - text          : text that should be printed
-                             - separator     : whether the separator is shown or not (True or False)
                              - color         : color of printed text
-                             - on_click      : read goo.gl/u10n0x
+                             - format        : text that should be printed
+                             - separator     : whether the separator is shown or not (true or false)
                          
                          @author frimdo ztracenastopa@centrum.cz
                          ---
