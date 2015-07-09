@@ -96,6 +96,21 @@ Available modules:
                          
                          @author Andre Doser <dosera AT tf.uni-freiburg.de>
                          ---
+external_script          Display output of given script
+
+                         
+                         Display output of any executable script set by script_path
+                         Pay attention. The output must be one liner, or will break your i3status
+                         The script should not have any parameters, but it could work
+                         
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds
+                             - script_path   : script you want to show output of (compulsory)
+                             - color         : color of printed text
+                             - on_click      : read goo.gl/u10n0x
+                         
+                         @author frimdo ztracenastopa@centrum.cz
+                         ---
   glpi                   Display the total number of open tickets from GLPI.
                          
                          Configuration parameters:
@@ -344,6 +359,18 @@ Available modules:
                          }
                          
                          @author Pierre Guilbert <pierre@1000mercis.com>
+                         ---
+static_string            Display static text
+
+                         Display static text given by "text" parameter
+
+                         Configuration parameters:
+                             - text          : text that should be printed
+                             - separator     : whether the separator is shown or not (True or False)
+                             - color         : color of printed text
+                             - on_click      : read goo.gl/u10n0x
+                         
+                         @author frimdo ztracenastopa@centrum.cz
                          ---
   sysdata                Display system RAM and CPU utilization.
                          
