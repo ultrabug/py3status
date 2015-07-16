@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Display currently active (started) taskwarrior tasks.
 
@@ -7,8 +6,7 @@ Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds
 
 Requires
-    - jq
-    - awk
+    - task
 
 @author James Smith http://jazmit.github.io/
 @license BSD
@@ -16,23 +14,29 @@ Requires
 
 # import your useful libs here
 from time import time
-import subprocess
+from subprocess import check_output
+import shlex
+import json
+
 
 class Py3status:
     cache_timeout = 5
 
     def taskWarrior(self, i3s_output_list, i3s_config):
-        active_task = subprocess.check_output(
-            """task start.before:tomorrow status:pending export \
-                | awk 'BEGIN { print "["} { print $0 } END { print "]"}' \
-                | jq -r 'map( (.id | tostring) + " " + .description ) | join(", ")' \
-            """,
-            shell=True).strip()
+        command = "task start.before:tomorrow status:pending export"
+        taskwarrior_output = check_output(shlex.split(command))
+        tasks_json = json.loads("[" + taskwarrior_output + "]")
+
+        def describeTask(taskObj):
+            return str(taskObj['id']) + " " + taskObj['description']
+
+        result = ', '.join(map(describeTask, tasks_json))
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': active_task
+            'full_text': result
         }
         return response
+
 
 if __name__ == "__main__":
     """
