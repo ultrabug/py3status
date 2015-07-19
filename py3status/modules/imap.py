@@ -5,14 +5,17 @@ Display the unread messages count from your IMAP account.
 Configuration parameters:
     - cache_timeout : how often to run this check
     - criterion : status of emails to check for
+    - format : format to display
     - hide_if_zero : don't show on bar if 0
     - imap_server : IMAP server to connect to
     - mailbox : name of the mailbox to check
-    - name : format to display
     - new_mail_color : what color to output on new mail
     - password : login password
     - port : IMAP server port
     - user : login user
+
+Format of status string placeholders:
+    {unseen} - number of unread emails
 
 @author obb
 """
@@ -30,7 +33,7 @@ class Py3status:
     hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
     mailbox = 'INBOX'
-    name = 'Mail: {unseen}'
+    format = 'Mail: {unseen}'
     new_mail_color = ''
     password = '<PASSWORD>'
     port = '993'
@@ -39,9 +42,7 @@ class Py3status:
     def check_mail(self, i3s_output_list, i3s_config):
         mail_count = self._get_mail_count()
 
-        response = {
-            'cached_until': time() + self.cache_timeout
-        }
+        response = {'cached_until': time() + self.cache_timeout}
 
         if not self.new_mail_color:
             self.new_mail_color = i3s_config['color_good']
@@ -50,12 +51,12 @@ class Py3status:
             response['full_text'] = mail_count
         elif mail_count != 0:
             response['color'] = self.new_mail_color
-            response['full_text'] = self.name.format(unseen=mail_count)
+            response['full_text'] = self.format.format(unseen=mail_count)
         else:
             if self.hide_if_zero:
                 response['full_text'] = ''
             else:
-                response['full_text'] = self.name.format(unseen=mail_count)
+                response['full_text'] = self.format.format(unseen=mail_count)
 
         return response
 
@@ -77,6 +78,7 @@ class Py3status:
 
         except:
             return 'N/A'
+
 
 if __name__ == "__main__":
     """
