@@ -18,6 +18,9 @@ Configuration parameters:
       Follow this article to activate this feature:
       http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
 
+Format of status string placeholders:
+    {bill_amount} - AWS bill amount
+
 Requires:
     - boto
 
@@ -41,6 +44,7 @@ class Py3status:
     aws_secret_access_key = ''
     billing_file = '/tmp/.aws_billing.csv'
     cache_timeout = 3600
+    format = '{bill_amount}$'
     s3_bucket_name = ''
 
     def _get_bill_amount(self):
@@ -90,8 +94,8 @@ class Py3status:
     def aws_bill(self, i3s_output_list, i3s_config):
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': '',
-            'color': i3s_config['color_bad']
+            'color': i3s_config['color_bad'],
+            'full_text': ''
         }
 
         bill_amount = self._get_bill_amount()
@@ -105,7 +109,7 @@ class Py3status:
         elif bill_amount == 'conn_error':
             response['full_text'] = 'Check your internet access'
         elif bill_amount is not False:
-            response['full_text'] = str(bill_amount) + '$'
+            response['full_text'] = self.format.format(bill_amount=bill_amount)
             response['color'] = i3s_config['color_good']
         else:
             response['full_text'] = 'Global error - WTF exception'
