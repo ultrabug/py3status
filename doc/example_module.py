@@ -51,7 +51,7 @@ from time import time
 
 class Py3status:
     """
-    The Py3status class name is mendatory.
+    The Py3status class name is mandatory.
 
     Below you list all the available configuration parameters and their
     default value for your module which can be overwritten by users
