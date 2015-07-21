@@ -7,12 +7,8 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-    - format: output format string
-    - status_off: string to display when DPMS is enabled
-    - status_on: string to display when DPMS is disabled
-
-Format of status string placeholders:
-    {status} - DPMS status (defined by status_on/off parameters)
+    - format_off: string to display when DPMS is enabled
+    - format_on: string to display when DPMS is disabled
 
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
@@ -24,9 +20,8 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = "DPMS"
-    status_off = "Off"
-    status_on = "On"
+    format_off = "DPMS"
+    format_on = "DPMS"
 
     def dpms(self, i3s_output_list, i3s_config):
         """
@@ -36,15 +31,9 @@ class Py3status:
         self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
 
         response = {
-            'full_text': self.format.format(
-                status = self.status_on if self.run else self.status_off
-            )
+            'full_text': self.format_on if self.run else self.format_off,
+            'color': i3s_config['color_good'] if self.run else i3s_config['color_bad']
         }
-
-        if self.run:
-            response['color'] = i3s_config['color_good']
-        else:
-            response['color'] = i3s_config['color_bad']
 
         return response
 
