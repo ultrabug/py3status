@@ -21,6 +21,7 @@ Configuration parameters:
 	- color_degraded : #FFFF00 by default, degraded volume color
 	- color_bad : #FF0000 by default, bad volume color
 	- channel : "Master" by default, alsamixer channel to track
+	- device : "default" by default, alsamixer device to use
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD
 """
@@ -28,6 +29,7 @@ Configuration parameters:
 from time import time
 import re
 from subprocess import check_output
+import shlex
 
 
 class Py3status:
@@ -42,6 +44,7 @@ class Py3status:
 	color_degraded = "#FFFF00"
 	color_bad = "#FF0000"
 
+	device = "default"
 	channel = "Master"
 
 	# constructor
@@ -101,7 +104,7 @@ class Py3status:
 	def current_volume(self, i3s_output_list, i3s_config):
 
 		# call amixer
-		output = check_output(["amixer", "sget", self.channel]).decode()
+		output = check_output(shlex.split("amixer -D {} sget {}".format(self.device, self.channel))).decode("utf-8")
 
 		# get the current percentage value
 		perc = self._get_percentage(output)
