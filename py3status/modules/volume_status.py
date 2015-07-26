@@ -129,10 +129,6 @@ class Py3status:
 		}
 		return response
 
-	# open alsamixer on click
-	def on_click(self, i3s_output_list, i3s_config, event):
-		check_output(["i3-sensible-terminal", "-e", "alsamixer"])
-
 # test if run directly
 if __name__ == "__main__":
 	from time import sleep
