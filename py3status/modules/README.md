@@ -18,6 +18,9 @@ Available modules:
                                Follow this article to activate this feature:
                                http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
                          
+                         Format of status string placeholders:
+                             {bill_amount} - AWS bill amount
+                         
                          Requires:
                              - boto
                          
@@ -79,34 +82,39 @@ Available modules:
                          @author Francois LASSERRE <choiz@me.com>
                          @license GNU GPL http://www.gnu.org/licenses/gpl.html
                          ---
-  counter                Display days/hours/minutes spent and calculated the price of your service for you.
-                         
-                         Configuration parameters:
-                             - config_file: file path to store the time already spent and restore it the next session.
-                             - tax  : tax value (1.02 = 2%)
-                             - hour_price : your price per hour
-                         
-                         @author Amaury Brisou <py3status AT puzzledge.org>
-                         ---
   dpms                   Activate or deactivate DPMS and screen blanking.
                          
                          This module allows activation and deactivation
                          of DPMS (Display Power Management Signaling)
                          by clicking on 'DPMS' in the status bar.
                          
+                         Configuration parameters:
+                             - format_off: string to display when DPMS is disabled
+                             - format_on: string to display when DPMS is enabled
+                         
                          @author Andre Doser <dosera AT tf.uni-freiburg.de>
                          ---
   external_script        Display output of given script.
-
                          
-                         Display output of any executable script set by script_path
-                         Pay attention. The output must be one liner, or will break your i3status
-                         The script should not have any parameters, but it could work
+                         Display output of any executable script set by 'script_path'.
+                         Pay attention. The output must be one liner, or will break your i3status !
+                         The script should not have any parameters, but it could work.
                          
                          Configuration parameters:
                              - cache_timeout : how often we refresh this module in seconds
                              - color         : color of printed text
+                             - format        : see placeholders below
                              - script_path   : script you want to show output of (compulsory)
+                         
+                         Format of status string placeholders:
+                             {output} - output of script given by "script_path"
+                         
+                         i3status.conf example:
+                         
+                         external_script {
+                             color = "#00FF00"
+                             format = "my name is {output}"
+                             script_path = "/usr/bin/whoami"
                          
                          @author frimdo ztracenastopa@centrum.cz
                          ---
@@ -128,18 +136,24 @@ Available modules:
                          Configuration parameters:
                              - cache_timeout : how often to run this check
                              - criterion : status of emails to check for
+                             - format : format to display
                              - hide_if_zero : don't show on bar if 0
                              - imap_server : IMAP server to connect to
                              - mailbox : name of the mailbox to check
-                             - name : format to display
                              - new_mail_color : what color to output on new mail
                              - password : login password
                              - port : IMAP server port
                              - user : login user
                          
+                         Format of status string placeholders:
+                             {unseen} - number of unread emails
+                         
                          @author obb
                          ---
   keyboard_layout        Display the current keyboard layout.
+                         
+                         Configuration parameters:
+                             - cache_timeout: check for keyboard layout change every seconds
                          
                          Requires:
                              - xkblayout-state
@@ -196,7 +210,7 @@ Available modules:
   netdata                Display network speed and bandwidth usage.
                          
                          Configuration parameters:
-                             - cache_timeout : 0 by default, you usually want continuous monitoring
+                             - cache_timeout : how often we refresh this module in seconds (2s default)
                              - low_* / med_* : coloration thresholds
                              - nic : the network interface to monitor (defaults to eth0)
                          
@@ -360,7 +374,7 @@ Available modules:
                          @author Pierre Guilbert <pierre@1000mercis.com>
                          ---
   static_string          Display static text.
-
+                         
                          Configuration parameters:
                              - color         : color of printed text
                              - format        : text that should be printed
@@ -370,11 +384,22 @@ Available modules:
                          ---
   sysdata                Display system RAM and CPU utilization.
                          
-                         NOTE: If you want py3status to show you your CPU temperature,
-                         change value of CPUTEMP into True in Py3status class - CPUInfo function
-                         and REMEMBER that you must install lm_sensors if you want CPU temp!
+                         Configuration parameters:
+                             - format: output format string
+                             - high_threshold: percent to consider CPU or RAM usage as 'high load'
+                             - med_threshold: percent to consider CPU or RAM usage as 'medium load'
                          
-                         @author Shahin Azad <ishahinism at Gmail>
+                         Format of status string placeholders:
+                             {cpu_temp}         - cpu temperature
+                             {cpu_usage}        - cpu usage percentage
+                             {mem_total}        - total memory
+                             {mem_used}         - used memory
+                             {mem_used_percent} - used memory percentage
+                         
+                         NOTE: If using the {cpu_temp} option, the 'sensors' command should 
+                         be available, provided by the 'lm-sensors' or 'lm_sensors' package.
+                         
+                         @author Shahin Azad <ishahinism at Gmail>, shrimpza
                          ---
   vnstat                 Display vnstat statistics.
                          
@@ -398,6 +423,31 @@ Available modules:
                          
                          @author shadowprince
                          @license Eclipse Public License
+                         ---
+  volume_status          Display current sound volume using amixer.
+                         
+                         Expands on the standard i3status volume module by adding color
+                         and percentage threshold settings.
+                         
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds (10s default)
+                             - channel : "Master" by default, alsamixer channel to track
+                             - device : "default" by default, alsamixer device to use
+                             - format : format the output, available variables: {percentage}
+                             - format_muted : format the output when the volume is muted
+                             - threshold_bad : 20 by default
+                             - threshold_degraded : 50 by default
+                         
+                         Requires:
+                             alsa-utils (tested with alsa-utils 1.0.29-1)
+                         
+                         NOTE:
+                             If you want to refresh the module quicker than the i3status interval,
+                             send a USR1 signal to py3status in the keybinding.
+                             Example: killall -s USR1 py3status
+                         
+                         @author <Jan T> <jans.tuomi@gmail.com>
+                         @license BSD
                          ---
   weather_yahoo          Display Yahoo! Weather forecast as icons.
                          
