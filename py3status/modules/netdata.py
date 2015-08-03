@@ -52,7 +52,7 @@ class Py3status:
     low_traffic = 400
     med_speed = 60
     med_traffic = 700
-    nic = 'wlp2s0'
+    nic = 'eth0'
 
     def __init__(self):
         self.old_transmitted = 0
