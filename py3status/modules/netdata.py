@@ -3,7 +3,7 @@
 Display network speed and bandwidth usage.
 
 Configuration parameters:
-    - cache_timeout : 0 by default, you usually want continuous monitoring
+    - cache_timeout : how often we refresh this module in seconds (2s default)
     - low_* / med_* : coloration thresholds
     - nic : the network interface to monitor (defaults to eth0)
 
