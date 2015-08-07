@@ -94,6 +94,25 @@ Available modules:
                          
                          @author Andre Doser <dosera AT tf.uni-freiburg.de>
                          ---
+  dropboxd_status        Display dropboxd status.
+                         
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds (10s default)
+                             - format: prefix text for the dropbox status
+                         
+                         Valid status values include:
+                             - Dropbox isn't running!
+                             - Starting...
+                             - Downloading file list...
+                             - Syncing "filename"
+                             - Up to date
+                         
+                         Requires:
+                             - the 'dropbox-cli' command
+                         
+                         @author Tjaart van der Walt (github:tjaartvdwalt)
+                         @license BSD
+                         ---
   external_script        Display output of given script.
                          
                          Display output of any executable script set by 'script_path'.
