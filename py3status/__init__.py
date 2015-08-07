@@ -473,7 +473,7 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        for section_name, conf in self.config.items():
+        for section_name, conf in sorted(self.config.items()):
             if section_name in ['i3s_modules', 'py3_modules']:
                 continue
             elif section_name == 'order':
