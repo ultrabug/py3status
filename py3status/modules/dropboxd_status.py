@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Displays dropboxd status.
+Display dropboxd status.
 
 Configuration parameters:
-    - format : Prefix text for the dropbox status
+    - cache_timeout : how often we refresh this module in seconds (10s default)
+    - format: prefix text for the dropbox status
 
 Valid status values include:
     - Dropbox isn't running!
@@ -16,30 +17,38 @@ Requires:
     - the 'dropbox-cli' command
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
-@license BSD 2-Clause License -- http://opensource.org/licenses/BSD-2-Clause
+@license BSD
 """
+
+import shlex
 import subprocess
+from time import time
 
 
 class Py3status:
-    format = "Dropbox: {}"
+    """
+    """
+    # available configuration parameters
+    cache_timeout = 10
+    format = 'Dropbox: {}'
 
-    def dropbox(self, i3status_output_json, i3status_config):
-        response = {}
+    def dropbox(self, i3s_output_list, i3s_config):
+        response = {'cached_until': time() + self.cache_timeout}
 
-        lines = subprocess.check_output(["dropbox-cli", "status"]).decode(
-            "utf-8").split("\n")
+        lines = subprocess.check_output(
+            shlex.split('dropbox-cli status')).decode('utf-8').split('\n')
         status = lines[0]
         full_text = self.format.format(str(status))
         response['full_text'] = full_text
 
-        if (status == "Dropbox isn't running!"):
-            response.update({'color': i3status_config['color_bad']})
-        elif (status == "Up to date"):
-            response.update({'color': i3status_config['color_good']})
+        if status == "Dropbox isn't running!":
+            response['color'] = i3s_config['color_bad']
+        elif status == "Up to date":
+            response['color'] = i3s_config['color_good']
         else:
-            response.update({'color': i3status_config['color_degraded']})
+            response['color'] = i3s_config['color_degraded']
         return response
+
 
 if __name__ == "__main__":
     from time import sleep
