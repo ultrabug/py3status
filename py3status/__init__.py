@@ -148,11 +148,18 @@ class I3status(Thread):
         #
         self.config = self.i3status_config_reader(i3status_config_path)
 
-    def valid_config_param(self, param_name):
+    def valid_config_param(self, param_name, cleanup=False):
         """
         Check if a given section name is a valid parameter for i3status.
         """
-        valid_config_params = self.i3status_module_names + ['general', 'order']
+        if cleanup:
+            valid_config_params = [ _ for _ in self.i3status_module_names if _ not in [
+                'cpu_usage', 'ddate', 'load', 'time'
+            ]]
+        else:
+            valid_config_params = self.i3status_module_names + [
+                'general', 'order'
+            ]
         return param_name.split(' ')[0] in valid_config_params
 
     @staticmethod
@@ -317,6 +324,14 @@ class I3status(Thread):
                     else ''
                 )
             )
+
+        # cleanup unconfigured i3status modules that have no default
+        for module_name in deepcopy(config['order']):
+            if (self.valid_config_param(module_name, cleanup=True) and
+                not config.get(module_name)):
+                config.pop(module_name)
+                config['i3s_modules'].remove(module_name)
+                config['order'].remove(module_name)
 
         return config
 
@@ -484,7 +499,7 @@ class I3status(Thread):
                             tmpfile
                         )
                 self.write_in_tmpfile('\n', tmpfile)
-            elif self.valid_config_param(section_name):
+            elif self.valid_config_param(section_name) and conf:
                 self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
                 for key, value in conf.items():
                     self.write_in_tmpfile(
