@@ -30,7 +30,7 @@ LANG_COLORS = {
 LAYOUT_RE = re.compile(r".*layout:\s*(\w+).*", flags=re.DOTALL)
 
 
-def xbklayout():
+def xkblayout():
     """
     check using xkblayout-state (preferred method)
     """
@@ -63,11 +63,11 @@ class Py3status:
         find the best implementation to get the keyboard's layout
         """
         try:
-            xbklayout()
+            xkblayout()
         except:
             self.command = setxkbmap
         else:
-            self.command = xbklayout
+            self.command = xkblayout
 
     def keyboard_layout(self, i3s_output_list, i3s_config):
         response = {
