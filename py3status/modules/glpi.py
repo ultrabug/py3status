@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-This example class demonstrates how to display the current total number of
-open tickets from GLPI in your i3bar.
+Display the total number of open tickets from GLPI.
+
+Configuration parameters:
+    - critical : set bad color above this threshold
+    - db : database to use
+    - host : database host to connect to
+    - password : login password
+    - user : login user
+    - warning : set degraded color above this threshold
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
-
-Note that we don't have to implement a cache layer as it is handled by
-py3status automagically.
 """
 
 # You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
@@ -15,7 +19,8 @@ import MySQLdb
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     critical = 20
     db = ''
@@ -60,6 +65,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.count_glpi_open_tickets([], {}))
+        print(x.count_glpi_open_tickets([], config))
         sleep(1)

@@ -1,3 +1,66 @@
+version 2.4 (2015-03-31)
+* IMPORTANT NOTE: this is the last version of py3status supporting the legacy modules loading and ordering, this behavior will be dropped on the next 2.5 version !
+* add CLI support for module listing, by Federico Ceratto
+* catch daylight savings time change, fix issue #75 thx to @Gamonics
+* fix issue #64, ensure modules methods are always iterated alphabetically thx to @shankargopal
+* refactor default config file detection, by Federico Ceratto
+* rename and move the empty_class example module to the doc/ folder
+* improve documentation in the example module, by Federico Ceratto
+* add note for Debian users installation using pip wrt issue #61
+* remove obsolete i3bar_click_events module
+* new online_status module by @obb
+* new bluetooth module by J.M. Dana
+* new player_control module, by Federico Ceratto
+* new spotify module, by Pierre Guilbert
+* new xrandr module to handle your screens layout from your bar
+* add VLC support to player_control module by @rixx
+* dpms module activate/deactivate the screensaver as well by J.M. Dana
+* imap module allows choice of color for unread mails, by rixx
+* imap module allows choosing to hide the mail status if no unseen mails exist, by rixx
+* imap module unread mail string is now fully configurable (format string), by rixx
+* imap module may now check several IMAP folders, by rixx
+* imap module only shows name if there are unread emails, by rixx
+* pomodoro module: add sound support, by Federico Ceratto
+* pomodoro module: sort configuration parameters, by Federico Ceratto
+* pomodoro module: disable progress bar by default, by Federico Ceratto
+* pomodoro module: make progress bar configurable, by Federico Ceratto
+* pomodoro module: display time as a progress bar, by Federico Ceratto
+* pomodoro module: play sounds before nagging the user., by Federico Ceratto
+* pomodoro module: left click can now pause and resume a Pomodoro, by rixx
+* fix spaceapi module for Space APIs without 'lastchange' field, by rixx
+* fix how xrandr module retrieves the layout with polling for hardware changes, by THEBAULT Julien
+* fix and cleanup netdata module as reported by @obb
+* fix keyboard_layout module incorrect parsing of "setxkbmap -query", by J.M. Dana
+* added better python3 compatibility for battery_level module by Thomas
+* added a small debugging output when directly calling battery_level.py by Thomas
+* QA on all modules docstrings for a clean CLI parsing
+* remove useless 'position' from debug logs
+* drop python2.5 from classifiers
+
+version 2.3 (2015-02-17)
+* refactor the main loop for instant i3bar update on module or i3status output change wrt issue #59, handle correctly all and multiple time and tztime instances while updating them only on py3status interval thx to @protosphere and @abello
+* clear cache of user modules on click events by default for maximal i3bar responsiveness
+* fix issue #63 wrt SIGUSR1 spam error, cap it to 1 per 100ms anyway to avoid killing i3status thx to @abello
+* lower the click event refresh mechanism rate limit to 100ms
+* remove legacy module ordering spammy debug logs
+* new spaceapi module, by Timm Szigat
+* new module bitcoin-price-checker, by André Doser
+* fix typo in imap module thx to @tasse
+* fix i3status setup race condition reported by @tasse
+* fix time adjustement for short iteration timers thx to @guilbep
+
+version 2.2 (2015-01-23)
+* rewrite and cleanup the modules loading mechanism to handle correctly user provided modules instances wrt #57 thx to @wlcx and @Zopieux
+* fix module name parsing thx to @guiniol
+* fix python3 default i3status.conf file path detection
+* fix i3status.conf parsing of one-liner configurations
+* support time/tztime definitions with extra parts in the section name, by Jyri-Petteri Paloposki
+* add more user configurable params to the pomodoro module wrt issue #53 thx to @promaq
+* add possibility to color mpd_status, by Thomas Sanchez
+* update get_user_modules docstring
+* add debug log of user provided modules
+* better format module loading error messages
+
 version 2.1 (2015-01-09)
 * fix i3status.conf parsing when config parameters contains brackets wrt issue #51 thx to @ZeiP
 * fix NamedTemporaryFile file delete throwing an OSError as we clean it up ourselves to be compatible with all python versions

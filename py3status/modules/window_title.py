@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Py3status plugin - shows current window title.
+Display the current window title.
 
 Requires:
     - i3-py (https://github.com/ziberna/i3-py)
@@ -33,7 +33,8 @@ def find_focused(tree):
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 0.5
     max_width = 120  # if width of title is greater, shrink it and add '...'
@@ -66,6 +67,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.window_title([], {}))
+        print(x.window_title([], config))
         sleep(1)

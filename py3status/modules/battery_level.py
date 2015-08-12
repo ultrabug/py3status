@@ -1,11 +1,17 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
-Module for displaying information about battery.
+Display the battery level.
+
+Configuration parameters:
+    - color_* : None means - get it from i3status config
+    - format : text with "text" mode. percentage with % replaces {}
+    - hide_when_full : hide any information when battery is fully charged
+    - mode : for primitive-one-char bar, or "text" for text percentage ouput
 
 Requires:
     - the 'acpi' command line
 
-@author shadowprince and AdamBSteele
+@author shadowprince, AdamBSteele
 @license Eclipse Public License
 """
 
@@ -24,13 +30,7 @@ FULL_BLOCK = '█'
 
 class Py3status:
     """
-    Configuration parameters:
-        - color_* : None means - get it from i3status config
-        - format : text with "text" mode. percentage with % replaces {}
-        - hide_when_full : hide any information when battery is fully charged
-        - mode : for primitive-one-char bar, or "text" for text percentage ouput
     """
-
     # available configuration parameters
     cache_timeout = 30
     color_bad = None
@@ -47,13 +47,13 @@ class Py3status:
 
         #  Example acpi raw output:  "Battery 0: Discharging, 43%, 00:59:20 remaining"
         acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
-        acpi_clean = acpi_raw.translate(None, ',')
+        acpi_unicode = acpi_raw.decode("UTF-8")
 
         #  Example list: ['Battery', '0:', 'Discharging', '43%', '00:59:20', 'remaining']
-        acpi_list = acpi_clean.split(' ')
+        acpi_list = acpi_unicode.split(' ')
 
-        charging = True if acpi_list[2] == "Charging" else False
-        percent_charged = int(acpi_list[3].translate(None, '%'))
+        charging = True if acpi_list[2][:8] == "Charging" else False
+        percent_charged = int(acpi_list[3][:-2])
 
         self.time_remaining = ' '.join(acpi_list[4:])
         battery_full = False
@@ -112,3 +112,14 @@ class Py3status:
                 stdout=open('/dev/null', 'w'),
                 stderr=open('/dev/null', 'w')
             )
+
+if __name__ == "__main__":
+    from time import sleep
+    x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
+    while True:
+        print(x.battery_level([], config))
+        sleep(1)

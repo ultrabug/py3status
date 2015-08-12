@@ -3,7 +3,7 @@ py3status
 *********
 |version|
 
-.. |version| image:: https://pypip.in/version/py3status/badge.png
+.. |version| image:: https://img.shields.io/pypi/v/py3status.svg
 
 **py3status** is an extensible i3status wrapper written in python.
 
@@ -14,7 +14,7 @@ Using py3status, you can take control of your i3bar easily by:
 - handling click events on your i3bar and play with them in no time
 - seeing your clock tick every second whatever your i3status interval
 
-No extra configuration file needed, just install & enjoy !
+**No extra configuration file needed**, just install & enjoy !
 
 Documentation
 =============
@@ -40,16 +40,29 @@ Get help or share your ideas on IRC:
 
 Usage
 =====
-In your i3 config file, simply switch from `i3status` to `py3status` in your `status_command`:
+In your i3 config file, simply switch from *i3status* to *py3status* in your *status_command*:
 ::
+
     status_command py3status
 
 Usually you have your own i3status configuration, just point to it:
 ::
+
     status_command py3status -c ~/.i3/i3status.conf
 
 Available modules
 =================
+You can get a list and short description of all the available modules by using the CLI:
+::
+
+    $ py3status modules list
+
+
+To get more details about all the available modules and their configuration, use:
+::
+
+    $ py3status modules details
+
 All the modules shipped with py3status are present in the sources in the `py3status/modules <https://github.com/ultrabug/py3status/tree/master/py3status/modules>`_ folder.
 
 Most of them are **configurable directly from your current i3status.conf**, check them out to see all the configurable variables.
@@ -60,30 +73,37 @@ Pypi
 ----
 Using pip:
 ::
+
     $ pip install py3status
+
+NB: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
 
 Gentoo Linux
 ------------
 Using emerge:
 ::
+
     $ sudo emerge -a py3status
 
 Arch Linux
 ----------
 Thanks to @waaaaargh, py3status is present in the Arch User Repository using this URL:
 ::
+
     https://aur.archlinux.org/packages/py3status-git/
 
 Fedora
 ------
 Using yum:
 ::
+
     $ yum install py3status
 
 Options
 =======
 You can see the help of py3status by issuing `py3status -h`:
 ::
+
     -h, --help            show this help message and exit
     -c I3STATUS_CONF, --config I3STATUS_CONF
                           path to i3status config file
@@ -104,4 +124,5 @@ Control
 Just like i3status, you can force an update of your i3bar by sending a SIGUSR1 signal to py3status.
 Note that this will also send a SIGUSR1 signal to i3status.
 ::
+
     killall -USR1 py3status

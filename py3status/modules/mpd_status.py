@@ -1,79 +1,168 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# coding: utf-8
+
 """
-Mpd - module to show information from mpd in your i3bar.
-Reequires
+Display information from mpd.
+
+Configuration parameters:
+               format: template string (see below)
+           state_play: label to display for "playing" state
+          state_pause: label to display for "paused" state
+           state_stop: label to display for "stopped" state
+     hide_when_paused: hide the status if state is paused
+    hide_when_stopped: hide the status if state is stopped
+            max_width: maximum status length
+                 host: mpd host
+                 port: mpd port
+             password: mpd password
+
+Refer to the mpc(1) manual page for the list of available placeholders to be
+used in `format`.
+You can also use the %state% placeholder, that will be replaced with the state
+label (play, pause or stop).
+Every placeholder can also be prefixed with `next_` to retrieve the data for
+the song following the one currently playing.
+
+Examples of `format`:
+    Show state and (artist -) title, if no title fallback to file:
+    %state% [[[%artist% - ]%title%]|[%file%]]
+
+    Show state, [duration], title (or file) and next song title (or file):
+    %state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
+
+
+Requires:
     - python-mpd2 (NOT python2-mpd2)
     # pip install python-mpd2
 
 @author shadowprince
+@author zopieux
 @license Eclipse Public License
 """
 
-import string
-from mpd import (MPDClient, CommandError)
-from socket import error as SocketError
-from time import time
+import ast
+import datetime
+import itertools
+import socket
+import time
+from mpd import MPDClient, CommandError
 
 
-class _DefaultFormatter(string.Formatter):
+def parse_template(instr, value_getter, found=True):
     """
-    Custom implementation of string Formatter that returns
-    a default string of raising KeyError on missing
-    fields.
+    MPC-like parsing of `instr` using `value_getter` callable to retrieve the
+    text representation of placeholders.
     """
-    def __init__(self, default_value=""):
-        self._default_value = default_value
 
-    def get_value(self, *args, **kwargs):
+    instr = iter(instr)
+    ret = []
+    for char in instr:
+        if char == '%':
+            key = ''.join(itertools.takewhile(lambda e: e != '%', instr))
+            value = value_getter(key)
+            if value:
+                found = True
+                ret.append(value)
+            else:
+                found = False
+        elif char == '#':
+            ret.append(next(instr, '#'))
+        elif char == '\\':
+            ln = next(instr, '\\')
+            if ln in 'abtnvfr':
+                ret.append(ast.literal_eval('"\\{}"'.format(ln)))
+            else:
+                ret.append(ln)
+        elif char == '[':
+            subret, found = parse_template(instr, value_getter, found)
+            subret = ''.join(subret)
+            ret.append(subret)
+        elif char == ']':
+            if found:
+                ret = ''.join(ret)
+                return ret, True
+            else:
+                return '', False
+        elif char == '|':
+            subret, subfound = parse_template(instr, value_getter, found)
+            if found:
+                pass
+            elif subfound:
+                ret.append(''.join(subret))
+                found = True
+            else:
+                return '', False
+        elif char == '&':
+            subret, subfound = parse_template(instr, value_getter, found)
+            if found and subfound:
+                subret = ''.join(subret)
+                ret.append(subret)
+            else:
+                return '', False
+        else:
+            ret.append(char)
+
+    ret = ''.join(ret)
+    return ret, found
+
+
+def song_attr(song, attr):
+    def parse_mtime(date_str):
+        return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ')
+
+    if attr == 'time':
         try:
-            return super().get_value(*args, **kwargs)
-        except KeyError:
-            return self._default_value
+            duration = int(song['time'])
+            if duration > 0:
+                return '{:d}:{:02d}'.format(duration // 60, duration % 60)
+            return ''
+        except (IndexError, ValueError):
+            return ''
+    elif attr == 'position':
+        try:
+            return '{}'.format(int(song['pos']) + 1)
+        except (KeyError, ValueError):
+            return ''
+    elif attr == 'mtime':
+        return parse_mtime(song['last-modified']).strftime('%c')
+    elif attr == 'mdate':
+        return parse_mtime(song['last-modified']).strftime('%x')
+
+    return song.get(attr, '')
 
 
 class Py3status:
     """
     Configuration parameters:
-        - format : indicator text format
-        - format_fallback : fallback indicator text format (see below)
-        - state_play : label to display for "playing" state
-        - state_pause : label to display for "paused" state
-        - state_stop : label to display for "stopped" state
-        - fallback_if_empty : comma-separated list of metadata (see below)
-        - hide_when_paused / hide_when_stopped : hide any indicator, if
-        - host : mpd host
-        - max_width : if text length will be greater - it'll shrink it
-        - password : mpd password
-        - port : mpd port
+                   format: template string (see below)
+               state_play: label to display for "playing" state
+              state_pause: label to display for "paused" state
+               state_stop: label to display for "stopped" state
+         hide_when_paused: hide the status if state is paused
+        hide_when_stopped: hide the status if state is stopped
+                max_width: maximum status length
+                     host: mpd host
+                     port: mpd port
+                 password: mpd password
 
-    `format` parameter can contain:
-        {state} - current state (see state_{play,pause,stop} parameters)
-        Track information:
-        {track}, {artist}, {title}, {time}, {album}, {pos}, {file}
-        In addition, information about the next track are also available,
-        similar to the above but prefixed with next_ as in: {next_title}
-    
-    `fallback_if_empty` contains a comma-separated list of the above blocks.
-        Example: 'artist,title'
-        If all these metadata are empty, `format_fallback` is used instead
-        of the usual `format`. This is useful if your songs are missing
-        metadata so you can display something else than an empty string.
-        Set this parameter to an empty string to disable the feature.
+    Refer to the mpc(1) manual page for the list of available placeholders to be
+    used in `format`.
+    You can also use the %state% placeholder, that will be replaced with the
+    state label (play, pause or stop).
+    Every placeholder can also be prefixed with `next_` to retrieve the data for
+    the song following the one currently playing.
     """
-
     # available configuration parameters
-    cache_timeout = 2
-    color = None
-    format = '{state} №{pos}. {artist} - {title} [{time}] | {next_title}'
-    format_fallback = '{state} №{pos}. {file} [{time}] | {next_title}'
-    fallback_if_empty = 'artist,title'
+    format = '%state% [[[%artist%] - %title%]|[%file%]]'
     state_play = "[play]"
     state_pause = "[pause]"
     state_stop = "[stop]"
     hide_when_paused = False
     hide_when_stopped = True
-    host = 'localhost'
     max_width = 120
+    cache_timeout = 2
+    color = None
+    host = 'localhost'
     password = None
     port = '6600'
 
@@ -88,7 +177,7 @@ class Py3status:
         elif state == 'stop':
             return self.state_stop
         return '?'
-        
+
     def current_track(self, i3s_output_list, i3s_config):
         try:
             c = MPDClient()
@@ -97,48 +186,43 @@ class Py3status:
                 c.password(self.password)
 
             status = c.status()
-            song = int(status.get("song", 0))
-            next_song = int(status.get("nextsong", 0))
+            song = int(status.get('song', 0))
+            next_song = int(status.get('nextsong', 0))
 
             state = status.get('state')
-            if (state == "pause" and self.hide_when_paused) or (state == "stop" and self.hide_when_stopped):
+
+            if ((state == 'pause' and self.hide_when_paused)
+                    or (state == 'stop' and self.hide_when_stopped)):
                 text = ""
+
             else:
+                playlist_info = c.playlistinfo()
                 try:
-                    song = c.playlistinfo()[song]
-                    song["time"] = "{0:.2f}".format(int(song.get("time", 1)) / 60)
+                    song = playlist_info[song]
                 except IndexError:
                     song = {}
-
                 try:
-                    next_song = c.playlistinfo()[next_song]
+                    next_song = playlist_info[next_song]
                 except IndexError:
                     next_song = {}
 
-                format_args = song
-                format_args["state"] = self.state_character(state)
-                for k, v in next_song.items():
-                    format_args["next_{}".format(k)] = v
+                song['state'] = next_song['state'] = self.state_character(state)
 
-                def_formatter = _DefaultFormatter()
+                def attr_getter(attr):
+                    if attr.startswith('next_'):
+                        return song_attr(next_song, attr[5:])
+                    return song_attr(song, attr)
 
-                needed_md = (md.strip() for md in self.fallback_if_empty.split(','))
-                needed_md = [md for md in needed_md if md]
-                if not needed_md or any(format_args.get(md, '').strip() for md in needed_md):
-                    # we have enough metadata, we can use normal format
-                    text = def_formatter.format(self.format, **format_args)
-                else:
-                    # there is not the needed metadata, we use fallback format
-                    text = def_formatter.format(self.format_fallback, **format_args)
+                text, _ = parse_template(self.format, attr_getter)
 
-        except SocketError:
+        except socket.error:
             text = "Failed to connect to mpd!"
         except CommandError:
             text = "Failed to authenticate to mpd!"
             c.disconnect()
 
         if len(text) > self.max_width:
-            text = text[-self.max_width-3:] + "..."
+            text = text[:-self.max_width - 3] + "..."
 
         if self.text != text:
             transformed = True
@@ -147,7 +231,7 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': int(time.time() + self.cache_timeout),
             'full_text': self.text,
             'transformed': transformed
         }
@@ -164,6 +248,11 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.current_track([], {}))
+        print(x.current_track([], config))
         sleep(1)

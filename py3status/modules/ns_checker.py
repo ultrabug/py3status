@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 """
+Display DNS resolution success on a configured domain.
+
 This module launch a simple query on each nameservers for the specified domain.
 Nameservers are dynamically retrieved. The FQDN is the only one mandatory parameter.
 It's also possible to add additional nameservers by appending them in nameservers list.
 
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 
-Written and contributed by @nawadanp
+Configuration parameters:
+    - domain : domain name to check
+    - lifetime : resolver lifetime
+    - nameservers : comma separated list of reference DNS nameservers
+    - resolvers : comma separated list of DNS resolvers to use
+
+@author nawadanp
 """
 
 import dns.resolver
@@ -15,11 +23,6 @@ import socket
 
 class Py3status:
     """
-    Configuration parameters:
-        - domain : domain name to check
-        - lifetime : resolver lifetime
-        - nameservers : comma separated list of reference DNS nameservers
-        - resolvers : comma separated list of DNS resolvers to use
     """
     # available configuration parameters
     domain = ''
@@ -76,6 +79,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.ns_checker([], {}))
+        print(x.ns_checker([], config))
         sleep(1)

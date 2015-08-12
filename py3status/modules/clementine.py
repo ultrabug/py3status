@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This module displays the current "artist - title" playing in Clementine.
+Display the current "artist - title" playing in Clementine.
 
-Last modified: 2014-03-23
-Author: Francois LASSERRE <choiz@me.com>
-License: GNU GPL http://www.gnu.org/licenses/gpl.html
+@author Francois LASSERRE <choiz@me.com>
+@license GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
 from time import time
@@ -12,9 +11,10 @@ from subprocess import check_output
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
-    cache_timeout = 0
+    cache_timeout = 5
 
     def _getMetadatas(self):
         """
@@ -72,6 +72,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.clementine([], {}))
+        print(x.clementine([], config))
         sleep(1)

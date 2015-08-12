@@ -1,21 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Dynamically display the latest response time of the configured checks using
-the Pingdom API.
+Display the latest response time of the configured Pingdom checks.
+
 We also verify the status of the checks and colorize if needed.
-Pingdom API doc : https://www.pingdom.com/services/api-documentation-rest/
+Pingdom API doc : https://www.pingdom.com/features/api/documentation/
 
-#NOTE: This module needs the 'requests' python module from pypi
-    https://pypi.python.org/pypi/requests
-"""
-
-import requests
-from time import time
-
-
-class Py3status:
-    """
-    Configuration parameters:
+Configuration parameters:
         - app_key : create an APP KEY on pingdom first
         - cache_timeout : how often to refresh the check from pingdom
         - checks : comma separated pindgom check names to display
@@ -24,6 +14,17 @@ class Py3status:
         - password : pingdom password
         - request_timeout : pindgom API request timeout
 
+Requires:
+    - requests python module from pypi
+      https://pypi.python.org/pypi/requests
+"""
+
+import requests
+from time import time
+
+
+class Py3status:
+    """
     """
     # available configuration parameters
     app_key = ''
@@ -78,6 +79,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.pingdom_checks([], {}))
+        print(x.pingdom_checks([], config))
         sleep(1)

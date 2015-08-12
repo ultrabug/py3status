@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Module for showing current keyboard layout.
+Display the current keyboard layout.
+
+Configuration parameters:
+    - cache_timeout: check for keyboard layout change every seconds
 
 Requires:
     - xkblayout-state
@@ -13,6 +16,8 @@ Requires:
 
 from subprocess import check_output
 from time import time
+import shlex
+import re
 
 # colors of layouts, check your command's output to match keys
 LANG_COLORS = {
@@ -22,8 +27,10 @@ LANG_COLORS = {
     'us': '#729FCF',  # light blue
 }
 
+LAYOUT_RE = re.compile(r".*layout:\s*(\w+).*", flags=re.DOTALL)
 
-def xbklayout():
+
+def xkblayout():
     """
     check using xkblayout-state (preferred method)
     """
@@ -39,12 +46,14 @@ def setxkbmap():
     Please read issue 33 for more information :
         https://github.com/ultrabug/py3status/pull/33
     """
-    q = check_output(['setxkbmap', '-query']).decode('utf-8')
-    return q.replace(' ', '').split(':')[-1]
+    out = check_output(shlex.split("setxkbmap -query")).decode("utf-8")
+
+    return re.match(LAYOUT_RE, out).group(1)
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 10
     color = ''
@@ -54,11 +63,11 @@ class Py3status:
         find the best implementation to get the keyboard's layout
         """
         try:
-            xbklayout()
+            xkblayout()
         except:
             self.command = setxkbmap
         else:
-            self.command = xbklayout
+            self.command = xkblayout
 
     def keyboard_layout(self, i3s_output_list, i3s_config):
         response = {
@@ -81,6 +90,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.keyboard_layout([], {}))
+        print(x.keyboard_layout([], config))
         sleep(1)

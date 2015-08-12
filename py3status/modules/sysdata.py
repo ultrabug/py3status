@@ -1,45 +1,60 @@
 # -*- coding: utf-8 -*-
 """
-Sysdata is a module used to display system information (RAM usage)
-in i3bar (Linux systems).
+Display system RAM and CPU utilization.
 
-NOTE: If you want py3status to show you your CPU temperature,
-change value of CPUTEMP into True in Py3status class - CPUInfo function
-and REMEMBER that you must install lm_sensors if you want CPU temp!
+Configuration parameters:
+    - format: output format string
+    - high_threshold: percent to consider CPU or RAM usage as 'high load'
+    - med_threshold: percent to consider CPU or RAM usage as 'medium load'
 
-Copyright (C) <2013> <Shahin Azad [ishahinism at Gmail]>
+Format of status string placeholders:
+    {cpu_temp}         - cpu temperature
+    {cpu_usage}        - cpu usage percentage
+    {mem_total}        - total memory
+    {mem_used}         - used memory
+    {mem_used_percent} - used memory percentage
+
+NOTE: If using the {cpu_temp} option, the 'sensors' command should 
+be available, provided by the 'lm-sensors' or 'lm_sensors' package.
+
+@author Shahin Azad <ishahinism at Gmail>, shrimpza
 """
 
+import re
 import subprocess
 from time import time
 
-
 class GetData:
-    """Get system status
     """
+    Get system status
+    """
+
     def execCMD(self, cmd, arg):
-        """Take a system command and its argument, then return the result.
+        """
+        Take a system command and its argument, then return the result.
 
         Arguments:
         - `cmd`: system command.
         - `arg`: argument.
         """
         result = subprocess.check_output([cmd, arg])
+        result = result.decode('utf-8')
         return result
 
     def cpu(self):
-        """Get the cpu usage data from /proc/stat :
-        cpu  2255 34 2290 22625563 6290 127 456 0 0
-        - user: normal processes executing in user mode
-        - nice: niced processes executing in user mode
-        - system: processes executing in kernel mode
-        - idle: twiddling thumbs
-        - iowait: waiting for I/O to complete
-        - irq: servicing interrupts
-        - softirq: servicing softirqs
-        - steal: involuntary wait
-        - guest: running a normal guest
-        - guest_nice: running a niced guest
+        """
+        Get the cpu usage data from /proc/stat :
+          cpu  2255 34 2290 22625563 6290 127 456 0 0
+          - user: normal processes executing in user mode
+          - nice: niced processes executing in user mode
+          - system: processes executing in kernel mode
+          - idle: twiddling thumbs
+          - iowait: waiting for I/O to complete
+          - irq: servicing interrupts
+          - softirq: servicing softirqs
+          - steal: involuntary wait
+          - guest: running a normal guest
+          - guest_nice: running a niced guest
         These numbers identify the amount of time the CPU has spent performing
         different kinds of work.  Time units are in USER_HZ
         (typically hundredths of a second)
@@ -54,88 +69,89 @@ class GetData:
         return total_cpu_time, cpu_idle_time
 
     def memory(self):
-        """Execute 'free -m' command, grab the memory capacity and used size
+        """
+        Execute 'free -m' command, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, and percentage
         of used memory.
-
         """
         # Run 'free -m' command and make a list from output.
         mem_data = self.execCMD('free', '-m').split()
-        total_mem = int(mem_data[7]) / 1024.
-        used_mem = int(mem_data[15]) / 1024.
+        mem_index = mem_data.index('Mem:')
+        total_mem = int(mem_data[mem_index + 1]) / 1024.
+        used_mem = int(mem_data[mem_index + 2]) / 1024.
+
         # Caculate percentage
         used_mem_percent = int(used_mem / (total_mem / 100))
 
         # Results are in kilobyte.
         return total_mem, used_mem, used_mem_percent
 
+    def cpuTemp(self):
+        """
+        Tries to determine CPU temperature using the 'sensors' command.
+        Searches for the CPU temperature by looking for a value prefixed
+        by either "CPU Temp" or "Core 0" - does not look for or average
+        out temperatures of all codes if more than one.
+        """
+
+        sensors = subprocess.check_output('sensors', shell=True);
+        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        if m:
+            cpu_temp = m.groups()[1]
+        else:
+            cpu_temp = 'Unknown'
+
+        return cpu_temp
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 10
-    med_threshold = 40
+    format = "CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
     high_threshold = 75
+    med_threshold = 40
 
     def __init__(self):
         self.data = GetData()
         self.cpu_total = 0
         self.cpu_idle = 0
 
-    def cpuInfo(self, i3s_output_list, i3s_config):
-        """Calculate the CPU status and return it.
-        """
-        response = {'full_text': ''}
+    def sysData(self, i3s_output_list, i3s_config):
+        # get CPU usage info
         cpu_total, cpu_idle = self.data.cpu()
-        used_cpu_percent = 1 - (
-            float(cpu_idle-self.cpu_idle)/float(cpu_total-self.cpu_total)
+        cpu_usage = 1 - (
+            float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
             )
         self.cpu_total = cpu_total
         self.cpu_idle = cpu_idle
 
-        if used_cpu_percent <= self.med_threshold/100.0:
+        # if specified as a formatting option, also get the CPU temperature
+        if '{cpu_temp}' in self.format:
+            cpu_temp = self.data.cpuTemp()
+        else:
+            cpu_temp = ''
+
+        # get RAM usage info
+        mem_total, mem_used, mem_used_percent = self.data.memory()
+
+        response = {
+            'cached_until': time() + self.cache_timeout,
+            'full_text': self.format.format(
+                cpu_usage = '%.2f' % (cpu_usage * 100),
+                cpu_temp = cpu_temp,
+                mem_used = '%.2f' % mem_used,
+                mem_total = '%.2f' % mem_total,
+                mem_used_percent = '%.2f' % mem_used_percent,
+            )
+        }
+
+        if max(cpu_usage, mem_used_percent/100) <= self.med_threshold / 100.0:
             response['color'] = i3s_config['color_good']
-        elif used_cpu_percent <= self.high_threshold/100.0:
+        elif max(cpu_usage, mem_used_percent/100) <= self.high_threshold / 100.0:
             response['color'] = i3s_config['color_degraded']
         else:
             response['color'] = i3s_config['color_bad']
-        #cpu temp
-        CPUTEMP = False
-        if CPUTEMP:
-            cputemp = subprocess.check_output(
-                'sensors | grep "CPU Temp" | cut -f2 -d"+" | cut -f1 -d" "',
-                shell=True
-            )
-            cputemp = cputemp[:-1].decode('utf-8')
-            response['full_text'] = "CPU: %.2f%% %s" % (
-                used_cpu_percent*100,
-                cputemp
-            )
-        else:
-            response['full_text'] = "CPU: %.2f%%" % (used_cpu_percent*100)
-        response['cached_until'] = time() + self.cache_timeout
-
-        return response
-
-    def ramInfo(self, i3s_output_list, i3s_config):
-        """Calculate the memory (RAM) status and return it.
-        """
-        response = {'full_text': ''}
-        total_mem, used_mem, used_mem_percent = self.data.memory()
-
-        if used_mem_percent <= self.med_threshold:
-            response['color'] = i3s_config['color_good']
-        elif used_mem_percent <= self.high_threshold:
-            response['color'] = i3s_config['color_degraded']
-        else:
-            response['color'] = i3s_config['color_bad']
-
-        response['full_text'] = "RAM: %.2f/%.2f GB (%d%%)" % (
-            used_mem,
-            total_mem,
-            used_mem_percent
-        )
-        response['cached_until'] = time() + self.cache_timeout
 
         return response
 
@@ -145,7 +161,12 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00',
+    }
+
     while True:
-        print(x.cpuInfo([], {}))
-        print(x.ramInfo([], {}))
+        print(x.sysData([], config))
         sleep(1)

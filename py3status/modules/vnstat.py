@@ -1,7 +1,24 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
-Module for displaying vnstat's statistics.
-REQUIRE external program called "vnstat" installed and configured to work.
+Display vnstat statistics.
+
+Coloring rules.
+
+If value is bigger that dict key, status string will turn to color, specified in the value.
+Example:
+coloring = {
+    800: "#dddd00",
+    900: "#dd0000",
+}
+(0 - 800: white, 800-900: yellow, >900 - red)
+
+Format of status string placeholders:
+    {down} - download
+    {total} - total
+    {up} - upload
+
+Requires:
+    - external program called "vnstat" installed and configured to work.
 
 @author shadowprince
 @license Eclipse Public License
@@ -41,24 +58,7 @@ def get_stat(statistics_type):
 
 class Py3status:
     """
-    Coloring rules.
-
-    If value is bigger that dict key, status string will turn to color, specified in the value.
-    Example:
-    coloring = {
-        800: "#dddd00",
-        900: "#dd0000",
-    }
-    (0 - 800: white, 800-900: yellow, >900 - red)
-
-    Format of status string.
-
-    Placeholders:
-        total - total
-        up - upload
-        down - download
     """
-
     # available configuration parameters
     cache_timeout = 180
     coloring = {}
@@ -130,6 +130,10 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
+    config = {
+        'color_good': '#00FF00',
+        'color_bad': '#FF0000',
+    }
     while True:
-        print(x.currentSpeed([], {}))
+        print(x.currentSpeed([], config))
         sleep(1)
