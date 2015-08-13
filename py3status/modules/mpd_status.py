@@ -23,9 +23,14 @@ label (play, pause or stop).
 Every placeholder can also be prefixed with `next_` to retrieve the data for
 the song following the one currently playing.
 
+You can also use {} instead of %% for placeholders (backward compatibility).
+
 Examples of `format`:
     Show state and (artist -) title, if no title fallback to file:
     %state% [[[%artist% - ]%title%]|[%file%]]
+
+    Alternative legacy syntax:
+    {state} [[[{artist} - ]{title}]|[{file}]]
 
     Show state, [duration], title (or file) and next song title (or file):
     %state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
@@ -57,8 +62,9 @@ def parse_template(instr, value_getter, found=True):
     instr = iter(instr)
     ret = []
     for char in instr:
-        if char == '%':
-            key = ''.join(itertools.takewhile(lambda e: e != '%', instr))
+        if char in '%{':
+            endchar = '%' if char == '%' else '}'
+            key = ''.join(itertools.takewhile(lambda e: e != endchar, instr))
             value = value_getter(key)
             if value:
                 found = True
