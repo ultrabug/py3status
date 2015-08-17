@@ -121,9 +121,10 @@ def song_attr(song, attr):
         try:
             duration = int(song['time'])
             if duration > 0:
-                return '{:d}:{:02d}'.format(duration // 60, duration % 60)
-            return ''
-        except (IndexError, ValueError):
+                minutes, seconds = divmod(duration, 60)
+                return '{:d}:{:02d}'.format(minutes, seconds)
+            raise ValueError
+        except (KeyError, ValueError):
             return ''
     elif attr == 'position':
         try:
@@ -198,8 +199,8 @@ class Py3status:
                 except IndexError:
                     next_song = {}
 
-                song['state'] = next_song['state'
-                                          ] = self._state_character(state)
+                song['state'] = next_song['state'] \
+                              = self._state_character(state)
 
                 def attr_getter(attr):
                     if attr.startswith('next_'):
@@ -233,7 +234,8 @@ class Py3status:
             if state == 'play':
                 response['color'] = self.color_play or i3s_config['color_good']
             elif state == 'pause':
-                response['color'] = self.color_pause or i3s_config['color_degraded']
+                response['color'] = (self.color_pause
+                                     or i3s_config['color_degraded'])
             elif state == 'stop':
                 response['color'] = self.color_stop or i3s_config['color_bad']
 
