@@ -153,7 +153,7 @@ class Py3status:
     def __init__(self):
         self.text = ''
 
-    def state_character(self, state):
+    def _state_character(self, state):
         if state == 'play':
             return self.state_play
         elif state == 'pause':
@@ -191,7 +191,7 @@ class Py3status:
                     next_song = {}
 
                 song['state'] = next_song['state'
-                                          ] = self.state_character(state)
+                                          ] = self._state_character(state)
 
                 def attr_getter(attr):
                     if attr.startswith('next_'):
