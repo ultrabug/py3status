@@ -1,20 +1,22 @@
-#!/usr/bin/env python
 # coding: utf-8
-
 """
 Display information from mpd.
 
 Configuration parameters:
-               format: template string (see below)
-           state_play: label to display for "playing" state
-          state_pause: label to display for "paused" state
-           state_stop: label to display for "stopped" state
-     hide_when_paused: hide the status if state is paused
+    format: template string (see below)
+    hide_when_paused: hide the status if state is paused
     hide_when_stopped: hide the status if state is stopped
-            max_width: maximum status length
-                 host: mpd host
-                 port: mpd port
-             password: mpd password
+    host: mpd host
+    max_width: maximum status length
+    password: mpd password
+    port: mpd port
+    state_pause: label to display for "paused" state
+    state_play: label to display for "playing" state
+    state_stop: label to display for "stopped" state
+
+Requires:
+    - python-mpd2 (NOT python2-mpd2)
+    # pip install python-mpd2
 
 Refer to the mpc(1) manual page for the list of available placeholders to be
 used in `format`.
@@ -35,11 +37,6 @@ Examples of `format`:
     Show state, [duration], title (or file) and next song title (or file):
     %state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
 
-
-Requires:
-    - python-mpd2 (NOT python2-mpd2)
-    # pip install python-mpd2
-
 @author shadowprince
 @author zopieux
 @license Eclipse Public License
@@ -58,7 +55,6 @@ def parse_template(instr, value_getter, found=True):
     MPC-like parsing of `instr` using `value_getter` callable to retrieve the
     text representation of placeholders.
     """
-
     instr = iter(instr)
     ret = []
     for char in instr:
@@ -139,30 +135,12 @@ def song_attr(song, attr):
 
 class Py3status:
     """
-    Configuration parameters:
-                   format: template string (see below)
-               state_play: label to display for "playing" state
-              state_pause: label to display for "paused" state
-               state_stop: label to display for "stopped" state
-         hide_when_paused: hide the status if state is paused
-        hide_when_stopped: hide the status if state is stopped
-                max_width: maximum status length
-                     host: mpd host
-                     port: mpd port
-                 password: mpd password
-
-    Refer to the mpc(1) manual page for the list of available placeholders to be
-    used in `format`.
-    You can also use the %state% placeholder, that will be replaced with the
-    state label (play, pause or stop).
-    Every placeholder can also be prefixed with `next_` to retrieve the data for
-    the song following the one currently playing.
     """
     # available configuration parameters
     format = '%state% [[[%artist%] - %title%]|[%file%]]'
-    state_play = "[play]"
-    state_pause = "[pause]"
-    state_stop = "[stop]"
+    state_play = '[play]'
+    state_pause = '[pause]'
+    state_stop = '[stop]'
     hide_when_paused = False
     hide_when_stopped = True
     max_width = 120
@@ -197,8 +175,8 @@ class Py3status:
 
             state = status.get('state')
 
-            if ((state == 'pause' and self.hide_when_paused)
-                    or (state == 'stop' and self.hide_when_stopped)):
+            if ((state == 'pause' and self.hide_when_paused) or
+                (state == 'stop' and self.hide_when_stopped)):
                 text = ""
 
             else:
@@ -212,7 +190,8 @@ class Py3status:
                 except IndexError:
                     next_song = {}
 
-                song['state'] = next_song['state'] = self.state_character(state)
+                song['state'] = next_song['state'
+                                          ] = self.state_character(state)
 
                 def attr_getter(attr):
                     if attr.startswith('next_'):
@@ -228,7 +207,7 @@ class Py3status:
             c.disconnect()
 
         if len(text) > self.max_width:
-            text = text[:-self.max_width - 3] + "..."
+            text = text[:-self.max_width - 3] + '...'
 
         if self.text != text:
             transformed = True
@@ -237,7 +216,7 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': int(time.time() + self.cache_timeout),
+            'cached_until': time.time() + self.cache_timeout,
             'full_text': self.text,
             'transformed': transformed
         }
@@ -256,8 +235,9 @@ if __name__ == "__main__":
     x = Py3status()
 
     config = {
-        'color_good': '#00FF00',
         'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00'
     }
     while True:
         print(x.current_track([], config))
