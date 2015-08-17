@@ -1,3 +1,36 @@
+version 2.5 (2015-08-17)
+* IMPORTANT NOTE: the legacy modules loading and ordering has been deprecated
+* drop old modules loading mechanism for version 2.5
+* new aws_bill module, by Anthony Brodard
+* new dropboxd_status module, by Tjaart van der Walt
+* new external_script module, by Dominik
+* new nvidia_temp module for displaying NVIDIA GPUs' temperature, by J.M. Dana
+* new rate_counter module, by Amaury Brisou
+* new screenshot module, by Amaury Brisou
+* new static_string module, by Dominik
+* new taskwarrior module, by James Smith
+* new volume_status module, by Jan T.
+* new whatismyip module displaying your public/external IP as well as your online status
+* dpms module: add format string support and add some options, by Kenneth Watson
+* dpms module: external processes might change DPMS so the module should check in the main loop, by J.M. Dana
+* example_module: fix standalone testing thanks to @frimdo issue #103
+* imap module: fix empty color that made text invisible on i3bar when no unread email, by Alexis 'Horgix' Chotard
+* imap module: switch to support format option
+* keyboard_layout module: add missing cache_timeout parameter in the docstring
+* mpd_status module: add coloring output based on state
+* mpd_status: mpc-like templating to remove format_fallback, by Alexandre `Zopieux` Macabies
+* netdata module: fix wrong nic default thx to @h8h on issue #111
+* pingdom module: update by Eric Masser
+* pomodoro: fix display_bar in python3, by Manuel Mendez
+* sysdata module: add format string support, refactor and cleanup, by shrimpza
+* whatismyip module: add a negative cache timeout for quicker check when offline
+* add optional setproctitle, by Federico Ceratto
+* fix i3status config file generation thx to @hlmtre some i3status modules have no default configuration
+* fix sysdata used RAM detection wrt issue #94 reported by @habash1986
+* fix typos in keyboard_layout module, by Jan T
+* implement thread profiling, by Federico Ceratto
+* update README with dropboxd_status docstring
+
 version 2.4 (2015-03-31)
 * IMPORTANT NOTE: this is the last version of py3status supporting the legacy modules loading and ordering, this behavior will be dropped on the next 2.5 version !
 * add CLI support for module listing, by Federico Ceratto
