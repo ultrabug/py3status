@@ -3,7 +3,12 @@
 Display information from mpd.
 
 Configuration parameters:
-    format: template string (see below)
+    cache_timeout = how often we refresh this module in seconds (2s default)
+    color = enable coloring output (default False)
+    color_pause = custom pause color (default i3status color degraded)
+    color_play = custom play color (default i3status color good)
+    color_stop = custom stop color (default i3status color bad)
+    format = template string (see below)
     hide_when_paused: hide the status if state is paused
     hide_when_stopped: hide the status if state is stopped
     host: mpd host

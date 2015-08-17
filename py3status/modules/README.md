@@ -185,25 +185,47 @@ Available modules:
   mpd_status             Display information from mpd.
                          
                          Configuration parameters:
-                             - format : indicator text format
-                             - hide_when_paused / hide_when_stopped : hide any indicator, if
-                             - host : mpd host
-                             - max_width : if text length will be greater - it'll shrink it
-                             - password : mpd password
-                             - port : mpd port
-                         
-                         Format of result string can contain:
-                             {state} - current state from STATE_CHARACTERS
-                             Track information:
-                             {track}, {artist}, {title}, {time}, {album}, {pos}
-                             In additional, information about next track also comes in,
-                             in analogue with current, but with next_ prefix, like {next_title}
+                             cache_timeout = how often we refresh this module in seconds (2s default)
+                             color = enable coloring output (default False)
+                             color_pause = custom pause color (default i3status color degraded)
+                             color_play = custom play color (default i3status color good)
+                             color_stop = custom stop color (default i3status color bad)
+                             format = template string (see below)
+                             hide_when_paused: hide the status if state is paused
+                             hide_when_stopped: hide the status if state is stopped
+                             host: mpd host
+                             max_width: maximum status length
+                             password: mpd password
+                             port: mpd port
+                             state_pause: label to display for "paused" state
+                             state_play: label to display for "playing" state
+                             state_stop: label to display for "stopped" state
                          
                          Requires:
                              - python-mpd2 (NOT python2-mpd2)
                              # pip install python-mpd2
                          
+                         Refer to the mpc(1) manual page for the list of available placeholders to be
+                         used in `format`.
+                         You can also use the %state% placeholder, that will be replaced with the state
+                         label (play, pause or stop).
+                         Every placeholder can also be prefixed with `next_` to retrieve the data for
+                         the song following the one currently playing.
+                         
+                         You can also use {} instead of %% for placeholders (backward compatibility).
+                         
+                         Examples of `format`:
+                             Show state and (artist -) title, if no title fallback to file:
+                             %state% [[[%artist% - ]%title%]|[%file%]]
+                         
+                             Alternative legacy syntax:
+                             {state} [[[{artist} - ]{title}]|[{file}]]
+                         
+                             Show state, [duration], title (or file) and next song title (or file):
+                             %state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
+                         
                          @author shadowprince
+                         @author zopieux
                          @license Eclipse Public License
                          ---
   net_rate               Display the current network transfer rate.
