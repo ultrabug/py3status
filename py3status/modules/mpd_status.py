@@ -137,18 +137,21 @@ class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 2
+    color = False
+    color_pause = None
+    color_play = None
+    color_stop = None
     format = '%state% [[[%artist%] - %title%]|[%file%]]'
-    state_play = '[play]'
-    state_pause = '[pause]'
-    state_stop = '[stop]'
     hide_when_paused = False
     hide_when_stopped = True
-    max_width = 120
-    cache_timeout = 2
-    color = None
     host = 'localhost'
+    max_width = 120
     password = None
     port = '6600'
+    state_pause = '[pause]'
+    state_play = '[play]'
+    state_stop = '[stop]'
 
     def __init__(self):
         self.text = ''
@@ -177,7 +180,7 @@ class Py3status:
 
             if ((state == 'pause' and self.hide_when_paused) or
                 (state == 'stop' and self.hide_when_stopped)):
-                text = ""
+                text = ''
 
             else:
                 playlist_info = c.playlistinfo()
@@ -222,7 +225,12 @@ class Py3status:
         }
 
         if self.color:
-            response['color'] = self.color
+            if state == 'play':
+                response['color'] = self.color_play or i3s_config['color_good']
+            elif state == 'pause':
+                response['color'] = self.color_pause or i3s_config['color_degraded']
+            elif state == 'stop':
+                response['color'] = self.color_stop or i3s_config['color_bad']
 
         return response
 
