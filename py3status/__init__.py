@@ -1007,8 +1007,7 @@ class Module(Thread):
                                     'full_text': ''
                                 },
                                 'method': method,
-                                'name': None,
-                                'position': 0
+                                'name': None
                             }
                             self.methods[method] = method_obj
 
@@ -1071,12 +1070,10 @@ class Module(Thread):
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
-                        position, result = None, response
+                        result = response
                     elif isinstance(response, tuple):
                         # this is an old school module reporting its position
                         position, result = response
-                        if not isinstance(position, int):
-                            raise TypeError('position is not an int')
                         if not isinstance(result, dict):
                             raise TypeError('response should be a dict')
                     else:
@@ -1106,9 +1103,6 @@ class Module(Thread):
 
                     # update method object output
                     my_method['last_output'] = result
-
-                    # update method object position
-                    my_method['position'] = position
 
                     # debug info
                     if self.config['debug']:
