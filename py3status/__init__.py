@@ -1072,14 +1072,22 @@ class Module(Thread):
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
                         position, result = None, response
-                        result['name'] = self.module_name
-                        result['instance'] = self.module_inst
+                    elif isinstance(response, tuple):
+                        # this is an old school module reporting its position
+                        position, result = response
+                        if not isinstance(position, int):
+                            raise TypeError('position is not an int')
+                        if not isinstance(result, dict):
+                            raise TypeError('response should be a dict')
                     else:
                         raise TypeError('response should be a dict')
 
                     # validate the response
                     if 'full_text' not in result:
                         raise KeyError('missing "full_text" key in response')
+                    else:
+                        result['instance'] = self.module_inst
+                        result['name'] = self.module_name
 
                     # initialize method object
                     if my_method['name'] is None:
