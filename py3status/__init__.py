@@ -6,6 +6,7 @@ import cProfile
 import imp
 import locale
 import os
+import pkgutil
 import select
 import sys
 
@@ -14,6 +15,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 from json import dumps, loads
+from py3status import modules as sitepkg_modules
 from signal import signal
 from signal import SIGTERM, SIGUSR1
 from subprocess import Popen
@@ -1007,8 +1009,7 @@ class Module(Thread):
                                     'full_text': ''
                                 },
                                 'method': method,
-                                'name': None,
-                                'position': 0
+                                'name': None
                             }
                             self.methods[method] = method_obj
 
@@ -1071,15 +1072,21 @@ class Module(Thread):
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
-                        position, result = None, response
-                        result['name'] = self.module_name
-                        result['instance'] = self.module_inst
+                        result = response
+                    elif isinstance(response, tuple):
+                        # this is an old school module reporting its position
+                        position, result = response
+                        if not isinstance(result, dict):
+                            raise TypeError('response should be a dict')
                     else:
                         raise TypeError('response should be a dict')
 
                     # validate the response
                     if 'full_text' not in result:
                         raise KeyError('missing "full_text" key in response')
+                    else:
+                        result['instance'] = self.module_inst
+                        result['name'] = self.module_name
 
                     # initialize method object
                     if my_method['name'] is None:
@@ -1098,9 +1105,6 @@ class Module(Thread):
 
                     # update method object output
                     my_method['last_output'] = result
-
-                    # update method object position
-                    my_method['position'] = position
 
                     # debug info
                     if self.config['debug']:
@@ -1251,14 +1255,13 @@ class Py3statusWrapper():
 
     def get_user_modules(self):
         """
-        Search import directories and files through include paths with
-        respect to i3status.conf configured py3status modules.
+        Search configured include directories for user provided modules.
 
-        User provided modules take precedence over py3status generic modules.
+        user_modules: {
+            'weather_yahoo': ('~/i3/py3status/', 'weather_yahoo.py')
+        }
         """
-        user_modules = dict()
-        if not self.py3_modules:
-            return user_modules
+        user_modules = {}
         for include_path in sorted(self.config['include_paths']):
             include_path = os.path.abspath(include_path) + '/'
             if not os.path.isdir(include_path):
@@ -1267,10 +1270,41 @@ class Py3statusWrapper():
                 if not f_name.endswith('.py'):
                     continue
                 module_name = f_name[:-3]
-                # i3status.conf based behaviour (using order += 'xx')
-                for module in self.py3_modules:
-                    if module_name == module.split(' ')[0]:
-                        user_modules[module_name] = (include_path, f_name)
+                user_modules[module_name] = (include_path, f_name)
+        return user_modules
+
+    def get_all_modules(self):
+        """
+        Search and yield all available py3status modules:
+            - in the current python's implementation site-packages
+            - provided by the user using the inclusion directories
+
+        User provided modules take precedence over py3status generic modules.
+        """
+        all_modules = {}
+        for importer, module_name, ispkg in pkgutil.iter_modules(
+            sitepkg_modules.__path__):
+            if not ispkg:
+                mod = importer.find_module(module_name)
+                all_modules[module_name] = (mod, None)
+        user_modules = self.get_user_modules()
+        all_modules.update(user_modules)
+        for module_name, module_info in sorted(all_modules.items()):
+            yield (module_name, module_info)
+
+    def get_user_configured_modules(self):
+        """
+        Get a dict of all available and configured py3status modules
+        in the user's i3status.conf.
+        """
+        user_modules = {}
+        if not self.py3_modules:
+            return user_modules
+        for module_name, module_info in self.get_user_modules().items():
+            for module in self.py3_modules:
+                if module_name == module.split(' ')[0]:
+                    include_path, f_name = module_info
+                    user_modules[module_name] = (include_path, f_name)
         return user_modules
 
     def load_modules(self, modules_list, user_modules):
@@ -1375,7 +1409,7 @@ class Py3statusWrapper():
         self.py3_modules = self.i3status_thread.config['py3_modules']
 
         # get a dict of all user provided modules
-        user_modules = self.get_user_modules()
+        user_modules = self.get_user_configured_modules()
         if self.config['debug']:
             syslog(LOG_INFO, 'user_modules={}'.format(user_modules))
 
@@ -1543,17 +1577,21 @@ class Py3statusWrapper():
             sleep(0.1)
 
     @staticmethod
-    def print_module_description(details, mod_name, mod_path):
+    def print_module_description(details, mod_name, mod_info):
         """Print module description extracted from its docstring.
         """
         if mod_name == '__init__':
             return
 
-        path = os.path.join(*mod_path)
-        try:
+        mod, f_name = mod_info
+        if f_name:
+            path = os.path.join(*mod_info)
             with open(path) as f:
                 module = ast.parse(f.read())
-
+        else:
+            path = mod.get_filename(mod_name)
+            module = ast.parse(mod.get_source(mod_name))
+        try:
             docstring = ast.get_docstring(module, clean=True)
             if docstring:
                 short_description = docstring.split('\n')[0].rstrip('.')
@@ -1576,20 +1614,10 @@ class Py3statusWrapper():
 
         # allowed cli commands
         if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
-            try:
-                py3_modules_path = imp.find_module('py3status')[1]
-                py3_modules_path += '/modules/'
-                if os.path.isdir(py3_modules_path):
-                    self.config['include_paths'].append(py3_modules_path)
-            except:
-                print_stderr('Unable to locate py3status modules !')
-
             details = cmd[1] == 'details'
-            user_modules = self.get_user_modules()
-
             print_stderr('Available modules:')
-            for mod_name, mod_path in sorted(user_modules.items()):
-                self.print_module_description(details, mod_name, mod_path)
+            for mod_name, mod_info in self.get_all_modules():
+                self.print_module_description(details, mod_name, mod_info)
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
             pass
