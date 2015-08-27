@@ -1,3 +1,10 @@
+version 2.6 (2015-08-27)
+* fix: overall site-packages and user modules detection thx to @coelebs
+* fix: add back support for old school modules wrt issue #117
+* qa: cleanup obsolete position handling and validation
+* new uname module inspired by @ndalliard
+* mpd_status: minor bugfix on error handling, use divmod, pep8-style fixes, by Alexandre `Zopieux` Macabies
+
 version 2.5 (2015-08-17)
 * IMPORTANT NOTE: the legacy modules loading and ordering has been deprecated
 * drop old modules loading mechanism for version 2.5
