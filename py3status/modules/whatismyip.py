@@ -11,6 +11,7 @@ Configuration parameters:
     - mode: default mode to display is 'ip' or 'status' (click to toggle)
     - negative_cache_timeout: how often to check again when offline
     - timeout : how long before deciding we're offline
+    - url: change IP check url (must output a plain text IP address)
 
 @author ultrabug
 """
@@ -34,6 +35,7 @@ class Py3status:
     mode = 'ip'
     negative_cache_timeout = 2
     timeout = 5
+    url = 'http://ultrabug.fr/py3status/whatismyip'
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -48,8 +50,7 @@ class Py3status:
         """
         """
         try:
-            ip = urlopen('http://ipecho.net/plain',
-                         timeout=self.timeout).read()
+            ip = urlopen(self.url, timeout=self.timeout).read()
             ip = ip.decode('utf-8')
         except Exception:
             ip = None

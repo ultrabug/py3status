@@ -544,6 +544,7 @@ Available modules:
                              - mode: default mode to display is 'ip' or 'status' (click to toggle)
                              - negative_cache_timeout: how often to check again when offline
                              - timeout : how long before deciding we're offline
+                             - url: change IP check url (must output a plain text IP address)
                          
                          @author ultrabug
                          ---
