@@ -4,6 +4,8 @@ Display and control a Pomodoro countdown.
 
 Configuration parameters:
     - display_bar: display time in bars when True, otherwise in seconds
+    - display_bar_and_time: display time in bar and seconds when True
+    - display_mmss: display time in hh:mm:ss format
     - max_breaks: maximum number of breaks
     - num_progress_bars: number of progress bars
     - sound_break_end: break end sound (file path)
@@ -19,6 +21,7 @@ Configuration parameters:
 from subprocess import call
 from syslog import syslog, LOG_INFO
 from time import time
+import datetime
 
 try:
     from pygame import mixer
@@ -35,6 +38,8 @@ class Py3status:
     """
     # available configuration parameters
     display_bar = False
+    display_bar_and_time = False
+    display_mmss = False
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
@@ -94,7 +99,13 @@ class Py3status:
         """
         Return the response full_text string
         """
-        if self.display_bar and self.status in ('start', 'pause'):
+        if self.display_mmss:
+            bar_time = str(datetime.timedelta(seconds=self.timer))
+        else:
+            bar_time = str(self.timer)
+
+        if (self.display_bar or self.display_bar_and_time) and \
+                self.status in ('start', 'pause'):
             bar = u''
             items_cnt = len(PROGRESS_BAR_ITEMS)
             bar = u''
@@ -106,9 +117,12 @@ class Py3status:
                 bar += PROGRESS_BAR_ITEMS[selector]
                 bar_val -= 1
 
-            bar = bar.ljust(self.num_progress_bars)
+            if self.display_bar_and_time:
+                bar = bar_time + ' ' + bar.ljust(self.num_progress_bars)
+            else:
+                bar = bar.ljust(self.num_progress_bars)
         else:
-            bar = self.timer
+            bar = bar_time
 
         if self.run:
             text = u'{} [{}]'.format(self.prefix, bar)
