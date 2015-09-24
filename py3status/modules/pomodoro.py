@@ -3,9 +3,17 @@
 Display and control a Pomodoro countdown.
 
 Configuration parameters:
-    - display_bar: display time in bars when True, otherwise in seconds
-    - display_bar_and_time: display time in bar and seconds when True
-    - display_mmss: display time in hh:mm:ss format
+    - display_format: define custom display format by defining a formatter
+      string.
+    Example:
+        display_format = '{mmss} {bar}'
+    Available options:
+        - bar : display time in bars
+        - ss : display time in total seconds
+        - mm : display time in total minutes
+        - mmss : display time in (hh:)mm:ss
+    - display_bar: (depreciated, use display_format) display time in bars
+        when True, otherwise in seconds
     - max_breaks: maximum number of breaks
     - num_progress_bars: number of progress bars
     - sound_break_end: break end sound (file path)
@@ -38,8 +46,8 @@ class Py3status:
     """
     # available configuration parameters
     display_bar = False
-    display_bar_and_time = False
-    display_mmss = False
+    # options:
+    display_format = u'{ss}'
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
@@ -94,35 +102,56 @@ class Py3status:
                 self.__setup('break')
             self.run = False
 
+    def setup_mmss_time(self, form=None):
+        """
+        Setup the formatted time string.
+        """
+        time = str(datetime.timedelta(seconds=self.timer))
+        components = time.split(':')
+
+        if time[0] == '0':
+            time = ':'.join(components[1:])
+            if form == 'mm':
+                time = components[-2]
+        else:
+            if form == 'mm':
+                time = int(components[0])*60 + int(components[-2])
+
+        return time
+
+    def setup_bar(self):
+        """
+        Setup the process bar.
+        """
+        bar = u''
+        items_cnt = len(PROGRESS_BAR_ITEMS)
+        bar = u''
+        bar_val = float(self.timer) / self.time_window * \
+            self.num_progress_bars
+        while bar_val > 0:
+            selector = int(bar_val * items_cnt)
+            selector = min(selector, items_cnt - 1)
+            bar += PROGRESS_BAR_ITEMS[selector]
+            bar_val -= 1
+
+        bar = bar.ljust(self.num_progress_bars)
+        return bar
+
     @property
     def response(self):
         """
         Return the response full_text string
         """
-        if self.display_mmss:
-            bar_time = str(datetime.timedelta(seconds=self.timer))
-        else:
-            bar_time = str(self.timer)
+        form_dict = {'bar': self.setup_bar(),
+                     'ss': self.timer,
+                     'mm': self.setup_mmss_time(form='mm'),
+                     'mmss': self.setup_mmss_time()}
 
-        if (self.display_bar or self.display_bar_and_time) and \
-                self.status in ('start', 'pause'):
-            bar = u''
-            items_cnt = len(PROGRESS_BAR_ITEMS)
-            bar = u''
-            bar_val = float(self.timer) / self.time_window * \
-                self.num_progress_bars
-            while bar_val > 0:
-                selector = int(bar_val * items_cnt)
-                selector = min(selector, items_cnt - 1)
-                bar += PROGRESS_BAR_ITEMS[selector]
-                bar_val -= 1
+        if self.display_bar is True:
+            self.display_format = u'{bar}'
 
-            if self.display_bar_and_time:
-                bar = bar_time + ' ' + bar.ljust(self.num_progress_bars)
-            else:
-                bar = bar.ljust(self.num_progress_bars)
-        else:
-            bar = bar_time
+        self.display_format = u'{}'.format(self.display_format)
+        bar = self.display_format.format(**form_dict)
 
         if self.run:
             text = u'{} [{}]'.format(self.prefix, bar)
