@@ -3,17 +3,8 @@
 Display and control a Pomodoro countdown.
 
 Configuration parameters:
-    - display_format: define custom display format by defining a formatter
-      string.
-    Example:
-        display_format = '{mmss} {bar}'
-    Available options:
-        - bar : display time in bars
-        - ss : display time in total seconds
-        - mm : display time in total minutes
-        - mmss : display time in (hh:)mm:ss
-    - display_bar: (depreciated, use display_format) display time in bars
-        when True, otherwise in seconds
+    - format: define custom display format. See placeholders below
+    - display_bar: display time in bars when True, otherwise in seconds
     - max_breaks: maximum number of breaks
     - num_progress_bars: number of progress bars
     - sound_break_end: break end sound (file path)
@@ -22,6 +13,18 @@ Configuration parameters:
     - timer_break: normal break time (seconds) (requires pygame)
     - timer_long_break: long break time (seconds) (requires pygame)
     - timer_pomodoro: pomodoro time (seconds) (requires pygame)
+
+Format of status string placeholders:
+    {bar} - display time in bars
+    {ss} - display time in total seconds (1500)
+    {mm} - display time in total minutes (25)
+    {mmss} - display time in (hh-)mm-ss (25:00)
+
+i3status.conf example:
+
+pomodoro {
+    format = "{mmss} {bar}"
+}
 
 @author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto
 """
@@ -47,7 +50,7 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     # options:
-    display_format = u'{ss}'
+    format = u'{ss}'
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
@@ -142,16 +145,16 @@ class Py3status:
         """
         Return the response full_text string
         """
-        form_dict = {'bar': self.setup_bar(),
-                     'ss': self.timer,
-                     'mm': self.setup_mmss_time(form='mm'),
-                     'mmss': self.setup_mmss_time()}
+        formatters = {'bar': self.setup_bar(),
+                      'ss': self.timer,
+                      'mm': self.setup_mmss_time(form='mm'),
+                      'mmss': self.setup_mmss_time()}
 
         if self.display_bar is True:
-            self.display_format = u'{bar}'
+            self.format = u'{bar}'
 
-        self.display_format = u'{}'.format(self.display_format)
-        bar = self.display_format.format(**form_dict)
+        self.format = u'{}'.format(self.format)
+        bar = self.format.format(**formatters)
 
         if self.run:
             text = u'{} [{}]'.format(self.prefix, bar)
