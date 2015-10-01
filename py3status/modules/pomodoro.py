@@ -3,8 +3,8 @@
 Display and control a Pomodoro countdown.
 
 Configuration parameters:
-    - format: define custom display format. See placeholders below
     - display_bar: display time in bars when True, otherwise in seconds
+    - format: define custom display format. See placeholders below
     - max_breaks: maximum number of breaks
     - num_progress_bars: number of progress bars
     - sound_break_end: break end sound (file path)
@@ -26,7 +26,10 @@ pomodoro {
     format = "{mmss} {bar}"
 }
 
-@author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto
+@author Fandekasp (Adrien Lemaire)
+@author rixx
+@author FedericoCeratto
+@author schober-ch
 """
 
 from subprocess import call
@@ -49,7 +52,6 @@ class Py3status:
     """
     # available configuration parameters
     display_bar = False
-    # options:
     format = u'{ss}'
     max_breaks = 4
     num_progress_bars = 5
@@ -118,7 +120,7 @@ class Py3status:
                 time = components[-2]
         else:
             if form == 'mm':
-                time = int(components[0])*60 + int(components[-2])
+                time = int(components[0]) * 60 + int(components[-2])
 
         return time
 
@@ -145,10 +147,12 @@ class Py3status:
         """
         Return the response full_text string
         """
-        formatters = {'bar': self.setup_bar(),
-                      'ss': self.timer,
-                      'mm': self.setup_mmss_time(form='mm'),
-                      'mmss': self.setup_mmss_time()}
+        formatters = {
+            'bar': self.setup_bar(),
+            'ss': self.timer,
+            'mm': self.setup_mmss_time(form='mm'),
+            'mmss': self.setup_mmss_time()
+        }
 
         if self.display_bar is True:
             self.format = u'{bar}'
@@ -224,8 +228,7 @@ class Py3status:
             call(
                 ['i3-nagbar', '-m', msg, '-t', level],
                 stdout=open('/dev/null', 'w'),
-                stderr=open('/dev/null', 'w')
-            )
+                stderr=open('/dev/null', 'w'))
         except:
             pass
 
@@ -277,8 +280,9 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     config = {
-        'color_good': '#00FF00',
         'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00'
     }
     while True:
         print(x.pomodoro([], config))

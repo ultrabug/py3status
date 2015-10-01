@@ -337,6 +337,7 @@ Available modules:
                          
                          Configuration parameters:
                              - display_bar: display time in bars when True, otherwise in seconds
+                             - format: define custom display format. See placeholders below
                              - max_breaks: maximum number of breaks
                              - num_progress_bars: number of progress bars
                              - sound_break_end: break end sound (file path)
@@ -346,7 +347,22 @@ Available modules:
                              - timer_long_break: long break time (seconds) (requires pygame)
                              - timer_pomodoro: pomodoro time (seconds) (requires pygame)
                          
-                         @author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto
+                         Format of status string placeholders:
+                             {bar} - display time in bars
+                             {ss} - display time in total seconds (1500)
+                             {mm} - display time in total minutes (25)
+                             {mmss} - display time in (hh-)mm-ss (25:00)
+                         
+                         i3status.conf example:
+                         
+                         pomodoro {
+                             format = "{mmss} {bar}"
+                         }
+                         
+                         @author Fandekasp (Adrien Lemaire)
+                         @author rixx
+                         @author FedericoCeratto
+                         @author schober-ch
                          ---
   rate_counter           Display days/hours/minutes spent and calculate the price of your service.
                          
@@ -612,5 +628,21 @@ Available modules:
                              }
                          
                          @author ultrabug
+                         ---
+  xsel                   Display the X selection.
+                         
+                         Configuration parameters:
+                             cache_timeout: how often we refresh this module in seconds
+                                            (default is at every py3status configured interval)
+                             command: the xsel command to run (default 'xsel')
+                             max_size: stip the selection to this value (default 15)
+                             symmetric: show the beginning and the end of the selection string
+                                        with respect to configured max_size.
+                         
+                         Requires:
+                             - xsel command line tool
+                         
+                         @author Sublim3 umbsublime@gamil.com
+                         @license BSD
                          ---
 ```
