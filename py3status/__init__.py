@@ -13,7 +13,7 @@ import sys
 from collections import OrderedDict
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 from json import dumps, loads
 from py3status import modules as sitepkg_modules
 from signal import signal
@@ -548,7 +548,7 @@ class I3status(Thread):
                                 print_line(line)
                                 with jsonify(line) as (prefix, json_list):
                                     self.last_output = json_list
-                                    self.last_output_ts = datetime.utcnow()
+                                    self.last_output_ts = datetime.now(timezone.utc)
                                     self.last_prefix = ','
                                     self.update_json_list()
                                     self.set_responses(json_list)
