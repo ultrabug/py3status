@@ -96,6 +96,9 @@ class IOPoller:
         Try to read our I/O for 'timeout' seconds, return None otherwise.
         This makes calling and reading I/O non blocking !
         """
+        # Convert seconds to milliseconds.
+        # Fixes bug where click events are never executes.
+        timeout *= 1000
         poll_result = self.poller.poll(timeout)
         if poll_result:
             line = self.io.readline().strip()
@@ -108,7 +111,7 @@ class IOPoller:
             except (AttributeError, UnicodeDecodeError):
                 pass
             return line
-        else:
+        else
             return None
 
 
