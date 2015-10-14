@@ -214,6 +214,9 @@ class Py3status:
         except CommandError:
             text = "Failed to authenticate to mpd!"
             c.disconnect()
+        else:
+            c.disconnect()
+
 
         if len(text) > self.max_width:
             text = text[:-self.max_width - 3] + '...'
