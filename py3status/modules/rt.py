@@ -22,6 +22,8 @@ Requires:
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
+
+@author ultrabug
 """
 
 try:
@@ -57,14 +59,19 @@ class Py3status:
             db=self.db,
             connect_timeout=self.timeout, )
         mycr = mydb.cursor()
-        mycr.execute('''select q.Name, count(t.id) as total
+        mycr.execute('''select q.Name as queue, coalesce(total,0) as total
             from Queues as q
-            left join Tickets as t on q.id = t.Queue
-            where Status = 'new' or Status = 'open'
-                  or Status = 'stalled' or t.id is NULL
+            left join (
+                select t.Queue as queue, count(t.id) as total
+                from Tickets as t
+                where Status = 'new' or Status = 'open' or Status = 'stalled'
+                group by t.Queue)
+            as s on s.Queue = q.id
             group by q.Name;''')
         for row in mycr.fetchall():
             queue, nb_tickets = row
+            if queue == '___Approvals':
+                continue
             tickets[queue] = nb_tickets
             if queue in self.format:
                 has_one_queue_formatted = True
