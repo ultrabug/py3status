@@ -91,9 +91,9 @@ class IOPoller:
         self.poller = select.poll()
         self.poller.register(io, eventmask)
 
-    def readline(self, timeout=0.5):
+    def readline(self, timeout=500):
         """
-        Try to read our I/O for 'timeout' seconds, return None otherwise.
+        Try to read our I/O for 'timeout' milliseconds, return None otherwise.
         This makes calling and reading I/O non blocking !
         """
         poll_result = self.poller.poll(timeout)
@@ -536,13 +536,9 @@ class I3status(Thread):
                 self.tmpfile_path = tmpfile.name
 
                 try:
-                    # at first, poll very quickly
-                    # to avoid delay in first i3bar display
-                    timeout = 0.001
-
                     # loop on i3status output
                     while self.lock.is_set():
-                        line = self.poller_inp.readline(timeout)
+                        line = self.poller_inp.readline()
                         if line:
                             if line.startswith('[{'):
                                 print_line(line)
@@ -563,7 +559,6 @@ class I3status(Thread):
                                     line = dumps(header)
                                 print_line(line)
                             else:
-                                timeout = 0.5
                                 with jsonify(line) as (prefix, json_list):
                                     self.last_output = json_list
                                     self.last_output_ts = datetime.utcnow()
@@ -571,7 +566,7 @@ class I3status(Thread):
                                     self.update_json_list()
                                     self.set_responses(json_list)
                         else:
-                            err = self.poller_err.readline(timeout)
+                            err = self.poller_err.readline()
                             code = i3status_pipe.poll()
                             if code is not None:
                                 msg = 'i3status died'
@@ -580,9 +575,6 @@ class I3status(Thread):
                                 else:
                                     msg += ' with code {}'.format(code)
                                 raise IOError(msg)
-                            else:
-                                # poll is CPU intensive, breath a bit
-                                sleep(timeout)
                 except IOError:
                     err = sys.exc_info()[1]
                     self.error = err
@@ -814,7 +806,6 @@ class Events(Thread):
         while self.lock.is_set():
             event = self.poller_inp.readline()
             if not event:
-                sleep(0.20)
                 continue
             try:
                 with jsonify(event) as (prefix, event):
