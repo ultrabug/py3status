@@ -98,7 +98,7 @@ class IOPoller:
         """
         # Convert seconds to milliseconds.
         # Fixes bug where click events are never executes.
-        timeout *= 1000
+        timeout = int(round(timeout * 1000))
         poll_result = self.poller.poll(timeout)
         if poll_result:
             line = self.io.readline().strip()
@@ -817,7 +817,6 @@ class Events(Thread):
         while self.lock.is_set():
             event = self.poller_inp.readline()
             if not event:
-                sleep(0.20)
                 continue
             try:
                 with jsonify(event) as (prefix, event):
