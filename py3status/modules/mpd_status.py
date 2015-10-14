@@ -213,8 +213,7 @@ class Py3status:
             text = "Failed to connect to mpd!"
         except CommandError:
             text = "Failed to authenticate to mpd!"
-            c.disconnect()
-        else:
+        finally:
             c.disconnect()
 
 
