@@ -111,7 +111,7 @@ class IOPoller:
             except (AttributeError, UnicodeDecodeError):
                 pass
             return line
-        else
+        else:
             return None
 
 
