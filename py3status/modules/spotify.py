@@ -39,7 +39,7 @@ class Py3status:
         """
         bus = dbus.SessionBus()
         try:
-            self.__bus = bus.get_object('com.spotify.qt', '/')
+            self.__bus = bus.get_object('com.spotify.music', '/')
             self.player = dbus.Interface(
                 self.__bus, 'org.freedesktop.MediaPlayer2')
 
