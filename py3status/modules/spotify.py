@@ -39,15 +39,18 @@ class Py3status:
         """
         bus = dbus.SessionBus()
         try:
-            self.__bus = bus.get_object('com.spotify.qt', '/')
+            self.__bus = bus.get_object('org.mpris.MediaPlayer2.spotify',
+                                        '/org/mpris/MediaPlayer2')
             self.player = dbus.Interface(
-                self.__bus, 'org.freedesktop.MediaPlayer2')
+                self.__bus, 'org.freedesktop.DBus.Properties')
 
-            album = self.player.GetMetadata().get('xesam:album')
-            artist = self.player.GetMetadata().get('xesam:artist')[0]
-            microtime = self.player.GetMetadata().get('mpris:length')
+            metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
+                                       'Metadata')
+            album = metadata.get('xesam:album')
+            artist = metadata.get('xesam:artist')[0]
+            microtime = metadata.get('mpris:length')
             rtime = str(timedelta(microseconds=microtime))
-            title = self.player.GetMetadata().get('xesam:title')
+            title = metadata.get('xesam:title')
 
             return self.format.format(title=title,
                                       artist=artist, album=album, time=rtime)
