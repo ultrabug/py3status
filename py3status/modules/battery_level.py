@@ -9,6 +9,7 @@ Configuration parameters:
     - mode : for primitive-one-char bar, or "text" for text percentage ouput
     - blocks : a string, where each character represents a battery level
     - charging_character : a character to represent charging battery
+    - show_percent_with_blocks : show battery level percentage in blocks mode
 
 Requires:
     - the 'acpi' command line
@@ -45,6 +46,7 @@ class Py3status:
     notification = False
     blocks = BLOCKS
     charging_character = CHARGING_CHARACTER
+    show_percent_with_blocks = False
 
     def battery_level(self, i3s_output_list, i3s_config):
         response = {}
@@ -67,6 +69,8 @@ class Py3status:
                 full_text = self.charging_character
             else:
                 full_text = self.blocks[int(math.ceil(percent_charged/100*(len(self.blocks) - 1)))]
+            if self.show_percent_with_blocks:
+                full_text += "  {}%".format(percent_charged)
         elif self.mode == "ascii_bar":
             full_part = FULL_BLOCK * int(percent_charged/10)
             if charging:
