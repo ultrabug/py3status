@@ -7,6 +7,8 @@ Configuration parameters:
     - format : text with "text" mode. percentage with % replaces {}
     - hide_when_full : hide any information when battery is fully charged
     - mode : for primitive-one-char bar, or "text" for text percentage ouput
+    - blocks : a string, where each character represents a battery level
+    - charging_character : a character to represent charging battery
 
 Requires:
     - the 'acpi' command line
@@ -41,6 +43,8 @@ class Py3status:
     hide_when_full = False
     mode = "bar"
     notification = False
+    blocks = BLOCKS
+    charging_character = CHARGING_CHARACTER
 
     def battery_level(self, i3s_output_list, i3s_config):
         response = {}
@@ -60,9 +64,9 @@ class Py3status:
 
         if self.mode == "bar":
             if charging:
-                full_text = CHARGING_CHARACTER
+                full_text = self.charging_character
             else:
-                full_text = BLOCKS[int(math.ceil(percent_charged/100*(len(BLOCKS) - 1)))]
+                full_text = self.blocks[int(math.ceil(percent_charged/100*(len(self.blocks) - 1)))]
         elif self.mode == "ascii_bar":
             full_part = FULL_BLOCK * int(percent_charged/10)
             if charging:
@@ -94,7 +98,7 @@ class Py3status:
                 if self.color_good
                 else i3s_config['color_good']
             )
-            response['full_text'] = "" if self.hide_when_full else BLOCKS[-1]
+            response['full_text'] = "" if self.hide_when_full else self.blocks[-1]
         elif charging:
             response['color'] = self.color_charging
 
