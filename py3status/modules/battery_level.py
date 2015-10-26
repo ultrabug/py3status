@@ -3,13 +3,17 @@
 Display the battery level.
 
 Configuration parameters:
-    - blocks : a string, where each character represents a battery level
-    - charging_character : a character to represent charging battery
+    - blocks : a string, where each character represents battery level in bar mode
+      especially useful when using icon fonts (e.g. FontAwesome)
+      default is "_▁▂▃▄▅▆▇█"
+    - charging_character : a character to represent charging battery in bar mode
+      especially useful when using icon fonts (e.g. FontAwesome)
+      default is "⚡"
     - color_* : None means - get it from i3status config
     - format : text with "text" mode. percentage with % replaces {}
     - hide_when_full : hide any information when battery is fully charged
     - mode : for primitive-one-char bar, or "text" for text percentage ouput
-    - show_percent_with_blocks : show battery level percentage in blocks mode
+    - show_percent_with_blocks : show battery level percentage in bar mode
 
 Requires:
     - the 'acpi' command line
