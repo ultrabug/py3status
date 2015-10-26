@@ -741,23 +741,52 @@ class Events(Thread):
     def i3status_mod_guess(self, instance, name):
         """
         Some i3status modules output a name and instance that are different
-        from the configuration parameters in i3status.conf.
+        from their configuration name in i3status.conf.
 
         For example the 'disk' module will output with name 'disk_info' so
         we try to be clever and figure it out here, case by case.
+
+        Guessed modules:
+            - battery
+            - cpu_temperature
+            - disk_info
+            - ethernet
+            - run_watch
+            - volume
+            - wireless
         """
         try:
-            # disk_info /home
-            if name == 'disk_info':
-                name = 'disk'
-
-            # /sys/class/power_supply/BAT0/uevent
-            elif name == 'battery':
-                instance = str([int(s) for s in instance if s.isdigit()][0])
+            # /sys/class/power_supply/BAT0/uevent and _first_
+            if name == 'battery':
+                for k, v in self.i3s_config.items():
+                    if (
+                        k.startswith('battery')
+                        and isinstance(v, dict)
+                        and v.get('response', {}).get('instance') == instance
+                    ):
+                        instance = k.split(' ', 1)[1]
+                        break
+                else:
+                    instance = str(
+                        [int(s) for s in instance if s.isdigit()][0])
 
             # /sys/devices/platform/coretemp.0/temp1_input
             elif name == 'cpu_temperature':
                 instance = str([int(s) for s in instance if s.isdigit()][0])
+
+            # disk_info /home
+            elif name == 'disk_info':
+                name = 'disk'
+
+            # ethernet _first_
+            elif name == 'ethernet':
+                for k, v in self.i3s_config.items():
+                    if (
+                        k.startswith('ethernet')
+                        and isinstance(v, dict)
+                        and v.get('response', {}).get('instance') == instance
+                    ):
+                        instance = k.split(' ', 1)[1]
 
             # run_watch /var/run/openvpn.pid
             elif name == 'run_watch':
@@ -785,6 +814,16 @@ class Events(Thread):
                         break
                 else:
                     instance = 'master'
+
+            # wireless _first_
+            elif name == 'wireless':
+                for k, v in self.i3s_config.items():
+                    if (
+                        k.startswith('wireless')
+                        and isinstance(v, dict)
+                        and v.get('response', {}).get('instance') == instance
+                    ):
+                        instance = k.split(' ', 1)[1]
         except:
             pass
         finally:
