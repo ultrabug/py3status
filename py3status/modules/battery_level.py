@@ -3,12 +3,12 @@
 Display the battery level.
 
 Configuration parameters:
+    - blocks : a string, where each character represents a battery level
+    - charging_character : a character to represent charging battery
     - color_* : None means - get it from i3status config
     - format : text with "text" mode. percentage with % replaces {}
     - hide_when_full : hide any information when battery is fully charged
     - mode : for primitive-one-char bar, or "text" for text percentage ouput
-    - blocks : a string, where each character represents a battery level
-    - charging_character : a character to represent charging battery
     - show_percent_with_blocks : show battery level percentage in blocks mode
 
 Requires:
@@ -35,7 +35,9 @@ class Py3status:
     """
     """
     # available configuration parameters
+    blocks = BLOCKS
     cache_timeout = 30
+    charging_character = CHARGING_CHARACTER
     color_bad = None
     color_charging = "#FCE94F"
     color_degraded = None
@@ -44,8 +46,6 @@ class Py3status:
     hide_when_full = False
     mode = "bar"
     notification = False
-    blocks = BLOCKS
-    charging_character = CHARGING_CHARACTER
     show_percent_with_blocks = False
 
     def battery_level(self, i3s_output_list, i3s_config):
