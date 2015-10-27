@@ -3,17 +3,32 @@
 Display the battery level.
 
 Configuration parameters:
-    - blocks : a string, where each character represents battery level in bar mode
+    - blocks : a string, where each character represents battery level
       especially useful when using icon fonts (e.g. FontAwesome)
       default is "_▁▂▃▄▅▆▇█"
-    - charging_character : a character to represent charging battery in bar mode
+    - charging_character : a character to represent charging battery
       especially useful when using icon fonts (e.g. FontAwesome)
       default is "⚡"
     - color_* : None means - get it from i3status config
-    - format : text with "text" mode. percentage with % replaces {}
+    - format : string that formats the output. Supported options:
+      - '{percent}' : the remaining battery percentage (previously '{}')
+      - '{icon}' : a character representing the battery level,
+                   as defined by the 'blocks' and 'charging_character' parameters
+      - '{ascii_bar}' : a string of ascii characters representing the battery level,
+                        an alternative visualization to '{icon}' option
+      default is "Battery: {percent}"
     - hide_when_full : hide any information when battery is fully charged
-    - mode : for primitive-one-char bar, or "text" for text percentage ouput
-    - show_percent_with_blocks : show battery level percentage in bar mode
+
+Obsolete configuration parameters:
+    - mode : an old way to define 'format' parameter. The current behavior is:
+      - if 'format' is specified, this parameter is completely ignored
+      - if the value is 'ascii_bar', the 'format' is set to "{ascii_bar}"
+      - all other values are ignored
+      - there is no default value for this parameter
+    - show_percent_with_blocks : an old way to define 'format' parameter:
+      - if 'format' is specified, this parameter is completely ignored
+      - if the value is True, the 'format' is set to "{icon} {percent}%"
+      - there is no default value for this parameter
 
 Requires:
     - the 'acpi' command line
