@@ -6,10 +6,23 @@ Configuration parameters:
     - blocks : a string, where each character represents battery level
       especially useful when using icon fonts (e.g. FontAwesome)
       default is "_▁▂▃▄▅▆▇█"
+    - cache_timeout : a timeout to refresh the battery state
+      default is 30
     - charging_character : a character to represent charging battery
       especially useful when using icon fonts (e.g. FontAwesome)
       default is "⚡"
-    - color_* : None means - get it from i3status config
+    - color_bad : a color to use when the battery level is bad
+      None means get it from i3status config
+      default is None
+    - color_charging : a color to use when the battery is charging
+      None means get it from i3status config
+      default is "#FCE94F"
+    - color_degraded : a color to use when the battery level is degraded
+      None means get it from i3status config
+      default is None
+    - color_good : a color to use when the battery level is good
+      None means get it from i3status config
+      default is None
     - format : string that formats the output. Supported options:
       - '{percent}' : the remaining battery percentage (previously '{}')
       - '{icon}' : a character representing the battery level,
@@ -18,6 +31,9 @@ Configuration parameters:
                         an alternative visualization to '{icon}' option
       default is "Battery: {percent}"
     - hide_when_full : hide any information when battery is fully charged
+      default is False
+    - notification : show current battery state as notification on click
+      default is False
 
 Obsolete configuration parameters:
     - mode : an old way to define 'format' parameter. The current behavior is:
