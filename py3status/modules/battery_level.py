@@ -3,10 +3,17 @@
 Display the battery level.
 
 Configuration parameters:
+    - blocks : a string, where each character represents battery level in bar mode
+      especially useful when using icon fonts (e.g. FontAwesome)
+      default is "_▁▂▃▄▅▆▇█"
+    - charging_character : a character to represent charging battery in bar mode
+      especially useful when using icon fonts (e.g. FontAwesome)
+      default is "⚡"
     - color_* : None means - get it from i3status config
     - format : text with "text" mode. percentage with % replaces {}
     - hide_when_full : hide any information when battery is fully charged
     - mode : for primitive-one-char bar, or "text" for text percentage ouput
+    - show_percent_with_blocks : show battery level percentage in bar mode
 
 Requires:
     - the 'acpi' command line
@@ -32,7 +39,9 @@ class Py3status:
     """
     """
     # available configuration parameters
+    blocks = BLOCKS
     cache_timeout = 30
+    charging_character = CHARGING_CHARACTER
     color_bad = None
     color_charging = "#FCE94F"
     color_degraded = None
@@ -41,6 +50,7 @@ class Py3status:
     hide_when_full = False
     mode = "bar"
     notification = False
+    show_percent_with_blocks = False
 
     def battery_level(self, i3s_output_list, i3s_config):
         response = {}
@@ -60,9 +70,11 @@ class Py3status:
 
         if self.mode == "bar":
             if charging:
-                full_text = CHARGING_CHARACTER
+                full_text = self.charging_character
             else:
-                full_text = BLOCKS[int(math.ceil(percent_charged/100*(len(BLOCKS) - 1)))]
+                full_text = self.blocks[int(math.ceil(percent_charged/100*(len(self.blocks) - 1)))]
+            if self.show_percent_with_blocks:
+                full_text += "  {}%".format(percent_charged)
         elif self.mode == "ascii_bar":
             full_part = FULL_BLOCK * int(percent_charged/10)
             if charging:
@@ -94,7 +106,7 @@ class Py3status:
                 if self.color_good
                 else i3s_config['color_good']
             )
-            response['full_text'] = "" if self.hide_when_full else BLOCKS[-1]
+            response['full_text'] = "" if self.hide_when_full else self.blocks[-1]
         elif charging:
             response['color'] = self.color_charging
 
