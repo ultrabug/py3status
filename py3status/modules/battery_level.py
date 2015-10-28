@@ -92,6 +92,7 @@ class Py3status:
 
         self.refresh_battery_info()
 
+        self.provide_backwards_compatibility()
         self.update_icon()
         self.update_ascii_bar()
         self.update_full_text()
@@ -108,6 +109,18 @@ class Py3status:
                 stdout=open('/dev/null', 'w'),
                 stderr=open('/dev/null', 'w')
             )
+
+    def provide_backwards_compatibility(self):
+        # Backwards compatibility for 'mode' parameter
+        if self.format == FORMAT and self.mode == 'ascii_bar':
+            self.format = "{ascii_bar}"
+
+        # Backwards compatibility for 'show_percent_with_blocks' parameter
+        if self.format == FORMAT and self.show_percent_with_blocks:
+            self.format = "{icon} {percent}%"
+
+        # Backwards compatibility for '{}' option in format string
+        self.format = self.format.replace('{}', '{percent}')
 
     def refresh_battery_info(self):
         # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
