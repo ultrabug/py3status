@@ -64,6 +64,7 @@ CHARGING_CHARACTER = "⚡"
 EMPTY_BLOCK_CHARGING = '|'
 EMPTY_BLOCK_DISCHARGING = '⍀'
 FULL_BLOCK = '█'
+FORMAT = "Battery: {percent}"
 
 
 class Py3status:
@@ -79,71 +80,23 @@ class Py3status:
     color_good = None
     format = "Battery: {}"
     hide_when_full = False
-    mode = "bar"
     notification = False
-    show_percent_with_blocks = False
+    # obsolete configuration parameters
+    mode = None
+    show_percent_with_blocks = None
+
 
     def battery_level(self, i3s_output_list, i3s_config):
-        response = {}
+        self.i3s_config = i3s_config
+        self.i3s_output_list = i3s_output_list
 
-        #  Example acpi raw output:  "Battery 0: Discharging, 43%, 00:59:20 remaining"
-        acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
-        acpi_unicode = acpi_raw.decode("UTF-8")
+        self.refresh_battery_info()
 
-        #  Example list: ['Battery', '0:', 'Discharging', '43%', '00:59:20', 'remaining']
-        acpi_list = acpi_unicode.split(' ')
+        self.update_icon()
+        self.update_ascii_bar()
+        self.update_full_text()
 
-        charging = True if acpi_list[2][:8] == "Charging" else False
-        percent_charged = int(acpi_list[3][:-2])
-
-        self.time_remaining = ' '.join(acpi_list[4:])
-        battery_full = False
-
-        if self.mode == "bar":
-            if charging:
-                full_text = self.charging_character
-            else:
-                full_text = self.blocks[int(math.ceil(percent_charged/100*(len(self.blocks) - 1)))]
-            if self.show_percent_with_blocks:
-                full_text += "  {}%".format(percent_charged)
-        elif self.mode == "ascii_bar":
-            full_part = FULL_BLOCK * int(percent_charged/10)
-            if charging:
-                empty_part = EMPTY_BLOCK_CHARGING * (10 - int(percent_charged/10))
-            else:
-                empty_part = EMPTY_BLOCK_DISCHARGING * (10 - int(percent_charged/10))
-            full_text = full_part + empty_part
-        else:
-            full_text = self.format.format(str(percent_charged) + "%")
-
-        response['full_text'] = full_text
-
-        if percent_charged < 30:
-            response['color'] = (
-                self.color_degraded
-                if self.color_degraded
-                else i3s_config['color_degraded']
-            )
-        if percent_charged < 10:
-            response['color'] = (
-                self.color_bad
-                if self.color_bad
-                else i3s_config['color_bad']
-            )
-
-        if battery_full:
-            response['color'] = (
-                self.color_good
-                if self.color_good
-                else i3s_config['color_good']
-            )
-            response['full_text'] = "" if self.hide_when_full else self.blocks[-1]
-        elif charging:
-            response['color'] = self.color_charging
-
-        response['cached_until'] = time() + self.cache_timeout
-
-        return response
+        return self.build_response()
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -156,6 +109,65 @@ class Py3status:
                 stderr=open('/dev/null', 'w')
             )
 
+    def refresh_battery_info(self):
+        # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
+        acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
+        acpi_unicode = acpi_raw.decode("UTF-8")
+
+        #  Example list: ['Battery', '0:', 'Discharging', '43%', '00:59:20', 'remaining']
+        self.acpi_list = acpi_unicode.split(' ')
+
+        self.charging = self.acpi_list[2][:8] == "Charging"
+        self.percent_charged = int(self.acpi_list[3][:-2])
+
+    def update_ascii_bar(self):
+        self.ascii_bar = FULL_BLOCK * int(self.percent_charged/10)
+        if self.charging:
+            self.ascii_bar += EMPTY_BLOCK_CHARGING * (10 - int(self.percent_charged/10))
+        else:
+            self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (10 - int(self.percent_charged/10))
+
+    def update_icon(self):
+        if self.charging:
+            self.icon = self.charging_character
+        else:
+            self.icon = self.blocks[int(math.ceil(self.percent_charged/100*(len(self.blocks) - 1)))]
+
+    def update_full_text(self):
+        self.full_text = self.format                                          \
+                             .replace('{percent}', str(self.percent_charged)) \
+                             .replace('{icon}', self.icon)                    \
+                             .replace('{ascii_bar}', self.ascii_bar)
+
+    def build_response(self):
+        self.response = {}
+
+        self.set_bar_text()
+        self.set_bar_color()
+        self.set_cache_timeout()
+
+        return self.response
+
+    def set_bar_text(self):
+        if self.percent_charged == 100 and self.hide_when_full:
+            self.response['full_text'] = ''
+        else:
+            self.response['full_text'] = self.full_text
+
+    def set_bar_color(self):
+        if self.charging:
+            self.response['color'] = self.color_charging
+        elif self.percent_charged < 10:
+            self.response['color'] = self.color_bad or self.i3s_config['color_bad']
+        elif self.percent_charged < 30:
+            self.response['color'] = self.color_degraded or self.i3s_config['color_degraded']
+        elif self.percent_charged == 100:
+            self.response['color'] = self.color_good or self.i3s_config['color_good']
+
+    def set_cache_timeout(self):
+        self.response['cached_until'] = time() + self.cache_timeout
+
+
 if __name__ == "__main__":
     from time import sleep
     x = Py3status()
@@ -166,3 +178,4 @@ if __name__ == "__main__":
     while True:
         print(x.battery_level([], config))
         sleep(1)
+
