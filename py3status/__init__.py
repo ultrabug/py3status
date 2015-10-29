@@ -195,9 +195,16 @@ class I3status(Thread):
         it properly. This is used to parse i3status configuration parameters
         such as 'disk "/home" {}' or worse like '"cpu_temperature" 0 {}'.
         """
+        if value.lower() in ('true', 'false'):
+            return eval(value.title())
         try:
             e_value = eval(value)
-            if isinstance(e_value, str) or isinstance(e_value, int):
+            if isinstance(e_value, str):
+                if e_value.lower() in ('true', 'false'):
+                    value = eval(e_value.title())
+                else:
+                    value = e_value
+            elif isinstance(e_value, int):
                 value = e_value
             else:
                 raise ValueError()
