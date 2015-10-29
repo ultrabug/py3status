@@ -4,14 +4,15 @@ Display the current keyboard layout.
 
 This module displays the current active keyboard layout.
 Requires:
+    - setxkbmap
     - xkblayout-state
     or
-    - setxkbmap and xset (Works for the first two predefined layouts.)
+    - xset (Works for the first two predefined layouts.)
 
 Configuration parameters:
     - cache_timeout: check for keyboard layout change every seconds
     - colors: a comma separated string of color values for each layout,
-              eg: "#FCE94F, #729FCF".
+              eg: "fr=#FCE94F, en=#729FCF".
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
@@ -29,6 +30,16 @@ class Py3status:
     cache_timeout = 1
     colors = '#729FCF, #FCE94F'
 
+    # The following options has been placed as an alternative, for backward
+    # compatibility
+    LANG_COLORS = {
+        # 'fr': '#268BD2',  # solarized blue
+        # 'ru': '#F75252',  # red
+        # 'ua': '#FCE94F',  # yellow
+        # 'us': '#729FCF',  # light blue
+    }
+    color = ""
+
     def __init__(self):
         """
         find the best implementation to get the keyboard's layout
@@ -39,8 +50,8 @@ class Py3status:
             self.command = self._xset
         else:
             self.command = self._xkblayout
-        self.colors_lst = self.colors.split(",")
         self.layouts = self._get_layouts()
+        self.colors_lst = self._get_colors_lst()
 
     def keyboard_layout(self, i3s_output_list, i3s_config):
         response = {
@@ -59,6 +70,17 @@ class Py3status:
         response['full_text'] = lang or '??'
         return response
 
+    def _get_colors_lst(self):
+        """
+        Returns a list of colors for each layout
+        """
+        if self.color:
+            return [self.color for lang in self.layouts]
+        if self.LANG_COLORS:
+            return [self.LANG_COLORS.get(lang) for lang in self.layouts]
+
+        return self.colors.split(",")
+
     def _get_layouts(self):
         """
         Returns a list of predefined keyboard layouts
@@ -70,7 +92,7 @@ class Py3status:
 
     def _xkblayout(self):
         """
-        check using xkblayout-state (preferred method)
+        check using xkblayout-state
         """
         return check_output(
             ["xkblayout-state", "print", "%s"]
