@@ -12,7 +12,7 @@ Requires:
 Configuration parameters:
     - cache_timeout: check for keyboard layout change every seconds
     - colors: a comma separated string of color values for each layout,
-              eg: "fr=#FCE94F, en=#729FCF".
+              eg: "#FCE94F, #729FCF".
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
