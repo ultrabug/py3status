@@ -10,7 +10,8 @@ Requires:
 
 Configuration parameters:
     - cache_timeout: check for keyboard layout change every seconds
-    - colors: "comma separated list of color values for each layout"
+    - colors: a comma separated string of color values for each layout,
+              eg: "#FCE94F, #729FCF".
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
@@ -26,7 +27,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 1
-    colors = '#268BD2, #FCE94F'
+    colors = '#729FCF, #FCE94F'
 
     def __init__(self):
         """
@@ -51,13 +52,11 @@ class Py3status:
         lang_idx = self.layouts.index(lang)
         try:
             lang_color = self.colors_lst[lang_idx].strip()
+            response['color'] = lang_color
         except:
-            lang_color = None
+            pass
 
         response['full_text'] = lang or '??'
-        if lang_color:
-            response['color'] = lang_color
-
         return response
 
     def _get_layouts(self):
@@ -85,7 +84,7 @@ class Py3status:
         ledmask_re = re.compile(r".*LED\smask:\s*(\d+).*", flags=re.DOTALL)
 
         if len(self.layouts) == 1:
-            return layouts[0]
+            return self.layouts[0]
 
         xset_output = check_output(["xset", "-q"]).decode("utf-8")
         led_mask = re.match(ledmask_re, xset_output).group(1)
@@ -110,3 +109,4 @@ if __name__ == "__main__":
     while True:
         print(x.keyboard_layout([], config))
         sleep(1)
+
