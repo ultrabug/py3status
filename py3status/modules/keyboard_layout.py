@@ -4,9 +4,13 @@ Display the current active keyboard layout.
 
 Configuration parameters:
     - cache_timeout: check for keyboard layout change every seconds
+    - color: a single color value for all layouts. eg: "#FCE94F"
     - colors: a comma separated string of color values for each layout,
               eg: "us=#FCE94F, fr=#729FCF".
-    - color: a single color value for all layouts. eg: "#FCE94F"
+    - format : see placeholders below
+
+Format of status string placeholders:
+    {layout} - currently active keyboard layout
 
 Requires:
     - xkblayout-state
@@ -27,8 +31,9 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    colors = 'us=#729FCF, fr=#268BD2, ua=#FCE94F, ru=#F75252'
     color = None
+    colors = 'us=#729FCF, fr=#268BD2, ua=#FCE94F, ru=#F75252'
+    format = '{layout}'
 
     def __init__(self):
         """
@@ -48,12 +53,12 @@ class Py3status:
         if not self.color:
             self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
                 layout.split('=') for layout in self.colors.split(',')))
-        lang = self._command().strip()
+        lang = self._command().strip() or '??'
         lang_color = self.color if self.color else self.colors_dict.get(lang)
         if lang_color:
             response['color'] = lang_color
 
-        response['full_text'] = lang or '??'
+        response['full_text'] = self.format.format(layout=lang)
         return response
 
     def _get_layouts(self):
