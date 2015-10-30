@@ -90,14 +90,14 @@ class Py3status:
         self.i3s_config = i3s_config
         self.i3s_output_list = i3s_output_list
 
-        self.refresh_battery_info()
+        self._refresh_battery_info()
 
-        self.provide_backwards_compatibility()
-        self.update_icon()
-        self.update_ascii_bar()
-        self.update_full_text()
+        self._provide_backwards_compatibility()
+        self._update_icon()
+        self._update_ascii_bar()
+        self._update_full_text()
 
-        return self.build_response()
+        return self._build_response()
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -110,7 +110,7 @@ class Py3status:
                 stderr=open('/dev/null', 'w')
             )
 
-    def provide_backwards_compatibility(self):
+    def _provide_backwards_compatibility(self):
         # Backwards compatibility for 'mode' parameter
         if self.format == FORMAT and self.mode == 'ascii_bar':
             self.format = "{ascii_bar}"
@@ -122,7 +122,7 @@ class Py3status:
         # Backwards compatibility for '{}' option in format string
         self.format = self.format.replace('{}', '{percent}')
 
-    def refresh_battery_info(self):
+    def _refresh_battery_info(self):
         # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
         acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
         acpi_unicode = acpi_raw.decode("UTF-8")
@@ -133,41 +133,41 @@ class Py3status:
         self.charging = self.acpi_list[2][:8] == "Charging"
         self.percent_charged = int(self.acpi_list[3][:-2])
 
-    def update_ascii_bar(self):
+    def _update_ascii_bar(self):
         self.ascii_bar = FULL_BLOCK * int(self.percent_charged/10)
         if self.charging:
             self.ascii_bar += EMPTY_BLOCK_CHARGING * (10 - int(self.percent_charged/10))
         else:
             self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (10 - int(self.percent_charged/10))
 
-    def update_icon(self):
+    def _update_icon(self):
         if self.charging:
             self.icon = self.charging_character
         else:
             self.icon = self.blocks[int(math.ceil(self.percent_charged/100*(len(self.blocks) - 1)))]
 
-    def update_full_text(self):
+    def _update_full_text(self):
         self.full_text = self.format                                          \
                              .replace('{percent}', str(self.percent_charged)) \
                              .replace('{icon}', self.icon)                    \
                              .replace('{ascii_bar}', self.ascii_bar)
 
-    def build_response(self):
+    def _build_response(self):
         self.response = {}
 
-        self.set_bar_text()
-        self.set_bar_color()
-        self.set_cache_timeout()
+        self._set_bar_text()
+        self._set_bar_color()
+        self._set_cache_timeout()
 
         return self.response
 
-    def set_bar_text(self):
+    def _set_bar_text(self):
         if self.percent_charged == 100 and self.hide_when_full:
             self.response['full_text'] = ''
         else:
             self.response['full_text'] = self.full_text
 
-    def set_bar_color(self):
+    def _set_bar_color(self):
         if self.charging:
             self.response['color'] = self.color_charging
         elif self.percent_charged < 10:
@@ -177,7 +177,7 @@ class Py3status:
         elif self.percent_charged == 100:
             self.response['color'] = self.color_good or self.i3s_config['color_good']
 
-    def set_cache_timeout(self):
+    def _set_cache_timeout(self):
         self.response['cached_until'] = time() + self.cache_timeout
 
 
