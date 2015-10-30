@@ -511,6 +511,8 @@ class I3status(Thread):
             elif self.valid_config_param(section_name) and conf:
                 self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
                 for key, value in conf.items():
+                    if isinstance(value, bool):
+                        value = '{}'.format(value).lower()
                     self.write_in_tmpfile(
                         '    %s = "%s"\n' % (key, value),
                         tmpfile
