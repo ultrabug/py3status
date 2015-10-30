@@ -13,9 +13,10 @@ import sys
 from collections import OrderedDict
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from json import dumps, loads
 from py3status import modules as sitepkg_modules
+from re import findall
 from signal import signal
 from signal import SIGTERM, SIGUSR1
 from subprocess import Popen
@@ -352,6 +353,41 @@ class I3status(Thread):
             conf_name = self.config['i3s_modules'][index]
             self.config[conf_name]['response'] = item
 
+    def get_delta_from_format(self, i3s_time, time_format):
+        """
+        Guess the time delta from %z time formats such as +0400.
+
+        When such a format is found, replace it in the string so we respect
+        i3status' output while being able to correctly adjust the time.
+
+        TODO: %Z is not supported still.
+        """
+        try:
+            if '%z' in time_format:
+                res = findall('[\-+]{1}[\d]{4}', i3s_time)[0]
+                if res:
+                    operator = res[0]
+                    hours = int(res[1:3])
+                    minutes = int(res[-2:])
+                    return (
+                        time_format.replace('%z', res),
+                        timedelta(
+                            hours=eval('{}{}'.format(operator, hours)),
+                            minutes=eval('{}{}'.format(operator, minutes))
+                            )
+                        )
+        except Exception:
+            err = sys.exc_info()[1]
+            syslog(
+                LOG_ERR,
+                'i3status get_delta_from_format failed "{}" "{}" ({})'.format(
+                    i3s_time,
+                    time_format,
+                    err
+                )
+            )
+        return (time_format, None)
+
     def set_time_modules(self):
         """
         This method is executed only once after the first i3status output.
@@ -394,6 +430,9 @@ class I3status(Thread):
                 except:
                     pass
 
+                time_format, delta = self.get_delta_from_format(i3s_time,
+                                                                  time_format)
+
                 try:
                     # add mendatory items in i3status time format wrt issue #18
                     time_fmt = time_format
@@ -417,8 +456,15 @@ class I3status(Thread):
                     )
                     date = datetime.now()
                 finally:
+                    if not delta:
+                        delta = (
+                            datetime(date.year, date.month, date.day,
+                                     date.hour, date.minute) -
+                            datetime(utcnow.year, utcnow.month, utcnow.day,
+                                     utcnow.hour, utcnow.minute)
+                        )
                     self.config[conf_name]['date'] = date
-                    self.config[conf_name]['delta'] = date - utcnow
+                    self.config[conf_name]['delta'] = delta
                     self.config[conf_name]['time_format'] = time_format
 
     def tick_time_modules(self, json_list, force):
