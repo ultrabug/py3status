@@ -27,9 +27,9 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 10
+    cache_timeout = 1
     colors = 'us=#729FCF, fr=#268BD2, ua=#FCE94F, ru=#F75252'
-    color = ''
+    color = None
 
     def __init__(self):
         """
@@ -37,23 +37,20 @@ class Py3status:
         """
         try:
             self._xkblayout()
-            self.command = self._xkblayout
+            self.ـcommand = self._xkblayout
         except:
-            self.command = self._xset
-            self.layouts = self._get_layouts()
-
-        if not self.color:
-            self.colors_dict = dict((k.strip(), v.strip()) for k, v in
-                                    (layout.split('=') for layout in
-                                     self.colors.split(',')))
+            self.ـcommand = self._xset
 
     def keyboard_layout(self, i3s_output_list, i3s_config):
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': ''
         }
-
-        lang = self.command().strip()
+        if not self.color:
+            self.colors_dict = dict((k.strip(), v.strip()) for k, v in
+                                    (layout.split('=') for layout in
+                                     self.colors.split(',')))
+        lang = self.ـcommand().strip()
         lang_color = self.color if self.color else self.colors_dict.get(lang)
         if lang_color:
             response['color'] = lang_color
@@ -84,16 +81,15 @@ class Py3status:
         This method works only for the first two predefined layouts.
         """
         ledmask_re = re.compile(r".*LED\smask:\s*(\d+).*", flags=re.DOTALL)
-
-        if len(self.layouts) == 1:
-            return self.layouts[0]
-
+        layouts = self._get_layouts()
+        if len(layouts) == 1:
+            return layouts[0]
         xset_output = check_output(["xset", "-q"]).decode("utf-8")
         led_mask = re.match(ledmask_re, xset_output).group(1)
         if led_mask == "00000000":
-            return self.layouts[0]
+            return layouts[0]
         elif led_mask == "00001000":
-            return self.layouts[1]
+            return layouts[1]
         return "Err"
 
 
