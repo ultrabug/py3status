@@ -27,7 +27,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 1
+    cache_timeout = 10
     colors = 'us=#729FCF, fr=#268BD2, ua=#FCE94F, ru=#F75252'
     color = None
 
@@ -37,9 +37,9 @@ class Py3status:
         """
         try:
             self._xkblayout()
-            self.ـcommand = self._xkblayout
+            self._command = self._xkblayout
         except:
-            self.ـcommand = self._xset
+            self._command = self._xset
 
     def keyboard_layout(self, i3s_output_list, i3s_config):
         response = {
@@ -50,7 +50,7 @@ class Py3status:
             self.colors_dict = dict((k.strip(), v.strip()) for k, v in
                                     (layout.split('=') for layout in
                                      self.colors.split(',')))
-        lang = self.ـcommand().strip()
+        lang = self._command().strip()
         lang_color = self.color if self.color else self.colors_dict.get(lang)
         if lang_color:
             response['color'] = lang_color
