@@ -271,10 +271,10 @@ class I3status(Thread):
                         section_name + ' {'
                     )[1].strip()
 
-                key = section_line.split('=')[0].strip()
+                key = section_line.split('=', 1)[0].strip()
                 key = self.eval_config_parameter(key)
 
-                value = section_line.split('=')[1].strip()
+                value = section_line.split('=', 1)[1].strip()
                 value = self.eval_config_value(value)
 
                 if section_name == 'order':
