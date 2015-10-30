@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Display the current keyboard layout.
-
-This module displays the current active keyboard layout.
-Requires:
-    - xkblayout-state
-    or
-    - setxkbmap and xset (Works for the first two predefined layouts.)
+Display the current active keyboard layout.
 
 Configuration parameters:
     - cache_timeout: check for keyboard layout change every seconds
     - colors: a comma separated string of color values for each layout,
               eg: "us=#FCE94F, fr=#729FCF".
     - color: a single color value for all layouts. eg: "#FCE94F"
+
+Requires:
+    - xkblayout-state
+    or
+    - setxkbmap and xset (works for the first two predefined layouts.)
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
@@ -47,9 +46,8 @@ class Py3status:
             'full_text': ''
         }
         if not self.color:
-            self.colors_dict = dict((k.strip(), v.strip()) for k, v in
-                                    (layout.split('=') for layout in
-                                     self.colors.split(',')))
+            self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
+                layout.split('=') for layout in self.colors.split(',')))
         lang = self._command().strip()
         lang_color = self.color if self.color else self.colors_dict.get(lang)
         if lang_color:
@@ -71,9 +69,7 @@ class Py3status:
         """
         check using xkblayout-state
         """
-        return check_output(
-            ["xkblayout-state", "print", "%s"]
-        ).decode('utf-8')
+        return check_output(["xkblayout-state", "print", "%s"]).decode('utf-8')
 
     def _xset(self):
         """
@@ -107,4 +103,3 @@ if __name__ == "__main__":
     while True:
         print(x.keyboard_layout([], config))
         sleep(1)
-
