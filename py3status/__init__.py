@@ -359,8 +359,6 @@ class I3status(Thread):
 
         When such a format is found, replace it in the string so we respect
         i3status' output while being able to correctly adjust the time.
-
-        TODO: %Z is not supported still.
         """
         try:
             if '%z' in time_format:
@@ -434,6 +432,9 @@ class I3status(Thread):
                                                                   time_format)
 
                 try:
+                    if '%Z' in time_format:
+                        raise ValueError('%Z directive is not supported')
+
                     # add mendatory items in i3status time format wrt issue #18
                     time_fmt = time_format
                     for fmt in ['%Y', '%m', '%d']:
@@ -445,17 +446,8 @@ class I3status(Thread):
 
                     # get a datetime from the parsed string date
                     date = datetime.strptime(i3s_time, time_fmt)
-                except Exception:
-                    err = sys.exc_info()[1]
-                    syslog(
-                        LOG_ERR,
-                        'i3status set_time_modules {} failed ({})'.format(
-                            conf_name,
-                            err
-                        )
-                    )
-                    date = datetime.now()
-                finally:
+
+                    # calculate the delta if needed
                     if not delta:
                         delta = (
                             datetime(date.year, date.month, date.day,
@@ -463,6 +455,19 @@ class I3status(Thread):
                             datetime(utcnow.year, utcnow.month, utcnow.day,
                                      utcnow.hour, utcnow.minute)
                         )
+                except ValueError:
+                    date = i3s_time
+                except Exception:
+                    err = sys.exc_info()[1]
+                    syslog(
+                        LOG_ERR,
+                        'i3status set_time_modules "{}" failed ({})'.format(
+                            conf_name,
+                            err
+                        )
+                    )
+                    date = i3s_time
+                finally:
                     self.config[conf_name]['date'] = date
                     self.config[conf_name]['delta'] = delta
                     self.config[conf_name]['time_format'] = time_format
@@ -485,15 +490,20 @@ class I3status(Thread):
             if item.get('name') in ['time', 'tztime']:
                 conf_name = self.config['i3s_modules'][index]
                 time_module = self.config[conf_name]
-                if force:
-                    date = utcnow + time_module['delta']
-                    time_module['date'] = date
+                if not isinstance(time_module['date'], datetime):
+                    # something went wrong in the datetime parsing
+                    # output i3status' date string
+                    item['full_text'] = time_module['date']
                 else:
-                    date = time_module['date']
-                time_format = self.config[conf_name].get('time_format')
+                    if force:
+                        date = utcnow + time_module['delta']
+                        time_module['date'] = date
+                    else:
+                        date = time_module['date']
+                    time_format = self.config[conf_name].get('time_format')
 
-                # set the full_text date on the json_list to be returned
-                item['full_text'] = date.strftime(time_format)
+                    # set the full_text date on the json_list to be returned
+                    item['full_text'] = date.strftime(time_format)
                 json_list[index] = item
 
                 # reset the full_text date on the config object for next
