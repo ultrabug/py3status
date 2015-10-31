@@ -29,7 +29,7 @@ Configuration parameters:
                    as defined by the 'blocks' and 'charging_character' parameters
       - '{ascii_bar}' : a string of ascii characters representing the battery level,
                         an alternative visualization to '{icon}' option
-      default is "Battery: {percent}"
+      default is "{icon}"
     - hide_when_full : hide any information when battery is fully charged
       default is False
     - notification : show current battery state as notification on click
@@ -39,6 +39,7 @@ Obsolete configuration parameters:
     - mode : an old way to define 'format' parameter. The current behavior is:
       - if 'format' is specified, this parameter is completely ignored
       - if the value is 'ascii_bar', the 'format' is set to "{ascii_bar}"
+      - if the value is 'text', the 'format' is set to "Battery: {percent}"
       - all other values are ignored
       - there is no default value for this parameter
     - show_percent_with_blocks : an old way to define 'format' parameter:
@@ -64,7 +65,7 @@ CHARGING_CHARACTER = "⚡"
 EMPTY_BLOCK_CHARGING = '|'
 EMPTY_BLOCK_DISCHARGING = '⍀'
 FULL_BLOCK = '█'
-FORMAT = "Battery: {percent}"
+FORMAT = "{icon}"
 
 
 class Py3status:
@@ -78,7 +79,7 @@ class Py3status:
     color_charging = "#FCE94F"
     color_degraded = None
     color_good = None
-    format = "Battery: {}"
+    format = FORMAT
     hide_when_full = False
     notification = False
     # obsolete configuration parameters
@@ -114,6 +115,8 @@ class Py3status:
         # Backwards compatibility for 'mode' parameter
         if self.format == FORMAT and self.mode == 'ascii_bar':
             self.format = "{ascii_bar}"
+        if self.format == FORMAT and self.mode == 'text':
+            self.format = "Battery: {percent}"
 
         # Backwards compatibility for 'show_percent_with_blocks' parameter
         if self.format == FORMAT and self.show_percent_with_blocks:
