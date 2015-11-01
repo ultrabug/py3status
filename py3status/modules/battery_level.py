@@ -150,10 +150,7 @@ class Py3status:
             self.icon = self.blocks[int(math.ceil(self.percent_charged/100*(len(self.blocks) - 1)))]
 
     def _update_full_text(self):
-        self.full_text = self.format                                          \
-                             .replace('{percent}', str(self.percent_charged)) \
-                             .replace('{icon}', self.icon)                    \
-                             .replace('{ascii_bar}', self.ascii_bar)
+        self.full_text = self.format.format(ascii_bar=self.ascii_bar, icon=self.icon, percent=self.percent_charged)
 
     def _build_response(self):
         self.response = {}
