@@ -23,17 +23,19 @@ Configuration parameters:
     - color_good : a color to use when the battery level is good
       None means get it from i3status config
       default is None
-    - format : string that formats the output. Supported options:
-      - '{percent}' : the remaining battery percentage (previously '{}')
-      - '{icon}' : a character representing the battery level,
-                   as defined by the 'blocks' and 'charging_character' parameters
-      - '{ascii_bar}' : a string of ascii characters representing the battery level,
-                        an alternative visualization to '{icon}' option
+    - format : string that formats the output. See placeholders below.
       default is "{icon}"
     - hide_when_full : hide any information when battery is fully charged
       default is False
     - notification : show current battery state as notification on click
       default is False
+
+Format of status string placeholders:
+    {ascii_bar} - a string of ascii characters representing the battery level,
+                  an alternative visualization to '{icon}' option
+    {icon} - a character representing the battery level,
+             as defined by the 'blocks' and 'charging_character' parameters
+    {percent} - the remaining battery percentage (previously '{}')
 
 Obsolete configuration parameters:
     - mode : an old way to define 'format' parameter. The current behavior is:
@@ -50,7 +52,7 @@ Obsolete configuration parameters:
 Requires:
     - the 'acpi' command line
 
-@author shadowprince, AdamBSteele
+@author shadowprince, AdamBSteele, maximbaz
 @license Eclipse Public License
 """
 
@@ -86,7 +88,6 @@ class Py3status:
     mode = None
     show_percent_with_blocks = None
 
-
     def battery_level(self, i3s_output_list, i3s_config):
         self.i3s_config = i3s_config
         self.i3s_output_list = i3s_output_list
@@ -106,10 +107,10 @@ class Py3status:
         """
         if self.notification and self.time_remaining:
             subprocess.call(
-                ['notify-send', '{}'.format(self.time_remaining), '-t', '4000'],
+                ['notify-send', '{}'.format(self.time_remaining), '-t', '4000'
+                 ],
                 stdout=open('/dev/null', 'w'),
-                stderr=open('/dev/null', 'w')
-            )
+                stderr=open('/dev/null', 'w'))
 
     def _provide_backwards_compatibility(self):
         # Backwards compatibility for 'mode' parameter
@@ -137,20 +138,25 @@ class Py3status:
         self.percent_charged = int(self.acpi_list[3][:-2])
 
     def _update_ascii_bar(self):
-        self.ascii_bar = FULL_BLOCK * int(self.percent_charged/10)
+        self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
         if self.charging:
-            self.ascii_bar += EMPTY_BLOCK_CHARGING * (10 - int(self.percent_charged/10))
+            self.ascii_bar += EMPTY_BLOCK_CHARGING * (
+                10 - int(self.percent_charged / 10))
         else:
-            self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (10 - int(self.percent_charged/10))
+            self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (
+                10 - int(self.percent_charged / 10))
 
     def _update_icon(self):
         if self.charging:
             self.icon = self.charging_character
         else:
-            self.icon = self.blocks[int(math.ceil(self.percent_charged/100*(len(self.blocks) - 1)))]
+            self.icon = self.blocks[int(math.ceil(self.percent_charged / 100 *
+                                                  (len(self.blocks) - 1)))]
 
     def _update_full_text(self):
-        self.full_text = self.format.format(ascii_bar=self.ascii_bar, icon=self.icon, percent=self.percent_charged)
+        self.full_text = self.format.format(ascii_bar=self.ascii_bar,
+                                            icon=self.icon,
+                                            percent=self.percent_charged)
 
     def _build_response(self):
         self.response = {}
@@ -171,11 +177,15 @@ class Py3status:
         if self.charging:
             self.response['color'] = self.color_charging
         elif self.percent_charged < 10:
-            self.response['color'] = self.color_bad or self.i3s_config['color_bad']
+            self.response['color'
+                          ] = self.color_bad or self.i3s_config['color_bad']
         elif self.percent_charged < 30:
-            self.response['color'] = self.color_degraded or self.i3s_config['color_degraded']
+            self.response['color'] = self.color_degraded or self.i3s_config[
+                'color_degraded'
+            ]
         elif self.percent_charged == 100:
-            self.response['color'] = self.color_good or self.i3s_config['color_good']
+            self.response['color'
+                          ] = self.color_good or self.i3s_config['color_good']
 
     def _set_cache_timeout(self):
         self.response['cached_until'] = time() + self.cache_timeout
@@ -192,4 +202,3 @@ if __name__ == "__main__":
     while True:
         print(x.battery_level([], config))
         sleep(1)
-
