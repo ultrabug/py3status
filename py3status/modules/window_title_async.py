@@ -43,7 +43,6 @@ class Py3status:
         t.start()
 
     def _loop(self):
-
         def get_title(conn):
             tree = conn.get_tree()
             w = tree.find_focused()
@@ -51,10 +50,12 @@ class Py3status:
 
             # dont show window title when the window already has means
             # to display it
-            if not self.always_show and (w.border == "normal" or
-                    w.type == "workspace" or
+            if not self.always_show and (
+                    w.border == "normal" or w.type == "workspace" or
                     (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
+
                 return self.empty_title
+
             else:
                 title = w.name
 
@@ -70,9 +71,9 @@ class Py3status:
 
             # check if we need to update title due to changes
             # in the workspace layout
-            layout_changed = (hasattr(e, "binding") and (
-                                e.binding.command.startswith("layout") or
-                                e.binding.command.startswith("border")))
+            layout_changed = (hasattr(e, "binding") and
+                              (e.binding.command.startswith("layout") or
+                               e.binding.command.startswith("border")))
 
             if title_changed or layout_changed:
                 self.title = get_title(conn) or self.empty_title
@@ -112,6 +113,7 @@ class Py3status:
                 continue
 
         return resp
+
 
 if __name__ == "__main__":
     """
