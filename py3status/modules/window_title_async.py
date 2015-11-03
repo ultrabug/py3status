@@ -6,8 +6,8 @@ Provides instant title update only when it required.
 
 Configuration parameters:
     - format : format of the title, default: "{title}".
-    - empty_title : string that will be shown instead of the title
-                    when the title is hidden, default: " ".
+    - empty_title : string that will be shown instead of the title when
+                    the title is hidden, default: "" (empty string).
     - always_show : do not hide the title when it can be already
                     visible (e.g. in tabbed layout), default: False.
     - max_width : maximum width of block (in symbols).
@@ -30,7 +30,7 @@ import i3ipc
 class Py3status:
 
     format = "{title}"
-    empty_title = " "
+    empty_title = ""
     always_show = False
     max_width = 120
 
