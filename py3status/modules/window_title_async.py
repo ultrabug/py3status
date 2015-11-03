@@ -10,6 +10,10 @@ Configuration parameters:
                     when the title is hidden, default: " ".
     - always_show : do not hide the title when it can be already
                     visible (e.g. in tabbed layout), default: False.
+    - max_width : maximum width of block (in symbols).
+                  If the title is longer than `max_width`,
+                  the title will be truncated to `max_width - 1`
+                  first symbols with ellipsis appended. Default: 120.
 
 Requires:
     - i3ipc (https://github.com/acrisci/i3ipc-python)
@@ -28,6 +32,7 @@ class Py3status:
     format = "{title}"
     empty_title = " "
     always_show = False
+    max_width = 120
 
     def __init__(self):
         self.title = self.empty_title
@@ -51,7 +56,12 @@ class Py3status:
                     (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
                 return self.empty_title
             else:
-                return w.name
+                title = w.name
+
+                if len(title) > self.max_width:
+                    title = title[:self.max_width - 1] + "…"
+
+                return title
 
         def update_title(conn, e):
 
