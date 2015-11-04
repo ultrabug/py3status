@@ -73,7 +73,8 @@ class Py3status:
             # in the workspace layout
             layout_changed = (hasattr(e, "binding") and
                               (e.binding.command.startswith("layout") or
-                               e.binding.command.startswith("border")))
+                               e.binding.command.startswith("move container")
+                               or e.binding.command.startswith("border")))
 
             if title_changed or layout_changed:
                 self.title = get_title(conn) or self.empty_title
