@@ -62,7 +62,7 @@ class Py3status:
                 if len(title) > self.max_width:
                     title = title[:self.max_width - 1] + "…"
 
-                return title
+                return self.format.format(title=title)
 
         def update_title(conn, e):
 
@@ -77,7 +77,7 @@ class Py3status:
                                or e.binding.command.startswith("border")))
 
             if title_changed or layout_changed:
-                self.title = get_title(conn) or self.empty_title
+                self.title = get_title(conn)
 
         def clear_title(*args):
             self.title = self.empty_title
@@ -104,7 +104,7 @@ class Py3status:
     def window_title(self, i3s_output_list, i3s_config):
         resp = {
             'cached_until': 0,  # update ASAP
-            'full_text': self.format.format(title=self.title),
+            'full_text': self.title,
         }
 
         for option in ('min_width', 'align', 'separator'):
