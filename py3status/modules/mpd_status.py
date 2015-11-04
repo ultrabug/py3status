@@ -211,8 +211,10 @@ class Py3status:
 
         except socket.error:
             text = "Failed to connect to mpd!"
+            state = None
         except CommandError:
             text = "Failed to authenticate to mpd!"
+            state = None
             c.disconnect()
         else:
             c.disconnect()
@@ -233,7 +235,7 @@ class Py3status:
             'transformed': transformed
         }
 
-        if self.color:
+        if self.color and state:
             if state == 'play':
                 response['color'] = self.color_play or i3s_config['color_good']
             elif state == 'pause':
