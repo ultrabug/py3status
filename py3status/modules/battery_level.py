@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 Display the battery level.
 
@@ -56,7 +57,6 @@ Requires:
 @license Eclipse Public License
 """
 
-from __future__ import division  # python2 compatibility
 from time import time
 
 import math
@@ -138,20 +138,15 @@ class Py3status:
         self.percent_charged = int(self.acpi_list[3][:-2])
 
     def _update_ascii_bar(self):
-        self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
-        if self.charging:
-            self.ascii_bar += EMPTY_BLOCK_CHARGING * (
-                10 - int(self.percent_charged / 10))
-        else:
-            self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (
-                10 - int(self.percent_charged / 10))
+        ascii_bar_len = 10
+        self.ascii_bar = (
+            FULL_BLOCK * ((self.percent_charged * ascii_bar_len) // 100)
+        ).ljust(ascii_bar_len, EMPTY_BLOCK_CHARGING if self.charging
+                else EMPTY_BLOCK_DISCHARGING)
 
     def _update_icon(self):
-        if self.charging:
-            self.icon = self.charging_character
-        else:
-            self.icon = self.blocks[int(math.ceil(self.percent_charged / 100 *
-                                                  (len(self.blocks) - 1)))]
+        self.icon = (self.charging_character if self.charging else self.blocks[
+            ((len(self.blocks) - 1) * self.percent_charged + 50) // 100])
 
     def _update_full_text(self):
         self.full_text = self.format.format(ascii_bar=self.ascii_bar,
