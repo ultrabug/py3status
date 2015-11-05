@@ -656,6 +656,24 @@ Available modules:
                          @author shadowprince
                          @license Eclipse Public License
                          ---
+  window_title_async     Display the current window title with async update.
+                         
+                         Uses asynchronous update via i3 IPC events.
+                         Provides instant title update only when it required.
+                         
+                         Configuration parameters:
+                             - format : format of the title, default: "{title}".
+                             - empty_title : string that will be shown instead of the title
+                                             when the title is hidden, default: 500 spaces.
+                             - always_show : do not hide the title when it can be already
+                                             visible (e.g. in tabbed layout), default: False.
+                         
+                         Requires:
+                             - i3ipc (https://github.com/acrisci/i3ipc-python)
+                         
+                         @author Anon1234 https://github.com/Anon1234
+                         @license BSD
+                         ---
   xrandr                 Control your screen(s) layout easily.
                          
                          This modules allows you to handle your screens outputs directly from your bar!
