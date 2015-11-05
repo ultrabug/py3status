@@ -29,15 +29,56 @@ Available modules:
   battery_level          Display the battery level.
                          
                          Configuration parameters:
-                             - color_* : None means - get it from i3status config
-                             - format : text with "text" mode. percentage with % replaces {}
+                             - blocks : a string, where each character represents battery level
+                               especially useful when using icon fonts (e.g. FontAwesome)
+                               default is "_▁▂▃▄▅▆▇█"
+                             - cache_timeout : a timeout to refresh the battery state
+                               default is 30
+                             - charging_character : a character to represent charging battery
+                               especially useful when using icon fonts (e.g. FontAwesome)
+                               default is "⚡"
+                             - color_bad : a color to use when the battery level is bad
+                               None means get it from i3status config
+                               default is None
+                             - color_charging : a color to use when the battery is charging
+                               None means get it from i3status config
+                               default is "#FCE94F"
+                             - color_degraded : a color to use when the battery level is degraded
+                               None means get it from i3status config
+                               default is None
+                             - color_good : a color to use when the battery level is good
+                               None means get it from i3status config
+                               default is None
+                             - format : string that formats the output. See placeholders below.
+                               default is "{icon}"
                              - hide_when_full : hide any information when battery is fully charged
-                             - mode : for primitive-one-char bar, or "text" for text percentage ouput
+                               default is False
+                             - notification : show current battery state as notification on click
+                               default is False
+                         
+                         Format of status string placeholders:
+                             {ascii_bar} - a string of ascii characters representing the battery level,
+                                           an alternative visualization to '{icon}' option
+                             {icon} - a character representing the battery level,
+                                      as defined by the 'blocks' and 'charging_character' parameters
+                             {percent} - the remaining battery percentage (previously '{}')
+                         
+                         Obsolete configuration parameters:
+                             - mode : an old way to define 'format' parameter. The current behavior is:
+                               - if 'format' is specified, this parameter is completely ignored
+                               - if the value is 'ascii_bar', the 'format' is set to "{ascii_bar}"
+                               - if the value is 'text', the 'format' is set to "Battery: {percent}"
+                               - all other values are ignored
+                               - there is no default value for this parameter
+                             - show_percent_with_blocks : an old way to define 'format' parameter:
+                               - if 'format' is specified, this parameter is completely ignored
+                               - if the value is True, the 'format' is set to "{icon} {percent}%"
+                               - there is no default value for this parameter
                          
                          Requires:
                              - the 'acpi' command line
                          
-                         @author shadowprince, AdamBSteele
+                         @author shadowprince, AdamBSteele, maximbaz
                          @license Eclipse Public License
                          ---
   bitcoin_price          Display bitcoin prices using bitcoincharts.com.
