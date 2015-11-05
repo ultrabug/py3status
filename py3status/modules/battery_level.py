@@ -26,9 +26,19 @@ Configuration parameters:
     - format : string that formats the output. See placeholders below.
       default is "{icon}"
     - hide_when_full : hide any information when battery is fully charged
+      (when the battery level is greater than or equal to 'threshold_full')
       default is False
     - notification : show current battery state as notification on click
       default is False
+    - threshold_bad : a percentage at or below which the battery level should
+      be considered bad
+      default is 10
+    - threshold_degraded : a percentage at or below which the battery level
+      should be considered degraded
+      default is 30
+    - threshold_full : a percentage at or above which the battery level should
+      should be considered full
+      default is 99
 
 Format of status string placeholders:
     {ascii_bar} - a string of ascii characters representing the battery level,
@@ -84,6 +94,9 @@ class Py3status:
     format = FORMAT
     hide_when_full = False
     notification = False
+    threshold_bad = 10
+    threshold_degraded = 30
+    threshold_full = 99
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = None
@@ -168,24 +181,23 @@ class Py3status:
         return self.response
 
     def _set_bar_text(self):
-        if self.percent_charged == 100 and self.hide_when_full:
-            self.response['full_text'] = ''
-        else:
-            self.response['full_text'] = self.full_text
+        self.response['full_text'] = '' if self.hide_when_full and \
+            self.percent_charged >= self.threshold_full else self.full_text
 
     def _set_bar_color(self):
-        if self.charging:
+        if self.charging and self.color_charging:
             self.response['color'] = self.color_charging
-        elif self.percent_charged < 10:
-            self.response['color'
-                          ] = self.color_bad or self.i3s_config['color_bad']
-        elif self.percent_charged < 30:
-            self.response['color'] = self.color_degraded or self.i3s_config[
-                'color_degraded'
-            ]
-        elif self.percent_charged == 100:
-            self.response['color'
-                          ] = self.color_good or self.i3s_config['color_good']
+        else:
+            thresholds = (self.threshold_bad, self.threshold_degraded, 100)
+            colors = (
+                self.color_bad      or self.i3s_config['color_bad'],
+                self.color_degraded or self.i3s_config['color_degraded'],
+                self.color_good     or self.i3s_config['color_good'],
+            )
+            for threshold, color in zip(thresholds, colors):
+                if self.percent_charged <= threshold:
+                    self.response['color'] = color
+                    break
 
     def _set_cache_timeout(self):
         self.response['cached_until'] = time() + self.cache_timeout
