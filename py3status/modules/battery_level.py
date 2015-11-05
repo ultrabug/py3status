@@ -39,15 +39,17 @@ Format of status string placeholders:
 
 Obsolete configuration parameters:
     - mode : an old way to define 'format' parameter. The current behavior is:
-      - if 'format' is specified, this parameter is completely ignored
+      - if 'format' is not "{icon}", this parameter is completely ignored
       - if the value is 'ascii_bar', the 'format' is set to "{ascii_bar}"
       - if the value is 'text', the 'format' is set to "Battery: {percent}"
       - all other values are ignored
       - there is no default value for this parameter
     - show_percent_with_blocks : an old way to define 'format' parameter:
-      - if 'format' is specified, this parameter is completely ignored
+      - if 'format' is not "{icon}", this parameter is completely ignored
+      - if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
+        parameter is completely ignored
       - if the value is True, the 'format' is set to "{icon} {percent}%"
-      - there is no default value for this parameter
+      default is False
 
 Requires:
     - the 'acpi' command line
@@ -86,7 +88,7 @@ class Py3status:
     notification = False
     # obsolete configuration parameters
     mode = None
-    show_percent_with_blocks = None
+    show_percent_with_blocks = False
 
     def battery_level(self, i3s_output_list, i3s_config):
         self.i3s_config = i3s_config
@@ -113,18 +115,18 @@ class Py3status:
                 stderr=open('/dev/null', 'w'))
 
     def _provide_backwards_compatibility(self):
-        # Backwards compatibility for 'mode' parameter
-        if self.format == FORMAT and self.mode == 'ascii_bar':
-            self.format = "{ascii_bar}"
-        if self.format == FORMAT and self.mode == 'text':
-            self.format = "Battery: {percent}"
-
-        # Backwards compatibility for 'show_percent_with_blocks' parameter
-        if self.format == FORMAT and self.show_percent_with_blocks:
-            self.format = "{icon} {percent}%"
-
-        # Backwards compatibility for '{}' option in format string
-        self.format = self.format.replace('{}', '{percent}')
+        if self.format == FORMAT:
+            # Backwards compatibility for 'mode' parameter
+            if self.mode == 'ascii_bar':
+                self.format = "{ascii_bar}"
+            elif self.mode == 'text':
+                self.format = "Battery: {percent}"
+            # Backwards compatibility for 'show_percent_with_blocks' parameter
+            elif self.show_percent_with_blocks:
+                self.format = "{icon} {percent}%"
+        else:
+            # Backwards compatibility for '{}' option in format string
+            self.format = self.format.replace('{}', '{percent}')
 
     def _refresh_battery_info(self):
         # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
