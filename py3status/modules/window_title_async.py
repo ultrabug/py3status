@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Display the current window title with async update.
 
@@ -5,11 +6,11 @@ Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.
 
 Configuration parameters:
-    - format : format of the title, default: "{title}".
-    - empty_title : string that will be shown instead of the title when
-                    the title is hidden, default: "" (empty string).
     - always_show : do not hide the title when it can be already
                     visible (e.g. in tabbed layout), default: False.
+    - empty_title : string that will be shown instead of the title when
+                    the title is hidden, default: "" (empty string).
+    - format : format of the title, default: "{title}".
     - max_width : maximum width of block (in symbols).
                   If the title is longer than `max_width`,
                   the title will be truncated to `max_width - 1`
@@ -28,10 +29,12 @@ import i3ipc
 
 
 class Py3status:
-
-    format = "{title}"
-    empty_title = ""
+    """
+    """
+    # available configuration parameters
     always_show = False
+    empty_title = ""
+    format = "{title}"
     max_width = 120
 
     def __init__(self):
@@ -52,7 +55,7 @@ class Py3status:
             # to display it
             if not self.always_show and (
                     w.border == "normal" or w.type == "workspace" or
-                    (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
+                (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
 
                 return self.empty_title
 
