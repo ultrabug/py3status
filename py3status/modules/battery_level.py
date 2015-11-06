@@ -142,14 +142,14 @@ class Py3status:
             self.format = self.format.replace('{}', '{percent}')
 
     def _refresh_battery_info(self):
-        # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
+        # Example acpi raw output:
+        #     "Battery 0: Discharging, 43%, 00:59:20 remaining"
         acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
-        acpi_unicode = acpi_raw.decode("UTF-8")
+        # Example list: ['Battery', '0:', 'Discharging,', '43%,', '00:59:20',
+        # 'remaining']
+        self.acpi_list = acpi_raw.decode("UTF-8").split(' ')
 
-        #  Example list: ['Battery', '0:', 'Discharging', '43%', '00:59:20', 'remaining']
-        self.acpi_list = acpi_unicode.split(' ')
-
-        self.charging = self.acpi_list[2][:8] == "Charging"
+        self.charging = self.acpi_list[2].startswith("Charging")
         self.percent_charged = int(self.acpi_list[3][:-2])
 
     def _update_ascii_bar(self):
