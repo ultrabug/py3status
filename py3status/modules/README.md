@@ -487,6 +487,9 @@ Available modules:
                          
                          Configuration parameters:
                              - cache_timeout : how often to update the bar
+                             - color_offline : text color when spotify is not running, defaults to color_bad
+                             - color_paused : text color when song is stopped or paused, defaults to color_degraded
+                             - color_playing : text color when song is playing, defaults to color_good
                              - format : see placeholders below
                          
                          Format of status string placeholders:
@@ -501,7 +504,9 @@ Available modules:
                              format = "{title} by {artist} -> {time}"
                          }
                          
-                         @author Pierre Guilbert <pierre@1000mercis.com>
+                         @author Pierre Guilbert
+                         @author Jimmy Garpehäll
+                         @author sondrele
                          ---
   static_string          Display static text.
                          
