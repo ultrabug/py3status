@@ -1,3 +1,23 @@
+version 2.7 (2015-11-11)
+* major performance and click event detection improvements by Daniel Foerster
+* fix poll() calls to convert from seconds, by Daniel Foerster
+* fix: directive %Z and any other failure in parsing the time and tztime modules format will result in using i3status date output
+* fix: support of %z on time and tztime modules fixes #110 and #123 thx to @derekdreery and @olhotak
+* fix ethernet, wireless and battery _first_ instance detection. thx to @rekoil for reporting
+* i3status.conf writer lower case boolean values
+* i3status.conf parser handles configuration values with the = char
+* new rt module: display ongoing tickets from RT queues
+* new xsel module: display xsel buffers, by umbsublime
+* new window_title_async module, by Anon1234
+* battery_level module: major improvements, documentation, add format option, by Maxim Baz
+* keyboard_layout module: color customisation, add format option, by Ali Mousavi
+* mpd_status module: fix connection leak, by Thomas Sanchez
+* pomodoro module: implement format option and add additional display features, by Christoph Schober
+* spotify module: fix support for new versions, by Jimmy Garpehäll
+* spotify module: add support for colors output based on the playback status, by Sondre Lefsaker
+* sysdata module: trim spaces in `cpu_temp`, by beetleman
+* whatismyip module: change default check URL and make it configurable
+
 version 2.6 (2015-08-27)
 * fix: overall site-packages and user modules detection thx to @coelebs
 * fix: add back support for old school modules wrt issue #117
