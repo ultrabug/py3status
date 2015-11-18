@@ -7,12 +7,12 @@ Configuration parameters:
     - format: define custom display format. See placeholders below
     - max_breaks: maximum number of breaks
     - num_progress_bars: number of progress bars
-    - sound_break_end: break end sound (file path)
-    - sound_pomodoro_end: pomodoro end sound (file path)
-    - sound_pomodoro_start: pomodoro start sound (file path)
-    - timer_break: normal break time (seconds) (requires pygame)
-    - timer_long_break: long break time (seconds) (requires pygame)
-    - timer_pomodoro: pomodoro time (seconds) (requires pygame)
+    - sound_break_end: break end sound (file path) (requires pyglet)
+    - sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet)
+    - sound_pomodoro_start: pomodoro start sound (file path) (requires pyglet)
+    - timer_break: normal break time (seconds)
+    - timer_long_break: long break time (seconds)
+    - timer_pomodoro: pomodoro time (seconds)
 
 Format of status string placeholders:
     {bar} - display time in bars
@@ -38,10 +38,28 @@ from time import time
 import datetime
 
 try:
-    from pygame import mixer
-    mixer.init()
+    import pyglet
+    import os
+
+    pyglet.options['audio'] = ('pulse', 'silent')
+    _player = pyglet.media.Player()
+
+    def player(sound_fname):
+        res_dir, f = os.path.split(
+            os.path.expanduser(sound_fname)
+        )
+
+        if res_dir not in pyglet.resource.path:
+            pyglet.resource.path= [res_dir]
+            pyglet.resource.reindex()
+
+        _player.queue(
+            pyglet.resource.media(f, streaming=False)
+        )
+        _player.play()
+
 except ImportError:
-    mixer = None
+    player = None
 
 # PROGRESS_BAR_ITEMS = u"▁▃▄▅▆▇█"
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
@@ -260,17 +278,15 @@ class Py3status:
         if not sound_fname:
             return
 
-        if not mixer:
-            syslog(LOG_INFO, "pomodoro module: the pygame library is required"
+        if not player:
+            syslog(LOG_INFO, "pomodoro module: the pyglet library is required"
                    " to play sounds")
             return
 
         try:
-            mixer.music.load(sound_fname)
+            player(sound_fname)
         except Exception:
             return
-
-        mixer.music.play()
 
 
 if __name__ == "__main__":
