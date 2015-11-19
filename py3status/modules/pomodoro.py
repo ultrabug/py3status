@@ -73,11 +73,11 @@ class Player(object):
 
     def _pyglet(self, sound_fname):
         res_dir, f = os.path.split(
-           sound_fname
+            sound_fname
         )
 
         if res_dir not in pyglet.resource.path:
-            pyglet.resource.path= [res_dir]
+            pyglet.resource.path = [res_dir]
             pyglet.resource.reindex()
 
         self._player.queue(
