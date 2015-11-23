@@ -36,10 +36,11 @@ class Py3status:
         pass
 
     def hamster(self, i3s_output_list, i3s_config):
-        cur_task = str(check_output(shlex.split("hamster current"))).strip()
+        cur_task = check_output(shlex.split("hamster current"))
+        cur_task = cur_task.decode('ascii', 'ignore').strip()
         if cur_task != "No activity":
             cur_task = cur_task.split()
-            time_elapsed = cur_task[-1].replace('\\n\'', '')
+            time_elapsed = cur_task[-1]
             cur_task = cur_task[2:-1]
             cur_task = "%s (%s)" % (" ".join(cur_task), time_elapsed)
         response = {'full_text': '', 'name': 'hamster'}
