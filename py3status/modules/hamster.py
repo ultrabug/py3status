@@ -19,18 +19,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+import shlex
+from subprocess import check_output
 from time import time
 
 class Py3status:
-    def hamster(self, json, i3status_config):
-        cur_task = subprocess.check_output(['hamster', 'current']).strip()
+    cache_timeout = 0
+
+    def __init__(self):
+        pass
+
+    def kill(self, i3s_output_list, i3s_config):
+        pass
+
+    def on_click(self, i3s_output_list, i3s_config, event):
+        pass
+
+    def hamster(self, i3s_output_list, i3s_config):
+        cur_task = str(check_output(shlex.split("hamster current"))).strip()
         if cur_task != "No activity":
             cur_task = cur_task.split()
-            time_elapsed = cur_task [-1]
+            time_elapsed = cur_task[-1].replace('\\n\'', '')
             cur_task = cur_task[2:-1]
             cur_task = "%s (%s)" % (" ".join(cur_task), time_elapsed)
         response = {'full_text': '', 'name': 'hamster'}
         response['full_text'] = cur_task
         response['cached_until'] = time()
-        return (0, response)
+        return response
+
+if __name__=="__main__":
+    from time import sleep
+    x = Py3status()
+    config = {
+            'color_bad': '#FF0000',
+            'color_degraded': '#FFFF00',
+            'color_good': '#00FF00'
+            }
+    while True:
+        print(x.hamster([], config)['full_text'])
+        sleep(1)
