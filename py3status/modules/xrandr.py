@@ -32,6 +32,8 @@ Dynamic configuration parameters:
         Example: DP1_pos = "-2560x0"
         Example: DP1_pos = "left-of LVDS1"
         Example: DP1_pos = "right-of eDP1"
+        Example: DP1_pos = "above eDP1"
+        Example: DP1_pos = "below eDP1"
 
     - <OUTPUT>_workspaces: comma separated list of workspaces to move to
         the given OUTPUT when it is activated
@@ -227,9 +229,7 @@ class Py3status:
                 if mode == 'clone' and previous_output is not None:
                     cmd += ' --auto --same-as {}'.format(previous_output)
                 else:
-                    if 'left-of' in pos:
-                        cmd += ' --auto --{} --rotate normal'.format(pos)
-                    elif 'right-of' in pos:
+                    if 'left-of' in pos or 'right-of' in pos or 'above' in pos or 'below' in pos:
                         cmd += ' --auto --{} --rotate normal'.format(pos)
                     else:
                         cmd += ' --auto --pos {} --rotate normal'.format(pos)
