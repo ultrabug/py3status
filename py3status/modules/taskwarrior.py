@@ -28,7 +28,7 @@ class Py3status:
     def taskWarrior(self, i3s_output_list, i3s_config):
         command = 'task start.before:tomorrow status:pending export'
         taskwarrior_output = check_output(shlex.split(command))
-        tasks_json = json.loads('[' + taskwarrior_output.decode('utf-8') + ']')
+        tasks_json = json.loads(taskwarrior_output.decode('utf-8'))
 
         def describeTask(taskObj):
             return str(taskObj['id']) + ' ' + taskObj['description']
