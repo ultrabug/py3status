@@ -472,6 +472,21 @@ Available modules:
                          @author shadowprince
                          @license Eclipse Public License
                          ---
+  selinux_state          Display the current selinux state.
+  
+                         This module displays the current state of selinux on your machine: Enforcing
+                         (good), Permissive (bad), or Disabled (bad).
+
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds (10s default)
+
+                         Requires:
+                             - libselinux-python
+                             - libselinux-pyton3 (optional for python3 support)
+
+                         @author bstinsonmhk
+                         @license MIT
+                         ---
   screenshot             Take a screenshot and optionally upload it to your online server.
                          
                          Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
