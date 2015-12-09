@@ -107,7 +107,7 @@ class Py3status:
                 self.__setup('break')
             self.run = False
 
-    def setup_mmss_time(self, form=None):
+    def _setup_mmss_time(self, form=None):
         """
         Setup the formatted time string.
         """
@@ -124,7 +124,7 @@ class Py3status:
 
         return time
 
-    def setup_bar(self):
+    def _setup_bar(self):
         """
         Setup the process bar.
         """
@@ -148,10 +148,10 @@ class Py3status:
         Return the response full_text string
         """
         formatters = {
-            'bar': self.setup_bar(),
+            'bar': self._setup_bar(),
             'ss': self.timer,
-            'mm': self.setup_mmss_time(form='mm'),
-            'mmss': self.setup_mmss_time()
+            'mm': self._setup_mmss_time(form='mm'),
+            'mmss': self._setup_mmss_time()
         }
 
         if self.display_bar is True:
