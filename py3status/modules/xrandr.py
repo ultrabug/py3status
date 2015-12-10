@@ -86,12 +86,10 @@ class Py3status:
         connected = list()
         active_layout = list()
         disconnected = list()
-        layout = OrderedDict(
-            {
-                'connected': OrderedDict(),
-                'disconnected': OrderedDict()
-            }
-        )
+        layout = OrderedDict({
+            'connected': OrderedDict(),
+            'disconnected': OrderedDict()
+        })
 
         current = Popen(['xrandr'], stdout=PIPE)
         for line in current.stdout.readlines():
@@ -129,9 +127,7 @@ class Py3status:
         if self.active_layout is None:
             self.active_comb = tuple(active_layout)
             self.active_layout = self._get_string_and_set_width(
-                tuple(active_layout),
-                self.active_mode
-            )
+                tuple(active_layout), self.active_mode)
 
         return layout
 
@@ -144,7 +140,7 @@ class Py3status:
         combinations_map = {}
 
         self.max_width = 0
-        for output in range(len(self.layout['connected'])+1):
+        for output in range(len(self.layout['connected']) + 1):
             for comb in combinations(self.layout['connected'], output):
                 if comb:
                     for mode in ['clone', 'extend']:
@@ -174,10 +170,8 @@ class Py3status:
         we display the last selected combination.
         """
         for _ in range(len(self.available_combinations)):
-            if (
-                self.displayed is None and
-                self.available_combinations[0] == self.active_layout
-            ):
+            if (self.displayed is None and
+                    self.available_combinations[0] == self.active_layout):
                 self.displayed = self.available_combinations[0]
                 break
             else:
@@ -189,10 +183,8 @@ class Py3status:
             if force_refresh:
                 self.displayed = self.available_combinations[0]
             else:
-                syslog(
-                    LOG_INFO,
-                    'xrandr error="displayed combination is not available"'
-                )
+                syslog(LOG_INFO,
+                       'xrandr error="displayed combination is not available"')
 
     def _center(self, s):
         """
@@ -209,9 +201,8 @@ class Py3status:
             # no change, do nothing
             return
 
-        combination, mode = self.combinations_map.get(
-            self.displayed, (None, None)
-        )
+        combination, mode = self.combinations_map.get(self.displayed,
+                                                      (None, None))
         if combination is None and mode is None:
             # displayed combination cannot be activated, ignore
             return
@@ -229,12 +220,8 @@ class Py3status:
                 if mode == 'clone' and previous_output is not None:
                     cmd += ' --auto --same-as {}'.format(previous_output)
                 else:
-                    if (
-                        'above' in pos or
-                        'below' in pos or
-                        'left-of' in pos or
-                        'right-of' in pos
-                    ):
+                    if ('above' in pos or 'below' in pos or 'left-of' in pos or
+                            'right-of' in pos):
                         cmd += ' --auto --{} --rotate normal'.format(pos)
                     else:
                         cmd += ' --auto --pos {} --rotate normal'.format(pos)
@@ -263,8 +250,8 @@ class Py3status:
         if len(combination) > 1 and mode == 'extend':
             sleep(3)
             for output in combination:
-                workspaces = getattr(
-                    self, '{}_workspaces'.format(output), '').split(',')
+                workspaces = getattr(self, '{}_workspaces'.format(output),
+                                     '').split(',')
                 for workspace in workspaces:
                     if not workspace:
                         continue
@@ -275,11 +262,9 @@ class Py3status:
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
                     call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
                     # log this
-                    syslog(
-                        LOG_INFO,
-                        'moved workspace {} to output {}'.format(
-                            workspace, output)
-                    )
+                    syslog(LOG_INFO,
+                           'moved workspace {} to output {}'.format(workspace,
+                                                                    output))
 
     def _refresh_py3status(self):
         """
@@ -379,6 +364,7 @@ class Py3status:
                 self._fallback_to_available_output()
 
         return response
+
 
 if __name__ == "__main__":
     """
