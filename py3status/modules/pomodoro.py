@@ -7,12 +7,15 @@ Configuration parameters:
     - format: define custom display format. See placeholders below
     - max_breaks: maximum number of breaks
     - num_progress_bars: number of progress bars
-    - sound_break_end: break end sound (file path)
-    - sound_pomodoro_end: pomodoro end sound (file path)
-    - sound_pomodoro_start: pomodoro start sound (file path)
-    - timer_break: normal break time (seconds) (requires pygame)
-    - timer_long_break: long break time (seconds) (requires pygame)
-    - timer_pomodoro: pomodoro time (seconds) (requires pygame)
+    - sound_break_end: break end sound (file path) (requires pyglet
+      or pygame)
+    - sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet
+      or pygame)
+    - sound_pomodoro_start: pomodoro start sound (file path) (requires pyglet
+      od pygame)
+    - timer_break: normal break time (seconds)
+    - timer_long_break: long break time (seconds)
+    - timer_pomodoro: pomodoro time (seconds)
 
 Format of status string placeholders:
     {bar} - display time in bars
@@ -36,12 +39,59 @@ from subprocess import call
 from syslog import syslog, LOG_INFO
 from time import time
 import datetime
+import os
 
 try:
-    from pygame import mixer
-    mixer.init()
+    from pygame import mixer as pygame_mixer
 except ImportError:
-    mixer = None
+    pygame_mixer = None
+
+try:
+    import pyglet
+except ImportError:
+    pyglet = None
+
+
+class Player(object):
+    _default = '_silence'
+
+    def __init__(self):
+        if pyglet is not None:
+            pyglet.options['audio'] = ('pulse', 'silent')
+            self._player = pyglet.media.Player()
+            self._default = '_pyglet'
+        elif pygame_mixer is not None:
+            pygame_mixer.init()
+            self._default = '_pygame'
+
+    def _silence(self, sound_fname):
+        pass
+
+    def _pygame(self, sound_fname):
+        pygame_mixer.music.load(sound_fname)
+        pygame_mixer.music.play()
+
+    def _pyglet(self, sound_fname):
+        res_dir, f = os.path.split(
+            sound_fname
+        )
+
+        if res_dir not in pyglet.resource.path:
+            pyglet.resource.path = [res_dir]
+            pyglet.resource.reindex()
+
+        self._player.queue(
+            pyglet.resource.media(f, streaming=False)
+        )
+        self._player.play()
+
+    @property
+    def available(self):
+        return self._default != '_silence'
+
+    def __call__(self, sound_fname):
+        getattr(self, self._default)(os.path.expanduser(sound_fname))
+
 
 # PROGRESS_BAR_ITEMS = u"▁▃▄▅▆▇█"
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
@@ -66,6 +116,7 @@ class Py3status:
         self.__setup('stop')
         self.alert = False
         self.run = False
+        self.__player = Player()
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -260,17 +311,15 @@ class Py3status:
         if not sound_fname:
             return
 
-        if not mixer:
-            syslog(LOG_INFO, "pomodoro module: the pygame library is required"
-                   " to play sounds")
+        if not self.__player.available:
+            syslog(LOG_INFO, "pomodoro module: the pyglet or pygame "
+                   "library are required to play sounds")
             return
 
         try:
-            mixer.music.load(sound_fname)
+            self.__player(sound_fname)
         except Exception:
             return
-
-        mixer.music.play()
 
 
 if __name__ == "__main__":
