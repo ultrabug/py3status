@@ -72,17 +72,13 @@ class Player(object):
         pygame_mixer.music.play()
 
     def _pyglet(self, sound_fname):
-        res_dir, f = os.path.split(
-            sound_fname
-        )
+        res_dir, f = os.path.split(sound_fname)
 
         if res_dir not in pyglet.resource.path:
             pyglet.resource.path = [res_dir]
             pyglet.resource.reindex()
 
-        self._player.queue(
-            pyglet.resource.media(f, streaming=False)
-        )
+        self._player.queue(pyglet.resource.media(f, streaming=False))
         self._player.play()
 
     @property
@@ -91,7 +87,6 @@ class Player(object):
 
     def __call__(self, sound_fname):
         getattr(self, self._default)(os.path.expanduser(sound_fname))
-
 
 # PROGRESS_BAR_ITEMS = u"▁▃▄▅▆▇█"
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
@@ -276,10 +271,9 @@ class Py3status:
         """
         msg = '{} time is up !'.format(self.prefix)
         try:
-            call(
-                ['i3-nagbar', '-m', msg, '-t', level],
-                stdout=open('/dev/null', 'w'),
-                stderr=open('/dev/null', 'w'))
+            call(['i3-nagbar', '-m', msg, '-t', level],
+                 stdout=open('/dev/null', 'w'),
+                 stderr=open('/dev/null', 'w'))
         except:
             pass
 
