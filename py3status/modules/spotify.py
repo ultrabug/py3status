@@ -54,18 +54,13 @@ class Py3status:
 
             metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
                                        'Metadata')
-            album = metadata.get('xesam:album')
-            artist = metadata.get('xesam:artist')[0]
-            microtime = metadata.get('mpris:length')
+            album = metadata['xesam:album']
+            artist = metadata['xesam:artist'][0]
+            microtime = metadata['mpris:length']
             rtime = str(timedelta(microseconds=microtime))
-            title = metadata.get('xesam:title')
+            title = metadata['xesam:title']
 
-            playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
-                                              'PlaybackStatus')
-            if playback_status.strip() == 'Playing':
-                color = self.color_playing or i3s_config['color_good']
-            else:
-                color = self.color_paused or i3s_config['color_degraded']
+            color = self.color_playing or i3s_config['color_good']
 
             return (
                 self.format.format(title=title,
