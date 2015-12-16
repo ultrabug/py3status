@@ -679,6 +679,96 @@ Available modules:
                          @author Anon1234 https://github.com/Anon1234
                          @license BSD
                          ---
+	wwan_status
+                         Display current network and ip address for newer Huwei modems. It
+                         is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
+                         Stick LTE III
+
+                         When using anything but NetworkManger (like wvdial, netctl), you
+                         never get to know which kind of Network (LTE/4G, UMTS/3G, EDGE, ...)
+                         your modem is using at a given point in time. This module querys
+                         the modem using AT commands and displays its response.
+
+                         You can optionally give a network interface name to display the IP
+                         address your mobile service provider has assigned you.
+
+                         If you know AT command-/answer pairs for other modems and would like
+                         to see them in this module, feel free to edit the code or contact me.
+
+                         IMPORTANT/PREREQUISITES:
+                         		1. Many USB modems (including the one tested) do not register as a
+                         		modem but as a storage device. If this applies to your modem, too,
+                         		consider using the usb_modeswith tool which is part of many Linux
+                         		distributions
+
+                         		2. This module needs read/write access to your modem communication
+                         		device file. If your modem is /dev/ttyUSB{n}, then it is
+                         		usually /dev/ttyUSB{n+1}. So in the vast majority of cases it is
+                         		/dev/ttyUSB1, which is the default setting.
+
+
+                         DEPENDENCIES:
+                         		pyserial (mandatory)
+                         		netifaces (for IP address display)
+
+                         Configuration parameters:
+                         		- cache_timeout : how often we refresh this module in seconds
+                         		- prefix        : Default is "WWAN: ".
+                         		- modem         : The device to send commands to. Default is
+                                                /dev/ttyUSB1, which should be fine for most
+                                                USB modems
+                         		- show_ip       : Enable or disable IP address display for the
+                                                configured interface (see below). Default is
+                                                true
+                         		- interface     : The default interface to obtain the IP address
+                                                from. For wvdial this is most likely ppp0
+                                                (default), for netctl it can be different. If
+                                                show_ip is false, then this settings has no
+                                                effect
+                         		- modem_timeout : The timespan betwenn querying the modem and
+                                                collecting the response. 0.2 seconds has turned
+                                                out to work for my E3276. If you do not get any
+                                                output, consider increasing the value in 0.1
+                                                second steps
+                         		- baudrate      : Default is 115200. There should be no need
+                                                to configure this, but feel free to experiment
+
+
+                         i3status.conf example configs:
+
+                         Default:
+
+                         		wwan_status {
+                         				cache_timeout = 5
+                         				prefix = "WWAN: "
+                         				modem1 = "/dev/ttyUSB1"
+                         				baudrate = 115200
+                         				modem_timeout = 0.2
+                         				show_ip = True
+                         				noipstring = "no ip"
+                         				interface = "ppp0"
+                         		}
+
+                         which is equvivalent to
+
+                         		wwan_status {
+                         		}
+
+                         or simply
+
+                         		wwan_status
+
+                         An alternative configuration with longer modem respond time but
+                         without IP address display:
+
+                         		wwan_status {
+                         				modem_timeout = 0.3
+                         				show_ip = False
+                         		}
+
+                         @author Timo Kohorst timo@kohorst-online.com
+                         PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
+                         ---
   xrandr                 Control your screen(s) layout easily.
                          
                          This modules allows you to handle your screens outputs directly from your bar!

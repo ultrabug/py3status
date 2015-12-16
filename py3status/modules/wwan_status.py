@@ -4,33 +4,6 @@ Display current network and ip address for newer Huwei modems. It
 is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III
 
-When using anything but NetworkManger (like wvdial, netctl), you
-never get to know which kind of Network (LTE/4G, UMTS/3G, EDGE, ...)
-your modem is using at a given point in time. This module querys
-the modem using AT commands and displays its response.
-
-You can optionally give a network interface name to display the IP
-address your mobile service provider has assigned you.
-
-If you know AT command-/answer pairs for other modems and would like
-to see them in this module, feel free to edit the code or contact me.
-
-IMPORTANT/PREREQUISITES:
-    1. Many USB modems (including the one tested) do not register as a
-    modem but as a storage device. If this applies to your modem, too,
-    consider using the usb_modeswith tool which is part of many Linux
-    distributions
-
-    2. This module needs read/write access to your modem communication
-    device file. If your modem is /dev/ttyUSB{n}, then it is
-    usually /dev/ttyUSB{n+1}. So in the vast majority of cases it is
-    /dev/ttyUSB1, which is the default setting.
-
-
-DEPENDENCIES:
-    pyserial (mandatory)
-    netifaces (for IP address display)
-
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds
     - prefix        : Default is "WWAN: ".
@@ -52,39 +25,6 @@ Configuration parameters:
                       second steps
     - baudrate      : Default is 115200. There should be no need
                       to configure this, but feel free to experiment
-
-
-i3status.conf example configs:
-
-Default:
-
-    wwan_status {
-        cache_timeout = 5
-        prefix = "WWAN: "
-        modem1 = "/dev/ttyUSB1"
-        baudrate = 115200
-        modem_timeout = 0.2
-        show_ip = True
-        noipstring = "no ip"
-        interface = "ppp0"
-    }
-
-which is equvivalent to
-
-    wwan_status {
-    }
-
-or simply
-
-    wwan_status
-
-An alternative configuration with longer modem respond time but
-without IP address display:
-
-    wwan_status {
-        modem_timeout = 0.3
-        show_ip = False
-    }
 
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
