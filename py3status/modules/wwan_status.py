@@ -112,6 +112,10 @@ class Py3status:
                         response['color'] = i3s_config['color_degraded']
                     response['full_text'] = self.prefix + "(" + netmode + ") " + ip_addr
                     return response
+                elif line.startswith("COMMAND NOT SUPPORT"):
+                    response['full_text'] = self.prefix + "unsupported modem"
+                    response['color'] = i3s_config['color_bad']
+
         else:
             print(self.modem + " not found")
             response['full_text'] = self.prefix + "down"
