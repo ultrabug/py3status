@@ -754,10 +754,6 @@ Available modules:
                          		wwan_status {
                          		}
 
-                         or simply
-
-                         		wwan_status
-
                          An alternative configuration with longer modem respond time but
                          without IP address display:
 
