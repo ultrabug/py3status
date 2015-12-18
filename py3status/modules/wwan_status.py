@@ -49,24 +49,24 @@ class Py3status:
 
     def wwan_status(self, i3s_output_list, i3s_config):
 
-        query = "AT^SYSINFOEX" 
-        target_line = "^SYSINFOEX" 
+        query = "AT^SYSINFOEX"
+        target_line = "^SYSINFOEX"
         noipstring = "no ip"
 
         response = {}
         # Check if path exists and is a character device
-        if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(self.modem).st_mode):
+        if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(
+                self.modem).st_mode):
             print("Found modem " + self.modem)
             try:
-                ser = serial.Serial (
-                    port = self.modem,
-                    baudrate = self.baudrate,
+                ser = serial.Serial(
+                    port=self.modem,
+                    baudrate=self.baudrate,
                     # Values below work for my modem. Not sure if
                     # they neccessarily work for all modems
-                    parity = serial.PARITY_ODD,
-                    stopbits = serial.STOPBITS_ONE,
-                    bytesize = serial.EIGHTBITS
-                )
+                    parity=serial.PARITY_ODD,
+                    stopbits=serial.STOPBITS_ONE,
+                    bytesize=serial.EIGHTBITS)
                 if ser.isOpen():
                     ser.close()
                 ser.open()
@@ -85,7 +85,8 @@ class Py3status:
                 PermissionError
                 print("Permission error")
                 response['color'] = i3s_config['color_bad']
-                response['full_text'] = self.prefix + "no access to " + self.modem
+                response[
+                    'full_text'] = self.prefix + "no access to " + self.modem
                 return response
             # Dissect response
             for line in modem_response.decode("utf-8").split('\n'):
@@ -108,11 +109,13 @@ class Py3status:
                             response['color'] = i3s_config['color_degraded']
                     elif netmode == "LTE":
                         response['color'] = i3s_config['color_good']
-                    else: 
+                    else:
                         response['color'] = i3s_config['color_degraded']
-                    response['full_text'] = self.prefix + "(" + netmode + ") " + ip_addr
+                    response[
+                        'full_text'] = self.prefix + "(" + netmode + ") " + ip_addr
                     return response
-                elif line.startswith("COMMAND NOT SUPPORT") or line.startswith("ERROR") :
+                elif line.startswith("COMMAND NOT SUPPORT") or line.startswith(
+                        "ERROR"):
                     response['full_text'] = self.prefix + "unsupported modem"
                     response['color'] = i3s_config['color_bad']
 
