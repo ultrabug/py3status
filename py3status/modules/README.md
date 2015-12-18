@@ -712,7 +712,8 @@ Available modules:
                          		netifaces (for IP address display)
 
                          Configuration parameters:
-                         		- cache_timeout : how often we refresh this module in seconds
+                         		- cache_timeout : How often we refresh this module in seconds.
+                         		                    Default is 5.
                          		- prefix        : Default is "WWAN: ".
                          		- modem         : The device to send commands to. Default is
                                                 /dev/ttyUSB1, which should be fine for most

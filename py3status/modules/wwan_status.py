@@ -5,7 +5,8 @@ is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds
+    - cache_timeout : How often we refresh this module in seconds.
+                      Default is 5.
     - prefix        : Default is "WWAN: ".
     - modem         : The device to send commands to. Default is
                       /dev/ttyUSB1, which should be fine for most
@@ -54,6 +55,7 @@ class Py3status:
         noipstring = "no ip"
 
         response = {}
+        response['cached_until'] = time() + self.cache_timeout
         # Check if path exists and is a character device
         if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(
                 self.modem).st_mode):
