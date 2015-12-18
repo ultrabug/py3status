@@ -708,8 +708,8 @@ Available modules:
 
 
                          DEPENDENCIES:
-                         		pyserial (mandatory)
-                         		netifaces (for IP address display)
+                         		pyserial
+                         		netifaces
 
                          Configuration parameters:
                          		- cache_timeout : How often we refresh this module in seconds.
