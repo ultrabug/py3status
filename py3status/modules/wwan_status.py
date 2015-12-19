@@ -9,27 +9,27 @@ DEPENDENCIES:
     - pyserial
 
 Configuration parameters:
+    - baudrate      : Default is 115200. There should be no need
+                      to configure this, but feel free to experiment
     - cache_timeout : How often we refresh this module in seconds.
                       Default is 5.
-    - prefix        : Default is "WWAN: ".
-    - modem         : The device to send commands to. Default is
-                      /dev/ttyUSB1, which should be fine for most
-                      USB modems
-    - show_ip       : Enable or disable IP address display for the
-                      configured interface (see below). Default is
-                      true
     - interface     : The default interface to obtain the IP address
                       from. For wvdial this is most likely ppp0
                       (default), for netctl it can be different. If
                       show_ip is false, then this settings has no
                       effect
+    - modem         : The device to send commands to. Default is
     - modem_timeout : The timespan betwenn querying the modem and
                       collecting the response. 0.2 seconds has turned
                       out to work for my E3276. If you do not get any
                       output, consider increasing the value in 0.1
                       second steps
-    - baudrate      : Default is 115200. There should be no need
-                      to configure this, but feel free to experiment
+                      /dev/ttyUSB1, which should be fine for most
+                      USB modems
+    - prefix        : Default is "WWAN: ".
+    - show_ip       : Enable or disable IP address display for the
+                      configured interface (see below). Default is
+                      true
 
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
@@ -44,12 +44,12 @@ from time import time, sleep
 
 
 class Py3status:
+    baudrate = 115200
     cache_timeout = 5
     interface = "ppp0"
-    prefix = "WWAN: "
     modem = "/dev/ttyUSB1"
-    baudrate = 115200
     modem_timeout = 0.2
+    prefix = "WWAN: "
     show_ip = True
 
     def wwan_status(self, i3s_output_list, i3s_config):

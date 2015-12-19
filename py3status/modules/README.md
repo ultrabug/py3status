@@ -712,27 +712,27 @@ Available modules:
                          		- pyserial
 
                          Configuration parameters:
+                         		- baudrate      : Default is 115200. There should be no need
+                                                to configure this, but feel free to experiment
                          		- cache_timeout : How often we refresh this module in seconds.
                          		                    Default is 5.
-                         		- prefix        : Default is "WWAN: ".
-                         		- modem         : The device to send commands to. Default is
-                                                /dev/ttyUSB1, which should be fine for most
-                                                USB modems
-                         		- show_ip       : Enable or disable IP address display for the
-                                                configured interface (see below). Default is
-                                                true
                          		- interface     : The default interface to obtain the IP address
                                                 from. For wvdial this is most likely ppp0
                                                 (default), for netctl it can be different. If
                                                 show_ip is false, then this settings has no
                                                 effect
+                         		- modem         : The device to send commands to. Default is
+                                                /dev/ttyUSB1, which should be fine for most
+                                                USB modems
                          		- modem_timeout : The timespan betwenn querying the modem and
                                                 collecting the response. 0.2 seconds has turned
                                                 out to work for my E3276. If you do not get any
                                                 output, consider increasing the value in 0.1
                                                 second steps
-                         		- baudrate      : Default is 115200. There should be no need
-                                                to configure this, but feel free to experiment
+                         		- prefix        : Default is "WWAN: ".
+                         		- show_ip       : Enable or disable IP address display for the
+                                                configured interface (see below). Default is
+                                                true
 
 
                          i3status.conf example configs:
@@ -740,14 +740,13 @@ Available modules:
                          Default:
 
                          		wwan_status {
-                         				cache_timeout = 5
-                         				prefix = "WWAN: "
-                         				modem1 = "/dev/ttyUSB1"
                          				baudrate = 115200
-                         				modem_timeout = 0.2
-                         				show_ip = True
-                         				noipstring = "no ip"
+                         				cache_timeout = 5
                          				interface = "ppp0"
+                         				modem1 = "/dev/ttyUSB1"
+                         				modem_timeout = 0.2
+                         				prefix = "WWAN: "
+                         				show_ip = True
                          		}
 
                          which is equvivalent to
