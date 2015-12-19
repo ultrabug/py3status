@@ -4,6 +4,10 @@ Display current network and ip address for newer Huwei modems. It
 is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III
 
+DEPENDENCIES:
+    - netifaces
+    - pyserial
+
 Configuration parameters:
     - cache_timeout : How often we refresh this module in seconds.
                       Default is 5.
