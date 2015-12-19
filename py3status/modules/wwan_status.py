@@ -117,8 +117,7 @@ class Py3status:
                         response['color'] = i3s_config['color_good']
                     else:
                         response['color'] = i3s_config['color_degraded']
-                    response[
-                        'full_text'] = self.prefix + "(" + netmode + ")"
+                    response['full_text'] = self.prefix + "(" + netmode + ")"
                     if self.show_ip:
                         response['full_text'] += " " + ip_addr
                     return response
