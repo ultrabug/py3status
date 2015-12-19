@@ -118,7 +118,9 @@ class Py3status:
                     else:
                         response['color'] = i3s_config['color_degraded']
                     response[
-                        'full_text'] = self.prefix + "(" + netmode + ") " + ip_addr
+                        'full_text'] = self.prefix + "(" + netmode + ")"
+                    if self.show_ip:
+                        response['full_text'] += " " + ip_addr
                     return response
                 elif line.startswith("COMMAND NOT SUPPORT") or line.startswith(
                         "ERROR"):
