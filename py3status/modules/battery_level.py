@@ -29,6 +29,8 @@ Configuration parameters:
       default is False
     - notification : show current battery state as notification on click
       default is False
+    - notify_low_level : display notification when battery is running low.
+      default is False
 
 Format of status string placeholders:
     {ascii_bar} - a string of ascii characters representing the battery level,
@@ -84,6 +86,7 @@ class Py3status:
     format = FORMAT
     hide_when_full = False
     notification = False
+    notify_low_level = False
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = None
@@ -176,19 +179,36 @@ class Py3status:
     def _set_bar_color(self):
         if self.charging:
             self.response['color'] = self.color_charging
+            battery_status = 'charging'
         elif self.percent_charged < 10:
             self.response['color'
                           ] = self.color_bad or self.i3s_config['color_bad']
+            battery_status = 'bad'
+            if self.notify_low_level and self.last_known_status != battery_status:
+                self._notify('Battery level is critically low ({}%)', 'critical')
         elif self.percent_charged < 30:
             self.response['color'] = self.color_degraded or self.i3s_config[
                 'color_degraded'
             ]
+            battery_status = 'degraded'
+            if self.notify_low_level and self.last_known_status != battery_status:
+                self._notify('Battery level is running low ({}%)', 'normal')
         elif self.percent_charged == 100:
             self.response['color'
                           ] = self.color_good or self.i3s_config['color_good']
+            battery_status = 'full'
+        else:
+            battery_status = 'good'
+        self.last_known_status = battery_status
 
     def _set_cache_timeout(self):
         self.response['cached_until'] = time() + self.cache_timeout
+
+    def _notify(self, text, urgency):
+        subprocess.call(
+            [ 'notify-send', text.format(self.percent_charged), '-u', urgency ],
+            stdout=open('/dev/null', 'w'),
+            stderr=open('/dev/null', 'w'))
 
 
 if __name__ == "__main__":
