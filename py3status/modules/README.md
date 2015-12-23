@@ -777,6 +777,7 @@ Available modules:
 
                          @author Timo Kohorst timo@kohorst-online.com
                          PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
+                         @license GPLv3
                          ---
   xrandr                 Control your screen(s) layout easily.
                          
