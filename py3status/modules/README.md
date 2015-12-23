@@ -698,7 +698,7 @@ Available modules:
                          IMPORTANT/PREREQUISITES:
                          		1. Many USB modems (including the one tested) do not register as a
                          		modem but as a storage device. If this applies to your modem, too,
-                         		consider using the usb_modeswith tool which is part of many Linux
+                         		consider using the usb_modeswitch tool which is part of many Linux
                          		distributions
 
                          		2. This module needs read/write access to your modem communication
@@ -712,55 +712,68 @@ Available modules:
                          		- pyserial
 
                          Configuration parameters:
-                         		- baudrate      : Default is 115200. There should be no need
-                                                to configure this, but feel free to experiment
-                         		- cache_timeout : How often we refresh this module in seconds.
-                         		                    Default is 5.
-                         		- interface     : The default interface to obtain the IP address
-                                                from. For wvdial this is most likely ppp0
-                                                (default), for netctl it can be different. If
-                                                show_ip is false, then this settings has no
-                                                effect
-                         		- modem         : The device to send commands to. Default is
-                                                /dev/ttyUSB1, which should be fine for most
-                                                USB modems
-                         		- modem_timeout : The timespan betwenn querying the modem and
-                                                collecting the response. 0.2 seconds has turned
-                                                out to work for my E3276. If you do not get any
-                                                output, consider increasing the value in 0.1
-                                                second steps
-                         		- prefix        : Default is "WWAN: ".
-                         		- show_ip       : Enable or disable IP address display for the
-                                                configured interface (see below). Default is
-                                                true
-
-
+                         		- baudrate              : There should be no need to configure this, but
+                                                      feel free to experiment.
+                                                      Default is 115200.
+                         		- cache_timeout         : How often we refresh this module in seconds.
+                                                      Default is 5.
+                         		- consider_3G_degraded  : If set to True, only 4G-networks will be
+                                                      considered 'good'; 3G connections are shown
+                                                      as 'degraded', which is yellow by default. Mostly
+                                                      useful if you want to keep track of where there
+                                                      is a 4G connection.
+                                                      Default is False.
+                         		- format_down           : What to display when the modem is not plugged in
+                                                      Default is: 'WWAN: down'
+                         		- format_error          : What to display when modem can't be accessed.
+                                                      Default is 'WWAN: {error}'
+                         		- format_no_service     : What to display when the modem does not have a
+                                                      network connection. This allows to omit the then
+                                                      meaningless network generation. Therefore the
+                                                      default is 'WWAN: {status} {ip}'
+                         		- format_up             : What to display upon regular connection
+                                                      Default is 'WWAN: {status} ({netgen}) {ip}'
+                         		- interface             : The default interface to obtain the IP address
+                                                      from. For wvdial this is most likely ppp0
+                                                      (default), for netctl it can be different. If
+                                                      show_ip is false, then this settings has no
+                                                      effect
+                         		- modem                 : The device to send commands to.
+                                                      Default is /dev/ttyUSB1
+                         		- modem_timeout         : The timespan betwenn querying the modem and
+                                                      collecting the response.
+                                                      Default is 0.4 (which should be sufficient)
+                        
                          i3status.conf example configs:
 
                          Default:
 
-                         		wwan_status {
-                         				baudrate = 115200
-                         				cache_timeout = 5
-                         				interface = "ppp0"
-                         				modem1 = "/dev/ttyUSB1"
-                         				modem_timeout = 0.2
-                         				prefix = "WWAN: "
-                         				show_ip = True
-                         		}
+                            wwan_status {
+                                baudrate = 115200
+                                cache_timeout = 5
+                                consider_3G_degraded = False
+                                format_down = 'WWAN: down'
+                                format_error = 'WWAN: {error}'
+                                format_no_service = 'WWAN: {status} {ip}'
+                                format_up = 'WWAN: {status} ({netgen}) {ip}'
+                                interface = "ppp0"
+                                modem1 = "/dev/ttyUSB1"
+                                modem_timeout = 0.4
+                            }
 
                          which is equvivalent to
 
-                         		wwan_status {
-                         		}
+                            wwan_status {
+                            }
 
-                         An alternative configuration with longer modem respond time but
-                         without IP address display:
+                         An alternative configuration with in which only 4G is show in 'good'
+                         color and IP address display is not desired:
 
-                         		wwan_status {
-                         				modem_timeout = 0.3
-                         				show_ip = False
-                         		}
+                            wwan_status {
+                                consider_3G_degraded = False
+                                format_no_service = 'WWAN: {status}'
+                                format_up = 'WWAN: {status} ({netgen})'
+                            }
 
                          @author Timo Kohorst timo@kohorst-online.com
                          PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
