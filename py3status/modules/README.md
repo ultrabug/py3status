@@ -680,8 +680,9 @@ Available modules:
                          @license BSD
                          ---
 	wwan_status
-                         Display current network and ip address for newer Huwei modems. It
-                         is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
+                         Display current network and ip address for newer Huwei modems.
+                         
+                         It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
                          Stick LTE III
 
                          When using anything but NetworkManger (like wvdial, netctl), you
