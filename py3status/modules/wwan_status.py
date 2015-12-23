@@ -38,12 +38,8 @@ Configuration parameters:
                               effect
     - modem                 : The device to send commands to. Default is
     - modem_timeout         : The timespan betwenn querying the modem and
-                              collecting the response. 0.2 seconds has turned
-                              out to work for my E3276. If you do not get any
-                              output, consider increasing the value in 0.1
-                              second steps
-                              /dev/ttyUSB1, which should be fine for most
-                              USB modems
+                              collecting the response.
+                              Default is 0.4 (which should be sufficient)
 
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
@@ -67,7 +63,7 @@ class Py3status:
     format_up = 'WWAN: ({status}/{netgen}) {ip}'
     interface = "ppp0"
     modem = "/dev/ttyUSB1"
-    modem_timeout = 0.2
+    modem_timeout = 0.4
 
     def wwan_status(self, i3s_output_list, i3s_config):
 
