@@ -1,35 +1,49 @@
 # -*- coding: utf-8 -*-
 """
-Display current network and ip address for newer Huwei modems. It
-is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
-Stick LTE III
+Display current network and ip address for newer Huwei modems.
+
+It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
+Stick LTE III but may work on other devices, too.
 
 DEPENDENCIES:
     - netifaces
     - pyserial
 
 Configuration parameters:
-    - baudrate      : Default is 115200. There should be no need
-                      to configure this, but feel free to experiment
-    - cache_timeout : How often we refresh this module in seconds.
-                      Default is 5.
-    - interface     : The default interface to obtain the IP address
-                      from. For wvdial this is most likely ppp0
-                      (default), for netctl it can be different. If
-                      show_ip is false, then this settings has no
-                      effect
-    - modem         : The device to send commands to. Default is
-    - modem_timeout : The timespan betwenn querying the modem and
-                      collecting the response. 0.2 seconds has turned
-                      out to work for my E3276. If you do not get any
-                      output, consider increasing the value in 0.1
-                      second steps
-                      /dev/ttyUSB1, which should be fine for most
-                      USB modems
-    - prefix        : Default is "WWAN: ".
-    - show_ip       : Enable or disable IP address display for the
-                      configured interface (see below). Default is
-                      true
+    - baudrate              : There should be no need to configure this, but
+                              feel free to experiment.
+                              Default is 115200.
+    - cache_timeout         : How often we refresh this module in seconds.
+                              Default is 5.
+    - consider_3G_degraded  : If set to True, only 4G-networks will be
+                              considered 'good'; 3G connections are shown
+                              as 'degraded', which is yellow by default. Mostly
+                              useful if you want to keep track of where there
+                              is a 4G connection.
+                              Default is False.
+    - format_down           : What to display when the modem is not plugged in
+                              Default is: 'WWAN: down'
+    - format_error          : What to display when modem can't be accessed.
+                              Default is 'WWAN: {error}'
+    - format_no_service     : What to display when the modem does not have a
+                              network connection. This allows to omit the then
+                              meaningless network generation. Therefore the
+                              default is 'WWAN: ({status}) {ip}'
+    - format_up             : What to display upon regular connection
+                              Default is 'WWAN: ({status}/{netgen}) {ip}'
+    - interface             : The default interface to obtain the IP address
+                              from. For wvdial this is most likely ppp0
+                              (default), for netctl it can be different. If
+                              show_ip is false, then this settings has no
+                              effect
+    - modem                 : The device to send commands to. Default is
+    - modem_timeout         : The timespan betwenn querying the modem and
+                              collecting the response. 0.2 seconds has turned
+                              out to work for my E3276. If you do not get any
+                              output, consider increasing the value in 0.1
+                              second steps
+                              /dev/ttyUSB1, which should be fine for most
+                              USB modems
 
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
@@ -46,20 +60,29 @@ from time import time, sleep
 class Py3status:
     baudrate = 115200
     cache_timeout = 5
+    consider_3G_degraded = False
+    format_down = 'WWAN: down'
+    format_error = 'WWAN: {error}'
+    format_no_service = 'WWAN: ({status}) {ip}'
+    format_up = 'WWAN: ({status}/{netgen}) {ip}'
     interface = "ppp0"
     modem = "/dev/ttyUSB1"
     modem_timeout = 0.2
-    prefix = "WWAN: "
-    show_ip = True
 
     def wwan_status(self, i3s_output_list, i3s_config):
 
         query = "AT^SYSINFOEX"
         target_line = "^SYSINFOEX"
-        noipstring = "no ip"
+
+        # Set up the highest network generation to display as degraded
+        if self.consider_3G_degraded:
+            degraded_netgen = 3
+        else:
+            degraded_netgen = 2
 
         response = {}
         response['cached_until'] = time() + self.cache_timeout
+
         # Check if path exists and is a character device
         if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(
                 self.modem).st_mode):
@@ -90,47 +113,59 @@ class Py3status:
                 # 2) if/when you unplug the device
                 PermissionError
                 print("Permission error")
+                response['full_text'] = self.format_error.format(
+                    error="no access to " + self.modem)
                 response['color'] = i3s_config['color_bad']
-                response[
-                    'full_text'] = self.prefix + "no access to " + self.modem
                 return response
             # Dissect response
             for line in modem_response.decode("utf-8").split('\n'):
                 print(line)
                 if line.startswith(target_line):
-                    netmode = line.split(',')[-1].rstrip()[1:-1]
-                    # Query IP address if desired
-                    if self.show_ip:
-                        ip_addr = noipstring
-                        if self.interface in ni.interfaces():
-                            addresses = ni.ifaddresses(self.interface)
-                            if ni.AF_INET in addresses:
-                                ip_addr = addresses[ni.AF_INET][0]['addr']
-
+                    # Determine IP once the modem responds
+                    ip = self.get_ip(self.interface)
+                    if not ip:
+                        ip = "no ip"
+                    modem_answer = line.split(',')
+                    netgen = len(modem_answer[-2]) + 1
+                    netmode = modem_answer[-1].rstrip()[1:-1]
                     if netmode == "NO SERVICE":
+                        response['full_text'] = self.format_no_service.format(
+                            status=netmode,
+                            ip=ip)
                         response['color'] = i3s_config['color_bad']
-                        if ip_addr != noipstring:
-                            # Merely downgrade color to degraded if we still have an IP
-                            # address, but there is no service
-                            response['color'] = i3s_config['color_degraded']
-                    elif netmode == "LTE":
-                        response['color'] = i3s_config['color_good']
                     else:
-                        response['color'] = i3s_config['color_degraded']
-                    response['full_text'] = self.prefix + "(" + netmode + ")"
-                    if self.show_ip:
-                        response['full_text'] += " " + ip_addr
-                    return response
+                        response['full_text'] = self.format_up.format(
+                            status=netmode,
+                            netgen=str(netgen) + "G",
+                            ip=ip)
+                        if netgen <= degraded_netgen:
+                            response['color'] = i3s_config['color_degraded']
+                        else:
+                            response['color'] = i3s_config['color_good']
                 elif line.startswith("COMMAND NOT SUPPORT") or line.startswith(
                         "ERROR"):
-                    response['full_text'] = self.prefix + "unsupported modem"
                     response['color'] = i3s_config['color_bad']
-
+                    response['full_text'] = self.format_error.format(
+                        error="unsupported modem")
+                else:
+                    # Outputs can be multiline, so just try the next one
+                    pass
         else:
             print(self.modem + " not found")
-            response['full_text'] = self.prefix + "down"
             response['color'] = i3s_config['color_bad']
+            response['full_text'] = self.format_down
         return response
+
+    def get_ip(self, interface):
+        """
+        Returns the interface's IPv4 address if device exists and has a valid
+        ip address. Otherwise, returns an empty string
+        """
+        if interface in ni.interfaces():
+            addresses = ni.ifaddresses(interface)
+            if ni.AF_INET in addresses:
+                return addresses[ni.AF_INET][0]['addr']
+        return ""
 
 
 if __name__ == "__main__":
