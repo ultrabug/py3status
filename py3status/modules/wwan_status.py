@@ -59,8 +59,8 @@ class Py3status:
     consider_3G_degraded = False
     format_down = 'WWAN: down'
     format_error = 'WWAN: {error}'
-    format_no_service = 'WWAN: ({status}) {ip}'
-    format_up = 'WWAN: ({status}/{netgen}) {ip}'
+    format_no_service = 'WWAN: {status} {ip}'
+    format_up = 'WWAN: {status} ({netgen}) {ip}'
     interface = "ppp0"
     modem = "/dev/ttyUSB1"
     modem_timeout = 0.4
