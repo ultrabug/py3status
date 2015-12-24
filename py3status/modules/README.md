@@ -768,7 +768,7 @@ Available modules:
                             wwan_status {
                             }
 
-                         An alternative configuration with in which only 4G is show in 'good'
+                         An alternative configuration in which only 4G networks are displayed in 'good'
                          color and IP address display is not desired:
 
                             wwan_status {
