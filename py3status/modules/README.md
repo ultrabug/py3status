@@ -735,10 +735,9 @@ Available modules:
                          		- format_up             : What to display upon regular connection
                                                       Default is 'WWAN: {status} ({netgen}) {ip}'
                          		- interface             : The default interface to obtain the IP address
-                                                      from. For wvdial this is most likely ppp0
-                                                      (default), for netctl it can be different. If
-                                                      show_ip is false, then this settings has no
-                                                      effect
+                                                      from. For wvdial this is most likely ppp0.
+                                                      For netctl it can be different.
+                                                      Default is: ppp0
                          		- modem                 : The device to send commands to.
                                                       Default is /dev/ttyUSB1
                          		- modem_timeout         : The timespan betwenn querying the modem and
