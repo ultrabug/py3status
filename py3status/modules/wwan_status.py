@@ -119,7 +119,7 @@ class Py3status:
                 print(line)
                 if line.startswith(target_line):
                     # Determine IP once the modem responds
-                    ip = self.get_ip(self.interface)
+                    ip = self._get_ip(self.interface)
                     if not ip:
                         ip = "no ip"
                     modem_answer = line.split(',')
@@ -153,7 +153,7 @@ class Py3status:
             response['full_text'] = self.format_down
         return response
 
-    def get_ip(self, interface):
+    def _get_ip(self, interface):
         """
         Returns the interface's IPv4 address if device exists and has a valid
         ip address. Otherwise, returns an empty string
