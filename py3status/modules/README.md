@@ -679,7 +679,7 @@ Available modules:
                          @author Anon1234 https://github.com/Anon1234
                          @license BSD
                          ---
-	wwan_status
+  wwan_status
                          Display current network and ip address for newer Huwei modems.
                          
                          It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
@@ -697,15 +697,17 @@ Available modules:
                          to see them in this module, feel free to edit the code or contact me.
 
                          IMPORTANT/PREREQUISITES:
-                         		1. Many USB modems (including the one tested) do not register as a
-                         		modem but as a storage device. If this applies to your modem, too,
-                         		consider using the usb_modeswitch tool which is part of many Linux
-                         		distributions
+                            1. Many USB modems (including the one tested) do not register as a
+                            modem but as a storage device. If this applies to your modem, too,
+                            consider using the usb_modeswitch tool which is part of many Linux
+                            distributions
 
-                         		2. This module needs read/write access to your modem communication
-                         		device file. If your modem is /dev/ttyUSB{n}, then it is
-                         		usually /dev/ttyUSB{n+1}. So in the vast majority of cases it is
-                         		/dev/ttyUSB1, which is the default setting.
+                            2. This module needs read/write access to your modem communication
+                            device file. If your modem is /dev/ttyUSB{n}, then it is
+                            usually /dev/ttyUSB{n+1}. So in the vast majority of cases it is
+                            /dev/ttyUSB1, which is the default setting. If you keep getting a
+                            "no access to /dev/..." message, checking permissions is the way to
+                            go
 
 
                          DEPENDENCIES:
