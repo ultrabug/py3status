@@ -687,7 +687,7 @@ Available modules:
 
                          When using anything but NetworkManger (like wvdial, netctl), you
                          never get to know which kind of Network (LTE/4G, UMTS/3G, EDGE, ...)
-                         your modem is using at a given point in time. This module querys
+                         your modem is using at a given point in time. This module queries
                          the modem using AT commands and displays its response.
 
                          You can optionally give a network interface name to display the IP
