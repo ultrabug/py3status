@@ -405,12 +405,15 @@ Available modules:
                              - format: define custom display format. See placeholders below
                              - max_breaks: maximum number of breaks
                              - num_progress_bars: number of progress bars
-                             - sound_break_end: break end sound (file path)
-                             - sound_pomodoro_end: pomodoro end sound (file path)
-                             - sound_pomodoro_start: pomodoro start sound (file path)
-                             - timer_break: normal break time (seconds) (requires pygame)
-                             - timer_long_break: long break time (seconds) (requires pygame)
-                             - timer_pomodoro: pomodoro time (seconds) (requires pygame)
+                             - sound_break_end: break end sound (file path) (requires pyglet
+                               or pygame)
+                             - sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet
+                               or pygame)
+                             - sound_pomodoro_start: pomodoro start sound (file path) (requires pyglet
+                               od pygame)
+                             - timer_break: normal break time (seconds)
+                             - timer_long_break: long break time (seconds)
+                             - timer_pomodoro: pomodoro time (seconds)
                          
                          Format of status string placeholders:
                              {bar} - display time in bars
