@@ -479,6 +479,7 @@ Available modules:
 
                          Configuration parameters:
                              - cache_timeout : how often we refresh this module in seconds (10s default)
+                             - format: use {state} as a placeholder for the current selinux state
 
                          Requires:
                              - libselinux-python
