@@ -55,6 +55,8 @@ Available modules:
                                default is False
                              - notification : show current battery state as notification on click
                                default is False
+                             - notify_low_level : display notification when battery is running low.
+                               default is False
                          
                          Format of status string placeholders:
                              {ascii_bar} - a string of ascii characters representing the battery level,
