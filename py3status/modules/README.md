@@ -485,7 +485,7 @@ Available modules:
                              - libselinux-pyton3 (optional for python3 support)
 
                          @author bstinsonmhk
-                         @license MIT
+                         @license BSD 
                          ---
   screenshot             Take a screenshot and optionally upload it to your online server.
                          

@@ -13,7 +13,7 @@ Requires:
     - libselinux-python3 (optional for python3 support)
 
 @author bstinsonmhk
-@license MIT
+@license BSD
 """
 
 import selinux
