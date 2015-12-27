@@ -776,6 +776,8 @@ Available modules:
                          Dynamic configuration parameters:
                              - <OUTPUT>_pos: apply the given position to the OUTPUT
                                  Example: DP1_pos = "-2560x0"
+                                 Example: DP1_pos = "above eDP1"
+                                 Example: DP1_pos = "below eDP1"
                                  Example: DP1_pos = "left-of LVDS1"
                                  Example: DP1_pos = "right-of eDP1"
                          
