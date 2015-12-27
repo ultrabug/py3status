@@ -25,6 +25,7 @@ class Py3status:
     """
 
     cache_timeout = 10
+    format = 'selinux: {state}'
 
     def __init__(self):
         pass
@@ -50,7 +51,7 @@ class Py3status:
 
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': 'selinux: {0}'.format(selinuxstring),
+            'full_text': self.format.format(state=selinuxstring),
             'color': i3s_config[color]
         }
 
