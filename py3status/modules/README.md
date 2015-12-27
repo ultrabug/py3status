@@ -687,11 +687,15 @@ Available modules:
                          Provides instant title update only when it required.
                          
                          Configuration parameters:
-                             - format : format of the title, default: "{title}".
-                             - empty_title : string that will be shown instead of the title
-                                             when the title is hidden, default: 500 spaces.
                              - always_show : do not hide the title when it can be already
                                              visible (e.g. in tabbed layout), default: False.
+                             - empty_title : string that will be shown instead of the title when
+                                             the title is hidden, default: "" (empty string).
+                             - format : format of the title, default: "{title}".
+                             - max_width : maximum width of block (in symbols).
+                                           If the title is longer than `max_width`,
+                                           the title will be truncated to `max_width - 1`
+                                           first symbols with ellipsis appended. Default: 120.
                          
                          Requires:
                              - i3ipc (https://github.com/acrisci/i3ipc-python)
