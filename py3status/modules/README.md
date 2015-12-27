@@ -193,6 +193,21 @@ Available modules:
                          It features thresholds to colorize the output and forces a low timeout to
                          limit the impact of a server connectivity problem on your i3bar freshness.
                          ---
+  hamster                Display current tasks from project Hamster.
+                         
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds (5s default)
+                             - format : see placeholders below
+                         
+                         Format of status string placeholders:
+                             {current} - hamster current
+                         
+                         Requires:
+                             - hamster
+                         
+                         @author Aaron Fields (spirotot [at] gmail.com)
+                         @license BSD
+                         ---
   imap                   Display the unread messages count from your IMAP account.
                          
                          Configuration parameters:
