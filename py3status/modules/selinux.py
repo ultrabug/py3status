@@ -7,7 +7,10 @@ This module displays the current state of selinux on your machine: Enforcing
 
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds (10s default)
-    - format: use {state} as a placeholder for the current selinux state
+    - format : see placeholders below, default is 'selinux: {state}'
+
+Format of status string placeholders:
+    {state} - the current selinux state
 
 Requires:
     - libselinux-python
@@ -24,21 +27,11 @@ from time import time
 class Py3status:
     """
     """
-
+    # available configuration parameters
     cache_timeout = 10
     format = 'selinux: {state}'
 
-    def __init__(self):
-        pass
-
-    def kill(self, i3s_output_list, i3s_config):
-        pass
-
-    def on_click(self, i3s_output_list, i3s_config):
-        pass
-
     def selinux_status(self, i3s_output_list, i3s_config):
-
         try:
             if selinux.security_getenforce():
                 selinuxstring = 'enforcing'
@@ -58,6 +51,7 @@ class Py3status:
 
         return response
 
+
 if __name__ == '__main__':
     from time import sleep
 
@@ -65,6 +59,7 @@ if __name__ == '__main__':
 
     config = {
         'color_good': '#00FF00',
+        'color_degraded': '#FFFF00',
         'color_bad': '#FF0000',
     }
 
