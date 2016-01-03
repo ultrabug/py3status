@@ -1,3 +1,13 @@
+version 2.8 (2016-01-03)
+* new hamster module for Project Hamster, by Aaron Fields
+* new selinux module, by Brian Stinson
+* new wwan_status module, by Timo Kohorst
+* battery_level module: Notify when battery is running low, by Maxim Baz
+* pomodoro module: add pyglet support for sound notifications, by Mateusz Probachta (Beetleman)
+* pomodoro module: eliminate intrusive log messages, by Alexandre Bonnetain
+* taskwarrior module: fix parsing of taskWarrior's output, by Alexandre Bonnetain
+* xrandr module: added missing "above" and "below" positioning options, by brianecker
+
 version 2.7 (2015-11-11)
 * major performance and click event detection improvements by Daniel Foerster
 * fix poll() calls to convert from seconds, by Daniel Foerster
