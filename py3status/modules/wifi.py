@@ -1,7 +1,7 @@
 """
-Display your wifi essid and IP address.
-This module improves the default wifi module by having two display modes
-that can toggled with a mouse click. This saves space in the status bar.
+Display the current wifi ESSID and IP address.
+It improves on the default i3status wifi module by allowing the user
+to toggle between the ESSID and IP address with a mouse click.
 
 This module is inspired by the "whatismyip" module.
 
@@ -9,8 +9,8 @@ Requires:
     - iwlib (https://pypi.python.org/pypi/iwlib)
 
 Configuration parameters:
-    - mode: default mode to display. Can be '{essid}' or '{ip}'
-    - interface: the wireless interface to query (default wlan0)
+    - mode: default mode to display. Can be 'essid' or 'ip'
+    - interface: the wireless interface to query. (default wlan0)
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
@@ -56,14 +56,16 @@ class Py3status:
         else:
             response['full_text'] = ip
 
-        if(quality < 33):
+        if(quality < 25):
             response['color'] = i3s_config['color_bad']
-            
-        if(quality >= 66):
+        if(quality >= 25 and quality < 50):
+            response['color'] = i3s_config['color_degraded']
+        if(quality >= 50 and quality < 75):
+            response['color'] = i3s_config['color_normal']
+        if(quality >= 75):
             response['color'] = i3s_config['color_good']
 
         return response
-
 
 if __name__ == "__main__":
     """
