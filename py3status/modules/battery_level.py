@@ -155,6 +155,13 @@ class Py3status:
         self.percent_charged = int(findall("(?<= )(\d+)(?=%)", battery[0])[0])
         self.charging = "Charging" in battery[0]
 
+        # ACPI only shows time remaining if battery is discharging or charging
+        try:
+            self.time_remaining = findall("(?<=, )(\d+:\d+:\d+)(?= remaining)", battery[0])[0]
+        except IndexError:
+            self.time_remaining = None
+
+
     def _update_ascii_bar(self):
         self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
         if self.charging:
