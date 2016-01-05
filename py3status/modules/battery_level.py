@@ -60,6 +60,7 @@ Requires:
 
 from __future__ import division  # python2 compatibility
 from time import time
+from re import findall
 
 import math
 import subprocess
@@ -76,6 +77,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    battery_id = 0
     blocks = BLOCKS
     cache_timeout = 30
     charging_character = CHARGING_CHARACTER
@@ -130,15 +132,28 @@ class Py3status:
         self.format = self.format.replace('{}', '{percent}')
 
     def _refresh_battery_info(self):
-        # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
-        acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
-        acpi_unicode = acpi_raw.decode("UTF-8")
+        # Example acpi -bi raw output:
+        #      "Battery 0: Discharging, 94%, 09:23:28 remaining
+        #       Battery 0: design capacity 5703 mAh, last full capacity 5283 mAh = 92%
+        #       Battery 1: Unknown, 98%
+        #       Battery 1: design capacity 1880 mAh, last full capacity 1370 mAh = 72%"
+        acpi_raw = subprocess.check_output(["acpi", "-b", "-i"], stderr=subprocess.STDOUT)
 
-        #  Example list: ['Battery', '0:', 'Discharging', '43%', '00:59:20', 'remaining']
-        self.acpi_list = acpi_unicode.split(' ')
+        #  Example list:
+        #       ['Battery 0: Charging, 96%, 00:20:40 until charged',
+        #       'Battery 0: design capacity 5566 mAh, last full capacity 5156 mAh = 92%',
+        #       'Battery 1: Unknown, 98%',
+        #       'Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%',
+        #       '']
+        acpi_list = acpi_raw.decode("UTF-8").split('\n')
 
-        self.charging = self.acpi_list[2][:8] == "Charging"
-        self.percent_charged = int(self.acpi_list[3][:-2])
+        # Separate the output because each pair of lines corresponds to a single battery.
+        # Now the list index will correspond to the index of the battery we want to look at
+        acpi_list = [acpi_list[i:i+2] for i in range(0,len(acpi_list)-1,2)]
+
+        battery = acpi_list[self.battery_id]
+        self.percent_charged = int(findall("(?<= )(\d+)(?=%)", battery[0])[0])
+        self.charging = "Charging" in battery[0]
 
     def _update_ascii_bar(self):
         self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
