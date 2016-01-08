@@ -1,5 +1,6 @@
 """
 Display the current wifi ESSID and IP address.
+
 It improves on the default i3status wifi module by allowing the user
 to toggle between the ESSID and IP address with a mouse click.
 
@@ -25,10 +26,9 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 30
+    cache_timeout = 10
     mode = 'essid'
-    negative_cache_timeout = 2
-    timeout = 5
+    interface = 'wlan0'
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -39,17 +39,17 @@ class Py3status:
         else:
             self.mode = 'essid'
 
-    def _get_status(self, interface):
-        interface = iwlib.get_iwconfig(interface)
-        quality = interface['stats']['quality']
-        essid = bytes(interface['ESSID']).decode()
+    def _get_status(self):
+        result = iwlib.get_iwconfig(self.interface)
+        quality = result['stats']['quality']
+        essid = bytes(result['ESSID']).decode()
         return (essid, quality, socket.gethostbyname(socket.gethostname()))
 
     def wifi(self, i3s_output_list, i3s_config):
         """
         """
-        (essid, quality, ip) = self._get_status(self.interface)
-        response = {'cached_until': time() + self.negative_cache_timeout}
+        (essid, quality, ip) = self._get_status()
+        response = {'cached_until': time() + self.cache_timeout}
 
         if(self.mode == 'essid'):
             response['full_text'] = essid
@@ -60,8 +60,6 @@ class Py3status:
             response['color'] = i3s_config['color_bad']
         if(quality >= 25 and quality < 50):
             response['color'] = i3s_config['color_degraded']
-        if(quality >= 50 and quality < 75):
-            response['color'] = i3s_config['color_normal']
         if(quality >= 75):
             response['color'] = i3s_config['color_good']
 
@@ -74,7 +72,6 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     config = {
-        'interface': 'wlan0',
         'color_bad': '#FF0000',
         'color_degraded': '#FFFF00',
         'color_good': '#00FF00'
