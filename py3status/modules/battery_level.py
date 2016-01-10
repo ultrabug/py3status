@@ -195,7 +195,7 @@ class Py3status:
         elif self.battery_id == "all":
             total_capacity = sum([battery['capacity'] for battery in battery_list])
 
-            # Average and weigh % charged by the capacities of the batteries so that the value
+            # Average and weigh % charged by the capacities of the batteries so that self.percent_charged
             # properly represents batteries that have different capacities.
             self.percent_charged = int(sum([battery["capacity"]/total_capacity * battery["percent_charged"]
                                             for battery in battery_list]))
@@ -214,13 +214,12 @@ class Py3status:
             # Therefore, ACPI does not provide a time remaining value for the other battery.
             # So the time remaining for the other battery is calculated using the time
             # remaining of the first battery and the capacity values for both batteries.
-            if active_battery and inactive_battery:  # handles systems with one battery
+            if active_battery and inactive_battery:
                 inactive_battery = inactive_battery[0]
-                time_remaining_seconds = self._hms_to_seconds(active_battery["time_remaining"])
 
+                time_remaining_seconds = self._hms_to_seconds(active_battery["time_remaining"])
                 rate_second_per_mah = time_remaining_seconds / (active_battery["capacity"] *
                                                                (active_battery["percent_charged"]/100))
-
                 time_remaining_seconds += inactive_battery["capacity"] * (inactive_battery["percent_charged"]/100) * \
                                           rate_second_per_mah
 
