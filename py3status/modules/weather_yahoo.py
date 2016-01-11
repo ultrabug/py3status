@@ -48,7 +48,7 @@ class Py3status:
     forecast_days = 3
     request_timeout = 10
     units = 'c'
-    today_format = '{icon}{temp}{units} '
+    today_format = '{icon} '
     forecast_format = '{icon} '
     forecast_include_today = False
     icon_sun = '☀'
