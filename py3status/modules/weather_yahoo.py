@@ -14,23 +14,23 @@ Find your woeid using:
 Configuration parameters:
     - cache_timeout : how often to check for new forecasts
     - city_code : city code to use
-    - woeid : use Yahoo woeid (extended location) instead of city_code
     - forecast_days : how many forecast days you want shown
+    - forecast_format : possible placeholders: {icon}, {low}, {high}, {units},
+        {text}
+    - forecast_include_today: show today forecast as well, default false
+    - icon_cloud: cloud icon, default '☁'
+    - icon_default: unknown weather icon, default '?'
+    - icon_rain: rain icon, default '☂'
+    - icon_snow: snow icon, default '☃'
+    - icon_sun: sun icon, default '☀'
     - request_timeout : check timeout
-    - units : Celsius (C) or Fahrenheit (F)
     - today_format : possible placeholders: {icon}, {temp}, {units}, {text}
         example:
             format = "Now: {icon}{temp}°{units} {text}"
         output:
             Now: ☂-4°C Light Rain/Windy
-    - forecast_format : possible placeholders: {icon}, {low}, {high}, {units},
-        {text}
-    - forecast_include_today: show today forecast as well, default false
-    - icon_sun: sun icon, default '☀'
-    - icon_cloud: cloud icon, default '☁'
-    - icon_rain: rain icon, default '☂'
-    - icon_snow: snow icon, default '☃'
-    - icon_default: unknown weather icon, default '?'
+    - units : Celsius (C) or Fahrenheit (F)
+    - woeid : use Yahoo woeid (extended location) instead of city_code
 
 The city_code in this example is for Paris, France => FRXX0076
 """
@@ -44,18 +44,18 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1800
     city_code = 'FRXX0076'
-    woeid = None
     forecast_days = 3
-    request_timeout = 10
-    units = 'c'
-    today_format = '{icon} '
     forecast_format = '{icon} '
     forecast_include_today = False
-    icon_sun = '☀'
     icon_cloud = '☁'
+    icon_default = '?'
     icon_rain = '☂'
     icon_snow = '☃'
-    icon_default = '?'
+    icon_sun = '☀'
+    request_timeout = 10
+    today_format = '{icon} '
+    units = 'c'
+    woeid = None
 
     def _get_forecast(self):
         """
