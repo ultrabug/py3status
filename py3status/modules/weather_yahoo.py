@@ -18,12 +18,12 @@ Configuration parameters:
     - forecast_days : how many forecast days you want shown
     - request_timeout : check timeout
     - units : Celsius (C) or Fahrenheit (F)
-    - today_format : possibple placeholders: {icon}, {temp}, {units}, {text}
+    - today_format : possible placeholders: {icon}, {temp}, {units}, {text}
         example:
             format = "Now: {icon}{temp}°{units} {text}"
         output:
             Now: ☂-4°C Light Rain/Windy
-    - forecast_format : possibple placeholders: {icon}, {low}, {high}, {units},
+    - forecast_format : possible placeholders: {icon}, {low}, {high}, {units},
         {text}
     - forecast_include_today: show today forecast as well, default false
     - icon_sun: sun icon, default '☀'
