@@ -17,12 +17,12 @@ Configuration parameters:
     - woeid : use Yahoo woeid (extended location) instead of city_code
     - forecast_days : how many forecast days you want shown
     - request_timeout : check timeout
-    - units : Celsius (C) of Fahrenheit (F)
+    - units : Celsius (C) or Fahrenheit (F)
     - today_format : possibple placeholders: {icon}, {temp}, {units}, {text}
         example:
-            format = "Now: {icon}{temp}{units}° {text}"
+            format = "Now: {icon}{temp}°{units} {text}"
         output:
-            Now: ☂-4C° Light Rain/Windy
+            Now: ☂-4°C Light Rain/Windy
     - forecast_format : possibple placeholders: {icon}, {low}, {high}, {units},
         {text}
     - forecast_include_today: show today forecast as well, default false
