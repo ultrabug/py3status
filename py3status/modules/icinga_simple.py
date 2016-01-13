@@ -45,7 +45,7 @@ class Py3status:
             'color': self.color,
             'cached_until': time() + self.cache_timeout,
             'full_text': self.format.format(
-                status_name=self.STATUS_NAMES.get(self.status),
+                status_name=self.STATUS_NAMES.get(self.status, "INVALID STATUS"),
                 count=self._query_service_count(self.status)
                 )
         }
