@@ -22,6 +22,12 @@ import requests
 class Py3status:
     """
     """
+    STATUS_NAMES = {
+            0: 'OK',
+            1: 'WARNING',
+            2: 'CRITICAL',
+            3: 'UNKNOWN'
+            }
     # available configuration parameters
     cache_timeout = 60
     base_url = ''
@@ -30,7 +36,7 @@ class Py3status:
     user = ''
     password = ''
     ca = True
-    format = ''
+    format = '{status_name}: {count}'
     color = '#ffffff'
     status = 0
 
@@ -38,7 +44,10 @@ class Py3status:
         response = {
             'color': self.color,
             'cached_until': time() + self.cache_timeout,
-            'full_text': self.format % self._query_service_count(self.status)
+            'full_text': self.format.format(
+                status_name=self.STATUS_NAMES.get(self.status),
+                count=self._query_service_count(self.status)
+                )
         }
         return response
 
