@@ -40,6 +40,8 @@ Configuration parameters:
     - woeid : use Yahoo woeid (extended location) instead of city_code
 
 The city_code in this example is for Paris, France => FRXX0076
+
+@author ultrabug, rail
 """
 
 from time import time
