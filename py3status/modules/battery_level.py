@@ -28,10 +28,10 @@ Configuration parameters:
       default is None
     - format : string that formats the output. See placeholders below.
       default is "{icon}"
-    - format_notif_plugged : format of the notification received when you click
+    - format_notify_charging : format of the notification received when you click
       on the module while your computer is plugged
       default is "In charge ({percent}%)"
-    - format_notif_discharging : format of the notification received when you
+    - format_notify_discharging : format of the notification received when you
       click on the module while your comupter is not plugged
       default is "{time_remaining}"
     - hide_when_full : hide any information when battery is fully charged
@@ -98,8 +98,8 @@ class Py3status:
     color_degraded = None
     color_good = None
     format = FORMAT
-    format_notif_plugged = FORMAT_NOTIF_PLUGGED
-    format_notif_discharging = FORMAT_NOTIF_DISCHARGING
+    format_notify_charging = FORMAT_NOTIF_PLUGGED
+    format_notify_discharging = FORMAT_NOTIF_DISCHARGING
     hide_when_full = False
     notification = False
     notify_low_level = False
@@ -128,9 +128,9 @@ class Py3status:
             return
 
         if self.time_remaining:
-            format = self.format_notif_discharging
+            format = self.format_notify_discharging
         else:
-            format = self.format_notif_plugged
+            format = self.format_notify_charging
 
         message = format.format(ascii_bar=self.ascii_bar, icon=self.icon,
                                 time_remaining=self.time_remaining,
@@ -290,8 +290,8 @@ class Py3status:
     def _update_full_text(self):
         self.full_text = self.format.format(ascii_bar=self.ascii_bar,
                                             icon=self.icon,
-                                            time_remaining=self.time_remaining,
-                                            percent=self.percent_charged)
+                                            percent=self.percent_charged,
+                                            time_remaining=self.time_remaining)
 
     def _build_response(self):
         self.response = {}
