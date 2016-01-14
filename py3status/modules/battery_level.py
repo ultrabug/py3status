@@ -28,6 +28,12 @@ Configuration parameters:
       default is None
     - format : string that formats the output. See placeholders below.
       default is "{icon}"
+    - format_notif_plugged : format of the notification received when you click
+      on the module while your computer is plugged
+      default is "In charge ({percent}%)"
+    - format_notif_discharging : format of the notification received when you
+      click on the module while your comupter is not plugged
+      default is "{time_remaining}"
     - hide_when_full : hide any information when battery is fully charged
       default is False
     - notification : show current battery state as notification on click
@@ -75,6 +81,8 @@ EMPTY_BLOCK_CHARGING = '|'
 EMPTY_BLOCK_DISCHARGING = '⍀'
 FULL_BLOCK = '█'
 FORMAT = "{icon}"
+FORMAT_NOTIF_DISCHARGING = "{time_remaining}"
+FORMAT_NOTIF_PLUGGED = "In charge ({percent}%)"
 
 
 class Py3status:
@@ -90,6 +98,8 @@ class Py3status:
     color_degraded = None
     color_good = None
     format = FORMAT
+    format_notif_plugged = FORMAT_NOTIF_PLUGGED
+    format_notif_discharging = FORMAT_NOTIF_DISCHARGING
     hide_when_full = False
     notification = False
     notify_low_level = False
@@ -112,14 +122,32 @@ class Py3status:
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
-        Display a notification with the remaining charge time.
+        Display a notification following the specified format
         """
-        if self.notification and self.time_remaining:
-            subprocess.call(
-                ['notify-send', '{}'.format(self.time_remaining), '-t',
-                 '4000'],
-                stdout=open('/dev/null', 'w'),
-                stderr=open('/dev/null', 'w'))
+        if not self.notification:
+            return
+
+        if self.time_remaining:
+            format = self.format_notif_discharging
+        else:
+            format = self.format_notif_plugged
+
+        message = format.format(ascii_bar=self.ascii_bar, icon=self.icon,
+                                time_remaining=self.time_remaining,
+                                percent=self.percent_charged)
+
+        if message:
+            self._desktop_notification(message)
+
+    def _desktop_notification(self, message):
+        """
+        Display the given message inside a desktop notification
+        """
+        subprocess.call(
+            ['notify-send', '{}'.format(message), '-t',
+                '4000'],
+            stdout=open('/dev/null', 'w'),
+            stderr=open('/dev/null', 'w'))
 
     def _provide_backwards_compatibility(self):
         # Backwards compatibility for 'mode' parameter
