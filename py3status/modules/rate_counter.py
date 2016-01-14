@@ -66,8 +66,9 @@ class Py3status:
             self.current_time = time.time()
             self.diff_time = time.gmtime(self.current_time - self.start_time)
             cost = (
-                float(self.hour_price) * float(self.diff_time.tm_mday - 1) * 24
-                + float(self.hour_price) * float(self.diff_time.tm_hour) +
+                24 * float(self.hour_price) *
+                float(self.diff_time.tm_mday - 1) +
+                float(self.hour_price) * float(self.diff_time.tm_hour) +
                 float(self.diff_time.tm_min) * float(self.hour_price) / 60 +
                 float(self.diff_time.tm_sec) * float(self.hour_price) / 3600)
             self.full_text = 'Time: %d day %d:%d Cost: %.2f$' % (

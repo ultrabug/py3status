@@ -47,11 +47,9 @@ class Py3status:
 
         transformed = False
         if window and 'name' in window and window['name'] != self.text:
-            self.text = (
-                len(window['name']) > self.max_width
-                and "..." + window['name'][-(self.max_width-3):]
-                or window['name']
-            )
+            self.text = (len(window['name']) > self.max_width and
+                         "..." + window['name'][-(self.max_width-3):] or
+                         window['name'])
             transformed = True
 
         response = {

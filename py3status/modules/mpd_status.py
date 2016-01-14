@@ -185,7 +185,7 @@ class Py3status:
             state = status.get('state')
 
             if ((state == 'pause' and self.hide_when_paused) or
-                (state == 'stop' and self.hide_when_stopped)):
+                    (state == 'stop' and self.hide_when_stopped)):
                 text = ''
 
             else:
@@ -219,7 +219,6 @@ class Py3status:
         else:
             c.disconnect()
 
-
         if len(text) > self.max_width:
             text = text[:-self.max_width - 3] + '...'
 
@@ -239,8 +238,8 @@ class Py3status:
             if state == 'play':
                 response['color'] = self.color_play or i3s_config['color_good']
             elif state == 'pause':
-                response['color'] = (self.color_pause
-                                     or i3s_config['color_degraded'])
+                response['color'] = (self.color_pause or
+                                     i3s_config['color_degraded'])
             elif state == 'stop':
                 response['color'] = self.color_stop or i3s_config['color_bad']
 

@@ -52,7 +52,7 @@ class Py3status:
         self.full_text = '%s%s' % (file_name, '.jpg')
 
         if (self.push and self.upload_server and self.upload_user and
-            self.upload_path):
+                self.upload_path):
             command = 'scp %s/%s%s %s@%s:%s' % (self.save_path, file_name,
                                                 '.jpg', self.upload_user,
                                                 self.upload_server,

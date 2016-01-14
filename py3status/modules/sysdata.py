@@ -14,7 +14,7 @@ Format of status string placeholders:
     {mem_used}         - used memory
     {mem_used_percent} - used memory percentage
 
-NOTE: If using the {cpu_temp} option, the 'sensors' command should 
+NOTE: If using the {cpu_temp} option, the 'sensors' command should
 be available, provided by the 'lm-sensors' or 'lm_sensors' package.
 
 @author Shahin Azad <ishahinism at Gmail>, shrimpza
@@ -23,6 +23,7 @@ be available, provided by the 'lm-sensors' or 'lm_sensors' package.
 import re
 import subprocess
 from time import time
+
 
 class GetData:
     """
@@ -65,7 +66,7 @@ class GetData:
         total_cpu_time = sum(map(int, cpu_data[1:]))
         cpu_idle_time = int(cpu_data[4])
 
-        #return the cpu total&idle time
+        # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
 
     def memory(self):
@@ -103,12 +104,14 @@ class GetData:
 
         return cpu_temp
 
+
 class Py3status:
     """
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
+    format = "CPU: {cpu_usage}%, " \
+        "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
     high_threshold = 75
     med_threshold = 40
 
@@ -138,11 +141,11 @@ class Py3status:
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': self.format.format(
-                cpu_usage = '%.2f' % (cpu_usage * 100),
-                cpu_temp = cpu_temp,
-                mem_used = '%.2f' % mem_used,
-                mem_total = '%.2f' % mem_total,
-                mem_used_percent = '%.2f' % mem_used_percent,
+                cpu_usage='%.2f' % (cpu_usage * 100),
+                cpu_temp=cpu_temp,
+                mem_used='%.2f' % mem_used,
+                mem_total='%.2f' % mem_total,
+                mem_used_percent='%.2f' % mem_used_percent,
             )
         }
 
