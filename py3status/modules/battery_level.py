@@ -41,6 +41,7 @@ Format of status string placeholders:
     {icon} - a character representing the battery level,
              as defined by the 'blocks' and 'charging_character' parameters
     {percent} - the remaining battery percentage (previously '{}')
+    {time_remaining} - the remaining time until the battery is empty
 
 Obsolete configuration parameters:
     - mode : an old way to define 'format' parameter. The current behavior is:
@@ -261,6 +262,7 @@ class Py3status:
     def _update_full_text(self):
         self.full_text = self.format.format(ascii_bar=self.ascii_bar,
                                             icon=self.icon,
+                                            time_remaining=self.time_remaining,
                                             percent=self.percent_charged)
 
     def _build_response(self):
