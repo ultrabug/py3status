@@ -30,7 +30,7 @@ Configuration parameters:
       default is "{icon}"
     - format_notify_charging : format of the notification received when you click
       on the module while your computer is plugged
-      default is "In charge ({percent}%)"
+      default is "Charging ({percent}%)"
     - format_notify_discharging : format of the notification received when you
       click on the module while your comupter is not plugged
       default is "{time_remaining}"
@@ -81,8 +81,8 @@ EMPTY_BLOCK_CHARGING = '|'
 EMPTY_BLOCK_DISCHARGING = '⍀'
 FULL_BLOCK = '█'
 FORMAT = "{icon}"
-FORMAT_NOTIF_DISCHARGING = "{time_remaining}"
-FORMAT_NOTIF_PLUGGED = "In charge ({percent}%)"
+FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
+FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
 
 
 class Py3status:
@@ -98,8 +98,8 @@ class Py3status:
     color_degraded = None
     color_good = None
     format = FORMAT
-    format_notify_charging = FORMAT_NOTIF_PLUGGED
-    format_notify_discharging = FORMAT_NOTIF_DISCHARGING
+    format_notify_charging = FORMAT_NOTIFY_CHARGING
+    format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
     hide_when_full = False
     notification = False
     notify_low_level = False
