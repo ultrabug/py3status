@@ -83,7 +83,7 @@ Available modules:
                          Requires:
                              - the 'acpi' command line
                          
-                         @author shadowprince, AdamBSteele, maximbaz
+                         @author shadowprince, AdamBSteele, maximbaz, 4iar
                          @license Eclipse Public License
                          ---
   bitcoin_price          Display bitcoin prices using bitcoincharts.com.
