@@ -81,8 +81,8 @@ EMPTY_BLOCK_CHARGING = '|'
 EMPTY_BLOCK_DISCHARGING = '⍀'
 FULL_BLOCK = '█'
 FORMAT = "{icon}"
-FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
 FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
+FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
 
 
 class Py3status:
@@ -133,8 +133,8 @@ class Py3status:
             format = self.format_notify_charging
 
         message = format.format(ascii_bar=self.ascii_bar, icon=self.icon,
-                                time_remaining=self.time_remaining,
-                                percent=self.percent_charged)
+                                percent=self.percent_charged,
+                                time_remaining=self.time_remaining)
 
         if message:
             self._desktop_notification(message)
