@@ -29,6 +29,9 @@ Available modules:
   battery_level          Display the battery level.
                          
                          Configuration parameters:
+                             - battery_id : id of the battery to be displayed
+                               set to 'all' for combined display of all batteries
+                               default is 0
                              - blocks : a string, where each character represents battery level
                                especially useful when using icon fonts (e.g. FontAwesome)
                                default is "_▁▂▃▄▅▆▇█"

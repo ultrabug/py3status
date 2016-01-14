@@ -3,6 +3,9 @@
 Display the battery level.
 
 Configuration parameters:
+    - battery_id : id of the battery to be displayed
+      set to 'all' for combined display of all batteries
+      default is 0
     - blocks : a string, where each character represents battery level
       especially useful when using icon fonts (e.g. FontAwesome)
       default is "_▁▂▃▄▅▆▇█"
@@ -60,6 +63,7 @@ Requires:
 
 from __future__ import division  # python2 compatibility
 from time import time
+from re import findall
 
 import math
 import subprocess
@@ -76,6 +80,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    battery_id = 0
     blocks = BLOCKS
     cache_timeout = 30
     charging_character = CHARGING_CHARACTER
@@ -129,16 +134,102 @@ class Py3status:
         # Backwards compatibility for '{}' option in format string
         self.format = self.format.replace('{}', '{percent}')
 
+    def _extract_battery_information_from_acpi(self, acpi_battery_lines):
+        """
+        Extract the percent charged, charging state, time remaining,
+        and capacity for a battery, given a list of two strings from acpi
+        """
+        battery = dict()
+        battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)", acpi_battery_lines[0])[0])
+        battery["charging"] = "Charging" in acpi_battery_lines[0]
+        battery["capacity"] = int(findall("(?<= )(\d+)(?= mAh)", acpi_battery_lines[1])[1])
+
+        # ACPI only shows time remaining if battery is discharging or charging
+        try:
+            battery["time_remaining"] = ''.join(findall("(?<=, )(\d+:\d+:\d+)(?= remaining)|"
+                                                        "(?<=, )(\d+:\d+:\d+)(?= until)",
+                                                        acpi_battery_lines[0])[0])
+        except IndexError:
+            battery["time_remaining"] = None
+
+        return battery
+
+    def _hms_to_seconds(self, t):
+        h, m, s = [int(i) for i in t.split(':')]
+        return 3600*h + 60*m + s
+
+    def _seconds_to_hms(self, secs):
+        m, s = divmod(secs, 60)
+        h, m = divmod(m, 60)
+        return "%d:%02d:%02d" % (h, m, s)
+
     def _refresh_battery_info(self):
-        # Example acpi raw output: "Battery 0: Discharging, 43%, 00:59:20 remaining"
-        acpi_raw = subprocess.check_output(["acpi"], stderr=subprocess.STDOUT)
-        acpi_unicode = acpi_raw.decode("UTF-8")
+        # Example acpi -bi raw output:
+        #      "Battery 0: Discharging, 94%, 09:23:28 remaining
+        #       Battery 0: design capacity 5703 mAh, last full capacity 5283 mAh = 92%
+        #       Battery 1: Unknown, 98%
+        #       Battery 1: design capacity 1880 mAh, last full capacity 1370 mAh = 72%"
+        acpi_raw = subprocess.check_output(["acpi", "-b", "-i"], stderr=subprocess.STDOUT)
 
-        #  Example list: ['Battery', '0:', 'Discharging', '43%', '00:59:20', 'remaining']
-        self.acpi_list = acpi_unicode.split(' ')
+        #  Example list:
+        #       ['Battery 0: Charging, 96%, 00:20:40 until charged',
+        #       'Battery 0: design capacity 5566 mAh, last full capacity 5156 mAh = 92%',
+        #       'Battery 1: Unknown, 98%',
+        #       'Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%',
+        #       '']
+        acpi_list = acpi_raw.decode("UTF-8").split('\n')
 
-        self.charging = self.acpi_list[2][:8] == "Charging"
-        self.percent_charged = int(self.acpi_list[3][:-2])
+        # Separate the output because each pair of lines corresponds to a single battery.
+        # Now the list index will correspond to the index of the battery we want to look at
+        acpi_list = [acpi_list[i:i+2] for i in range(0, len(acpi_list)-1, 2)]
+
+        battery_list = [self._extract_battery_information_from_acpi(battery)
+                        for battery in acpi_list]
+
+        if type(self.battery_id) == int:
+            battery = battery_list[self.battery_id]
+            self.percent_charged = battery['percent_charged']
+            self.charging = battery['charging']
+            self.time_remaining = battery['time_remaining']
+
+        elif self.battery_id == "all":
+            total_capacity = sum([battery['capacity'] for battery in battery_list])
+
+            # Average and weigh % charged by the capacities of the batteries so that self.percent_charged
+            # properly represents batteries that have different capacities.
+            self.percent_charged = int(sum([battery["capacity"]/total_capacity * battery["percent_charged"]
+                                            for battery in battery_list]))
+
+            self.charging = any([battery["charging"] for battery in battery_list])
+
+            # Assumes a system has at max two batteries
+            active_battery = None
+            inactive_battery = battery_list[:]
+            for battery_id in range(0, len(battery_list)):
+                if battery_list[battery_id]["time_remaining"]:
+                    active_battery = battery_list[battery_id]
+                    del inactive_battery[battery_id]
+
+            # Only one battery will be discharging or charging at a time.
+            # Therefore, ACPI does not provide a time remaining value for the other battery.
+            # So the time remaining for the other battery is calculated using the time
+            # remaining of the first battery and the capacity values for both batteries.
+            if active_battery and inactive_battery:
+                inactive_battery = inactive_battery[0]
+
+                time_remaining_seconds = self._hms_to_seconds(active_battery["time_remaining"])
+                rate_second_per_mah = time_remaining_seconds / (active_battery["capacity"] *
+                                                               (active_battery["percent_charged"]/100))
+                time_remaining_seconds += inactive_battery["capacity"] * (inactive_battery["percent_charged"]/100) * \
+                                          rate_second_per_mah
+
+                self.time_remaining = self._seconds_to_hms(time_remaining_seconds)
+
+            elif active_battery:
+                self.time_remaining = active_battery["time_remaining"]
+
+            else:
+                self.time_remaining = None
 
     def _update_ascii_bar(self):
         self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
