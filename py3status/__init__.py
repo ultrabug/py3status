@@ -158,7 +158,7 @@ class I3status(Thread):
         if cleanup:
             valid_config_params = [_ for _ in self.i3status_module_names
                                    if _ not in
-                                   ['cpu_usage', 'ddate', 'load', 'time']]
+                                   ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']]
         else:
             valid_config_params = self.i3status_module_names + [
                 'general', 'order'
