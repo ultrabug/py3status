@@ -44,7 +44,6 @@ Configuration parameters:
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
 """
 
-import subprocess
 import netifaces as ni
 import os
 import stat
@@ -102,11 +101,11 @@ class Py3status:
                 ser.close()
             except:
                 # This will happen...
-                # 1) in the short timespan between the creation of the device node
-                # and udev changing the permissions. If this message persists,
-                # double check if you are using the proper device file
+                # 1) in the short timespan between the creation of the device
+                # node and udev changing the permissions. If this message
+                # persists, double check if you are using the proper device
+                # file
                 # 2) if/when you unplug the device
-                PermissionError
                 print("Permission error")
                 response['full_text'] = self.format_error.format(
                     error="no access to " + self.modem)
@@ -164,7 +163,6 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    from time import sleep
     x = Py3status()
     config = {
         'color_good': '#00FF00',

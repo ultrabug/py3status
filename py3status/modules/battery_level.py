@@ -259,8 +259,8 @@ class Py3status:
                 rate_second_per_mah = time_remaining_seconds / (
                     active_battery["capacity"] *
                     (active_battery["percent_charged"] / 100))
-                time_remaining_seconds += inactive_battery["capacity"] * (inactive_battery["percent_charged"]/100) * \
-                                          rate_second_per_mah
+                time_remaining_seconds += inactive_battery["capacity"] * \
+                    inactive_battery["percent_charged"]/100 * rate_second_per_mah
 
                 self.time_remaining = self._seconds_to_hms(
                     time_remaining_seconds)

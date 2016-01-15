@@ -156,9 +156,9 @@ class I3status(Thread):
         Check if a given section name is a valid parameter for i3status.
         """
         if cleanup:
-            valid_config_params = [ _ for _ in self.i3status_module_names if _ not in [
-                'cpu_usage', 'ddate', 'load', 'time'
-            ]]
+            valid_config_params = [_ for _ in self.i3status_module_names
+                                   if _ not in
+                                   ['cpu_usage', 'ddate', 'load', 'time']]
         else:
             valid_config_params = self.i3status_module_names + [
                 'general', 'order'
@@ -338,7 +338,7 @@ class I3status(Thread):
         # cleanup unconfigured i3status modules that have no default
         for module_name in deepcopy(config['order']):
             if (self.valid_config_param(module_name, cleanup=True) and
-                not config.get(module_name)):
+                    not config.get(module_name)):
                 config.pop(module_name)
                 config['i3s_modules'].remove(module_name)
                 config['order'].remove(module_name)
@@ -429,7 +429,7 @@ class I3status(Thread):
                     pass
 
                 time_format, delta = self.get_delta_from_format(i3s_time,
-                                                                  time_format)
+                                                                time_format)
 
                 try:
                     if '%Z' in time_format:
@@ -824,11 +824,8 @@ class Events(Thread):
             # /sys/class/power_supply/BAT0/uevent and _first_
             if name == 'battery':
                 for k, v in self.i3s_config.items():
-                    if (
-                        k.startswith('battery')
-                        and isinstance(v, dict)
-                        and v.get('response', {}).get('instance') == instance
-                    ):
+                    if k.startswith('battery') and isinstance(v, dict) and \
+                            v.get('response', {}).get('instance') == instance:
                         instance = k.split(' ', 1)[1]
                         break
                 else:
@@ -846,21 +843,15 @@ class Events(Thread):
             # ethernet _first_
             elif name == 'ethernet':
                 for k, v in self.i3s_config.items():
-                    if (
-                        k.startswith('ethernet')
-                        and isinstance(v, dict)
-                        and v.get('response', {}).get('instance') == instance
-                    ):
+                    if k.startswith('ethernet') and isinstance(v, dict) and \
+                            v.get('response', {}).get('instance') == instance:
                         instance = k.split(' ', 1)[1]
 
             # run_watch /var/run/openvpn.pid
             elif name == 'run_watch':
                 for k, v in self.i3s_config.items():
-                    if (
-                        k.startswith('run_watch')
-                        and isinstance(v, dict)
-                        and v.get('pidfile') == instance
-                    ):
+                    if k.startswith('run_watch') and isinstance(v, dict) and \
+                            v.get('pidfile') == instance:
                         instance = k.split(' ', 1)[1]
                         break
 
@@ -868,13 +859,10 @@ class Events(Thread):
             elif name == 'volume':
                 device, mixer, mixer_idx = instance.split('.')
                 for k, v in self.i3s_config.items():
-                    if (
-                        k.startswith('volume')
-                        and isinstance(v, dict)
-                        and v.get('device') == device
-                        and v.get('mixer') == mixer
-                        and str(v.get('mixer_idx')) == mixer_idx
-                    ):
+                    if k.startswith('volume') and isinstance(v, dict) and \
+                            v.get('device') == device and \
+                            v.get('mixer') == mixer and \
+                            str(v.get('mixer_idx')) == mixer_idx:
                         instance = k.split(' ', 1)[1]
                         break
                 else:
@@ -883,11 +871,8 @@ class Events(Thread):
             # wireless _first_
             elif name == 'wireless':
                 for k, v in self.i3s_config.items():
-                    if (
-                        k.startswith('wireless')
-                        and isinstance(v, dict)
-                        and v.get('response', {}).get('instance') == instance
-                    ):
+                    if k.startswith('wireless') and isinstance(v, dict) and \
+                            v.get('response', {}).get('instance') == instance:
                         instance = k.split(' ', 1)[1]
         except:
             pass
@@ -1377,8 +1362,8 @@ class Py3statusWrapper():
         User provided modules take precedence over py3status generic modules.
         """
         all_modules = {}
-        for importer, module_name, ispkg in pkgutil.iter_modules(
-            sitepkg_modules.__path__):
+        for importer, module_name, ispkg in \
+                pkgutil.iter_modules(sitepkg_modules.__path__):
             if not ispkg:
                 mod = importer.find_module(module_name)
                 all_modules[module_name] = (mod, None)
@@ -1631,12 +1616,9 @@ class Py3statusWrapper():
 
             # transform time and tztime outputs from i3status
             # every configured interval seconds
-            if (
-                self.config['interval'] <= 1 or (
-                    int(delta) % self.config['interval'] == 0
-                    and int(last_delta) != int(delta)
-                )
-            ):
+            if self.config['interval'] <= 1 or \
+                    int(delta) % self.config['interval'] == 0 \
+                    and int(last_delta) != int(delta):
                 delta = 0
                 last_delta = 0
                 json_list = self.i3status_thread.tick_time_modules(
