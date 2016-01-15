@@ -84,6 +84,7 @@ class IOPoller:
     This class implements a predictive and timing-out I/O reader
     using select and the poll() mechanism for greater compatibility.
     """
+
     def __init__(self, io, eventmask=select.POLLIN):
         """
         Our default is to read (POLLIN) the specified 'io' file descriptor.
@@ -117,6 +118,7 @@ class I3status(Thread):
     """
     This class is responsible for spawning i3status and reading its output.
     """
+
     def __init__(self, lock, i3status_config_path, standalone):
         """
         Our output will be read asynchronously from 'last_output'.
@@ -124,20 +126,9 @@ class I3status(Thread):
         Thread.__init__(self)
         self.error = None
         self.i3status_module_names = [
-            'battery',
-            'cpu_temperature',
-            'cpu_usage',
-            'ddate',
-            'disk',
-            'ethernet',
-            'ipv6',
-            'load',
-            'path_exists',
-            'run_watch',
-            'time',
-            'tztime',
-            'volume',
-            'wireless'
+            'battery', 'cpu_temperature', 'cpu_usage', 'ddate', 'disk',
+            'ethernet', 'ipv6', 'load', 'path_exists', 'run_watch', 'time',
+            'tztime', 'volume', 'wireless'
         ]
         self.json_list = None
         self.json_list_ts = None
@@ -156,9 +147,11 @@ class I3status(Thread):
         Check if a given section name is a valid parameter for i3status.
         """
         if cleanup:
-            valid_config_params = [_ for _ in self.i3status_module_names
-                                   if _ not in
-                                   ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']]
+            valid_config_params = [
+                _
+                for _ in self.i3status_module_names
+                if _ not in ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
+            ]
         else:
             valid_config_params = self.i3status_module_names + [
                 'general', 'order'
@@ -268,9 +261,8 @@ class I3status(Thread):
                 if line.endswith('}'):
                     section_line = section_line.split('}', -1)[0].strip()
                 if line.startswith(section_name + ' {'):
-                    section_line = section_line.split(
-                        section_name + ' {'
-                    )[1].strip()
+                    section_line = section_line.split(section_name + ' {')[
+                        1].strip()
 
                 key = section_line.split('=', 1)[0].strip()
                 key = self.eval_config_parameter(key)
@@ -299,20 +291,16 @@ class I3status(Thread):
                         try:
                             button = int(key.split()[1])
                             if button not in range(1, 6):
-                                raise ValueError(
-                                    'should be 1, 2, 3, 4 or 5'
-                                )
+                                raise ValueError('should be 1, 2, 3, 4 or 5')
                         except IndexError as e:
                             raise IndexError(
                                 'missing "button id" for "on_click" '
-                                'parameter in section {}'.format(section_name)
-                            )
+                                'parameter in section {}'.format(section_name))
                         except ValueError as e:
-                            raise ValueError(
-                                'invalid "button id" '
-                                'for "on_click" parameter '
-                                'in section {} ({})'.format(section_name, e)
-                            )
+                            raise ValueError('invalid "button id" '
+                                             'for "on_click" parameter '
+                                             'in section {} ({})'.format(
+                                                 section_name, e))
                         on_c = config['on_click']
                         on_c[section_name] = on_c.get(section_name, {})
                         on_c[section_name][button] = value
@@ -323,21 +311,18 @@ class I3status(Thread):
 
         # py3status only uses the i3bar protocol because it needs JSON output
         if config['general']['output_format'] != 'i3bar':
-            raise RuntimeError(
-                'i3status output_format should be set' +
-                ' to "i3bar" on {}'.format(
-                    i3status_config_path,
-                    ' or on your own {}/.i3status.conf'.format(
-                        os.path.expanduser('~')
-                    )
-                    if i3status_config_path == '/etc/i3status.conf'
-                    else ''
-                )
-            )
+            raise RuntimeError('i3status output_format should be set' +
+                               ' to "i3bar" on {}'.format(
+                                   i3status_config_path,
+                                   ' or on your own {}/.i3status.conf'.format(
+                                       os.path.expanduser(
+                                           '~')) if i3status_config_path ==
+                                   '/etc/i3status.conf' else ''))
 
         # cleanup unconfigured i3status modules that have no default
         for module_name in deepcopy(config['order']):
-            if (self.valid_config_param(module_name, cleanup=True) and
+            if (self.valid_config_param(module_name,
+                                        cleanup=True) and
                     not config.get(module_name)):
                 config.pop(module_name)
                 config['i3s_modules'].remove(module_name)
@@ -367,23 +352,15 @@ class I3status(Thread):
                     operator = res[0]
                     hours = int(res[1:3])
                     minutes = int(res[-2:])
-                    return (
-                        time_format.replace('%z', res),
-                        timedelta(
-                            hours=eval('{}{}'.format(operator, hours)),
-                            minutes=eval('{}{}'.format(operator, minutes))
-                            )
-                        )
+                    return (time_format.replace('%z', res), timedelta(
+                        hours=eval('{}{}'.format(operator, hours)),
+                        minutes=eval('{}{}'.format(operator, minutes))))
         except Exception:
             err = sys.exc_info()[1]
             syslog(
                 LOG_ERR,
                 'i3status get_delta_from_format failed "{}" "{}" ({})'.format(
-                    i3s_time,
-                    time_format,
-                    err
-                )
-            )
+                    i3s_time, time_format, err))
         return (time_format, None)
 
     def set_time_modules(self):
@@ -411,14 +388,10 @@ class I3status(Thread):
                 # time and tztime have different defaults
                 if time_name == 'time':
                     time_format = self.config.get(
-                        conf_name,
-                        {}
-                    ).get('format', default_time_format)
+                        conf_name, {}).get('format', default_time_format)
                 else:
                     time_format = self.config.get(
-                        conf_name,
-                        {}
-                    ).get('format', default_tztime_format)
+                        conf_name, {}).get('format', default_tztime_format)
 
                 # parse i3status date
                 i3s_time = item['full_text'].encode('UTF-8', 'replace')
@@ -441,8 +414,7 @@ class I3status(Thread):
                         if fmt not in time_format:
                             time_fmt = '{} {}'.format(time_fmt, fmt)
                             i3s_time = '{} {}'.format(
-                                i3s_time, datetime.now().strftime(fmt)
-                            )
+                                i3s_time, datetime.now().strftime(fmt))
 
                     # get a datetime from the parsed string date
                     date = datetime.strptime(i3s_time, time_fmt)
@@ -451,21 +423,16 @@ class I3status(Thread):
                     if not delta:
                         delta = (
                             datetime(date.year, date.month, date.day,
-                                     date.hour, date.minute) -
-                            datetime(utcnow.year, utcnow.month, utcnow.day,
-                                     utcnow.hour, utcnow.minute)
-                        )
+                                     date.hour, date.minute) - datetime(
+                                         utcnow.year, utcnow.month, utcnow.day,
+                                         utcnow.hour, utcnow.minute))
                 except ValueError:
                     date = i3s_time
                 except Exception:
                     err = sys.exc_info()[1]
-                    syslog(
-                        LOG_ERR,
-                        'i3status set_time_modules "{}" failed ({})'.format(
-                            conf_name,
-                            err
-                        )
-                    )
+                    syslog(LOG_ERR,
+                           'i3status set_time_modules "{}" failed ({})'.format(
+                               conf_name, err))
                     date = i3s_time
                 finally:
                     self.config[conf_name]['date'] = date
@@ -559,20 +526,16 @@ class I3status(Thread):
             elif section_name == 'order':
                 for module_name in conf:
                     if self.valid_config_param(module_name):
-                        self.write_in_tmpfile(
-                            'order += "%s"\n' % module_name,
-                            tmpfile
-                        )
+                        self.write_in_tmpfile('order += "%s"\n' % module_name,
+                                              tmpfile)
                 self.write_in_tmpfile('\n', tmpfile)
             elif self.valid_config_param(section_name) and conf:
                 self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
                 for key, value in conf.items():
                     if isinstance(value, bool):
                         value = '{}'.format(value).lower()
-                    self.write_in_tmpfile(
-                        '    %s = "%s"\n' % (key, value),
-                        tmpfile
-                    )
+                    self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
+                                          tmpfile)
                 self.write_in_tmpfile('}\n\n', tmpfile)
         tmpfile.flush()
 
@@ -584,18 +547,14 @@ class I3status(Thread):
         try:
             with NamedTemporaryFile(prefix='py3status_') as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
-                syslog(
-                    LOG_INFO,
-                    'i3status spawned using config file {}'.format(
-                        tmpfile.name
-                    )
-                )
+                syslog(LOG_INFO,
+                       'i3status spawned using config file {}'.format(
+                           tmpfile.name))
 
                 i3status_pipe = Popen(
                     ['i3status', '-c', tmpfile.name],
                     stdout=PIPE,
-                    stderr=PIPE,
-                )
+                    stderr=PIPE, )
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
                 self.tmpfile_path = tmpfile.name
@@ -663,11 +622,7 @@ class I3status(Thread):
         self.is_alive = lambda: True
 
         # mock i3status base output
-        init_output = [
-            '{"click_events": true, "version": 1}',
-            '[',
-            '[]'
-        ]
+        init_output = ['{"click_events": true, "version": 1}', '[', '[]']
         for line in init_output:
             print_line(line)
 
@@ -682,6 +637,7 @@ class Events(Thread):
     """
     This class is responsible for dispatching event JSONs sent by the i3bar.
     """
+
     def __init__(self, lock, config, modules, i3s_config):
         """
         We need to poll stdin to receive i3bar messages.
@@ -699,10 +655,8 @@ class Events(Thread):
         """
         Dispatch the event or enforce the default clear cache action.
         """
-        module_name = '{} {}'.format(
-            module.module_name,
-            module.module_inst
-        ).strip()
+        module_name = '{} {}'.format(module.module_name,
+                                     module.module_inst).strip()
         #
         if module.click_events:
             # module accepts click_events, use it
@@ -751,8 +705,7 @@ class Events(Thread):
                 if self.config['debug']:
                     syslog(
                         LOG_INFO,
-                        'refresh i3status for module {}'.format(module_name)
-                    )
+                        'refresh i3status for module {}'.format(module_name))
                 call(['killall', '-s', 'USR1', 'i3status'])
                 self.last_refresh_ts = time()
 
@@ -794,14 +747,8 @@ class Events(Thread):
         Execute the given i3 message and log its output.
         """
         i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
-        syslog(
-            LOG_INFO,
-            'i3-msg module="{}" command="{}" stdout={}'.format(
-                module_name,
-                command,
-                i3_msg_pipe.stdout.read()
-            )
-        )
+        syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
+            module_name, command, i3_msg_pipe.stdout.read()))
 
     def i3status_mod_guess(self, instance, name):
         """
@@ -829,8 +776,8 @@ class Events(Thread):
                         instance = k.split(' ', 1)[1]
                         break
                 else:
-                    instance = str(
-                        [int(s) for s in instance if s.isdigit()][0])
+                    instance = str([int(s) for s in instance if s.isdigit()][
+                        0])
 
             # /sys/devices/platform/coretemp.0/temp1_input
             elif name == 'cpu_temperature':
@@ -914,9 +861,7 @@ class Events(Thread):
                         syslog(
                             LOG_INFO,
                             'trying to dispatch event to module "{}"'.format(
-                                '{} {}'.format(name, instance).strip()
-                            )
-                        )
+                                '{} {}'.format(name, instance).strip()))
 
                     # guess the module config name
                     module_name = '{} {}'.format(name, instance).strip()
@@ -925,8 +870,7 @@ class Events(Thread):
                     if self.on_click.get(module_name, {}).get(button):
                         self.on_click_dispatcher(
                             module_name,
-                            self.on_click[module_name].get(button)
-                        )
+                            self.on_click[module_name].get(button))
                         dispatched = True
                     # otherwise setup default action on button 2 press
                     elif button == 2:
@@ -958,8 +902,7 @@ class Events(Thread):
                             if self.config['debug']:
                                 syslog(
                                     LOG_INFO,
-                                    'dispatching event to i3bar_click_events'
-                                )
+                                    'dispatching event to i3bar_click_events')
                             self.dispatch(module, obj, event)
             except Exception:
                 err = sys.exc_info()[1]
@@ -972,6 +915,7 @@ class Module(Thread):
     It is reponsible for executing it every given interval and
     caching its output based on user will.
     """
+
     def __init__(self, lock, config, module, i3_thread, user_modules):
         """
         We need quite some stuff to occupy ourselves don't we ?
@@ -1039,24 +983,15 @@ class Module(Thread):
         # user provided modules take precedence over py3status provided modules
         if self.module_name in user_modules:
             include_path, f_name = user_modules[self.module_name]
-            syslog(
-                LOG_INFO,
-                'loading module "{}" from {}{}'.format(
-                    module,
-                    include_path,
-                    f_name
-                )
-            )
+            syslog(LOG_INFO,
+                   'loading module "{}" from {}{}'.format(module, include_path,
+                                                          f_name))
             class_inst = self.load_from_file(include_path + f_name)
         # load from py3status provided modules
         else:
-            syslog(
-                LOG_INFO,
-                'loading module "{}" from py3status.modules.{}'.format(
-                    module,
-                    self.module_name
-                )
-            )
+            syslog(LOG_INFO,
+                   'loading module "{}" from py3status.modules.{}'.format(
+                       module, self.module_name))
             class_inst = self.load_from_namespace(self.module_name)
 
         if class_inst:
@@ -1095,15 +1030,10 @@ class Module(Thread):
 
         # done, syslog some debug info
         if self.config['debug']:
-            syslog(
-                LOG_INFO,
-                'module "{}" click_events={} has_kill={} methods={}'.format(
-                    module,
-                    self.click_events,
-                    self.has_kill,
-                    self.methods.keys()
-                )
-            )
+            syslog(LOG_INFO,
+                   'module "{}" click_events={} has_kill={} methods={}'.format(
+                       module, self.click_events, self.has_kill,
+                       self.methods.keys()))
 
     def click_event(self, event):
         """
@@ -1111,11 +1041,8 @@ class Module(Thread):
         """
         try:
             click_method = getattr(self.module_class, 'on_click')
-            click_method(
-                self.i3status_thread.json_list,
-                self.i3status_thread.config['general'],
-                event
-            )
+            click_method(self.i3status_thread.json_list,
+                         self.i3status_thread.config['general'], event)
         except Exception:
             err = sys.exc_info()[1]
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
@@ -1145,10 +1072,8 @@ class Module(Thread):
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    response = method(
-                        self.i3status_thread.json_list,
-                        self.i3status_thread.config['general']
-                    )
+                    response = method(self.i3status_thread.json_list,
+                                      self.i3status_thread.config['general'])
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -1188,16 +1113,12 @@ class Module(Thread):
 
                     # debug info
                     if self.config['debug']:
-                        syslog(
-                            LOG_INFO,
-                            'method {} returned {} '.format(meth, result)
-                        )
+                        syslog(LOG_INFO,
+                               'method {} returned {} '.format(meth, result))
                 except Exception:
                     err = sys.exc_info()[1]
-                    syslog(
-                        LOG_WARNING,
-                        'user method {} failed ({})'.format(meth, err)
-                    )
+                    syslog(LOG_WARNING,
+                           'user method {} failed ({})'.format(meth, err))
 
             # don't be hasty mate, let's take it easy for now
             sleep(self.config['interval'])
@@ -1206,10 +1127,8 @@ class Module(Thread):
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, 'kill')
-                kill_method(
-                    self.i3status_thread.json_list,
-                    self.i3status_thread.config['general']
-                )
+                kill_method(self.i3status_thread.json_list,
+                            self.i3status_thread.config['general'])
             except Exception:
                 # this would be stupid to die on exit
                 pass
@@ -1219,6 +1138,7 @@ class Py3statusWrapper():
     """
     This is the py3status wrapper.
     """
+
     def __init__(self):
         """
         Useful variables we'll need.
@@ -1254,13 +1174,10 @@ class Py3statusWrapper():
         # respect i3status' file detection order wrt issue #43
         i3status_config_file_candidates = [
             '{}/.i3status.conf'.format(home_path),
-            '{}/.config/i3status/config'.format(
-                os.environ.get('XDG_CONFIG_HOME', home_path)
-            ),
-            '/etc/i3status.conf',
-            '{}/i3status/config'.format(
-                os.environ.get('XDG_CONFIG_DIRS', '/etc/xdg')
-            )
+            '{}/.config/i3status/config'.format(os.environ.get(
+                'XDG_CONFIG_HOME', home_path)), '/etc/i3status.conf',
+            '{}/i3status/config'.format(os.environ.get('XDG_CONFIG_DIRS',
+                                                       '/etc/xdg'))
         ]
         for fn in i3status_config_file_candidates:
             if os.path.isfile(fn):
@@ -1270,38 +1187,51 @@ class Py3statusWrapper():
             # if none of the default files exists, we will default
             # to ~/.i3/i3status.conf
             i3status_config_file_default = '{}/.i3/i3status.conf'.format(
-                home_path
-            )
+                home_path)
 
         # command line options
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
         parser = argparse.ArgumentParser(add_help=True)
-        parser.add_argument('-c', '--config', action="store",
+        parser.add_argument('-c',
+                            '--config',
+                            action="store",
                             dest="i3status_conf",
                             type=str,
                             default=i3status_config_file_default,
                             help="path to i3status config file")
-        parser.add_argument('-d', '--debug', action="store_true",
+        parser.add_argument('-d',
+                            '--debug',
+                            action="store_true",
                             help="be verbose in syslog")
-        parser.add_argument('-i', '--include', action="append",
+        parser.add_argument('-i',
+                            '--include',
+                            action="append",
                             dest="include_paths",
                             help="""include user-written modules from those
                             directories (default ~/.i3/py3status)""")
-        parser.add_argument('-n', '--interval', action="store",
+        parser.add_argument('-n',
+                            '--interval',
+                            action="store",
                             dest="interval",
                             type=float,
                             default=config['interval'],
                             help="update interval in seconds (default 1 sec)")
-        parser.add_argument('-s', '--standalone', action="store_true",
+        parser.add_argument('-s',
+                            '--standalone',
+                            action="store_true",
                             help="standalone mode, do not use i3status")
-        parser.add_argument('-t', '--timeout', action="store",
+        parser.add_argument('-t',
+                            '--timeout',
+                            action="store",
                             dest="cache_timeout",
                             type=int,
                             default=config['cache_timeout'],
                             help="""default injection cache timeout in seconds
                             (default 60 sec)""")
-        parser.add_argument('-v', '--version', action="store_true",
+        parser.add_argument('-v',
+                            '--version',
+                            action="store_true",
                             help="""show py3status version and exit""")
         parser.add_argument('cli_command', nargs='*', help=argparse.SUPPRESS)
 
@@ -1313,12 +1243,8 @@ class Py3statusWrapper():
         # only asked for version
         if options.version:
             from platform import python_version
-            print(
-                'py3status version {} (python {})'.format(
-                    config['version'],
-                    python_version()
-                )
-            )
+            print('py3status version {} (python {})'.format(config['version'],
+                                                            python_version()))
             sys.exit(0)
 
         # override configuration and helper variables
@@ -1402,24 +1328,16 @@ class Py3statusWrapper():
             if module in self.modules:
                 continue
             try:
-                my_m = Module(
-                    self.lock,
-                    self.config,
-                    module,
-                    self.i3status_thread,
-                    user_modules
-                )
+                my_m = Module(self.lock, self.config, module,
+                              self.i3status_thread, user_modules)
                 # only start and handle modules with available methods
                 if my_m.methods:
                     my_m.start()
                     self.modules[module] = my_m
                 elif self.config['debug']:
-                    syslog(
-                        LOG_INFO,
-                        'ignoring module "{}" (no methods found)'.format(
-                            module
-                        )
-                    )
+                    syslog(LOG_INFO,
+                           'ignoring module "{}" (no methods found)'.format(
+                               module))
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'loading module "{}" failed ({})'.format(module, err)
@@ -1440,17 +1358,13 @@ class Py3statusWrapper():
             sys.exit()
 
         if self.config['debug']:
-            syslog(
-                LOG_INFO,
-                'py3status started with config {}'.format(self.config)
-            )
+            syslog(LOG_INFO,
+                   'py3status started with config {}'.format(self.config))
 
         # setup i3status thread
-        self.i3status_thread = I3status(
-            self.lock,
-            self.config['i3status_config_path'],
-            self.config['standalone']
-        )
+        self.i3status_thread = I3status(self.lock,
+                                        self.config['i3status_config_path'],
+                                        self.config['standalone'])
         if self.config['standalone']:
             self.i3status_thread.mock()
         else:
@@ -1461,21 +1375,13 @@ class Py3statusWrapper():
                     raise IOError(err)
                 sleep(0.1)
         if self.config['debug']:
-            syslog(
-                LOG_INFO,
-                'i3status thread {} with config {}'.format(
-                    'started' if not self.config['standalone'] else 'mocked',
-                    self.i3status_thread.config
-                )
-            )
+            syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
+                'started' if not self.config['standalone'] else 'mocked',
+                self.i3status_thread.config))
 
         # setup input events thread
-        self.events_thread = Events(
-            self.lock,
-            self.config,
-            self.modules,
-            self.i3status_thread.config
-        )
+        self.events_thread = Events(self.lock, self.config, self.modules,
+                                    self.i3status_thread.config)
         self.events_thread.start()
         if self.config['debug']:
             syslog(LOG_INFO, 'events thread started')
@@ -1507,11 +1413,9 @@ class Py3statusWrapper():
         try:
             log_level = LOG_ERR if level == 'error' else LOG_WARNING
             syslog(log_level, msg)
-            Popen(
-                ['i3-nagbar', '-m', msg, '-t', level],
-                stdout=open('/dev/null', 'w'),
-                stderr=open('/dev/null', 'w')
-            )
+            Popen(['i3-nagbar', '-m', msg, '-t', level],
+                  stdout=open('/dev/null', 'w'),
+                  stderr=open('/dev/null', 'w'))
         except:
             pass
 
@@ -1547,10 +1451,8 @@ class Py3statusWrapper():
             # reset the refresh timestamp
             self.last_refresh_ts = time()
         else:
-            syslog(
-                LOG_INFO,
-                'received USR1 but rate limit is in effect, calm down'
-            )
+            syslog(LOG_INFO,
+                   'received USR1 but rate limit is in effect, calm down')
 
     def clear_modules_cache(self):
         """
@@ -1606,8 +1508,7 @@ class Py3statusWrapper():
                     if not hasattr(module, 'i3_nagbar'):
                         module.i3_nagbar = True
                         msg = 'output frozen for dead module(s) {}'.format(
-                            ','.join(module.methods.keys())
-                        )
+                            ','.join(module.methods.keys()))
                         self.i3_nagbar(msg, level='warning')
 
             # get output from i3status
@@ -1621,23 +1522,17 @@ class Py3statusWrapper():
                     and int(last_delta) != int(delta):
                 delta = 0
                 last_delta = 0
-                json_list = self.i3status_thread.tick_time_modules(
-                    json_list,
-                    force=True
-                )
+                json_list = self.i3status_thread.tick_time_modules(json_list,
+                                                                   force=True)
             else:
-                json_list = self.i3status_thread.tick_time_modules(
-                    json_list,
-                    force=False
-                )
+                json_list = self.i3status_thread.tick_time_modules(json_list,
+                                                                   force=False)
 
             # construct the global output
             if self.modules and self.py3_modules:
                 # new style i3status configured ordering
                 json_list = self.i3status_thread.get_modules_output(
-                    json_list,
-                    self.modules
-                )
+                    json_list, self.modules)
 
             # dump the line to stdout only on change
             if json_list != previous_json_list:
