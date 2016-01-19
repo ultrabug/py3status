@@ -52,10 +52,11 @@ class Py3status:
         return response
 
     def _query_service_count(self, state):
+        url_parameters = self.url_parameters
         if self.disable_acknowledge:
-            self.url_parameters = self.url_parameters + "&service_handled=0"
+            url_parameters = url_parameters + "&service_handled=0"
         result = requests.get(
-            self.base_url + self.url_parameters.format(service_state=state),
+            self.base_url + url_parameters.format(service_state=state),
             auth=(self.user, self.password), verify=self.ca)
         return len(result.json())
 
