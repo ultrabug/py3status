@@ -41,7 +41,7 @@ class Py3status:
     color_playing = None
     format = '{artist} : {title}'
 
-    def getText(self, i3s_config):
+    def _get_text(self, i3s_config):
         """
         Get the current song metadatas (artist - title)
         """
@@ -81,7 +81,7 @@ class Py3status:
         """
         Get the current "artist - title" and return it.
         """
-        (text, color) = self.getText(i3s_config)
+        (text, color) = self._get_text(i3s_config)
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': text,
