@@ -59,23 +59,32 @@ class Py3status:
             microtime = metadata.get('mpris:length')
             rtime = str(timedelta(microseconds=microtime))
             title = metadata.get('xesam:title')
-
+        except Exception:
+            return (
+                'Spotify not running',
+                self.color_offline or i3s_config['color_bad'])
+        try:
             playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
                                               'PlaybackStatus')
             if playback_status.strip() == 'Playing':
                 color = self.color_playing or i3s_config['color_good']
             else:
                 color = self.color_paused or i3s_config['color_degraded']
-
+        except dbus.DBusException:
             return (
                 self.format.format(title=title,
                                    artist=artist,
                                    album=album,
-                                   time=rtime), color)
-        except Exception:
-            return (
-                'Spotify not running',
-                self.color_offline or i3s_config['color_bad'])
+                                   time=rtime),
+                                   self.color_playing or i3s_config['color_good'])
+        else:
+            return ('Unhandled Error while retrieving PlaybackStatus', self.color_degraded)
+
+        return (
+            self.format.format(title=title,
+                               artist=artist,
+                               album=album,
+                               time=rtime), color)
 
     def spotify(self, i3s_output_list, i3s_config):
         """
