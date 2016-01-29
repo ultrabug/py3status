@@ -110,7 +110,7 @@ class Py3status:
             'full_text': self.title,
         }
 
-        for option in ('min_width', 'align', 'separator'):
+        for option in ('separator'):
             try:
                 resp[option] = getattr(self, option)
             except AttributeError:

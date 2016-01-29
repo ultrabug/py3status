@@ -43,6 +43,7 @@ class Module(Thread):
         # if the module is part of a group then we want to store it's name
         self.group = self.i3status_thread.config.get(module, {}).get('.group')
         #
+        self.set_module_options(module)
         self.load_methods(module, user_modules)
 
     @staticmethod
@@ -93,6 +94,24 @@ class Module(Thread):
         for method in self.methods.values():
             output.append(method['last_output'])
         return output
+
+    def set_module_options(self, module):
+        """
+        Set universal module options to be interpreted by i3bar
+        https://i3wm.org/i3status/manpage.html#_universal_module_options
+        """
+        self.module_options = {}
+        mod_config = self.i3status_thread.config.get(module, {})
+
+        if 'min_width' in mod_config:
+            self.module_options['min_width'] = mod_config['min_width']
+
+        if 'align' in mod_config:
+            align = mod_config['align']
+            if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
+                raise ValueError("invalid 'align' attribute, valid values are: left, center, right")
+
+            self.module_options['align'] = align
 
     def load_methods(self, module, user_modules):
         """
@@ -233,6 +252,9 @@ class Module(Thread):
                     else:
                         result['instance'] = self.module_inst
                         result['name'] = self.module_name
+
+                    # set universal module options in result
+                    result.update(self.module_options)
 
                     # initialize method object
                     if my_method['name'] is None:
