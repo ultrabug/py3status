@@ -393,6 +393,11 @@ class I3status(Thread):
                     time_format = self.config.get(
                         conf_name, {}).get('format', default_tztime_format)
 
+                # handle format_time parameter
+                if 'format_time' in self.config.get(conf_name, {}):
+                    time_format = time_format.replace(
+                        '%time', self.config[conf_name]['format_time'])
+
                 # parse i3status date
                 i3s_time = item['full_text'].encode('UTF-8', 'replace')
                 try:
