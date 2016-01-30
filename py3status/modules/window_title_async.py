@@ -110,12 +110,6 @@ class Py3status:
             'full_text': self.title,
         }
 
-        for option in ('separator'):
-            try:
-                resp[option] = getattr(self, option)
-            except AttributeError:
-                continue
-
         return resp
 
 

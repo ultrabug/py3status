@@ -106,6 +106,20 @@ class Module(Thread):
         if 'min_width' in mod_config:
             self.module_options['min_width'] = mod_config['min_width']
 
+        if 'separator' in mod_config:
+            separator = mod_config['separator']
+            if not isinstance(separator, bool):
+                raise TypeError("invalid 'separator' attribute, should be a bool")
+
+            self.module_options['separator'] = separator
+
+        if 'separator_block_width' in mod_config:
+            separator_block_width = mod_config['separator_block_width']
+            if not isinstance(separator_block_width, int):
+                raise TypeError("invalid 'separator_block_width' attribute, should be an int")
+
+            self.module_options['separator_block_width'] = separator_block_width
+
         if 'align' in mod_config:
             align = mod_config['align']
             if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
