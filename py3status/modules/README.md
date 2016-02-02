@@ -477,6 +477,21 @@ Available modules:
                          
                          @author ultrabug
                          ---
+  scratchpad_async       Display the amount of windows and indicate urgency hints on scratchpad (async).
+                         
+                         Configuration parameters:
+                             - always_show: whether the indicator should be shown if there are no
+                             scratchpad windows (default False)
+                             - color_urgent: color to use if a scratchpad window is urgent (default
+                             "#900000")
+                             - format: string to format the output (default "{} ⌫")
+                         
+                         Requires:
+                             - i3ipc (https://github.com/acrisci/i3ipc-python)
+                         
+                         @author cornerman
+                         @license BSD
+                         ---
   scratchpad_counter     Display the amount of windows in your i3 scratchpad.
                          
                          @author shadowprince
@@ -580,7 +595,7 @@ Available modules:
                              {mem_used}         - used memory
                              {mem_used_percent} - used memory percentage
                          
-                         NOTE: If using the {cpu_temp} option, the 'sensors' command should 
+                         NOTE: If using the {cpu_temp} option, the 'sensors' command should
                          be available, provided by the 'lm-sensors' or 'lm_sensors' package.
                          
                          @author Shahin Azad <ishahinism at Gmail>, shrimpza
