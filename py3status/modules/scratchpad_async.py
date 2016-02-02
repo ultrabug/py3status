@@ -19,6 +19,7 @@ Requires:
 from threading import Thread
 import i3ipc
 
+
 class Py3status:
     """
     """
@@ -36,9 +37,7 @@ class Py3status:
         t.start()
 
     def scratchpad_counter(self, i3s_output_list, i3s_config):
-        response = {
-            'cached_until': 0
-        }
+        response = {'cached_until': 0}
 
         if self.urgent:
             response['color'] = self.color_urgent
@@ -50,9 +49,8 @@ class Py3status:
 
         return response
 
-
     def _listen(self):
-        def update_scratchpad_counter(conn, e = None):
+        def update_scratchpad_counter(conn, e=None):
             cons = conn.get_tree().scratchpad().leaves()
             self.urgent = any(con for con in cons if con.urgent)
             self.count = len(cons)
@@ -65,6 +63,7 @@ class Py3status:
         conn.on('window::urgent', update_scratchpad_counter)
 
         conn.main()
+
 
 if __name__ == "__main__":
     """
