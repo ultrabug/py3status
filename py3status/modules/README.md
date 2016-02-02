@@ -54,6 +54,12 @@ Available modules:
                                default is None
                              - format : string that formats the output. See placeholders below.
                                default is "{icon}"
+                             - format_notify_charging : format of the notification received when you click
+                               on the module while your computer is plugged
+                               default is "Charging ({percent}%)"
+                             - format_notify_discharging : format of the notification received when you
+                               click on the module while your comupter is not plugged
+                               default is "{time_remaining}"
                              - hide_when_full : hide any information when battery is fully charged
                                default is False
                              - notification : show current battery state as notification on click
@@ -67,6 +73,7 @@ Available modules:
                              {icon} - a character representing the battery level,
                                       as defined by the 'blocks' and 'charging_character' parameters
                              {percent} - the remaining battery percentage (previously '{}')
+                             {time_remaining} - the remaining time until the battery is empty
                          
                          Obsolete configuration parameters:
                              - mode : an old way to define 'format' parameter. The current behavior is:
