@@ -13,7 +13,7 @@ Configuration Parameters:
     - status: set the status you want to optain (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
 
 @author Ben Oswald <ben.oswald@root-space.de>
-@license MIT License <https://opensource.org/licenses/MIT>
+@license BSD License <https://opensource.org/licenses/BSD-2-Clause>
 @source https://github.com/nazco/i3status-modules
 """
 from time import time
