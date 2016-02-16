@@ -754,6 +754,30 @@ Available modules:
                          Inspired by i3 FAQ:
                              https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
                          ---
+  wifi                   Display WiFi quality or signal, and bitrate using iw.
+                         
+                         Configuration parameters:
+                             - cache_timeout : Update interval in seconds (default: 5)
+                             - device : Wireless device name (default: "wlan0")
+                             - label : Left-sided label (default: "W: ")
+                             - down_text : Output when disconnected (default: "down")
+                             - down_color : Output color when disconnected, possible values:
+                               "good", "degraded", "bad" (default: "bad")
+                             - signal_dbm : If true, displays signal in dBm instead of quality in
+                               percent (default: false)
+                             - signal_bad : Bad signal strength in dBm, or percent if signal_quality is
+                               true (default: -85)
+                             - signal_degraded : Degraded signal strength in dBm, or percent if
+                               signal_quality is true (default: -75)
+                             - rate_bad : Bad bitrate in Mbit/s (default: 26)
+                             - rate_degraded : Degraded bitrate in Mbit/s (default: 53)
+                         
+                         Requires:
+                             - iw
+                         
+                         @author Markus Weimar <mail@markusweimar.de>
+                         @license BSD
+                         ---
   window_title           Display the current window title.
                          
                          Requires:
