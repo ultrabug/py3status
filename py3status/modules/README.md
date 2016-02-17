@@ -754,24 +754,31 @@ Available modules:
                          Inspired by i3 FAQ:
                              https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
                          ---
-  wifi                   Display WiFi quality or signal, and bitrate using iw.
+  wifi                   Display WiFi bit rate, quality, signal and SSID using iw.
                          
                          Configuration parameters:
                              - cache_timeout : Update interval in seconds (default: 5)
                              - device : Wireless device name (default: "wlan0")
-                             - label : Left-sided label (default: "W: ")
-                             - down_text : Output when disconnected (default: "down")
                              - down_color : Output color when disconnected, possible values:
                                "good", "degraded", "bad" (default: "bad")
-                             - signal_dbm : If true, displays signal in dBm instead of quality in
                                percent (default: false)
-                             - signal_bad : Bad signal strength in dBm, or percent if signal_quality is
-                               true (default: -85)
-                             - signal_degraded : Degraded signal strength in dBm, or percent if
-                               signal_quality is true (default: -75)
-                             - rate_bad : Bad bitrate in Mbit/s (default: 26)
-                             - rate_degraded : Degraded bitrate in Mbit/s (default: 53)
+                             - signal_bad : Bad signal strength in percent (default: 29)
+                             - signal_degraded : Degraded signal strength in percent
+                               (default: 49)
+                             - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
+                             - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
+                             - round_bitrate : If true, bitrate is rounded to the nearest whole number
+                               (default: true)
+                             - format_up : See placeholders below (default:
+                               "W: {bitrate} {signal_percent} {ssid}").
+                             - format_down : Output when disconnected (default: "down")
                          
+                         Format of status string placeholders:
+                             {bitrate} - Display bit rate
+                             {signal_percent} - Display signal in percent
+                             {signal_dbm} - Display signal in dBm
+                             {ssid} - Display SSID
+
                          Requires:
                              - iw
                          

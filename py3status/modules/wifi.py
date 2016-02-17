@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
 """
-Display WiFi quality or signal, and bitrate using iw.
+Display WiFi bit rate, quality, signal and SSID using iw.
 
 Configuration parameters:
     - cache_timeout : Update interval in seconds (default: 5)
     - device : Wireless device name (default: "wlan0")
-    - label : Left-sided label (default: "W: ")
-    - down_text : Output when disconnected (default: "down")
     - down_color : Output color when disconnected, possible values:
       "good", "degraded", "bad" (default: "bad")
-    - signal_dbm : If true, displays signal in dBm instead of quality in
       percent (default: false)
-    - signal_bad : Bad signal strength in dBm, or percent if signal_quality is
-      true (default: -85)
-    - signal_degraded : Degraded signal strength in dBm, or percent if
-      signal_quality is true (default: -75)
-    - rate_bad : Bad bitrate in Mbit/s (default: 26)
-    - rate_degraded : Degraded bitrate in Mbit/s (default: 53)
+    - signal_bad : Bad signal strength in percent (default: 29)
+    - signal_degraded : Degraded signal strength in percent
+      (default: 49)
+    - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
+    - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
+    - round_bitrate : If true, bitrate is rounded to the nearest whole number
+      (default: true)
+    - format_up : See placeholders below (default:
+      "W: {bitrate} {signal_percent} {ssid}").
+    - format_down : Output when disconnected (default: "down")
+
+Format of status string placeholders:
+    {bitrate} - Display bit rate
+    {signal_percent} - Display signal in percent
+    {signal_dbm} - Display signal in dBm
+    {ssid} - Display SSID
 
 Requires:
     - iw
@@ -36,52 +43,71 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     device = 'wlan0'
-    label = 'W: '
-    down_text = 'down'
     down_color = 'bad'
-    signal_dbm = False
-    signal_bad = -85
-    signal_degraded = -75
-    rate_bad = 26
-    rate_degraded = 53
+    signal_percent_bad = 29
+    signal_percent_degraded = 49
+    bitrate_bad = 26
+    bitrate_degraded = 53
+    round_bitrate = True
+    format_up = 'W: {bitrate} {signal_percent} {ssid}'
+    format_down = 'W: down'
 
     def get_wifi(self, i3s_output_list, i3s_config):
         """
-        Get signal and bitrate using iw.
+        Get WiFi status using iw.
         """
-        wifi = subprocess.check_output(['iw', self.device, 'link']).decode(
+        self.signal_dbm_bad = self._percent_to_dbm(self.signal_percent_bad)
+        self.signal_dbm_degraded = \
+            self._percent_to_dbm(self.signal_percent_degraded)
+
+        iw = subprocess.check_output(['iw', self.device, 'link']).decode(
             'utf-8')
 
-        rate_out = re.search('tx bitrate: ([0-9\.]+)', wifi)
-        if rate_out:
-            rate_num = round(float(rate_out.group(1)))
+        bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
+        if bitrate_out:
+            bitrate = float(bitrate_out.group(1))
+            if self.round_bitrate:
+                bitrate = round(bitrate)
+            bitrate_unit = bitrate_out.group(2)
+            if bitrate_unit == 'Gbit/s':
+                bitrate *= 1000
         else:
-            rate_num = None
-
-        signal_out = re.search('signal: ([\-0-9]+)', wifi)
+            bitrate = None
+            bitrate_unit = None
+        signal_out = re.search('signal: ([\-0-9]+)', iw)
         if signal_out:
-            signal_num = int(signal_out.group(1))
+            signal_dbm = int(signal_out.group(1))
+            signal_percent = self._dbm_to_percent(signal_dbm)
         else:
-            signal_num = None
+            signal_dbm = None
+            signal_percent = None
+        ssid_out = re.search('SSID: (.+)', iw)
+        if ssid_out:
+            ssid = ssid_out.group(1)
+        else:
+            ssid = None
 
-        if any(num is None for num in [rate_num, signal_num]):
-            full_text = self.label + self.down_text
+        if ssid is None:
+            full_text = self.format_down
             color = i3s_config['color_{}'.format(self.down_color)]
         else:
-            if rate_num <= self.rate_bad or signal_num <= self.signal_bad:
+            if bitrate <= self.bitrate_bad or \
+                    signal_dbm <= self.signal_dbm_bad:
                 color = i3s_config['color_bad']
-            elif rate_num <= self.rate_degraded or \
-                    signal_num <= self.signal_degraded:
+            elif bitrate <= self.bitrate_degraded or \
+                    signal_dbm <= self.signal_dbm_degraded:
                 color = i3s_config['color_degraded']
             else:
                 color = i3s_config['color_good']
-            if self.signal_dbm is True:
-                signal_unit = ' dBm'
-            else:
-                signal_unit = '%'
-                signal_num = 2 * (signal_num + 100)
-            full_text = self.label + str(rate_num) + ' MBit/s' + ' ' + \
-                str(signal_num) + signal_unit
+
+            bitrate = '{} {}'.format(bitrate, bitrate_unit)
+            signal_percent = '{}%'.format(signal_percent)
+            signal_dbm = '{} dBm'.format(signal_dbm)
+
+            full_text = self.format_up.format(bitrate=bitrate,
+                                              signal_percent=signal_percent,
+                                              signal_dbm=signal_dbm,
+                                              ssid=ssid)
 
         response = {
             'cached_until': time() + self.cache_timeout,
@@ -89,6 +115,13 @@ class Py3status:
             'color': color
         }
         return response
+
+    def _percent_to_dbm(self, percent):
+        return (percent / 2) - 100
+
+    def _dbm_to_percent(self, dbm):
+        return 2 * (dbm + 100)
+
 
 if __name__ == "__main__":
     """
