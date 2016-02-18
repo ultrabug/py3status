@@ -3,26 +3,24 @@
 Display WiFi bit rate, quality, signal and SSID using iw.
 
 Configuration parameters:
+    - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
+    - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
     - cache_timeout : Update interval in seconds (default: 5)
     - device : Wireless device name (default: "wlan0")
     - down_color : Output color when disconnected, possible values:
       "good", "degraded", "bad" (default: "bad")
-      percent (default: false)
-    - signal_bad : Bad signal strength in percent (default: 29)
-    - signal_degraded : Degraded signal strength in percent
-      (default: 49)
-    - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
-    - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
+    - format_down : Output when disconnected (default: "down")
+    - format_up : See placeholders below
+      (default: "W: {bitrate} {signal_percent} {ssid}")
     - round_bitrate : If true, bitrate is rounded to the nearest whole number
       (default: true)
-    - format_up : See placeholders below (default:
-      "W: {bitrate} {signal_percent} {ssid}").
-    - format_down : Output when disconnected (default: "down")
+    - signal_bad : Bad signal strength in percent (default: 29)
+    - signal_degraded : Degraded signal strength in percent (default: 49)
 
 Format of status string placeholders:
     {bitrate} - Display bit rate
-    {signal_percent} - Display signal in percent
     {signal_dbm} - Display signal in dBm
+    {signal_percent} - Display signal in percent
     {ssid} - Display SSID
 
 Requires:
@@ -41,16 +39,16 @@ class Py3status:
     """
     """
     # available configuration parameters
+    bitrate_bad = 26
+    bitrate_degraded = 53
     cache_timeout = 5
     device = 'wlan0'
     down_color = 'bad'
+    format_down = 'W: down'
+    format_up = 'W: {bitrate} {signal_percent} {ssid}'
+    round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
-    bitrate_bad = 26
-    bitrate_degraded = 53
-    round_bitrate = True
-    format_up = 'W: {bitrate} {signal_percent} {ssid}'
-    format_down = 'W: down'
 
     def get_wifi(self, i3s_output_list, i3s_config):
         """
