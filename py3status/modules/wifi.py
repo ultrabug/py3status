@@ -16,6 +16,8 @@ Configuration parameters:
       (default: true)
     - signal_bad : Bad signal strength in percent (default: 29)
     - signal_degraded : Degraded signal strength in percent (default: 49)
+    - use_sudo : Use sudo to run iw, make sure it requires no password
+      (default: false)
 
 Format of status string placeholders:
     {bitrate} - Display bit rate
@@ -49,6 +51,7 @@ class Py3status:
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
+    use_sudo = False
 
     def get_wifi(self, i3s_output_list, i3s_config):
         """
@@ -57,8 +60,10 @@ class Py3status:
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
 
-        iw = subprocess.check_output(['iw', self.device, 'link']).decode(
-            'utf-8')
+        cmd = ['iw', self.device, 'link']
+        if self.use_sudo:
+            cmd.insert(0, 'sudo')
+        iw = subprocess.check_output(cmd).decode('utf-8')
 
         bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
         if bitrate_out:
