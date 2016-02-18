@@ -12,7 +12,7 @@ Configuration parameters:
     - format_down : Output when disconnected (default: "down")
     - format_up : See placeholders below
       (default: "W: {bitrate} {signal_percent} {ssid}")
-    - round_bitrate : If true, bitrate is rounded to the nearest whole number
+    - round_bitrate : If true, bit rate is rounded to the nearest whole number
       (default: true)
     - signal_bad : Bad signal strength in percent (default: 29)
     - signal_degraded : Degraded signal strength in percent (default: 49)
