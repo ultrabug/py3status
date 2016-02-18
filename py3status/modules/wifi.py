@@ -77,7 +77,7 @@ class Py3status:
         signal_out = re.search('signal: ([\-0-9]+)', iw)
         if signal_out:
             signal_dbm = int(signal_out.group(1))
-            signal_percent = self._dbm_to_percent(signal_dbm)
+            signal_percent = min(self._dbm_to_percent(signal_dbm), 100)
         else:
             signal_dbm = None
             signal_percent = None
