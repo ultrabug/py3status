@@ -44,8 +44,8 @@ class Py3status:
     cache_timeout = 5
     device = 'wlan0'
     down_color = 'bad'
-    signal_percent_bad = 29
-    signal_percent_degraded = 49
+    signal_bad = 29
+    signal_degraded = 49
     bitrate_bad = 26
     bitrate_degraded = 53
     round_bitrate = True
@@ -56,9 +56,8 @@ class Py3status:
         """
         Get WiFi status using iw.
         """
-        self.signal_dbm_bad = self._percent_to_dbm(self.signal_percent_bad)
-        self.signal_dbm_degraded = \
-            self._percent_to_dbm(self.signal_percent_degraded)
+        self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
+        self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
 
         iw = subprocess.check_output(['iw', self.device, 'link']).decode(
             'utf-8')
