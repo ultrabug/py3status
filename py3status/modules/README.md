@@ -759,7 +759,7 @@ Available modules:
                          Configuration parameters:
                              - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
                              - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
-                             - cache_timeout : Update interval in seconds (default: 5)
+                             - cache_timeout : Update interval in seconds (default: 10)
                              - device : Wireless device name (default: "wlan0")
                              - down_color : Output color when disconnected, possible values:
                                "good", "degraded", "bad" (default: "bad")
