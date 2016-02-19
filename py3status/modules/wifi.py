@@ -60,7 +60,7 @@ class Py3status:
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
 
-        cmd = ['iw', self.device, 'link']
+        cmd = ['iw', 'dev', self.device, 'link']
         if self.use_sudo:
             cmd.insert(0, 'sudo')
         iw = subprocess.check_output(cmd).decode('utf-8')
