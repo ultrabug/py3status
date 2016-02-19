@@ -770,7 +770,9 @@ Available modules:
                                (default: true)
                              - signal_bad : Bad signal strength in percent (default: 29)
                              - signal_degraded : Degraded signal strength in percent (default: 49)
-                             - use_sudo : Use sudo to run iw, make sure it requires no password
+                             - use_sudo : Use sudo to run iw, make sure iw requires no password by
+                               adding a sudoers entry like
+                               "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
                                (default: false)
                          
                          Format of status string placeholders:
