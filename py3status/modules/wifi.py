@@ -95,18 +95,33 @@ class Py3status:
             full_text = self.format_down
             color = i3s_config['color_{}'.format(self.down_color)]
         else:
-            if bitrate <= self.bitrate_bad or \
-                    signal_dbm <= self.signal_dbm_bad:
+            bad = False
+            degraded = False
+            if bitrate:
+                if bitrate <= self.bitrate_bad:
+                    bad = True
+                elif bitrate <= self.bitrate_degraded:
+                    degraded = True
+                bitrate = '{} {}'.format(bitrate, bitrate_unit)
+            else:
+                bitrate = '? MBit/s'
+            if signal_dbm:
+                if signal_dbm <= self.signal_dbm_bad:
+                    bad = True
+                elif signal_dbm <= self.signal_dbm_degraded:
+                    degraded = True
+                signal_dbm = '{} dBm'.format(signal_dbm)
+                signal_percent = '{}%'.format(signal_percent)
+            else:
+                signal_dbm = '? dBm'
+                signal_percent = '?%'
+
+            if bad:
                 color = i3s_config['color_bad']
-            elif bitrate <= self.bitrate_degraded or \
-                    signal_dbm <= self.signal_dbm_degraded:
+            elif degraded:
                 color = i3s_config['color_degraded']
             else:
                 color = i3s_config['color_good']
-
-            bitrate = '{} {}'.format(bitrate, bitrate_unit)
-            signal_percent = '{}%'.format(signal_percent)
-            signal_dbm = '{} dBm'.format(signal_dbm)
 
             full_text = self.format_up.format(bitrate=bitrate,
                                               signal_percent=signal_percent,
