@@ -9,6 +9,7 @@ Configuration parameters:
     - color_playing : text color when song is playing, defaults to color_good
     - format : see placeholders below
     - format_down : define output if spotify is not running
+    - format_stopped : define output if spotify is not playing
 
 Format of status string placeholders:
     {album} - album name
@@ -44,6 +45,7 @@ class Py3status:
     color_playing = None
     format = '{artist} : {title}'
     format_down = 'Spotify not running'
+    format_stopped = 'Spotify stopped'
 
     def _get_text(self, i3s_config):
         """
@@ -56,26 +58,31 @@ class Py3status:
             self.player = dbus.Interface(
                 self.__bus, 'org.freedesktop.DBus.Properties')
 
-            metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
-                                       'Metadata')
-            album = metadata.get('xesam:album')
-            artist = metadata.get('xesam:artist')[0]
-            microtime = metadata.get('mpris:length')
-            rtime = str(timedelta(microseconds=microtime))
-            title = metadata.get('xesam:title')
+            try:
+                metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
+                                           'Metadata')
+                album = metadata.get('xesam:album')
+                artist = metadata.get('xesam:artist')[0]
+                microtime = metadata.get('mpris:length')
+                rtime = str(timedelta(microseconds=microtime))[:-7]
+                title = metadata.get('xesam:title')
+            except Exception:
+                return (
+                    self.format_stopped,
+                    self.color_paused or i3s_config['color_paused'])
 
-            playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
-                                              'PlaybackStatus')
-            if playback_status.strip() == 'Playing':
-                color = self.color_playing or i3s_config['color_good']
-            else:
-                color = self.color_paused or i3s_config['color_degraded']
-
+## 2016-02-22: doesn't work, known bug https://community.spotify.com/t5/Help-Desktop-Linux-Windows-Web/DBus-MPRIS-interface-bug/td-p/1262889
+#            playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
+#                                              'PlaybackStatus')
+#            if playback_status.strip() == 'Playing':
+#                color = self.color_playing or i3s_config['color_good']
+#            else:
+#                color = self.color_paused or i3s_config['color_degraded']
             return (
                 self.format.format(title=title,
                                    artist=artist,
                                    album=album,
-                                   time=rtime), color)
+                                   time=rtime), self.color_playing or i3s_config['color_good'])
         except Exception:
             return (
                 self.format_down,
