@@ -9,6 +9,7 @@ Configuration parameters:
     - color_playing : text color when song is playing, defaults to color_good
     - format : see placeholders below
     - format_down : define output if spotify is not running
+    - format_stopped : define output if spotify is not playing
 
 Format of status string placeholders:
     {album} - album name
@@ -44,10 +45,15 @@ class Py3status:
     color_playing = None
     format = '{artist} : {title}'
     format_down = 'Spotify not running'
+    format_stopped = 'Spotify stopped'
 
     def _get_text(self, i3s_config):
         """
         Get the current song metadatas (artist - title)
+        
+        there is a known bug for dbus property PlaybackStatus:
+          https://community.spotify.com/t5/Help-Desktop-Linux-Windows-Web/DBus-MPRIS-interface-bug/td-p/1262889
+          retested on : 2016-02-22
         """
         bus = dbus.SessionBus()
         try:
@@ -56,14 +62,19 @@ class Py3status:
             self.player = dbus.Interface(
                 self.__bus, 'org.freedesktop.DBus.Properties')
 
-            metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
-                                       'Metadata')
-            album = metadata.get('xesam:album')
-            artist = metadata.get('xesam:artist')[0]
-            microtime = metadata.get('mpris:length')
-            rtime = str(timedelta(microseconds=microtime))
-            title = metadata.get('xesam:title')
-            color = self.color_playing or i3s_config['color_good']
+            try:
+                metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
+                                           'Metadata')
+                album = metadata.get('xesam:album')
+                artist = metadata.get('xesam:artist')[0]
+                microtime = metadata.get('mpris:length')
+                rtime = str(timedelta(microseconds=microtime))[:-7]
+                title = metadata.get('xesam:title')
+                color = self.color_playing or i3s_config['color_good']
+            except Exception:
+                return (
+                    self.format_stopped,
+                    self.color_paused or i3s_config['color_paused'])
 
             return (
                 self.format.format(title=title,
