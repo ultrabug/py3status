@@ -8,6 +8,7 @@ Configuration parameters:
     - color_paused : text color when song is stopped or paused, defaults to color_degraded
     - color_playing : text color when song is playing, defaults to color_good
     - format : see placeholders below
+    - format_down : define output if spotify is not running
 
 Format of status string placeholders:
     {album} - album name
@@ -19,11 +20,13 @@ i3status.conf example:
 
 spotify {
     format = "{title} by {artist} -> {time}"
+    format_down = "no Spotify"
 }
 
 @author Pierre Guilbert
 @author Jimmy Garpehäll
 @author sondrele
+@author Andrwe
 """
 
 from datetime import timedelta
@@ -40,6 +43,7 @@ class Py3status:
     color_paused = None
     color_playing = None
     format = '{artist} : {title}'
+    format_down = 'Spotify not running'
 
     def _get_text(self, i3s_config):
         """
@@ -74,7 +78,7 @@ class Py3status:
                                    time=rtime), color)
         except Exception:
             return (
-                'Spotify not running',
+                self.format_down,
                 self.color_offline or i3s_config['color_bad'])
 
     def spotify(self, i3s_output_list, i3s_config):
