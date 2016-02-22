@@ -124,8 +124,8 @@ class Py3status:
                 color = i3s_config['color_good']
 
             full_text = self.format_up.format(bitrate=bitrate,
-                                              signal_percent=signal_percent,
                                               signal_dbm=signal_dbm,
+                                              signal_percent=signal_percent,
                                               ssid=ssid)
 
         response = {
@@ -135,11 +135,11 @@ class Py3status:
         }
         return response
 
-    def _percent_to_dbm(self, percent):
-        return (percent / 2) - 100
-
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)
+
+    def _percent_to_dbm(self, percent):
+        return (percent / 2) - 100
 
 
 if __name__ == "__main__":
