@@ -18,7 +18,7 @@ Configuration parameters:
 """
 
 from time import time
-import sh
+import subprocess
 
 
 class Py3status:
@@ -47,8 +47,8 @@ class Py3status:
         to determine how many updates are waiting to be installed via
         'pacman -Syu'.
         """
-        pending_updates = sh.checkupdates()
-        return len(pending_updates)
+        pending_updates = str(subprocess.check_output(["checkupdates"]))
+        return pending_updates.count("\\n")
 
     def _check_aur_updates(self):
         """
@@ -56,8 +56,18 @@ class Py3status:
         to determine how many updates are waiting to be installed
         from the AUR.
         """
-        pending_updates = sh.cower('-u')
-        return len(pending_updates)
+        # For reasons best known to its author, 'cower' returns a non-zero
+        # status code upon successful execution, if there is any output.
+        # See https://github.com/falconindy/cower/blob/master/cower.c#L2596
+        pending_updates = b""
+        try:
+            pending_updates = str(subprocess.check_output(["cower", "-bu"]))
+        except subprocess.CalledProcessError as cp_error:
+            pending_updates = cp_error.output
+        except:
+            pending_updates = '?'
+
+        return str(pending_updates).count("\\n")
 
 if __name__ == "__main__":
     """
