@@ -754,6 +754,39 @@ Available modules:
                          Inspired by i3 FAQ:
                              https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
                          ---
+  wifi                   Display WiFi bit rate, quality, signal and SSID using iw.
+                         
+                         Configuration parameters:
+                             - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
+                             - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
+                             - cache_timeout : Update interval in seconds (default: 10)
+                             - device : Wireless device name (default: "wlan0")
+                             - down_color : Output color when disconnected, possible values:
+                               "good", "degraded", "bad" (default: "bad")
+                             - format_down : Output when disconnected (default: "down")
+                             - format_up : See placeholders below
+                               (default: "W: {bitrate} {signal_percent} {ssid}")
+                             - round_bitrate : If true, bit rate is rounded to the nearest whole number
+                               (default: true)
+                             - signal_bad : Bad signal strength in percent (default: 29)
+                             - signal_degraded : Degraded signal strength in percent (default: 49)
+                             - use_sudo : Use sudo to run iw, make sure iw requires no password by
+                               adding a sudoers entry like
+                               "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
+                               (default: false)
+                         
+                         Format of status string placeholders:
+                             {bitrate} - Display bit rate
+                             {signal_dbm} - Display signal in dBm
+                             {signal_percent} - Display signal in percent
+                             {ssid} - Display SSID
+                         
+                         Requires:
+                             - iw
+                         
+                         @author Markus Weimar <mail@markusweimar.de>
+                         @license BSD
+                         ---
   window_title           Display the current window title.
                          
                          Requires:
