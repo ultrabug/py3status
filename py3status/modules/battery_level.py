@@ -36,6 +36,8 @@ Configuration parameters:
       default is "{time_remaining}"
     - hide_when_full : hide any information when battery is fully charged
       default is False
+    - hide_seconds : hide seconds in remaining time
+      default is False
     - notification : show current battery state as notification on click
       default is False
     - notify_low_level : display notification when battery is running low.
@@ -101,6 +103,7 @@ class Py3status:
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
     hide_when_full = False
+    hide_seconds = False
     notification = False
     notify_low_level = False
     # obsolete configuration parameters
@@ -180,6 +183,8 @@ class Py3status:
             battery["time_remaining"] = ''.join(findall(
                 "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
                 "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
+            if self.hide_seconds:
+                battery["time_remaining"] = battery["time_remaining"][:-3]
         except IndexError:
             battery["time_remaining"] = None
 
