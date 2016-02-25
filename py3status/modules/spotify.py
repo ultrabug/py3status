@@ -74,7 +74,7 @@ class Py3status:
             except Exception:
                 return (
                     self.format_stopped,
-                    self.color_paused or i3s_config['color_paused'])
+                    self.color_paused or i3s_config['color_degraded'])
 
             return (
                 self.format.format(title=title,
