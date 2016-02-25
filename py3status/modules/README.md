@@ -62,6 +62,8 @@ Available modules:
                                default is "{time_remaining}"
                              - hide_when_full : hide any information when battery is fully charged
                                default is False
+                             - hide_seconds : hide seconds in remaining time
+                               default is False
                              - notification : show current battery state as notification on click
                                default is False
                              - notify_low_level : display notification when battery is running low.
@@ -571,6 +573,7 @@ Available modules:
                              - color_paused : text color when song is stopped or paused, defaults to color_degraded
                              - color_playing : text color when song is playing, defaults to color_good
                              - format : see placeholders below
+                             - format_down : define output if spotify is not running
                          
                          Format of status string placeholders:
                              {album} - album name
@@ -582,11 +585,13 @@ Available modules:
                          
                          spotify {
                              format = "{title} by {artist} -> {time}"
+                             format_down = "no Spotify"
                          }
                          
                          @author Pierre Guilbert
                          @author Jimmy Garpehäll
                          @author sondrele
+                         @author Andrwe
                          ---
   static_string          Display static text.
                          

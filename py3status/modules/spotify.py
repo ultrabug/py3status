@@ -69,7 +69,7 @@ class Py3status:
             except Exception:
                 return (
                     self.format_stopped,
-                    self.color_paused or i3s_config['color_paused'])
+                    self.color_paused or i3s_config['color_degraded'])
 
 ## 2016-02-22: doesn't work, known bug https://community.spotify.com/t5/Help-Desktop-Linux-Windows-Web/DBus-MPRIS-interface-bug/td-p/1262889
 #            playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
