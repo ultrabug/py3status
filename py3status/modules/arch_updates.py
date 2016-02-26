@@ -18,7 +18,8 @@ Configuration parameters:
 """
 
 from time import time
-import subprocess, sys
+import subprocess
+import sys
 
 
 class Py3status:
@@ -27,7 +28,6 @@ class Py3status:
     include_aur = 0
 
     _line_separator = "\\n" if sys.version_info > (3, 0) else "\n"
-
 
     def check_updates(self, i3s_output_list, i3s_config):
         pacman_updates = self._check_pacman_updates()
