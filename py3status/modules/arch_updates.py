@@ -18,13 +18,15 @@ Configuration parameters:
 """
 
 from time import time
-import subprocess
+import subprocess, sys
 
 
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
     include_aur = 0
+
+    _line_separator = "\\n" if sys.version_info > (3, 0) else "\n"
 
 
     def check_updates(self, i3s_output_list, i3s_config):
@@ -48,7 +50,7 @@ class Py3status:
         'pacman -Syu'.
         """
         pending_updates = str(subprocess.check_output(["checkupdates"]))
-        return pending_updates.count("\\n")
+        return pending_updates.count(self._line_separator)
 
     def _check_aur_updates(self):
         """
@@ -67,7 +69,7 @@ class Py3status:
         except:
             pending_updates = '?'
 
-        return str(pending_updates).count("\\n")
+        return str(pending_updates).count(self._line_separator)
 
 if __name__ == "__main__":
     """
