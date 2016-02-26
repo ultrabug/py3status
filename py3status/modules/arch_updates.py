@@ -12,6 +12,11 @@ To display pending 'aur' updates you need to have installed 'cower'.
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds (default 600)
     - include_aur : set to 0 to use 'cower' to check for AUR updates (default 0)
+    - format : display format to use
+
+Format status string parameters:
+    - aur : number of pending aur updates
+    - pacman : number of pending pacman updates
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -26,20 +31,29 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 600
     include_aur = 0
+    format = ''
 
+    _format_pacman_only = 'UPD: {pacman}'
+    _format_pacman_and_aur = 'UPD: {pacman}/{aur}'
     _line_separator = "\\n" if sys.version_info > (3, 0) else "\n"
+
+    if format == '':
+        if include_aur == 0:
+            format = _format_pacman_only
+        else:
+            format = _format_pacman_and_aur
 
     def check_updates(self, i3s_output_list, i3s_config):
         pacman_updates = self._check_pacman_updates()
         if self.include_aur:
             aur_updates = self._check_aur_updates()
-            results = "{0}/{1}".format(pacman_updates, aur_updates)
+            results = self.format.format(pacman=pacman_updates, aur=aur_updates)
         else:
-            results = str(pacman_updates)
+            results = self.format.format(pacman=str(pacman_updates))
 
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': 'UPD: ' + results
+            'full_text': results
         }
         return response
 
