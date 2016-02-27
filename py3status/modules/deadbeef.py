@@ -3,8 +3,9 @@
 Display track currently playing in deadbeef.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh usage in seconds (1s default)
+    - cache_timeout : how often we refresh usage in seconds (default: 1s)
     - format : see placeholders below
+    - delimiter : delimiter character for parsing (default: ¥)
 
 Format of status string placeholders:
     {artist} : artist
@@ -23,11 +24,7 @@ from time import time
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
-    artist = ''
-    title = ''
-    length = ''
-    elapsed = ''
-    year = ''
+    delimiter = '¥'
     format = '{artist} - {title}'
 
     # return error occurs
@@ -41,11 +38,21 @@ class Py3status:
 
     # return track currently playing in deadbeef
     def get_status(self, i3s_output_list, i3s_config):
+        artist = ''
+        title = ''
+        length = ''
+        elapsed = ''
+        year = ''
         try:
             # get all properties using ¥ as delimiter
             status = check_output(['deadbeef',
                                    '--nowplaying',
-                                   '%a¥%t¥%l¥%e¥%y¥%n'])
+                                   '%a' + self.delimiter +
+                                   '%t' + self.delimiter +
+                                   '%l' + self.delimiter +
+                                   '%e' + self.delimiter +
+                                   '%y' + self.delimiter +
+                                   '%n'])
             # check if we have music currently  playing
             if 'nothing' in status:
                 response = {
@@ -54,7 +61,7 @@ class Py3status:
                 }
                 return response
             # split properties using special delimiter
-            parts = status.split('¥')
+            parts = status.split(self.delimiter)
             if len(parts) == 6:
                 self.artist = parts[0]
                 self.title = parts[1]
