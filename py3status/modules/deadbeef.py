@@ -45,7 +45,7 @@ class Py3status:
             # get all properties using ¥ as delimiter
             status = check_output(['deadbeef',
                                    '--nowplaying',
-                                   '%a¥%t¥%l¥%e¥%y¥n'])
+                                   '%a¥%t¥%l¥%e¥%y¥%n'])
             # check if we have music currently  playing
             if 'nothing' in status:
                 response = {
