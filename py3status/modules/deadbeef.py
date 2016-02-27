@@ -19,6 +19,7 @@ Format of status string placeholders:
 from subprocess import check_output
 from time import time
 
+
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
@@ -33,26 +34,27 @@ class Py3status:
     def _error_response(self, color):
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text' : 'deadbeef: error',
-            'color' : color
+            'full_text': 'deadbeef: error',
+            'color': color
         }
         return response
-
 
     # return track currently playing in deadbeef
     def get_status(self, i3s_output_list, i3s_config):
         try:
             # get all properties using ¥ as delimiter
-            status = check_output(['deadbeef', '--nowplaying', '%a¥%t¥%l¥%e¥%y¥n'])
+            status = check_output(['deadbeef',
+                                   '--nowplaying',
+                                   '%a¥%t¥%l¥%e¥%y¥n'])
             # check if we have music currently  playing
             if 'nothing' in status:
                 response = {
                     'cached_until': time() + self.cache_timeout,
-                    'full_text' : ''
+                    'full_text': ''
                 }
                 return response
             # split properties using special delimiter
-            parts =  status.split('¥')
+            parts = status.split('¥')
             if len(parts) == 6:
                 self.artist = parts[0]
                 self.title = parts[1]
@@ -65,12 +67,12 @@ class Py3status:
 
             response = {
                 'cached_until': time() + self.cache_timeout,
-                'full_text' : self.format.format(artist=self.artist,
-                                                 title=self.title,
-                                                 length=self.length,
-                                                 elapsed=self.elapsed,
-                                                 year=self.year,
-                                                 tracknum=self.tracknum)
+                'full_text': self.format.format(artist=self.artist,
+                                                title=self.title,
+                                                length=self.length,
+                                                elapsed=self.elapsed,
+                                                year=self.year,
+                                                tracknum=self.tracknum)
             }
             return response
         except:
