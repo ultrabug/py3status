@@ -38,21 +38,16 @@ class Py3status:
 
     # return track currently playing in deadbeef
     def get_status(self, i3s_output_list, i3s_config):
-        self.artist = ''
-        self.title = ''
-        self.length = ''
-        self.elapsed = ''
-        self.year = ''
         try:
             # get all properties using ¥ as delimiter
             status = check_output(['deadbeef',
                                    '--nowplaying',
-                                   '%a' + self.delimiter +
-                                   '%t' + self.delimiter +
-                                   '%l' + self.delimiter +
-                                   '%e' + self.delimiter +
-                                   '%y' + self.delimiter +
-                                   '%n'])
+                                   self.delimiter.join(['%a',
+                                                        '%t',
+                                                        '%l',
+                                                        '%e',
+                                                        '%y',
+                                                        '%n'])])
             # check if we have music currently  playing
             if 'nothing' in status:
                 response = {
