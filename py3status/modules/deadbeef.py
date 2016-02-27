@@ -58,23 +58,18 @@ class Py3status:
             # split properties using special delimiter
             parts = status.split(self.delimiter)
             if len(parts) == 6:
-                self.artist = parts[0]
-                self.title = parts[1]
-                self.length = parts[2]
-                self.elapsed = parts[3]
-                self.year = parts[4]
-                self.tracknum = parts[5]
+                artist, title, length, elapsed, year, tracknum = parts
             else:
                 return self._error_response(i3s_config['color_bad'])
 
             response = {
                 'cached_until': time() + self.cache_timeout,
-                'full_text': self.format.format(artist=self.artist,
-                                                title=self.title,
-                                                length=self.length,
-                                                elapsed=self.elapsed,
-                                                year=self.year,
-                                                tracknum=self.tracknum)
+                'full_text': self.format.format(artist=artist,
+                                                title=title,
+                                                length=length,
+                                                elapsed=elapsed,
+                                                year=year,
+                                                tracknum=tracknum)
             }
             return response
         except:
