@@ -17,7 +17,7 @@ Format of status string placeholders:
 
 @author mrt-prodz
 """
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 from time import time
 
 
@@ -48,8 +48,8 @@ class Py3status:
     def get_status(self, i3s_output_list, i3s_config):
         try:
             # check if we have deadbeef running
-            output = check_output(['pidof', 'deadbeef'])
-        except subprocess.CalledProcessError:
+            check_output(['pidof', 'deadbeef'])
+        except CalledProcessError:
             return self._empty_response()
 
         try:
