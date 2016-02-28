@@ -22,6 +22,8 @@ class Py3status:
     # available configuration parameters
     format_off = "DPMS"
     format_on = "DPMS"
+    color_on = None
+    color_off = None
 
     def dpms(self, i3s_output_list, i3s_config):
         """
@@ -30,12 +32,10 @@ class Py3status:
 
         self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
 
-        response = {
+        return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': i3s_config['color_good'] if self.run else i3s_config['color_bad']
+            'color': self.color_on or i3s_config['color_good'] if self.run else self.color_off or i3s_config['color_bad']
         }
-
-        return response
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
