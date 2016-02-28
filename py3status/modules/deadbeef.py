@@ -36,8 +36,22 @@ class Py3status:
         }
         return response
 
+    # return empty response
+    def _empty_response(self):
+        response = {
+            'cached_until': time() + self.cache_timeout,
+            'full_text': ''
+        }
+        return response
+
     # return track currently playing in deadbeef
     def get_status(self, i3s_output_list, i3s_config):
+        try:
+            # check if we have deadbeef running
+            output = check_output(['pidof', 'deadbeef'])
+        except subprocess.CalledProcessError:
+            return self._empty_response()
+
         try:
             # get all properties using ¥ as delimiter
             status = check_output(['deadbeef',
@@ -48,13 +62,10 @@ class Py3status:
                                                         '%e',
                                                         '%y',
                                                         '%n'])])
-            # check if we have music currently  playing
-            if 'nothing' in status:
-                response = {
-                    'cached_until': time() + self.cache_timeout,
-                    'full_text': ''
-                }
-                return response
+
+            if status == 'nothing':
+                return self._empty_response()
+
             # split properties using special delimiter
             parts = status.split(self.delimiter)
             if len(parts) == 6:
