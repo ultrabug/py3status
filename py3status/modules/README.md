@@ -1,5 +1,25 @@
 ```
 Available modules:
+  arch_updates           Displays the number of package updates pending for an Arch Linux installation.
+                         
+                         This will display a count of how many 'pacman' updates are waiting
+                         to be installed and optionally a count of how many 'aur' updates are
+                         also waiting.
+                         
+                         To display pending 'aur' updates you need to have installed 'cower'.
+                         
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds (default 600)
+                             - include_aur : set to 0 to use 'cower' to check for AUR updates (default 0)
+                             - format : display format to use
+                         
+                         Format status string parameters:
+                             - aur : number of pending aur updates
+                             - pacman : number of pending pacman updates
+                         
+                         @author Iain Tatch <iain.tatch@gmail.com>
+                         @license BSD
+                         ---
   aws_bill               Display the current AWS bill.
                          
                          ##### WARNING #####
