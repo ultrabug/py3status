@@ -611,6 +611,7 @@ Available modules:
                              - color_playing : text color when song is playing, defaults to color_good
                              - format : see placeholders below
                              - format_down : define output if spotify is not running
+                             - format_stopped : define output if spotify is not playing
                          
                          Format of status string placeholders:
                              {album} - album name
