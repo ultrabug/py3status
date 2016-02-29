@@ -157,6 +157,23 @@ Available modules:
                          @author Francois LASSERRE <choiz@me.com>
                          @license GNU GPL http://www.gnu.org/licenses/gpl.html
                          ---
+  deadbeef               Display track currently playing in deadbeef.
+                         
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh usage in seconds (default: 1s)
+                             - format : see placeholders below
+                             - delimiter : delimiter character for parsing (default: ¥)
+                         
+                         Format of status string placeholders:
+                             {artist} : artist
+                             {title} : title
+                             {elapsed} : elapsed time
+                             {length} : total length
+                             {year} : year
+                             {tracknum} : track number
+                         
+                         @author mrt-prodz
+                         ---
   dpms                   Activate or deactivate DPMS and screen blanking.
                          
                          This module allows activation and deactivation
