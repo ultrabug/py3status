@@ -9,6 +9,8 @@ import os
 import pkgutil
 import select
 import sys
+import logging
+import logging.handlers
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -25,7 +27,6 @@ from subprocess import call
 from tempfile import NamedTemporaryFile
 from threading import Event, Thread
 from time import sleep, time
-from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
 try:
     from setproctitle import setproctitle
@@ -35,6 +36,56 @@ except ImportError:
 
 # Used in development
 enable_profiling = False
+
+log = logging.getLogger('py3status')
+
+
+class I3nagbarHandler(logging.StreamHandler):
+    """
+    Logging handler used to display warning and errors with i3-nagbar.
+    """
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            Popen(
+                ['i3-nagbar', '-m', msg, '-t',
+                    logging.getLevelName(self.level).lower()],
+                stdout=open('/dev/null', 'w'),
+                stderr=open('/dev/null', 'w')
+            )
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+
+def init_logger():
+    # Handlers initialization
+    stdoutHandler = logging.StreamHandler()
+    nagbarHandler = I3nagbarHandler()
+    syslogHandler = logging.handlers.SysLogHandler(address='/dev/log')
+    # Formatters definition
+    stdoutFormatter = logging.Formatter(
+            "%(levelname)5s [%(filename)20s:%(funcName)10s()] - %(message)s"
+            )
+    nagbarFormatter = logging.Formatter(
+            "py3status: %(message)s. "
+            "Please try to fix this and reload i3wm (Mod+Shift+R)")
+    syslogFormatter = logging.Formatter("%(message)s")
+    # Levels assignation
+    stdoutHandler.setLevel(logging.DEBUG)
+    nagbarHandler.setLevel(logging.WARNING)
+    syslogHandler.setLevel(logging.DEBUG)
+    # Formatters assignation
+    stdoutHandler.setFormatter(stdoutFormatter)
+    nagbarHandler.setFormatter(nagbarFormatter)
+    syslogHandler.setFormatter(syslogFormatter)
+    # Loggers
+    # log.addHandler(stdoutHandler)
+    log.addHandler(nagbarHandler)
+    log.addHandler(syslogHandler)
+    # Default level : DEBUG = forward everything to handlers
+    log.setLevel(logging.DEBUG)
 
 
 def profile(thread_run_fn):
@@ -357,8 +408,7 @@ class I3status(Thread):
                         minutes=eval('{}{}'.format(operator, minutes))))
         except Exception:
             err = sys.exc_info()[1]
-            syslog(
-                LOG_ERR,
+            log.error(
                 'i3status get_delta_from_format failed "{}" "{}" ({})'.format(
                     i3s_time, time_format, err))
         return (time_format, None)
@@ -435,7 +485,7 @@ class I3status(Thread):
                     date = i3s_time
                 except Exception:
                     err = sys.exc_info()[1]
-                    syslog(LOG_ERR,
+                    log.error(
                            'i3status set_time_modules "{}" failed ({})'.format(
                                conf_name, err))
                     date = i3s_time
@@ -552,8 +602,7 @@ class I3status(Thread):
         try:
             with NamedTemporaryFile(prefix='py3status_') as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
-                syslog(LOG_INFO,
-                       'i3status spawned using config file {}'.format(
+                log.info('i3status spawned using config file {}'.format(
                            tmpfile.name))
 
                 i3status_pipe = Popen(
@@ -667,11 +716,11 @@ class Events(Thread):
             # module accepts click_events, use it
             module.click_event(event)
             if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching event {}'.format(event))
+                log.info('dispatching event {}'.format(event))
         else:
             # default button 2 action is to clear this method's cache
             if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching default event {}'.format(event))
+                log.info('dispatching default event {}'.format(event))
 
         # to make the bar more responsive to users we ask for a refresh
         # of the module or of i3status if the module is an i3status one
@@ -702,14 +751,13 @@ class Events(Thread):
         module = self.modules.get(module_name)
         if module is not None:
             if self.config['debug']:
-                syslog(LOG_INFO, 'refresh module {}'.format(module_name))
+                log.info('refresh module {}'.format(module_name))
             for obj in module.methods.values():
                 obj['cached_until'] = time()
         else:
             if time() > (self.last_refresh_ts + 0.1):
                 if self.config['debug']:
-                    syslog(
-                        LOG_INFO,
+                    log.info(
                         'refresh i3status for module {}'.format(module_name))
                 call(['killall', '-s', 'USR1', 'i3status'])
                 self.last_refresh_ts = time()
@@ -752,7 +800,7 @@ class Events(Thread):
         Execute the given i3 message and log its output.
         """
         i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
-        syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
+        log.info('i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
     def i3status_mod_guess(self, instance, name):
@@ -851,7 +899,7 @@ class Events(Thread):
             try:
                 with jsonify(event) as (prefix, event):
                     if self.config['debug']:
-                        syslog(LOG_INFO, 'received event {}'.format(event))
+                        log.info('received event {}'.format(event))
 
                     # usage variables
                     button = event.get('button', 0)
@@ -863,8 +911,7 @@ class Events(Thread):
                     # i3status module name guess
                     instance, name = self.i3status_mod_guess(instance, name)
                     if self.config['debug']:
-                        syslog(
-                            LOG_INFO,
+                        log.info(
                             'trying to dispatch event to module "{}"'.format(
                                 '{} {}'.format(name, instance).strip()))
 
@@ -905,13 +952,12 @@ class Events(Thread):
                         module = self.i3bar_click_events_module()
                         if module:
                             if self.config['debug']:
-                                syslog(
-                                    LOG_INFO,
+                                log.info(
                                     'dispatching event to i3bar_click_events')
                             self.dispatch(module, obj, event)
             except Exception:
                 err = sys.exc_info()[1]
-                syslog(LOG_WARNING, 'event failed ({})'.format(err))
+                log.warning('event failed ({})'.format(err))
 
 
 class Module(Thread):
@@ -974,7 +1020,7 @@ class Module(Thread):
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
-                syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+                log.info('clearing cache for method {}'.format(meth))
 
     def load_methods(self, module, user_modules):
         """
@@ -988,14 +1034,13 @@ class Module(Thread):
         # user provided modules take precedence over py3status provided modules
         if self.module_name in user_modules:
             include_path, f_name = user_modules[self.module_name]
-            syslog(LOG_INFO,
+            log.info(
                    'loading module "{}" from {}{}'.format(module, include_path,
                                                           f_name))
             class_inst = self.load_from_file(include_path + f_name)
         # load from py3status provided modules
         else:
-            syslog(LOG_INFO,
-                   'loading module "{}" from py3status.modules.{}'.format(
+            log.info('loading module "{}" from py3status.modules.{}'.format(
                        module, self.module_name))
             class_inst = self.load_from_namespace(self.module_name)
 
@@ -1033,9 +1078,9 @@ class Module(Thread):
                             }
                             self.methods[method] = method_obj
 
-        # done, syslog some debug info
+        # done, log some debug info
         if self.config['debug']:
-            syslog(LOG_INFO,
+            log.info(
                    'module "{}" click_events={} has_kill={} methods={}'.format(
                        module, self.click_events, self.has_kill,
                        self.methods.keys()))
@@ -1051,7 +1096,7 @@ class Module(Thread):
         except Exception:
             err = sys.exc_info()[1]
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
-            syslog(LOG_WARNING, msg)
+            log.warning(msg)
 
     @profile
     def run(self):
@@ -1118,12 +1163,10 @@ class Module(Thread):
 
                     # debug info
                     if self.config['debug']:
-                        syslog(LOG_INFO,
-                               'method {} returned {} '.format(meth, result))
+                        log.info('method {} returned {} '.format(meth, result))
                 except Exception:
                     err = sys.exc_info()[1]
-                    syslog(LOG_WARNING,
-                           'user method {} failed ({})'.format(meth, err))
+                    log.warning('user method {} failed ({})'.format(meth, err))
 
             # don't be hasty mate, let's take it easy for now
             sleep(self.config['interval'])
@@ -1208,7 +1251,7 @@ class Py3statusWrapper():
         parser.add_argument('-d',
                             '--debug',
                             action="store_true",
-                            help="be verbose in syslog")
+                            help="be verbose in log")
         parser.add_argument('-i',
                             '--include',
                             action="append",
@@ -1340,13 +1383,12 @@ class Py3statusWrapper():
                     my_m.start()
                     self.modules[module] = my_m
                 elif self.config['debug']:
-                    syslog(LOG_INFO,
-                           'ignoring module "{}" (no methods found)'.format(
+                    log.info('ignoring module "{}" (no methods found)'.format(
                                module))
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'loading module "{}" failed ({})'.format(module, err)
-                self.i3_nagbar(msg, level='warning')
+                log.warning(msg)
 
     def setup(self):
         """
@@ -1363,8 +1405,7 @@ class Py3statusWrapper():
             sys.exit()
 
         if self.config['debug']:
-            syslog(LOG_INFO,
-                   'py3status started with config {}'.format(self.config))
+            log.info('py3status started with config {}'.format(self.config))
 
         # setup i3status thread
         self.i3status_thread = I3status(self.lock,
@@ -1380,7 +1421,7 @@ class Py3statusWrapper():
                     raise IOError(err)
                 sleep(0.1)
         if self.config['debug']:
-            syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
+            log.info('i3status thread {} with config {}'.format(
                 'started' if not self.config['standalone'] else 'mocked',
                 self.i3status_thread.config))
 
@@ -1389,7 +1430,7 @@ class Py3statusWrapper():
                                     self.i3status_thread.config)
         self.events_thread.start()
         if self.config['debug']:
-            syslog(LOG_INFO, 'events thread started')
+            log.info('events thread started')
 
         # suppress modules' ouput wrt issue #20
         if not self.config['debug']:
@@ -1402,27 +1443,11 @@ class Py3statusWrapper():
         # get a dict of all user provided modules
         user_modules = self.get_user_configured_modules()
         if self.config['debug']:
-            syslog(LOG_INFO, 'user_modules={}'.format(user_modules))
+            log.info('user_modules={}'.format(user_modules))
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
-
-    def i3_nagbar(self, msg, level='error'):
-        """
-        Make use of i3-nagbar to display errors and warnings to the user.
-        We also make sure to log anything to keep trace of it.
-        """
-        msg = 'py3status: {}. '.format(msg)
-        msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
-        try:
-            log_level = LOG_ERR if level == 'error' else LOG_WARNING
-            syslog(log_level, msg)
-            Popen(['i3-nagbar', '-m', msg, '-t', level],
-                  stdout=open('/dev/null', 'w'),
-                  stderr=open('/dev/null', 'w'))
-        except:
-            pass
 
     def stop(self):
         """
@@ -1431,7 +1456,7 @@ class Py3statusWrapper():
         try:
             self.lock.clear()
             if self.config['debug']:
-                syslog(LOG_INFO, 'lock cleared, exiting')
+                log.info('lock cleared, exiting')
             self.i3status_thread.cleanup_tmpfile()
         except:
             pass
@@ -1445,7 +1470,7 @@ class Py3statusWrapper():
         To prevent abuse, we rate limit this function to 100ms.
         """
         if time() > (self.last_refresh_ts + 0.1):
-            syslog(LOG_INFO, 'received USR1, forcing refresh')
+            log.info('received USR1, forcing refresh')
 
             # send SIGUSR1 to i3status
             call(['killall', '-s', 'USR1', 'i3status'])
@@ -1456,8 +1481,7 @@ class Py3statusWrapper():
             # reset the refresh timestamp
             self.last_refresh_ts = time()
         else:
-            syslog(LOG_INFO,
-                   'received USR1 but rate limit is in effect, calm down')
+            log.info('received USR1 but rate limit is in effect, calm down')
 
     def clear_modules_cache(self):
         """
@@ -1495,7 +1519,7 @@ class Py3statusWrapper():
                 err = self.i3status_thread.error
                 if not err:
                     err = 'i3status died horribly'
-                self.i3_nagbar(err)
+                log.error(err)
                 break
 
             # check events thread
@@ -1504,7 +1528,7 @@ class Py3statusWrapper():
                 if not hasattr(self.events_thread, 'i3_nagbar'):
                     self.events_thread.i3_nagbar = True
                     err = 'events thread died, click events are disabled'
-                    self.i3_nagbar(err, level='warning')
+                    log.warning(err)
 
             # check that every module thread is alive
             for module in self.modules.values():
@@ -1514,7 +1538,7 @@ class Py3statusWrapper():
                         module.i3_nagbar = True
                         msg = 'output frozen for dead module(s) {}'.format(
                             ','.join(module.methods.keys()))
-                        self.i3_nagbar(msg, level='warning')
+                        log.warning(msg)
 
             # get output from i3status
             prefix = self.i3status_thread.last_prefix
@@ -1610,11 +1634,11 @@ def main():
         py3.setup()
     except KeyboardInterrupt:
         err = sys.exc_info()[1]
-        py3.i3_nagbar('setup interrupted (KeyboardInterrupt)')
+        log.error('setup interrupted (KeyboardInterrupt)')
         sys.exit(0)
     except Exception:
         err = sys.exc_info()[1]
-        py3.i3_nagbar('setup error ({})'.format(err))
+        log.error('setup error ({})'.format(err))
         py3.stop()
         sys.exit(2)
 
@@ -1622,7 +1646,7 @@ def main():
         py3.run()
     except Exception:
         err = sys.exc_info()[1]
-        py3.i3_nagbar('runtime error ({})'.format(err))
+        log.error('runtime error ({})'.format(err))
         sys.exit(3)
     except KeyboardInterrupt:
         pass
