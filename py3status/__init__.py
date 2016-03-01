@@ -7,7 +7,6 @@ import imp
 import locale
 import os
 import pkgutil
-import select
 import sys
 
 from collections import OrderedDict
@@ -23,15 +22,17 @@ from subprocess import Popen
 from subprocess import PIPE
 from subprocess import call
 from tempfile import NamedTemporaryFile
-from threading import Event, Thread
+from threading import Thread, Lock
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
-
 try:
     from setproctitle import setproctitle
     setproctitle('py3status')
 except ImportError:
     pass
+
+from py3status.io import print_line, print_stderr, sanitize_text, InputReader
+
 
 # Used in development
 enable_profiling = False
@@ -65,61 +66,12 @@ def jsonify(string):
     yield (prefix, loads(string))
 
 
-def print_line(line):
-    """
-    Print given line to stdout (i3bar).
-    """
-    sys.__stdout__.write('{}\n'.format(line))
-    sys.__stdout__.flush()
-
-
-def print_stderr(line):
-    """Print line to stderr
-    """
-    print(line, file=sys.stderr)
-
-
-class IOPoller:
-    """
-    This class implements a predictive and timing-out I/O reader
-    using select and the poll() mechanism for greater compatibility.
-    """
-
-    def __init__(self, io, eventmask=select.POLLIN):
-        """
-        Our default is to read (POLLIN) the specified 'io' file descriptor.
-        """
-        self.io = io
-        self.poller = select.poll()
-        self.poller.register(io, eventmask)
-
-    def readline(self, timeout=500):
-        """
-        Try to read our I/O for 'timeout' milliseconds, return None otherwise.
-        This makes calling and reading I/O non blocking !
-        """
-        poll_result = self.poller.poll(timeout)
-        if poll_result:
-            line = self.io.readline().strip()
-            if self.io == sys.stdin and line == '[':
-                # skip first event line wrt issue #19
-                line = self.io.readline().strip()
-            try:
-                # python3 compatibility code
-                line = line.decode()
-            except (AttributeError, UnicodeDecodeError):
-                pass
-            return line
-        else:
-            return None
-
-
-class I3status(Thread):
+class I3Status(Thread):
     """
     This class is responsible for spawning i3status and reading its output.
     """
 
-    def __init__(self, lock, i3status_config_path, standalone):
+    def __init__(self, exit_lock, i3status_config_path, standalone):
         """
         Our output will be read asynchronously from 'last_output'.
         """
@@ -135,7 +87,7 @@ class I3status(Thread):
         self.last_output = None
         self.last_output_ts = None
         self.last_prefix = None
-        self.lock = lock
+        self.exit_lock = exit_lock
         self.ready = False
         self.standalone = standalone
         self.tmpfile_path = None
@@ -549,75 +501,68 @@ class I3status(Thread):
         """
         Spawn i3status using a self generated config file and poll its output.
         """
-        try:
-            with NamedTemporaryFile(prefix='py3status_') as tmpfile:
-                self.write_tmp_i3status_config(tmpfile)
-                syslog(LOG_INFO,
-                       'i3status spawned using config file {}'.format(
-                           tmpfile.name))
+        with NamedTemporaryFile(prefix='py3status_') as tmpfile:
+            self.write_tmp_i3status_config(tmpfile)
+            syslog(LOG_INFO,
+                   'i3status spawned using config file {}'.format(
+                       tmpfile.name))
 
-                i3status_pipe = Popen(
-                    ['i3status', '-c', tmpfile.name],
-                    stdout=PIPE,
-                    stderr=PIPE, )
-                self.poller_inp = IOPoller(i3status_pipe.stdout)
-                self.poller_err = IOPoller(i3status_pipe.stderr)
-                self.tmpfile_path = tmpfile.name
+            i3status_pipe = Popen(
+                ['i3status', '-c', tmpfile.name], stdout=PIPE, stderr=PIPE
+            )
+            pipe_out = i3status_pipe.stdout
+            pipe_err = i3status_pipe.stderr
+            self.tmpfile_path = tmpfile.name
 
-                try:
-                    # loop on i3status output
-                    while self.lock.is_set():
-                        line = self.poller_inp.readline()
-                        if line:
-                            if line.startswith('[{'):
-                                print_line(line)
-                                with jsonify(line) as (prefix, json_list):
-                                    self.last_output = json_list
-                                    self.last_output_ts = datetime.utcnow()
-                                    self.last_prefix = ','
-                                    self.update_json_list()
-                                    self.set_responses(json_list)
-                                    # on first i3status output, we parse
-                                    # the time and tztime modules
-                                    self.set_time_modules()
-                                self.ready = True
-                            elif not line.startswith(','):
-                                if 'version' in line:
-                                    header = loads(line)
-                                    header.update({'click_events': True})
-                                    line = dumps(header)
-                                print_line(line)
-                            else:
-                                with jsonify(line) as (prefix, json_list):
-                                    self.last_output = json_list
-                                    self.last_output_ts = datetime.utcnow()
-                                    self.last_prefix = prefix
-                                    self.update_json_list()
-                                    self.set_responses(json_list)
+            try:
+                # loop on i3status output
+                for line in pipe_out:
+                    if not self.exit_lock.locked():
+                        break
+
+                    line = sanitize_text(line)
+
+                    if line:
+                        if line.startswith('[{'):
+                            print_line(line)
+                            with jsonify(line) as (prefix, json_list):
+                                self.last_output = json_list
+                                self.last_output_ts = datetime.utcnow()
+                                self.last_prefix = ','
+                                self.update_json_list()
+                                self.set_responses(json_list)
+                                # on first i3status output, we parse
+                                # the time and tztime modules
+                                self.set_time_modules()
+                            self.ready = True
+                        elif not line.startswith(','):
+                            if 'version' in line:
+                                header = loads(line)
+                                header.update({'click_events': True})
+                                line = dumps(header)
+                            print_line(line)
                         else:
-                            err = self.poller_err.readline()
-                            code = i3status_pipe.poll()
-                            if code is not None:
-                                msg = 'i3status died'
-                                if err:
-                                    msg += ' and said: {}'.format(err)
-                                else:
-                                    msg += ' with code {}'.format(code)
-                                raise IOError(msg)
-                except IOError:
-                    err = sys.exc_info()[1]
-                    self.error = err
-        except OSError:
-            # we cleanup the tmpfile ourselves so when the delete will occur
-            # it will usually raise an OSError: No such file or directory
-            pass
-
-    def cleanup_tmpfile(self):
-        """
-        Cleanup i3status tmp configuration file.
-        """
-        if os.path.isfile(self.tmpfile_path):
-            os.remove(self.tmpfile_path)
+                            with jsonify(line) as (prefix, json_list):
+                                self.last_output = json_list
+                                self.last_output_ts = datetime.utcnow()
+                                self.last_prefix = prefix
+                                self.update_json_list()
+                                self.set_responses(json_list)
+                    else:
+                        code = i3status_pipe.poll()
+                        if code is not None:
+                            msg = 'i3status died'
+                            err = sanitize_text(pipe_err.read())
+                            # Condense whitespace
+                            err = ' '.join(err.split())
+                            if err:
+                                msg += ' and said: {}'.format(err)
+                            else:
+                                msg += ' with code {}'.format(code)
+                            raise IOError(msg)
+            except IOError:
+                err = sys.exc_info()[1]
+                self.error = err
 
     def mock(self):
         """
@@ -643,7 +588,7 @@ class Events(Thread):
     This class is responsible for dispatching event JSONs sent by the i3bar.
     """
 
-    def __init__(self, lock, config, modules, i3s_config):
+    def __init__(self, exit_lock, config, modules, i3s_config):
         """
         We need to poll stdin to receive i3bar messages.
         """
@@ -651,10 +596,10 @@ class Events(Thread):
         self.config = config
         self.i3s_config = i3s_config
         self.last_refresh_ts = time()
-        self.lock = lock
+        self.exit_lock = exit_lock
         self.modules = modules
         self.on_click = i3s_config['on_click']
-        self.poller_inp = IOPoller(sys.stdin)
+        self.input_reader = InputReader(sys.stdin)
 
     def dispatch(self, module, obj, event):
         """
@@ -844,8 +789,9 @@ class Events(Thread):
         Example event:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
-        while self.lock.is_set():
-            event = self.poller_inp.readline()
+        self.input_reader.start()
+        while self.exit_lock.locked():
+            event = self.input_reader.get()
             if not event:
                 continue
             try:
@@ -921,7 +867,7 @@ class Module(Thread):
     caching its output based on user will.
     """
 
-    def __init__(self, lock, config, module, i3_thread, user_modules):
+    def __init__(self, exit_lock, config, module, i3_thread, user_modules):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
@@ -931,7 +877,7 @@ class Module(Thread):
         self.has_kill = False
         self.i3status_thread = i3_thread
         self.last_output = []
-        self.lock = lock
+        self.exit_lock = exit_lock
         self.methods = OrderedDict()
         self.module_class = None
         self.module_inst = ''.join(module.split(' ')[1:])
@@ -1061,13 +1007,13 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
-        while self.lock.is_set():
+        while self.exit_lock.locked():
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
 
                 # always check the lock
-                if not self.lock.is_set():
+                if not self.exit_lock.locked():
                     break
 
                 # respect the cache set for this method
@@ -1130,16 +1076,12 @@ class Module(Thread):
 
         # check and execute the 'kill' method if present
         if self.has_kill:
-            try:
-                kill_method = getattr(self.module_class, 'kill')
-                kill_method(self.i3status_thread.json_list,
-                            self.i3status_thread.config['general'])
-            except Exception:
-                # this would be stupid to die on exit
-                pass
+            kill_method = getattr(self.module_class, 'kill')
+            kill_method(self.i3status_thread.json_list,
+                        self.i3status_thread.config['general'])
 
 
-class Py3statusWrapper():
+class Py3StatusWrapper(object):
     """
     This is the py3status wrapper.
     """
@@ -1149,7 +1091,7 @@ class Py3statusWrapper():
         Useful variables we'll need.
         """
         self.last_refresh_ts = time()
-        self.lock = Event()
+        self.exit_lock = Lock()
         self.modules = {}
         self.py3_modules = []
 
@@ -1333,7 +1275,7 @@ class Py3statusWrapper():
             if module in self.modules:
                 continue
             try:
-                my_m = Module(self.lock, self.config, module,
+                my_m = Module(self.exit_lock, self.config, module,
                               self.i3status_thread, user_modules)
                 # only start and handle modules with available methods
                 if my_m.methods:
@@ -1352,8 +1294,8 @@ class Py3statusWrapper():
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
-        # set the Event lock
-        self.lock.set()
+        # set the exit lock
+        self.exit_lock.acquire()
 
         # setup configuration
         self.config = self.get_config()
@@ -1367,7 +1309,7 @@ class Py3statusWrapper():
                    'py3status started with config {}'.format(self.config))
 
         # setup i3status thread
-        self.i3status_thread = I3status(self.lock,
+        self.i3status_thread = I3Status(self.exit_lock,
                                         self.config['i3status_config_path'],
                                         self.config['standalone'])
         if self.config['standalone']:
@@ -1385,7 +1327,7 @@ class Py3statusWrapper():
                 self.i3status_thread.config))
 
         # setup input events thread
-        self.events_thread = Events(self.lock, self.config, self.modules,
+        self.events_thread = Events(self.exit_lock, self.config, self.modules,
                                     self.i3status_thread.config)
         self.events_thread.start()
         if self.config['debug']:
@@ -1426,13 +1368,12 @@ class Py3statusWrapper():
 
     def stop(self):
         """
-        Clear the Event lock, this will break all threads' loops.
+        Release the exit lock, this will break all threads' loops.
         """
         try:
-            self.lock.clear()
+            self.exit_lock.release()
             if self.config['debug']:
                 syslog(LOG_INFO, 'lock cleared, exiting')
-            self.i3status_thread.cleanup_tmpfile()
         except:
             pass
 
@@ -1470,7 +1411,7 @@ class Py3statusWrapper():
         """
         Received request to terminate (SIGTERM), exit nicely.
         """
-        raise KeyboardInterrupt()
+        raise KeyboardInterrupt
 
     @profile
     def run(self):
@@ -1606,12 +1547,8 @@ class Py3statusWrapper():
 def main():
     try:
         locale.setlocale(locale.LC_ALL, '')
-        py3 = Py3statusWrapper()
+        py3 = Py3StatusWrapper()
         py3.setup()
-    except KeyboardInterrupt:
-        err = sys.exc_info()[1]
-        py3.i3_nagbar('setup interrupted (KeyboardInterrupt)')
-        sys.exit(0)
     except Exception:
         err = sys.exc_info()[1]
         py3.i3_nagbar('setup error ({})'.format(err))
@@ -1624,8 +1561,6 @@ def main():
         err = sys.exc_info()[1]
         py3.i3_nagbar('runtime error ({})'.format(err))
         sys.exit(3)
-    except KeyboardInterrupt:
-        pass
     finally:
         py3.stop()
         sys.exit(0)
