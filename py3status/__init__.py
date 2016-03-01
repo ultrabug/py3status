@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import argparse
 import ast
-import cProfile
 import imp
 import locale
 import os
@@ -27,31 +26,13 @@ from threading import Event, Thread
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
+from py3status.profiling import profile
+
 try:
     from setproctitle import setproctitle
     setproctitle('py3status')
 except ImportError:
     pass
-
-# Used in development
-enable_profiling = False
-
-
-def profile(thread_run_fn):
-    if not enable_profiling:
-        return thread_run_fn
-
-    def wrapper_run(self):
-        """Wrap the Thread.run() method
-        """
-        profiler = cProfile.Profile()
-        try:
-            return profiler.runcall(thread_run_fn, self)
-        finally:
-            thread_id = getattr(self, 'ident', 'core')
-            profiler.dump_stats("py3status-%s.profile" % thread_id)
-
-    return wrapper_run
 
 
 @contextmanager
