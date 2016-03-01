@@ -7,7 +7,6 @@ import imp
 import locale
 import os
 import pkgutil
-import select
 import sys
 
 from collections import OrderedDict
@@ -517,7 +516,7 @@ class I3Status(Thread):
 
             try:
                 # loop on i3status output
-                for line in self.pipe_out:
+                for line in pipe_out:
                     if not self.exit_lock.locked():
                         break
 
@@ -553,7 +552,7 @@ class I3Status(Thread):
                         code = i3status_pipe.poll()
                         if code is not None:
                             msg = 'i3status died'
-                            err = sanitize_text(self.poller_err.read())
+                            err = sanitize_text(pipe_err.read())
                             # Condense whitespace
                             err = ' '.join(err.split())
                             if err:
@@ -564,7 +563,6 @@ class I3Status(Thread):
             except IOError:
                 err = sys.exc_info()[1]
                 self.error = err
-
 
     def mock(self):
         """
@@ -1081,6 +1079,7 @@ class Module(Thread):
             kill_method = getattr(self.module_class, 'kill')
             kill_method(self.i3status_thread.json_list,
                         self.i3status_thread.config['general'])
+
 
 class Py3StatusWrapper(object):
     """
