@@ -10,7 +10,6 @@ import select
 import sys
 
 from collections import OrderedDict
-from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from json import dumps, loads
@@ -27,37 +26,13 @@ from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
 from py3status.profiling import profile
+from py3status.helpers import jsonify, print_line, print_stderr
 
 try:
     from setproctitle import setproctitle
     setproctitle('py3status')
 except ImportError:
     pass
-
-
-@contextmanager
-def jsonify(string):
-    """
-    Transform the given string to a JSON in a context manager fashion.
-    """
-    prefix = ''
-    if string.startswith(','):
-        prefix, string = ',', string[1:]
-    yield (prefix, loads(string))
-
-
-def print_line(line):
-    """
-    Print given line to stdout (i3bar).
-    """
-    sys.__stdout__.write('{}\n'.format(line))
-    sys.__stdout__.flush()
-
-
-def print_stderr(line):
-    """Print line to stderr
-    """
-    print(line, file=sys.stderr)
 
 
 class IOPoller:
