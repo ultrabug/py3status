@@ -88,7 +88,7 @@ Using emerge:
 
 Arch Linux
 ----------
-Thanks to @waaaaargh, py3status is present in the Arch User Repository using this URL:
+Thanks to @Horgix, py3status is present in the Arch User Repository using this URL:
 ::
 
     https://aur.archlinux.org/packages/py3status-git/
