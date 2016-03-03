@@ -186,7 +186,7 @@ class Py3status:
             if self.hide_seconds:
                 battery["time_remaining"] = battery["time_remaining"][:-3]
         except IndexError:
-            battery["time_remaining"] = None
+            battery["time_remaining"] = ''
 
         return battery
 
