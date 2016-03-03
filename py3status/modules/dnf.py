@@ -66,10 +66,10 @@ class Py3status:
             self._security_notice = False
         else:
             results = self.format.format(updates=updates)
-            if self._updates != updates:
-                updates = str(subprocess.check_output(['dnf', 'updateinfo']))
-                self._security_notice = len(self._reg_ex_sec.findall(updates))
-                self._updates = updates
+            if self._updates != updates and not self._security_notice:
+                notices = str(subprocess.check_output(['dnf', 'updateinfo']))
+                self._security_notice = len(self._reg_ex_sec.findall(notices))
+            self._updates = updates
             if self._security_notice:
                 color = self.color_bad or i3s_config['color_bad']
             else:
