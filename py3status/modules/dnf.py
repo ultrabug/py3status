@@ -8,13 +8,8 @@ Additionally check if any update security notices.
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds
       default is 600
-    - format_updates : display format when updates needed
+    - format : display format
       default is 'DNF: {updates}'
-    - format_uptodate : display format when no updates needed
-      default is 'DNF:'
-    - format_waiting : display format when first started as initial update
-      can take time
-      default is 'DNF:'
     - color_good : color when no upgrades needed
       default is None
     - color_degraded : color when upgrade available
@@ -37,9 +32,7 @@ import re
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    format_updates = 'DNF: {updates}'
-    format_uptodate = 'DNF:'
-    format_waiting = 'DNF:'
+    format = 'DNF: {updates}'
     color_good = None
     color_bad = None
     color_degraded = None
@@ -55,7 +48,7 @@ class Py3status:
             self._first = False
             response = {
                 'cached_until': time() + 1,
-                'full_text': self.format_waiting
+                'full_text': self.format.format(updates='')
             }
             return response
 
@@ -68,11 +61,11 @@ class Py3status:
 
         if updates == 0:
             color = self.color_good or i3s_config['color_good']
-            results = self.format_uptodate
+            results = self.format.format(updates='')
             self._updates = 0
             self._security_notice = False
         else:
-            results = self.format_updates.format(updates=updates)
+            results = self.format.format(updates=updates)
             if self._updates != updates:
                 updates = str(subprocess.check_output(['dnf', 'updateinfo']))
                 self._security_notice = len(self._reg_ex_sec.findall(updates))

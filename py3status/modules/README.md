@@ -182,13 +182,8 @@ dnf                      Displays the number of package updates pending for a Fe
                          Configuration parameters:
                              - cache_timeout : how often we refresh this module in seconds
                                default is 600
-                             - format_updates : display format when updates needed
+                             - format : display format when updates needed
                                default is 'DNF: {updates}'
-                             - format_uptodate : display format when no updates needed
-                               default is 'DNF:'
-                             - format_waiting : display format when first started as initial update
-                               can take time
-                               default is 'DNF:'
                              - color_good : color when no upgrades needed
                                default is None
                              - color_degraded : color when upgrade available
