@@ -174,6 +174,34 @@ Available modules:
                          
                          @author mrt-prodz
                          ---
+dnf                      Displays the number of package updates pending for a Fedora Linux installation.
+                         This will display a count of how many `dnf` updates are waiting
+                         to be installed.
+                         Additionally check if any update security notices.
+
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds
+                               default is 600
+                             - format_updates : display format when updates needed
+                               default is 'DNF: {updates}'
+                             - format_uptodate : display format when no updates needed
+                               default is 'DNF:'
+                             - format_waiting : display format when first started as initial update
+                               can take time
+                               default is 'DNF:'
+                             - color_good : color when no upgrades needed
+                               default is None
+                             - color_degraded : color when upgrade available
+                               default is None
+                             - color_bad : color when security notice
+                               default is None
+
+                         Format status string parameters:
+                             - updates : number of pending dnf updates
+
+                         @author Toby Dacre <https://github.com/tobes>
+                         @license BSD
+                         ---
   dpms                   Activate or deactivate DPMS and screen blanking.
                          
                          This module allows activation and deactivation
