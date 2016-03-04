@@ -11,11 +11,11 @@ Configuration parameters:
     - format : display format
       default is 'DNF: {updates}'
     - color_good : color when no upgrades needed
-      default is None
+      default is global color_good
     - color_degraded : color when upgrade available
-      default is None
+      default is global color_degraded
     - color_bad : color when security notice
-      default is None
+      default is global color_bad
 
 Format status string parameters:
     - updates : number of pending dnf updates
@@ -48,7 +48,7 @@ class Py3status:
             self._first = False
             response = {
                 'cached_until': time() + 1,
-                'full_text': self.format.format(updates='')
+                'full_text': self.format.format(updates='?')
             }
             return response
 
@@ -61,11 +61,9 @@ class Py3status:
 
         if updates == 0:
             color = self.color_good or i3s_config['color_good']
-            results = self.format.format(updates='')
             self._updates = 0
             self._security_notice = False
         else:
-            results = self.format.format(updates=updates)
             if self._updates != updates and not self._security_notice:
                 notices = str(subprocess.check_output(['dnf', 'updateinfo']))
                 self._security_notice = len(self._reg_ex_sec.findall(notices))
@@ -78,7 +76,7 @@ class Py3status:
         response = {
             'cached_until': time() + self.cache_timeout,
             'color': color,
-            'full_text': results
+            'full_text': self.format.format(updates=updates)
         }
         return response
 

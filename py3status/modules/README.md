@@ -174,29 +174,6 @@ Available modules:
                          
                          @author mrt-prodz
                          ---
-dnf                      Displays the number of package updates pending for a Fedora Linux installation.
-                         This will display a count of how many `dnf` updates are waiting
-                         to be installed.
-                         Additionally check if any update security notices.
-
-                         Configuration parameters:
-                             - cache_timeout : how often we refresh this module in seconds
-                               default is 600
-                             - format : display format when updates needed
-                               default is 'DNF: {updates}'
-                             - color_good : color when no upgrades needed
-                               default is None
-                             - color_degraded : color when upgrade available
-                               default is None
-                             - color_bad : color when security notice
-                               default is None
-
-                         Format status string parameters:
-                             - updates : number of pending dnf updates
-
-                         @author Toby Dacre <https://github.com/tobes>
-                         @license BSD
-                         ---
   dpms                   Activate or deactivate DPMS and screen blanking.
                          
                          This module allows activation and deactivation
@@ -264,6 +241,29 @@ dnf                      Displays the number of package updates pending for a Fe
                          
                          It features thresholds to colorize the output and forces a low timeout to
                          limit the impact of a server connectivity problem on your i3bar freshness.
+                         ---
+fedora_updates           Displays the number of package updates pending for a Fedora Linux installation.
+                         This will display a count of how many `dnf` updates are waiting
+                         to be installed.
+                         Additionally check if any update security notices.
+
+                         Configuration parameters:
+                             - cache_timeout : how often we refresh this module in seconds
+                               default is 600
+                             - format : display format
+                               default is 'DNF: {updates}'
+                             - color_good : color when no upgrades needed
+                               default is global color_good
+                             - color_degraded : color when upgrade available
+                               default is global color_degraded
+                             - color_bad : color when security notice
+                               default is global color_bad
+
+                         Format status string parameters:
+                             - updates : number of pending dnf updates
+
+                         @author Toby Dacre <https://github.com/tobes>
+                         @license BSD
                          ---
   hamster                Display current tasks from project Hamster.
                          
