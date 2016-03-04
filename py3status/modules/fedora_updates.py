@@ -38,7 +38,7 @@ class Py3status:
     color_good = None
     format = 'DNF: {updates}'
 
-    class __init__(self):
+    def __init__(self):
         self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
         self._reg_ex_pkg = re.compile(b'^\S+\.', re.M)
         self._first = True
