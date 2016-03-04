@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Displays the number of package updates pending for a Fedora Linux installation.
+
 This will display a count of how many `dnf` updates are waiting
 to be installed.
 Additionally check if any update security notices.
