@@ -8,12 +8,12 @@ Additionally check if any update security notices.
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds
         default 600
-    - color_good : color when no upgrades needed
-        default global color_good
-    - color_degraded : color when upgrade available
-        default global color_degraded
     - color_bad : color when security notice
         default global color_bad
+    - color_degraded : color when upgrade available
+        default global color_degraded
+    - color_good : color when no upgrades needed
+        default global color_good
     - format : display format to use
         default 'DNF: {updates}'
 
@@ -32,9 +32,9 @@ import re
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    color_good = None
     color_bad = None
     color_degraded = None
+    color_good = None
     format = 'DNF: {updates}'
 
     class __init__(self):
