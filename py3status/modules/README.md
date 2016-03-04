@@ -97,8 +97,8 @@
 
 ---
 
-### <a name="arch_updates"></a>arch_updates [^top](#top)
-Displays the number of package updates pending for an Arch Linux installation.
+### <a name="arch_updates"></a>arch_updates
+Displays the number of package updates pending for a Arch Linux installation.
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are
 also waiting.
@@ -122,7 +122,7 @@ Requires:
 
 ---
 
-### <a name="aws_bill"></a>aws_bill [^top](#top)
+### <a name="aws_bill"></a>aws_bill
 
 Display the current AWS bill.
 
@@ -150,7 +150,7 @@ Requires:
 
 ---
 
-### <a name="battery_level"></a>battery_level [^top](#top)
+### <a name="battery_level"></a>battery_level
 Display the battery level.
 
 Configuration parameters:
@@ -222,7 +222,7 @@ Requires:
 
 ---
 
-### <a name="bitcoin_price"></a>bitcoin_price [^top](#top)
+### <a name="bitcoin_price"></a>bitcoin_price
 Display bitcoin prices using bitcoincharts.com.
 
 Configuration parameters:
@@ -244,7 +244,7 @@ e.g. USD -> $, EUR -> € and so on
 
 ---
 
-### <a name="bluetooth"></a>bluetooth [^top](#top)
+### <a name="bluetooth"></a>bluetooth
 Display bluetooth status.
 
 Confiuration parameters:
@@ -265,7 +265,7 @@ Requires:
 
 ---
 
-### <a name="clementine"></a>clementine [^top](#top)
+### <a name="clementine"></a>clementine
 Display the current "artist - title" playing in Clementine.
 
 Requires:
@@ -276,7 +276,7 @@ Requires:
 
 ---
 
-### <a name="deadbeef"></a>deadbeef [^top](#top)
+### <a name="deadbeef"></a>deadbeef
 Display track currently playing in deadbeef.
 
 Configuration parameters:
@@ -300,7 +300,7 @@ Requires:
 
 ---
 
-### <a name="dpms"></a>dpms [^top](#top)
+### <a name="dpms"></a>dpms
 Activate or deactivate DPMS and screen blanking.
 
 This module allows activation and deactivation
@@ -315,7 +315,7 @@ Configuration parameters:
 
 ---
 
-### <a name="dropboxd_status"></a>dropboxd_status [^top](#top)
+### <a name="dropboxd_status"></a>dropboxd_status
 Display dropboxd status.
 
 Configuration parameters:
@@ -337,7 +337,7 @@ Requires:
 
 ---
 
-### <a name="external_script"></a>external_script [^top](#top)
+### <a name="external_script"></a>external_script
 Display output of given script.
 
 Display output of any executable script set by `script_path`.
@@ -366,7 +366,7 @@ external_script {
 
 ---
 
-### <a name="glpi"></a>glpi [^top](#top)
+### <a name="glpi"></a>glpi
 Display the total number of open tickets from GLPI.
 
 Configuration parameters:
@@ -382,7 +382,7 @@ limit the impact of a server connectivity problem on your i3bar freshness.
 
 ---
 
-### <a name="hamster"></a>hamster [^top](#top)
+### <a name="hamster"></a>hamster
 Display current tasks from project Hamster.
 
 Configuration parameters:
@@ -400,7 +400,7 @@ Requires:
 
 ---
 
-### <a name="icinga2"></a>icinga2 [^top](#top)
+### <a name="icinga2"></a>icinga2
 Display Icinga2 service status information.
 
 Configuration Parameters:
@@ -419,7 +419,7 @@ Configuration Parameters:
 
 ---
 
-### <a name="imap"></a>imap [^top](#top)
+### <a name="imap"></a>imap
 Display the unread messages count from your IMAP account.
 
 Configuration parameters:
@@ -441,7 +441,7 @@ Format of status string placeholders:
 
 ---
 
-### <a name="keyboard_layout"></a>keyboard_layout [^top](#top)
+### <a name="keyboard_layout"></a>keyboard_layout
 Display the current active keyboard layout.
 
 Configuration parameters:
@@ -464,7 +464,7 @@ or
 
 ---
 
-### <a name="mpd_status"></a>mpd_status [^top](#top)
+### <a name="mpd_status"></a>mpd_status
 Display information from mpd.
 
 Configuration parameters:
@@ -516,7 +516,7 @@ Examples of `format`
 
 ---
 
-### <a name="net_rate"></a>net_rate [^top](#top)
+### <a name="net_rate"></a>net_rate
 Display the current network transfer rate.
 
 Confiuration parameters:
@@ -539,7 +539,7 @@ Format of status string placeholders:
 
 ---
 
-### <a name="netdata"></a>netdata [^top](#top)
+### <a name="netdata"></a>netdata
 Display network speed and bandwidth usage.
 
 Configuration parameters:
@@ -551,7 +551,7 @@ Configuration parameters:
 
 ---
 
-### <a name="ns_checker"></a>ns_checker [^top](#top)
+### <a name="ns_checker"></a>ns_checker
 Display DNS resolution success on a configured domain.
 
 This module launch a simple query on each nameservers for the specified domain.
@@ -570,7 +570,7 @@ Configuration parameters:
 
 ---
 
-### <a name="nvidia_temp"></a>nvidia_temp [^top](#top)
+### <a name="nvidia_temp"></a>nvidia_temp
 Display NVIDIA GPU temperature.
 
 Configuration parameters:
@@ -589,7 +589,7 @@ Requires:
 
 ---
 
-### <a name="online_status"></a>online_status [^top](#top)
+### <a name="online_status"></a>online_status
 Display if a connection to the internet is established.
 
 Configuration parameters:
@@ -603,7 +603,7 @@ Configuration parameters:
 
 ---
 
-### <a name="pingdom"></a>pingdom [^top](#top)
+### <a name="pingdom"></a>pingdom
 Display the latest response time of the configured Pingdom checks.
 
 We also verify the status of the checks and colorize if needed.
@@ -624,7 +624,7 @@ https://pypi.python.org/pypi/requests
 
 ---
 
-### <a name="player_control"></a>player_control [^top](#top)
+### <a name="player_control"></a>player_control
 Control music/video players.
 
 Provides an icon to control simple functions of audio/video players:
@@ -642,7 +642,7 @@ Configuration parameters:
 
 ---
 
-### <a name="pomodoro"></a>pomodoro [^top](#top)
+### <a name="pomodoro"></a>pomodoro
 Display and control a Pomodoro countdown.
 
 Configuration parameters:
@@ -677,7 +677,7 @@ pomodoro {
 
 ---
 
-### <a name="rate_counter"></a>rate_counter [^top](#top)
+### <a name="rate_counter"></a>rate_counter
 Display days/hours/minutes spent and calculate the price of your service.
 
 Configuration parameters:
@@ -690,7 +690,7 @@ and restore it the next session
 
 ---
 
-### <a name="rt"></a>rt [^top](#top)
+### <a name="rt"></a>rt
 Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
@@ -718,7 +718,7 @@ limit the impact of a server connectivity problem on your i3bar freshness.
 
 ---
 
-### <a name="scratchpad_async"></a>scratchpad_async [^top](#top)
+### <a name="scratchpad_async"></a>scratchpad_async
 Display the amount of windows and indicate urgency hints on scratchpad (async).
 
 Configuration parameters:
@@ -736,7 +736,7 @@ Requires:
 
 ---
 
-### <a name="scratchpad_counter"></a>scratchpad_counter [^top](#top)
+### <a name="scratchpad_counter"></a>scratchpad_counter
 Display the amount of windows in your i3 scratchpad.
 
 **author** shadowprince
@@ -744,7 +744,7 @@ Display the amount of windows in your i3 scratchpad.
 
 ---
 
-### <a name="screenshot"></a>screenshot [^top](#top)
+### <a name="screenshot"></a>screenshot
 Take a screenshot and optionally upload it to your online server.
 
 Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
@@ -765,7 +765,7 @@ Configuration parameters:
 
 ---
 
-### <a name="selinux"></a>selinux [^top](#top)
+### <a name="selinux"></a>selinux
 Display the current selinux state.
 
 This module displays the current state of selinux on your machine: Enforcing
@@ -788,7 +788,7 @@ or
 
 ---
 
-### <a name="spaceapi"></a>spaceapi [^top](#top)
+### <a name="spaceapi"></a>spaceapi
 Display if your favorite hackerspace is open or not.
 
 Configuration Parameters:
@@ -804,7 +804,7 @@ Configuration Parameters:
 
 ---
 
-### <a name="spotify"></a>spotify [^top](#top)
+### <a name="spotify"></a>spotify
 Display information about the current song playing on Spotify.
 
 Configuration parameters:
@@ -833,7 +833,7 @@ spotify {
 
 ---
 
-### <a name="static_string"></a>static_string [^top](#top)
+### <a name="static_string"></a>static_string
 Display static text.
 
 Configuration parameters:
@@ -845,7 +845,7 @@ Configuration parameters:
 
 ---
 
-### <a name="sysdata"></a>sysdata [^top](#top)
+### <a name="sysdata"></a>sysdata
 Display system RAM and CPU utilization.
 
 Configuration parameters:
@@ -867,7 +867,7 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 
 ---
 
-### <a name="taskwarrior"></a>taskwarrior [^top](#top)
+### <a name="taskwarrior"></a>taskwarrior
 Display currently active (started) taskwarrior tasks.
 
 Configuration parameters:
@@ -881,7 +881,7 @@ Requires
 
 ---
 
-### <a name="uname"></a>uname [^top](#top)
+### <a name="uname"></a>uname
 Display uname information.
 
 Configuration parameters:
@@ -900,7 +900,7 @@ Format of status string placeholders:
 
 ---
 
-### <a name="vnstat"></a>vnstat [^top](#top)
+### <a name="vnstat"></a>vnstat
 Display vnstat statistics.
 
 Coloring rules.
@@ -926,7 +926,7 @@ Requires:
 
 ---
 
-### <a name="volume_status"></a>volume_status [^top](#top)
+### <a name="volume_status"></a>volume_status
 Display current sound volume using amixer.
 
 Expands on the standard i3status volume module by adding color
@@ -954,7 +954,7 @@ Example: killall -s USR1 py3status
 
 ---
 
-### <a name="weather_yahoo"></a>weather_yahoo [^top](#top)
+### <a name="weather_yahoo"></a>weather_yahoo
 Display Yahoo! Weather forecast as icons.
 
 Based on Yahoo! Weather. forecast, thanks guys !
@@ -1000,7 +1000,7 @@ The city_code in this example is for Paris, France => FRXX0076
 
 ---
 
-### <a name="whatismyip"></a>whatismyip [^top](#top)
+### <a name="whatismyip"></a>whatismyip
 Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
@@ -1018,7 +1018,7 @@ Configuration parameters:
 
 ---
 
-### <a name="whoami"></a>whoami [^top](#top)
+### <a name="whoami"></a>whoami
 Display the currently logged in user.
 
 Inspired by i3 FAQ:
@@ -1026,7 +1026,7 @@ https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
 
 ---
 
-### <a name="wifi"></a>wifi [^top](#top)
+### <a name="wifi"></a>wifi
 Display WiFi bit rate, quality, signal and SSID using iw.
 
 Configuration parameters:
@@ -1062,7 +1062,7 @@ Requires:
 
 ---
 
-### <a name="window_title"></a>window_title [^top](#top)
+### <a name="window_title"></a>window_title
 Display the current window title.
 
 Requires:
@@ -1079,7 +1079,7 @@ I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 
 ---
 
-### <a name="window_title_async"></a>window_title_async [^top](#top)
+### <a name="window_title_async"></a>window_title_async
 Display the current window title with async update.
 
 Uses asynchronous update via i3 IPC events.
@@ -1104,7 +1104,7 @@ Requires:
 
 ---
 
-### <a name="wwan_status"></a>wwan_status [^top](#top)
+### <a name="wwan_status"></a>wwan_status
 Display current network and ip address for newer Huwei modems.
 
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
@@ -1150,7 +1150,7 @@ PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
 
 ---
 
-### <a name="xrandr"></a>xrandr [^top](#top)
+### <a name="xrandr"></a>xrandr
 Control your screen(s) layout easily.
 
 This modules allows you to handle your screens outputs directly from your bar!
@@ -1167,16 +1167,16 @@ screen is available (handy for laptops)
 - Automatically move workspaces to screens when they are available
 
 Configuration parameters:
-- cache_timeout: how often to (re)detect the outputs
-- fallback: when the current output layout is not available anymore,
+- `cache_timeout` how often to (re)detect the outputs
+- `fallback` when the current output layout is not available anymore,
 fallback to this layout if available. This is very handy if you
 have a laptop and switched to an external screen for presentation
 and want to automatically fallback to your laptop screen when you
 disconnect the external screen.
-- force_on_start: switch to the given combination mode if available
+- `force_on_start` switch to the given combination mode if available
 when the module starts (saves you from having to configure xorg)
-- format_clone: string used to display a 'clone' combination
-- format_extend: string used to display a 'extend' combination
+- `format_clone` string used to display a 'clone' combination
+- `format_extend` string used to display a 'extend' combination
 
 Dynamic configuration parameters:
 - <OUTPUT>_pos: apply the given position to the OUTPUT
@@ -1203,7 +1203,7 @@ xrandr {
 
 ---
 
-### <a name="xsel"></a>xsel [^top](#top)
+### <a name="xsel"></a>xsel
 Display the X selection.
 
 Configuration parameters:
