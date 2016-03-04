@@ -250,14 +250,14 @@ fedora_updates           Displays the number of package updates pending for a Fe
                          Configuration parameters:
                              - cache_timeout : how often we refresh this module in seconds
                                default is 600
-                             - format : display format
-                               default is 'DNF: {updates}'
                              - color_good : color when no upgrades needed
                                default is global color_good
                              - color_degraded : color when upgrade available
                                default is global color_degraded
                              - color_bad : color when security notice
                                default is global color_bad
+                             - format : display format
+                               default is 'DNF: {updates}'
 
                          Format status string parameters:
                              - updates : number of pending dnf updates

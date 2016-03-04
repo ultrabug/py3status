@@ -8,14 +8,14 @@ Additionally check if any update security notices.
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds
       default is 600
-    - format : display format
-      default is 'DNF: {updates}'
     - color_good : color when no upgrades needed
       default is global color_good
     - color_degraded : color when upgrade available
       default is global color_degraded
     - color_bad : color when security notice
       default is global color_bad
+    - format : display format
+      default is 'DNF: {updates}'
 
 Format status string parameters:
     - updates : number of pending dnf updates
@@ -32,16 +32,17 @@ import re
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    format = 'DNF: {updates}'
     color_good = None
     color_bad = None
     color_degraded = None
+    format = 'DNF: {updates}'
 
-    _reg_ex_sec = re.compile('\d+(?=\s+Security)')
-    _reg_ex_pkg = re.compile(b'^\S+\.', re.M)
-    _first = True
-    _updates = None
-    _security_notice = False
+    def __init__(self):
+        self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
+        self._reg_ex_pkg = re.compile(b'^\S+\.', re.M)
+        self._first = True
+        self._updates = None
+        self._security_notice = False
 
     def check_updates(self, i3s_output_list, i3s_config):
         if self._first:
