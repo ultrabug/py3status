@@ -1,6 +1,4 @@
-
 # -*- coding: utf-8 -*-
-
 """
 Displays the number of package updates pending for a Fedora Linux installation.
 This will display a count of how many `dnf` updates are waiting
@@ -58,8 +56,7 @@ class Py3status:
         output, error = subprocess.Popen(
             ['dnf', 'check-update'],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        ).communicate()
+            stderr=subprocess.PIPE).communicate()
 
         updates = len(self._reg_ex_pkg.findall(output))
 
