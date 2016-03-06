@@ -285,8 +285,8 @@ Available modules:
                              }
 
                              disk "/home" {
-                                 format = "/ %avail"
-                                 }
+                                 format = "/home %avail"
+                             }
                          }
                          ```
 

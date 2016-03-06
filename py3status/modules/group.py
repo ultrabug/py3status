@@ -43,8 +43,8 @@ group disks {
     }
 
     disk "/home" {
-        format = "/ %avail"
-        }
+        format = "/home %avail"
+    }
 }
 ```
 
