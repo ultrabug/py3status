@@ -223,10 +223,11 @@ class Module(Thread):
 
         # if in a group then force the group to update
         if self.group:
-            group_module = self.py3_wrapper.modules[self.group]
-            group_module.update_module()
-            for obj in group_module.methods.values():
-                obj['cached_until'] = time()
+            group_module = self.py3_wrapper.modules.get(self.group)
+            if group_module:
+                group_module.update_module()
+                for obj in group_module.methods.values():
+                    obj['cached_until'] = time()
 
     @profile
     def run(self):

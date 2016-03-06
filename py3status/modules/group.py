@@ -63,10 +63,13 @@ class Py3status:
     format = "GROUP: {output}"
 
     def __init__(self):
+        self.items = []
         self.active = 0
         self._cycle_time = time() + self.cycle
 
     def _get_current_output(self):
+        if not self.items:
+            return
         output = None
         current = self.items[self.active]
         py3_wrapper = self.py3_wrapper
@@ -81,9 +84,13 @@ class Py3status:
         return output
 
     def _get_current_module_name(self):
+        if not self.items:
+            return
         return self.items[self.active]
 
     def _get_current_module(self):
+        if not self.items:
+            return
         current = self.items[self.active]
         py3_wrapper = self.py3_wrapper
         if current in py3_wrapper.modules:
@@ -99,11 +106,12 @@ class Py3status:
 
     def output(self, i3s_output_list, i3s_config):
         """
-        Display a colorful state of DPMS.
+        Display a output of current module
         """
         if self.cycle and time() >= self._cycle_time:
             self._next()
             self._cycle_time = time() + self.cycle
+        output = '?'
         color = None
         current_output = self._get_current_output()
         if current_output:
@@ -124,6 +132,8 @@ class Py3status:
         """
         Switch the displayed module or pass the event on to the active module
         """
+        if not self.items:
+            return
         if self.button_next and event['button'] == self.button_next:
             self._next()
         elif self.button_prev and event['button'] == self.button_prev:
@@ -142,8 +152,8 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
-    config = {'color_bad': '#FF0000', 'color_good': '#00FF00', }
+    config = {}
 
     while True:
-        print(x.dpms([], config))
+        print(x.output([], config))
         sleep(1)
