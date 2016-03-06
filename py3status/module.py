@@ -17,21 +17,25 @@ class Module(Thread):
     caching its output based on user will.
     """
 
-    def __init__(self, lock, config, module, i3_thread, user_modules):
+    def __init__(self, module, user_modules, py3_wrapper):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
         self.click_events = False
-        self.config = config
+        self.config = py3_wrapper.config
         self.has_kill = False
-        self.i3status_thread = i3_thread
+        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.lock = lock
+        self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
         self.module_class = None
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
+        self.module_full_name = module
+        self.py3_wrapper = py3_wrapper
+        # if the module is part of a group then we want to store it's name
+        self.group = self.i3status_thread.config.get(module, {}).get('.group')
         #
         self.load_methods(module, user_modules)
 
@@ -101,8 +105,12 @@ class Module(Thread):
             # apply module configuration from i3status config
             mod_config = self.i3status_thread.config.get(module, {})
             for config, value in mod_config.items():
-                setattr(self.module_class, config, value)
-
+                # names starting with '.' are private
+                if not config.startswith('.'):
+                    setattr(self.module_class, config, value)
+            # group modules need to be able to find the modules they contain
+            if self.module_name == 'group':
+                setattr(self.module_class, 'py3_wrapper', self.py3_wrapper)
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
                 if method.startswith('_'):
@@ -149,6 +157,77 @@ class Module(Thread):
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
             syslog(LOG_WARNING, msg)
 
+    def update_module(self):
+        # execute each method of this module
+        for meth, obj in self.methods.items():
+            my_method = self.methods[meth]
+
+            # always check the lock
+            if not self.lock.is_set():
+                break
+
+            # respect the cache set for this method
+            if time() < obj['cached_until']:
+                continue
+
+            try:
+                # execute method and get its output
+                method = getattr(self.module_class, meth)
+                response = method(self.i3status_thread.json_list,
+                                  self.i3status_thread.config['general'])
+
+                if isinstance(response, dict):
+                    # this is a shiny new module giving a dict response
+                    result = response
+                elif isinstance(response, tuple):
+                    # this is an old school module reporting its position
+                    position, result = response
+                    if not isinstance(result, dict):
+                        raise TypeError('response should be a dict')
+                else:
+                    raise TypeError('response should be a dict')
+
+                # validate the response
+                if 'full_text' not in result:
+                    raise KeyError('missing "full_text" key in response')
+                else:
+                    result['instance'] = self.module_inst
+                    result['name'] = self.module_name
+
+                # initialize method object
+                if my_method['name'] is None:
+                    my_method['name'] = result['name']
+                    if 'instance' in result:
+                        my_method['instance'] = result['instance']
+                    else:
+                        my_method['instance'] = result['name']
+
+                # update method object cache
+                if 'cached_until' in result:
+                    cached_until = result['cached_until']
+                else:
+                    cached_until = time() + self.config['cache_timeout']
+                my_method['cached_until'] = cached_until
+
+                # update method object output
+                my_method['last_output'] = result
+
+                # debug info
+                if self.config['debug']:
+                    syslog(LOG_INFO,
+                           'method {} returned {} '.format(meth, result))
+            except Exception:
+                err = sys.exc_info()[1]
+                syslog(LOG_WARNING,
+                       'user method {} failed ({})'.format(meth, err))
+
+        # if in a group then force the group to update
+        if self.group:
+            group_module = self.py3_wrapper.modules[self.group]
+            group_module.update_module()
+            for obj in group_module.methods.values():
+                obj['cached_until'] = time()
+
     @profile
     def run(self):
         """
@@ -158,69 +237,7 @@ class Module(Thread):
         We will execute the 'kill' method of the module when we terminate.
         """
         while self.lock.is_set():
-            # execute each method of this module
-            for meth, obj in self.methods.items():
-                my_method = self.methods[meth]
-
-                # always check the lock
-                if not self.lock.is_set():
-                    break
-
-                # respect the cache set for this method
-                if time() < obj['cached_until']:
-                    continue
-
-                try:
-                    # execute method and get its output
-                    method = getattr(self.module_class, meth)
-                    response = method(self.i3status_thread.json_list,
-                                      self.i3status_thread.config['general'])
-
-                    if isinstance(response, dict):
-                        # this is a shiny new module giving a dict response
-                        result = response
-                    elif isinstance(response, tuple):
-                        # this is an old school module reporting its position
-                        position, result = response
-                        if not isinstance(result, dict):
-                            raise TypeError('response should be a dict')
-                    else:
-                        raise TypeError('response should be a dict')
-
-                    # validate the response
-                    if 'full_text' not in result:
-                        raise KeyError('missing "full_text" key in response')
-                    else:
-                        result['instance'] = self.module_inst
-                        result['name'] = self.module_name
-
-                    # initialize method object
-                    if my_method['name'] is None:
-                        my_method['name'] = result['name']
-                        if 'instance' in result:
-                            my_method['instance'] = result['instance']
-                        else:
-                            my_method['instance'] = result['name']
-
-                    # update method object cache
-                    if 'cached_until' in result:
-                        cached_until = result['cached_until']
-                    else:
-                        cached_until = time() + self.config['cache_timeout']
-                    my_method['cached_until'] = cached_until
-
-                    # update method object output
-                    my_method['last_output'] = result
-
-                    # debug info
-                    if self.config['debug']:
-                        syslog(LOG_INFO,
-                               'method {} returned {} '.format(meth, result))
-                except Exception:
-                    err = sys.exc_info()[1]
-                    syslog(LOG_WARNING,
-                           'user method {} failed ({})'.format(meth, err))
-
+            self.update_module()
             # don't be hasty mate, let's take it easy for now
             sleep(self.config['interval'])
 
