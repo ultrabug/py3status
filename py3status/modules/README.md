@@ -242,6 +242,56 @@ Available modules:
                          It features thresholds to colorize the output and forces a low timeout to
                          limit the impact of a server connectivity problem on your i3bar freshness.
                          ---
+  group                  Group a bunch of modules together and switch between them.
+
+                         In `i3status.conf` groups can be configured. The active one of these groups is
+                         shown in the i3bar.  The active group can be changed by a user click.  If the
+                         click is not used by the group module then it will be passed down to the
+                         displayed module.
+
+                         Modules can be i3status core modules or py3status modules.
+
+                         Additionally the active group can be cycled through automatically.
+
+                         Configuration parameters:
+                         - `button_next` Button that when clicked will switch to display next module.
+                           Setting to `0` will disable this action. *(default 4)*
+                         - `button_previous` Button that when clicked will switch to display previous
+                           module.  Setting to `0` will disable this action. *(default 5)*
+                         - `color` If the active module does not supply a color use this if set.
+                           Format as hex value eg `'#0000FF'` *(default None)*
+                         - `cycle` Time in seconds till changing to next module to display. Setting to
+                           `0` will disable cycling. *(default 0)*
+                         - `format` Format for module output. *(default "GROUP: {output}")*
+
+
+                         Format of status string placeholders:
+                         - `{output}` Output of current active module
+
+                         Example:
+                         ```
+                         # Create a disks group t hat will show space on '/' and '/home'
+                         # Change between disk mo dules every 30 seconds
+                         ...
+                         order += "group disks"
+                         ...
+
+                         group disks {
+                             cycle = 30
+                             format = "Disks: {output}"
+
+                             disk "/" {
+                                 format = "/ %avail"
+                             }
+
+                             disk "/home" {
+                                 format = "/ %avail"
+                                 }
+                         }
+                         ```
+
+                         @author tobes
+                         ---
   hamster                Display current tasks from project Hamster.
                          
                          Configuration parameters:
