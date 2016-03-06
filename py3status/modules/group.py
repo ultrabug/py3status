@@ -14,7 +14,7 @@ Additionally the active group can be cycled through automatically.
 Configuration parameters:
 - `button_next` Button that when clicked will switch to display next module.
   Setting to `0` will disable this action. *(default 4)*
-- `button_previous` Button that when clicked will switch to display previous
+- `button_prev` Button that when clicked will switch to display previous
   module.  Setting to `0` will disable this action. *(default 5)*
 - `color` If the active module does not supply a color use this if set.
   Format as hex value eg `'#0000FF'` *(default None)*
