@@ -136,8 +136,10 @@ class Py3status:
             return
         if self.button_next and event['button'] == self.button_next:
             self._next()
+            self._cycle_time = time() + self.cycle
         elif self.button_prev and event['button'] == self.button_prev:
             self._prev()
+            self._cycle_time = time() + self.cycle
         else:
             self._cycle_time = time() + self.cycle
             current_module = self._get_current_module()
