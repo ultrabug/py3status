@@ -1,4 +1,6 @@
 <a name="top"></a>Modules
+========
+
 
 [arch_updates](#arch_updates)  Displays the number of package updates pending for an Arch Linux installation.
 
