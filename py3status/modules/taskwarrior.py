@@ -3,13 +3,14 @@
 Display currently active (started) taskwarrior tasks.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds (5s default)
+  - `cache_timeout` how often we refresh this module in seconds (5s default)
 
 Requires
-    - task
+  - `task`
 
-@author James Smith http://jazmit.github.io/
-@license BSD
+**author** James Smith http://jazmit.github.io/
+**license** BSD
+
 """
 
 # import your useful libs here

@@ -2,8 +2,12 @@
 """
 Display the current "artist - title" playing in Clementine.
 
-@author Francois LASSERRE <choiz@me.com>
-@license GNU GPL http://www.gnu.org/licenses/gpl.html
+Requires:
+  - `clementine`
+
+**author** Francois LASSERRE <choiz@me.com>
+**license** GNU GPL http://www.gnu.org/licenses/gpl.html
+
 """
 
 from time import time

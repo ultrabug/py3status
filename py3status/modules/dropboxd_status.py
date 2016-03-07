@@ -3,21 +3,22 @@
 Display dropboxd status.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds (10s default)
-    - format: prefix text for the dropbox status
+  - `cache_timeout` how often we refresh this module in seconds (10s default)
+  - `format` prefix text for the dropbox status
 
 Valid status values include:
-    - Dropbox isn't running!
-    - Starting...
-    - Downloading file list...
-    - Syncing "filename"
-    - Up to date
+- Dropbox isn't running!
+- Starting...
+- Downloading file list...
+- Syncing "filename"
+- Up to date
 
 Requires:
-    - the 'dropbox-cli' command
+  - `dropbox-cli` command line tool
 
-@author Tjaart van der Walt (github:tjaartvdwalt)
-@license BSD
+**author** Tjaart van der Walt (github:tjaartvdwalt)
+**license** BSD
+
 """
 
 import shlex

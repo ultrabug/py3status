@@ -3,16 +3,17 @@
 Display the current window title.
 
 Requires:
-    - i3-py (https://github.com/ziberna/i3-py)
-    # pip install i3-py
+- i3-py (https://github.com/ziberna/i3-py)
+# pip install i3-py
 
 If payload from server contains wierd utf-8
 (for example one window have something bad in title) - the plugin will
 give empty output UNTIL this window is closed.
 I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 
-@author shadowprince
-@license Eclipse Public License
+**author** shadowprince
+**license** Eclipse Public License
+
 """
 
 import i3

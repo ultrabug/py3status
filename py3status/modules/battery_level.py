@@ -3,71 +3,72 @@
 Display the battery level.
 
 Configuration parameters:
-    - battery_id : id of the battery to be displayed
-      set to 'all' for combined display of all batteries
-      default is 0
-    - blocks : a string, where each character represents battery level
-      especially useful when using icon fonts (e.g. FontAwesome)
-      default is "_▁▂▃▄▅▆▇█"
-    - cache_timeout : a timeout to refresh the battery state
-      default is 30
-    - charging_character : a character to represent charging battery
-      especially useful when using icon fonts (e.g. FontAwesome)
-      default is "⚡"
-    - color_bad : a color to use when the battery level is bad
-      None means get it from i3status config
-      default is None
-    - color_charging : a color to use when the battery is charging
-      None means get it from i3status config
-      default is "#FCE94F"
-    - color_degraded : a color to use when the battery level is degraded
-      None means get it from i3status config
-      default is None
-    - color_good : a color to use when the battery level is good
-      None means get it from i3status config
-      default is None
-    - format : string that formats the output. See placeholders below.
-      default is "{icon}"
-    - format_notify_charging : format of the notification received when you click
-      on the module while your computer is plugged
-      default is "Charging ({percent}%)"
-    - format_notify_discharging : format of the notification received when you
-      click on the module while your comupter is not plugged
-      default is "{time_remaining}"
-    - hide_when_full : hide any information when battery is fully charged
-      default is False
-    - hide_seconds : hide seconds in remaining time
-      default is False
-    - notification : show current battery state as notification on click
-      default is False
-    - notify_low_level : display notification when battery is running low.
-      default is False
+  - `battery_id` id of the battery to be displayed
+set to 'all' for combined display of all batteries
+default is 0
+  - `blocks` a string, where each character represents battery level
+especially useful when using icon fonts (e.g. FontAwesome)
+default is "_▁▂▃▄▅▆▇█"
+  - `cache_timeout` a timeout to refresh the battery state
+default is 30
+  - `charging_character` a character to represent charging battery
+especially useful when using icon fonts (e.g. FontAwesome)
+default is "⚡"
+  - `color_bad` a color to use when the battery level is bad
+None means get it from i3status config
+default is None
+  - `color_charging` a color to use when the battery is charging
+None means get it from i3status config
+default is "#FCE94F"
+  - `color_degraded` a color to use when the battery level is degraded
+None means get it from i3status config
+default is None
+  - `color_good` a color to use when the battery level is good
+None means get it from i3status config
+default is None
+  - `format` string that formats the output. See placeholders below.
+default is "{icon}"
+  - `format_notify_charging` format of the notification received when you click
+on the module while your computer is plugged
+default is "Charging ({percent}%)"
+  - `format_notify_discharging` format of the notification received when you
+click on the module while your comupter is not plugged
+default is "{time_remaining}"
+  - `hide_when_full` hide any information when battery is fully charged
+default is False
+  - `hide_seconds` hide seconds in remaining time
+default is False
+  - `notification` show current battery state as notification on click
+default is False
+  - `notify_low_level` display notification when battery is running low.
+default is False
 
 Format of status string placeholders:
-    {ascii_bar} - a string of ascii characters representing the battery level,
-                  an alternative visualization to '{icon}' option
-    {icon} - a character representing the battery level,
-             as defined by the 'blocks' and 'charging_character' parameters
-    {percent} - the remaining battery percentage (previously '{}')
-    {time_remaining} - the remaining time until the battery is empty
+  - `{ascii_bar}` - a string of ascii characters representing the battery level,
+an alternative visualization to '{icon}' option
+  - `{icon}` - a character representing the battery level,
+as defined by the 'blocks' and 'charging_character' parameters
+  - `{percent}` - the remaining battery percentage (previously '{}')
+  - `{time_remaining}` - the remaining time until the battery is empty
 
 Obsolete configuration parameters:
-    - mode : an old way to define 'format' parameter. The current behavior is:
-      - if 'format' is specified, this parameter is completely ignored
-      - if the value is 'ascii_bar', the 'format' is set to "{ascii_bar}"
-      - if the value is 'text', the 'format' is set to "Battery: {percent}"
-      - all other values are ignored
-      - there is no default value for this parameter
-    - show_percent_with_blocks : an old way to define 'format' parameter:
-      - if 'format' is specified, this parameter is completely ignored
-      - if the value is True, the 'format' is set to "{icon} {percent}%"
-      - there is no default value for this parameter
+  - `mode` an old way to define `format` parameter. The current behavior is:
+ if 'format' is specified, this parameter is completely ignored
+ if the value is `ascii_bar`, the `format` is set to `"{ascii_bar}"`
+ if the value is `text`, the `format` is set to `"Battery: {percent}"`
+ all other values are ignored
+ there is no default value for this parameter
+  - `show_percent_with_blocks` an old way to define `format` parameter:
+ if `format` is specified, this parameter is completely ignored
+ if the value is True, the `format` is set to `"{icon} {percent}%"`
+ there is no default value for this parameter
 
 Requires:
-    - the 'acpi' command line
+- the `acpi` command line
 
-@author shadowprince, AdamBSteele, maximbaz, 4iar
-@license Eclipse Public License
+**author** shadowprince, AdamBSteele, maximbaz, 4iar
+**license** Eclipse Public License
+
 """
 
 from __future__ import division  # python2 compatibility

@@ -3,22 +3,23 @@
 Display the current network transfer rate.
 
 Confiuration parameters:
-    - all_interfaces : ignore self.interfaces, but not self.interfaces_blacklist
-    - devfile : location of dev file under /proc
-    - format_no_connection : when there is no data transmitted from the start of the plugin
-    - hide_if_zero : hide indicator if rate == 0
-    - interfaces : comma separated list of interfaces to track
-    - interfaces_blacklist : comma separated list of interfaces to ignore
-    - precision : amount of numbers after dot
+  - `all_interfaces` ignore self.interfaces, but not self.interfaces_blacklist
+  - `devfile` location of dev file under /proc
+  - `format_no_connection` when there is no data transmitted from the start of the plugin
+  - `hide_if_zero` hide indicator if rate == 0
+  - `interfaces` comma separated list of interfaces to track
+  - `interfaces_blacklist` comma separated list of interfaces to ignore
+  - `precision` amount of numbers after dot
 
 Format of status string placeholders:
-    {down} - download rate
-    {interface} - name of interface
-    {total} - total rate
-    {up} - upload rate
+  - `{down}` download rate
+  - `{interface}` name of interface
+  - `{total}` total rate
+  - `{up}` upload rate
 
-@author shadowprince
-@license Eclipse Public License
+**author** shadowprince
+**license** Eclipse Public License
+
 """
 
 from __future__ import division  # python2 compatibility

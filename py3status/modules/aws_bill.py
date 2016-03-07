@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
 """
+
 Display the current AWS bill.
 
-##### WARNING #####
-This module generate some costs on the AWS bill.
-Take care about the cache_timeout to limit these fees !
-##### WARNING #####
+**WARNING: This module generate some costs on the AWS bill.
+Take care about the cache_timeout to limit these fees!**
 
 Configuration parameters:
-    - aws_access_key_id: Your AWS access key
-    - aws_account_id: the root ID of the AWS account.
-      Can be found here: https://console.aws.amazon.com/billing/home#/account
-    - aws_secret_access_key: Your AWS secret key
-    - billing_file: csv file location
-    - cache_timeout: how often we refresh this module in seconds
-    - s3_bucket_name: the bucket where billing files are sent by AWS.
-      Follow this article to activate this feature:
-      http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
+  - `aws_access_key_id` Your AWS access key
+  - `aws_account_id` The root ID of the AWS account.
+Can be found here` https://console.aws.amazon.com/billing/home#/account
+  - `aws_secret_access_key` Your AWS secret key
+  - `billing_file` Csv file location
+  - `cache_timeout` How often we refresh this module in seconds
+  - `s3_bucket_name` The bucket where billing files are sent by AWS.
+Follow this article to activate this feature:
+http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
 
 Format of status string placeholders:
-    {bill_amount} - AWS bill amount
+  - `{bill_amount}` AWS bill amount
 
 Requires:
-    - boto
+  - `boto`
 
-@author nawadanp
+**author** nawadanp
+
 """
 
 import boto

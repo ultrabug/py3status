@@ -3,12 +3,13 @@
 Display days/hours/minutes spent and calculate the price of your service.
 
 Configuration parameters:
-    - config_file: file path to store the time already spent
-                   and restore it the next session
-    - hour_price : your price per hour
-    - tax  : tax value (1.02 = 2%)
+  - `config_file` file path to store the time already spent
+and restore it the next session
+  - `hour_price` your price per hour
+  - `tax`  : tax value (1.02 = 2%)
 
-@author Amaury Brisou <py3status AT puzzledge.org>
+**author** Amaury Brisou <py3status AT puzzledge.org>
+
 """
 import os
 import time

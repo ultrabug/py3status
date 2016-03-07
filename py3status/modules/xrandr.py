@@ -3,50 +3,53 @@
 Control your screen(s) layout easily.
 
 This modules allows you to handle your screens outputs directly from your bar!
-    - Detect and propose every possible screen combinations
-    - Switch between combinations using click events and mouse scroll
-    - Activate the screen or screen combination on a single click
-    - It will detect any newly connected or removed screen automatically
+- Detect and propose every possible screen combinations
+- Switch between combinations using click events and mouse scroll
+- Activate the screen or screen combination on a single click
+- It will detect any newly connected or removed screen automatically
 
 For convenience, this module also proposes some added features:
-    - Dynamic parameters for POSITION and WORKSPACES assignment (see below)
-    - Automatic fallback to a given screen or screen combination when no more
-        screen is available (handy for laptops)
-    - Automatically apply this screen combination on start: no need for xorg!
-    - Automatically move workspaces to screens when they are available
+- Dynamic parameters for POSITION and WORKSPACES assignment (see below)
+- Automatic fallback to a given screen or screen combination when no more
+screen is available (handy for laptops)
+- Automatically apply this screen combination on start: no need for xorg!
+- Automatically move workspaces to screens when they are available
 
 Configuration parameters:
-    - cache_timeout: how often to (re)detect the outputs
-    - fallback: when the current output layout is not available anymore,
-        fallback to this layout if available. This is very handy if you
-        have a laptop and switched to an external screen for presentation
-        and want to automatically fallback to your laptop screen when you
-        disconnect the external screen.
-    - force_on_start: switch to the given combination mode if available
-        when the module starts (saves you from having to configure xorg)
-    - format_clone: string used to display a 'clone' combination
-    - format_extend: string used to display a 'extend' combination
+  - `cache_timeout` how often to (re)detect the outputs
+  - `fallback` when the current output layout is not available anymore,
+fallback to this layout if available. This is very handy if you
+have a laptop and switched to an external screen for presentation
+and want to automatically fallback to your laptop screen when you
+disconnect the external screen.
+  - `force_on_start` switch to the given combination mode if available
+when the module starts (saves you from having to configure xorg)
+  - `format_clone` string used to display a 'clone' combination
+  - `format_extend` string used to display a 'extend' combination
 
 Dynamic configuration parameters:
-    - <OUTPUT>_pos: apply the given position to the OUTPUT
-        Example: DP1_pos = "-2560x0"
-        Example: DP1_pos = "above eDP1"
-        Example: DP1_pos = "below eDP1"
-        Example: DP1_pos = "left-of LVDS1"
-        Example: DP1_pos = "right-of eDP1"
+- <OUTPUT>_pos: apply the given position to the OUTPUT
+Example: DP1_pos = "-2560x0"
+Example: DP1_pos = "above eDP1"
+Example: DP1_pos = "below eDP1"
+Example: DP1_pos = "left-of LVDS1"
+Example: DP1_pos = "right-of eDP1"
 
-    - <OUTPUT>_workspaces: comma separated list of workspaces to move to
-        the given OUTPUT when it is activated
-        Example: DP1_workspaces = "1,2,3"
+- <OUTPUT>_workspaces: comma separated list of workspaces to move to
+the given OUTPUT when it is activated
+Example: DP1_workspaces = "1,2,3"
 
 Example config:
-    xrandr {
-        force_on_start = "eDP1+DP1"
-        DP1_pos = "left-of eDP1"
-        VGA_workspaces = "7"
-    }
+```
+xrandr {
+    force_on_start = "eDP1+DP1"
+    DP1_pos = "left-of eDP1"
+    VGA_workspaces = "7"
+}
+```
 
-@author ultrabug
+**author** ultrabug
+
 """
 import shlex
 
