@@ -1,5 +1,4 @@
 <a name="top"></a>Modules
-=======
 
 [arch_updates](#arch_updates)  Displays the number of package updates pending for an Arch Linux installation.
 
@@ -20,6 +19,8 @@
 [dropboxd_status](#dropboxd_status)  Display dropboxd status.
 
 [external_script](#external_script)  Display output of given script.
+
+[fedora_updates](#fedora_updates)  The number of package updates pending for a Fedora Linux installation.
 
 [glpi](#glpi)  Display the total number of open tickets from GLPI.
 
@@ -363,6 +364,33 @@ external_script {
 ```
 
 **author** frimdo ztracenastopa@centrum.cz
+
+---
+
+### <a name="fedora_updates"></a>fedora_updates
+
+The number of package updates pending for a Fedora Linux installation.
+This will display a count of how many `dnf` updates are waiting
+to be installed.
+Additionally check if any update security notices.
+
+Configuration parameters:
+- `cache_timeout` How often we refresh this module in seconds
+    *(default 600)*
+- `color_bad` Color when security notice
+    *(default global color_bad)*
+- `color_degraded` Color when upgrade available
+    *(default global color_degraded)*
+- `color_good` Color when no upgrades needed
+    *(default global color_good)*
+- `format` Display format to use
+    *(default 'DNF: {updates}')*
+
+Format status string parameters:
+ - updates : number of pending dnf updates
+
+@author Toby Dacre
+@license BSD
 
 ---
 
