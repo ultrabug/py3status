@@ -145,16 +145,16 @@ class I3status(Thread):
                 in_section = True
                 section_name = 'order'
 
-            if (not in_section) and line.startswith('group'):
+            if not in_section and line.startswith('group'):
                 group_name = line.split('{')[0].strip()
                 config[group_name] = {'items': []}
                 continue
 
-            if (not in_section) and group_name and line == '}':
+            if not in_section and group_name and line == '}':
                 group_name = None
                 continue
 
-            if group_name and (not in_section) and '=' in line:
+            if group_name and not in_section and '=' in line:
                 # check this is not a section definition
                 if '{' not in line or line.index('{') > line.index('='):
                     key = line.split('=', 1)[0].strip()
