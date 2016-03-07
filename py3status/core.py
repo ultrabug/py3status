@@ -5,6 +5,7 @@ import ast
 import os
 import pkgutil
 import sys
+import re
 
 from copy import deepcopy
 from json import dumps
@@ -467,6 +468,58 @@ class Py3statusWrapper():
         except Exception:
             print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
 
+    def update_docstrings(self):
+        '''
+        update the docstring of each module using info in the
+        modules/README.md file
+        '''
+        mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules')
+        name = None
+        re_mod = re.compile('^\#\#\# <a name="(?P<name>[a-z_]+)"></a>')
+        readme_file = os.path.join(mod_dir, 'README.md')
+        modules_dict = {}
+        with open(readme_file) as f:
+            readme = f.readlines()
+        for row in readme:
+            match = re_mod.match(row)
+            if match:
+                name = match.group('name')
+                modules_dict[name] = []
+                continue
+            if row.startswith('---'):
+                name = None
+                continue
+            if name:
+                modules_dict[name].append(row)
+        files = {}
+        # update modules
+        for mod in modules_dict:
+            mod_file = os.path.join(mod_dir, mod + '.py')
+            with open(mod_file) as f:
+                files[mod] = f.readlines()
+
+        for mod in files:
+            replaced = False
+            done = False
+            lines = False
+            out = []
+            for row in files[mod]:
+                if row.strip().startswith('"""') and not done:
+                    out.append(row)
+                    if not replaced:
+                        out = out + modules_dict[mod]
+                        replaced = True
+                    if lines:
+                        done = True
+                    if not done and not lines:
+                        lines = True
+                    continue
+                if not lines or done:
+                    out.append(row)
+            mod_file = os.path.join(mod_dir, mod + '.py')
+            with open(mod_file, 'w') as f:
+                f.writelines(out)
+
     def handle_cli_command(self, cmd):
         """Handle a command from the CLI.
         """
@@ -483,6 +536,8 @@ class Py3statusWrapper():
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
             pass
+        elif cmd == ['docs', 'update', 'modules']:
+            self.update_docstrings()
         else:
             print_stderr('Error: unknown command')
             sys.exit(1)
