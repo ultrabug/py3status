@@ -122,7 +122,7 @@ def check_docstrings(show_diff=False):
             if module not in readme:
                 print_stderr('\tModule {} in /modules but not in README'.format(module))
         if show_diff:
-            print_stderr('\n'.join(difflib.unified_diff(readme.split('\n'), modules_readme.split('\n'))))
+            print_stderr('\n'.join(difflib.unified_diff(create_readme(readme).split('\n'), create_readme(modules_readme).split('\n'))))
         else:
             print_stderr('\nUse `py3satus docstring check diff` to view diff.')
 
