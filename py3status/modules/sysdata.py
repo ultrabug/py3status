@@ -18,7 +18,6 @@ NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
 **author** Shahin Azad <ishahinism at Gmail>, shrimpza
-
 """
 
 import re

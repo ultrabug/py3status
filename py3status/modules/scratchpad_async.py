@@ -14,7 +14,6 @@ Requires:
 
 **author** cornerman
 **license** BSD
-
 """
 
 from threading import Thread

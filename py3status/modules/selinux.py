@@ -19,7 +19,6 @@ or
 
 **author** bstinsonmhk
 **license** BSD
-
 """
 
 import selinux

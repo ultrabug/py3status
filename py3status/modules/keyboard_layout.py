@@ -19,7 +19,6 @@ or
 
 **author** shadowprince, tuxitop
 **license** Eclipse Public License
-
 """
 
 from subprocess import check_output

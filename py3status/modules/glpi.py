@@ -12,7 +12,6 @@ Configuration parameters:
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
-
 """
 
 # You need MySQL-python from http://pypi.python.org/pypi/MySQL-python

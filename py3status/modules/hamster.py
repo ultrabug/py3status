@@ -14,7 +14,6 @@ Requires:
 
 **author** Aaron Fields (spirotot [at] gmail.com)
 **license** BSD
-
 """
 import shlex
 from subprocess import check_output

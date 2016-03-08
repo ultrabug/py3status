@@ -11,7 +11,6 @@ Configuration parameters:
     - `format_on` string to display when DPMS is enabled
 
 **author** Andre Doser <dosera AT tf.uni-freiburg.de>
-
 """
 
 from os import system

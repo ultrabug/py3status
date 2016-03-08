@@ -22,7 +22,6 @@ Requires:
 
 **author** Iain Tatch <iain.tatch@gmail.com>
 **license** BSD
-
 """
 
 from time import time

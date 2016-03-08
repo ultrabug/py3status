@@ -15,7 +15,6 @@ Format of status string placeholders:
     - `{processor}` the (real) processor name, e.g. 'amdk6'
 
 **author** ultrabug (inspired by ndalliard)
-
 """
 
 from time import time

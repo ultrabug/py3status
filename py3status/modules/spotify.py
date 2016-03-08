@@ -25,7 +25,6 @@ spotify {
 }
 ```
 **author** Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
-
 """
 
 from datetime import timedelta

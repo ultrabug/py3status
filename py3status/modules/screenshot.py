@@ -17,7 +17,6 @@ Configuration parameters:
     - `upload_user` your ssh user
 
 **author** Amaury Brisou <py3status AT puzzledge.org>
-
 """
 import os
 import random

@@ -20,7 +20,6 @@ Requires:
     - `deadbeef`
 
 **author** mrt-prodz
-
 """
 from subprocess import check_output, CalledProcessError
 from time import time

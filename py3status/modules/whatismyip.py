@@ -14,7 +14,6 @@ Configuration parameters:
     - `url` change IP check url (must output a plain text IP address)
 
 **author** ultrabug
-
 """
 from time import time
 try:

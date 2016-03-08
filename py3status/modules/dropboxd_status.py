@@ -18,7 +18,6 @@ Requires:
 
 **author** Tjaart van der Walt (github:tjaartvdwalt)
 **license** BSD
-
 """
 
 import shlex

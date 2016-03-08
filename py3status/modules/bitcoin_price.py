@@ -18,7 +18,6 @@ be found at http://bitcoincharts.com/markets/list/
 e.g. USD -> $, EUR -> € and so on
 
 **author** Andre Doser <doser.andre AT gmail.com>
-
 """
 import json
 

@@ -42,7 +42,6 @@ Now: ☂-4°C Light Rain/Windy
 The city_code in this example is for Paris, France => FRXX0076
 
 **author** ultrabug, rail
-
 """
 
 from time import time

@@ -24,7 +24,6 @@ Example: killall -s USR1 py3status
 
 **author** <Jan T> <jans.tuomi@gmail.com>
 **license** BSD
-
 """
 
 import re

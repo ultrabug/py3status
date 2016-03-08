@@ -10,7 +10,6 @@ Requires
 
 **author** James Smith http://jazmit.github.io/
 **license** BSD
-
 """
 
 # import your useful libs here

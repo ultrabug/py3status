@@ -10,7 +10,6 @@ Configuration parameters:
     - `url` connect to this url to check the connection status
 
 **author** obb
-
 """
 
 from time import time

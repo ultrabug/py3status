@@ -32,7 +32,6 @@ Requires:
 
 **author** Markus Weimar <mail@markusweimar.de>
 **license** BSD
-
 """
 
 import re

@@ -31,7 +31,6 @@ pomodoro {
 ```
 
 **author** Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
-
 """
 
 from subprocess import call

@@ -7,7 +7,6 @@ Requires:
 
 **author** Francois LASSERRE <choiz@me.com>
 **license** GNU GPL http://www.gnu.org/licenses/gpl.html
-
 """
 
 from time import time

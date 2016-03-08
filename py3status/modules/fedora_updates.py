@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 The number of package updates pending for a Fedora Linux installation.
 
 This will display a count of how many `dnf` updates are waiting
@@ -24,7 +23,6 @@ Format status string parameters:
 
 @author Toby Dacre
 @license BSD
-
 """
 
 from time import time

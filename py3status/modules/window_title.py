@@ -13,7 +13,6 @@ I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 
 **author** shadowprince
 **license** Eclipse Public License
-
 """
 
 import i3

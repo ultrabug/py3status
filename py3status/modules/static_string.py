@@ -8,7 +8,6 @@ Configuration parameters:
     - `separator` whether the separator is shown or not (true or false)
 
 **author** frimdo ztracenastopa@centrum.cz
-
 """
 
 from time import time

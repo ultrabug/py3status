@@ -15,7 +15,6 @@ Configuration parameters:
     - `resolvers` comma separated list of DNS resolvers to use
 
 **author** nawadanp
-
 """
 
 import dns.resolver

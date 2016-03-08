@@ -25,7 +25,6 @@ external_script {
 ```
 
 **author** frimdo ztracenastopa@centrum.cz
-
 """
 
 import subprocess

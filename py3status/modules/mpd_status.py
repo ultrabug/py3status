@@ -48,7 +48,6 @@ Examples of `format`
 
 **author** shadowprince, zopieux
 **license** Eclipse Public License
-
 """
 
 import ast

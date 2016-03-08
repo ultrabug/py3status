@@ -17,7 +17,6 @@ Requires:
 
 **author** jmdana <https://github.com/jmdana>
 **license** GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
-
 """
 
 import re

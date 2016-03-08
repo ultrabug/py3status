@@ -14,7 +14,6 @@ Configuration parameters:
 
 **author** Federico Ceratto <federico.ceratto@gmail.com>, rixx
 **license** BSD
-
 """
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.

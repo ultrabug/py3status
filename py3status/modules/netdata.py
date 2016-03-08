@@ -8,7 +8,6 @@ Configuration parameters:
     - `nic` the network interface to monitor (defaults to eth0)
 
 **author** Shahin Azad <ishahinism at Gmail>
-
 """
 
 import subprocess

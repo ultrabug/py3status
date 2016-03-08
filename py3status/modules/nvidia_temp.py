@@ -15,7 +15,6 @@ Requires:
 
 **author** jmdana <https://github.com/jmdana>
 **license** BSD
-
 """
 
 import re

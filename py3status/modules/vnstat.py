@@ -22,7 +22,6 @@ Requires:
 
 **author** shadowprince
 **license** Eclipse Public License
-
 """
 
 from __future__ import division  # python2 compatibility

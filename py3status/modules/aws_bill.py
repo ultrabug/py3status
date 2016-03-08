@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Display the current AWS bill.
 
 **WARNING: This module generate some costs on the AWS bill.
@@ -24,7 +23,6 @@ Requires:
     - `boto`
 
 **author** nawadanp
-
 """
 
 import boto

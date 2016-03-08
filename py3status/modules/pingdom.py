@@ -17,7 +17,6 @@ Configuration parameters:
 Requires:
     - `requests` python module from pypi
 https://pypi.python.org/pypi/requests
-
 """
 
 import requests

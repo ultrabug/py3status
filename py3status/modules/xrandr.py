@@ -49,7 +49,6 @@ xrandr {
 ```
 
 **author** ultrabug
-
 """
 import shlex
 

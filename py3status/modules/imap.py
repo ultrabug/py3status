@@ -18,7 +18,6 @@ Format of status string placeholders:
     - `{unseen}` number of unread emails
 
 **author** obb
-
 """
 
 import imaplib

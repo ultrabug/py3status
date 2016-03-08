@@ -4,7 +4,6 @@ Display the amount of windows in your i3 scratchpad.
 
 **author** shadowprince
 **license** Eclipse Public License
-
 """
 
 import i3

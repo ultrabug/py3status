@@ -21,7 +21,6 @@ Requires:
 
 **author** Anon1234 https://github.com/Anon1234
 **license** BSD
-
 """
 
 from threading import Thread

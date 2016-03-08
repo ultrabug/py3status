@@ -9,7 +9,6 @@ and restore it the next session
     - `tax`  : tax value (1.02 = 2%)
 
 **author** Amaury Brisou <py3status AT puzzledge.org>
-
 """
 import os
 import time

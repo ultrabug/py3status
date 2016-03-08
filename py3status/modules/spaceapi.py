@@ -12,7 +12,6 @@ Configuration Parameters:
 
 **author** timmszigat
 **license** WTFPL <http://www.wtfpl.net/txt/copying/>
-
 """
 
 import codecs
