@@ -92,7 +92,7 @@ def update_docstrings():
             if row.strip().startswith('"""') and not done:
                 out.append(row)
                 if not replaced:
-                    out = out + modules_dict[mod]
+                    out = out + [''.join(modules_dict[mod]).strip() + '\n']
                     replaced = True
                 if lines:
                     done = True
