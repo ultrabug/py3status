@@ -37,22 +37,38 @@ def parse_readme():
     return modules_dict
 
 
-def core_module_docstrings():
+def core_module_docstrings(include_user=False, config=None):
     '''
-    Get docstrings for all core modules
+    Get docstrings for all core modules and user ones if requested
     returns a dict of {<module_name>: <docstring>}
     '''
+    paths = {}
     docstrings = {}
     for file in os.listdir(modules_directory()):
         if file.endswith(".py"):
-            name = file.split('.')[0]
+            name = file[:-3]
             if name != '__init__':
-                with open(os.path.join(modules_directory(), file)) as f:
-                    module = ast.parse(f.read())
-                    docstring = ast.get_docstring(module)
-                    docstring = ['{}\n'.format(d)
-                                 for d in str(docstring).strip().split('\n')]
-                    docstrings[name] = docstring + ['\n']
+                paths[name] = (os.path.join(modules_directory(), file), 'core')
+
+    if include_user:
+        # include user modules
+        for include_path in sorted(config['include_paths']):
+            include_path = os.path.abspath(include_path) + '/'
+            if not os.path.isdir(include_path):
+                continue
+            for file in sorted(os.listdir(include_path)):
+                if not file.endswith('.py'):
+                    continue
+                name = file[:-3]
+                paths[name] = (os.path.join(include_path, file), 'user')
+    for name in paths:
+        path, module_type = paths[name]
+        with open(path) as f:
+            module = ast.parse(f.read())
+            docstring = ast.get_docstring(module)
+            docstring = ['{}\n'.format(d)
+                         for d in str(docstring).strip().split('\n')]
+            docstrings[name] = docstring + ['\n']
     return docstrings
 
 
@@ -112,9 +128,13 @@ def update_docstrings():
     print_stderr('Modules updated from README.md')
 
 
-def check_docstrings(show_diff=False):
+def check_docstrings(show_diff=False, config=None):
+    '''
+    Check docstrings in module match the README.md
+    '''
+
     readme = parse_readme()
-    modules_readme = core_module_docstrings()
+    modules_readme = core_module_docstrings(config=config)
     if (create_readme(readme) != create_readme(modules_readme)):
         print_stderr('Documentation does not match!\n')
         for module in readme:
@@ -140,6 +160,9 @@ def check_docstrings(show_diff=False):
 
 
 def update_readme_for_modules(modules):
+    '''
+    Update README.md updating the sections for the module names listed.
+    '''
     readme = parse_readme()
     module_docstrings = core_module_docstrings()
     for module in modules:
@@ -153,3 +176,18 @@ def update_readme_for_modules(modules):
     readme_file = os.path.join(modules_directory(), 'README.md')
     with open(readme_file, 'w') as f:
         f.write(create_readme(readme))
+
+
+def show_modules(config, details):
+    '''
+    List modules available optionally with details.
+    '''
+    print_stderr('Available modules:')
+    modules = core_module_docstrings(include_user=True, config=config)
+    for name in sorted(modules.keys()):
+        desc = modules[name][0][:-1]
+        print_stderr('  %-22s %s' % (name, desc))
+        if details:
+            for description in modules[name][1:]:
+                print_stderr(' ' * 25 + '%s' % description[:-1])
+            print_stderr(' ' * 25 + '---')

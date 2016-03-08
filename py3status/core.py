@@ -245,7 +245,7 @@ class Py3statusWrapper():
         self.config = self.get_config()
 
         if self.config.get('cli_command'):
-            self.handle_cli_command(self.config['cli_command'])
+            self.handle_cli_command(self.config)
             sys.exit()
 
         if self.config['debug']:
@@ -439,38 +439,11 @@ class Py3statusWrapper():
             delta += 0.1
             sleep(0.1)
 
-    @staticmethod
-    def print_module_description(details, mod_name, mod_info):
-        """Print module description extracted from its docstring.
-        """
-        if mod_name == '__init__':
-            return
 
-        mod, f_name = mod_info
-        if f_name:
-            path = os.path.join(*mod_info)
-            with open(path) as f:
-                module = ast.parse(f.read())
-        else:
-            path = mod.get_filename(mod_name)
-            module = ast.parse(mod.get_source(mod_name))
-        try:
-            docstring = ast.get_docstring(module, clean=True)
-            if docstring:
-                short_description = docstring.split('\n')[0].rstrip('.')
-                print_stderr('  %-22s %s.' % (mod_name, short_description))
-                if details:
-                    for description in docstring.split('\n')[1:]:
-                        print_stderr(' ' * 25 + '%s' % description)
-                    print_stderr(' ' * 25 + '---')
-            else:
-                print_stderr('  %-22s No docstring in %s' % (mod_name, path))
-        except Exception:
-            print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
-
-    def handle_cli_command(self, cmd):
+    def handle_cli_command(self, config):
         """Handle a command from the CLI.
         """
+        cmd = config['cli_command']
         # aliases
         if cmd[0] in ['mod', 'module', 'modules']:
             cmd[0] = 'modules'
@@ -478,17 +451,12 @@ class Py3statusWrapper():
         # allowed cli commands
         if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
             details = cmd[1] == 'details'
-            print_stderr('Available modules:')
-            for mod_name, mod_info in self.get_all_modules():
-                self.print_module_description(details, mod_name, mod_info)
-        elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
-            # TODO: to be implemented
-            pass
+            docstrings.show_modules(config, details)
+        # docstring formatting and checking
         elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
-            # docstring functions
             if cmd[1] == 'check':
                 show_diff = len(cmd) > 2 and cmd[2] == 'diff'
-                docstrings.check_docstrings(show_diff)
+                docstrings.check_docstrings(show_diff, config)
             if cmd[1] == 'update':
                 if len(cmd) < 3:
                     print_stderr('Error: you must specify what to update')
@@ -498,6 +466,9 @@ class Py3statusWrapper():
                     docstrings.update_docstrings()
                 else:
                     docstrings.update_readme_for_modules(cmd[2:])
+        elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
+            # TODO: to be implemented
+            pass
         else:
             print_stderr('Error: unknown command')
             sys.exit(1)
