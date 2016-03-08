@@ -479,18 +479,17 @@ class Py3statusWrapper():
         readme_file = os.path.join(mod_dir, 'README.md')
         modules_dict = {}
         with open(readme_file) as f:
-            readme = f.readlines()
-        for row in readme:
-            match = re_mod.match(row)
-            if match:
-                name = match.group('name')
-                modules_dict[name] = []
-                continue
-            if row.startswith('---'):
-                name = None
-                continue
-            if name:
-                modules_dict[name].append(row)
+            for row in f.readlines():
+                match = re_mod.match(row)
+                if match:
+                    name = match.group('name')
+                    modules_dict[name] = []
+                    continue
+                if row.startswith('---'):
+                    name = None
+                    continue
+                if name:
+                    modules_dict[name].append(row)
         files = {}
         # update modules
         for mod in modules_dict:
