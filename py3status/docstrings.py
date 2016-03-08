@@ -50,7 +50,8 @@ def core_module_docstrings():
                 with open(os.path.join(modules_directory(), file)) as f:
                     module = ast.parse(f.read())
                     docstring = ast.get_docstring(module)
-                    docstring = ['{}\n'.format(d) for d in str(docstring).strip().split('\n')]
+                    docstring = ['{}\n'.format(d)
+                                 for d in str(docstring).strip().split('\n')]
                     docstrings[name] = docstring + ['\n']
     return docstrings
 
@@ -63,10 +64,14 @@ def create_readme(data):
     # Links
     for module in sorted(data.keys()):
         desc = ''.join(data[module]).strip().split('\n')[0]
-        out.append('\n[{name}](#{name})  {desc}\n'.format(name=module, desc=desc))
+        out.append('\n[{name}](#{name})  {desc}\n'.format(name=module,
+                                                          desc=desc))
     # details
     for module in sorted(data.keys()):
-        out.append('\n---\n\n### <a name="{name}"></a>{name}\n\n{details}\n'.format(name=module, details=''.join(data[module]).strip()))
+        out.append(
+            '\n---\n\n### <a name="{name}"></a>{name}\n\n{details}\n'.format(
+                name=module,
+                details=''.join(data[module]).strip()))
     return ''.join(out)
 
 
@@ -114,15 +119,22 @@ def check_docstrings(show_diff=False):
         print_stderr('Documentation does not match!\n')
         for module in readme:
             if module not in modules_readme:
-                print_stderr('\tModule {} in README but not in /modules'.format(module))
-            elif ''.join(readme[module]).strip() != ''.join(modules_readme[module]).strip():
-                print_stderr('\tModule {} docstring does not match README'.format(module))
+                print_stderr(
+                    '\tModule {} in README but not in /modules'.format(module))
+            elif ''.join(readme[module]).strip() != ''.join(modules_readme[
+                    module]).strip():
+                print_stderr(
+                    '\tModule {} docstring does not match README'.format(
+                        module))
 
         for module in modules_readme:
             if module not in readme:
-                print_stderr('\tModule {} in /modules but not in README'.format(module))
+                print_stderr(
+                    '\tModule {} in /modules but not in README'.format(module))
         if show_diff:
-            print_stderr('\n'.join(difflib.unified_diff(create_readme(readme).split('\n'), create_readme(modules_readme).split('\n'))))
+            print_stderr('\n'.join(difflib.unified_diff(
+                create_readme(readme).split('\n'), create_readme(
+                    modules_readme).split('\n'))))
         else:
             print_stderr('\nUse `py3satus docstring check diff` to view diff.')
 
