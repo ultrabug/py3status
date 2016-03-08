@@ -3,19 +3,19 @@
 Display the unread messages count from your IMAP account.
 
 Configuration parameters:
-    - `cache_timeout` how often to run this check
-    - `criterion` status of emails to check for
-    - `format` format to display
-    - `hide_if_zero` don't show on bar if 0
-    - `imap_server` IMAP server to connect to
-    - `mailbox` name of the mailbox to check
-    - `new_mail_color` what color to output on new mail
-    - `password` login password
-    - `port` IMAP server port
-    - `user` login user
+  - `cache_timeout` how often to run this check
+  - `criterion` status of emails to check for
+  - `format` format to display
+  - `hide_if_zero` don't show on bar if 0
+  - `imap_server` IMAP server to connect to
+  - `mailbox` name of the mailbox to check
+  - `new_mail_color` what color to output on new mail
+  - `password` login password
+  - `port` IMAP server port
+  - `user` login user
 
 Format of status string placeholders:
-    - `{unseen}` number of unread emails
+  - `{unseen}` number of unread emails
 
 **author** obb
 """

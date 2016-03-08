@@ -3,15 +3,15 @@
 Display NVIDIA GPU temperature.
 
 Configuration parameters:
-    - `cache_timeout` how often we refresh this module in seconds
-    - `color_bad` the color used if the temperature can't be read.
-    - `color_good` the color used if everything is OK.
-    - `format_prefix` a prefix for the output.
-    - `format_units` the temperature units. Will appear at the end.
-    - `separator` the separator char between temperatures (only if more than one GPU)
+  - `cache_timeout` how often we refresh this module in seconds
+  - `color_bad` the color used if the temperature can't be read.
+  - `color_good` the color used if everything is OK.
+  - `format_prefix` a prefix for the output.
+  - `format_units` the temperature units. Will appear at the end.
+  - `separator` the separator char between temperatures (only if more than one GPU)
 
 Requires:
-    - `nvidia-smi`
+  - `nvidia-smi`
 
 **author** jmdana <https://github.com/jmdana>
 **license** BSD

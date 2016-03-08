@@ -3,15 +3,15 @@
 Display the X selection.
 
 Configuration parameters:
-    - `cache_timeout` how often we refresh this module in seconds
+  - `cache_timeout` how often we refresh this module in seconds
 (default is at every py3status configured interval)
-    - `command` the xsel command to run (default 'xsel')
-    - `max_size` stip the selection to this value (default 15)
-    - `symmetric` show the beginning and the end of the selection string
+  - `command` the xsel command to run (default 'xsel')
+  - `max_size` stip the selection to this value (default 15)
+  - `symmetric` show the beginning and the end of the selection string
 with respect to configured max_size.
 
 Requires:
-    - `xsel` command line tool
+  - `xsel` command line tool
 
 **author** Sublim3 umbsublime@gamil.com
 **license** BSD

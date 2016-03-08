@@ -3,25 +3,25 @@
 Display and control a Pomodoro countdown.
 
 Configuration parameters:
-    - `display_bar` display time in bars when True, otherwise in seconds
-    - `format` define custom display format. See placeholders below
-    - `max_breaks` maximum number of breaks
-    - `num_progress_bars` number of progress bars
-    - `sound_break_end` break end sound (file path) (requires pyglet
+  - `display_bar` display time in bars when True, otherwise in seconds
+  - `format` define custom display format. See placeholders below
+  - `max_breaks` maximum number of breaks
+  - `num_progress_bars` number of progress bars
+  - `sound_break_end` break end sound (file path) (requires pyglet
 or pygame)
-    - `sound_pomodoro_end` pomodoro end sound (file path) (requires pyglet
+  - `sound_pomodoro_end` pomodoro end sound (file path) (requires pyglet
 or pygame)
-    - `sound_pomodoro_start` pomodoro start sound (file path) (requires pyglet
+  - `sound_pomodoro_start` pomodoro start sound (file path) (requires pyglet
 od pygame)
-    - `timer_break` normal break time (seconds)
-    - `timer_long_break` long break time (seconds)
-    - `timer_pomodoro` pomodoro time (seconds)
+  - `timer_break` normal break time (seconds)
+  - `timer_long_break` long break time (seconds)
+  - `timer_pomodoro` pomodoro time (seconds)
 
 Format of status string placeholders:
-    - `{bar}` display time in bars
-    - `{ss}` display time in total seconds (1500)
-    - `{mm}` display time in total minutes (25)
-    - `{mmss}` display time in (hh-)mm-ss (25:00)
+  - `{bar}` display time in bars
+  - `{ss}` display time in total seconds (1500)
+  - `{mm}` display time in total minutes (25)
+  - `{mmss}` display time in (hh-)mm-ss (25:00)
 
 i3status.conf example:
 ```

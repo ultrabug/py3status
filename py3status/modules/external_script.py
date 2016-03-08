@@ -7,13 +7,13 @@ Pay attention. The output must be one liner, or will break your i3status !
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
-    - `cache_timeout` how often we refresh this module in seconds
-    - `color`  color of printed text
-    - `format`  see placeholders below
-    - `script_path` script you want to show output of (compulsory)
+  - `cache_timeout` how often we refresh this module in seconds
+  - `color`  color of printed text
+  - `format`  see placeholders below
+  - `script_path` script you want to show output of (compulsory)
 
 Format of status string placeholders:
-    - `{output}` output of script given by "script_path"
+  - `{output}` output of script given by "script_path"
 
 i3status.conf example:
 ```

@@ -3,12 +3,12 @@
 Display if your favorite hackerspace is open or not.
 
 Configuration Parameters:
-    - `cache_timeout` Set timeout between calls in seconds
-    - `closed_color` color if space is closed
-    - `closed_text` text if space is closed, strftime parameters will be translated
-    - `open_color` color if space is open
-    - `open_text` text if space is open, strftime parmeters will be translated
-    - `url` URL to SpaceAPI json file of your space
+  - `cache_timeout` Set timeout between calls in seconds
+  - `closed_color` color if space is closed
+  - `closed_text` text if space is closed, strftime parameters will be translated
+  - `open_color` color if space is open
+  - `open_text` text if space is open, strftime parmeters will be translated
+  - `url` URL to SpaceAPI json file of your space
 
 **author** timmszigat
 **license** WTFPL <http://www.wtfpl.net/txt/copying/>
