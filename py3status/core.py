@@ -5,7 +5,6 @@ import ast
 import os
 import pkgutil
 import sys
-import re
 
 from copy import deepcopy
 from json import dumps
@@ -17,6 +16,7 @@ from threading import Event
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
+import py3status.docstrings as docstrings
 from py3status import modules as sitepkg_modules
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
@@ -468,57 +468,6 @@ class Py3statusWrapper():
         except Exception:
             print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
 
-    def update_docstrings(self):
-        '''
-        update the docstring of each module using info in the
-        modules/README.md file
-        '''
-        mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules')
-        name = None
-        re_mod = re.compile('^\#\#\# <a name="(?P<name>[a-z_]+)"></a>')
-        readme_file = os.path.join(mod_dir, 'README.md')
-        modules_dict = {}
-        with open(readme_file) as f:
-            for row in f.readlines():
-                match = re_mod.match(row)
-                if match:
-                    name = match.group('name')
-                    modules_dict[name] = []
-                    continue
-                if row.startswith('---'):
-                    name = None
-                    continue
-                if name:
-                    modules_dict[name].append(row)
-        files = {}
-        # update modules
-        for mod in modules_dict:
-            mod_file = os.path.join(mod_dir, mod + '.py')
-            with open(mod_file) as f:
-                files[mod] = f.readlines()
-
-        for mod in files:
-            replaced = False
-            done = False
-            lines = False
-            out = []
-            for row in files[mod]:
-                if row.strip().startswith('"""') and not done:
-                    out.append(row)
-                    if not replaced:
-                        out = out + modules_dict[mod]
-                        replaced = True
-                    if lines:
-                        done = True
-                    if not done and not lines:
-                        lines = True
-                    continue
-                if not lines or done:
-                    out.append(row)
-            mod_file = os.path.join(mod_dir, mod + '.py')
-            with open(mod_file, 'w') as f:
-                f.writelines(out)
-
     def handle_cli_command(self, cmd):
         """Handle a command from the CLI.
         """
@@ -535,8 +484,20 @@ class Py3statusWrapper():
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
             pass
-        elif cmd == ['docs', 'update', 'modules']:
-            self.update_docstrings()
+        elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
+            # docstring functions
+            if cmd[1] == 'check':
+                show_diff = len(cmd) > 2 and cmd[2] == 'diff'
+                docstrings.check_docstrings(show_diff)
+            if cmd[1] == 'update':
+                if len(cmd) < 3:
+                    print_stderr('Error: you must specify what to update')
+                    sys.exit(1)
+
+                if cmd[2] == 'modules':
+                    docstrings.update_docstrings()
+                else:
+                    docstrings.update_readme_for_modules(cmd[2:])
         else:
             print_stderr('Error: unknown command')
             sys.exit(1)
