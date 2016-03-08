@@ -3,21 +3,21 @@
 Display track currently playing in deadbeef.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh usage in seconds (default: 1s)
-  - `format` see placeholders below
-  - `delimiter` delimiter character for parsing (default: ¥)
+    - `cache_timeout` how often we refresh usage in seconds (default: 1s)
+    - `format` see placeholders below
+    - `delimiter` delimiter character for parsing (default: ¥)
 
 Format of status string placeholders:
-  - `{artist}' artist
-  - `{title}' title
-  - `{elapsed}' elapsed time
-  - `{length}' total length
-  - `{year}' year
-  - `{tracknum}' track number
+    - `{artist}' artist
+    - `{title}' title
+    - `{elapsed}' elapsed time
+    - `{length}' total length
+    - `{year}' year
+    - `{tracknum}' track number
 
 
 Requires:
-  - `deadbeef`
+    - `deadbeef`
 
 **author** mrt-prodz
 

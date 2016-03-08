@@ -6,16 +6,16 @@ We also verify the status of the checks and colorize if needed.
 Pingdom API doc : https://www.pingdom.com/features/api/documentation/
 
 Configuration parameters:
-  - `app_key` create an APP KEY on pingdom first
-  - `cache_timeout` how often to refresh the check from pingdom
-  - `checks` comma separated pindgom check names to display
-  - `login` pingdom login
-  - `max_latency` maximal latency before coloring the output
-  - `password` pingdom password
-  - `request_timeout` pindgom API request timeout
+    - `app_key` create an APP KEY on pingdom first
+    - `cache_timeout` how often to refresh the check from pingdom
+    - `checks` comma separated pindgom check names to display
+    - `login` pingdom login
+    - `max_latency` maximal latency before coloring the output
+    - `password` pingdom password
+    - `request_timeout` pindgom API request timeout
 
 Requires:
-  - `requests` python module from pypi
+    - `requests` python module from pypi
 https://pypi.python.org/pypi/requests
 
 """
