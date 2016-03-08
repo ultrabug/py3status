@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import argparse
 import os
-import pkgutil
 import sys
 
 from copy import deepcopy
@@ -16,7 +15,6 @@ from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
 import py3status.docstrings as docstrings
-from py3status import modules as sitepkg_modules
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
@@ -168,25 +166,6 @@ class Py3statusWrapper():
                 module_name = f_name[:-3]
                 user_modules[module_name] = (include_path, f_name)
         return user_modules
-
-    def get_all_modules(self):
-        """
-        Search and yield all available py3status modules:
-            - in the current python's implementation site-packages
-            - provided by the user using the inclusion directories
-
-        User provided modules take precedence over py3status generic modules.
-        """
-        all_modules = {}
-        for importer, module_name, ispkg in \
-                pkgutil.iter_modules(sitepkg_modules.__path__):
-            if not ispkg:
-                mod = importer.find_module(module_name)
-                all_modules[module_name] = (mod, None)
-        user_modules = self.get_user_modules()
-        all_modules.update(user_modules)
-        for module_name, module_info in sorted(all_modules.items()):
-            yield (module_name, module_info)
 
     def get_user_configured_modules(self):
         """
