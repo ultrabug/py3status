@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import argparse
-import ast
 import os
 import pkgutil
 import sys
@@ -438,7 +437,6 @@ class Py3statusWrapper():
             # sleep a bit before doing this again to avoid killing the CPU
             delta += 0.1
             sleep(0.1)
-
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.
