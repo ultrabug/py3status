@@ -211,9 +211,14 @@ def show_modules(config, params):
     for name in sorted(modules.keys()):
         if modules_list and name not in modules_list:
             continue
-        desc = modules[name][0][:-1]
-        print_stderr('  %-22s %s' % (name, desc))
+        module = modules[name]
+        desc = module[0][:-1]
         if details:
-            for description in modules[name][1:]:
-                print_stderr(' ' * 25 + '%s' % description[:-1])
-            print_stderr(' ' * 25 + '---')
+            dash_len = len(name) + 4
+            print_stderr('-' * dash_len)
+            print_stderr('  ' + name)
+            print_stderr('-' * dash_len)
+            for description in module:
+                print_stderr(description[:-1])
+        else:
+            print_stderr('  %-22s %s' % (name, desc))
