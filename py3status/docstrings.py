@@ -37,18 +37,20 @@ def parse_readme():
     return modules_dict
 
 
-def core_module_docstrings(include_user=False, config=None):
+def core_module_docstrings(include_core=True, include_user=False, config=None):
     '''
     Get docstrings for all core modules and user ones if requested
     returns a dict of {<module_name>: <docstring>}
     '''
     paths = {}
     docstrings = {}
-    for file in os.listdir(modules_directory()):
-        if file.endswith(".py"):
-            name = file[:-3]
-            if name != '__init__':
-                paths[name] = (os.path.join(modules_directory(), file), 'core')
+    if include_core:
+        for file in os.listdir(modules_directory()):
+            if file.endswith(".py"):
+                name = file[:-3]
+                if name != '__init__':
+                    paths[name] = (os.path.join(modules_directory(), file),
+                                   'core')
 
     if include_user:
         # include user modules
@@ -178,13 +180,37 @@ def update_readme_for_modules(modules):
         f.write(create_readme(readme))
 
 
-def show_modules(config, details):
+def show_modules(config, params):
     '''
     List modules available optionally with details.
     '''
-    print_stderr('Available modules:')
-    modules = core_module_docstrings(include_user=True, config=config)
+    details = params[0] == 'details'
+    if details:
+        modules_list = params[1:]
+        core_mods = True
+        user_mods = True
+    else:
+        modules_list = []
+        if len(params) == 2:
+            if params[1] == 'user':
+                user_mods = True
+                core_mods = False
+            elif params[1] == 'core':
+                user_mods = False
+                core_mods = True
+        else:
+            user_mods = True
+            core_mods = True
+    if details:
+        print_stderr('Module details:')
+    else:
+        print_stderr('Available modules:')
+    modules = core_module_docstrings(include_core=core_mods,
+                                     include_user=user_mods,
+                                     config=config)
     for name in sorted(modules.keys()):
+        if modules_list and name not in modules_list:
+            continue
         desc = modules[name][0][:-1]
         print_stderr('  %-22s %s' % (name, desc))
         if details:

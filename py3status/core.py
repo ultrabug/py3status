@@ -427,8 +427,7 @@ class Py3statusWrapper():
 
         # allowed cli commands
         if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
-            details = cmd[1] == 'details'
-            docstrings.show_modules(config, details)
+            docstrings.show_modules(config, cmd[1:])
         # docstring formatting and checking
         elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
             if cmd[1] == 'check':
