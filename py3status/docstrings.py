@@ -213,10 +213,10 @@ def show_modules(config, params):
         module = modules[name]
         desc = module[0][:-1]
         if details:
-            dash_len = len(name) + 4
-            print_stderr('-' * dash_len)
-            print_stderr('  ' + name)
-            print_stderr('-' * dash_len)
+            dash_len = len(name)
+            print_stderr('=' * dash_len)
+            print_stderr(name)
+            print_stderr('=' * dash_len)
             for description in module:
                 print_stderr(description[:-1])
         else:
