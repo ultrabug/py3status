@@ -190,6 +190,8 @@ def show_modules(config, params):
         core_mods = True
         user_mods = True
     else:
+        user_mods = True
+        core_mods = True
         modules_list = []
         if len(params) == 2:
             if params[1] == 'user':
@@ -198,9 +200,6 @@ def show_modules(config, params):
             elif params[1] == 'core':
                 user_mods = False
                 core_mods = True
-        else:
-            user_mods = True
-            core_mods = True
     if details:
         print_stderr('Module details:')
     else:
