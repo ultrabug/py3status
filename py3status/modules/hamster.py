@@ -3,11 +3,11 @@
 Display current tasks from project Hamster.
 
 Configuration parameters:
-  - `cache_timeout` : how often we refresh this module in seconds (5s default)
-  - `format` : see placeholders below
+    cache_timeout - how often we refresh this module in seconds (5s default)
+    format - see placeholders below
 
 Format of status string placeholders:
-  - `{current}` : hamster current
+    {current} - hamster current
 
 Requires:
   - `hamster`

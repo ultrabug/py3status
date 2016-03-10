@@ -69,8 +69,10 @@ def core_module_docstrings(include_core=True, include_user=False, config=None):
         with open(path) as f:
             module = ast.parse(f.read())
             docstring = ast.get_docstring(module)
-            docstring = ['{}\n'.format(d)
-                         for d in str(docstring).strip().split('\n')]
+            docstring = [
+                '{}\n'.format(d)
+                for d in from_docstring(str(docstring).strip().split('\n'))
+            ]
             docstrings[name] = docstring + ['\n']
     return docstrings
 
@@ -92,6 +94,22 @@ def create_readme(data):
                 name=module,
                 details=''.join(data[module]).strip()))
     return ''.join(out)
+
+
+def to_docstring(doc):
+    re_param = re.compile('^  - `([a-zA-Z0-9_{}]+)` ')
+    out = []
+    for line in doc:
+        out.append(re_param.sub('    \\1 - ', line))
+    return out
+
+
+def from_docstring(doc):
+    re_param = re.compile('^    ([a-zA-Z0-9_{}]+) - ')
+    out = []
+    for line in doc:
+        out.append(re_param.sub('  - `\\1` ', line))
+    return out
 
 
 def update_docstrings():
@@ -116,7 +134,9 @@ def update_docstrings():
             if row.strip().startswith('"""') and not done:
                 out.append(row)
                 if not replaced:
-                    out = out + [''.join(modules_dict[mod]).strip() + '\n']
+                    out = out + [
+                        ''.join(to_docstring(modules_dict[mod])).strip() + '\n'
+                    ]
                     replaced = True
                 if lines:
                     done = True
@@ -211,7 +231,7 @@ def show_modules(config, params):
     for name in sorted(modules.keys()):
         if modules_list and name not in modules_list:
             continue
-        module = modules[name]
+        module = to_docstring(modules[name])
         desc = module[0][:-1]
         if details:
             dash_len = len(name)

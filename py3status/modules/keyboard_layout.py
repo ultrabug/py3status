@@ -3,11 +3,11 @@
 Display the current active keyboard layout.
 
 Configuration parameters:
-  - `cache_timeout` : check for keyboard layout change every seconds
-  - `color` : a single color value for all layouts. eg: "#FCE94F"
-  - `colors` : a comma separated string of color values for each layout,
+    cache_timeout - check for keyboard layout change every seconds
+    color - a single color value for all layouts. eg: "#FCE94F"
+    colors - a comma separated string of color values for each layout,
 eg: "us=#FCE94F, fr=#729FCF".
-  - `format` : see placeholders below
+    format - see placeholders below
 
 Format of status string placeholders:
  - `{layout}` currently active keyboard layout
@@ -15,7 +15,7 @@ Format of status string placeholders:
 Requires:
   - `xkblayout-state`
 or
-  - `setxkbmap` : and `xset` (works for the first two predefined layouts.)
+    setxkbmap - and `xset` (works for the first two predefined layouts.)
 
 **author** shadowprince, tuxitop
 **license** Eclipse Public License
