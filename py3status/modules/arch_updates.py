@@ -7,18 +7,18 @@ to be installed and optionally a count of how many 'aur' updates are
 also waiting.
 
 Configuration parameters:
-  - `cache_timeout` — How often we refresh this module in seconds *(default 600)*
-  - `include_aur` — Set to 0 to use 'cower' to check for AUR updates *(default 0)*
-  - `format` — Display format to use *(default
+  - `cache_timeout` : How often we refresh this module in seconds *(default 600)*
+  - `include_aur` : Set to 0 to use 'cower' to check for AUR updates *(default 0)*
+  - `format` : Display format to use *(default
     'UPD: {pacman}' or 'UPD: {pacman}/{aur}'
     )*
 
 Format status string parameters:
-  - `{aur}` — Number of pending aur updates
-  - `{pacman}` — Number of pending pacman updates
+  - `{aur}` : Number of pending aur updates
+  - `{pacman}` : Number of pending pacman updates
 
 Requires:
-  - `cower` — Needed to display pending 'aur' updates
+  - `cower` : Needed to display pending 'aur' updates
 
 **author** Iain Tatch <iain.tatch@gmail.com>
 **license** BSD

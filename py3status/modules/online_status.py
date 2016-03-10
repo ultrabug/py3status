@@ -3,11 +3,11 @@
 Display if a connection to the internet is established.
 
 Configuration parameters:
-  - `cache_timeout` — how often to run the check
-  - `format_offline` — what to display when offline
-  - `format_online` — what to display when online
-  - `timeout` — how long before deciding we're offline
-  - `url` — connect to this url to check the connection status
+  - `cache_timeout` : how often to run the check
+  - `format_offline` : what to display when offline
+  - `format_online` : what to display when online
+  - `timeout` : how long before deciding we're offline
+  - `url` : connect to this url to check the connection status
 
 **author** obb
 """

@@ -16,16 +16,16 @@ screen is available (handy for laptops)
 - Automatically move workspaces to screens when they are available
 
 Configuration parameters:
-  - `cache_timeout` — how often to (re)detect the outputs
-  - `fallback` — when the current output layout is not available anymore,
+  - `cache_timeout` : how often to (re)detect the outputs
+  - `fallback` : when the current output layout is not available anymore,
 fallback to this layout if available. This is very handy if you
 have a laptop and switched to an external screen for presentation
 and want to automatically fallback to your laptop screen when you
 disconnect the external screen.
-  - `force_on_start` — switch to the given combination mode if available
+  - `force_on_start` : switch to the given combination mode if available
 when the module starts (saves you from having to configure xorg)
-  - `format_clone` — string used to display a 'clone' combination
-  - `format_extend` — string used to display a 'extend' combination
+  - `format_clone` : string used to display a 'clone' combination
+  - `format_extend` : string used to display a 'extend' combination
 
 Dynamic configuration parameters:
 - <OUTPUT>_pos: apply the given position to the OUTPUT

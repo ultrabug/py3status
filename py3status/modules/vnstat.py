@@ -13,9 +13,9 @@ coloring = {
 (0 - 800: white, 800-900: yellow, >900 - red)
 
 Format of status string placeholders:
-  - `{down}` — download
-  - `{total}` — total
-  - `{up}` — upload
+  - `{down}` : download
+  - `{total}` : total
+  - `{up}` : upload
 
 Requires:
 - external program called `vnstat` installed and configured to work.
