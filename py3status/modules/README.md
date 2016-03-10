@@ -2,101 +2,101 @@
 ========
 
 
-[arch_updates](#arch_updates) — Displays the number of package updates pending for an Arch Linux installation.
+**[arch_updates](#arch_updates)** — Displays the number of package updates pending for an Arch Linux installation.
 
-[aws_bill](#aws_bill) — Display the current AWS bill.
+**[aws_bill](#aws_bill)** — Display the current AWS bill.
 
-[battery_level](#battery_level) — Display the battery level.
+**[battery_level](#battery_level)** — Display the battery level.
 
-[bitcoin_price](#bitcoin_price) — Display bitcoin prices using bitcoincharts.com.
+**[bitcoin_price](#bitcoin_price)** — Display bitcoin prices using bitcoincharts.com.
 
-[bluetooth](#bluetooth) — Display bluetooth status.
+**[bluetooth](#bluetooth)** — Display bluetooth status.
 
-[clementine](#clementine) — Display the current "artist - title" playing in Clementine.
+**[clementine](#clementine)** — Display the current "artist - title" playing in Clementine.
 
-[deadbeef](#deadbeef) — Display track currently playing in deadbeef.
+**[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
 
-[dpms](#dpms) — Activate or deactivate DPMS and screen blanking.
+**[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
 
-[dropboxd_status](#dropboxd_status) — Display dropboxd status.
+**[dropboxd_status](#dropboxd_status)** — Display dropboxd status.
 
-[external_script](#external_script) — Display output of given script.
+**[external_script](#external_script)** — Display output of given script.
 
-[fedora_updates](#fedora_updates) — The number of package updates pending for a Fedora Linux installation.
+**[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
 
-[glpi](#glpi) — Display the total number of open tickets from GLPI.
+**[glpi](#glpi)** — Display the total number of open tickets from GLPI.
 
-[hamster](#hamster) — Display current tasks from project Hamster.
+**[hamster](#hamster)** — Display current tasks from project Hamster.
 
-[icinga2](#icinga2) — Display Icinga2 service status information.
+**[icinga2](#icinga2)** — Display Icinga2 service status information.
 
-[imap](#imap) — Display the unread messages count from your IMAP account.
+**[imap](#imap)** — Display the unread messages count from your IMAP account.
 
-[keyboard_layout](#keyboard_layout) — Display the current active keyboard layout.
+**[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
 
-[mpd_status](#mpd_status) — Display information from mpd.
+**[mpd_status](#mpd_status)** — Display information from mpd.
 
-[net_rate](#net_rate) — Display the current network transfer rate.
+**[net_rate](#net_rate)** — Display the current network transfer rate.
 
-[netdata](#netdata) — Display network speed and bandwidth usage.
+**[netdata](#netdata)** — Display network speed and bandwidth usage.
 
-[ns_checker](#ns_checker) — Display DNS resolution success on a configured domain.
+**[ns_checker](#ns_checker)** — Display DNS resolution success on a configured domain.
 
-[nvidia_temp](#nvidia_temp) — Display NVIDIA GPU temperature.
+**[nvidia_temp](#nvidia_temp)** — Display NVIDIA GPU temperature.
 
-[online_status](#online_status) — Display if a connection to the internet is established.
+**[online_status](#online_status)** — Display if a connection to the internet is established.
 
-[pingdom](#pingdom) — Display the latest response time of the configured Pingdom checks.
+**[pingdom](#pingdom)** — Display the latest response time of the configured Pingdom checks.
 
-[player_control](#player_control) — Control music/video players.
+**[player_control](#player_control)** — Control music/video players.
 
-[pomodoro](#pomodoro) — Display and control a Pomodoro countdown.
+**[pomodoro](#pomodoro)** — Display and control a Pomodoro countdown.
 
-[rate_counter](#rate_counter) — Display days/hours/minutes spent and calculate the price of your service.
+**[rate_counter](#rate_counter)** — Display days/hours/minutes spent and calculate the price of your service.
 
-[rt](#rt) — Display the number of ongoing tickets from selected RT queues.
+**[rt](#rt)** — Display the number of ongoing tickets from selected RT queues.
 
-[scratchpad_async](#scratchpad_async) — Display the amount of windows and indicate urgency hints on scratchpad (async).
+**[scratchpad_async](#scratchpad_async)** — Display the amount of windows and indicate urgency hints on scratchpad (async).
 
-[scratchpad_counter](#scratchpad_counter) — Display the amount of windows in your i3 scratchpad.
+**[scratchpad_counter](#scratchpad_counter)** — Display the amount of windows in your i3 scratchpad.
 
-[screenshot](#screenshot) — Take a screenshot and optionally upload it to your online server.
+**[screenshot](#screenshot)** — Take a screenshot and optionally upload it to your online server.
 
-[selinux](#selinux) — Display the current selinux state.
+**[selinux](#selinux)** — Display the current selinux state.
 
-[spaceapi](#spaceapi) — Display if your favorite hackerspace is open or not.
+**[spaceapi](#spaceapi)** — Display if your favorite hackerspace is open or not.
 
-[spotify](#spotify) — Display information about the current song playing on Spotify.
+**[spotify](#spotify)** — Display information about the current song playing on Spotify.
 
-[static_string](#static_string) — Display static text.
+**[static_string](#static_string)** — Display static text.
 
-[sysdata](#sysdata) — Display system RAM and CPU utilization.
+**[sysdata](#sysdata)** — Display system RAM and CPU utilization.
 
-[taskwarrior](#taskwarrior) — Display currently active (started) taskwarrior tasks.
+**[taskwarrior](#taskwarrior)** — Display currently active (started) taskwarrior tasks.
 
-[uname](#uname) — Display uname information.
+**[uname](#uname)** — Display uname information.
 
-[vnstat](#vnstat) — Display vnstat statistics.
+**[vnstat](#vnstat)** — Display vnstat statistics.
 
-[volume_status](#volume_status) — Display current sound volume using amixer.
+**[volume_status](#volume_status)** — Display current sound volume using amixer.
 
-[weather_yahoo](#weather_yahoo) — Display Yahoo! Weather forecast as icons.
+**[weather_yahoo](#weather_yahoo)** — Display Yahoo! Weather forecast as icons.
 
-[whatismyip](#whatismyip) — Display your public/external IP address and toggle to online status on click.
+**[whatismyip](#whatismyip)** — Display your public/external IP address and toggle to online status on click.
 
-[whoami](#whoami) — Display the currently logged in user.
+**[whoami](#whoami)** — Display the currently logged in user.
 
-[wifi](#wifi) — Display WiFi bit rate, quality, signal and SSID using iw.
+**[wifi](#wifi)** — Display WiFi bit rate, quality, signal and SSID using iw.
 
-[window_title](#window_title) — Display the current window title.
+**[window_title](#window_title)** — Display the current window title.
 
-[window_title_async](#window_title_async) — Display the current window title with async update.
+**[window_title_async](#window_title_async)** — Display the current window title with async update.
 
-[wwan_status](#wwan_status) — Display current network and ip address for newer Huwei modems.
+**[wwan_status](#wwan_status)** — Display current network and ip address for newer Huwei modems.
 
-[xrandr](#xrandr) — Control your screen(s) layout easily.
+**[xrandr](#xrandr)** — Control your screen(s) layout easily.
 
-[xsel](#xsel) — Display the X selection.
+**[xsel](#xsel)** — Display the X selection.
 
 ---
 

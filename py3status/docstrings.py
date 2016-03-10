@@ -83,7 +83,7 @@ def create_readme(data):
     # Links
     for module in sorted(data.keys()):
         desc = ''.join(data[module]).strip().split('\n')[0]
-        out.append('\n[{name}](#{name}) — {desc}\n'.format(name=module,
+        out.append('\n**[{name}](#{name})** — {desc}\n'.format(name=module,
                                                           desc=desc))
     # details
     for module in sorted(data.keys()):
