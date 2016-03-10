@@ -3,16 +3,16 @@
 Display uname information.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (1h default)
-  - `format` see placeholders below
+  - `cache_timeout` — how often we refresh this module in seconds (1h default)
+  - `format` — see placeholders below
 
 Format of status string placeholders:
-  - `{system}` system/OS name, e.g. 'Linux', 'Windows', or 'Java'
-  - `{node}` computer’s network name (may not be fully qualified!)
-  - `{release}` system’s release, e.g. '2.2.0' or 'NT'
-  - `{version}` system’s release version, e.g. '#3 on degas'
-  - `{machine}` machine type, e.g. 'x86_64'
-  - `{processor}` the (real) processor name, e.g. 'amdk6'
+  - `{system}` — system/OS name, e.g. 'Linux', 'Windows', or 'Java'
+  - `{node}` — computer’s network name (may not be fully qualified!)
+  - `{release}` — system’s release, e.g. '2.2.0' or 'NT'
+  - `{version}` — system’s release version, e.g. '#3 on degas'
+  - `{machine}` — machine type, e.g. 'x86_64'
+  - `{processor}` — the (real) processor name, e.g. 'amdk6'
 
 **author** ultrabug (inspired by ndalliard)
 """

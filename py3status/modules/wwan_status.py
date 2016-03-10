@@ -6,37 +6,37 @@ It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III but may work on other devices, too.
 
 DEPENDENCIES:
-  - `netifaces`
-  - `pyserial`
+  - `netifaces` —
+  - `pyserial` —
 
 Configuration parameters:
-  - `baudrate`              : There should be no need to configure this, but
+  - `baudrate` —              : There should be no need to configure this, but
 feel free to experiment.
 Default is 115200.
-  - `cache_timeout`         : How often we refresh this module in seconds.
+  - `cache_timeout` —         : How often we refresh this module in seconds.
 Default is 5.
-  - `consider_3G_degraded`  : If set to True, only 4G-networks will be
+  - `consider_3G_degraded` —  : If set to True, only 4G-networks will be
 considered 'good'; 3G connections are shown
 as 'degraded', which is yellow by default. Mostly
 useful if you want to keep track of where there
 is a 4G connection.
 Default is False.
-  - `format_down`           : What to display when the modem is not plugged in
+  - `format_down` —           : What to display when the modem is not plugged in
 Default is: 'WWAN: down'
-  - `format_error`          : What to display when modem can't be accessed.
+  - `format_error` —          : What to display when modem can't be accessed.
 Default is 'WWAN: {error}'
-  - `format_no_service`     : What to display when the modem does not have a
+  - `format_no_service` —     : What to display when the modem does not have a
 network connection. This allows to omit the then
 meaningless network generation. Therefore the
 default is 'WWAN: ({status}) {ip}'
-  - `format_up`             : What to display upon regular connection
+  - `format_up` —             : What to display upon regular connection
 Default is 'WWAN: ({status}/{netgen}) {ip}'
-  - `interface`             : The default interface to obtain the IP address
+  - `interface` —             : The default interface to obtain the IP address
 from. For wvdial this is most likely ppp0.
 For netctl it can be different.
 Default is: ppp0
-  - `modem`                 : The device to send commands to. Default is
-  - `modem_timeout`         : The timespan betwenn querying the modem and
+  - `modem` —                 : The device to send commands to. Default is
+  - `modem_timeout` —         : The timespan betwenn querying the modem and
 collecting the response.
 Default is 0.4 (which should be sufficient)
 

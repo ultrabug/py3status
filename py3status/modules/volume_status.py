@@ -6,16 +6,16 @@ Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (10s default)
-  - `channel` "Master" by default, alsamixer channel to track
-  - `device` "default" by default, alsamixer device to use
-  - `format` format the output, available variables: {percentage}
-  - `format_muted` format the output when the volume is muted
-  - `threshold_bad` 20 by default
-  - `threshold_degraded` 50 by default
+  - `cache_timeout` — how often we refresh this module in seconds (10s default)
+  - `channel` — "Master" by default, alsamixer channel to track
+  - `device` — "default" by default, alsamixer device to use
+  - `format` — format the output, available variables: {percentage}
+  - `format_muted` — format the output when the volume is muted
+  - `threshold_bad` — 20 by default
+  - `threshold_degraded` — 50 by default
 
 Requires:
-  - `alsa-utils` (tested with alsa-utils 1.0.29-1)
+  - `alsa-utils` — (tested with alsa-utils 1.0.29-1)
 
 NOTE:
 If you want to refresh the module quicker than the i3status interval,

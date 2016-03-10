@@ -3,14 +3,14 @@
 Display Icinga2 service status information.
 
 Configuration Parameters:
-  - `base_url` the base url to the icinga-web2 services list
-  - `cache_timeout` how often the data should be updated
-  - `color` define a color for the output
-  - `disable_acknowledge` enable or disable counting of acknowledged service problems
-  - `format` define a format string like "CRITICAL: %d"
-  - `password` password to authenticate against the icinga-web2 interface
-  - `status` set the status you want to optain (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
-  - `user` username to authenticate against the icinga-web2 interface
+  - `base_url` — the base url to the icinga-web2 services list
+  - `cache_timeout` — how often the data should be updated
+  - `color` — define a color for the output
+  - `disable_acknowledge` — enable or disable counting of acknowledged service problems
+  - `format` — define a format string like "CRITICAL: %d"
+  - `password` — password to authenticate against the icinga-web2 interface
+  - `status` — set the status you want to optain (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
+  - `user` — username to authenticate against the icinga-web2 interface
 
 **author** Ben Oswald <ben.oswald@root-space.de>
 **license** BSD License <https://opensource.org/licenses/BSD-2-Clause>
