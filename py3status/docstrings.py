@@ -84,7 +84,7 @@ def create_readme(data):
     for module in sorted(data.keys()):
         desc = ''.join(data[module]).strip().split('\n')[0]
         out.append('\n**[{name}](#{name})** — {desc}\n'.format(name=module,
-                                                          desc=desc))
+                                                               desc=desc))
     # details
     for module in sorted(data.keys()):
         out.append(
