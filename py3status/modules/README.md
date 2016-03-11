@@ -16,8 +16,6 @@
 
 **[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
 
-**[disk_space](#disk_space)** — Shows details for a given mount point.
-
 **[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
 
 **[dropboxd_status](#dropboxd_status)** — Display dropboxd status.
@@ -291,9 +289,9 @@ Requires:
 Display track currently playing in deadbeef.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh usage in seconds (default: 1s)
+  - `cache_timeout` how often we refresh usage in seconds *(default: 1s)*
   - `format` see placeholders below
-  - `delimiter` delimiter character for parsing (default: ¥)
+  - `delimiter` delimiter character for parsing *(default: ¥)*
 
 Format of status string placeholders:
   - `{artist}` artist
@@ -308,52 +306,6 @@ Requires:
     deadbeef:
 
 **author** mrt-prodz
-
----
-
-### <a name="disk_space"></a>disk_space
-
-Shows details for a given mount point.
-
-Provide information such as available space in bytes or as a percentage.
-Allows multiple formats to be provided an button click to move between them.
-
-Configuration parameters:
-  - `button_cycle` Button to cycle through formats *(default 1)*
-  - `cache_timeout` How often we refresh this module in seconds
-    *(default 600)*
-  - `color_good` Color when free space over threshold_degraded
-    *(default is global color_good)*
-  - `color_degraded` Color when free space under threshold_degraded
-    *(default is global color_degraded)*
-  - `color_bad` Color when free space under threshold_bad
-    *(default is global color_bad)*
-  - `decimal_places` Number of decimal places to show for size *(default 1)*
-  - `format` : display format it can either be a string like
-    `'{mount} {free}'`
-    or a array eg `["{mount} free:{free}", "{mount} size:{size}"]` double quores `"` must be used!
-    *(default ["{mount} free:{free}", "{mount} size:{size}",
-    "{mount} free:{free_percent}", "{mount} {filesystem}"])*
-  - `format_unmounted` format to show for an unmounted mountpoint *(default
-    '{mount} unmounted')*
-  - `mount_point` Mount point of disk *(default '/')*
-  - `threshold_bad` Percentage of free space below which to show status as
-    bad *(default 5)*
-  - `threshold_degraded` Percentage of free space below which to show status as
-    degraded *(default 15)*
-  - `use_si` = False
-
-Format status string parameters:
-  - `{filesystem}` file system eg /dev/sda1
-  - `{free}` free disk space
-  - `{free_percent}` percentage free space
-  - `{mount}` the mount point
-  - `{size}` size of disk
-  - `{used}` used disk space
-  - `{used_percent}` percentage used
-
-**author** tobes
-**license** BSD
 
 ---
 
@@ -563,10 +515,10 @@ Display information from mpd.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds (2s default)
-  - `color` enable coloring output (default False)
-  - `color_pause` custom pause color (default i3status color degraded)
-  - `color_play` custom play color (default i3status color good)
-  - `color_stop` custom stop color (default i3status color bad)
+  - `color` enable coloring output *(default False)*
+  - `color_pause` custom pause color *(default i3status color degraded)*
+  - `color_play` custom play color *(default i3status color good)*
+  - `color_stop` custom stop color *(default i3status color bad)*
   - `format` template string (see below)
   - `hide_when_paused` hide the status if state is paused
   - `hide_when_stopped` hide the status if state is stopped
@@ -614,7 +566,7 @@ Examples of `format`
 
 Display the current network transfer rate.
 
-Confiuration parameters:
+Configuration parameters:
   - `all_interfaces` ignore self.interfaces, but not self.interfaces_blacklist
   - `devfile` location of dev file under /proc
   - `format_no_connection` when there is no data transmitted from the start of the plugin
@@ -641,7 +593,7 @@ Display network speed and bandwidth usage.
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds (2s default)
   - `low_*` / `med_*` coloration thresholds
-  - `nic` the network interface to monitor (defaults to eth0)
+  - `nic` the network interface to monitor *(defaults to eth0)*
 
 **author** Shahin Azad &lt;ishahinism at Gmail&gt;
 
@@ -734,7 +686,7 @@ Provides an icon to control simple functions of audio/video players:
   - pause (middle click)
 
 Configuration parameters:
-  - `debug` enable verbose logging (bool) (default: False)
+  - `debug` enable verbose logging (bool) *(default: False)*
   - `supported_players` supported players (str) (comma separated list)
   - `volume_tick` percentage volume change on mouse wheel (int) (positive number or None to disable it)
 
@@ -798,7 +750,7 @@ Configuration parameters:
 Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (default 300)
+  - `cache_timeout` how often we refresh this module in seconds *(default 300)*
   - `threshold_critical` set bad color above this threshold
   - `db` database to use
   - `format` see placeholders below
@@ -828,10 +780,10 @@ Display the amount of windows and indicate urgency hints on scratchpad (async).
 
 Configuration parameters:
   - `always_show` whether the indicator should be shown if there are no
-    scratchpad windows (default False)
+    scratchpad windows *(default False)*
   - `color_urgent` color to use if a scratchpad window is urgent (default
     "#900000")
-  - `format` string to format the output (default "{} ⌫")
+  - `format` string to format the output *(default "{} ⌫")*
 
 Requires:
   - `i3ipc` (https://github.com/acrisci/i3ipc-python)
@@ -1124,11 +1076,11 @@ The city_code in this example is for Paris, France => FRXX0076
 Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (default 30s)
-  - `format` the only placeholder available is {ip} (default '{ip}')
+  - `cache_timeout` how often we refresh this module in seconds *(default 30s)*
+  - `format` the only placeholder available is {ip} *(default '{ip}')*
   - `format_offline` what to display when offline
   - `format_online` what to display when online
-  - `hide_when_offline` hide the module output when offline (default False)
+  - `hide_when_offline` hide the module output when offline *(default False)*
   - `mode` default mode to display is 'ip' or 'status' (click to toggle)
   - `negative_cache_timeout` how often to check again when offline
   - `timeout` how long before deciding we're offline
@@ -1152,23 +1104,23 @@ Inspired by i3 FAQ:
 Display WiFi bit rate, quality, signal and SSID using iw.
 
 Configuration parameters:
-  - `bitrate_bad` Bad bit rate in Mbit/s (default: 26)
-  - `bitrate_degraded` Degraded bit rate in Mbit/s (default: 53)
-  - `cache_timeout` Update interval in seconds (default: 10)
-  - `device` Wireless device name (default: "wlan0")
+  - `bitrate_bad` Bad bit rate in Mbit/s *(default: 26)*
+  - `bitrate_degraded` Degraded bit rate in Mbit/s *(default: 53)*
+  - `cache_timeout` Update interval in seconds *(default: 10)*
+  - `device` Wireless device name *(default: "wlan0")*
   - `down_color` Output color when disconnected, possible values:
-    "good", "degraded", "bad" (default: "bad")
-  - `format_down` Output when disconnected (default: "down")
+    "good", "degraded", "bad" *(default: "bad")*
+  - `format_down` Output when disconnected *(default: "down")*
   - `format_up` See placeholders below
-    (default: "W: {bitrate} {signal_percent} {ssid}")
+    *(default: "W: {bitrate} {signal_percent} {ssid}")*
   - `round_bitrate` If true, bit rate is rounded to the nearest whole number
-    (default: true)
-  - `signal_bad` Bad signal strength in percent (default: 29)
-  - `signal_degraded` Degraded signal strength in percent (default: 49)
+    *(default: true)*
+  - `signal_bad` Bad signal strength in percent *(default: 29)*
+  - `signal_degraded` Degraded signal strength in percent *(default: 49)*
   - `use_sudo` Use sudo to run iw, make sure iw requires no password by
     adding a sudoers entry like
     "&lt;username&gt; ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
-    (default: false)
+    *(default: false)*
 
 Format of status string placeholders:
   - `{bitrate}` Display bit rate
@@ -1335,9 +1287,9 @@ Display the X selection.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds
-    (default is at every py3status configured interval)
-  - `command` the xsel command to run (default 'xsel')
-  - `max_size` stip the selection to this value (default 15)
+    *(default is at every py3status configured interval)*
+  - `command` the xsel command to run *(default 'xsel')*
+  - `max_size` stip the selection to this value *(default 15)*
   - `symmetric` show the beginning and the end of the selection string
     with respect to configured max_size.
 

@@ -2,7 +2,7 @@
 """
 Display the current network transfer rate.
 
-Confiuration parameters:
+Configuration parameters:
     all_interfaces: ignore self.interfaces, but not self.interfaces_blacklist
     devfile: location of dev file under /proc
     format_no_connection: when there is no data transmitted from the start of the plugin

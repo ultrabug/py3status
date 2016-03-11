@@ -8,15 +8,15 @@ Additionally check if any update security notices.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds
-        *(default 600)*
+        (default 600)
     color_bad: Color when security notice
-        *(default global color_bad)*
+        (default global color_bad)
     color_degraded: Color when upgrade available
-        *(default global color_degraded)*
+        (default global color_degraded)
     color_good: Color when no upgrades needed
-        *(default global color_good)*
+        (default global color_good)
     format: Display format to use
-        *(default 'DNF: {updates}')*
+        (default 'DNF: {updates}')
 
 Format status string parameters:
     {updates} number of pending dnf updates

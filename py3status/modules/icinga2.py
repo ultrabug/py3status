@@ -14,7 +14,7 @@ Configuration Parameters:
 
 @author Ben Oswald <ben.oswald@root-space.de>
 @license BSD License <https://opensource.org/licenses/BSD-2-Clause>
-**source** https://github.com/nazco/i3status-modules
+@source https://github.com/nazco/i3status-modules
 """
 from time import time
 import requests
