@@ -70,8 +70,7 @@ def core_module_docstrings(include_core=True, include_user=False, config=None):
             module = ast.parse(f.read())
             docstring = ast.get_docstring(module)
             docstring = [
-                '{}\n'.format(d)
-                for d in from_docstring(str(docstring).strip().split('\n'))
+                d for d in _from_docstring(str(docstring).strip().split('\n'))
             ]
             docstrings[name] = docstring + ['\n']
     return docstrings
@@ -96,20 +95,101 @@ def create_readme(data):
     return ''.join(out)
 
 
-def to_docstring(doc):
-    re_param = re.compile('^  - `([a-zA-Z0-9_{}]+)` ')
+re_listing = re.compile('^\w.*:$')
+
+# match in README.md
+re_to_param = re.compile('^  - `([a-z]\S+)`[ \t]*')
+re_to_status = re.compile('^  - `({\S+})`[ \t]*')
+re_to_item = re.compile('^\s+-')
+re_to_data = re.compile('^\*\*(author|license)\*\*[ \t]*')
+re_to_tag = re.compile('&lt;([^.]*)&gt;')
+
+# match in module docstring
+re_from_param = re.compile('^    ([a-z]\S+):[ \t]*')
+re_from_status = re.compile('^\s+({\S+})[ \t]*')
+re_from_item = re.compile('^\s+-')
+re_from_data = re.compile('^@(author|license)[ \t]*')
+re_from_tag = re.compile('<([^.]*)>')
+
+
+def _reformat_docstring(doc, format_fn, code_newline=''):
+    '''
+    Go through lines of file and reformat using format_fn
+    '''
     out = []
+    listing = False
+    code = False
     for line in doc:
-        out.append(re_param.sub('    \\1 - ', line))
+        # check for start/end of code block
+        if line.strip() == '```':
+            code = not code
+            out.append(line + code_newline)
+            continue
+        if not code:
+            # if we are in a block listing a blank line ends it
+            if line.rstrip() == '':
+                listing = False
+            # format the line
+            line = format_fn(line, listing)
+            # see if block start
+            if re_listing.match(line):
+                listing = True
+        out.append(line.rstrip() + '\n')
     return out
 
 
-def from_docstring(doc):
-    re_param = re.compile('^    ([a-zA-Z0-9_{}]+) - ')
-    out = []
-    for line in doc:
-        out.append(re_param.sub('  - `\\1` ', line))
-    return out
+def _to_docstring(doc):
+    '''
+    format from Markdown to docstring
+    '''
+    def format_fn(line, listing):
+        ''' format function '''
+        # swap &lt; &gt; to < >
+        line = re_to_tag.sub(r'<\1>', line)
+        line = re_to_data.sub(r'@\1 ', line)
+        if listing:
+            # parameters
+            if re_to_param.match(line):
+                line = re_to_param.sub(r'    \1: ', line)
+            # status items
+            elif re_to_status.match(line):
+                line = re_to_status.sub(r'    \1 ', line)
+            # bullets
+            elif re_to_item.match(line):
+                line = re_to_item.sub(r'    -', line)
+            # is continuation line
+            else:
+                line = ' ' * 8 + line.lstrip()
+        return line
+
+    return _reformat_docstring(doc, format_fn)
+
+
+def _from_docstring(doc):
+    '''
+    format from docstring to Markdown
+    '''
+    def format_fn(line, listing):
+        ''' format function '''
+        # swap < > to &lt; &gt;
+        line = re_from_tag.sub(r'&lt;\1&gt;', line)
+        line = re_from_data.sub(r'**\1** ', line)
+        if listing:
+            # parameters
+            if re_from_param.match(line):
+                line = re_from_param.sub(r'  - `\1` ', line)
+            # status items
+            elif re_from_status.match(line):
+                line = re_from_status.sub(r'  - `\1` ', line)
+            # bullets
+            elif re_from_item.match(line):
+                line = re_from_item.sub(r'  -', line)
+            # is continuation line
+            else:
+                line = ' ' * 4 + line.lstrip()
+        return line
+
+    return _reformat_docstring(doc, format_fn, code_newline='\n')
 
 
 def update_docstrings():
@@ -135,7 +215,7 @@ def update_docstrings():
                 out.append(row)
                 if not replaced:
                     out = out + [
-                        ''.join(to_docstring(modules_dict[mod])).strip() + '\n'
+                        ''.join(_to_docstring(modules_dict[mod])).strip() + '\n'
                     ]
                     replaced = True
                 if lines:
@@ -188,6 +268,8 @@ def update_readme_for_modules(modules):
     '''
     readme = parse_readme()
     module_docstrings = core_module_docstrings()
+    if modules == ['__all__']:
+        modules = core_module_docstrings().keys()
     for module in modules:
         if module in module_docstrings:
             print_stderr('Updating README.md for module {}'.format(module))
@@ -231,7 +313,7 @@ def show_modules(config, params):
     for name in sorted(modules.keys()):
         if modules_list and name not in modules_list:
             continue
-        module = to_docstring(modules[name])
+        module = _to_docstring(modules[name])
         desc = module[0][:-1]
         if details:
             dash_len = len(name)
