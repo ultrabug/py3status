@@ -101,15 +101,17 @@ re_listing = re.compile('^\w.*:$')
 re_to_param = re.compile('^  - `([a-z]\S+)`[ \t]*')
 re_to_status = re.compile('^  - `({\S+})`[ \t]*')
 re_to_item = re.compile('^\s+-')
-re_to_data = re.compile('^\*\*(author|license)\*\*[ \t]*')
+re_to_data = re.compile('^\*\*(author|license|source)\*\*[ \t]*')
 re_to_tag = re.compile('&lt;([^.]*)&gt;')
+re_to_defaults = re.compile('\*(\(default.*\))\*')
 
 # match in module docstring
 re_from_param = re.compile('^    ([a-z]\S+):[ \t]*')
 re_from_status = re.compile('^\s+({\S+})[ \t]*')
 re_from_item = re.compile('^\s+-')
-re_from_data = re.compile('^@(author|license)[ \t]*')
+re_from_data = re.compile('^@(author|license|source)[ \t]*')
 re_from_tag = re.compile('<([^.]*)>')
+re_from_defaults = re.compile('(\(default.*\))')
 
 
 def _reformat_docstring(doc, format_fn, code_newline=''):
@@ -147,6 +149,7 @@ def _to_docstring(doc):
         # swap &lt; &gt; to < >
         line = re_to_tag.sub(r'<\1>', line)
         line = re_to_data.sub(r'@\1 ', line)
+        line = re_to_defaults.sub(r'\1', line)
         if listing:
             # parameters
             if re_to_param.match(line):
@@ -174,6 +177,7 @@ def _from_docstring(doc):
         # swap < > to &lt; &gt;
         line = re_from_tag.sub(r'&lt;\1&gt;', line)
         line = re_from_data.sub(r'**\1** ', line)
+        line = re_from_defaults.sub(r'*\1*', line)
         if listing:
             # parameters
             if re_from_param.match(line):
@@ -210,8 +214,15 @@ def update_docstrings():
         done = False
         lines = False
         out = []
+        quotes = None
         for row in files[mod]:
-            if row.strip().startswith('"""') and not done:
+            # deal with single or double quoted docstring
+            if not quotes:
+                if row.strip().startswith('"""'):
+                    quotes = '"""'
+                if row.strip().startswith("'''"):
+                    quotes = "'''"
+            if quotes and row.strip().startswith(quotes) and not done:
                 out.append(row)
                 if not replaced:
                     out = out + [
