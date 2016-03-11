@@ -3,7 +3,7 @@
 Display the currently logged in user.
 
 Inspired by i3 FAQ:
-https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
+        https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
 """
 
 from getpass import getuser

@@ -3,27 +3,27 @@
 Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
-    cache_timeout - how often we refresh this module in seconds (default 300)
-    threshold_critical - set bad color above this threshold
-    db - database to use
-    format - see placeholders below
-    host - database host to connect to
-    password - login password
-    user - login user
-    threshold_warning - set degraded color above this threshold
+    cache_timeout: how often we refresh this module in seconds (default 300)
+    threshold_critical: set bad color above this threshold
+    db: database to use
+    format: see placeholders below
+    host: database host to connect to
+    password: login password
+    user: login user
+    threshold_warning: set degraded color above this threshold
 
 Format of status string placeholders:
-    {YOUR_QUEUE_NAME} - number of ongoing RT tickets (open+new+stalled)
+    {YOUR_QUEUE_NAME} number of ongoing RT tickets (open+new+stalled)
 
 Requires:
-    PyMySQL - https://pypi.python.org/pypi/PyMySQL
-or
-  - `MySQL-python` http://pypi.python.org/pypi/MySQL-python
+    - `PyMySQL` https://pypi.python.org/pypi/PyMySQL
+        or
+    - `MySQL-python` http://pypi.python.org/pypi/MySQL-python
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
 
-**author** ultrabug
+@author ultrabug
 """
 
 try:

@@ -3,21 +3,21 @@
 Display bitcoin prices using bitcoincharts.com.
 
 Configuration parameters:
-    cache_timeout - Should be at least 15 min according to bitcoincharts.
-    color_index - Index of the market responsible for coloration,
-meaning that the output is going to be green if the
-price went up and red if it went down.
-default: -1 means no coloration,
-except when only one market is selected
-    field - Field that is displayed per market,
-see http://bitcoincharts.com/about/markets-api/
-    hide_on_error - Display empty response if True, else an error message
-    markets - Comma-separated list of markets. Supported markets can
-be found at http://bitcoincharts.com/markets/list/
-    symbols - Try to match currency abbreviations to symbols,
-e.g. USD -> $, EUR -> € and so on
+    cache_timeout: Should be at least 15 min according to bitcoincharts.
+    color_index: Index of the market responsible for coloration,
+        meaning that the output is going to be green if the
+        price went up and red if it went down.
+        default: -1 means no coloration,
+        except when only one market is selected
+    field: Field that is displayed per market,
+        see http://bitcoincharts.com/about/markets-api/
+    hide_on_error: Display empty response if True, else an error message
+    markets: Comma-separated list of markets. Supported markets can
+        be found at http://bitcoincharts.com/markets/list/
+    symbols: Try to match currency abbreviations to symbols,
+        e.g. USD -> $, EUR -> € and so on
 
-**author** Andre Doser <doser.andre AT gmail.com>
+@author Andre Doser <doser.andre AT gmail.com>
 """
 import json
 

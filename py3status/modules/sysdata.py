@@ -3,21 +3,21 @@
 Display system RAM and CPU utilization.
 
 Configuration parameters:
-    format - output format string
-    high_threshold - percent to consider CPU or RAM usage as 'high load'
-    med_threshold - percent to consider CPU or RAM usage as 'medium load'
+    format: output format string
+    high_threshold: percent to consider CPU or RAM usage as 'high load'
+    med_threshold: percent to consider CPU or RAM usage as 'medium load'
 
 Format of status string placeholders:
-    {cpu_temp} - cpu temperature
-    {cpu_usage} - cpu usage percentage
-    {mem_total} - total memory
-    {mem_used} - used memory
-    {mem_used_percent} -  used memory percentage
+    {cpu_temp} cpu temperature
+    {cpu_usage} cpu usage percentage
+    {mem_total} total memory
+    {mem_used} used memory
+    {mem_used_percent} used memory percentage
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
-**author** Shahin Azad <ishahinism at Gmail>, shrimpza
+@author Shahin Azad <ishahinism at Gmail>, shrimpza
 """
 
 import re

@@ -3,10 +3,10 @@
 Display the current "artist - title" playing in Clementine.
 
 Requires:
-  - `clementine`
+    clementine:
 
-**author** Francois LASSERRE <choiz@me.com>
-**license** GNU GPL http://www.gnu.org/licenses/gpl.html
+@author Francois LASSERRE <choiz@me.com>
+@license GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
 from time import time

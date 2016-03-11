@@ -3,17 +3,17 @@
 Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
-    cache_timeout - how often we refresh this module in seconds (default 30s)
-    format - the only placeholder available is {ip} (default '{ip}')
-    format_offline - what to display when offline
-    format_online - what to display when online
-    hide_when_offline - hide the module output when offline (default False)
-    mode - default mode to display is 'ip' or 'status' (click to toggle)
-    negative_cache_timeout - how often to check again when offline
-    timeout - how long before deciding we're offline
-    url - change IP check url (must output a plain text IP address)
+    cache_timeout: how often we refresh this module in seconds (default 30s)
+    format: the only placeholder available is {ip} (default '{ip}')
+    format_offline: what to display when offline
+    format_online: what to display when online
+    hide_when_offline: hide the module output when offline (default False)
+    mode: default mode to display is 'ip' or 'status' (click to toggle)
+    negative_cache_timeout: how often to check again when offline
+    timeout: how long before deciding we're offline
+    url: change IP check url (must output a plain text IP address)
 
-**author** ultrabug
+@author ultrabug
 """
 from time import time
 try:

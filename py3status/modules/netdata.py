@@ -3,11 +3,11 @@
 Display network speed and bandwidth usage.
 
 Configuration parameters:
-    cache_timeout - how often we refresh this module in seconds (2s default)
-  - `low_*` / `med_*` coloration thresholds
-    nic - the network interface to monitor (defaults to eth0)
+    cache_timeout: how often we refresh this module in seconds (2s default)
+    low_*: / `med_*` coloration thresholds
+    nic: the network interface to monitor (defaults to eth0)
 
-**author** Shahin Azad <ishahinism at Gmail>
+@author Shahin Azad <ishahinism at Gmail>
 """
 
 import subprocess

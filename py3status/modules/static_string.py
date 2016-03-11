@@ -3,11 +3,11 @@
 Display static text.
 
 Configuration parameters:
-    color - color of printed text
-    format - text that should be printed
-    separator - whether the separator is shown or not (true or false)
+    color: color of printed text
+    format: text that should be printed
+    separator: whether the separator is shown or not (true or false)
 
-**author** frimdo ztracenastopa@centrum.cz
+@author frimdo ztracenastopa@centrum.cz
 """
 
 from time import time

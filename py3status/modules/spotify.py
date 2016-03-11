@@ -3,28 +3,30 @@
 Display information about the current song playing on Spotify.
 
 Configuration parameters:
-    cache_timeout - how often to update the bar
-    color_offline - text color when spotify is not running, defaults to color_bad
-    color_paused - text color when song is stopped or paused, defaults to color_degraded
-    color_playing - text color when song is playing, defaults to color_good
-    format - see placeholders below
-    format_down - define output if spotify is not running
-    format_stopped - define output if spotify is not playing
+    cache_timeout: how often to update the bar
+    color_offline: text color when spotify is not running, defaults to color_bad
+    color_paused: text color when song is stopped or paused, defaults to color_degraded
+    color_playing: text color when song is playing, defaults to color_good
+    format: see placeholders below
+    format_down: define output if spotify is not running
+    format_stopped: define output if spotify is not playing
 
 Format of status string placeholders:
-    {album} - album name
-    {artist} - artiste name (first one)
-    {time} - time duration of the song
-    {title} - name of the song
+    {album} album name
+    {artist} artiste name (first one)
+    {time} time duration of the song
+    {title} name of the song
 
 i3status.conf example:
+
 ```
 spotify {
     format = "{title} by {artist} -> {time}"
     format_down = "no Spotify"
 }
 ```
-**author** Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
+
+@author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 """
 
 from datetime import timedelta
