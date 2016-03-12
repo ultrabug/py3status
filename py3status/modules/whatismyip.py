@@ -4,11 +4,11 @@ Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds (default 30s)
-    - format: the only placeholder available is {ip} (default '{ip}')
-    - format_offline : what to display when offline
-    - format_online : what to display when online
+    - format_offline : what to display when offline (default '■')
+    - format_online : what to display when online placeholder are {ip} and {country}
+      (default '{ip}, {country}')
     - hide_when_offline: hide the module output when offline (default False)
-    - mode: default mode to display is 'ip' or 'status' (click to toggle)
+    - mode: default mode to display is 'text' or 'icon' (default 'icon', toggle with left click)
     - negative_cache_timeout: how often to check again when offline
     - timeout : how long before deciding we're offline
     - url: change IP check url (must output a plain text IP address)
@@ -22,52 +22,55 @@ try:
 except:
     from urllib2 import urlopen
 
-
 class Py3status:
     """
     """
     # available configuration parameters
     cache_timeout = 30
-    format = '{ip}'
+    format = '{ip}, {country}'
     format_offline = '■'
     format_online = '●'
     hide_when_offline = False
-    mode = 'ip'
+    mode = 'icon'
     negative_cache_timeout = 2
     timeout = 5
-    url = 'http://ultrabug.fr/py3status/whatismyip'
+    url = 'http://ip-api.com/csv'
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
-        Toggle between display modes 'ip' and 'status'
+       Toggle between display modes 'ip', 'icon' and 'country'
         """
-        if self.mode == 'ip':
-            self.mode = 'status'
+        if self.mode == 'text':
+            self.mode = 'icon'
         else:
-            self.mode = 'ip'
+            self.mode = 'text'
 
     def _get_my_ip(self):
         """
         """
         try:
-            ip = urlopen(self.url, timeout=self.timeout).read()
-            ip = ip.decode('utf-8')
+            raw = urlopen(self.url, timeout=self.timeout).read()
+            raw = raw.decode('utf-8').split(",")
+            ip = raw[-1]
+            country = raw[1]
         except Exception:
             ip = None
-        return ip
+            country = None
+        return ip, country
 
     def whatismyip(self, i3s_output_list, i3s_config):
         """
         """
-        ip = self._get_my_ip()
+        ip, country = self._get_my_ip()
         response = {'cached_until': time() + self.negative_cache_timeout}
 
         if ip is None and self.hide_when_offline:
             response['full_text'] = ''
         elif ip is not None:
             response['cached_until'] = time() + self.cache_timeout
-            if self.mode == 'ip':
-                response['full_text'] = self.format.format(ip=ip)
+            if self.mode == 'text':
+                response['full_text'] = self.format.format(ip=ip, country=country)
+                response['color'] = i3s_config['color_good']
             else:
                 response['full_text'] = self.format_online
                 response['color'] = i3s_config['color_good']
