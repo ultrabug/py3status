@@ -87,10 +87,10 @@ class Py3status:
             return layouts[0]
         xset_output = check_output(["xset", "-q"]).decode("utf-8")
         led_mask = re.match(ledmask_re, xset_output).group(1)
-        if led_mask == "00000000":
-            return layouts[0]
-        elif led_mask == "00001000":
-            return layouts[1]
+        if len(led_mask) == 8:
+            lang = int(led_mask[4])
+            if layouts[lang] is not None:
+                return layouts[lang]
         return "Err"
 
 
