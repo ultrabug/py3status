@@ -101,7 +101,7 @@ re_listing = re.compile('^\w.*:$')
 re_to_param = re.compile('^  - `([a-z]\S+)`[ \t]*')
 re_to_status = re.compile('^  - `({\S+})`[ \t]*')
 re_to_item = re.compile('^\s+-')
-re_to_data = re.compile('^\*\*(author|license|source)\*\*[ \t]*')
+re_to_data = re.compile('^<br/>\*\*(author|license|source)\*\*[ \t]*')
 re_to_tag = re.compile('&lt;([^.]*)&gt;')
 re_to_defaults = re.compile('\*(\(default.*\))\*')
 
@@ -176,7 +176,7 @@ def _from_docstring(doc):
         ''' format function '''
         # swap < > to &lt; &gt;
         line = re_from_tag.sub(r'&lt;\1&gt;', line)
-        line = re_from_data.sub(r'**\1** ', line)
+        line = re_from_data.sub(r'<br/>**\1** ', line)
         line = re_from_defaults.sub(r'*\1*', line)
         if listing:
             # parameters
