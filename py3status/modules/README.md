@@ -14,11 +14,7 @@
 
 **[clementine](#clementine)** — Display the current "artist - title" playing in Clementine.
 
-**[clock](#clock)** — https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-
 **[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
-
-**[disk_space](#disk_space)** — Shows details for a given mount point.
 
 **[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
 
@@ -292,12 +288,6 @@ Requires:
 
 ---
 
-### <a name="clock"></a>clock
-
-https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-
----
-
 ### <a name="deadbeef"></a>deadbeef
 
 Display track currently playing in deadbeef.
@@ -320,53 +310,6 @@ Requires:
     deadbeef:
 
 **author** mrt-prodz
-
----
-
-### <a name="disk_space"></a>disk_space
-
-Shows details for a given mount point.
-
-Provide information such as available space in bytes or as a percentage.
-Allows multiple formats to be provided an button click to move between them.
-
-Configuration parameters:
-  - `button_cycle` Button to cycle through formats *(default 1)*
-  - `cache_timeout` How often we refresh this module in seconds
-    *(default 600)*
-  - `color_good` Color when free space over threshold_degraded
-    *(default is global color_good)*
-  - `color_degraded` Color when free space under threshold_degraded
-    *(default is global color_degraded)*
-  - `color_bad` Color when free space under threshold_bad
-    *(default is global color_bad)*
-  - `decimal_places` Number of decimal places to show for size *(default 1)*
-  - `format` : display format it can either be a string like
-    `'{mount} {free}'`
-    or a array eg `["{mount} free:{free}", "{mount} size:{size}"]` double quores `"` must be used!
-    *(default ["{mount} free:{free}", "{mount} size:{size}",
-    "{mount} free:{free_percent}", "{mount} {filesystem}"])*
-  - `format_unmounted` format to show for an unmounted mountpoint *(default
-    '{mount} unmounted')*
-  - `mount_point` Mount point of disk *(default '/')*
-  - `threshold_bad` Percentage of free space below which to show status as
-    bad *(default 5)*
-  - `threshold_degraded` Percentage of free space below which to show status as
-    degraded *(default 15)*
-  - `use_si` = False
-
-Format status string parameters:
-  - `{filesystem}` file system eg /dev/sda1
-  - `{free}` free disk space
-  - `{free_percent}` percentage free space
-  - `{mount}` the mount point
-  - `{size}` size of disk
-  - `{used}` used disk space
-  - `{used_percent}` percentage used
-
-**author** tobes
-
-**license** BSD
 
 ---
 
