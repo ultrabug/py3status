@@ -89,7 +89,7 @@ class Py3status:
         led_mask = re.match(ledmask_re, xset_output).group(1)
         if len(led_mask) == 8:
             lang = int(led_mask[4], 16)
-            if layouts[lang] is not None:
+            if lang < len(layouts):
                 return layouts[lang]
         return "Err"
 
