@@ -101,7 +101,7 @@ re_listing = re.compile('^\w.*:$')
 re_to_param = re.compile('^  - `([a-z]\S+)`[ \t]*')
 re_to_status = re.compile('^  - `({\S+})`[ \t]*')
 re_to_item = re.compile('^\s+-')
-re_to_data = re.compile('^<br/>\*\*(author|license|source)\*\*[ \t]*')
+re_to_data = re.compile('^\*\*(author|license|source)\*\*[ \t]*')
 re_to_tag = re.compile('&lt;([^.]*)&gt;')
 re_to_defaults = re.compile('\*(\(default.*\))\*')
 
@@ -119,9 +119,19 @@ def _reformat_docstring(doc, format_fn, code_newline=''):
     Go through lines of file and reformat using format_fn
     '''
     out = []
-    listing = False
+    status = {
+        'listing': False,
+        'add_line': False,
+        'eat_line': False,
+    }
     code = False
     for line in doc:
+        if status['add_line']:
+            out.append('\n')
+            status['add_line'] = False
+        if status['eat_line'] and line.strip() == '':
+            continue
+            status['eat_line'] = False
         # check for start/end of code block
         if line.strip() == '```':
             code = not code
@@ -130,12 +140,12 @@ def _reformat_docstring(doc, format_fn, code_newline=''):
         if not code:
             # if we are in a block listing a blank line ends it
             if line.rstrip() == '':
-                listing = False
+                status['listing'] = False
             # format the line
-            line = format_fn(line, listing)
+            line = format_fn(line, status)
             # see if block start
             if re_listing.match(line):
-                listing = True
+                status['listing'] = True
         out.append(line.rstrip() + '\n')
     return out
 
@@ -144,13 +154,15 @@ def _to_docstring(doc):
     '''
     format from Markdown to docstring
     '''
-    def format_fn(line, listing):
+    def format_fn(line, status):
         ''' format function '''
         # swap &lt; &gt; to < >
         line = re_to_tag.sub(r'<\1>', line)
-        line = re_to_data.sub(r'@\1 ', line)
+        if re_to_data.match(line):
+            line = re_to_data.sub(r'@\1 ', line)
+            status['eat_line'] = True
         line = re_to_defaults.sub(r'\1', line)
-        if listing:
+        if status['listing']:
             # parameters
             if re_to_param.match(line):
                 line = re_to_param.sub(r'    \1: ', line)
@@ -172,13 +184,15 @@ def _from_docstring(doc):
     '''
     format from docstring to Markdown
     '''
-    def format_fn(line, listing):
+    def format_fn(line, status):
         ''' format function '''
         # swap < > to &lt; &gt;
         line = re_from_tag.sub(r'&lt;\1&gt;', line)
-        line = re_from_data.sub(r'<br/>**\1** ', line)
+        if re_from_data.match(line):
+            line = re_from_data.sub(r'**\1** ', line)
+            status['add_line'] = True
         line = re_from_defaults.sub(r'*\1*', line)
-        if listing:
+        if status['listing']:
             # parameters
             if re_from_param.match(line):
                 line = re_from_param.sub(r'  - `\1` ', line)

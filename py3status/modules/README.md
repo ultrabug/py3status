@@ -14,7 +14,11 @@
 
 **[clementine](#clementine)** — Display the current "artist - title" playing in Clementine.
 
+**[clock](#clock)** — https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
 **[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
+
+**[disk_space](#disk_space)** — Shows details for a given mount point.
 
 **[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
 
@@ -121,8 +125,9 @@ Format status string parameters:
 Requires:
   - `cower` Needed to display pending 'aur' updates
 
-<br/>**author** Iain Tatch <iain.tatch@gmail.com>
-<br/>**license** BSD
+**author** Iain Tatch <iain.tatch@gmail.com>
+
+**license** BSD
 
 ---
 
@@ -150,7 +155,7 @@ Format of status string placeholders:
 Requires:
   - `boto`
 
-<br/>**author** nawadanp
+**author** nawadanp
 
 ---
 
@@ -222,8 +227,9 @@ Obsolete configuration parameters:
 Requires:
   - the `acpi` command line
 
-<br/>**author** shadowprince, AdamBSteele, maximbaz, 4iar
-<br/>**license** Eclipse Public License
+**author** shadowprince, AdamBSteele, maximbaz, 4iar
+
+**license** Eclipse Public License
 
 ---
 
@@ -246,7 +252,7 @@ Configuration parameters:
   - `symbols` Try to match currency abbreviations to symbols,
     e.g. USD -> $, EUR -> € and so on
 
-<br/>**author** Andre Doser <doser.andre AT gmail.com>
+**author** Andre Doser <doser.andre AT gmail.com>
 
 ---
 
@@ -267,8 +273,9 @@ Format of status string placeholders
 Requires:
   - `hcitool`
 
-<br/>**author** jmdana <https://github.com/jmdana>
-<br/>**license** GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
+**author** jmdana <https://github.com/jmdana>
+
+**license** GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
 
 ---
 
@@ -279,8 +286,15 @@ Display the current "artist - title" playing in Clementine.
 Requires:
   - `clementine`
 
-<br/>**author** Francois LASSERRE <choiz@me.com>
-<br/>**license** GNU GPL http://www.gnu.org/licenses/gpl.html
+**author** Francois LASSERRE <choiz@me.com>
+
+**license** GNU GPL http://www.gnu.org/licenses/gpl.html
+
+---
+
+### <a name="clock"></a>clock
+
+https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 ---
 
@@ -305,7 +319,54 @@ Format of status string placeholders:
 Requires:
     deadbeef:
 
-<br/>**author** mrt-prodz
+**author** mrt-prodz
+
+---
+
+### <a name="disk_space"></a>disk_space
+
+Shows details for a given mount point.
+
+Provide information such as available space in bytes or as a percentage.
+Allows multiple formats to be provided an button click to move between them.
+
+Configuration parameters:
+  - `button_cycle` Button to cycle through formats *(default 1)*
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 600)*
+  - `color_good` Color when free space over threshold_degraded
+    *(default is global color_good)*
+  - `color_degraded` Color when free space under threshold_degraded
+    *(default is global color_degraded)*
+  - `color_bad` Color when free space under threshold_bad
+    *(default is global color_bad)*
+  - `decimal_places` Number of decimal places to show for size *(default 1)*
+  - `format` : display format it can either be a string like
+    `'{mount} {free}'`
+    or a array eg `["{mount} free:{free}", "{mount} size:{size}"]` double quores `"` must be used!
+    *(default ["{mount} free:{free}", "{mount} size:{size}",
+    "{mount} free:{free_percent}", "{mount} {filesystem}"])*
+  - `format_unmounted` format to show for an unmounted mountpoint *(default
+    '{mount} unmounted')*
+  - `mount_point` Mount point of disk *(default '/')*
+  - `threshold_bad` Percentage of free space below which to show status as
+    bad *(default 5)*
+  - `threshold_degraded` Percentage of free space below which to show status as
+    degraded *(default 15)*
+  - `use_si` = False
+
+Format status string parameters:
+  - `{filesystem}` file system eg /dev/sda1
+  - `{free}` free disk space
+  - `{free_percent}` percentage free space
+  - `{mount}` the mount point
+  - `{size}` size of disk
+  - `{used}` used disk space
+  - `{used_percent}` percentage used
+
+**author** tobes
+
+**license** BSD
 
 ---
 
@@ -321,7 +382,7 @@ Configuration parameters:
   - `format_off` string to display when DPMS is disabled
   - `format_on` string to display when DPMS is enabled
 
-<br/>**author** Andre Doser <dosera AT tf.uni-freiburg.de>
+**author** Andre Doser <dosera AT tf.uni-freiburg.de>
 
 ---
 
@@ -343,8 +404,9 @@ Valid status values include:
 Requires:
   - `dropbox-cli` command line tool
 
-<br/>**author** Tjaart van der Walt (github:tjaartvdwalt)
-<br/>**license** BSD
+**author** Tjaart van der Walt (github:tjaartvdwalt)
+
+**license** BSD
 
 ---
 
@@ -374,7 +436,7 @@ external_script {
 }
 ```
 
-<br/>**author** frimdo ztracenastopa@centrum.cz
+**author** frimdo ztracenastopa@centrum.cz
 
 ---
 
@@ -401,8 +463,9 @@ Configuration parameters:
 Format status string parameters:
   - `{updates}` number of pending dnf updates
 
-<br/>**author** Toby Dacre
-<br/>**license** BSD
+**author** Toby Dacre
+
+**license** BSD
 
 ---
 
@@ -437,8 +500,9 @@ Format of status string placeholders:
 Requires:
   - `hamster`
 
-<br/>**author** Aaron Fields (spirotot [at] gmail.com)
-<br/>**license** BSD
+**author** Aaron Fields (spirotot [at] gmail.com)
+
+**license** BSD
 
 ---
 
@@ -456,9 +520,11 @@ Configuration Parameters:
   - `status` set the status you want to optain (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
   - `user` username to authenticate against the icinga-web2 interface
 
-<br/>**author** Ben Oswald <ben.oswald@root-space.de>
-<br/>**license** BSD License <https://opensource.org/licenses/BSD-2-Clause>
-<br/>**source** https://github.com/nazco/i3status-modules
+**author** Ben Oswald <ben.oswald@root-space.de>
+
+**license** BSD License <https://opensource.org/licenses/BSD-2-Clause>
+
+**source** https://github.com/nazco/i3status-modules
 
 ---
 
@@ -481,7 +547,7 @@ Configuration parameters:
 Format of status string placeholders:
   - `{unseen}` number of unread emails
 
-<br/>**author** obb
+**author** obb
 
 ---
 
@@ -504,8 +570,9 @@ Requires:
     or
   - `setxkbmap` and `xset` (works for the first two predefined layouts.)
 
-<br/>**author** shadowprince, tuxitop
-<br/>**license** Eclipse Public License
+**author** shadowprince, tuxitop
+
+**license** Eclipse Public License
 
 ---
 
@@ -557,8 +624,9 @@ Examples of `format`
 %state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
 ```
 
-<br/>**author** shadowprince, zopieux
-<br/>**license** Eclipse Public License
+**author** shadowprince, zopieux
+
+**license** Eclipse Public License
 
 ---
 
@@ -581,8 +649,9 @@ Format of status string placeholders:
   - `{total}` total rate
   - `{up}` upload rate
 
-<br/>**author** shadowprince
-<br/>**license** Eclipse Public License
+**author** shadowprince
+
+**license** Eclipse Public License
 
 ---
 
@@ -595,7 +664,7 @@ Configuration parameters:
   - `low_*` / `med_*` coloration thresholds
   - `nic` the network interface to monitor *(defaults to eth0)*
 
-<br/>**author** Shahin Azad &lt;ishahinism at Gmail&gt;
+**author** Shahin Azad &lt;ishahinism at Gmail&gt;
 
 ---
 
@@ -615,7 +684,7 @@ Configuration parameters:
   - `nameservers` comma separated list of reference DNS nameservers
   - `resolvers` comma separated list of DNS resolvers to use
 
-<br/>**author** nawadanp
+**author** nawadanp
 
 ---
 
@@ -634,8 +703,9 @@ Configuration parameters:
 Requires:
   - `nvidia-smi`
 
-<br/>**author** jmdana <https://github.com/jmdana>
-<br/>**license** BSD
+**author** jmdana <https://github.com/jmdana>
+
+**license** BSD
 
 ---
 
@@ -650,7 +720,7 @@ Configuration parameters:
   - `timeout` how long before deciding we're offline
   - `url` connect to this url to check the connection status
 
-<br/>**author** obb
+**author** obb
 
 ---
 
@@ -690,8 +760,9 @@ Configuration parameters:
   - `supported_players` supported players (str) (comma separated list)
   - `volume_tick` percentage volume change on mouse wheel (int) (positive number or None to disable it)
 
-<br/>**author** Federico Ceratto <federico.ceratto@gmail.com>, rixx
-<br/>**license** BSD
+**author** Federico Ceratto <federico.ceratto@gmail.com>, rixx
+
+**license** BSD
 
 ---
 
@@ -727,7 +798,7 @@ pomodoro {
 }
 ```
 
-<br/>**author** Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
+**author** Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
 
 ---
 
@@ -741,7 +812,7 @@ Configuration parameters:
   - `hour_price` your price per hour
   - `tax` tax value (1.02 = 2%)
 
-<br/>**author** Amaury Brisou <py3status AT puzzledge.org>
+**author** Amaury Brisou <py3status AT puzzledge.org>
 
 ---
 
@@ -770,7 +841,7 @@ Requires:
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
 
-<br/>**author** ultrabug
+**author** ultrabug
 
 ---
 
@@ -788,8 +859,9 @@ Configuration parameters:
 Requires:
   - `i3ipc` (https://github.com/acrisci/i3ipc-python)
 
-<br/>**author** cornerman
-<br/>**license** BSD
+**author** cornerman
+
+**license** BSD
 
 ---
 
@@ -797,8 +869,9 @@ Requires:
 
 Display the amount of windows in your i3 scratchpad.
 
-<br/>**author** shadowprince
-<br/>**license** Eclipse Public License
+**author** shadowprince
+
+**license** Eclipse Public License
 
 ---
 
@@ -820,7 +893,7 @@ Configuration parameters:
   - `upload_server` your server address
   - `upload_user` your ssh user
 
-<br/>**author** Amaury Brisou <py3status AT puzzledge.org>
+**author** Amaury Brisou <py3status AT puzzledge.org>
 
 ---
 
@@ -843,8 +916,9 @@ Requires:
     or
   - `libselinux-python3` (optional for python3 support)
 
-<br/>**author** bstinsonmhk
-<br/>**license** BSD
+**author** bstinsonmhk
+
+**license** BSD
 
 ---
 
@@ -860,8 +934,9 @@ Configuration Parameters:
   - `open_text` text if space is open, strftime parmeters will be translated
   - `url` URL to SpaceAPI json file of your space
 
-<br/>**author** timmszigat
-<br/>**license** WTFPL <http://www.wtfpl.net/txt/copying/>
+**author** timmszigat
+
+**license** WTFPL <http://www.wtfpl.net/txt/copying/>
 
 ---
 
@@ -893,7 +968,7 @@ spotify {
 }
 ```
 
-<br/>**author** Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
+**author** Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 
 ---
 
@@ -906,7 +981,7 @@ Configuration parameters:
   - `format` text that should be printed
   - `separator` whether the separator is shown or not (true or false)
 
-<br/>**author** frimdo ztracenastopa@centrum.cz
+**author** frimdo ztracenastopa@centrum.cz
 
 ---
 
@@ -929,7 +1004,7 @@ Format of status string placeholders:
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
-<br/>**author** Shahin Azad &lt;ishahinism at Gmail&gt;, shrimpza
+**author** Shahin Azad &lt;ishahinism at Gmail&gt;, shrimpza
 
 ---
 
@@ -943,8 +1018,9 @@ Configuration parameters:
 Requires
   - `task`
 
-<br/>**author** James Smith http://jazmit.github.io/
-<br/>**license** BSD
+**author** James Smith http://jazmit.github.io/
+
+**license** BSD
 
 ---
 
@@ -964,7 +1040,7 @@ Format of status string placeholders:
   - `{machine}` machine type, e.g. 'x86_64'
   - `{processor}` the (real) processor name, e.g. 'amdk6'
 
-<br/>**author** ultrabug (inspired by ndalliard)
+**author** ultrabug (inspired by ndalliard)
 
 ---
 
@@ -990,8 +1066,9 @@ Format of status string placeholders:
 Requires:
   - external program called `vnstat` installed and configured to work.
 
-<br/>**author** shadowprince
-<br/>**license** Eclipse Public License
+**author** shadowprince
+
+**license** Eclipse Public License
 
 ---
 
@@ -1019,8 +1096,9 @@ NOTE:
     send a USR1 signal to py3status in the keybinding.
     Example: killall -s USR1 py3status
 
-<br/>**author** &lt;Jan T&gt; <jans.tuomi@gmail.com>
-<br/>**license** BSD
+**author** &lt;Jan T&gt; <jans.tuomi@gmail.com>
+
+**license** BSD
 
 ---
 
@@ -1067,7 +1145,7 @@ Configuration parameters:
 
 The city_code in this example is for Paris, France => FRXX0076
 
-<br/>**author** ultrabug, rail
+**author** ultrabug, rail
 
 ---
 
@@ -1086,7 +1164,7 @@ Configuration parameters:
   - `timeout` how long before deciding we're offline
   - `url` change IP check url (must output a plain text IP address)
 
-<br/>**author** ultrabug
+**author** ultrabug
 
 ---
 
@@ -1131,8 +1209,9 @@ Format of status string placeholders:
 Requires:
   - `iw`
 
-<br/>**author** Markus Weimar <mail@markusweimar.de>
-<br/>**license** BSD
+**author** Markus Weimar <mail@markusweimar.de>
+
+**license** BSD
 
 ---
 
@@ -1149,8 +1228,9 @@ If payload from server contains wierd utf-8
 give empty output UNTIL this window is closed.
 I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 
-<br/>**author** shadowprince
-<br/>**license** Eclipse Public License
+**author** shadowprince
+
+**license** Eclipse Public License
 
 ---
 
@@ -1175,8 +1255,9 @@ Configuration parameters:
 Requires:
   - `i3ipc` (https://github.com/acrisci/i3ipc-python)
 
-<br/>**author** Anon1234 https://github.com/Anon1234
-<br/>**license** BSD
+**author** Anon1234 https://github.com/Anon1234
+
+**license** BSD
 
 ---
 
@@ -1222,7 +1303,8 @@ Configuration parameters:
     collecting the response.
     Default is 0.4 (which should be sufficient)
 
-<br/>**author** Timo Kohorst timo@kohorst-online.com
+**author** Timo Kohorst timo@kohorst-online.com
+
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
 
 ---
@@ -1277,7 +1359,7 @@ xrandr {
 }
 ```
 
-<br/>**author** ultrabug
+**author** ultrabug
 
 ---
 
@@ -1296,5 +1378,6 @@ Configuration parameters:
 Requires:
   - `xsel` command line tool
 
-<br/>**author** Sublim3 umbsublime@gamil.com
-<br/>**license** BSD
+**author** Sublim3 umbsublime@gamil.com
+
+**license** BSD
