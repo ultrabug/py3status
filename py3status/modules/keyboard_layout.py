@@ -88,7 +88,7 @@ class Py3status:
         xset_output = check_output(["xset", "-q"]).decode("utf-8")
         led_mask = re.match(ledmask_re, xset_output).group(1)
         if len(led_mask) == 8:
-            lang = int(led_mask[4])
+            lang = int(led_mask[4], 16)
             if layouts[lang] is not None:
                 return layouts[lang]
         return "Err"
