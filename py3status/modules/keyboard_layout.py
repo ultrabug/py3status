@@ -81,17 +81,14 @@ class Py3status:
         Check using setxkbmap >= 1.3.0 and xset
         This method works only for the first two predefined layouts.
         """
-        ledmask_re = re.compile(r".*LED\smask:\s*(\d+).*", flags=re.DOTALL)
+        ledmask_re = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*",
+                                flags=re.DOTALL)
         layouts = self._get_layouts()
         if len(layouts) == 1:
             return layouts[0]
         xset_output = check_output(["xset", "-q"]).decode("utf-8")
-        led_mask = re.match(ledmask_re, xset_output).group(1)
-        if len(led_mask) == 8:
-            lang = int(led_mask[4], 16)
-            if lang < len(layouts):
-                return layouts[lang]
-        return "Err"
+        led_mask = re.match(ledmask_re, xset_output).groups(0)[0]
+        return layouts[int(led_mask)]
 
 
 if __name__ == "__main__":
