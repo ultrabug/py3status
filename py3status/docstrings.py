@@ -128,10 +128,11 @@ def _reformat_docstring(doc, format_fn, code_newline=''):
     for line in doc:
         if status['add_line']:
             out.append('\n')
-            status['add_line'] = False
-        if status['eat_line'] and line.strip() == '':
-            continue
+        status['add_line'] = False
+        if status['eat_line']:
             status['eat_line'] = False
+            if line.strip() == '':
+                continue
         # check for start/end of code block
         if line.strip() == '```':
             code = not code
