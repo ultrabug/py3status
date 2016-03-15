@@ -47,7 +47,7 @@ class Py3statusWrapper():
         config = {
             'cache_timeout': 60,
             'include_paths': ['{}/.i3/py3status/'.format(home_path)],
-            'interval': 1,  # no longer used but is an existing cli option
+            'interval': 1,
             'minimum_interval': 0.1  # minimum module update interval
         }
 
