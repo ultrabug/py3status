@@ -1,9 +1,7 @@
 from __future__ import print_function
 
 import argparse
-import ast
 import os
-import pkgutil
 import sys
 
 from copy import deepcopy
@@ -16,7 +14,7 @@ from threading import Event
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
-from py3status import modules as sitepkg_modules
+import py3status.docstrings as docstrings
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
@@ -169,25 +167,6 @@ class Py3statusWrapper():
                 user_modules[module_name] = (include_path, f_name)
         return user_modules
 
-    def get_all_modules(self):
-        """
-        Search and yield all available py3status modules:
-            - in the current python's implementation site-packages
-            - provided by the user using the inclusion directories
-
-        User provided modules take precedence over py3status generic modules.
-        """
-        all_modules = {}
-        for importer, module_name, ispkg in \
-                pkgutil.iter_modules(sitepkg_modules.__path__):
-            if not ispkg:
-                mod = importer.find_module(module_name)
-                all_modules[module_name] = (mod, None)
-        user_modules = self.get_user_modules()
-        all_modules.update(user_modules)
-        for module_name, module_info in sorted(all_modules.items()):
-            yield (module_name, module_info)
-
     def get_user_configured_modules(self):
         """
         Get a dict of all available and configured py3status modules
@@ -243,7 +222,7 @@ class Py3statusWrapper():
         self.config = self.get_config()
 
         if self.config.get('cli_command'):
-            self.handle_cli_command(self.config['cli_command'])
+            self.handle_cli_command(self.config)
             sys.exit()
 
         if self.config['debug']:
@@ -437,48 +416,31 @@ class Py3statusWrapper():
             delta += 0.1
             sleep(0.1)
 
-    @staticmethod
-    def print_module_description(details, mod_name, mod_info):
-        """Print module description extracted from its docstring.
-        """
-        if mod_name == '__init__':
-            return
-
-        mod, f_name = mod_info
-        if f_name:
-            path = os.path.join(*mod_info)
-            with open(path) as f:
-                module = ast.parse(f.read())
-        else:
-            path = mod.get_filename(mod_name)
-            module = ast.parse(mod.get_source(mod_name))
-        try:
-            docstring = ast.get_docstring(module, clean=True)
-            if docstring:
-                short_description = docstring.split('\n')[0].rstrip('.')
-                print_stderr('  %-22s %s.' % (mod_name, short_description))
-                if details:
-                    for description in docstring.split('\n')[1:]:
-                        print_stderr(' ' * 25 + '%s' % description)
-                    print_stderr(' ' * 25 + '---')
-            else:
-                print_stderr('  %-22s No docstring in %s' % (mod_name, path))
-        except Exception:
-            print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
-
-    def handle_cli_command(self, cmd):
+    def handle_cli_command(self, config):
         """Handle a command from the CLI.
         """
+        cmd = config['cli_command']
         # aliases
         if cmd[0] in ['mod', 'module', 'modules']:
             cmd[0] = 'modules'
 
         # allowed cli commands
         if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
-            details = cmd[1] == 'details'
-            print_stderr('Available modules:')
-            for mod_name, mod_info in self.get_all_modules():
-                self.print_module_description(details, mod_name, mod_info)
+            docstrings.show_modules(config, cmd[1:])
+        # docstring formatting and checking
+        elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
+            if cmd[1] == 'check':
+                show_diff = len(cmd) > 2 and cmd[2] == 'diff'
+                docstrings.check_docstrings(show_diff, config)
+            if cmd[1] == 'update':
+                if len(cmd) < 3:
+                    print_stderr('Error: you must specify what to update')
+                    sys.exit(1)
+
+                if cmd[2] == 'modules':
+                    docstrings.update_docstrings()
+                else:
+                    docstrings.update_readme_for_modules(cmd[2:])
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
             pass

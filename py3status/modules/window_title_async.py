@@ -6,18 +6,18 @@ Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.
 
 Configuration parameters:
-    - always_show : do not hide the title when it can be already
-                    visible (e.g. in tabbed layout), default: False.
-    - empty_title : string that will be shown instead of the title when
-                    the title is hidden, default: "" (empty string).
-    - format : format of the title, default: "{title}".
-    - max_width : maximum width of block (in symbols).
-                  If the title is longer than `max_width`,
-                  the title will be truncated to `max_width - 1`
-                  first symbols with ellipsis appended. Default: 120.
+    always_show: do not hide the title when it can be already
+        visible (e.g. in tabbed layout), default: False.
+    empty_title: string that will be shown instead of the title when
+        the title is hidden, default: "" (empty string).
+    format: format of the title, default: "{title}".
+    max_width: maximum width of block (in symbols).
+        If the title is longer than `max_width`,
+        the title will be truncated to `max_width - 1`
+        first symbols with ellipsis appended. Default: 120.
 
 Requires:
-    - i3ipc (https://github.com/acrisci/i3ipc-python)
+    i3ipc: (https://github.com/acrisci/i3ipc-python)
 
 @author Anon1234 https://github.com/Anon1234
 @license BSD

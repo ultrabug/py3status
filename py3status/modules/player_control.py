@@ -3,14 +3,14 @@
 Control music/video players.
 
 Provides an icon to control simple functions of audio/video players:
- - start (left click)
- - stop  (left click)
- - pause (middle click)
+    - start (left click)
+    - stop  (left click)
+    - pause (middle click)
 
 Configuration parameters:
-    - debug: enable verbose logging (bool) (default: False)
-    - supported_players: supported players (str) (comma separated list)
-    - volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
+    debug: enable verbose logging (bool) (default: False)
+    supported_players: supported players (str) (comma separated list)
+    volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
