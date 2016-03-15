@@ -6,15 +6,16 @@ This module displays the current state of selinux on your machine: Enforcing
 (good), Permissive (bad), or Disabled (bad).
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds (10s default)
-    - format : see placeholders below, default is 'selinux: {state}'
+    cache_timeout: how often we refresh this module in seconds (10s default)
+    format: see placeholders below, default is 'selinux: {state}'
 
 Format of status string placeholders:
-    {state} - the current selinux state
+    {state} the current selinux state
 
 Requires:
-    - libselinux-python
-    - libselinux-python3 (optional for python3 support)
+    libselinux-python:
+        or
+    libselinux-python3: (optional for python3 support)
 
 @author bstinsonmhk
 @license BSD

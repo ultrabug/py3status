@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-Displays the number of package updates pending for a Fedora Linux installation.
+The number of package updates pending for a Fedora Linux installation.
 
 This will display a count of how many `dnf` updates are waiting
 to be installed.
 Additionally check if any update security notices.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds
-        default 600
-    - color_bad : color when security notice
-        default global color_bad
-    - color_degraded : color when upgrade available
-        default global color_degraded
-    - color_good : color when no upgrades needed
-        default global color_good
-    - format : display format to use
-        default 'DNF: {updates}'
+    cache_timeout: How often we refresh this module in seconds
+        (default 600)
+    color_bad: Color when security notice
+        (default global color_bad)
+    color_degraded: Color when upgrade available
+        (default global color_degraded)
+    color_good: Color when no upgrades needed
+        (default global color_good)
+    format: Display format to use
+        (default 'DNF: {updates}')
 
 Format status string parameters:
-    - updates : number of pending dnf updates
+    {updates} number of pending dnf updates
 
 @author Toby Dacre
 @license BSD

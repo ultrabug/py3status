@@ -2,21 +2,23 @@
 
 """
 Displays the number of package updates pending for an Arch Linux installation.
-
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are
 also waiting.
 
-To display pending 'aur' updates you need to have installed 'cower'.
-
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds (default 600)
-    - include_aur : set to 0 to use 'cower' to check for AUR updates (default 0)
-    - format : display format to use
+    cache_timeout: How often we refresh this module in seconds (default 600)
+    include_aur: Set to 0 to use 'cower' to check for AUR updates (default 0)
+    format: Display format to use *(default
+        'UPD: {pacman}' or 'UPD: {pacman}/{aur}'
+        )*
 
 Format status string parameters:
-    - aur : number of pending aur updates
-    - pacman : number of pending pacman updates
+    {aur} Number of pending aur updates
+    {pacman} Number of pending pacman updates
+
+Requires:
+    cower: Needed to display pending 'aur' updates
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
