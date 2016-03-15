@@ -17,8 +17,8 @@ Example configuration in py3status.conf:
 
 order += "xscreensaver"
 xscreensaver {
-	    format_off = "xscreensaver off"
-	    format_on = "xscreensaver on"
+    format_off = "xscreensaver off"
+    format_on = "xscreensaver on"
 }
 
 @author Andre Doser <dosera AT tf.uni-freiburg.de> (dpms.py)
