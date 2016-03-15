@@ -2,10 +2,10 @@ import sys
 import os
 import imp
 
-from threading import Thread
+from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
-from time import sleep, time
+from time import time
 
 from py3status.profiling import profile
 
@@ -32,6 +32,7 @@ class Module(Thread):
         self.module_class = None
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
+        self.timer = None
         #
         self.load_methods(module, user_modules)
 
@@ -157,7 +158,12 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
-        while self.lock.is_set():
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+
+        if self.lock.is_set():
+            cache_time = None
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
@@ -168,6 +174,8 @@ class Module(Thread):
 
                 # respect the cache set for this method
                 if time() < obj['cached_until']:
+                    if not cache_time or obj['cached_until'] < cache_time:
+                        cache_time = obj['cached_until']
                     continue
 
                 try:
@@ -208,6 +216,8 @@ class Module(Thread):
                     else:
                         cached_until = time() + self.config['cache_timeout']
                     my_method['cached_until'] = cached_until
+                    if not cache_time or cached_until < cache_time:
+                        cache_time = cached_until
 
                     # update method object output
                     my_method['last_output'] = result
@@ -220,10 +230,19 @@ class Module(Thread):
                     err = sys.exc_info()[1]
                     syslog(LOG_WARNING,
                            'user method {} failed ({})'.format(meth, err))
+            # don't be hasty mate
+            # set timer to do update next time one is needed
+            if cache_time:
+                delay = cache_time - time()
+                if delay < self.config['minimum_interval']:
+                    delay = self.config['minimum_interval']
+                self.timer = Timer(delay, self.run)
+                self.timer.start()
 
-            # don't be hasty mate, let's take it easy for now
-            sleep(self.config['interval'])
-
+    def kill(self):
+        # stop timer if exists
+        if self.timer:
+            self.timer.cancel()
         # check and execute the 'kill' method if present
         if self.has_kill:
             try:
