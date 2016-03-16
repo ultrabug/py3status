@@ -454,6 +454,8 @@ Configuration parameters:
     Format as hex value eg `'#0000FF'` *(default None)*
   - cycle: Time in seconds till changing to next module to display.
     Setting to `0` will disable cycling. *(default 0)*
+  - fixed_width: Reduce the size changes when switching to new group
+    *(default True)*
   - format: Format for module output. *(default "GROUP: {output}")*
 
 
