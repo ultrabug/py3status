@@ -35,22 +35,25 @@ class Py3status:
     err_exception = 'error: calendar parsing failed'
     format = 'tasks:[{due}] current:{current}'
 
-    # return error occurs
-    def _error_response(self, text, color):
+    def _response(self, text, color=None):
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': text,
-            'color': 3s_config['color_bad']
         }
+        if color is not None:
+            response['color'] = color
+        
         return response
 
     # return calendar data
     def get_calendar(self, i3s_output_list, i3s_config):
+        _err_color = i3s_config['color_bad']
+        
         db = self.profile_path + '/calendar-data/local.sqlite'
         due = completed = 0
         current = ''
         if not access(db, R_OK):
-            return self._error_response(self.err_profile)
+            return self._response(self.err_profile, _err_color)
 
         try:
             con = connect(db)
@@ -60,22 +63,18 @@ class Py3status:
             tasks = cur.fetchall()
             con.close()
 
-            # task[1] is the todo_completed column
+            # task[0] is the task name, task[1] is the todo_completed column
             duetasks = [task[0] for task in tasks if task[1] is None]
             due = len(duetasks)
             completed = len(tasks) - due
             if due:
                 current = duetasks[0]
-
-            response = {
-                'cached_until': time() + self.cache_timeout,
-                'full_text': self.format.format(due=due,
-                                                completed=completed,
-                                                current=current)
-            }
-            return response
+            
+            return self._response(self.format.format(due=due,
+                                                     completed=completed,
+                                                     current=current)
         except Exception:
-            return self._error_response(self.err_exception)
+            return self._response(self.err_exception, _err_color)
 
 if __name__ == "__main__":
     x = Py3status()
