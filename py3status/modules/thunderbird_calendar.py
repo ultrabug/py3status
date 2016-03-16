@@ -50,8 +50,6 @@ class Py3status:
         _err_color = i3s_config['color_bad']
         
         db = self.profile_path + '/calendar-data/local.sqlite'
-        due = completed = 0
-        current = ''
         if not access(db, R_OK):
             return self._response(self.err_profile, _err_color)
 
@@ -65,10 +63,10 @@ class Py3status:
 
             # task[0] is the task name, task[1] is the todo_completed column
             duetasks = [task[0] for task in tasks if task[1] is None]
+
             due = len(duetasks)
             completed = len(tasks) - due
-            if due:
-                current = duetasks[0]
+            current = duetasks[0] if due else ''
             
             return self._response(self.format.format(due=due,
                                                      completed=completed,
