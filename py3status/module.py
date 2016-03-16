@@ -2,10 +2,10 @@ import sys
 import os
 import imp
 
-from threading import Thread
+from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
-from time import sleep, time
+from time import time
 
 from py3status.profiling import profile
 
@@ -34,6 +34,7 @@ class Module(Thread):
         self.module_name = module.split(' ')[0]
         self.module_full_name = module
         self.py3_wrapper = py3_wrapper
+        self.timer = None
         # if the module is part of a group then we want to store it's name
         self.group = self.i3status_thread.config.get(module, {}).get('.group')
         #
@@ -157,78 +158,6 @@ class Module(Thread):
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
             syslog(LOG_WARNING, msg)
 
-    def update_module(self):
-        # execute each method of this module
-        for meth, obj in self.methods.items():
-            my_method = self.methods[meth]
-
-            # always check the lock
-            if not self.lock.is_set():
-                break
-
-            # respect the cache set for this method
-            if time() < obj['cached_until']:
-                continue
-
-            try:
-                # execute method and get its output
-                method = getattr(self.module_class, meth)
-                response = method(self.i3status_thread.json_list,
-                                  self.i3status_thread.config['general'])
-
-                if isinstance(response, dict):
-                    # this is a shiny new module giving a dict response
-                    result = response
-                elif isinstance(response, tuple):
-                    # this is an old school module reporting its position
-                    position, result = response
-                    if not isinstance(result, dict):
-                        raise TypeError('response should be a dict')
-                else:
-                    raise TypeError('response should be a dict')
-
-                # validate the response
-                if 'full_text' not in result:
-                    raise KeyError('missing "full_text" key in response')
-                else:
-                    result['instance'] = self.module_inst
-                    result['name'] = self.module_name
-
-                # initialize method object
-                if my_method['name'] is None:
-                    my_method['name'] = result['name']
-                    if 'instance' in result:
-                        my_method['instance'] = result['instance']
-                    else:
-                        my_method['instance'] = result['name']
-
-                # update method object cache
-                if 'cached_until' in result:
-                    cached_until = result['cached_until']
-                else:
-                    cached_until = time() + self.config['cache_timeout']
-                my_method['cached_until'] = cached_until
-
-                # update method object output
-                my_method['last_output'] = result
-
-                # debug info
-                if self.config['debug']:
-                    syslog(LOG_INFO,
-                           'method {} returned {} '.format(meth, result))
-            except Exception:
-                err = sys.exc_info()[1]
-                syslog(LOG_WARNING,
-                       'user method {} failed ({})'.format(meth, err))
-
-        # if in a group then force the group to update
-        if self.group:
-            group_module = self.py3_wrapper.modules.get(self.group)
-            if group_module:
-                group_module.update_module()
-                for obj in group_module.methods.values():
-                    obj['cached_until'] = time()
-
     @profile
     def run(self):
         """
@@ -237,11 +166,99 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
-        while self.lock.is_set():
-            self.update_module()
-            # don't be hasty mate, let's take it easy for now
-            sleep(self.config['interval'])
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
 
+        if self.lock.is_set():
+            cache_time = None
+            # execute each method of this module
+            for meth, obj in self.methods.items():
+                my_method = self.methods[meth]
+
+                # always check the lock
+                if not self.lock.is_set():
+                    break
+
+                # respect the cache set for this method
+                if time() < obj['cached_until']:
+                    if not cache_time or obj['cached_until'] < cache_time:
+                        cache_time = obj['cached_until']
+                    continue
+
+                try:
+                    # execute method and get its output
+                    method = getattr(self.module_class, meth)
+                    response = method(self.i3status_thread.json_list,
+                                      self.i3status_thread.config['general'])
+
+                    if isinstance(response, dict):
+                        # this is a shiny new module giving a dict response
+                        result = response
+                    elif isinstance(response, tuple):
+                        # this is an old school module reporting its position
+                        position, result = response
+                        if not isinstance(result, dict):
+                            raise TypeError('response should be a dict')
+                    else:
+                        raise TypeError('response should be a dict')
+
+                    # validate the response
+                    if 'full_text' not in result:
+                        raise KeyError('missing "full_text" key in response')
+                    else:
+                        result['instance'] = self.module_inst
+                        result['name'] = self.module_name
+
+                    # initialize method object
+                    if my_method['name'] is None:
+                        my_method['name'] = result['name']
+                        if 'instance' in result:
+                            my_method['instance'] = result['instance']
+                        else:
+                            my_method['instance'] = result['name']
+
+                    # update method object cache
+                    if 'cached_until' in result:
+                        cached_until = result['cached_until']
+                    else:
+                        cached_until = time() + self.config['cache_timeout']
+                    my_method['cached_until'] = cached_until
+                    if not cache_time or cached_until < cache_time:
+                        cache_time = cached_until
+
+                    # update method object output
+                    my_method['last_output'] = result
+
+                    # debug info
+                    if self.config['debug']:
+                        syslog(LOG_INFO,
+                               'method {} returned {} '.format(meth, result))
+                except Exception:
+                    err = sys.exc_info()[1]
+                    syslog(LOG_WARNING,
+                           'user method {} failed ({})'.format(meth, err))
+
+            # if in a group then force the group to update
+            if self.group:
+                group_module = self.py3_wrapper.modules.get(self.group)
+                if group_module:
+                    for obj in group_module.methods.values():
+                        obj['cached_until'] = time()
+                    group_module.run()
+
+            # don't be hasty mate
+            # set timer to do update next time one is needed
+            if cache_time:
+                delay = max(cache_time - time(),
+                            self.config['minimum_interval'])
+                self.timer = Timer(delay, self.run)
+                self.timer.start()
+
+    def kill(self):
+        # stop timer if exists
+        if self.timer:
+            self.timer.cancel()
         # check and execute the 'kill' method if present
         if self.has_kill:
             try:
