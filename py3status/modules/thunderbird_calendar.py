@@ -42,13 +42,13 @@ class Py3status:
         }
         if color is not None:
             response['color'] = color
-        
+
         return response
 
     # return calendar data
     def get_calendar(self, i3s_output_list, i3s_config):
         _err_color = i3s_config['color_bad']
-        
+
         db = self.profile_path + '/calendar-data/local.sqlite'
         if not access(db, R_OK):
             return self._response(self.err_profile, _err_color)
@@ -67,7 +67,7 @@ class Py3status:
             due = len(duetasks)
             completed = len(tasks) - due
             current = duetasks[0] if due else ''
-            
+
             return self._response(self.format.format(due=due,
                                                      completed=completed,
                                                      current=current))
