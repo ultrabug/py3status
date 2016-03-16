@@ -58,11 +58,11 @@ class Py3status:
             tasks = cur.fetchall()
             con.close()
 
-            # t = title, c = completed
-            duetasks = [t for t in tasks for c in t if c is None]
+            # task[1] is the todo_completed column
+            duetasks = [task for task in tasks if task[1] is None]
             due = len(duetasks)
             completed = len(tasks) - due
-            if due > 0 and type(duetasks[0] is tuple):
+            if due:
                 current = duetasks[0][0]
 
             response = {
