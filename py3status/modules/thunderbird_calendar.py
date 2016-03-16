@@ -3,14 +3,16 @@
 Display tasks in thunderbird calendar.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh usage in seconds (default: 120s)
-    - profile_path : path to the user thunderbird profile (not optional)
-    - format : see placeholders below
+    cache_timeout: how often we refresh usage in seconds (default: 120s)
+    profile_path: path to the user thunderbird profile (not optional)
+    err_profile: error message regarding profile path and read access
+    err_exception: error message when an exception is raised
+    format: see placeholders below
 
 Format of status string placeholders:
-    {due} : due tasks
-    {completed} : completed tasks
-    {current} : title of current running task (sorted by priority and stamp)
+    {due} due tasks
+    {completed} completed tasks
+    {current} title of current running task (sorted by priority and stamp)
 
 Make sure to configure profile_path in your i3status config using the full
 path or this module will not be able to retrieve any information from your
@@ -28,16 +30,16 @@ from time import time
 class Py3status:
     # available configuration parameters
     cache_timeout = 120
-    # user must configure the path to thunderbird profile_path
-    # ex: /home/user/.thunderbird/1yawevtp.default
     profile_path = ''
+    err_profile = 'profile_path | read permission error'
+    err_exception = 'calendar parsing error'
     format = 'tasks:[{due}] current:{current}'
 
     # return error occurs
-    def _error_response(self, color):
+    def _error_response(self, text, color):
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': 'Err',
+            'full_text': text,
             'color': color
         }
         return response
@@ -48,7 +50,8 @@ class Py3status:
         due = completed = 0
         current = ''
         if not access(db, R_OK):
-            return self._error_response(i3s_config['color_bad'])
+            return self._error_response(self.err_profile,
+                                        i3s_config['color_bad'])
 
         try:
             con = connect(db)
@@ -59,11 +62,11 @@ class Py3status:
             con.close()
 
             # task[1] is the todo_completed column
-            duetasks = [task for task in tasks if task[1] is None]
+            duetasks = [task[0] for task in tasks if task[1] is None]
             due = len(duetasks)
             completed = len(tasks) - due
             if due:
-                current = duetasks[0][0]
+                current = duetasks[0]
 
             response = {
                 'cached_until': time() + self.cache_timeout,
@@ -73,7 +76,8 @@ class Py3status:
             }
             return response
         except:
-            return self._error_response(i3s_config['color_bad'])
+            return self._error_response(self.err_exception,
+                                        i3s_config['color_bad'])
 
 if __name__ == "__main__":
     x = Py3status()
