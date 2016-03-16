@@ -31,8 +31,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 120
     profile_path = ''
-    err_profile = 'profile_path | read permission error'
-    err_exception = 'calendar parsing error'
+    err_profile = 'error: profile not readable'
+    err_exception = 'error: calendar parsing failed'
     format = 'tasks:[{due}] current:{current}'
 
     # return error occurs
@@ -40,7 +40,7 @@ class Py3status:
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': text,
-            'color': color
+            'color': 3s_config['color_bad']
         }
         return response
 
@@ -50,8 +50,7 @@ class Py3status:
         due = completed = 0
         current = ''
         if not access(db, R_OK):
-            return self._error_response(self.err_profile,
-                                        i3s_config['color_bad'])
+            return self._error_response(self.err_profile)
 
         try:
             con = connect(db)
@@ -75,9 +74,8 @@ class Py3status:
                                                 current=current)
             }
             return response
-        except:
-            return self._error_response(self.err_exception,
-                                        i3s_config['color_bad'])
+        except Exception:
+            return self._error_response(self.err_exception)
 
 if __name__ == "__main__":
     x = Py3status()
