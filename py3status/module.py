@@ -2,7 +2,7 @@ import sys
 import os
 import imp
 
-from threading import Thread, Timer
+from threading import Thread, Timer, Lock
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
@@ -32,7 +32,9 @@ class Module(Thread):
         self.module_class = None
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
+        self.new_update = False
         self.timer = None
+        self.update_lock = Lock()
         #
         self.load_methods(module, user_modules)
 
@@ -72,6 +74,26 @@ class Module(Thread):
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
                 syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+
+    def set_updated(self):
+        """
+        Mark the module as updated
+        """
+        self.update_lock.acquire()
+        self.new_update = True
+        self.update_lock.release()
+
+    def check_updated(self, reset=False):
+        """
+        Check if the module is updated and clear flag if reset.
+        """
+        if not reset:
+            return self.new_update
+        self.update_lock.acquire()
+        updated = self.new_update
+        self.new_update = False
+        self.update_lock.release()
+        return updated
 
     def load_methods(self, module, user_modules):
         """
@@ -221,6 +243,9 @@ class Module(Thread):
 
                     # update method object output
                     my_method['last_output'] = result
+
+                    # mark module as updated
+                    self.set_updated()
 
                     # debug info
                     if self.config['debug']:
