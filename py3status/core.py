@@ -47,7 +47,8 @@ class Py3statusWrapper():
         config = {
             'cache_timeout': 60,
             'include_paths': ['{}/.i3/py3status/'.format(home_path)],
-            'interval': 1
+            'interval': 1,
+            'minimum_interval': 0.1  # minimum module update interval
         }
 
         # package version
@@ -296,6 +297,9 @@ class Py3statusWrapper():
             self.lock.clear()
             if self.config['debug']:
                 syslog(LOG_INFO, 'lock cleared, exiting')
+            # run kill() method on all py3status modules
+            for module in self.modules.values():
+                module.kill()
             self.i3status_thread.cleanup_tmpfile()
         except:
             pass
@@ -369,16 +373,6 @@ class Py3statusWrapper():
                     self.events_thread.i3_nagbar = True
                     err = 'events thread died, click events are disabled'
                     self.i3_nagbar(err, level='warning')
-
-            # check that every module thread is alive
-            for module in self.modules.values():
-                if not module.is_alive():
-                    # don't spam the user with i3-nagbar warnings
-                    if not hasattr(module, 'i3_nagbar'):
-                        module.i3_nagbar = True
-                        msg = 'output frozen for dead module(s) {}'.format(
-                            ','.join(module.methods.keys()))
-                        self.i3_nagbar(msg, level='warning')
 
             # get output from i3status
             prefix = self.i3status_thread.last_prefix
