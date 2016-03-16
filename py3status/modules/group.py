@@ -12,21 +12,21 @@ Modules can be i3status core modules or py3status modules.
 Additionally the active group can be cycled through automatically.
 
 Configuration parameters:
-    - button_next: Button that when clicked will switch to display next module.
+    button_next: Button that when clicked will switch to display next module.
         Setting to `0` will disable this action. (default 4)
-    - button_prev: Button that when clicked will switch to display previous
+    button_prev: Button that when clicked will switch to display previous
         module.  Setting to `0` will disable this action. (default 5)
-    - color: If the active module does not supply a color use this if set.
+    color: If the active module does not supply a color use this if set.
         Format as hex value eg `'#0000FF'` (default None)
-    - cycle: Time in seconds till changing to next module to display.
+    cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
-    - fixed_width: Reduce the size changes when switching to new group
+    fixed_width: Reduce the size changes when switching to new group
         (default True)
-    - format: Format for module output. (default "GROUP: {output}")
+    format: Format for module output. (default "GROUP: {output}")
 
 
 Format of status string placeholders:
-    - {output} Output of current active module
+    {output} Output of current active module
 
 Example:
 
