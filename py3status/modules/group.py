@@ -20,6 +20,8 @@ Configuration parameters:
         Format as hex value eg `'#0000FF'` (default None)
     - cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
+    - fixed_width: Reduce the size changes when switching to new group
+        (default True)
     - format: Format for module output. (default "GROUP: {output}")
 
 
@@ -61,6 +63,7 @@ class Py3status:
     button_prev = 5
     color = None
     cycle = 0
+    fixed_width = True
     format = "GROUP: {output}"
 
     class Meta:
@@ -79,11 +82,27 @@ class Py3status:
             self.py3_wrapper = None
         self.initialized = True
 
-    def _get_current_output(self):
+    def _get_output(self):
         if not self.items:
             return
+        if not self.fixed_width:
+            return self._get_current_output(self.active)
+        current = None
+        widths = []
+        for i in range(len(self.items)):
+            output = self._get_current_output(i)
+            if not output:
+                continue
+            if i == self.active:
+                current = output
+            widths.append(len(output['full_text']))
+        width = max(widths)
+        current['full_text'] += ' ' * (width - len(current['full_text']))
+        return current
+
+    def _get_current_output(self, item):
         output = None
-        current = self.items[self.active]
+        current = self.items[item]
         py3_wrapper = self.py3_wrapper
         if current in py3_wrapper.modules:
             for method in py3_wrapper.modules[current].methods.values():
@@ -128,7 +147,8 @@ class Py3status:
             self._cycle_time = time() + self.cycle
         output = '?'
         color = None
-        current_output = self._get_current_output()
+        current_output = self._get_output()
+
         if current_output:
             output = current_output['full_text']
             color = current_output.get('color')
