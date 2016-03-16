@@ -395,22 +395,32 @@ class I3status(Thread):
         self.json_list = deepcopy(self.last_output)
         self.json_list_ts = deepcopy(self.last_output_ts)
 
-    def get_modules_output(self, json_list, py3_modules):
+    def get_modules_output(self, json_list, py3_modules, output):
         """
         Return the final json list to be displayed on the i3bar by taking
         into account every py3status configured module and i3status'.
         Simply put, this method honors the initial 'order' configured by
         the user in his i3status.conf.
         """
-        ordered = []
-        for module_name in self.config['order']:
+        if len(self.config['order']) != len(output):
+            output = [None] * len(self.config['order'])
+        for index, module_name in enumerate(self.config['order']):
+       #     print_line(index)
             if module_name in py3_modules:
-                for method in py3_modules[module_name].methods.values():
-                    ordered.append(method['last_output'])
+                # kill any updated
+                if py3_modules[module_name].check_updated(reset=True) or not output[index]:
+                   # if module_name == 'weather_yahoo':
+                    #    print_line('## weather')
+                    for method in py3_modules[module_name].methods.values():
+                       # output.append(method['last_output'])
+                        output[index] = method['last_output']
+               # else:
+                #    print_line(module_name)
             else:
                 if self.config.get(module_name, {}).get('response'):
-                    ordered.append(self.config[module_name]['response'])
-        return ordered
+                    output[index] = self.config[module_name]['response']
+       # print_line(output)
+        return output
 
     @staticmethod
     def write_in_tmpfile(text, tmpfile):

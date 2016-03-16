@@ -352,63 +352,74 @@ class Py3statusWrapper():
         signal(SIGTERM, self.terminate)
 
         # initialize usage variables
-        delta = 0
-        last_delta = -1
-        previous_json_list = []
+        self.last_sec = 0
+        self.output = []
 
         # main loop
         while True:
-            # check i3status thread
-            if not self.i3status_thread.is_alive():
-                err = self.i3status_thread.error
-                if not err:
-                    err = 'i3status died horribly'
-                self.i3_nagbar(err)
-                break
+            sec = int(time())
+            if sec > self.last_sec:
+                self.last_sec = sec
+                # check i3status thread
+                if not self.i3status_thread.is_alive():
+                    err = self.i3status_thread.error
+                    if not err:
+                        err = 'i3status died horribly'
+                    self.i3_nagbar(err)
+                    break
 
-            # check events thread
-            if not self.events_thread.is_alive():
-                # don't spam the user with i3-nagbar warnings
-                if not hasattr(self.events_thread, 'i3_nagbar'):
-                    self.events_thread.i3_nagbar = True
-                    err = 'events thread died, click events are disabled'
-                    self.i3_nagbar(err, level='warning')
+                # check events thread
+                if not self.events_thread.is_alive():
+                    # don't spam the user with i3-nagbar warnings
+                    if not hasattr(self.events_thread, 'i3_nagbar'):
+                        self.events_thread.i3_nagbar = True
+                        err = 'events thread died, click events are disabled'
+                        self.i3_nagbar(err, level='warning')
 
-            # get output from i3status
-            prefix = self.i3status_thread.last_prefix
-            json_list = deepcopy(self.i3status_thread.json_list)
+                # get output from i3status
+                prefix = self.i3status_thread.last_prefix
+                json_list = deepcopy(self.i3status_thread.json_list)
 
-            # transform time and tztime outputs from i3status
-            # every configured interval seconds
-            if self.config['interval'] <= 1 or \
-                    int(delta) % self.config['interval'] == 0 \
-                    and int(last_delta) != int(delta):
-                delta = 0
-                last_delta = 0
+                # transform time and tztime outputs from i3status
+                # every configured interval seconds
+              #  if self.config['interval'] <= 1 or \
+              #          int(delta) % self.config['interval'] == 0 \
+              #          and int(last_delta) != int(delta):
+              #      delta = 0
+               #     last_delta = 0
                 json_list = self.i3status_thread.tick_time_modules(json_list,
-                                                                   force=True)
-            else:
-                json_list = self.i3status_thread.tick_time_modules(json_list,
-                                                                   force=False)
+                                                                       force=True)
+                #else:
+                #    json_list = self.i3status_thread.tick_time_modules(json_list,
+                 #                                                      force=False)
+                updated = True
+            #    print_line('.')
 
             # construct the global output
-            if self.modules and self.py3_modules:
+            if not updated and self.modules and self.py3_modules:
+                for module in self.modules.values():
+                    if module.check_updated():
+                        updated = True
+             #           print_line('* ' + module.module_name)
+                        break
+
+            if updated:
+              #  print_line('~~~')
                 # new style i3status configured ordering
-                json_list = self.i3status_thread.get_modules_output(
-                    json_list, self.modules)
+                self.output = self.i3status_thread.get_modules_output(
+                    json_list, self.modules, self.output)
 
-            # dump the line to stdout only on change
-            if json_list != previous_json_list:
-                print_line('{}{}'.format(prefix, dumps(json_list)))
+                # dump the line to stdout only on change
+                print_line('{}{}'.format(prefix, dumps(self.output)))
 
-            # remember the last json list output
-            previous_json_list = deepcopy(json_list)
+                # remember the last json list output
+                #previous_json_list = deepcopy(json_list)
 
-            # reset i3status json_list and json_list_ts
-            self.i3status_thread.update_json_list()
+                # reset i3status json_list and json_list_ts
+                self.i3status_thread.update_json_list()
+                updated = False
 
             # sleep a bit before doing this again to avoid killing the CPU
-            delta += 0.1
             sleep(0.1)
 
     def handle_cli_command(self, config):
