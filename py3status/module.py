@@ -1,6 +1,7 @@
 import sys
 import os
 import imp
+import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
@@ -109,9 +110,15 @@ class Module(Thread):
                 # names starting with '.' are private
                 if not config.startswith('.'):
                     setattr(self.module_class, config, value)
-            # group modules need to be able to find the modules they contain
-            if self.module_name == 'group':
-                setattr(self.module_class, 'py3_wrapper', self.py3_wrapper)
+
+            # check if module has meta class
+            if hasattr(self.module_class, 'Meta'):
+                meta = self.module_class.Meta
+                if inspect.isclass(meta):
+                    # module wants it's Module
+                    if getattr(meta, 'include_py3_module', False):
+                        setattr(self.module_class, 'py3_module', self)
+
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
                 if method.startswith('_'):

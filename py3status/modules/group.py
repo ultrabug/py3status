@@ -63,10 +63,21 @@ class Py3status:
     cycle = 0
     format = "GROUP: {output}"
 
+    class Meta:
+        include_py3_module = True
+
     def __init__(self):
         self.items = []
         self.active = 0
         self._cycle_time = time() + self.cycle
+        self.initialized = False
+
+    def _init(self):
+        try:
+            self.py3_wrapper = self.py3_module.py3_wrapper
+        except AttributeError:
+            self.py3_wrapper = None
+        self.initialized = True
 
     def _get_current_output(self):
         if not self.items:
@@ -109,6 +120,9 @@ class Py3status:
         """
         Display a output of current module
         """
+        if not self.initialized:
+            self._init()
+
         if self.cycle and time() >= self._cycle_time:
             self._next()
             self._cycle_time = time() + self.cycle
