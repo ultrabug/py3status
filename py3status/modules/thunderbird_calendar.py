@@ -70,7 +70,7 @@ class Py3status:
             
             return self._response(self.format.format(due=due,
                                                      completed=completed,
-                                                     current=current)
+                                                     current=current))
         except Exception:
             return self._response(self.err_exception, _err_color)
 
