@@ -233,9 +233,8 @@ class Module(Thread):
             # don't be hasty mate
             # set timer to do update next time one is needed
             if cache_time:
-                delay = cache_time - time()
-                if delay < self.config['minimum_interval']:
-                    delay = self.config['minimum_interval']
+                delay = max(cache_time - time(),
+                            self.config['minimum_interval'])
                 self.timer = Timer(delay, self.run)
                 self.timer.start()
 
