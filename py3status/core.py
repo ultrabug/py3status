@@ -419,11 +419,13 @@ class Py3statusWrapper():
                                 time_module['date'] = date
                                 time_format = time_module.get('time_format')
 
-                                # set the full_text date on the json_list to be returned
+                                # set the full_text date on the json_list to be
+                                # returned
                                 output[index]['full_text'] = date.strftime(
                                     time_format)
-                                # reset the full_text date on the config object for next
-                                # iteration to be consistent with this one
+                                # reset the full_text date on the config object
+                                # for next iteration to be consistent with this
+                                # one
                                 time_module['response']['full_text'] = mod[
                                     'full_text']
                             updated = True
