@@ -368,44 +368,6 @@ class I3status(Thread):
                     self.config[conf_name]['delta'] = delta
                     self.config[conf_name]['time_format'] = time_format
 
-    def tick_time_modules(self, json_list, force):
-        """
-        Adjust the 'time' and 'tztime' objects from the given json_list so that
-        they are updated only at py3status interval seconds.
-
-        This method is used to overwrite any i3status time or tztime output
-        with respect to their parsed and timezone offset detected on start.
-        """
-        utcnow = datetime.utcnow()
-        # every whole minute, resync our time from i3status'
-        # this ensures we will catch any daylight savings time change
-        if utcnow.second == 0:
-            self.set_time_modules()
-        #
-        for index, item in enumerate(json_list):
-            if item.get('name') in ['time', 'tztime']:
-                conf_name = self.config['i3s_modules'][index]
-                time_module = self.config[conf_name]
-                if not isinstance(time_module['date'], datetime):
-                    # something went wrong in the datetime parsing
-                    # output i3status' date string
-                    item['full_text'] = time_module['date']
-                else:
-                    if force:
-                        date = utcnow + time_module['delta']
-                        time_module['date'] = date
-                    else:
-                        date = time_module['date']
-                    time_format = self.config[conf_name].get('time_format')
-
-                    # set the full_text date on the json_list to be returned
-                    item['full_text'] = date.strftime(time_format)
-                json_list[index] = item
-
-                # reset the full_text date on the config object for next
-                # iteration to be consistent with this one
-                time_module['response']['full_text'] = item['full_text']
-        return json_list
 
     def update_json_list(self):
         """
@@ -417,32 +379,6 @@ class I3status(Thread):
         self.json_list = deepcopy(self.last_output)
         self.json_list_ts = deepcopy(self.last_output_ts)
 
-    def get_modules_output(self, json_list, py3_modules, output):
-        """
-        Return the final json list to be displayed on the i3bar by taking
-        into account every py3status configured module and i3status'.
-        Simply put, this method honors the initial 'order' configured by
-        the user in his i3status.conf.
-        """
-        if len(self.config['order']) != len(output):
-            output = [None] * len(self.config['order'])
-        for index, module_name in enumerate(self.config['order']):
-       #     print_line(index)
-            if module_name in py3_modules:
-                # kill any updated
-                if py3_modules[module_name].check_updated(reset=True) or not output[index]:
-                   # if module_name == 'weather_yahoo':
-                    #    print_line('## weather')
-                    for method in py3_modules[module_name].methods.values():
-                       # output.append(method['last_output'])
-                        output[index] = method['last_output']
-               # else:
-                #    print_line(module_name)
-            else:
-                if self.config.get(module_name, {}).get('response'):
-                    output[index] = self.config[module_name]['response']
-       # print_line(output)
-        return output
 
     @staticmethod
     def write_in_tmpfile(text, tmpfile):

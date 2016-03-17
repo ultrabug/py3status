@@ -3,6 +3,7 @@ from __future__ import print_function
 import argparse
 import os
 import sys
+from datetime import datetime
 
 from copy import deepcopy
 from json import dumps
@@ -354,10 +355,18 @@ class Py3statusWrapper():
         # initialize usage variables
         self.last_sec = 0
         self.output = []
+        json_list = None
 
+        config = self.i3status_thread.config
+
+        if len(config['order']) != len(self.output):
+            self.output = [None] * len(config['order'])
+
+            json_list = deepcopy(self.i3status_thread.json_list)
         # main loop
         while True:
             sec = int(time())
+            update_time = sec > self.last_sec or self.config['interval'] < 1
             if sec > self.last_sec:
                 self.last_sec = sec
                 # check i3status thread
@@ -376,44 +385,51 @@ class Py3statusWrapper():
                         err = 'events thread died, click events are disabled'
                         self.i3_nagbar(err, level='warning')
 
-                # get output from i3status
-                prefix = self.i3status_thread.last_prefix
-                json_list = deepcopy(self.i3status_thread.json_list)
+                # Check times every min due to daylight savings etc
+                if sec % 60 == 0:
+                    self.i3status_thread.set_time_modules()
 
-                # transform time and tztime outputs from i3status
-                # every configured interval seconds
-              #  if self.config['interval'] <= 1 or \
-              #          int(delta) % self.config['interval'] == 0 \
-              #          and int(last_delta) != int(delta):
-              #      delta = 0
-               #     last_delta = 0
-                json_list = self.i3status_thread.tick_time_modules(json_list,
-                                                                       force=True)
-                #else:
-                #    json_list = self.i3status_thread.tick_time_modules(json_list,
-                 #                                                      force=False)
-                updated = True
-            #    print_line('.')
+            # has i3status been updated?
+            i3status_updated = self.i3status_thread.check_updated(reset=True)
 
-            # construct the global output
-            if not updated and self.modules and self.py3_modules:
-                for module in self.modules.values():
-                    if module.check_updated():
+            for index, module_name in enumerate(config['order']):
+                if module_name in self.modules:
+                    # py3status module
+                    if self.modules[module_name].check_updated(reset=True) or not self.output[index]:
                         updated = True
-             #           print_line('* ' + module.module_name)
-                        break
+                        for method in self.modules[module_name].methods.values():
+                            self.output[index] = method['last_output']
+                else:
+                    # i3status module
+                    m = self.output[index]
+                    if m and m.get('name') in ['time', 'tztime']:
+                        time_module = self.i3status_thread.config[module_name]
+                        if not isinstance(time_module['date'], datetime):
+                            # something went wrong in the datetime parsing
+                            # output i3status' date string
+                            self.output[index]['full_text'] = time_module['date']
+                        else:
+                            if update_time:
+                                utcnow = datetime.utcnow()
+                                date = utcnow + time_module['delta']
+                                time_module['date'] = date
+                                time_format = time_module.get('time_format')
+
+                                # set the full_text date on the json_list to be returned
+                                self.output[index]['full_text'] = date.strftime(time_format)
+                                # reset the full_text date on the config object for next
+                                # iteration to be consistent with this one
+                                time_module['response']['full_text'] = m['full_text']
+                                updated = True
+
+                    if i3status_updated and config.get(module_name, {}).get('response'):
+                        self.output[index] = config[module_name]['response']
+                        updated = True
 
             if updated:
-              #  print_line('~~~')
-                # new style i3status configured ordering
-                self.output = self.i3status_thread.get_modules_output(
-                    json_list, self.modules, self.output)
-
+                prefix = self.i3status_thread.last_prefix
                 # dump the line to stdout only on change
                 print_line('{}{}'.format(prefix, dumps(self.output)))
-
-                # remember the last json list output
-                #previous_json_list = deepcopy(json_list)
 
                 # reset i3status json_list and json_list_ts
                 self.i3status_thread.update_json_list()
