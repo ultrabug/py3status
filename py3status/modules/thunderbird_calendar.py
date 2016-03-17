@@ -4,15 +4,15 @@ Display tasks in thunderbird calendar.
 
 Configuration parameters:
     cache_timeout: how often we refresh usage in seconds (default: 120s)
-    profile_path: path to the user thunderbird profile (not optional)
-    err_profile: error message regarding profile path and read access
     err_exception: error message when an exception is raised
+    err_profile: error message regarding profile path and read access
     format: see placeholders below
+    profile_path: path to the user thunderbird profile (not optional)
 
 Format of status string placeholders:
-    {due} due tasks
     {completed} completed tasks
     {current} title of current running task (sorted by priority and stamp)
+    {due} due tasks
 
 Make sure to configure profile_path in your i3status config using the full
 path or this module will not be able to retrieve any information from your
@@ -30,10 +30,10 @@ from time import time
 class Py3status:
     # available configuration parameters
     cache_timeout = 120
-    profile_path = ''
-    err_profile = 'error: profile not readable'
     err_exception = 'error: calendar parsing failed'
+    err_profile = 'error: profile not readable'
     format = 'tasks:[{due}] current:{current}'
+    profile_path = ''
 
     def _response(self, text, color=None):
         response = {
