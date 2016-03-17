@@ -44,12 +44,14 @@ class Py3status:
         """
         Display a colorful state of xscreensaver.
         """
-        self.run = call(["pidof", "xscreensaver"], stdout=DEVNULL,
-                        stderr=DEVNULL, preexec_fn=setpgrp) == 0
+        self.run = call(["pidof", "xscreensaver"],
+                        stdout=DEVNULL,
+                        stderr=DEVNULL,
+                        preexec_fn=setpgrp) == 0
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good'] if self.run
-                     else self.color_off or i3s_config['color_bad']
+            'color': self.color_on or i3s_config['color_good']
+            if self.run else self.color_off or i3s_config['color_bad']
         }
 
     def on_click(self, i3s_output_list, i3s_config, event):
@@ -59,12 +61,18 @@ class Py3status:
         if event['button'] == 1:
             if self.run:
                 self.run = False
-                Popen(["killall", "xscreensaver"], stdout=DEVNULL,
-                      stderr=DEVNULL, preexec_fn=setpgrp)
+                Popen(["killall", "xscreensaver"],
+                      stdout=DEVNULL,
+                      stderr=DEVNULL,
+                      preexec_fn=setpgrp)
             else:
                 self.run = True
-                Popen(["xscreensaver", "-no-splash", "-no-capture-stderr"],
-                      stdout=DEVNULL, stderr=DEVNULL, preexec_fn=setpgrp)
+                Popen(
+                    ["xscreensaver", "-no-splash", "-no-capture-stderr"],
+                    stdout=DEVNULL,
+                    stderr=DEVNULL,
+                    preexec_fn=setpgrp)
+
 
 if __name__ == "__main__":
     """
@@ -72,10 +80,8 @@ if __name__ == "__main__":
     """
     from time import sleep
     x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_good': '#00FF00',
-    }
+    config = {'color_bad': '#FF0000', 'color_good': '#00FF00', }
     while True:
         print(x.xscreensaver([], config))
         sleep(1)
+
