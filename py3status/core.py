@@ -355,8 +355,11 @@ class Py3statusWrapper():
         # initialize usage variables
         last_sec = 0
         interval = self.config['interval']
+        i3status_thread = self.i3status_thread
+        config = i3status_thread.config
 
-        config = self.i3status_thread.config
+        # this will be our output set to the correct length for the number of
+        # items in the bar
         output = [None] * len(config['order'])
 
         # main loop
@@ -365,12 +368,12 @@ class Py3statusWrapper():
             # do we need to update time for i3status modules?
             update_time = interval == 0 or sec % interval == 0
 
-            # check every thing is good each second
+            # only check everything is good each second
             if sec > last_sec:
                 last_sec = sec
                 # check i3status thread
-                if not self.i3status_thread.is_alive():
-                    err = self.i3status_thread.error
+                if not i3status_thread.is_alive():
+                    err = i3status_thread.error
                     if not err:
                         err = 'i3status died horribly'
                     self.i3_nagbar(err)
@@ -386,14 +389,14 @@ class Py3statusWrapper():
 
                 # Check times every min due to daylight savings etc
                 if sec % 60 == 0:
-                    self.i3status_thread.set_time_modules()
+                    i3status_thread.set_time_modules()
 
             # has i3status been updated?
-            i3status_updated = self.i3status_thread.check_updated(reset=True)
+            i3status_updated = i3status_thread.check_updated(reset=True)
 
             for index, module_name in enumerate(config['order']):
                 if module_name in self.modules:
-                    # py3status module
+                    # py3status module update if needed
                     if self.modules[module_name].check_updated(reset=True) or not output[index]:
                         updated = True
                         for method in self.modules[module_name].methods.values():
@@ -401,9 +404,10 @@ class Py3statusWrapper():
                 else:
                     # i3status module
                     if update_time:
-                        m = output[index]
-                        if m and m.get('name') in ['time', 'tztime']:
-                            time_module = self.i3status_thread.config[module_name]
+                        # only check time modules if we need to update the time
+                        mod = output[index]
+                        if mod and mod.get('name') in ['time', 'tztime']:
+                            time_module = i3status_thread.config[module_name]
                             if not isinstance(time_module['date'], datetime):
                                 # something went wrong in the datetime parsing
                                 # output i3status' date string
@@ -417,7 +421,7 @@ class Py3statusWrapper():
                                 output[index]['full_text'] = date.strftime(time_format)
                                 # reset the full_text date on the config object for next
                                 # iteration to be consistent with this one
-                                time_module['response']['full_text'] = m['full_text']
+                                time_module['response']['full_text'] = mod['full_text']
                             updated = True
                             continue
 
@@ -426,13 +430,13 @@ class Py3statusWrapper():
                         updated = True
 
             if updated:
-                prefix = self.i3status_thread.last_prefix
+                prefix = i3status_thread.last_prefix
                 # dump the line to stdout only on change
                 print_line('{}{}'.format(prefix, dumps(output)))
 
                 # reset i3status json_list and json_list_ts
                 if i3status_updated:
-                    self.i3status_thread.update_json_list()
+                    i3status_thread.update_json_list()
                 updated = False
 
             # sleep a bit before doing this again to avoid killing the CPU
