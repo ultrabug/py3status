@@ -366,7 +366,10 @@ class Py3statusWrapper():
         # main loop
         while True:
             sec = int(time())
+            # do we need to update time for i3status modules?
             update_time = sec > self.last_sec or self.config['interval'] < 1
+
+            # check every thing is good each second
             if sec > self.last_sec:
                 self.last_sec = sec
                 # check i3status thread
@@ -401,17 +404,16 @@ class Py3statusWrapper():
                             self.output[index] = method['last_output']
                 else:
                     # i3status module
-                    m = self.output[index]
-                    if m and m.get('name') in ['time', 'tztime']:
-                        time_module = self.i3status_thread.config[module_name]
-                        if not isinstance(time_module['date'], datetime):
-                            # something went wrong in the datetime parsing
-                            # output i3status' date string
-                            self.output[index]['full_text'] = time_module['date']
-                        else:
-                            if update_time:
-                                utcnow = datetime.utcnow()
-                                date = utcnow + time_module['delta']
+                    if update_time:
+                        m = self.output[index]
+                        if m and m.get('name') in ['time', 'tztime']:
+                            time_module = self.i3status_thread.config[module_name]
+                            if not isinstance(time_module['date'], datetime):
+                                # something went wrong in the datetime parsing
+                                # output i3status' date string
+                                self.output[index]['full_text'] = time_module['date']
+                            else:
+                                date = datetime.utcnow() + time_module['delta']
                                 time_module['date'] = date
                                 time_format = time_module.get('time_format')
 
@@ -421,6 +423,7 @@ class Py3statusWrapper():
                                 # iteration to be consistent with this one
                                 time_module['response']['full_text'] = m['full_text']
                                 updated = True
+                                continue
 
                     if i3status_updated and config.get(module_name, {}).get('response'):
                         self.output[index] = config[module_name]['response']
@@ -432,7 +435,8 @@ class Py3statusWrapper():
                 print_line('{}{}'.format(prefix, dumps(self.output)))
 
                 # reset i3status json_list and json_list_ts
-                self.i3status_thread.update_json_list()
+                if i3status_updated:
+                    self.i3status_thread.update_json_list()
                 updated = False
 
             # sleep a bit before doing this again to avoid killing the CPU
