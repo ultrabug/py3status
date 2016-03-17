@@ -354,16 +354,16 @@ class Py3statusWrapper():
 
         # initialize usage variables
         last_sec = 0
+        interval = self.config['interval']
 
         config = self.i3status_thread.config
-
         output = [None] * len(config['order'])
 
         # main loop
         while True:
             sec = int(time())
             # do we need to update time for i3status modules?
-            update_time = sec > last_sec or self.config['interval'] < 1
+            update_time = interval == 0 or sec % interval == 0
 
             # check every thing is good each second
             if sec > last_sec:
