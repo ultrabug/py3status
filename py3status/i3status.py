@@ -9,7 +9,7 @@ from subprocess import Popen
 from subprocess import PIPE
 from syslog import syslog, LOG_ERR, LOG_INFO
 from tempfile import NamedTemporaryFile
-from threading import Thread
+from threading import Thread, Lock
 
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
@@ -38,11 +38,33 @@ class I3status(Thread):
         self.last_output_ts = None
         self.last_prefix = None
         self.lock = lock
+        self.new_update = False
         self.ready = False
         self.standalone = standalone
         self.tmpfile_path = None
+        self.update_lock = Lock()
         #
         self.config = self.i3status_config_reader(i3status_config_path)
+
+    def set_updated(self):
+        """
+        Mark the status as updated
+        """
+        self.update_lock.acquire()
+        self.new_update = True
+        self.update_lock.release()
+
+    def check_updated(self, reset=False):
+        """
+        Check if the status is updated and clear flag if reset.
+        """
+        if not reset:
+            return self.new_update
+        self.update_lock.acquire()
+        updated = self.new_update
+        self.new_update = False
+        self.update_lock.release()
+        return updated
 
     def valid_config_param(self, param_name, cleanup=False):
         """
@@ -506,6 +528,7 @@ class I3status(Thread):
                                     self.last_prefix = prefix
                                     self.update_json_list()
                                     self.set_responses(json_list)
+                            self.set_updated()
                         else:
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
