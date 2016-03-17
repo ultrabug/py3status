@@ -5,7 +5,6 @@ import os
 import sys
 from datetime import datetime
 
-from copy import deepcopy
 from json import dumps
 from signal import signal
 from signal import SIGTERM, SIGUSR1
@@ -397,9 +396,11 @@ class Py3statusWrapper():
             for index, module_name in enumerate(config['order']):
                 if module_name in self.modules:
                     # py3status module update if needed
-                    if self.modules[module_name].check_updated(reset=True) or not output[index]:
+                    if self.modules[module_name].check_updated(
+                            reset=True) or not output[index]:
                         updated = True
-                        for method in self.modules[module_name].methods.values():
+                        for method in self.modules[module_name].methods.values(
+                        ):
                             output[index] = method['last_output']
                 else:
                     # i3status module
@@ -411,21 +412,25 @@ class Py3statusWrapper():
                             if not isinstance(time_module['date'], datetime):
                                 # something went wrong in the datetime parsing
                                 # output i3status' date string
-                                output[index]['full_text'] = time_module['date']
+                                output[index]['full_text'] = time_module[
+                                    'date']
                             else:
                                 date = datetime.utcnow() + time_module['delta']
                                 time_module['date'] = date
                                 time_format = time_module.get('time_format')
 
                                 # set the full_text date on the json_list to be returned
-                                output[index]['full_text'] = date.strftime(time_format)
+                                output[index]['full_text'] = date.strftime(
+                                    time_format)
                                 # reset the full_text date on the config object for next
                                 # iteration to be consistent with this one
-                                time_module['response']['full_text'] = mod['full_text']
+                                time_module['response']['full_text'] = mod[
+                                    'full_text']
                             updated = True
                             continue
 
-                    if i3status_updated and config.get(module_name, {}).get('response'):
+                    if i3status_updated and config.get(module_name,
+                                                       {}).get('response'):
                         output[index] = config[module_name]['response']
                         updated = True
 
