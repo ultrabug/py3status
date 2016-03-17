@@ -3,19 +3,20 @@
 Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds (default 30s)
-    - format: the only placeholder available is {ip} (default '{ip}')
-    - format_offline : what to display when offline
-    - format_online : what to display when online
-    - hide_when_offline: hide the module output when offline (default False)
-    - mode: default mode to display is 'ip' or 'status' (click to toggle)
-    - negative_cache_timeout: how often to check again when offline
-    - timeout : how long before deciding we're offline
-    - url: change IP check url (must output a plain text IP address)
-    - geolocation: uses ip-api.com/csv to look up origin of IP, and show the
-      country instead of ip (default: false)
-    - color_good_online_ip_mode: sets the good color when an ip/country lookup
-      was successful in IP mode (default: false)
+    cache_timeout: how often we refresh this module in seconds (default 30s)
+    format: avalable placeholders are {ip} and {country} (default '{ip}')
+            If {country} is used the data is queried from
+            "http://ip-api.com/csv instead" of
+            "http://ultrabug.fr/py3status/whatismyip".
+    format_offline: what to display when offline
+    format_online: what to display when online
+    hide_when_offline: hide the module output when offline (default False)
+    mode: default mode to display is 'ip' or 'status' (click to toggle)
+    negative_cache_timeout: how often to check again when offline
+    timeout: how long before deciding we're offline
+    url: change IP check url (must output a plain text IP address)
+    color_good_online_ip_mode: sets the good color when an ip/country lookup
+                               was successful in IP mode (default: false)
 
 @author ultrabug
 """
@@ -40,8 +41,8 @@ class Py3status:
     negative_cache_timeout = 2
     timeout = 5
     url = 'http://ultrabug.fr/py3status/whatismyip'
-    url2 = 'http://ip-api.com/csv'
-    geolocation = False
+    url_geo = 'http://ip-api.com/csv'
+    use_geo = '{country}' in format
     color_good_online_ip_mode = False
 
     def on_click(self, i3s_output_list, i3s_config, event):
@@ -56,29 +57,31 @@ class Py3status:
     def _get_my_ip(self):
         """
         """
+        country = None
         try:
-            if self.geolocation:
-                self.url = self.url2
+            if self.use_geo:
+                self.url = self.url_geo
             ip = urlopen(self.url, timeout=self.timeout).read()
             ip = ip.decode('utf-8')
-            if self.geolocation:
-                ip = ip.split(",")[1]
+            if self.use_geo:
+                ip = ip.split(",")
+                ip, country = ip[-1], ip[1]
         except Exception:
             ip = None
-        return ip
+        return ip, country
 
     def whatismyip(self, i3s_output_list, i3s_config):
         """
         """
-        ip = self._get_my_ip()
+        ip, country = self._get_my_ip()
         response = {'cached_until': time() + self.negative_cache_timeout}
-
         if ip is None and self.hide_when_offline:
             response['full_text'] = ''
         elif ip is not None:
             response['cached_until'] = time() + self.cache_timeout
             if self.mode == 'ip':
-                response['full_text'] = self.format.format(ip=ip)
+                response['full_text'] = self.format.format(ip=ip,
+                                                           country=country)
                 if self.color_good_online_ip_mode:
                     response['color'] = i3s_config['color_good']
             else:
