@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Indicator for Xscreensaver, can be toggled by left clicking.
+
 This is a partial rewrite of dpms.py. Most credit
 goes to the original author Andre Doser. This module shows the status
 of Xscreensaver and activates or deactivates it upon left click.
@@ -11,18 +13,19 @@ Settings can be managed using "xscreensaver-demo".
 
 Configuration parameters:
     - format_off: string to display when Xscreensaver is disabled
-    - format_on: string to display when Xscreensaver is enabled
+    - format_on : string to display when Xscreensaver is enabled
 
 Example configuration in py3status.conf:
 
+```
 order += "xscreensaver"
 xscreensaver {
     format_off = "xscreensaver off"
     format_on = "xscreensaver on"
 }
+```
 
-@author Andre Doser <dosera AT tf.uni-freiburg.de> (dpms.py)
-@author neutronst4r <c7420{at}gmx{dot}net> (Xscreensaver rewrite)
+@author neutronst4r <c7420{at}gmx{dot}net>
 """
 from os import setpgrp
 from subprocess import call, Popen, DEVNULL
@@ -45,8 +48,8 @@ class Py3status:
                         stderr=DEVNULL, preexec_fn=setpgrp) == 0
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good']
-            if self.run else self.color_off or i3s_config['color_bad']
+            'color': self.color_on or i3s_config['color_good'] if self.run
+                     else self.color_off or i3s_config['color_bad']
         }
 
     def on_click(self, i3s_output_list, i3s_config, event):
