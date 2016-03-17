@@ -368,7 +368,6 @@ class I3status(Thread):
                     self.config[conf_name]['delta'] = delta
                     self.config[conf_name]['time_format'] = time_format
 
-
     def update_json_list(self):
         """
         Copy the last json list output from i3status so that any module
@@ -378,7 +377,6 @@ class I3status(Thread):
         """
         self.json_list = deepcopy(self.last_output)
         self.json_list_ts = deepcopy(self.last_output_ts)
-
 
     @staticmethod
     def write_in_tmpfile(text, tmpfile):
