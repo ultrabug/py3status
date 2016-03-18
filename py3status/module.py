@@ -2,7 +2,7 @@ import sys
 import os
 import imp
 
-from threading import Thread, Timer, Lock
+from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
@@ -17,24 +17,25 @@ class Module(Thread):
     caching its output based on user will.
     """
 
-    def __init__(self, lock, config, module, i3_thread, user_modules):
+    def __init__(self, module, user_modules, py3wrapper):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
         self.click_events = False
-        self.config = config
+        self.config = py3wrapper.config
         self.has_kill = False
-        self.i3status_thread = i3_thread
+        self.i3status_thread = py3wrapper.i3status_thread
         self.last_output = []
-        self.lock = lock
+        self.lock = py3wrapper.lock
         self.methods = OrderedDict()
         self.module_class = None
+        self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.new_update = False
+        self.py3wrapper = py3wrapper
         self.timer = None
-        self.update_lock = Lock()
         #
         self.load_methods(module, user_modules)
 
@@ -79,21 +80,7 @@ class Module(Thread):
         """
         Mark the module as updated
         """
-        self.update_lock.acquire()
-        self.new_update = True
-        self.update_lock.release()
-
-    def check_updated(self, reset=False):
-        """
-        Check if the module is updated and clear flag if reset.
-        """
-        if not reset:
-            return self.new_update
-        self.update_lock.acquire()
-        updated = self.new_update
-        self.new_update = False
-        self.update_lock.release()
-        return updated
+        self.py3wrapper.notify_update(self.module_full_name)
 
     def load_methods(self, module, user_modules):
         """
@@ -167,6 +154,7 @@ class Module(Thread):
             click_method = getattr(self.module_class, 'on_click')
             click_method(self.i3status_thread.json_list,
                          self.i3status_thread.config['general'], event)
+            self.set_updated()
         except Exception:
             err = sys.exc_info()[1]
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)

@@ -32,6 +32,7 @@ class I3status(Thread):
             'ethernet', 'ipv6', 'load', 'path_exists', 'run_watch', 'time',
             'tztime', 'volume', 'wireless'
         ]
+        self.i3modules = {}
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
@@ -41,6 +42,7 @@ class I3status(Thread):
         self.new_update = False
         self.ready = False
         self.standalone = standalone
+        self.time_modules = []
         self.tmpfile_path = None
         self.update_lock = Lock()
         #
@@ -56,7 +58,7 @@ class I3status(Thread):
 
     def check_updated(self, reset=False):
         """
-        Check if the status is updated and clear flag if reset.
+        Check if the status is updated and clear if requested.
         """
         if not reset:
             return self.new_update
@@ -261,6 +263,7 @@ class I3status(Thread):
         for index, item in enumerate(self.json_list):
             conf_name = self.config['i3s_modules'][index]
             self.config[conf_name]['response'] = item
+            self.i3modules[conf_name] = item
 
     def get_delta_from_format(self, i3s_time, time_format):
         """
@@ -306,9 +309,11 @@ class I3status(Thread):
         #
         for index, item in enumerate(self.json_list):
             if item.get('name') in ['time', 'tztime']:
+
                 conf_name = self.config['i3s_modules'][index]
                 time_name = item.get('name')
-
+                if index not in self.time_modules:
+                    self.time_modules.append(index)
                 # time and tztime have different defaults
                 if time_name == 'time':
                     time_format = self.config.get(
