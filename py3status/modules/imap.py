@@ -9,7 +9,9 @@ Configuration parameters:
     hide_if_zero: don't show on bar if 0
     imap_server: IMAP server to connect to
     mailbox: name of the mailbox to check
+    maildir: full path of your maildir location
     new_mail_color: what color to output on new mail
+    offline: set to 1 will only check for local maildir
     password: login password
     port: IMAP server port
     user: login user
@@ -21,6 +23,7 @@ Format of status string placeholders:
 """
 
 import imaplib
+from mailbox import Maildir
 from time import time
 
 
@@ -33,8 +36,10 @@ class Py3status:
     hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
     mailbox = 'INBOX'
+    maildir = ''
     format = 'Mail: {unseen}'
     new_mail_color = ''
+    offline = '0'
     password = '<PASSWORD>'
     port = '993'
     user = '<USERNAME>'
@@ -61,23 +66,33 @@ class Py3status:
         return response
 
     def _get_mail_count(self):
+        mail_count = 0
         try:
-            mail_count = 0
-            directories = self.mailbox.split(',')
-            connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
-            connection.login(self.user, self.password)
-
-            for directory in directories:
-                connection.select(directory)
-                unseen_response = connection.search(None, self.criterion)
-                mails = unseen_response[1][0].split()
-                mail_count += len(mails)
-
-            connection.close()
-            return mail_count
-
+            if len(self.maildir) > 0:
+                directories = self.maildir.split(',')
+                for directory in directories:
+                    mbox = Maildir(directory, create=False)
+                    mail_count += mbox.__len__()
         except:
-            return 'N/A'
+            pass
+
+        if self.offline != '1':
+            try:
+                directories = self.mailbox.split(',')
+                connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
+                connection.login(self.user, self.password)
+
+                for directory in directories:
+                    connection.select(directory)
+                    unseen_response = connection.search(None, self.criterion)
+                    mails = unseen_response[1][0].split()
+                    mail_count += len(mails)
+
+                connection.close()
+            except:
+                return 'N/A'
+
+        return mail_count
 
 
 if __name__ == "__main__":
