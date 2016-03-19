@@ -359,7 +359,6 @@ class Py3statusWrapper():
         signal(SIGTERM, self.terminate)
 
         # initialize usage variables
-        self.last_sec = 0
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
 
@@ -412,7 +411,7 @@ class Py3statusWrapper():
                         err = 'events thread died, click events are disabled'
                         self.i3_nagbar(err, level='warning')
 
-                # update and i3status time/tztime items
+                # update i3status time/tztime items
                 if interval == 0 or sec % interval == 0:
                     i3status_thread.update_times()
 
