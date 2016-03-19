@@ -82,6 +82,11 @@ class Module(Thread):
         """
         self.py3wrapper.notify_update(self.module_full_name)
 
+    def get_latest(self):
+        for method in self.methods.values():
+            output = method['last_output']
+        return output
+
     def load_methods(self, module, user_modules):
         """
         Read the given user-written py3status class file and store its methods.

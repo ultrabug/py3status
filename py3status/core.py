@@ -3,7 +3,6 @@ from __future__ import print_function
 import argparse
 import os
 import sys
-from datetime import datetime
 from collections import deque
 
 from json import dumps
@@ -233,9 +232,7 @@ class Py3statusWrapper():
                    'py3status started with config {}'.format(self.config))
 
         # setup i3status thread
-        self.i3status_thread = I3status(self.lock,
-                                        self.config['i3status_config_path'],
-                                        self.config['standalone'])
+        self.i3status_thread = I3status(self)
         if self.config['standalone']:
             self.i3status_thread.mock()
         else:
@@ -341,77 +338,16 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
+    def notify_update(self, update):
+        """
+        Name or list of names of modules that have updated.
+        """
+        if isinstance(update, list):
+            self.queue.extend(update)
+        else:
+            self.queue.append(update)
+
     @profile
-    def update_bar(self):
-        updated = False
-        i3status_thread = self.i3status_thread
-        i3modules = i3status_thread.i3modules
-        output = self.output
-        interval = self.config['interval']
-
-        sec = int(time())
-        if sec > self.last_sec:
-            self.last_sec = sec
-
-        # do we need to update time for i3status modules?
-        update_time = interval == 0 or sec % interval == 0
-
-        # Any modules that need updating?
-        while (len(self.queue)):
-            module_name = self.queue.popleft()
-            index = self.positions[module_name]
-            for method in self.modules[module_name].methods.values():
-                output[index] = method['last_output']
-            updated = True
-
-        # has i3status been updated?
-        i3status_updated = i3status_thread.check_updated(reset=True)
-        if i3status_updated:
-            for module_name in self.i3status_modules:
-                if i3modules.get(module_name):
-                    index = self.positions[module_name]
-                    output[index] = i3modules[module_name]
-            updated = True
-
-        # i3status time modules
-        if update_time:
-            for item in self.i3status_thread.time_modules:
-                module_name = self.i3status_modules[item]
-                index = self.positions[module_name]
-                time_module = i3status_thread.config[module_name]
-                mod = output[index]
-                if not mod:
-                    continue
-                if not isinstance(time_module['date'], datetime):
-                    # something went wrong in the datetime parsing
-                    # output i3status' date string
-                    output[index]['full_text'] = time_module['date']
-                else:
-                    date = datetime.utcnow() + time_module['delta']
-                    time_module['date'] = date
-                    time_format = time_module.get('time_format')
-
-                    # set the full_text date on the json_list to be
-                    # returned
-                    output[index]['full_text'] = date.strftime(time_format)
-                    # reset the full_text date on the config object
-                    # for next iteration to be consistent with this
-                    # one
-                    i3modules[module_name]['full_text'] = mod['full_text']
-                updated = True
-
-        if updated:
-            prefix = i3status_thread.last_prefix
-            # dump the line to stdout only on change
-            print_line('{}{}'.format(prefix, dumps(output)))
-
-            # reset i3status json_list and json_list_ts
-            if i3status_updated:
-                i3status_thread.update_json_list()
-
-    def notify_update(self, module_full_name):
-        self.queue.append(module_full_name)
-
     def run(self):
         """
         Main py3status loop, continuously read from i3status and modules
@@ -432,30 +368,33 @@ class Py3statusWrapper():
 
         # this will be our output set to the correct length for the number of
         # items in the bar
-        self.output = [None] * len(config['order'])
+        output = [None] * len(config['order'])
 
-        self.i3status_modules = [name
-                                 for name in config['order']
-                                 if name not in self.modules]
-        self.positions = {name: index
-                          for index, name in enumerate(config['order'])}
+        # Setup our output modules to allow easy updating of py3modules and
+        # i3status modules allows the same module to be used multiple times.
+        output_modules = {}
+        for index, name in enumerate(config['order']):
+            if name not in output_modules:
+                output_modules[name] = {'position': []}
+            output_modules[name]['position'].append(index)
+            if name in self.modules:
+                # py3module
+                output_modules[name]['module'] = self.modules[name]
+            else:
+                # i3status
+                output_modules[name]['module'] = i3status_thread.i3modules[
+                    name]
 
         interval = self.config['interval']
-        # main loop
         last_sec = 0
+
+        # main loop
         while True:
-            update_time = False
-            now = time()
-            sec = int(now)
+            sec = int(time())
 
             # only check everything is good each second
             if sec > last_sec:
                 last_sec = sec
-                update_time = interval == 0 or sec % interval == 0
-
-                # Check times every min due to daylight savings etc
-                if sec % 60 == 0:
-                    i3status_thread.set_time_modules()
 
                 # check i3status thread
                 if not i3status_thread.is_alive():
@@ -473,9 +412,24 @@ class Py3statusWrapper():
                         err = 'events thread died, click events are disabled'
                         self.i3_nagbar(err, level='warning')
 
+                # update and i3status time/tztime items
+                if interval == 0 or sec % interval == 0:
+                    i3status_thread.update_times()
+
             # check if an update is needed
-            if self.queue or update_time or i3status_thread.check_updated():
-                self.update_bar()
+            if self.queue:
+                while (len(self.queue)):
+                    module_name = self.queue.popleft()
+                    module = output_modules[module_name]
+                    for index in module['position']:
+                        # store the outupt as json
+                        output[index] = dumps(module['module'].get_latest())
+
+                prefix = i3status_thread.last_prefix
+                # build output string
+                out = ','.join([x for x in output if x])
+                # dump the line to stdout
+                print_line('{}[{}]'.format(prefix, out))
 
             # sleep a bit before doing this again to avoid killing the CPU
             sleep(0.1)

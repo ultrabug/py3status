@@ -9,11 +9,161 @@ from subprocess import Popen
 from subprocess import PIPE
 from syslog import syslog, LOG_ERR, LOG_INFO
 from tempfile import NamedTemporaryFile
-from threading import Thread, Lock
+from threading import Thread
+from time import time
 
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
+
+
+class I3statusModule:
+    """
+    This a wrapper for i3status items so that they mirror some of the methods
+    of the Module class.  It also helps encapsulate the auto time updating for
+    `time` and `tztime`.
+    """
+
+    def __init__(self, module_name, py3statusWrapper):
+        self.module_name = module_name
+        self.i3status = py3statusWrapper.i3status_thread
+        self.is_time_module = module_name.split()[0] in ['time', 'tztime']
+        self.item = {}
+        self.py3statusWrapper = py3statusWrapper
+        self.time_date = None
+
+    def get_latest(self):
+        return self.item
+
+    def update_from_item(self, item):
+        """
+        Update from i3status output. returns if item has changed.
+        """
+        is_updated = self.item != item
+        self.item = item
+        if self.is_time_module:
+            self.set_time_zone()
+        return is_updated
+
+    def update_time_value(self):
+        if not self.item:
+            return
+        if not isinstance(self.time_date, datetime):
+            # something went wrong in the datetime parsing
+            # output i3status' date string
+            self.item['full_text'] = self.time_date
+        else:
+            date = datetime.utcnow() + self.time_delta
+            self.time_date = date
+            # set the full_text date on the json_list to be
+            # returned
+            self.item['full_text'] = date.strftime(self.time_format)
+        self.py3statusWrapper.notify_update(self.module_name)
+
+    def get_delta_from_format(self, i3s_time, time_format):
+        """
+        Guess the time delta from %z time formats such as +0400.
+
+        When such a format is found, replace it in the string so we respect
+        i3status' output while being able to correctly adjust the time.
+        """
+        try:
+            if '%z' in time_format:
+                res = findall('[\-+]{1}[\d]{4}', i3s_time)[0]
+                if res:
+                    operator = res[0]
+                    hours = int(res[1:3])
+                    minutes = int(res[-2:])
+                    return (time_format.replace('%z', res), timedelta(
+                        hours=eval('{}{}'.format(operator, hours)),
+                        minutes=eval('{}{}'.format(operator, minutes))))
+        except Exception:
+            err = sys.exc_info()[1]
+            syslog(
+                LOG_ERR,
+                'i3status get_delta_from_format failed "{}" "{}" ({})'.format(
+                    i3s_time, time_format, err))
+        return (time_format, None)
+
+    def set_time_zone(self):
+        """
+        This method is executed only once after the first i3status output.
+
+        We parse all the i3status time and tztime modules and generate
+        a datetime for each of them while preserving (or defaulting) their
+        configured time format.
+
+        We also calculate a timedelta for each of them representing their
+        timezone offset. This is this delta that we'll be using from now on as
+        any future time or tztime update from i3status will be overwritten
+        thanks to our pre-parsed date here.
+        """
+        if self.time_date and int(time()) % 60 != 0:
+            return
+        default_time_format = '%Y-%m-%d %H:%M:%S'
+        default_tztime_format = '%Y-%m-%d %H:%M:%S %Z'
+        utcnow = self.i3status.last_output_ts
+        #
+        config = self.i3status.config
+        item = self.item
+        conf_name = self.module_name
+        time_name = item.get('name')
+        # time and tztime have different defaults
+        if time_name == 'time':
+            time_format = config.get(conf_name,
+                                     {}).get('format', default_time_format)
+        else:
+            time_format = config.get(conf_name,
+                                     {}).get('format', default_tztime_format)
+
+        # handle format_time parameter
+        if 'format_time' in config.get(conf_name, {}):
+            time_format = time_format.replace('%time',
+                                              config[conf_name]['format_time'])
+
+        # parse i3status date
+        i3s_time = item['full_text'].encode('UTF-8', 'replace')
+        try:
+            # python3 compatibility code
+            i3s_time = i3s_time.decode()
+        except:
+            pass
+
+        time_format, delta = self.get_delta_from_format(i3s_time, time_format)
+
+        try:
+            if '%Z' in time_format:
+                raise ValueError('%Z directive is not supported')
+
+            # add mendatory items in i3status time format wrt issue #18
+            time_fmt = time_format
+            for fmt in ['%Y', '%m', '%d']:
+                if fmt not in time_format:
+                    time_fmt = '{} {}'.format(time_fmt, fmt)
+                    i3s_time = '{} {}'.format(i3s_time,
+                                              datetime.now().strftime(fmt))
+
+            # get a datetime from the parsed string date
+            date = datetime.strptime(i3s_time, time_fmt)
+
+            # calculate the delta if needed
+            if not delta:
+                delta = (datetime(date.year, date.month, date.day, date.hour,
+                                  date.minute) -
+                         datetime(utcnow.year, utcnow.month, utcnow.day,
+                                  utcnow.hour, utcnow.minute))
+        except ValueError:
+            date = i3s_time
+        except Exception:
+            err = sys.exc_info()[1]
+            syslog(LOG_ERR,
+                   'i3status set_time_modules "{}" failed ({})'.format(
+                       conf_name, err))
+            date = i3s_time
+        finally:
+            self.time_date = date
+            self.time_delta = delta
+            self.time_format = time_format
 
 
 class I3status(Thread):
@@ -21,7 +171,7 @@ class I3status(Thread):
     This class is responsible for spawning i3status and reading its output.
     """
 
-    def __init__(self, lock, i3status_config_path, standalone):
+    def __init__(self, py3statusWrapper):
         """
         Our output will be read asynchronously from 'last_output'.
         """
@@ -38,35 +188,24 @@ class I3status(Thread):
         self.last_output = None
         self.last_output_ts = None
         self.last_prefix = None
-        self.lock = lock
+        self.lock = py3statusWrapper.lock
         self.new_update = False
+        self.py3statusWrapper = py3statusWrapper
         self.ready = False
-        self.standalone = standalone
+        self.standalone = py3statusWrapper.config['standalone']
         self.time_modules = []
         self.tmpfile_path = None
-        self.update_lock = Lock()
         #
-        self.config = self.i3status_config_reader(i3status_config_path)
+        config_path = py3statusWrapper.config['i3status_config_path']
+        self.config = self.i3status_config_reader(config_path)
 
-    def set_updated(self):
+    def update_times(self):
         """
-        Mark the status as updated
+        Update time for any i3status time/tztime items.
         """
-        self.update_lock.acquire()
-        self.new_update = True
-        self.update_lock.release()
-
-    def check_updated(self, reset=False):
-        """
-        Check if the status is updated and clear if requested.
-        """
-        if not reset:
-            return self.new_update
-        self.update_lock.acquire()
-        updated = self.new_update
-        self.new_update = False
-        self.update_lock.release()
-        return updated
+        for module in self.i3modules.values():
+            if module.is_time_module:
+                module.update_time_value()
 
     def valid_config_param(self, param_name, cleanup=False):
         """
@@ -260,118 +399,16 @@ class I3status(Thread):
         """
         Set the given i3status responses on their respective configuration.
         """
+        self.update_json_list()
+        updates = []
         for index, item in enumerate(self.json_list):
             conf_name = self.config['i3s_modules'][index]
-            self.config[conf_name]['response'] = item
-            self.i3modules[conf_name] = item
-
-    def get_delta_from_format(self, i3s_time, time_format):
-        """
-        Guess the time delta from %z time formats such as +0400.
-
-        When such a format is found, replace it in the string so we respect
-        i3status' output while being able to correctly adjust the time.
-        """
-        try:
-            if '%z' in time_format:
-                res = findall('[\-+]{1}[\d]{4}', i3s_time)[0]
-                if res:
-                    operator = res[0]
-                    hours = int(res[1:3])
-                    minutes = int(res[-2:])
-                    return (time_format.replace('%z', res), timedelta(
-                        hours=eval('{}{}'.format(operator, hours)),
-                        minutes=eval('{}{}'.format(operator, minutes))))
-        except Exception:
-            err = sys.exc_info()[1]
-            syslog(
-                LOG_ERR,
-                'i3status get_delta_from_format failed "{}" "{}" ({})'.format(
-                    i3s_time, time_format, err))
-        return (time_format, None)
-
-    def set_time_modules(self):
-        """
-        This method is executed only once after the first i3status output.
-
-        We parse all the i3status time and tztime modules and generate
-        a datetime for each of them while preserving (or defaulting) their
-        configured time format.
-
-        We also calculate a timedelta for each of them representing their
-        timezone offset. This is this delta that we'll be using from now on as
-        any future time or tztime update from i3status will be overwritten
-        thanks to our pre-parsed date here.
-        """
-        default_time_format = '%Y-%m-%d %H:%M:%S'
-        default_tztime_format = '%Y-%m-%d %H:%M:%S %Z'
-        utcnow = self.last_output_ts
-        #
-        for index, item in enumerate(self.json_list):
-            if item.get('name') in ['time', 'tztime']:
-
-                conf_name = self.config['i3s_modules'][index]
-                time_name = item.get('name')
-                if index not in self.time_modules:
-                    self.time_modules.append(index)
-                # time and tztime have different defaults
-                if time_name == 'time':
-                    time_format = self.config.get(
-                        conf_name, {}).get('format', default_time_format)
-                else:
-                    time_format = self.config.get(
-                        conf_name, {}).get('format', default_tztime_format)
-
-                # handle format_time parameter
-                if 'format_time' in self.config.get(conf_name, {}):
-                    time_format = time_format.replace(
-                        '%time', self.config[conf_name]['format_time'])
-
-                # parse i3status date
-                i3s_time = item['full_text'].encode('UTF-8', 'replace')
-                try:
-                    # python3 compatibility code
-                    i3s_time = i3s_time.decode()
-                except:
-                    pass
-
-                time_format, delta = self.get_delta_from_format(i3s_time,
-                                                                time_format)
-
-                try:
-                    if '%Z' in time_format:
-                        raise ValueError('%Z directive is not supported')
-
-                    # add mendatory items in i3status time format wrt issue #18
-                    time_fmt = time_format
-                    for fmt in ['%Y', '%m', '%d']:
-                        if fmt not in time_format:
-                            time_fmt = '{} {}'.format(time_fmt, fmt)
-                            i3s_time = '{} {}'.format(
-                                i3s_time, datetime.now().strftime(fmt))
-
-                    # get a datetime from the parsed string date
-                    date = datetime.strptime(i3s_time, time_fmt)
-
-                    # calculate the delta if needed
-                    if not delta:
-                        delta = (
-                            datetime(date.year, date.month, date.day,
-                                     date.hour, date.minute) - datetime(
-                                         utcnow.year, utcnow.month, utcnow.day,
-                                         utcnow.hour, utcnow.minute))
-                except ValueError:
-                    date = i3s_time
-                except Exception:
-                    err = sys.exc_info()[1]
-                    syslog(LOG_ERR,
-                           'i3status set_time_modules "{}" failed ({})'.format(
-                               conf_name, err))
-                    date = i3s_time
-                finally:
-                    self.config[conf_name]['date'] = date
-                    self.config[conf_name]['delta'] = delta
-                    self.config[conf_name]['time_format'] = time_format
+            if conf_name not in self.i3modules:
+                self.i3modules[conf_name] = I3statusModule(
+                    conf_name, self.py3statusWrapper)
+            if self.i3modules[conf_name].update_from_item(item):
+                updates.append(conf_name)
+        self.py3statusWrapper.notify_update(updates)
 
     def update_json_list(self):
         """
@@ -448,11 +485,7 @@ class I3status(Thread):
                                     self.last_output = json_list
                                     self.last_output_ts = datetime.utcnow()
                                     self.last_prefix = ','
-                                    self.update_json_list()
                                     self.set_responses(json_list)
-                                    # on first i3status output, we parse
-                                    # the time and tztime modules
-                                    self.set_time_modules()
                                 self.ready = True
                             elif not line.startswith(','):
                                 if 'version' in line:
@@ -465,9 +498,7 @@ class I3status(Thread):
                                     self.last_output = json_list
                                     self.last_output_ts = datetime.utcnow()
                                     self.last_prefix = prefix
-                                    self.update_json_list()
                                     self.set_responses(json_list)
-                            self.set_updated()
                         else:
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
