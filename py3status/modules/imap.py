@@ -11,7 +11,6 @@ Configuration parameters:
     mailbox: name of the mailbox to check
     maildir: full path of your maildir location
     new_mail_color: what color to output on new mail
-    offline: set to 1 will only check for local maildir
     password: login password
     port: IMAP server port
     user: login user
@@ -39,7 +38,6 @@ class Py3status:
     maildir = ''
     format = 'Mail: {unseen}'
     new_mail_color = ''
-    offline = '0'
     password = '<PASSWORD>'
     port = '993'
     user = '<USERNAME>'
@@ -67,17 +65,17 @@ class Py3status:
 
     def _get_mail_count(self):
         mail_count = 0
+
         try:
+            # check for local maildir if variable is defined
             if len(self.maildir) > 0:
-                directories = self.maildir.split(',')
+                directories = self.maildir.split(';')
                 for directory in directories:
                     mbox = Maildir(directory, create=False)
                     mail_count += mbox.__len__()
-        except:
-            pass
 
-        if self.offline != '1':
-            try:
+            # check for remote mailbox if variable is defined
+            if self.imap_server != '<IMAP_SERVER>':
                 directories = self.mailbox.split(',')
                 connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
                 connection.login(self.user, self.password)
@@ -89,8 +87,8 @@ class Py3status:
                     mail_count += len(mails)
 
                 connection.close()
-            except:
-                return 'N/A'
+        except:
+            return 'N/A'
 
         return mail_count
 
