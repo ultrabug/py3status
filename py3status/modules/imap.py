@@ -8,6 +8,7 @@ Configuration parameters:
     format: format to display
     hide_if_zero: don't show on bar if 0
     imap_server: IMAP server to connect to
+    local_mailbox: full path of your mbox location
     mailbox: name of the mailbox to check
     maildir: full path of your maildir location
     new_mail_color: what color to output on new mail
@@ -22,7 +23,7 @@ Format of status string placeholders:
 """
 
 import imaplib
-from mailbox import Maildir
+from mailbox import Maildir, mbox as Mailbox
 from time import time
 
 
@@ -34,6 +35,7 @@ class Py3status:
     criterion = 'UNSEEN'
     hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
+    local_mailbox = ''
     mailbox = 'INBOX'
     maildir = ''
     format = 'Mail: {unseen}'
@@ -72,6 +74,13 @@ class Py3status:
                 directories = self.maildir.split(';')
                 for directory in directories:
                     mbox = Maildir(directory, create=False)
+                    mail_count += mbox.__len__()
+
+            # check for local mbox if variable is defined
+            if len(self.local_mailbox) > 0:
+                directories = self.local_mailbox.split(';')
+                for directory in directories:
+                    mbox = Mailbox(directory, create=False)
                     mail_count += mbox.__len__()
 
             # check for remote mailbox if variable is defined
