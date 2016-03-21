@@ -254,13 +254,15 @@ class Module(Thread):
                         obj['cached_until'] = time()
                     group_module.run()
 
+            if not cache_time:
+                cache_time = self.config['cache_timeout']
+
             # don't be hasty mate
             # set timer to do update next time one is needed
-            if cache_time:
-                delay = max(cache_time - time(),
-                            self.config['minimum_interval'])
-                self.timer = Timer(delay, self.run)
-                self.timer.start()
+            delay = max(cache_time - time(),
+                        self.config['minimum_interval'])
+            self.timer = Timer(delay, self.run)
+            self.timer.start()
 
     def kill(self):
         # stop timer if exists
