@@ -347,6 +347,36 @@ class Py3statusWrapper():
         else:
             self.queue.append(update)
 
+    def create_output_modules(self):
+        """
+        Setup our output modules to allow easy updating of py3modules and
+        i3status modules allows the same module to be used multiple times.
+        """
+        config = self.i3status_thread.config
+        i3modules = self.i3status_thread.i3modules
+        output_modules = {}
+        # position in the bar of the modules
+        positions = {}
+        for index, name in enumerate(config['order']):
+            if name not in positions:
+                positions[name] = []
+            positions[name].append(index)
+
+        # py3status modules
+        for name in self.modules:
+            if name not in output_modules:
+                output_modules[name] = {}
+                output_modules[name]['position'] = positions.get(name, [])
+                output_modules[name]['module'] = self.modules[name]
+        # i3status modules
+        for name in i3modules:
+            if name not in output_modules:
+                output_modules[name] = {}
+                output_modules[name]['position'] = positions.get(name, [])
+                output_modules[name]['module'] = i3modules[name]
+
+        self.output_modules = output_modules
+
     @profile
     def run(self):
         """
@@ -361,6 +391,7 @@ class Py3statusWrapper():
         # initialize usage variables
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
+        self.create_output_modules()
 
         # update queue populate with all py3modules
         self.queue.extend(self.modules)
@@ -368,21 +399,6 @@ class Py3statusWrapper():
         # this will be our output set to the correct length for the number of
         # items in the bar
         output = [None] * len(config['order'])
-
-        # Setup our output modules to allow easy updating of py3modules and
-        # i3status modules allows the same module to be used multiple times.
-        output_modules = {}
-        for index, name in enumerate(config['order']):
-            if name not in output_modules:
-                output_modules[name] = {'position': []}
-            output_modules[name]['position'].append(index)
-            if name in self.modules:
-                # py3module
-                output_modules[name]['module'] = self.modules[name]
-            else:
-                # i3status
-                output_modules[name]['module'] = i3status_thread.i3modules[
-                    name]
 
         interval = self.config['interval']
         last_sec = 0
@@ -419,7 +435,7 @@ class Py3statusWrapper():
             if self.queue:
                 while (len(self.queue)):
                     module_name = self.queue.popleft()
-                    module = output_modules[module_name]
+                    module = self.output_modules[module_name]
                     for index in module['position']:
                         # store the outupt as json
                         output[index] = dumps(module['module'].get_latest())
