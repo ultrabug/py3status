@@ -198,8 +198,7 @@ class Py3statusWrapper():
             if module in self.modules:
                 continue
             try:
-                my_m = Module(self.lock, self.config, module,
-                              self.i3status_thread, user_modules)
+                my_m = Module(module, user_modules, self)
                 # only start and handle modules with available methods
                 if my_m.methods:
                     my_m.start()

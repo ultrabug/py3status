@@ -16,6 +16,7 @@ Format of status string placeholders:
     {output} output of script given by "script_path"
 
 i3status.conf example:
+
 ```
 external_script {
     color = "#00FF00"

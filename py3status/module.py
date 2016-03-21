@@ -1,6 +1,7 @@
 import sys
 import os
 import imp
+import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
@@ -17,22 +18,27 @@ class Module(Thread):
     caching its output based on user will.
     """
 
-    def __init__(self, lock, config, module, i3_thread, user_modules):
+    def __init__(self, module, user_modules, py3_wrapper):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
+        self.cache_time = None
         self.click_events = False
-        self.config = config
+        self.config = py3_wrapper.config
         self.has_kill = False
-        self.i3status_thread = i3_thread
+        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.lock = lock
+        self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
         self.module_class = None
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
+        self.module_full_name = module
+        self.py3_wrapper = py3_wrapper
         self.timer = None
+        # if the module is part of a group then we want to store it's name
+        self.group = self.i3status_thread.config.get(module, {}).get('.group')
         #
         self.load_methods(module, user_modules)
 
@@ -102,7 +108,17 @@ class Module(Thread):
             # apply module configuration from i3status config
             mod_config = self.i3status_thread.config.get(module, {})
             for config, value in mod_config.items():
-                setattr(self.module_class, config, value)
+                # names starting with '.' are private
+                if not config.startswith('.'):
+                    setattr(self.module_class, config, value)
+
+            # check if module has meta class
+            if hasattr(self.module_class, 'Meta'):
+                meta = self.module_class.Meta
+                if inspect.isclass(meta):
+                    # module wants it's Module
+                    if getattr(meta, 'include_py3_module', False):
+                        setattr(self.module_class, 'py3_module', self)
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -230,13 +246,25 @@ class Module(Thread):
                     err = sys.exc_info()[1]
                     syslog(LOG_WARNING,
                            'user method {} failed ({})'.format(meth, err))
+
+            # if in a group then force the group to update
+            if self.group:
+                group_module = self.py3_wrapper.modules.get(self.group)
+                if group_module:
+                    for obj in group_module.methods.values():
+                        obj['cached_until'] = time()
+                    group_module.run()
+
+            if not cache_time:
+                cache_time = time() + self.config['cache_timeout']
+            self.cache_time = cache_time
+
             # don't be hasty mate
             # set timer to do update next time one is needed
-            if cache_time:
-                delay = max(cache_time - time(),
-                            self.config['minimum_interval'])
-                self.timer = Timer(delay, self.run)
-                self.timer.start()
+            delay = max(cache_time - time(),
+                        self.config['minimum_interval'])
+            self.timer = Timer(delay, self.run)
+            self.timer.start()
 
     def kill(self):
         # stop timer if exists
