@@ -23,6 +23,7 @@ class Module(Thread):
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
+        self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
         self.has_kill = False
@@ -255,7 +256,8 @@ class Module(Thread):
                     group_module.run()
 
             if not cache_time:
-                cache_time = self.config['cache_timeout']
+                cache_time = time() + self.config['cache_timeout']
+            self.cache_time = cache_time
 
             # don't be hasty mate
             # set timer to do update next time one is needed
