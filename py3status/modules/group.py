@@ -132,7 +132,7 @@ class Py3status:
     def _prev(self):
         self.active = (self.active - 1) % len(self.items)
 
-    def output(self, i3s_output_list, i3s_config):
+    def group(self, i3s_output_list, i3s_config):
         """
         Display a output of current module
         """
