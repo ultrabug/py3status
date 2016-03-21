@@ -75,8 +75,12 @@ class Py3status:
         self.initialized = False
 
     def _init(self):
+        try:
+            self.py3_wrapper = self.py3_module.py3_wrapper
+        except AttributeError:
+            self.py3_wrapper = None
+
         self._cycle_time = time() + self.cycle
-        self.py3_wrapper = self.py3_module.py3_wrapper
         self.initialized = True
 
     def _get_output(self):
@@ -189,5 +193,5 @@ if __name__ == "__main__":
     config = {}
 
     while True:
-        print(x.output([], config))
+        print(x.group([], config))
         sleep(1)
