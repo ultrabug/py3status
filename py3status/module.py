@@ -255,7 +255,7 @@ class Module(Thread):
                         obj['cached_until'] = time()
                     group_module.run()
 
-            if not cache_time:
+            if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
 
