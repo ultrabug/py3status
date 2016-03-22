@@ -97,8 +97,9 @@ class Py3status:
             if i == self.active:
                 current = output
             widths.append(len(output['full_text']))
-        width = max(widths)
-        current['full_text'] += ' ' * (width - len(current['full_text']))
+        if widths:
+            width = max(widths)
+            current['full_text'] += ' ' * (width - len(current['full_text']))
         return current
 
     def _get_current_output(self, item):
