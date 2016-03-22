@@ -171,14 +171,27 @@ class Py3status:
         """
         if not self.items:
             return
+        # reset cycle time
+        self._cycle_time = time() + self.cycle
         if self.button_next and event['button'] == self.button_next:
             self._next()
-            self._cycle_time = time() + self.cycle
         elif self.button_prev and event['button'] == self.button_prev:
             self._prev()
-            self._cycle_time = time() + self.cycle
         else:
-            self._cycle_time = time() + self.cycle
+            # pass the event to the module
+            # first see if any event set in the config
+            current_module = self.items[self.active]
+            config = self.py3_module.py3_wrapper.i3status_thread.config[
+                'on_click']
+            click_info = config.get(current_module, None)
+            if click_info:
+                action = click_info.get(event['button'])
+                if action:
+                    # we have an action so call it
+                    self.py3_module.py3_wrapper.events_thread.i3_msg(
+                        current_module, action)
+                    return
+            # try the modules own click event
             current_module = self._get_current_module()
             current_module.click_event(event)
             self.py3_wrapper.events_thread.refresh(
