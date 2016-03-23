@@ -35,6 +35,7 @@ class Module(Thread):
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.module_full_name = module
+        self.nagged = False
         self.py3_wrapper = py3_wrapper
         self.timer = None
         # if the module is part of a group then we want to store it's name
@@ -244,8 +245,11 @@ class Module(Thread):
                                'method {} returned {} '.format(meth, result))
                 except Exception:
                     err = sys.exc_info()[1]
-                    syslog(LOG_WARNING,
-                           'user method {} failed ({})'.format(meth, err))
+                    msg = 'user method {} failed ({})'.format(meth, err)
+                    syslog(LOG_WARNING, msg)
+                    if not self.nagged:
+                        self.py3_wrapper.i3_nagbar(msg, level='warning')
+                        self.nagged = True
 
             # if in a group then force the group to update
             if self.group:
