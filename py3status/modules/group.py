@@ -197,7 +197,7 @@ class Py3status:
                     # we have an action so call it
                     self.py3_module.py3_wrapper.events_thread.i3_msg(
                         current_module, action)
-                    return
+
             # try the modules own click event
             current_module = self._get_current_module()
             current_module.click_event(event)
