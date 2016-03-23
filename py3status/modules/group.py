@@ -141,7 +141,8 @@ class Py3status:
         """
         Display a output of current module
         """
-        if not self.initialized:
+        ready = self.initialized
+        if not ready:
             self._init()
 
         if self.cycle and time() >= self._cycle_time:
@@ -155,6 +156,12 @@ class Py3status:
             output = current_output['full_text']
             color = current_output.get('color')
         update_time = self.cycle or 1000
+
+        # on the first run contained items may not be displayed so make sure we
+        # check them again to ensure all is correct
+        if not ready:
+            update_time = 0.1
+
         response = {
             'cached_until': time() + update_time,
             'full_text': self.format.format(output=output)
