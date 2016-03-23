@@ -24,12 +24,12 @@ class I3statusModule:
     `time` and `tztime`.
     """
 
-    def __init__(self, module_name, py3statusWrapper):
+    def __init__(self, module_name, py3_wrapper):
         self.module_name = module_name
-        self.i3status = py3statusWrapper.i3status_thread
+        self.i3status = py3_wrapper.i3status_thread
         self.is_time_module = module_name.split()[0] in ['time', 'tztime']
         self.item = {}
-        self.py3statusWrapper = py3statusWrapper
+        self.py3_wrapper = py3_wrapper
         self.time_date = None
 
     def get_latest(self):
@@ -58,7 +58,7 @@ class I3statusModule:
             # set the full_text date on the json_list to be
             # returned
             self.item['full_text'] = date.strftime(self.time_format)
-        self.py3statusWrapper.notify_update(self.module_name)
+        self.py3_wrapper.notify_update(self.module_name)
 
     def get_delta_from_format(self, i3s_time, time_format):
         """
@@ -171,7 +171,7 @@ class I3status(Thread):
     This class is responsible for spawning i3status and reading its output.
     """
 
-    def __init__(self, py3statusWrapper):
+    def __init__(self, py3_wrapper):
         """
         Our output will be read asynchronously from 'last_output'.
         """
@@ -188,15 +188,15 @@ class I3status(Thread):
         self.last_output = None
         self.last_output_ts = None
         self.last_prefix = None
-        self.lock = py3statusWrapper.lock
+        self.lock = py3_wrapper.lock
         self.new_update = False
-        self.py3statusWrapper = py3statusWrapper
+        self.py3_wrapper = py3_wrapper
         self.ready = False
-        self.standalone = py3statusWrapper.config['standalone']
+        self.standalone = py3_wrapper.config['standalone']
         self.time_modules = []
         self.tmpfile_path = None
         #
-        config_path = py3statusWrapper.config['i3status_config_path']
+        config_path = py3_wrapper.config['i3status_config_path']
         self.config = self.i3status_config_reader(config_path)
 
     def update_times(self):
@@ -449,10 +449,10 @@ class I3status(Thread):
             conf_name = self.config['i3s_modules'][index]
             if conf_name not in self.i3modules:
                 self.i3modules[conf_name] = I3statusModule(
-                    conf_name, self.py3statusWrapper)
+                    conf_name, self.py3_wrapper)
             if self.i3modules[conf_name].update_from_item(item):
                 updates.append(conf_name)
-        self.py3statusWrapper.notify_update(updates)
+        self.py3_wrapper.notify_update(updates)
 
     def update_json_list(self):
         """
