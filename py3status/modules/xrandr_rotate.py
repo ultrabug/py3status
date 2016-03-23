@@ -63,8 +63,8 @@ class Py3status:
         cmd = 'xrandr -q --verbose | grep " connected [^(]" | cut -d " " -f1'
         return self._call(cmd).split()
 
-    def _get_current_rotation_icon(self):
-        output = self.screen or self._get_all_outputs()[0]
+    def _get_current_rotation_icon(self, all_outputs):
+        output = self.screen or all_outputs[0]
         cmd = 'xrandr -q --verbose | grep "^' + output + '" | cut -d " " -f5'
         is_horizontal = self._call(cmd) in ['normal', 'inverted']
         return self.horizontal_icon if is_horizontal else self.vertical_icon
@@ -92,12 +92,13 @@ class Py3status:
             self._apply()
 
     def xrandr_rotate(self, i3s_output_list, i3s_config):
-        selected_screen_disconnected = self.screen is not None and self.screen not in self._get_all_outputs()
+        all_outputs = self._get_all_outputs()
+        selected_screen_disconnected = self.screen is not None and self.screen not in all_outputs
         if selected_screen_disconnected and self.hide_if_disconnected:
             full_text = ''
         else:
             if not hasattr(self, 'displayed'):
-                self.displayed = self._get_current_rotation_icon()
+                self.displayed = self._get_current_rotation_icon(all_outputs)
 
             full_text = self.format.format(icon=self.displayed or '?')
 
@@ -109,7 +110,7 @@ class Py3status:
         # coloration
         if selected_screen_disconnected and not self.hide_if_disconnected:
             response['color'] = i3s_config['color_degraded']
-        elif self.displayed == self._get_current_rotation_icon():
+        elif self.displayed == self._get_current_rotation_icon(all_outputs):
             response['color'] = i3s_config['color_good']
 
         return response
