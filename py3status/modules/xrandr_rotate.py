@@ -4,29 +4,29 @@
 Switch between horizontal and vertical screen rotation on a single click.
 
 Configuration parameters:
-    - cache_timeout: how often to refresh this module.
-        default is 10
-    - format: a string that formats the output, can include placeholders.
-        default is '{icon}'
-    - hide_if_disconnected: a boolean flag to hide icon when `screen` is disconnected.
+    cache_timeout: how often to refresh this module.
+        (default is 10)
+    format: a string that formats the output, can include placeholders.
+        (default is '{icon}')
+    hide_if_disconnected: a boolean flag to hide icon when `screen` is disconnected.
         it has no effect unless `screen` option is also configured.
-        default: None
-    - horizontal_icon: a character to represent horizontal rotation.
-        default is 'H'
-    - horizontal_rotation: a horizontal rotation for xrandr to use.
+        (default: None)
+    horizontal_icon: a character to represent horizontal rotation.
+        (default is 'H')
+    horizontal_rotation: a horizontal rotation for xrandr to use.
         available options: 'normal' or 'inverted'.
-        default is 'normal'
-    - screen: display output name to rotate, as detected by xrandr.
+        (default is 'normal')
+    screen: display output name to rotate, as detected by xrandr.
         if not provided, all enabled screens will be rotated.
-        default: None
-    - vertical_icon: a character to represent vertical rotation.
-        default is 'V'
-    - vertical_rotation: a vertical rotation for xrandr to use.
+        (default: None)
+    vertical_icon: a character to represent vertical rotation.
+        (default is 'V')
+    vertical_rotation: a vertical rotation for xrandr to use.
         available options: 'left' or 'right'.
-        default is 'left'
+        (default is 'left')
 
 Available placeholders for formatting the output:
-    - {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
+    {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
 
 
 @author Maxim Baz (https://github.com/maximbaz)
