@@ -8,11 +8,17 @@ Configuration parameters:
         default is 10
     - format: a string that formats the output, can include placeholders.
         default is '{icon}'
+    - hide_if_disconnected: a boolean flag to hide icon when `screen` is disconnected.
+        it has no effect unless `screen` option is also configured.
+        default: None
     - horizontal_icon: a character to represent horizontal rotation.
         default is 'H'
     - horizontal_rotation: a horizontal rotation for xrandr to use.
         available options: 'normal' or 'inverted'.
         default is 'normal'
+    - screen: display output name to rotate, as detected by xrandr.
+        if not provided, all enabled screens will be rotated.
+        default: None
     - vertical_icon: a character to represent vertical rotation.
         default is 'V'
     - vertical_rotation: a vertical rotation for xrandr to use.
@@ -37,13 +43,15 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = '{icon}'
+    hide_if_disconnected = False
     horizontal_icon = 'H'
     horizontal_rotation = 'normal'
+    screen = None
     vertical_icon = 'V'
     vertical_rotation = 'left'
 
     def _call(self, cmd):
-        output = Popen(cmd, stdout=PIPE, shell=True).stdout.readline()
+        output = Popen(cmd, stdout=PIPE, shell=True).stdout.read()
         try:
             # python3
             output = output.decode()
@@ -51,21 +59,22 @@ class Py3status:
             pass
         return output.strip()
 
-    def _get_first_output(self):
+    def _get_all_outputs(self):
         cmd = 'xrandr -q --verbose | grep " connected [^(]" | cut -d " " -f1'
-        return self._call(cmd)
+        return self._call(cmd).split()
 
     def _get_current_rotation_icon(self):
-        output = self._get_first_output()
+        output = self.screen or self._get_all_outputs()[0]
         cmd = 'xrandr -q --verbose | grep "^' + output + '" | cut -d " " -f5'
         is_horizontal = self._call(cmd) in ['normal', 'inverted']
         return self.horizontal_icon if is_horizontal else self.vertical_icon
 
     def _apply(self):
         rotation = self.horizontal_rotation if self.displayed == self.horizontal_icon else self.vertical_rotation
-        output = self._get_first_output()
-        cmd = 'xrandr --output ' + output + ' --rotate ' + rotation
-        self._call(cmd)
+        outputs = [self.screen] if self.screen else self._get_all_outputs()
+        for output in outputs:
+            cmd = 'xrandr --output ' + output + ' --rotate ' + rotation
+            self._call(cmd)
 
     def _switch_selection(self):
         self.displayed = self.vertical_icon if self.displayed == self.horizontal_icon else self.horizontal_icon
@@ -83,10 +92,14 @@ class Py3status:
             self._apply()
 
     def xrandr_rotate(self, i3s_output_list, i3s_config):
-        if not hasattr(self, 'displayed'):
-            self.displayed = self._get_current_rotation_icon()
+        selected_screen_disconnected = self.screen is not None and self.screen not in self._get_all_outputs()
+        if selected_screen_disconnected and self.hide_if_disconnected:
+            full_text = ''
+        else:
+            if not hasattr(self, 'displayed'):
+                self.displayed = self._get_current_rotation_icon()
 
-        full_text = self.format.format(icon=self.displayed or '?')
+            full_text = self.format.format(icon=self.displayed or '?')
 
         response = {
             'cached_until': time() + self.cache_timeout,
@@ -94,7 +107,9 @@ class Py3status:
         }
 
         # coloration
-        if self.displayed == self._get_current_rotation_icon():
+        if selected_screen_disconnected and not self.hide_if_disconnected:
+            response['color'] = i3s_config['color_degraded']
+        elif self.displayed == self._get_current_rotation_icon():
             response['color'] = i3s_config['color_good']
 
         return response
