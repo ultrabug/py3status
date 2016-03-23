@@ -60,13 +60,15 @@ class Py3status:
         return output.strip()
 
     def _get_all_outputs(self):
-        cmd = 'xrandr -q --verbose | grep " connected [^(]" | cut -d " " -f1'
+        cmd = 'xrandr -q | grep " connected [^(]" | cut -d " " -f1'
         return self._call(cmd).split()
 
     def _get_current_rotation_icon(self, all_outputs):
         output = self.screen or all_outputs[0]
-        cmd = 'xrandr -q --verbose | grep "^' + output + '" | cut -d " " -f5'
-        is_horizontal = self._call(cmd) in ['normal', 'inverted']
+        cmd = 'xrandr -q | grep "^' + output + '" | cut -d " " -f4'
+        output = self._call(cmd)
+        # xrandr may skip printing the 'normal', in which case the output would start from '('
+        is_horizontal = output.startswith('(') or output in ['normal', 'inverted']
         return self.horizontal_icon if is_horizontal else self.vertical_icon
 
     def _apply(self):
