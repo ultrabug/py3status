@@ -324,7 +324,26 @@ class I3status(Thread):
                     key = self.eval_config_parameter(key)
                     value = line.split('=', 1)[1].strip()
                     value = self.eval_config_value(value)
-                    config[group_name][key] = value
+                    if not key.startswith('on_click'):
+                        config[group_name][key] = value
+                    else:
+                        # on_click special parameters
+                        try:
+                            button = int(key.split()[1])
+                            if button not in range(1, 6):
+                                raise ValueError('should be 1, 2, 3, 4 or 5')
+                        except IndexError as e:
+                            raise IndexError(
+                                'missing "button id" for "on_click" '
+                                'parameter in group {}'.format(group_name))
+                        except ValueError as e:
+                            raise ValueError('invalid "button id" '
+                                             'for "on_click" parameter '
+                                             'in group {} ({})'.format(
+                                                 group_name, e))
+                        on_c = config['on_click']
+                        on_c[group_name] = on_c.get(group_name, {})
+                        on_c[group_name][button] = value
                     continue
 
             if not in_section:
