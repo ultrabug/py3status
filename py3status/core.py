@@ -34,6 +34,7 @@ class Py3statusWrapper():
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
+        self.output_modules = {}
         self.py3_modules = []
         self.queue = deque()
 
@@ -437,8 +438,10 @@ class Py3statusWrapper():
                     module_name = self.queue.popleft()
                     module = self.output_modules[module_name]
                     for index in module['position']:
-                        # store the outupt as json
-                        output[index] = dumps(module['module'].get_latest())
+                        # store the output as json
+                        # modules can have more than one output
+                        out = module['module'].get_latest()
+                        output[index] = ', '.join([dumps(x) for x in out])
 
                 prefix = i3status_thread.last_prefix
                 # build output string

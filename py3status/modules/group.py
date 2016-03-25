@@ -106,14 +106,8 @@ class Py3status:
         output = None
         current = self.items[item]
         py3_wrapper = self.py3_wrapper
-        if current in py3_wrapper.modules:
-            for method in py3_wrapper.modules[current].methods.values():
-                output = method['last_output']
-        else:
-            if py3_wrapper.i3status_thread.config.get(current,
-                                                      {}).get('response'):
-                output = (
-                    py3_wrapper.i3status_thread.config[current]['response'])
+        if current in py3_wrapper.output_modules:
+            output = py3_wrapper.output_modules[current]['module'].get_latest()[0]
         return output
 
     def _get_current_module_name(self):

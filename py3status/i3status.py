@@ -59,7 +59,7 @@ class I3statusModule:
             self.set_time_format()
 
     def get_latest(self):
-        return self.item
+        return [self.item]
 
     def update_from_item(self, item):
         """
