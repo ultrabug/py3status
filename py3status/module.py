@@ -32,8 +32,10 @@ class Module(Thread):
         self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
         self.module_class = None
+        self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
+        self.new_update = False
         self.module_full_name = module
         self.nagged = False
         self.py3_wrapper = py3_wrapper
@@ -79,6 +81,18 @@ class Module(Thread):
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
                 syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+
+    def set_updated(self):
+        """
+        Mark the module as updated
+        """
+        self.py3_wrapper.notify_update(self.module_full_name)
+
+    def get_latest(self):
+        output = []
+        for method in self.methods.values():
+            output.append(method['last_output'])
+        return output
 
     def load_methods(self, module, user_modules):
         """
@@ -162,6 +176,7 @@ class Module(Thread):
             click_method = getattr(self.module_class, 'on_click')
             click_method(self.i3status_thread.json_list,
                          self.i3status_thread.config['general'], event)
+            self.set_updated()
         except Exception:
             err = sys.exc_info()[1]
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
@@ -238,6 +253,9 @@ class Module(Thread):
 
                     # update method object output
                     my_method['last_output'] = result
+
+                    # mark module as updated
+                    self.set_updated()
 
                     # debug info
                     if self.config['debug']:
