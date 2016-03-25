@@ -34,6 +34,7 @@ class Py3statusWrapper():
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
+        self.output_modules = {}
         self.py3_modules = []
         self.queue = deque()
 
