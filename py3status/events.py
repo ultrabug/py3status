@@ -50,18 +50,19 @@ class Events(Thread):
     This class is responsible for dispatching event JSONs sent by the i3bar.
     """
 
-    def __init__(self, lock, config, modules, i3s_config):
+    def __init__(self, py3_wrapper):
         """
         We need to poll stdin to receive i3bar messages.
         """
         Thread.__init__(self)
-        self.config = config
-        self.i3s_config = i3s_config
+        self.config = py3_wrapper.config
+        self.i3s_config = py3_wrapper.i3status_thread.config
         self.last_refresh_ts = time()
-        self.lock = lock
-        self.modules = modules
-        self.on_click = i3s_config['on_click']
+        self.lock = py3_wrapper.lock
+        self.modules = py3_wrapper.modules
+        self.on_click = self.i3s_config['on_click']
         self.poller_inp = IOPoller(sys.stdin)
+        self.py3_wrapper = py3_wrapper
 
     def dispatch(self, module, obj, event):
         """
@@ -240,6 +241,55 @@ class Events(Thread):
         finally:
             return (instance, name)
 
+    def process_event(self, module_name, event):
+        """
+        Process the event for the named module.
+        Events may have been declared in i3status.conf, modules may have
+        on_click() functions. There is a default middle click event etc.
+        """
+        button = event.get('button', 0)
+        default_event = False
+        dispatched = False
+        # execute any configured i3-msg command
+        if self.on_click.get(module_name, {}).get(button):
+            self.on_click_dispatcher(module_name,
+                                     self.on_click[module_name].get(button))
+            dispatched = True
+        # otherwise setup default action on button 2 press
+        elif button == 2:
+            default_event = True
+
+        for module in self.modules.values():
+            # skip modules not supporting click_events
+            # unless we have a default_event set
+            if not module.click_events and not default_event:
+                continue
+
+            # check for the method name/instance
+            if ' ' in module_name:
+                name, instance = module_name.split(' ')
+            else:
+                name, instance = module_name, None
+            for obj in module.methods.values():
+                if name == obj['name']:
+                    if instance:
+                        if instance == obj['instance']:
+                            self.dispatch(module, obj, event)
+                            dispatched = True
+                            break
+                    else:
+                        self.dispatch(module, obj, event)
+                        dispatched = True
+                        break
+
+        # fall back to i3bar_click_events.py module if present
+        if not dispatched:
+            module = self.i3bar_click_events_module()
+            if module:
+                if self.config['debug']:
+                    syslog(LOG_INFO, 'dispatching event to i3bar_click_events')
+                self.dispatch(module, obj, event)
+
     @profile
     def run(self):
         """
@@ -263,9 +313,6 @@ class Events(Thread):
                         syslog(LOG_INFO, 'received event {}'.format(event))
 
                     # usage variables
-                    button = event.get('button', 0)
-                    default_event = False
-                    dispatched = False
                     instance = event.get('instance', '')
                     name = event.get('name', '')
 
@@ -279,45 +326,9 @@ class Events(Thread):
 
                     # guess the module config name
                     module_name = '{} {}'.format(name, instance).strip()
+                    # do the work
+                    self.process_event(module_name, event)
 
-                    # execute any configured i3-msg command
-                    if self.on_click.get(module_name, {}).get(button):
-                        self.on_click_dispatcher(
-                            module_name,
-                            self.on_click[module_name].get(button))
-                        dispatched = True
-                    # otherwise setup default action on button 2 press
-                    elif button == 2:
-                        default_event = True
-
-                    for module in self.modules.values():
-                        # skip modules not supporting click_events
-                        # unless we have a default_event set
-                        if not module.click_events and not default_event:
-                            continue
-
-                        # check for the method name/instance
-                        for obj in module.methods.values():
-                            if name == obj['name']:
-                                if instance:
-                                    if instance == obj['instance']:
-                                        self.dispatch(module, obj, event)
-                                        dispatched = True
-                                        break
-                                else:
-                                    self.dispatch(module, obj, event)
-                                    dispatched = True
-                                    break
-
-                    # fall back to i3bar_click_events.py module if present
-                    if not dispatched:
-                        module = self.i3bar_click_events_module()
-                        if module:
-                            if self.config['debug']:
-                                syslog(
-                                    LOG_INFO,
-                                    'dispatching event to i3bar_click_events')
-                            self.dispatch(module, obj, event)
             except Exception:
                 err = sys.exc_info()[1]
                 syslog(LOG_WARNING, 'event failed ({})'.format(err))

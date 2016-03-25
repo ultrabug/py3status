@@ -249,8 +249,7 @@ class Py3statusWrapper():
                 self.i3status_thread.config))
 
         # setup input events thread
-        self.events_thread = Events(self.lock, self.config, self.modules,
-                                    self.i3status_thread.config)
+        self.events_thread = Events(self)
         self.events_thread.start()
         if self.config['debug']:
             syslog(LOG_INFO, 'events thread started')
