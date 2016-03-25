@@ -51,7 +51,8 @@ class Py3status:
     vertical_rotation = 'left'
 
     def _call(self, cmd):
-        output = Popen(cmd, stdout=PIPE, shell=True).stdout.read()
+        process = Popen(cmd, stdout=PIPE, shell=True)
+        output = process.communicate()[0] or ""
         try:
             # python3
             output = output.decode()
