@@ -65,6 +65,8 @@ class I3statusModule:
         """
         Update from i3status output. returns if item has changed.
         """
+        # have we updated?
+        is_updated = self.item != item
         self.item = item
         if self.is_time_module:
             # If no timezone or a minute has passed update timezone
@@ -72,9 +74,7 @@ class I3statusModule:
             if not self.tz or int(time()) % 60 != 0:
                 self.set_time_zone()
             # update time to be shown
-            self.update_time_value()
-        # have we updated?
-        is_updated = self.item != item
+            is_updated = self.update_time_value()
         return is_updated
 
     def set_time_format(self):
@@ -89,9 +89,11 @@ class I3statusModule:
     def update_time_value(self):
         date = datetime.now(self.tz)
         # set the full_text with the correctly formatted date
-        self.item['full_text'] = date.strftime(self.time_format)
-        # trigger the update so new time is shown
-        self.py3_wrapper.notify_update(self.module_name)
+        new_value = date.strftime(self.time_format)
+        updated = self.item['full_text'] != new_value
+        if updated:
+            self.item['full_text'] = new_value
+        return updated
 
     def set_time_zone(self):
         """
@@ -157,9 +159,14 @@ class I3status(Thread):
         """
         Update time for any i3status time/tztime items.
         """
+        updated = []
         for module in self.i3modules.values():
             if module.is_time_module:
-                module.update_time_value()
+                if module.update_time_value():
+                    updated.append(module.module_name)
+        if updated:
+            # trigger the update so new time is shown
+            self.py3_wrapper.notify_update(updated)
 
     def valid_config_param(self, param_name, cleanup=False):
         """
