@@ -17,11 +17,11 @@ def main():
         py3.setup()
     except KeyboardInterrupt:
         err = sys.exc_info()[1]
-        py3.i3_nagbar('setup interrupted (KeyboardInterrupt)')
+        py3.notify_user('setup interrupted (KeyboardInterrupt)')
         sys.exit(0)
     except Exception:
         err = sys.exc_info()[1]
-        py3.i3_nagbar('setup error ({})'.format(err))
+        py3.notify_user('setup error ({})'.format(err))
         py3.stop()
         sys.exit(2)
 
@@ -29,7 +29,7 @@ def main():
         py3.run()
     except Exception:
         err = sys.exc_info()[1]
-        py3.i3_nagbar('runtime error ({})'.format(err))
+        py3.notify_user('runtime error ({})'.format(err))
         sys.exit(3)
     except KeyboardInterrupt:
         pass
