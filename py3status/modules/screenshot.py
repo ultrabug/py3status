@@ -9,6 +9,7 @@ When the screenshot has been taken, 'SHOT' is replaced by the file_name.
 This modules uses the 'gnome-screenshot' program to take the screenshot.
 
 Configuration parameters:
+    screenshot_command: the command used to generate the screenshot
     file_length: generated file_name length
     push: True/False if yo want to push your screenshot to your server
     save_path: Directory where to store your screenshots.
@@ -29,6 +30,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    screenshot_command = 'gnome-screenshot -f'
     cache_timeout = 5
     save_path = '%s%s' % (os.environ['HOME'], '/Pictures/')
     file_length = 4
@@ -44,7 +46,7 @@ class Py3status:
 
         file_name = self._filename_generator(self.file_length)
 
-        command = '%s %s/%s%s' % ('gnome-screenshot -f', self.save_path,
+        command = '%s %s/%s%s' % (self.screenshot_command, self.save_path,
                                   file_name, '.jpg')
 
         subprocess.Popen(command.split())
