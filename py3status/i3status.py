@@ -33,7 +33,7 @@ class I3statusModule:
         self.time_date = None
 
     def get_latest(self):
-        return self.item
+        return [self.item]
 
     def update_from_item(self, item):
         """

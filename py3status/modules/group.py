@@ -107,7 +107,7 @@ class Py3status:
         current = self.items[item]
         py3_wrapper = self.py3_wrapper
         if current in py3_wrapper.output_modules:
-            output = py3_wrapper.output_modules[current]['module'].get_latest()
+            output = py3_wrapper.output_modules[current]['module'].get_latest()[0]
         return output
 
     def _get_current_module_name(self):
