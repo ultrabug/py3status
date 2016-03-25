@@ -29,6 +29,12 @@ Available placeholders for formatting the output:
     {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
 
 
+Remarks:
+    There have been cases when rotating a screen using this module made i3 unusabe.
+    If you experience a similar behavior, please report as many details as you can:
+    https://github.com/ultrabug/py3status/issues/227
+
+
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
 """
