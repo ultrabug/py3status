@@ -390,12 +390,14 @@ class Py3statusWrapper():
                 output_modules[name] = {}
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = self.modules[name]
+                output_modules[name]['type'] = 'py3status'
         # i3status modules
         for name in i3modules:
             if name not in output_modules:
                 output_modules[name] = {}
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = i3modules[name]
+                output_modules[name]['type'] = 'i3status'
 
         self.output_modules = output_modules
 
