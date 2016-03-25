@@ -504,7 +504,8 @@ class I3status(Thread):
         based on the parsed one from 'i3status_config_path'.
         """
         for section_name, conf in sorted(self.config.items()):
-            if section_name in ['i3s_modules', 'py3_modules', '.group_extras']:
+            if section_name in ['i3s_modules', 'py3_modules', '.group_extras',
+                                '.module_groups']:
                 continue
             elif section_name == 'order':
                 for module_name in conf:
