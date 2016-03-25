@@ -6,7 +6,8 @@ Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
 directly send (if wanted) the file to your online server.
 When the screenshot has been taken, 'SHOT' is replaced by the file_name.
 
-This modules uses the 'gnome-screenshot' program to take the screenshot.
+By default, this modules uses the 'gnome-screenshot' program to take the screenshot,
+but this can be configured with the `screenshot_command` configuration parameter.
 
 Configuration parameters:
     screenshot_command: the command used to generate the screenshot
