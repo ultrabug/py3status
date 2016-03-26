@@ -102,7 +102,7 @@ class Py3status:
         current = self.items[item]
         module_info = self.py3_module.helper_get_module_info(current)
         if module_info:
-            output = module_info['module'].get_latest()
+            output = module_info['module'].get_latest()[0]
         return output
 
     def _get_current_module_name(self):

@@ -93,8 +93,9 @@ class Module(Thread):
         self._py3_wrapper.notify_update(self.module_full_name)
 
     def get_latest(self):
+        output = []
         for method in self.methods.values():
-            output = method['last_output']
+            output.append(method['last_output'])
         return output
 
     def helper_get_module_info(self, module_name):
