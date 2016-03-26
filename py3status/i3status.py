@@ -359,10 +359,9 @@ class I3status(Thread):
                     if group_name:
                         # update the items in the group
                         config[group_name]['items'].append(section_name)
-                        if section_name not in config['.module_groups']:
-                            config['.module_groups'][section_name] = []
-                        if group_name not in config['.module_groups'][section_name]:
-                            config['.module_groups'][section_name].append(group_name)
+                        section = config['.module_groups'].setdefault(section_name, [])
+                        if group_name not in section:
+                            section.append(group_name)
                         if not self.valid_config_param(section_name):
                             # py3status module add a reference to the group and
                             # make sure we have it in the list of modules to
