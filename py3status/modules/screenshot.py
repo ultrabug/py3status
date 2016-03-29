@@ -9,12 +9,12 @@ When the screenshot has been taken, 'SHOT' is replaced by the file_name.
 This modules uses the 'gnome-screenshot' program to take the screenshot.
 
 Configuration parameters:
-    - file_length: generated file_name length
-    - push: True/False if yo want to push your screenshot to your server
-    - save_path: Directory where to store your screenshots.
-    - upload_path: the remote path where to push the screenshot
-    - upload_server: your server address
-    - upload_user: your ssh user
+    file_length: generated file_name length
+    push: True/False if yo want to push your screenshot to your server
+    save_path: Directory where to store your screenshots.
+    upload_path: the remote path where to push the screenshot
+    upload_server: your server address
+    upload_user: your ssh user
 
 @author Amaury Brisou <py3status AT puzzledge.org>
 """

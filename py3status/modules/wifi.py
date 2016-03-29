@@ -3,32 +3,39 @@
 Display WiFi bit rate, quality, signal and SSID using iw.
 
 Configuration parameters:
-    - bitrate_bad : Bad bit rate in Mbit/s (default: 26)
-    - bitrate_degraded : Degraded bit rate in Mbit/s (default: 53)
-    - cache_timeout : Update interval in seconds (default: 10)
-    - device : Wireless device name (default: "wlan0")
-    - down_color : Output color when disconnected, possible values:
-      "good", "degraded", "bad" (default: "bad")
-    - format_down : Output when disconnected (default: "down")
-    - format_up : See placeholders below
-      (default: "W: {bitrate} {signal_percent} {ssid}")
-    - round_bitrate : If true, bit rate is rounded to the nearest whole number
-      (default: true)
-    - signal_bad : Bad signal strength in percent (default: 29)
-    - signal_degraded : Degraded signal strength in percent (default: 49)
-    - use_sudo : Use sudo to run iw, make sure iw requires no password by
-      adding a sudoers entry like
-      "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
-      (default: false)
+    bitrate_bad: Bad bit rate in Mbit/s (default: 26)
+    bitrate_degraded: Degraded bit rate in Mbit/s (default: 53)
+    blocks: a string, where each character represents quality level
+        (default: "_▁▂▃▄▅▆▇█")
+    cache_timeout: Update interval in seconds (default: 10)
+    device: Wireless device name (default: "wlan0")
+    down_color: Output color when disconnected, possible values:
+        "good", "degraded", "bad" (default: "bad")
+    format_down: Output when disconnected (default: "down")
+    format_up: See placeholders below
+        (default: "W: {bitrate} {signal_percent} {ssid}")
+    round_bitrate: If true, bit rate is rounded to the nearest whole number
+        (default: true)
+    signal_bad: Bad signal strength in percent (default: 29)
+    signal_degraded: Degraded signal strength in percent (default: 49)
+    use_sudo: Use sudo to run iw, make sure iw requires no password by
+        adding a sudoers entry like
+        "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
+        (default: false)
 
 Format of status string placeholders:
-    {bitrate} - Display bit rate
-    {signal_dbm} - Display signal in dBm
-    {signal_percent} - Display signal in percent
-    {ssid} - Display SSID
+    {bitrate} Display bit rate
+    {device} Display device name
+    {icon} Character representing the quality based on bitrate,
+        as defined by the 'blocks'
+    {ip} Display IP address
+    {signal_dbm} Display signal in dBm
+    {signal_percent} Display signal in percent
+    {ssid} Display SSID
 
 Requires:
-    - iw
+    iw:
+    ip: if {ip} is used
 
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
@@ -36,6 +43,7 @@ Requires:
 
 import re
 import subprocess
+import math
 from time import time
 
 
@@ -45,6 +53,7 @@ class Py3status:
     # available configuration parameters
     bitrate_bad = 26
     bitrate_degraded = 53
+    blocks = ["_", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
     cache_timeout = 10
     device = 'wlan0'
     down_color = 'bad'
@@ -54,6 +63,22 @@ class Py3status:
     signal_bad = 29
     signal_degraded = 49
     use_sudo = False
+
+    def __init__(self):
+        self._ssid = None
+        self._max_bitrate = 0
+        # Try and guess the wifi interface
+        try:
+            cmd = ['iw', 'dev']
+            iw = subprocess.check_output(cmd).decode('utf-8')
+
+            devices = re.findall('Interface\s*([^\s]+)', iw)
+            if not devices or 'wlan0' in devices:
+                self.device = 'wlan0'
+            else:
+                self.device = devices[0]
+        except:
+            pass
 
     def get_wifi(self, i3s_output_list, i3s_config):
         """
@@ -91,6 +116,32 @@ class Py3status:
         else:
             ssid = None
 
+        if '{ip}' in self.format_up:
+            cmd = ['ip', 'addr', 'list', self.device]
+            if self.use_sudo:
+                cmd.insert(0, 'sudo')
+            ip_info = subprocess.check_output(cmd).decode('utf-8')
+            ip_match = re.search('inet\s+([0-9.]+)', ip_info)
+            if ip_match:
+                ip = ip_match.group(1)
+            else:
+                ip = None
+        else:
+            ip = ''
+
+        # reset _max_bitrate if we have changed network
+        if self._ssid != ssid:
+            self._ssid = ssid
+            self._max_bitrate = self.bitrate_degraded
+        if bitrate:
+            if bitrate > self._max_bitrate:
+                self._max_bitrate = bitrate
+            quality = int((bitrate / self._max_bitrate) * 100)
+        else:
+            quality = 0
+        icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1
+                                                          )))]
+
         if ssid is None:
             full_text = self.format_down
             color = i3s_config['color_{}'.format(self.down_color)]
@@ -126,6 +177,9 @@ class Py3status:
             full_text = self.format_up.format(bitrate=bitrate,
                                               signal_dbm=signal_dbm,
                                               signal_percent=signal_percent,
+                                              ip=ip,
+                                              device=self.device,
+                                              icon=icon,
                                               ssid=ssid)
 
         response = {

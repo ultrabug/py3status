@@ -1,12 +1,10 @@
 from __future__ import print_function
 
 import argparse
-import ast
 import os
-import pkgutil
 import sys
+from collections import deque
 
-from copy import deepcopy
 from json import dumps
 from signal import signal
 from signal import SIGTERM, SIGUSR1
@@ -16,7 +14,7 @@ from threading import Event
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 
-from py3status import modules as sitepkg_modules
+import py3status.docstrings as docstrings
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
@@ -36,7 +34,9 @@ class Py3statusWrapper():
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
+        self.output_modules = {}
         self.py3_modules = []
+        self.queue = deque()
 
     def get_config(self):
         """
@@ -49,7 +49,8 @@ class Py3statusWrapper():
         config = {
             'cache_timeout': 60,
             'include_paths': ['{}/.i3/py3status/'.format(home_path)],
-            'interval': 1
+            'interval': 1,
+            'minimum_interval': 0.1  # minimum module update interval
         }
 
         # package version
@@ -169,25 +170,6 @@ class Py3statusWrapper():
                 user_modules[module_name] = (include_path, f_name)
         return user_modules
 
-    def get_all_modules(self):
-        """
-        Search and yield all available py3status modules:
-            - in the current python's implementation site-packages
-            - provided by the user using the inclusion directories
-
-        User provided modules take precedence over py3status generic modules.
-        """
-        all_modules = {}
-        for importer, module_name, ispkg in \
-                pkgutil.iter_modules(sitepkg_modules.__path__):
-            if not ispkg:
-                mod = importer.find_module(module_name)
-                all_modules[module_name] = (mod, None)
-        user_modules = self.get_user_modules()
-        all_modules.update(user_modules)
-        for module_name, module_info in sorted(all_modules.items()):
-            yield (module_name, module_info)
-
     def get_user_configured_modules(self):
         """
         Get a dict of all available and configured py3status modules
@@ -218,8 +200,7 @@ class Py3statusWrapper():
             if module in self.modules:
                 continue
             try:
-                my_m = Module(self.lock, self.config, module,
-                              self.i3status_thread, user_modules)
+                my_m = Module(module, user_modules, self)
                 # only start and handle modules with available methods
                 if my_m.methods:
                     my_m.start()
@@ -244,7 +225,7 @@ class Py3statusWrapper():
         self.config = self.get_config()
 
         if self.config.get('cli_command'):
-            self.handle_cli_command(self.config['cli_command'])
+            self.handle_cli_command(self.config)
             sys.exit()
 
         if self.config['debug']:
@@ -252,9 +233,7 @@ class Py3statusWrapper():
                    'py3status started with config {}'.format(self.config))
 
         # setup i3status thread
-        self.i3status_thread = I3status(self.lock,
-                                        self.config['i3status_config_path'],
-                                        self.config['standalone'])
+        self.i3status_thread = I3status(self)
         if self.config['standalone']:
             self.i3status_thread.mock()
         else:
@@ -317,6 +296,9 @@ class Py3statusWrapper():
             self.lock.clear()
             if self.config['debug']:
                 syslog(LOG_INFO, 'lock cleared, exiting')
+            # run kill() method on all py3status modules
+            for module in self.modules.values():
+                module.kill()
             self.i3status_thread.cleanup_tmpfile()
         except:
             pass
@@ -357,6 +339,57 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
+    def notify_update(self, update):
+        """
+        Name or list of names of modules that have updated.
+        """
+        if not isinstance(update, list):
+            update = [update]
+        self.queue.extend(update)
+
+        # find groups that use the modules updated
+        module_groups = self.i3status_thread.config['.module_groups']
+        groups_to_update = set()
+        for item in update:
+            if item in module_groups:
+                groups_to_update.update(set(module_groups[item]))
+        # force groups to update
+        for group in groups_to_update:
+            group_module = self.output_modules.get(group)
+            if group_module:
+                group_module['module'].clear_cache()
+                group_module['module'].run()
+
+    def create_output_modules(self):
+        """
+        Setup our output modules to allow easy updating of py3modules and
+        i3status modules allows the same module to be used multiple times.
+        """
+        config = self.i3status_thread.config
+        i3modules = self.i3status_thread.i3modules
+        output_modules = {}
+        # position in the bar of the modules
+        positions = {}
+        for index, name in enumerate(config['order']):
+            if name not in positions:
+                positions[name] = []
+            positions[name].append(index)
+
+        # py3status modules
+        for name in self.modules:
+            if name not in output_modules:
+                output_modules[name] = {}
+                output_modules[name]['position'] = positions.get(name, [])
+                output_modules[name]['module'] = self.modules[name]
+        # i3status modules
+        for name in i3modules:
+            if name not in output_modules:
+                output_modules[name] = {}
+                output_modules[name]['position'] = positions.get(name, [])
+                output_modules[name]['module'] = i3modules[name]
+
+        self.output_modules = output_modules
+
     @profile
     def run(self):
         """
@@ -369,117 +402,93 @@ class Py3statusWrapper():
         signal(SIGTERM, self.terminate)
 
         # initialize usage variables
-        delta = 0
-        last_delta = -1
-        previous_json_list = []
+        i3status_thread = self.i3status_thread
+        config = i3status_thread.config
+        self.create_output_modules()
+
+        # update queue populate with all py3modules
+        self.queue.extend(self.modules)
+
+        # this will be our output set to the correct length for the number of
+        # items in the bar
+        output = [None] * len(config['order'])
+
+        interval = self.config['interval']
+        last_sec = 0
 
         # main loop
         while True:
-            # check i3status thread
-            if not self.i3status_thread.is_alive():
-                err = self.i3status_thread.error
-                if not err:
-                    err = 'i3status died horribly'
-                self.i3_nagbar(err)
-                break
+            sec = int(time())
 
-            # check events thread
-            if not self.events_thread.is_alive():
-                # don't spam the user with i3-nagbar warnings
-                if not hasattr(self.events_thread, 'i3_nagbar'):
-                    self.events_thread.i3_nagbar = True
-                    err = 'events thread died, click events are disabled'
-                    self.i3_nagbar(err, level='warning')
+            # only check everything is good each second
+            if sec > last_sec:
+                last_sec = sec
 
-            # check that every module thread is alive
-            for module in self.modules.values():
-                if not module.is_alive():
+                # check i3status thread
+                if not i3status_thread.is_alive():
+                    err = i3status_thread.error
+                    if not err:
+                        err = 'i3status died horribly'
+                    self.i3_nagbar(err)
+                    break
+
+                # check events thread
+                if not self.events_thread.is_alive():
                     # don't spam the user with i3-nagbar warnings
-                    if not hasattr(module, 'i3_nagbar'):
-                        module.i3_nagbar = True
-                        msg = 'output frozen for dead module(s) {}'.format(
-                            ','.join(module.methods.keys()))
-                        self.i3_nagbar(msg, level='warning')
+                    if not hasattr(self.events_thread, 'i3_nagbar'):
+                        self.events_thread.i3_nagbar = True
+                        err = 'events thread died, click events are disabled'
+                        self.i3_nagbar(err, level='warning')
 
-            # get output from i3status
-            prefix = self.i3status_thread.last_prefix
-            json_list = deepcopy(self.i3status_thread.json_list)
+                # update i3status time/tztime items
+                if interval == 0 or sec % interval == 0:
+                    i3status_thread.update_times()
 
-            # transform time and tztime outputs from i3status
-            # every configured interval seconds
-            if self.config['interval'] <= 1 or \
-                    int(delta) % self.config['interval'] == 0 \
-                    and int(last_delta) != int(delta):
-                delta = 0
-                last_delta = 0
-                json_list = self.i3status_thread.tick_time_modules(json_list,
-                                                                   force=True)
-            else:
-                json_list = self.i3status_thread.tick_time_modules(json_list,
-                                                                   force=False)
+            # check if an update is needed
+            if self.queue:
+                while (len(self.queue)):
+                    module_name = self.queue.popleft()
+                    module = self.output_modules[module_name]
+                    for index in module['position']:
+                        # store the output as json
+                        # modules can have more than one output
+                        out = module['module'].get_latest()
+                        output[index] = ', '.join([dumps(x) for x in out])
 
-            # construct the global output
-            if self.modules and self.py3_modules:
-                # new style i3status configured ordering
-                json_list = self.i3status_thread.get_modules_output(
-                    json_list, self.modules)
-
-            # dump the line to stdout only on change
-            if json_list != previous_json_list:
-                print_line('{}{}'.format(prefix, dumps(json_list)))
-
-            # remember the last json list output
-            previous_json_list = deepcopy(json_list)
-
-            # reset i3status json_list and json_list_ts
-            self.i3status_thread.update_json_list()
+                prefix = i3status_thread.last_prefix
+                # build output string
+                out = ','.join([x for x in output if x])
+                # dump the line to stdout
+                print_line('{}[{}]'.format(prefix, out))
 
             # sleep a bit before doing this again to avoid killing the CPU
-            delta += 0.1
             sleep(0.1)
 
-    @staticmethod
-    def print_module_description(details, mod_name, mod_info):
-        """Print module description extracted from its docstring.
-        """
-        if mod_name == '__init__':
-            return
-
-        mod, f_name = mod_info
-        if f_name:
-            path = os.path.join(*mod_info)
-            with open(path) as f:
-                module = ast.parse(f.read())
-        else:
-            path = mod.get_filename(mod_name)
-            module = ast.parse(mod.get_source(mod_name))
-        try:
-            docstring = ast.get_docstring(module, clean=True)
-            if docstring:
-                short_description = docstring.split('\n')[0].rstrip('.')
-                print_stderr('  %-22s %s.' % (mod_name, short_description))
-                if details:
-                    for description in docstring.split('\n')[1:]:
-                        print_stderr(' ' * 25 + '%s' % description)
-                    print_stderr(' ' * 25 + '---')
-            else:
-                print_stderr('  %-22s No docstring in %s' % (mod_name, path))
-        except Exception:
-            print_stderr('  %-22s Unable to parse %s' % (mod_name, path))
-
-    def handle_cli_command(self, cmd):
+    def handle_cli_command(self, config):
         """Handle a command from the CLI.
         """
+        cmd = config['cli_command']
         # aliases
         if cmd[0] in ['mod', 'module', 'modules']:
             cmd[0] = 'modules'
 
         # allowed cli commands
         if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
-            details = cmd[1] == 'details'
-            print_stderr('Available modules:')
-            for mod_name, mod_info in self.get_all_modules():
-                self.print_module_description(details, mod_name, mod_info)
+            docstrings.show_modules(config, cmd[1:])
+        # docstring formatting and checking
+        elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
+            if cmd[1] == 'check':
+                show_diff = len(cmd) > 2 and cmd[2] == 'diff'
+                docstrings.check_docstrings(show_diff, config)
+            if cmd[1] == 'update':
+                if len(cmd) < 3:
+                    print_stderr('Error: you must specify what to update')
+                    sys.exit(1)
+
+                if cmd[2] == 'modules':
+                    docstrings.update_docstrings()
+                else:
+                    docstrings.update_readme_for_modules(cmd[2:])
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
             pass

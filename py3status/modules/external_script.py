@@ -2,25 +2,28 @@
 """
 Display output of given script.
 
-Display output of any executable script set by 'script_path'.
+Display output of any executable script set by `script_path`.
 Pay attention. The output must be one liner, or will break your i3status !
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds
-    - color         : color of printed text
-    - format        : see placeholders below
-    - script_path   : script you want to show output of (compulsory)
+    cache_timeout: how often we refresh this module in seconds
+    color: color of printed text
+    format: see placeholders below
+    script_path: script you want to show output of (compulsory)
 
 Format of status string placeholders:
-    {output} - output of script given by "script_path"
+    {output} output of script given by "script_path"
 
 i3status.conf example:
 
+```
 external_script {
     color = "#00FF00"
     format = "my name is {output}"
     script_path = "/usr/bin/whoami"
+}
+```
 
 @author frimdo ztracenastopa@centrum.cz
 """

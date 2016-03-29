@@ -6,19 +6,19 @@ Coloring rules.
 
 If value is bigger that dict key, status string will turn to color, specified in the value.
 Example:
-coloring = {
-    800: "#dddd00",
-    900: "#dd0000",
-}
-(0 - 800: white, 800-900: yellow, >900 - red)
+        coloring = {
+        800: "#dddd00",
+        900: "#dd0000",
+        }
+        (0 - 800: white, 800-900: yellow, >900 - red)
 
 Format of status string placeholders:
-    {down} - download
-    {total} - total
-    {up} - upload
+    {down} download
+    {total} total
+    {up} upload
 
 Requires:
-    - external program called "vnstat" installed and configured to work.
+    - external program called `vnstat` installed and configured to work.
 
 @author shadowprince
 @license Eclipse Public License

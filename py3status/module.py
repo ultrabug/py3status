@@ -1,11 +1,12 @@
 import sys
 import os
 import imp
+import inspect
 
-from threading import Thread
+from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
-from time import sleep, time
+from time import time
 
 from py3status.profiling import profile
 
@@ -17,21 +18,30 @@ class Module(Thread):
     caching its output based on user will.
     """
 
-    def __init__(self, lock, config, module, i3_thread, user_modules):
+    def __init__(self, module, user_modules, py3_wrapper):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
+        self.cache_time = None
         self.click_events = False
-        self.config = config
+        self.config = py3_wrapper.config
         self.has_kill = False
-        self.i3status_thread = i3_thread
+        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.lock = lock
+        self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
         self.module_class = None
+        self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
+        self.new_update = False
+        self.module_full_name = module
+        self.nagged = False
+        self.py3_wrapper = py3_wrapper
+        self.timer = None
+        # if the module is part of a group then we want to store it's name
+        self.group = self.i3status_thread.config.get(module, {}).get('.group')
         #
         self.load_methods(module, user_modules)
 
@@ -72,6 +82,18 @@ class Module(Thread):
             if self.config['debug']:
                 syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
 
+    def set_updated(self):
+        """
+        Mark the module as updated
+        """
+        self.py3_wrapper.notify_update(self.module_full_name)
+
+    def get_latest(self):
+        output = []
+        for method in self.methods.values():
+            output.append(method['last_output'])
+        return output
+
     def load_methods(self, module, user_modules):
         """
         Read the given user-written py3status class file and store its methods.
@@ -101,7 +123,17 @@ class Module(Thread):
             # apply module configuration from i3status config
             mod_config = self.i3status_thread.config.get(module, {})
             for config, value in mod_config.items():
-                setattr(self.module_class, config, value)
+                # names starting with '.' are private
+                if not config.startswith('.'):
+                    setattr(self.module_class, config, value)
+
+            # check if module has meta class
+            if hasattr(self.module_class, 'Meta'):
+                meta = self.module_class.Meta
+                if inspect.isclass(meta):
+                    # module wants it's Module
+                    if getattr(meta, 'include_py3_module', False):
+                        setattr(self.module_class, 'py3_module', self)
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -144,6 +176,7 @@ class Module(Thread):
             click_method = getattr(self.module_class, 'on_click')
             click_method(self.i3status_thread.json_list,
                          self.i3status_thread.config['general'], event)
+            self.set_updated()
         except Exception:
             err = sys.exc_info()[1]
             msg = 'on_click failed with ({}) for event ({})'.format(err, event)
@@ -157,7 +190,12 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
-        while self.lock.is_set():
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+
+        if self.lock.is_set():
+            cache_time = None
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
@@ -168,6 +206,8 @@ class Module(Thread):
 
                 # respect the cache set for this method
                 if time() < obj['cached_until']:
+                    if not cache_time or obj['cached_until'] < cache_time:
+                        cache_time = obj['cached_until']
                     continue
 
                 try:
@@ -208,9 +248,14 @@ class Module(Thread):
                     else:
                         cached_until = time() + self.config['cache_timeout']
                     my_method['cached_until'] = cached_until
+                    if not cache_time or cached_until < cache_time:
+                        cache_time = cached_until
 
                     # update method object output
                     my_method['last_output'] = result
+
+                    # mark module as updated
+                    self.set_updated()
 
                     # debug info
                     if self.config['debug']:
@@ -218,12 +263,27 @@ class Module(Thread):
                                'method {} returned {} '.format(meth, result))
                 except Exception:
                     err = sys.exc_info()[1]
-                    syslog(LOG_WARNING,
-                           'user method {} failed ({})'.format(meth, err))
+                    msg = 'user method {} failed ({})'.format(meth, err)
+                    syslog(LOG_WARNING, msg)
+                    if not self.nagged:
+                        self.py3_wrapper.i3_nagbar(msg, level='warning')
+                        self.nagged = True
 
-            # don't be hasty mate, let's take it easy for now
-            sleep(self.config['interval'])
+            if cache_time is None:
+                cache_time = time() + self.config['cache_timeout']
+            self.cache_time = cache_time
 
+            # don't be hasty mate
+            # set timer to do update next time one is needed
+            delay = max(cache_time - time(),
+                        self.config['minimum_interval'])
+            self.timer = Timer(delay, self.run)
+            self.timer.start()
+
+    def kill(self):
+        # stop timer if exists
+        if self.timer:
+            self.timer.cancel()
         # check and execute the 'kill' method if present
         if self.has_kill:
             try:
