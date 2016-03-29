@@ -43,9 +43,6 @@ class Module(Thread):
         # py3wrapper this is private and any modules accessing their instance
         # should only use it on the understanding that it is not supported.
         self._py3_wrapper = py3_wrapper
-
-        # if the module is part of a group then we want to store it's name
-        self.group = self.i3status_thread.config.get(module, {}).get('.group')
         #
         self.load_methods(module, user_modules)
 
