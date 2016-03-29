@@ -27,6 +27,8 @@ Configuration parameters:
 
 Available placeholders for formatting the output:
     {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
+    {screen} a screen name, specified by `screen` option or detected automatically
+        if only one screen is connected, otherwise 'ALL'.
 
 
 Remarks:
@@ -109,7 +111,8 @@ class Py3status:
             if not hasattr(self, 'displayed'):
                 self.displayed = self._get_current_rotation_icon(all_outputs)
 
-            full_text = self.format.format(icon=self.displayed or '?')
+            screen = self.screen or all_outputs[0] if len(all_outputs) == 1 else 'ALL'
+            full_text = self.format.format(icon=self.displayed or '?', screen=screen)
 
         response = {
             'cached_until': time() + self.cache_timeout,
