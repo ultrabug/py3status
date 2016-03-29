@@ -79,7 +79,9 @@ class Py3status:
             self.py3_wrapper = self.py3_module.py3_wrapper
         except AttributeError:
             self.py3_wrapper = None
-
+        # if no items don't cycle
+        if not self.items:
+            self.cycle = 0
         self._cycle_time = time() + self.cycle
         self.initialized = True
 
