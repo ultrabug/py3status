@@ -68,6 +68,7 @@ class Py3status:
 
     class Meta:
         include_py3_module = True
+        container = True
 
     def __init__(self):
         self.items = []

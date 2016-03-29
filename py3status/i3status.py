@@ -15,6 +15,7 @@ from time import time
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
+from py3status.parse_config import parse_config, ModuleDefinition
 
 
 class I3statusModule:
@@ -32,6 +33,10 @@ class I3statusModule:
         self.py3_wrapper = py3_wrapper
         self.time_date = None
 
+    def __repr__(self):
+        return '<I3statusModule {}>'.format(self.module_name)
+
+
     def get_latest(self):
         return [self.item]
 
@@ -43,6 +48,7 @@ class I3statusModule:
         self.item = item
         if self.is_time_module:
             self.set_time_zone()
+            is_updated = False
         return is_updated
 
     def update_time_value(self):
@@ -223,229 +229,121 @@ class I3status(Thread):
             ]
         return param_name.split(' ')[0] in valid_config_params
 
-    @staticmethod
-    def eval_config_parameter(param):
-        """
-        Try to evaluate the given parameter as a string or integer and return
-        it properly. This is used to parse i3status configuration parameters
-        such as 'disk "/home" {}' or worse like '"cpu_temperature" 0 {}'.
-        """
-        params = param.split(' ')
-        result_list = list()
-
-        for p in params:
-            try:
-                e_value = eval(p)
-                if isinstance(e_value, str) or isinstance(e_value, int):
-                    p = str(e_value)
-                else:
-                    raise ValueError()
-            except (NameError, SyntaxError, ValueError):
-                pass
-            finally:
-                result_list.append(p)
-
-        return ' '.join(result_list)
-
-    @staticmethod
-    def eval_config_value(value):
-        """
-        Try to evaluate the given parameter as a string or integer and return
-        it properly. This is used to parse i3status configuration parameters
-        such as 'disk "/home" {}' or worse like '"cpu_temperature" 0 {}'.
-        """
-        if value.lower() in ('true', 'false'):
-            return eval(value.title())
-        try:
-            e_value = eval(value)
-            if isinstance(e_value, str):
-                if e_value.lower() in ('true', 'false'):
-                    value = eval(e_value.title())
-                else:
-                    value = e_value
-            elif isinstance(e_value, int):
-                value = e_value
-            else:
-                raise ValueError()
-        except (NameError, ValueError):
-            pass
-        finally:
-            return value
-
     def i3status_config_reader(self, i3status_config_path):
         """
         Parse i3status.conf so we can adapt our code to the i3status config.
         """
-        config = {
-            'general': {
-                'color_bad': '#FF0000',
-                'color_degraded': '#FFFF00',
-                'color_good': '#00FF00',
-                'color_separator': '#333333',
-                'colors': False,
-                'interval': 5,
-                'output_format': 'i3bar'
-            },
-            'i3s_modules': [],
-            'on_click': {},
-            'order': [],
-            '.group_extras': [],  # extra i3status modules needed by groups
-            '.module_groups': {},  # record groups that modules are in
-            'py3_modules': []
+        general_defaults = {
+            'color_bad': '#FF0000',
+            'color_degraded': '#FFFF00',
+            'color_good': '#00FF00',
+            'color_separator': '#333333',
+            'colors': False,
+            'interval': 5,
+            'output_format': 'i3bar',
         }
 
-        # some ugly parsing
-        in_section = False
-        section_name = ''
-        group_name = None
+        config = {}
 
-        for line in open(i3status_config_path, 'r'):
-            line = line.strip(' \t\n\r')
+        user_modules = self.py3_wrapper.get_user_modules()
+        with open(i3status_config_path, 'r') as f:
+            config_info = parse_config(f, user_modules=user_modules)
 
-            if not line or line.startswith('#'):
-                continue
+        # update general section with defaults
+        if 'general' in config_info:
+            general_defaults.update(config_info['general'])
+        config['general'] = general_defaults
 
-            if line.startswith('order'):
-                in_section = True
-                section_name = 'order'
+        # get all modules
+        modules = {}
+        on_click = {}
+        i3s_modules = set()
+        py3_modules = set()
+        module_groups = {}
+        group_extras = []
 
-            if not in_section and line.startswith('group'):
-                group_name = line.split('{')[0].strip()
-                config[group_name] = {'items': []}
-                continue
+        def process_onclick(key, value, group_name):
+            try:
+                button = int(key.split()[1])
+                if button not in range(1, 6):
+                    raise ValueError('should be 1, 2, 3, 4 or 5')
+            except IndexError as e:
+                raise IndexError(
+                    'missing "button id" for "on_click" '
+                    'parameter in group {}'.format(group_name))
+            except ValueError as e:
+                raise ValueError('invalid "button id" '
+                                 'for "on_click" parameter '
+                                 'in group {} ({})'.format(
+                                     group_name, e))
+            clicks = on_click.setdefault(group_name, {})
+            clicks[button] = value
 
-            if not in_section and group_name and line == '}':
-                group_name = None
-                continue
+        def get_module_type(name):
+            if name.split()[0] in self.i3status_module_names:
+                return 'i3status'
+            return 'py3status'
 
-            if group_name and not in_section and '=' in line:
-                # check this is not a section definition
-                if '{' not in line or line.index('{') > line.index('='):
-                    key = line.split('=', 1)[0].strip()
-                    key = self.eval_config_parameter(key)
-                    value = line.split('=', 1)[1].strip()
-                    value = self.eval_config_value(value)
-                    if not key.startswith('on_click'):
-                        config[group_name][key] = value
-                    else:
-                        # on_click special parameters
-                        try:
-                            button = int(key.split()[1])
-                            if button not in range(1, 6):
-                                raise ValueError('should be 1, 2, 3, 4 or 5')
-                        except IndexError as e:
-                            raise IndexError(
-                                'missing "button id" for "on_click" '
-                                'parameter in group {}'.format(group_name))
-                        except ValueError as e:
-                            raise ValueError('invalid "button id" '
-                                             'for "on_click" parameter '
-                                             'in group {} ({})'.format(
-                                                 group_name, e))
-                        on_c = config['on_click']
-                        on_c[group_name] = on_c.get(group_name, {})
-                        on_c[group_name][button] = value
-                    continue
+        def process_module(name, module, parent):
+            if name.split()[0] == 'group':
+                module['items'] = []
 
-            if not in_section:
-                section_name = line.split('{')[0].strip()
-                section_name = self.eval_config_parameter(section_name)
-                if not section_name:
-                    continue
-                else:
-                    in_section = True
-                    if section_name not in config:
-                        config[section_name] = {}
-                    if group_name:
-                        # update the items in the group
-                        config[group_name]['items'].append(section_name)
-                        section = config['.module_groups'].setdefault(section_name, [])
-                        if group_name not in section:
-                            section.append(group_name)
-                        if not self.valid_config_param(section_name):
-                            # py3status module add a reference to the group and
-                            # make sure we have it in the list of modules to
-                            # run
-                            config[section_name]['.group'] = group_name
-                            if section_name not in config['py3_modules']:
-                                config['py3_modules'].append(section_name)
-                        else:
-                            # i3status module.  Add to the list of needed
-                            # modules and add to the `.group-extras` config to
-                            # ensure that it gets run even though not in
-                            # `order` config
-                            if section_name not in config['i3s_modules']:
-                                config['i3s_modules'].append(section_name)
-                            if section_name not in config['.group_extras']:
-                                config['.group_extras'].append(section_name)
+            if parent:
+                modules[parent]['items'].append(name)
+                mg = module_groups.setdefault(name, [])
+                mg.append(parent)
+                group_extras.append(name)
+                if get_module_type(name) == 'py3status':
+                    module['.group'] = parent
 
-            if '{' in line:
-                in_section = True
+            # get on_click events
+            for k, v in module.items():
+                if k.startswith('on_click'):
+                    process_onclick(k, v, name)
+            return module
 
-            if section_name and '=' in line:
-                section_line = line
+        def get_modules(data, parent=None):
+            for k, v in data.items():
+                if isinstance(v, ModuleDefinition):
+                    module = process_module(k, v, parent)
+                    modules[k] = module
+                    get_modules(v, parent=k)
 
-                # one liner cases
-                if line.endswith('}'):
-                    section_line = section_line.split('}', -1)[0].strip()
-                if line.startswith(section_name + ' {'):
-                    section_line = section_line.split(section_name + ' {')[
-                        1].strip()
+        get_modules(config_info)
 
-                key = section_line.split('=', 1)[0].strip()
-                key = self.eval_config_parameter(key)
+        config['order'] = []
+        config['.group_extras'] = []
 
-                value = section_line.split('=', 1)[1].strip()
-                value = self.eval_config_value(value)
+        def fix_module(module):
+            fixed = {}
+            for k, v in module.items():
+                if not isinstance(v, ModuleDefinition):
+                    fixed[k] = v
+            return fixed
 
-                if section_name == 'order':
-                    config[section_name].append(value)
-                    line = '}'
+        def update_config(name, order):
+            module = modules.get(name, {})
+            module_type = get_module_type(name)
+            if order:
+                config['order'].append(name)
+            elif module_type == 'i3status':
+                config['.group_extras'].append(name)
+            if module_type == 'i3status':
+                i3s_modules.add(name)
+            else:
+                py3_modules.add(name)
+            config[name] = fix_module(module)
 
-                    # create an empty config for this module
-                    if value not in config:
-                        config[value] = {}
+        for name in config_info['order']:
+            update_config(name, order=True)
 
-                    # detect internal modules to be loaded dynamically
-                    if not self.valid_config_param(value):
-                        config['py3_modules'].append(value)
-                    else:
-                        config['i3s_modules'].append(value)
-                else:
-                    if not key.startswith('on_click'):
-                        config[section_name][key] = value
-                    else:
-                        # on_click special parameters
-                        try:
-                            button = int(key.split()[1])
-                            if button not in range(1, 6):
-                                raise ValueError('should be 1, 2, 3, 4 or 5')
-                        except IndexError as e:
-                            raise IndexError(
-                                'missing "button id" for "on_click" '
-                                'parameter in section {}'.format(section_name))
-                        except ValueError as e:
-                            raise ValueError('invalid "button id" '
-                                             'for "on_click" parameter '
-                                             'in section {} ({})'.format(
-                                                 section_name, e))
-                        on_c = config['on_click']
-                        on_c[section_name] = on_c.get(section_name, {})
-                        on_c[section_name][button] = value
+        for name in group_extras:
+            update_config(name, order=False)
 
-            if line.endswith('}'):
-                in_section = False
-                section_name = ''
-
-        # py3status only uses the i3bar protocol because it needs JSON output
-        if config['general']['output_format'] != 'i3bar':
-            raise RuntimeError('i3status output_format should be set' +
-                               ' to "i3bar" on {}'.format(
-                                   i3status_config_path,
-                                   ' or on your own {}/.i3status.conf'.format(
-                                       os.path.expanduser(
-                                           '~')) if i3status_config_path ==
-                                   '/etc/i3status.conf' else ''))
+        config['on_click'] = on_click
+        config['i3s_modules'] = sorted(list(i3s_modules))
+        config['py3_modules'] = sorted(list(py3_modules))
+        config['.module_groups'] = module_groups
 
         def clean_i3status_modules(key):
             # cleanup unconfigured i3status modules that have no default
@@ -460,6 +358,7 @@ class I3status(Thread):
 
         clean_i3status_modules('order')
         clean_i3status_modules('.group_extras')
+
         return config
 
     def set_responses(self, json_list):
@@ -503,20 +402,14 @@ class I3status(Thread):
         based on the parsed one from 'i3status_config_path'.
         """
         for section_name, conf in sorted(self.config.items()):
-            if section_name in ['i3s_modules', 'py3_modules', '.group_extras',
+            if section_name in ['order', 'py3_modules', '.group_extras',
                                 '.module_groups']:
                 continue
-            elif section_name == 'order':
+            elif section_name == 'i3s_modules':
                 for module_name in conf:
                     if self.valid_config_param(module_name):
                         self.write_in_tmpfile('order += "%s"\n' % module_name,
                                               tmpfile)
-                # we need to make sure any additional i3status modules needed
-                # for groups are added to the i3status config
-                for module_name in self.config['.group_extras']:
-                    self.write_in_tmpfile('order += "%s"\n' % module_name,
-                                          tmpfile)
-
                 self.write_in_tmpfile('\n', tmpfile)
             elif self.valid_config_param(section_name) and conf:
                 self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
