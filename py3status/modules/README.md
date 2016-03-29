@@ -1187,6 +1187,8 @@ Display WiFi bit rate, quality, signal and SSID using iw.
 Configuration parameters:
   - `bitrate_bad` Bad bit rate in Mbit/s *(default: 26)*
   - `bitrate_degraded` Degraded bit rate in Mbit/s *(default: 53)*
+  - `blocks` a string, where each character represents quality level
+    *(default: "_▁▂▃▄▅▆▇█")*
   - `cache_timeout` Update interval in seconds *(default: 10)*
   - `device` Wireless device name *(default: "wlan0")*
   - `down_color` Output color when disconnected, possible values:
@@ -1205,12 +1207,17 @@ Configuration parameters:
 
 Format of status string placeholders:
   - `{bitrate}` Display bit rate
+  - `{device}` Display device name
+  - `{icon}` Character representing the quality based on bitrate,
+    as defined by the 'blocks'
+  - `{ip}` Display IP address
   - `{signal_dbm}` Display signal in dBm
   - `{signal_percent}` Display signal in percent
   - `{ssid}` Display SSID
 
 Requires:
   - `iw`
+  - `ip` if {ip} is used
 
 **author** Markus Weimar <mail@markusweimar.de>
 
