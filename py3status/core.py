@@ -343,10 +343,22 @@ class Py3statusWrapper():
         """
         Name or list of names of modules that have updated.
         """
-        if isinstance(update, list):
-            self.queue.extend(update)
-        else:
-            self.queue.append(update)
+        if not isinstance(update, list):
+            update = [update]
+        self.queue.extend(update)
+
+        # find groups that use the modules updated
+        module_groups = self.i3status_thread.config['.module_groups']
+        groups_to_update = set()
+        for item in update:
+            if item in module_groups:
+                groups_to_update.update(set(module_groups[item]))
+        # force groups to update
+        for group in groups_to_update:
+            group_module = self.output_modules.get(group)
+            if group_module:
+                group_module['module'].clear_cache()
+                group_module['module'].run()
 
     def create_output_modules(self):
         """

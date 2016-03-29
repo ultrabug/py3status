@@ -269,14 +269,6 @@ class Module(Thread):
                         self.py3_wrapper.i3_nagbar(msg, level='warning')
                         self.nagged = True
 
-            # if in a group then force the group to update
-            if self.group:
-                group_module = self.py3_wrapper.modules.get(self.group)
-                if group_module:
-                    for obj in group_module.methods.values():
-                        obj['cached_until'] = time()
-                    group_module.run()
-
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time

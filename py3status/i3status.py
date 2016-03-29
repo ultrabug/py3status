@@ -290,6 +290,7 @@ class I3status(Thread):
             'on_click': {},
             'order': [],
             '.group_extras': [],  # extra i3status modules needed by groups
+            '.module_groups': {},  # record groups that modules are in
             'py3_modules': []
         }
 
@@ -358,6 +359,9 @@ class I3status(Thread):
                     if group_name:
                         # update the items in the group
                         config[group_name]['items'].append(section_name)
+                        section = config['.module_groups'].setdefault(section_name, [])
+                        if group_name not in section:
+                            section.append(group_name)
                         if not self.valid_config_param(section_name):
                             # py3status module add a reference to the group and
                             # make sure we have it in the list of modules to
@@ -499,7 +503,8 @@ class I3status(Thread):
         based on the parsed one from 'i3status_config_path'.
         """
         for section_name, conf in sorted(self.config.items()):
-            if section_name in ['i3s_modules', 'py3_modules', '.group_extras']:
+            if section_name in ['i3s_modules', 'py3_modules', '.group_extras',
+                                '.module_groups']:
                 continue
             elif section_name == 'order':
                 for module_name in conf:
