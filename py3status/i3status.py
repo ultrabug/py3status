@@ -114,7 +114,7 @@ class I3statusModule:
 
         date = datetime.strptime(i3s_datetime, TIME_FORMAT)
         # calculate the time delta
-        utcnow = datetime.now()
+        utcnow = datetime.utcnow()
         delta = (
             datetime(date.year, date.month, date.day, date.hour, date.minute) -
             datetime(utcnow.year, utcnow.month, utcnow.day, utcnow.hour,

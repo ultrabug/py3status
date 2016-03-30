@@ -44,6 +44,7 @@ class Module(Thread):
         # should only use it on the understanding that it is not supported.
         self._py3_wrapper = py3_wrapper
         #
+        self.set_module_options(module)
         self.load_methods(module, user_modules)
 
     @staticmethod
@@ -119,6 +120,38 @@ class Module(Thread):
         level can be 'info', 'error' or 'warning'
         """
         self._py3_wrapper.notify_user(msg, level=level)
+
+    def set_module_options(self, module):
+        """
+        Set universal module options to be interpreted by i3bar
+        https://i3wm.org/i3status/manpage.html#_universal_module_options
+        """
+        self.module_options = {}
+        mod_config = self.i3status_thread.config.get(module, {})
+
+        if 'min_width' in mod_config:
+            self.module_options['min_width'] = mod_config['min_width']
+
+        if 'separator' in mod_config:
+            separator = mod_config['separator']
+            if not isinstance(separator, bool):
+                raise TypeError("invalid 'separator' attribute, should be a bool")
+
+            self.module_options['separator'] = separator
+
+        if 'separator_block_width' in mod_config:
+            separator_block_width = mod_config['separator_block_width']
+            if not isinstance(separator_block_width, int):
+                raise TypeError("invalid 'separator_block_width' attribute, should be an int")
+
+            self.module_options['separator_block_width'] = separator_block_width
+
+        if 'align' in mod_config:
+            align = mod_config['align']
+            if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
+                raise ValueError("invalid 'align' attribute, valid values are: left, center, right")
+
+            self.module_options['align'] = align
 
     def load_methods(self, module, user_modules):
         """
@@ -259,6 +292,9 @@ class Module(Thread):
                     else:
                         result['instance'] = self.module_inst
                         result['name'] = self.module_name
+
+                    # set universal module options in result
+                    result.update(self.module_options)
 
                     # initialize method object
                     if my_method['name'] is None:
