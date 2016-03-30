@@ -51,13 +51,14 @@ class ConfigParser:
         module_path = os.path.join(root, 'modules', '*.py')
         for file in glob.glob(module_path):
             modules.append(os.path.basename(file)[:-3])
-        self.modules = modules
-        self.i3status_modules = [
-            'battery', 'cpu_temperature', 'cpu_usage', 'ddate', 'disk',
-            'ethernet', 'ipv6', 'load', 'path_exists', 'run_watch', 'time',
+        i3status_modules = [
+            'battery', 'cpu_temperature', 'disk',
+            'ethernet', 'path_exists', 'run_watch',
             'tztime', 'volume', 'wireless'
         ]
-        self.i3s_single_names = ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
+        i3s_single_names = ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
+        self.module_names = modules + i3s_single_names + i3status_modules
+        self.i3s_single_names = i3s_single_names
         self.container_modules = []
 
     def check_child_friendly(self, name):
@@ -84,7 +85,7 @@ class ConfigParser:
         if name in ['general']:
             return
         split_name = name.split()
-        if split_name[0] not in self.modules + self.i3status_modules:
+        if split_name[0] not in self.module_names:
             self.current_token -= len(split_name) - offset
             self.error('Unknown module')
         if len(split_name) > 1 and split_name[0] in self.i3s_single_names:
@@ -111,7 +112,7 @@ class ConfigParser:
             position = len(line) + 2
         marker = ' ' * (position - 1) + '^'
         location = '\n\n `{}` at line {} position {}\n\n{}\n{}'.format(
-            token['value'], line_no, position, line, marker)
+            token['value'], line_no + 1, position, line, marker)
         raise ParseException(msg, location)
 
     def tokenize(self, config):
@@ -328,7 +329,7 @@ class ConfigParser:
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:
-                    self.error('Config name expected')
+                    self.error('Name expected')
                 elif t_value == '+=' and name not in dictionary:
                     # order is treated specially
                     if not(self.level == 1 and name == 'order'):

@@ -149,6 +149,7 @@ class Py3status:
             color = current_output.get('color')
         update_time = self.cycle or 1000
 
+        # FIXME always start contained items after container so they trigger
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
         if not ready:

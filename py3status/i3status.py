@@ -4,6 +4,7 @@ import os
 from copy import deepcopy
 from json import dumps, loads
 from datetime import datetime, timedelta, tzinfo
+from string import Template
 from subprocess import Popen
 from subprocess import PIPE
 from syslog import syslog, LOG_INFO
@@ -14,12 +15,23 @@ from time import time
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
-from py3status.parse_config import parse_config, ModuleDefinition
+from py3status.parse_config import parse_config, ModuleDefinition, ParseException
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 TIME_MODULES = ['time', 'tztime']
 
+ERROR_CONFIG = '''
+general {colors = true interval = 5}
+
+order += "static_string py3status"
+order += "tztime local"
+order += "static_string error"
+
+static_string py3status {format = "py3status"}
+tztime local {format = "%c"}
+static_string error {format = "$error" color = "#FF0000"}
+'''
 
 class Tz(tzinfo):
     """
@@ -207,7 +219,14 @@ class I3status(Thread):
 
         user_modules = self.py3_wrapper.get_user_modules()
         with open(i3status_config_path, 'r') as f:
-            config_info = parse_config(f, user_modules=user_modules)
+            try:
+                config_info = parse_config(f, user_modules=user_modules)
+            except ParseException as e:
+
+                self.py3_wrapper.notify_user(str(e).replace('\n', ' '))
+                error = str(e).replace('\n', ' ')
+                error_config = Template(ERROR_CONFIG).substitute(error=error)
+                config_info = parse_config(error_config)
 
         # update general section with defaults
         if 'general' in config_info:
@@ -245,9 +264,6 @@ class I3status(Thread):
             return 'py3status'
 
         def process_module(name, module, parent):
-            if name.split()[0] == 'group':
-                module['items'] = []
-
             if parent:
                 modules[parent]['items'].append(name)
                 mg = module_groups.setdefault(name, [])
@@ -256,10 +272,14 @@ class I3status(Thread):
                 if get_module_type(name) == 'py3status':
                     module['.group'] = parent
 
-            # get on_click events
+            # check module content
             for k, v in module.items():
                 if k.startswith('on_click'):
+                    # on_click event
                     process_onclick(k, v, name)
+                if isinstance(v, ModuleDefinition):
+                    # we are a container
+                    module['items'] = []
             return module
 
         def get_modules(data, parent=None):
