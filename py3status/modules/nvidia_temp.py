@@ -8,7 +8,8 @@ Configuration parameters:
     color_good: the color used if everything is OK.
     format_prefix: a prefix for the output.
     format_units: the temperature units. Will appear at the end.
-    separator: the separator char between temperatures (only if more than one GPU)
+    temp_separator: the separator char between temperatures (only if more than
+    one GPU)
 
 Requires:
     nvidia-smi:
@@ -34,7 +35,7 @@ class Py3status:
     color_good = None
     format_prefix = "GPU: "
     format_units = "°C"
-    separator = '|'
+    temp_separator = '|'
 
     def nvidia_temp(self, i3s_output_list, i3s_config):
         # The whole command:
@@ -54,7 +55,7 @@ class Py3status:
 
             output = "{format_prefix}{data}".format(
                 format_prefix=self.format_prefix,
-                data=self.separator.join(data)
+                data=self.temp_separator.join(data)
             )
 
             color = self.color_good or i3s_config['color_good']
