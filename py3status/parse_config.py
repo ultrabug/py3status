@@ -6,7 +6,6 @@ import imp
 from collections import OrderedDict
 from string import Template
 
-
 MAX_NESTING_LEVELS = 4
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -37,6 +36,17 @@ group error{
 }
 '''
 
+GENERAL_DEFAULTS = {
+    'color_bad': '#FF0000',
+    'color_degraded': '#FFFF00',
+    'color_good': '#00FF00',
+    'color_separator': '#333333',
+    'colors': False,
+    'interval': 5,
+    'output_format': 'i3bar',
+}
+
+
 class ParseException(Exception):
     def __init__(self, error, line, line_no, position, token):
         self.error = error
@@ -65,8 +75,7 @@ class ConfigParser:
 
     TOKENS = [
         '#.*$'  # comments
-        '|(?P<operator>[()[\]{},:]|\+?='')'  # operators
-
+        '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
         r"|('(?:[^'\\]|\\.)*')"  # single quoted string
@@ -74,7 +83,6 @@ class ConfigParser:
         '|(-?\d+\.\d*)|(-?\.\d+)'  # float
         '|(-?\d+)'  # int
         ')'
-
         r'|(?P<newline>\n)'  # newline
         '|(?P<unknown>\S+)'  # unknown token
     ]
@@ -397,34 +405,45 @@ class ConfigParser:
         pass
 
 
-def process_config(config_path, py3_wrapper):
+def process_config(config_path, py3_wrapper=None):
     """
     Parse i3status.conf so we can adapt our code to the i3status config.
     """
-    general_defaults = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00',
-        'color_separator': '#333333',
-        'colors': False,
-        'interval': 5,
-        'output_format': 'i3bar',
-    }
+
+    def parse_config(config, user_modules=None):
+        '''
+        Parse text or file as a py3status config file.
+        '''
+
+        if hasattr(config, 'readlines'):
+            config = ''.join(config.readlines())
+        parser = ConfigParser(config)
+        parser.parse()
+        parsed = parser.config
+        del parser
+        return parsed
 
     config = {}
 
-    user_modules = py3_wrapper.get_user_modules()
+    if py3_wrapper:
+        user_modules = py3_wrapper.get_user_modules()
+    else:
+        user_modules = None
+
     with open(config_path, 'r') as f:
         try:
             config_info = parse_config(f, user_modules=user_modules)
         except ParseException as e:
 
             error = e.one_line()
-            py3_wrapper.notify_user(error)
-            error_config = Template(ERROR_CONFIG).substitute(error=error.replace('"', '\\"'))
+            if py3_wrapper:
+                py3_wrapper.notify_user(error)
+            error_config = Template(ERROR_CONFIG).substitute(
+                error=error.replace('"', '\\"'))
             config_info = parse_config(error_config)
 
     # update general section with defaults
+    general_defaults = GENERAL_DEFAULTS.copy()
     if 'general' in config_info:
         general_defaults.update(config_info['general'])
     config['general'] = general_defaults
@@ -443,14 +462,12 @@ def process_config(config_path, py3_wrapper):
             if button not in range(1, 6):
                 raise ValueError('should be 1, 2, 3, 4 or 5')
         except IndexError as e:
-            raise IndexError(
-                'missing "button id" for "on_click" '
-                'parameter in group {}'.format(group_name))
+            raise IndexError('missing "button id" for "on_click" '
+                             'parameter in group {}'.format(group_name))
         except ValueError as e:
             raise ValueError('invalid "button id" '
                              'for "on_click" parameter '
-                             'in group {} ({})'.format(
-                                 group_name, e))
+                             'in group {} ({})'.format(group_name, e))
         clicks = on_click.setdefault(group_name, {})
         clicks[button] = value
 
@@ -523,8 +540,7 @@ def process_config(config_path, py3_wrapper):
 
     # time and tztime modules need a format for correct processing
     for name in config:
-        if name.split()[0] in TIME_MODULES and 'format' not in config[
-                name]:
+        if name.split()[0] in TIME_MODULES and 'format' not in config[name]:
             if name.split()[0] == 'time':
                 config[name]['format'] = TIME_FORMAT
             else:
@@ -532,25 +548,9 @@ def process_config(config_path, py3_wrapper):
 
     return config
 
-def parse_config(config, user_modules=None):
-    '''
-    Parse text or file as a py3status config file.
-    '''
-
-    if hasattr(config, 'readlines'):
-        config = ''.join(config.readlines())
-    parser = ConfigParser(config)
-    parser.parse()
-    parsed = parser.config
-    del parser
-    return parsed
-
 
 if __name__ == '__main__':
     pass
     config = '/home/toby/.i3/i3status.conf'
-    with open(config) as f:
-      #  input = ''.join(f.readlines())
-        parse_config(f)
-     #   import pprint
-     #   pprint.pprint(parse_config(f))
+    import pprint
+    pprint.pprint(process_config(config))
