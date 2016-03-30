@@ -33,6 +33,7 @@ from os import setpgrp
 from subprocess import call, Popen, DEVNULL
 from time import time
 
+
 class Py3status:
     """
     """
