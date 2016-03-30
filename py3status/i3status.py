@@ -22,15 +22,22 @@ TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 TIME_MODULES = ['time', 'tztime']
 
 ERROR_CONFIG = '''
-general {colors = true interval = 5}
+general {colors = true interval = 60}
 
 order += "static_string py3status"
 order += "tztime local"
-order += "static_string error"
+order += "group error"
 
 static_string py3status {format = "py3status"}
 tztime local {format = "%c"}
-static_string error {format = "$error" color = "#FF0000"}
+group error{
+    button_next = 1
+    button_prev = 0
+    fixed_width = False
+    format = "{output}"
+    static_string error_min {format = "CONFIG ERROR" color = "#FF0000"}
+    static_string error {format = "$error" color = "#FF0000"}
+}
 '''
 
 class Tz(tzinfo):
@@ -223,8 +230,8 @@ class I3status(Thread):
                 config_info = parse_config(f, user_modules=user_modules)
             except ParseException as e:
 
-                self.py3_wrapper.notify_user(str(e).replace('\n', ' '))
-                error = str(e).replace('\n', ' ')
+                error = e.one_line()
+                self.py3_wrapper.notify_user(error)
                 error_config = Template(ERROR_CONFIG).substitute(error=error)
                 config_info = parse_config(error_config)
 

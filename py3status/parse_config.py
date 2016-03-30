@@ -7,8 +7,21 @@ from collections import OrderedDict
 
 
 class ParseException(Exception):
+    def __init__(self, error, line, line_no, position, token):
+        self.error = error
+        self.line = line
+        self.line_no = line_no
+        self.position = position
+        self.token = token
+
+    def one_line(self):
+        return 'CONFIG ERROR: {} saw `{}` at line {} position {}'.format(
+            self.error, self.token, self.line_no, self.position)
+
     def __str__(self):
-        return ': '.join(self.args)
+        marker = ' ' * (self.position - 1) + '^'
+        return '{}\n\nsaw `{}` at line {} position {}\n\n{}\n{}'.format(
+            self.error, self.token, self.line_no, self.position, self.line, marker)
 
 
 class ModuleDefinition(OrderedDict):
@@ -110,10 +123,7 @@ class ConfigParser:
         position = token['start'] - self.line_start
         if previous:
             position = len(line) + 2
-        marker = ' ' * (position - 1) + '^'
-        location = '\n\n `{}` at line {} position {}\n\n{}\n{}'.format(
-            token['value'], line_no + 1, position, line, marker)
-        raise ParseException(msg, location)
+        raise ParseException(msg, line, line_no + 1, position, token['value'])
 
     def tokenize(self, config):
         '''
