@@ -42,7 +42,7 @@ class Py3status:
     format_on = "xscreensaver on"
     color_on = None
     color_off = None
-    cache_timeout = 30
+    cache_timeout = 5
 
     def xscreensaver(self, i3s_output_list, i3s_config):
         """
