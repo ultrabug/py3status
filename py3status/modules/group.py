@@ -76,6 +76,9 @@ class Py3status:
         self.initialized = False
 
     def _init(self):
+        # if no items don't cycle
+        if not self.items:
+            self.cycle = 0
         self._cycle_time = time() + self.cycle
         self.initialized = True
 
@@ -121,6 +124,15 @@ class Py3status:
         """
         Display a output of current module
         """
+
+        # hide if no contents
+        # FIXME the module shouldn't even run if no content
+        if not self.items:
+            return {
+                'cached_until': time() + 36000,
+                'full_text': '',
+            }
+
         ready = self.initialized
         if not ready:
             self._init()
