@@ -8,12 +8,14 @@ of Xscreensaver and activates or deactivates it upon left click.
 
 This script is useful for people who let Xscreensaver manage dpms
 settings. Xscreensaver has its own dpms variables separate from xset.
-Dpms can be savely turned of in xset as long as xscreensaver is running.
+Dpms can be safely turned off in xset as long as xscreensaver is running.
 Settings can be managed using "xscreensaver-demo".
 
 Configuration parameters:
-    - format_off: string to display when Xscreensaver is disabled
-    - format_on : string to display when Xscreensaver is enabled
+    format_off   : string to display when Xscreensaver is disabled
+    format_on    : string to display when Xscreensaver is enabled
+    cache_timeout: interval for checking whether Xscreensaver is running
+                   (default 30s)
 
 Example configuration in py3status.conf:
 
@@ -21,7 +23,7 @@ Example configuration in py3status.conf:
 order += "xscreensaver"
 xscreensaver {
     format_off = "xscreensaver off"
-    format_on = "xscreensaver on"
+    format_on  = "xscreensaver on"
 }
 ```
 
@@ -29,7 +31,7 @@ xscreensaver {
 """
 from os import setpgrp
 from subprocess import call, Popen, DEVNULL
-
+from time import time
 
 class Py3status:
     """
@@ -39,6 +41,7 @@ class Py3status:
     format_on = "xscreensaver on"
     color_on = None
     color_off = None
+    cache_timeout = 30
 
     def xscreensaver(self, i3s_output_list, i3s_config):
         """
@@ -48,11 +51,14 @@ class Py3status:
                         stdout=DEVNULL,
                         stderr=DEVNULL,
                         preexec_fn=setpgrp) == 0
-        return {
-            'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good']
-            if self.run else self.color_off or i3s_config['color_bad']
-        }
+        full_text = self.format_on if self.run else self.format_off
+        if self.run:
+            color = self.color_on or i3s_config['color_good']
+        else:
+            color = self.color_off or i3s_config['color_bad']
+        return {'full_text': full_text,
+                'color': color,
+                'cached_until': time() + self.cache_timeout}
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
