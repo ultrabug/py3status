@@ -217,6 +217,17 @@ class Py3status:
         #       '']
         acpi_list = acpi_raw.decode("UTF-8").split('\n')
 
+        # check for faulty acpi output
+        for i, line in reversed(list(enumerate(acpi_list))):
+            if len(line) == 0:
+                acpi_list.pop(i)
+        # if there is an uneven number of lines, someonething is wrong...
+        # search for the battery with only one line and remove it.
+        if len(acpi_list) % 2 == 1:
+            for i, line in reversed(list(enumerate(acpi_list[0:-1]))):
+                if acpi_list[i][0:10] != acpi_list[i+1][0:10]:
+                    acpi_list.pop(i)
+
         # Separate the output because each pair of lines corresponds to a single battery.
         # Now the list index will correspond to the index of the battery we want to look at
         acpi_list = [acpi_list[i:i + 2]
