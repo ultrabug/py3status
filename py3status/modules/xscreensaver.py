@@ -12,8 +12,8 @@ Dpms can be safely turned off in xset as long as xscreensaver is running.
 Settings can be managed using "xscreensaver-demo".
 
 Configuration parameters:
-    format_off   : string to display when Xscreensaver is disabled
-    format_on    : string to display when Xscreensaver is enabled
+    format_off:    string to display when Xscreensaver is disabled
+    format_on:     string to display when Xscreensaver is enabled
     cache_timeout: interval for checking whether Xscreensaver is running
                    (default 30s)
 
