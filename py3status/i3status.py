@@ -4,7 +4,6 @@ import os
 from copy import deepcopy
 from json import dumps, loads
 from datetime import datetime, timedelta, tzinfo
-from string import Template
 from subprocess import Popen
 from subprocess import PIPE
 from syslog import syslog, LOG_INFO
@@ -15,30 +14,11 @@ from time import time
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
-from py3status.parse_config import parse_config, ModuleDefinition, ParseException
+from py3status.parse_config import process_config
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 TIME_MODULES = ['time', 'tztime']
-
-ERROR_CONFIG = '''
-general {colors = true interval = 60}
-
-order += "static_string py3status"
-order += "tztime local"
-order += "group error"
-
-static_string py3status {format = "py3status"}
-tztime local {format = "%c"}
-group error{
-    button_next = 1
-    button_prev = 0
-    fixed_width = False
-    format = "{output}"
-    static_string error_min {format = "CONFIG ERROR" color = "#FF0000"}
-    static_string error {format = "$error" color = "#FF0000"}
-}
-'''
 
 class Tz(tzinfo):
     """
@@ -177,7 +157,7 @@ class I3status(Thread):
         self.tmpfile_path = None
         #
         config_path = py3_wrapper.config['i3status_config_path']
-        self.config = self.i3status_config_reader(config_path)
+        self.config = process_config(config_path, py3_wrapper)
 
     def update_times(self):
         """
@@ -208,154 +188,6 @@ class I3status(Thread):
             ]
         return param_name.split(' ')[0] in valid_config_params
 
-    def i3status_config_reader(self, i3status_config_path):
-        """
-        Parse i3status.conf so we can adapt our code to the i3status config.
-        """
-        general_defaults = {
-            'color_bad': '#FF0000',
-            'color_degraded': '#FFFF00',
-            'color_good': '#00FF00',
-            'color_separator': '#333333',
-            'colors': False,
-            'interval': 5,
-            'output_format': 'i3bar',
-        }
-
-        config = {}
-
-        user_modules = self.py3_wrapper.get_user_modules()
-        with open(i3status_config_path, 'r') as f:
-            try:
-                config_info = parse_config(f, user_modules=user_modules)
-            except ParseException as e:
-
-                error = e.one_line()
-                self.py3_wrapper.notify_user(error)
-                error_config = Template(ERROR_CONFIG).substitute(error=error)
-                config_info = parse_config(error_config)
-
-        # update general section with defaults
-        if 'general' in config_info:
-            general_defaults.update(config_info['general'])
-        config['general'] = general_defaults
-
-        # get all modules
-        modules = {}
-        on_click = {}
-        i3s_modules = set()
-        py3_modules = set()
-        module_groups = {}
-        group_extras = []
-
-        def process_onclick(key, value, group_name):
-            try:
-                button = int(key.split()[1])
-                if button not in range(1, 6):
-                    raise ValueError('should be 1, 2, 3, 4 or 5')
-            except IndexError as e:
-                raise IndexError(
-                    'missing "button id" for "on_click" '
-                    'parameter in group {}'.format(group_name))
-            except ValueError as e:
-                raise ValueError('invalid "button id" '
-                                 'for "on_click" parameter '
-                                 'in group {} ({})'.format(
-                                     group_name, e))
-            clicks = on_click.setdefault(group_name, {})
-            clicks[button] = value
-
-        def get_module_type(name):
-            if name.split()[0] in self.i3status_module_names:
-                return 'i3status'
-            return 'py3status'
-
-        def process_module(name, module, parent):
-            if parent:
-                modules[parent]['items'].append(name)
-                mg = module_groups.setdefault(name, [])
-                mg.append(parent)
-                group_extras.append(name)
-                if get_module_type(name) == 'py3status':
-                    module['.group'] = parent
-
-            # check module content
-            for k, v in module.items():
-                if k.startswith('on_click'):
-                    # on_click event
-                    process_onclick(k, v, name)
-                if isinstance(v, ModuleDefinition):
-                    # we are a container
-                    module['items'] = []
-            return module
-
-        def get_modules(data, parent=None):
-            for k, v in data.items():
-                if isinstance(v, ModuleDefinition):
-                    module = process_module(k, v, parent)
-                    modules[k] = module
-                    get_modules(v, parent=k)
-
-        get_modules(config_info)
-
-        config['order'] = []
-        config['.group_extras'] = []
-
-        def fix_module(module):
-            fixed = {}
-            for k, v in module.items():
-                if not isinstance(v, ModuleDefinition):
-                    fixed[k] = v
-            return fixed
-
-        def update_config(name, order):
-            module = modules.get(name, {})
-            module_type = get_module_type(name)
-            if order:
-                config['order'].append(name)
-            elif module_type == 'i3status':
-                config['.group_extras'].append(name)
-            if module_type == 'i3status':
-                i3s_modules.add(name)
-            else:
-                py3_modules.add(name)
-            config[name] = fix_module(module)
-
-        for name in config_info['order']:
-            update_config(name, order=True)
-
-        for name in group_extras:
-            update_config(name, order=False)
-
-        config['on_click'] = on_click
-        config['i3s_modules'] = sorted(list(i3s_modules))
-        config['py3_modules'] = sorted(list(py3_modules))
-        config['.module_groups'] = module_groups
-
-        # time and tztime modules need a format for correct processing
-        for name in config:
-            if name.split()[0] in TIME_MODULES and 'format' not in config[
-                    name]:
-                if name.split()[0] == 'time':
-                    config[name]['format'] = TIME_FORMAT
-                else:
-                    config[name]['format'] = TZTIME_FORMAT
-
-        def clean_i3status_modules(key):
-            # cleanup unconfigured i3status modules that have no default
-            for module_name in deepcopy(config[key]):
-                if (self.valid_config_param(module_name,
-                                            cleanup=True) and
-                        not config.get(module_name)):
-                    config.pop(module_name)
-                    if module_name in config['i3s_modules']:
-                        config['i3s_modules'].remove(module_name)
-                    config[key].remove(module_name)
-
-        clean_i3status_modules('order')
-        clean_i3status_modules('.group_extras')
-
-        return config
 
     def set_responses(self, json_list):
         """
