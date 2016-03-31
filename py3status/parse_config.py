@@ -458,8 +458,8 @@ def process_config(config_path, py3_wrapper=None):
     # get all modules
     modules = {}
     on_click = {}
-    i3s_modules = set()
-    py3_modules = set()
+    i3s_modules = []
+    py3_modules = []
     module_groups = {}
 
     def process_onclick(key, value, group_name):
@@ -526,9 +526,11 @@ def process_config(config_path, py3_wrapper=None):
                 continue
             module_type = get_module_type(item)
             if module_type == 'i3status':
-                i3s_modules.add(item)
+                if item not in i3s_modules:
+                    i3s_modules.append(item)
             else:
-                py3_modules.add(item)
+                if item not in py3_modules:
+                    py3_modules.append(item)
             module = modules.get(item, {})
             config[item] = fix_module(module)
             # add any children
@@ -541,14 +543,16 @@ def process_config(config_path, py3_wrapper=None):
         config['order'].append(name)
         add_container_items(name)
         if module_type == 'i3status':
-            i3s_modules.add(name)
+            if name not in i3s_modules:
+                i3s_modules.append(name)
         else:
-            py3_modules.add(name)
+            if name not in py3_modules:
+                py3_modules.append(name)
         config[name] = fix_module(module)
 
     config['on_click'] = on_click
-    config['i3s_modules'] = sorted(list(i3s_modules))
-    config['py3_modules'] = sorted(list(py3_modules))
+    config['i3s_modules'] = i3s_modules
+    config['py3_modules'] = py3_modules
     config['.module_groups'] = module_groups
 
     # time and tztime modules need a format for correct processing
