@@ -123,14 +123,16 @@ class ConfigParser:
             # config can get parsed and py3status loads.  The error about the
             # failing module load is better handled at that point, and will be.
             return
-        if hasattr(py_mod, 'Py3status'):
-            if hasattr(py_mod.Py3status, 'Meta'):
-                if hasattr(py_mod.Py3status.Meta, 'container'):
-                    self.container_modules.append(name)
-                    del py_mod
-                    return
+        try:
+            container = py_mod.Py3status.Meta.container
+        except AttributeError:
+            container = False
+        # delete the module
         del py_mod
-        self.error('Module `{}` cannot contain others'.format(name))
+        if container:
+            self.container_modules.append(name)
+        else:
+            self.error('Module `{}` cannot contain others'.format(name))
 
     def check_module_name(self, name, offset=0):
         if name in ['general']:
