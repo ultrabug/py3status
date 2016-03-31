@@ -489,7 +489,6 @@ def process_config(config_path, py3_wrapper=None):
             modules[parent]['items'].append(name)
             mg = module_groups.setdefault(name, [])
             mg.append(parent)
-            group_extras.append(name)
             if get_module_type(name) == 'py3status':
                 module['.group'] = parent
 
@@ -522,24 +521,33 @@ def process_config(config_path, py3_wrapper=None):
                 fixed[k] = v
         return fixed
 
-    def update_config(name, order):
+    def add_container_items(module_name):
+        module = modules.get(module_name, {})
+        items = module.get('items', [])
+        for item in items:
+            if item in config:
+                continue
+            module_type = get_module_type(item)
+            if module_type == 'i3status':
+                i3s_modules.add(item)
+            else:
+                py3_modules.add(item)
+            module = modules.get(item, {})
+            config[item] = fix_module(module)
+            # add any children
+            add_container_items(item)
+
+    # create config for modules in order
+    for name in config_info['order']:
         module = modules.get(name, {})
         module_type = get_module_type(name)
-        if order:
-            config['order'].append(name)
-        elif module_type == 'i3status':
-            config['.group_extras'].append(name)
+        config['order'].append(name)
+        add_container_items(name)
         if module_type == 'i3status':
             i3s_modules.add(name)
         else:
             py3_modules.add(name)
         config[name] = fix_module(module)
-
-    for name in config_info['order']:
-        update_config(name, order=True)
-
-    for name in group_extras:
-        update_config(name, order=False)
 
     config['on_click'] = on_click
     config['i3s_modules'] = sorted(list(i3s_modules))
