@@ -41,9 +41,6 @@ GENERAL_DEFAULTS = {
     'color_degraded': '#FFFF00',
     'color_good': '#00FF00',
     'color_separator': '#333333',
-    'colors': False,
-    'interval': 5,
-    'output_format': 'i3bar',
 }
 
 
@@ -462,7 +459,6 @@ def process_config(config_path, py3_wrapper=None):
     i3s_modules = set()
     py3_modules = set()
     module_groups = {}
-    group_extras = []
 
     def process_onclick(key, value, group_name):
         try:
@@ -512,7 +508,6 @@ def process_config(config_path, py3_wrapper=None):
     get_modules(config_info)
 
     config['order'] = []
-    config['.group_extras'] = []
 
     def fix_module(module):
         fixed = {}
