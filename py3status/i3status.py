@@ -28,6 +28,7 @@ general {
 }
 """
 
+
 class Tz(tzinfo):
     """
     Timezone info for creating dates.
@@ -68,7 +69,6 @@ class I3statusModule:
 
     def __repr__(self):
         return '<I3statusModule {}>'.format(self.module_name)
-
 
     def get_latest(self):
         return [self.item]
@@ -196,7 +196,6 @@ class I3status(Thread):
             ]
         return param_name.split(' ')[0] in valid_config_params
 
-
     def set_responses(self, json_list):
         """
         Set the given i3status responses on their respective configuration.
@@ -236,7 +235,8 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        interval = self.config.get('general', {}).get('interval', DEFAULT_I3STATUS_INTERVAL)
+        interval = self.config.get('general', {}).get(
+            'interval', DEFAULT_I3STATUS_INTERVAL)
         self.write_in_tmpfile(GENERAL % interval, tmpfile)
         for module in self.config['i3s_modules']:
             self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
@@ -247,8 +247,7 @@ class I3status(Thread):
             for key, value in section.items():
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
-                if module.split()[
-                        0] in TIME_MODULES and key == 'format':
+                if module.split()[0] in TIME_MODULES and key == 'format':
                     value = TZTIME_FORMAT
                 if isinstance(value, bool):
                     value = '{}'.format(value).lower()
