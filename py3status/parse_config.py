@@ -117,7 +117,15 @@ class ConfigParser:
         if not info:
             return
         (file, pathname, description) = info
-        py_mod = imp.load_module(name, file, pathname, description)
+        try:
+            py_mod = imp.load_module(name, file, pathname, description)
+        except:
+            # We cannot load the module!  We could error out here but then the
+            # user gets informed that the problem is with their config.  This
+            # is not correct.  Better to say that all is well and then the
+            # config can get parsed and py3status loads.  The error about the
+            # failing module load is better handled at that point, and will be.
+            return
         if hasattr(py_mod, 'Py3status'):
             if hasattr(py_mod.Py3status, 'Meta'):
                 if hasattr(py_mod.Py3status.Meta, 'container'):
