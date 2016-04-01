@@ -14,7 +14,6 @@ from time import time
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
-from py3status.parse_config import process_config
 import py3status.constants as const
 
 
@@ -129,11 +128,12 @@ class I3status(Thread):
     This class is responsible for spawning i3status and reading its output.
     """
 
-    def __init__(self, py3_wrapper):
+    def __init__(self, py3_wrapper, config):
         """
         Our output will be read asynchronously from 'last_output'.
         """
         Thread.__init__(self)
+        self.config = config
         self.error = None
         self.i3status_module_names = [
             'battery', 'cpu_temperature', 'cpu_usage', 'ddate', 'disk',
@@ -152,9 +152,6 @@ class I3status(Thread):
         self.standalone = py3_wrapper.config['standalone']
         self.time_modules = []
         self.tmpfile_path = None
-        #
-        config_path = py3_wrapper.config['i3status_config_path']
-        self.config = process_config(config_path, py3_wrapper)
 
     def update_times(self):
         """
