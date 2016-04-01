@@ -3,48 +3,12 @@ import codecs
 import re
 import glob
 import os
-import sys
 import imp
 from collections import OrderedDict
 from string import Template
 from subprocess import check_output
 
-MAX_NESTING_LEVELS = 4
-
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
-TIME_MODULES = ['time', 'tztime']
-
-I3STATUS_MODULES = [
-    'battery', 'cpu_temperature', 'disk', 'ethernet', 'path_exists',
-    'run_watch', 'tztime', 'volume', 'wireless'
-]
-I3S_SINGLE_NAMES = ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
-ERROR_CONFIG = '''
-general {colors = true interval = 60}
-
-order += "static_string py3status"
-order += "tztime local"
-order += "group error"
-
-static_string py3status {format = "py3status"}
-tztime local {format = "%c"}
-group error{
-    button_next = 1
-    button_prev = 0
-    fixed_width = False
-    format = "{output}"
-    static_string error_min {format = "CONFIG ERROR" color = "#FF0000"}
-    static_string error {format = "$error" color = "#FF0000"}
-}
-'''
-
-GENERAL_DEFAULTS = {
-    'color_bad': '#FF0000',
-    'color_degraded': '#FFFF00',
-    'color_good': '#00FF00',
-    'color_separator': '#333333',
-}
+import py3status.constants as const
 
 
 class ParseException(Exception):
@@ -132,7 +96,7 @@ class ConfigParser:
         if name in ['general']:
             return
         split_name = name.split()
-        if len(split_name) > 1 and split_name[0] in I3S_SINGLE_NAMES:
+        if len(split_name) > 1 and split_name[0] in const.I3S_SINGLE_NAMES:
             self.current_token -= len(split_name) - 1 - offset
             self.error('Invalid name cannot have 2 tokens')
         if len(split_name) > 2:
@@ -319,7 +283,7 @@ class ConfigParser:
         '''
         This is a module definition so parse content till end.
         '''
-        if self.module_level == MAX_NESTING_LEVELS:
+        if self.module_level == const.MAX_NESTING_LEVELS:
             self.error('Module nested too deep')
         self.module_level += 1
         module = ModuleDefinition()
@@ -411,7 +375,7 @@ def process_config(config_path, py3_wrapper=None):
 
     def module_names():
         # get list of all module names
-        modules = I3S_SINGLE_NAMES + I3STATUS_MODULES
+        modules = const.I3S_SINGLE_NAMES + const.I3STATUS_MODULES
         root = os.path.dirname(os.path.realpath(__file__))
         module_path = os.path.join(root, 'modules', '*.py')
         for file in glob.glob(module_path):
@@ -449,12 +413,12 @@ def process_config(config_path, py3_wrapper=None):
             error = e.one_line()
             if py3_wrapper:
                 py3_wrapper.notify_user(error)
-            error_config = Template(ERROR_CONFIG).substitute(
+            error_config = Template(const.ERROR_CONFIG).substitute(
                 error=error.replace('"', '\\"'))
             config_info = parse_config(error_config)
 
     # update general section with defaults
-    general_defaults = GENERAL_DEFAULTS.copy()
+    general_defaults = const.GENERAL_DEFAULTS.copy()
     if 'general' in config_info:
         general_defaults.update(config_info['general'])
     config['general'] = general_defaults
@@ -482,7 +446,7 @@ def process_config(config_path, py3_wrapper=None):
         clicks[button] = value
 
     def get_module_type(name):
-        if name.split()[0] in I3S_SINGLE_NAMES + I3STATUS_MODULES:
+        if name.split()[0] in const.I3S_SINGLE_NAMES + const.I3STATUS_MODULES:
             return 'i3status'
         return 'py3status'
 
@@ -567,11 +531,11 @@ def process_config(config_path, py3_wrapper=None):
 
     # time and tztime modules need a format for correct processing
     for name in config:
-        if name.split()[0] in TIME_MODULES and 'format' not in config[name]:
+        if name.split()[0] in const.TIME_MODULES and 'format' not in config[name]:
             if name.split()[0] == 'time':
-                config[name]['format'] = TIME_FORMAT
+                config[name]['format'] = const.TIME_FORMAT
             else:
-                config[name]['format'] = TZTIME_FORMAT
+                config[name]['format'] = const.TZTIME_FORMAT
 
     return config
 

@@ -15,18 +15,7 @@ from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
 from py3status.parse_config import process_config
-
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
-TIME_MODULES = ['time', 'tztime']
-DEFAULT_I3STATUS_INTERVAL = 15
-GENERAL = """
-general {
-    interval = %s
-    colors = false
-    output_format = "i3bar"
-}
-"""
+import py3status.constants as const
 
 
 class Tz(tzinfo):
@@ -60,7 +49,7 @@ class I3statusModule:
     def __init__(self, module_name, py3_wrapper):
         self.module_name = module_name
         self.i3status = py3_wrapper.i3status_thread
-        self.is_time_module = module_name.split()[0] in TIME_MODULES
+        self.is_time_module = module_name.split()[0] in const.TIME_MODULES
         self.item = {}
         self.py3_wrapper = py3_wrapper
         if self.is_time_module:
@@ -91,7 +80,7 @@ class I3statusModule:
 
     def set_time_format(self):
         config = self.i3status.config.get(self.module_name, {})
-        time_format = config.get('format', TIME_FORMAT)
+        time_format = config.get('format', const.TIME_FORMAT)
         # Handle format_time parameter if exists
         # Not sure if i3status supports this but docs say it does
         if 'format_time' in config:
@@ -124,7 +113,7 @@ class I3statusModule:
         i3s_datetime = ' '.join(parts[:2])
         i3s_time_tz = parts[2]
 
-        date = datetime.strptime(i3s_datetime, TIME_FORMAT)
+        date = datetime.strptime(i3s_datetime, const.TIME_FORMAT)
         # calculate the time delta
         utcnow = datetime.utcnow()
         delta = (
@@ -236,8 +225,8 @@ class I3status(Thread):
         based on the parsed one from 'i3status_config_path'.
         """
         interval = self.config.get('general', {}).get(
-            'interval', DEFAULT_I3STATUS_INTERVAL)
-        self.write_in_tmpfile(GENERAL % interval, tmpfile)
+            'interval', const.DEFAULT_I3STATUS_INTERVAL)
+        self.write_in_tmpfile(const.I3STATUS_CONF_GENERAL % interval, tmpfile)
         for module in self.config['i3s_modules']:
             self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
         self.write_in_tmpfile('\n', tmpfile)
@@ -247,8 +236,8 @@ class I3status(Thread):
             for key, value in section.items():
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
-                if module.split()[0] in TIME_MODULES and key == 'format':
-                    value = TZTIME_FORMAT
+                if module.split()[0] in const.TIME_MODULES and key == 'format':
+                    value = const.TZTIME_FORMAT
                 if isinstance(value, bool):
                     value = '{}'.format(value).lower()
                 self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
