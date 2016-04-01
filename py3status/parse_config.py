@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import codecs
 import re
 import glob
 import os
+import sys
 import imp
 from collections import OrderedDict
 from string import Template
+from subprocess import check_output
 
 MAX_NESTING_LEVELS = 4
 
@@ -94,6 +97,7 @@ class ConfigParser:
         self.line = 0
         self.raw = config.split('\n')
         self.modules()
+        self.py3 = sys.version_info > (3, 0)
 
     def modules(self):
         modules = []
@@ -212,10 +216,12 @@ class ConfigParser:
             return value[1:-1].replace("\\'", "'")
         return value
 
+
     def make_value(self, value):
         '''
         Converts to actual value, or remains as string.
         '''
+
         if value.startswith('"'):
             return value[1:-1].replace('\\"', '"')
         if value.startswith("'"):
@@ -437,7 +443,10 @@ def process_config(config_path, py3_wrapper=None):
     else:
         user_modules = None
 
-    with open(config_path, 'r') as f:
+    # get the file encoding this is important with multi-byte unicode chars
+    encoding = check_output(['file', '-b', '--mime-encoding', config_path])
+    encoding = encoding.strip().decode('utf-8')
+    with codecs.open(config_path, 'r', encoding) as f:
         try:
             config_info = parse_config(f, user_modules=user_modules)
         except ParseException as e:
