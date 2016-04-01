@@ -96,16 +96,6 @@ class ConfigParser:
         self.current_token = 0
         self.line = 0
         self.raw = config.split('\n')
-        self.modules()
-        self.py3 = sys.version_info > (3, 0)
-
-    def modules(self):
-        modules = []
-        root = os.path.dirname(os.path.realpath(__file__))
-        module_path = os.path.join(root, 'modules', '*.py')
-        for file in glob.glob(module_path):
-            modules.append(os.path.basename(file)[:-3])
-        self.module_names = modules + I3S_SINGLE_NAMES + I3STATUS_MODULES
         self.container_modules = []
 
     def check_child_friendly(self, name):
@@ -142,9 +132,6 @@ class ConfigParser:
         if name in ['general']:
             return
         split_name = name.split()
-        if split_name[0] not in self.module_names:
-            self.current_token -= len(split_name) - offset
-            self.error('Unknown module')
         if len(split_name) > 1 and split_name[0] in I3S_SINGLE_NAMES:
             self.current_token -= len(split_name) - 1 - offset
             self.error('Invalid name cannot have 2 tokens')
@@ -215,7 +202,6 @@ class ConfigParser:
         if value.startswith("'"):
             return value[1:-1].replace("\\'", "'")
         return value
-
 
     def make_value(self, value):
         '''
@@ -423,7 +409,20 @@ def process_config(config_path, py3_wrapper=None):
     Parse i3status.conf so we can adapt our code to the i3status config.
     """
 
-    def parse_config(config, user_modules=None):
+    def module_names():
+        # get list of all module names
+        modules = I3S_SINGLE_NAMES + I3STATUS_MODULES
+        root = os.path.dirname(os.path.realpath(__file__))
+        module_path = os.path.join(root, 'modules', '*.py')
+        for file in glob.glob(module_path):
+            modules.append(os.path.basename(file)[:-3])
+
+        # FIXME we can do this better
+        if py3_wrapper:
+            modules += list(py3_wrapper.get_user_modules().keys())
+        return modules
+
+    def parse_config(config):
         '''
         Parse text or file as a py3status config file.
         '''
@@ -438,17 +437,13 @@ def process_config(config_path, py3_wrapper=None):
 
     config = {}
 
-    if py3_wrapper:
-        user_modules = py3_wrapper.get_user_modules()
-    else:
-        user_modules = None
 
     # get the file encoding this is important with multi-byte unicode chars
     encoding = check_output(['file', '-b', '--mime-encoding', config_path])
     encoding = encoding.strip().decode('utf-8')
     with codecs.open(config_path, 'r', encoding) as f:
         try:
-            config_info = parse_config(f, user_modules=user_modules)
+            config_info = parse_config(f)
         except ParseException as e:
 
             error = e.one_line()
@@ -545,10 +540,16 @@ def process_config(config_path, py3_wrapper=None):
             # add any children
             add_container_items(item)
 
+    allowed_modules = module_names()
+
     # create config for modules in order
     for name in config_info['order']:
         module = modules.get(name, {})
         module_type = get_module_type(name)
+        if allowed_modules and name.split()[0] not in allowed_modules:
+            error = 'Module {} cannot be found'.format(name.split()[0])
+            py3_wrapper.notify_user(error)
+            continue
         config['order'].append(name)
         add_container_items(name)
         if module_type == 'i3status':
