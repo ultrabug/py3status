@@ -3,18 +3,18 @@
 Toggle monitor output from the status bar using xrandr.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh usage in seconds (default: 10s)
-    - distext : custom text or symbol for disconnected status
-    - format : see placeholders below
-    - number : number of the monitor we want to query
-    - offtext : custom text or symbol for off status
-    - ontext : custom text or symbol for on status
-    - position : where the monitor will be toggled (ex: left-of HDMI-1)
-    - source : name of the source we want to query (ex: HDMI-2)
+    cache_timeout: how often we refresh usage in seconds (default: 10s)
+    distext: custom text or symbol for disconnected status
+    format: see placeholders below
+    number: number of the monitor we want to query
+    offtext: custom text or symbol for off status
+    ontext: custom text or symbol for on status
+    position: where the monitor will be toggled (ex: left-of HDMI-1)
+    source: name of the source we want to query (ex: HDMI-2)
 
 Format of status string placeholders:
-    {monitor} : monitor source name
-    {status} : on/off status
+    {monitor} monitor source name
+    {status} on/off status
 
 Example config:
 
