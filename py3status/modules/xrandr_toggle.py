@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Toggle monitor output from the status bar using xrandr.
+Toggles a monitor on or off from the status bar using xrandr.
 
 Configuration parameters:
     cache_timeout: how often we refresh usage in seconds (default: 10s)
-    distext: custom text or symbol for disconnected status
     format: see placeholders below
+    format_disconnected: custom text or symbol for disconnected status
+    format_off: custom text or symbol for off status
+    format_on: custom text or symbol for on status
     number: number of the monitor we want to query
-    offtext: custom text or symbol for off status
-    ontext: custom text or symbol for on status
     position: where the monitor will be toggled (ex: left-of HDMI-1)
     source: name of the source we want to query (ex: HDMI-2)
 
 Format of status string placeholders:
-    {monitor} monitor source name
+    {screen} screen source name
     {status} on/off status
 
 Example config:
@@ -25,7 +25,7 @@ xrandr_toggle {
     # or the monitor id directly
     source = "HDMI-2"
     position = "left-of DVI-I-1"
-    format = "[{monitor}:TV32\"]"
+    format = "[{screen}:TV32\"]"
 }
 ```
 
@@ -39,11 +39,11 @@ from time import time
 class Py3status:
     # available configuration parameters
     cache_timeout = 10
-    distext = 'disconnected'
     format = '{source}:{status}'
+    format_disconnected = 'disconnected'
+    format_on = 'on'
+    format_off = 'off'
     number = '1'
-    offtext = 'off'
-    ontext = 'on'
     position = ''
     source = ''
 
@@ -85,15 +85,15 @@ class Py3status:
                         if details[1] == 'disconnected':
                             source['connected'] = 0
                             source['state'] = 'off'
-                            source['status'] = self.distext
+                            source['status'] = self.format_disconnected
                         else:
                             source['connected'] = 1
                             if search(regex, details[2]):
                                 source['state'] = 'auto'
-                                source['status'] = self.ontext
+                                source['status'] = self.format_on
                             else:
                                 source['state'] = 'off'
-                                source['status'] = self.offtext
+                                source['status'] = self.format_off
                         monitors.append(source)
 
             # index bigger than array of monitors found
@@ -121,7 +121,7 @@ class Py3status:
             response = {
                 'cached_until': time() + self.cache_timeout,
                 'color': color,
-                'full_text': self.format.format(monitor=self.mon['id'],
+                'full_text': self.format.format(screen=self.mon['id'],
                                                 status=self.mon['status'])
             }
             return response
