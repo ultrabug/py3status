@@ -88,7 +88,7 @@ class Py3status:
                         monitors.append(source)
             return monitors
         except:
-            return self._error('error while parsing xrandr')
+            return self._error('error while parsing xrandr', None)
 
     # return connected monitor using xrandr and number for index
     def get_status(self, i3s_output_list, i3s_config):
