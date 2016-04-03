@@ -48,11 +48,13 @@ class Py3status:
     source = ''
 
     def __init__(self):
-        self.mon = None
-        self.status = self._xrandr()
+        self.monitor = None
+        self.monitors = self._xrandr()
 
     # return error occurs
-    def _error_response(self, color, text):
+    def _error(self, text, color):
+        if color is None:
+            color = '#FF0000'
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': 'xrandr_toggle: ' + text,
@@ -62,21 +64,13 @@ class Py3status:
 
     # query xrandr for monitors status
     def _xrandr(self):
-            return check_output(['xrandr']).split('\n')
-
-    # return connected monitor using xrandr and number for index
-    def get_status(self, i3s_output_list, i3s_config):
         try:
-            # monitor number (index) must be bigger than 0
-            number = int(self.number) - 1
-            if number < 0:
-                return self._error_response(i3s_config['color_bad'],
-                                            'invalid number')
+            status = check_output(['xrandr']).split('\n')
             monitors = []
             # width x height + left + top
             regex = r'\d{1,}x\d{1,}\+\d{1,}\+\d{1,}'
             # for each line find (dis)connected monitors
-            for line in self.status:
+            for line in status:
                 if 'connected' in line:
                     details = line.split(' ')
                     if len(details) > 2:
@@ -85,54 +79,67 @@ class Py3status:
                         if details[1] == 'disconnected':
                             source['connected'] = 0
                             source['state'] = 'off'
-                            source['status'] = self.format_disconnected
                         else:
                             source['connected'] = 1
                             if search(regex, details[2]):
                                 source['state'] = 'auto'
-                                source['status'] = self.format_on
                             else:
                                 source['state'] = 'off'
-                                source['status'] = self.format_off
                         monitors.append(source)
+            return monitors
+        except:
+            return self._error('error while parsing xrandr')
 
+    # return connected monitor using xrandr and number for index
+    def get_status(self, i3s_output_list, i3s_config):
+        try:
+            color_bad = i3s_config['color_bad']
+            color_degraded = i3s_config['color_degraded']
+            color_good = i3s_config['color_good']
+            # monitor number (index) must be bigger than 0
+            number = int(self.number) - 1
+            if number < 0:
+                return self._error('invalid number', color_bad)
             # index bigger than array of monitors found
-            if number >= len(monitors):
-                return self._error_response(i3s_config['color_bad'],
-                                            'number is too high')
+            if number >= len(self.monitors):
+                return self._error('number is too high', color_bad)
             # if source is set, use that instead of number
             if len(self.source) > 0:
-                self.mon = next((x for x in monitors
-                                if x['id'] == self.source),
-                                None)
-                if self.mon is None:
-                    return self._error_response(i3s_config['color_bad'],
-                                                'monitor not found')
+                self.monitor = None
+                for x in self.monitors:
+                    if x['id'] == self.source:
+                        self.monitor = x
+                        break
+                if self.monitor is None:
+                    return self._error('monitor not found', color_bad)
             else:
-                self.mon = monitors[number]
-
-            if self.mon['connected'] == 0:
-                color = i3s_config['color_bad']
-            elif self.mon['state'] == 'auto':
-                color = i3s_config['color_good']
+                self.monitor = self.monitors[number]
+            # set color and custom status
+            if self.monitor['connected'] == 0:
+                color = color_bad
+                self.monitor['status'] = self.format_disconnected
+            elif self.monitor['state'] == 'auto':
+                color = color_good
+                self.monitor['status'] = self.format_on
             else:
-                color = i3s_config['color_degraded']
+                color = color_degraded
+                self.monitor['status'] = self.format_off
 
             response = {
                 'cached_until': time() + self.cache_timeout,
                 'color': color,
-                'full_text': self.format.format(screen=self.mon['id'],
-                                                status=self.mon['status'])
+                'full_text': self.format.format(screen=self.monitor['id'],
+                                                status=self.monitor['status'])
             }
             return response
-        except:
-            return self._error_response(i3s_config['color_bad'], 'error')
+        except Exception as e:
+            return self._error(e.message, color_bad)
 
     # toggle source on/off
     def on_click(self, i3s_output_list, i3s_config, event):
-        if (self.mon is not None) and (self.mon['connected'] == 1):
-            command = ['xrandr', '--output', self.mon['id']]
-            if self.mon['state'] == 'auto':
+        if (self.monitor is not None) and (self.monitor['connected'] == 1):
+            command = ['xrandr', '--output', self.monitor['id']]
+            if self.monitor['state'] == 'auto':
                 state = 'off'
             else:
                 state = 'auto'
@@ -144,7 +151,7 @@ class Py3status:
             command.append('--' + state)
             call(command)
             # update status
-            self.status = self._xrandr()
+            self.monitors = self._xrandr()
 
 
 if __name__ == "__main__":
