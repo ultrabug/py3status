@@ -38,10 +38,11 @@ class Module(Thread):
         self.new_update = False
         self.module_full_name = module
         self.nagged = False
-        self.py3_wrapper = py3_wrapper
         self.timer = None
-        # if the module is part of a group then we want to store it's name
-        self.group = self.i3status_thread.config.get(module, {}).get('.group')
+
+        # py3wrapper this is private and any modules accessing their instance
+        # should only use it on the understanding that it is not supported.
+        self._py3_wrapper = py3_wrapper
         #
         self.set_module_options(module)
         self.load_methods(module, user_modules)
@@ -87,13 +88,38 @@ class Module(Thread):
         """
         Mark the module as updated
         """
-        self.py3_wrapper.notify_update(self.module_full_name)
+        self._py3_wrapper.notify_update(self.module_full_name)
 
     def get_latest(self):
         output = []
         for method in self.methods.values():
             output.append(method['last_output'])
         return output
+
+    def helper_get_module_info(self, module_name):
+        """
+        Helper function to get info for named module. info comes back as a dict
+        containing.
+
+        'module': the instance of the module,
+        'position': list of places in i3bar, usually only one item
+        'type': module type py3status/i3status
+        """
+        return self._py3_wrapper.output_modules.get(module_name)
+
+    def helper_trigger_event(self, module_name, event):
+        """
+        Trigger the event on named module
+        """
+        if module_name:
+            self._py3_wrapper.events_thread.process_event(module_name, event)
+
+    def helper_notification(self, msg, level='info'):
+        """
+        Send notification to user.
+        level can be 'info', 'error' or 'warning'
+        """
+        self._py3_wrapper.notify_user(msg, level=level)
 
     def set_module_options(self, module):
         """
@@ -302,7 +328,7 @@ class Module(Thread):
                     msg = 'user method {} failed ({})'.format(meth, err)
                     syslog(LOG_WARNING, msg)
                     if not self.nagged:
-                        self.py3_wrapper.i3_nagbar(msg, level='warning')
+                        self.helper_notification(msg, level='error')
                         self.nagged = True
 
             if cache_time is None:
@@ -311,8 +337,7 @@ class Module(Thread):
 
             # don't be hasty mate
             # set timer to do update next time one is needed
-            delay = max(cache_time - time(),
-                        self.config['minimum_interval'])
+            delay = max(cache_time - time(), self.config['minimum_interval'])
             self.timer = Timer(delay, self.run)
             self.timer.start()
 

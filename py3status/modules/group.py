@@ -75,10 +75,6 @@ class Py3status:
         self.initialized = False
 
     def _init(self):
-        try:
-            self.py3_wrapper = self.py3_module.py3_wrapper
-        except AttributeError:
-            self.py3_wrapper = None
         # if no items don't cycle
         if not self.items:
             self.cycle = 0
@@ -107,25 +103,15 @@ class Py3status:
     def _get_current_output(self, item):
         output = None
         current = self.items[item]
-        py3_wrapper = self.py3_wrapper
-        if current in py3_wrapper.output_modules:
-            output = py3_wrapper.output_modules[current]['module'].get_latest()[0]
+        module_info = self.py3_module.helper_get_module_info(current)
+        if module_info:
+            output = module_info['module'].get_latest()[0]
         return output
 
     def _get_current_module_name(self):
         if not self.items:
             return
         return self.items[self.active]
-
-    def _get_current_module(self):
-        if not self.items:
-            return
-        current = self.items[self.active]
-        py3_wrapper = self.py3_wrapper
-        if current in py3_wrapper.modules:
-            return py3_wrapper.modules[current]
-        else:
-            return py3_wrapper.config.get(current)
 
     def _next(self):
         self.active = (self.active + 1) % len(self.items)
@@ -177,20 +163,6 @@ class Py3status:
             response['color'] = self.color
         return response
 
-    def _call_i3status_config_on_click(self, module_name, event):
-        """
-        call any on_click event set in the config for the named module
-        """
-        config = self.py3_module.py3_wrapper.i3status_thread.config[
-            'on_click']
-        click_info = config.get(module_name, None)
-        if click_info:
-            action = click_info.get(event['button'])
-            if action:
-                # we have an action so call it
-                self.py3_module.py3_wrapper.events_thread.i3_msg(
-                    module_name, action)
-
     def on_click(self, i3s_output_list, i3s_config, event):
         """
         Switch the displayed module or pass the event on to the active module
@@ -204,19 +176,9 @@ class Py3status:
         if self.button_prev and event['button'] == self.button_prev:
             self._prev()
 
-        # any event set in the config for the group
-        name = self.py3_module.module_full_name
-        self._call_i3status_config_on_click(name, event)
-
-        # any event set in the config for the active module
-        current_module = self.items[self.active]
-        self._call_i3status_config_on_click(current_module, event)
-
-        # try the modules own click event
-        current_module = self._get_current_module()
-        current_module.click_event(event)
-        self.py3_wrapper.events_thread.refresh(
-            current_module.module_full_name)
+        # pass the event to the current module
+        module_name = self._get_current_module_name()
+        self.py3_module.helper_trigger_event(module_name, event)
 
 
 if __name__ == "__main__":

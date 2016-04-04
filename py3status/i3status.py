@@ -327,7 +327,6 @@ class I3status(Thread):
                             # py3status module add a reference to the group and
                             # make sure we have it in the list of modules to
                             # run
-                            config[section_name]['.group'] = group_name
                             if section_name not in config['py3_modules']:
                                 config['py3_modules'].append(section_name)
                         else:

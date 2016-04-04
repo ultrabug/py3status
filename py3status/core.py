@@ -21,6 +21,10 @@ from py3status.i3status import I3status
 from py3status.module import Module
 from py3status.profiling import profile
 
+LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
+
+DBUS_LEVELS = {'error': 'critical', 'warning': 'normal', 'info': 'low', }
+
 
 class Py3statusWrapper():
     """
@@ -50,7 +54,8 @@ class Py3statusWrapper():
             'cache_timeout': 60,
             'include_paths': ['{}/.i3/py3status/'.format(home_path)],
             'interval': 1,
-            'minimum_interval': 0.1  # minimum module update interval
+            'minimum_interval': 0.1,  # minimum module update interval
+            'dbus_notify': False,
         }
 
         # package version
@@ -95,6 +100,12 @@ class Py3statusWrapper():
                             '--debug',
                             action="store_true",
                             help="be verbose in syslog")
+        parser.add_argument('-b',
+                            '--dbus-notify',
+                            action="store_true",
+                            default=False,
+                            dest="dbus_notify",
+                            help="use notify-send to send user notifications")
         parser.add_argument('-i',
                             '--include',
                             action="append",
@@ -141,6 +152,7 @@ class Py3statusWrapper():
         # override configuration and helper variables
         config['cache_timeout'] = options.cache_timeout
         config['debug'] = options.debug
+        config['dbus_notify'] = options.dbus_notify
         if options.include_paths:
             config['include_paths'] = options.include_paths
         config['interval'] = int(options.interval)
@@ -212,7 +224,7 @@ class Py3statusWrapper():
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'loading module "{}" failed ({})'.format(module, err)
-                self.i3_nagbar(msg, level='warning')
+                self.notify_user(msg, level='warning')
 
     def setup(self):
         """
@@ -249,8 +261,7 @@ class Py3statusWrapper():
                 self.i3status_thread.config))
 
         # setup input events thread
-        self.events_thread = Events(self.lock, self.config, self.modules,
-                                    self.i3status_thread.config)
+        self.events_thread = Events(self)
         self.events_thread.start()
         if self.config['debug']:
             syslog(LOG_INFO, 'events thread started')
@@ -272,17 +283,28 @@ class Py3statusWrapper():
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-    def i3_nagbar(self, msg, level='error'):
+    def notify_user(self, msg, level='error'):
         """
         Make use of i3-nagbar to display errors and warnings to the user.
         We also make sure to log anything to keep trace of it.
         """
-        msg = 'py3status: {}. '.format(msg)
-        msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
+        if not self.config['dbus_notify']:
+            msg = 'py3status: {}. '.format(msg)
+        if level != 'info':
+            msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
         try:
-            log_level = LOG_ERR if level == 'error' else LOG_WARNING
+            log_level = LOG_LEVELS.get(level, LOG_ERR)
             syslog(log_level, msg)
-            Popen(['i3-nagbar', '-m', msg, '-t', level],
+            if self.config['dbus_notify']:
+                # fix any html entities
+                msg = msg.replace('&', '&amp;')
+                msg = msg.replace('<', '&lt;')
+                msg = msg.replace('>', '&gt;')
+                cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
+                       '-t', '10000', 'py3status', msg]
+            else:
+                cmd = ['i3-nagbar', '-m', msg, '-t', level]
+            Popen(cmd,
                   stdout=open('/dev/null', 'w'),
                   stderr=open('/dev/null', 'w'))
         except:
@@ -381,12 +403,14 @@ class Py3statusWrapper():
                 output_modules[name] = {}
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = self.modules[name]
+                output_modules[name]['type'] = 'py3status'
         # i3status modules
         for name in i3modules:
             if name not in output_modules:
                 output_modules[name] = {}
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = i3modules[name]
+                output_modules[name]['type'] = 'i3status'
 
         self.output_modules = output_modules
 
@@ -429,16 +453,16 @@ class Py3statusWrapper():
                     err = i3status_thread.error
                     if not err:
                         err = 'i3status died horribly'
-                    self.i3_nagbar(err)
+                    self.notify_user(err)
                     break
 
                 # check events thread
                 if not self.events_thread.is_alive():
                     # don't spam the user with i3-nagbar warnings
-                    if not hasattr(self.events_thread, 'i3_nagbar'):
-                        self.events_thread.i3_nagbar = True
+                    if not hasattr(self.events_thread, 'nagged'):
+                        self.events_thread.nagged = True
                         err = 'events thread died, click events are disabled'
-                        self.i3_nagbar(err, level='warning')
+                        self.notify_user(err, level='warning')
 
                 # update i3status time/tztime items
                 if interval == 0 or sec % interval == 0:
