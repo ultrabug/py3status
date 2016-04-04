@@ -1,17 +1,16 @@
-
 """
 Checks if a streamer is online. [Gross Gore/grossie_gore as placeholder]
 
-Checks if a streamer is online using the requests library to check to see
-if the dictionary key 'stream' in the json response is set to None or not.
- 
+Checks if a streamer is online using the Twitch Kraken API to see
+if a channel is currently streaming or not.
+
 Configuration parameters
     cache_timeout: how often we refresh this module in seconds
     stream_name: name of streamer(twitch.tv/<stream_name>)
-    
+
 Format of status string placeholders
     {stream_name}:  name of the streamer (twitch.tv/<stream_name>)
-     
+
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
 """
@@ -31,10 +30,10 @@ class Py3status:
 
     def is_streaming(self, i3s_output_list, i3s_config):
         r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
-        if r.json()['stream'] == None: 
+        if r.json().get('stream') == None:
             colour=i3s_config['color_bad']
             full_text = self.format_offline.format(stream_name=self.stream_name)
-        else: 
+        else:
             colour=i3s_config['color_good']
             full_text = self.format.format(stream_name=self.stream_name)
         response = {
