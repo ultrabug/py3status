@@ -353,7 +353,7 @@ class Py3statusWrapper():
         For every module, reset the 'cached_until' of all its methods.
         """
         for module in self.modules.values():
-            module.clear_cache()
+            module.force_update()
 
     def terminate(self, signum, frame):
         """
@@ -379,8 +379,7 @@ class Py3statusWrapper():
         for group in groups_to_update:
             group_module = self.output_modules.get(group)
             if group_module:
-                group_module['module'].clear_cache()
-                group_module['module'].run()
+                group_module['module'].force_update()
 
     def create_output_modules(self):
         """
