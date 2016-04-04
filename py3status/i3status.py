@@ -58,6 +58,9 @@ class I3statusModule:
             self.tz = None
             self.set_time_format()
 
+    def __repr__(self):
+        return '<I3statusModule {}>'.format(self.module_name)
+
     def get_latest(self):
         return [self.item]
 

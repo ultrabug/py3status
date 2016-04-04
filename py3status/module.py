@@ -47,6 +47,9 @@ class Module(Thread):
         self.set_module_options(module)
         self.load_methods(module, user_modules)
 
+    def __repr__(self):
+        return '<Module {}>'.format(self.module_full_name)
+
     @staticmethod
     def load_from_file(filepath):
         """
