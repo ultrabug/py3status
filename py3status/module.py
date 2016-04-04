@@ -334,7 +334,7 @@ class Module(Thread):
                         filename = os.path.basename(stack[-1][0])
                         line_no = stack[-1][1]
                         msg = '{}, instance, {}, user method {}, failed ({}) line {}'.format(
-                            filename, self.module_full_name, meth, exc_type,
+                            filename, self.module_full_name, meth, exc_type.__name__,
                             line_no)
                     except:
                         msg = 'instance {}, user method {}, failed.'.format(
