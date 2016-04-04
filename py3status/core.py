@@ -289,9 +289,9 @@ class Py3statusWrapper():
         We also make sure to log anything to keep trace of it.
         """
         if not self.config['dbus_notify']:
-            msg = 'py3status: {}. '.format(msg)
+            msg = 'py3status: {}.'.format(msg)
         if level != 'info':
-            msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
+            msg += ' Please try to fix this and reload i3wm (Mod+Shift+R)'
         try:
             log_level = LOG_LEVELS.get(level, LOG_ERR)
             syslog(log_level, msg)
