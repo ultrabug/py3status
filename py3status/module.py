@@ -7,6 +7,7 @@ from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
+from traceback import extract_tb
 
 from py3status.profiling import profile
 
@@ -329,8 +330,7 @@ class Module(Thread):
                         # we need to make sure to delete tb even if things go
                         # wrong.
                         exc_type, exc_obj, tb = sys.exc_info()
-                        import traceback
-                        stack = traceback.extract_tb(tb)
+                        stack = extract_tb(tb)
                         filename = os.path.basename(stack[-1][0])
                         line_no = stack[-1][1]
                         msg = '{}, instance, {}, user method {}, failed ({}) line {}'.format(
