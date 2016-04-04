@@ -1,10 +1,11 @@
 
 """
-Checks if a streamer is online. [Gross Gore or grossie_gore as example placeholder]
+Checks if a streamer is online. [Gross Gore/grossie_gore as placeholder]
 
-Checks if a streamer is online using the requests library to check to see if the dictionary key 'stream' in the json response is set to None or not.
-
-Configuration parameters:
+Checks if a streamer is online using the requests library to check to see
+if the dictionary key 'stream' in the json response is set to None or not.
+ 
+Configuration parameters
     cache_timeout: how often we refresh this module in seconds
     stream_name: name of streamer(twitch.tv/<stream_name>)
     
