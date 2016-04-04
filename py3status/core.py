@@ -55,7 +55,7 @@ class Py3statusWrapper():
             'include_paths': ['{}/.i3/py3status/'.format(home_path)],
             'interval': 1,
             'minimum_interval': 0.1,  # minimum module update interval
-            'dbus': False,
+            'dbus_notify': False,
         }
 
         # package version
@@ -100,10 +100,11 @@ class Py3statusWrapper():
                             '--debug',
                             action="store_true",
                             help="be verbose in syslog")
-        parser.add_argument('--dbus-notifications',
+        parser.add_argument('-b',
+                            '--dbus-notify',
                             action="store_true",
                             default=False,
-                            dest="dbus_notifications",
+                            dest="dbus_notify",
                             help="use notify-send to send user notifications")
         parser.add_argument('-i',
                             '--include',
@@ -151,7 +152,7 @@ class Py3statusWrapper():
         # override configuration and helper variables
         config['cache_timeout'] = options.cache_timeout
         config['debug'] = options.debug
-        config['dbus'] = options.dbus_notifications
+        config['dbus_notify'] = options.dbus_notify
         if options.include_paths:
             config['include_paths'] = options.include_paths
         config['interval'] = int(options.interval)
@@ -287,14 +288,14 @@ class Py3statusWrapper():
         Make use of i3-nagbar to display errors and warnings to the user.
         We also make sure to log anything to keep trace of it.
         """
-        if not self.config['dbus']:
+        if not self.config['dbus_notify']:
             msg = 'py3status: {}. '.format(msg)
         if level != 'info':
             msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
         try:
             log_level = LOG_LEVELS.get(level, LOG_ERR)
             syslog(log_level, msg)
-            if self.config['dbus']:
+            if self.config['dbus_notify']:
                 # fix any html entities
                 msg = msg.replace('&', '&amp;')
                 msg = msg.replace('<', '&lt;')
