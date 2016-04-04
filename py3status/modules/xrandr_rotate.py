@@ -58,6 +58,9 @@ class Py3status:
     vertical_icon = 'V'
     vertical_rotation = 'left'
 
+    def __init__(self):
+        self.displayed = ''
+
     def _call(self, cmd):
         process = Popen(cmd, stdout=PIPE, shell=True)
         output = process.communicate()[0] or ""
@@ -84,8 +87,8 @@ class Py3status:
         rotation = self.horizontal_rotation if self.displayed == self.horizontal_icon else self.vertical_rotation
         outputs = [self.screen] if self.screen else self._get_all_outputs()
         for output in outputs:
-            cmd = 'xrandr --output ' + output + ' --rotate ' + rotation
-            self._call(cmd)
+            cmd = 'exec xrandr --output ' + output + ' --rotate ' + rotation
+            Popen(['i3-msg', cmd], stdout=PIPE)
 
     def _switch_selection(self):
         self.displayed = self.vertical_icon if self.displayed == self.horizontal_icon else self.horizontal_icon
@@ -106,9 +109,10 @@ class Py3status:
         all_outputs = self._get_all_outputs()
         selected_screen_disconnected = self.screen is not None and self.screen not in all_outputs
         if selected_screen_disconnected and self.hide_if_disconnected:
+            self.displayed = ''
             full_text = ''
         else:
-            if not hasattr(self, 'displayed'):
+            if not self.displayed:
                 self.displayed = self._get_current_rotation_icon(all_outputs)
 
             screen = self.screen or all_outputs[0] if len(all_outputs) == 1 else 'ALL'

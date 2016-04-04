@@ -98,18 +98,18 @@ def create_readme(data):
 re_listing = re.compile('^\w.*:$')
 
 # match in README.md
-re_to_param = re.compile('^  - `([a-z]\S+)`[ \t]*')
-re_to_status = re.compile('^  - `({\S+})`[ \t]*')
+re_to_param = re.compile('^  - `([a-z]\S+)`($|[ \t])')
+re_to_status = re.compile('^  - `({\S+})`($|[ \t])')
 re_to_item = re.compile('^\s+-')
-re_to_data = re.compile('^\*\*(author|license|source)\*\*[ \t]*')
+re_to_data = re.compile('^\*\*(author|license|source)\*\*($|[ \t])')
 re_to_tag = re.compile('&lt;([^.]*)&gt;')
 re_to_defaults = re.compile('\*(\(default.*\))\*')
 
 # match in module docstring
-re_from_param = re.compile('^    ([a-z]\S+):[ \t]*')
-re_from_status = re.compile('^\s+({\S+})[ \t]*')
+re_from_param = re.compile('^    ([a-z]\S+):($|[ \t])')
+re_from_status = re.compile('^\s+({\S+})($|[ \t])')
 re_from_item = re.compile('^\s+-')
-re_from_data = re.compile('^@(author|license|source)[ \t]*')
+re_from_data = re.compile('^@(author|license|source)($|[ \t])')
 re_from_tag = re.compile('<([^.]*)>')
 re_from_defaults = re.compile('(\(default.*\))')
 
@@ -285,7 +285,7 @@ def check_docstrings(show_diff=False, config=None):
                 create_readme(readme).split('\n'), create_readme(
                     modules_readme).split('\n'))))
         else:
-            print_stderr('\nUse `py3satus docstring check diff` to view diff.')
+            print_stderr('\nUse `py3status docstring check diff` to view diff.')
 
 
 def update_readme_for_modules(modules):

@@ -98,6 +98,8 @@
 
 **[xrandr](#xrandr)** — Control your screen(s) layout easily.
 
+**[xrandr_rotate](#xrandr_rotate)** — Switch between horizontal and vertical screen rotation on a single click.
+
 **[xsel](#xsel)** — Display the X selection.
 
 ---
@@ -263,6 +265,8 @@ Confiuration parameters:
   - `format_no_conn` format when there is no connected device
   - `format_no_conn_prefix` prefix when there is no connected device
   - `format_prefix` prefix when there is a connected device
+  - `device_separator` the separator char between devices (only if more than one
+    device)
 
 Format of status string placeholders
   - `{name}`  device name
@@ -701,7 +705,8 @@ Configuration parameters:
   - `color_good` the color used if everything is OK.
   - `format_prefix` a prefix for the output.
   - `format_units` the temperature units. Will appear at the end.
-  - `separator` the separator char between temperatures (only if more than one GPU)
+  - `temp_separator` the separator char between temperatures (only if more than
+    one GPU)
 
 Requires:
   - `nvidia-smi`
@@ -982,7 +987,6 @@ Display static text.
 Configuration parameters:
   - `color` color of printed text
   - `format` text that should be printed
-  - `separator` whether the separator is shown or not (true or false)
 
 **author** frimdo ztracenastopa@centrum.cz
 
@@ -1370,6 +1374,50 @@ xrandr {
 ```
 
 **author** ultrabug
+
+---
+
+### <a name="xrandr_rotate"></a>xrandr_rotate
+
+Switch between horizontal and vertical screen rotation on a single click.
+
+Configuration parameters:
+  - `cache_timeout` how often to refresh this module.
+    *(default is 10)*
+  - `format` a string that formats the output, can include placeholders.
+    *(default is '{icon}')*
+  - `hide_if_disconnected` a boolean flag to hide icon when `screen` is disconnected.
+    it has no effect unless `screen` option is also configured.
+    *(default: None)*
+  - `horizontal_icon` a character to represent horizontal rotation.
+    *(default is 'H')*
+  - `horizontal_rotation` a horizontal rotation for xrandr to use.
+    available options: 'normal' or 'inverted'.
+    *(default is 'normal')*
+  - `screen` display output name to rotate, as detected by xrandr.
+    if not provided, all enabled screens will be rotated.
+    *(default: None)*
+  - `vertical_icon` a character to represent vertical rotation.
+    *(default is 'V')*
+  - `vertical_rotation` a vertical rotation for xrandr to use.
+    available options: 'left' or 'right'.
+    *(default is 'left')*
+
+Available placeholders for formatting the output:
+  - `{icon}` a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
+  - `{screen}` a screen name, specified by `screen` option or detected automatically
+    if only one screen is connected, otherwise 'ALL'.
+
+
+Remarks:
+    There have been cases when rotating a screen using this module made i3 unusabe.
+    If you experience a similar behavior, please report as many details as you can:
+    https://github.com/ultrabug/py3status/issues/227
+
+
+**author** Maxim Baz (https://github.com/maximbaz)
+
+**license** BSD
 
 ---
 

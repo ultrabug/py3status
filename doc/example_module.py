@@ -32,14 +32,19 @@
 # DOCSTRING:
 #
 # Fill in the following docstring: it will be parsed by py3status to document
-# your module from the CLI.
+# your module from the CLI.  Please follow the example below.
 """
 One-line summary followed by an empty line.
 
 Multi-line description followed by an empty line.
 
 Configuration parameters:
-    - cache_timeout : how often we refresh this module in seconds
+    cache_timeout: How often we refresh this module in seconds
+        (default 10)
+    format: Format for module output (default "{output}")
+
+Format of status string placeholders:
+    {output} output of this module
 
 @author <your full name> <your email address>
 @license BSD
@@ -57,11 +62,16 @@ class Py3status:
     default value for your module which can be overwritten by users
     directly from their i3status config.
 
-    This examples features only one parameter which is 'cache_timeout'
-    and is set to 10 seconds (0 would mean no cache).
+    This examples features only two parameters:
+    'cache_timeout' is set to 10 seconds (0 would mean no cache).
+    'format' this allows users to customise their output.  In this example we
+    have a status string placeholder.  This will be replaced by the module.
+    Some modules have multiple placeholders.  For examples look at the included
+    py3status modules.
     """
     # available configuration parameters
     cache_timeout = 10
+    format = '{output}'
 
     def __init__(self):
         """
@@ -102,9 +112,11 @@ class Py3status:
         See the i3bar protocol spec for more information:
         http://i3wm.org/docs/i3bar-protocol.html
         """
+        # create out output text replacing the placeholder
+        full_text = self.format.format(output='example')
         response = {
             'cached_until': time() + self.cache_timeout,
-            'full_text': ''
+            'full_text': full_text
         }
         return response
 
