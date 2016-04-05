@@ -38,7 +38,6 @@ class Py3status:
 
     def is_streaming(self, i3s_output_list, i3s_config):
         r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
-        print(r.json())
         if not self._display_name:
             self._get_display_name()
         if 'error' in r.json():
