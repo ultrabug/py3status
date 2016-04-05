@@ -290,6 +290,8 @@ class Py3statusWrapper():
         """
         if not self.config['dbus_notify']:
             msg = 'py3status: {}.'.format(msg)
+        else:
+            msg = '{}.'.format(msg)
         if level != 'info':
             msg += ' Please try to fix this and reload i3wm (Mod+Shift+R)'
         try:
