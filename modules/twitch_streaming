@@ -24,7 +24,7 @@ class Py3status:
     # available configuration parameters
     # can be customized in i3status.conf
     cache_timeout = 10
-    stream_name = "asdfdfgag"
+    stream_name = "grossie_gore"
     format = "{stream_name} is live!"
     format_offline = "{stream_name} is offline."
     format_invalid = "{stream_name} does not exist!"
