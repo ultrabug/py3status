@@ -23,12 +23,12 @@ import requests
 class Py3status:
     # available configuration parameters
     # can be customized in i3status.conf
-    cache_timeout = 10
+    cache_timeout = 120
     stream_name = "grossie_gore"
     format = "{stream_name} is live!"
     format_offline = "{stream_name} is offline."
 
-    def get_display_name(self, stream_name):
+    def _get_display_name(self, stream_name):
         display_name_request = requests.get('https://api.twitch.tv/kraken/users/' + self.stream_name)
         return display_name_request.json().get('display_name')
 
