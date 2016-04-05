@@ -373,6 +373,10 @@ def process_config(config_path, py3_wrapper=None):
     Parse i3status.conf so we can adapt our code to the i3status config.
     """
 
+    def notify_user(error):
+        if py3_wrapper:
+            py3_wrapper.notify_user(error)
+
     def module_names():
         # get list of all module names
         modules = const.I3S_SINGLE_NAMES + const.I3STATUS_MODULES
@@ -411,8 +415,7 @@ def process_config(config_path, py3_wrapper=None):
         except ParseException as e:
 
             error = e.one_line()
-            if py3_wrapper:
-                py3_wrapper.notify_user(error)
+            notify_user(error)
             error_config = Template(const.ERROR_CONFIG).substitute(
                 error=error.replace('"', '\\"'))
             config_info = parse_config(error_config)
@@ -431,19 +434,21 @@ def process_config(config_path, py3_wrapper=None):
     module_groups = {}
 
     def process_onclick(key, value, group_name):
+        button_error = False
+        button = ''
         try:
-            button = int(key.split()[1])
-            if button not in range(1, 6):
-                raise ValueError('should be 1, 2, 3, 4 or 5')
-        except IndexError as e:
-            raise IndexError('missing "button id" for "on_click" '
-                             'parameter in group {}'.format(group_name))
-        except ValueError as e:
-            raise ValueError('invalid "button id" '
-                             'for "on_click" parameter '
-                             'in group {} ({})'.format(group_name, e))
+            button = key.split()[1]
+            if int(button) not in range(1, 6):
+                button_error = True
+        except (ValueError, IndexError):
+                button_error = True
+
+        if button_error:
+            notify_user('Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 in saw `{}`'.format(group_name, button))
+            return False
         clicks = on_click.setdefault(group_name, {})
         clicks[button] = value
+        return True
 
     def get_module_type(name):
         if name.split()[0] in const.I3S_SINGLE_NAMES + const.I3STATUS_MODULES:
@@ -462,7 +467,8 @@ def process_config(config_path, py3_wrapper=None):
         for k, v in module.items():
             if k.startswith('on_click'):
                 # on_click event
-                process_onclick(k, v, name)
+                if not process_onclick(k, v, name):
+                    del module[k]
             if isinstance(v, ModuleDefinition):
                 # we are a container
                 module['items'] = []
