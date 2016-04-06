@@ -24,7 +24,7 @@ class Py3status:
     # available configuration parameters
     # can be customized in i3status.conf
     cache_timeout = 10
-    stream_name = "asdfdfgag"
+    stream_name = "grossie_gore"
     format = "{stream_name} is live!"
     format_offline = "{stream_name} is offline."
     format_invalid = "{stream_name} does not exist!"
@@ -38,7 +38,6 @@ class Py3status:
 
     def is_streaming(self, i3s_output_list, i3s_config):
         r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
-        print(r.json())
         if not self._display_name:
             self._get_display_name()
         if 'error' in r.json():
