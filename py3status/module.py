@@ -7,7 +7,6 @@ from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
-from traceback import extract_tb
 
 from py3status.profiling import profile
 
@@ -335,33 +334,15 @@ class Module(Thread):
                         syslog(LOG_INFO,
                                'method {} returned {} '.format(meth, result))
                 except Exception:
-                    try:
-                        # Try to get nice feedback info
-                        # we need to make sure to delete tb even if things go
-                        # wrong.
-                        exc_type, exc_obj, tb = sys.exc_info()
-                        stack = extract_tb(tb)
-                        filename = os.path.basename(stack[-1][0])
-                        line_no = stack[-1][1]
-                        msg = '{}, instance {}, user method {}, failed ({}) line {}'.format(
-                            filename, self.module_full_name, meth, exc_type.__name__,
-                            line_no)
-                    except:
-                        msg = 'instance {}, user method {}, failed.'.format(
-                            self.module_full_name, meth)
-                    finally:
-                        # delete tb!
-                        del tb
-
-                    syslog(LOG_WARNING, msg)
-                    if not self.nagged:
-                        self.helper_notification(msg, level='error')
-                        self.nagged = True
+                    msg = 'Instance `{}`, user method `{}` Failed.'
+                    msg = msg.format(self.module_full_name, meth)
+                    notify = not self.nagged
+                    self._py3_wrapper.report_exception(msg, notify_user=notify)
+                    self.nagged = True
 
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
-
             # don't be hasty mate
             # set timer to do update next time one is needed
             delay = max(cache_time - time(), self.config['minimum_interval'])
