@@ -7,6 +7,7 @@ from threading import Thread, Timer
 from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
+from traceback import extract_tb
 
 from py3status.profiling import profile
 
@@ -327,8 +328,24 @@ class Module(Thread):
                         syslog(LOG_INFO,
                                'method {} returned {} '.format(meth, result))
                 except Exception:
-                    err = sys.exc_info()[1]
-                    msg = 'user method {} failed ({})'.format(meth, err)
+                    try:
+                        # Try to get nice feedback info
+                        # we need to make sure to delete tb even if things go
+                        # wrong.
+                        exc_type, exc_obj, tb = sys.exc_info()
+                        stack = extract_tb(tb)
+                        filename = os.path.basename(stack[-1][0])
+                        line_no = stack[-1][1]
+                        msg = '{}, instance {}, user method {}, failed ({}) line {}'.format(
+                            filename, self.module_full_name, meth, exc_type.__name__,
+                            line_no)
+                    except:
+                        msg = 'instance {}, user method {}, failed.'.format(
+                            self.module_full_name, meth)
+                    finally:
+                        # delete tb!
+                        del tb
+
                     syslog(LOG_WARNING, msg)
                     if not self.nagged:
                         self.helper_notification(msg, level='error')
