@@ -111,10 +111,7 @@ class Events(Thread):
         if module is not None:
             if self.config['debug']:
                 syslog(LOG_INFO, 'refresh module {}'.format(module_name))
-            for obj in module.methods.values():
-                obj['cached_until'] = time()
-            # get module to update
-            module.run()
+            module.force_update()
         else:
             if time() > (self.last_refresh_ts + 0.1):
                 if self.config['debug']:

@@ -79,14 +79,21 @@ class Module(Thread):
         class_inst = py_mod.Py3status()
         return class_inst
 
-    def clear_cache(self):
+    def force_update(self):
         """
-        Reset the cache for all methods of this module.
+        Forces an update of the module.
         """
+        # clear cached_until for each method to allow update
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
                 syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+        # get the thread to update itself
+        self.timer = Timer(0, self.run)
+        self.timer.start()
 
     def set_updated(self):
         """
