@@ -13,6 +13,7 @@ from subprocess import call
 from threading import Event
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
+from traceback import extract_tb
 
 import py3status.docstrings as docstrings
 from py3status.events import Events
@@ -36,6 +37,7 @@ class Py3statusWrapper():
         """
         Useful variables we'll need.
         """
+        self.config = {}
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
@@ -293,14 +295,17 @@ class Py3statusWrapper():
         Make use of i3-nagbar to display errors and warnings to the user.
         We also make sure to log anything to keep trace of it.
         """
-        if not self.config['dbus_notify']:
-            msg = 'py3status: {}. '.format(msg)
+        dbus = self.config.get('dbus_notify')
+        if not dbus:
+            msg = 'py3status: {}.'.format(msg)
+        else:
+            msg = '{}.'.format(msg)
         if level != 'info':
-            msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
+            msg += ' Please try to fix this and reload i3wm (Mod+Shift+R)'
         try:
             log_level = LOG_LEVELS.get(level, LOG_ERR)
             syslog(log_level, msg)
-            if self.config['dbus_notify']:
+            if dbus:
                 # fix any html entities
                 msg = msg.replace('&', '&amp;')
                 msg = msg.replace('<', '&lt;')
@@ -358,7 +363,7 @@ class Py3statusWrapper():
         For every module, reset the 'cached_until' of all its methods.
         """
         for module in self.modules.values():
-            module.clear_cache()
+            module.force_update()
 
     def terminate(self, signum, frame):
         """
@@ -384,8 +389,32 @@ class Py3statusWrapper():
         for group in groups_to_update:
             group_module = self.output_modules.get(group)
             if group_module:
-                group_module['module'].clear_cache()
-                group_module['module'].run()
+                group_module['module'].force_update()
+
+    def report_exception(self, msg, notify_user=True):
+        """
+        Report details of an exception to the user.
+        This should only be called within an except: block Details of the
+        exception are reported eg filename, line number and exception type.
+        """
+        try:
+            # we need to make sure to delete tb even if things go wrong.
+            exc_type, exc_obj, tb = sys.exc_info()
+            stack = extract_tb(tb)
+            filename = os.path.basename(stack[-1][0])
+            line_no = stack[-1][1]
+            msg = '{} ({}) {} line {}'.format(
+                msg, exc_type.__name__, filename, line_no)
+        except:
+            # something went wrong report what we can.
+            msg = '{} '.format(msg)
+        finally:
+            # delete tb!
+            del tb
+        # log the exception and notify user
+        syslog(LOG_WARNING, msg)
+        if notify_user:
+            self.notify_user(msg, level='error')
 
     def create_output_modules(self):
         """

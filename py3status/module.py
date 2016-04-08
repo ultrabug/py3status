@@ -47,6 +47,9 @@ class Module(Thread):
         self.set_module_options(module)
         self.load_methods(module, user_modules)
 
+    def __repr__(self):
+        return '<Module {}>'.format(self.module_full_name)
+
     @staticmethod
     def load_from_file(filepath):
         """
@@ -78,14 +81,21 @@ class Module(Thread):
         class_inst = py_mod.Py3status()
         return class_inst
 
-    def clear_cache(self):
+    def force_update(self):
         """
-        Reset the cache for all methods of this module.
+        Forces an update of the module.
         """
+        # clear cached_until for each method to allow update
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
                 syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+        # get the thread to update itself
+        self.timer = Timer(0, self.run)
+        self.timer.start()
 
     def set_updated(self):
         """
@@ -327,17 +337,15 @@ class Module(Thread):
                         syslog(LOG_INFO,
                                'method {} returned {} '.format(meth, result))
                 except Exception:
-                    err = sys.exc_info()[1]
-                    msg = 'user method {} failed ({})'.format(meth, err)
-                    syslog(LOG_WARNING, msg)
-                    if not self.nagged:
-                        self.helper_notification(msg, level='error')
-                        self.nagged = True
+                    msg = 'Instance `{}`, user method `{}` Failed.'
+                    msg = msg.format(self.module_full_name, meth)
+                    notify = not self.nagged
+                    self._py3_wrapper.report_exception(msg, notify_user=notify)
+                    self.nagged = True
 
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
-
             # don't be hasty mate
             # set timer to do update next time one is needed
             delay = max(cache_time - time(), self.config['minimum_interval'])

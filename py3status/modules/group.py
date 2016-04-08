@@ -22,7 +22,7 @@ Configuration parameters:
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
         (default True)
-    format: Format for module output. (default "GROUP: {output}")
+    format: Format for module output. (default "{output}")
 
 
 Format of status string placeholders:
@@ -64,7 +64,7 @@ class Py3status:
     color = None
     cycle = 0
     fixed_width = True
-    format = "GROUP: {output}"
+    format = "{output}"
 
     class Meta:
         include_py3_module = True
