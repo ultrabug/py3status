@@ -66,9 +66,6 @@ class Py3status:
     fixed_width = True
     format = "{output}"
 
-    class Meta:
-        include_py3_module = True
-
     def __init__(self):
         self.items = []
         self.active = 0
@@ -103,7 +100,7 @@ class Py3status:
     def _get_current_output(self, item):
         output = None
         current = self.items[item]
-        module_info = self.py3_module.helper_get_module_info(current)
+        module_info = self.py3.get_module_info(current)
         if module_info:
             output = module_info['module'].get_latest()[0]
         return output
@@ -119,7 +116,7 @@ class Py3status:
     def _prev(self):
         self.active = (self.active - 1) % len(self.items)
 
-    def group(self, i3s_output_list, i3s_config):
+    def group(self):
         """
         Display a output of current module
         """
@@ -128,7 +125,7 @@ class Py3status:
         # FIXME the module shouldn't even run if no content
         if not self.items:
             return {
-                'cached_until': time() + 36000,
+                'cached_until': self.py3.CACHE_FOREVER,
                 'full_text': '',
             }
 
@@ -146,15 +143,20 @@ class Py3status:
         if current_output:
             output = current_output['full_text']
             color = current_output.get('color')
-        update_time = self.cycle or 1000
+        update_time = self.cycle or None
 
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
         if not ready:
-            update_time = 0.1
+            update_time = 0
+
+        if update_time is not None:
+            cached_until = time() + update_time
+        else:
+            cached_until = self.py3.CACHE_FOREVER
 
         response = {
-            'cached_until': time() + update_time,
+            'cached_until': cached_until,
             'full_text': self.format.format(output=output)
         }
         if color:
@@ -163,7 +165,7 @@ class Py3status:
             response['color'] = self.color
         return response
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Switch the displayed module or pass the event on to the active module
         """
@@ -178,7 +180,7 @@ class Py3status:
 
         # pass the event to the current module
         module_name = self._get_current_module_name()
-        self.py3_module.helper_trigger_event(module_name, event)
+        self.py3.trigger_event(module_name, event)
 
 
 if __name__ == "__main__":
