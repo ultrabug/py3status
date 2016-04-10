@@ -95,7 +95,11 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
-        sensors = subprocess.check_output('sensors', shell=True)
+        sensors = subprocess.check_output(
+            'sensors',
+            shell=True,
+            universal_newlines=True,
+        )
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
             cpu_temp = m.groups()[1].strip()
