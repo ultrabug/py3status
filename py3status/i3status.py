@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, tzinfo
 from subprocess import Popen
 from subprocess import PIPE
 from syslog import syslog, LOG_INFO
+from signal import SIGUSR2
 from tempfile import NamedTemporaryFile
 from threading import Thread
 from time import time
@@ -540,6 +541,8 @@ class I3status(Thread):
                                 if 'version' in line:
                                     header = loads(line)
                                     header.update({'click_events': True})
+                                    # set custom stop signal
+                                    header['stop_signal'] = SIGUSR2
                                     line = dumps(header)
                                 print_line(line)
                             else:
@@ -548,8 +551,13 @@ class I3status(Thread):
                                     self.last_prefix = prefix
                                     self.set_responses(json_list)
                         else:
-                            err = self.poller_err.readline()
                             code = i3status_pipe.poll()
+                            # If we are 'suspended' then we recieve this
+                            # signal from i3status and can safely ignore
+                            # it.
+                            if code == -SIGUSR2:
+                                continue
+                            err = self.poller_err.readline()
                             if code is not None:
                                 msg = 'i3status died'
                                 if err:
