@@ -334,7 +334,7 @@ class Module(Thread):
                         syslog(LOG_INFO,
                                'method {} returned {} '.format(meth, result))
                 except Exception:
-                    msg = 'Instance `{}`, user method `{}` Failed.'
+                    msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
                     notify = not self.nagged
                     self._py3_wrapper.report_exception(msg, notify_user=notify)
