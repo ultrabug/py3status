@@ -396,13 +396,34 @@ class Py3statusWrapper():
         Report details of an exception to the user.
         This should only be called within an except: block Details of the
         exception are reported eg filename, line number and exception type.
+        Because stack trace information outside of py3status or it's modules is
+        not helpful in actually finding and fixing the error, we try to locate
+        the first place that the exception affected our code.
         """
+        # Get list of paths that our stack trace should be found in.
+        py3_paths = [os.path.dirname(__file__)]
+        user_paths = self.config['include_paths']
+        py3_paths += [os.path.abspath(path) + '/' for path in user_paths]
+
         try:
-            # we need to make sure to delete tb even if things go wrong.
+            # We need to make sure to delete tb even if things go wrong.
             exc_type, exc_obj, tb = sys.exc_info()
             stack = extract_tb(tb)
-            filename = os.path.basename(stack[-1][0])
-            line_no = stack[-1][1]
+            # Find first relevant trace in the stack.
+            # it should be in py3status or one of it's modules.
+            found = False
+            for item in reversed(stack):
+                filename = item[0]
+                for path in py3_paths:
+                    if filename.startswith(path):
+                        # Found a good trace
+                        filename = os.path.basename(item[0])
+                        line_no = item[1]
+                        found = True
+                        break
+                if found:
+                    break
+            # all done!  create our message.
             msg = '{} ({}) {} line {}'.format(
                 msg, exc_type.__name__, filename, line_no)
         except:

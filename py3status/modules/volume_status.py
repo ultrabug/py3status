@@ -4,21 +4,55 @@ Display current sound volume using amixer.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
+Volume up/down and Toggle mute via mouse clicks can be easily added see
+example.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (10s default)
-    channel: "Master" by default, alsamixer channel to track
-    device: "default" by default, alsamixer device to use
-    format: format the output, available variables: {percentage}
-    format_muted: format the output when the volume is muted
-    threshold_bad: 20 by default
-    threshold_degraded: 50 by default
+    button_down: Button to click to decrease volume. Setting to 0 disables.
+        (default 0)
+    button_mute: Button to click to toggle mute. Setting to 0 disables.
+        (default 0)
+    button_up: Button to click to increase volume. Setting to 0 disables.
+        (default 0)
+    cache_timeout: how often we refresh this module in seconds.
+        (default 10)
+    channel: Alsamixer channel to track.
+        (default 'Master')
+    device: Alsamixer device to use.
+        (default 'default')
+    format: Format of the output.
+        (default '♪: {percentage}%')
+    format_muted: Format of the output when the volume is muted.
+        (default '♪: muted')
+    threshold_bad: Volume below which color is set to bad.
+        (default 20)
+    threshold_degraded: Volume below which color is set to degraded.
+        (default 50)
+    volume_delta: Percentage amount that the volume is increased or
+        decreased by when volume buttons pressed.
+        (default 5)
+
+Format status string parameters:
+    {percentage} Percentage volume
+
+Example:
+
+```
+# Add mouse clicks to change volume
+
+volume_status {
+    button_up = 4
+    button_down = 5
+    button_mute = 2
+}
+```
 
 Requires:
     alsa-utils: (tested with alsa-utils 1.0.29-1)
 
 NOTE:
-        If you want to refresh the module quicker than the i3status interval,
+        If you are changing volume state by external scripts etc and
+        want to refresh the module quicker than the i3status interval,
         send a USR1 signal to py3status in the keybinding.
         Example: killall -s USR1 py3status
 
@@ -29,7 +63,7 @@ NOTE:
 import re
 import shlex
 
-from subprocess import check_output
+from subprocess import check_output, call
 from time import time
 
 
@@ -37,6 +71,9 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_down = 0
+    button_mute = 0
+    button_up = 0
     cache_timeout = 10
     channel = 'Master'
     device = 'default'
@@ -44,10 +81,7 @@ class Py3status:
     format_muted = u'♪: muted'
     threshold_bad = 20
     threshold_degraded = 50
-
-    # constructor
-    def __init__(self):
-        self.text = ''
+    volume_delta = 5
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, i3s_config, string):
@@ -117,20 +151,30 @@ class Py3status:
         # format the output
         text = self._format_output(self.format_muted
                                    if muted else self.format, perc)
-
-        # if the text has been changed, update the cached text and
-        # set transformed to True
-        transformed = text != self.text
-        self.text = text
-
         # create response dict
         response = {
             'cached_until': time() + self.cache_timeout,
             'color': color,
             'full_text': text,
-            'transformed': transformed
         }
         return response
+
+    def on_click(self, i3s_output_list, i3s_config, event):
+        '''
+        Volume up/down and toggle mute.
+        '''
+        button = event['button']
+        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
+        # volume up
+        if self.button_up and button == self.button_up:
+            call(shlex.split('{} {}%+'.format(cmd, self.volume_delta)))
+        # volume down
+        elif self.button_down and button == self.button_down:
+            call(shlex.split('{} {}%-'.format(cmd, self.volume_delta)))
+        # toggle mute
+        elif self.button_mute and button == self.button_mute:
+            call(shlex.split('{} toggle'.format(cmd)))
+
 
 # test if run directly
 if __name__ == "__main__":
