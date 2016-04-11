@@ -1089,11 +1089,11 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
-  - `button_up` Button to click to increase volume. Setting to 0 disables.
-    *(default 0)*
   - `button_down` Button to click to decrease volume. Setting to 0 disables.
     *(default 0)*
   - `button_mute` Button to click to toggle mute. Setting to 0 disables.
+    *(default 0)*
+  - `button_up` Button to click to increase volume. Setting to 0 disables.
     *(default 0)*
   - `cache_timeout` how often we refresh this module in seconds.
     *(default 10)*
