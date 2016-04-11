@@ -10,9 +10,9 @@ from syslog import syslog, LOG_INFO
 from tempfile import NamedTemporaryFile
 from threading import Thread
 from time import time
+from json import loads
 
 from py3status.profiling import profile
-from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -146,7 +146,6 @@ class I3status(Thread):
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
-        self.last_prefix = None
         self.lock = py3_wrapper.lock
         self.new_update = False
         self.py3_wrapper = py3_wrapper
@@ -529,24 +528,14 @@ class I3status(Thread):
                     while self.lock.is_set():
                         line = self.poller_inp.readline()
                         if line:
+                            # remove leading comma if present
+                            if line[0] == ',':
+                                line = line[1:]
                             if line.startswith('[{'):
-                                print_line(line)
-                                with jsonify(line) as (prefix, json_list):
-                                    self.last_output = json_list
-                                    self.last_prefix = ','
-                                    self.set_responses(json_list)
+                                json_list = loads(line)
+                                self.last_output = json_list
+                                self.set_responses(json_list)
                                 self.ready = True
-                            elif not line.startswith(','):
-                                if 'version' in line:
-                                    header = loads(line)
-                                    header.update({'click_events': True})
-                                    line = dumps(header)
-                                print_line(line)
-                            else:
-                                with jsonify(line) as (prefix, json_list):
-                                    self.last_output = json_list
-                                    self.last_prefix = prefix
-                                    self.set_responses(json_list)
                         else:
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
@@ -579,12 +568,6 @@ class I3status(Thread):
         # mock thread is_alive() method
         self.is_alive = lambda: True
 
-        # mock i3status base output
-        init_output = ['{"click_events": true, "version": 1}', '[', '[]']
-        for line in init_output:
-            print_line(line)
-
         # mock i3status output parsing
         self.last_output = []
-        self.last_prefix = ','
         self.update_json_list()

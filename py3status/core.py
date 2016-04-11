@@ -490,6 +490,9 @@ class Py3statusWrapper():
         interval = self.config['interval']
         last_sec = 0
 
+        # start our output
+        print_line('{"version": 1, "click_events": true}[[]')
+
         # main loop
         while True:
             sec = int(time())
@@ -529,11 +532,10 @@ class Py3statusWrapper():
                         out = module['module'].get_latest()
                         output[index] = ', '.join([dumps(x) for x in out])
 
-                prefix = i3status_thread.last_prefix
                 # build output string
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
-                print_line('{}[{}]'.format(prefix, out))
+                print_line(',[{}]'.format(out))
 
             # sleep a bit before doing this again to avoid killing the CPU
             sleep(0.1)

@@ -5,9 +5,9 @@ from threading import Thread
 from time import time
 from subprocess import Popen, call, PIPE
 from syslog import syslog, LOG_INFO, LOG_WARNING
+from json import loads
 
 from py3status.profiling import profile
-from py3status.helpers import jsonify
 
 
 class IOPoller:
@@ -301,30 +301,34 @@ class Events(Thread):
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
         while self.lock.is_set():
-            event = self.poller_inp.readline()
-            if not event:
+            event_str = self.poller_inp.readline()
+            if not event_str:
                 continue
             try:
-                with jsonify(event) as (prefix, event):
-                    if self.config['debug']:
-                        syslog(LOG_INFO, 'received event {}'.format(event))
+                # remove leading comma if present
+                if event_str[0] == ',':
+                    event_str = event_str[1:]
+                event = loads(event_str)
 
-                    # usage variables
-                    instance = event.get('instance', '')
-                    name = event.get('name', '')
+                if self.config['debug']:
+                    syslog(LOG_INFO, 'received event {}'.format(event))
 
-                    # i3status module name guess
-                    instance, name = self.i3status_mod_guess(instance, name)
-                    if self.config['debug']:
-                        syslog(
-                            LOG_INFO,
-                            'trying to dispatch event to module "{}"'.format(
-                                '{} {}'.format(name, instance).strip()))
+                # usage variables
+                instance = event.get('instance', '')
+                name = event.get('name', '')
 
-                    # guess the module config name
-                    module_name = '{} {}'.format(name, instance).strip()
-                    # do the work
-                    self.process_event(module_name, event)
+                # i3status module name guess
+                instance, name = self.i3status_mod_guess(instance, name)
+                if self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'trying to dispatch event to module "{}"'.format(
+                            '{} {}'.format(name, instance).strip()))
+
+                # guess the module config name
+                module_name = '{} {}'.format(name, instance).strip()
+                # do the work
+                self.process_event(module_name, event)
 
             except Exception:
                 err = sys.exc_info()[1]
