@@ -248,8 +248,13 @@ class Py3statusWrapper():
 
         # setup i3status thread
         self.i3status_thread = I3status(self)
-        if self.config['standalone']:
+
+        # If standalone or no i3status modules then use the mock i3status
+        # else start i3status thread.
+        i3s_modules = self.i3status_thread.config['i3s_modules']
+        if self.config['standalone'] or not i3s_modules:
             self.i3status_thread.mock()
+            i3s_mode = 'mocked'
         else:
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
@@ -257,9 +262,10 @@ class Py3statusWrapper():
                     err = self.i3status_thread.error
                     raise IOError(err)
                 sleep(0.1)
+            i3s_mode = 'started'
         if self.config['debug']:
             syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
-                'started' if not self.config['standalone'] else 'mocked',
+                i3s_mode,
                 self.i3status_thread.config))
 
         # setup input events thread
