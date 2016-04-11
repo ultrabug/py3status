@@ -49,7 +49,7 @@ class Py3status:
         if self._first:
             self._first = False
             response = {
-                'cached_until': time() + 1,
+                'cached_until': time(),
                 'full_text': self.format.format(updates='?')
             }
             return response
@@ -67,7 +67,11 @@ class Py3status:
             self._security_notice = False
         else:
             if not self._security_notice and self._updates != updates:
-                notices = str(subprocess.check_output(['dnf', 'updateinfo']))
+                output, error = subprocess.Popen(
+                    ['dnf', 'updateinfo'],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE).communicate()
+                notices = str(output)
                 self._security_notice = len(self._reg_ex_sec.findall(notices))
                 self._updates = updates
             if self._security_notice:
