@@ -14,6 +14,7 @@ For convenience, this module also proposes some added features:
         screen is available (handy for laptops)
     - Automatically apply this screen combination on start: no need for xorg!
     - Automatically move workspaces to screens when they are available
+    - Define your own subset of output combinations to use
 
 Configuration parameters:
     cache_timeout: how often to (re)detect the outputs
@@ -26,6 +27,19 @@ Configuration parameters:
         when the module starts (saves you from having to configure xorg)
     format_clone: string used to display a 'clone' combination
     format_extend: string used to display a 'extend' combination
+    output_combinations: string used to define your own subset of output
+        combinations to use, instead of generating every possible combination
+        automatically. Provide the values in the format that this module uses,
+        splitting the combinations using '|' character.
+        The combinations will be rotated in the exact order as you listed them.
+        When an output layout is not available anymore, the configurations
+        are automatically filtered out.
+        Example:
+            Assuming the default values for `format_clone` and `format_extend`
+            are used, and assuming you have two screens 'eDP1' and 'DP1', the
+            following setup will reduce the number of output combinations
+            from four (every possible one) down to two:
+            output_combinations = "eDP1|eDP1+DP1"
 
 Dynamic configuration parameters:
     - <OUTPUT>_pos: apply the given position to the OUTPUT
@@ -70,6 +84,7 @@ class Py3status:
     force_on_start = None
     format_clone = '='
     format_extend = '+'
+    output_combinations = None
 
     def __init__(self):
         """
@@ -138,21 +153,31 @@ class Py3status:
         Generate all connected outputs combinations and
         set the max display width while iterating.
         """
-        available_combinations = set()
+        available = set()
         combinations_map = {}
 
+        whitelist = None
+        if self.output_combinations:
+            whitelist = self.output_combinations.split('|')
+
         self.max_width = 0
-        for output in range(len(self.layout['connected']) + 1):
-            for comb in combinations(self.layout['connected'], output):
-                if comb:
-                    for mode in ['clone', 'extend']:
-                        string = self._get_string_and_set_width(comb, mode)
-                        if len(comb) == 1:
-                            combinations_map[string] = (comb, None)
-                        else:
-                            combinations_map[string] = (comb, mode)
-                        available_combinations.add(string)
-        self.available_combinations = deque(available_combinations)
+        for output in range(len(self.layout['connected'])):
+            for comb in combinations(self.layout['connected'], output + 1):
+                for mode in ['clone', 'extend']:
+                    string = self._get_string_and_set_width(comb, mode)
+                    if whitelist and string not in whitelist:
+                        continue
+                    if len(comb) == 1:
+                        combinations_map[string] = (comb, None)
+                    else:
+                        combinations_map[string] = (comb, mode)
+                    available.add(string)
+
+        # Preserve the order in which user defined the output combinations
+        if whitelist:
+            available = reversed([comb for comb in whitelist if comb in available])
+
+        self.available_combinations = deque(available)
         self.combinations_map = combinations_map
 
     def _get_string_and_set_width(self, combination, mode):
