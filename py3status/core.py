@@ -486,9 +486,23 @@ class Py3statusWrapper():
         self.i3bar_running = False
         # i3status should be stopped
         self.i3status_thread.suspend_i3status()
+        self.sleep_modules()
 
     def i3bar_start(self, signum, frame):
         self.i3bar_running = True
+        self.wake_modules()
+
+    def sleep_modules(self):
+        # Put all py3modules to sleep so they stop updating
+        for module in self.output_modules.values():
+            if module['type'] == 'py3status':
+                module['module'].sleep()
+
+    def wake_modules(self):
+        # Wake up all py3modules.
+        for module in self.output_modules.values():
+            if module['type'] == 'py3status':
+                module['module'].wake()
 
     @profile
     def run(self):
