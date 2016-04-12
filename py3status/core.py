@@ -484,6 +484,8 @@ class Py3statusWrapper():
 
     def i3bar_stop(self, signum, frame):
         self.i3bar_running = False
+        # i3status should be stopped
+        self.i3status_thread.suspend_i3status()
 
     def i3bar_start(self, signum, frame):
         self.i3bar_running = True
