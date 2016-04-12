@@ -236,9 +236,9 @@ class Py3statusWrapper():
         # set the Event lock
         self.lock.set()
 
-        # SIGUSR2 will be recieced from i3bar indicating that all output should
+        # SIGUSR2 will be received from i3bar indicating that all output should
         # stop and we should consider py3status suspended.  It is however
-        # important that any processes using i3 ipc should continue to recieve
+        # important that any processes using i3 ipc should continue to receive
         # those events otherwise it can lead to a stall in i3.
         signal(SIGUSR2, self.i3bar_stop)
         # SIGCONT indicates output should be resumed.
