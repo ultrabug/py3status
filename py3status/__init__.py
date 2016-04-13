@@ -16,7 +16,7 @@ def main():
         py3 = Py3statusWrapper()
         py3.setup()
     except KeyboardInterrupt:
-        py3.notify_user('setup interrupted (KeyboardInterrupt)')
+        py3.notify_user('Setup interrupted (KeyboardInterrupt).')
         sys.exit(0)
     except Exception:
         py3.report_exception('Setup error')
