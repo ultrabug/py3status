@@ -8,75 +8,14 @@ from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
 
+import py3status.py3 as py3
 from py3status.profiling import profile
-
-
-PY3_CACHE_FOREVER = -1
-PY3_COLOR_GOOD = 1
-PY3_COLOR_BAD = 2
-
-
-class Py3ModuleHelper:
-    """
-    Helper object that gets injected as self.py3 into Py3status
-    modules that have not got that attribute set already.
-
-    This allows functionality like:
-        User notifications
-        Forcing module to update (even other modules)
-        Triggering events for modules
-    """
-
-    CACHE_FOREVER = PY3_CACHE_FOREVER
-    COLOR_GOOD = PY3_COLOR_GOOD
-    COLOR_BAD = PY3_COLOR_BAD
-
-    def __init__(self, module):
-        self._module = module
-
-    def update(self, module_name=None):
-        """
-        Update a module.  If module_name is supplied the module of that
-        name is updated.  Otherwise the module calling is updated.
-        """
-        if not module_name:
-            return self._module.force_update()
-        else:
-            module = self.get_module_info(self, module_name).get(module_name)
-            if module:
-                module.force_update()
-
-    def get_module_info(self, module_name):
-        """
-        Helper function to get info for named module.
-        Info comes back as a dict containing.
-
-        'module': the instance of the module,
-        'position': list of places in i3bar, usually only one item
-        'type': module type py3status/i3status
-        """
-        return self._module._py3_wrapper.output_modules.get(module_name)
-
-    def trigger_event(self, module_name, event):
-        """
-        Trigger the event on named module
-        """
-        if module_name:
-            self._module._py3_wrapper.events_thread.process_event(
-                module_name, event)
-
-    def notify_user(self, msg, level='info'):
-        """
-        Send notification to user.
-        level can be 'info', 'error' or 'warning'
-        """
-        self._module._py3_wrapper.notify_user(msg, level=level)
 
 
 class Module(Thread):
     """
     This class represents a user module (imported file).
-    It is reponsible for executing it every given interval and
+    It is responsible for executing it every given interval and
     caching its output based on user will.
     """
 
@@ -270,7 +209,7 @@ class Module(Thread):
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
-                setattr(self.module_class, 'py3', Py3ModuleHelper(self))
+                setattr(self.module_class, 'py3', py3.Py3(self))
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -425,7 +364,7 @@ class Module(Thread):
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
-            if cache_time == PY3_CACHE_FOREVER:
+            if cache_time == py3.PY3_CACHE_FOREVER:
                 return
             # don't be hasty mate
             # set timer to do update next time one is needed

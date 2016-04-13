@@ -7,7 +7,7 @@ from collections import deque
 
 from json import dumps
 from signal import signal
-from signal import SIGTERM, SIGUSR1
+from signal import SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
 from subprocess import Popen
 from subprocess import call
 from threading import Event
@@ -15,6 +15,7 @@ from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb
 
+import py3status.py3 as py3
 import py3status.docstrings as docstrings
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
@@ -25,15 +26,6 @@ from py3status.profiling import profile
 LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
 
 DBUS_LEVELS = {'error': 'critical', 'warning': 'normal', 'info': 'low', }
-
-PY3_COLOR_GOOD = 1
-PY3_COLOR_BAD = 2
-
-COLOR_MAPPINGS = {
-    'color_good': PY3_COLOR_GOOD,
-    'color_bad': PY3_COLOR_BAD,
-    'color': None,
-}
 
 CONFIG_SPECIAL_SECTIONS = [
     'order',
@@ -56,6 +48,7 @@ class Py3statusWrapper():
         Useful variables we'll need.
         """
         self.config = {}
+        self.i3bar_running = True
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
@@ -253,6 +246,14 @@ class Py3statusWrapper():
         """
         # set the Event lock
         self.lock.set()
+
+        # SIGUSR2 will be recieced from i3bar indicating that all output should
+        # stop and we should consider py3status suspended.  It is however
+        # important that any processes using i3 ipc should continue to recieve
+        # those events otherwise it can lead to a stall in i3.
+        signal(SIGUSR2, self.i3bar_stop)
+        # SIGCONT indicates output should be resumed.
+        signal(SIGCONT, self.i3bar_start)
 
         # setup configuration
         self.config = self.get_config()
@@ -502,11 +503,11 @@ class Py3statusWrapper():
             if name in CONFIG_SPECIAL_SECTIONS:
                 continue
             mapping = {}
-            for key in COLOR_MAPPINGS.keys():
+            for key in py3.COLOR_MAPPINGS.keys():
                 # Get the value from section config or general.
                 color = cfg.get(key, config['general'].get(key))
                 if color:
-                    mapping[COLOR_MAPPINGS[key]] = color
+                    mapping[py3.COLOR_MAPPINGS[key]] = color
             mappings[name] = mapping
         # Store mappings for later use.
         self.mappings_color = mappings
@@ -530,6 +531,14 @@ class Py3statusWrapper():
                 output['color'] = mapped_color
         # Create the json string output.
         return ','.join([dumps(x) for x in outputs])
+
+    def i3bar_stop(self, signum, frame):
+        self.i3bar_running = False
+        # i3status should be stopped
+        self.i3status_thread.suspend_i3status()
+
+    def i3bar_start(self, signum, frame):
+        self.i3bar_running = True
 
     @profile
     def run(self):
@@ -562,6 +571,9 @@ class Py3statusWrapper():
 
         # main loop
         while True:
+            while not self.i3bar_running:
+                sleep(0.1)
+
             sec = int(time())
 
             # only check everything is good each second
