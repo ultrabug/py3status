@@ -162,82 +162,6 @@ class Events(Thread):
         syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
-    def i3status_mod_guess(self, instance, name):
-        """
-        Some i3status modules output a name and instance that are different
-        from their configuration name in i3status.conf.
-
-        For example the 'disk' module will output with name 'disk_info' so
-        we try to be clever and figure it out here, case by case.
-
-        Guessed modules:
-            - battery
-            - cpu_temperature
-            - disk_info
-            - ethernet
-            - run_watch
-            - volume
-            - wireless
-        """
-        try:
-            # /sys/class/power_supply/BAT0/uevent and _first_
-            if name == 'battery':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('battery') and isinstance(v, dict) and \
-                            v.get('response', {}).get('instance') == instance:
-                        instance = k.split(' ', 1)[1]
-                        break
-                else:
-                    instance = str([int(s) for s in instance if s.isdigit()][
-                        0])
-
-            # /sys/devices/platform/coretemp.0/temp1_input
-            elif name == 'cpu_temperature':
-                instance = str([int(s) for s in instance if s.isdigit()][0])
-
-            # disk_info /home
-            elif name == 'disk_info':
-                name = 'disk'
-
-            # ethernet _first_
-            elif name == 'ethernet':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('ethernet') and isinstance(v, dict) and \
-                            v.get('response', {}).get('instance') == instance:
-                        instance = k.split(' ', 1)[1]
-
-            # run_watch /var/run/openvpn.pid
-            elif name == 'run_watch':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('run_watch') and isinstance(v, dict) and \
-                            v.get('pidfile') == instance:
-                        instance = k.split(' ', 1)[1]
-                        break
-
-            # volume default.Master.0
-            elif name == 'volume':
-                device, mixer, mixer_idx = instance.split('.')
-                for k, v in self.i3s_config.items():
-                    if k.startswith('volume') and isinstance(v, dict) and \
-                            v.get('device') == device and \
-                            v.get('mixer') == mixer and \
-                            str(v.get('mixer_idx')) == mixer_idx:
-                        instance = k.split(' ', 1)[1]
-                        break
-                else:
-                    instance = 'master'
-
-            # wireless _first_
-            elif name == 'wireless':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('wireless') and isinstance(v, dict) and \
-                            v.get('response', {}).get('instance') == instance:
-                        instance = k.split(' ', 1)[1]
-        except:
-            pass
-        finally:
-            return (instance, name)
-
     def process_event(self, module_name, event):
         """
         Process the event for the named module.
@@ -313,8 +237,6 @@ class Events(Thread):
                     instance = event.get('instance', '')
                     name = event.get('name', '')
 
-                    # i3status module name guess
-                    instance, name = self.i3status_mod_guess(instance, name)
                     if self.config['debug']:
                         syslog(
                             LOG_INFO,

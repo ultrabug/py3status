@@ -50,10 +50,23 @@ class I3statusModule:
 
     def __init__(self, module_name, py3_wrapper):
         self.module_name = module_name
-        self.i3status = py3_wrapper.i3status_thread
-        self.is_time_module = module_name.split()[0] in TIME_MODULES
+
+        # i3status returns different name/instances than it is sent we want to
+        # be able to restore the correct ones.
+        try:
+            name, instance = self.module_name.split()
+        except:
+            name = self.module_name
+            instance = ''
+        self.name = name
+        self.instance = instance
+
         self.item = {}
+
+        self.i3status = py3_wrapper.i3status_thread
         self.py3_wrapper = py3_wrapper
+
+        self.is_time_module = name in TIME_MODULES
         if self.is_time_module:
             self.tz = None
             self.set_time_format()
@@ -68,6 +81,10 @@ class I3statusModule:
         """
         Update from i3status output. returns if item has changed.
         """
+        # Restore the name/instance.
+        item['name'] = self.name
+        item['instance'] = self.instance
+
         # have we updated?
         is_updated = self.item != item
         self.item = item
