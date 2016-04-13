@@ -69,7 +69,12 @@ class Py3status:
                 microtime = metadata.get('mpris:length')
                 rtime = str(timedelta(microseconds=microtime))[:-7]
                 title = metadata.get('xesam:title')
-                color = self.color_playing or i3s_config['color_good']
+                playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
+                                                  'PlaybackStatus')
+                if playback_status.strip() == 'Playing':
+                    color = self.color_playing or i3s_config['color_good']
+                else:
+                    color = self.color_paused or i3s_config['color_degraded']
             except Exception:
                 return (
                     self.format_stopped,
