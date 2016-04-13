@@ -12,7 +12,7 @@ from tempfile import NamedTemporaryFile
 from threading import Thread
 from time import time
 
-import py3status.py3 as py3
+from py3status.py3 import COLOR_MAPPINGS
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
@@ -496,7 +496,7 @@ class I3status(Thread):
                 self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
                 for key, value in conf.items():
                     # don't include color values
-                    if key in py3.COLOR_MAPPINGS.keys():
+                    if key in COLOR_MAPPINGS.keys():
                         continue
                     # Set known fixed format for time and tztime so we can work
                     # out the timezone

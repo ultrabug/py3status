@@ -15,13 +15,13 @@ from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb
 
-import py3status.py3 as py3
 import py3status.docstrings as docstrings
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
 from py3status.module import Module
 from py3status.profiling import profile
+from py3status.py3 import COLOR_MAPPINGS
 
 LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
 
@@ -503,11 +503,11 @@ class Py3statusWrapper():
             if name in CONFIG_SPECIAL_SECTIONS:
                 continue
             mapping = {}
-            for key in py3.COLOR_MAPPINGS.keys():
+            for key in COLOR_MAPPINGS.keys():
                 # Get the value from section config or general.
                 color = cfg.get(key, config['general'].get(key))
                 if color:
-                    mapping[py3.COLOR_MAPPINGS[key]] = color
+                    mapping[COLOR_MAPPINGS[key]] = color
             mappings[name] = mapping
         # Store mappings for later use.
         self.mappings_color = mappings
@@ -523,7 +523,7 @@ class Py3statusWrapper():
                 output['name'], output.get('instance', '')
             ).strip()
             # Color: substitute the config defined color and replace
-            # py3.COLOR_GOOD etc using our color mappings.
+            # COLOR_GOOD etc using our color mappings.
             color = output.get('color')
             mapping = self.mappings_color.get(module_name, {})
             mapped_color = mapping.get(color, color)
