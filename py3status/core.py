@@ -26,6 +26,25 @@ LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
 
 DBUS_LEVELS = {'error': 'critical', 'warning': 'normal', 'info': 'low', }
 
+PY3_COLOR_GOOD = 1
+PY3_COLOR_BAD = 2
+
+COLOR_MAPPINGS = {
+    'color_good': PY3_COLOR_GOOD,
+    'color_bad': PY3_COLOR_BAD,
+    'color': None,
+}
+
+CONFIG_SPECIAL_SECTIONS = [
+    'order',
+    'general',
+    'i3s_modules',
+    'on_click',
+    '.group_extras',
+    '.module_groups',
+    'py3_modules',
+]
+
 
 class Py3statusWrapper():
     """
@@ -473,6 +492,45 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
+    def create_mappings(self, config):
+        """
+        Create any mappings needed for global substitutions eg. colors
+        """
+        mappings = {}
+        for name, cfg in config.items():
+            # Ignore special config sections.
+            if name in CONFIG_SPECIAL_SECTIONS:
+                continue
+            mapping = {}
+            for key in COLOR_MAPPINGS.keys():
+                # Get the value from section config or general.
+                color = cfg.get(key, config['general'].get(key))
+                if color:
+                    mapping[COLOR_MAPPINGS[key]] = color
+            mappings[name] = mapping
+        # Store mappings for later use.
+        self.mappings_color = mappings
+
+    def process_module_output(self, outputs):
+        """
+        Process the output for a module and return a json string representing it.
+        Color processing occurs here.
+        """
+        for output in outputs:
+            # Get the module name from the output.
+            module_name = '{} {}'.format(
+                output['name'], output.get('instance', '')
+            ).strip()
+            # Color: substitute the config defined color and replace
+            # py3.COLOR_GOOD etc using our color mappings.
+            color = output.get('color')
+            mapping = self.mappings_color.get(module_name, {})
+            mapped_color = mapping.get(color, color)
+            if mapped_color:
+                output['color'] = mapped_color
+        # Create the json string output.
+        return ','.join([dumps(x) for x in outputs])
+
     @profile
     def run(self):
         """
@@ -488,6 +546,9 @@ class Py3statusWrapper():
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
         self.create_output_modules()
+
+        # prepare the color mappings
+        self.create_mappings(config)
 
         # update queue populate with all py3modules
         self.queue.extend(self.modules)
@@ -534,9 +595,8 @@ class Py3statusWrapper():
                     module = self.output_modules[module_name]
                     for index in module['position']:
                         # store the output as json
-                        # modules can have more than one output
                         out = module['module'].get_latest()
-                        output[index] = ', '.join([dumps(x) for x in out])
+                        output[index] = self.process_module_output(out)
 
                 prefix = i3status_thread.last_prefix
                 # build output string

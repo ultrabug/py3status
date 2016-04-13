@@ -12,6 +12,8 @@ from py3status.profiling import profile
 
 
 PY3_CACHE_FOREVER = -1
+PY3_COLOR_GOOD = 1
+PY3_COLOR_BAD = 2
 
 
 class Py3ModuleHelper:
@@ -26,6 +28,8 @@ class Py3ModuleHelper:
     """
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
+    COLOR_GOOD = PY3_COLOR_GOOD
+    COLOR_BAD = PY3_COLOR_BAD
 
     def __init__(self, module):
         self._module = module
@@ -261,7 +265,7 @@ class Module(Thread):
             mod_config = self.i3status_thread.config.get(module, {})
             for config, value in mod_config.items():
                 # names starting with '.' are private
-                if not config.startswith('.'):
+                if not config.startswith('.') and hasattr(self.module_class, config):
                     setattr(self.module_class, config, value)
 
             # Add the py3 module helper if modules self.py3 is not defined

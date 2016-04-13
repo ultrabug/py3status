@@ -25,7 +25,7 @@ class Py3status:
     color_on = None
     color_off = None
 
-    def dpms(self, i3s_output_list, i3s_config):
+    def dpms(self):
         """
         Display a colorful state of DPMS.
         """
@@ -34,10 +34,10 @@ class Py3status:
 
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good'] if self.run else self.color_off or i3s_config['color_bad']
+            'color': self.color_on or self.py3.COLOR_GOOD if self.run else self.color_off or self.py3.COLOR_BAD
         }
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Enable/Disable DPMS on left click.
         """

@@ -492,6 +492,8 @@ class I3status(Thread):
             elif self.valid_config_param(section_name) and conf:
                 self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
                 for key, value in conf.items():
+                    if key == 'color':
+                        continue
                     # Set known fixed format for time and tztime so we can work
                     # out the timezone
                     if section_name.split()[
