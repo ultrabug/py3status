@@ -7,7 +7,7 @@ from collections import deque
 
 from json import dumps
 from signal import signal
-from signal import SIGTERM, SIGUSR1
+from signal import SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
 from subprocess import Popen
 from subprocess import call
 from threading import Event
@@ -37,6 +37,7 @@ class Py3statusWrapper():
         Useful variables we'll need.
         """
         self.config = {}
+        self.i3bar_running = True
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
@@ -234,6 +235,14 @@ class Py3statusWrapper():
         """
         # set the Event lock
         self.lock.set()
+
+        # SIGUSR2 will be recieced from i3bar indicating that all output should
+        # stop and we should consider py3status suspended.  It is however
+        # important that any processes using i3 ipc should continue to recieve
+        # those events otherwise it can lead to a stall in i3.
+        signal(SIGUSR2, self.i3bar_stop)
+        # SIGCONT indicates output should be resumed.
+        signal(SIGCONT, self.i3bar_start)
 
         # setup configuration
         self.config = self.get_config()
@@ -473,6 +482,14 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
+    def i3bar_stop(self, signum, frame):
+        self.i3bar_running = False
+        # i3status should be stopped
+        self.i3status_thread.suspend_i3status()
+
+    def i3bar_start(self, signum, frame):
+        self.i3bar_running = True
+
     @profile
     def run(self):
         """
@@ -501,6 +518,9 @@ class Py3statusWrapper():
 
         # main loop
         while True:
+            while not self.i3bar_running:
+                sleep(0.1)
+
             sec = int(time())
 
             # only check everything is good each second
