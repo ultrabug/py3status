@@ -1,12 +1,14 @@
 PY3_CACHE_FOREVER = -1
 
-PY3_COLOR_GOOD = 1
-PY3_COLOR_BAD = 2
+PY3_COLOR_BAD = 1
+PY3_COLOR_DEGRADED = 2
+PY3_COLOR_GOOD = 3
 
 COLOR_MAPPINGS = {
-    'color_good': PY3_COLOR_GOOD,
-    'color_bad': PY3_COLOR_BAD,
     'color': None,
+    'color_bad': PY3_COLOR_BAD,
+    'color_degraded': PY3_COLOR_DEGRADED,
+    'color_good': PY3_COLOR_GOOD,
 }
 
 
@@ -22,8 +24,9 @@ class Py3:
     """
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
-    COLOR_GOOD = PY3_COLOR_GOOD
     COLOR_BAD = PY3_COLOR_BAD
+    COLOR_DEGRADED = PY3_COLOR_DEGRADED
+    COLOR_GOOD = PY3_COLOR_GOOD
 
     def __init__(self, module):
         self._module = module
