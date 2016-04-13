@@ -8,7 +8,7 @@ from collections import OrderedDict
 from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
 
-import py3status.py3 as py3
+from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
 
 
@@ -209,7 +209,7 @@ class Module(Thread):
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
-                setattr(self.module_class, 'py3', py3.Py3(self))
+                setattr(self.module_class, 'py3', Py3(self))
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -364,7 +364,7 @@ class Module(Thread):
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
-            if cache_time == py3.PY3_CACHE_FOREVER:
+            if cache_time == PY3_CACHE_FOREVER:
                 return
             # don't be hasty mate
             # set timer to do update next time one is needed
