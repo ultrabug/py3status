@@ -11,12 +11,73 @@ from time import time
 from py3status.profiling import profile
 
 
+PY3_CACHE_FOREVER = -1
+
+
+class Py3ModuleHelper:
+    """
+    Helper object that gets injected as self.py3 into Py3status
+    modules that have not got that attribute set already.
+
+    This allows functionality like:
+        User notifications
+        Forcing module to update (even other modules)
+        Triggering events for modules
+    """
+
+    CACHE_FOREVER = PY3_CACHE_FOREVER
+
+    def __init__(self, module):
+        self._module = module
+
+    def update(self, module_name=None):
+        """
+        Update a module.  If module_name is supplied the module of that
+        name is updated.  Otherwise the module calling is updated.
+        """
+        if not module_name:
+            return self._module.force_update()
+        else:
+            module = self.get_module_info(self, module_name).get(module_name)
+            if module:
+                module.force_update()
+
+    def get_module_info(self, module_name):
+        """
+        Helper function to get info for named module.
+        Info comes back as a dict containing.
+
+        'module': the instance of the module,
+        'position': list of places in i3bar, usually only one item
+        'type': module type py3status/i3status
+        """
+        return self._module._py3_wrapper.output_modules.get(module_name)
+
+    def trigger_event(self, module_name, event):
+        """
+        Trigger the event on named module
+        """
+        if module_name:
+            self._module._py3_wrapper.events_thread.process_event(
+                module_name, event)
+
+    def notify_user(self, msg, level='info'):
+        """
+        Send notification to user.
+        level can be 'info', 'error' or 'warning'
+        """
+        self._module._py3_wrapper.notify_user(msg, level=level)
+
+
 class Module(Thread):
     """
     This class represents a user module (imported file).
     It is reponsible for executing it every given interval and
     caching its output based on user will.
     """
+
+    PARAMS_NEW = 'new'
+    PARAMS_LEGACY = 'legacy'
 
     def __init__(self, module, user_modules, py3_wrapper):
         """
@@ -109,31 +170,6 @@ class Module(Thread):
             output.append(method['last_output'])
         return output
 
-    def helper_get_module_info(self, module_name):
-        """
-        Helper function to get info for named module. info comes back as a dict
-        containing.
-
-        'module': the instance of the module,
-        'position': list of places in i3bar, usually only one item
-        'type': module type py3status/i3status
-        """
-        return self._py3_wrapper.output_modules.get(module_name)
-
-    def helper_trigger_event(self, module_name, event):
-        """
-        Trigger the event on named module
-        """
-        if module_name:
-            self._py3_wrapper.events_thread.process_event(module_name, event)
-
-    def helper_notification(self, msg, level='info'):
-        """
-        Send notification to user.
-        level can be 'info', 'error' or 'warning'
-        """
-        self._py3_wrapper.notify_user(msg, level=level)
-
     def set_module_options(self, module):
         """
         Set universal module options to be interpreted by i3bar
@@ -165,6 +201,38 @@ class Module(Thread):
                 raise ValueError("invalid 'align' attribute, valid values are: left, center, right")
 
             self.module_options['align'] = align
+
+    def _params_type(self, method_name, instance):
+        """
+        Check to see if this is a legacy method or shiny new one
+
+        legacy update method:
+            def update(self, i3s_output_list, i3s_config):
+                ...
+
+        new update method:
+            def update(self):
+                ...
+
+        Returns False if the method does not exist,
+        else PARAMS_NEW or PARAMS_LEGACY
+        """
+
+        method = getattr(instance, method_name, None)
+        if not method:
+            return False
+
+        # Check the parameters we simply count the number of args and don't
+        # allow any extras like keywords.
+        arg_count = 1
+        # on_click method has extra events parameter
+        if method_name == 'on_click':
+            arg_count = 2
+        args, vargs, kw, defaults = inspect.getargspec(method)
+        if len(args) == arg_count and not vargs and not kw:
+            return self.PARAMS_NEW
+        else:
+            return self.PARAMS_LEGACY
 
     def load_methods(self, module, user_modules):
         """
@@ -199,13 +267,9 @@ class Module(Thread):
                 if not config.startswith('.'):
                     setattr(self.module_class, config, value)
 
-            # check if module has meta class
-            if hasattr(self.module_class, 'Meta'):
-                meta = self.module_class.Meta
-                if inspect.isclass(meta):
-                    # module wants it's Module
-                    if getattr(meta, 'include_py3_module', False):
-                        setattr(self.module_class, 'py3_module', self)
+            # Add the py3 module helper if modules self.py3 is not defined
+            if not hasattr(self.module_class, 'py3'):
+                setattr(self.module_class, 'py3', Py3ModuleHelper(self))
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -214,15 +278,17 @@ class Module(Thread):
                 else:
                     m_type = type(getattr(class_inst, method))
                     if 'method' in str(m_type):
+                        params_type = self._params_type(method, class_inst)
                         if method == 'on_click':
-                            self.click_events = True
+                            self.click_events = params_type
                         elif method == 'kill':
-                            self.has_kill = True
+                            self.has_kill = params_type
                         else:
                             # the method_obj stores infos about each method
                             # of this module.
                             method_obj = {
                                 'cached_until': time(),
+                                'call_type': params_type,
                                 'instance': None,
                                 'last_output': {
                                     'name': method,
@@ -246,8 +312,13 @@ class Module(Thread):
         """
         try:
             click_method = getattr(self.module_class, 'on_click')
-            click_method(self.i3status_thread.json_list,
-                         self.i3status_thread.config['general'], event)
+            if self.click_events == self.PARAMS_NEW:
+                # new style modules
+                click_method(event)
+            else:
+                # legacy modules had extra parameters passed
+                click_method(self.i3status_thread.json_list,
+                             self.i3status_thread.config['general'], event)
             self.set_updated()
         except Exception:
             err = sys.exc_info()[1]
@@ -285,8 +356,14 @@ class Module(Thread):
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    response = method(self.i3status_thread.json_list,
-                                      self.i3status_thread.config['general'])
+                    if my_method['call_type'] == self.PARAMS_NEW:
+                        # new style modules
+                        response = method()
+                    else:
+                        # legacy modules had parameters passed
+                        response = method(
+                            self.i3status_thread.json_list,
+                            self.i3status_thread.config['general'])
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -337,7 +414,7 @@ class Module(Thread):
                         syslog(LOG_INFO,
                                'method {} returned {} '.format(meth, result))
                 except Exception:
-                    msg = 'Instance `{}`, user method `{}` Failed.'
+                    msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
                     notify = not self.nagged
                     self._py3_wrapper.report_exception(msg, notify_user=notify)
@@ -346,6 +423,9 @@ class Module(Thread):
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
+            # new style modules can signal they want to cache forever
+            if cache_time == PY3_CACHE_FOREVER:
+                return
             # don't be hasty mate
             # set timer to do update next time one is needed
             delay = max(cache_time - time(), self.config['minimum_interval'])
@@ -360,8 +440,12 @@ class Module(Thread):
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, 'kill')
-                kill_method(self.i3status_thread.json_list,
-                            self.i3status_thread.config['general'])
+                if self.has_kill == self.PARAMS_NEW:
+                    kill_method()
+                else:
+                    # legacy call parameters
+                    kill_method(self.i3status_thread.json_list,
+                                self.i3status_thread.config['general'])
             except Exception:
                 # this would be stupid to die on exit
                 pass
