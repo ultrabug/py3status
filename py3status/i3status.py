@@ -523,15 +523,13 @@ class I3status(Thread):
                        'i3status spawned using config file {}'.format(
                            tmpfile.name))
 
-                def preexec():
-                    # Ignore the SIGUSR2 signal for this subprocess
-                    signal(SIGUSR2, SIG_IGN)
-
                 i3status_pipe = Popen(
                     ['i3status', '-c', tmpfile.name],
                     stdout=PIPE,
                     stderr=PIPE,
-                    preexec_fn=preexec)
+                    # Ignore the SIGUSR2 signal for this subprocess
+                    preexec_fn=lambda:  signal(SIGUSR2, SIG_IGN)
+                )
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
                 self.tmpfile_path = tmpfile.name
@@ -565,13 +563,8 @@ class I3status(Thread):
                                     self.last_prefix = prefix
                                     self.set_responses(json_list)
                         else:
-                            code = i3status_pipe.poll()
-                            # If we are 'suspended' then we recieve this
-                            # signal from i3status and can safely ignore
-                            # it.
-                            if code == -SIGUSR2:
-                                continue
                             err = self.poller_err.readline()
+                            code = i3status_pipe.poll()
                             if code is not None:
                                 msg = 'i3status died'
                                 if err:
