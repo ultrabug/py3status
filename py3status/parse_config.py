@@ -467,8 +467,9 @@ def process_config(config_path, py3_wrapper=None):
         for k, v in module.items():
             if k.startswith('on_click'):
                 # on_click event
-                if not process_onclick(k, v, name):
-                    del module[k]
+                process_onclick(k, v, name)
+                # on_click should not be passed to the module via the config.
+                del module[k]
             if isinstance(v, ModuleDefinition):
                 # we are a container
                 module['items'] = []
