@@ -64,7 +64,7 @@ class Py3status:
     color = None
     cycle = 0
     fixed_width = True
-    format = "{output}"
+    format = u'{output}'
 
     class Meta:
         container = True
