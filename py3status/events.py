@@ -313,6 +313,19 @@ class Events(Thread):
                     instance = event.get('instance', '')
                     name = event.get('name', '')
 
+                    # composites have an index which is passed to i3bar with
+                    # the instance.  We need to separate this out here and
+                    # clean up the event.  If index
+                    # is an integer type then cast it as such.
+                    if ' ' in instance:
+                        instance, index = instance.split(' ', 1)
+                        try:
+                            index = int(index)
+                        except ValueError:
+                            pass
+                        event['index'] = index
+                        event['instance'] = instance
+
                     # i3status module name guess
                     instance, name = self.i3status_mod_guess(instance, name)
                     if self.config['debug']:
@@ -322,7 +335,7 @@ class Events(Thread):
                                 '{} {}'.format(name, instance).strip()))
 
                     # guess the module config name
-                    module_name = '{} {}'.format(name, instance).strip()
+                    module_name = '{} {}'.format(name, instance.split(' ')[0]).strip()
                     # do the work
                     self.process_event(module_name, event)
 

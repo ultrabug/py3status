@@ -12,20 +12,30 @@ Modules can be i3status core modules or py3status modules.
 Additionally the active group can be cycled through automatically.
 
 Configuration parameters:
+    align: Text alignment when fixed_width is set
+        can be 'left', 'center' or 'right' (default 'left')
     button_next: Button that when clicked will switch to display next module.
         Setting to `0` will disable this action. (default 4)
     button_prev: Button that when clicked will switch to display previous
         module.  Setting to `0` will disable this action. (default 5)
+    button_toggle: Button that when clicked toggles the group content being
+    displayed. Setting to `0` will disable this action (default 1)
     color: If the active module does not supply a color use this if set.
         Format as hex value eg `'#0000FF'` (default None)
     cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
         (default True)
-    format: Format for module output. (default "{output}")
+    format: Format for module output. (default "{output}{control}")
+    format_control_open: Format for the control when group closed
+        (default ' 🡙')
+    format_control_closed: Format for the control when group open
+        (default  '🡘')
+    open: Is the group open and displaying its content (default True)
 
 
 Format of status string placeholders:
+    {control} The control to open/close or change the displayed group
     {output} Output of current active module
 
 Example:
@@ -39,7 +49,7 @@ order += "group disks"
 
 group disks {
     cycle = 30
-    format = "Disks: {output}"
+    format = "Disks: {output}{control}"
 
     disk "/" {
         format = "/ %avail"
@@ -59,12 +69,17 @@ from time import time
 
 class Py3status:
     # available configuration parameters
+    align = 'left'
     button_next = 4
     button_prev = 5
+    button_toggle = 1
     color = None
     cycle = 0
     fixed_width = True
-    format = u'{output}'
+    format = u'{output}{control}'
+    format_control_open = ' 🡙'
+    format_control_closed = '🡘'
+    open = True
 
     def __init__(self):
         self.items = []
@@ -77,6 +92,17 @@ class Py3status:
             self.cycle = 0
         self._cycle_time = time() + self.cycle
         self.initialized = True
+        parts = self.format.split('{output}')
+        if len(parts) == 2:
+            parts[0] = parts[0]
+            parts[1] = parts[1]
+        else:
+            msg = 'module {} format must contain {{output}} once to be valid'
+            msg = msg.format(self.py3_module.module_full_name)
+            self.py3_module.helper_notification(msg)
+            self.items = []
+        self.format_parts = parts
+        self.open = bool(self.open)
 
     def _get_output(self):
         if not self.items:
@@ -89,12 +115,21 @@ class Py3status:
             output = self._get_current_output(i)
             if not output:
                 continue
+            widths.append(sum([len(x['full_text']) for x in output]))
             if i == self.active:
                 current = output
-            widths.append(len(output['full_text']))
+                current_width = widths[-1]
         if widths:
             width = max(widths)
-            current['full_text'] += ' ' * (width - len(current['full_text']))
+            padding = ' ' * (width - current_width)
+            if self.align == 'right':
+                current[0]['full_text'] = padding + current[0]['full_text']
+            elif self.align == 'center':
+                cut = round(len(padding) / 2)
+                current[0]['full_text'] = padding[:cut] + current[0]['full_text']
+                current[-1]['full_text'] += padding[cut:]
+            else:
+                current[-1]['full_text'] += padding
         return current
 
     def _get_current_output(self, item):
@@ -102,7 +137,7 @@ class Py3status:
         current = self.items[item]
         module_info = self.py3.get_module_info(current)
         if module_info:
-            output = module_info['module'].get_latest()[0]
+            output = module_info['module'].get_latest()
         return output
 
     def _get_current_module_name(self):
@@ -133,17 +168,34 @@ class Py3status:
         if not ready:
             self._init()
 
-        if self.cycle and time() >= self._cycle_time:
-            self._next()
-            self._cycle_time = time() + self.cycle
-        output = '?'
-        color = None
-        current_output = self._get_output()
+        if self.open:
+            if self.cycle and time() >= self._cycle_time:
+                self._next()
+                self._cycle_time = time() + self.cycle
+            output = [{'full_text': '?'}]
+            current_output = self._get_output()
+            if current_output:
+                output = current_output
+                if self.color:
+                    for item in output:
+                        if not item.get('color'):
+                            item['color'] = self.color
+            update_time = self.cycle or None
+        else:
+            output = []
+            update_time = None
 
-        if current_output:
-            output = current_output['full_text']
-            color = current_output.get('color')
-        update_time = self.cycle or None
+        if self.open:
+            format_control = self.format_control_open
+        else:
+            format_control = self.format_control_closed
+
+        if self.format_parts[0]:
+            out = self.format_parts[0].format(control=format_control)
+            output = [{'full_text': out}] + output
+        if self.format_parts[1]:
+            out = self.format_parts[1].format(control=format_control)
+            output += [{'full_text': out}]
 
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
@@ -157,12 +209,8 @@ class Py3status:
 
         response = {
             'cached_until': cached_until,
-            'full_text': self.format.format(output=output)
+            'composite': output
         }
-        if color:
-            response['color'] = color
-        elif self.color:
-            response['color'] = self.color
         return response
 
     def on_click(self, event):
@@ -177,10 +225,8 @@ class Py3status:
             self._next()
         if self.button_prev and event['button'] == self.button_prev:
             self._prev()
-
-        # pass the event to the current module
-        module_name = self._get_current_module_name()
-        self.py3.trigger_event(module_name, event)
+        if self.button_toggle and event['button'] == self.button_toggle:
+            self.open = not self.open
 
 
 if __name__ == "__main__":
