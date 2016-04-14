@@ -1,11 +1,10 @@
-import sys
 import os
 import imp
 import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
-from syslog import syslog, LOG_INFO, LOG_WARNING
+from syslog import syslog, LOG_INFO
 from time import time
 
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
@@ -279,9 +278,8 @@ class Module(Thread):
                              self.i3status_thread.config['general'], event)
             self.set_updated()
         except Exception:
-            err = sys.exc_info()[1]
-            msg = 'on_click failed with ({}) for event ({})'.format(err, event)
-            syslog(LOG_WARNING, msg)
+            msg = 'on_click event in `{}` failed'.format(self.module_full_name)
+            self._py3_wrapper.report_exception(msg)
 
     @profile
     def run(self):
