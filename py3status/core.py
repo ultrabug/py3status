@@ -311,7 +311,8 @@ class Py3statusWrapper():
         if not dbus:
             msg = 'py3status: {}'.format(msg)
         if level != 'info':
-            msg += ' Please try to fix this and reload i3wm (Mod+Shift+R)'
+            fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
+            msg = fix_msg.format(msg)
         try:
             log_level = LOG_LEVELS.get(level, LOG_ERR)
             syslog(log_level, msg)
