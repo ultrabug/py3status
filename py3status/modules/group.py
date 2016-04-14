@@ -77,8 +77,8 @@ class Py3status:
     cycle = 0
     fixed_width = True
     format = u'{output}{control}'
-    format_control_open = ' 🡙'
-    format_control_closed = '🡘'
+    format_control_open = u' 🡙'
+    format_control_closed = u'🡘'
     open = True
 
     def __init__(self):

@@ -170,8 +170,10 @@ class Module(Thread):
         We need to respect the universal options too.
         """
         composite = response['composite']
-        if not composite:
+        if not isinstance(composite, list):
             raise Exception('Expecting composite')
+        if 'full_text' in response:
+            raise Exception('Conflict "full_text" and "composite" in response')
         # set universal options on last component
         composite[-1].update(self.module_options)
         # calculate any min width (we split this across components)
