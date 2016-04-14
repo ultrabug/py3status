@@ -99,6 +99,7 @@ class Module(Thread):
         self.new_update = False
         self.module_full_name = module
         self.nagged = False
+        self.sleeping = False
         self.timer = None
 
         # py3wrapper this is private and any modules accessing their instance
@@ -153,6 +154,23 @@ class Module(Thread):
             self.timer.cancel()
         # get the thread to update itself
         self.timer = Timer(0, self.run)
+        self.timer.start()
+
+    def sleep(self):
+        self.sleeping = True
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+
+    def wake(self):
+        self.sleeping = False
+        cache_time = self.cache_time
+        # new style modules can signal they want to cache forever
+        if cache_time == PY3_CACHE_FOREVER:
+            return
+        # restart
+        delay = max(cache_time - time(), 0)
+        self.timer = Timer(delay, self.run)
         self.timer.start()
 
     def set_updated(self):
@@ -425,9 +443,10 @@ class Module(Thread):
                 return
             # don't be hasty mate
             # set timer to do update next time one is needed
-            delay = max(cache_time - time(), self.config['minimum_interval'])
-            self.timer = Timer(delay, self.run)
-            self.timer.start()
+            if not self.sleeping:
+                delay = max(cache_time - time(), self.config['minimum_interval'])
+                self.timer = Timer(delay, self.run)
+                self.timer.start()
 
     def kill(self):
         # stop timer if exists
