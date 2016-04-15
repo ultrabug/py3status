@@ -7,12 +7,13 @@ from collections import deque
 
 from json import dumps
 from signal import signal
-from signal import SIGTERM, SIGUSR1
+from signal import SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
 from subprocess import Popen
 from subprocess import call
 from threading import Event
 from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
+from traceback import extract_tb
 
 import py3status.docstrings as docstrings
 from py3status.events import Events
@@ -35,6 +36,8 @@ class Py3statusWrapper():
         """
         Useful variables we'll need.
         """
+        self.config = {}
+        self.i3bar_running = True
         self.last_refresh_ts = time()
         self.lock = Event()
         self.modules = {}
@@ -223,7 +226,7 @@ class Py3statusWrapper():
                                module))
             except Exception:
                 err = sys.exc_info()[1]
-                msg = 'loading module "{}" failed ({})'.format(module, err)
+                msg = 'Loading module "{}" failed ({}).'.format(module, err)
                 self.notify_user(msg, level='warning')
 
     def setup(self):
@@ -232,6 +235,14 @@ class Py3statusWrapper():
         """
         # set the Event lock
         self.lock.set()
+
+        # SIGUSR2 will be received from i3bar indicating that all output should
+        # stop and we should consider py3status suspended.  It is however
+        # important that any processes using i3 ipc should continue to receive
+        # those events otherwise it can lead to a stall in i3.
+        signal(SIGUSR2, self.i3bar_stop)
+        # SIGCONT indicates output should be resumed.
+        signal(SIGCONT, self.i3bar_start)
 
         # setup configuration
         self.config = self.get_config()
@@ -246,8 +257,13 @@ class Py3statusWrapper():
 
         # setup i3status thread
         self.i3status_thread = I3status(self)
-        if self.config['standalone']:
+
+        # If standalone or no i3status modules then use the mock i3status
+        # else start i3status thread.
+        i3s_modules = self.i3status_thread.config['i3s_modules']
+        if self.config['standalone'] or not i3s_modules:
             self.i3status_thread.mock()
+            i3s_mode = 'mocked'
         else:
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
@@ -255,9 +271,10 @@ class Py3statusWrapper():
                     err = self.i3status_thread.error
                     raise IOError(err)
                 sleep(0.1)
+            i3s_mode = 'started'
         if self.config['debug']:
             syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
-                'started' if not self.config['standalone'] else 'mocked',
+                i3s_mode,
                 self.i3status_thread.config))
 
         # setup input events thread
@@ -285,17 +302,21 @@ class Py3statusWrapper():
 
     def notify_user(self, msg, level='error'):
         """
-        Make use of i3-nagbar to display errors and warnings to the user.
+        Display notification to user via i3-nagbar or send-notify
         We also make sure to log anything to keep trace of it.
+
+        NOTE: Message should end with a '.' for consistency.
         """
-        if not self.config['dbus_notify']:
-            msg = 'py3status: {}. '.format(msg)
+        dbus = self.config.get('dbus_notify')
+        if not dbus:
+            msg = 'py3status: {}'.format(msg)
         if level != 'info':
-            msg += 'please try to fix this and reload i3wm (Mod+Shift+R)'
+            fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
+            msg = fix_msg.format(msg)
         try:
             log_level = LOG_LEVELS.get(level, LOG_ERR)
             syslog(log_level, msg)
-            if self.config['dbus_notify']:
+            if dbus:
                 # fix any html entities
                 msg = msg.replace('&', '&amp;')
                 msg = msg.replace('<', '&lt;')
@@ -353,7 +374,7 @@ class Py3statusWrapper():
         For every module, reset the 'cached_until' of all its methods.
         """
         for module in self.modules.values():
-            module.clear_cache()
+            module.force_update()
 
     def terminate(self, signum, frame):
         """
@@ -379,8 +400,56 @@ class Py3statusWrapper():
         for group in groups_to_update:
             group_module = self.output_modules.get(group)
             if group_module:
-                group_module['module'].clear_cache()
-                group_module['module'].run()
+                group_module['module'].force_update()
+
+    def report_exception(self, msg, notify_user=True):
+        """
+        Report details of an exception to the user.
+        This should only be called within an except: block Details of the
+        exception are reported eg filename, line number and exception type.
+
+        Because stack trace information outside of py3status or it's modules is
+        not helpful in actually finding and fixing the error, we try to locate
+        the first place that the exception affected our code.
+
+        NOTE: msg should not end in a '.' for consistency.
+        """
+        # Get list of paths that our stack trace should be found in.
+        py3_paths = [os.path.dirname(__file__)]
+        user_paths = self.config['include_paths']
+        py3_paths += [os.path.abspath(path) + '/' for path in user_paths]
+
+        try:
+            # We need to make sure to delete tb even if things go wrong.
+            exc_type, exc_obj, tb = sys.exc_info()
+            stack = extract_tb(tb)
+            # Find first relevant trace in the stack.
+            # it should be in py3status or one of it's modules.
+            found = False
+            for item in reversed(stack):
+                filename = item[0]
+                for path in py3_paths:
+                    if filename.startswith(path):
+                        # Found a good trace
+                        filename = os.path.basename(item[0])
+                        line_no = item[1]
+                        found = True
+                        break
+                if found:
+                    break
+            # all done!  create our message.
+            msg = '{} ({}) {} line {}.'.format(
+                msg, exc_type.__name__, filename, line_no)
+        except:
+            # something went wrong report what we can.
+            msg = '{}.'.format(msg)
+        finally:
+            # delete tb!
+            del tb
+        # log the exception and notify user
+        syslog(LOG_WARNING, msg)
+        if notify_user:
+            self.notify_user(msg, level='error')
 
     def create_output_modules(self):
         """
@@ -414,6 +483,28 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
+    def i3bar_stop(self, signum, frame):
+        self.i3bar_running = False
+        # i3status should be stopped
+        self.i3status_thread.suspend_i3status()
+        self.sleep_modules()
+
+    def i3bar_start(self, signum, frame):
+        self.i3bar_running = True
+        self.wake_modules()
+
+    def sleep_modules(self):
+        # Put all py3modules to sleep so they stop updating
+        for module in self.output_modules.values():
+            if module['type'] == 'py3status':
+                module['module'].sleep()
+
+    def wake_modules(self):
+        # Wake up all py3modules.
+        for module in self.output_modules.values():
+            if module['type'] == 'py3status':
+                module['module'].wake()
+
     @profile
     def run(self):
         """
@@ -442,6 +533,9 @@ class Py3statusWrapper():
 
         # main loop
         while True:
+            while not self.i3bar_running:
+                sleep(0.1)
+
             sec = int(time())
 
             # only check everything is good each second
@@ -452,7 +546,7 @@ class Py3statusWrapper():
                 if not i3status_thread.is_alive():
                     err = i3status_thread.error
                     if not err:
-                        err = 'i3status died horribly'
+                        err = 'I3status died horribly.'
                     self.notify_user(err)
                     break
 
@@ -461,7 +555,7 @@ class Py3statusWrapper():
                     # don't spam the user with i3-nagbar warnings
                     if not hasattr(self.events_thread, 'nagged'):
                         self.events_thread.nagged = True
-                        err = 'events thread died, click events are disabled'
+                        err = 'Events thread died, click events are disabled.'
                         self.notify_user(err, level='warning')
 
                 # update i3status time/tztime items

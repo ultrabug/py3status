@@ -81,13 +81,16 @@ class Py3status:
 
             if title_changed or layout_changed:
                 self.title = get_title(conn)
+                self.py3.update()
 
         def clear_title(*args):
             self.title = self.empty_title
+            self.py3.update()
 
         conn = i3ipc.Connection()
 
         self.title = get_title(conn)  # set title on startup
+        self.py3.update()
 
         # The order of following callbacks is important!
 
@@ -106,7 +109,7 @@ class Py3status:
 
     def window_title(self, i3s_output_list, i3s_config):
         resp = {
-            'cached_until': 0,  # update ASAP
+            'cached_until': self.py3.CACHE_FOREVER,  # cache until event received
             'full_text': self.title,
         }
 

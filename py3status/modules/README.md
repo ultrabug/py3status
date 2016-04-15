@@ -460,7 +460,7 @@ Configuration parameters:
     Setting to `0` will disable cycling. *(default 0)*
   - `fixed_width` Reduce the size changes when switching to new group
     *(default True)*
-  - `format` Format for module output. *(default "GROUP: {output}")*
+  - `format` Format for module output. *(default "{output}")*
 
 
 Format of status string placeholders:
@@ -1085,21 +1085,55 @@ Display current sound volume using amixer.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
+Volume up/down and Toggle mute via mouse clicks can be easily added see
+example.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (10s default)
-  - `channel` "Master" by default, alsamixer channel to track
-  - `device` "default" by default, alsamixer device to use
-  - `format` format the output, available variables: {percentage}
-  - `format_muted` format the output when the volume is muted
-  - `threshold_bad` 20 by default
-  - `threshold_degraded` 50 by default
+  - `button_down` Button to click to decrease volume. Setting to 0 disables.
+    *(default 0)*
+  - `button_mute` Button to click to toggle mute. Setting to 0 disables.
+    *(default 0)*
+  - `button_up` Button to click to increase volume. Setting to 0 disables.
+    *(default 0)*
+  - `cache_timeout` how often we refresh this module in seconds.
+    *(default 10)*
+  - `channel` Alsamixer channel to track.
+    *(default 'Master')*
+  - `device` Alsamixer device to use.
+    *(default 'default')*
+  - `format` Format of the output.
+    *(default '♪: {percentage}%')*
+  - `format_muted` Format of the output when the volume is muted.
+    *(default '♪: muted')*
+  - `threshold_bad` Volume below which color is set to bad.
+    *(default 20)*
+  - `threshold_degraded` Volume below which color is set to degraded.
+    *(default 50)*
+  - `volume_delta` Percentage amount that the volume is increased or
+    decreased by when volume buttons pressed.
+    *(default 5)*
+
+Format status string parameters:
+  - `{percentage}` Percentage volume
+
+Example:
+
+```
+# Add mouse clicks to change volume
+
+volume_status {
+    button_up = 4
+    button_down = 5
+    button_mute = 2
+}
+```
 
 Requires:
   - `alsa-utils` (tested with alsa-utils 1.0.29-1)
 
 NOTE:
-    If you want to refresh the module quicker than the i3status interval,
+    If you are changing volume state by external scripts etc and
+    want to refresh the module quicker than the i3status interval,
     send a USR1 signal to py3status in the keybinding.
     Example: killall -s USR1 py3status
 

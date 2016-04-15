@@ -16,20 +16,16 @@ def main():
         py3 = Py3statusWrapper()
         py3.setup()
     except KeyboardInterrupt:
-        err = sys.exc_info()[1]
-        py3.notify_user('setup interrupted (KeyboardInterrupt)')
+        py3.notify_user('Setup interrupted (KeyboardInterrupt).')
         sys.exit(0)
     except Exception:
-        err = sys.exc_info()[1]
-        py3.notify_user('setup error ({})'.format(err))
-        py3.stop()
+        py3.report_exception('Setup error')
         sys.exit(2)
 
     try:
         py3.run()
     except Exception:
-        err = sys.exc_info()[1]
-        py3.notify_user('runtime error ({})'.format(err))
+        py3.report_exception('Runtime error')
         sys.exit(3)
     except KeyboardInterrupt:
         pass

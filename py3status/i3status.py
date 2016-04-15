@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, tzinfo
 from subprocess import Popen
 from subprocess import PIPE
 from syslog import syslog, LOG_INFO
+from signal import SIGUSR2, SIGSTOP, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
 from threading import Thread
 from time import time
@@ -57,12 +58,27 @@ class I3statusModule:
     `time` and `tztime`.
     """
 
+
     def __init__(self, module_name, py3_wrapper):
+        self.i3status_pipe = None
         self.module_name = module_name
-        self.i3status = py3_wrapper.i3status_thread
-        self.is_time_module = module_name.split()[0] in TIME_MODULES
+
+        # i3status returns different name/instances than it is sent we want to
+        # be able to restore the correct ones.
+        try:
+            name, instance = self.module_name.split()
+        except:
+            name = self.module_name
+            instance = ''
+        self.name = name
+        self.instance = instance
+
         self.item = {}
+
+        self.i3status = py3_wrapper.i3status_thread
         self.py3_wrapper = py3_wrapper
+
+        self.is_time_module = name in TIME_MODULES
         if self.is_time_module:
             self.tz = None
             self.set_time_format()
@@ -77,6 +93,10 @@ class I3statusModule:
         """
         Update from i3status output. returns if item has changed.
         """
+        # Restore the name/instance.
+        item['name'] = self.name
+        item['instance'] = self.instance
+
         # have we updated?
         is_updated = self.item != item
         self.item = item
@@ -509,6 +529,11 @@ class I3status(Thread):
             self.write_in_tmpfile('}\n\n', tmpfile)
         tmpfile.flush()
 
+    def suspend_i3status(self):
+        # Put i3status to sleep
+        if self.i3status_pipe:
+            self.i3status_pipe.send_signal(SIGSTOP)
+
     @profile
     def run(self):
         """
@@ -524,10 +549,16 @@ class I3status(Thread):
                 i3status_pipe = Popen(
                     ['i3status', '-c', tmpfile.name],
                     stdout=PIPE,
-                    stderr=PIPE, )
+                    stderr=PIPE,
+                    # Ignore the SIGUSR2 signal for this subprocess
+                    preexec_fn=lambda:  signal(SIGUSR2, SIG_IGN)
+                )
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
                 self.tmpfile_path = tmpfile.name
+
+                # Store the pipe so we can signal it
+                self.i3status_pipe = i3status_pipe
 
                 try:
                     # loop on i3status output
@@ -545,6 +576,8 @@ class I3status(Thread):
                                 if 'version' in line:
                                     header = loads(line)
                                     header.update({'click_events': True})
+                                    # set custom stop signal
+                                    header['stop_signal'] = SIGUSR2
                                     line = dumps(header)
                                 print_line(line)
                             else:
@@ -569,6 +602,7 @@ class I3status(Thread):
             # we cleanup the tmpfile ourselves so when the delete will occur
             # it will usually raise an OSError: No such file or directory
             pass
+        self.i3status_pipe = None
 
     def cleanup_tmpfile(self):
         """
