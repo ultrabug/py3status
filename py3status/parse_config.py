@@ -479,7 +479,7 @@ def process_config(config_path, py3_wrapper=None):
         try:
             config_info = parse_config(f)
         except ParseException as e:
-
+            # There was a problem use our special error config
             error = e.one_line()
             notify_user(error)
             error_config = Template(ERROR_CONFIG).substitute(
@@ -492,7 +492,6 @@ def process_config(config_path, py3_wrapper=None):
         general_defaults.update(config_info['general'])
     config['general'] = general_defaults
 
-    # get all modules
     modules = {}
     on_click = {}
     i3s_modules = []
@@ -500,6 +499,9 @@ def process_config(config_path, py3_wrapper=None):
     module_groups = {}
 
     def process_onclick(key, value, group_name):
+        '''
+        Check on_click events are valid.  Store if they are good
+        '''
         button_error = False
         button = ''
         try:
@@ -517,6 +519,9 @@ def process_config(config_path, py3_wrapper=None):
         return True
 
     def get_module_type(name):
+        '''
+        i3status or py3status?
+        '''
         if name.split()[0] in I3S_SINGLE_NAMES + I3STATUS_MODULES:
             return 'i3status'
         return 'py3status'
@@ -552,7 +557,11 @@ def process_config(config_path, py3_wrapper=None):
 
     config['order'] = []
 
-    def fix_module(module):
+    def remove_any_contained_modules(module):
+        '''
+        takes a module definition and returns a dict without any modules that
+        may be defined with it.
+        '''
         fixed = {}
         for k, v in module.items():
             if not isinstance(v, ModuleDefinition):
@@ -573,7 +582,7 @@ def process_config(config_path, py3_wrapper=None):
                 if item not in py3_modules:
                     py3_modules.append(item)
             module = modules.get(item, {})
-            config[item] = fix_module(module)
+            config[item] = remove_any_contained_modules(module)
             # add any children
             add_container_items(item)
 
@@ -596,7 +605,7 @@ def process_config(config_path, py3_wrapper=None):
         else:
             if name not in py3_modules:
                 py3_modules.append(name)
-        config[name] = fix_module(module)
+        config[name] = remove_any_contained_modules(module)
 
     config['on_click'] = on_click
     config['i3s_modules'] = i3s_modules
