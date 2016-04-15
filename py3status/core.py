@@ -218,7 +218,6 @@ class Py3statusWrapper():
                 my_m = Module(module, user_modules, self)
                 # only start and handle modules with available methods
                 if my_m.methods:
-                    my_m.start()
                     self.modules[module] = my_m
                 elif self.config['debug']:
                     syslog(LOG_INFO,
@@ -390,17 +389,26 @@ class Py3statusWrapper():
             update = [update]
         self.queue.extend(update)
 
-        # find groups that use the modules updated
-        module_groups = self.i3status_thread.config['.module_groups']
-        groups_to_update = set()
+        # find containers that use the modules that updated
+        containers = self.i3status_thread.config['.module_groups']
+        containers_to_update = set()
         for item in update:
-            if item in module_groups:
-                groups_to_update.update(set(module_groups[item]))
-        # force groups to update
-        for group in groups_to_update:
-            group_module = self.output_modules.get(group)
-            if group_module:
-                group_module['module'].force_update()
+            if item in containers:
+                containers_to_update.update(set(containers[item]))
+        # force containers to update
+        for container in containers_to_update:
+            container_module = self.output_modules.get(container)
+            if container_module:
+                # If a container has registered a content_function we use that
+                # to see if the container needs to be updated.
+                # We only need to update containers if their active content has
+                # changed.
+                if container_module.get('content_function'):
+                    if set(update) & container_module['content_function']():
+                        container_module['module'].force_update()
+                else:
+                    # we don't know so just update.
+                    container_module['module'].force_update()
 
     def report_exception(self, msg, notify_user=True):
         """
@@ -520,6 +528,13 @@ class Py3statusWrapper():
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
         self.create_output_modules()
+
+        # start modules
+        # self.output_modules needs to have been created before modules are
+        # started.  This is so that modules can do things like register their
+        # content_functionn.
+        for module in self.modules.values():
+            module.start()
 
         # update queue populate with all py3modules
         self.queue.extend(self.modules)

@@ -25,7 +25,7 @@ class Py3:
         if not module_name:
             return self._module.force_update()
         else:
-            module = self.get_module_info(self, module_name).get(module_name)
+            module = self.get_module_info(module_name).get('module')
             if module:
                 module.force_update()
 
@@ -54,3 +54,17 @@ class Py3:
         level can be 'info', 'error' or 'warning'
         """
         self._module._py3_wrapper.notify_user(msg, level=level)
+
+    def register_content_function(self, content_function):
+        """
+        Register a function that can be called to discover what modules a
+        container is displaying.  This is used to determine when updates need
+        passing on to the container and also when modules can be put to sleep.
+
+        the function must return a set of module names that are being
+        displayed.
+
+        Note: This function should only be used by containers.
+        """
+        my_info = self.get_module_info(self._module.module_full_name)
+        my_info['content_function'] = content_function

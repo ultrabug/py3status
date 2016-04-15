@@ -77,6 +77,14 @@ class Py3status:
             self.cycle = 0
         self._cycle_time = time() + self.cycle
         self.initialized = True
+        self.py3.register_content_function(self._content_function)
+
+    def _content_function(self):
+        '''
+        This returns a set containing the actively shown module.  This is so we
+        only get update events triggered for these modules.
+        '''
+        return set([self.items[self.active]])
 
     def _get_output(self):
         if not self.items:

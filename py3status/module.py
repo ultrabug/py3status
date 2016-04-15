@@ -117,15 +117,24 @@ class Module(Thread):
 
     def set_updated(self):
         """
-        Mark the module as updated
+        Mark the module as updated.
+        We check if the actual content has changed and if so we trigger an
+        update in py3status.
         """
-        self._py3_wrapper.notify_update(self.module_full_name)
-
-    def get_latest(self):
+        # get latest output
         output = []
         for method in self.methods.values():
             output.append(method['last_output'])
-        return output
+        # if changed store and force dispaly update.
+        if output != self.last_output:
+            self.last_output = output
+            self._py3_wrapper.notify_update(self.module_full_name)
+
+    def get_latest(self):
+        """
+        return latest output.
+        """
+        return self.last_output
 
     def set_module_options(self, module):
         """
@@ -353,6 +362,8 @@ class Module(Thread):
                     # update method object cache
                     if 'cached_until' in result:
                         cached_until = result['cached_until']
+                        # remove this so we can check later for output changes
+                        del result['cached_until']
                     else:
                         cached_until = time() + self.config['cache_timeout']
                     my_method['cached_until'] = cached_until
