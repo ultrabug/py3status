@@ -136,7 +136,10 @@ class ConfigParser:
             return
         root = os.path.dirname(os.path.realpath(__file__))
         module_path = os.path.join(root, 'modules')
-        info = imp.find_module(name, [module_path])
+        try:
+            info = imp.find_module(name, [module_path])
+        except ImportError:
+            return
         if not info:
             return
         (file, pathname, description) = info
