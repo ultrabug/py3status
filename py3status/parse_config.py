@@ -12,6 +12,11 @@ import py3status.constants as const
 
 
 class ParseException(Exception):
+    '''
+    Exception raised when a parse exception occurs.
+    This exception receives information on the error so that helpful error
+    messages can be provided to the user.
+    '''
     def __init__(self, error, line, line_no, position, token):
         self.error = error
         self.line = line
@@ -31,11 +36,54 @@ class ParseException(Exception):
 
 
 class ModuleDefinition(OrderedDict):
-    '''Module definition in dict form'''
+    '''Module definition in OrderedDict form'''
     pass
 
 
 class ConfigParser:
+    '''
+    A basic top down parser.
+
+    We break the config into a list of tokens and travel through them to build
+    up a dict that corresponds to the config.
+
+    The parser allows:
+
+    * containers
+
+        container {
+            included_module 1 {}
+            included_module 2 {}
+        }
+
+    * nesting of containers
+
+        container 1 {
+            container 2 {
+                included_module 1 {}
+            }
+            included_module 2 {}
+        }
+
+    * many types including lists, dict and tuple values
+
+        my_module {
+            my_str = 'hello'
+            my_int = 23
+            my_bool = true
+            my_list = [1, 2, 3]
+            my_dict = {'x': 1, 'y': 2}
+            my_tuple = (1, 'something')
+            my_complex = {
+                'list' : [1, 2, 3],
+                'dict' : {'x': 1, 'y': 2}
+            }
+        }
+
+    * quality feedback on parse errors.
+        details include error description, line number, position.
+
+    '''
 
     TOKENS = [
         '#.*$'  # comments
@@ -62,7 +110,17 @@ class ConfigParser:
         self.raw = config.split('\n')
         self.container_modules = []
 
+    class ParseEnd(Exception):
+        '''
+        Used to signify the end of a dict, list, tuple, or module
+        definition.
+        '''
+        pass
+
     def check_child_friendly(self, name):
+        '''
+        Check if a module is a container and so can have children
+        '''
         name = name.split()[0]
         if name in self.container_modules:
             return
@@ -93,6 +151,9 @@ class ConfigParser:
             self.error('Module `{}` cannot contain others'.format(name))
 
     def check_module_name(self, name, offset=0):
+        '''
+        Checks a module name eg. some i3status modules cannot have an instance name.
+        '''
         if name in ['general']:
             return
         split_name = name.split()
@@ -161,6 +222,10 @@ class ConfigParser:
         return token
 
     def make_name(self, value):
+        '''
+        Remove any surrounding quotes from a value and unescape any contained
+        quotes of that type.
+        '''
         if value.startswith('"'):
             return value[1:-1].replace('\\"', '"')
         if value.startswith("'"):
@@ -360,13 +425,6 @@ class ConfigParser:
                     self.error('Unexpected character')
                 name = []
 
-    class ParseEnd(Exception):
-        '''
-        Used to signify the end of a dict, list, tuple, or module
-        definition.
-        '''
-        pass
-
 
 def process_config(config_path, py3_wrapper=None):
     """
@@ -444,7 +502,7 @@ def process_config(config_path, py3_wrapper=None):
                 button_error = True
 
         if button_error:
-            notify_user('Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 in saw `{}`'.format(group_name, button))
+            notify_user('Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 saw `{}`'.format(group_name, button))
             return False
         clicks = on_click.setdefault(group_name, {})
         clicks[button] = value
@@ -518,8 +576,9 @@ def process_config(config_path, py3_wrapper=None):
         module = modules.get(name, {})
         module_type = get_module_type(name)
         if allowed_modules and name.split()[0] not in allowed_modules:
-            error = 'Module {} cannot be found'.format(name.split()[0])
-            py3_wrapper.notify_user(error)
+            if py3_wrapper:
+                error = 'Module {} cannot be found'.format(name.split()[0])
+                py3_wrapper.notify_user(error)
             continue
         config['order'].append(name)
         add_container_items(name)
@@ -549,6 +608,7 @@ def process_config(config_path, py3_wrapper=None):
 
 if __name__ == '__main__':
     pass
+    # FIXME
     config = '/home/toby/.i3/i3status.conf'
     import pprint
     pprint.pprint(process_config(config))
