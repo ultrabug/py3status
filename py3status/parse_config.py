@@ -31,7 +31,7 @@ class ParseException(Exception):
         self.line = line
         self.line_no = line_no
         self.position = position
-        self.token = token
+        self.token = token.replace('\n', '\\n')
 
     def one_line(self):
         return 'CONFIG ERROR: {} saw `{}` at line {} position {}'.format(
@@ -116,6 +116,7 @@ class ConfigParser:
         self.current_module = []
         self.current_token = 0
         self.line = 0
+        self.line_start = 0
         self.raw = config.split('\n')
         self.container_modules = []
 
@@ -443,6 +444,8 @@ def process_config(config_path, py3_wrapper=None):
     def notify_user(error):
         if py3_wrapper:
             py3_wrapper.notify_user(error)
+        else:
+            print(error)
 
     def module_names():
         # get list of all module names
