@@ -1,5 +1,4 @@
-
-DEFAULT_I3STATUS_INTERVAL = 15
+# This file contains various useful constants for py3status
 
 GENERAL_DEFAULTS = {
     'color_bad': '#FF0000',
