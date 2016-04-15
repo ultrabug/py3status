@@ -67,18 +67,17 @@ class Py3status:
         """
         if event['button'] == 1:
             if self.run:
-                self.run = False
-                Popen(["killall", "xscreensaver"],
-                      stdout=DEVNULL,
-                      stderr=DEVNULL,
-                      preexec_fn=setpgrp)
+                self.run = Popen(["killall", "xscreensaver"],
+                                 stdout=DEVNULL,
+                                 stderr=DEVNULL,
+                                 preexec_fn=setpgrp) == 0
             else:
-                self.run = True
-                Popen(
-                    ["xscreensaver", "-no-splash", "-no-capture-stderr"],
-                    stdout=DEVNULL,
-                    stderr=DEVNULL,
-                    preexec_fn=setpgrp)
+                self.run = Popen(["xscreensaver",
+                                  "-no-splash",
+                                  "-no-capture-stderr"],
+                                 stdout=DEVNULL,
+                                 stderr=DEVNULL,
+                                 preexec_fn=setpgrp) == 1
 
 
 if __name__ == "__main__":
