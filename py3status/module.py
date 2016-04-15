@@ -1,78 +1,20 @@
-import sys
 import os
 import imp
 import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
-from syslog import syslog, LOG_INFO, LOG_WARNING
+from syslog import syslog, LOG_INFO
 from time import time
 
+from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
-
-
-PY3_CACHE_FOREVER = -1
-
-
-class Py3ModuleHelper:
-    """
-    Helper object that gets injected as self.py3 into Py3status
-    modules that have not got that attribute set already.
-
-    This allows functionality like:
-        User notifications
-        Forcing module to update (even other modules)
-        Triggering events for modules
-    """
-
-    CACHE_FOREVER = PY3_CACHE_FOREVER
-
-    def __init__(self, module):
-        self._module = module
-
-    def update(self, module_name=None):
-        """
-        Update a module.  If module_name is supplied the module of that
-        name is updated.  Otherwise the module calling is updated.
-        """
-        if not module_name:
-            return self._module.force_update()
-        else:
-            module = self.get_module_info(self, module_name).get(module_name)
-            if module:
-                module.force_update()
-
-    def get_module_info(self, module_name):
-        """
-        Helper function to get info for named module.
-        Info comes back as a dict containing.
-
-        'module': the instance of the module,
-        'position': list of places in i3bar, usually only one item
-        'type': module type py3status/i3status
-        """
-        return self._module._py3_wrapper.output_modules.get(module_name)
-
-    def trigger_event(self, module_name, event):
-        """
-        Trigger the event on named module
-        """
-        if module_name:
-            self._module._py3_wrapper.events_thread.process_event(
-                module_name, event)
-
-    def notify_user(self, msg, level='info'):
-        """
-        Send notification to user.
-        level can be 'info', 'error' or 'warning'
-        """
-        self._module._py3_wrapper.notify_user(msg, level=level)
 
 
 class Module(Thread):
     """
     This class represents a user module (imported file).
-    It is reponsible for executing it every given interval and
+    It is responsible for executing it every given interval and
     caching its output based on user will.
     """
 
@@ -99,6 +41,7 @@ class Module(Thread):
         self.new_update = False
         self.module_full_name = module
         self.nagged = False
+        self.sleeping = False
         self.timer = None
 
         # py3wrapper this is private and any modules accessing their instance
@@ -153,6 +96,23 @@ class Module(Thread):
             self.timer.cancel()
         # get the thread to update itself
         self.timer = Timer(0, self.run)
+        self.timer.start()
+
+    def sleep(self):
+        self.sleeping = True
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+
+    def wake(self):
+        self.sleeping = False
+        cache_time = self.cache_time
+        # new style modules can signal they want to cache forever
+        if cache_time == PY3_CACHE_FOREVER:
+            return
+        # restart
+        delay = max(cache_time - time(), 0)
+        self.timer = Timer(delay, self.run)
         self.timer.start()
 
     def set_updated(self):
@@ -266,7 +226,7 @@ class Module(Thread):
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
-                setattr(self.module_class, 'py3', Py3ModuleHelper(self))
+                setattr(self.module_class, 'py3', Py3(self))
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -318,9 +278,8 @@ class Module(Thread):
                              self.i3status_thread.config['general'], event)
             self.set_updated()
         except Exception:
-            err = sys.exc_info()[1]
-            msg = 'on_click failed with ({}) for event ({})'.format(err, event)
-            syslog(LOG_WARNING, msg)
+            msg = 'on_click event in `{}` failed'.format(self.module_full_name)
+            self._py3_wrapper.report_exception(msg)
 
     @profile
     def run(self):
@@ -425,9 +384,10 @@ class Module(Thread):
                 return
             # don't be hasty mate
             # set timer to do update next time one is needed
-            delay = max(cache_time - time(), self.config['minimum_interval'])
-            self.timer = Timer(delay, self.run)
-            self.timer.start()
+            if not self.sleeping:
+                delay = max(cache_time - time(), self.config['minimum_interval'])
+                self.timer = Timer(delay, self.run)
+                self.timer.start()
 
     def kill(self):
         # stop timer if exists
