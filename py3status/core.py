@@ -265,13 +265,18 @@ class Py3statusWrapper():
             self.i3status_thread.mock()
             i3s_mode = 'mocked'
         else:
+            i3s_mode = 'started'
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
                 if not self.i3status_thread.is_alive():
+                    # i3status is having a bad day, so tell the user what went
+                    # wrong and do the best we can with just py3status modules.
                     err = self.i3status_thread.error
-                    raise IOError(err)
+                    self.notify_user(err)
+                    self.i3status_thread.mock()
+                    i3s_mode = 'mocked'
+                    break
                 sleep(0.1)
-            i3s_mode = 'started'
         if self.config['debug']:
             syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
                 i3s_mode,
