@@ -615,8 +615,13 @@ def process_config(config_path, py3_wrapper=None):
 
 
 if __name__ == '__main__':
-    pass
-    # FIXME
-    config = '/home/toby/.i3/i3status.conf'
+    # process a config file and display output
+    # file name user supplied or ~/.i3/i3status.conf
+    import sys
     import pprint
-    pprint.pprint(process_config(config))
+    if len(sys.argv) > 1:
+        file_name = sys.argv[1]
+    else:
+        file_name = os.path.join(os.path.expanduser('~'), '.i3/i3status.conf')
+    print('\nPARSING CONFIG FILE %s\n\n' % file_name)
+    pprint.pprint(process_config(file_name))
