@@ -37,7 +37,7 @@ class Py3status:
         t.start()
 
     def scratchpad_counter(self, i3s_output_list, i3s_config):
-        response = {'cached_until': 0}
+        response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:
             response['color'] = self.color_urgent
@@ -54,6 +54,7 @@ class Py3status:
             cons = conn.get_tree().scratchpad().leaves()
             self.urgent = any(con for con in cons if con.urgent)
             self.count = len(cons)
+            self.py3.update()
 
         conn = i3ipc.Connection()
 

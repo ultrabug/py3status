@@ -1,14 +1,13 @@
-import sys
 import os
 import imp
 import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
-from syslog import syslog, LOG_INFO, LOG_WARNING
+from syslog import syslog, LOG_INFO
 from time import time
 
-import py3status.py3 as py3
+from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
 
 
@@ -42,6 +41,7 @@ class Module(Thread):
         self.new_update = False
         self.module_full_name = module
         self.nagged = False
+        self.sleeping = False
         self.timer = None
 
         # py3wrapper this is private and any modules accessing their instance
@@ -96,6 +96,23 @@ class Module(Thread):
             self.timer.cancel()
         # get the thread to update itself
         self.timer = Timer(0, self.run)
+        self.timer.start()
+
+    def sleep(self):
+        self.sleeping = True
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+
+    def wake(self):
+        self.sleeping = False
+        cache_time = self.cache_time
+        # new style modules can signal they want to cache forever
+        if cache_time == PY3_CACHE_FOREVER:
+            return
+        # restart
+        delay = max(cache_time - time(), 0)
+        self.timer = Timer(delay, self.run)
         self.timer.start()
 
     def set_updated(self):
@@ -209,7 +226,7 @@ class Module(Thread):
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
-                setattr(self.module_class, 'py3', py3.Py3(self))
+                setattr(self.module_class, 'py3', Py3(self))
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -261,9 +278,8 @@ class Module(Thread):
                              self.i3status_thread.config['general'], event)
             self.set_updated()
         except Exception:
-            err = sys.exc_info()[1]
-            msg = 'on_click failed with ({}) for event ({})'.format(err, event)
-            syslog(LOG_WARNING, msg)
+            msg = 'on_click event in `{}` failed'.format(self.module_full_name)
+            self._py3_wrapper.report_exception(msg)
 
     @profile
     def run(self):
@@ -364,13 +380,14 @@ class Module(Thread):
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
-            if cache_time == py3.PY3_CACHE_FOREVER:
+            if cache_time == PY3_CACHE_FOREVER:
                 return
             # don't be hasty mate
             # set timer to do update next time one is needed
-            delay = max(cache_time - time(), self.config['minimum_interval'])
-            self.timer = Timer(delay, self.run)
-            self.timer.start()
+            if not self.sleeping:
+                delay = max(cache_time - time(), self.config['minimum_interval'])
+                self.timer = Timer(delay, self.run)
+                self.timer.start()
 
     def kill(self):
         # stop timer if exists

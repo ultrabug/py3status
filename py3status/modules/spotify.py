@@ -26,6 +26,9 @@ spotify {
 }
 ```
 
+Requires:
+    spotify (>=1.0.27.71.g0a26e3b2)
+
 @author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 """
 
@@ -49,10 +52,6 @@ class Py3status:
     def _get_text(self, i3s_config):
         """
         Get the current song metadatas (artist - title)
-
-        there is a known bug for dbus property PlaybackStatus:
-          https://community.spotify.com/t5/Help-Desktop-Linux-Windows-Web/DBus-MPRIS-interface-bug/td-p/1262889
-          retested on : 2016-02-22
         """
         bus = dbus.SessionBus()
         try:
@@ -69,7 +68,12 @@ class Py3status:
                 microtime = metadata.get('mpris:length')
                 rtime = str(timedelta(microseconds=microtime))[:-7]
                 title = metadata.get('xesam:title')
-                color = self.color_playing or i3s_config['color_good']
+                playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
+                                                  'PlaybackStatus')
+                if playback_status.strip() == 'Playing':
+                    color = self.color_playing or i3s_config['color_good']
+                else:
+                    color = self.color_paused or i3s_config['color_degraded']
             except Exception:
                 return (
                     self.format_stopped,
