@@ -8,7 +8,16 @@ from collections import OrderedDict
 from string import Template
 from subprocess import check_output
 
-import py3status.constants as const
+from py3status.constants import (
+    I3S_SINGLE_NAMES,
+    I3STATUS_MODULES,
+    MAX_NESTING_LEVELS,
+    ERROR_CONFIG,
+    GENERAL_DEFAULTS,
+    TIME_MODULES,
+    TIME_FORMAT,
+    TZTIME_FORMAT,
+)
 
 
 class ParseException(Exception):
@@ -157,7 +166,7 @@ class ConfigParser:
         if name in ['general']:
             return
         split_name = name.split()
-        if len(split_name) > 1 and split_name[0] in const.I3S_SINGLE_NAMES:
+        if len(split_name) > 1 and split_name[0] in I3S_SINGLE_NAMES:
             self.current_token -= len(split_name) - 1 - offset
             self.error('Invalid name cannot have 2 tokens')
         if len(split_name) > 2:
@@ -348,7 +357,7 @@ class ConfigParser:
         '''
         This is a module definition so parse content till end.
         '''
-        if self.module_level == const.MAX_NESTING_LEVELS:
+        if self.module_level == MAX_NESTING_LEVELS:
             self.error('Module nested too deep')
         self.module_level += 1
         module = ModuleDefinition()
@@ -437,7 +446,7 @@ def process_config(config_path, py3_wrapper=None):
 
     def module_names():
         # get list of all module names
-        modules = const.I3S_SINGLE_NAMES + const.I3STATUS_MODULES
+        modules = I3S_SINGLE_NAMES + I3STATUS_MODULES
         root = os.path.dirname(os.path.realpath(__file__))
         module_path = os.path.join(root, 'modules', '*.py')
         for file in glob.glob(module_path):
@@ -473,12 +482,12 @@ def process_config(config_path, py3_wrapper=None):
 
             error = e.one_line()
             notify_user(error)
-            error_config = Template(const.ERROR_CONFIG).substitute(
+            error_config = Template(ERROR_CONFIG).substitute(
                 error=error.replace('"', '\\"'))
             config_info = parse_config(error_config)
 
     # update general section with defaults
-    general_defaults = const.GENERAL_DEFAULTS.copy()
+    general_defaults = GENERAL_DEFAULTS.copy()
     if 'general' in config_info:
         general_defaults.update(config_info['general'])
     config['general'] = general_defaults
@@ -508,7 +517,7 @@ def process_config(config_path, py3_wrapper=None):
         return True
 
     def get_module_type(name):
-        if name.split()[0] in const.I3S_SINGLE_NAMES + const.I3STATUS_MODULES:
+        if name.split()[0] in I3S_SINGLE_NAMES + I3STATUS_MODULES:
             return 'i3status'
         return 'py3status'
 
@@ -596,11 +605,11 @@ def process_config(config_path, py3_wrapper=None):
 
     # time and tztime modules need a format for correct processing
     for name in config:
-        if name.split()[0] in const.TIME_MODULES and 'format' not in config[name]:
+        if name.split()[0] in TIME_MODULES and 'format' not in config[name]:
             if name.split()[0] == 'time':
-                config[name]['format'] = const.TIME_FORMAT
+                config[name]['format'] = TIME_FORMAT
             else:
-                config[name]['format'] = const.TZTIME_FORMAT
+                config[name]['format'] = TZTIME_FORMAT
 
     return config
 
