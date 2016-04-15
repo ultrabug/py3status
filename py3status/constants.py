@@ -1,21 +1,15 @@
 
 DEFAULT_I3STATUS_INTERVAL = 15
 
-
 GENERAL_DEFAULTS = {
     'color_bad': '#FF0000',
     'color_degraded': '#FFFF00',
     'color_good': '#00FF00',
     'color_separator': '#333333',
+    'colors': False,
+    'interval': 5,
+    'output_format': 'i3bar'
 }
-
-I3STATUS_CONF_GENERAL = """
-    general {
-        interval = %s
-        colors = false
-        output_format = "i3bar"
-    }
-"""
 
 MAX_NESTING_LEVELS = 4
 

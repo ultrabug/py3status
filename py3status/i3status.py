@@ -15,7 +15,7 @@ from time import time
 from py3status.profiling import profile
 from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
-import py3status.constants as const
+from py3status.constants import TIME_MODULES, TZTIME_FORMAT, TIME_FORMAT
 
 
 class Tz(tzinfo):
@@ -49,10 +49,23 @@ class I3statusModule:
     def __init__(self, module_name, py3_wrapper):
         self.i3status_pipe = None
         self.module_name = module_name
-        self.i3status = py3_wrapper.i3status_thread
-        self.is_time_module = module_name.split()[0] in const.TIME_MODULES
+
+        # i3status returns different name/instances than it is sent we want to
+        # be able to restore the correct ones.
+        try:
+            name, instance = self.module_name.split()
+        except:
+            name = self.module_name
+            instance = ''
+        self.name = name
+        self.instance = instance
+
         self.item = {}
+
+        self.i3status = py3_wrapper.i3status_thread
         self.py3_wrapper = py3_wrapper
+
+        self.is_time_module = name in TIME_MODULES
         if self.is_time_module:
             self.tz = None
             self.set_time_format()
@@ -67,6 +80,10 @@ class I3statusModule:
         """
         Update from i3status output. returns if item has changed.
         """
+        # Restore the name/instance.
+        item['name'] = self.name
+        item['instance'] = self.instance
+
         # have we updated?
         is_updated = self.item != item
         self.item = item
@@ -81,7 +98,7 @@ class I3statusModule:
 
     def set_time_format(self):
         config = self.i3status.config.get(self.module_name, {})
-        time_format = config.get('format', const.TIME_FORMAT)
+        time_format = config.get('format', TIME_FORMAT)
         # Handle format_time parameter if exists
         # Not sure if i3status supports this but docs say it does
         if 'format_time' in config:
@@ -114,7 +131,7 @@ class I3statusModule:
         i3s_datetime = ' '.join(parts[:2])
         i3s_time_tz = parts[2]
 
-        date = datetime.strptime(i3s_datetime, const.TIME_FORMAT)
+        date = datetime.strptime(i3s_datetime, TIME_FORMAT)
         # calculate the time delta
         utcnow = datetime.utcnow()
         delta = (
@@ -223,20 +240,22 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        interval = self.config.get('general', {}).get(
-            'interval', const.DEFAULT_I3STATUS_INTERVAL)
-        self.write_in_tmpfile(const.I3STATUS_CONF_GENERAL % interval, tmpfile)
+        # order += ...
         for module in self.config['i3s_modules']:
             self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
         self.write_in_tmpfile('\n', tmpfile)
-        for module in self.config['i3s_modules']:
-            section = self.config[module]
-            self.write_in_tmpfile('%s {\n' % module, tmpfile)
+        # config params for general section and each module
+        for section_name in ['general'] + self.config['i3s_modules']:
+            section = self.config[section_name]
+            self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
             for key, value in section.items():
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
-                if module.split()[0] in const.TIME_MODULES and key == 'format':
-                    value = const.TZTIME_FORMAT
+                if section_name.split()[0] in TIME_MODULES:
+                    if key == 'format':
+                        value = TZTIME_FORMAT
+                    if key == 'format_time':
+                        continue
                 if isinstance(value, bool):
                     value = '{}'.format(value).lower()
                 self.write_in_tmpfile('    %s = "%s"\n' % (key, value),

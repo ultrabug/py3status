@@ -463,7 +463,6 @@ def process_config(config_path, py3_wrapper=None):
 
     config = {}
 
-
     # get the file encoding this is important with multi-byte unicode chars
     encoding = check_output(['file', '-b', '--mime-encoding', config_path])
     encoding = encoding.strip().decode('utf-8')

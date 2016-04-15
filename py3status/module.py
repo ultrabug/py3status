@@ -68,9 +68,6 @@ class Module(Thread):
                 class_inst = py_mod.Py3status()
         return class_inst
 
-    def __repr__(self):
-        return '<Module {}>'.format(self.module_full_name)
-
     @staticmethod
     def load_from_namespace(module_name):
         """
