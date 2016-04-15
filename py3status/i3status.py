@@ -497,8 +497,11 @@ class I3status(Thread):
                     # Set known fixed format for time and tztime so we can work
                     # out the timezone
                     if section_name.split()[
-                            0] in TIME_MODULES and key == 'format':
-                        value = TZTIME_FORMAT
+                            0] in TIME_MODULES:
+                        if key == 'format':
+                            value = TZTIME_FORMAT
+                        if key == 'format_time':
+                            continue
                     if isinstance(value, bool):
                         value = '{}'.format(value).lower()
                     self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
