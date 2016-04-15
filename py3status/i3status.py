@@ -20,15 +20,6 @@ TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 TIME_MODULES = ['time', 'tztime']
 
-DEFAULT_I3STATUS_INTERVAL = 15
-I3STATUS_CONF_GENERAL = """
-    general {
-        interval = %s
-        colors = false
-        output_format = "i3bar"
-    }
-"""
-
 
 class Tz(tzinfo):
     """
@@ -57,7 +48,6 @@ class I3statusModule:
     of the Module class.  It also helps encapsulate the auto time updating for
     `time` and `tztime`.
     """
-
 
     def __init__(self, module_name, py3_wrapper):
         self.i3status_pipe = None
@@ -502,22 +492,18 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        # general section
-        interval = self.config.get('general', {}).get(
-            'interval', DEFAULT_I3STATUS_INTERVAL)
-        self.write_in_tmpfile(I3STATUS_CONF_GENERAL % interval, tmpfile)
         # order += ...
         for module in self.config['i3s_modules']:
             self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
         self.write_in_tmpfile('\n', tmpfile)
-        # config params for each module
-        for module in self.config['i3s_modules']:
-            section = self.config[module]
-            self.write_in_tmpfile('%s {\n' % module, tmpfile)
+        # config params for general section and each module
+        for section_name in ['general'] + self.config['i3s_modules']:
+            section = self.config[section_name]
+            self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
             for key, value in section.items():
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
-                if module.split()[0] in TIME_MODULES:
+                if section_name.split()[0] in TIME_MODULES:
                     if key == 'format':
                         value = TZTIME_FORMAT
                     if key == 'format_time':
