@@ -57,7 +57,7 @@ class Py3status:
     def _get_my_ip(self):
         """
         """
-        country = None
+        country = ""
         try:
             if '{country}' in self.format:
                 self.url = self.url_geo
