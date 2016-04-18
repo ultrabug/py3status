@@ -20,22 +20,21 @@ Configuration parameters:
         module.  Setting to `0` will disable this action. (default 5)
     button_toggle: Button that when clicked toggles the group content being
     displayed. Setting to `0` will disable this action (default 1)
-    color: If the active module does not supply a color use this if set.
-        Format as hex value eg `'#0000FF'` (default None)
     cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
         (default True)
-    format: Format for module output. (default "{output}{control}")
-    format_control_open: Format for the control when group closed
+    format: Format for module output. (default "{output}{button}")
+    format_button_open: Format for the button when group closed
         (default ' 🡙')
-    format_control_closed: Format for the control when group open
+    format_button_closed: Format for the button when group open
         (default  '🡘')
+    format_closed: Format for module output when closed. (default "{button}")
     open: Is the group open and displaying its content (default True)
 
 
 Format of status string placeholders:
-    {control} The control to open/close or change the displayed group
+    {button} The button to open/close or change the displayed group
     {output} Output of current active module
 
 Example:
@@ -49,7 +48,7 @@ order += "group disks"
 
 group disks {
     cycle = 30
-    format = "Disks: {output}{control}"
+    format = "Disks: {output} {button}"
 
     disk "/" {
         format = "/ %avail"
@@ -64,6 +63,7 @@ group disks {
 @author tobes
 """
 
+from re import findall
 from time import time
 
 
@@ -73,12 +73,12 @@ class Py3status:
     button_next = 4
     button_prev = 5
     button_toggle = 1
-    color = None
     cycle = 0
-    fixed_width = True
-    format = u'{output}{control}'
-    format_control_open = u' 🡙'
-    format_control_closed = u'🡘'
+    fixed_width = False
+    format = u'{output} {button}'
+    format_button_open = u'🡙'
+    format_button_closed = u'🡘'
+    format_closed = u'{button}'
     open = True
 
     def __init__(self):
@@ -92,23 +92,13 @@ class Py3status:
             self.cycle = 0
         self._cycle_time = time() + self.cycle
         self.initialized = True
-        parts = self.format.split('{output}')
-        if len(parts) == 2:
-            parts[0] = parts[0]
-            parts[1] = parts[1]
-        else:
-            msg = 'module {} format must contain {{output}} once to be valid'
-            msg = msg.format(self.py3_module.module_full_name)
-            self.py3_module.helper_notification(msg)
-            self.items = []
-        self.format_parts = parts
         self.open = bool(self.open)
 
     def _get_output(self):
-        if not self.items:
-            return
         if not self.fixed_width:
             return self._get_current_output(self.active)
+        # fixed width we need to find the width of all outputs
+        # and then pad with spaces to make correct width.
         current = None
         widths = []
         for i in range(len(self.items)):
@@ -133,7 +123,7 @@ class Py3status:
         return current
 
     def _get_current_output(self, item):
-        output = None
+        output = []
         current = self.items[item]
         module_info = self.py3.get_module_info(current)
         if module_info:
@@ -172,30 +162,29 @@ class Py3status:
             if self.cycle and time() >= self._cycle_time:
                 self._next()
                 self._cycle_time = time() + self.cycle
-            output = [{'full_text': '?'}]
             current_output = self._get_output()
-            if current_output:
-                output = current_output
-                if self.color:
-                    for item in output:
-                        if not item.get('color'):
-                            item['color'] = self.color
             update_time = self.cycle or None
         else:
-            output = []
+            current_output = []
             update_time = None
 
         if self.open:
-            format_control = self.format_control_open
+            format_control = self.format_button_open
+            format = self.format
         else:
-            format_control = self.format_control_closed
+            format_control = self.format_button_closed
+            format = self.format_closed
 
-        if self.format_parts[0]:
-            out = self.format_parts[0].format(control=format_control)
-            output = [{'full_text': out}] + output
-        if self.format_parts[1]:
-            out = self.format_parts[1].format(control=format_control)
-            output += [{'full_text': out}]
+        parts = findall('({[^}]*}|[^{]+)', format)
+
+        output = []
+        for part in parts:
+            if part == '{output}':
+                output += current_output
+            elif part == '{button}':
+                output += [{'full_text': format_control}]
+            else:
+                output += [{'full_text': part}]
 
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
