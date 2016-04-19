@@ -172,6 +172,9 @@ class Module(Thread):
         composite = response['composite']
         if not isinstance(composite, list):
             raise Exception('Expecting composite')
+        # if list is empty nothing to do
+        if not len(composite):
+            return
         if 'full_text' in response:
             raise Exception('Conflict "full_text" and "composite" in response')
         # set universal options on last component

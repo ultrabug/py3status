@@ -26,9 +26,9 @@ Configuration parameters:
         (default True)
     format: Format for module output. (default "{output}{button}")
     format_button_open: Format for the button when group closed
-        (default ' 🡙')
+        (default '*')
     format_button_closed: Format for the button when group open
-        (default  '🡘')
+        (default  '*')
     format_closed: Format for module output when closed. (default "{button}")
     open: Is the group open and displaying its content (default True)
 
@@ -76,8 +76,8 @@ class Py3status:
     cycle = 0
     fixed_width = False
     format = u'{output} {button}'
-    format_button_open = u'🡙'
-    format_button_closed = u'🡘'
+    format_button_open = u'*'
+    format_button_closed = u'*'
     format_closed = u'{button}'
     open = True
 
