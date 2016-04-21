@@ -102,6 +102,8 @@
 
 **[xsel](#xsel)** — Display the X selection.
 
+**[yandexdisk_status](#yandexdisk_status)** — Display Yandex.Disk status.
+
 ---
 
 ### <a name="arch_updates"></a>arch_updates
@@ -1473,3 +1475,24 @@ Requires:
 **author** Sublim3 umbsublime@gamil.com
 
 **license** BSD
+
+---
+
+### <a name="yandexdisk_status"></a>yandexdisk_status
+
+Display Yandex.Disk status.
+
+Configuration parameters:
+    - `cache_timeout` how often we refresh this module in seconds (10s default)
+    - `format` a prefix text for the Yandex.Disk status
+
+Valid status values include:
+    - Yandex.Disk isn't running!
+    - Error: daemon not started
+    - ...
+
+Requires:
+    `yandex-disk` command line tool (link: https://disk.yandex.com/)
+
+@author Vladimir Potapev (github:vpotapev)
+@license BSD
