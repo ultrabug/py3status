@@ -175,7 +175,8 @@ class Py3status:
 
         # Preserve the order in which user defined the output combinations
         if whitelist:
-            available = reversed([comb for comb in whitelist if comb in available])
+            available = reversed([comb for comb in whitelist
+                                  if comb in available])
 
         self.available_combinations = deque(available)
         self.combinations_map = combinations_map
