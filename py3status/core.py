@@ -458,7 +458,7 @@ class Py3statusWrapper():
         """
         config = self.i3status_thread.config
         i3modules = self.i3status_thread.i3modules
-        output_modules = {}
+        output_modules = self.output_modules
         # position in the bar of the modules
         positions = {}
         for index, name in enumerate(config['order']):
