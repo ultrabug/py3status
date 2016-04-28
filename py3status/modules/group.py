@@ -7,9 +7,12 @@ shown in the i3bar.  The active group can be changed by a user click.  If the
 click is not used by the group module then it will be passed down to the
 displayed module.
 
-Modules can be i3status core modules or py3status modules.
+Modules can be i3status core modules or py3status modules.  The active group
+can be cycled through automatically.
 
-Additionally the active group can be cycled through automatically.
+The group can handle clicks by reacting to any that are made on it or its
+content or it can use a button and only respond to clicks on that.
+The way it does this is selected via the `click_mode` option.
 
 Configuration parameters:
     align: Text alignment when fixed_width is set
@@ -19,18 +22,31 @@ Configuration parameters:
     button_prev: Button that when clicked will switch to display previous
         module.  Setting to `0` will disable this action. (default 5)
     button_toggle: Button that when clicked toggles the group content being
-    displayed. Setting to `0` will disable this action (default 1)
+        displayed between open and closed.
+        This action is ignored if `{button}` is not in the format.
+        Setting to `0` will disable this action (default 1)
+    click_mode: This defines how clicks are handled by the group.
+        If set to `all` then the group will respond to all click events.  This
+        may cause issues with contained modules that use the same clicks that
+        the group captures.  If set to `button` then only clicks that are
+        directly on the `{button}` are acted on.  The group
+        will need `{button}` in its format.
+        (default 'all')
     cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
         (default True)
-    format: Format for module output. (default "{output}{button}")
+    format: Format for module output.
+        (default "{output}" if click_mode is 'all',
+        "{output} {button}" if click_mode 'button')
     format_button_open: Format for the button when group closed
-        (default '*')
+        (default '+')
     format_button_closed: Format for the button when group open
-        (default  '*')
-    format_closed: Format for module output when closed. (default "{button}")
-    open: Is the group open and displaying its content (default True)
+        (default  '-')
+    format_closed: Format for module output when closed.
+        (default "{button}")
+    open: Is the group open and displaying its content. Has no effect if
+        `{button}` not in format (default True)
 
 
 Format of status string placeholders:
@@ -49,6 +65,7 @@ order += "group disks"
 group disks {
     cycle = 30
     format = "Disks: {output} {button}"
+    click_mode = "button"
 
     disk "/" {
         format = "/ %avail"
@@ -73,11 +90,12 @@ class Py3status:
     button_next = 4
     button_prev = 5
     button_toggle = 1
+    click_mode = 'all'
     cycle = 0
     fixed_width = False
-    format = u'{output} {button}'
-    format_button_open = u'*'
-    format_button_closed = u'*'
+    format = None
+    format_button_open = u'-'
+    format_button_closed = u'+'
     format_closed = u'{button}'
     open = True
 
@@ -93,6 +111,15 @@ class Py3status:
         self._cycle_time = time() + self.cycle
         self.initialized = True
         self.open = bool(self.open)
+        # set default format etc based on click_mode
+        if self.format is None:
+            if self.click_mode == 'button':
+                self.format = u'{output} {button}'
+            else:
+                self.format = u'{output}'
+        # if no button then force open
+        if '{button}' not in self.format:
+                self.open = True
 
     def _get_output(self):
         if not self.fixed_width:
@@ -182,7 +209,8 @@ class Py3status:
             if part == '{output}':
                 output += current_output
             elif part == '{button}':
-                output += [{'full_text': format_control}]
+                output += [{'full_text': format_control,
+                            'index': 'button'}]
             else:
                 output += [{'full_text': part}]
 
@@ -208,6 +236,13 @@ class Py3status:
         """
         if not self.items:
             return
+
+        # if click_mode is button then we only action clicks that are
+        # directly on the group not its contents.
+        if self.click_mode == 'button':
+            if event['name'] != 'group' or event.get('index') != 'button':
+                return
+
         # reset cycle time
         self._cycle_time = time() + self.cycle
         if self.button_next and event['button'] == self.button_next:
@@ -215,7 +250,9 @@ class Py3status:
         if self.button_prev and event['button'] == self.button_prev:
             self._prev()
         if self.button_toggle and event['button'] == self.button_toggle:
-            self.open = not self.open
+            # we only toggle if button was used
+            if event.get('index') == 'button':
+                self.open = not self.open
 
 
 if __name__ == "__main__":

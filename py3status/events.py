@@ -203,12 +203,11 @@ class Events(Thread):
                         dispatched = True
                         break
 
-        if not dispatched:
-            # find container that holds the module and call its onclick
-            module_groups = self.i3s_config['.module_groups']
-            containers = module_groups.get(module_name)
-            for container in containers:
-                self.process_event(container, event)
+        # find container that holds the module and call its onclick
+        module_groups = self.i3s_config['.module_groups']
+        containers = module_groups.get(module_name)
+        for container in containers:
+            self.process_event(container, event)
 
         # fall back to i3bar_click_events.py module if present
         if not dispatched:
