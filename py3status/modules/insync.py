@@ -31,7 +31,7 @@ class Py3status:
         status = str(subprocess.check_output(["/usr/bin/insync", "get_status"]))
         if len(status) > 5:
             status = status[2:-3]
-        #print(status)
+        # print(status)
         color = i3s_config.get('color_degraded', '')
         if status == "OFFLINE":
             color = i3s_config.get('color_bad', '')
@@ -43,7 +43,7 @@ class Py3status:
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': results,
-            'color' : color
+            'color': color
         }
         return response
 
