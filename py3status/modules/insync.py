@@ -19,6 +19,7 @@ Thanks to @author Iain Tatch <iain.tatch@gmail.com> for the script that this is 
 from time import time
 import subprocess
 
+
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
