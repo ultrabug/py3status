@@ -25,13 +25,11 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1
     format = '{status}'
-    _line_separator = "\\n" if sys.version_info > (3, 0) else "\n"
 
     def check_insync(self, i3s_output_list, i3s_config):
         status = str(subprocess.check_output(["/usr/bin/insync", "get_status"]))
         if len(status) > 5:
             status = status[2:-3]
-        # print(status)
         color = i3s_config.get('color_degraded', '')
         if status == "OFFLINE":
             color = i3s_config.get('color_bad', '')
