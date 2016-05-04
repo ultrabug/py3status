@@ -18,8 +18,6 @@ Thanks to @author Iain Tatch <iain.tatch@gmail.com> for the script that this is 
 
 from time import time
 import subprocess
-import sys
-
 
 class Py3status:
     # available configuration parameters
