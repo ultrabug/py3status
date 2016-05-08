@@ -445,25 +445,50 @@ shown in the i3bar.  The active group can be changed by a user click.  If the
 click is not used by the group module then it will be passed down to the
 displayed module.
 
-Modules can be i3status core modules or py3status modules.
+Modules can be i3status core modules or py3status modules.  The active group
+can be cycled through automatically.
 
-Additionally the active group can be cycled through automatically.
+The group can handle clicks by reacting to any that are made on it or its
+content or it can use a button and only respond to clicks on that.
+The way it does this is selected via the `click_mode` option.
 
 Configuration parameters:
+  - `align` Text alignment when fixed_width is set
+    can be 'left', 'center' or 'right' *(default 'left')*
   - `button_next` Button that when clicked will switch to display next module.
     Setting to `0` will disable this action. *(default 4)*
   - `button_prev` Button that when clicked will switch to display previous
     module.  Setting to `0` will disable this action. *(default 5)*
-  - `color` If the active module does not supply a color use this if set.
-    Format as hex value eg `'#0000FF'` *(default None)*
+  - `button_toggle` Button that when clicked toggles the group content being
+    displayed between open and closed.
+    This action is ignored if `{button}` is not in the format.
+    Setting to `0` will disable this action *(default 1)*
+  - `click_mode` This defines how clicks are handled by the group.
+    If set to `all` then the group will respond to all click events.  This
+    may cause issues with contained modules that use the same clicks that
+    the group captures.  If set to `button` then only clicks that are
+    directly on the `{button}` are acted on.  The group
+    will need `{button}` in its format.
+    *(default 'all')*
   - `cycle` Time in seconds till changing to next module to display.
     Setting to `0` will disable cycling. *(default 0)*
   - `fixed_width` Reduce the size changes when switching to new group
     *(default True)*
-  - `format` Format for module output. *(default "{output}")*
+  - `format` Format for module output.
+    (default "{output}" if click_mode is 'all',
+    "{output} {button}" if click_mode 'button')
+  - `format_button_open` Format for the button when group closed
+    *(default '+')*
+  - `format_button_closed` Format for the button when group open
+    *(default  '-')*
+  - `format_closed` Format for module output when closed.
+    *(default "{button}")*
+  - `open` Is the group open and displaying its content. Has no effect if
+    `{button}` not in format *(default True)*
 
 
 Format of status string placeholders:
+  - `{button}` The button to open/close or change the displayed group
   - `{output}` Output of current active module
 
 Example:
@@ -477,7 +502,8 @@ order += "group disks"
 
 group disks {
     cycle = 30
-    format = "Disks: {output}"
+    format = "Disks: {output} {button}"
+    click_mode = "button"
 
     disk "/" {
         format = "/ %avail"
