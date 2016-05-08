@@ -145,21 +145,21 @@ class Module(Thread):
         if 'separator' in mod_config:
             separator = mod_config['separator']
             if not isinstance(separator, bool):
-                raise TypeError("invalid 'separator' attribute, should be a bool")
+                raise TypeError('invalid "separator" attribute, should be a bool')
 
             self.module_options['separator'] = separator
 
         if 'separator_block_width' in mod_config:
             separator_block_width = mod_config['separator_block_width']
             if not isinstance(separator_block_width, int):
-                raise TypeError("invalid 'separator_block_width' attribute, should be an int")
+                raise TypeError('invalid "separator_block_width" attribute, should be an int')
 
             self.module_options['separator_block_width'] = separator_block_width
 
         if 'align' in mod_config:
             align = mod_config['align']
             if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
-                raise ValueError("invalid 'align' attribute, valid values are: left, center, right")
+                raise ValueError('invalid "align" attribute, valid values are: left, center, right')
 
             self.module_options['align'] = align
 
@@ -171,12 +171,12 @@ class Module(Thread):
         """
         composite = response['composite']
         if not isinstance(composite, list):
-            raise Exception('Expecting composite')
+            raise Exception('expecting "composite" key in response')
         # if list is empty nothing to do
         if not len(composite):
             return
         if 'full_text' in response:
-            raise Exception('Conflict "full_text" and "composite" in response')
+            raise Exception('conflicting "full_text" and "composite" in response')
         # set universal options on last component
         composite[-1].update(self.module_options)
         # calculate any min width (we split this across components)
