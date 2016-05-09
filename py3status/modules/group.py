@@ -123,13 +123,13 @@ class Py3status:
 
     def _get_output(self):
         if not self.fixed_width:
-            return self._get_current_output(self.active)
+            return self.py3.get_output(self.items[self.active])
         # fixed width we need to find the width of all outputs
         # and then pad with spaces to make correct width.
         current = None
         widths = []
         for i in range(len(self.items)):
-            output = self._get_current_output(i)
+            output = self.py3.get_output(self.items[i])
             if not output:
                 continue
             widths.append(sum([len(x['full_text']) for x in output]))
@@ -148,14 +148,6 @@ class Py3status:
             else:
                 current[-1]['full_text'] += padding
         return current
-
-    def _get_current_output(self, item):
-        output = []
-        current = self.items[item]
-        module_info = self.py3.get_module_info(current)
-        if module_info:
-            output = module_info['module'].get_latest()
-        return output
 
     def _get_current_module_name(self):
         if not self.items:
