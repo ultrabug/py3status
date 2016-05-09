@@ -5,9 +5,9 @@ from threading import Thread
 from time import time
 from subprocess import Popen, call, PIPE
 from syslog import syslog, LOG_INFO, LOG_WARNING
+from json import loads
 
 from py3status.profiling import profile
-from py3status.helpers import jsonify
 
 
 class IOPoller:
@@ -162,82 +162,6 @@ class Events(Thread):
         syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
-    def i3status_mod_guess(self, instance, name):
-        """
-        Some i3status modules output a name and instance that are different
-        from their configuration name in i3status.conf.
-
-        For example the 'disk' module will output with name 'disk_info' so
-        we try to be clever and figure it out here, case by case.
-
-        Guessed modules:
-            - battery
-            - cpu_temperature
-            - disk_info
-            - ethernet
-            - run_watch
-            - volume
-            - wireless
-        """
-        try:
-            # /sys/class/power_supply/BAT0/uevent and _first_
-            if name == 'battery':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('battery') and isinstance(v, dict) and \
-                            v.get('response', {}).get('instance') == instance:
-                        instance = k.split(' ', 1)[1]
-                        break
-                else:
-                    instance = str([int(s) for s in instance if s.isdigit()][
-                        0])
-
-            # /sys/devices/platform/coretemp.0/temp1_input
-            elif name == 'cpu_temperature':
-                instance = str([int(s) for s in instance if s.isdigit()][0])
-
-            # disk_info /home
-            elif name == 'disk_info':
-                name = 'disk'
-
-            # ethernet _first_
-            elif name == 'ethernet':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('ethernet') and isinstance(v, dict) and \
-                            v.get('response', {}).get('instance') == instance:
-                        instance = k.split(' ', 1)[1]
-
-            # run_watch /var/run/openvpn.pid
-            elif name == 'run_watch':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('run_watch') and isinstance(v, dict) and \
-                            v.get('pidfile') == instance:
-                        instance = k.split(' ', 1)[1]
-                        break
-
-            # volume default.Master.0
-            elif name == 'volume':
-                device, mixer, mixer_idx = instance.split('.')
-                for k, v in self.i3s_config.items():
-                    if k.startswith('volume') and isinstance(v, dict) and \
-                            v.get('device') == device and \
-                            v.get('mixer') == mixer and \
-                            str(v.get('mixer_idx')) == mixer_idx:
-                        instance = k.split(' ', 1)[1]
-                        break
-                else:
-                    instance = 'master'
-
-            # wireless _first_
-            elif name == 'wireless':
-                for k, v in self.i3s_config.items():
-                    if k.startswith('wireless') and isinstance(v, dict) and \
-                            v.get('response', {}).get('instance') == instance:
-                        instance = k.split(' ', 1)[1]
-        except:
-            pass
-        finally:
-            return (instance, name)
-
     def process_event(self, module_name, event):
         """
         Process the event for the named module.
@@ -279,6 +203,12 @@ class Events(Thread):
                         dispatched = True
                         break
 
+        # find container that holds the module and call its onclick
+        module_groups = self.i3s_config['.module_groups']
+        containers = module_groups.get(module_name)
+        for container in containers:
+            self.process_event(container, event)
+
         # fall back to i3bar_click_events.py module if present
         if not dispatched:
             module = self.i3bar_click_events_module()
@@ -301,30 +231,45 @@ class Events(Thread):
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
         while self.lock.is_set():
-            event = self.poller_inp.readline()
-            if not event:
+            event_str = self.poller_inp.readline()
+            if not event_str:
                 continue
             try:
-                with jsonify(event) as (prefix, event):
-                    if self.config['debug']:
-                        syslog(LOG_INFO, 'received event {}'.format(event))
+                # remove leading comma if present
+                if event_str[0] == ',':
+                    event_str = event_str[1:]
+                event = loads(event_str)
 
-                    # usage variables
-                    instance = event.get('instance', '')
-                    name = event.get('name', '')
+                if self.config['debug']:
+                    syslog(LOG_INFO, 'received event {}'.format(event))
 
-                    # i3status module name guess
-                    instance, name = self.i3status_mod_guess(instance, name)
-                    if self.config['debug']:
-                        syslog(
-                            LOG_INFO,
-                            'trying to dispatch event to module "{}"'.format(
-                                '{} {}'.format(name, instance).strip()))
+                # usage variables
+                instance = event.get('instance', '')
+                name = event.get('name', '')
 
-                    # guess the module config name
-                    module_name = '{} {}'.format(name, instance).strip()
-                    # do the work
-                    self.process_event(module_name, event)
+                # composites have an index which is passed to i3bar with
+                # the instance.  We need to separate this out here and
+                # clean up the event.  If index
+                # is an integer type then cast it as such.
+                if ' ' in instance:
+                    instance, index = instance.split(' ', 1)
+                    try:
+                        index = int(index)
+                    except ValueError:
+                        pass
+                    event['index'] = index
+                    event['instance'] = instance
+
+                if self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'trying to dispatch event to module "{}"'.format(
+                            '{} {}'.format(name, instance).strip()))
+
+                # guess the module config name
+                module_name = '{} {}'.format(name, instance).strip()
+                # do the work
+                self.process_event(module_name, event)
 
             except Exception:
                 err = sys.exc_info()[1]

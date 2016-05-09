@@ -2,20 +2,6 @@ from __future__ import print_function
 
 import sys
 
-from json import loads
-from contextlib import contextmanager
-
-
-@contextmanager
-def jsonify(string):
-    """
-    Transform the given string to a JSON in a context manager fashion.
-    """
-    prefix = ''
-    if string.startswith(','):
-        prefix, string = ',', string[1:]
-    yield (prefix, loads(string))
-
 
 def print_line(line):
     """

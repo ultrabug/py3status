@@ -2,7 +2,7 @@ import sys
 import os
 
 from copy import deepcopy
-from json import dumps, loads
+from json import loads
 from datetime import datetime, timedelta, tzinfo
 from subprocess import Popen
 from subprocess import PIPE
@@ -13,7 +13,6 @@ from threading import Thread
 from time import time
 
 from py3status.profiling import profile
-from py3status.helpers import jsonify, print_line
 from py3status.events import IOPoller
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -52,10 +51,23 @@ class I3statusModule:
     def __init__(self, module_name, py3_wrapper):
         self.i3status_pipe = None
         self.module_name = module_name
-        self.i3status = py3_wrapper.i3status_thread
-        self.is_time_module = module_name.split()[0] in TIME_MODULES
+
+        # i3status returns different name/instances than it is sent we want to
+        # be able to restore the correct ones.
+        try:
+            name, instance = self.module_name.split()
+        except:
+            name = self.module_name
+            instance = ''
+        self.name = name
+        self.instance = instance
+
         self.item = {}
+
+        self.i3status = py3_wrapper.i3status_thread
         self.py3_wrapper = py3_wrapper
+
+        self.is_time_module = name in TIME_MODULES
         if self.is_time_module:
             self.tz = None
             self.set_time_format()
@@ -70,6 +82,10 @@ class I3statusModule:
         """
         Update from i3status output. returns if item has changed.
         """
+        # Restore the name/instance.
+        item['name'] = self.name
+        item['instance'] = self.instance
+
         # have we updated?
         is_updated = self.item != item
         self.item = item
@@ -148,7 +164,6 @@ class I3status(Thread):
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
-        self.last_prefix = None
         self.lock = py3_wrapper.lock
         self.new_update = False
         self.py3_wrapper = py3_wrapper
@@ -475,35 +490,27 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        for section_name, conf in sorted(self.config.items()):
-            if section_name in ['i3s_modules', 'py3_modules', '.group_extras',
-                                '.module_groups']:
-                continue
-            elif section_name == 'order':
-                for module_name in conf:
-                    if self.valid_config_param(module_name):
-                        self.write_in_tmpfile('order += "%s"\n' % module_name,
-                                              tmpfile)
-                # we need to make sure any additional i3status modules needed
-                # for groups are added to the i3status config
-                for module_name in self.config['.group_extras']:
-                    self.write_in_tmpfile('order += "%s"\n' % module_name,
-                                          tmpfile)
-
-                self.write_in_tmpfile('\n', tmpfile)
-            elif self.valid_config_param(section_name) and conf:
-                self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
-                for key, value in conf.items():
-                    # Set known fixed format for time and tztime so we can work
-                    # out the timezone
-                    if section_name.split()[
-                            0] in TIME_MODULES and key == 'format':
+        # order += ...
+        for module in self.config['i3s_modules']:
+            self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
+        self.write_in_tmpfile('\n', tmpfile)
+        # config params for general section and each module
+        for section_name in ['general'] + self.config['i3s_modules']:
+            section = self.config[section_name]
+            self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
+            for key, value in section.items():
+                # Set known fixed format for time and tztime so we can work
+                # out the timezone
+                if section_name.split()[0] in TIME_MODULES:
+                    if key == 'format':
                         value = TZTIME_FORMAT
-                    if isinstance(value, bool):
-                        value = '{}'.format(value).lower()
-                    self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
-                                          tmpfile)
-                self.write_in_tmpfile('}\n\n', tmpfile)
+                    if key == 'format_time':
+                        continue
+                if isinstance(value, bool):
+                    value = '{}'.format(value).lower()
+                self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
+                                      tmpfile)
+            self.write_in_tmpfile('}\n\n', tmpfile)
         tmpfile.flush()
 
     def suspend_i3status(self):
@@ -542,26 +549,14 @@ class I3status(Thread):
                     while self.lock.is_set():
                         line = self.poller_inp.readline()
                         if line:
+                            # remove leading comma if present
+                            if line[0] == ',':
+                                line = line[1:]
                             if line.startswith('[{'):
-                                print_line(line)
-                                with jsonify(line) as (prefix, json_list):
-                                    self.last_output = json_list
-                                    self.last_prefix = ','
-                                    self.set_responses(json_list)
+                                json_list = loads(line)
+                                self.last_output = json_list
+                                self.set_responses(json_list)
                                 self.ready = True
-                            elif not line.startswith(','):
-                                if 'version' in line:
-                                    header = loads(line)
-                                    header.update({'click_events': True})
-                                    # set custom stop signal
-                                    header['stop_signal'] = SIGUSR2
-                                    line = dumps(header)
-                                print_line(line)
-                            else:
-                                with jsonify(line) as (prefix, json_list):
-                                    self.last_output = json_list
-                                    self.last_prefix = prefix
-                                    self.set_responses(json_list)
                         else:
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
@@ -595,12 +590,6 @@ class I3status(Thread):
         # mock thread is_alive() method
         self.is_alive = lambda: True
 
-        # mock i3status base output
-        init_output = ['{"click_events": true, "version": 1}', '[', '[]']
-        for line in init_output:
-            print_line(line)
-
         # mock i3status output parsing
         self.last_output = []
-        self.last_prefix = ','
         self.update_json_list()
