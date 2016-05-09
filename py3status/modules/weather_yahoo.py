@@ -5,15 +5,11 @@ Display Yahoo! Weather forecast as icons.
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
-Find your city code using:
-        http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
-
 Find your woeid using:
         http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
     cache_timeout: how often to check for new forecasts
-    city_code: city code to use
     forecast_days: how many forecast days you want shown
     forecast_include_today: show today's forecast, default false. Note that
         `{today}` in `format` shows the current conditions, while this variable
@@ -37,9 +33,9 @@ Configuration parameters:
     icon_sun: sun icon, default '☀'
     request_timeout: check timeout
     units: Celsius (C) or Fahrenheit (F)
-    woeid: use Yahoo woeid (extended location) instead of city_code
+    woeid: use Yahoo woeid (extended location)
 
-The city_code in this example is for Paris, France => FRXX0076
+The WOEID in this example is for Paris, France => 615702
 
 @author ultrabug, rail
 """
@@ -52,7 +48,6 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1800
-    city_code = 'FRXX0076'
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
@@ -72,14 +67,12 @@ class Py3status:
         """
         Ask Yahoo! Weather. for a forecast
         """
-        where = 'location="%s"' % self.city_code
-        if self.woeid:
-            where = 'woeid="%s"' % self.woeid
         q = requests.get(
-            'http://query.yahooapis.com/v1/public/yql?q=' +
+            'https://query.yahooapis.com/v1/public/yql?q=' +
             'select * from weather.forecast ' +
-            'where {where} and u="{units}"&format=json'.format(
-                where=where, units=self.units.lower()[0]),
+            'where woeid="{woeid}" and u="{units}"&format=json'.format(
+                woeid=self.woeid, units=self.units.lower()[0]) +
+            '&env=store://datatables.org/alltableswithkeys',
             timeout=self.request_timeout
         )
         q.raise_for_status()
@@ -137,6 +130,8 @@ class Py3status:
         """
         This method gets executed by py3status
         """
+        if not self.woeid:
+            raise Exception('missing woeid setting, please configure it')
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': ''
@@ -162,8 +157,9 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     config = {
-        'color_good': '#00FF00',
         'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00'
     }
     while True:
         print(x.weather_yahoo([], config))
