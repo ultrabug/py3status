@@ -492,38 +492,27 @@ class I3status(Thread):
         Given a temporary file descriptor, write a valid i3status config file
         based on the parsed one from 'i3status_config_path'.
         """
-        for section_name, conf in sorted(self.config.items()):
-            if section_name in ['i3s_modules', 'py3_modules', '.group_extras',
-                                '.module_groups']:
-                continue
-            elif section_name == 'order':
-                for module_name in conf:
-                    if self.valid_config_param(module_name):
-                        self.write_in_tmpfile('order += "%s"\n' % module_name,
-                                              tmpfile)
-                # we need to make sure any additional i3status modules needed
-                # for groups are added to the i3status config
-                for module_name in self.config['.group_extras']:
-                    self.write_in_tmpfile('order += "%s"\n' % module_name,
-                                          tmpfile)
-
-                self.write_in_tmpfile('\n', tmpfile)
-            elif self.valid_config_param(section_name) and conf:
-                self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
-                for key, value in conf.items():
-                    # Set known fixed format for time and tztime so we can work
-                    # out the timezone
-                    if section_name.split()[
-                            0] in TIME_MODULES:
-                        if key == 'format':
-                            value = TZTIME_FORMAT
-                        if key == 'format_time':
-                            continue
-                    if isinstance(value, bool):
-                        value = '{}'.format(value).lower()
-                    self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
-                                          tmpfile)
-                self.write_in_tmpfile('}\n\n', tmpfile)
+        # order += ...
+        for module in self.config['i3s_modules']:
+            self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
+        self.write_in_tmpfile('\n', tmpfile)
+        # config params for general section and each module
+        for section_name in ['general'] + self.config['i3s_modules']:
+            section = self.config[section_name]
+            self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
+            for key, value in section.items():
+                # Set known fixed format for time and tztime so we can work
+                # out the timezone
+                if section_name.split()[0] in TIME_MODULES:
+                    if key == 'format':
+                        value = TZTIME_FORMAT
+                    if key == 'format_time':
+                        continue
+                if isinstance(value, bool):
+                    value = '{}'.format(value).lower()
+                self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
+                                      tmpfile)
+            self.write_in_tmpfile('}\n\n', tmpfile)
         tmpfile.flush()
 
     def suspend_i3status(self):

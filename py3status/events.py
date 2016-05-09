@@ -203,6 +203,12 @@ class Events(Thread):
                         dispatched = True
                         break
 
+        # find container that holds the module and call its onclick
+        module_groups = self.i3s_config['.module_groups']
+        containers = module_groups.get(module_name)
+        for container in containers:
+            self.process_event(container, event)
+
         # fall back to i3bar_click_events.py module if present
         if not dispatched:
             module = self.i3bar_click_events_module()
@@ -240,6 +246,19 @@ class Events(Thread):
                 # usage variables
                 instance = event.get('instance', '')
                 name = event.get('name', '')
+
+                # composites have an index which is passed to i3bar with
+                # the instance.  We need to separate this out here and
+                # clean up the event.  If index
+                # is an integer type then cast it as such.
+                if ' ' in instance:
+                    instance, index = instance.split(' ', 1)
+                    try:
+                        index = int(index)
+                    except ValueError:
+                        pass
+                    event['index'] = index
+                    event['instance'] = instance
 
                 if self.config['debug']:
                     syslog(
