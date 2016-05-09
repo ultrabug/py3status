@@ -5,9 +5,9 @@ from threading import Thread
 from time import time
 from subprocess import Popen, call, PIPE
 from syslog import syslog, LOG_INFO, LOG_WARNING
+from json import loads
 
 from py3status.profiling import profile
-from py3status.helpers import jsonify
 
 
 class IOPoller:
@@ -203,6 +203,12 @@ class Events(Thread):
                         dispatched = True
                         break
 
+        # find container that holds the module and call its onclick
+        module_groups = self.i3s_config['.module_groups']
+        containers = module_groups.get(module_name)
+        for container in containers:
+            self.process_event(container, event)
+
         # fall back to i3bar_click_events.py module if present
         if not dispatched:
             module = self.i3bar_click_events_module()
@@ -225,28 +231,45 @@ class Events(Thread):
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
         while self.lock.is_set():
-            event = self.poller_inp.readline()
-            if not event:
+            event_str = self.poller_inp.readline()
+            if not event_str:
                 continue
             try:
-                with jsonify(event) as (prefix, event):
-                    if self.config['debug']:
-                        syslog(LOG_INFO, 'received event {}'.format(event))
+                # remove leading comma if present
+                if event_str[0] == ',':
+                    event_str = event_str[1:]
+                event = loads(event_str)
 
-                    # usage variables
-                    instance = event.get('instance', '')
-                    name = event.get('name', '')
+                if self.config['debug']:
+                    syslog(LOG_INFO, 'received event {}'.format(event))
 
-                    if self.config['debug']:
-                        syslog(
-                            LOG_INFO,
-                            'trying to dispatch event to module "{}"'.format(
-                                '{} {}'.format(name, instance).strip()))
+                # usage variables
+                instance = event.get('instance', '')
+                name = event.get('name', '')
 
-                    # guess the module config name
-                    module_name = '{} {}'.format(name, instance).strip()
-                    # do the work
-                    self.process_event(module_name, event)
+                # composites have an index which is passed to i3bar with
+                # the instance.  We need to separate this out here and
+                # clean up the event.  If index
+                # is an integer type then cast it as such.
+                if ' ' in instance:
+                    instance, index = instance.split(' ', 1)
+                    try:
+                        index = int(index)
+                    except ValueError:
+                        pass
+                    event['index'] = index
+                    event['instance'] = instance
+
+                if self.config['debug']:
+                    syslog(
+                        LOG_INFO,
+                        'trying to dispatch event to module "{}"'.format(
+                            '{} {}'.format(name, instance).strip()))
+
+                # guess the module config name
+                module_name = '{} {}'.format(name, instance).strip()
+                # do the work
+                self.process_event(module_name, event)
 
             except Exception:
                 err = sys.exc_info()[1]

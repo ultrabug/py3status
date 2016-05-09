@@ -584,6 +584,15 @@ class Py3statusWrapper():
         interval = self.config['interval']
         last_sec = 0
 
+        # start our output
+        header = {
+            'version': 1,
+            'click_events': True,
+            'stop_signal': SIGUSR2,
+        }
+        print_line(dumps(header))
+        print_line('[[]')
+
         # main loop
         while True:
             while not self.i3bar_running:
@@ -625,11 +634,10 @@ class Py3statusWrapper():
                         out = module['module'].get_latest()
                         output[index] = self.process_module_output(out)
 
-                prefix = i3status_thread.last_prefix
                 # build output string
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
-                print_line('{}[{}]'.format(prefix, out))
+                print_line(',[{}]'.format(out))
 
             # sleep a bit before doing this again to avoid killing the CPU
             sleep(0.1)
