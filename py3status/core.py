@@ -73,8 +73,9 @@ class Py3statusWrapper():
         # respect i3status' file detection order wrt issue #43
         i3status_config_file_candidates = [
             '{}/.i3status.conf'.format(home_path),
-            '{}/.config/i3status/config'.format(os.environ.get(
-                'XDG_CONFIG_HOME', home_path)), '/etc/i3status.conf',
+            '{}/i3status/config'.format(os.environ.get(
+                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+            '/etc/i3status.conf',
             '{}/i3status/config'.format(os.environ.get('XDG_CONFIG_DIRS',
                                                        '/etc/xdg'))
         ]
