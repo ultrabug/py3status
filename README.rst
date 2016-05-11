@@ -21,19 +21,11 @@ Documentation
 =============
 Up to date documentation:
 
-- `See the wiki <https://github.com/ultrabug/py3status/wiki>`_
+-  `Using modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#modules>`_
 
-Learn how to easily **handle i3bar click events** directly from your i3status config:
+-  `Custom click events <https://github.com/ultrabug/py3status/blob/master/doc/README.md#on_click>`_
 
-- `Handle click events directly from your i3status config <https://github.com/ultrabug/py3status/wiki/Handle-click-events-directly-from-your-i3status-config>`_
-
-Learn how to **extend your current i3status config** to easily interact with your i3bar:
-
-- `Load and order py3status modules directly from your current i3status config <https://github.com/ultrabug/py3status/wiki/Load-and-order-py3status-modules-directly-from-your-current-i3status-config>`_
-
-Learn how to write your own modules:
-
-- `Write your own modules <https://github.com/ultrabug/py3status/wiki/Write-your-own-modules>`_
+-  `Writing custom modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#writing_custom_modules>`_
 
 Get help or share your ideas on IRC:
 
@@ -99,10 +91,10 @@ Thanks to @waaaaargh and @carstene1ns for initially creating the packages.
 
 Fedora
 ------
-Using yum:
+Using dnf:
 ::
 
-    $ yum install py3status
+    $ dnf install py3status
 
 Options
 =======
