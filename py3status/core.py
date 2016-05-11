@@ -92,6 +92,14 @@ class Py3statusWrapper():
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
         parser = argparse.ArgumentParser(add_help=True)
+        parser.add_argument('-b',
+                            '--dbus-notify',
+                            action="store_true",
+                            default=False,
+                            dest="dbus_notify",
+                            help="""use notify-send to send user notifications
+                                    rather than i3-nagbar,
+                                    requires a notification daemon eg dunst""")
         parser.add_argument('-c',
                             '--config',
                             action="store",
@@ -103,12 +111,6 @@ class Py3statusWrapper():
                             '--debug',
                             action="store_true",
                             help="be verbose in syslog")
-        parser.add_argument('-b',
-                            '--dbus-notify',
-                            action="store_true",
-                            default=False,
-                            dest="dbus_notify",
-                            help="use notify-send to send user notifications")
         parser.add_argument('-i',
                             '--include',
                             action="append",
@@ -264,13 +266,18 @@ class Py3statusWrapper():
             self.i3status_thread.mock()
             i3s_mode = 'mocked'
         else:
+            i3s_mode = 'started'
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
                 if not self.i3status_thread.is_alive():
+                    # i3status is having a bad day, so tell the user what went
+                    # wrong and do the best we can with just py3status modules.
                     err = self.i3status_thread.error
-                    raise IOError(err)
+                    self.notify_user(err)
+                    self.i3status_thread.mock()
+                    i3s_mode = 'mocked'
+                    break
                 sleep(0.1)
-            i3s_mode = 'started'
         if self.config['debug']:
             syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
                 i3s_mode,
@@ -466,7 +473,7 @@ class Py3statusWrapper():
         """
         config = self.i3status_thread.config
         i3modules = self.i3status_thread.i3modules
-        output_modules = {}
+        output_modules = self.output_modules
         # position in the bar of the modules
         positions = {}
         for index, name in enumerate(config['order']):
