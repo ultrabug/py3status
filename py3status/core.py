@@ -92,6 +92,14 @@ class Py3statusWrapper():
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
         parser = argparse.ArgumentParser(add_help=True)
+        parser.add_argument('-b',
+                            '--dbus-notify',
+                            action="store_true",
+                            default=False,
+                            dest="dbus_notify",
+                            help="""use notify-send to send user notifications
+                                    rather than i3-nagbar,
+                                    requires a notification daemon eg dunst""")
         parser.add_argument('-c',
                             '--config',
                             action="store",
@@ -103,12 +111,6 @@ class Py3statusWrapper():
                             '--debug',
                             action="store_true",
                             help="be verbose in syslog")
-        parser.add_argument('-b',
-                            '--dbus-notify',
-                            action="store_true",
-                            default=False,
-                            dest="dbus_notify",
-                            help="use notify-send to send user notifications")
         parser.add_argument('-i',
                             '--include',
                             action="append",
