@@ -21,7 +21,11 @@ Documentation
 =============
 Up to date documentation:
 
-- `Usage, writing your own modules etc <https://github.com/ultrabug/py3status/blob/master/doc/README.md>`_
+-  `Using modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#modules>`_
+
+-  `Custom click events <https://github.com/ultrabug/py3status/blob/master/doc/README.md#on_click>`_
+
+-  `Writing custom modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#writing_custom_modules>`_
 
 Get help or share your ideas on IRC:
 
