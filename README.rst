@@ -110,6 +110,8 @@ You can see the help of py3status by issuing `py3status -h`:
 ::
 
     -h, --help            show this help message and exit
+    -b, --dbus-notify     use notify-send to send user notifications rather than
+                        i3-nagbar, requires a notification daemon eg dunst
     -c I3STATUS_CONF, --config I3STATUS_CONF
                           path to i3status config file
     -d, --debug           be verbose in syslog
