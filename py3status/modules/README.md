@@ -76,6 +76,8 @@
 
 **[taskwarrior](#taskwarrior)** — Display currently active (started) taskwarrior tasks.
 
+**[timer](#timer)** — A simple countdown timer.
+
 **[uname](#uname)** — Display uname information.
 
 **[vnstat](#vnstat)** — Display vnstat statistics.
@@ -1054,6 +1056,27 @@ Requires
 **author** James Smith http://jazmit.github.io/
 
 **license** BSD
+
+---
+
+### <a name="timer"></a>timer
+
+A simple countdown timer.
+
+This is a very basic countdown timer.  You can change the timer length as well
+as pausing, restarting and resetting it.  Currently this is more of a demo of a
+composites.
+
+Each part of the timer can be changed independently hours, minutes, seconds using
+mouse buttons 4 and 5 (scroll wheel).
+Button 1 starts/pauses the countdown.
+Button 2 resets timer.
+
+Configuration parameters:
+  - `sound` path to a sound file that will be played when the timer expires.
+    *(default None)*
+  - `time` how long in seconds for the timer
+    *(default 60)*
 
 ---
 

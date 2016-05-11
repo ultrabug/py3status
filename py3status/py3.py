@@ -1,5 +1,9 @@
+import os
 import re
+import shlex
 from time import time
+from subprocess import Popen, call
+
 
 PY3_CACHE_FOREVER = -1
 
@@ -20,6 +24,7 @@ class Py3:
     def __init__(self, module):
         self._module = module
         self._output_modules = module._py3_wrapper.output_modules
+        self._audio = None
 
     def _get_module_info(self, module_name):
         """
@@ -93,3 +98,31 @@ class Py3:
 
         format_string = re.sub('\{[^}]*\}', replace_fn, format_string)
         return format_string.format(**param_dict)
+
+    def check_commands(self, cmd_list):
+        """
+        Checks to see if commands in list are available using `which`.
+        Returns the first available command.
+        """
+        devnull = open(os.devnull, 'w')
+        for cmd in cmd_list:
+            c = shlex.split('which {}'.format(cmd))
+            if call(c, stdout=devnull, stderr=devnull) == 0:
+                return cmd
+
+    def play_sound(self, sound_file):
+        """
+        Plays sound_file if possible.
+        """
+        self.stop_sound()
+        cmd = self.check_commands(['paplay', 'play'])
+        if cmd:
+            c = shlex.split('{} {}'.format(cmd, sound_file))
+            self._audio = Popen(c, shell=True)
+
+    def stop_sound(self):
+        """
+        Stops any currently playing sounds for this module.
+        """
+        if self._audio:
+            self._audio.kill()
