@@ -22,9 +22,9 @@ class Py3:
     CACHE_FOREVER = PY3_CACHE_FOREVER
 
     def __init__(self, module):
+        self._audio = None
         self._module = module
         self._output_modules = module._py3_wrapper.output_modules
-        self._audio = None
 
     def _get_module_info(self, module_name):
         """
@@ -117,8 +117,9 @@ class Py3:
         self.stop_sound()
         cmd = self.check_commands(['paplay', 'play'])
         if cmd:
+            sound_file = os.path.expanduser(sound_file)
             c = shlex.split('{} {}'.format(cmd, sound_file))
-            self._audio = Popen(c, shell=True)
+            self._audio = Popen(c)
 
     def stop_sound(self):
         """
@@ -126,3 +127,4 @@ class Py3:
         """
         if self._audio:
             self._audio.kill()
+            self._audio = None
