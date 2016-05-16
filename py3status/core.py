@@ -55,11 +55,19 @@ class Py3statusWrapper():
         # defaults
         config = {
             'cache_timeout': 60,
-            'include_paths': ['{}/.i3/py3status/'.format(home_path)],
             'interval': 1,
             'minimum_interval': 0.1,  # minimum module update interval
             'dbus_notify': False,
         }
+
+        # include path to search for user modules
+        config['include_paths'] = [
+            '{}/.i3/py3status/'.format(home_path),
+            '{}/i3status/py3status'.format(os.environ.get(
+                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+            '{}/i3/py3status'.format(os.environ.get(
+                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+        ]
 
         # package version
         try:
@@ -175,7 +183,7 @@ class Py3statusWrapper():
         }
         """
         user_modules = {}
-        for include_path in sorted(self.config['include_paths']):
+        for include_path in self.config['include_paths']:
             include_path = os.path.abspath(include_path) + '/'
             if not os.path.isdir(include_path):
                 continue
@@ -183,6 +191,9 @@ class Py3statusWrapper():
                 if not f_name.endswith('.py'):
                     continue
                 module_name = f_name[:-3]
+                # do not overwrite modules if already found
+                if module_name in user_modules:
+                    pass
                 user_modules[module_name] = (include_path, f_name)
         return user_modules
 
