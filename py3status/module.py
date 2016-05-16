@@ -39,7 +39,6 @@ class Module(Thread):
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.new_update = False
-        self.module_full_name = module
         self.nagged = False
         self.sleeping = False
         self.timer = None
