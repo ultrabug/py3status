@@ -241,7 +241,8 @@ def update_docstrings():
                 out.append(row)
                 if not replaced:
                     out = out + [
-                        ''.join(_to_docstring(modules_dict[mod])).strip() + '\n'
+                        ''.join(_to_docstring(modules_dict[mod])).strip() +
+                        '\n'
                     ]
                     replaced = True
                 if lines:
@@ -285,7 +286,8 @@ def check_docstrings(show_diff=False, config=None):
                 create_readme(readme).split('\n'), create_readme(
                     modules_readme).split('\n'))))
         else:
-            print_stderr('\nUse `py3status docstring check diff` to view diff.')
+            print_stderr()
+            print_stderr('Use `py3status docstring check diff` to view diff.')
 
 
 def update_readme_for_modules(modules):

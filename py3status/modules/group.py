@@ -143,7 +143,8 @@ class Py3status:
                 current[0]['full_text'] = padding + current[0]['full_text']
             elif self.align == 'center':
                 cut = round(len(padding) / 2)
-                current[0]['full_text'] = padding[:cut] + current[0]['full_text']
+                current[0]['full_text'] = padding[:cut] + \
+                    current[0]['full_text']
                 current[-1]['full_text'] += padding[cut:]
             else:
                 current[-1]['full_text'] += padding

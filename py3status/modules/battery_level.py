@@ -200,25 +200,30 @@ class Py3status:
         return "%d:%02d:%02d" % (h, m, s)
 
     def _refresh_battery_info(self):
-        # Example acpi -bi raw output:
-        #      "Battery 0: Discharging, 94%, 09:23:28 remaining
-        #       Battery 0: design capacity 5703 mAh, last full capacity 5283 mAh = 92%
-        #       Battery 1: Unknown, 98%
-        #       Battery 1: design capacity 1880 mAh, last full capacity 1370 mAh = 72%"
+        '''
+        Get the battery info from acpi
+
+        # Example acpi -bi raw output (Discharging):
+        Battery 0: Discharging, 94%, 09:23:28 remaining
+        Battery 0: design capacity 5703 mAh, last full capacity 5283 mAh = 92%
+        Battery 1: Unknown, 98%
+        Battery 1: design capacity 1880 mAh, last full capacity 1370 mAh = 72%
+
+        # Example Charging
+        Battery 0: Charging, 96%, 00:20:40 until charged
+        Battery 0: design capacity 5566 mAh, last full capacity 5156 mAh = 92%
+        Battery 1: Unknown, 98%
+        Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%
+        '''
         acpi_raw = subprocess.check_output(
             ["acpi", "-b", "-i"],
             stderr=subprocess.STDOUT)
 
-        #  Example list:
-        #       ['Battery 0: Charging, 96%, 00:20:40 until charged',
-        #       'Battery 0: design capacity 5566 mAh, last full capacity 5156 mAh = 92%',
-        #       'Battery 1: Unknown, 98%',
-        #       'Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%',
-        #       '']
         acpi_list = acpi_raw.decode("UTF-8").split('\n')
 
-        # Separate the output because each pair of lines corresponds to a single battery.
-        # Now the list index will correspond to the index of the battery we want to look at
+        # Separate the output because each pair of lines corresponds to a
+        # single battery.  Now the list index will correspond to the index of
+        # the battery we want to look at
         acpi_list = [acpi_list[i:i + 2]
                      for i in range(0, len(acpi_list) - 1, 2)]
 
@@ -235,11 +240,12 @@ class Py3status:
             total_capacity = sum([battery['capacity'] for battery in
                                   battery_list])
 
-            # Average and weigh % charged by the capacities of the batteries so that self.percent_charged
-            # properly represents batteries that have different capacities.
+            # Average and weigh % charged by the capacities of the batteries so
+            # that self.percent_charged properly represents batteries that have
+            # different capacities.
             self.percent_charged = int(sum([battery[
                 "capacity"] / total_capacity * battery["percent_charged"]
-                                            for battery in battery_list]))
+                for battery in battery_list]))
 
             self.charging = any([battery["charging"] for battery in
                                  battery_list])
@@ -253,9 +259,10 @@ class Py3status:
                     del inactive_battery[battery_id]
 
             # Only one battery will be discharging or charging at a time.
-            # Therefore, ACPI does not provide a time remaining value for the other battery.
-            # So the time remaining for the other battery is calculated using the time
-            # remaining of the first battery and the capacity values for both batteries.
+            # Therefore, ACPI does not provide a time remaining value for the
+            # other battery.  So the time remaining for the other battery is
+            # calculated using the time remaining of the first battery and the
+            # capacity values for both batteries.
             if active_battery and inactive_battery:
                 inactive_battery = inactive_battery[0]
 
@@ -265,7 +272,8 @@ class Py3status:
                     active_battery["capacity"] *
                     (active_battery["percent_charged"] / 100))
                 time_remaining_seconds += inactive_battery["capacity"] * \
-                    inactive_battery["percent_charged"]/100 * rate_second_per_mah
+                    inactive_battery["percent_charged"]/100 * \
+                    rate_second_per_mah
 
                 self.time_remaining = self._seconds_to_hms(
                     time_remaining_seconds)
@@ -321,14 +329,16 @@ class Py3status:
             self.response['color'] = self.color_bad or self.i3s_config[
                 'color_bad']
             battery_status = 'bad'
-            if self.notify_low_level and self.last_known_status != battery_status:
+            if (self.notify_low_level and
+                    self.last_known_status != battery_status):
                 self._notify('Battery level is critically low ({}%)',
                              'critical')
         elif self.percent_charged < 30:
             self.response['color'] = self.color_degraded or self.i3s_config[
                 'color_degraded']
             battery_status = 'degraded'
-            if self.notify_low_level and self.last_known_status != battery_status:
+            if (self.notify_low_level and
+                    self.last_known_status != battery_status):
                 self._notify('Battery level is running low ({}%)', 'normal')
         elif self.percent_charged == 100:
             self.response['color'] = self.color_good or self.i3s_config[

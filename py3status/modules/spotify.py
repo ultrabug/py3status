@@ -4,8 +4,10 @@ Display information about the current song playing on Spotify.
 
 Configuration parameters:
     cache_timeout: how often to update the bar
-    color_offline: text color when spotify is not running, defaults to color_bad
-    color_paused: text color when song is stopped or paused, defaults to color_degraded
+    color_offline: text color when spotify is not running,
+        defaults to color_bad
+    color_paused: text color when song is stopped or paused,
+        defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     format: see placeholders below
     format_down: define output if spotify is not running
@@ -68,8 +70,9 @@ class Py3status:
                 microtime = metadata.get('mpris:length')
                 rtime = str(timedelta(microseconds=microtime))[:-7]
                 title = metadata.get('xesam:title')
-                playback_status = self.player.Get('org.mpris.MediaPlayer2.Player',
-                                                  'PlaybackStatus')
+                playback_status = self.player.Get(
+                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
+                )
                 if playback_status.strip() == 'Playing':
                     color = self.color_playing or i3s_config['color_good']
                 else:
