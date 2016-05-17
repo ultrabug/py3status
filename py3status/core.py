@@ -56,11 +56,19 @@ class Py3statusWrapper():
         # defaults
         config = {
             'cache_timeout': 60,
-            'include_paths': ['{}/.i3/py3status/'.format(home_path)],
             'interval': 1,
             'minimum_interval': 0.1,  # minimum module update interval
             'dbus_notify': False,
         }
+
+        # include path to search for user modules
+        config['include_paths'] = [
+            '{}/.i3/py3status/'.format(home_path),
+            '{}/i3status/py3status'.format(os.environ.get(
+                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+            '{}/i3/py3status'.format(os.environ.get(
+                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+        ]
 
         # package version
         try:
@@ -74,8 +82,9 @@ class Py3statusWrapper():
         # respect i3status' file detection order wrt issue #43
         i3status_config_file_candidates = [
             '{}/.i3status.conf'.format(home_path),
-            '{}/.config/i3status/config'.format(os.environ.get(
-                'XDG_CONFIG_HOME', home_path)), '/etc/i3status.conf',
+            '{}/i3status/config'.format(os.environ.get(
+                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+            '/etc/i3status.conf',
             '{}/i3status/config'.format(os.environ.get('XDG_CONFIG_DIRS',
                                                        '/etc/xdg'))
         ]
@@ -93,6 +102,14 @@ class Py3statusWrapper():
         parser = argparse.ArgumentParser(
             description='The agile, python-powered, i3status wrapper')
         parser = argparse.ArgumentParser(add_help=True)
+        parser.add_argument('-b',
+                            '--dbus-notify',
+                            action="store_true",
+                            default=False,
+                            dest="dbus_notify",
+                            help="""use notify-send to send user notifications
+                                    rather than i3-nagbar,
+                                    requires a notification daemon eg dunst""")
         parser.add_argument('-c',
                             '--config',
                             action="store",
@@ -104,12 +121,6 @@ class Py3statusWrapper():
                             '--debug',
                             action="store_true",
                             help="be verbose in syslog")
-        parser.add_argument('-b',
-                            '--dbus-notify',
-                            action="store_true",
-                            default=False,
-                            dest="dbus_notify",
-                            help="use notify-send to send user notifications")
         parser.add_argument('-i',
                             '--include',
                             action="append",
@@ -175,7 +186,7 @@ class Py3statusWrapper():
         }
         """
         user_modules = {}
-        for include_path in sorted(self.config['include_paths']):
+        for include_path in self.config['include_paths']:
             include_path = os.path.abspath(include_path) + '/'
             if not os.path.isdir(include_path):
                 continue
@@ -183,6 +194,9 @@ class Py3statusWrapper():
                 if not f_name.endswith('.py'):
                     continue
                 module_name = f_name[:-3]
+                # do not overwrite modules if already found
+                if module_name in user_modules:
+                    pass
                 user_modules[module_name] = (include_path, f_name)
         return user_modules
 
@@ -270,13 +284,18 @@ class Py3statusWrapper():
             self.i3status_thread.mock()
             i3s_mode = 'mocked'
         else:
+            i3s_mode = 'started'
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
                 if not self.i3status_thread.is_alive():
+                    # i3status is having a bad day, so tell the user what went
+                    # wrong and do the best we can with just py3status modules.
                     err = self.i3status_thread.error
-                    raise IOError(err)
+                    self.notify_user(err)
+                    self.i3status_thread.mock()
+                    i3s_mode = 'mocked'
+                    break
                 sleep(0.1)
-            i3s_mode = 'started'
         if self.config['debug']:
             syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
                 i3s_mode,
@@ -463,7 +482,7 @@ class Py3statusWrapper():
         """
         config = self.i3status_thread.config
         i3modules = self.i3status_thread.i3modules
-        output_modules = {}
+        output_modules = self.output_modules
         # position in the bar of the modules
         positions = {}
         for index, name in enumerate(config['order']):
@@ -536,6 +555,15 @@ class Py3statusWrapper():
         interval = self.config['interval']
         last_sec = 0
 
+        # start our output
+        header = {
+            'version': 1,
+            'click_events': True,
+            'stop_signal': SIGUSR2,
+        }
+        print_line(dumps(header))
+        print_line('[[]')
+
         # main loop
         while True:
             while not self.i3bar_running:
@@ -578,11 +606,10 @@ class Py3statusWrapper():
                         out = module['module'].get_latest()
                         output[index] = ', '.join([dumps(x) for x in out])
 
-                prefix = i3status_thread.last_prefix
                 # build output string
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
-                print_line('{}[{}]'.format(prefix, out))
+                print_line(',[{}]'.format(out))
 
             # sleep a bit before doing this again to avoid killing the CPU
             sleep(0.1)

@@ -39,7 +39,6 @@ class Module(Thread):
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.new_update = False
-        self.module_full_name = module
         self.nagged = False
         self.sleeping = False
         self.timer = None
@@ -124,7 +123,11 @@ class Module(Thread):
     def get_latest(self):
         output = []
         for method in self.methods.values():
-            output.append(method['last_output'])
+            data = method['last_output']
+            if isinstance(data, list):
+                output.extend(data)
+            else:
+                output.append(data)
         return output
 
     def set_module_options(self, module):
@@ -141,23 +144,79 @@ class Module(Thread):
         if 'separator' in mod_config:
             separator = mod_config['separator']
             if not isinstance(separator, bool):
-                raise TypeError("invalid 'separator' attribute, should be a bool")
+                err = 'invalid "separator" attribute, should be a bool'
+                raise TypeError(err)
 
             self.module_options['separator'] = separator
 
         if 'separator_block_width' in mod_config:
-            separator_block_width = mod_config['separator_block_width']
-            if not isinstance(separator_block_width, int):
-                raise TypeError("invalid 'separator_block_width' attribute, should be an int")
+            sep_block_width = mod_config['separator_block_width']
+            if not isinstance(sep_block_width, int):
+                err = 'invalid "separator_block_width" attribute, '
+                err += "should be an int"
+                raise TypeError(err)
 
-            self.module_options['separator_block_width'] = separator_block_width
+            self.module_options['separator_block_width'] = sep_block_width
 
         if 'align' in mod_config:
             align = mod_config['align']
-            if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
-                raise ValueError("invalid 'align' attribute, valid values are: left, center, right")
+            if not (isinstance(align, str) and
+                    align.lower() in ("left", "center", "right")):
+                err = 'invalid "align" attribute, valid values are:'
+                err += ' left, center, right'
+                raise ValueError(err)
 
             self.module_options['align'] = align
+
+    def process_composite(self, response):
+        """
+        Process a composite response.
+        composites do not have inter item separators as they appear joined.
+        We need to respect the universal options too.
+        """
+        composite = response['composite']
+        if not isinstance(composite, list):
+            raise Exception('expecting "composite" key in response')
+        # if list is empty nothing to do
+        if not len(composite):
+            return
+        if 'full_text' in response:
+            err = 'conflicting "full_text" and "composite" in response'
+            raise Exception(err)
+        # set universal options on last component
+        composite[-1].update(self.module_options)
+        # calculate any min width (we split this across components)
+        min_width = None
+        if 'min_width' in self.module_options:
+            min_width = int(self.module_options['min_width'] / len(composite))
+        # store alignment
+        align = None
+        if 'align' in self.module_options:
+            align = self.module_options['align']
+
+        # update all components
+        for index, item in enumerate(response['composite']):
+            # validate the response
+            if 'full_text' not in item:
+                raise KeyError('missing "full_text" key in response')
+            # make sure all components have a name
+            if 'name' not in item:
+                instance_index = item.get('index', index)
+                item['instance'] = '{} {}'.format(
+                    self.module_inst, instance_index
+                )
+                item['name'] = self.module_name
+            # hide separator for all inner components unless existing
+            if index != len(response['composite']) - 1:
+                if 'separator' not in item:
+                    item['separator'] = False
+                    item['separator_block_width'] = 0
+            # set min width
+            if min_width:
+                item['min_width'] = min_width
+            # set align
+            if align:
+                item['align'] = align
 
     def _params_type(self, method_name, instance):
         """
@@ -332,15 +391,18 @@ class Module(Thread):
                     else:
                         raise TypeError('response should be a dict')
 
-                    # validate the response
-                    if 'full_text' not in result:
-                        raise KeyError('missing "full_text" key in response')
+                    if 'composite' in response:
+                        self.process_composite(response)
                     else:
-                        result['instance'] = self.module_inst
-                        result['name'] = self.module_name
+                        # validate the response
+                        if 'full_text' not in result:
+                            err = 'missing "full_text" key in response'
+                            raise KeyError(err)
+                        # set universal module options in result
+                        result.update(self.module_options)
 
-                    # set universal module options in result
-                    result.update(self.module_options)
+                    result['instance'] = self.module_inst
+                    result['name'] = self.module_name
 
                     # initialize method object
                     if my_method['name'] is None:
@@ -360,7 +422,10 @@ class Module(Thread):
                         cache_time = cached_until
 
                     # update method object output
-                    my_method['last_output'] = result
+                    if 'composite' in response:
+                        my_method['last_output'] = result['composite']
+                    else:
+                        my_method['last_output'] = result
 
                     # mark module as updated
                     self.set_updated()
@@ -385,7 +450,8 @@ class Module(Thread):
             # don't be hasty mate
             # set timer to do update next time one is needed
             if not self.sleeping:
-                delay = max(cache_time - time(), self.config['minimum_interval'])
+                delay = max(cache_time - time(),
+                            self.config['minimum_interval'])
                 self.timer = Timer(delay, self.run)
                 self.timer.start()
 

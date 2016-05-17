@@ -3,8 +3,9 @@
 Display DNS resolution success on a configured domain.
 
 This module launch a simple query on each nameservers for the specified domain.
-Nameservers are dynamically retrieved. The FQDN is the only one mandatory parameter.
-It's also possible to add additional nameservers by appending them in nameservers list.
+Nameservers are dynamically retrieved. The FQDN is the only one mandatory
+parameter.  It's also possible to add additional nameservers by appending them
+in nameservers list.
 
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 

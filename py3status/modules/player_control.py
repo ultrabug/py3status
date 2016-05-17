@@ -10,7 +10,8 @@ Provides an icon to control simple functions of audio/video players:
 Configuration parameters:
     debug: enable verbose logging (bool) (default: False)
     supported_players: supported players (str) (comma separated list)
-    volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
+    volume_tick: percentage volume change on mouse wheel (int) (positive number
+        or None to disable it)
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
