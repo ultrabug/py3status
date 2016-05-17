@@ -165,7 +165,8 @@ class ConfigParser:
 
     def check_module_name(self, name, offset=0):
         '''
-        Checks a module name eg. some i3status modules cannot have an instance name.
+        Checks a module name eg. some i3status modules cannot have an instance
+        name.
         '''
         if name in ['general']:
             return
@@ -518,7 +519,8 @@ def process_config(config_path, py3_wrapper=None):
                 button_error = True
 
         if button_error:
-            notify_user('Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 saw `{}`'.format(group_name, button))
+            err = 'Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 saw `{}`'
+            notify_user(err.format(group_name, button))
             return False
         clicks = on_click.setdefault(group_name, {})
         clicks[button] = value
