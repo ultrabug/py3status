@@ -38,9 +38,6 @@ class Py3status:
     temp_separator = '|'
 
     def nvidia_temp(self, i3s_output_list, i3s_config):
-        # The whole command:
-        # nvidia-smi -q -d TEMPERATURE | sed -nr 's/.*Current Temp.*:[[:space:]]*([0-9]+).*/\1/p'
-
         out = check_output(shlex.split("nvidia-smi -q -d TEMPERATURE"))
         temps = re.findall(TEMP_RE, out.decode("utf-8"))
 

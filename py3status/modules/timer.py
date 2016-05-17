@@ -4,29 +4,52 @@ A simple countdown timer.
 
 This is a very basic countdown timer.  You can change the timer length as well
 as pausing, restarting and resetting it.  Currently this is more of a demo of a
-composite and not really ready for production usage.
+composite.
 
-As well as a general clean it would be nice to have it play an alarm when the
-time is up.  Ideally it should also run as a thread so that the alarm will go
-off at the correct time.  It would be nice too if it could also survive a
-py3status restart.
+Each part of the timer can be changed independently hours, minutes, seconds using
+mouse buttons 4 and 5 (scroll wheel).
+Button 1 starts/pauses the countdown.
+Button 2 resets timer.
 
+Configuration parameters:
+    sound: path to a sound file that will be played when the timer expires.
+        (default None)
+    time: how long in seconds for the timer
+        (default 60)
 """
 
 from time import time
+from threading import Timer
 
 
 class Py3status:
     """
     """
     # available configuration parameters
+    sound = None
+    time = 60
 
     def __init__(self):
-        self.time = 60
         self.running = False
         self.end_time = None
         self.time_left = None
         self.color = None
+        self.alarm_timer = None
+        self.alarm = False
+        self.done = False
+
+    def _time_up(self):
+        """
+        Called when the timer expires
+        """
+        self.running = False
+        self.color = '#FF0000'
+        self.time_left = 0
+        self.done = True
+        if self.sound:
+            self.py3.play_sound(self.sound)
+            self.alarm = True
+        self.timer()
 
     def timer(self, i3s_output_list, i3s_config):
 
@@ -36,13 +59,10 @@ class Py3status:
                 value = '0' + value
             return value
 
-        if self.running:
+        if self.running or self.done:
             t = int(self.end_time - time())
             if t <= 0:
                 t = 0
-                self.running = False
-                self.color = '#FF0000'
-                self.time_left = None
         else:
             if self.time_left:
                 t = self.time_left
@@ -104,25 +124,45 @@ class Py3status:
         index = event['index']
         button = event['button']
 
+        # If played an alarm sound then cancel the sound on any putton press
+        if self.alarm:
+            self.py3.stop_sound()
+            self.alarm = False
+            return
+
         if button == 1:
             if self.running:
+                # pause timer
                 self.running = False
                 self.time_left = int(self.end_time - time())
                 self.color = '#FFFF00'
+                if self.alarm_timer:
+                    self.alarm_timer.cancel()
             else:
+                # start/restart timer
                 self.running = True
                 if self.time_left:
                     self.end_time = time() + self.time_left
                 else:
                     self.end_time = time() + self.time
                 self.color = '#00FF00'
+                if self.alarm_timer:
+                    self.alarm_timer.cancel()
+                self.done = False
+                self.alarm_timer = Timer(self.time_left or self.time, self._time_up)
+                self.alarm_timer.start()
 
         if button == 2:
             self.running = False
             self.time_left = None
             self.color = None
+            self.done = False
+            if self.alarm_timer:
+                self.alarm_timer.cancel()
 
         if not self.running:
+            self.done = False
+            # change timer section HH:MM:SS
             if self.time_left:
                 t = self.time_left
             else:
@@ -138,7 +178,11 @@ class Py3status:
             else:
                 self.time = t
 
-        self.text = str(event['index'])
+    def kill(self):
+        # remove any timer
+        if self.alarm_timer:
+            self.alarm_timer.cancel()
+
 
 if __name__ == "__main__":
     x = Py3status()

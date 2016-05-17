@@ -39,7 +39,6 @@ class Module(Thread):
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.new_update = False
-        self.module_full_name = module
         self.nagged = False
         self.sleeping = False
         self.timer = None
@@ -145,21 +144,27 @@ class Module(Thread):
         if 'separator' in mod_config:
             separator = mod_config['separator']
             if not isinstance(separator, bool):
-                raise TypeError('invalid "separator" attribute, should be a bool')
+                err = 'invalid "separator" attribute, should be a bool'
+                raise TypeError(err)
 
             self.module_options['separator'] = separator
 
         if 'separator_block_width' in mod_config:
-            separator_block_width = mod_config['separator_block_width']
-            if not isinstance(separator_block_width, int):
-                raise TypeError('invalid "separator_block_width" attribute, should be an int')
+            sep_block_width = mod_config['separator_block_width']
+            if not isinstance(sep_block_width, int):
+                err = 'invalid "separator_block_width" attribute, '
+                err += "should be an int"
+                raise TypeError(err)
 
-            self.module_options['separator_block_width'] = separator_block_width
+            self.module_options['separator_block_width'] = sep_block_width
 
         if 'align' in mod_config:
             align = mod_config['align']
-            if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
-                raise ValueError('invalid "align" attribute, valid values are: left, center, right')
+            if not (isinstance(align, str) and
+                    align.lower() in ("left", "center", "right")):
+                err = 'invalid "align" attribute, valid values are:'
+                err += ' left, center, right'
+                raise ValueError(err)
 
             self.module_options['align'] = align
 
@@ -176,7 +181,8 @@ class Module(Thread):
         if not len(composite):
             return
         if 'full_text' in response:
-            raise Exception('conflicting "full_text" and "composite" in response')
+            err = 'conflicting "full_text" and "composite" in response'
+            raise Exception(err)
         # set universal options on last component
         composite[-1].update(self.module_options)
         # calculate any min width (we split this across components)
@@ -196,7 +202,9 @@ class Module(Thread):
             # make sure all components have a name
             if 'name' not in item:
                 instance_index = item.get('index', index)
-                item['instance'] = '{} {}'.format(self.module_inst, instance_index)
+                item['instance'] = '{} {}'.format(
+                    self.module_inst, instance_index
+                )
                 item['name'] = self.module_name
             # hide separator for all inner components unless existing
             if index != len(response['composite']) - 1:
@@ -388,7 +396,8 @@ class Module(Thread):
                     else:
                         # validate the response
                         if 'full_text' not in result:
-                            raise KeyError('missing "full_text" key in response')
+                            err = 'missing "full_text" key in response'
+                            raise KeyError(err)
                         # set universal module options in result
                         result.update(self.module_options)
 
@@ -441,7 +450,8 @@ class Module(Thread):
             # don't be hasty mate
             # set timer to do update next time one is needed
             if not self.sleeping:
-                delay = max(cache_time - time(), self.config['minimum_interval'])
+                delay = max(cache_time - time(),
+                            self.config['minimum_interval'])
                 self.timer = Timer(delay, self.run)
                 self.timer.start()
 

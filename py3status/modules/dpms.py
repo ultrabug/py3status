@@ -34,7 +34,8 @@ class Py3status:
 
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or self.py3.COLOR_GOOD if self.run else self.color_off or self.py3.COLOR_BAD
+            'color': self.color_on or self.py3.COLOR_GOOD if self.run
+            else self.color_off or self.py3.COLOR_BAD
         }
 
     def on_click(self, event):

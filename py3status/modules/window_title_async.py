@@ -74,10 +74,12 @@ class Py3status:
 
             # check if we need to update title due to changes
             # in the workspace layout
-            layout_changed = (hasattr(e, "binding") and
-                              (e.binding.command.startswith("layout") or
-                               e.binding.command.startswith("move container") or
-                               e.binding.command.startswith("border")))
+            layout_changed = (
+                hasattr(e, "binding") and
+                (e.binding.command.startswith("layout") or
+                 e.binding.command.startswith("move container") or
+                 e.binding.command.startswith("border"))
+            )
 
             if title_changed or layout_changed:
                 self.title = get_title(conn)
@@ -109,7 +111,7 @@ class Py3status:
 
     def window_title(self, i3s_output_list, i3s_config):
         resp = {
-            'cached_until': self.py3.CACHE_FOREVER,  # cache until event received
+            'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.title,
         }
 

@@ -162,7 +162,7 @@ class Events(Thread):
         syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
-    def process_event(self, module_name, event):
+    def process_event(self, module_name, event, top_level=True):
         """
         Process the event for the named module.
         Events may have been declared in i3status.conf, modules may have
@@ -172,13 +172,15 @@ class Events(Thread):
         default_event = False
         dispatched = False
         # execute any configured i3-msg command
-        if self.on_click.get(module_name, {}).get(button):
-            self.on_click_dispatcher(module_name,
-                                     self.on_click[module_name].get(button))
-            dispatched = True
-        # otherwise setup default action on button 2 press
-        elif button == 2:
-            default_event = True
+        # we do not do this for containers
+        if top_level:
+            if self.on_click.get(module_name, {}).get(button):
+                self.on_click_dispatcher(module_name,
+                                         self.on_click[module_name].get(button))
+                dispatched = True
+            # otherwise setup default action on button 2 press
+            elif button == 2:
+                default_event = True
 
         for module in self.modules.values():
             # skip modules not supporting click_events
@@ -207,7 +209,7 @@ class Events(Thread):
         module_groups = self.i3s_config['.module_groups']
         containers = module_groups.get(module_name)
         for container in containers:
-            self.process_event(container, event)
+            self.process_event(container, event, top_level=False)
 
         # fall back to i3bar_click_events.py module if present
         if not dispatched:
