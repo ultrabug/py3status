@@ -27,6 +27,8 @@ Up to date documentation:
 
 -  `Writing custom modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#writing_custom_modules>`_
 
+-  `Contributing <https://github.com/ultrabug/py3status/blob/master/doc/README.md#contributing>`_
+
 Get help or share your ideas on IRC:
 
 - channel **#py3status** on **FreeNode**
