@@ -81,6 +81,14 @@ class GetData:
         total_mem = int(mem_data[mem_index + 1]) / 1024.
         used_mem = int(mem_data[mem_index + 2]) / 1024.
 
+        # Substract cached memory from the used memory
+        try:
+            cached_index = mem_data.index('cached')
+            cached_mem = int(mem_data[mem_index + 1 + cached_index]) / 1024.
+            used_mem -= cached_mem
+        except:
+            pass
+
         # Caculate percentage
         used_mem_percent = int(used_mem / (total_mem / 100))
 
