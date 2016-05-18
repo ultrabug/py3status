@@ -34,6 +34,8 @@
 
 **[imap](#imap)** — Display the unread messages count from your IMAP account.
 
+**[insync](#insync)** — Get current insync status
+
 **[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
 
 **[mpd_status](#mpd_status)** — Display information from mpd.
@@ -583,6 +585,30 @@ Format of status string placeholders:
   - `{unseen}` number of unread emails
 
 **author** obb
+
+---
+
+### <a name="insync"></a>insync
+
+Get current insync status
+
+Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
+
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 10)*
+  - `format` Display format to use *(default '{status} {queued}')*
+
+Format status string parameters:
+  - `{status}` Status of Insync
+  - `{queued}` Number of files queued
+
+Requires:
+  - `insync` command line tool
+
+**author** Joshua Pratt <jp10010101010000@gmail.com>
+
+**license** BSD
 
 ---
 

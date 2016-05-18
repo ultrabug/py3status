@@ -1,35 +1,39 @@
 # -*- coding: utf-8 -*-
 
 """
-Gets the current insync status
+Get current insync status
+
+Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
 
 Configuration parameters:
-    format: Display format to use *(default
-        '{status} {queued}'
-        )*
+    cache_timeout: How often we refresh this module in seconds
+        (default 10)
+    format: Display format to use (default '{status} {queued}')
 
 Format status string parameters:
     {status} Status of Insync
     {queued} Number of files queued
 
+Requires:
+    insync: command line tool
+
 @author Joshua Pratt <jp10010101010000@gmail.com>
-Thanks to @author Iain Tatch <iain.tatch@gmail.com> for the script that this is based on
 @license BSD
 """
 
 from time import time
-import subprocess
+from subprocess import check_output
 
 
 class Py3status:
     # available configuration parameters
-    cache_timeout = 1
+    cache_timeout = 10
     format = '{status} {queued}'
 
     def check_insync(self, i3s_output_list, i3s_config):
-        status = str(subprocess.check_output(["/usr/bin/insync", "get_status"]))
-        if len(status) > 5:
-            status = status[2:-3]
+        status = check_output(["insync", "get_status"]).decode()
+        if len(status) > 2:
+            status = status[:-2]
         color = i3s_config.get('color_degraded', '')
         if status == "OFFLINE":
             color = i3s_config.get('color_bad', '')
@@ -37,13 +41,14 @@ class Py3status:
             color = i3s_config.get('color_good', '')
             status = "INSYNC"
 
-        queued = str(subprocess.check_output(["/usr/bin/insync", "get_sync_progress"]))
+        queued = check_output(["insync", "get_sync_progress"]).decode()
         queued = queued.split("\\n")
         if len(queued) > 2 and "queued" in queued[-2]:
             queued = queued[-2]
-            queued = queued.split(" ")[0].replace("b'", "")
+            queued = queued.split(" ")[0]
         else:
             queued = ""
+
         results = self.format.format(status=status, queued=queued)
 
         response = {
