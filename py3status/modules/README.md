@@ -1532,16 +1532,17 @@ Requires:
 Display Yandex.Disk status.
 
 Configuration parameters:
-    - `cache_timeout` how often we refresh this module in seconds (10s default)
-    - `format` a prefix text for the Yandex.Disk status
+  - `cache_timeout` how often we refresh this module in seconds
+    *(default 10)*
+  - `format` prefix text for the Yandex.Disk status
+    *(default 'Yandex.Disk: {status}')*
 
-Valid status values include:
-    - Yandex.Disk isn't running!
-    - Error: daemon not started
-    - ...
+Format of status string placeholders:
+  - `{status}` daemon status
 
 Requires:
-    `yandex-disk` command line tool (link: https://disk.yandex.com/)
+  - `yandex-disk` command line tool (link: https://disk.yandex.com/)
 
-@author Vladimir Potapev (github:vpotapev)
-@license BSD
+**author** Vladimir Potapev (github:vpotapev)
+
+**license** BSD

@@ -2,10 +2,14 @@
 """
 Display Yandex.Disk status.
 
-Valid status values include:
-    - Yandex.Disk isn't running!
-    - Error: daemon not started
-    - ...
+Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds
+        (default 10)
+    format: prefix text for the Yandex.Disk status
+        (default 'Yandex.Disk: {status}')
+
+Format of status string placeholders:
+    {status} daemon status
 
 Requires:
     yandex-disk: command line tool (link: https://disk.yandex.com/)
@@ -21,12 +25,6 @@ from time import time
 
 class Py3status:
     """
-    Configuration parameters:
-        cache_timeout: how often we refresh this module in seconds (10s default)
-        format: prefix text for the Yandex.Disk status
-
-    Format of status string placeholders:
-        {status} daemon status
     """
     # available configuration parameters
     cache_timeout = 10
@@ -55,7 +53,7 @@ class Py3status:
             status = 'Busy'
             response['color'] = i3s_config['color_degraded']
 
-        full_text = self.format.format(status=str(status))
+        full_text = self.format.format(status=status)
         response['full_text'] = full_text
         return response
 
