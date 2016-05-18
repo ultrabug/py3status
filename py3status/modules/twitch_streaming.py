@@ -14,7 +14,7 @@ Configuration parameters
     format_invalid: Display format when streamer does not exist
         (default "{stream_name} does not exist!")
     stream_name: name of streamer(twitch.tv/<stream_name>)
-        (default 'grossie_gore')
+        (default None)
 
 Format of status string placeholders
     {stream_name}:  name of the streamer
@@ -35,7 +35,7 @@ class Py3status:
     format = "{stream_name} is live!"
     format_offline = "{stream_name} is offline."
     format_invalid = "{stream_name} does not exist!"
-    stream_name = "grossie_gore"
+    stream_name = None
 
     def __init__(self):
         self._display_name = None
@@ -46,6 +46,11 @@ class Py3status:
         self._display_name = display_name_request.json().get('display_name')
 
     def is_streaming(self, i3s_output_list, i3s_config):
+        if self.stream_name is None:
+            return {
+                'full_text': 'stream_name missing',
+                'cached_until': self.py3.CACHE_FOREVER
+            }
         r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
         if not self._display_name:
             self._get_display_name()
