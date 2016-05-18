@@ -10,10 +10,10 @@ By default, this modules uses the 'gnome-screenshot' program to take the screens
 but this can be configured with the `screenshot_command` configuration parameter.
 
 Configuration parameters:
-    screenshot_command: the command used to generate the screenshot
     file_length: generated file_name length
     push: True/False if yo want to push your screenshot to your server
     save_path: Directory where to store your screenshots.
+    screenshot_command: the command used to generate the screenshot
     upload_path: the remote path where to push the screenshot
     upload_server: your server address
     upload_user: your ssh user
@@ -31,14 +31,14 @@ class Py3status:
     """
     """
     # available configuration parameters
-    screenshot_command = 'gnome-screenshot -f'
     cache_timeout = 5
-    save_path = '%s%s' % (os.environ['HOME'], '/Pictures/')
     file_length = 4
+    push = True
+    save_path = '%s%s' % (os.environ['HOME'], '/Pictures/')
+    screenshot_command = 'gnome-screenshot -f'
     upload_path = "/files"
     upload_server = 'puzzledge.org'
     upload_user = 'erol'
-    push = True
 
     def __init__(self):
         self.full_text = ''
@@ -56,10 +56,9 @@ class Py3status:
 
         if (self.push and self.upload_server and self.upload_user and
                 self.upload_path):
-            command = 'scp %s/%s%s %s@%s:%s' % (self.save_path, file_name,
-                                                '.jpg', self.upload_user,
-                                                self.upload_server,
-                                                self.upload_path)
+            command = 'scp %s/%s%s %s@%s:%s' % (
+                self.save_path, file_name, '.jpg', self.upload_user,
+                self.upload_server, self.upload_path)
             subprocess.Popen(command.split())
 
     def _filename_generator(self,
