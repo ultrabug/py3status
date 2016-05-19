@@ -212,7 +212,7 @@ class Py3status:
     def hello_world(self):
         return {
             'full_text': 'Hello World!',
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 ```
 
@@ -247,7 +247,7 @@ It should contain at least two key / values.
 
 This is the text that will be displayed in the status bar.
 
-######cache_until
+######cached_until
 
 This tells py3status how long it should consider your
 response valid before it should re-run the method to get a fresh response.  In
@@ -285,7 +285,7 @@ class Py3status:
     def hello_world(self):
         return {
             'full_text': self.format,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 ```
 This module still outputs 'Hello World' as before but now you can customise the
@@ -320,7 +320,7 @@ class Py3status:
     def click_info(self):
         return {
             'full_text': self.full_text,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 
     def on_click(self, event):
@@ -380,7 +380,7 @@ class Py3status:
 
         return {
             'full_text': full_text,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 
     def on_click(self, event):
