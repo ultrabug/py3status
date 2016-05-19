@@ -17,14 +17,21 @@ class Py3:
         User notifications
         Forcing module to update (even other modules)
         Triggering events for modules
+
+    Py3 is also used for testing in which case it does not get a module when
+    being created.  All methods should work in this situation.
     """
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
 
-    def __init__(self, module):
+    def __init__(self, module=None, i3s_config=None):
         self._audio = None
         self._module = module
-        self._output_modules = module._py3_wrapper.output_modules
+        self._i3s_config = i3s_config
+        # we are running through the whole stack.
+        # If testing then module is None.
+        if module:
+            self._output_modules = module._py3_wrapper.output_modules
 
     def _get_module_info(self, module_name):
         """
@@ -35,14 +42,21 @@ class Py3:
         'position': list of places in i3bar, usually only one item
         'type': module type py3status/i3status
         """
-        return self._output_modules.get(module_name)
+        if self._module:
+            return self._output_modules.get(module_name)
+
+    def i3s_config(self):
+        """
+        returns the i3s_config dict.
+        """
+        return self._i3s_config
 
     def update(self, module_name=None):
         """
         Update a module.  If module_name is supplied the module of that
         name is updated.  Otherwise the module calling is updated.
         """
-        if not module_name:
+        if not module_name and self._module:
             return self._module.force_update()
         else:
             module_info = self._get_module_info(module_name)
@@ -63,7 +77,7 @@ class Py3:
         """
         Trigger the event on named module
         """
-        if module_name:
+        if module_name and self._module:
             self._module._py3_wrapper.events_thread.process_event(
                 module_name, event)
 
@@ -72,7 +86,8 @@ class Py3:
         Send notification to user.
         level can be 'info', 'error' or 'warning'
         """
-        self._module._py3_wrapper.notify_user(msg, level=level)
+        if self._module:
+            self._module._py3_wrapper.notify_user(msg, level=level)
 
     def time_in(self, seconds=0):
         """

@@ -25,7 +25,6 @@ Format status string parameters:
 @license BSD
 """
 
-from time import time
 import subprocess
 import re
 
@@ -45,15 +44,16 @@ class Py3status:
         self._updates = None
         self._security_notice = False
 
-    def check_updates(self, i3s_output_list, i3s_config):
+    def check_updates(self):
         if self._first:
             self._first = False
             response = {
-                'cached_until': time(),
+                'cached_until': self.py3.time_in(),
                 'full_text': self.format.format(updates='?')
             }
             return response
 
+        i3s_config = self.py3.i3s_config()
         output, error = subprocess.Popen(
             ['dnf', 'check-update'],
             stdout=subprocess.PIPE,
@@ -80,7 +80,7 @@ class Py3status:
                 color = self.color_degraded or i3s_config['color_degraded']
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': self.format.format(updates=updates)
         }
@@ -91,13 +91,8 @@ if __name__ == "__main__":
     """
     Test this module by calling it directly.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.check_updates([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

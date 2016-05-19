@@ -213,7 +213,7 @@ class Py3status:
         bar = bar.ljust(self.num_progress_bars)
         return bar
 
-    def pomodoro(self, i3s_output_list, i3s_config):
+    def pomodoro(self):
         """
         Pomodoro response handling and countdown
         """
@@ -259,6 +259,8 @@ class Py3status:
             response['urgent'] = True
             self._alert = False
 
+        i3s_config = self.py3.i3s_config()
+
         if not self._running:
             response['color'] = i3s_config['color_bad']
         else:
@@ -288,15 +290,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.pomodoro([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

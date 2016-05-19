@@ -286,7 +286,9 @@ class Module(Thread):
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
-                setattr(self.module_class, 'py3', Py3(self))
+                i3s_config = self.i3status_thread.config['general']
+                py3 = Py3(module=self, i3s_config=i3s_config)
+                setattr(self.module_class, 'py3', py3)
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):

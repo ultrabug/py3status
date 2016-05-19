@@ -23,8 +23,6 @@ Format of status string placeholders
 @license BSD
 """
 
-# import your useful libs here
-from time import time
 import requests
 
 
@@ -45,12 +43,15 @@ class Py3status:
         display_name_request = requests.get(url)
         self._display_name = display_name_request.json().get('display_name')
 
-    def is_streaming(self, i3s_output_list, i3s_config):
+    def is_streaming(self):
         if self.stream_name is None:
             return {
                 'full_text': 'stream_name missing',
                 'cached_until': self.py3.CACHE_FOREVER
             }
+
+        i3s_config = self.py3.i3s_config()
+
         r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
         if not self._display_name:
             self._get_display_name()
@@ -68,20 +69,18 @@ class Py3status:
             full_text = "An unknown error has occurred."
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
             'color': colour
         }
         return response
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
+    """
+    Run module in test mode.
+    """
     config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
+        'stream_name': 'moo'
     }
-    while True:
-        print(x.is_streaming([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status, config=config)
