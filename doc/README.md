@@ -22,6 +22,8 @@ Py3status
 * [Example 4: Status string placeholders](#example_4)
 
 
+* [Py3 module helper](#py3)
+
 [Contributing](#contributing)
 
 ***
@@ -401,6 +403,70 @@ click_info {
     format_clicked = "Vous bouton {button} enfoncé"
 }
 ```
+
+***
+
+
+## <a name="py3"></a>Py3 module helper
+
+Py3 is a special helper object that gets injected into
+py3status modules, providing extra functionality.
+A module can access it via the self.py3 instance attribute
+of its Py3status class.
+
+#### Constants
+
+__CACHE_FOREVER__
+
+If this is returned as the value for `cached_until` then the module will not be
+updated.  This is useful for static modules and ones updating asynchronously.
+
+#### Methods
+
+__update(module_name=None)__
+
+Update a module.  If `module_name` is supplied the module of that
+name is updated.  Otherwise the module calling is updated.
+
+__get_output(module_name)__
+
+Return the output of the named module.  This will be a list.
+
+__trigger_event(module_name, event)__
+
+Trigger an event on a named module.
+
+__notify_user(msg, level='info')__
+
+Send notification to user.
+`level` must be `info`, `error` or `warning`
+
+__time_in(seconds=0)__
+
+Returns the time a given number of seconds into the future.
+Helpful for creating the `cached_until` value for the module
+output.
+
+__safe_format(format_string, param_dict)__
+
+Perform a safe formatting of a string.  Using format fails if the
+format string contains placeholders which are missing.  Since these can
+be set by the user it is possible that they add unsupported items.
+This function will escape missing placemolders so that modules do not
+crash hard.
+
+__check_commands(cmd_list)__
+
+Checks to see if commands in list are available using `which`.
+Returns the first available command.
+
+__play_sound(sound_file)__
+
+Plays sound_file if possible.  requires `paplay` or `play`
+
+__stop_sound()__
+
+Stops any currently playing sounds for this module.
 
 ***
 
