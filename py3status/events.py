@@ -207,7 +207,7 @@ class Events(Thread):
 
         # find container that holds the module and call its onclick
         module_groups = self.i3s_config['.module_groups']
-        containers = module_groups.get(module_name)
+        containers = module_groups.get(module_name, [])
         for container in containers:
             self.process_event(container, event, top_level=False)
 
