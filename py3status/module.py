@@ -105,12 +105,13 @@ class Module(Thread):
 
     def wake(self):
         self.sleeping = False
-        cache_time = self.cache_time
+        if self.cache_time is None:
+            return
         # new style modules can signal they want to cache forever
-        if cache_time == PY3_CACHE_FOREVER:
+        if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        delay = max(cache_time - time(), 0)
+        delay = max(self.cache_time - time(), 0)
         self.timer = Timer(delay, self.run)
         self.timer.start()
 
