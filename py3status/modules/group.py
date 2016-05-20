@@ -16,7 +16,7 @@ The way it does this is selected via the `click_mode` option.
 
 Configuration parameters:
     align: Text alignment when fixed_width is set
-        can be 'left', 'center' or 'right' (default 'left')
+        can be 'left', 'center' or 'right' (default 'center')
     button_next: Button that when clicked will switch to display next module.
         Setting to `0` will disable this action. (default 4)
     button_prev: Button that when clicked will switch to display previous
@@ -35,7 +35,7 @@ Configuration parameters:
     cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
-        (default True)
+        (default False)
     format: Format for module output.
         (default "{output}" if click_mode is 'all',
         "{output} {button}" if click_mode 'button')
@@ -86,7 +86,7 @@ from time import time
 
 class Py3status:
     # available configuration parameters
-    align = 'left'
+    align = 'center'
     button_next = 4
     button_prev = 5
     button_toggle = 1
@@ -142,7 +142,7 @@ class Py3status:
             if self.align == 'right':
                 current[0]['full_text'] = padding + current[0]['full_text']
             elif self.align == 'center':
-                cut = round(len(padding) / 2)
+                cut = len(padding) // 2
                 current[0]['full_text'] = padding[:cut] + \
                     current[0]['full_text']
                 current[-1]['full_text'] += padding[cut:]
@@ -200,7 +200,7 @@ class Py3status:
         output = []
         for part in parts:
             if part == '{output}':
-                output += current_output
+                output += current_output if current_output else ''
             elif part == '{button}':
                 output += [{'full_text': format_control,
                             'index': 'button'}]
