@@ -61,7 +61,7 @@ class Py3:
 
     def trigger_event(self, module_name, event):
         """
-        Trigger the event on named module
+        Trigger an event on a named module.
         """
         if module_name:
             self._module._py3_wrapper.events_thread.process_event(
@@ -70,13 +70,14 @@ class Py3:
     def notify_user(self, msg, level='info'):
         """
         Send notification to user.
-        level can be 'info', 'error' or 'warning'
+        level must be 'info', 'error' or 'warning'
         """
         self._module._py3_wrapper.notify_user(msg, level=level)
 
     def time_in(self, seconds=0):
         """
-        Returns time seconds in the future.  Helpfull for creating cache_until
+        Returns the time a given number of seconds into the future.  Helpful
+        for creating the `cached_until` value for the module output.
         """
         return time() + seconds
 
