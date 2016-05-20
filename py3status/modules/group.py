@@ -156,10 +156,10 @@ class Py3status:
         return self.items[self.active]
 
     def _next(self):
-        self.active = (self.active + 1) % len(self.items)
+        self.active = (self.active - 1) % len(self.items)
 
     def _prev(self):
-        self.active = (self.active - 1) % len(self.items)
+        self.active = (self.active + 1) % len(self.items)
 
     def group(self):
         """
