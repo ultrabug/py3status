@@ -576,7 +576,6 @@ class Py3statusWrapper():
                     if not err:
                         err = 'I3status died horribly.'
                     self.notify_user(err)
-                    break
 
                 # check events thread
                 if not self.events_thread.is_alive():

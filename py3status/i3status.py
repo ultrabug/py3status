@@ -10,7 +10,7 @@ from syslog import syslog, LOG_INFO
 from signal import SIGUSR2, SIGSTOP, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
 from threading import Thread
-from time import time
+from time import time, sleep
 
 from py3status.profiling import profile
 from py3status.events import IOPoller
@@ -522,6 +522,19 @@ class I3status(Thread):
 
     @profile
     def run(self):
+        # if the i3status process dies we want to restart it.
+        # We give up restarting if we have died too often
+        for x in range(10):
+            if not self.lock.is_set():
+                break
+            self.spawn_i3status()
+            # check if we never worked properly and if so quit now
+            if not self.ready:
+                break
+            # limit restart rate
+            sleep(5)
+
+    def spawn_i3status(self):
         """
         Spawn i3status using a self generated config file and poll its output.
         """
