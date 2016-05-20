@@ -126,7 +126,7 @@ class Py3status:
             return self.py3.get_output(self.items[self.active])
         # fixed width we need to find the width of all outputs
         # and then pad with spaces to make correct width.
-        current = None
+        current = []
         widths = []
         for i in range(len(self.items)):
             output = self.py3.get_output(self.items[i])
@@ -200,7 +200,7 @@ class Py3status:
         output = []
         for part in parts:
             if part == '{output}':
-                output += current_output if current_output else ''
+                output += current_output
             elif part == '{button}':
                 output += [{'full_text': format_control,
                             'index': 'button'}]
