@@ -35,7 +35,6 @@ pomodoro {
 
 from math import ceil
 from threading import Timer
-from syslog import syslog, LOG_INFO
 from time import time
 import os
 
@@ -276,8 +275,8 @@ class Py3status:
             return
 
         if not self._player.available:
-            syslog(LOG_INFO, "pomodoro module: the pyglet or pygame "
-                   "library are required to play sounds")
+            self.py3.log("pomodoro module: the pyglet or pygame "
+                         "library are required to play sounds")
             return
 
         try:

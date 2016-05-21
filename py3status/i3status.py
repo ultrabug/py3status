@@ -6,7 +6,6 @@ from json import loads
 from datetime import datetime, timedelta, tzinfo
 from subprocess import Popen
 from subprocess import PIPE
-from syslog import syslog, LOG_INFO
 from signal import SIGUSR2, SIGSTOP, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
 from threading import Thread
@@ -541,9 +540,9 @@ class I3status(Thread):
         try:
             with NamedTemporaryFile(prefix='py3status_') as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
-                syslog(LOG_INFO,
-                       'i3status spawned using config file {}'.format(
-                           tmpfile.name))
+                self.py3_wrapper.log(
+                    'i3status spawned using config file {}'.format(
+                        tmpfile.name))
 
                 i3status_pipe = Popen(
                     ['i3status', '-c', tmpfile.name],
@@ -585,6 +584,7 @@ class I3status(Thread):
                 except IOError:
                     err = sys.exc_info()[1]
                     self.error = err
+                    self.py3_wrapper.log(err, 'error')
         except OSError:
             # we cleanup the tmpfile ourselves so when the delete will occur
             # it will usually raise an OSError: No such file or directory
