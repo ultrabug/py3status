@@ -31,9 +31,7 @@ class Py3status:
     format = '{status} {queued}'
 
     def check_insync(self, i3s_output_list, i3s_config):
-        status = check_output(["insync", "get_status"]).decode()
-        if len(status) > 2:
-            status = status[:-2]
+        status = check_output(["insync", "get_status"]).decode().strip()
         color = i3s_config.get('color_degraded', '')
         if status == "OFFLINE":
             color = i3s_config.get('color_bad', '')
@@ -42,9 +40,9 @@ class Py3status:
             status = "INSYNC"
 
         queued = check_output(["insync", "get_sync_progress"]).decode()
-        queued = queued.split("\\n")
-        if len(queued) > 2 and "queued" in queued[-2]:
-            queued = queued[-2]
+        queued = [q for q in queued.split("\n") if q != '']
+        if len(queued) > 0 and "queued" in queued[-1]:
+            queued = queued[-1]
             queued = queued.split(" ")[0]
         else:
             queued = ""
