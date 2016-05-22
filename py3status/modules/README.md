@@ -450,9 +450,11 @@ Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds
     *(default 60)*
   - `format` Format of output
-    *(default '{repo} {issues}/{pull_requests}{notifications}')*
+    (default '{repo} {issues}/{pull_requests}{notifications}'
+    if username and auth_token provided else
+    '{repo} {issues}/{pull_requests}')
   - `format_notifications` Format of `{notification}` status placeholder.
-    *(default ' 🔔{count}')*
+    *(default ' 🔔{notification_count}')*
   - `notifications` Type of notifications can be `all` for all notifications or
     `repo` to only get notifications for the repo specified.  If repo is
     not provided then all notifications will be checked.
@@ -467,8 +469,8 @@ Format of status string placeholders:
   - `{issues}` Number of open issues.
   - `{pull_requests}` Number of open pull requests
   - `{notifications}` Notifications.  If no notifications this will be empty.
-  - `{count}` __Only__ used in `format_notifications`,
-    the number of unread notifications
+  - `{notification_count}` Number of notifications.  This is also the __Only__
+    status string available to `format_notifications`.
 
 Requires:
   - `requests` python module from pypi https://pypi.python.org/pypi/requests
@@ -486,8 +488,7 @@ github {
 github {
     auth_token = '40_char_hex_access_token'
     username = 'my_username'
-    format = 'Github{notifications}'
-    format_notifications = ' {count}'
+    format = 'Github {notification_count}'
 }
 ```
 
