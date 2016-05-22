@@ -24,6 +24,8 @@
 
 **[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
 
+**[github](#github)** — Display Github notifications and issue/pull requests for a repo.
+
 **[glpi](#glpi)** — Display the total number of open tickets from GLPI.
 
 **[group](#group)** — Group a bunch of modules together and switch between them.
@@ -422,6 +424,74 @@ Format status string parameters:
 **author** Toby Dacre
 
 **license** BSD
+
+---
+
+### <a name="github"></a>github
+
+Display Github notifications and issue/pull requests for a repo.
+
+To check notifications a Github `username` and `personal access token` are
+required.  You can create a personal access token at
+https://github.com/settings/tokens The only `scope` needed is `notifications`,
+which provides readonly access to notifications.
+
+The Github API is rate limited so setting `cache_timeout` too small may cause
+issues see https://developer.github.com/v3/#rate-limiting for details
+
+
+Configuration parameters:
+  - `auth_token` Github personal access token, needed to check notifications
+    see above.
+    *(default None)*
+  - `button_notifications` Button that when clicked opens the notification page
+    on github.com. Setting to `0` disables.
+    *(default 1)*
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 60)*
+  - `format` Format of output
+    *(default '{repo} {issues}/{pull_requests}{notifications}')*
+  - `format_notifications` Format of `{notification}` status placeholder.
+    *(default ' 🔔{count}')*
+  - `notifications` Type of notifications can be `all` for all notifications or
+    `repo` to only get notifications for the repo specified.  If repo is
+    not provided then all notifications will be checked.
+    *(default 'all')*
+  - `repo` Github repo to check
+    *(default 'ultrabug/py3status')*
+  - `username` Github username, needed to check notifications.
+    *(default None)*
+
+Format of status string placeholders:
+  - `{repo}` the name of the repository being checked.
+  - `{issues}` Number of open issues.
+  - `{pull_requests}` Number of open pull requests
+  - `{notifications}` Notifications.  If no notifications this will be empty.
+  - `{count}` __Only__ used in `format_notifications`,
+    the number of unread notifications
+
+Requires:
+  - `requests` python module from pypi https://pypi.python.org/pypi/requests
+
+Examples:
+
+```
+# set github access credentials
+github {
+    auth_token = '40_char_hex_access_token'
+    username = 'my_username'
+}
+
+# just check for any notifications
+github {
+    auth_token = '40_char_hex_access_token'
+    username = 'my_username'
+    format = 'Github{notifications}'
+    format_notifications = ' {count}'
+}
+```
+
+**author** tobes
 
 ---
 
