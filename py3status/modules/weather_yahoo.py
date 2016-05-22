@@ -33,9 +33,17 @@ Configuration parameters:
     icon_sun: sun icon, default '☀'
     request_timeout: check timeout
     units: Celsius (C) or Fahrenheit (F)
-    woeid: use Yahoo woeid (extended location)
+    woeid: Yahoo woeid (extended location)
 
 The WOEID in this example is for Paris, France => 615702
+
+```
+weather_yahoo {
+    woeid = 615702
+    format_today = "Now: {icon}{temp}°{units} {text}"
+    forecast_days = 5
+}
+```
 
 @author ultrabug, rail
 """

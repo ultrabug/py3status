@@ -1231,15 +1231,11 @@ Display Yahoo! Weather forecast as icons.
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
-Find your city code using:
-    http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
-
 Find your woeid using:
     http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
   - `cache_timeout` how often to check for new forecasts
-  - `city_code` city code to use
   - `forecast_days` how many forecast days you want shown
   - `forecast_include_today` show today's forecast, default false. Note that
     `{today}` in `format` shows the current conditions, while this variable
@@ -1263,9 +1259,17 @@ Configuration parameters:
   - `icon_sun` sun icon, default '☀'
   - `request_timeout` check timeout
   - `units` Celsius (C) or Fahrenheit (F)
-  - `woeid` use Yahoo woeid (extended location) instead of city_code
+  - `woeid` Yahoo woeid (extended location)
 
-The city_code in this example is for Paris, France => FRXX0076
+The WOEID in this example is for Paris, France => 615702
+
+```
+weather_yahoo {
+    woeid = 615702
+    format_today = "Now: {icon}{temp}°{units} {text}"
+    forecast_days = 5
+}
+```
 
 **author** ultrabug, rail
 
