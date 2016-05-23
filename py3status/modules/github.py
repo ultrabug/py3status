@@ -25,7 +25,7 @@ Configuration parameters:
         if username and auth_token provided else
         '{repo} {issues}/{pull_requests}')
     format_notifications: Format of `{notification}` status placeholder.
-        (default ' 🔔{notification_count}')
+        (default ' N{notifications_count}')
     notifications: Type of notifications can be `all` for all notifications or
         `repo` to only get notifications for the repo specified.  If repo is
         not provided then all notifications will be checked.
@@ -36,11 +36,14 @@ Configuration parameters:
         (default None)
 
 Format of status string placeholders:
-    {repo} the name of the repository being checked.
+    {repo} the short name of the repository being checked.
+        eg py3status
+    {repo_full} the full name of the repository being checked.
+        eg ultrabug/py3status
     {issues} Number of open issues.
     {pull_requests} Number of open pull requests
     {notifications} Notifications.  If no notifications this will be empty.
-    {notification_count} Number of notifications.  This is also the __Only__
+    {notifications_count} Number of notifications.  This is also the __Only__
         status string available to `format_notifications`.
 
 Requires:
@@ -59,7 +62,7 @@ github {
 github {
     auth_token = '40_char_hex_access_token'
     username = 'my_username'
-    format = 'Github {notification_count}'
+    format = 'Github {notifications_count}'
 }
 ```
 
@@ -80,7 +83,7 @@ class Py3status:
     button_notifications = 1
     cache_timeout = 60
     format = None
-    format_notifications = u' 🔔{notification_count}'
+    format_notifications = ' N{notifications_count}'
     notifications = 'all'
     repo = 'ultrabug/py3status'
     username = None
@@ -172,20 +175,24 @@ class Py3status:
         status['pull_requests'] = self._pulls
         # notifications
         if ('{notifications}' in self.format or
-                '{notification_count}' in self.format):
+                '{notifications_count}' in self.format):
             count = self._notifications()
             self._notify = count or self._notify
             if count and count != '?':
                 notify = self.py3.safe_format(
                     self.format_notifications,
-                    {'notification_count': count})
+                    {'notifications_count': count})
                 urgent = True
             else:
                 notify = ''
             status['notifications'] = notify
-            status['notification_count'] = count
+            status['notifications_count'] = count
         # repo
-        status['repo'] = self.repo
+        try:
+            status['repo'] = self.repo.split('/')[1]
+        except IndexError:
+            status['repo'] = 'Error'
+        status['repo_full'] = self.repo
 
         if self.first:
             cached_until = 0

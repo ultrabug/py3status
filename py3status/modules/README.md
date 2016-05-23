@@ -454,7 +454,7 @@ Configuration parameters:
     if username and auth_token provided else
     '{repo} {issues}/{pull_requests}')
   - `format_notifications` Format of `{notification}` status placeholder.
-    *(default ' 🔔{notification_count}')*
+    *(default ' N{notifications_count}')*
   - `notifications` Type of notifications can be `all` for all notifications or
     `repo` to only get notifications for the repo specified.  If repo is
     not provided then all notifications will be checked.
@@ -465,11 +465,14 @@ Configuration parameters:
     *(default None)*
 
 Format of status string placeholders:
-  - `{repo}` the name of the repository being checked.
+  - `{repo}` the short name of the repository being checked.
+    eg py3status
+  - `{repo_full}` the full name of the repository being checked.
+    eg ultrabug/py3status
   - `{issues}` Number of open issues.
   - `{pull_requests}` Number of open pull requests
   - `{notifications}` Notifications.  If no notifications this will be empty.
-  - `{notification_count}` Number of notifications.  This is also the __Only__
+  - `{notifications_count}` Number of notifications.  This is also the __Only__
     status string available to `format_notifications`.
 
 Requires:
@@ -488,7 +491,7 @@ github {
 github {
     auth_token = '40_char_hex_access_token'
     username = 'my_username'
-    format = 'Github {notification_count}'
+    format = 'Github {notifications_count}'
 }
 ```
 
