@@ -75,14 +75,17 @@ class Py3status:
         """
         Ask Yahoo! Weather. for a forecast
         """
-        q = requests.get(
-            'https://query.yahooapis.com/v1/public/yql?q=' +
-            'select * from weather.forecast ' +
-            'where woeid="{woeid}" and u="{units}"&format=json'.format(
-                woeid=self.woeid, units=self.units.lower()[0]) +
-            '&env=store://datatables.org/alltableswithkeys',
-            timeout=self.request_timeout
-        )
+        try:
+            q = requests.get(
+                'https://query.yahooapis.com/v1/public/yql?q=' +
+                'select * from weather.forecast ' +
+                'where woeid="{woeid}" and u="{units}"&format=json'.format(
+                    woeid=self.woeid, units=self.units.lower()[0]) +
+                '&env=store://datatables.org/alltableswithkeys',
+                timeout=self.request_timeout
+            )
+        except requests.ConnectionError:
+            return None, None
         q.raise_for_status()
         r = q.json()
         today = r['query']['results']['channel']['item']['condition']
@@ -146,6 +149,9 @@ class Py3status:
         }
 
         today, forecasts = self._get_forecast()
+        if today is None and forecasts is None:
+            response['cached_until'] = time() + 30
+            return response
         units = self.units.upper()[0]
         today_text = self.format_today.format(icon=self._get_icon(today),
                                               units=units, **today)
