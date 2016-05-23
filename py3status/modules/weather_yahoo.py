@@ -55,7 +55,7 @@ import requests
 class Py3status:
 
     # available configuration parameters
-    cache_timeout = 1800
+    cache_timeout = 7200
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
