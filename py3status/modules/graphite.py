@@ -34,7 +34,7 @@ Dynamic format placeholders:
     names returned by the "targets" query to graphite.
 
     For example if your target is "carbon.agents.localhost-a.memUsage", you'd get
-    a JSON result like this: 
+    a JSON result like this:
         {"target": "carbon.agents.localhost-a.memUsage", "datapoints": [[19693568.0, 1463663040]]}
 
     So the placeholder you could use on your "format" config is:
