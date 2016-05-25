@@ -446,9 +446,10 @@ Configuration parameters:
   - `auth_token` Github personal access token, needed to check notifications
     see above.
     *(default None)*
-  - `button_notifications` Button that when clicked opens the notification page
-    on github.com. Setting to `0` disables.
-    *(default 1)*
+  - `button_action` Button that when clicked opens the Github notification page
+    if notifications, else the project page for the repository . Setting to
+    `0` disables.
+    *(default 3)*
   - `cache_timeout` How often we refresh this module in seconds
     *(default 60)*
   - `format` Format of output
