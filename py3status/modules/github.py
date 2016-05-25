@@ -212,3 +212,4 @@ class Py3status:
             # open github notifications page in default browser
             cmd = 'xdg-open {}'.format(GITHUB_NOTIFICATION_URL)
             call(split(cmd))
+            self.py3.prevent_refresh()

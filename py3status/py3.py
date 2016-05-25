@@ -67,6 +67,14 @@ class Py3:
             self._module._py3_wrapper.events_thread.process_event(
                 module_name, event)
 
+    def prevent_refresh(self):
+        """
+        Calling this function during the on_click() method of a module will
+        request that the module is not refreshed after the event which is the
+        default action.
+        """
+        self._module.prevent_refresh = True
+
     def notify_user(self, msg, level='info'):
         """
         Send notification to user.

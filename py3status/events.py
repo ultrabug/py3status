@@ -61,29 +61,9 @@ class Events(Thread):
         self.lock = py3_wrapper.lock
         self.modules = py3_wrapper.modules
         self.on_click = self.i3s_config['on_click']
+        self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
-
-    def dispatch(self, module, obj, event):
-        """
-        Dispatch the event or enforce the default clear cache action.
-        """
-        module_name = '{} {}'.format(module.module_name,
-                                     module.module_inst).strip()
-        #
-        if module.click_events:
-            # module accepts click_events, use it
-            module.click_event(event)
-            if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching event {}'.format(event))
-        else:
-            # default button 2 action is to clear this method's cache
-            if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching default event {}'.format(event))
-
-        # to make the bar more responsive to users we ask for a refresh
-        # of the module or of i3status if the module is an i3status one
-        self.refresh(module_name)
 
     def i3bar_click_events_module(self):
         """
@@ -182,28 +162,29 @@ class Events(Thread):
             elif button == 2:
                 default_event = True
 
-        for module in self.modules.values():
-            # skip modules not supporting click_events
-            # unless we have a default_event set
-            if not module.click_events and not default_event:
-                continue
+        # get the module that the event is for
+        module_info = self.output_modules.get(module_name)
+        module = module_info['module']
+        # if module is a py3status one and it has an on_click function then
+        # call it.
+        if module_info['type'] == 'py3status' and module.click_events:
+            module.click_event(event)
+            if self.config['debug']:
+                syslog(LOG_INFO, 'dispatching event {}'.format(event))
 
-            # check for the method name/instance
-            if ' ' in module_name:
-                name, instance = module_name.split(' ')
-            else:
-                name, instance = module_name, None
-            for obj in module.methods.values():
-                if name == obj['name']:
-                    if instance:
-                        if instance == obj['instance']:
-                            self.dispatch(module, obj, event)
-                            dispatched = True
-                            break
-                    else:
-                        self.dispatch(module, obj, event)
-                        dispatched = True
-                        break
+            # to make the bar more responsive to users we refresh the module
+            # unless the on_click event called py3.prevent_refresh()
+            if not module.prevent_refresh:
+                self.refresh(module_name)
+            dispatched = True
+            default_event = False
+
+        if default_event:
+            # default button 2 action is to clear this method's cache
+            if self.config['debug']:
+                syslog(LOG_INFO, 'dispatching default event {}'.format(event))
+            self.refresh(module_name)
+            dispatched = True
 
         # find container that holds the module and call its onclick
         module_groups = self.i3s_config['.module_groups']
@@ -217,7 +198,9 @@ class Events(Thread):
             if module:
                 if self.config['debug']:
                     syslog(LOG_INFO, 'dispatching event to i3bar_click_events')
-                self.dispatch(module, obj, event)
+                    if module.click_events:
+                        # module accepts click_events, use it
+                        module.click_event(event)
 
     @profile
     def run(self):
