@@ -70,8 +70,8 @@ class Py3:
     def prevent_refresh(self):
         """
         Calling this function during the on_click() method of a module will
-        request that the module is not refreshed after the event which is the
-        default action.
+        request that the module is not refreshed after the event. By default
+        the module is updated after the on_click event has been processed.
         """
         self._module.prevent_refresh = True
 
