@@ -7,10 +7,8 @@ import time
 
 from collections import deque
 from json import dumps
-from signal import signal
-from signal import SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
-from subprocess import Popen
-from subprocess import call
+from signal import signal, SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
+from subprocess import Popen, call
 from threading import Event
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb
