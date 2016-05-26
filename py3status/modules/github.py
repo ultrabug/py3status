@@ -15,9 +15,10 @@ Configuration parameters:
     auth_token: Github personal access token, needed to check notifications
         see above.
         (default None)
-    button_notifications: Button that when clicked opens the notification page
-        on github.com. Setting to `0` disables.
-        (default 1)
+    button_action: Button that when clicked opens the Github notification page
+        if notifications, else the project page for the repository . Setting to
+            `0` disables.
+        (default 3)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
     format: Format of output
@@ -75,12 +76,12 @@ import requests
 
 
 GITHUB_API_URL = 'https://api.github.com'
-GITHUB_NOTIFICATION_URL = 'https://github.com/notifications'
+GITHUB_URL = 'https://github.com/'
 
 
 class Py3status:
     auth_token = None
-    button_notifications = 1
+    button_action = 3
     cache_timeout = 60
     format = None
     format_notifications = ' N{notifications_count}'
@@ -94,6 +95,7 @@ class Py3status:
         self.repo_warning = False
         self._issues = '?'
         self._pulls = '?'
+        self._notify = '?'
 
     def _init(self):
         # Set format if user has not configured it.
@@ -208,7 +210,12 @@ class Py3status:
 
     def on_click(self, event):
         button = event['button']
-        if self.button_notifications and self.button_notifications == button:
-            # open github notifications page in default browser
-            cmd = 'xdg-open {}'.format(GITHUB_NOTIFICATION_URL)
+        if self.button_action and self.button_action == button:
+            if self._notify and self._notify != '?':
+                # open github notifications page in default browser
+                url = GITHUB_URL + 'notifications'
+            else:
+                # open repo page
+                url = GITHUB_URL + self.repo
+            cmd = 'xdg-open {}'.format(url)
             call(split(cmd))
