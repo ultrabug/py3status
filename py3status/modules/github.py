@@ -219,3 +219,4 @@ class Py3status:
                 url = GITHUB_URL + self.repo
             cmd = 'xdg-open {}'.format(url)
             call(split(cmd))
+            self.py3.prevent_refresh()
