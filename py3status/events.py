@@ -64,22 +64,6 @@ class Events(Thread):
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
 
-    def i3bar_click_events_module(self):
-        """
-        Detect the presence of the special i3bar_click_events.py module.
-
-        When py3status detects a module named 'i3bar_click_events.py',
-        it will dispatch i3status click events to this module so you can catch
-        them and trigger any function call based on the event.
-        """
-        for module in self.modules.values():
-            if not module.click_events:
-                continue
-            if module.module_name == 'i3bar_click_events.py':
-                return module
-        else:
-            return False
-
     def refresh(self, module_name):
         """
         Force a cache expiration for all the methods of the given module.
@@ -147,14 +131,12 @@ class Events(Thread):
         """
         button = event.get('button', 0)
         default_event = False
-        dispatched = False
         # execute any configured i3-msg command
         # we do not do this for containers
         if top_level:
             if self.on_click.get(module_name, {}).get(button):
                 self.on_click_dispatcher(module_name,
                                          self.on_click[module_name].get(button))
-                dispatched = True
             # otherwise setup default action on button 2 press
             elif button == 2:
                 default_event = True
@@ -173,7 +155,6 @@ class Events(Thread):
             # unless the on_click event called py3.prevent_refresh()
             if not module.prevent_refresh:
                 self.refresh(module_name)
-            dispatched = True
             default_event = False
 
         if default_event:
@@ -182,23 +163,12 @@ class Events(Thread):
                 self.py3_wrapper.log(
                     'dispatching default event {}'.format(event))
             self.refresh(module_name)
-            dispatched = True
 
         # find container that holds the module and call its onclick
         module_groups = self.i3s_config['.module_groups']
         containers = module_groups.get(module_name, [])
         for container in containers:
             self.process_event(container, event, top_level=False)
-
-        # fall back to i3bar_click_events.py module if present
-        if not dispatched:
-            module = self.i3bar_click_events_module()
-            if module:
-                if self.config['debug']:
-                    self.py3_wrapper.log('dispatching event to i3bar_click_events')
-                    if module.click_events:
-                        # module accepts click_events, use it
-                        module.click_event(event)
 
     @profile
     def run(self):

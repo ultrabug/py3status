@@ -113,7 +113,7 @@ You can see the help of py3status by issuing `py3status -h`:
                           include user-written modules from those directories
                           (default ~/.i3/py3status)
     -l LOG_FILE, --log-file LOG_FILE
-                          path to i3status log file
+                          path to py3status log file
     -n INTERVAL, --interval INTERVAL
                           update interval in seconds (default 1 sec)
     -s, --standalone      standalone mode, do not use i3status

@@ -130,7 +130,7 @@ class Py3statusWrapper():
                             dest="log_file",
                             type=str,
                             default=None,
-                            help="path to i3status log file")
+                            help="path to py3status log file")
         parser.add_argument('-n',
                             '--interval',
                             action="store",
@@ -435,7 +435,7 @@ class Py3statusWrapper():
         else:
             with open(self.config['log_file'], 'a') as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
-                f.write('{}\t{}\t{}\n'.format(log_time, level.upper(), msg))
+                f.write('{} {} {}\n'.format(log_time, level.upper(), msg))
 
     def report_exception(self, msg, notify_user=True):
         """
