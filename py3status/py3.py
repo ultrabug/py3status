@@ -75,23 +75,32 @@ class Py3:
 
     def trigger_event(self, module_name, event):
         """
-        Trigger the event on named module
+        Trigger an event on a named module.
         """
         if module_name and self._module:
             self._module._py3_wrapper.events_thread.process_event(
                 module_name, event)
 
+    def prevent_refresh(self):
+        """
+        Calling this function during the on_click() method of a module will
+        request that the module is not refreshed after the event which is the
+        default action.
+        """
+        self._module.prevent_refresh = True
+
     def notify_user(self, msg, level='info'):
         """
         Send notification to user.
-        level can be 'info', 'error' or 'warning'
+        level must be 'info', 'error' or 'warning'
         """
         if self._module:
             self._module._py3_wrapper.notify_user(msg, level=level)
 
     def time_in(self, seconds=0):
         """
-        Returns time seconds in the future.  Helpfull for creating cache_until
+        Returns the time a given number of seconds into the future.  Helpful
+        for creating the `cached_until` value for the module output.
         """
         return time() + seconds
 

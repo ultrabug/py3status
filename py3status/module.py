@@ -40,6 +40,7 @@ class Module(Thread):
         self.module_name = module.split(' ')[0]
         self.new_update = False
         self.nagged = False
+        self.prevent_refresh = False
         self.sleeping = False
         self.timer = None
 
@@ -329,6 +330,10 @@ class Module(Thread):
         """
         Execute the 'on_click' method of this module with the given event.
         """
+        # we can prevent request that a refresh after the event has happened
+        # by setting this to True.  Modules should do this via
+        # py3.prevent_refresh()
+        self.prevent_refresh = False
         try:
             click_method = getattr(self.module_class, 'on_click')
             if self.click_events == self.PARAMS_NEW:
