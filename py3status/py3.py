@@ -87,7 +87,8 @@ class Py3:
         request that the module is not refreshed after the event which is the
         default action.
         """
-        self._module.prevent_refresh = True
+        if self._module:
+            self._module.prevent_refresh = True
 
     def notify_user(self, msg, level='info'):
         """
