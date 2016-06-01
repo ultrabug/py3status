@@ -3,15 +3,15 @@ from __future__ import print_function
 import argparse
 import os
 import sys
-from collections import deque
+import time
 
+from collections import deque
 from json import dumps
 from signal import signal, SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
 from subprocess import Popen, call
 from threading import Event
-from time import sleep, time
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
-from traceback import extract_tb
+from traceback import extract_tb, format_tb
 
 import py3status.docstrings as docstrings
 from py3status.events import Events
@@ -36,7 +36,7 @@ class Py3statusWrapper():
         """
         self.config = {}
         self.i3bar_running = True
-        self.last_refresh_ts = time()
+        self.last_refresh_ts = time.time()
         self.lock = Event()
         self.modules = {}
         self.output_modules = {}
@@ -124,6 +124,13 @@ class Py3statusWrapper():
                             dest="include_paths",
                             help="""include user-written modules from those
                             directories (default ~/.i3/py3status)""")
+        parser.add_argument('-l',
+                            '--log-file',
+                            action="store",
+                            dest="log_file",
+                            type=str,
+                            default=None,
+                            help="path to py3status log file")
         parser.add_argument('-n',
                             '--interval',
                             action="store",
@@ -168,6 +175,7 @@ class Py3statusWrapper():
         if options.include_paths:
             config['include_paths'] = options.include_paths
         config['interval'] = int(options.interval)
+        config['log_file'] = options.log_file
         config['standalone'] = options.standalone
         config['i3status_config_path'] = options.i3status_conf
 
@@ -233,9 +241,9 @@ class Py3statusWrapper():
                     my_m.start()
                     self.modules[module] = my_m
                 elif self.config['debug']:
-                    syslog(LOG_INFO,
-                           'ignoring module "{}" (no methods found)'.format(
-                               module))
+                    self.log(
+                        'ignoring module "{}" (no methods found)'.format(
+                            module))
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'Loading module "{}" failed ({}).'.format(module, err)
@@ -264,8 +272,8 @@ class Py3statusWrapper():
             sys.exit()
 
         if self.config['debug']:
-            syslog(LOG_INFO,
-                   'py3status started with config {}'.format(self.config))
+            self.log(
+                'py3status started with config {}'.format(self.config))
 
         # setup i3status thread
         self.i3status_thread = I3status(self)
@@ -288,17 +296,16 @@ class Py3statusWrapper():
                     self.i3status_thread.mock()
                     i3s_mode = 'mocked'
                     break
-                sleep(0.1)
+                time.sleep(0.1)
         if self.config['debug']:
-            syslog(LOG_INFO, 'i3status thread {} with config {}'.format(
-                i3s_mode,
-                self.i3status_thread.config))
+            self.log('i3status thread {} with config {}'.format(
+                i3s_mode, self.i3status_thread.config))
 
         # setup input events thread
         self.events_thread = Events(self)
         self.events_thread.start()
         if self.config['debug']:
-            syslog(LOG_INFO, 'events thread started')
+            self.log('events thread started')
 
         # suppress modules' ouput wrt issue #20
         if not self.config['debug']:
@@ -311,7 +318,7 @@ class Py3statusWrapper():
         # get a dict of all user provided modules
         user_modules = self.get_user_configured_modules()
         if self.config['debug']:
-            syslog(LOG_INFO, 'user_modules={}'.format(user_modules))
+            self.log('user_modules={}'.format(user_modules))
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
@@ -331,8 +338,7 @@ class Py3statusWrapper():
             fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
             msg = fix_msg.format(msg)
         try:
-            log_level = LOG_LEVELS.get(level, LOG_ERR)
-            syslog(log_level, msg)
+            self.log(msg, level)
             if dbus:
                 # fix any html entities
                 msg = msg.replace('&', '&amp;')
@@ -355,7 +361,7 @@ class Py3statusWrapper():
         try:
             self.lock.clear()
             if self.config['debug']:
-                syslog(LOG_INFO, 'lock cleared, exiting')
+                self.log('lock cleared, exiting')
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
@@ -371,8 +377,8 @@ class Py3statusWrapper():
 
         To prevent abuse, we rate limit this function to 100ms.
         """
-        if time() > (self.last_refresh_ts + 0.1):
-            syslog(LOG_INFO, 'received USR1, forcing refresh')
+        if time.time() > (self.last_refresh_ts + 0.1):
+            self.log('received USR1, forcing refresh')
 
             # send SIGUSR1 to i3status
             call(['killall', '-s', 'USR1', 'i3status'])
@@ -381,10 +387,9 @@ class Py3statusWrapper():
             self.clear_modules_cache()
 
             # reset the refresh timestamp
-            self.last_refresh_ts = time()
+            self.last_refresh_ts = time.time()
         else:
-            syslog(LOG_INFO,
-                   'received USR1 but rate limit is in effect, calm down')
+            self.log('received USR1 but rate limit is in effect, calm down')
 
     def clear_modules_cache(self):
         """
@@ -419,6 +424,19 @@ class Py3statusWrapper():
             if group_module:
                 group_module['module'].force_update()
 
+    def log(self, msg, level='info'):
+        """
+        log this information to syslog or user provided logfile.
+        """
+        if not self.config['log_file']:
+            # If level was given as a str then convert to actual level
+            level = LOG_LEVELS.get(level, level)
+            syslog(level, msg)
+        else:
+            with open(self.config['log_file'], 'a') as f:
+                log_time = time.strftime("%Y-%m-%d %H:%M:%S")
+                f.write('{} {} {}\n'.format(log_time, level.upper(), msg))
+
     def report_exception(self, msg, notify_user=True):
         """
         Report details of an exception to the user.
@@ -435,11 +453,14 @@ class Py3statusWrapper():
         py3_paths = [os.path.dirname(__file__)]
         user_paths = self.config['include_paths']
         py3_paths += [os.path.abspath(path) + '/' for path in user_paths]
+        traceback = None
 
         try:
             # We need to make sure to delete tb even if things go wrong.
             exc_type, exc_obj, tb = sys.exc_info()
             stack = extract_tb(tb)
+            error_str = '{}: {}\n'.format(exc_type.__name__, exc_obj)
+            traceback = [error_str] + format_tb(tb)
             # Find first relevant trace in the stack.
             # it should be in py3status or one of it's modules.
             found = False
@@ -464,7 +485,9 @@ class Py3statusWrapper():
             # delete tb!
             del tb
         # log the exception and notify user
-        syslog(LOG_WARNING, msg)
+        self.log(msg, 'warning')
+        if traceback and self.config['log_file']:
+            self.log(''.join(['Traceback\n'] + traceback))
         if notify_user:
             self.notify_user(msg, level='error')
 
@@ -560,9 +583,9 @@ class Py3statusWrapper():
         # main loop
         while True:
             while not self.i3bar_running:
-                sleep(0.1)
+                time.sleep(0.1)
 
-            sec = int(time())
+            sec = int(time.time())
 
             # only check everything is good each second
             if sec > last_sec:
@@ -604,7 +627,7 @@ class Py3statusWrapper():
                 print_line(',[{}]'.format(out))
 
             # sleep a bit before doing this again to avoid killing the CPU
-            sleep(0.1)
+            time.sleep(0.1)
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.

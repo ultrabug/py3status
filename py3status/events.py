@@ -4,7 +4,6 @@ import sys
 from threading import Thread
 from time import time
 from subprocess import Popen, call, PIPE
-from syslog import syslog, LOG_INFO, LOG_WARNING
 from json import loads
 
 from py3status.profiling import profile
@@ -74,13 +73,12 @@ class Events(Thread):
         module = self.modules.get(module_name)
         if module is not None:
             if self.config['debug']:
-                syslog(LOG_INFO, 'refresh module {}'.format(module_name))
+                self.py3_wrapper.log('refresh module {}'.format(module_name))
             module.force_update()
         else:
             if time() > (self.last_refresh_ts + 0.1):
                 if self.config['debug']:
-                    syslog(
-                        LOG_INFO,
+                    self.py3_wrapper.log(
                         'refresh i3status for module {}'.format(module_name))
                 call(['killall', '-s', 'USR1', 'i3status'])
                 self.last_refresh_ts = time()
@@ -117,13 +115,12 @@ class Events(Thread):
             # of the module or of i3status if the module is an i3status one
             self.refresh(module_name)
 
-    @staticmethod
-    def i3_msg(module_name, command):
+    def i3_msg(self, module_name, command):
         """
         Execute the given i3 message and log its output.
         """
         i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
-        syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
+        self.py3_wrapper.log('i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
     def process_event(self, module_name, event, top_level=True):
@@ -152,7 +149,7 @@ class Events(Thread):
         if module_info['type'] == 'py3status' and module.click_events:
             module.click_event(event)
             if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching event {}'.format(event))
+                self.py3_wrapper.log('dispatching event {}'.format(event))
 
             # to make the bar more responsive to users we refresh the module
             # unless the on_click event called py3.prevent_refresh()
@@ -163,7 +160,8 @@ class Events(Thread):
         if default_event:
             # default button 2 action is to clear this method's cache
             if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching default event {}'.format(event))
+                self.py3_wrapper.log(
+                    'dispatching default event {}'.format(event))
             self.refresh(module_name)
 
         # find container that holds the module and call its onclick
@@ -196,7 +194,7 @@ class Events(Thread):
                 event = loads(event_str)
 
                 if self.config['debug']:
-                    syslog(LOG_INFO, 'received event {}'.format(event))
+                    self.py3_wrapper.log('received event {}'.format(event))
 
                 # usage variables
                 instance = event.get('instance', '')
@@ -216,8 +214,7 @@ class Events(Thread):
                     event['instance'] = instance
 
                 if self.config['debug']:
-                    syslog(
-                        LOG_INFO,
+                    self.py3_wrapper.log(
                         'trying to dispatch event to module "{}"'.format(
                             '{} {}'.format(name, instance).strip()))
 
@@ -228,4 +225,4 @@ class Events(Thread):
 
             except Exception:
                 err = sys.exc_info()[1]
-                syslog(LOG_WARNING, 'event failed ({})'.format(err))
+                self.py3_wrapper.log('event failed ({})'.format(err), 'warning')

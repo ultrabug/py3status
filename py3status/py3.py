@@ -6,6 +6,9 @@ from subprocess import Popen, call
 
 
 PY3_CACHE_FOREVER = -1
+PY3_LOG_ERROR = 'error'
+PY3_LOG_INFO = 'info'
+PY3_LOG_WARNING = 'warning'
 
 
 class Py3:
@@ -20,6 +23,9 @@ class Py3:
     """
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
+    LOG_ERROR = PY3_LOG_ERROR
+    LOG_INFO = PY3_LOG_INFO
+    LOG_WARNING = PY3_LOG_WARNING
 
     def __init__(self, module):
         self._audio = None
@@ -36,6 +42,20 @@ class Py3:
         'type': module type py3status/i3status
         """
         return self._output_modules.get(module_name)
+
+    def log(self, message, level=LOG_INFO):
+        """
+        Log the message.
+        The level must be one of LOG_ERROR, LOG_INFO or LOG_WARNING
+        """
+        assert level in [
+            self.LOG_ERROR, self.LOG_INFO, self.LOG_WARNING
+        ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
+
+        if self._module:
+            message = 'Module `{}`: {}'.format(
+                self._module.module_full_name, message)
+            self._module._py3_wrapper.log(message, level)
 
     def update(self, module_name=None):
         """
