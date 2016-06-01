@@ -6,7 +6,7 @@ from json import loads
 from datetime import datetime, timedelta, tzinfo
 from subprocess import Popen
 from subprocess import PIPE
-from signal import SIGUSR2, SIGSTOP, SIG_IGN, signal
+from signal import SIGTSTP, SIGSTOP, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
 from threading import Thread
 from time import time, sleep
@@ -548,8 +548,8 @@ class I3status(Thread):
                     ['i3status', '-c', tmpfile.name],
                     stdout=PIPE,
                     stderr=PIPE,
-                    # Ignore the SIGUSR2 signal for this subprocess
-                    preexec_fn=lambda:  signal(SIGUSR2, SIG_IGN)
+                    # Ignore the SIGTSTP signal for this subprocess
+                    preexec_fn=lambda:  signal(SIGTSTP, SIG_IGN)
                 )
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
@@ -585,10 +585,10 @@ class I3status(Thread):
                     err = sys.exc_info()[1]
                     self.error = err
                     self.py3_wrapper.log(err, 'error')
-        except OSError:
-            # we cleanup the tmpfile ourselves so when the delete will occur
-            # it will usually raise an OSError: No such file or directory
-            pass
+        except Exception:
+            err = sys.exc_info()[1]
+            self.error = err
+            self.py3_wrapper.log(err, 'error')
         self.i3status_pipe = None
 
     def cleanup_tmpfile(self):

@@ -55,6 +55,7 @@ class Events(Thread):
         """
         Thread.__init__(self)
         self.config = py3_wrapper.config
+        self.error = None
         self.i3s_config = py3_wrapper.i3status_thread.config
         self.last_refresh_ts = time()
         self.lock = py3_wrapper.lock
@@ -225,4 +226,5 @@ class Events(Thread):
 
             except Exception:
                 err = sys.exc_info()[1]
+                self.error = err
                 self.py3_wrapper.log('event failed ({})'.format(err), 'warning')

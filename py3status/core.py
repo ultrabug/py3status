@@ -7,7 +7,7 @@ import time
 
 from collections import deque
 from json import dumps
-from signal import signal, SIGTERM, SIGUSR1, SIGUSR2, SIGCONT
+from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen, call
 from threading import Event
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
@@ -256,11 +256,11 @@ class Py3statusWrapper():
         # set the Event lock
         self.lock.set()
 
-        # SIGUSR2 will be received from i3bar indicating that all output should
+        # SIGTSTP will be received from i3bar indicating that all output should
         # stop and we should consider py3status suspended.  It is however
         # important that any processes using i3 ipc should continue to receive
         # those events otherwise it can lead to a stall in i3.
-        signal(SIGUSR2, self.i3bar_stop)
+        signal(SIGTSTP, self.i3bar_stop)
         # SIGCONT indicates output should be resumed.
         signal(SIGCONT, self.i3bar_start)
 
@@ -575,7 +575,7 @@ class Py3statusWrapper():
         header = {
             'version': 1,
             'click_events': True,
-            'stop_signal': SIGUSR2,
+            'stop_signal': SIGTSTP
         }
         print_line(dumps(header))
         print_line('[[]')
