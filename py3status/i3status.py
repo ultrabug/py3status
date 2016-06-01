@@ -6,11 +6,10 @@ from json import loads
 from datetime import datetime, timedelta, tzinfo
 from subprocess import Popen
 from subprocess import PIPE
-from syslog import syslog, LOG_INFO
-from signal import SIGUSR2, SIGSTOP, SIG_IGN, signal
+from signal import SIGTSTP, SIGSTOP, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
 from threading import Thread
-from time import time
+from time import time, sleep
 
 from py3status.py3 import COLOR_MAPPINGS
 from py3status.profiling import profile
@@ -526,22 +525,35 @@ class I3status(Thread):
 
     @profile
     def run(self):
+        # if the i3status process dies we want to restart it.
+        # We give up restarting if we have died too often
+        for x in range(10):
+            if not self.lock.is_set():
+                break
+            self.spawn_i3status()
+            # check if we never worked properly and if so quit now
+            if not self.ready:
+                break
+            # limit restart rate
+            sleep(5)
+
+    def spawn_i3status(self):
         """
         Spawn i3status using a self generated config file and poll its output.
         """
         try:
             with NamedTemporaryFile(prefix='py3status_') as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
-                syslog(LOG_INFO,
-                       'i3status spawned using config file {}'.format(
-                           tmpfile.name))
+                self.py3_wrapper.log(
+                    'i3status spawned using config file {}'.format(
+                        tmpfile.name))
 
                 i3status_pipe = Popen(
                     ['i3status', '-c', tmpfile.name],
                     stdout=PIPE,
                     stderr=PIPE,
-                    # Ignore the SIGUSR2 signal for this subprocess
-                    preexec_fn=lambda:  signal(SIGUSR2, SIG_IGN)
+                    # Ignore the SIGTSTP signal for this subprocess
+                    preexec_fn=lambda:  signal(SIGTSTP, SIG_IGN)
                 )
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
@@ -576,10 +588,11 @@ class I3status(Thread):
                 except IOError:
                     err = sys.exc_info()[1]
                     self.error = err
-        except OSError:
-            # we cleanup the tmpfile ourselves so when the delete will occur
-            # it will usually raise an OSError: No such file or directory
-            pass
+                    self.py3_wrapper.log(err, 'error')
+        except Exception:
+            err = sys.exc_info()[1]
+            self.error = err
+            self.py3_wrapper.log(err, 'error')
         self.i3status_pipe = None
 
     def cleanup_tmpfile(self):

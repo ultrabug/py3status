@@ -71,21 +71,29 @@ class GetData:
 
     def memory(self):
         """
-        Execute 'free -m' command, grab the memory capacity and used size
+        Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, and percentage
         of used memory.
         """
-        # Run 'free -m' command and make a list from output.
-        mem_data = self.execCMD('free', '-m').split()
-        mem_index = mem_data.index('Mem:')
-        total_mem = int(mem_data[mem_index + 1]) / 1024.
-        used_mem = int(mem_data[mem_index + 2]) / 1024.
 
-        # Caculate percentage
-        used_mem_percent = int(used_mem / (total_mem / 100))
+        memi = {}
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1]) / (1 << 20)
 
-        # Results are in kilobyte.
-        return total_mem, used_mem, used_mem_percent
+        try:
+            total_mem = memi["MemTotal:"]
+            used_mem = (total_mem -
+                        memi["MemFree:"] -
+                        memi["Buffers:"] -
+                        memi["Cached:"])
+            used_mem_p = int(used_mem / (total_mem / 100))
+        except:
+            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
+
+        # Results are in gigabytes
+        return total_mem, used_mem, used_mem_p
 
     def cpuTemp(self):
         """

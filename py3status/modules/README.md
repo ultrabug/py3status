@@ -24,6 +24,8 @@
 
 **[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
 
+**[github](#github)** — Display Github notifications and issue/pull requests for a repo.
+
 **[glpi](#glpi)** — Display the total number of open tickets from GLPI.
 
 **[group](#group)** — Group a bunch of modules together and switch between them.
@@ -33,6 +35,8 @@
 **[icinga2](#icinga2)** — Display Icinga2 service status information.
 
 **[imap](#imap)** — Display the unread messages count from your IMAP account.
+
+**[insync](#insync)** — Get current insync status
 
 **[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
 
@@ -78,6 +82,8 @@
 
 **[timer](#timer)** — A simple countdown timer.
 
+**[twitch_streaming](#twitch_streaming)** — Checks if a Twitch streamer is online.
+
 **[uname](#uname)** — Display uname information.
 
 **[vnstat](#vnstat)** — Display vnstat statistics.
@@ -103,6 +109,8 @@
 **[xrandr_rotate](#xrandr_rotate)** — Switch between horizontal and vertical screen rotation on a single click.
 
 **[xsel](#xsel)** — Display the X selection.
+
+**[yandexdisk_status](#yandexdisk_status)** — Display Yandex.Disk status.
 
 ---
 
@@ -421,6 +429,79 @@ Format status string parameters:
 
 ---
 
+### <a name="github"></a>github
+
+Display Github notifications and issue/pull requests for a repo.
+
+To check notifications a Github `username` and `personal access token` are
+required.  You can create a personal access token at
+https://github.com/settings/tokens The only `scope` needed is `notifications`,
+which provides readonly access to notifications.
+
+The Github API is rate limited so setting `cache_timeout` too small may cause
+issues see https://developer.github.com/v3/#rate-limiting for details
+
+
+Configuration parameters:
+  - `auth_token` Github personal access token, needed to check notifications
+    see above.
+    *(default None)*
+  - `button_action` Button that when clicked opens the Github notification page
+    if notifications, else the project page for the repository . Setting to
+    `0` disables.
+    *(default 3)*
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 60)*
+  - `format` Format of output
+    (default '{repo} {issues}/{pull_requests}{notifications}'
+    if username and auth_token provided else
+    '{repo} {issues}/{pull_requests}')
+  - `format_notifications` Format of `{notification}` status placeholder.
+    *(default ' N{notifications_count}')*
+  - `notifications` Type of notifications can be `all` for all notifications or
+    `repo` to only get notifications for the repo specified.  If repo is
+    not provided then all notifications will be checked.
+    *(default 'all')*
+  - `repo` Github repo to check
+    *(default 'ultrabug/py3status')*
+  - `username` Github username, needed to check notifications.
+    *(default None)*
+
+Format of status string placeholders:
+  - `{repo}` the short name of the repository being checked.
+    eg py3status
+  - `{repo_full}` the full name of the repository being checked.
+    eg ultrabug/py3status
+  - `{issues}` Number of open issues.
+  - `{pull_requests}` Number of open pull requests
+  - `{notifications}` Notifications.  If no notifications this will be empty.
+  - `{notifications_count}` Number of notifications.  This is also the __Only__
+    status string available to `format_notifications`.
+
+Requires:
+  - `requests` python module from pypi https://pypi.python.org/pypi/requests
+
+Examples:
+
+```
+# set github access credentials
+github {
+    auth_token = '40_char_hex_access_token'
+    username = 'my_username'
+}
+
+# just check for any notifications
+github {
+    auth_token = '40_char_hex_access_token'
+    username = 'my_username'
+    format = 'Github {notifications_count}'
+}
+```
+
+**author** tobes
+
+---
+
 ### <a name="glpi"></a>glpi
 
 Display the total number of open tickets from GLPI.
@@ -583,6 +664,30 @@ Format of status string placeholders:
   - `{unseen}` number of unread emails
 
 **author** obb
+
+---
+
+### <a name="insync"></a>insync
+
+Get current insync status
+
+Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
+
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 10)*
+  - `format` Display format to use *(default '{status} {queued}')*
+
+Format status string parameters:
+  - `{status}` Status of Insync
+  - `{queued}` Number of files queued
+
+Requires:
+  - `insync` command line tool
+
+**author** Joshua Pratt <jp10010101010000@gmail.com>
+
+**license** BSD
 
 ---
 
@@ -1080,6 +1185,34 @@ Configuration parameters:
 
 ---
 
+### <a name="twitch_streaming"></a>twitch_streaming
+
+Checks if a Twitch streamer is online.
+
+Checks if a streamer is online using the Twitch Kraken API to see
+if a channel is currently streaming or not.
+
+Configuration parameters
+    cache_timeout: how often we refresh this module in seconds
+        *(default 10)*
+    format: Display format when online
+        *(default "{stream_name} is live!")*
+    format_offline: Display format when offline
+        *(default "{stream_name} is offline.")*
+    format_invalid: Display format when streamer does not exist
+        *(default "{stream_name} does not exist!")*
+    stream_name: name of streamer(twitch.tv/&lt;stream_name&gt;)
+        *(default None)*
+
+Format of status string placeholders
+    {stream_name}:  name of the streamer
+
+**author** Alex Caswell horatioesf@virginmedia.com
+
+**license** BSD
+
+---
+
 ### <a name="uname"></a>uname
 
 Display uname information.
@@ -1199,15 +1332,11 @@ Display Yahoo! Weather forecast as icons.
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
-Find your city code using:
-    http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
-
 Find your woeid using:
     http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
   - `cache_timeout` how often to check for new forecasts
-  - `city_code` city code to use
   - `forecast_days` how many forecast days you want shown
   - `forecast_include_today` show today's forecast, default false. Note that
     `{today}` in `format` shows the current conditions, while this variable
@@ -1231,9 +1360,17 @@ Configuration parameters:
   - `icon_sun` sun icon, default '☀'
   - `request_timeout` check timeout
   - `units` Celsius (C) or Fahrenheit (F)
-  - `woeid` use Yahoo woeid (extended location) instead of city_code
+  - `woeid` Yahoo woeid (extended location)
 
-The city_code in this example is for Paris, France => FRXX0076
+The WOEID in this example is for Paris, France => 615702
+
+```
+weather_yahoo {
+    woeid = 615702
+    format_today = "Now: {icon}{temp}°{units} {text}"
+    forecast_days = 5
+}
+```
 
 **author** ultrabug, rail
 
@@ -1520,5 +1657,27 @@ Requires:
   - `xsel` command line tool
 
 **author** Sublim3 umbsublime@gamil.com
+
+**license** BSD
+
+---
+
+### <a name="yandexdisk_status"></a>yandexdisk_status
+
+Display Yandex.Disk status.
+
+Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds
+    *(default 10)*
+  - `format` prefix text for the Yandex.Disk status
+    *(default 'Yandex.Disk: {status}')*
+
+Format of status string placeholders:
+  - `{status}` daemon status
+
+Requires:
+  - `yandex-disk` command line tool (link: https://disk.yandex.com/)
+
+**author** Vladimir Potapev (github:vpotapev)
 
 **license** BSD

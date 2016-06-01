@@ -27,6 +27,8 @@ Up to date documentation:
 
 -  `Writing custom modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#writing_custom_modules>`_
 
+-  `Contributing <https://github.com/ultrabug/py3status/blob/master/doc/README.md#contributing>`_
+
 Get help or share your ideas on IRC:
 
 - channel **#py3status** on **FreeNode**
@@ -103,13 +105,15 @@ You can see the help of py3status by issuing `py3status -h`:
 
     -h, --help            show this help message and exit
     -b, --dbus-notify     use notify-send to send user notifications rather than
-                        i3-nagbar, requires a notification daemon eg dunst
+                          i3-nagbar, requires a notification daemon eg dunst
     -c I3STATUS_CONF, --config I3STATUS_CONF
                           path to i3status config file
     -d, --debug           be verbose in syslog
     -i INCLUDE_PATHS, --include INCLUDE_PATHS
                           include user-written modules from those directories
                           (default ~/.i3/py3status)
+    -l LOG_FILE, --log-file LOG_FILE
+                          path to py3status log file
     -n INTERVAL, --interval INTERVAL
                           update interval in seconds (default 1 sec)
     -s, --standalone      standalone mode, do not use i3status

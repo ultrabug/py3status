@@ -22,6 +22,12 @@ Py3status
 * [Example 4: Status string placeholders](#example_4)
 
 
+* [Py3 module helper](#py3)
+
+[Contributing](#contributing)
+
+***
+
 <a name="modules"></a>Using modules
 ===================================
 
@@ -177,6 +183,7 @@ weather_yahoo paris {
 }
 ```
 
+***
 
 <a name="writing_custom_modules"></a>Writing custom py3status modules
 =====================================================================
@@ -207,7 +214,7 @@ class Py3status:
     def hello_world(self):
         return {
             'full_text': 'Hello World!',
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 ```
 
@@ -242,7 +249,7 @@ It should contain at least two key / values.
 
 This is the text that will be displayed in the status bar.
 
-######cache_until
+######cached_until
 
 This tells py3status how long it should consider your
 response valid before it should re-run the method to get a fresh response.  In
@@ -280,7 +287,7 @@ class Py3status:
     def hello_world(self):
         return {
             'full_text': self.format,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 ```
 This module still outputs 'Hello World' as before but now you can customise the
@@ -315,7 +322,7 @@ class Py3status:
     def click_info(self):
         return {
             'full_text': self.full_text,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 
     def on_click(self, event):
@@ -375,7 +382,7 @@ class Py3status:
 
         return {
             'full_text': full_text,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 
     def on_click(self, event):
@@ -395,4 +402,143 @@ click_info {
     format = "Cliquez ici"
     format_clicked = "Vous bouton {button} enfoncé"
 }
+```
+
+***
+
+
+## <a name="py3"></a>Py3 module helper
+
+Py3 is a special helper object that gets injected into
+py3status modules, providing extra functionality.
+A module can access it via the self.py3 instance attribute
+of its Py3status class.
+
+#### Constants
+
+__CACHE_FOREVER__
+
+If this is returned as the value for `cached_until` then the module will not be
+updated.  This is useful for static modules and ones updating asynchronously.
+
+#### Methods
+
+__update(module_name=None)__
+
+Update a module.  If `module_name` is supplied the module of that
+name is updated.  Otherwise the module calling is updated.
+
+__get_output(module_name)__
+
+Return the output of the named module.  This will be a list.
+
+__trigger_event(module_name, event)__
+
+Trigger an event on a named module.
+
+__notify_user(msg, level='info')__
+
+Send notification to user.
+`level` must be `info`, `error` or `warning`
+
+__prevent_refresh()__
+
+Calling this function during the on_click() method of a module will
+request that the module is not refreshed after the event. By default
+the module is updated after the on_click event has been processed.
+
+__time_in(seconds=0)__
+
+Returns the time a given number of seconds into the future.
+Helpful for creating the `cached_until` value for the module
+output.
+
+__safe_format(format_string, param_dict)__
+
+Perform a safe formatting of a string.  Using format fails if the
+format string contains placeholders which are missing.  Since these can
+be set by the user it is possible that they add unsupported items.
+This function will escape missing placemolders so that modules do not
+crash hard.
+
+__check_commands(cmd_list)__
+
+Checks to see if commands in list are available using `which`.
+Returns the first available command.
+
+__play_sound(sound_file)__
+
+Plays sound_file if possible.  requires `paplay` or `play`
+
+__stop_sound()__
+
+Stops any currently playing sounds for this module.
+
+***
+
+<a name="contributing"></a>Contributing
+=======================================
+
+Contributions to Py3status either to the core code or for new or existing modules are welcome.
+
+# What you will need
+
+- python3/python2
+- i3status
+    - http://i3wm.org/i3status/
+    - https://github.com/i3/i3status
+- flake8
+    - https://pypi.python.org/pypi/flake8
+    - https://github.com/PyCQA/flake8
+
+# Python versions
+
+Py3status code, including modules, should run under both python 2 and python 3.
+
+# Flake 8
+
+Before making any Pull Request, make sure that flake8 tests pass without any
+error/warning:
+
+- Code what you want to
+- Run `flake8 .` at the root of the repository
+- Fix potential errors/warnings
+- If you already commited your code, make sure to amend (`git commit --amend`)
+  or rebase your commit with the flake8 fixes !
+
+# Travis CI
+
+When you create your Pull Request, some checks from Travis CI will
+automatically run; you can see [previous
+builds](https://travis-ci.org/ultrabug/py3status/) if you want to.
+
+If something fails in the CI:
+
+- Take a look the build log
+- If you don't get what is failing or why it is failing, feel free to tell it
+  as a comment in your PR: people here are helpful and open-minded :)
+- Once the problem is identified and fixed, rebase your commit with the fix and
+  push it on your fork to trigger the CI again
+
+For reference, you can take a look at [this
+PR](https://github.com/ultrabug/py3status/pull/193); you won't see the old
+failed CI runs, but you'll get an idea of the PR flow.
+
+# Coding in containers
+
+Warning, by default (at least [on
+Archlinux](https://projects.archlinux.org/svntogit/community.git/tree/trunk/i3status.install?h=packages/i3status#n2)),
+i3status has cap\_net\_admin capabilities, which will make it fail with
+`operation not permitted` when running inside a Docker container.
+
+```
+$ getcap `which i3status`
+/usr/sbin/i3status = cap_net_admin+ep
+```
+
+To allow it to run without these capabilites (hence disabling some of the
+functionnalities), remove it with:
+
+```
+setcap -r `which i3status`
 ```
