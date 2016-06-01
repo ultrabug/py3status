@@ -39,6 +39,7 @@ class Py3statusWrapper():
         self.last_refresh_ts = time.time()
         self.lock = Event()
         self.modules = {}
+        self.notified_messages = set()
         self.output_modules = {}
         self.py3_modules = []
         self.queue = deque()
@@ -338,7 +339,12 @@ class Py3statusWrapper():
             fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
             msg = fix_msg.format(msg)
         try:
-            self.log(msg, level)
+            if msg in self.notified_messages:
+                return
+            else:
+                self.log(msg, level)
+                self.notified_messages.add(msg)
+
             if dbus:
                 # fix any html entities
                 msg = msg.replace('&', '&amp;')
