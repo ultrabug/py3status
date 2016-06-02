@@ -441,6 +441,12 @@ __notify_user(msg, level='info')__
 Send notification to user.
 `level` must be `info`, `error` or `warning`
 
+__prevent_refresh()__
+
+Calling this function during the on_click() method of a module will
+request that the module is not refreshed after the event. By default
+the module is updated after the on_click event has been processed.
+
 __time_in(seconds=0)__
 
 Returns the time a given number of seconds into the future.
