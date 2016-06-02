@@ -220,3 +220,11 @@ class Py3status:
             cmd = 'xdg-open {}'.format(url)
             call(split(cmd))
             self.py3.prevent_refresh()
+
+
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
