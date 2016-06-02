@@ -33,11 +33,14 @@ class Py3:
     def __init__(self, module=None, i3s_config=None):
         self._audio = None
         self._module = module
-        self._i3s_config = i3s_config
+        self._i3s_config = i3s_config or {}
         # we are running through the whole stack.
         # If testing then module is None.
         if module:
             self._output_modules = module._py3_wrapper.output_modules
+            if not i3s_config:
+                config = self._module.i3status_thread.config['general']
+                self._i3s_config = config
 
     def _get_module_info(self, module_name):
         """
