@@ -96,6 +96,32 @@ module allows you to group several modules together.  Only one of the
 modules are displayed at a time.  The displayed module can either be cycled
 through automatically or by user action (the default, on mouse scroll).
 
+This module is very powerful and allows you to save a lot of space on your bar.
+Example usage:
+```
+order += "group tz"
+
+# cycle through different timezone hours every 10s
+group tz {
+    cycle = 10
+    format = "{output}"
+
+    tztime la {
+        format = "LA %H:%M"
+        timezone = "America/Los_Angeles"
+    }
+
+    tztime ny {
+        format = "NY %H:%M"
+        timezone = "America/New_York"
+    }
+
+    tztime du {
+        format = "DU %H:%M"
+        timezone = "Asia/Dubai"
+    }
+}
+```
 
 ## <a name="on_click"></a>Custom click events
 
