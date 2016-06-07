@@ -1,6 +1,6 @@
 
-Py3status
-=========
+py3status documentation
+=======================
 
 [Using modules](#modules)
 
@@ -31,22 +31,22 @@ Py3status
 <a name="modules"></a>Using modules
 ===================================
 
-Modules in Py3status are configured using your `i3status.conf`.
+Modules in py3status are configured using your usual `i3status.conf`.
 
-Py3status tries to find the config in the following locations.
-`~/.i3/i3status.conf`,
-`~/.i3status.conf`,
-`/etc/i3status.conf`,
-`XDG_CONFIG_HOME/.config/i3status/config`,
-`~/.config/i3status/config`,
-`XDG_CONFIG_DIRS/i3status/config`,
-`/etc/xdg/i3status/config`,
+py3status tries to find the config in the following locations:
+- `~/.i3/i3status.conf`,
+- `~/.i3status.conf`,
+- `/etc/i3status.conf`,
+- `XDG_CONFIG_HOME/.config/i3status/config`,
+- `~/.config/i3status/config`,
+- `XDG_CONFIG_DIRS/i3status/config`,
+- `/etc/xdg/i3status/config`,
 
 You can also specify the config location using `py3status -c <path to config
 file>` in your i3 configuration file.
 
 #### <a name="available_modules"></a>Available modules
-Py3status comes with a large range of modules.
+py3status comes with a large range of modules.
 
 [List of available modules and their configuration details.](
 https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md)
@@ -55,13 +55,13 @@ https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md)
 
 
 To load a py3status module you just have to list it like any other i3status
-module using the `order += parameter`.
+module using the `order +=` parameter.
 
 Ordering your py3status modules in your i3bar is just the same as i3status
 modules, just list the order parameter where you want your module to be
 displayed.
 
-For example you could insert and load the imap module like this:
+For example you could insert and load the `imap` module like this:
 ```
 order += "disk /home"
 order += "disk /"
@@ -92,15 +92,15 @@ imap {
 The [group](
 https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md#group
 )
-module allows you to group several modules togeather.  Only one of the
+module allows you to group several modules together.  Only one of the
 modules are displayed at a time.  The displayed module can either be cycled
-through automatically or by user action.
+through automatically or by user action (the default, on mouse scroll).
 
 
 ## <a name="on_click"></a>Custom click events
 
-Py3status allows you to easily add click events to modules in your i3bar.
-These modules can be both i3status or py3status modules.  This is done in
+py3status allows you to easily add click events to modules in your i3bar.
+These modules can be both i3status or py3status modules. This is done in
 your `i3status.config` using the `on_click` parameter.
 
 Just add a new configuration parameter named `on_click [button number]` to
@@ -128,7 +128,7 @@ special meaning to py3status :
    (i3status included). This has the same effect has sending a SIGUSR1 to
    py3status.
 
-#### <a name="on_click_example"></a>Example i3status.conf:
+#### <a name="on_click_example"></a>Example on_click usage on i3status.conf:
 
 ```
 # reload the i3 config when I left click on the i3status time module
@@ -188,14 +188,14 @@ weather_yahoo paris {
 <a name="writing_custom_modules"></a>Writing custom py3status modules
 =====================================================================
 
-__This guide covers the new style of py3status modules.  These are only
-available in version 3.0 and above__
+__This guide covers the new style of py3status modules. These are only
+available in version 3.0 and above.__
 
-Writing custom modules for py3status is easy.  This guide will teach you how.
+Writing custom modules for py3status is easy. This guide will teach you how.
 
 Let's start by looking at a simple example.
 
-## <a name="example_1"></a>Example 1:  The basics - Hello World!
+## <a name="example_1"></a>Example 1: The basics - Hello World!
 
 Here we start with the most basic module that just outputs a static string to
 the status bar.
@@ -209,7 +209,7 @@ This demonstrates how to produce a simple custom module.
 """
 
 
-class Py3status:
+class py3status:
 
     def hello_world(self):
         return {
@@ -226,19 +226,20 @@ py3status will check for modules. By default it will look in
 `$HOME/.i3/py3status/` or you can specify additional directories using
 `--include` when you run py3status.
 
-You need to tell py3status about your new module so in your `i3status.conf` add
+You need to tell py3status about your new module,
+so in your `i3status.conf` add:
 ```
 order += "hello_world"
 ```
 
-Then restart i3 by pressing `Mod` + `Shift` + `R`.  Your new module should now
+Then restart i3 by pressing `Mod` + `Shift` + `R`. Your new module should now
 show up in the status bar.
 
 ####How does it work?
 
-The `Py3status` class tell py3status that this is a module.  The module gets
-loaded.  py3status then calls any public methods that the class contains to get
-a response.  In our example there is a single method `hello_world()`.
+The `Py3status` class tells py3status that this is a module. The module gets
+loaded. py3status then calls any public methods that the class contains to get
+a response. In our example there is a single method `hello_world()`.
 
 ####The response
 
@@ -252,16 +253,16 @@ This is the text that will be displayed in the status bar.
 ######cached_until
 
 This tells py3status how long it should consider your
-response valid before it should re-run the method to get a fresh response.  In
+response valid before it should re-run the method to get a fresh response. In
 our example our response will not need to be updated so we can use the special
-`self.py3.CACHE_FOREVER` constant.  This tells py3status to consider our
+`self.py3.CACHE_FOREVER` constant. This tells py3status to consider our
 response always valid.
 
 ####self.py3
 
-This is a special object that gets injected into Py3status
-modules.  It helps provide functionality for the module, such as the
-`CACHE_FOREVER` constant.
+This is a special object that gets injected into py3status
+modules. It helps provide functionality for the module, such as the
+`CACHE_FOREVER` constant. Read more here: [Py3 module helper](#py3)
 
 
 ## <a name="example_2"></a>Example 2: Configuration parameters
@@ -280,7 +281,7 @@ Configuration parameters:
 """
 
 
-class Py3status:
+class py3status:
 
     format = 'Hello World!'
 
@@ -294,14 +295,14 @@ This module still outputs 'Hello World' as before but now you can customise the
 output using your `i3status.config` for example to show the text in French.
 ```
 hello_world {
-    format = 'Bonjour le monde'
+    format = 'Bonjour tout le monde!'
 }
 ```
 In your module `self.format` will have been set to the value supplied in the
 config.
 
 
-## <a name="example_3"></a>Example 3: Events
+## <a name="example_3"></a>Example 3: Click events
 
 Catch click events and perform an action.
 
@@ -314,7 +315,7 @@ This demonstrates how to use events.
 """
 
 
-class Py3status:
+class py3status:
 
     def __init__(self):
         self.full_text = 'Click me'
@@ -336,15 +337,17 @@ class Py3status:
 ```
 
 The `on_click` method of a module is special and will get
-called when the module is clicked on.  The event parameter
-will be a dict that gives information about the event. A
-typical event dict will look like `{'y': 13, 'x': 1737,
-'button': 1, 'name': 'example', 'instance': 'first'}` you
-should only receive events for the module clicked on, so
+called when the module is clicked on. The event parameter
+will be a dict that gives information about the event.
+
+A typical event dict will look like this:
+`{'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}`
+
+You should only receive events for the module clicked on, so
 generally we only care about the button.
 
-The `__init__()` method is called when our class is instantiated.  __Note: this
-is called before any config parameters have been set__
+The `__init__()` method is called when our class is instantiated. __Note: this
+is called before any config parameters have been set.__
 
 ## <a name="example_4"></a>Example 4: Status string placeholders
 
@@ -367,7 +370,7 @@ Format status string parameters:
 """
 
 
-class Py3status:
+class py3status:
     format = 'Click me'
     format_clicked = 'You pressed button {button}'
 
@@ -394,13 +397,13 @@ class Py3status:
         # Our modules update methods will get called automatically.
 ```
 
-This works just like the previous example but we can now be customised.  The
+This works just like the previous example but we can now be customised. The
 following example assumes that our module has been saved as `click_info.py`.
 
 ```
 click_info {
     format = "Cliquez ici"
-    format_clicked = "Vous bouton {button} enfoncé"
+    format_clicked = "Vous avez appuyé sur le bouton {button}"
 }
 ```
 
@@ -412,25 +415,25 @@ click_info {
 Py3 is a special helper object that gets injected into
 py3status modules, providing extra functionality.
 A module can access it via the self.py3 instance attribute
-of its Py3status class.
+of its py3status class.
 
 #### Constants
 
 __CACHE_FOREVER__
 
 If this is returned as the value for `cached_until` then the module will not be
-updated.  This is useful for static modules and ones updating asynchronously.
+updated. This is useful for static modules and ones updating asynchronously.
 
 #### Methods
 
 __update(module_name=None)__
 
-Update a module.  If `module_name` is supplied the module of that
-name is updated.  Otherwise the module calling is updated.
+Update a module. If `module_name` is supplied the module of that
+name is updated. Otherwise the module calling is updated.
 
 __get_output(module_name)__
 
-Return the output of the named module.  This will be a list.
+Return the output of the named module. This will be a list.
 
 __trigger_event(module_name, event)__
 
@@ -438,8 +441,8 @@ Trigger an event on a named module.
 
 __notify_user(msg, level='info')__
 
-Send notification to user.
-`level` must be `info`, `error` or `warning`
+Send a notification to the user.
+`level` must be `info`, `error` or `warning`.
 
 __prevent_refresh()__
 
@@ -455,20 +458,20 @@ output.
 
 __safe_format(format_string, param_dict)__
 
-Perform a safe formatting of a string.  Using format fails if the
-format string contains placeholders which are missing.  Since these can
+Perform a safe formatting of a string. Using format fails if the
+format string contains placeholders which are missing. Since these can
 be set by the user it is possible that they add unsupported items.
-This function will escape missing placemolders so that modules do not
+This function will escape missing placeholders so that modules do not
 crash hard.
 
 __check_commands(cmd_list)__
 
-Checks to see if commands in list are available using `which`.
+Checks to see if the shell commands in list are available using `which`.
 Returns the first available command.
 
 __play_sound(sound_file)__
 
-Plays sound_file if possible.  requires `paplay` or `play`
+Plays sound_file if possible. Requires `paplay` or `play`.
 
 __stop_sound()__
 
@@ -479,7 +482,8 @@ Stops any currently playing sounds for this module.
 <a name="contributing"></a>Contributing
 =======================================
 
-Contributions to Py3status either to the core code or for new or existing modules are welcome.
+Contributions to py3status either to the core code or for new or
+existing modules are welcome.
 
 # What you will need
 
@@ -493,7 +497,7 @@ Contributions to Py3status either to the core code or for new or existing module
 
 # Python versions
 
-Py3status code, including modules, should run under both python 2 and python 3.
+py3status code, including modules, should run under both python 2 and python 3.
 
 # Flake 8
 
