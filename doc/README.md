@@ -235,7 +235,7 @@ This demonstrates how to produce a simple custom module.
 """
 
 
-class py3status:
+class Py3status:
 
     def hello_world(self):
         return {
@@ -307,7 +307,7 @@ Configuration parameters:
 """
 
 
-class py3status:
+class Py3status:
 
     format = 'Hello World!'
 
@@ -341,7 +341,7 @@ This demonstrates how to use events.
 """
 
 
-class py3status:
+class Py3status:
 
     def __init__(self):
         self.full_text = 'Click me'
@@ -396,7 +396,7 @@ Format status string parameters:
 """
 
 
-class py3status:
+class Py3status:
     format = 'Click me'
     format_clicked = 'You pressed button {button}'
 
