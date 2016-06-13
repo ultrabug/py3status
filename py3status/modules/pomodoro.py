@@ -238,8 +238,11 @@ class Py3status:
             mins, seconds = divmod(rest, 60)
 
             if hours:
-                vals['mmss'] = u'%d%s%02d%s%02d' % (hours, self.format_separator,
-                    mins, self.format_separator, seconds)
+                vals['mmss'] = u'%d%s%02d%s%02d' % (hours,
+                                                    self.format_separator,
+                                                    mins,
+                                                    self.format_separator,
+                                                    seconds)
             else:
                 vals['mmss'] = u'%d%s%02d' % (mins, self.format_separator, seconds)
 
