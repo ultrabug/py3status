@@ -29,7 +29,8 @@ The goal of py3status is to fill this gap by allowing users to simply extend
 their i3bar while preserving their current i3status configuration. The main idea
 is to rely on i3status' strength without adding any configuration on the user's
 side. py3status is thus a wrapper script for i3status and its configuration as
-explained <a href="https://github.com/ultrabug/py3status/wiki">on the wiki</a>.
+explained <a href="https://github.com/ultrabug/py3status/tree/master/doc">
+on the documentation</a>.
 </p>
 
 <h2>Usage</h2>
@@ -84,20 +85,20 @@ disk / {
     on_click 1 = "exec thunar /"
 }
 
-# open an URL on opera when I left click on the py3status weather_yahoo module
+# open an URL on firefox when I left click on the py3status weather_yahoo module
 weather_yahoo paris {
-    cache_timeout = 1800
-    city_code = "FRXX0076"
+    cache_timeout = 7200
+    woeid = 615702
     forecast_days = 2
-    on_click 1 = "exec opera http://www.meteo.fr"
     request_timeout = 10
+    on_click 1 = "exec firefox-bin http://www.meteo.fr"
 }
 </tt></pre>
 
-<h2>Use py3status modules in your i3bar</h2>
+<h2>Use py3status modules on your i3bar</h2>
 
 <p>
-Py3status (since v2) also comes with some configurable modules you can load and
+Py3status also comes with some configurable modules you can load and
 configure directly from your i3status.conf just like any other i3status module.
 <a 
 href="https://github.com/ultrabug/py3status/tree/master/py3status/modules">You 
@@ -134,6 +135,40 @@ imap {
 }
 </tt></pre>
 
+<h2>Group modules to save space on your i3bar</h2>
+
+<p>
+The <b>group</b> module allows you to group several modules together.
+Only one of the modules are displayed at a time. The displayed module can either
+be cycled through automatically or by user action (mouse scroll by default).
+</p>
+
+<p>Example usage:</p>
+
+<pre><tt>
+order += "group tz"
+
+# cycle through different timezone hours every 10s
+group tz {
+    cycle = 10
+    format = "{output}"
+
+    tztime la {
+        format = "LA %H:%M"
+        timezone = "America/Los_Angeles"
+    }
+
+    tztime ny {
+        format = "NY %H:%M"
+        timezone = "America/New_York"
+    }
+
+    tztime du {
+        format = "DU %H:%M"
+        timezone = "Asia/Dubai"
+    }
+}
+</tt></pre>
 
 <h2>Write your own modules to display your own stuff</h2>
 
@@ -141,13 +176,13 @@ imap {
 Py3status features a simple and straightforward module system which you can use
 to get your own output displayed on your i3bar. You can read more and view some
 examples <a
-href="https://github.com/ultrabug/py3status/wiki/Write-your-own-modules"> on the
-wiki</a>.
+href="https://github.com/ultrabug/py3status/tree/master/doc#writing_custom_modules">
+on the documentation</a>.
 </p>
 
 <h2>Documentation</h2>
 
 <p>
 You can read the full and up to date documentation on the <a
-href="https://github.com/ultrabug/py3status">py3status home page</a>.
+href="https://github.com/ultrabug/py3status/tree/master/doc">py3status docs</a>.
 </p>
