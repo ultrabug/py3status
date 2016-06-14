@@ -77,7 +77,7 @@ Obsolete configuration parameters:
         - if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
           parameter is completely ignored
         - if the value is True, the `format` is set to "{icon} {percent}%"
-        default is False
+        default is None
 
 Requires:
     - the `acpi` command line
@@ -127,7 +127,7 @@ class Py3status:
     threshold_full = 100
     # obsolete configuration parameters
     mode = None
-    show_percent_with_blocks = False
+    show_percent_with_blocks = None
 
     def battery_level(self, i3s_output_list, i3s_config):
         self.i3s_config = i3s_config
