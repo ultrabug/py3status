@@ -34,14 +34,25 @@ Configuration parameters:
     format_notify_discharging: format of the notification received when you
         click on the module while your comupter is not plugged
         default is "{time_remaining}"
-    hide_when_full: hide any information when battery is fully charged
+    hide_when_full: hide any information when battery is fully charged (when
+        the battery level is greater than or equal to 'threshold_full')
         default is False
     hide_seconds: hide seconds in remaining time
         default is False
     notification: show current battery state as notification on click
         default is False
-    notify_low_level: display notification when battery is running low.
+    notify_low_level: display notification when battery is running low (when
+        the battery level is less than 'threshold_degraded')
         default is False
+    threshold_bad: a percentage below which the battery level should be
+        considered bad
+        default is 10
+    threshold_degraded: a percentage below which the battery level should be
+        considered degraded
+        default is 30
+    threshold_full: a percentage at or above which the battery level should
+        should be considered full
+        default is 100
 
 Format of status string placeholders:
     {ascii_bar} - a string of ascii characters representing the battery level,
@@ -111,6 +122,9 @@ class Py3status:
     hide_seconds = False
     notification = False
     notify_low_level = False
+    threshold_bad = 10
+    threshold_degraded = 30
+    threshold_full = 100
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = False
@@ -321,16 +335,14 @@ class Py3status:
         return self.response
 
     def _set_bar_text(self):
-        if self.percent_charged == 100 and self.hide_when_full:
-            self.response['full_text'] = ''
-        else:
-            self.response['full_text'] = self.full_text
+        self.response['full_text'] = '' if self.hide_when_full and \
+            self.percent_charged >= self.threshold_full else self.full_text
 
     def _set_bar_color(self):
         if self.charging:
             self.response['color'] = self.color_charging
             battery_status = 'charging'
-        elif self.percent_charged < 10:
+        elif self.percent_charged < self.threshold_bad:
             self.response['color'] = self.color_bad or self.i3s_config[
                 'color_bad']
             battery_status = 'bad'
@@ -338,14 +350,14 @@ class Py3status:
                     self.last_known_status != battery_status):
                 self._notify('Battery level is critically low ({}%)',
                              'critical')
-        elif self.percent_charged < 30:
+        elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.color_degraded or self.i3s_config[
                 'color_degraded']
             battery_status = 'degraded'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
                 self._notify('Battery level is running low ({}%)', 'normal')
-        elif self.percent_charged == 100:
+        elif self.percent_charged >= self.threshold_full:
             self.response['color'] = self.color_good or self.i3s_config[
                 'color_good']
             battery_status = 'full'
