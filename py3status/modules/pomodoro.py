@@ -5,7 +5,6 @@ Display and control a Pomodoro countdown.
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
     format: define custom display format. See placeholders below
-    format_separator: separator between minutes:seconds
     max_breaks: maximum number of breaks
     num_progress_bars: number of progress bars
     sound_break_end: break end sound (file path) (requires pyglet
@@ -95,7 +94,6 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     format = u'{ss}'
-    format_separator = u"-"
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
@@ -238,15 +236,9 @@ class Py3status:
             mins, seconds = divmod(rest, 60)
 
             if hours:
-                vals['mmss'] = u'%d%s%02d%s%02d' % (hours,
-                                                    self.format_separator,
-                                                    mins,
-                                                    self.format_separator,
-                                                    seconds)
+                vals['mmss'] = u'%d-%02d-%02d' % (hours, mins, seconds)
             else:
-                vals['mmss'] = u'%d%s%02d' % (mins,
-                                              self.format_separator,
-                                              seconds)
+                vals['mmss'] = u'%d-%02d' % (mins, seconds)
 
         if '{bar}' in self.format:
             vals['bar'] = self._setup_bar()
