@@ -95,7 +95,7 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     format = u'{ss}'
-    format_separator = u"-"
+    format_separator = u":"
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
