@@ -38,7 +38,7 @@ Philosophy
 
 Documentation
 =============
-Up to date `documentation <https://github.com/ultrabug/py3status/blob/master/doc/README.md>`_:
+Up-to-date `documentation <https://github.com/ultrabug/py3status/blob/master/doc/README.md>`_:
 
 -  `Using modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#modules>`_
 
@@ -66,18 +66,18 @@ Usually you have your own i3status configuration, just point to it:
 
 Available modules
 =================
-You can get a list and short description of all the available modules by using the CLI:
+You can get a list with short descriptions of all available modules by using the CLI:
 ::
 
     $ py3status modules list
 
 
-To get more details about all the available modules and their configuration, use:
+To get more details about all available modules and their configuration, use:
 ::
 
     $ py3status modules details
 
-All the modules shipped with py3status are present in the sources in the `py3status/modules <https://github.com/ultrabug/py3status/tree/master/py3status/modules>`_ folder.
+All modules shipped with py3status are present as the Python source files in the `py3status/modules <https://github.com/ultrabug/py3status/tree/master/py3status/modules>`_ directory.
 
 Most of them are **configurable directly from your current i3status.conf**, check them out to see all the configurable variables.
 
@@ -90,7 +90,7 @@ Using pip:
 
     $ pip install py3status
 
-NB: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
+Note: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
 
 Gentoo Linux
 ------------
