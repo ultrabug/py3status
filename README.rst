@@ -10,7 +10,7 @@ py3status
 
 Using py3status, you can take control of your i3bar easily by:
 
-- using one of the availables
+- using one of the available
   `modules <https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md>`_
   shipped with py3status
 - grouping multiple modules and automatically or manually cycle their display
