@@ -3,14 +3,15 @@
 Control music/video players.
 
 Provides an icon to control simple functions of audio/video players:
- - start (left click)
- - stop  (left click)
- - pause (middle click)
+    - start (left click)
+    - stop  (left click)
+    - pause (middle click)
 
 Configuration parameters:
-    - debug: enable verbose logging (bool) (default: False)
-    - supported_players: supported players (str) (comma separated list)
-    - volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
+    debug: enable verbose logging (bool) (default: False)
+    supported_players: supported players (str) (comma separated list)
+    volume_tick: percentage volume change on mouse wheel (int) (positive number
+        or None to disable it)
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
@@ -18,7 +19,6 @@ Configuration parameters:
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.
 
-from syslog import syslog, LOG_INFO
 from time import time, sleep
 import os
 import subprocess
@@ -28,10 +28,6 @@ try:
     dbus_available = True
 except:
     dbus_available = False
-
-
-def log(msg):
-    syslog(LOG_INFO, "player_control: %s" % msg[:100])
 
 
 class Py3status:
@@ -82,7 +78,7 @@ class Py3status:
 
     def _run(self, *args):
         if self.debug:
-            log('running %s' % repr(*args))
+            self.py3.log('running %s' % repr(*args))
 
         subprocess.check_output(*args, stderr=subprocess.STDOUT)
 
@@ -150,11 +146,11 @@ class Py3status:
         for player_name in supported_players:
             if player_name in running_players:
                 if self.debug:
-                    log('found player: %s' % player_name)
+                    self.py3.log('found player: %s' % player_name)
 
                 # those players need the dbus module
                 if player_name in ('vlc') and not dbus_available:
-                    log('%s requires the dbus python module' % player_name)
+                    self.py3.log('%s requires the dbus python module' % player_name)
                     return None
 
                 return player_name

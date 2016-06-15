@@ -1,3 +1,34 @@
+version 2.9 (2016-03-01)
+* fix: handle format_time tztime parameter thx to @cornerman, fix issue #177
+* fix: issue #166, by Daniel Foerster
+* fix: respect ordering of the ipv6 i3status module even on empty configuration, fix #158 as reported by @nazco
+* new arch_updates module, by Iain Tatch
+* new deadbeef module to show current track playing, by Themistokle Benetatos
+* new icinga2 module, by Ben Oswald
+* new scratchpad_async module, by johannes karoff
+* new wifi module, by Markus Weimar
+* battery_level module: add multiple battery support, by 4iar
+* battery_level module: added formatting options, by Alexandre Bonnetain
+* battery_level module: added option hide_seconds, by Andrwe Lord Weber
+* deadbeef module: fix permissions, remove execution mode, by Alexis 'Horgix' Chotard
+* dpms module: added color support, by Andrwe Lord Weber
+* spotify module: added format_down option, by Andrwe Lord Weber
+* spotify module: fixed color & playbackstatus check, by Andrwe Lord Weber
+* spotify module: workaround broken dbus, removed PlaybackStatus query, by christian
+* weather_yahoo module: support woeid, add more configuration parameters, by Rail Aliiev
+* implement flake8 check via travis-ci, by Rail Aliiev
+* yapf formatting on core
+
+version 2.8 (2016-01-03)
+* new hamster module for Project Hamster, by Aaron Fields
+* new selinux module, by Brian Stinson
+* new wwan_status module, by Timo Kohorst
+* battery_level module: Notify when battery is running low, by Maxim Baz
+* pomodoro module: add pyglet support for sound notifications, by Mateusz Probachta (Beetleman)
+* pomodoro module: eliminate intrusive log messages, by Alexandre Bonnetain
+* taskwarrior module: fix parsing of taskWarrior's output, by Alexandre Bonnetain
+* xrandr module: added missing "above" and "below" positioning options, by brianecker
+
 version 2.7 (2015-11-11)
 * major performance and click event detection improvements by Daniel Foerster
 * fix poll() calls to convert from seconds, by Daniel Foerster

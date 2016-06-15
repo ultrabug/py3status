@@ -2,12 +2,17 @@
 """
 Display the current "artist - title" playing in Clementine.
 
+Requires:
+    clementine:
+
 @author Francois LASSERRE <choiz@me.com>
 @license GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
 from time import time
 from subprocess import check_output
+
+CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
 
 
 class Py3status:
@@ -20,8 +25,10 @@ class Py3status:
         """
         Get the current song metadatas (artist - title)
         """
-        track_id = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetCurrentTrack', shell=True)
-        metadatas = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetMetadata {}'.format(track_id.decode()), shell=True)
+        track_id = check_output(CMD + '.GetCurrentTrack', shell=True)
+        metadatas = check_output(
+            CMD + '.GetMetadata {}'.format(track_id.decode()), shell=True
+        )
         lines = metadatas.decode('utf-8').split('\n')
         lines = filter(None, lines)
 

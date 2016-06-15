@@ -3,8 +3,8 @@
 Display the current window title.
 
 Requires:
-    - i3-py (https://github.com/ziberna/i3-py)
-    # pip install i3-py
+    i3-py: (https://github.com/ziberna/i3-py)
+        `pip install i3-py`
 
 If payload from server contains wierd utf-8
 (for example one window have something bad in title) - the plugin will
@@ -47,11 +47,9 @@ class Py3status:
 
         transformed = False
         if window and 'name' in window and window['name'] != self.text:
-            self.text = (
-                len(window['name']) > self.max_width
-                and "..." + window['name'][-(self.max_width-3):]
-                or window['name']
-            )
+            self.text = (len(window['name']) > self.max_width and
+                         "..." + window['name'][-(self.max_width-3):] or
+                         window['name'])
             transformed = True
 
         response = {

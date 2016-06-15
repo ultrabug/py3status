@@ -3,19 +3,19 @@
 Display the current active keyboard layout.
 
 Configuration parameters:
-    - cache_timeout: check for keyboard layout change every seconds
-    - color: a single color value for all layouts. eg: "#FCE94F"
-    - colors: a comma separated string of color values for each layout,
-              eg: "us=#FCE94F, fr=#729FCF".
-    - format : see placeholders below
+    cache_timeout: check for keyboard layout change every seconds
+    color: a single color value for all layouts. eg: "#FCE94F"
+    colors: a comma separated string of color values for each layout,
+        eg: "us=#FCE94F, fr=#729FCF".
+    format: see placeholders below
 
 Format of status string placeholders:
-    {layout} - currently active keyboard layout
+    {layout} currently active keyboard layout
 
 Requires:
-    - xkblayout-state
-    or
-    - setxkbmap and xset (works for the first two predefined layouts.)
+    xkblayout-state:
+        or
+    setxkbmap: and `xset` (works for the first two predefined layouts.)
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
@@ -81,17 +81,14 @@ class Py3status:
         Check using setxkbmap >= 1.3.0 and xset
         This method works only for the first two predefined layouts.
         """
-        ledmask_re = re.compile(r".*LED\smask:\s*(\d+).*", flags=re.DOTALL)
+        ledmask_re = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*",
+                                flags=re.DOTALL)
         layouts = self._get_layouts()
         if len(layouts) == 1:
             return layouts[0]
         xset_output = check_output(["xset", "-q"]).decode("utf-8")
-        led_mask = re.match(ledmask_re, xset_output).group(1)
-        if led_mask == "00000000":
-            return layouts[0]
-        elif led_mask == "00001000":
-            return layouts[1]
-        return "Err"
+        led_mask = re.match(ledmask_re, xset_output).groups(0)[0]
+        return layouts[int(led_mask)]
 
 
 if __name__ == "__main__":

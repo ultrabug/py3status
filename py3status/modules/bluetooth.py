@@ -3,17 +3,19 @@
 Display bluetooth status.
 
 Confiuration parameters:
-    - format : format when there is a connected device
-    - format_no_conn : format when there is no connected device
-    - format_no_conn_prefix : prefix when there is no connected device
-    - format_prefix : prefix when there is a connected device
+    format: format when there is a connected device
+    format_no_conn: format when there is no connected device
+    format_no_conn_prefix: prefix when there is no connected device
+    format_prefix: prefix when there is a connected device
+    device_separator: the separator char between devices (only if more than one
+    device)
 
 Format of status string placeholders
-    {name} : device name
-    {mac} : device MAC address
+  - `{name}`  device name
+  - `{mac}`  device MAC address
 
 Requires:
-    - hcitool
+    hcitool:
 
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
@@ -39,7 +41,7 @@ class Py3status:
     format_no_conn = 'OFF'
     format_no_conn_prefix = 'BT: '
     format_prefix = 'BT: '
-    separator = '|'
+    device_separator = '|'
 
     def bluetooth(self, i3s_output_list, i3s_config):
         """
@@ -62,7 +64,7 @@ class Py3status:
 
             output = '{format_prefix}{data}'.format(
                 format_prefix=self.format_prefix,
-                data=self.separator.join(data)
+                data=self.device_separator.join(data)
             )
 
             color = self.color_good or i3s_config['color_good']

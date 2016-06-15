@@ -3,12 +3,12 @@
 Display information from mpd.
 
 Configuration parameters:
-    cache_timeout = how often we refresh this module in seconds (2s default)
-    color = enable coloring output (default False)
-    color_pause = custom pause color (default i3status color degraded)
-    color_play = custom play color (default i3status color good)
-    color_stop = custom stop color (default i3status color bad)
-    format = template string (see below)
+    cache_timeout: how often we refresh this module in seconds (2s default)
+    color: enable coloring output (default False)
+    color_pause: custom pause color (default i3status color degraded)
+    color_play: custom play color (default i3status color good)
+    color_stop: custom stop color (default i3status color bad)
+    format: template string (see below)
     hide_when_paused: hide the status if state is paused
     hide_when_stopped: hide the status if state is stopped
     host: mpd host
@@ -20,8 +20,10 @@ Configuration parameters:
     state_stop: label to display for "stopped" state
 
 Requires:
-    - python-mpd2 (NOT python2-mpd2)
-    # pip install python-mpd2
+    python-mpd2: (NOT python2-mpd2)
+```
+# pip install python-mpd2
+```
 
 Refer to the mpc(1) manual page for the list of available placeholders to be
 used in `format`.
@@ -32,18 +34,19 @@ the song following the one currently playing.
 
 You can also use {} instead of %% for placeholders (backward compatibility).
 
-Examples of `format`:
-    Show state and (artist -) title, if no title fallback to file:
-    %state% [[[%artist% - ]%title%]|[%file%]]
+Examples of `format`
+```
+# Show state and (artist -) title, if no title fallback to file:
+%state% [[[%artist% - ]%title%]|[%file%]]
 
-    Alternative legacy syntax:
-    {state} [[[{artist} - ]{title}]|[{file}]]
+# Alternative legacy syntax:
+{state} [[[{artist} - ]{title}]|[{file}]]
 
-    Show state, [duration], title (or file) and next song title (or file):
-    %state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
+# Show state, [duration], title (or file) and next song title (or file):
+%state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
+```
 
-@author shadowprince
-@author zopieux
+@author shadowprince, zopieux
 @license Eclipse Public License
 """
 
@@ -185,7 +188,7 @@ class Py3status:
             state = status.get('state')
 
             if ((state == 'pause' and self.hide_when_paused) or
-                (state == 'stop' and self.hide_when_stopped)):
+                    (state == 'stop' and self.hide_when_stopped)):
                 text = ''
 
             else:
@@ -219,7 +222,6 @@ class Py3status:
         else:
             c.disconnect()
 
-
         if len(text) > self.max_width:
             text = text[:-self.max_width - 3] + '...'
 
@@ -239,8 +241,8 @@ class Py3status:
             if state == 'play':
                 response['color'] = self.color_play or i3s_config['color_good']
             elif state == 'pause':
-                response['color'] = (self.color_pause
-                                     or i3s_config['color_degraded'])
+                response['color'] = (self.color_pause or
+                                     i3s_config['color_degraded'])
             elif state == 'stop':
                 response['color'] = self.color_stop or i3s_config['color_bad']
 

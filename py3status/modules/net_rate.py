@@ -2,20 +2,21 @@
 """
 Display the current network transfer rate.
 
-Confiuration parameters:
-    - all_interfaces : ignore self.interfaces, but not self.interfaces_blacklist
-    - devfile : location of dev file under /proc
-    - format_no_connection : when there is no data transmitted from the start of the plugin
-    - hide_if_zero : hide indicator if rate == 0
-    - interfaces : comma separated list of interfaces to track
-    - interfaces_blacklist : comma separated list of interfaces to ignore
-    - precision : amount of numbers after dot
+Configuration parameters:
+    all_interfaces: ignore self.interfaces, but not self.interfaces_blacklist
+    devfile: location of dev file under /proc
+    format_no_connection: when there is no data transmitted from the
+        start of the plugin
+    hide_if_zero: hide indicator if rate == 0
+    interfaces: comma separated list of interfaces to track
+    interfaces_blacklist: comma separated list of interfaces to ignore
+    precision: amount of numbers after dot
 
 Format of status string placeholders:
-    {down} - download rate
-    {interface} - name of interface
-    {total} - total rate
-    {up} - upload rate
+    {down} download rate
+    {interface} name of interface
+    {total} total rate
+    {up} upload rate
 
 @author shadowprince
 @license Eclipse Public License
@@ -24,10 +25,16 @@ Format of status string placeholders:
 from __future__ import division  # python2 compatibility
 from time import time
 
-INITIAL_MULTI = 1024  # initial multiplier, if you want to get rid of first bytes, set to 1 to disable
-MULTIPLIER_TOP = 999  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-UNIT_MULTI = 1024  # value to divide if rate is greater than MULTIPLIER_TOP
-UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]  # list of units, first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
+# initial multiplier, if you want to get rid of first bytes, set to 1 to
+# disable
+INITIAL_MULTI = 1024
+# if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
+MULTIPLIER_TOP = 999
+# value to divide if rate is greater than MULTIPLIER_TOP
+UNIT_MULTI = 1024
+# list of units, first one - value/INITIAL_MULTI, second - value/1024, third -
+# value/1024^2, etc...
+UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
 
 
 class Py3status:
@@ -68,7 +75,9 @@ class Py3status:
             self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
         else:
             self.left_align = len(str(MULTIPLIER_TOP))
-        self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
+        self.value_format = "{value:%s.%sf} {unit}" % (
+            self.left_align, self.precision
+        )
 
         ns = self._get_stat()
         deltas = {}

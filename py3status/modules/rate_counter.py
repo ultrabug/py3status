@@ -3,10 +3,10 @@
 Display days/hours/minutes spent and calculate the price of your service.
 
 Configuration parameters:
-    - config_file: file path to store the time already spent
-                   and restore it the next session
-    - hour_price : your price per hour
-    - tax  : tax value (1.02 = 2%)
+    config_file: file path to store the time already spent
+        and restore it the next session
+    hour_price: your price per hour
+    tax: tax value (1.02 = 2%)
 
 @author Amaury Brisou <py3status AT puzzledge.org>
 """
@@ -66,8 +66,9 @@ class Py3status:
             self.current_time = time.time()
             self.diff_time = time.gmtime(self.current_time - self.start_time)
             cost = (
-                float(self.hour_price) * float(self.diff_time.tm_mday - 1) * 24
-                + float(self.hour_price) * float(self.diff_time.tm_hour) +
+                24 * float(self.hour_price) *
+                float(self.diff_time.tm_mday - 1) +
+                float(self.hour_price) * float(self.diff_time.tm_hour) +
                 float(self.diff_time.tm_min) * float(self.hour_price) / 60 +
                 float(self.diff_time.tm_sec) * float(self.hour_price) / 3600)
             self.full_text = 'Time: %d day %d:%d Cost: %.2f$' % (

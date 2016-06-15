@@ -6,18 +6,18 @@ Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.
 
 Configuration parameters:
-    - always_show : do not hide the title when it can be already
-                    visible (e.g. in tabbed layout), default: False.
-    - empty_title : string that will be shown instead of the title when
-                    the title is hidden, default: "" (empty string).
-    - format : format of the title, default: "{title}".
-    - max_width : maximum width of block (in symbols).
-                  If the title is longer than `max_width`,
-                  the title will be truncated to `max_width - 1`
-                  first symbols with ellipsis appended. Default: 120.
+    always_show: do not hide the title when it can be already
+        visible (e.g. in tabbed layout), default: False.
+    empty_title: string that will be shown instead of the title when
+        the title is hidden, default: "" (empty string).
+    format: format of the title, default: "{title}".
+    max_width: maximum width of block (in symbols).
+        If the title is longer than `max_width`,
+        the title will be truncated to `max_width - 1`
+        first symbols with ellipsis appended. Default: 120.
 
 Requires:
-    - i3ipc (https://github.com/acrisci/i3ipc-python)
+    i3ipc: (https://github.com/acrisci/i3ipc-python)
 
 @author Anon1234 https://github.com/Anon1234
 @license BSD
@@ -55,7 +55,7 @@ class Py3status:
             # to display it
             if not self.always_show and (
                     w.border == "normal" or w.type == "workspace" or
-                (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
+                    (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
 
                 return self.empty_title
 
@@ -74,20 +74,25 @@ class Py3status:
 
             # check if we need to update title due to changes
             # in the workspace layout
-            layout_changed = (hasattr(e, "binding") and
-                              (e.binding.command.startswith("layout") or
-                               e.binding.command.startswith("move container")
-                               or e.binding.command.startswith("border")))
+            layout_changed = (
+                hasattr(e, "binding") and
+                (e.binding.command.startswith("layout") or
+                 e.binding.command.startswith("move container") or
+                 e.binding.command.startswith("border"))
+            )
 
             if title_changed or layout_changed:
                 self.title = get_title(conn)
+                self.py3.update()
 
         def clear_title(*args):
             self.title = self.empty_title
+            self.py3.update()
 
         conn = i3ipc.Connection()
 
         self.title = get_title(conn)  # set title on startup
+        self.py3.update()
 
         # The order of following callbacks is important!
 
@@ -106,15 +111,9 @@ class Py3status:
 
     def window_title(self, i3s_output_list, i3s_config):
         resp = {
-            'cached_until': 0,  # update ASAP
+            'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.title,
         }
-
-        for option in ('min_width', 'align', 'separator'):
-            try:
-                resp[option] = getattr(self, option)
-            except AttributeError:
-                continue
 
         return resp
 

@@ -3,12 +3,13 @@
 Display if your favorite hackerspace is open or not.
 
 Configuration Parameters:
-    - cache_timeout: Set timeout between calls in seconds
-    - closed_color: color if space is closed
-    - closed_text: text if space is closed, strftime parameters will be translated
-    - open_color: color if space is open
-    - open_text: text if space is open, strftime parmeters will be translated
-    - url: URL to SpaceAPI json file of your space
+    cache_timeout: Set timeout between calls in seconds
+    closed_color: color if space is closed
+    closed_text: text if space is closed, strftime parameters
+        will be translated
+    open_color: color if space is open
+    open_text: text if space is open, strftime parmeters will be translated
+    url: URL to SpaceAPI json file of your space
 
 @author timmszigat
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
@@ -75,7 +76,9 @@ class Py3status:
 
             if 'lastchange' in data['state'].keys():
                 # apply strftime to full and short text
-                dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
+                dt = datetime.datetime.fromtimestamp(
+                    data['state']['lastchange']
+                )
                 response['full_text'] = dt.strftime(response['full_text'])
                 response['short_text'] = dt.strftime(response['short_text'])
 
