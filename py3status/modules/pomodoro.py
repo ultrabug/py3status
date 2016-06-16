@@ -274,9 +274,11 @@ class Py3status:
             try:
                 self._colors = dict((k.strip(), v.strip()) for k, v in (
                     color.split('=') for color in self.colors.split(',')))
-            except:
-                self.py3.log("pomodoro module: colors parsing error")
+            except ValueError:
                 self._colors = dict()
+                self.colors = None
+                msg = '`colors` config parameter parsing error. i3status defaults in use.'
+                self.py3.notify_user('Error: {}'.format(msg))
 
         if not self._running:
             response['color'] = self._colors.get('off') or i3s_config['color_bad']
