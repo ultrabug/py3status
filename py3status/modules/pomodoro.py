@@ -2,6 +2,10 @@
 """
 Display and control a Pomodoro countdown.
 
+Button 1 starts/pauses countdown.
+Button 2 switch Pomodoro/Break.
+Button 3 resets timer.
+
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
     format: define custom display format. See placeholders below
