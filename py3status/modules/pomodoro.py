@@ -10,6 +10,8 @@ Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
     format: define custom display format. See placeholders below
     format_separator: separator between minutes:seconds
+    colors: a comma separated string of color values for each state,
+        eg: "on=#FFFFFF, off=#FF0000, break=#FCE94F".
     max_breaks: maximum number of breaks
     num_progress_bars: number of progress bars
     sound_break_end: break end sound (file path) (requires pyglet
@@ -108,6 +110,7 @@ class Py3status:
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
+    colors = None
 
     def __init__(self):
         self._initialized = False
@@ -126,6 +129,7 @@ class Py3status:
         self._alert = False
         if self.display_bar is True:
             self.format = u'{bar}'
+        self._colors = dict()
         self._initialized = True
 
     def _time_up(self):
@@ -270,13 +274,23 @@ class Py3status:
             response['urgent'] = True
             self._alert = False
 
+        if self.colors:
+            try:
+                self._colors = dict((k.strip(), v.strip()) for k, v in (
+                    color.split('=') for color in self.colors.split(',')))
+            except ValueError:
+                self._colors = dict()
+                self.colors = None
+                msg = '`colors` config parameter parsing error. i3status defaults in use.'
+                self.py3.notify_user('Error: {}'.format(msg))
+
         if not self._running:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self._colors.get('off') or i3s_config['color_bad']
         else:
             if self._active:
-                response['color'] = i3s_config['color_good']
+                response['color'] = self._colors.get('on') or i3s_config['color_good']
             else:
-                response['color'] = i3s_config['color_degraded']
+                response['color'] = self._colors.get('break') or i3s_config['color_degraded']
 
         return response
 
