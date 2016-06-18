@@ -100,7 +100,8 @@ class Py3:
         Send notification to user.
         level must be 'info', 'error' or 'warning'
         """
-        self._module._py3_wrapper.notify_user(msg, level=level)
+        self._module._py3_wrapper.notify_user(
+            msg, level=level, rate_limit=5)
 
     def time_in(self, seconds=0):
         """
