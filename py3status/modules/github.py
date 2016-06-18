@@ -179,7 +179,11 @@ class Py3status:
         if ('{notifications}' in self.format or
                 '{notifications_count}' in self.format):
             count = self._notifications()
-            self._notify = count or self._notify
+            # if we don't have a notification count, then use the last value
+            # that we did have.
+            if count is None:
+                count = self._notify
+            self._notify = count
             if count and count != '?':
                 notify = self.py3.safe_format(
                     self.format_notifications,
