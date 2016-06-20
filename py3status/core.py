@@ -333,7 +333,10 @@ class Py3statusWrapper():
         NOTE: Message should end with a '.' for consistency.
         """
         dbus = self.config.get('dbus_notify')
-        if not dbus:
+        if dbus:
+            # force msg to be a string
+            msg = '{}'.format(msg)
+        else:
             msg = 'py3status: {}'.format(msg)
         if level != 'info':
             fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
