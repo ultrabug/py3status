@@ -325,7 +325,7 @@ class Py3statusWrapper():
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-    def notify_user(self, msg, level='error', rate_limit=None):
+    def notify_user(self, msg, level='error', rate_limit=None, key=''):
         """
         Display notification to user via i3-nagbar or send-notify
         We also make sure to log anything to keep trace of it.
@@ -352,7 +352,7 @@ class Py3statusWrapper():
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash('{}{}'.format(limit_key, msg))
+        msg_hash = hash('{}#{}#{}'.format(key, limit_key, msg))
         if msg_hash in self.notified_messages:
             return
         else:

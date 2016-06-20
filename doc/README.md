@@ -469,6 +469,8 @@ __notify_user(msg, level='info')__
 
 Send a notification to the user.
 `level` must be `info`, `error` or `warning`.
+`rate_limit` is the time period in seconds during which this message
+should not be repeated.
 
 __prevent_refresh()__
 
