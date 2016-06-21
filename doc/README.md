@@ -465,7 +465,7 @@ __trigger_event(module_name, event)__
 
 Trigger an event on a named module.
 
-__notify_user(msg, level='info')__
+__notify_user(msg, level='info', rate_limit=5)__
 
 Send a notification to the user.
 `level` must be `info`, `error` or `warning`.
