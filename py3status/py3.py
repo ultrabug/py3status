@@ -102,9 +102,9 @@ class Py3:
         rate_limit is the time period in seconds during which this message
         should not be repeated.
         """
-        key = self._module.module_full_name
+        module_name = self._module.module_full_name
         self._module._py3_wrapper.notify_user(
-            msg, level=level, rate_limit=rate_limit, key=key)
+            msg, level=level, rate_limit=rate_limit, module_name=module_name)
 
     def time_in(self, seconds=0):
         """
