@@ -9,10 +9,13 @@ Configuration parameters:
 
 Format status string parameters:
     {level} brightness
+    {color} text color
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
 """
+
+from __future__ import division
 
 import subprocess
 from time import time
@@ -24,18 +27,19 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     device = "acpi_video0"
-    format = u'☼: {level}'
+    format = u'☼: {level}%'
+    color = '#FFFFFF'
 
     def backlight(self,  i3s_output_list, i3s_config):
         level = int(subprocess.check_output(
             ["cat", "/sys/class/backlight/%s/brightness" % self.device]))
-        max = int(subprocess.check_output(
+        max_level = int(subprocess.check_output(
             ["cat", "/sys/class/backlight/%s/max_brightness" % self.device]))
-        full_text = self.format.format(level=round((level/max) * 100))
+        full_text = self.format.format(level=(level * 100 // max_level))
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': full_text,
-            'color': '#FFFFFF'
+            'color': self.color
         }
         return response
 
