@@ -27,8 +27,10 @@ class Py3status:
     format = u'☼: {level}'
 
     def backlight(self,  i3s_output_list, i3s_config):
-        level = int(subprocess.check_output(["cat", "/sys/class/backlight/%s/brightness" % self.device]))
-        max = int(subprocess.check_output(["cat", "/sys/class/backlight/%s/max_brightness" % self.device]))
+        level = int(subprocess.check_output(
+            ["cat", "/sys/class/backlight/%s/brightness" % self.device]))
+        max = int(subprocess.check_output(
+            ["cat", "/sys/class/backlight/%s/max_brightness" % self.device]))
         full_text = self.format.format(level=round((level/max) * 100))
         response = {
             'cached_until': time() + self.cache_timeout,
