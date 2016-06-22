@@ -6,10 +6,10 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default: 10s)
     device: The backlight device (default: "acpi_video0")
             If you are unsure try: `ls /sys/class/backlight`
+    color:  The text color (default: "#FFFFFF")
 
 Format status string parameters:
     {level} brightness
-    {color} text color
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
