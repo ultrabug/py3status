@@ -9,7 +9,7 @@ Configuration parameters:
     format_prefix: a prefix for the output.
     format_units: the temperature units. Will appear at the end.
     temp_separator: the separator char between temperatures (only if more than
-    one GPU)
+        one GPU)
 
 Requires:
     nvidia-smi:

@@ -66,16 +66,16 @@ Obsolete configuration parameters:
     mode: an old way to define `format` parameter. The current behavior is:
         if 'format' is not "{icon}", this parameter is completely ignored
         if 'format' is "{icon}" and 'mode' is "ascii_bar", the `format` is
-            set to "{ascii_bar}"
+        set to "{ascii_bar}"
         if 'format' is "{icon}" and 'mode' is "text", the `format` is set to
-            "Battery: {percent}"
+        "Battery: {percent}"
         all other values are ignored
         default is None
     show_percent_with_blocks: an old way to define `format` parameter. The
-      current behavior is:
+        current behavior is:
         if 'format' is not "{icon}", this parameter is completely ignored
         if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
-            parameter is completely ignored
+        parameter is completely ignored
         if the value is True, the `format` is set to "{icon} {percent}%"
         default is None
 

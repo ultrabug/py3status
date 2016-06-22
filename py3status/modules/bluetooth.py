@@ -8,7 +8,7 @@ Confiuration parameters:
     format_no_conn_prefix: prefix when there is no connected device
     format_prefix: prefix when there is a connected device
     device_separator: the separator char between devices (only if more than one
-    device)
+        device)
 
 Format of status string placeholders
   - `{name}`  device name

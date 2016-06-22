@@ -17,7 +17,7 @@ Configuration parameters:
         (default None)
     button_action: Button that when clicked opens the Github notification page
         if notifications, else the project page for the repository . Setting to
-            `0` disables.
+        `0` disables.
         (default 3)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
