@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 
 import argparse
 import os
@@ -325,7 +326,7 @@ class Py3statusWrapper():
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-    def notify_user(self, msg, level='error'):
+    def notify_user(self, msg, level='error', rate_limit=None, module_name=''):
         """
         Display notification to user via i3-nagbar or send-notify
         We also make sure to log anything to keep trace of it.
@@ -333,18 +334,36 @@ class Py3statusWrapper():
         NOTE: Message should end with a '.' for consistency.
         """
         dbus = self.config.get('dbus_notify')
-        if not dbus:
+        if dbus:
+            # force msg to be a string
+            msg = '{}'.format(msg)
+        else:
             msg = 'py3status: {}'.format(msg)
-        if level != 'info':
+        if level != 'info' and module_name == '':
             fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
             msg = fix_msg.format(msg)
-        try:
-            if msg in self.notified_messages:
-                return
-            else:
-                self.log(msg, level)
-                self.notified_messages.add(msg)
+        # Rate limiting. If rate limiting then we need to calculate the time
+        # period for which the message should not be repeated.  We just use
+        # A simple chunked time model where a message cannot be repeated in a
+        # given time period. Messages can be repeated more frequently but must
+        # be in different time periods.
 
+        limit_key = ''
+        if rate_limit:
+            try:
+                limit_key = time.time()//rate_limit
+            except TypeError:
+                pass
+        # We use a hash to see if the message is being repeated.  This is crude
+        # and imperfect but should work for our needs.
+        msg_hash = hash('{}#{}#{}'.format(module_name, limit_key, msg))
+        if msg_hash in self.notified_messages:
+            return
+        else:
+            self.log(msg, level)
+            self.notified_messages.add(msg_hash)
+
+        try:
             if dbus:
                 # fix any html entities
                 msg = msg.replace('&', '&amp;')

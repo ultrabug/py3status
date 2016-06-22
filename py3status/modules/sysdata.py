@@ -29,19 +29,6 @@ class GetData:
     """
     Get system status
     """
-
-    def execCMD(self, cmd, arg):
-        """
-        Take a system command and its argument, then return the result.
-
-        Arguments:
-        - `cmd`: system command.
-        - `arg`: argument.
-        """
-        result = subprocess.check_output([cmd, arg])
-        result = result.decode('utf-8')
-        return result
-
     def cpu(self):
         """
         Get the cpu usage data from /proc/stat :
