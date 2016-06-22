@@ -5,7 +5,7 @@ Display the current screen backlight level.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (10s default)
     format: prefix text for the backlight status
-    command: the command used to retrieve the bakglight level. 
+    command: the command used to retrieve the bakglight level.
              By default we use `light` https://github.com/haikarainen/light
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
@@ -43,4 +43,3 @@ if __name__ == "__main__":
     while True:
         print(x.backlight([], None))
         sleep(1)
-
