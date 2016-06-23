@@ -1,2 +1,3 @@
 include CHANGELOG LICENSE README.rst
+include py3status/VERSION
 recursive-include modules *.py

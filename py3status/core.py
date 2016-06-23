@@ -71,8 +71,9 @@ class Py3statusWrapper():
 
         # package version
         try:
-            import pkg_resources
-            version = pkg_resources.get_distribution('py3status').version
+            version = open(
+                os.path.join(os.path.dirname(__file__), 'VERSION')
+            ).read().strip()
         except:
             version = 'unknown'
         config['version'] = version
