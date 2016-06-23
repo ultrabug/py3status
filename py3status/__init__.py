@@ -3,6 +3,8 @@ import sys
 
 from py3status.core import Py3statusWrapper
 
+__version__ = '3.1_rc'
+
 try:
     from setproctitle import setproctitle
     setproctitle('py3status')
@@ -13,7 +15,7 @@ except ImportError:
 def main():
     try:
         locale.setlocale(locale.LC_ALL, '')
-        py3 = Py3statusWrapper()
+        py3 = Py3statusWrapper(__version__)
         py3.setup()
     except KeyboardInterrupt:
         py3.notify_user('Setup interrupted (KeyboardInterrupt).')
