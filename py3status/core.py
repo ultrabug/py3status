@@ -20,6 +20,7 @@ from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
 from py3status.module import Module
 from py3status.profiling import profile
+from py3status.version import version
 
 LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
 
@@ -68,13 +69,6 @@ class Py3statusWrapper():
             '{}/i3/py3status'.format(os.environ.get(
                 'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
         ]
-
-        # package version
-        try:
-            import pkg_resources
-            version = pkg_resources.get_distribution('py3status').version
-        except:
-            version = 'unknown'
         config['version'] = version
 
         # i3status config file default detection
