@@ -31,7 +31,7 @@ class Py3statusWrapper():
     This is the py3status wrapper.
     """
 
-    def __init__(self):
+    def __init__(self, version):
         """
         Useful variables we'll need.
         """
@@ -44,6 +44,7 @@ class Py3statusWrapper():
         self.output_modules = {}
         self.py3_modules = []
         self.queue = deque()
+        self.version = version
 
     def get_config(self):
         """
@@ -70,12 +71,7 @@ class Py3statusWrapper():
         ]
 
         # package version
-        try:
-            import pkg_resources
-            version = pkg_resources.get_distribution('py3status').version
-        except:
-            version = 'unknown'
-        config['version'] = version
+        config['version'] = self.version
 
         # i3status config file default detection
         # respect i3status' file detection order wrt issue #43

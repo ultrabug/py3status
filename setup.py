@@ -13,9 +13,22 @@ from setuptools import find_packages, setup
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+def get_version():
+    '''
+    Parse core.py file to find the version looking for line like
+    __version__ = 'X.Y'
+    '''
+    core_path = os.path.join(os.path.dirname(__file__), 'py3status', '__init__.py')
+    with open(core_path) as f:
+        for line in f:
+            if line.startswith('__version__'):
+                return eval(line.split('=')[1].strip())
+
+
 setup(
     name='py3status',
-    version='3.1_rc',
+    version=get_version(),
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
     description='py3status: an extensible i3status wrapper written in python',
