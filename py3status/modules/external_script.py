@@ -11,6 +11,8 @@ Configuration parameters:
     color: color of printed text
     format: see placeholders below
     script_path: script you want to show output of (compulsory)
+    strip_output: shall we strip leading and trailing spaces from output
+        (default False)
 
 Format of status string placeholders:
     {output} output of script given by "script_path"
@@ -40,16 +42,19 @@ class Py3status:
     color = None
     format = '{output}'
     script_path = None
+    strip_output = False
 
     def external_script(self, i3s_output_list, i3s_config):
         if self.script_path:
             return_value = subprocess.check_output(self.script_path,
                                                    shell=True,
                                                    universal_newlines=True)
+            if self.strip_output:
+                return_value = return_value.strip()
             response = {
                 'cached_until': time() + self.cache_timeout,
                 'color': self.color,
-                'full_text': self.format.format(output=return_value.rstrip())
+                'full_text': self.format.format(output=return_value)
             }
         else:
             response = {

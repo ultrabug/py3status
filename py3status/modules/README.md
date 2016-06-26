@@ -402,6 +402,8 @@ Configuration parameters:
   - `color` color of printed text
   - `format` see placeholders below
   - `script_path` script you want to show output of (compulsory)
+  - `strip_output` shall we strip leading and trailing spaces from output
+    *(default False)*
 
 Format of status string placeholders:
   - `{output}` output of script given by "script_path"
