@@ -2,13 +2,14 @@
 py3status
 """
 
-import os, sys
+import os
+import sys
 from setuptools import find_packages, setup
 
 module_path = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'py3status')
 sys.path.insert(0, module_path)
-from version import version
+from version import version  # noqa
 sys.path.remove(module_path)
 
 
