@@ -111,12 +111,16 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(self, msg, level='info'):
+    def notify_user(self, msg, level='info', rate_limit=5):
         """
-        Send notification to user.
-        level must be 'info', 'error' or 'warning'
+        Send a notification to the user.
+        level must be 'info', 'error' or 'warning'.
+        rate_limit is the time period in seconds during which this message
+        should not be repeated.
         """
-        self._module._py3_wrapper.notify_user(msg, level=level)
+        module_name = self._module.module_full_name
+        self._module._py3_wrapper.notify_user(
+            msg, level=level, rate_limit=rate_limit, module_name=module_name)
 
     def time_in(self, seconds=0):
         """

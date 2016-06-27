@@ -35,11 +35,11 @@ Configuration parameters:
         When an output layout is not available anymore, the configurations
         are automatically filtered out.
         Example:
-            Assuming the default values for `format_clone` and `format_extend`
-            are used, and assuming you have two screens 'eDP1' and 'DP1', the
-            following setup will reduce the number of output combinations
-            from four (every possible one) down to two:
-            output_combinations = "eDP1|eDP1+DP1"
+        Assuming the default values for `format_clone` and `format_extend`
+        are used, and assuming you have two screens 'eDP1' and 'DP1', the
+        following setup will reduce the number of output combinations
+        from four (every possible one) down to two:
+        output_combinations = "eDP1|eDP1+DP1"
 
 Dynamic configuration parameters:
     - <OUTPUT>_pos: apply the given position to the OUTPUT
