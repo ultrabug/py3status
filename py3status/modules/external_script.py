@@ -49,8 +49,22 @@ class Py3status:
             return_value = subprocess.check_output(self.script_path,
                                                    shell=True,
                                                    universal_newlines=True)
+
+            # this is a convenience cleanup code to avoid breaking i3bar which
+            # does not support multi lines output
+            if len(return_value.split('\n')) > 2:
+                return_value = return_value.split('\n')[0]
+                self.py3.notify_user(
+                    'Script {} output contains new lines.'.format(
+                        self.script_path) +
+                    ' Only the first one is being displayed to avoid breaking your i3bar',
+                    rate_limit=3600)
+            elif return_value[-1] == '\n':
+                return_value = return_value.rstrip('\n')
+
             if self.strip_output:
                 return_value = return_value.strip()
+
             response = {
                 'cached_until': time() + self.cache_timeout,
                 'color': self.color,
@@ -68,8 +82,9 @@ if __name__ == "__main__":
     from time import sleep
     x = Py3status()
     config = {
-        'color_good': '#00FF00',
         'color_bad': '#FF0000',
+        'color_degraded': '#FFFF00',
+        'color_good': '#00FF00'
     }
     while True:
         print(x.external_script([], config))
