@@ -14,7 +14,7 @@ Configuration parameters:
 
 from time import time
 import os
-import re
+import subprocess
 try:
     # python3
     from urllib.request import urlopen
@@ -33,7 +33,7 @@ class Py3status:
     url = 'http://www.google.com'
 
     def _connection_present(self):
-        if re.search('://', self.url):
+        if '://' in self.url:
             try:
                 urlopen(self.url, timeout=self.timeout)
             except:
@@ -41,10 +41,9 @@ class Py3status:
             else:
                 return True
         else:
-            if os.system("ping -c 1 " + self.url + ">> /dev/null 2>&1") == 0:
-                return True
-            else:
-                return False
+            fnull = open(os.devnull, 'w')
+            return subprocess.call(['ping', '-c', '1', self.url], stdout=fnull,
+                               stderr=subprocess.STDOUT) == 0
 
     def online_status(self, i3s_output_list, i3s_config):
         response = {
