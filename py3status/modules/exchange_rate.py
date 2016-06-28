@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-View foreign exchange rates.
+Display foreign exchange rates.
 
 The exchange rate data comes from Yahoo Finance.
 
@@ -71,3 +71,10 @@ class Py3status:
             'full_text': self.py3.safe_format(self.format, output),
             'cached_until': self.py3.time_in(self.cache_timeout),
         }
+
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
