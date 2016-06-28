@@ -150,7 +150,6 @@ class Py3status:
         Get the current metadatas
         """
         is_video = False
-        error = False
         album = 'Unknown'
         artist = 'Unknown'
         state = 'Unkown'
