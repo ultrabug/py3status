@@ -43,14 +43,12 @@ class Py3status:
         display_name_request = requests.get(url)
         self._display_name = display_name_request.json().get('display_name')
 
-    def is_streaming(self):
+    def is_streaming(self, i3s_output_list, i3s_config):
         if self.stream_name is None:
             return {
                 'full_text': 'stream_name missing',
                 'cached_until': self.py3.CACHE_FOREVER
             }
-
-        i3s_config = self.py3.i3s_config()
 
         r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
         if not self._display_name:

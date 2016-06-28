@@ -218,7 +218,7 @@ class Py3status:
         bar = bar.ljust(self.num_progress_bars)
         return bar
 
-    def pomodoro(self):
+    def pomodoro(self, i3s_output_list, i3s_config):
         """
         Pomodoro response handling and countdown
         """
@@ -269,8 +269,6 @@ class Py3status:
         if self._alert:
             response['urgent'] = True
             self._alert = False
-
-        i3s_config = self.py3.i3s_config()
 
         if not self._running:
             response['color'] = i3s_config['color_bad']

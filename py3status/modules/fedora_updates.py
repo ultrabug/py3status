@@ -44,7 +44,7 @@ class Py3status:
         self._updates = None
         self._security_notice = False
 
-    def check_updates(self):
+    def check_updates(self, i3s_output_list, i3s_config):
         if self._first:
             self._first = False
             response = {
@@ -53,7 +53,6 @@ class Py3status:
             }
             return response
 
-        i3s_config = self.py3.i3s_config()
         output, error = subprocess.Popen(
             ['dnf', 'check-update'],
             stdout=subprocess.PIPE,

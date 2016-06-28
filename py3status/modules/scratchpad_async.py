@@ -36,7 +36,7 @@ class Py3status:
         t.daemon = True
         t.start()
 
-    def scratchpad_counter(self):
+    def scratchpad_counter(self, i3s_output_list, i3s_config):
         response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:

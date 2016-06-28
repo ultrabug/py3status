@@ -17,7 +17,7 @@ class Py3status:
     color = None
     format = ''
 
-    def static_string(self):
+    def static_string(self, i3s_output_list, i3s_config):
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'color': self.color,

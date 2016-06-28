@@ -109,7 +109,7 @@ class Py3status:
 
         conn.main()  # run the event loop
 
-    def window_title(self):
+    def window_title(self, i3s_output_list, i3s_config):
         resp = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.title,

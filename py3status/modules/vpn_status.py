@@ -91,10 +91,9 @@ class Py3status:
         return path.isfile(self.pidfile)
 
     # Method run by py3status
-    def return_status(self):
+    def return_status(self, i3s_output_list, i3s_config):
         """Returns response dict"""
 
-        i3s_config = self.py3.i3s_config()
         # Start signal handler thread if it should be running
         if not self.check_pid and not self.thread_started:
             self._start_handler_thread()
