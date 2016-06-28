@@ -20,6 +20,8 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 @author Shahin Azad <ishahinism at Gmail>, shrimpza
 """
 
+from __future__ import division
+
 import re
 import subprocess
 from time import time
