@@ -4,8 +4,6 @@ Display if a file or dir exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check
-    color_available: color of format_available
-    color_unavailable: color of format_unavailable
     format_available: what to display when available
     format_unavailable: what to display when unavailable
     path: check if file or dir exists
