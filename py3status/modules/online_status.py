@@ -13,6 +13,8 @@ Configuration parameters:
 """
 
 from time import time
+import os
+import re
 try:
     # python3
     from urllib.request import urlopen
@@ -25,18 +27,24 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format_offline = '■'
-    format_online = '●'
+    format_offline = u'■'
+    format_online = u'●'
     timeout = 2
-    url = 'http://www.google.com'
+    url = 'uranus'
 
     def _connection_present(self):
-        try:
-            urlopen(self.url, timeout=self.timeout)
-        except:
-            return False
+        if re.search('://', self.url):
+            try:
+                urlopen(self.url, timeout=self.timeout)
+            except:
+                return False
+            else:
+                return True
         else:
-            return True
+            if os.system("ping -c 1 " + self.url + ">> /dev/null 2>&1") == 0:
+                return True
+            else:
+                return False
 
     def online_status(self, i3s_output_list, i3s_config):
         response = {
