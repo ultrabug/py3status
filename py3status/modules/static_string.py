@@ -9,8 +9,6 @@ Configuration parameters:
 @author frimdo ztracenastopa@centrum.cz
 """
 
-from time import time
-
 
 class Py3status:
     """
@@ -21,7 +19,7 @@ class Py3status:
 
     def static_string(self, i3s_output_list, i3s_config):
         response = {
-            'cached_until': time() + 60,
+            'cached_until': self.py3.CACHE_FOREVER,
             'color': self.color,
             'full_text': self.format,
         }
@@ -29,9 +27,11 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    x = Py3status()
+    """
+    Run module in test mode.
+    """
     config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
+        'format': 'Hello World!'
     }
-    print(x.static_string([], config))
+    from py3status.module_test import module_test
+    module_test(Py3status, config=config)
