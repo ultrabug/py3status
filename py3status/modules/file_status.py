@@ -15,6 +15,7 @@ Configuration parameters:
 
 from time import time
 import os
+import subprocess
 
 
 class Py3status:
@@ -22,8 +23,6 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    color_available = None
-    color_unavailable = None
     format_available = u'●'
     format_unavailable = u'■'
     path = '/dev/sdb1'
@@ -33,12 +32,14 @@ class Py3status:
             'cached_until': time() + self.cache_timeout
         }
 
-        if os.system("ls " + self.path + " >> /dev/null 2>&1") == 0:
+        fnull = open(os.devnull, 'w')
+        if subprocess.call(["ls", self.path], stdout=fnull,
+                                              stderr=subprocess.STDOUT) == 0:
             response['full_text'] = self.format_available
-            response['color'] = self.color_available or i3s_config['color_good']
+            response['color'] = i3s_config['color_good']
         else:
             response['full_text'] = self.format_unavailable
-            response['color'] = self.color_unavailable or i3s_config['color_bad']
+            response['color'] = i3s_config['color_bad']
 
         return response
 
