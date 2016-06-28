@@ -33,8 +33,7 @@ class Py3status:
         }
 
         fnull = open(os.devnull, 'w')
-        if subprocess.call(["ls", self.path], stdout=fnull,
-                                              stderr=subprocess.STDOUT) == 0:
+        if subprocess.call(["ls", self.path], stdout=fnull, stderr=fnull) == 0:
             response['full_text'] = self.format_available
             response['color'] = i3s_config['color_good']
         else:
