@@ -30,7 +30,7 @@ class Py3status:
     format_offline = u'■'
     format_online = u'●'
     timeout = 2
-    url = 'uranus'
+    url = 'http://www.google.com'
 
     def _connection_present(self):
         if re.search('://', self.url):
