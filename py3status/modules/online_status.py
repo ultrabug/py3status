@@ -42,8 +42,8 @@ class Py3status:
                 return True
         else:
             fnull = open(os.devnull, 'w')
-            return subprocess.call(['ping', '-c', '1', self.url], stdout=fnull,
-                                   stderr=subprocess.STDOUT) == 0
+            return subprocess.call(['ping', '-c', '1', self.url],
+                                   stdout=fnull, stderr=fnull) == 0
 
     def online_status(self, i3s_output_list, i3s_config):
         response = {
