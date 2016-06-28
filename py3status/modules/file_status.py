@@ -16,6 +16,7 @@ Configuration parameters:
 from time import time
 import os
 
+
 class Py3status:
     """
     """
