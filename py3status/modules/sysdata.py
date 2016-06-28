@@ -148,10 +148,18 @@ class Py3status:
             )
         }
 
-        if max(cpu_usage, mem_used_percent/100) <= self.med_threshold / 100.0:
+        if '{cpu_usage}' in self.format:
+            if ('{mem_used_percent}' in self.format
+                    or '{mem_used}' in self.format):
+                threshold = max(cpu_usage, mem_used_percent/100)
+            else:
+                threshold = cpu_usage
+        else:
+            threshold = mem_used_percent/100
+
+        if threshold <= self.med_threshold / 100.0:
             response['color'] = i3s_config['color_good']
-        elif (max(cpu_usage, mem_used_percent/100) <=
-                self.high_threshold / 100.0):
+        elif (threshold <= self.high_threshold / 100.0):
             response['color'] = i3s_config['color_degraded']
         else:
             response['color'] = i3s_config['color_bad']
