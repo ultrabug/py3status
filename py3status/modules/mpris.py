@@ -37,7 +37,7 @@ mpris {
     format_video = "{state} {title} -> {time}"
     format_none = "no player"
     format_error = "{state} Unknown"
-	player_priority = "mpd,cantata,vlc,bomi"
+    player_priority = "mpd,cantata,vlc,bomi"
 }
 ```
 
