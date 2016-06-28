@@ -250,12 +250,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {}
-
-    while True:
-        print(x.group([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
