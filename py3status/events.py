@@ -4,7 +4,6 @@ import sys
 from threading import Thread
 from time import time
 from subprocess import Popen, call, PIPE
-from syslog import syslog, LOG_INFO, LOG_WARNING
 from json import loads
 
 from py3status.profiling import profile
@@ -56,50 +55,15 @@ class Events(Thread):
         """
         Thread.__init__(self)
         self.config = py3_wrapper.config
+        self.error = None
         self.i3s_config = py3_wrapper.i3status_thread.config
         self.last_refresh_ts = time()
         self.lock = py3_wrapper.lock
         self.modules = py3_wrapper.modules
         self.on_click = self.i3s_config['on_click']
+        self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
-
-    def dispatch(self, module, obj, event):
-        """
-        Dispatch the event or enforce the default clear cache action.
-        """
-        module_name = '{} {}'.format(module.module_name,
-                                     module.module_inst).strip()
-        #
-        if module.click_events:
-            # module accepts click_events, use it
-            module.click_event(event)
-            if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching event {}'.format(event))
-        else:
-            # default button 2 action is to clear this method's cache
-            if self.config['debug']:
-                syslog(LOG_INFO, 'dispatching default event {}'.format(event))
-
-        # to make the bar more responsive to users we ask for a refresh
-        # of the module or of i3status if the module is an i3status one
-        self.refresh(module_name)
-
-    def i3bar_click_events_module(self):
-        """
-        Detect the presence of the special i3bar_click_events.py module.
-
-        When py3status detects a module named 'i3bar_click_events.py',
-        it will dispatch i3status click events to this module so you can catch
-        them and trigger any function call based on the event.
-        """
-        for module in self.modules.values():
-            if not module.click_events:
-                continue
-            if module.module_name == 'i3bar_click_events.py':
-                return module
-        else:
-            return False
 
     def refresh(self, module_name):
         """
@@ -110,13 +74,12 @@ class Events(Thread):
         module = self.modules.get(module_name)
         if module is not None:
             if self.config['debug']:
-                syslog(LOG_INFO, 'refresh module {}'.format(module_name))
+                self.py3_wrapper.log('refresh module {}'.format(module_name))
             module.force_update()
         else:
             if time() > (self.last_refresh_ts + 0.1):
                 if self.config['debug']:
-                    syslog(
-                        LOG_INFO,
+                    self.py3_wrapper.log(
                         'refresh i3status for module {}'.format(module_name))
                 call(['killall', '-s', 'USR1', 'i3status'])
                 self.last_refresh_ts = time()
@@ -153,13 +116,12 @@ class Events(Thread):
             # of the module or of i3status if the module is an i3status one
             self.refresh(module_name)
 
-    @staticmethod
-    def i3_msg(module_name, command):
+    def i3_msg(self, module_name, command):
         """
         Execute the given i3 message and log its output.
         """
         i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
-        syslog(LOG_INFO, 'i3-msg module="{}" command="{}" stdout={}'.format(
+        self.py3_wrapper.log('i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
     def process_event(self, module_name, event, top_level=True):
@@ -170,54 +132,44 @@ class Events(Thread):
         """
         button = event.get('button', 0)
         default_event = False
-        dispatched = False
         # execute any configured i3-msg command
         # we do not do this for containers
         if top_level:
             if self.on_click.get(module_name, {}).get(button):
                 self.on_click_dispatcher(module_name,
                                          self.on_click[module_name].get(button))
-                dispatched = True
             # otherwise setup default action on button 2 press
             elif button == 2:
                 default_event = True
 
-        for module in self.modules.values():
-            # skip modules not supporting click_events
-            # unless we have a default_event set
-            if not module.click_events and not default_event:
-                continue
+        # get the module that the event is for
+        module_info = self.output_modules.get(module_name)
+        module = module_info['module']
+        # if module is a py3status one and it has an on_click function then
+        # call it.
+        if module_info['type'] == 'py3status' and module.click_events:
+            module.click_event(event)
+            if self.config['debug']:
+                self.py3_wrapper.log('dispatching event {}'.format(event))
 
-            # check for the method name/instance
-            if ' ' in module_name:
-                name, instance = module_name.split(' ')
-            else:
-                name, instance = module_name, None
-            for obj in module.methods.values():
-                if name == obj['name']:
-                    if instance:
-                        if instance == obj['instance']:
-                            self.dispatch(module, obj, event)
-                            dispatched = True
-                            break
-                    else:
-                        self.dispatch(module, obj, event)
-                        dispatched = True
-                        break
+            # to make the bar more responsive to users we refresh the module
+            # unless the on_click event called py3.prevent_refresh()
+            if not module.prevent_refresh:
+                self.refresh(module_name)
+            default_event = False
+
+        if default_event:
+            # default button 2 action is to clear this method's cache
+            if self.config['debug']:
+                self.py3_wrapper.log(
+                    'dispatching default event {}'.format(event))
+            self.refresh(module_name)
 
         # find container that holds the module and call its onclick
         module_groups = self.i3s_config['.module_groups']
-        containers = module_groups.get(module_name)
+        containers = module_groups.get(module_name, [])
         for container in containers:
             self.process_event(container, event, top_level=False)
-
-        # fall back to i3bar_click_events.py module if present
-        if not dispatched:
-            module = self.i3bar_click_events_module()
-            if module:
-                if self.config['debug']:
-                    syslog(LOG_INFO, 'dispatching event to i3bar_click_events')
-                self.dispatch(module, obj, event)
 
     @profile
     def run(self):
@@ -243,7 +195,7 @@ class Events(Thread):
                 event = loads(event_str)
 
                 if self.config['debug']:
-                    syslog(LOG_INFO, 'received event {}'.format(event))
+                    self.py3_wrapper.log('received event {}'.format(event))
 
                 # usage variables
                 instance = event.get('instance', '')
@@ -263,8 +215,7 @@ class Events(Thread):
                     event['instance'] = instance
 
                 if self.config['debug']:
-                    syslog(
-                        LOG_INFO,
+                    self.py3_wrapper.log(
                         'trying to dispatch event to module "{}"'.format(
                             '{} {}'.format(name, instance).strip()))
 
@@ -275,4 +226,5 @@ class Events(Thread):
 
             except Exception:
                 err = sys.exc_info()[1]
-                syslog(LOG_WARNING, 'event failed ({})'.format(err))
+                self.error = err
+                self.py3_wrapper.log('event failed ({})'.format(err), 'warning')

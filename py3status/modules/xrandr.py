@@ -35,11 +35,11 @@ Configuration parameters:
         When an output layout is not available anymore, the configurations
         are automatically filtered out.
         Example:
-            Assuming the default values for `format_clone` and `format_extend`
-            are used, and assuming you have two screens 'eDP1' and 'DP1', the
-            following setup will reduce the number of output combinations
-            from four (every possible one) down to two:
-            output_combinations = "eDP1|eDP1+DP1"
+        Assuming the default values for `format_clone` and `format_extend`
+        are used, and assuming you have two screens 'eDP1' and 'DP1', the
+        following setup will reduce the number of output combinations
+        from four (every possible one) down to two:
+        output_combinations = "eDP1|eDP1+DP1"
 
 Dynamic configuration parameters:
     - <OUTPUT>_pos: apply the given position to the OUTPUT
@@ -70,7 +70,6 @@ from collections import deque
 from collections import OrderedDict
 from itertools import combinations
 from subprocess import call, Popen, PIPE
-from syslog import syslog, LOG_INFO
 from time import sleep, time
 
 
@@ -132,7 +131,7 @@ class Py3status:
                 else:
                     continue
             except Exception as err:
-                syslog(LOG_INFO, 'xrandr error="{}"'.format(err))
+                self.py3.log('xrandr error="{}"'.format(err))
             else:
                 layout[state][output] = {
                     'infos': infos,
@@ -175,7 +174,8 @@ class Py3status:
 
         # Preserve the order in which user defined the output combinations
         if whitelist:
-            available = reversed([comb for comb in whitelist if comb in available])
+            available = reversed([comb for comb in whitelist
+                                  if comb in available])
 
         self.available_combinations = deque(available)
         self.combinations_map = combinations_map
@@ -210,8 +210,8 @@ class Py3status:
             if force_refresh:
                 self.displayed = self.available_combinations[0]
             else:
-                syslog(LOG_INFO,
-                       'xrandr error="displayed combination is not available"')
+                self.py3.log(
+                    'xrandr error="displayed combination is not available"')
 
     def _center(self, s):
         """
@@ -261,7 +261,7 @@ class Py3status:
             self.active_comb = combination
             self.active_layout = self.displayed
             self.active_mode = mode
-        syslog(LOG_INFO, 'command "{}" exit code {}'.format(cmd, code))
+        self.py3.log('command "{}" exit code {}'.format(cmd, code))
 
         # move workspaces to outputs as configured
         self._apply_workspaces(combination, mode)
@@ -289,9 +289,9 @@ class Py3status:
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
                     call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
                     # log this
-                    syslog(LOG_INFO,
-                           'moved workspace {} to output {}'.format(workspace,
-                                                                    output))
+                    self.py3.log(
+                        'moved workspace {} to output {}'.format(workspace,
+                                                                 output))
 
     def _refresh_py3status(self):
         """

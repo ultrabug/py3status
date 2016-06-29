@@ -3,7 +3,14 @@ py3status
 """
 
 import os
+import sys
 from setuptools import find_packages, setup
+
+module_path = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'py3status')
+sys.path.insert(0, module_path)
+from version import version  # noqa
+sys.path.remove(module_path)
 
 
 # Utility function to read the README file.
@@ -13,12 +20,13 @@ from setuptools import find_packages, setup
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
 setup(
     name='py3status',
-    version='3.0_rc',
+    version=version,
     author='Ultrabug',
     author_email='ultrabug@ultrabug.net',
-    description='py3status is an extensible i3status wrapper written in python',
+    description='py3status: an extensible i3status wrapper written in python',
     long_description=read('README.rst'),
     url='https://github.com/ultrabug/py3status',
     download_url='https://github.com/ultrabug/py3status/tags',
@@ -30,8 +38,8 @@ setup(
     entry_points={
         'console_scripts': [
             'py3status = py3status:main',
-            ]
-        },
+        ]
+    },
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX :: Linux',
@@ -44,5 +52,4 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        ],
-    )
+    ], )

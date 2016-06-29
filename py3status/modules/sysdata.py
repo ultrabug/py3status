@@ -29,19 +29,6 @@ class GetData:
     """
     Get system status
     """
-
-    def execCMD(self, cmd, arg):
-        """
-        Take a system command and its argument, then return the result.
-
-        Arguments:
-        - `cmd`: system command.
-        - `arg`: argument.
-        """
-        result = subprocess.check_output([cmd, arg])
-        result = result.decode('utf-8')
-        return result
-
     def cpu(self):
         """
         Get the cpu usage data from /proc/stat :
@@ -71,21 +58,29 @@ class GetData:
 
     def memory(self):
         """
-        Execute 'free -m' command, grab the memory capacity and used size
+        Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, and percentage
         of used memory.
         """
-        # Run 'free -m' command and make a list from output.
-        mem_data = self.execCMD('free', '-m').split()
-        mem_index = mem_data.index('Mem:')
-        total_mem = int(mem_data[mem_index + 1]) / 1024.
-        used_mem = int(mem_data[mem_index + 2]) / 1024.
 
-        # Caculate percentage
-        used_mem_percent = int(used_mem / (total_mem / 100))
+        memi = {}
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1]) / (1 << 20)
 
-        # Results are in kilobyte.
-        return total_mem, used_mem, used_mem_percent
+        try:
+            total_mem = memi["MemTotal:"]
+            used_mem = (total_mem -
+                        memi["MemFree:"] -
+                        memi["Buffers:"] -
+                        memi["Cached:"])
+            used_mem_p = int(used_mem / (total_mem / 100))
+        except:
+            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
+
+        # Results are in gigabytes
+        return total_mem, used_mem, used_mem_p
 
     def cpuTemp(self):
         """
@@ -155,7 +150,8 @@ class Py3status:
 
         if max(cpu_usage, mem_used_percent/100) <= self.med_threshold / 100.0:
             response['color'] = i3s_config['color_good']
-        elif max(cpu_usage, mem_used_percent/100) <= self.high_threshold / 100.0:
+        elif (max(cpu_usage, mem_used_percent/100) <=
+                self.high_threshold / 100.0):
             response['color'] = i3s_config['color_degraded']
         else:
             response['color'] = i3s_config['color_bad']

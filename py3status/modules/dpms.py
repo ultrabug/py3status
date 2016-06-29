@@ -34,7 +34,8 @@ class Py3status:
 
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good'] if self.run else self.color_off or i3s_config['color_bad']
+            'color': self.color_on or i3s_config['color_good'] if self.run
+            else self.color_off or i3s_config['color_bad']
         }
 
     def on_click(self, i3s_output_list, i3s_config, event):
