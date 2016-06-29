@@ -136,8 +136,9 @@ class Py3:
 
         Note: This function should only be used by containers.
         """
-        my_info = self._get_module_info(self._module.module_full_name)
-        my_info['content_function'] = content_function
+        if self._module:
+            my_info = self._get_module_info(self._module.module_full_name)
+            my_info['content_function'] = content_function
 
     def time_in(self, seconds=0):
         """
