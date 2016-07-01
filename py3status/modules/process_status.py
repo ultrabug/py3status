@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display if a file or dir exists.
+Display if a process is running.
 
 Configuration parameters:
     cache_timeout: how often to run the check
@@ -26,18 +26,20 @@ class Py3status:
     process = 'rsnapshot'
 
     def process_status(self, i3s_output_list, i3s_config):
-        response = {
-            'cached_until': time() + self.cache_timeout
-        }
+        text = self.format_not_running
+        color = i3s_config['color_bad']
 
         fnull = open(os.devnull, 'w')
         if subprocess.call(["pgrep", self.process],
                            stdout=fnull, stderr=fnull) == 0:
-            response['full_text'] = self.format_running
-            response['color'] = i3s_config['color_good']
-        else:
-            response['full_text'] = self.format_not_running
-            response['color'] = i3s_config['color_bad']
+            text = self.format_running
+            color = i3s_config['color_good']
+
+        response = {
+            'cached_until': time() + self.cache_timeout,
+            'full_text': text,
+            'color': color
+        }
 
         return response
 
