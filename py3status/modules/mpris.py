@@ -4,7 +4,6 @@ Display information about the current song and video playing on player with
 mpris support.
 
 Configuration parameters:
-    color_none: text color when no player is running, defaults to color_bad
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
@@ -42,7 +41,7 @@ mpris {
 ```
 
 Requires:
-    dbus
+    pydbus
 
 @author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe, Moritz Lüdecke
 """
@@ -50,7 +49,7 @@ Requires:
 from datetime import timedelta
 from time import time, sleep
 import re
-import dbus
+from pydbus import SessionBus
 
 
 SERVICE_BUS = 'org.mpris.MediaPlayer2'
@@ -63,7 +62,6 @@ class Py3status:
     """
     """
     # available configuration parameters
-    color_none = None
     color_paused = None
     color_playing = None
     color_stopped = None
@@ -76,31 +74,24 @@ class Py3status:
     state_stopped = '◾'
     player_priority = None
 
-    def _init_dbus(self, player):
+    def _get_player(self, player):
         """
-        Initialize dbus session and interface
+        Get dbus object
         """
-        self._dbus = dbus.SessionBus()
-
-        if player is not None:
-            try:
-                self._dbus_session = self._dbus.get_object(
-                                     SERVICE_BUS + '.%s' % player, SERVICE_BUS_URL)
-                self._dbus_interface = dbus.Interface(
-                              self._dbus_session, 'org.freedesktop.DBus.Properties')
-            except Exception:
-                return False
-
-        return True
+        try:
+            return self._dbus.get(SERVICE_BUS + '.%s' % player, SERVICE_BUS_URL)
+        except Exception:
+            return None
 
     def _get_state(self, player):
         """
         Get the state of a player
         """
-        if self._init_dbus(player):
-            return self._dbus_interface.Get(INTERFACE, 'PlaybackStatus')
+        player = self._get_player(player)
+        if player is None:
+            return 'None'
 
-        return 'None'
+        return player.PlaybackStatus
 
     def _detect_running_player(self):
         """
@@ -111,9 +102,8 @@ class Py3status:
         players = []
         players_prioritized = []
 
-        self._init_dbus(None)
-
-        for player in self._dbus.list_names():
+        _dbus = self._dbus.get('org.freedesktop.DBus')
+        for player in _dbus.ListNames():
             if SERVICE_BUS in player:
                 player = re.sub(r'%s' % SERVICE_BUS_REGEX, '', player)
                 players.append(player)
@@ -157,14 +147,13 @@ class Py3status:
         title = 'Unknown'
         rtime = '0'
 
-        if not self._init_dbus(player):
-            return (self.format_none,
-                    self.color_none or i3s_config['color_degraded'])
+        player = self._get_player(player)
+        if player is None:
+            return (self.format_none, i3s_config['color_bad'])
 
         try:
-            metadata = self._dbus_interface.Get(INTERFACE, 'Metadata')
-            playback_status = self._dbus_interface.Get(INTERFACE,
-                                                       'PlaybackStatus')
+            metadata = player.Metadata
+            playback_status = player.PlaybackStatus
 
             if playback_status.strip() == 'Playing':
                 color = self.color_playing or i3s_config['color_good']
@@ -191,7 +180,7 @@ class Py3status:
                                              artist=artist,
                                              album=album,
                                              time=rtime),
-                    self.color_none or i3s_config['color_degraded'])
+                    i3s_config['color_bad'])
 
         if is_video:
             title = re.sub(r'\....$', '', title)
@@ -209,6 +198,8 @@ class Py3status:
         """
         Get the current "artist - title" and return it.
         """
+        self._dbus = SessionBus()
+
         running_player = self._detect_running_player()
         (text, color) = self._get_text(i3s_config, running_player)
         response = {
