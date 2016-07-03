@@ -204,9 +204,14 @@ class Py3status:
             except Exception:
                 is_video = True
 
-            microtime = metadata.get('mpris:length')
-            rtime = str(timedelta(microseconds=microtime))[:-7]
             title = metadata.get('xesam:title')
+            microtime = metadata.get('mpris:length')
+            rtime = str(timedelta(microseconds=microtime))
+            if rtime[0] == '0':
+                rtime = rtime[2:]
+                if rtime[0] == '0':
+                    rtime = rtime[1:]
+
         except Exception:
             return (self.format_error.format(state=state,
                                              title=title,
