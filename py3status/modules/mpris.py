@@ -33,6 +33,7 @@ Configuration parameters:
             paused and bomi is playing than bomi wins.
 
 Format of status string placeholders:
+    {player} show name of the player
     {state} playback status of the player
     {album} album name
     {artist} artiste name (first one)
@@ -46,10 +47,10 @@ i3status.conf example:
 
 ```
 mpris {
-    format = "{state} {artist} - {title} [{time} / {length}]"
-    format_video = "{state} {title} [{time} / {length}]"
+    format = "{player}: {state} {artist} - {title} [{time} / {length}]"
+    format_video = "{player}: {state} {title} [{time} / {length}]"
     format_none = "no player"
-    format_error = "{state} Unknown"
+    format_error = "{player}: {state} Unknown"
     player_priority = "mpd,cantata,vlc,bomi"
 }
 ```
@@ -109,7 +110,6 @@ class Py3status:
     loop_track = '⟲'
     loop_playlist = '⟳'
     player_priority = None
-
 
     def _get_player(self, player):
         """
@@ -191,6 +191,7 @@ class Py3status:
             return (self.format_none, i3s_config['color_bad'])
 
         try:
+            player = self._player.Identity
             metadata = self._player.Metadata
             playback_status = self._player.PlaybackStatus
 
@@ -228,7 +229,8 @@ class Py3status:
             time = _get_time_str(_microtime)
 
         except Exception:
-            return (self.format_error.format(state=state,
+            return (self.format_error.format(player=player,
+                                             state=state,
                                              title=title,
                                              artist=artist,
                                              album=album,
@@ -240,14 +242,16 @@ class Py3status:
 
         if is_video:
             title = re.sub(r'\....$', '', title)
-            return (self.format_video.format(state=state,
+            return (self.format_video.format(player=player,
+                                             state=state,
                                              title=title,
                                              time=time,
                                              length=length,
                                              shuffle=shuffle,
                                              loop=loop), color)
         else:
-            return (self.format.format(state=state,
+            return (self.format.format(player=player,
+                                       state=state,
                                        title=title,
                                        artist=artist,
                                        album=album,
