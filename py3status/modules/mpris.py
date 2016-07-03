@@ -16,6 +16,8 @@ Configuration parameters:
     format: see placeholders below
     format_video: see placeholders below, keep in mind that {artist} and {album}
             are empty
+    format_stream: see placeholders below, keep in mind that {artist}, {album}
+            and {length} are empty
     format_error: define output if one or more informations couldn't read,
             keep in mind that some playceholders may be work
     format_none: define output if no player is running
@@ -74,8 +76,9 @@ SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
 UNKNOWN = 'Unknown'
 
 
-def _get_time_str(microtime):
-    time = str(timedelta(microseconds=microtime))
+def _get_time_str(microseconds):
+    seconds = int(microseconds / 1000000)
+    time = str(timedelta(seconds=seconds))
     if time[0] == '0':
         time = time[2:]
         if time[0] == '0':
@@ -98,6 +101,7 @@ class Py3status:
     color_playing = None
     color_stopped = None
     format = '{state} {artist} - {title}'
+    format_stream = '{state} {title}'
     format_video = '{state} {title}'
     format_error = '{state} Unknown'
     format_none = 'no player running'
@@ -151,6 +155,7 @@ class Py3status:
             player_priority = self.player_priority.split(',')
 
             for player_name in player_priority:
+                print(player_name)
                 if player_name in players:
                     players.remove(player_name)
                     players_prioritized.append(player_name)
@@ -177,6 +182,7 @@ class Py3status:
         """
         Get the current metadatas
         """
+        is_stream = False
         is_video = False
         album = UNKNOWN
         artist = UNKNOWN
@@ -215,18 +221,24 @@ class Py3status:
             else:
                 loop = self.loop_none
 
-            try:
-                album = metadata.get('xesam:album')
-                artist = metadata.get('xesam:artist')[0]
-            except Exception:
-                is_video = True
-
             title = metadata.get('xesam:title')
+            if title is None:
+                title = UNKNOWN
 
-            _microtime = metadata.get('mpris:length')
-            length = _get_time_str(_microtime)
             _microtime = self._player.Position
             time = _get_time_str(_microtime)
+            try:
+                _microtime = metadata.get('mpris:length')
+                length = _get_time_str(_microtime)
+            except Exception:
+                is_stream = True
+
+            if not is_stream:
+                try:
+                    album = metadata.get('xesam:album')
+                    artist = metadata.get('xesam:artist')[0]
+                except Exception:
+                    is_video = True
 
         except Exception:
             return (self.format_error.format(player=player,
@@ -240,7 +252,14 @@ class Py3status:
                                              loop=loop),
                     i3s_config['color_bad'])
 
-        if is_video:
+        if is_stream:
+            return (self.format_stream.format(player=player,
+                                              state=state,
+                                              title=title,
+                                              time=time,
+                                              shuffle=shuffle,
+                                              loop=loop), color)
+        elif is_video:
             title = re.sub(r'\....$', '', title)
             return (self.format_video.format(player=player,
                                              state=state,
