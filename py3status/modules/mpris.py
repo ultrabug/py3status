@@ -4,6 +4,12 @@ Display information about the current song and video playing on player with
 mpris support.
 
 Configuration parameters:
+    button_play: mouse button to play the entry
+    button_stop: mouse button to stop the player
+    button_pause: mouse button to pause the player
+    button_pause_toggle: mouse button to toggle between play and pause mode
+    button_next: mouse button to play the next entry
+    button_previous: mouse button to play the previous entry
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
@@ -62,12 +68,18 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_play = None
+    button_stop = None
+    button_pause = None
+    button_pause_toggle = 1
+    button_next = 4
+    button_previous = 5
     color_paused = None
     color_playing = None
     color_stopped = None
     format = '{state} {artist} - {title}'
     format_video = '{state} {title}'
-    format_error = 'no player running'
+    format_error = '{state} Unknown'
     format_none = 'no player running'
     state_paused = '▮▮'
     state_playing = '▶'
@@ -136,7 +148,7 @@ class Py3status:
 
         return 'None'
 
-    def _get_text(self, i3s_config, player):
+    def _get_text(self, i3s_config):
         """
         Get the current metadatas
         """
@@ -147,13 +159,12 @@ class Py3status:
         title = 'Unknown'
         rtime = '0'
 
-        player = self._get_player(player)
-        if player is None:
+        if self._player is None:
             return (self.format_none, i3s_config['color_bad'])
 
         try:
-            metadata = player.Metadata
-            playback_status = player.PlaybackStatus
+            metadata = self._player.Metadata
+            playback_status = self._player.PlaybackStatus
 
             if playback_status.strip() == 'Playing':
                 color = self.color_playing or i3s_config['color_good']
@@ -201,7 +212,9 @@ class Py3status:
         self._dbus = SessionBus()
 
         running_player = self._detect_running_player()
-        (text, color) = self._get_text(i3s_config, running_player)
+        self._player = self._get_player(running_player)
+
+        (text, color) = self._get_text(i3s_config)
         response = {
             'cached_until': time() + i3s_config['interval'],
             'full_text': text,
@@ -209,6 +222,26 @@ class Py3status:
         }
 
         return response
+
+    def on_click(self, i3s_output_list, i3s_config, event):
+        """
+        Handles click events
+        """
+        button = event['button']
+
+        if button == self.button_play:
+            self._player.Play()
+        elif button == self.button_stop:
+            self._player.Stop()
+        elif button == self.button_pause:
+            self._player.Pause()
+        elif button == self.button_pause_toggle:
+            self._player.PlayPause()
+        elif button == self.button_next:
+            self._player.Next()
+        elif button == self.button_previous:
+            self._player.Previous()
+
 
 if __name__ == "__main__":
     """
