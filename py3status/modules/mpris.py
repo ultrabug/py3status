@@ -36,8 +36,9 @@ Format of status string placeholders:
     {state} playback status of the player
     {album} album name
     {artist} artiste name (first one)
-    {time} time duration of the song
     {title} name of the song
+    {time} played time of the song
+    {length} time duration of the song
     {shuffle} show if shuffle mode is activated or not
     {loop} show if loop mode is activated or not
 
@@ -45,8 +46,8 @@ i3status.conf example:
 
 ```
 mpris {
-    format = "{state} {artist} - {title} -> {time}"
-    format_video = "{state} {title} -> {time}"
+    format = "{state} {artist} - {title} [{time} / {length}]"
+    format_video = "{state} {title} [{time} / {length}]"
     format_none = "no player"
     format_error = "{state} Unknown"
     player_priority = "mpd,cantata,vlc,bomi"
@@ -69,6 +70,16 @@ SERVICE_BUS = 'org.mpris.MediaPlayer2'
 INTERFACE = SERVICE_BUS + '.Player'
 SERVICE_BUS_URL = '/org/mpris/MediaPlayer2'
 SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
+
+
+def _get_time_str(microtime):
+    time = str(timedelta(microseconds=microtime))
+    if time[0] == '0':
+        time = time[2:]
+        if time[0] == '0':
+            time = time[1:]
+
+    return time
 
 
 class Py3status:
@@ -97,6 +108,7 @@ class Py3status:
     loop_track = '⟲'
     loop_playlist = '⟳'
     player_priority = None
+
 
     def _get_player(self, player):
         """
@@ -205,19 +217,19 @@ class Py3status:
                 is_video = True
 
             title = metadata.get('xesam:title')
-            microtime = metadata.get('mpris:length')
-            rtime = str(timedelta(microseconds=microtime))
-            if rtime[0] == '0':
-                rtime = rtime[2:]
-                if rtime[0] == '0':
-                    rtime = rtime[1:]
+
+            _microtime = metadata.get('mpris:length')
+            length = _get_time_str(_microtime)
+            _microtime = self._player.Position
+            time = _get_time_str(_microtime)
 
         except Exception:
             return (self.format_error.format(state=state,
                                              title=title,
                                              artist=artist,
                                              album=album,
-                                             time=rtime,
+                                             time=time,
+                                             length=length,
                                              shuffle=shuffle,
                                              loop=loop),
                     i3s_config['color_bad'])
@@ -226,7 +238,8 @@ class Py3status:
             title = re.sub(r'\....$', '', title)
             return (self.format_video.format(state=state,
                                              title=title,
-                                             time=rtime,
+                                             time=time,
+                                             length=length,
                                              shuffle=shuffle,
                                              loop=loop), color)
         else:
@@ -234,7 +247,8 @@ class Py3status:
                                        title=title,
                                        artist=artist,
                                        album=album,
-                                       time=rtime,
+                                       time=time,
+                                       length=length,
                                        shuffle=shuffle,
                                        loop=loop), color)
 
