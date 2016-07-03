@@ -70,6 +70,7 @@ SERVICE_BUS = 'org.mpris.MediaPlayer2'
 INTERFACE = SERVICE_BUS + '.Player'
 SERVICE_BUS_URL = '/org/mpris/MediaPlayer2'
 SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
+UNKNOWN = 'Unknown'
 
 
 def _get_time_str(microtime):
@@ -177,11 +178,14 @@ class Py3status:
         Get the current metadatas
         """
         is_video = False
-        album = 'Unknown'
-        artist = 'Unknown'
-        state = 'Unkown'
-        title = 'Unknown'
-        rtime = '0'
+        album = UNKNOWN
+        artist = UNKNOWN
+        state = UNKNOWN
+        title = UNKNOWN
+        time = '0'
+        length = '0'
+        shuffle = UNKNOWN
+        loop = UNKNOWN
 
         if self._player is None:
             return (self.format_none, i3s_config['color_bad'])
