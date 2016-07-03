@@ -22,6 +22,11 @@ Configuration parameters:
     state_paused: text for placeholder {state} when song is paused
     state_playing: text for placeholder {state} when song is playing
     state_stopped: text for placeholder {state} when song is stopped
+    shuffle_on: text for placeholder {shuffle} when shuffle mode is activated
+    shuffle_off: text for placeholder {shuffle} when shuffle mode is deactivated
+    loop_none: text for placeholder {loop} when loop mode is deactivated
+    loop_track: text for placeholder {loop} when loop mode is in track mode
+    loop_playlist: text for placeholder {loop} when loop mode is in playlist mode
     player_priority: priority of the players.
             Keep in mind that the state has a higher priority than
             player_priority. So when player_priority is "mpd,bomi" and mpd is
@@ -33,6 +38,8 @@ Format of status string placeholders:
     {artist} artiste name (first one)
     {time} time duration of the song
     {title} name of the song
+    {shuffle} show if shuffle mode is activated or not
+    {loop} show if loop mode is activated or not
 
 i3status.conf example:
 
@@ -84,6 +91,11 @@ class Py3status:
     state_paused = '▮▮'
     state_playing = '▶'
     state_stopped = '◾'
+    shuffle_off = '⇉'
+    shuffle_on = '⤨'
+    loop_none = '⇥'
+    loop_track = '⟲'
+    loop_playlist = '⟳'
     player_priority = None
 
     def _get_player(self, player):
@@ -176,6 +188,16 @@ class Py3status:
                 color = self.color_stopped or i3s_config['color_bad']
                 state = self.state_stopped
 
+            shuffle = self.shuffle_on if self._player.Shuffle else self.shuffle_off
+
+            loop_status = self._player.LoopStatus
+            if loop_status.strip() == 'Track':
+                loop = self.loop_track
+            elif loop_status.strip() == 'Playlist':
+                loop = self.loop_playlist
+            else:
+                loop = self.loop_none
+
             try:
                 album = metadata.get('xesam:album')
                 artist = metadata.get('xesam:artist')[0]
@@ -190,20 +212,26 @@ class Py3status:
                                              title=title,
                                              artist=artist,
                                              album=album,
-                                             time=rtime),
+                                             time=rtime,
+                                             shuffle=shuffle,
+                                             loop=loop),
                     i3s_config['color_bad'])
 
         if is_video:
             title = re.sub(r'\....$', '', title)
             return (self.format_video.format(state=state,
                                              title=title,
-                                             time=rtime), color)
+                                             time=rtime,
+                                             shuffle=shuffle,
+                                             loop=loop), color)
         else:
             return (self.format.format(state=state,
                                        title=title,
                                        artist=artist,
                                        album=album,
-                                       time=rtime), color)
+                                       time=rtime,
+                                       shuffle=shuffle,
+                                       loop=loop), color)
 
     def mpris(self, i3s_output_list, i3s_config):
         """
