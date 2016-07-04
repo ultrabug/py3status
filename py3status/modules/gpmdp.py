@@ -24,34 +24,34 @@ class Py3status:
     """
     # available configuration parameters
 
-    cache_timeout = 5 
+    cache_timeout = 5
 
     def gpmdp(self, i3s_output_list, i3s_config):
         command = 'gpmdp-remote info'
-        result = u'♫ ' + check_output(shlex.split(command)).decode('ascii','ignore').strip()
+        result = u'♫ ' + check_output(shlex.split(command)).decode('ascii', 'ignore').strip()
         split = result.split()
 
         if len(split) == 3 and split[1] == 'Paused:':
             result = ''
 
-        response = { 
+        response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': result
-        }   
+        }
         return response
 
 
 if __name__ == "__main__":
-    """ 
+    """
     Test this module by calling it directly.
     """
     from time import sleep
     x = Py3status()
-    config = { 
+    config = {
         'color_bad': '#FF0000',
         'color_degraded': '#FFFF00',
         'color_good': '#00FF00'
-    }   
+    }
     while True:
         print(x.gpmdp([], config))
         sleep(1)
