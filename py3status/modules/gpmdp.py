@@ -27,10 +27,10 @@ class Py3status:
 
     def gpmdp(self, i3s_output_list, i3s_config):
         command = 'gpmdp-remote info'
-        result = '♫ ' + check_output(shlex.split(command)).decode('ascii','ignore').strip()
+        result = u'♫ ' + check_output(shlex.split(command)).decode('ascii','ignore').strip()
         split = result.split()
 
-        if split[1] == 'Paused:' and len(split) == 3:
+        if len(split) == 3 and split[1] == 'Paused:':
             result = ''
 
         response = { 
