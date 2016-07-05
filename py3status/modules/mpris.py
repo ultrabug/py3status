@@ -45,6 +45,7 @@ Format of status string placeholders:
     {shuffle} show if shuffle mode is activated or not
     {state} playback status of the player
     {time} played time of the song
+    {time_left} time left before song end
     {title} name of the song
     {track} track number of the song
 
@@ -217,6 +218,7 @@ class Py3status:
         genre = UNKNOWN
         length = '-:--'
         time = '0'
+        time_left = '0'
         title = UNKNOWN
         track = '?'
         loop = UNKNOWN
@@ -249,8 +251,8 @@ class Py3status:
             else:
                 loop = self.loop_none
 
-            _microtime = self._player.Position
-            time = _get_time_str(_microtime)
+            _time_ms = self._player.Position
+            time = _get_time_str(_time_ms)
 
             metadata = self._player.Metadata
             has_metadata = len(metadata) > 0
@@ -258,8 +260,10 @@ class Py3status:
                 is_stream = 'file://' not in metadata.get('xesam:url')
 
                 if not is_stream:
-                    _microtime = metadata.get('mpris:length')
-                    length = _get_time_str(_microtime)
+                    _length_ms = metadata.get('mpris:length')
+                    length = _get_time_str(_length_ms)
+                    _time_left_ms = _length_ms - _time_ms
+                    time_left = _get_time_str(_time_left_ms)
 
                 if metadata.get('xesam:title') is not None:
                     title = metadata.get('xesam:title')
@@ -306,6 +310,7 @@ class Py3status:
                               genre=genre,
                               length=length,
                               time=time,
+                              time_left=time_left,
                               title=title,
                               track=track), color)
 
