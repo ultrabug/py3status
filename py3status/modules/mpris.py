@@ -35,17 +35,18 @@ Configuration parameters:
             paused and bomi is playing than bomi wins.
 
 Format of status string placeholders:
-    {player} show name of the player
-    {state} playback status of the player
     {album} album name
     {artist} artiste name (first one)
+    {date} creation date of the song
+    {genre} the genre
+    {length} time duration of the song
+    {loop} show if loop mode is activated or not
+    {player} show name of the player
+    {shuffle} show if shuffle mode is activated or not
+    {state} playback status of the player
+    {time} played time of the song
     {title} name of the song
     {track} track number of the song
-    {time} played time of the song
-    {length} time duration of the song
-    {shuffle} show if shuffle mode is activated or not
-    {loop} show if loop mode is activated or not
-    {date} creation date of the song
 
 i3status.conf example:
 
@@ -184,16 +185,18 @@ class Py3status:
         Get the current metadatas
         """
         is_stream = False
-        album = UNKNOWN
-        artist = UNKNOWN
-        date = UNKNOWN
+        player = UNKNOWN
         state = UNKNOWN
+        artist = UNKNOWN
+        album = UNKNOWN
+        date = UNKNOWN
+        genre = UNKNOWN
+        length = '-:--'
+        time = '0'
         title = UNKNOWN
         track = '?'
-        time = '0'
-        length = '-:--'
-        shuffle = UNKNOWN
         loop = UNKNOWN
+        shuffle = UNKNOWN
 
         if self._player is None:
             return (self.format_none, i3s_config['color_bad'])
@@ -243,12 +246,14 @@ class Py3status:
                 if metadata.get('xesam:trackNumber') is not None:
                     track = metadata.get('xesam:trackNumber')
 
+                if metadata.get('xesam:genre') is not None:
+                    genre = metadata.get('xesam:genre')[0]
+
                 if not is_stream:
                     if metadata.get('xesam:album') is not None:
                         album = metadata.get('xesam:album')
 
-                    _artist = metadata.get('xesam:artist')
-                    if _artist is not None:
+                    if metadata.get('xesam:artist') is not None:
                         artist = metadata.get('xesam:artist')[0]
                     else:
                         # We assume here that we playing a video and these types
@@ -274,6 +279,7 @@ class Py3status:
                               album=album,
                               artist=artist,
                               date=date,
+                              genre=genre,
                               length=length,
                               time=time,
                               title=title,
