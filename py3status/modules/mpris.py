@@ -40,10 +40,12 @@ Format of status string placeholders:
     {album} album name
     {artist} artiste name (first one)
     {title} name of the song
+    {track} track number of the song
     {time} played time of the song
     {length} time duration of the song
     {shuffle} show if shuffle mode is activated or not
     {loop} show if loop mode is activated or not
+    {date} creation date of the song
 
 i3status.conf example:
 
@@ -184,8 +186,10 @@ class Py3status:
         is_stream = False
         album = UNKNOWN
         artist = UNKNOWN
+        date = UNKNOWN
         state = UNKNOWN
         title = UNKNOWN
+        track = '?'
         time = '0'
         length = '-:--'
         shuffle = UNKNOWN
@@ -233,6 +237,12 @@ class Py3status:
                 if metadata.get('xesam:title') is not None:
                     title = metadata.get('xesam:title')
 
+                if metadata.get('xesam:contentCreated') is not None:
+                    date = metadata.get('xesam:contentCreated')
+
+                if metadata.get('xesam:trackNumber') is not None:
+                    track = metadata.get('xesam:trackNumber')
+
                 if not is_stream:
                     if metadata.get('xesam:album') is not None:
                         album = metadata.get('xesam:album')
@@ -259,13 +269,15 @@ class Py3status:
 
         return (format.format(player=player,
                               state=state,
-                              title=title,
-                              artist=artist,
-                              album=album,
-                              time=time,
-                              length=length,
+                              loop=loop,
                               shuffle=shuffle,
-                              loop=loop), color)
+                              album=album,
+                              artist=artist,
+                              date=date,
+                              length=length,
+                              time=time,
+                              title=title,
+                              track=track), color)
 
     def mpris(self, i3s_output_list, i3s_config):
         """
