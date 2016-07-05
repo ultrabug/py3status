@@ -56,7 +56,31 @@ mpris {
     format_stream = "{player}: {state} {title} [{time} / {length}]"
     format_none = "no player"
     format_no_tags = "{player}: {state} Unknown"
-    player_priority = "mpd,cantata,vlc,bomi"
+    player_priority = "mpd,cantata,vlc,bomi,*"
+}
+```
+
+only show information from vlc:
+
+```
+mpris {
+    player_priority = "vlc"
+}
+```
+
+only show information from mpd and vlc, but mpd has a higher priority:
+
+```
+mpris {
+    player_priority = "mpd,vlc"
+}
+```
+
+show information of all players, but mpd and vlc have the highest priority:
+
+```
+mpris {
+    player_priority = "mpd,vlc,*"
 }
 ```
 
@@ -157,11 +181,11 @@ class Py3status:
             player_priority = self.player_priority.split(',')
 
             for player_name in player_priority:
-                print(player_name)
                 if player_name in players:
                     players.remove(player_name)
                     players_prioritized.append(player_name)
-            players_prioritized += players
+            if '*' in player_priority:
+                players_prioritized += players
 
         for player_name in players_prioritized:
             player_state = self._get_state(player_name)
