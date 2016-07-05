@@ -102,6 +102,7 @@ INTERFACE = SERVICE_BUS + '.Player'
 SERVICE_BUS_URL = '/org/mpris/MediaPlayer2'
 SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
 UNKNOWN = 'Unknown'
+UNKNOWN_TIME = '-:--'
 
 
 def _get_time_str(microseconds):
@@ -128,9 +129,12 @@ class Py3status:
     color_paused = None
     color_playing = None
     color_stopped = None
-    format = '{state} {artist} - {title}'
-    format_stream = '{state} {title}'
-    format_no_tags = '{state} Unknown'
+#    format = '{state} {artist} - {title}'
+    format = 'FORMAT: player:{player}, state:{state}, artist:{artist}, title:{title}, album:{album}, date:{date}, genre:{genre}, length:{length}, time:{time}, time_left:{time_left}, shuffle:{shuffle}, loop:{loop}'
+#    format_stream = '{state} {title}'
+    format_stream = 'STREAM: player:{player}, state:{state}, artist:{artist}, title:{title}, album:{album}, date:{date}, genre:{genre}, length:{length}, time:{time}, time_left:{time_left}, shuffle:{shuffle}, loop:{loop}'
+#    format_no_tags = '{state} Unknown'
+    format_no_tags = 'NO_TAGS: player:{player}, state:{state}, artist:{artist}, title:{title}, album:{album}, date:{date}, genre:{genre}, length:{length}, time:{time}, time_left:{time_left}, shuffle:{shuffle}, loop:{loop}'
     format_none = 'no player running'
     state_paused = '▮▮'
     state_playing = '▶'
@@ -140,7 +144,8 @@ class Py3status:
     loop_none = '⇥'
     loop_track = '⟲'
     loop_playlist = '⟳'
-    player_priority = None
+#    player_priority = None
+    player_priority = "mpd,vlc,bomi,*"
 
     def _get_player(self, player):
         """
@@ -160,6 +165,54 @@ class Py3status:
             return 'None'
 
         return player.PlaybackStatus
+
+    def _get_state_format(self, i3s_config):
+        playback_status = self._player.PlaybackStatus
+
+        if playback_status == 'Playing':
+            color = self.color_playing or i3s_config['color_good']
+            state = self.state_playing
+        elif playback_status == 'Paused':
+            color = self.color_paused or i3s_config['color_degraded']
+            state = self.state_paused
+        else:
+            color = self.color_stopped or i3s_config['color_bad']
+            state = self.state_stopped
+
+        return (color, state)
+
+    def _get_loop_format(self):
+        loop_status = self._player.LoopStatus
+
+        if loop_status == 'Track':
+            return self.loop_track
+        elif loop_status == 'Playlist':
+            return self.loop_playlist
+        else:
+            return self.loop_none
+
+    def _get_metadata(self, metadata):
+        is_stream = 'file://' not in metadata.get('xesam:url')
+        album = metadata.get('xesam:album') or UNKNOWN
+        date = metadata.get('xesam:contentCreated') or UNKNOWN
+        track = metadata.get('xesam:trackNumber') or UNKNOWN
+        title = metadata.get('xesam:title') or UNKNOWN
+        length = metadata.get('mpris:length')
+
+        if metadata.get('xesam:genre') is not None:
+            genre = metadata.get('xesam:genre')[0]
+        else:
+            genre = UNKNOWN
+
+        if metadata.get('xesam:artist') is not None:
+            artist = metadata.get('xesam:artist')[0]
+        else:
+            artist = UNKNOWN
+            # we assume here that we playing a video and these types of media we
+            # handle just like streams
+            is_stream = True
+
+        return (album, artist, date, genre, length, track, title, is_stream)
 
     def _detect_running_player(self):
         """
@@ -195,7 +248,7 @@ class Py3status:
                 return player_name
             elif player_state == 'Paused':
                 players_paused.append(player_name)
-            elif player_state == 'Stopped':
+            else:
                 players_stopped.append(player_name)
 
         if players_paused:
@@ -216,40 +269,20 @@ class Py3status:
         album = UNKNOWN
         date = UNKNOWN
         genre = UNKNOWN
-        length = '-:--'
-        time = '0'
-        time_left = '0'
+        length = UNKNOWN_TIME
+        time = UNKNOWN_TIME
+        time_left = UNKNOWN_TIME
         title = UNKNOWN
         track = '?'
-        loop = UNKNOWN
-        shuffle = UNKNOWN
 
         if self._player is None:
             return (self.format_none, i3s_config['color_bad'])
 
         try:
             player = self._player.Identity
-            playback_status = self._player.PlaybackStatus
-
-            if playback_status.strip() == 'Playing':
-                color = self.color_playing or i3s_config['color_good']
-                state = self.state_playing
-            elif playback_status.strip() == 'Paused':
-                color = self.color_paused or i3s_config['color_degraded']
-                state = self.state_paused
-            else:
-                color = self.color_stopped or i3s_config['color_bad']
-                state = self.state_stopped
-
+            (color, state) = self._get_state_format(i3s_config)
             shuffle = self.shuffle_on if self._player.Shuffle else self.shuffle_off
-
-            loop_status = self._player.LoopStatus
-            if loop_status.strip() == 'Track':
-                loop = self.loop_track
-            elif loop_status.strip() == 'Playlist':
-                loop = self.loop_playlist
-            else:
-                loop = self.loop_none
+            loop = self._get_loop_format()
 
             _time_ms = self._player.Position
             time = _get_time_str(_time_ms)
@@ -257,36 +290,14 @@ class Py3status:
             metadata = self._player.Metadata
             has_metadata = len(metadata) > 0
             if has_metadata:
-                is_stream = 'file://' not in metadata.get('xesam:url')
+                # TODO: Format this
+                (album, artist, date, genre, _length_ms, track, title,
+                 is_stream) = self._get_metadata(metadata)
 
-                if not is_stream:
-                    _length_ms = metadata.get('mpris:length')
+                if _length_ms is not None:
                     length = _get_time_str(_length_ms)
                     _time_left_ms = _length_ms - _time_ms
                     time_left = _get_time_str(_time_left_ms)
-
-                if metadata.get('xesam:title') is not None:
-                    title = metadata.get('xesam:title')
-
-                if metadata.get('xesam:contentCreated') is not None:
-                    date = metadata.get('xesam:contentCreated')
-
-                if metadata.get('xesam:trackNumber') is not None:
-                    track = metadata.get('xesam:trackNumber')
-
-                if metadata.get('xesam:genre') is not None:
-                    genre = metadata.get('xesam:genre')[0]
-
-                if not is_stream:
-                    if metadata.get('xesam:album') is not None:
-                        album = metadata.get('xesam:album')
-
-                    if metadata.get('xesam:artist') is not None:
-                        artist = metadata.get('xesam:artist')[0]
-                    else:
-                        # We assume here that we playing a video and these types
-                        # of media we handle just like streams
-                        is_stream = True
 
         except Exception:
             color = i3s_config['color_bad']
