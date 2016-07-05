@@ -14,12 +14,12 @@ Configuration parameters:
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
     format: see placeholders below
-    format_video: see placeholders below, keep in mind that {artist} and {album}
-            are empty
-    format_stream: see placeholders below, keep in mind that {artist}, {album}
-            and {length} are empty
-    format_error: define output if one or more informations couldn't read,
-            keep in mind that some playceholders may be work
+    format_stream: see placeholders below, keep in mind that {artist} and
+            {album} are empty. This format is also used for videos or just media
+            files without an artist information!
+    format_no_tags: define output if song informations couldn't read,
+            keep in mind that this concerns only playceholders
+            {artist}, {album}, {title} and {length}
     format_none: define output if no player is running
     state_paused: text for placeholder {state} when song is paused
     state_playing: text for placeholder {state} when song is playing
@@ -50,9 +50,9 @@ i3status.conf example:
 ```
 mpris {
     format = "{player}: {state} {artist} - {title} [{time} / {length}]"
-    format_video = "{player}: {state} {title} [{time} / {length}]"
+    format_stream = "{player}: {state} {title} [{time} / {length}]"
     format_none = "no player"
-    format_error = "{player}: {state} Unknown"
+    format_no_tags = "{player}: {state} Unknown"
     player_priority = "mpd,cantata,vlc,bomi"
 }
 ```
@@ -102,8 +102,7 @@ class Py3status:
     color_stopped = None
     format = '{state} {artist} - {title}'
     format_stream = '{state} {title}'
-    format_video = '{state} {title}'
-    format_error = '{state} Unknown'
+    format_no_tags = '{state} Unknown'
     format_none = 'no player running'
     state_paused = '▮▮'
     state_playing = '▶'
@@ -183,13 +182,12 @@ class Py3status:
         Get the current metadatas
         """
         is_stream = False
-        is_video = False
         album = UNKNOWN
         artist = UNKNOWN
         state = UNKNOWN
         title = UNKNOWN
         time = '0'
-        length = '0'
+        length = '-:--'
         shuffle = UNKNOWN
         loop = UNKNOWN
 
@@ -198,7 +196,6 @@ class Py3status:
 
         try:
             player = self._player.Identity
-            metadata = self._player.Metadata
             playback_status = self._player.PlaybackStatus
 
             if playback_status.strip() == 'Playing':
@@ -221,63 +218,54 @@ class Py3status:
             else:
                 loop = self.loop_none
 
-            title = metadata.get('xesam:title')
-            if title is None:
-                title = UNKNOWN
-
             _microtime = self._player.Position
             time = _get_time_str(_microtime)
-            try:
-                _microtime = metadata.get('mpris:length')
-                length = _get_time_str(_microtime)
-            except Exception:
-                is_stream = True
 
-            if not is_stream:
-                try:
-                    album = metadata.get('xesam:album')
-                    artist = metadata.get('xesam:artist')[0]
-                except Exception:
-                    is_video = True
+            metadata = self._player.Metadata
+            has_metadata = len(metadata) > 0
+            if has_metadata:
+                is_stream = 'file://' not in metadata.get('xesam:url')
+
+                if not is_stream:
+                    _microtime = metadata.get('mpris:length')
+                    length = _get_time_str(_microtime)
+
+                if metadata.get('xesam:title') is not None:
+                    title = metadata.get('xesam:title')
+
+                if not is_stream:
+                    if metadata.get('xesam:album') is not None:
+                        album = metadata.get('xesam:album')
+
+                    _artist = metadata.get('xesam:artist')
+                    if _artist is not None:
+                        artist = metadata.get('xesam:artist')[0]
+                    else:
+                        # We assume here that we playing a video and these types
+                        # of media we handle just like streams
+                        is_stream = True
 
         except Exception:
-            return (self.format_error.format(player=player,
-                                             state=state,
-                                             title=title,
-                                             artist=artist,
-                                             album=album,
-                                             time=time,
-                                             length=length,
-                                             shuffle=shuffle,
-                                             loop=loop),
-                    i3s_config['color_bad'])
+            color = i3s_config['color_bad']
 
-        if is_stream:
-            return (self.format_stream.format(player=player,
-                                              state=state,
-                                              title=title,
-                                              time=time,
-                                              shuffle=shuffle,
-                                              loop=loop), color)
-        elif is_video:
+        if not has_metadata:
+            format = self.format_no_tags
+        elif is_stream:
+            # Delete the file extension
             title = re.sub(r'\....$', '', title)
-            return (self.format_video.format(player=player,
-                                             state=state,
-                                             title=title,
-                                             time=time,
-                                             length=length,
-                                             shuffle=shuffle,
-                                             loop=loop), color)
+            format = self.format_stream
         else:
-            return (self.format.format(player=player,
-                                       state=state,
-                                       title=title,
-                                       artist=artist,
-                                       album=album,
-                                       time=time,
-                                       length=length,
-                                       shuffle=shuffle,
-                                       loop=loop), color)
+            format = self.format
+
+        return (format.format(player=player,
+                              state=state,
+                              title=title,
+                              artist=artist,
+                              album=album,
+                              time=time,
+                              length=length,
+                              shuffle=shuffle,
+                              loop=loop), color)
 
     def mpris(self, i3s_output_list, i3s_config):
         """
