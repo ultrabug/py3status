@@ -35,7 +35,7 @@ class Py3status:
             result = ''
         else:
             cmds = ['info', 'title', 'artist', 'album', 'status', 'current',
-                    'status', 'time_total', 'time_current', 'album_art']
+                    'time_total', 'time_current', 'album_art']
             data = {}
             for cmd in cmds:
                 if '{%s}' % cmd in self.format:
