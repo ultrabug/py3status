@@ -114,16 +114,13 @@ class Py3status:
     color_paused = None
     color_playing = None
     color_stopped = None
-#    format = '{state} {artist} - {title}'
-    format = 'FORMAT: player:{player}, state:{state}, artist:{artist}, title:{title}, album:{album}, length:{length}, time:{time}'
-#    format_stream = '{state} {title}'
-    format_stream = 'STREAM: player:{player}, state:{state}, artist:{artist}, title:{title}, album:{album}, length:{length}, time:{time}'
+    format = '{state} {artist} - {title}'
+    format_stream = '{state} {title}'
     format_none = 'no player running'
     state_paused = '▮▮'
     state_playing = '▶'
     state_stopped = '◾'
-#    player_priority = None
-    player_priority = "mpd,vlc,bomi,*"
+    player_priority = None
 
     def _get_player(self, player):
         """
