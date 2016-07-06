@@ -40,7 +40,6 @@ Requires:
 """
 
 from time import time, sleep
-import re
 from pydbus import SessionBus
 
 
@@ -118,7 +117,7 @@ class Py3status:
                 'name': self._dev.name,
                 'isReachable': self._dev.isReachable,
                 'isPaired': self._dev.isPaired,
-        }
+            }
         except Exception:
             return None
 
