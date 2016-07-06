@@ -2,6 +2,10 @@
 """
 Display and control a Pomodoro countdown.
 
+Button 1 starts/pauses countdown.
+Button 2 switch Pomodoro/Break.
+Button 3 resets timer.
+
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
     format: define custom display format. See placeholders below
@@ -95,7 +99,7 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     format = u'{ss}'
-    format_separator = u"-"
+    format_separator = u":"
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
@@ -295,15 +299,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.pomodoro([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

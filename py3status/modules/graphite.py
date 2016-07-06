@@ -30,8 +30,8 @@ Confiuration parameters:
         (default True)
 
 Dynamic format placeholders:
-    The "format" parameter placeholders are dynamically based on the data points
-    names returned by the "targets" query to graphite.
+        The "format" parameter placeholders are dynamically based on the data points
+        names returned by the "targets" query to graphite.
 
     For example if your target is "carbon.agents.localhost-a.memUsage", you'd get
     a JSON result like this:

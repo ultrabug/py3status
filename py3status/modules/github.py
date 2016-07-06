@@ -17,7 +17,7 @@ Configuration parameters:
         (default None)
     button_action: Button that when clicked opens the Github notification page
         if notifications, else the project page for the repository . Setting to
-            `0` disables.
+        `0` disables.
         (default 3)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
@@ -179,7 +179,11 @@ class Py3status:
         if ('{notifications}' in self.format or
                 '{notifications_count}' in self.format):
             count = self._notifications()
-            self._notify = count or self._notify
+            # if we don't have a notification count, then use the last value
+            # that we did have.
+            if count is None:
+                count = self._notify
+            self._notify = count
             if count and count != '?':
                 notify = self.py3.safe_format(
                     self.format_notifications,
@@ -220,3 +224,11 @@ class Py3status:
             cmd = 'xdg-open {}'.format(url)
             call(split(cmd))
             self.py3.prevent_refresh()
+
+
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
