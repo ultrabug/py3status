@@ -4,10 +4,8 @@ Display information about the current song and video playing on player with
 mpris support.
 
 Configuration parameters:
-    button_play: mouse button to play the entry
+    button_play: mouse button to toggle between play and pause mode
     button_stop: mouse button to stop the player
-    button_pause: mouse button to pause the player
-    button_pause_toggle: mouse button to toggle between play and pause mode
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
     color_paused: text color when song is paused, defaults to color_degraded
@@ -105,10 +103,8 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_play = None
+    button_play = 1
     button_stop = None
-    button_pause = None
-    button_pause_toggle = 1
     button_next = 4
     button_previous = 5
     color_paused = None
@@ -284,13 +280,9 @@ class Py3status:
         button = event['button']
 
         if button == self.button_play:
-            self._player.Play()
+            self._player.PlayPause()
         elif button == self.button_stop:
             self._player.Stop()
-        elif button == self.button_pause:
-            self._player.Pause()
-        elif button == self.button_pause_toggle:
-            self._player.PlayPause()
         elif button == self.button_next:
             self._player.Next()
         elif button == self.button_previous:
