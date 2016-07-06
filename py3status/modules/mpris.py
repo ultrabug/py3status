@@ -3,11 +3,18 @@
 Display information about the current song and video playing on player with
 mpris support.
 
+There are two ways to control the media player. Either by clicking with a mouse
+button in the text information or by using buttons_control. For former you have
+to define the button parameters in the i3status config.
+
 Configuration parameters:
     button_play: mouse button to toggle between play and pause mode
     button_stop: mouse button to stop the player
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
+    buttons_control: where to show the control buttons (see format_buttons).
+            Can be left, right or none
+    buttons_order: order of the buttons play, stop, next and previous
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
@@ -16,9 +23,9 @@ Configuration parameters:
             {album} are empty. This format is also used for videos or just media
             files without an artist information or any other metadata!
     format_none: define output if no player is running
-    state_paused: text for placeholder {state} when song is paused
-    state_playing: text for placeholder {state} when song is playing
-    state_stopped: text for placeholder {state} when song is stopped
+    state_pause: text for placeholder {state} when song is paused
+    state_play: text for placeholder {state} when song is playing
+    state_stop: text for placeholder {state} when song is stopped
     player_priority: priority of the players.
             Keep in mind that the state has a higher priority than
             player_priority. So when player_priority is "mpd,bomi" and mpd is
@@ -40,6 +47,8 @@ mpris {
     format = "{player}: {state} {artist} - {title} [{time} / {length}]"
     format_stream = "{player}: {state} {title} [{time} / {length}]"
     format_none = "no player"
+    buttons_control = "left"
+    buttons_order = "previous,play,next"
     player_priority = "mpd,cantata,vlc,bomi,*"
 }
 ```
@@ -107,15 +116,19 @@ class Py3status:
     button_stop = None
     button_next = 4
     button_previous = 5
+    buttons_control = None
+    buttons_order = 'previous,play,next'
     color_paused = None
     color_playing = None
     color_stopped = None
     format = '{state} {artist} - {title}'
     format_stream = '{state} {title}'
     format_none = 'no player running'
-    state_paused = '▮▮'
-    state_playing = '▶'
-    state_stopped = '◾'
+    state_pause = '▮▮'
+    state_play = '▶'
+    state_stop = '◾'
+    state_next = '»'
+    state_previous = '«'
     player_priority = None
 
     def _get_player(self, player):
@@ -142,13 +155,13 @@ class Py3status:
 
         if playback_status == 'Playing':
             color = self.color_playing or i3s_config['color_good']
-            state = self.state_playing
+            state = self.state_play
         elif playback_status == 'Paused':
             color = self.color_paused or i3s_config['color_degraded']
-            state = self.state_paused
+            state = self.state_pause
         else:
             color = self.color_stopped or i3s_config['color_bad']
-            state = self.state_stopped
+            state = self.state_stop
 
         return (color, state)
 
@@ -209,9 +222,6 @@ class Py3status:
         time = UNKNOWN_TIME
         title = UNKNOWN
 
-        if self._player is None:
-            return (self.format_none, i3s_config['color_bad'])
-
         try:
             player = self._player.Identity
             (color, state) = self._get_state_format(i3s_config)
@@ -227,6 +237,7 @@ class Py3status:
 
                 if metadata.get('xesam:artist') is not None:
                     artist = metadata.get('xesam:artist')[0]
+                else:
                     # we assume here that we playing a video and these types of
                     # media we handle just like streams
                     is_stream = True
@@ -255,21 +266,82 @@ class Py3status:
                               time=time,
                               title=title), color)
 
+    def _get_response_buttons(self):
+        response = []
+
+        if self._player.PlaybackStatus == 'Playing':
+            state = self.state_pause
+        else:
+            state = self.state_play
+
+        buttons_order = self.buttons_order.split(',')
+        for button in buttons_order:
+            if button == 'play':
+                response.append({
+                    'color': '#CCCCCC',
+                    'full_text': ' ' + state + ' ',
+                    'index': 'play',
+                })
+            elif button == 'stop':
+                response.append({
+                    'color': '#CCCCCC',
+                    'full_text': ' ' + self.state_stop + ' ',
+                    'index': 'stop',
+                })
+            elif button == 'next':
+                response.append({
+                    'color': '#CCCCCC',
+                    'full_text': ' ' + self.state_next + ' ',
+                    'index': 'next',
+                })
+            elif button == 'previous':
+                response.append({
+                    'color': '#CCCCCC',
+                    'full_text': ' ' + self.state_previous + ' ',
+                    'index': 'previous',
+                })
+
+        return response
+
     def mpris(self, i3s_output_list, i3s_config):
         """
         Get the current output format and return it.
         """
+        buttons_control = self.buttons_control
+        cached_until = time() + i3s_config['interval']
         self._dbus = SessionBus()
 
         running_player = self._detect_running_player()
         self._player = self._get_player(running_player)
 
-        (text, color) = self._get_text(i3s_config)
-        response = {
-            'cached_until': time() + i3s_config['interval'],
+        if self._player is None:
+            buttons_control = None
+            text = self.format_none
+            color = i3s_config['color_bad']
+        else:
+            (text, color) = self._get_text(i3s_config)
+            response_buttons = self._get_response_buttons()
+            if len(response_buttons) == 0:
+                buttons_control = None
+
+        response_text = {
             'full_text': text,
             'color': color
         }
+
+        response = {
+            'cached_until': cached_until,
+        }
+
+        if buttons_control == 'left':
+            response_text['full_text'] = ' ' + response_text['full_text']
+            response['composite'] = response_buttons + [response_text]
+        elif buttons_control == 'right':
+            response_text['full_text'] = response_text['full_text'] + ' '
+            response['composite'] = [response_text] + response_buttons
+        else:
+            response['full_text'] = response_text['full_text']
+            response['color'] = response_text['color']
 
         return response
 
@@ -277,7 +349,22 @@ class Py3status:
         """
         Handles click events
         """
+        index = event['index']
         button = event['button']
+
+        if button == 1:
+            if index == 'play':
+                self._player.PlayPause()
+                return
+            elif index == 'stop':
+                self._player.Stop()
+                return
+            elif index == 'next':
+                self._player.Next()
+                return
+            elif index == 'previous':
+                self._player.Previous()
+                return
 
         if button == self.button_play:
             self._player.PlayPause()
