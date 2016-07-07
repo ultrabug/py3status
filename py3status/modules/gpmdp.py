@@ -3,6 +3,27 @@
 Display currently playing song from Google Play Music Desktop Player.
 
 Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 5)
+    format: specify the items and ordering of the data in the status bar. These are
+	    a 1:1 match to gpmdp-remote's options (default is '♫ {info}').
+
+Format of status string placeholders:
+    See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
+    with curly braces (i.e. `{album}`) and place as-desired in the format string.
+    
+
+Requires:
+    gpmdp: http://www.googleplaymusicdesktopplayer.com/
+    gpmdp-remote: https://github.com/iandrewt/gpmdp-remote
+
+@author Aaron Fields https://twitter.com/spirotot
+@license BSD
+"""
+
+"""
+Display currently playing song from Google Play Music Desktop Player.
+
+Configuration parameters:
     - cache_timeout : how often we refresh this module in seconds (5s default)
 
 Requires
