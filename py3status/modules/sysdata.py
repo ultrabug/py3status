@@ -161,16 +161,10 @@ class Py3status:
 
         if threshold <= self.med_threshold:
             response['color'] = i3s_config['color_good']
-            c = 'good'
         elif (threshold <= self.high_threshold):
             response['color'] = i3s_config['color_degraded']
-            c = 'degraded'
         else:
             response['color'] = i3s_config['color_bad']
-            c = 'bad'
-        self.py3.log('%s (%s/%s) %s %s' % (
-            threshold, self.med_threshold, self.high_threshold,
-            c, response['full_text']))
 
         return response
 
