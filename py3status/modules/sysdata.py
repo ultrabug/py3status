@@ -20,6 +20,8 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 @author Shahin Azad <ishahinism at Gmail>, shrimpza
 """
 
+from __future__ import division
+
 import re
 import subprocess
 from time import time
@@ -122,9 +124,9 @@ class Py3status:
     def sysData(self, i3s_output_list, i3s_config):
         # get CPU usage info
         cpu_total, cpu_idle = self.data.cpu()
-        cpu_usage = 1 - (
+        cpu_usage = (1 - (
             float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
-            )
+            )) * 100
         self.cpu_total = cpu_total
         self.cpu_idle = cpu_idle
 
@@ -140,7 +142,7 @@ class Py3status:
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': self.format.format(
-                cpu_usage='%.2f' % (cpu_usage * 100),
+                cpu_usage='%.2f' % (cpu_usage),
                 cpu_temp=cpu_temp,
                 mem_used='%.2f' % mem_used,
                 mem_total='%.2f' % mem_total,
@@ -148,10 +150,18 @@ class Py3status:
             )
         }
 
-        if max(cpu_usage, mem_used_percent/100) <= self.med_threshold / 100.0:
+        if '{cpu_usage}' in self.format:
+            if ('{mem_used_percent}' in self.format
+                    or '{mem_used}' in self.format):
+                threshold = max(cpu_usage, mem_used_percent)
+            else:
+                threshold = cpu_usage
+        else:
+            threshold = mem_used_percent
+
+        if threshold <= self.med_threshold:
             response['color'] = i3s_config['color_good']
-        elif (max(cpu_usage, mem_used_percent/100) <=
-                self.high_threshold / 100.0):
+        elif (threshold <= self.high_threshold):
             response['color'] = i3s_config['color_degraded']
         else:
             response['color'] = i3s_config['color_bad']
