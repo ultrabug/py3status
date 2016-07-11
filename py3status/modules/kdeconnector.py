@@ -82,12 +82,12 @@ class Py3status:
             self.device_id = self._get_device_id(_bus)
             if self.device_id is None:
                 return False
-        else:
-            try:
-                self._dev = _bus.get(SERVICE_BUS,
-                                     DEVICE_PATH + '/%s' % self.device_id)
-            except Exception:
-                return False
+
+        try:
+            self._dev = _bus.get(SERVICE_BUS,
+                                 DEVICE_PATH + '/%s' % self.device_id)
+        except Exception:
+            return False
 
         return True
 
@@ -102,7 +102,6 @@ class Py3status:
             return devices[0]
 
         for id in devices:
-            self._dev = bus.get(SERVICE_BUS, DEVICE_PATH + '/%s' % id)
             if self.device == self._dev.name:
                 return id
 
