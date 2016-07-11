@@ -326,7 +326,8 @@ class Py3status:
 
         response_text = {
             'full_text': text,
-            'color': color
+            'color': color,
+            'index': 'text'
         }
 
         response = {
@@ -334,14 +335,11 @@ class Py3status:
         }
 
         if buttons_control == 'left':
-            response_text['full_text'] = ' ' + response_text['full_text']
             response['composite'] = response_buttons + [response_text]
         elif buttons_control == 'right':
-            response_text['full_text'] = response_text['full_text'] + ' '
             response['composite'] = [response_text] + response_buttons
         else:
-            response['full_text'] = response_text['full_text']
-            response['color'] = response_text['color']
+            response['composite'] = [response_text]
 
         return response
 
@@ -352,29 +350,25 @@ class Py3status:
         index = event['index']
         button = event['button']
 
-        if button == 1:
-            if index == 'play':
+        if index == 'text':
+            if button == self.button_play:
                 self._player.PlayPause()
-                return
-            elif index == 'stop':
+            elif button == self.button_stop:
                 self._player.Stop()
-                return
-            elif index == 'next':
+            elif button == self.button_next:
                 self._player.Next()
-                return
-            elif index == 'previous':
+            elif button == self.button_previous:
                 self._player.Previous()
-                return
-
-        if button == self.button_play:
-            self._player.PlayPause()
-        elif button == self.button_stop:
-            self._player.Stop()
-        elif button == self.button_next:
-            self._player.Next()
-        elif button == self.button_previous:
-            self._player.Previous()
-
+        else:
+            if button == 1:
+                if index == 'play':
+                    self._player.PlayPause()
+                elif index == 'stop':
+                    self._player.Stop()
+                elif index == 'next':
+                    self._player.Next()
+                elif index == 'previous':
+                    self._player.Previous()
 
 if __name__ == "__main__":
     """
