@@ -586,9 +586,7 @@ class I3status(Thread):
                     self.error = err
                     self.py3_wrapper.log(err, 'error')
         except Exception:
-            err = sys.exc_info()[1]
-            self.error = err
-            self.py3_wrapper.log(err, 'error')
+            self.py3_wrapper.report_exception('', notify_user=True)
         self.i3status_pipe = None
 
     def cleanup_tmpfile(self):
