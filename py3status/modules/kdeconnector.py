@@ -39,7 +39,6 @@ Requires:
 @author Moritz Lüdecke
 """
 
-from time import time, sleep
 from pydbus import SessionBus
 
 
