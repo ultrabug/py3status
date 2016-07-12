@@ -273,7 +273,8 @@ class Py3status:
             active_battery = None
             inactive_battery = battery_list[:]
             for battery_id in range(0, len(battery_list)):
-                if battery_list[battery_id]["time_remaining"]:
+                if (battery_list[battery_id]["time_remaining"]
+                        and battery_list[battery_id]["time_remaining"] != '?'):
                     active_battery = battery_list[battery_id]
                     del inactive_battery[battery_id]
 
