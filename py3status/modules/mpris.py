@@ -84,6 +84,7 @@ Requires:
 """
 
 from datetime import timedelta
+from time import time
 import re
 from pydbus import SessionBus
 
