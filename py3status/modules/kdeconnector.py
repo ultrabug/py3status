@@ -40,6 +40,7 @@ Requires:
 """
 
 from pydbus import SessionBus
+from time import time
 
 
 SERVICE_BUS = 'org.kde.kdeconnect'
