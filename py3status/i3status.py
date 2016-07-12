@@ -130,7 +130,10 @@ class I3statusModule:
         # get datetime and time zone info
         parts = i3s_time.split()
         i3s_datetime = ' '.join(parts[:2])
-        i3s_time_tz = parts[2]
+        if len(parts) > 2:
+            i3s_time_tz = parts[2]
+        else:
+            i3s_time_tz = '?'
 
         date = datetime.strptime(i3s_datetime, TIME_FORMAT)
         # calculate the time delta
