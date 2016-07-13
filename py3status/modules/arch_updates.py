@@ -2,18 +2,19 @@
 
 """
 Displays the number of package updates pending for an Arch Linux installation.
+
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are
 also waiting.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
-    include_aur: Set to 0 to use 'cower' to check for AUR updates (default 0)
-    format: Display format to use *(default
-        'UPD: {pacman}' or 'UPD: {pacman}/{aur}'
-        )*
+    format: Display format to use
+        (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
+    include_aur: Set to 1 to use 'cower' to check for AUR updates
+        (default 0)
 
-Format status string parameters:
+Format of status string parameters:
     {aur} Number of pending aur updates
     {pacman} Number of pending pacman updates
 
@@ -32,8 +33,8 @@ import sys
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    include_aur = 0
     format = ''
+    include_aur = 0
 
     _format_pacman_only = 'UPD: {pacman}'
     _format_pacman_and_aur = 'UPD: {pacman}/{aur}'
@@ -85,20 +86,12 @@ class Py3status:
             pending_updates = cp_error.output
         except:
             pending_updates = '?'
-
         return str(pending_updates).count(self._line_separator)
+
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.check_updates([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
