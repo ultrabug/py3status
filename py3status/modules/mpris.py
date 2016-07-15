@@ -112,6 +112,7 @@ def _get_time_str(microseconds):
 
     return time
 
+
 def _get_ctr_struct(clickable, icon, action):
     return {'clickable': clickable, 'icon': icon, 'action': action}
 
