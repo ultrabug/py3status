@@ -23,6 +23,11 @@ Configuration parameters:
             {album} are empty. This format is also used for videos or just media
             files without an artist information or any other metadata!
     format_none: define output if no player is running
+    icon_pause: text for the pause button in the button control panel
+    icon_play: text for the play button in the button control panel
+    icon_stop: text for the stop button in the button control panel
+    icon_next: text for the next button in the button control panel
+    icon_previous: text for the previous button in the button control panel
     state_pause: text for placeholder {state} when song is paused
     state_play: text for placeholder {state} when song is playing
     state_stop: text for placeholder {state} when song is stopped
@@ -107,6 +112,9 @@ def _get_time_str(microseconds):
 
     return time
 
+def _get_ctr_struct(clickable, icon, action):
+    return {'clickable': clickable, 'icon': icon, 'action': action}
+
 
 class Py3status:
     """
@@ -117,18 +125,20 @@ class Py3status:
     button_next = 4
     button_previous = 5
     buttons_control = None
-    buttons_order = 'previous,play,next'
+    buttons_order = 'previous,play_pause,next'
     color_paused = None
     color_playing = None
     color_stopped = None
     format = '{state} {artist} - {title}'
     format_stream = '{state} {title}'
     format_none = 'no player running'
+    icon_pause = ' ▮▮ '
+    icon_play = ' ▶ '
+    icon_stop = ' ◾ '
+    icon_next = ' » '
+    icon_previous = ' « '
     state_pause = '▮▮'
     state_play = '▶'
-    state_stop = '◾'
-    state_next = '»'
-    state_previous = '«'
     player_priority = None
 
     def _get_player(self, player):
@@ -266,40 +276,32 @@ class Py3status:
                               time=time,
                               title=title), color)
 
+    def _get_control_states(self):
+        control_states = {
+            'pause':    _get_ctr_struct(self._player.CanPause, self.icon_pause, self._player.Pause),
+            'play':     _get_ctr_struct(self._player.CanPlay, self.icon_play, self._player.Play),
+            'stop':     _get_ctr_struct(True, self.icon_stop,self._player.Stop),
+            'next':     _get_ctr_struct(self._player.CanGoNext, self.icon_next, self._player.Next),
+            'previous': _get_ctr_struct(self._player.CanGoPrevious, self.icon_previous, self._player.Previous)
+        }
+
+        state = 'pause' if self._player.PlaybackStatus == 'Playing' else 'play'
+        control_states['play_pause'] = control_states[state]
+
+        return control_states
+
     def _get_response_buttons(self):
         response = []
-
-        if self._player.PlaybackStatus == 'Playing':
-            state = self.state_pause
-        else:
-            state = self.state_play
-
         buttons_order = self.buttons_order.split(',')
-        for button in buttons_order:
-            if button == 'play':
-                response.append({
-                    'color': '#CCCCCC',
-                    'full_text': ' ' + state + ' ',
-                    'index': 'play',
-                })
-            elif button == 'stop':
-                response.append({
-                    'color': '#CCCCCC',
-                    'full_text': ' ' + self.state_stop + ' ',
-                    'index': 'stop',
-                })
-            elif button == 'next':
-                response.append({
-                    'color': '#CCCCCC',
-                    'full_text': ' ' + self.state_next + ' ',
-                    'index': 'next',
-                })
-            elif button == 'previous':
-                response.append({
-                    'color': '#CCCCCC',
-                    'full_text': ' ' + self.state_previous + ' ',
-                    'index': 'previous',
-                })
+        buttons_available = ['pause', 'play', 'play_pause', 'stop', 'next', 'previous']
+
+        for button in [e for e in buttons_order if e in buttons_available]:
+            control_state = self._control_states[button]
+            response.append({
+                'color': '#CCCCCC' if control_state['clickable'] else '#666666',
+                'full_text': control_state['icon'],
+                'index': button,
+            })
 
         return response
 
@@ -320,6 +322,7 @@ class Py3status:
             color = i3s_config['color_bad']
         else:
             (text, color) = self._get_text(i3s_config)
+            self._control_states = self._get_control_states()
             response_buttons = self._get_response_buttons()
             if len(response_buttons) == 0:
                 buttons_control = None
@@ -361,14 +364,7 @@ class Py3status:
                 self._player.Previous()
         else:
             if button == 1:
-                if index == 'play':
-                    self._player.PlayPause()
-                elif index == 'stop':
-                    self._player.Stop()
-                elif index == 'next':
-                    self._player.Next()
-                elif index == 'previous':
-                    self._player.Previous()
+                self._control_states[index]['action']()
 
 if __name__ == "__main__":
     """
