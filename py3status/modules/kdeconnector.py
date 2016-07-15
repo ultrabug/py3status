@@ -8,12 +8,12 @@ Configuration parameters:
     device_id: alternatively to the device name you can set your device id here
     format: see placeholders below
     format_disconnected: text if device is disconnected
+    low_threshold: percentage value when text is twitch to color_bad
     status_bat: text when battery is discharged
     status_chr: text when device is charged
     status_full: text when battery is full
     status_notif: text when notifications are available
     status_no_notif: text when you have no notifications
-    low_threshold: percentage value when text is twitch to color_bad
 
 Format of status string placeholders:
     {name} name of the device
@@ -63,12 +63,12 @@ class Py3status:
     device_id = None
     format = '{name}{notif_status} {bat_status} {charge}%'
     format_disconnected = 'device disconnected'
+    low_threshold = 20
     status_bat = '⬇'
     status_chr = '⬆'
     status_full = '☻'
     status_notif = ' ✉'
     status_no_notif = ''
-    low_threshold = 20
 
     _dev = None
 
