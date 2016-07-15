@@ -12,15 +12,15 @@ Configuration parameters:
     status_bat: text when battery is discharged
     status_chr: text when device is charged
     status_full: text when battery is full
-    status_notif: text when notifications are available
     status_no_notif: text when you have no notifications
+    status_notif: text when notifications are available
 
 Format of status string placeholders:
-    {name} name of the device
-    {notif_status} shows if a notification is available or nor
-    {notif_size} number of notifications
     {bat_status} battery state
     {charge} the battery charge
+    {name} name of the device
+    {notif_size} number of notifications
+    {notif_status} shows if a notification is available or nor
 
 i3status.conf example:
 
@@ -51,8 +51,8 @@ INTERFACE_NOTIFICATIONS = INTERFACE + '.notifications'
 PATH = '/modules/kdeconnect'
 DEVICE_PATH = PATH + '/devices'
 UNKNOWN = 'Unknown'
-UNKNOWN_SYMBOL = '?'
 UNKNOWN_DEVICE = 'unknown device'
+UNKNOWN_SYMBOL = '?'
 
 
 class Py3status:
@@ -67,8 +67,8 @@ class Py3status:
     status_bat = '⬇'
     status_chr = '⬆'
     status_full = '☻'
-    status_notif = ' ✉'
     status_no_notif = ''
+    status_notif = ' ✉'
 
     _dev = None
 
