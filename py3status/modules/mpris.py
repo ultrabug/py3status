@@ -278,11 +278,21 @@ class Py3status:
 
     def _get_control_states(self):
         control_states = {
-            'pause':    _get_ctr_struct(self._player.CanPause, self.icon_pause, self._player.Pause),
-            'play':     _get_ctr_struct(self._player.CanPlay, self.icon_play, self._player.Play),
-            'stop':     _get_ctr_struct(True, self.icon_stop,self._player.Stop),
-            'next':     _get_ctr_struct(self._player.CanGoNext, self.icon_next, self._player.Next),
-            'previous': _get_ctr_struct(self._player.CanGoPrevious, self.icon_previous, self._player.Previous)
+            'pause':    _get_ctr_struct(self._player.CanPause,
+                                        self.icon_pause,
+                                        self._player.Pause),
+            'play':     _get_ctr_struct(self._player.CanPlay,
+                                        self.icon_play,
+                                        self._player.Play),
+            'stop':     _get_ctr_struct(True,
+                                        self.icon_stop,
+                                        self._player.Stop),
+            'next':     _get_ctr_struct(self._player.CanGoNext,
+                                        self.icon_next,
+                                        self._player.Next),
+            'previous': _get_ctr_struct(self._player.CanGoPrevious,
+                                        self.icon_previous,
+                                        self._player.Previous)
         }
 
         state = 'pause' if self._player.PlaybackStatus == 'Playing' else 'play'
@@ -293,9 +303,9 @@ class Py3status:
     def _get_response_buttons(self):
         response = []
         buttons_order = self.buttons_order.split(',')
-        buttons_available = ['pause', 'play', 'play_pause', 'stop', 'next', 'previous']
+        available = ['pause', 'play', 'play_pause', 'stop', 'next', 'previous']
 
-        for button in [e for e in buttons_order if e in buttons_available]:
+        for button in [e for e in buttons_order if e in available]:
             control_state = self._control_states[button]
             response.append({
                 'color': '#CCCCCC' if control_state['clickable'] else '#666666',
