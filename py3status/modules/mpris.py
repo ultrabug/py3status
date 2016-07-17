@@ -113,10 +113,6 @@ def _get_time_str(microseconds):
     return time
 
 
-def _get_ctr_struct(clickable, icon, action):
-    return {'clickable': clickable, 'icon': icon, 'action': action}
-
-
 class Py3status:
     """
     """
@@ -279,21 +275,21 @@ class Py3status:
 
     def _get_control_states(self):
         control_states = {
-            'pause':    _get_ctr_struct(self._player.CanPause,
-                                        self.icon_pause,
-                                        self._player.Pause),
-            'play':     _get_ctr_struct(self._player.CanPlay,
-                                        self.icon_play,
-                                        self._player.Play),
-            'stop':     _get_ctr_struct(True,
-                                        self.icon_stop,
-                                        self._player.Stop),
-            'next':     _get_ctr_struct(self._player.CanGoNext,
-                                        self.icon_next,
-                                        self._player.Next),
-            'previous': _get_ctr_struct(self._player.CanGoPrevious,
-                                        self.icon_previous,
-                                        self._player.Previous)
+            'pause':    {'clickable': self._player.CanPause,
+                         'icon':      self.icon_pause,
+                         'action':    self._player.Pause},
+            'play':     {'clickable': self._player.CanPlay,
+                         'icon':      self.icon_play,
+                         'action':    self._player.Play},
+            'stop':     {'clickable': True,
+                         'icon':      self.icon_stop,
+                         'action':    self._player.Stop},
+            'next':     {'clickable': self._player.CanGoNext,
+                         'icon':      self.icon_next,
+                         'action':    self._player.Next},
+            'previous': {'clickable': self._player.CanGoPrevious,
+                         'icon':      self.icon_previous,
+                         'action':    self._player.Previous}
         }
 
         state = 'pause' if self._player.PlaybackStatus == 'Playing' else 'play'
@@ -304,7 +300,7 @@ class Py3status:
     def _get_response_buttons(self):
         response = []
         buttons_order = self.buttons_order.split(',')
-        available = ['pause', 'play', 'play_pause', 'stop', 'next', 'previous']
+        available = self._control_states.keys()
 
         for button in [e for e in buttons_order if e in available]:
             control_state = self._control_states[button]
