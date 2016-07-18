@@ -8,7 +8,7 @@ button in the text information or by using buttons_control. For former you have
 to define the button parameters in the i3status config.
 
 Configuration parameters:
-    button_play: mouse button to toggle between play and pause mode
+    button_play_pause: mouse button to toggle between play and pause mode
     button_stop: mouse button to stop the player
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
@@ -117,7 +117,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_play = 1
+    button_play_pause = 1
     button_stop = None
     button_next = 4
     button_previous = 5
@@ -277,19 +277,19 @@ class Py3status:
         control_states = {
             'pause':    {'clickable': self._player.CanPause,
                          'icon':      self.icon_pause,
-                         'action':    self._player.Pause},
+                         'action':    'Pause'},
             'play':     {'clickable': self._player.CanPlay,
                          'icon':      self.icon_play,
-                         'action':    self._player.Play},
+                         'action':    'Play'},
             'stop':     {'clickable': True,
                          'icon':      self.icon_stop,
-                         'action':    self._player.Stop},
+                         'action':    'Stop'},
             'next':     {'clickable': self._player.CanGoNext,
                          'icon':      self.icon_next,
-                         'action':    self._player.Next},
+                         'action':    'Next'},
             'previous': {'clickable': self._player.CanGoPrevious,
                          'icon':      self.icon_previous,
-                         'action':    self._player.Previous}
+                         'action':    'Previous'}
         }
 
         state = 'pause' if self._player.PlaybackStatus == 'Playing' else 'play'
@@ -361,17 +361,18 @@ class Py3status:
         button = event['button']
 
         if index == 'text':
-            if button == self.button_play:
-                self._player.PlayPause()
+            if button == self.button_play_pause:
+                index = 'play_pause'
             elif button == self.button_stop:
-                self._player.Stop()
+                index = 'stop'
             elif button == self.button_next:
-                self._player.Next()
+                index = 'next'
             elif button == self.button_previous:
-                self._player.Previous()
-        else:
-            if button == 1:
-                self._control_states[index]['action']()
+                index = 'previous'
+        elif button != 1:
+            return
+
+        getattr(self._player, self._control_states[index]['action'])()
 
 if __name__ == "__main__":
     """
