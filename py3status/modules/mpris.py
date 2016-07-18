@@ -8,8 +8,8 @@ button in the text information or by using buttons_control. For former you have
 to define the button parameters in the i3status config.
 
 Configuration parameters:
-    button_play_pause: mouse button to toggle between play and pause mode
     button_stop: mouse button to stop the player
+    button_toggle: mouse button to toggle between play and pause mode
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
     buttons_control: where to show the control buttons (see format_buttons).
@@ -117,8 +117,8 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_play_pause = 1
     button_stop = None
+    button_toggle = 1
     button_next = 4
     button_previous = 5
     buttons_control = None
@@ -361,7 +361,7 @@ class Py3status:
         button = event['button']
 
         if index == 'text':
-            if button == self.button_play_pause:
+            if button == self.button_toggle:
                 index = 'play_pause'
             elif button == self.button_stop:
                 index = 'stop'
