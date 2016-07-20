@@ -11,8 +11,8 @@ Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
     format: Display format to use
         (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
-    include_aur: Set to 1 to use 'cower' to check for AUR updates
-        (default 0)
+    include_aur: Set to True to use 'cower' to check for AUR updates
+        (default False)
 
 Format of status string parameters:
     {aur} Number of pending aur updates
@@ -34,19 +34,19 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 600
     format = ''
-    include_aur = 0
+    include_aur = False
 
     _format_pacman_only = 'UPD: {pacman}'
     _format_pacman_and_aur = 'UPD: {pacman}/{aur}'
     _line_separator = "\\n" if sys.version_info > (3, 0) else "\n"
 
     if format == '':
-        if include_aur == 0:
+        if not include_aur:
             format = _format_pacman_only
         else:
             format = _format_pacman_and_aur
 
-    def check_updates(self, i3s_output_list, i3s_config):
+    def check_updates(self):
         pacman_updates = self._check_pacman_updates()
         if self.include_aur:
             aur_updates = self._check_aur_updates()
