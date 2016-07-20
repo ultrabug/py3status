@@ -12,7 +12,8 @@ Configuration parameters:
     button_toggle: mouse button to toggle between play and pause mode
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
-    buttons_order: order of the buttons play, stop, next and previous
+    buttons_order: order of the buttons play, pause, toggle, stop, next and
+            previous
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
@@ -26,7 +27,7 @@ Configuration parameters:
     icon_stop: text for the stop button in the button control panel
     icon_next: text for the next button in the button control panel
     icon_previous: text for the previous button in the button control panel
-    show_controls: where to show the control buttons (see format_buttons).
+    show_controls: where to show the control buttons (see buttons_order).
             Can be left, right or none
     state_pause: text for placeholder {state} when song is paused
     state_play: text for placeholder {state} when song is playing
@@ -121,7 +122,7 @@ class Py3status:
     button_toggle = 1
     button_next = 4
     button_previous = 5
-    buttons_order = 'previous,play_pause,next'
+    buttons_order = 'previous,toggle,next'
     color_paused = None
     color_playing = None
     color_stopped = None
@@ -276,25 +277,25 @@ class Py3status:
 
     def _get_control_states(self):
         control_states = {
-            'pause':    {'clickable': self._player.CanPause,
+            'pause':    {'clickable': 'CanPause',
                          'icon':      self.icon_pause,
                          'action':    'Pause'},
-            'play':     {'clickable': self._player.CanPlay,
+            'play':     {'clickable': 'CanPlay',
                          'icon':      self.icon_play,
                          'action':    'Play'},
-            'stop':     {'clickable': True,
+            'stop':     {'clickable': 'True',
                          'icon':      self.icon_stop,
                          'action':    'Stop'},
-            'next':     {'clickable': self._player.CanGoNext,
+            'next':     {'clickable': 'CanGoNext',
                          'icon':      self.icon_next,
                          'action':    'Next'},
-            'previous': {'clickable': self._player.CanGoPrevious,
+            'previous': {'clickable': 'CanGoPrevious',
                          'icon':      self.icon_previous,
                          'action':    'Previous'}
         }
 
         state = 'pause' if self._player.PlaybackStatus == 'Playing' else 'play'
-        control_states['play_pause'] = control_states[state]
+        control_states['toggle'] = control_states[state]
 
         return control_states
 
@@ -305,8 +306,9 @@ class Py3status:
 
         for button in [e for e in buttons_order if e in available]:
             control_state = self._control_states[button]
+            clickable = getattr(self._player, control_state['clickable'], True)
             response.append({
-                'color': '#CCCCCC' if control_state['clickable'] else '#666666',
+                'color': '#CCCCCC' if clickable else '#666666',
                 'full_text': control_state['icon'],
                 'index': button,
             })
@@ -363,7 +365,7 @@ class Py3status:
 
         if index == 'text':
             if button == self.button_toggle:
-                index = 'play_pause'
+                index = 'toggle'
             elif button == self.button_stop:
                 index = 'stop'
             elif button == self.button_next:
