@@ -238,7 +238,8 @@ class Py3status:
 
             metadata = self._player.Metadata
             if len(metadata) > 0:
-                is_stream = 'file://' not in metadata.get('xesam:url')
+                url = metadata.get('xesam:url')
+                is_stream = url is not None and 'file://' not in url
                 title = metadata.get('xesam:title') or UNKNOWN
                 album = metadata.get('xesam:album') or UNKNOWN
 
