@@ -589,13 +589,6 @@ class I3status(Thread):
             self.py3_wrapper.report_exception('', notify_user=True)
         self.i3status_pipe = None
 
-    def cleanup_tmpfile(self):
-        """
-        Cleanup i3status tmp configuration file.
-        """
-        if os.path.isfile(self.tmpfile_path):
-            os.remove(self.tmpfile_path)
-
     def mock(self):
         """
         Mock i3status behavior, used in standalone mode.

@@ -384,7 +384,6 @@ class Py3statusWrapper():
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
-            self.i3status_thread.cleanup_tmpfile()
         except:
             pass
 
