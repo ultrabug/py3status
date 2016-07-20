@@ -4,7 +4,7 @@ Display information about the current song and video playing on player with
 mpris support.
 
 There are two ways to control the media player. Either by clicking with a mouse
-button in the text information or by using buttons_control. For former you have
+button in the text information or by using show_controls. For former you have
 to define the button parameters in the i3status config.
 
 Configuration parameters:
@@ -12,8 +12,6 @@ Configuration parameters:
     button_toggle: mouse button to toggle between play and pause mode
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
-    buttons_control: where to show the control buttons (see format_buttons).
-            Can be left, right or none
     buttons_order: order of the buttons play, stop, next and previous
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
@@ -28,6 +26,8 @@ Configuration parameters:
     icon_stop: text for the stop button in the button control panel
     icon_next: text for the next button in the button control panel
     icon_previous: text for the previous button in the button control panel
+    show_controls: where to show the control buttons (see format_buttons).
+            Can be left, right or none
     state_pause: text for placeholder {state} when song is paused
     state_play: text for placeholder {state} when song is playing
     state_stop: text for placeholder {state} when song is stopped
@@ -52,7 +52,7 @@ mpris {
     format = "{player}: {state} {artist} - {title} [{time} / {length}]"
     format_stream = "{player}: {state} {title} [{time} / {length}]"
     format_none = "no player"
-    buttons_control = "left"
+    show_controls = "left"
     buttons_order = "previous,play,next"
     player_priority = "mpd,cantata,vlc,bomi,*"
 }
@@ -121,7 +121,6 @@ class Py3status:
     button_toggle = 1
     button_next = 4
     button_previous = 5
-    buttons_control = None
     buttons_order = 'previous,play_pause,next'
     color_paused = None
     color_playing = None
@@ -134,6 +133,7 @@ class Py3status:
     icon_stop = ' ◾ '
     icon_next = ' » '
     icon_previous = ' « '
+    show_controls = None
     state_pause = '▮▮'
     state_play = '▶'
     player_priority = None
@@ -317,7 +317,7 @@ class Py3status:
         """
         Get the current output format and return it.
         """
-        buttons_control = self.buttons_control
+        show_controls = self.show_controls
         cached_until = time() + i3s_config['interval']
         self._dbus = SessionBus()
 
@@ -325,7 +325,7 @@ class Py3status:
         self._player = self._get_player(running_player)
 
         if self._player is None:
-            buttons_control = None
+            show_controls = None
             text = self.format_none
             color = i3s_config['color_bad']
         else:
@@ -333,7 +333,7 @@ class Py3status:
             self._control_states = self._get_control_states()
             response_buttons = self._get_response_buttons()
             if len(response_buttons) == 0:
-                buttons_control = None
+                show_controls = None
 
         response_text = {
             'full_text': text,
@@ -345,9 +345,9 @@ class Py3status:
             'cached_until': cached_until,
         }
 
-        if buttons_control == 'left':
+        if show_controls == 'left':
             response['composite'] = response_buttons + [response_text]
-        elif buttons_control == 'right':
+        elif show_controls == 'right':
             response['composite'] = [response_text] + response_buttons
         else:
             response['composite'] = [response_text]
