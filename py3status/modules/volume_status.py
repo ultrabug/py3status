@@ -146,7 +146,7 @@ class Py3status:
         muted = self._get_muted(output)
 
         # determine the color based on the current volume level
-        color = self._perc_to_color(i3s_config, perc)
+        color = self._perc_to_color(i3s_config, perc if not muted else '0')
 
         # format the output
         text = self._format_output(self.format_muted

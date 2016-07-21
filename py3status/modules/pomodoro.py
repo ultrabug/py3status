@@ -2,9 +2,14 @@
 """
 Display and control a Pomodoro countdown.
 
+Button 1 starts/pauses countdown.
+Button 2 switch Pomodoro/Break.
+Button 3 resets timer.
+
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
     format: define custom display format. See placeholders below
+    format_separator: separator between minutes:seconds
     max_breaks: maximum number of breaks
     num_progress_bars: number of progress bars
     sound_break_end: break end sound (file path) (requires pyglet
@@ -35,7 +40,6 @@ pomodoro {
 
 from math import ceil
 from threading import Timer
-from syslog import syslog, LOG_INFO
 from time import time
 import os
 
@@ -95,6 +99,7 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     format = u'{ss}'
+    format_separator = u":"
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
@@ -237,9 +242,15 @@ class Py3status:
             mins, seconds = divmod(rest, 60)
 
             if hours:
-                vals['mmss'] = u'%d-%02d-%02d' % (hours, mins, seconds)
+                vals['mmss'] = u'%d%s%02d%s%02d' % (hours,
+                                                    self.format_separator,
+                                                    mins,
+                                                    self.format_separator,
+                                                    seconds)
             else:
-                vals['mmss'] = u'%d-%02d' % (mins, seconds)
+                vals['mmss'] = u'%d%s%02d' % (mins,
+                                              self.format_separator,
+                                              seconds)
 
         if '{bar}' in self.format:
             vals['bar'] = self._setup_bar()
@@ -276,8 +287,8 @@ class Py3status:
             return
 
         if not self._player.available:
-            syslog(LOG_INFO, "pomodoro module: the pyglet or pygame "
-                   "library are required to play sounds")
+            self.py3.log("pomodoro module: the pyglet or pygame "
+                         "library are required to play sounds")
             return
 
         try:
@@ -288,15 +299,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.pomodoro([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

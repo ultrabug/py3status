@@ -24,7 +24,11 @@
 
 **[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
 
+**[github](#github)** — Display Github notifications and issue/pull requests for a repo.
+
 **[glpi](#glpi)** — Display the total number of open tickets from GLPI.
+
+**[graphite](#graphite)** — Display Graphite metrics.
 
 **[group](#group)** — Group a bunch of modules together and switch between them.
 
@@ -33,6 +37,8 @@
 **[icinga2](#icinga2)** — Display Icinga2 service status information.
 
 **[imap](#imap)** — Display the unread messages count from your IMAP account.
+
+**[insync](#insync)** — Get current insync status
 
 **[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
 
@@ -78,11 +84,15 @@
 
 **[timer](#timer)** — A simple countdown timer.
 
+**[twitch_streaming](#twitch_streaming)** — Checks if a Twitch streamer is online.
+
 **[uname](#uname)** — Display uname information.
 
 **[vnstat](#vnstat)** — Display vnstat statistics.
 
 **[volume_status](#volume_status)** — Display current sound volume using amixer.
+
+**[vpn_status](#vpn_status)** — Drop-in replacement for i3status run_watch VPN module.
 
 **[weather_yahoo](#weather_yahoo)** — Display Yahoo! Weather forecast as icons.
 
@@ -103,6 +113,8 @@
 **[xrandr_rotate](#xrandr_rotate)** — Switch between horizontal and vertical screen rotation on a single click.
 
 **[xsel](#xsel)** — Display the X selection.
+
+**[yandexdisk_status](#yandexdisk_status)** — Display Yandex.Disk status.
 
 ---
 
@@ -197,14 +209,25 @@ Configuration parameters:
   - `format_notify_discharging` format of the notification received when you
     click on the module while your comupter is not plugged
     default is "{time_remaining}"
-  - `hide_when_full` hide any information when battery is fully charged
+  - `hide_when_full` hide any information when battery is fully charged (when
+    the battery level is greater than or equal to 'threshold_full')
     default is False
   - `hide_seconds` hide seconds in remaining time
     default is False
   - `notification` show current battery state as notification on click
     default is False
-  - `notify_low_level` display notification when battery is running low.
+  - `notify_low_level` display notification when battery is running low (when
+    the battery level is less than 'threshold_degraded')
     default is False
+  - `threshold_bad` a percentage below which the battery level should be
+    considered bad
+    default is 10
+  - `threshold_degraded` a percentage below which the battery level should be
+    considered degraded
+    default is 30
+  - `threshold_full` a percentage at or above which the battery level should
+    should be considered full
+    default is 100
 
 Format of status string placeholders:
   - `{ascii_bar}` - a string of ascii characters representing the battery level,
@@ -216,15 +239,20 @@ Format of status string placeholders:
 
 Obsolete configuration parameters:
   - `mode` an old way to define `format` parameter. The current behavior is:
-    if 'format' is specified, this parameter is completely ignored
-    if the value is `ascii_bar`, the `format` is set to `"{ascii_bar}"`
-    if the value is `text`, the `format` is set to `"Battery: {percent}"`
+    if 'format' is not "{icon}", this parameter is completely ignored
+    if 'format' is "{icon}" and 'mode' is "ascii_bar", the `format` is
+    set to "{ascii_bar}"
+    if 'format' is "{icon}" and 'mode' is "text", the `format` is set to
+    "Battery: {percent}"
     all other values are ignored
-    there is no default value for this parameter
-  - `show_percent_with_blocks` an old way to define `format` parameter:
-    if `format` is specified, this parameter is completely ignored
-    if the value is True, the `format` is set to `"{icon} {percent}%"`
-    there is no default value for this parameter
+    default is None
+  - `show_percent_with_blocks` an old way to define `format` parameter. The
+    current behavior is:
+    if 'format' is not "{icon}", this parameter is completely ignored
+    if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
+    parameter is completely ignored
+    if the value is True, the `format` is set to "{icon} {percent}%"
+    default is None
 
 Requires:
   - the `acpi` command line
@@ -374,6 +402,8 @@ Configuration parameters:
   - `color` color of printed text
   - `format` see placeholders below
   - `script_path` script you want to show output of (compulsory)
+  - `strip_output` shall we strip leading and trailing spaces from output
+    *(default False)*
 
 Format of status string placeholders:
   - `{output}` output of script given by "script_path"
@@ -421,6 +451,79 @@ Format status string parameters:
 
 ---
 
+### <a name="github"></a>github
+
+Display Github notifications and issue/pull requests for a repo.
+
+To check notifications a Github `username` and `personal access token` are
+required.  You can create a personal access token at
+https://github.com/settings/tokens The only `scope` needed is `notifications`,
+which provides readonly access to notifications.
+
+The Github API is rate limited so setting `cache_timeout` too small may cause
+issues see https://developer.github.com/v3/#rate-limiting for details
+
+
+Configuration parameters:
+  - `auth_token` Github personal access token, needed to check notifications
+    see above.
+    *(default None)*
+  - `button_action` Button that when clicked opens the Github notification page
+    if notifications, else the project page for the repository . Setting to
+    `0` disables.
+    *(default 3)*
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 60)*
+  - `format` Format of output
+    (default '{repo} {issues}/{pull_requests}{notifications}'
+    if username and auth_token provided else
+    '{repo} {issues}/{pull_requests}')
+  - `format_notifications` Format of `{notification}` status placeholder.
+    *(default ' N{notifications_count}')*
+  - `notifications` Type of notifications can be `all` for all notifications or
+    `repo` to only get notifications for the repo specified.  If repo is
+    not provided then all notifications will be checked.
+    *(default 'all')*
+  - `repo` Github repo to check
+    *(default 'ultrabug/py3status')*
+  - `username` Github username, needed to check notifications.
+    *(default None)*
+
+Format of status string placeholders:
+  - `{repo}` the short name of the repository being checked.
+    eg py3status
+  - `{repo_full}` the full name of the repository being checked.
+    eg ultrabug/py3status
+  - `{issues}` Number of open issues.
+  - `{pull_requests}` Number of open pull requests
+  - `{notifications}` Notifications.  If no notifications this will be empty.
+  - `{notifications_count}` Number of notifications.  This is also the __Only__
+    status string available to `format_notifications`.
+
+Requires:
+  - `requests` python module from pypi https://pypi.python.org/pypi/requests
+
+Examples:
+
+```
+# set github access credentials
+github {
+    auth_token = '40_char_hex_access_token'
+    username = 'my_username'
+}
+
+# just check for any notifications
+github {
+    auth_token = '40_char_hex_access_token'
+    username = 'my_username'
+    format = 'Github {notifications_count}'
+}
+```
+
+**author** tobes
+
+---
+
 ### <a name="glpi"></a>glpi
 
 Display the total number of open tickets from GLPI.
@@ -435,6 +538,56 @@ Configuration parameters:
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
+
+---
+
+### <a name="graphite"></a>graphite
+
+Display Graphite metrics.
+
+Confiuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds.
+    *(default 10)*
+  - `datapoint_selection` when multiple data points are returned,
+    use "max" or "min" to determine which one to display.
+    *(default "max")*
+  - `format` you MUST use placeholders here to display data, see below.
+  - `graphite_url` URL to your graphite server.
+  - `http_timeout` HTTP query timeout to graphite.
+    *(default 10)*
+  - `targets` semicolon separated list of targets to query graphite for.
+  - `threshold_bad` numerical threshold,
+    if set will send a notification and colorize the output.
+    *(default None means no notification and color)*
+  - `threshold_degraded` numerical threshold,
+    if set will send a notification and colorize the output.
+    *(default None means no notification and color)*
+  - `timespan` time range to query graphite for.
+    *(default "-2minutes")*
+  - `value_comparator` choose between "max" and "min" to compare thresholds
+    to the data point value.
+    *(default "max")*
+  - `value_format` pretty format long numbers with "K", "M" etc.
+    *(default True)*
+  - `value_round` round values so they're not displayed as floats.
+    *(default True)*
+
+Dynamic format placeholders:
+    The "format" parameter placeholders are dynamically based on the data points
+    names returned by the "targets" query to graphite.
+
+    For example if your target is "carbon.agents.localhost-a.memUsage", you'd get
+    a JSON result like this:
+        {"target": "carbon.agents.localhost-a.memUsage", "datapoints": [[19693568.0, 1463663040]]}
+
+    So the placeholder you could use on your "format" config is:
+        format = "{carbon.agents.localhost-a.memUsage}"
+
+    TIP: use aliases !
+        targets = "alias(carbon.agents.localhost-a.memUsage, 'local_memuse')"
+        format = "local carbon mem usage: {local_memuse} bytes"
+
+**author** ultrabug
 
 ---
 
@@ -456,11 +609,11 @@ The way it does this is selected via the `click_mode` option.
 
 Configuration parameters:
   - `align` Text alignment when fixed_width is set
-    can be 'left', 'center' or 'right' *(default 'left')*
+    can be 'left', 'center' or 'right' *(default 'center')*
   - `button_next` Button that when clicked will switch to display next module.
-    Setting to `0` will disable this action. *(default 4)*
+    Setting to `0` will disable this action. *(default 5)*
   - `button_prev` Button that when clicked will switch to display previous
-    module.  Setting to `0` will disable this action. *(default 5)*
+    module.  Setting to `0` will disable this action. *(default 4)*
   - `button_toggle` Button that when clicked toggles the group content being
     displayed between open and closed.
     This action is ignored if `{button}` is not in the format.
@@ -475,7 +628,7 @@ Configuration parameters:
   - `cycle` Time in seconds till changing to next module to display.
     Setting to `0` will disable cycling. *(default 0)*
   - `fixed_width` Reduce the size changes when switching to new group
-    *(default True)*
+    *(default False)*
   - `format` Format for module output.
     (default "{output}" if click_mode is 'all',
     "{output} {button}" if click_mode 'button')
@@ -549,10 +702,12 @@ Configuration Parameters:
   - `base_url` the base url to the icinga-web2 services list
   - `cache_timeout` how often the data should be updated
   - `color` define a color for the output
-  - `disable_acknowledge` enable or disable counting of acknowledged service problems
+  - `disable_acknowledge` enable or disable counting of acknowledged
+    service problems
   - `format` define a format string like "CRITICAL: %d"
   - `password` password to authenticate against the icinga-web2 interface
-  - `status` set the status you want to optain (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
+  - `status` set the status you want to obtain
+    (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
   - `user` username to authenticate against the icinga-web2 interface
 
 **author** Ben Oswald <ben.oswald@root-space.de>
@@ -583,6 +738,30 @@ Format of status string placeholders:
   - `{unseen}` number of unread emails
 
 **author** obb
+
+---
+
+### <a name="insync"></a>insync
+
+Get current insync status
+
+Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
+
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds
+    *(default 10)*
+  - `format` Display format to use *(default '{status} {queued}')*
+
+Format status string parameters:
+  - `{status}` Status of Insync
+  - `{queued}` Number of files queued
+
+Requires:
+  - `insync` command line tool
+
+**author** Joshua Pratt <jp10010101010000@gmail.com>
+
+**license** BSD
 
 ---
 
@@ -672,7 +851,8 @@ Display the current network transfer rate.
 Configuration parameters:
   - `all_interfaces` ignore self.interfaces, but not self.interfaces_blacklist
   - `devfile` location of dev file under /proc
-  - `format_no_connection` when there is no data transmitted from the start of the plugin
+  - `format_no_connection` when there is no data transmitted from the
+    start of the plugin
   - `hide_if_zero` hide indicator if rate == 0
   - `interfaces` comma separated list of interfaces to track
   - `interfaces_blacklist` comma separated list of interfaces to ignore
@@ -708,8 +888,9 @@ Configuration parameters:
 Display DNS resolution success on a configured domain.
 
 This module launch a simple query on each nameservers for the specified domain.
-Nameservers are dynamically retrieved. The FQDN is the only one mandatory parameter.
-It's also possible to add additional nameservers by appending them in nameservers list.
+Nameservers are dynamically retrieved. The FQDN is the only one mandatory
+parameter.  It's also possible to add additional nameservers by appending them
+in nameservers list.
 
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 
@@ -794,7 +975,8 @@ Provides an icon to control simple functions of audio/video players:
 Configuration parameters:
   - `debug` enable verbose logging (bool) *(default: False)*
   - `supported_players` supported players (str) (comma separated list)
-  - `volume_tick` percentage volume change on mouse wheel (int) (positive number or None to disable it)
+  - `volume_tick` percentage volume change on mouse wheel (int) (positive number
+    or None to disable it)
 
 **author** Federico Ceratto <federico.ceratto@gmail.com>, rixx
 
@@ -806,9 +988,14 @@ Configuration parameters:
 
 Display and control a Pomodoro countdown.
 
+Button 1 starts/pauses countdown.
+Button 2 switch Pomodoro/Break.
+Button 3 resets timer.
+
 Configuration parameters:
   - `display_bar` display time in bars when True, otherwise in seconds
   - `format` define custom display format. See placeholders below
+  - `format_separator` separator between minutes:seconds
   - `max_breaks` maximum number of breaks
   - `num_progress_bars` number of progress bars
   - `sound_break_end` break end sound (file path) (requires pyglet
@@ -919,12 +1106,14 @@ Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
 directly send (if wanted) the file to your online server.
 When the screenshot has been taken, 'SHOT' is replaced by the file_name.
 
-This modules uses the 'gnome-screenshot' program to take the screenshot.
+By default, this modules uses the 'gnome-screenshot' program to take the screenshot,
+but this can be configured with the `screenshot_command` configuration parameter.
 
 Configuration parameters:
   - `file_length` generated file_name length
   - `push` True/False if yo want to push your screenshot to your server
   - `save_path` Directory where to store your screenshots.
+  - `screenshot_command` the command used to generate the screenshot
   - `upload_path` the remote path where to push the screenshot
   - `upload_server` your server address
   - `upload_user` your ssh user
@@ -965,7 +1154,8 @@ Display if your favorite hackerspace is open or not.
 Configuration Parameters:
   - `cache_timeout` Set timeout between calls in seconds
   - `closed_color` color if space is closed
-  - `closed_text` text if space is closed, strftime parameters will be translated
+  - `closed_text` text if space is closed, strftime parameters
+    will be translated
   - `open_color` color if space is open
   - `open_text` text if space is open, strftime parmeters will be translated
   - `url` URL to SpaceAPI json file of your space
@@ -982,8 +1172,10 @@ Display information about the current song playing on Spotify.
 
 Configuration parameters:
   - `cache_timeout` how often to update the bar
-  - `color_offline` text color when spotify is not running, defaults to color_bad
-  - `color_paused` text color when song is stopped or paused, defaults to color_degraded
+  - `color_offline` text color when spotify is not running,
+    defaults to color_bad
+  - `color_paused` text color when song is stopped or paused,
+    defaults to color_degraded
   - `color_playing` text color when song is playing, defaults to color_good
   - `format` see placeholders below
   - `format_down` define output if spotify is not running
@@ -1003,6 +1195,9 @@ spotify {
     format_down = "no Spotify"
 }
 ```
+
+Requires:
+    spotify (>=1.0.27.71.g0a26e3b2)
 
 **author** Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 
@@ -1065,7 +1260,7 @@ A simple countdown timer.
 
 This is a very basic countdown timer.  You can change the timer length as well
 as pausing, restarting and resetting it.  Currently this is more of a demo of a
-composites.
+composite.
 
 Each part of the timer can be changed independently hours, minutes, seconds using
 mouse buttons 4 and 5 (scroll wheel).
@@ -1077,6 +1272,34 @@ Configuration parameters:
     *(default None)*
   - `time` how long in seconds for the timer
     *(default 60)*
+
+---
+
+### <a name="twitch_streaming"></a>twitch_streaming
+
+Checks if a Twitch streamer is online.
+
+Checks if a streamer is online using the Twitch Kraken API to see
+if a channel is currently streaming or not.
+
+Configuration parameters
+    cache_timeout: how often we refresh this module in seconds
+        *(default 10)*
+    format: Display format when online
+        *(default "{stream_name} is live!")*
+    format_offline: Display format when offline
+        *(default "{stream_name} is offline.")*
+    format_invalid: Display format when streamer does not exist
+        *(default "{stream_name} does not exist!")*
+    stream_name: name of streamer(twitch.tv/&lt;stream_name&gt;)
+        *(default None)*
+
+Format of status string placeholders
+    {stream_name}:  name of the streamer
+
+**author** Alex Caswell horatioesf@virginmedia.com
+
+**license** BSD
 
 ---
 
@@ -1106,7 +1329,9 @@ Display vnstat statistics.
 
 Coloring rules.
 
-If value is bigger that dict key, status string will turn to color, specified in the value.
+If value is bigger that dict key, status string will turn to color, specified
+in the value.
+
 Example:
     coloring = {
     800: "#dddd00",
@@ -1192,6 +1417,33 @@ NOTE:
 
 ---
 
+### <a name="vpn_status"></a>vpn_status
+
+Drop-in replacement for i3status run_watch VPN module.
+
+Expands on the i3status module by displaying the name of the connected vpn
+using pydbus. Asynchronously updates on dbus signals unless check_pid is True.
+
+Configuration parameters:
+  - `cache_timeout` How often to refresh in seconds when check_pid is True.
+    *(default 10)*
+  - `check_pid` If True, act just like the default i3status module.
+    *(default False)*
+  - `format` Format of the output.
+    *(default 'VPN: {name}')*
+  - `pidfile` Same as i3status.conf pidfile, checked when check_pid is True.
+    *(default '/sys/class/net/vpn0/dev_id')*
+
+Format string parameters:
+  - `{name}` The name and/or status of the VPN.
+
+Requires:
+  - `pydbus` Which further requires PyGi. Check your distribution's repositories.
+
+**author** Nathan Smith <nathan AT praisetopia.org>
+
+---
+
 ### <a name="weather_yahoo"></a>weather_yahoo
 
 Display Yahoo! Weather forecast as icons.
@@ -1199,15 +1451,11 @@ Display Yahoo! Weather forecast as icons.
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
-Find your city code using:
-    http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
-
 Find your woeid using:
     http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
   - `cache_timeout` how often to check for new forecasts
-  - `city_code` city code to use
   - `forecast_days` how many forecast days you want shown
   - `forecast_include_today` show today's forecast, default false. Note that
     `{today}` in `format` shows the current conditions, while this variable
@@ -1231,9 +1479,17 @@ Configuration parameters:
   - `icon_sun` sun icon, default '☀'
   - `request_timeout` check timeout
   - `units` Celsius (C) or Fahrenheit (F)
-  - `woeid` use Yahoo woeid (extended location) instead of city_code
+  - `woeid` Yahoo woeid (extended location)
 
-The city_code in this example is for Paris, France => FRXX0076
+The WOEID in this example is for Paris, France => 615702
+
+```
+weather_yahoo {
+    woeid = 615702
+    format_today = "Now: {icon}{temp}°{units} {text}"
+    forecast_days = 5
+}
+```
 
 **author** ultrabug, rail
 
@@ -1422,6 +1678,7 @@ For convenience, this module also proposes some added features:
     screen is available (handy for laptops)
   - Automatically apply this screen combination on start: no need for xorg!
   - Automatically move workspaces to screens when they are available
+  - Define your own subset of output combinations to use
 
 Configuration parameters:
   - `cache_timeout` how often to (re)detect the outputs
@@ -1434,6 +1691,19 @@ Configuration parameters:
     when the module starts (saves you from having to configure xorg)
   - `format_clone` string used to display a 'clone' combination
   - `format_extend` string used to display a 'extend' combination
+  - `output_combinations` string used to define your own subset of output
+    combinations to use, instead of generating every possible combination
+    automatically. Provide the values in the format that this module uses,
+    splitting the combinations using '|' character.
+    The combinations will be rotated in the exact order as you listed them.
+    When an output layout is not available anymore, the configurations
+    are automatically filtered out.
+    Example:
+    Assuming the default values for `format_clone` and `format_extend`
+    are used, and assuming you have two screens 'eDP1' and 'DP1', the
+    following setup will reduce the number of output combinations
+    from four (every possible one) down to two:
+    output_combinations = "eDP1|eDP1+DP1"
 
 Dynamic configuration parameters:
   - &lt;OUTPUT&gt;_pos: apply the given position to the OUTPUT
@@ -1469,7 +1739,8 @@ Configuration parameters:
     *(default is 10)*
   - `format` a string that formats the output, can include placeholders.
     *(default is '{icon}')*
-  - `hide_if_disconnected` a boolean flag to hide icon when `screen` is disconnected.
+  - `hide_if_disconnected` a boolean flag to hide icon when `screen` is
+    disconnected.
     it has no effect unless `screen` option is also configured.
     *(default: None)*
   - `horizontal_icon` a character to represent horizontal rotation.
@@ -1488,15 +1759,8 @@ Configuration parameters:
 
 Available placeholders for formatting the output:
   - `{icon}` a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
-  - `{screen}` a screen name, specified by `screen` option or detected automatically
-    if only one screen is connected, otherwise 'ALL'.
-
-
-Remarks:
-    There have been cases when rotating a screen using this module made i3 unusabe.
-    If you experience a similar behavior, please report as many details as you can:
-    https://github.com/ultrabug/py3status/issues/227
-
+  - `{screen}` a screen name, specified by `screen` option or detected
+    automatically if only one screen is connected, otherwise 'ALL'.
 
 **author** Maxim Baz (https://github.com/maximbaz)
 
@@ -1520,5 +1784,27 @@ Requires:
   - `xsel` command line tool
 
 **author** Sublim3 umbsublime@gamil.com
+
+**license** BSD
+
+---
+
+### <a name="yandexdisk_status"></a>yandexdisk_status
+
+Display Yandex.Disk status.
+
+Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds
+    *(default 10)*
+  - `format` prefix text for the Yandex.Disk status
+    *(default 'Yandex.Disk: {status}')*
+
+Format of status string placeholders:
+  - `{status}` daemon status
+
+Requires:
+  - `yandex-disk` command line tool (link: https://disk.yandex.com/)
+
+**author** Vladimir Potapev (github:vpotapev)
 
 **license** BSD

@@ -4,7 +4,6 @@ import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
-from syslog import syslog, LOG_INFO
 from time import time
 
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
@@ -40,6 +39,7 @@ class Module(Thread):
         self.module_name = module.split(' ')[0]
         self.new_update = False
         self.nagged = False
+        self.prevent_refresh = False
         self.sleeping = False
         self.timer = None
 
@@ -89,7 +89,7 @@ class Module(Thread):
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
-                syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+                self._py3_wrapper.log('clearing cache for method {}'.format(meth))
         # cancel any existing timer
         if self.timer:
             self.timer.cancel()
@@ -105,12 +105,13 @@ class Module(Thread):
 
     def wake(self):
         self.sleeping = False
-        cache_time = self.cache_time
+        if self.cache_time is None:
+            return
         # new style modules can signal they want to cache forever
-        if cache_time == PY3_CACHE_FOREVER:
+        if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        delay = max(cache_time - time(), 0)
+        delay = max(self.cache_time - time(), 0)
         self.timer = Timer(delay, self.run)
         self.timer.start()
 
@@ -262,15 +263,15 @@ class Module(Thread):
         # user provided modules take precedence over py3status provided modules
         if self.module_name in user_modules:
             include_path, f_name = user_modules[self.module_name]
-            syslog(LOG_INFO,
-                   'loading module "{}" from {}{}'.format(module, include_path,
-                                                          f_name))
+            self._py3_wrapper.log(
+                'loading module "{}" from {}{}'.format(module, include_path,
+                                                       f_name))
             class_inst = self.load_from_file(include_path + f_name)
         # load from py3status provided modules
         else:
-            syslog(LOG_INFO,
-                   'loading module "{}" from py3status.modules.{}'.format(
-                       module, self.module_name))
+            self._py3_wrapper.log(
+                'loading module "{}" from py3status.modules.{}'.format(
+                    module, self.module_name))
             class_inst = self.load_from_namespace(self.module_name)
 
         if class_inst:
@@ -315,17 +316,21 @@ class Module(Thread):
                             }
                             self.methods[method] = method_obj
 
-        # done, syslog some debug info
+        # done, log some debug info
         if self.config['debug']:
-            syslog(LOG_INFO,
-                   'module "{}" click_events={} has_kill={} methods={}'.format(
-                       module, self.click_events, self.has_kill,
-                       self.methods.keys()))
+            self._py3_wrapper.log(
+                'module "{}" click_events={} has_kill={} methods={}'.format(
+                    module, self.click_events, self.has_kill,
+                    self.methods.keys()))
 
     def click_event(self, event):
         """
         Execute the 'on_click' method of this module with the given event.
         """
+        # we can prevent request that a refresh after the event has happened
+        # by setting this to True.  Modules should do this via
+        # py3.prevent_refresh()
+        self.prevent_refresh = False
         try:
             click_method = getattr(self.module_class, 'on_click')
             if self.click_events == self.PARAMS_NEW:
@@ -432,8 +437,8 @@ class Module(Thread):
 
                     # debug info
                     if self.config['debug']:
-                        syslog(LOG_INFO,
-                               'method {} returned {} '.format(meth, result))
+                        self._py3_wrapper.log(
+                            'method {} returned {} '.format(meth, result))
                 except Exception:
                     msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
