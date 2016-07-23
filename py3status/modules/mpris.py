@@ -283,23 +283,18 @@ class Py3status:
         control_states = {
             'pause':    {'action':    'Pause',
                          'clickable': 'CanPause',
-                         'enable':    None,
                          'icon':      self.icon_pause},
             'play':     {'action':    'Play',
                          'clickable': 'CanPlay',
-                         'enable':    None,
                          'icon':      self.icon_play},
             'stop':     {'action':    'Stop',
                          'clickable': 'True',
-                         'enable':    None,
                          'icon':      self.icon_stop},
             'next':     {'action':    'Next',
                          'clickable': 'CanGoNext',
-                         'enable':    None,
                          'icon':      self.icon_next},
             'previous': {'action':    'Previous',
                          'clickable': 'CanGoPrevious',
-                         'enable':    None,
                          'icon':      self.icon_previous}
         }
 
@@ -329,9 +324,8 @@ class Py3status:
 
         for button in [e for e in buttons_order if e in available]:
             control_state = self._control_states[button]
-            control_state['enable'] = self._get_button_state(control_state)
 
-            if control_state['enable']:
+            if self._get_button_state(control_state):
                 color = self.color_control_active or i3s_config['color_good']
             else:
                 color = self.color_control_inactive or i3s_config['color_bad']
@@ -406,7 +400,8 @@ class Py3status:
         elif button != 1:
             return
 
-        if self._control_states[index]['enable']:
+        control_state = self._control_states[index]
+        if self._get_button_state(control_state):
             getattr(self._player, self._control_states[index]['action'])()
 
 if __name__ == "__main__":
