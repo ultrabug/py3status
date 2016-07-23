@@ -129,11 +129,11 @@ class Py3status:
     format = '{state} {artist} - {title}'
     format_stream = '{state} {title}'
     format_none = 'no player running'
-    icon_pause = ' ▮▮ '
-    icon_play = ' ▶ '
-    icon_stop = ' ◾ '
-    icon_next = ' » '
-    icon_previous = ' « '
+    icon_pause = '▮▮'
+    icon_play = '▶'
+    icon_stop = '◾'
+    icon_next = '»'
+    icon_previous = '«'
     show_controls = None
     state_pause = '▮▮'
     state_play = '▶'
@@ -299,7 +299,7 @@ class Py3status:
 
         return control_states
 
-    def _get_response_buttons(self):
+    def _get_response_buttons(self, i3s_config):
         response = []
         buttons_order = self.buttons_order.split(',')
         available = self._control_states.keys()
@@ -308,9 +308,11 @@ class Py3status:
             control_state = self._control_states[button]
             clickable = getattr(self._player, control_state['clickable'], True)
             response.append({
-                'color': '#CCCCCC' if clickable else '#666666',
+                'color': i3s_config['color_good'] if clickable else i3s_config['color_bad'],
                 'full_text': control_state['icon'],
                 'index': button,
+                'min_width': 20,
+                'align': 'center'
             })
 
         return response
@@ -333,7 +335,7 @@ class Py3status:
         else:
             (text, color) = self._get_text(i3s_config)
             self._control_states = self._get_control_states()
-            response_buttons = self._get_response_buttons()
+            response_buttons = self._get_response_buttons(i3s_config)
             if len(response_buttons) == 0:
                 show_controls = None
 
