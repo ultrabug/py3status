@@ -14,8 +14,8 @@ Configuration parameters:
     button_previous: mouse button to play the previous entry
     buttons_order: order of the buttons play, pause, toggle, stop, next and
             previous
-    color_buttons_bad: button color if button is not clickable
-    color_buttons_good: button color if button is clickable
+    color_control_inactive: button color if button is not clickable
+    color_control_active: button color if button is clickable
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
@@ -125,8 +125,8 @@ class Py3status:
     button_next = 4
     button_previous = 5
     buttons_order = 'previous,toggle,next'
-    color_buttons_bad = None
-    color_buttons_good = None
+    color_control_inactive = None
+    color_control_active = None
     color_paused = None
     color_playing = None
     color_stopped = None
@@ -332,9 +332,9 @@ class Py3status:
             control_state['enable'] = self._get_button_state(control_state)
 
             if control_state['enable']:
-                color = self.color_buttons_good or i3s_config['color_good']
+                color = self.color_control_active or i3s_config['color_good']
             else:
-                color = self.color_buttons_bad or i3s_config['color_bad']
+                color = self.color_control_inactive or i3s_config['color_bad']
 
             response.append({
                 'color': color,
