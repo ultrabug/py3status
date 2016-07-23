@@ -281,27 +281,46 @@ class Py3status:
 
     def _get_control_states(self):
         control_states = {
-            'pause':    {'clickable': 'CanPause',
-                         'icon':      self.icon_pause,
-                         'action':    'Pause'},
-            'play':     {'clickable': 'CanPlay',
-                         'icon':      self.icon_play,
-                         'action':    'Play'},
-            'stop':     {'clickable': 'True',
-                         'icon':      self.icon_stop,
-                         'action':    'Stop'},
-            'next':     {'clickable': 'CanGoNext',
-                         'icon':      self.icon_next,
-                         'action':    'Next'},
-            'previous': {'clickable': 'CanGoPrevious',
-                         'icon':      self.icon_previous,
-                         'action':    'Previous'}
+            'pause':    {'action':    'Pause',
+                         'clickable': 'CanPause',
+                         'enable':    None,
+                         'icon':      self.icon_pause},
+            'play':     {'action':    'Play',
+                         'clickable': 'CanPlay',
+                         'enable':    None,
+                         'icon':      self.icon_play},
+            'stop':     {'action':    'Stop',
+                         'clickable': 'True',
+                         'enable':    None,
+                         'icon':      self.icon_stop},
+            'next':     {'action':    'Next',
+                         'clickable': 'CanGoNext',
+                         'enable':    None,
+                         'icon':      self.icon_next},
+            'previous': {'action':    'Previous',
+                         'clickable': 'CanGoPrevious',
+                         'enable':    None,
+                         'icon':      self.icon_previous}
         }
 
         state = 'pause' if self._player.PlaybackStatus == 'Playing' else 'play'
         control_states['toggle'] = control_states[state]
 
         return control_states
+
+    def _get_button_state(self, control_state):
+        playback_status = self._player.PlaybackStatus
+        clickable = getattr(self._player, control_state['clickable'], True)
+
+        if control_state['action'] == 'Play' and playback_status == 'Playing':
+            clickable = False
+        elif control_state['action'] == 'Pause' and (
+             playback_status == 'Stopped' or playback_status == 'Paused'):
+            clickable = False
+        elif control_state['action'] == 'Stop' and playback_status == 'Stopped':
+            clickable = False
+
+        return clickable
 
     def _get_response_buttons(self, i3s_config):
         response = []
@@ -310,10 +329,13 @@ class Py3status:
 
         for button in [e for e in buttons_order if e in available]:
             control_state = self._control_states[button]
-            if getattr(self._player, control_state['clickable'], True):
+            control_state['enable'] = self._get_button_state(control_state)
+
+            if control_state['enable']:
                 color = self.color_buttons_good or i3s_config['color_good']
             else:
                 color = self.color_buttons_bad or i3s_config['color_bad']
+
             response.append({
                 'color': color,
                 'full_text': control_state['icon'],
@@ -384,7 +406,8 @@ class Py3status:
         elif button != 1:
             return
 
-        getattr(self._player, self._control_states[index]['action'])()
+        if self._control_states[index]['enable']:
+            getattr(self._player, self._control_states[index]['action'])()
 
 if __name__ == "__main__":
     """
