@@ -1,5 +1,4 @@
 import sys
-import os
 
 from copy import deepcopy
 from json import loads
