@@ -45,7 +45,6 @@ class I3statusModule:
     """
 
     def __init__(self, module_name, py3_wrapper):
-        self.i3status_pipe = None
         self.module_name = module_name
 
         # i3status returns different name/instances than it is sent we want to
@@ -166,6 +165,7 @@ class I3status(Thread):
         self.py3_wrapper = py3_wrapper
         self.ready = False
         self.standalone = py3_wrapper.config['standalone']
+        self.i3status_pipe = None
         self.time_modules = []
         self.tmpfile_path = None
 
