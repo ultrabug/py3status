@@ -141,7 +141,10 @@ class Py3:
         crash hard.
         """
         keys = param_dict.keys()
-        fields = [p[1] for p in Formatter().parse(format_string)]
+        try:
+            fields = [p[1] for p in Formatter().parse(format_string)]
+        except ValueError:
+            return 'Invalid Format'
         for field in fields:
             if not field or field in keys:
                 continue
