@@ -400,8 +400,6 @@ class ConfigParser:
             t_type = token['type']
             t_value = token['value']
             if t_type == 'newline':
-                if name:
-                    self.error('Value expected', previous=True)
                 continue
             elif t_value == end_token:
                 self.level -= 1
