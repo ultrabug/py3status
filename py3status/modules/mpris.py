@@ -104,7 +104,6 @@ SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
 UNKNOWN = 'Unknown'
 UNKNOWN_TIME = '-:--'
 
-
 def _get_time_str(microseconds):
     seconds = int(microseconds / 1000000)
     time = str(timedelta(seconds=seconds))
@@ -231,15 +230,17 @@ class Py3status:
         artist = UNKNOWN
         album = UNKNOWN
         length = UNKNOWN_TIME
-        time = UNKNOWN_TIME
+        ptime = UNKNOWN_TIME
         title = UNKNOWN
+
+        _left_s = None
 
         try:
             player = self._player.Identity
             (color, state) = self._get_state_format(i3s_config)
 
-            _time_ms = self._player.Position
-            time = _get_time_str(_time_ms)
+            _ptime_ms = self._player.Position
+            ptime = _get_time_str(_ptime_ms)
 
             metadata = self._player.Metadata
             if len(metadata) > 0:
@@ -258,6 +259,7 @@ class Py3status:
                 _length_ms = metadata.get('mpris:length')
                 if _length_ms is not None:
                     length = _get_time_str(_length_ms)
+                    _left_s = int((_length_ms - _ptime_ms) / 1000000)
             else:
                 # use stream format if no metadata is available
                 is_stream = True
@@ -271,13 +273,20 @@ class Py3status:
         else:
             format = self.format
 
+        update = time() + i3s_config['interval']
+        if self._player.PlaybackStatus == 'Playing' and _left_s is not None:
+            if _left_s < i3s_config['interval']:
+                update = time() + _left_s
+            elif '{time}' in format:
+                update = time() + 1
+
         return (format.format(player=player,
                               state=state,
                               album=album,
                               artist=artist,
                               length=length,
-                              time=time,
-                              title=title), color)
+                              time=ptime,
+                              title=title), color, update)
 
     def _get_control_states(self):
         control_states = {
@@ -344,8 +353,8 @@ class Py3status:
         """
         Get the current output format and return it.
         """
-        show_controls = self.show_controls
         cached_until = time() + i3s_config['interval']
+        show_controls = self.show_controls
         self._dbus = SessionBus()
 
         running_player = self._detect_running_player()
@@ -356,7 +365,7 @@ class Py3status:
             text = self.format_none
             color = i3s_config['color_bad']
         else:
-            (text, color) = self._get_text(i3s_config)
+            (text, color, cached_until) = self._get_text(i3s_config)
             self._control_states = self._get_control_states()
             response_buttons = self._get_response_buttons(i3s_config)
             if len(response_buttons) == 0:
