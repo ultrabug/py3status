@@ -489,7 +489,7 @@ __safe_format(format_string, param_dict)__
 Perform a safe formatting of a string. Using format fails if the
 format string contains placeholders which are missing. Since these can
 be set by the user it is possible that they add unsupported items.
-This function will escape missing placeholders so that modules do not
+This function will show missing placeholders so that modules do not
 crash hard.
 
 __check_commands(cmd_list)__

@@ -1,8 +1,8 @@
 import os
-import re
 import shlex
 from time import time
 from subprocess import Popen, call
+from string import Formatter
 
 
 PY3_CACHE_FOREVER = -1
@@ -137,18 +137,18 @@ class Py3:
         Perform a safe formatting of a string.  Using format fails if the
         format string contains placeholders which are missing.  Since these can
         be set by the user it is possible that they add unsupported items.
-        This function will escape missing placemolders so that modules do not
+        This function will show missing placemolders so that modules do not
         crash hard.
         """
         keys = param_dict.keys()
-
-        def replace_fn(match):
-            item = match.group()
-            if item[1:-1] in keys:
-                return item
-            return '{' + item + '}'
-
-        format_string = re.sub('\{[^}]*\}', replace_fn, format_string)
+        try:
+            fields = [p[1] for p in Formatter().parse(format_string)]
+        except ValueError:
+            return 'Invalid Format'
+        for field in fields:
+            if not field or field in keys:
+                continue
+            param_dict[field] = '{%s}' % field
         return format_string.format(**param_dict)
 
     def check_commands(self, cmd_list):
