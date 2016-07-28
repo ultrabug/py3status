@@ -104,6 +104,7 @@ SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
 UNKNOWN = 'Unknown'
 UNKNOWN_TIME = '-:--'
 
+
 def _get_time_str(microseconds):
     seconds = int(microseconds / 1000000)
     time = str(timedelta(seconds=seconds))
