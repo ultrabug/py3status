@@ -93,14 +93,14 @@ from re import findall
 import math
 import subprocess
 
-BLOCKS = ["_", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
-CHARGING_CHARACTER = "⚡"
-EMPTY_BLOCK_CHARGING = '|'
-EMPTY_BLOCK_DISCHARGING = '⍀'
-FULL_BLOCK = '█'
-FORMAT = "{icon}"
-FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
-FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
+BLOCKS = [u"_", u"▁", u"▂", u"▃", u"▄", u"▅", u"▆", u"▇", u"█"]
+CHARGING_CHARACTER = u"⚡"
+EMPTY_BLOCK_CHARGING = u'|'
+EMPTY_BLOCK_DISCHARGING = u'⍀'
+FULL_BLOCK = u'█'
+FORMAT = u"{icon}"
+FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
+FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
 
 
 class Py3status:
