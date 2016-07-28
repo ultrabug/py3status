@@ -99,6 +99,9 @@ class Py3status:
     format_closed = u'{button}'
     open = True
 
+    class Meta:
+        container = True
+
     def __init__(self):
         self.items = []
         self.active = 0
@@ -207,6 +210,7 @@ class Py3status:
             else:
                 output += [{'full_text': part}]
 
+        # FIXME always start contained items after container so they trigger
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
         if not ready:

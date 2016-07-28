@@ -18,6 +18,7 @@ import py3status.docstrings as docstrings
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
+from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.version import version
@@ -271,8 +272,12 @@ class Py3statusWrapper():
             self.log(
                 'py3status started with config {}'.format(self.config))
 
+        # read i3status.conf
+        config_path = self.config['i3status_config_path']
+        config = process_config(config_path, self)
+
         # setup i3status thread
-        self.i3status_thread = I3status(self)
+        self.i3status_thread = I3status(self, config)
 
         # If standalone or no i3status modules then use the mock i3status
         # else start i3status thread.
