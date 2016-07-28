@@ -230,6 +230,8 @@ class I3status(Thread):
             tmpfile.write(text)
         except TypeError:
             tmpfile.write(str.encode(text))
+        except UnicodeEncodeError:
+            tmpfile.write(text.encode('utf-8'))
 
     def write_tmp_i3status_config(self, tmpfile):
         """
