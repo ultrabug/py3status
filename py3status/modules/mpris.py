@@ -234,14 +234,14 @@ class Py3status:
         ptime = UNKNOWN_TIME
         title = UNKNOWN
 
-        _left_s = None
+        left_s = None
 
         try:
             player = self._player.Identity
             (color, state) = self._get_state_format(i3s_config)
 
-            _ptime_ms = self._player.Position
-            ptime = _get_time_str(_ptime_ms)
+            ptime_ms = self._player.Position
+            ptime = _get_time_str(ptime_ms)
 
             metadata = self._player.Metadata
             if len(metadata) > 0:
@@ -257,10 +257,10 @@ class Py3status:
                     # media we handle just like streams
                     is_stream = True
 
-                _length_ms = metadata.get('mpris:length')
-                if _length_ms is not None:
-                    length = _get_time_str(_length_ms)
-                    _left_s = int((_length_ms - _ptime_ms) / 1000000)
+                length_ms = metadata.get('mpris:length')
+                if length_ms is not None:
+                    length = _get_time_str(length_ms)
+                    left_s = int((length_ms - ptime_ms) / 1000000)
             else:
                 # use stream format if no metadata is available
                 is_stream = True
@@ -275,9 +275,9 @@ class Py3status:
             format = self.format
 
         update = time() + i3s_config['interval']
-        if self._player.PlaybackStatus == 'Playing' and _left_s is not None:
-            if _left_s < i3s_config['interval']:
-                update = time() + _left_s
+        if self._player.PlaybackStatus == 'Playing' and left_s is not None:
+            if left_s < i3s_config['interval']:
+                update = time() + left_s
             elif '{time}' in format:
                 update = time() + 1
 
