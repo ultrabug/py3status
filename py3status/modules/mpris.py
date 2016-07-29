@@ -407,6 +407,8 @@ class Py3status:
                 index = 'next'
             elif button == self.button_previous:
                 index = 'previous'
+            else:
+                return
         elif button != 1:
             return
 
