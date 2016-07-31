@@ -148,6 +148,8 @@ class Events(Thread):
 
         # get the module that the event is for
         module_info = self.output_modules.get(module_name)
+        if not module_info:
+            return
         module = module_info['module']
         # if module is a py3status one and it has an on_click function then
         # call it.
@@ -229,6 +231,4 @@ class Events(Thread):
                 self.process_event(module_name, event)
 
             except Exception:
-                err = sys.exc_info()[1]
-                self.error = err
-                self.py3_wrapper.log('event failed ({})'.format(err), 'warning')
+                self.py3_wrapper.report_exception('Event failed')
