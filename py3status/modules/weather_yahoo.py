@@ -86,6 +86,8 @@ class Py3status:
             )
         except requests.ConnectionError:
             return None, None
+        except requests.ReadTimeout:
+            return None, None
         q.raise_for_status()
         r = q.json()
         today = r['query']['results']['channel']['item']['condition']

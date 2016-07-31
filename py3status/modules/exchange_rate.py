@@ -54,6 +54,8 @@ class Py3status:
             result = requests.get(self.data_url, timeout=self.request_timeout)
         except requests.ConnectionError:
             result = None
+        except requests.ReadTimeout:
+            result = None
         rates = []
         if result:
             data = result.json()
