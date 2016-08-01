@@ -6,20 +6,16 @@ Configuration parameters:
     cache_timeout: how often to run the check
     color_down: color of format_down
     color_up: color of format_up
-    format_down: what to display when ssh server is donw
-    format_up: what to display when ssh server is up
-    host: check if ssh service on host is up
-    port: the port
-    timeout: the time which the server has to answer
-
-Requires:
-    netcat
+    format_down: what to display when tcp port is down
+    format_up: what to display when tcp port is up
+    host: check if tcp port on host is up
+    port: the tcp port
 
 @author obb, Moritz Lüdecke
 """
 
 from time import time
-import subprocess
+import socket
 
 
 class Py3status:
@@ -29,26 +25,20 @@ class Py3status:
     cache_timeout = 10
     color_down = None
     color_up = None
-    format_down = 'SSH down'
-    format_up = 'SSH up'
+    format_down = 'TCP port down'
+    format_up = 'TCP port up'
     host = 'localhost'
     port = 22
-    timeout = 1
 
-    def ssh_status(self, i3s_output_list, i3s_config):
+    def check_tcp(self, i3s_output_list, i3s_config):
         response = {
             'cached_until': time() + self.cache_timeout
         }
 
-        cmd = ['netcat', '-w', str(self.timeout), self.host, str(self.port)]
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex((self.host, self.port))
 
-        try:
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-            ssh_connectable = 'SSH' in str(output)
-        except Exception:
-            ssh_connectable = False
-
-        if ssh_connectable:
+        if result == 0:
             response['full_text'] = self.format_up
             response['color'] = self.color_up or i3s_config['color_good']
         else:
