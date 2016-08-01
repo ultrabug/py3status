@@ -143,6 +143,13 @@ class Py3status:
     state_play = '▶'
     player_priority = None
 
+    _dbus = None
+    _player = None
+
+        # TODO: Implement this
+    def _on_change(self, bus, data, unknown):
+        self.format = "DEBUG"
+
     def _get_player(self, player):
         """
         Get dbus object
@@ -186,8 +193,8 @@ class Py3status:
         players = []
         players_prioritized = []
 
-        _dbus = self._dbus.get('org.freedesktop.DBus')
-        for player in _dbus.ListNames():
+        dbus = self._dbus.get('org.freedesktop.DBus')
+        for player in dbus.ListNames():
             if SERVICE_BUS in player:
                 player = re.sub(r'%s' % SERVICE_BUS_REGEX, '', player)
                 players.append(player)
@@ -220,6 +227,10 @@ class Py3status:
             return players_stopped[0]
 
         return 'None'
+
+    def _connect_player(self):
+        self._player.PropertiesChanged.connect(self._on_change)
+        # TODO: Init cached variables
 
     def _get_text(self, i3s_config):
         """
@@ -356,10 +367,16 @@ class Py3status:
         """
         cached_until = time() + i3s_config['interval']
         show_controls = self.show_controls
-        self._dbus = SessionBus()
+
+        if self._dbus is None:
+            self._dbus = SessionBus()
 
         running_player = self._detect_running_player()
-        self._player = self._get_player(running_player)
+        if self._player is None or self._player_name != running_player :
+            self._player_name = running_player
+            self._player = self._get_player(running_player)
+            if self._player is not None:
+                self._connect_player()
 
         if self._player is None:
             show_controls = None
