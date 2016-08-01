@@ -132,14 +132,139 @@ class Py3:
         """
         return time() + seconds
 
-    def safe_format(self, format_string, param_dict):
+    def parse_format(self, format_string, data):
+        '''
+        Parser for advanced formating.
+        Square brackets `[]` can be used. The content of them will be removed
+        from the output if there is no valid placeholder contained within.
+        They can also be nested.
+        A pipe (vertical bar) `|` can be used to divide sections the first
+        valid section only will be shown in the output.
+        A backslash `\` can be used to escape a character eg `\[` will show `[`
+        in the output.
+        `{<placeholder>}` will be converted, or removed if it is None or
+        missing.  formating can also be applied to the placeholder eg
+        `{number:03.2f}`.
+
+        example format_string:
+        "[[{artist} - ]{title}]|{file}"
+        This will show `artist - title` if artist is present,
+        `title` if title but no artist,
+        and `file` if file is present but not artist or title.
+        '''
+
+        # this class helps us maintain state in the next_item function
+        class Info:
+            part = 0
+            char = None
+
+        try:
+            parsed = list(Formatter().parse(format_string))
+        except ValueError:
+            return 'Invalid Format'
+
+        def next_item(ignore_slash=False):
+            '''
+            Get the next item from the pared info.  This will be a single
+            character or placeholder and may be preceded by a backslash.
+            '''
+            if Info.part >= len(parsed):
+                # We got to the end of the format string.
+                return None, None
+            # Find the next character location
+            if Info.char is None:
+                Info.char = 0
+            else:
+                Info.char += 1
+            if Info.char >= len(parsed[Info.part][0]):
+                # We have gone of the end of the string is there a placeholder?
+                if parsed[Info.part][1]:
+                    Info.char = None
+                    param = parsed[Info.part][1]
+                    Info.part += 1
+                    if data.get(param) is not None:
+                        # valid placeholder so return it along with any extras
+                        conversion = parsed[Info.part - 1][3]
+                        if conversion:
+                            param += '!%s' % conversion
+                        field_format = parsed[Info.part - 1][2]
+                        if field_format:
+                            param += ':%s' % field_format
+                        return '{%s}' % param, True
+                    # Empty or missing placeholder
+                    return '', False
+                # Move to next part of the format string
+                Info.char = 0
+                Info.part += 1
+                if Info.part >= len(parsed):
+                    return None, None
+            found = None
+            n = parsed[Info.part][0][Info.char]
+            if n == '\\' and not ignore_slash:
+                # the next item is escaped
+                m, found = next_item(ignore_slash=True)
+                if m:
+                    n += m
+            return n, found
+
+        parts = [['', True]]
+        level = 0
+        block_level = None
+        # We will go through the parsed format string one character/placeholder
+        # at a time.
+        while True:
+            n, found = next_item()
+            if n is None:
+                # Finished
+                break
+            if found:
+                # A placeholder exists so this section is valid
+                parts[len(parts) - 1][1] = True
+            if n == '':
+                continue
+            if n == '[':
+                # Start a new section
+                parts.append(['', False])
+                level += 1
+                continue
+            if n == ']':
+                # Section finished remove if no placeholders found
+                if not parts[len(parts) - 1][1]:
+                    parts = parts[:-1]
+                level -= 1
+                if level < block_level:
+                    block_level = None
+                continue
+            if n == '|':
+                # Alternative section if we already have output then prevent
+                # any more at this depth.
+                if parts[len(parts) - 1][1]:
+                    if block_level is None:
+                        block_level = level
+                continue
+            if n[0] == '\\':
+                # The item was escaped remove the escape character
+                n = n[1:]
+            if block_level is None:
+                # Add the item if we are not blocking
+                parts[len(parts) - 1][0] += n
+
+        # Finally output our format string with the placeholders substituted.
+        return ''.join([p[0] for p in parts if p[1]]).format(**data)
+
+    def safe_format(self, format_string, param_dict, advanced_format=False):
         """
         Perform a safe formatting of a string.  Using format fails if the
         format string contains placeholders which are missing.  Since these can
         be set by the user it is possible that they add unsupported items.
         This function will show missing placemolders so that modules do not
         crash hard.
+
+        If advanced_format is True then parse_format() will be used.
         """
+        if advanced_format:
+            return self.parse_format(format_string, param_dict)
+
         keys = param_dict.keys()
         try:
             fields = [p[1] for p in Formatter().parse(format_string)]

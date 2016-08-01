@@ -484,13 +484,40 @@ Returns the time a given number of seconds into the future.
 Helpful for creating the `cached_until` value for the module
 output.
 
-__safe_format(format_string, param_dict)__
+__parse_format(format_string, data)__
+
+Parser for advanced formating.
+
+Square brackets `[]` can be used. The content of them will be removed
+from the output if there is no valid placeholder contained within.
+They can also be nested.
+
+A pipe (vertical bar) `|` can be used to divide sections the first
+valid section only will be shown in the output.
+
+A backslash `\` can be used to escape a character eg `\[` will show `[`
+in the output.
+
+`{<placeholder>}` will be converted, or removed if it is None or
+missing.  formating can also be applied to the placeholder eg
+`{number:03.2f}`.
+
+*example format_string:*
+
+`"[[{artist} - ]{title}]|{file}"`
+This will show `artist - title` if artist is present,
+`title` if title but no artist,
+and `file` if file is present but not artist or title.
+
+__safe_format(format_string, param_dict, advanced_format=False)__
 
 Perform a safe formatting of a string. Using format fails if the
 format string contains placeholders which are missing. Since these can
 be set by the user it is possible that they add unsupported items.
 This function will show missing placeholders so that modules do not
 crash hard.
+If `advanced_format` is `True` then `parse_format()` will be used.
+
 
 __check_commands(cmd_list)__
 
