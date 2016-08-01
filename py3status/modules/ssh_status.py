@@ -35,7 +35,7 @@ class Py3status:
     port = 22
     timeout = 1
 
-    def process_status(self, i3s_output_list, i3s_config):
+    def ssh_status(self, i3s_output_list, i3s_config):
         response = {
             'cached_until': time() + self.cache_timeout
         }
@@ -58,9 +58,8 @@ class Py3status:
         return response
 
 if __name__ == "__main__":
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    print(x.timer([], config))
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
