@@ -8,7 +8,8 @@ Configuration parameters:
         (default is 10)
     format: a string that formats the output, can include placeholders.
         (default is '{icon}')
-    hide_if_disconnected: a boolean flag to hide icon when `screen` is disconnected.
+    hide_if_disconnected: a boolean flag to hide icon when `screen` is
+        disconnected.
         it has no effect unless `screen` option is also configured.
         (default: None)
     horizontal_icon: a character to represent horizontal rotation.
@@ -27,15 +28,8 @@ Configuration parameters:
 
 Available placeholders for formatting the output:
     {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
-    {screen} a screen name, specified by `screen` option or detected automatically
-        if only one screen is connected, otherwise 'ALL'.
-
-
-Remarks:
-    There have been cases when rotating a screen using this module made i3 unusabe.
-    If you experience a similar behavior, please report as many details as you can:
-    https://github.com/ultrabug/py3status/issues/227
-
+    {screen} a screen name, specified by `screen` option or detected
+        automatically if only one screen is connected, otherwise 'ALL'.
 
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
@@ -79,19 +73,27 @@ class Py3status:
         output = self.screen or all_outputs[0]
         cmd = 'xrandr -q | grep "^' + output + '" | cut -d " " -f4'
         output = self._call(cmd)
-        # xrandr may skip printing the 'normal', in which case the output would start from '('
-        is_horizontal = output.startswith('(') or output in ['normal', 'inverted']
+        # xrandr may skip printing the 'normal', in which case the output would
+        # start from '('
+        is_horizontal = (output.startswith('(') or
+                         output in ['normal', 'inverted'])
         return self.horizontal_icon if is_horizontal else self.vertical_icon
 
     def _apply(self):
-        rotation = self.horizontal_rotation if self.displayed == self.horizontal_icon else self.vertical_rotation
+        if self.displayed == self.horizontal_icon:
+            rotation = self.horizontal_rotation
+        else:
+            rotation = self.vertical_rotation
         outputs = [self.screen] if self.screen else self._get_all_outputs()
         for output in outputs:
             cmd = 'exec xrandr --output ' + output + ' --rotate ' + rotation
             Popen(['i3-msg', cmd], stdout=PIPE)
 
     def _switch_selection(self):
-        self.displayed = self.vertical_icon if self.displayed == self.horizontal_icon else self.horizontal_icon
+        if self.displayed == self.horizontal_icon:
+            self.displayed = self.vertical_icon
+        else:
+            self.displayed = self.horizontal_icon
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
@@ -107,7 +109,9 @@ class Py3status:
 
     def xrandr_rotate(self, i3s_output_list, i3s_config):
         all_outputs = self._get_all_outputs()
-        selected_screen_disconnected = self.screen is not None and self.screen not in all_outputs
+        selected_screen_disconnected = (
+            self.screen is not None and self.screen not in all_outputs
+        )
         if selected_screen_disconnected and self.hide_if_disconnected:
             self.displayed = ''
             full_text = ''
@@ -115,8 +119,12 @@ class Py3status:
             if not self.displayed:
                 self.displayed = self._get_current_rotation_icon(all_outputs)
 
-            screen = self.screen or all_outputs[0] if len(all_outputs) == 1 else 'ALL'
-            full_text = self.format.format(icon=self.displayed or '?', screen=screen)
+            if len(all_outputs) == 1:
+                screen = self.screen or all_outputs[0]
+            else:
+                screen = 'ALL'
+            full_text = self.format.format(icon=self.displayed or '?',
+                                           screen=screen)
 
         response = {
             'cached_until': time() + self.cache_timeout,

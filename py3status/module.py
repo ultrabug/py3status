@@ -4,7 +4,6 @@ import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
-from syslog import syslog, LOG_INFO
 from time import time
 
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
@@ -39,8 +38,8 @@ class Module(Thread):
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.new_update = False
-        self.module_full_name = module
         self.nagged = False
+        self.prevent_refresh = False
         self.sleeping = False
         self.timer = None
 
@@ -90,7 +89,7 @@ class Module(Thread):
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
-                syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+                self._py3_wrapper.log('clearing cache for method {}'.format(meth))
         # cancel any existing timer
         if self.timer:
             self.timer.cancel()
@@ -106,12 +105,13 @@ class Module(Thread):
 
     def wake(self):
         self.sleeping = False
-        cache_time = self.cache_time
+        if self.cache_time is None:
+            return
         # new style modules can signal they want to cache forever
-        if cache_time == PY3_CACHE_FOREVER:
+        if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        delay = max(cache_time - time(), 0)
+        delay = max(self.cache_time - time(), 0)
         self.timer = Timer(delay, self.run)
         self.timer.start()
 
@@ -145,21 +145,27 @@ class Module(Thread):
         if 'separator' in mod_config:
             separator = mod_config['separator']
             if not isinstance(separator, bool):
-                raise TypeError('invalid "separator" attribute, should be a bool')
+                err = 'invalid "separator" attribute, should be a bool'
+                raise TypeError(err)
 
             self.module_options['separator'] = separator
 
         if 'separator_block_width' in mod_config:
-            separator_block_width = mod_config['separator_block_width']
-            if not isinstance(separator_block_width, int):
-                raise TypeError('invalid "separator_block_width" attribute, should be an int')
+            sep_block_width = mod_config['separator_block_width']
+            if not isinstance(sep_block_width, int):
+                err = 'invalid "separator_block_width" attribute, '
+                err += "should be an int"
+                raise TypeError(err)
 
-            self.module_options['separator_block_width'] = separator_block_width
+            self.module_options['separator_block_width'] = sep_block_width
 
         if 'align' in mod_config:
             align = mod_config['align']
-            if not (isinstance(align, str) and align.lower() in ("left", "center", "right")):
-                raise ValueError('invalid "align" attribute, valid values are: left, center, right')
+            if not (isinstance(align, str) and
+                    align.lower() in ("left", "center", "right")):
+                err = 'invalid "align" attribute, valid values are:'
+                err += ' left, center, right'
+                raise ValueError(err)
 
             self.module_options['align'] = align
 
@@ -176,7 +182,8 @@ class Module(Thread):
         if not len(composite):
             return
         if 'full_text' in response:
-            raise Exception('conflicting "full_text" and "composite" in response')
+            err = 'conflicting "full_text" and "composite" in response'
+            raise Exception(err)
         # set universal options on last component
         composite[-1].update(self.module_options)
         # calculate any min width (we split this across components)
@@ -196,7 +203,9 @@ class Module(Thread):
             # make sure all components have a name
             if 'name' not in item:
                 instance_index = item.get('index', index)
-                item['instance'] = '{} {}'.format(self.module_inst, instance_index)
+                item['instance'] = '{} {}'.format(
+                    self.module_inst, instance_index
+                )
                 item['name'] = self.module_name
             # hide separator for all inner components unless existing
             if index != len(response['composite']) - 1:
@@ -254,15 +263,15 @@ class Module(Thread):
         # user provided modules take precedence over py3status provided modules
         if self.module_name in user_modules:
             include_path, f_name = user_modules[self.module_name]
-            syslog(LOG_INFO,
-                   'loading module "{}" from {}{}'.format(module, include_path,
-                                                          f_name))
+            self._py3_wrapper.log(
+                'loading module "{}" from {}{}'.format(module, include_path,
+                                                       f_name))
             class_inst = self.load_from_file(include_path + f_name)
         # load from py3status provided modules
         else:
-            syslog(LOG_INFO,
-                   'loading module "{}" from py3status.modules.{}'.format(
-                       module, self.module_name))
+            self._py3_wrapper.log(
+                'loading module "{}" from py3status.modules.{}'.format(
+                    module, self.module_name))
             class_inst = self.load_from_namespace(self.module_name)
 
         if class_inst:
@@ -307,17 +316,21 @@ class Module(Thread):
                             }
                             self.methods[method] = method_obj
 
-        # done, syslog some debug info
+        # done, log some debug info
         if self.config['debug']:
-            syslog(LOG_INFO,
-                   'module "{}" click_events={} has_kill={} methods={}'.format(
-                       module, self.click_events, self.has_kill,
-                       self.methods.keys()))
+            self._py3_wrapper.log(
+                'module "{}" click_events={} has_kill={} methods={}'.format(
+                    module, self.click_events, self.has_kill,
+                    self.methods.keys()))
 
     def click_event(self, event):
         """
         Execute the 'on_click' method of this module with the given event.
         """
+        # we can prevent request that a refresh after the event has happened
+        # by setting this to True.  Modules should do this via
+        # py3.prevent_refresh()
+        self.prevent_refresh = False
         try:
             click_method = getattr(self.module_class, 'on_click')
             if self.click_events == self.PARAMS_NEW:
@@ -388,7 +401,8 @@ class Module(Thread):
                     else:
                         # validate the response
                         if 'full_text' not in result:
-                            raise KeyError('missing "full_text" key in response')
+                            err = 'missing "full_text" key in response'
+                            raise KeyError(err)
                         # set universal module options in result
                         result.update(self.module_options)
 
@@ -423,8 +437,8 @@ class Module(Thread):
 
                     # debug info
                     if self.config['debug']:
-                        syslog(LOG_INFO,
-                               'method {} returned {} '.format(meth, result))
+                        self._py3_wrapper.log(
+                            'method {} returned {} '.format(meth, result))
                 except Exception:
                     msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
@@ -441,7 +455,8 @@ class Module(Thread):
             # don't be hasty mate
             # set timer to do update next time one is needed
             if not self.sleeping:
-                delay = max(cache_time - time(), self.config['minimum_interval'])
+                delay = max(cache_time - time(),
+                            self.config['minimum_interval'])
                 self.timer = Timer(delay, self.run)
                 self.timer.start()
 

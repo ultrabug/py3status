@@ -1,31 +1,51 @@
 *********
 py3status
 *********
-|version| |travis|
+|travis|
 
-.. |version| image:: https://img.shields.io/pypi/v/py3status.svg
 .. |travis| image:: https://travis-ci.org/ultrabug/py3status.svg?branch=master
 
 **py3status** is an extensible i3status wrapper written in python.
 
 Using py3status, you can take control of your i3bar easily by:
 
-- using one of the availables modules shipped with py3status
+- using one of the available
+  `modules <https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md>`_
+  shipped with py3status
+- grouping multiple modules and automatically or manually cycle their display
 - writing your own modules and have their output displayed on your bar
 - handling click events on your i3bar and play with them in no time
 - seeing your clock tick every second whatever your i3status interval
 
 **No extra configuration file needed**, just install & enjoy !
 
+About
+=====
+You will love `py3status` if you're using `i3wm <http://i3wm.org>`_ and are frustrated by the i3status `limitations <https://faq.i3wm.org/question/459/external-scriptsprograms-in-i3status-without-loosing-colors/>`_ on your i3bar such as:
+
+* you cannot hack into it easily
+* you want more than the built-in modules and their limited configuration
+* you cannot pipe the result of one of more scripts or commands in your bar easily
+
+Philosophy
+----------
+* **no added configuration file, use the standard i3status.conf**
+* **rely on i3status**' strengths and its **existing configuration** as much as possible
+* **be extensible**, it must be easy for users to add their own stuff/output by writing a simple python class which will be loaded and executed dynamically
+* **easily allow interactivity** with the i3bar
+* add some **built-in enhancement/transformation** of basic i3status modules output
+
 Documentation
 =============
-Up to date documentation:
+Up-to-date `documentation <https://github.com/ultrabug/py3status/blob/master/doc/README.md>`_:
 
 -  `Using modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#modules>`_
 
 -  `Custom click events <https://github.com/ultrabug/py3status/blob/master/doc/README.md#on_click>`_
 
 -  `Writing custom modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#writing_custom_modules>`_
+
+-  `Contributing <https://github.com/ultrabug/py3status/blob/master/doc/README.md#contributing>`_
 
 Get help or share your ideas on IRC:
 
@@ -45,18 +65,18 @@ Usually you have your own i3status configuration, just point to it:
 
 Available modules
 =================
-You can get a list and short description of all the available modules by using the CLI:
+You can get a list with short descriptions of all available modules by using the CLI:
 ::
 
     $ py3status modules list
 
 
-To get more details about all the available modules and their configuration, use:
+To get more details about all available modules and their configuration, use:
 ::
 
     $ py3status modules details
 
-All the modules shipped with py3status are present in the sources in the `py3status/modules <https://github.com/ultrabug/py3status/tree/master/py3status/modules>`_ folder.
+All modules shipped with py3status are present as the Python source files in the `py3status/modules <https://github.com/ultrabug/py3status/tree/master/py3status/modules>`_ directory.
 
 Most of them are **configurable directly from your current i3status.conf**, check them out to see all the configurable variables.
 
@@ -69,7 +89,7 @@ Using pip:
 
     $ pip install py3status
 
-NB: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
+Note: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
 
 Gentoo Linux
 ------------
@@ -103,13 +123,15 @@ You can see the help of py3status by issuing `py3status -h`:
 
     -h, --help            show this help message and exit
     -b, --dbus-notify     use notify-send to send user notifications rather than
-                        i3-nagbar, requires a notification daemon eg dunst
+                          i3-nagbar, requires a notification daemon eg dunst
     -c I3STATUS_CONF, --config I3STATUS_CONF
                           path to i3status config file
     -d, --debug           be verbose in syslog
     -i INCLUDE_PATHS, --include INCLUDE_PATHS
                           include user-written modules from those directories
                           (default ~/.i3/py3status)
+    -l LOG_FILE, --log-file LOG_FILE
+                          path to py3status log file
     -n INTERVAL, --interval INTERVAL
                           update interval in seconds (default 1 sec)
     -s, --standalone      standalone mode, do not use i3status

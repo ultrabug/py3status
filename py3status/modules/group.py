@@ -16,11 +16,11 @@ The way it does this is selected via the `click_mode` option.
 
 Configuration parameters:
     align: Text alignment when fixed_width is set
-        can be 'left', 'center' or 'right' (default 'left')
+        can be 'left', 'center' or 'right' (default 'center')
     button_next: Button that when clicked will switch to display next module.
-        Setting to `0` will disable this action. (default 4)
+        Setting to `0` will disable this action. (default 5)
     button_prev: Button that when clicked will switch to display previous
-        module.  Setting to `0` will disable this action. (default 5)
+        module.  Setting to `0` will disable this action. (default 4)
     button_toggle: Button that when clicked toggles the group content being
         displayed between open and closed.
         This action is ignored if `{button}` is not in the format.
@@ -35,7 +35,7 @@ Configuration parameters:
     cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
-        (default True)
+        (default False)
     format: Format for module output.
         (default "{output}" if click_mode is 'all',
         "{output} {button}" if click_mode 'button')
@@ -86,9 +86,9 @@ from time import time
 
 class Py3status:
     # available configuration parameters
-    align = 'left'
-    button_next = 4
-    button_prev = 5
+    align = 'center'
+    button_next = 5
+    button_prev = 4
     button_toggle = 1
     click_mode = 'all'
     cycle = 0
@@ -98,6 +98,9 @@ class Py3status:
     format_button_closed = u'+'
     format_closed = u'{button}'
     open = True
+
+    class Meta:
+        container = True
 
     def __init__(self):
         self.items = []
@@ -126,7 +129,7 @@ class Py3status:
             return self.py3.get_output(self.items[self.active])
         # fixed width we need to find the width of all outputs
         # and then pad with spaces to make correct width.
-        current = None
+        current = []
         widths = []
         for i in range(len(self.items)):
             output = self.py3.get_output(self.items[i])
@@ -142,8 +145,9 @@ class Py3status:
             if self.align == 'right':
                 current[0]['full_text'] = padding + current[0]['full_text']
             elif self.align == 'center':
-                cut = round(len(padding) / 2)
-                current[0]['full_text'] = padding[:cut] + current[0]['full_text']
+                cut = len(padding) // 2
+                current[0]['full_text'] = padding[:cut] + \
+                    current[0]['full_text']
                 current[-1]['full_text'] += padding[cut:]
             else:
                 current[-1]['full_text'] += padding
@@ -206,6 +210,7 @@ class Py3status:
             else:
                 output += [{'full_text': part}]
 
+        # FIXME always start contained items after container so they trigger
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
         if not ready:
@@ -249,12 +254,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {}
-
-    while True:
-        print(x.group([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

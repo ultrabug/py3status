@@ -9,7 +9,7 @@ Configuration parameters:
     format_prefix: a prefix for the output.
     format_units: the temperature units. Will appear at the end.
     temp_separator: the separator char between temperatures (only if more than
-    one GPU)
+        one GPU)
 
 Requires:
     nvidia-smi:
@@ -38,9 +38,6 @@ class Py3status:
     temp_separator = '|'
 
     def nvidia_temp(self, i3s_output_list, i3s_config):
-        # The whole command:
-        # nvidia-smi -q -d TEMPERATURE | sed -nr 's/.*Current Temp.*:[[:space:]]*([0-9]+).*/\1/p'
-
         out = check_output(shlex.split("nvidia-smi -q -d TEMPERATURE"))
         temps = re.findall(TEMP_RE, out.decode("utf-8"))
 
