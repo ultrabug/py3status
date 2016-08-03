@@ -6,8 +6,8 @@ Configuration parameters:
     cache_timeout: how often we refresh usage in seconds (default: 1s)
     format: Output format (default: "{track}")
     quodlibet_format: Quod Libet tag pattern to use for song. See
-    https://quodlibet.readthedocs.io/en/latest/guide/tags/patterns.html
-    for Quod Libet's documentation on them. (default: "<artist~title>")
+        https://quodlibet.readthedocs.io/en/latest/guide/tags/patterns.html
+        for Quod Libet's documentation on them. (default: "<artist~title>")
     quodlibet_directory: Directory of Quod Libet (default: "~/.quodlibet")
 
 Format of status string placeholders:
