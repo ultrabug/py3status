@@ -9,7 +9,7 @@ import time
 from collections import deque
 from json import dumps
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
-from subprocess import Popen, call
+from subprocess import Popen
 from threading import Event
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb
@@ -18,6 +18,7 @@ import py3status.docstrings as docstrings
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
+from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.version import version
@@ -282,8 +283,12 @@ class Py3statusWrapper():
             self.log(
                 'py3status started with config {}'.format(self.config))
 
+        # read i3status.conf
+        config_path = self.config['i3status_config_path']
+        config = process_config(config_path, self)
+
         # setup i3status thread
-        self.i3status_thread = I3status(self)
+        self.i3status_thread = I3status(self, config)
 
         # If standalone or no i3status modules then use the mock i3status
         # else start i3status thread.
@@ -395,38 +400,47 @@ class Py3statusWrapper():
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
-            self.i3status_thread.cleanup_tmpfile()
         except:
             pass
+
+    def refresh_modules(self, module_string=None, exact=True):
+        """
+        Update modules.
+        if module_string is None all modules are refreshed
+        if module_string then modules with the exact name or those starting
+        with the given string depending on exact parameter will be refreshed.
+        If a module is an i3status one then we refresh i3status.
+        To prevent abuse, we rate limit this function to 100ms for full
+        refreshes.
+        """
+        if not module_string:
+            if time.time() > (self.last_refresh_ts + 0.1):
+                self.last_refresh_ts = time.time()
+            else:
+                # rate limiting
+                return
+        update_i3status = False
+        for name, module in self.output_modules.items():
+            if (module_string is None or
+                    (exact and name == module_string) or
+                    (not exact and name.startswith(module_string))):
+                if module['type'] == 'py3status':
+                    if self.config['debug']:
+                        self.log('refresh py3status module {}'.format(name))
+                    module['module'].force_update()
+                else:
+                    if self.config['debug']:
+                        self.log('refresh i3status module {}'.format(name))
+                    update_i3status = True
+        if update_i3status:
+            self.i3status_thread.refresh_i3status()
 
     def sig_handler(self, signum, frame):
         """
         SIGUSR1 was received, the user asks for an immediate refresh of the bar
-        so we force i3status to refresh by sending it a SIGUSR1
-        and we clear all py3status modules' cache.
-
-        To prevent abuse, we rate limit this function to 100ms.
         """
-        if time.time() > (self.last_refresh_ts + 0.1):
-            self.log('received USR1, forcing refresh')
-
-            # send SIGUSR1 to i3status
-            call(['killall', '-s', 'USR1', 'i3status'])
-
-            # clear the cache of all modules
-            self.clear_modules_cache()
-
-            # reset the refresh timestamp
-            self.last_refresh_ts = time.time()
-        else:
-            self.log('received USR1 but rate limit is in effect, calm down')
-
-    def clear_modules_cache(self):
-        """
-        For every module, reset the 'cached_until' of all its methods.
-        """
-        for module in self.modules.values():
-            module.force_update()
+        self.log('received USR1')
+        self.refresh_modules()
 
     def terminate(self, signum, frame):
         """
