@@ -8,7 +8,7 @@ It allows color cycling of modules. Imagine the joy of having the current time
 change through the colors of the rainbow.
 
 If you were completely insane you could also use it to implement the i3bar
-equivalent of the `<blink>` tag and cause yourself endless headaches and the
+equivalent of the <blink> tag and cause yourself endless headaches and the
 desire to vomit.
 
 The color for the contained module(s) is changed and cycles through your chosen
