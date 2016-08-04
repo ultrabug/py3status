@@ -290,8 +290,10 @@ class Module(Thread):
             mod_config = self.i3status_thread.config.get(module, {})
             for config, value in mod_config.items():
                 # names starting with '.' are private
-                if not config.startswith('.') and hasattr(self.module_class, config):
-                    setattr(self.module_class, config, value)
+                if not config.startswith('.'):
+                    if (hasattr(self.module_class, config) or not
+                            (config == 'color' or config.startswith('color_'))):
+                        setattr(self.module_class, config, value)
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
