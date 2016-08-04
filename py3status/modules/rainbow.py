@@ -21,10 +21,10 @@ Configuration parameters:
     cycle_time: How often we cdo a color change in seconds
     (default 1)
     force: If True then the color will always be set.  If false the color will
-        only be changed if it has not beeen set by a module.
+        only be changed if it has not been set by a module.
         (default False)
     gradient: The colors we will cycle through, This is a list of hex values
-        (default [ '#FF0000', '#FFFF00', '#00FF00':q, '#00FFFF',
+        (default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
         '#0000FF', '#FF00FF', '#FF0000', ])
     steps: Number of steps between each color in the gradient
         (default 10)
@@ -32,13 +32,21 @@ Configuration parameters:
 Example config:
 
 ```
+order += "rainbow time"
+
 # show time colorfully
-rainbow {
+rainbow time {
     time {}
 }
+```
+
+Example blinking config:
+
+```
+order += "rainbow blink_time"
 
 # blinking text black/white
-rainbow blink{
+rainbow blink_time{
     gradient = [
         '#FFFFFF',
         '#000000',
