@@ -22,7 +22,6 @@ from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.version import version
-from py3status.py3 import COLOR_MAPPINGS
 
 LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
 
@@ -567,6 +566,20 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
+    def get_config_attribute(self, name, attribute):
+        config = self.i3status_thread.config
+        color = config[name].get(attribute)
+        if not color and name in config['.module_groups']:
+            for module in config['.module_groups'][name]:
+                if config.get(module, {}).get(attribute):
+                    color = config[module].get(attribute)
+                    break
+        if not color:
+            color = config['general'].get(attribute)
+        if not color:
+            color = config['general'].get('color')
+        return color
+
     def create_mappings(self, config):
         """
         Create any mappings needed for global substitutions eg. colors
@@ -576,13 +589,8 @@ class Py3statusWrapper():
             # Ignore special config sections.
             if name in CONFIG_SPECIAL_SECTIONS:
                 continue
-            mapping = {}
-            for key in COLOR_MAPPINGS.keys():
-                # Get the value from section config or general.
-                color = cfg.get(key, config['general'].get(key))
-                if color:
-                    mapping[COLOR_MAPPINGS[key]] = color
-            mappings[name] = mapping
+            color = self.get_config_attribute(name, 'color')
+            mappings[name] = color
         # Store mappings for later use.
         self.mappings_color = mappings
 
@@ -591,18 +599,18 @@ class Py3statusWrapper():
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
         """
+        config = self.i3status_thread.config
         for output in outputs:
-            # Get the module name from the output.
-            module_name = '{} {}'.format(
-                output['name'], output.get('instance', '')
-            ).strip()
-            # Color: substitute the config defined color and replace
-            # COLOR_GOOD etc using our color mappings.
+            # Color: substitute the config defined color
             color = output.get('color')
-            mapping = self.mappings_color.get(module_name, {})
-            mapped_color = mapping.get(color, color)
-            if mapped_color:
-                output['color'] = mapped_color
+            if not color:
+                # Get the module name from the output.
+                module_name = '{} {}'.format(
+                    output['name'], output.get('instance', '').split(' ')[0]
+                ).strip()
+                color = self.mappings_color.get(module_name)
+                if color:
+                    output['color'] = color
         # Create the json string output.
         return ','.join([dumps(x) for x in outputs])
 

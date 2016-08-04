@@ -10,17 +10,6 @@ PY3_LOG_ERROR = 'error'
 PY3_LOG_INFO = 'info'
 PY3_LOG_WARNING = 'warning'
 
-PY3_COLOR_BAD = 1
-PY3_COLOR_DEGRADED = 2
-PY3_COLOR_GOOD = 3
-
-COLOR_MAPPINGS = {
-    'color': None,
-    'color_bad': PY3_COLOR_BAD,
-    'color_degraded': PY3_COLOR_DEGRADED,
-    'color_good': PY3_COLOR_GOOD,
-}
-
 
 class Py3:
     """
@@ -38,15 +27,12 @@ class Py3:
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
 
-    COLOR_BAD = PY3_COLOR_BAD
-    COLOR_DEGRADED = PY3_COLOR_DEGRADED
-    COLOR_GOOD = PY3_COLOR_GOOD
-
     LOG_ERROR = PY3_LOG_ERROR
     LOG_INFO = PY3_LOG_INFO
     LOG_WARNING = PY3_LOG_WARNING
 
     def __init__(self, module=None, i3s_config=None):
+        self._colors = {}
         self._audio = None
         self._module = module
         self._i3s_config = i3s_config or {}
@@ -57,6 +43,25 @@ class Py3:
             if not i3s_config:
                 config = self._module.i3status_thread.config['general']
                 self._i3s_config = config
+
+    def __getattr__(self, name):
+        """
+        Py3 can provide COLOR constants
+        eg COLOR_GOOD, COLOR_BAD, COLOR_DEGRADED
+        but also any constant COLOR_XXX we find this color in the config
+        if it exists
+        """
+        if not name.startswith('COLOR_'):
+            raise AttributeError
+        name = name.lower()
+        if name not in self._colors:
+            if self._module:
+                color_fn = self._module._py3_wrapper.get_config_attribute
+                color = color_fn(self._module.module_full_name, name)
+            else:
+                color = self._i3s_config.get(name)
+            self._colors[name] = color
+        return self._colors[name]
 
     def _get_module_info(self, module_name):
         """
