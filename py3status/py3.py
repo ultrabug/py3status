@@ -132,9 +132,12 @@ class Py3:
         """
         return time() + seconds
 
-    def parse_format(self, format_string, data):
+    def safe_format(self, format_string, data):
         '''
         Parser for advanced formating.
+
+        Unknown placeholders will be shown in the output eg `{foo}`
+
         Square brackets `[]` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
         They can also be nested.
@@ -142,8 +145,8 @@ class Py3:
         valid section only will be shown in the output.
         A backslash `\` can be used to escape a character eg `\[` will show `[`
         in the output.
-        `{<placeholder>}` will be converted, or removed if it is None or
-        missing.  formating can also be applied to the placeholder eg
+        `{<placeholder>}` will be converted, or removed if it is None or empty.
+        Formating can also be applied to the placeholder eg
         `{number:03.2f}`.
 
         example format_string:
@@ -191,8 +194,12 @@ class Py3:
                         if field_format:
                             param += ':%s' % field_format
                         return '{%s}' % param, True
-                    # Empty or missing placeholder
-                    return '', False
+                    elif param not in data:
+                        # Missing placeholder
+                        return '{{%s}}' % param, True
+                    else:
+                        # Empty placeholder
+                        return '', False
                 # Move to next part of the format string
                 Info.char = 0
                 Info.part += 1
@@ -251,30 +258,6 @@ class Py3:
 
         # Finally output our format string with the placeholders substituted.
         return ''.join([p[0] for p in parts if p[1]]).format(**data)
-
-    def safe_format(self, format_string, param_dict, advanced_format=False):
-        """
-        Perform a safe formatting of a string.  Using format fails if the
-        format string contains placeholders which are missing.  Since these can
-        be set by the user it is possible that they add unsupported items.
-        This function will show missing placemolders so that modules do not
-        crash hard.
-
-        If advanced_format is True then parse_format() will be used.
-        """
-        if advanced_format:
-            return self.parse_format(format_string, param_dict)
-
-        keys = param_dict.keys()
-        try:
-            fields = [p[1] for p in Formatter().parse(format_string)]
-        except ValueError:
-            return 'Invalid Format'
-        for field in fields:
-            if not field or field in keys:
-                continue
-            param_dict[field] = '{%s}' % field
-        return format_string.format(**param_dict)
 
     def check_commands(self, cmd_list):
         """
