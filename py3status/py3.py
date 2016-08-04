@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 from time import time
 from subprocess import Popen, call
@@ -156,6 +157,17 @@ class Py3:
         and `file` if file is present but not artist or title.
         '''
 
+        # we need to treat \{ and \} specially for the formatter
+        # change them to {{ and }}
+        def my_replace(match):
+            match = match.group()
+            if match == '\\{':
+                return '{{'
+            if match == '\\}':
+                return '}}'
+            return match
+        format_string = re.sub('\\\\.', my_replace, format_string)
+
         # this class helps us maintain state in the next_item function
         class Info:
             part = 0
@@ -239,7 +251,7 @@ class Py3:
                 if not parts[len(parts) - 1][1]:
                     parts = parts[:-1]
                 level -= 1
-                if level < block_level:
+                if block_level is not None and level < block_level:
                     block_level = None
                 continue
             if n == '|':
@@ -252,6 +264,10 @@ class Py3:
             if n[0] == '\\':
                 # The item was escaped remove the escape character
                 n = n[1:]
+            if n == '{':
+                n = '{{'
+            if n == '}':
+                n = '}}'
             if block_level is None:
                 # Add the item if we are not blocking
                 parts[len(parts) - 1][0] += n
