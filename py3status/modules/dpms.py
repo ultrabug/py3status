@@ -10,6 +10,10 @@ Configuration parameters:
     format_off: string to display when DPMS is disabled
     format_on: string to display when DPMS is enabled
 
+Color options:
+    color_on: when dpms is enabled, defaults to color_good
+    color_off: when dpms is disabled, defaults to color_bad
+
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
 
@@ -22,8 +26,6 @@ class Py3status:
     # available configuration parameters
     format_off = "DPMS"
     format_on = "DPMS"
-    color_on = None
-    color_off = None
 
     def dpms(self):
         """
@@ -34,8 +36,8 @@ class Py3status:
 
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or self.py3.COLOR_GOOD if self.run
-            else self.color_off or self.py3.COLOR_BAD
+            'color': self.py3.COLOR_ON or self.py3.COLOR_GOOD if self.run
+            else self.py3.COLOR_OFF or self.py3.COLOR_BAD
         }
 
     def on_click(self, event):

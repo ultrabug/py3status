@@ -250,7 +250,7 @@ class I3status(Thread):
             section = self.config[section_name]
             self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
             for key, value in section.items():
-                # don't include color values
+                # don't include color values except in the general section
                 if key.startswith('color'):
                     if not (section_name == 'general' and
                             key in I3S_ALLOWED_COLORS):

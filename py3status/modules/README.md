@@ -374,6 +374,10 @@ Configuration parameters:
   - `format_off` string to display when DPMS is disabled
   - `format_on` string to display when DPMS is enabled
 
+Color options:
+  - `color_on` when dpms is enabled, defaults to color_good
+  - `color_off` when dpms is disabled, defaults to color_bad
+
 **author** Andre Doser <dosera AT tf.uni-freiburg.de>
 
 ---
