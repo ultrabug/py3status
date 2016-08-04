@@ -20,13 +20,19 @@
 
 **[dropboxd_status](#dropboxd_status)** — Display dropboxd status.
 
+**[exchange_rate](#exchange_rate)** — Display foreign exchange rates.
+
 **[external_script](#external_script)** — Display output of given script.
 
 **[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
 
+**[file_status](#file_status)** — Display if a file or dir exists.
+
 **[github](#github)** — Display Github notifications and issue/pull requests for a repo.
 
 **[glpi](#glpi)** — Display the total number of open tickets from GLPI.
+
+**[gpmdp](#gpmdp)** — Display currently playing song from Google Play Music Desktop Player.
 
 **[graphite](#graphite)** — Display Graphite metrics.
 
@@ -39,6 +45,8 @@
 **[imap](#imap)** — Display the unread messages count from your IMAP account.
 
 **[insync](#insync)** — Get current insync status
+
+**[kdeconnector](#kdeconnector)** — Display information of your android device over KDEConnector.
 
 **[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
 
@@ -59,6 +67,10 @@
 **[player_control](#player_control)** — Control music/video players.
 
 **[pomodoro](#pomodoro)** — Display and control a Pomodoro countdown.
+
+**[process_status](#process_status)** — Display if a process is running.
+
+**[rainbow](#rainbow)** — Add color cycling fun to your i3bar.
 
 **[rate_counter](#rate_counter)** — Display days/hours/minutes spent and calculate the price of your service.
 
@@ -121,18 +133,19 @@
 ### <a name="arch_updates"></a>arch_updates
 
 Displays the number of package updates pending for an Arch Linux installation.
+
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are
 also waiting.
 
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 600)*
-  - `include_aur` Set to 0 to use 'cower' to check for AUR updates *(default 0)*
-  - `format` Display format to use *(default
-    'UPD: {pacman}' or 'UPD: {pacman}/{aur}'
-    )*
+  - `format` Display format to use
+    *(default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')*
+  - `include_aur` Set to True to use 'cower' to check for AUR updates
+    *(default False)*
 
-Format status string parameters:
+Format of status string parameters:
   - `{aur}` Number of pending aur updates
   - `{pacman}` Number of pending pacman updates
 
@@ -389,6 +402,33 @@ Requires:
 
 ---
 
+### <a name="exchange_rate"></a>exchange_rate
+
+Display foreign exchange rates.
+
+The exchange rate data comes from Yahoo Finance.
+
+For a list of three letter currency codes please see
+https://en.wikipedia.org/wiki/ISO_4217 NOTE: Not all listed currencies may be
+available
+
+Configuration parameters:
+  - `base` Base currency used for exchange rates *(default 'EUR')*
+  - `cache_timeout` How often we refresh this module in seconds *(default 600)*
+  - `format` Format of the output.  This is also where requested currencies are
+    configured. Add the currency code surrounded by curly braces and it
+    will be replaced by the current exchange rate.
+    *(default '${USD} £{GBP} ¥{JPY}')*
+
+Requires:
+  - `requests` python lib
+
+**author** tobes
+
+**license** BSD
+
+---
+
 ### <a name="external_script"></a>external_script
 
 Display output of given script.
@@ -448,6 +488,20 @@ Format status string parameters:
 **author** Toby Dacre
 
 **license** BSD
+
+---
+
+### <a name="file_status"></a>file_status
+
+Display if a file or dir exists.
+
+Configuration parameters:
+  - `cache_timeout` how often to run the check
+  - `format_available` what to display when available
+  - `format_unavailable` what to display when unavailable
+  - `path` the path to a file or dir to check if it exists
+
+**author** obb, Moritz Lüdecke
 
 ---
 
@@ -538,6 +592,41 @@ Configuration parameters:
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
+
+---
+
+### <a name="gpmdp"></a>gpmdp
+
+Display currently playing song from Google Play Music Desktop Player.
+
+Configuration parameters:
+  - `cache_timeout`  how often we refresh this module in seconds *(default 5)*
+  - `format`         specify the items and ordering of the data in the status bar.
+    These area 1:1 match to gpmdp-remote's options *(default is '♫ {info}')*.
+
+Format of status string placeholders:
+    See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
+    with curly braces (i.e. `{album}`) and place as-desired in the format string.
+
+    {info}            Print info about now playing song
+    {title}           Print current song title
+    {artist}          Print current song artist
+    {album}           Print current song album
+    {album_art}       Print current song album art URL
+    {time_current}    Print current song time in milliseconds
+    {time_total}      Print total song time in milliseconds
+    {status}          Print whether GPMDP is paused or playing
+    {current}         Print now playing song in "artist - song" format
+    {help}            Print this help message
+
+
+Requires:
+  - `gpmdp` http://www.googleplaymusicdesktopplayer.com/
+  - `gpmdp-remote` https://github.com/iandrewt/gpmdp-remote
+
+**author** Aaron Fields https://twitter.com/spirotot
+
+**license** BSD
 
 ---
 
@@ -762,6 +851,48 @@ Requires:
 **author** Joshua Pratt <jp10010101010000@gmail.com>
 
 **license** BSD
+
+---
+
+### <a name="kdeconnector"></a>kdeconnector
+
+Display information of your android device over KDEConnector.
+
+Configuration parameters:
+  - `device` the device name, you need this if you have more than one device
+    connected to your PC
+  - `device_id` alternatively to the device name you can set your device id here
+  - `format` see placeholders below
+  - `format_disconnected` text if device is disconnected
+  - `low_threshold` percentage value when text is twitch to color_bad
+  - `status_bat` text when battery is discharged
+  - `status_chr` text when device is charged
+  - `status_full` text when battery is full
+  - `status_no_notif` text when you have no notifications
+  - `status_notif` text when notifications are available
+
+Format of status string placeholders:
+  - `{bat_status}` battery state
+  - `{charge}` the battery charge
+  - `{name}` name of the device
+  - `{notif_size}` number of notifications
+  - `{notif_status}` shows if a notification is available or nor
+
+i3status.conf example:
+
+```
+kdeconnector {
+    device_id = "aa0844d33ac6ca03"
+    format = "{name} {battery} ⚡ {state}"
+    low_battery = "10"
+}
+```
+
+Requires:
+    pydbus
+    kdeconnect
+
+**author** Moritz Lüdecke
 
 ---
 
@@ -1022,6 +1153,83 @@ pomodoro {
 ```
 
 **author** Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
+
+---
+
+### <a name="process_status"></a>process_status
+
+Display if a process is running.
+
+Configuration parameters:
+  - `cache_timeout` how often to run the check
+  - `format_running` what to display when process running
+  - `format_not_running` what to display when process is not running
+  - `process` the process name to check if it is running
+
+**author** obb, Moritz Lüdecke
+
+---
+
+### <a name="rainbow"></a>rainbow
+
+Add color cycling fun to your i3bar.
+
+This is the most pointless yet most exciting module you can imagine.
+
+It allows color cycling of modules. Imagine the joy of having the current time
+change through the colors of the rainbow.
+
+If you were completely insane you could also use it to implement the i3bar
+equivalent of the `&lt;blink&gt;` tag and cause yourself endless headaches and the
+desire to vomit.
+
+The color for the contained module(s) is changed and cycles through your chosen
+gradient by default this is the colors of the rainbow.  This module will
+increase the amount of updates that py3status needs to do so should be used
+sparingly.
+
+
+Configuration parameters:
+  - `cycle_time` How often we cdo a color change in seconds
+    *(default 1)*
+  - `force` If True then the color will always be set.  If false the color will
+    only be changed if it has not been set by a module.
+    *(default False)*
+  - `gradient` The colors we will cycle through, This is a list of hex values
+    (default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
+    '#0000FF', '#FF00FF', '#FF0000', ])
+  - `steps` Number of steps between each color in the gradient
+    *(default 10)*
+
+Example config:
+
+```
+order += "rainbow time"
+
+# show time colorfully
+rainbow time {
+    time {}
+}
+```
+
+Example blinking config:
+
+```
+order += "rainbow blink_time"
+
+# blinking text black/white
+rainbow blink_time{
+    gradient = [
+        '#FFFFFF',
+        '#000000',
+    ]
+    steps = 1
+
+    time {}
+}
+```
+
+**author** tobes
 
 ---
 
