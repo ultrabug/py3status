@@ -116,6 +116,7 @@ class Py3status:
                 x = (b * t)
                 x += (a * (1 - t))
                 return x
+
             c1 = from_hex(c1)
             c2 = from_hex(c2)
             return (fade(0), fade(1), fade(2))
@@ -145,7 +146,7 @@ class Py3status:
         if cycle_time == int(cycle_time):
             self._cycle_time = math.ceil(now + cycle_time)
         else:
-            self._cycle_time = math.ceil((now + cycle_time)*10)/10
+            self._cycle_time = math.ceil((now + cycle_time) * 10) / 10
         self._cycle_time = now + self.cycle_time
 
     def _get_current_output(self):
@@ -168,7 +169,7 @@ class Py3status:
         if not self.items:
             return {'full_text': '', 'cached_until': self.py3.CACHE_FOREVER}
 
-        if time() >= self._cycle_time - (self.cycle_time/10):
+        if time() >= self._cycle_time - (self.cycle_time / 10):
             self.active_color = (self.active_color + 1) % len(self.colors)
             self._set_cycle_time()
 
@@ -182,10 +183,7 @@ class Py3status:
                 obj['color'] = color
             output.append(obj)
 
-        response = {
-            'cached_until': self._cycle_time,
-            'composite': output,
-        }
+        response = {'cached_until': self._cycle_time, 'composite': output}
         return response
 
 
