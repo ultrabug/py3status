@@ -112,7 +112,6 @@ class Py3status:
         if not self.items:
             self.cycle = 0
         self._cycle_time = time() + self.cycle
-        self.initialized = True
         self.open = bool(self.open)
         # set default format etc based on click_mode
         if self.format is None:
@@ -123,6 +122,15 @@ class Py3status:
         # if no button then force open
         if '{button}' not in self.format:
                 self.open = True
+        self.py3.register_content_function(self._content_function)
+        self.initialized = True
+
+    def _content_function(self):
+        '''
+        This returns a set containing the actively shown module.  This is so we
+        only get update events triggered for these modules.
+        '''
+        return set([self.items[self.active]])
 
     def _get_output(self):
         if not self.fixed_width:
