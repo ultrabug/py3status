@@ -57,7 +57,7 @@ class Py3:
         if name not in self._colors:
             if self._module:
                 color_fn = self._module._py3_wrapper.get_config_attribute
-                color = color_fn(self._module.module_full_name, name)
+                color = color_fn(self._module.module_full_name, name, 'color')
             else:
                 color = self._i3s_config.get(name)
             self._colors[name] = color
