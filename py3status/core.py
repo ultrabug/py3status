@@ -614,7 +614,6 @@ class Py3statusWrapper():
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
         """
-        config = self.i3status_thread.config
         for output in outputs:
             # Color: substitute the config defined color
             color = output.get('color')
