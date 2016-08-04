@@ -32,10 +32,10 @@ class Py3:
     LOG_WARNING = PY3_LOG_WARNING
 
     def __init__(self, module=None, i3s_config=None):
-        self._colors = {}
         self._audio = None
-        self._module = module
+        self._colors = {}
         self._i3s_config = i3s_config or {}
+        self._module = module
         # we are running through the whole stack.
         # If testing then module is None.
         if module:
