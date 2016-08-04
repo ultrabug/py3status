@@ -59,14 +59,14 @@ class Py3status:
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{today} {forecasts}'
-    format_forecast = '{icon}'
-    format_today = '{icon}'
-    icon_cloud = '☁'
-    icon_default = '?'
-    icon_rain = '☂'
-    icon_snow = '☃'
-    icon_sun = '☀'
+    format = u'{today} {forecasts}'
+    format_forecast = u'{icon}'
+    format_today = u'{icon}'
+    icon_cloud = u'☁'
+    icon_default = u'?'
+    icon_rain = u'☂'
+    icon_snow = u'☃'
+    icon_sun = u'☀'
     request_timeout = 10
     units = 'c'
     woeid = None
@@ -85,6 +85,8 @@ class Py3status:
                 timeout=self.request_timeout
             )
         except requests.ConnectionError:
+            return None, None
+        except requests.ReadTimeout:
             return None, None
         q.raise_for_status()
         r = q.json()

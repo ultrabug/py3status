@@ -20,9 +20,9 @@ py3status documentation
 * [Example 2: Configuration parameters](#example_2)
 * [Example 3: Events](#example_3)
 * [Example 4: Status string placeholders](#example_4)
-
-
 * [Py3 module helper](#py3)
+* [Module documentation](#docstring)
+* [Module testing](#testing)
 
 [Contributing](#contributing)
 
@@ -489,7 +489,7 @@ __safe_format(format_string, param_dict)__
 Perform a safe formatting of a string. Using format fails if the
 format string contains placeholders which are missing. Since these can
 be set by the user it is possible that they add unsupported items.
-This function will escape missing placeholders so that modules do not
+This function will show missing placeholders so that modules do not
 crash hard.
 
 __check_commands(cmd_list)__
@@ -504,6 +504,105 @@ Plays sound_file if possible. Requires `paplay` or `play`.
 __stop_sound()__
 
 Stops any currently playing sounds for this module.
+
+***
+
+
+## <a name="docstring"></a>Module documentation
+
+All contributed modules should have correct documentation.  This documentation is in a
+specific format and is used to generate user documentation.
+
+The docsting of a module is used.  The format is as follows:
+
+- Single line description of the module followed by a single blank line.
+
+- Longer description of the module providing more detail.
+
+- Configuration parameters.  This section describes the user setable
+  parameters for the module.  All parameters should be listed (in alphabetical
+  order). default values should be given in parentheses eg `(default 7)`.
+
+- Format status string parameters.  These are used for substituting values in
+  format strings. All parameters should be listed (in alphabetical
+  order) and describe the output that they provide.
+
+- Requires.  A list of all the additional requirements for the module to work.
+  These may be command line utilities, python librarys etc.
+
+- Example.  Example configerations for the module can be given.
+
+- Author and license.  Finally information on the modules author and a license
+  can be provided.
+
+Here is an example of a docstring.
+
+    """
+    Single line summary
+
+    Longer description of the module.  This should help users understand the
+    modules purpose.
+
+    Configuration parameters:
+        parameter: Explanation of this parameter (default <value>)
+        parameter_other: This parameter has a longer explanation that continues
+            onto a second line so it is indented.
+            (default <value>)
+
+    Format status string parameters:
+        {info} Description of the parameter
+
+    Requires:
+        program: Information about the program
+        python_lib: Information on the library
+
+    Example:
+
+    ```
+    module {
+        parameter = "Example"
+        parameter_other = 7
+    }
+    ```
+
+    @author <author>
+    @license <license>
+    """
+
+***
+
+
+## <a name="testing"></a>Module testing
+
+Each module should be able to run independantly for testing purposes.
+This is simply done by adding the following code to the bottom of your module.
+
+```
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
+```
+
+If a specific config should should be provided for the module test, this
+can be done as follows.
+
+```
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    config = {
+        'always_show': True,
+    }
+    from py3status.module_test import module_test
+    module_test(Py3status, config=config)
+```
+
+Such modules can then be tested independently by running
+`python path/to/module`
 
 ***
 

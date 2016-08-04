@@ -1,9 +1,8 @@
 *********
 py3status
 *********
-|version| |travis|
+|travis|
 
-.. |version| image:: https://img.shields.io/pypi/v/py3status.svg
 .. |travis| image:: https://travis-ci.org/ultrabug/py3status.svg?branch=master
 
 **py3status** is an extensible i3status wrapper written in python.

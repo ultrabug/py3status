@@ -93,14 +93,14 @@ from re import findall
 import math
 import subprocess
 
-BLOCKS = ["_", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
-CHARGING_CHARACTER = "⚡"
-EMPTY_BLOCK_CHARGING = '|'
-EMPTY_BLOCK_DISCHARGING = '⍀'
-FULL_BLOCK = '█'
-FORMAT = "{icon}"
-FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
-FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
+BLOCKS = [u"_", u"▁", u"▂", u"▃", u"▄", u"▅", u"▆", u"▇", u"█"]
+CHARGING_CHARACTER = u"⚡"
+EMPTY_BLOCK_CHARGING = u'|'
+EMPTY_BLOCK_DISCHARGING = u'⍀'
+FULL_BLOCK = u'█'
+FORMAT = u"{icon}"
+FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
+FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
 
 
 class Py3status:
@@ -273,7 +273,8 @@ class Py3status:
             active_battery = None
             inactive_battery = battery_list[:]
             for battery_id in range(0, len(battery_list)):
-                if battery_list[battery_id]["time_remaining"]:
+                if (battery_list[battery_id]["time_remaining"]
+                        and battery_list[battery_id]["time_remaining"] != '?'):
                     active_battery = battery_list[battery_id]
                     del inactive_battery[battery_id]
 
