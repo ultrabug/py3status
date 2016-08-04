@@ -24,7 +24,8 @@ I3STATUS_MODULES = [
 ]
 
 I3S_SINGLE_NAMES = ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
-
+I3S_ALLOWED_COLORS = ['color_bad', 'color_good', 'color_degraded',
+                      'color_separator']
 ERROR_CONFIG = '''
     general {colors = true interval = 60}
 

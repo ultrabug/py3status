@@ -12,7 +12,9 @@ from time import time, sleep
 
 from py3status.profiling import profile
 from py3status.events import IOPoller
-from py3status.constants import TIME_MODULES, TZTIME_FORMAT, TIME_FORMAT
+from py3status.constants import (
+        TIME_MODULES, TZTIME_FORMAT, TIME_FORMAT, I3S_ALLOWED_COLORS
+)
 
 
 class Tz(tzinfo):
@@ -250,7 +252,9 @@ class I3status(Thread):
             for key, value in section.items():
                 # don't include color values
                 if key.startswith('color'):
-                    continue
+                    if not (section_name == 'general' and
+                            key in I3S_ALLOWED_COLORS):
+                        continue
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
                 if section_name.split()[0] in TIME_MODULES:
