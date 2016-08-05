@@ -133,28 +133,8 @@ class Py3:
         """
         return time() + seconds
 
-    def safe_format(self, format_string, data):
+    def _safe_format(self, format_string, data):
         '''
-        Parser for advanced formating.
-
-        Unknown placeholders will be shown in the output eg `{foo}`
-
-        Square brackets `[]` can be used. The content of them will be removed
-        from the output if there is no valid placeholder contained within.
-        They can also be nested.
-        A pipe (vertical bar) `|` can be used to divide sections the first
-        valid section only will be shown in the output.
-        A backslash `\` can be used to escape a character eg `\[` will show `[`
-        in the output.
-        `{<placeholder>}` will be converted, or removed if it is None or empty.
-        Formating can also be applied to the placeholder eg
-        `{number:03.2f}`.
-
-        example format_string:
-        "[[{artist} - ]{title}]|{file}"
-        This will show `artist - title` if artist is present,
-        `title` if title but no artist,
-        and `file` if file is present but not artist or title.
         '''
 
         # we need to treat \{ and \} specially for the formatter
@@ -272,8 +252,77 @@ class Py3:
                 # Add the item if we are not blocking
                 parts[len(parts) - 1][0] += n
 
-        # Finally output our format string with the placeholders substituted.
-        return ''.join([p[0] for p in parts if p[1]]).format(**data)
+        return ''.join([p[0] for p in parts if p[1]])
+
+    def safe_format(self, format_string, data):
+        """
+        Parser for advanced formating.
+
+        Unknown placeholders will be shown in the output eg `{foo}`
+
+        Square brackets `[]` can be used. The content of them will be removed
+        from the output if there is no valid placeholder contained within.
+        They can also be nested.
+        A pipe (vertical bar) `|` can be used to divide sections the first
+        valid section only will be shown in the output.
+        A backslash `\` can be used to escape a character eg `\[` will show `[`
+        in the output.
+        `{<placeholder>}` will be converted, or removed if it is None or empty.
+        Formating can also be applied to the placeholder eg
+        `{number:03.2f}`.
+
+        example format_string:
+        "[[{artist} - ]{title}]|{file}"
+        This will show `artist - title` if artist is present,
+        `title` if title but no artist,
+        and `file` if file is present but not artist or title.
+        """
+        # Output our format string with the placeholders substituted.
+        return self._safe_format(format_string, data).format(**data)
+
+    def build_composite(self, format_string, data=None, composites=None):
+        """
+        Build composite output.
+
+        Takes a format_string and treats it the same way as safe_format but
+        also takes a composites dict where each key/value is the name of the
+        placeholderand either some output eg {'full_text': 'something} or a
+        list of outputs.
+        """
+        if data is None:
+            data = {}
+        if composites is None:
+            composites = {}
+
+        # Make sure that placeholders for our composites are kept by adding
+        # entries if not in data
+        my_data = data.copy()
+        for composite in composites:
+            if composite not in my_data:
+                my_data[composite] = True
+
+        output_format = self._safe_format(format_string, my_data)
+        parsed = list(Formatter().parse(output_format))
+
+        output = []
+        text = u''
+        for item in parsed:
+            text += item[0]
+            if item[1]:
+                if item[1] in data:
+                    text = '{}{}'.format(text, data[item[1]])
+                else:
+                    if text:
+                        output.append({'full_text': text})
+                        text = u''
+                    composite = composites[item[1]]
+                    if isinstance(composite, list):
+                        output += composite
+                    else:
+                        output.append(composite)
+        if text:
+            output.append({'full_text': text})
+        return output
 
     def check_commands(self, cmd_list):
         """

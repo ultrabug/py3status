@@ -198,17 +198,12 @@ class Py3status:
             format_control = self.format_button_closed
             format = self.format_closed
 
-        parts = findall('({[^}]*}|[^{]+)', format)
-
-        output = []
-        for part in parts:
-            if part == '{output}':
-                output += current_output
-            elif part == '{button}':
-                output += [{'full_text': format_control,
-                            'index': 'button'}]
-            else:
-                output += [{'full_text': part}]
+        button = {'full_text': format_control, 'index': 'button'}
+        composites = {
+            'output': current_output,
+            'button': button,
+        }
+        output = self.py3.build_composite(format, composites=composites)
 
         # FIXME always start contained items after container so they trigger
         # on the first run contained items may not be displayed so make sure we
