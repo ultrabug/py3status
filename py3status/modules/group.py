@@ -80,7 +80,6 @@ group disks {
 @author tobes
 """
 
-from re import findall
 from time import time
 
 
