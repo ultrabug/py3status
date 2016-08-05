@@ -233,9 +233,8 @@ class Py3statusWrapper():
                 continue
             try:
                 my_m = Module(module, user_modules, self)
-                # only start and handle modules with available methods
+                # only handle modules with available methods
                 if my_m.methods:
-                    my_m.start()
                     self.modules[module] = my_m
                 elif self.config['debug']:
                     self.log(
@@ -593,6 +592,13 @@ class Py3statusWrapper():
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
         self.create_output_modules()
+
+        # start all py3status modules.  We need self.output_modules to have
+        # been initiated before some modules can work correctly.
+        for module in self.output_modules.values():
+            self.log(module)
+            if module['type'] == 'py3status':
+                module['module'].start()
 
         # update queue populate with all py3modules
         self.queue.extend(self.modules)
