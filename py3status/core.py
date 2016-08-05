@@ -596,7 +596,6 @@ class Py3statusWrapper():
         # start all py3status modules.  We need self.output_modules to have
         # been initiated before some modules can work correctly.
         for module in self.output_modules.values():
-            self.log(module)
             if module['type'] == 'py3status':
                 module['module'].start()
 
