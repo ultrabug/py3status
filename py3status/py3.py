@@ -134,8 +134,11 @@ class Py3:
         return time() + seconds
 
     def _safe_format(self, format_string, param_dict):
-        '''
-        '''
+        """
+        Parse a format string. we make sure that no undefined parameters are
+        included in the format and if they do we escape them.  We also apply
+        rules around [ | ] etc.
+        """
 
         # we need to treat \{ and \} specially for the formatter
         # change them to {{ and }}
@@ -159,10 +162,10 @@ class Py3:
             return 'Invalid Format'
 
         def next_item(ignore_slash=False):
-            '''
+            """
             Get the next item from the pared info.  This will be a single
             character or placeholder and may be preceded by a backslash.
-            '''
+            """
             if Info.part >= len(parsed):
                 # We got to the end of the format string.
                 return None, None
