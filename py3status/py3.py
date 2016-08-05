@@ -133,7 +133,7 @@ class Py3:
         """
         return time() + seconds
 
-    def _safe_format(self, format_string, data):
+    def _safe_format(self, format_string, param_dict):
         '''
         '''
 
@@ -177,7 +177,7 @@ class Py3:
                     Info.char = None
                     param = parsed[Info.part][1]
                     Info.part += 1
-                    if data.get(param) is not None:
+                    if param_dict.get(param) is not None:
                         # valid placeholder so return it along with any extras
                         conversion = parsed[Info.part - 1][3]
                         if conversion:
@@ -186,7 +186,7 @@ class Py3:
                         if field_format:
                             param += ':%s' % field_format
                         return '{%s}' % param, True
-                    elif param not in data:
+                    elif param not in param_dict:
                         # Missing placeholder
                         return '{{%s}}' % param, True
                     else:
@@ -254,7 +254,7 @@ class Py3:
 
         return ''.join([p[0] for p in parts if p[1]])
 
-    def safe_format(self, format_string, data):
+    def safe_format(self, format_string, param_dict):
         """
         Parser for advanced formating.
 
@@ -278,9 +278,9 @@ class Py3:
         and `file` if file is present but not artist or title.
         """
         # Output our format string with the placeholders substituted.
-        return self._safe_format(format_string, data).format(**data)
+        return self._safe_format(format_string, param_dict).format(**param_dict)
 
-    def build_composite(self, format_string, data=None, composites=None):
+    def build_composite(self, format_string, param_dict=None, composites=None):
         """
         Build a composite output using a format string.
 
@@ -289,14 +289,14 @@ class Py3:
         placeholderand either an output eg `{'full_text': 'something'}` or a
         list of outputs.
         """
-        if data is None:
-            data = {}
+        if param_dict is None:
+            param_dict = {}
         if composites is None:
             composites = {}
 
         # Make sure that placeholders for our composites are kept by adding
-        # entries if not in data
-        my_data = data.copy()
+        # entries if not in param_dict
+        my_data = param_dict.copy()
         for composite in composites:
             if composite not in my_data:
                 my_data[composite] = True
@@ -309,8 +309,8 @@ class Py3:
         for item in parsed:
             text += item[0]
             if item[1]:
-                if item[1] in data:
-                    text = '{}{}'.format(text, data[item[1]])
+                if item[1] in param_dict:
+                    text = '{}{}'.format(text, param_dict[item[1]])
                 else:
                     if text:
                         output.append({'full_text': text})

@@ -484,7 +484,7 @@ Returns the time a given number of seconds into the future.
 Helpful for creating the `cached_until` value for the module
 output.
 
-__safe_format(format_string, data)__
+__safe_format(format_string, param_dict)__
 
 Parser for advanced formating.
 
@@ -512,7 +512,7 @@ This will show `artist - title` if artist is present,
 `title` if title but no artist,
 and `file` if file is present but not artist or title.
 
-__build_composite(format_string, data=None, composites=None)__
+__build_composite(format_string, param_dict=None, composites=None)__
 
 Build a composite output using a format string.
 
