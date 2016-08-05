@@ -9,7 +9,7 @@ import time
 from collections import deque
 from json import dumps
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
-from subprocess import Popen, call
+from subprocess import Popen
 from threading import Event
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb
@@ -235,7 +235,6 @@ class Py3statusWrapper():
                 my_m = Module(module, user_modules, self)
                 # only start and handle modules with available methods
                 if my_m.methods:
-                    my_m.start()
                     self.modules[module] = my_m
                 elif self.config['debug']:
                     self.log(
@@ -392,34 +391,44 @@ class Py3statusWrapper():
         except:
             pass
 
+    def refresh_modules(self, module_string=None, exact=True):
+        """
+        Update modules.
+        if module_string is None all modules are refreshed
+        if module_string then modules with the exact name or those starting
+        with the given string depending on exact parameter will be refreshed.
+        If a module is an i3status one then we refresh i3status.
+        To prevent abuse, we rate limit this function to 100ms for full
+        refreshes.
+        """
+        if not module_string:
+            if time.time() > (self.last_refresh_ts + 0.1):
+                self.last_refresh_ts = time.time()
+            else:
+                # rate limiting
+                return
+        update_i3status = False
+        for name, module in self.output_modules.items():
+            if (module_string is None or
+                    (exact and name == module_string) or
+                    (not exact and name.startswith(module_string))):
+                if module['type'] == 'py3status':
+                    if self.config['debug']:
+                        self.log('refresh py3status module {}'.format(name))
+                    module['module'].force_update()
+                else:
+                    if self.config['debug']:
+                        self.log('refresh i3status module {}'.format(name))
+                    update_i3status = True
+        if update_i3status:
+            self.i3status_thread.refresh_i3status()
+
     def sig_handler(self, signum, frame):
         """
         SIGUSR1 was received, the user asks for an immediate refresh of the bar
-        so we force i3status to refresh by sending it a SIGUSR1
-        and we clear all py3status modules' cache.
-
-        To prevent abuse, we rate limit this function to 100ms.
         """
-        if time.time() > (self.last_refresh_ts + 0.1):
-            self.log('received USR1, forcing refresh')
-
-            # send SIGUSR1 to i3status
-            call(['killall', '-s', 'USR1', 'i3status'])
-
-            # clear the cache of all modules
-            self.clear_modules_cache()
-
-            # reset the refresh timestamp
-            self.last_refresh_ts = time.time()
-        else:
-            self.log('received USR1 but rate limit is in effect, calm down')
-
-    def clear_modules_cache(self):
-        """
-        For every module, reset the 'cached_until' of all its methods.
-        """
-        for module in self.modules.values():
-            module.force_update()
+        self.log('received USR1')
+        self.refresh_modules()
 
     def terminate(self, signum, frame):
         """
@@ -435,17 +444,26 @@ class Py3statusWrapper():
             update = [update]
         self.queue.extend(update)
 
-        # find groups that use the modules updated
-        module_groups = self.i3status_thread.config['.module_groups']
-        groups_to_update = set()
+        # find containers that use the modules that updated
+        containers = self.i3status_thread.config['.module_groups']
+        containers_to_update = set()
         for item in update:
-            if item in module_groups:
-                groups_to_update.update(set(module_groups[item]))
-        # force groups to update
-        for group in groups_to_update:
-            group_module = self.output_modules.get(group)
-            if group_module:
-                group_module['module'].force_update()
+            if item in containers:
+                containers_to_update.update(set(containers[item]))
+        # force containers to update
+        for container in containers_to_update:
+            container_module = self.output_modules.get(container)
+            if container_module:
+                # If a container has registered a content_function we use that
+                # to see if the container needs to be updated.
+                # We only need to update containers if their active content has
+                # changed.
+                if container_module.get('content_function'):
+                    if set(update) & container_module['content_function']():
+                        container_module['module'].force_update()
+                else:
+                    # we don't know so just update.
+                    container_module['module'].force_update()
 
     def log(self, msg, level='info'):
         """
@@ -583,6 +601,13 @@ class Py3statusWrapper():
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
         self.create_output_modules()
+
+        # start modules
+        # self.output_modules needs to have been created before modules are
+        # started.  This is so that modules can do things like register their
+        # content_functionn.
+        for module in self.modules.values():
+            module.start()
 
         # update queue populate with all py3modules
         self.queue.extend(self.modules)
