@@ -282,11 +282,11 @@ class Py3:
 
     def build_composite(self, format_string, data=None, composites=None):
         """
-        Build composite output.
+        Build a composite output using a format string.
 
-        Takes a format_string and treats it the same way as safe_format but
+        Takes a format_string and treats it the same way as `safe_format` but
         also takes a composites dict where each key/value is the name of the
-        placeholderand either some output eg {'full_text': 'something} or a
+        placeholderand either an output eg `{'full_text': 'something'}` or a
         list of outputs.
         """
         if data is None:

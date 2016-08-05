@@ -512,6 +512,15 @@ This will show `artist - title` if artist is present,
 `title` if title but no artist,
 and `file` if file is present but not artist or title.
 
+__build_composite(format_string, data=None, composites=None)__
+
+Build a composite output using a format string.
+
+Takes a format_string and treats it the same way as `safe_format` but
+also takes a composites dict where each key/value is the name of the
+placeholderand either an output eg `{'full_text': 'something'}` or a
+list of outputs.
+
 __check_commands(cmd_list)__
 
 Checks to see if the shell commands in list are available using `which`.
