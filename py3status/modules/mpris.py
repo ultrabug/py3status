@@ -106,9 +106,9 @@ SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
 UNKNOWN = 'Unknown'
 UNKNOWN_TIME = '-:--'
 
-STOPPED = 0
+PLAYING = 0
 PAUSED = 1
-PLAYING = 2
+STOPPED = 2
 
 
 def _get_time_str(microseconds):
@@ -152,8 +152,8 @@ class Py3status:
     def __init__(self):
         self._dbus = None
         self._player = None
-        # TODO: Do this in worker thread but main thread has to wait...
-        self._init_data()
+        self._player_name = 'None'
+        self._player_subscription = None
 
     def _init_data(self):
         self._data = {
@@ -166,7 +166,6 @@ class Py3status:
             'player': UNKNOWN,
             'state': STOPPED,
             'state_symbol': UNKNOWN,
-            'time': UNKNOWN_TIME,
             'title': UNKNOWN
         }
 
@@ -176,10 +175,24 @@ class Py3status:
         try:
             self._data['player'] = self._player.Identity
             self._data['state'] = self._get_state()
+            self._update_metadata()
+        except Exception:
+            self._data['error_occurred'] = True
 
-            ptime_ms = self._player.Position
-            self._data['time'] = _get_time_str(ptime_ms)
+    def _on_change(self, bus, data, nop):
+        self._data['error_occurred'] = False
 
+        for field in data:
+            if field == 'Metadata':
+                self._update_metadata(data[field])
+            elif field == 'PlaybackStatus':
+                self._data['state'] = self._get_state(state=data[field])
+
+    def _update_metadata(self, metadata = None):
+        if metadata is None:
+            metadata = self._player.Metadata
+
+        try:
             metadata = self._player.Metadata
             if len(metadata) > 0:
                 url = metadata.get('xesam:url')
@@ -203,10 +216,6 @@ class Py3status:
         except Exception:
             self._data['error_occurred'] = True
 
-    # TODO: Implement this
-    def _on_change(self, bus, data, unknown):
-        self.format = "DEBUG"
-
     def _get_player(self, player):
         """
         Get dbus object
@@ -216,8 +225,13 @@ class Py3status:
         except Exception:
             return None
 
-    def _get_state(self):
-        playback_status = self._player.PlaybackStatus
+    def _get_state(self, player = None, state = None):
+        if state:
+            playback_status = state
+        elif player:
+            playback_status = player.PlaybackStatus
+        else:
+            playback_status = self._player.PlaybackStatus
 
         if playback_status == 'Playing':
             return PLAYING
@@ -225,16 +239,6 @@ class Py3status:
             return PAUSED
         else:
             return STOPPED
-
-    def _get_state_from_dbus(self, player):
-        """
-        Get the state of a player
-        """
-        player = self._get_player(player)
-        if player is None:
-            return 'None'
-
-        return player.PlaybackStatus
 
     def _get_state_format(self, i3s_config):
         if self._data['state'] == PLAYING:
@@ -249,7 +253,7 @@ class Py3status:
 
         return (color, state_symbol)
 
-    def _detect_running_player(self):
+    def _get_highest_prioritized(self):
         """
         Detect running player process, if any
         """
@@ -277,11 +281,14 @@ class Py3status:
                 players_prioritized += players
 
         for player_name in players_prioritized:
-            player_state = self._get_state_from_dbus(player_name)
+            player = self._get_player(player_name)
+            if player is None:
+                continue
+            player_state = self._get_state(player)
 
-            if player_state == 'Playing':
+            if player_state == PLAYING:
                 return player_name
-            elif player_state == 'Paused':
+            elif player_state == PAUSED:
                 players_paused.append(player_name)
             else:
                 players_stopped.append(player_name)
@@ -293,15 +300,28 @@ class Py3status:
 
         return 'None'
 
+    def _start_loop(self):
+        self._loop = GObject.MainLoop()
+        self._loop.run()
+
+    def _start_listener(self):
+        t = Thread(target=self._start_loop)
+        t.daemon = True
+        t.start()
+
     def _get_text(self, i3s_config):
         """
         Get the current metadata
         """
-        self._init_data()
-
         (color, self._data['state_symbol']) = self._get_state_format(i3s_config)
         if self._data['error_occurred']:
             color = i3s_config['color_bad']
+
+        try:
+            ptime_ms = self._player.Position
+            ptime = _get_time_str(ptime_ms)
+        except Exception:
+            ptime = UNKNOWN_TIME,
 
         if self._data['is_stream']:
             # delete the file extension
@@ -327,7 +347,7 @@ class Py3status:
                               album=self._data['album'],
                               artist=self._data['artist'],
                               length=self._data['length'],
-                              time=self._data['time'],
+                              time=ptime,
                               title=self._data['title']), color, update)
 
     def _get_control_states(self):
@@ -399,22 +419,26 @@ class Py3status:
 
         if self._dbus is None:
             self._dbus = SessionBus()
-            # TODO: First start: start thread which updates the needed data in time and update the current player
+            self._start_listener()
 
-        # TODO: Add new stated player to worker thread
-        # TODO: Worker thread should decide which player is the choosen one
-        # TODO: Worker thread also delete no longer available player in the list
-        running_player = self._detect_running_player()
+        running_player = self._get_highest_prioritized()
         if self._player is None or self._player_name != running_player:
+            # TODO: This should also works with "del self._player"
+            if self._player_subscription:
+                self._player_subscription.disconnect()
             self._player_name = running_player
             self._player = self._get_player(running_player)
+            self._init_data()
+            self._player_subscription = self._player.PropertiesChanged.connect(self._on_change)
 
         if self._player is None:
+            self._player = None
+            self._player_name = 'None'
+            self._player_subscription = None
             show_controls = None
             text = self.format_none
             color = i3s_config['color_bad']
         else:
-            # TODO: Call this in worker thread when player becomes first time active
             (text, color, cached_until) = self._get_text(i3s_config)
             self._control_states = self._get_control_states()
             response_buttons = self._get_response_buttons(i3s_config)
