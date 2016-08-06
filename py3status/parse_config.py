@@ -541,7 +541,7 @@ def process_config(config_path, py3_wrapper=None):
                 module['.group'] = parent
 
         # check module content
-        for k, v in module.items():
+        for k, v in list(module.items()):
             if k.startswith('on_click'):
                 # on_click event
                 process_onclick(k, v, name)
