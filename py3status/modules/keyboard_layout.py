@@ -4,13 +4,16 @@ Display the current active keyboard layout.
 
 Configuration parameters:
     cache_timeout: check for keyboard layout change every seconds
-    color: a single color value for all layouts. eg: "#FCE94F"
     colors: a comma separated string of color values for each layout,
-        eg: "us=#FCE94F, fr=#729FCF".
+        eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
     format: see placeholders below
 
 Format of status string placeholders:
     {layout} currently active keyboard layout
+
+Color options:
+    color_<layout>: color for the layout
+        eg color_fr = '#729FCF'
 
 Requires:
     xkblayout-state:
@@ -31,8 +34,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    color = None
-    colors = 'us=#729FCF, fr=#268BD2, ua=#FCE94F, ru=#F75252'
+    colors = None
     format = '{layout}'
 
     def __init__(self):
@@ -44,17 +46,33 @@ class Py3status:
             self._command = self._xkblayout
         except:
             self._command = self._xset
+        self.colors_dict = {}
+        # old default values for backwards compatability
+        self.defaults = {
+            'us': '#729FCF',
+            'fr': '#268BD2',
+            'ua': '#FCE94F',
+            'ru': '#F75252',
+        }
 
-    def keyboard_layout(self, i3s_output_list, i3s_config):
+    def keyboard_layout(self):
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': ''
         }
-        if not self.color:
+        if self.colors and not self.colors_dict:
             self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
                 layout.split('=') for layout in self.colors.split(',')))
+
         lang = self._command().strip() or '??'
-        lang_color = self.color if self.color else self.colors_dict.get(lang)
+
+        lang_color = getattr(self.py3, 'COLOR_%s' % lang.upper())
+        if not lang_color:
+            lang_color = self.colors_dict.get(lang)
+        if not lang_color:
+            # If not found try to use old default value
+            lang_color = self.defaults.get(lang)
+
         if lang_color:
             response['color'] = lang_color
 
@@ -93,15 +111,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_degraded': '#FFFF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.keyboard_layout([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
