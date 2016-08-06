@@ -582,15 +582,15 @@ class Py3statusWrapper():
         as the attribute.  this is used for finding colors for modules.
         """
         config = self.i3status_thread.config
-        color = config[name].get(attribute)
-        if not color and name in config['.module_groups']:
+        color = config[name].get(attribute, 'missing')
+        if color == 'missing' and name in config['.module_groups']:
             for module in config['.module_groups'][name]:
-                if config.get(module, {}).get(attribute):
+                if attribute in config.get(module, {}):
                     color = config[module].get(attribute)
                     break
-        if not color:
+        if color == 'missing':
             color = config['general'].get(attribute)
-        if not color:
+        if color == 'missing':
             if default:
                 color = self.get_config_attribute(name, default)
         return color
@@ -616,8 +616,7 @@ class Py3statusWrapper():
         """
         for output in outputs:
             # Color: substitute the config defined color
-            color = output.get('color')
-            if not color:
+            if 'color' not in output:
                 # Get the module name from the output.
                 module_name = '{} {}'.format(
                     output['name'], output.get('instance', '').split(' ')[0]
