@@ -188,7 +188,7 @@ class Py3status:
             elif field == 'PlaybackStatus':
                 self._data['state'] = self._get_state(state=data[field])
 
-    def _update_metadata(self, metadata = None):
+    def _update_metadata(self, metadata=None):
         if metadata is None:
             metadata = self._player.Metadata
 
@@ -225,7 +225,7 @@ class Py3status:
         except Exception:
             return None
 
-    def _get_state(self, player = None, state = None):
+    def _get_state(self, player=None, state=None):
         if state:
             playback_status = state
         elif player:
