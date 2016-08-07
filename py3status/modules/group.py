@@ -99,6 +99,9 @@ class Py3status:
     format_closed = u'{button}'
     open = True
 
+    class Meta:
+        container = True
+
     def __init__(self):
         self.items = []
         self.active = 0
@@ -109,7 +112,6 @@ class Py3status:
         if not self.items:
             self.cycle = 0
         self._cycle_time = time() + self.cycle
-        self.initialized = True
         self.open = bool(self.open)
         # set default format etc based on click_mode
         if self.format is None:
@@ -120,6 +122,15 @@ class Py3status:
         # if no button then force open
         if '{button}' not in self.format:
                 self.open = True
+        self.py3.register_content_function(self._content_function)
+        self.initialized = True
+
+    def _content_function(self):
+        '''
+        This returns a set containing the actively shown module.  This is so we
+        only get update events triggered for these modules.
+        '''
+        return set([self.items[self.active]])
 
     def _get_output(self):
         if not self.fixed_width:
@@ -207,6 +218,7 @@ class Py3status:
             else:
                 output += [{'full_text': part}]
 
+        # FIXME always start contained items after container so they trigger
         # on the first run contained items may not be displayed so make sure we
         # check them again to ensure all is correct
         if not ready:
@@ -250,12 +262,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {}
-
-    while True:
-        print(x.group([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

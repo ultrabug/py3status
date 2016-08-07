@@ -28,7 +28,7 @@ from pydbus import SystemBus
 from gi.repository import GObject
 from threading import Thread
 from os import path
-from time import time, sleep
+from time import sleep
 
 
 class Py3status:
@@ -91,8 +91,9 @@ class Py3status:
         return path.isfile(self.pidfile)
 
     # Method run by py3status
-    def return_status(self, i3s_outputs, i3s_config):
+    def return_status(self, i3s_output_list, i3s_config):
         """Returns response dict"""
+
         # Start signal handler thread if it should be running
         if not self.check_pid and not self.thread_started:
             self._start_handler_thread()
@@ -124,17 +125,12 @@ class Py3status:
 
         # Cache forever unless in check_pid mode
         if self.check_pid:
-            response["cached_until"] = time() + self.cache_timeout
+            response["cached_until"] = self.py3.time_in(self.cache_timeout)
         return response
 
-
 if __name__ == "__main__":
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.return_status([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

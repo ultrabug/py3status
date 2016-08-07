@@ -123,6 +123,8 @@ class Py3status:
             info = requests.get(url, 'GET', timeout=10, auth=auth)
         except requests.ConnectionError:
             return
+        except requests.ReadTimeout:
+            return
         if info and info.status_code == 200:
             return(int(info.json()['total_count']))
         if info.status_code == 422:
@@ -152,6 +154,8 @@ class Py3status:
             info = requests.get(url, timeout=10,
                                 auth=(self.username, self.auth_token))
         except requests.ConnectionError:
+            return
+        except requests.ReadTimeout:
             return
         if info.status_code == 200:
             return len(info.json())
@@ -224,3 +228,11 @@ class Py3status:
             cmd = 'xdg-open {}'.format(url)
             call(split(cmd))
             self.py3.prevent_refresh()
+
+
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
