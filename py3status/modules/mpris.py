@@ -162,7 +162,6 @@ class Py3status:
             'error_occurred': False,
             'is_stream': False,
             'length': UNKNOWN_TIME,
-            'length_ms': None,
             'player': UNKNOWN,
             'state': STOPPED,
             'state_symbol': UNKNOWN,
@@ -188,6 +187,8 @@ class Py3status:
             elif field == 'PlaybackStatus':
                 self._data['state'] = self._get_state(state=data[field])
 
+        self.py3.update()
+
     def _update_metadata(self, metadata=None):
         if metadata is None:
             metadata = self._player.Metadata
@@ -207,9 +208,9 @@ class Py3status:
                     # media we handle just like streams
                     self._data['is_stream'] = True
 
-                self._data['length_ms'] = metadata.get('mpris:length')
-                if self._data['length_ms'] is not None:
-                    self._data['length'] = _get_time_str(self._data['length_ms'])
+                length_ms = metadata.get('mpris:length')
+                if length_ms is not None:
+                    self._data['length'] = _get_time_str(length_ms)
             else:
                 # use stream format if no metadata is available
                 self._data['is_stream'] = True
@@ -317,12 +318,6 @@ class Py3status:
         if self._data['error_occurred']:
             color = i3s_config['color_bad']
 
-        try:
-            ptime_ms = self._player.Position
-            ptime = _get_time_str(ptime_ms)
-        except Exception:
-            ptime = UNKNOWN_TIME,
-
         if self._data['is_stream']:
             # delete the file extension
             self._data['title'] = re.sub(r'\....$', '', self._data['title'])
@@ -330,17 +325,17 @@ class Py3status:
         else:
             format = self.format
 
-        update = time() + i3s_config['interval']
-        if self._data['state'] == PLAYING and self._data['length_ms'] is not None:
-            try:
-                time_ms = self._player.Position
-            except Exception:
-                time_ms = 0
-            left_s = int((self._data['length_ms'] - time_ms) / 1000000)
-            if left_s < i3s_config['interval']:
-                update = time() + left_s
-            elif '{time}' in format:
-                update = time() + 1
+        try:
+            ptime_ms = self._player.Position
+            ptime = _get_time_str(ptime_ms)
+        except Exception:
+            ptime = UNKNOWN_TIME
+
+        if '{time}' in format and self._data['state'] == PLAYING:
+            # Don't get trapped in aliasing errors!
+            update = time() + 0.5
+        else:
+            update = time() + i3s_config['interval']
 
         return (format.format(player=self._data['player'],
                               state=self._data['state_symbol'],
