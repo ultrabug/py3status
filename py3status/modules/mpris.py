@@ -34,7 +34,7 @@ Configuration parameters:
     state_stop: text for placeholder {state} when song is stopped
     player_priority: priority of the players.
             Keep in mind that the state has a higher priority than
-            player_priority. So when player_priority is "mpd,bomi" and mpd is
+            player_priority. So when player_priority is "[mpd, bomi]" and mpd is
             paused and bomi is playing than bomi wins.
 
 Format of status string placeholders:
@@ -54,15 +54,7 @@ mpris {
     format_none = "no player"
     show_controls = "left"
     buttons_order = "previous,play,next"
-    player_priority = "mpd,cantata,vlc,bomi,*"
-}
-```
-
-only show information from vlc:
-
-```
-mpris {
-    player_priority = "vlc"
+    player_priority = "[mpd, cantata, vlc, bomi, *]"
 }
 ```
 
@@ -70,7 +62,7 @@ only show information from mpd and vlc, but mpd has a higher priority:
 
 ```
 mpris {
-    player_priority = "mpd,vlc"
+    player_priority = "[mpd, vlc]"
 }
 ```
 
@@ -78,7 +70,15 @@ show information of all players, but mpd and vlc have the highest priority:
 
 ```
 mpris {
-    player_priority = "mpd,vlc,*"
+    player_priority = "[mpd, vlc, *]"
+}
+```
+
+vlc has the lowest priority:
+
+```
+mpris {
+    player_priority = "[*, vlc]"
 }
 ```
 
@@ -132,7 +132,8 @@ class Py3status:
     color_playing = None
     color_stopped = None
     cache_timeout = 10
-    format = '[{state} {artist} - {title}]|{title}'
+    format = '[{state} {artist} - {title}]|[{state} {title}]'
+    # TODO: Use substituted formatings in "format" to make this obsolete
     format_none = 'no player running'
     icon_pause = '▮▮'
     icon_play = '▶'
@@ -142,7 +143,7 @@ class Py3status:
     show_controls = None
     state_pause = '▮▮'
     state_play = '▶'
-    player_priority = None
+    player_priority = []
 
     def __init__(self):
         self._dbus = None
@@ -264,17 +265,23 @@ class Py3status:
                 player = re.sub(r'%s' % SERVICE_BUS_REGEX, '', player)
                 players.append(player)
 
-        if self.player_priority is None:
+        if len(self.player_priority) == 0:
             players_prioritized = players
         else:
-            player_priority = self.player_priority.split(',')
-
-            for player_name in player_priority:
-                if player_name in players:
+            wildcard = []
+            lowest = []
+            for player_name in self.player_priority:
+                if player_name is '*':
+                    wildcard = players
+                elif player_name in players:
                     players.remove(player_name)
-                    players_prioritized.append(player_name)
-            if '*' in player_priority:
-                players_prioritized += players
+                    if len(wildcard) > 0:
+                        if player_name in wildcard:
+                            wildcard.remove(player_name)
+                        lowest.append(player_name)
+                    else:
+                        players_prioritized.append(player_name)
+            players_prioritized = wildcard + lowest
 
         for player_name in players_prioritized:
             player = self._get_player(player_name)
