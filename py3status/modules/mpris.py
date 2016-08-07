@@ -184,63 +184,18 @@ class Py3status:
 
         self.py3.update()
 
-    def _update_metadata(self, metadata=None):
-        is_stream = False
+    def _get_button_state(self, control_state):
+        clickable = getattr(self._player, control_state['clickable'], True)
 
-        if metadata is None:
-            metadata = self._player.Metadata
+        if control_state['action'] == 'Play' and self._data['state'] == PLAYING:
+            clickable = False
+        elif control_state['action'] == 'Pause' and (
+             self._data['state'] == STOPPED or self._data['state'] == PAUSED):
+            clickable = False
+        elif control_state['action'] == 'Stop' and self._data['state'] == STOPPED:
+            clickable = False
 
-        try:
-            metadata = self._player.Metadata
-            if len(metadata) > 0:
-                url = metadata.get('xesam:url')
-                is_stream = url is not None and 'file://' not in url
-                self._data['title'] = metadata.get('xesam:title')
-                self._data['album'] = metadata.get('xesam:album')
-
-                if metadata.get('xesam:artist') is not None:
-                    self._data['artist'] = metadata.get('xesam:artist')[0]
-                else:
-                    # we assume here that we playing a video and these types of
-                    # media we handle just like streams
-                    is_stream = True
-
-                length_ms = metadata.get('mpris:length')
-                if length_ms is not None:
-                    self._data['length'] = _get_time_str(length_ms)
-            else:
-                # use stream format if no metadata is available
-                is_stream = True
-        except Exception:
-            self._data['error_occurred'] = True
-
-        if is_stream and self._data['title']:
-            # delete the file extension
-            self._data['title'] = re.sub(r'\....$', '', self._data['title'])
-
-    def _get_player(self, player):
-        """
-        Get dbus object
-        """
-        try:
-            return self._dbus.get(SERVICE_BUS + '.%s' % player, SERVICE_BUS_URL)
-        except Exception:
-            return None
-
-    def _get_state(self, player=None, state=None):
-        if state:
-            playback_status = state
-        elif player:
-            playback_status = player.PlaybackStatus
-        else:
-            playback_status = self._player.PlaybackStatus
-
-        if playback_status == 'Playing':
-            return PLAYING
-        elif playback_status == 'Paused':
-            return PAUSED
-        else:
-            return STOPPED
+        return clickable
 
     def _get_highest_prioritized(self):
         """
@@ -295,14 +250,29 @@ class Py3status:
 
         return 'None'
 
-    def _start_loop(self):
-        self._loop = GObject.MainLoop()
-        self._loop.run()
+    def _get_player(self, player):
+        """
+        Get dbus object
+        """
+        try:
+            return self._dbus.get(SERVICE_BUS + '.%s' % player, SERVICE_BUS_URL)
+        except Exception:
+            return None
 
-    def _start_listener(self):
-        t = Thread(target=self._start_loop)
-        t.daemon = True
-        t.start()
+    def _get_state(self, player=None, state=None):
+        if state:
+            playback_status = state
+        elif player:
+            playback_status = player.PlaybackStatus
+        else:
+            playback_status = self._player.PlaybackStatus
+
+        if playback_status == 'Playing':
+            return PLAYING
+        elif playback_status == 'Paused':
+            return PAUSED
+        else:
+            return STOPPED
 
     def _get_text(self, i3s_config):
         """
@@ -371,19 +341,6 @@ class Py3status:
 
         return control_states
 
-    def _get_button_state(self, control_state):
-        clickable = getattr(self._player, control_state['clickable'], True)
-
-        if control_state['action'] == 'Play' and self._data['state'] == PLAYING:
-            clickable = False
-        elif control_state['action'] == 'Pause' and (
-             self._data['state'] == STOPPED or self._data['state'] == PAUSED):
-            clickable = False
-        elif control_state['action'] == 'Stop' and self._data['state'] == STOPPED:
-            clickable = False
-
-        return clickable
-
     def _get_response_buttons(self, i3s_config):
         response = []
         buttons_order = self.buttons_order.split(',')
@@ -406,6 +363,49 @@ class Py3status:
             })
 
         return response
+
+    def _start_loop(self):
+        self._loop = GObject.MainLoop()
+        self._loop.run()
+
+    def _start_listener(self):
+        t = Thread(target=self._start_loop)
+        t.daemon = True
+        t.start()
+
+    def _update_metadata(self, metadata=None):
+        is_stream = False
+
+        if metadata is None:
+            metadata = self._player.Metadata
+
+        try:
+            metadata = self._player.Metadata
+            if len(metadata) > 0:
+                url = metadata.get('xesam:url')
+                is_stream = url is not None and 'file://' not in url
+                self._data['title'] = metadata.get('xesam:title')
+                self._data['album'] = metadata.get('xesam:album')
+
+                if metadata.get('xesam:artist') is not None:
+                    self._data['artist'] = metadata.get('xesam:artist')[0]
+                else:
+                    # we assume here that we playing a video and these types of
+                    # media we handle just like streams
+                    is_stream = True
+
+                length_ms = metadata.get('mpris:length')
+                if length_ms is not None:
+                    self._data['length'] = _get_time_str(length_ms)
+            else:
+                # use stream format if no metadata is available
+                is_stream = True
+        except Exception:
+            self._data['error_occurred'] = True
+
+        if is_stream and self._data['title']:
+            # delete the file extension
+            self._data['title'] = re.sub(r'\....$', '', self._data['title'])
 
     def mpris(self, i3s_output_list, i3s_config):
         """
