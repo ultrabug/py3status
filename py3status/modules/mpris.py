@@ -499,7 +499,7 @@ class Py3status:
             return
 
         control_state = self._control_states[index]
-        if self._get_button_state(control_state):
+        if self._player and self._get_button_state(control_state):
             getattr(self._player, self._control_states[index]['action'])()
 
 if __name__ == "__main__":
