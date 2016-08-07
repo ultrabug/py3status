@@ -156,11 +156,9 @@ class Py3status:
             'album': None,
             'artist': None,
             'error_occurred': False,
-            'is_stream': False,
             'length': None,
             'player': None,
             'state': STOPPED,
-            'state_symbol': None,
             'title': None
         }
 
@@ -186,6 +184,8 @@ class Py3status:
         self.py3.update()
 
     def _update_metadata(self, metadata=None):
+        is_stream = False
+
         if metadata is None:
             metadata = self._player.Metadata
 
@@ -193,7 +193,7 @@ class Py3status:
             metadata = self._player.Metadata
             if len(metadata) > 0:
                 url = metadata.get('xesam:url')
-                self._data['is_stream'] = url is not None and 'file://' not in url
+                is_stream = url is not None and 'file://' not in url
                 self._data['title'] = metadata.get('xesam:title')
                 self._data['album'] = metadata.get('xesam:album')
 
@@ -202,16 +202,20 @@ class Py3status:
                 else:
                     # we assume here that we playing a video and these types of
                     # media we handle just like streams
-                    self._data['is_stream'] = True
+                    is_stream = True
 
                 length_ms = metadata.get('mpris:length')
                 if length_ms is not None:
                     self._data['length'] = _get_time_str(length_ms)
             else:
                 # use stream format if no metadata is available
-                self._data['is_stream'] = True
+                is_stream = True
         except Exception:
             self._data['error_occurred'] = True
+
+        if is_stream:
+            # delete the file extension
+            self._data['title'] = re.sub(r'\....$', '', self._data['title'])
 
     def _get_player(self, player):
         """
@@ -236,19 +240,6 @@ class Py3status:
             return PAUSED
         else:
             return STOPPED
-
-    def _get_state_format(self, i3s_config):
-        if self._data['state'] == PLAYING:
-            color = self.color_playing or i3s_config['color_good']
-            state_symbol = self.state_play
-        elif self._data['state'] == PAUSED:
-            color = self.color_paused or i3s_config['color_degraded']
-            state_symbol = self.state_pause
-        else:
-            color = self.color_stopped or i3s_config['color_bad']
-            state_symbol = self.state_stop
-
-        return (color, state_symbol)
 
     def _get_highest_prioritized(self):
         """
@@ -316,13 +307,18 @@ class Py3status:
         """
         Get the current metadata
         """
-        (color, self._data['state_symbol']) = self._get_state_format(i3s_config)
+        if self._data['state'] == PLAYING:
+            color = self.color_playing or i3s_config['color_good']
+            state_symbol = self.state_play
+        elif self._data['state'] == PAUSED:
+            color = self.color_paused or i3s_config['color_degraded']
+            state_symbol = self.state_pause
+        else:
+            color = self.color_stopped or i3s_config['color_bad']
+            state_symbol = self.state_stop
+
         if self._data['error_occurred']:
             color = i3s_config['color_bad']
-
-        if self._data['is_stream']:
-            # delete the file extension
-            self._data['title'] = re.sub(r'\....$', '', self._data['title'])
 
         try:
             ptime_ms = self._player.Position
@@ -336,13 +332,19 @@ class Py3status:
         else:
             update = time() + self.cache_timeout
 
-        return (self.format.format(player=self._data['player'],
-                                   state=self._data['state_symbol'],
-                                   album=self._data['album'],
-                                   artist=self._data['artist'],
-                                   length=self._data['length'],
-                                   time=ptime,
-                                   title=self._data['title']), color, update)
+        placeholders = {
+            'player': self._data['player'],
+            'state': state_symbol,
+            'album': self._data['album'],
+            'artist': self._data['artist'],
+            'length': self._data['length'],
+            'time': ptime,
+            'title': self._data['title']
+        }
+
+        return (self.py3.safe_format(self.format, placeholders),
+                color,
+                update)
 
     def _get_control_states(self):
         control_states = {
