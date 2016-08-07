@@ -85,7 +85,7 @@ mpris {
 Requires:
     pydbus
 
-@author Moritz Lüdecke
+@author Moritz Lüdecke, tobes
 """
 
 from datetime import timedelta
@@ -172,6 +172,12 @@ class Py3status:
             self._update_metadata()
         except Exception:
             self._data['error_occurred'] = True
+
+    def _on_available_players_changed(self, *args):
+        if len(args) < 6:
+            return
+        if args[5][0].startswith('org.mpris.MediaPlayer2'):
+            self.py3.update()
 
     def _on_change(self, bus, data, nop):
         self._data['error_occurred'] = False
@@ -313,7 +319,7 @@ class Py3status:
             'title': self._data['title']
         }
 
-        return (self.py3.build_composite(self.format, placeholders),
+        return (self.py3.safe_format(self.format, placeholders),
                 color,
                 update)
 
@@ -369,6 +375,15 @@ class Py3status:
         self._loop.run()
 
     def _start_listener(self):
+        self._dbus.con.signal_subscribe(
+            None,
+            'org.freedesktop.DBus',
+            'NameOwnerChanged',
+            None,
+            None,
+            0,
+            self._on_available_players_changed,
+        )
         t = Thread(target=self._start_loop)
         t.daemon = True
         t.start()
