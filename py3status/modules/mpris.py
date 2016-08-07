@@ -50,7 +50,7 @@ i3status.conf example:
 
 ```
 mpris {
-    format = "{player}: {state} [[{artist} - {title}]|[{title}]] {time} / {length}"
+    format = "{player}: {state} [[{artist} - {title}]|[{title}]] [\[{time} / {length}\]]"
     format_none = "no player"
     show_controls = "left"
     buttons_order = "previous,play,next"
@@ -85,7 +85,7 @@ mpris {
 Requires:
     pydbus
 
-@author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe, Moritz Lüdecke
+@author Moritz Lüdecke
 """
 
 from datetime import timedelta
