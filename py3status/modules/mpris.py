@@ -14,15 +14,13 @@ Configuration parameters:
     button_previous: mouse button to play the previous entry
     buttons_order: order of the buttons play, pause, toggle, stop, next and
             previous
+    cache_timeout: How often we refresh this module in seconds
     color_control_inactive: button color if button is not clickable
     color_control_active: button color if button is clickable
     color_paused: text color when song is paused, defaults to color_degraded
     color_playing: text color when song is playing, defaults to color_good
     color_stopped: text color when song is stopped, defaults to color_bad
     format: see placeholders below
-    format_stream: see placeholders below, keep in mind that {artist} and
-            {album} are empty. This format is also used for videos or just media
-            files without an artist information or any other metadata!
     format_none: define output if no player is running
     icon_pause: text for the pause button in the button control panel
     icon_play: text for the play button in the button control panel
@@ -52,8 +50,7 @@ i3status.conf example:
 
 ```
 mpris {
-    format = "{player}: {state} {artist} - {title} [{time} / {length}]"
-    format_stream = "{player}: {state} {title} [{time} / {length}]"
+    format = "{player}: {state} [[{artist} - {title}]|[{title}]] {time} / {length}"
     format_none = "no player"
     show_controls = "left"
     buttons_order = "previous,play,next"
@@ -103,8 +100,6 @@ SERVICE_BUS = 'org.mpris.MediaPlayer2'
 INTERFACE = SERVICE_BUS + '.Player'
 SERVICE_BUS_URL = '/org/mpris/MediaPlayer2'
 SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
-UNKNOWN = 'Unknown'
-UNKNOWN_TIME = '-:--'
 
 PLAYING = 0
 PAUSED = 1
@@ -136,8 +131,8 @@ class Py3status:
     color_paused = None
     color_playing = None
     color_stopped = None
-    format = '{state} {artist} - {title}'
-    format_stream = '{state} {title}'
+    cache_timeout = 10
+    format = '[{state} {artist} - {title}]|{title}'
     format_none = 'no player running'
     icon_pause = '▮▮'
     icon_play = '▶'
@@ -157,15 +152,15 @@ class Py3status:
 
     def _init_data(self):
         self._data = {
-            'album': UNKNOWN,
-            'artist': UNKNOWN,
+            'album': None,
+            'artist': None,
             'error_occurred': False,
             'is_stream': False,
-            'length': UNKNOWN_TIME,
-            'player': UNKNOWN,
+            'length': None,
+            'player': None,
             'state': STOPPED,
-            'state_symbol': UNKNOWN,
-            'title': UNKNOWN
+            'state_symbol': None,
+            'title': None
         }
 
         if self._player is None:
@@ -198,8 +193,8 @@ class Py3status:
             if len(metadata) > 0:
                 url = metadata.get('xesam:url')
                 self._data['is_stream'] = url is not None and 'file://' not in url
-                self._data['title'] = metadata.get('xesam:title') or UNKNOWN
-                self._data['album'] = metadata.get('xesam:album') or UNKNOWN
+                self._data['title'] = metadata.get('xesam:title')
+                self._data['album'] = metadata.get('xesam:album')
 
                 if metadata.get('xesam:artist') is not None:
                     self._data['artist'] = metadata.get('xesam:artist')[0]
@@ -321,29 +316,26 @@ class Py3status:
         if self._data['is_stream']:
             # delete the file extension
             self._data['title'] = re.sub(r'\....$', '', self._data['title'])
-            format = self.format_stream
-        else:
-            format = self.format
 
         try:
             ptime_ms = self._player.Position
             ptime = _get_time_str(ptime_ms)
         except Exception:
-            ptime = UNKNOWN_TIME
+            ptime = None
 
-        if '{time}' in format and self._data['state'] == PLAYING:
+        if '{time}' in self.format and self._data['state'] == PLAYING:
             # Don't get trapped in aliasing errors!
             update = time() + 0.5
         else:
-            update = time() + i3s_config['interval']
+            update = time() + self.cache_timeout
 
-        return (format.format(player=self._data['player'],
-                              state=self._data['state_symbol'],
-                              album=self._data['album'],
-                              artist=self._data['artist'],
-                              length=self._data['length'],
-                              time=ptime,
-                              title=self._data['title']), color, update)
+        return (self.format.format(player=self._data['player'],
+                                   state=self._data['state_symbol'],
+                                   album=self._data['album'],
+                                   artist=self._data['artist'],
+                                   length=self._data['length'],
+                                   time=ptime,
+                                   title=self._data['title']), color, update)
 
     def _get_control_states(self):
         control_states = {
@@ -409,7 +401,7 @@ class Py3status:
         """
         Get the current output format and return it.
         """
-        cached_until = time() + i3s_config['interval']
+        cached_until = time() + self.cache_timeout
         show_controls = self.show_controls
 
         if self._dbus is None:
