@@ -135,14 +135,14 @@ class Py3status:
     format = '[{state} {artist} - {title}]|[{state} {title}]'
     # TODO: Use substituted formatings in "format" to make this obsolete
     format_none = 'no player running'
-    icon_pause = '▮▮'
-    icon_play = '▶'
-    icon_stop = '◾'
-    icon_next = '»'
-    icon_previous = '«'
+    icon_pause = u'▮▮'
+    icon_play = u'▶'
+    icon_stop = u'◾'
+    icon_next = u'»'
+    icon_previous = u'«'
     show_controls = None
-    state_pause = '▮▮'
-    state_play = '▶'
+    state_pause = u'▮▮'
+    state_play = u'▶'
     player_priority = []
 
     def __init__(self):
@@ -425,7 +425,8 @@ class Py3status:
             self._player_name = running_player
             self._player = self._get_player(running_player)
             self._init_data()
-            self._player_subscription = self._player.PropertiesChanged.connect(self._on_change)
+            if self._player is not None:
+                self._player_subscription = self._player.PropertiesChanged.connect(self._on_change)
 
         if self._player is None:
             self._player = None
