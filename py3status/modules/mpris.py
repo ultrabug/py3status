@@ -143,6 +143,7 @@ class Py3status:
     show_controls = None
     state_pause = u'▮▮'
     state_play = u'▶'
+    state_stop = u'◾'
     player_priority = []
 
     def __init__(self):
@@ -213,7 +214,7 @@ class Py3status:
         except Exception:
             self._data['error_occurred'] = True
 
-        if is_stream:
+        if is_stream and self._data['title']:
             # delete the file extension
             self._data['title'] = re.sub(r'\....$', '', self._data['title'])
 
