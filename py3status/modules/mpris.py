@@ -132,7 +132,7 @@ class Py3status:
     color_playing = None
     color_stopped = None
     cache_timeout = 10
-    format = '[{state} {artist} - {title}]|[{state} {title}]'
+    format = '{state} [{artist} - {title}]|[{title}]'
     # TODO: Use substituted formatings in "format" to make this obsolete
     format_none = 'no player running'
     icon_pause = u'▮▮'
@@ -313,7 +313,7 @@ class Py3status:
             'title': self._data['title']
         }
 
-        return (self.py3.safe_format(self.format, placeholders),
+        return (self.py3.build_composite(self.format, placeholders),
                 color,
                 update)
 
