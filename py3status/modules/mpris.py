@@ -42,6 +42,14 @@ Format of status string placeholders:
     {time} played time of the song
     {title} name of the song
 
+Format of button placeholders:
+    {next} play the next title
+    {pause} pause the player
+    {play} play the player
+    {previous} play the previous title
+    {stop} stop the player
+    {toggle} toggle between play and pause
+
 i3status.conf example:
 
 ```
