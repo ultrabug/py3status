@@ -205,6 +205,7 @@ class Module(Thread):
             align = self.module_options['align']
 
         # update all components
+        color = response.get('color')
         for index, item in enumerate(response['composite']):
             # validate the response
             if 'full_text' not in item:
@@ -227,6 +228,10 @@ class Module(Thread):
             # set align
             if align:
                 item['align'] = align
+            # If a color was supplied for the composite and a composite
+            # part does not supply a color, use the composite color.
+            if color and 'color' not in item:
+                item['color'] = color
 
     def _params_type(self, method_name, instance):
         """
