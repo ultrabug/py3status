@@ -54,7 +54,7 @@ i3status.conf example:
 
 ```
 mpris {
-    format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]] [\[{time} / {length}\]]"
+    format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]]"
     format_none = "no player"
     player_priority = "[mpd, cantata, vlc, bomi, *]"
 }
