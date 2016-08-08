@@ -224,7 +224,7 @@ class Py3:
                     n += m
             return n, found
 
-        parts = [['', True]]
+        parts = [['', True, 0]]
         level = 0
         block_level = None
         # We will go through the parsed format string one character/placeholder
@@ -237,12 +237,24 @@ class Py3:
             if found:
                 # A placeholder exists so this section is valid
                 parts[len(parts) - 1][1] = True
+                # We need to work out which other sections depend on this one
+                # so that we can make sure they are shown.
+                # [ [ ] | [ ] ] [show [{placeholder}] | [ ] ]
+                fix_level = level
+                for i in range(len(parts) - 2, 0, -1):
+                    part_level = parts[i][2]
+                    if part_level >= fix_level:
+                        continue
+                    parts[i][1] = True
+                    if part_level == 0:
+                        break
+                    fix_level = part_level
             if n == '':
                 continue
             if n == '[':
                 # Start a new section
-                parts.append(['', False])
                 level += 1
+                parts.append(['', False, level])
                 continue
             if n == ']':
                 # Section finished remove if no placeholders found
