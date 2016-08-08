@@ -444,10 +444,10 @@ class Py3status:
             self._player_subscription = None
             text = self.format_none
             color = i3s_config['color_bad']
-            composite = ({
+            composite = [{
                 'full_text': text,
                 'color': color,
-            })
+            }]
         else:
             (text, color, cached_until) = self._get_text(i3s_config)
             self._control_states = self._get_control_states()
