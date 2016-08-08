@@ -8,11 +8,10 @@ button in the text information or by using buttons. For former you have
 to define the button parameters in the i3status config.
 
 Configuration parameters:
-    button_stop: mouse button to stop the player
-    button_toggle: mouse button to toggle between play and pause mode
-    button_next: mouse button to play the next entry
-    button_previous: mouse button to play the previous entry
-    cache_timeout: How often we refresh this module in seconds
+    button_stop: mouse button to stop the player (default None)
+    button_toggle: mouse button to toggle between play and pause mode (default 1)
+    button_next: mouse button to play the next entry (default 4)
+    button_previous: mouse button to play the previous entry (default 5)
     color_control_inactive: button color if button is not clickable
     color_control_active: button color if button is clickable
     color_paused: text color when song is paused, defaults to color_degraded
@@ -20,15 +19,15 @@ Configuration parameters:
     color_stopped: text color when song is stopped, defaults to color_bad
     format: see placeholders below
     format_none: define output if no player is running
-    icon_pause: text for the pause button in the button control panel
-    icon_play: text for the play button in the button control panel
-    icon_stop: text for the stop button in the button control panel
-    icon_next: text for the next button in the button control panel
-    icon_previous: text for the previous button in the button control panel
-    state_pause: text for placeholder {state} when song is paused
-    state_play: text for placeholder {state} when song is playing
-    state_stop: text for placeholder {state} when song is stopped
-    player_priority: priority of the players.
+    icon_pause: text for the pause button in the button control panel (default ▮)
+    icon_play: text for the play button in the button control panel (default ▶)
+    icon_stop: text for the stop button in the button control panel (default ◾)
+    icon_next: text for the next button in the button control panel (default »)
+    icon_previous: text for the previous button in the button control panel (default «)
+    state_pause: text for placeholder {state} when song is paused (default ▮)
+    state_play: text for placeholder {state} when song is playing (default ▶)
+    state_stop: text for placeholder {state} when song is stopped (default ◾)
+    player_priority: priority of the players. (default [])
             Keep in mind that the state has a higher priority than
             player_priority. So when player_priority is "[mpd, bomi]" and mpd is
             paused and bomi is playing than bomi wins.
@@ -87,6 +86,12 @@ mpris {
 Requires:
     pydbus
 
+Tested players:
+    bomi
+    Cantata
+    mpDris2 (mpris extension for mpd)
+    vlc
+
 @author Moritz Lüdecke, tobes
 """
 
@@ -132,7 +137,6 @@ class Py3status:
     color_paused = None
     color_playing = None
     color_stopped = None
-    cache_timeout = 10
     format = '{previous}{toggle}{next} {state}[ [{artist} - {title}]| {title}]'
     format_none = 'no player running'
     icon_pause = u'▮'
@@ -306,7 +310,7 @@ class Py3status:
             # Don't get trapped in aliasing errors!
             update = time() + 0.5
         else:
-            update = time() + self.cache_timeout
+            update = self.py3.CACHE_FOREVER
 
         placeholders = {
             'player': self._data['player'],
@@ -421,7 +425,7 @@ class Py3status:
         """
         Get the current output format and return it.
         """
-        cached_until = time() + self.cache_timeout
+        cached_until = self.py3.CACHE_FOREVER
 
         if self._dbus is None:
             self._dbus = SessionBus()
@@ -429,7 +433,6 @@ class Py3status:
 
         running_player = self._get_highest_prioritized()
         if self._player is None or self._player_name != running_player:
-            # TODO: This should also works with "del self._player"
             if self._player_subscription:
                 self._player_subscription.disconnect()
             self._player_name = running_player
