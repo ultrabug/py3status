@@ -4,7 +4,7 @@ Display information about the current song and video playing on player with
 mpris support.
 
 There are two ways to control the media player. Either by clicking with a mouse
-button in the text information or by using show_controls. For former you have
+button in the text information or by using buttons. For former you have
 to define the button parameters in the i3status config.
 
 Configuration parameters:
@@ -12,8 +12,6 @@ Configuration parameters:
     button_toggle: mouse button to toggle between play and pause mode
     button_next: mouse button to play the next entry
     button_previous: mouse button to play the previous entry
-    buttons_order: order of the buttons play, pause, toggle, stop, next and
-            previous
     cache_timeout: How often we refresh this module in seconds
     color_control_inactive: button color if button is not clickable
     color_control_active: button color if button is clickable
@@ -27,8 +25,6 @@ Configuration parameters:
     icon_stop: text for the stop button in the button control panel
     icon_next: text for the next button in the button control panel
     icon_previous: text for the previous button in the button control panel
-    show_controls: where to show the control buttons (see buttons_order).
-            Can be left, right or none
     state_pause: text for placeholder {state} when song is paused
     state_play: text for placeholder {state} when song is playing
     state_stop: text for placeholder {state} when song is stopped
@@ -50,10 +46,8 @@ i3status.conf example:
 
 ```
 mpris {
-    format = "{player}: {state} [[{artist} - {title}]|[{title}]] [\[{time} / {length}\]]"
+    format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]] [\[{time} / {length}\]]"
     format_none = "no player"
-    show_controls = "left"
-    buttons_order = "previous,play,next"
     player_priority = "[mpd, cantata, vlc, bomi, *]"
 }
 ```
@@ -125,22 +119,19 @@ class Py3status:
     button_toggle = 1
     button_next = 4
     button_previous = 5
-    buttons_order = 'previous,toggle,next'
     color_control_inactive = None
     color_control_active = None
     color_paused = None
     color_playing = None
     color_stopped = None
     cache_timeout = 10
-    format = '{state} [{artist} - {title}]|[{title}]'
-    # TODO: Use substituted formatings in "format" to make this obsolete
+    format = '{previous}{toggle}{next} {state}[ [{artist} - {title}]|{title}]'
     format_none = 'no player running'
     icon_pause = u'▮▮'
     icon_play = u'▶'
     icon_stop = u'◾'
     icon_next = u'»'
     icon_previous = u'«'
-    show_controls = None
     state_pause = u'▮▮'
     state_play = u'▶'
     state_stop = u'◾'
@@ -319,9 +310,7 @@ class Py3status:
             'title': self._data['title']
         }
 
-        return (self.py3.safe_format(self.format, placeholders),
-                color,
-                update)
+        return (placeholders, color, update)
 
     def _get_control_states(self):
         control_states = {
@@ -348,11 +337,9 @@ class Py3status:
         return control_states
 
     def _get_response_buttons(self, i3s_config):
-        response = []
-        buttons_order = self.buttons_order.split(',')
-        available = self._control_states.keys()
+        response = {}
 
-        for button in [e for e in buttons_order if e in available]:
+        for button in self._control_states.keys():
             control_state = self._control_states[button]
 
             if self._get_button_state(control_state):
@@ -360,13 +347,13 @@ class Py3status:
             else:
                 color = self.color_control_inactive or i3s_config['color_bad']
 
-            response.append({
+            response[button] = {
                 'color': color,
                 'full_text': control_state['icon'],
                 'index': button,
                 'min_width': 20,
                 'align': 'center'
-            })
+            }
 
         return response
 
@@ -427,7 +414,6 @@ class Py3status:
         Get the current output format and return it.
         """
         cached_until = time() + self.cache_timeout
-        show_controls = self.show_controls
 
         if self._dbus is None:
             self._dbus = SessionBus()
@@ -448,32 +434,25 @@ class Py3status:
             self._player = None
             self._player_name = 'None'
             self._player_subscription = None
-            show_controls = None
             text = self.format_none
             color = i3s_config['color_bad']
+            composite = ({
+                'full_text': text,
+                'color': color,
+            })
         else:
             (text, color, cached_until) = self._get_text(i3s_config)
             self._control_states = self._get_control_states()
-            response_buttons = self._get_response_buttons(i3s_config)
-            if len(response_buttons) == 0:
-                show_controls = None
-
-        response_text = {
-            'full_text': text,
-            'color': color,
-            'index': 'text'
-        }
+            buttons = self._get_response_buttons(i3s_config)
+            composite = self.py3.build_composite(self.format,
+                                                 text,
+                                                 buttons)
 
         response = {
             'cached_until': cached_until,
+            'color': color,
+            'composite': composite
         }
-
-        if show_controls == 'left':
-            response['composite'] = response_buttons + [response_text]
-        elif show_controls == 'right':
-            response['composite'] = [response_text] + response_buttons
-        else:
-            response['composite'] = [response_text]
 
         return response
 
@@ -484,7 +463,7 @@ class Py3status:
         index = event['index']
         button = event['button']
 
-        if index == 'text':
+        if index not in self._control_states.keys():
             if button == self.button_toggle:
                 index = 'toggle'
             elif button == self.button_stop:
