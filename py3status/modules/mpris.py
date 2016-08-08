@@ -133,14 +133,14 @@ class Py3status:
     color_playing = None
     color_stopped = None
     cache_timeout = 10
-    format = '{previous}{toggle}{next} {state}[ [{artist} - {title}]|{title}]'
+    format = '{previous}{toggle}{next} {state}[ [{artist} - {title}]| {title}]'
     format_none = 'no player running'
-    icon_pause = u'▮▮'
+    icon_pause = u'▮'
     icon_play = u'▶'
     icon_stop = u'◾'
     icon_next = u'»'
     icon_previous = u'«'
-    state_pause = u'▮▮'
+    state_pause = u'▮'
     state_play = u'▶'
     state_stop = u'◾'
     player_priority = []
