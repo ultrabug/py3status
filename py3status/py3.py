@@ -1,3 +1,4 @@
+import sys
 import os
 import shlex
 from time import time
@@ -34,6 +35,7 @@ class Py3:
         self._audio = None
         self._module = module
         self._i3s_config = i3s_config or {}
+        self.is_python_2 = sys.version_info < (3, 0)
         # we are running through the whole stack.
         # If testing then module is None.
         if module:
@@ -121,6 +123,9 @@ class Py3:
         should not be repeated.
         """
         if self._module:
+            # force unicode for python2 str
+            if self.is_python_2 and isinstance(msg, str):
+                msg = msg.decode('utf-8')
             module_name = self._module.module_full_name
             self._module._py3_wrapper.notify_user(
                 msg, level=level, rate_limit=rate_limit, module_name=module_name)
