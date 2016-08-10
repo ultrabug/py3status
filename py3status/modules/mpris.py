@@ -394,7 +394,6 @@ class Py3status:
             metadata = self._player.Metadata
 
         try:
-            metadata = self._player.Metadata
             if len(metadata) > 0:
                 url = metadata.get('xesam:url')
                 is_stream = url is not None and 'file://' not in url
