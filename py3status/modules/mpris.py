@@ -19,14 +19,14 @@ Configuration parameters:
     color_stopped: text color when song is stopped, defaults to color_bad
     format: see placeholders below
     format_none: define output if no player is running
-    icon_pause: text for the pause button in the button control panel (default ▮)
-    icon_play: text for the play button in the button control panel (default ▶)
-    icon_stop: text for the stop button in the button control panel (default ◾)
-    icon_next: text for the next button in the button control panel (default »)
-    icon_previous: text for the previous button in the button control panel (default «)
-    state_pause: text for placeholder {state} when song is paused (default ▮)
-    state_play: text for placeholder {state} when song is playing (default ▶)
-    state_stop: text for placeholder {state} when song is stopped (default ◾)
+    icon_pause: text for the pause button in the button control panel (default '▮')
+    icon_play: text for the play button in the button control panel (default '▶')
+    icon_stop: text for the stop button in the button control panel (default '◾')
+    icon_next: text for the next button in the button control panel (default '»')
+    icon_previous: text for the previous button in the button control panel (default '«')
+    state_pause: text for placeholder {state} when song is paused (default '▮')
+    state_play: text for placeholder {state} when song is playing (default '▶')
+    state_stop: text for placeholder {state} when song is stopped (default '◾')
     player_priority: priority of the players. (default [])
             Keep in mind that the state has a higher priority than
             player_priority. So when player_priority is "[mpd, bomi]" and mpd is
