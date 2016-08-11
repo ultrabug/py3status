@@ -607,7 +607,7 @@ class Py3statusWrapper():
         # started.  This is so that modules can do things like register their
         # content_functionn.
         for module in self.modules.values():
-            module.start()
+            module.start_module()
 
         # update queue populate with all py3modules
         self.queue.extend(self.modules)
