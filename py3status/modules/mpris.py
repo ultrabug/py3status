@@ -237,7 +237,7 @@ class Py3status:
                         lowest.append(player_name)
                     else:
                         players_prioritized.append(player_name)
-            players_prioritized = wildcard + lowest
+            players_prioritized = players_prioritized + wildcard + lowest
 
         for player_name in players_prioritized:
             player = self._get_player(player_name)
