@@ -194,7 +194,14 @@ class Py3status:
         self.py3.update()
 
     def _get_button_state(self, control_state):
-        clickable = getattr(self._player, control_state['clickable'], True)
+        if self._player:
+            # Workaround: The last parameter returns True for the Stop button.
+            clickable = getattr(self._player, control_state['clickable'], True)
+        else:
+            # This should never be happen but sometimes self._player is None.
+            # This could be a race condition when you kill the player after
+            # checking self._player at the beginning in the mpris function.
+            clickable = False
 
         if control_state['action'] == 'Play' and self._data['state'] == PLAYING:
             clickable = False
@@ -333,6 +340,7 @@ class Py3status:
                          'clickable': 'CanPlay',
                          'icon':      self.icon_play},
             'stop':     {'action':    'Stop',
+                         # Workaround: The MPRIS API has no CanStop function.
                          'clickable': 'True',
                          'icon':      self.icon_stop},
             'next':     {'action':    'Next',
