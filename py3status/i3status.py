@@ -70,7 +70,7 @@ class I3statusModule:
         return '<I3statusModule {}>'.format(self.module_name)
 
     def get_latest(self):
-        return [self.item]
+        return [self.item.copy()]
 
     def update_from_item(self, item):
         """
