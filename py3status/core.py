@@ -28,12 +28,12 @@ LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
 DBUS_LEVELS = {'error': 'critical', 'warning': 'normal', 'info': 'low', }
 
 CONFIG_SPECIAL_SECTIONS = [
-    'order',
+    '.group_extras',
+    '.module_groups',
     'general',
     'i3s_modules',
     'on_click',
-    '.group_extras',
-    '.module_groups',
+    'order',
     'py3_modules',
 ]
 

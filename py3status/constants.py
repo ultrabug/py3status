@@ -28,7 +28,7 @@ I3S_SINGLE_NAMES = ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
 I3S_ALLOWED_COLORS = ['color_bad', 'color_good', 'color_degraded']
 
 # i3status modules that allow colors to be passed.
-# general section also allows colors so included.
+# general section also allows colors so is included.
 I3S_COLOR_MODULES = [
     'general', 'battery', 'cpu_temperature', 'disk', 'load'
 ]

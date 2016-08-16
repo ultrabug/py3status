@@ -13,8 +13,8 @@ from time import time, sleep
 from py3status.profiling import profile
 from py3status.events import IOPoller
 from py3status.constants import (
-        TIME_MODULES, TZTIME_FORMAT, TIME_FORMAT,
-        I3S_ALLOWED_COLORS, I3S_COLOR_MODULES
+    I3S_ALLOWED_COLORS, I3S_COLOR_MODULES,
+    TIME_FORMAT,TIME_MODULES, TZTIME_FORMAT,
 )
 
 
