@@ -7,6 +7,7 @@ py3status documentation
 * [Available modules](#available_modules)
 * [Ordering modules](#ordering_modules)
 * [Configuring modules](#configuring_modules)
+* [Configuring colors](#configuring_color)
 * [Grouping modules](#group_modules)
 
 [Custom click events](#on_click)
@@ -20,6 +21,7 @@ py3status documentation
 * [Example 2: Configuration parameters](#example_2)
 * [Example 3: Events](#example_3)
 * [Example 4: Status string placeholders](#example_4)
+* [Example 5: Using color constants](#example_5)
 * [Py3 module helper](#py3)
 * [Composites](#composites)
 * [Module documentation](#docstring)
@@ -85,6 +87,40 @@ imap {
     port = '993'
     user = 'mylogin'
     on_click 1 = "exec thunderbird"
+}
+```
+
+#### <a name="configuring_color"></a>Configuring colors
+
+Since version 3.1 py3status allows greater color configuration.
+Colors can be set in the general section of your `i3status.conf` or in an
+individual modules configuration.  If a color is not in a modules configuration
+the the values from the general section will be used.
+
+If a module does not specify colors but it is in a container, then the colors
+of the container will be used if they are set, before using ones defined in the
+general section.
+
+Example:
+```
+general {
+    # These will be used if not supplied by a module
+    color = '#FFFFFF'
+    color_good = '#00FF00'
+    color_bad = '#FF0000'
+    color_degraded = '#FFFF00'
+}
+
+time {
+    color = 'FF00FF'
+    format = "%H:%M"
+}
+
+battery_level {
+    color_good = '#00AA00'
+    color_bad = '#AA0000'
+    color_degraded = '#AAAA00'
+    color_charging = '#FFFF00'
 }
 ```
 
@@ -440,6 +476,72 @@ click_info {
 }
 ```
 
+## <a name="example_5"></a>Example 5: Using color constants
+
+`self.py3` in our module has color constants that we can access, these allow the user to set colors easily in their config.
+
+__Note: py3 colors constants require py3status 3.1 or higher__
+
+
+```
+# -*- coding: utf-8 -*-
+"""
+Example module that uses colors.
+
+We generate a random number between and color it depending on its value.
+Clicking on the module will update it an a new number will be chosen.
+
+Configuration parameters:
+    format: Initial format to use
+        (default 'Number {number}')
+
+Format status string parameters:
+    {number} Our random number
+
+Color options:
+    color_high: number is 5 or higher
+    color_low: number is less than 5
+"""
+
+from random import randint
+
+
+class Py3status:
+    format = 'Number {number}'
+
+    def random(self):
+        number = randint(0, 9)
+        full_text = self.py3.safe_format(self.format, {'number': number})
+
+        if number < 5:
+            color = self.py3.COLOR_LOW
+        else:
+            color = self.py3.COLOR_HIGH
+
+        return {
+            'full_text': full_text,
+            'color': color,
+            'cache_until': self.py3.CACHE_FOREVER
+        }
+
+    def on_click(self, event):
+        # by defining on_click pressing any mouse button will refresh the
+        # module.
+        pass
+```
+
+The colors can be set in the config in the module or its container or in the
+general section.  The following example assumes that our module has been saved
+as `number.py`.  Although the constants are capitalized they are defined in the
+config in lower case.
+
+```
+number {
+    color_high = '#FF0000'
+    color_low = '#00FF00'
+}
+```
+
 ***
 
 
@@ -456,6 +558,19 @@ __CACHE_FOREVER__
 
 If this is returned as the value for `cached_until` then the module will not be
 updated. This is useful for static modules and ones updating asynchronously.
+
+__COLOR_&lt;VALUE&gt;__
+
+Introduced in py3status version 3.1
+
+This will have the value of the requested color as defined by the user config.
+eg `COLOR_GOOD` will have the value `color_good` that the user had in their
+config.  This may have been defined in the modules config, that of a container
+or the general section.
+
+Custom colors like `COLOR_CHARGING` can be used and are setable by the user in
+their `i3status.conf` just like any other color.  If the color is undefined
+then it will be the default color value.
 
 #### Methods
 
@@ -612,6 +727,10 @@ The docsting of a module is used.  The format is as follows:
   format strings. All parameters should be listed (in alphabetical
   order) and describe the output that they provide.
 
+- Color options.  These are the color options that can be provided for this
+  module.  All color options should be listed (in alphabetical order) that the
+  module uses.
+
 - Requires.  A list of all the additional requirements for the module to work.
   These may be command line utilities, python librarys etc.
 
@@ -636,6 +755,10 @@ Here is an example of a docstring.
 
     Format status string parameters:
         {info} Description of the parameter
+
+    Color options:
+        color_meaning: what this signifies, defaults to color_good
+        color_meaning2: what this signifies
 
     Requires:
         program: Information about the program
