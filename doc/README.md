@@ -21,6 +21,7 @@ py3status documentation
 * [Example 3: Events](#example_3)
 * [Example 4: Status string placeholders](#example_4)
 * [Py3 module helper](#py3)
+* [Composites](#composites)
 * [Module documentation](#docstring)
 * [Module testing](#testing)
 
@@ -358,7 +359,10 @@ class Py3status:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}
         """
         button = event['button']
-        self.full_text = 'You pressed button {}'.format(button)
+        # update our output (self.full_text)
+        format_string = 'You pressed button {button}'
+        data = {'button': button}
+        self.full_text = self.py3.safe_format(format_string, data)
         # Our modules update methods will get called automatically.
 ```
 
@@ -374,6 +378,8 @@ generally we only care about the button.
 
 The `__init__()` method is called when our class is instantiated. __Note: this
 is called before any config parameters have been set.__
+
+We use the `safe_format()` method of `py3` for formatting. Read more here: [Py3 module helper](#py3)
 
 ## <a name="example_4"></a>Example 4: Status string placeholders
 
@@ -405,7 +411,8 @@ class Py3status:
 
     def click_info(self):
         if self.button:
-            full_text = self.format_clicked.format(button=self.button)
+            data = {'button': self.button}
+            full_text = self.py3.safe_format(self.format_clicked, data)
         else:
             full_text = self.format
 
@@ -486,11 +493,40 @@ output.
 
 __safe_format(format_string, param_dict)__
 
-Perform a safe formatting of a string. Using format fails if the
-format string contains placeholders which are missing. Since these can
-be set by the user it is possible that they add unsupported items.
-This function will show missing placeholders so that modules do not
-crash hard.
+Parser for advanced formating.
+
+Unknown placeholders will be shown in the output eg `{foo}`
+
+Square brackets `[]` can be used. The content of them will be removed
+from the output if there is no valid placeholder contained within.
+They can also be nested.
+
+A pipe (vertical bar) `|` can be used to divide sections the first
+valid section only will be shown in the output.
+
+A backslash `\` can be used to escape a character eg `\[` will show `[`
+in the output.
+
+`{<placeholder>}` will be converted, or removed if it is None or empty.
+
+Formating can also be applied to the placeholder eg
+`{number:03.2f}`.
+
+*example format_string:*
+
+`"[[{artist} - ]{title}]|{file}"`
+This will show `artist - title` if artist is present,
+`title` if title but no artist,
+and `file` if file is present but not artist or title.
+
+__build_composite(format_string, param_dict=None, composites=None)__
+
+Build a composite output using a format string.
+
+Takes a format_string and treats it the same way as `safe_format` but
+also takes a composites dict where each key/value is the name of the
+placeholder and either an output eg `{'full_text': 'something'}` or a
+list of outputs.
 
 __check_commands(cmd_list)__
 
@@ -504,6 +540,50 @@ Plays sound_file if possible. Requires `paplay` or `play`.
 __stop_sound()__
 
 Stops any currently playing sounds for this module.
+
+***
+
+
+## <a name="composites"></a>Composites
+
+
+Whilst most modules return a simple response eg:
+```
+{
+    'full_text': <some text>,
+    'cached_until': <cache time>,
+}
+```
+
+Sometimes it is useful to provide a more complex, composite response.  A
+composite is made up of more than one simple response which allows for example
+a response that has multiple colors.  Different parts of the response can also
+be differentiated between when a click event occures and so allow clicking on
+different parts of the response to have different outcomes.  The different
+parts of the composite will not have separators between them in the output so
+they will appear as a single module to the user.
+
+The format of a composite is as follows:
+
+```
+{
+    'cached_until': <cache time>,
+    'composite': [
+        {
+            'full_text': <some text>,
+        },
+        {
+            'full_text': <some more text>,
+            'index': <some index>
+        },
+    ]
+}
+```
+
+The `index` key in the response is used to identify the individual block and
+when the the modules `on_click()` method is called the event will include this.
+Supplied index values should be strings.  If no index is given then it will
+have an integer value indicating its position in the composite.
 
 ***
 

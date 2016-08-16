@@ -243,7 +243,7 @@ class Py3statusWrapper():
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'Loading module "{}" failed ({}).'.format(module, err)
-                self.notify_user(msg, level='warning')
+                self.report_exception(msg, level='warning')
 
     def setup(self):
         """
@@ -482,7 +482,7 @@ class Py3statusWrapper():
                 except UnicodeEncodeError:
                     f.write(out.encode('utf-8'))
 
-    def report_exception(self, msg, notify_user=True):
+    def report_exception(self, msg, notify_user=True, level='error'):
         """
         Report details of an exception to the user.
         This should only be called within an except: block Details of the
@@ -534,7 +534,7 @@ class Py3statusWrapper():
         if traceback and self.config['log_file']:
             self.log(''.join(['Traceback\n'] + traceback))
         if notify_user:
-            self.notify_user(msg, level='error')
+            self.notify_user(msg, level=level)
 
     def create_output_modules(self):
         """
