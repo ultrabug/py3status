@@ -33,12 +33,16 @@ class Py3:
     LOG_INFO = PY3_LOG_INFO
     LOG_WARNING = PY3_LOG_WARNING
 
-    def __init__(self, module=None, i3s_config=None):
+    def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
         self._colors = {}
         self._i3s_config = i3s_config or {}
         self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
+
+        if py3status:
+            self._py3status_module = py3status
+
         # we are running through the whole stack.
         # If testing then module is None.
         if module:
@@ -46,6 +50,7 @@ class Py3:
             if not i3s_config:
                 config = self._module.i3status_thread.config['general']
                 self._i3s_config = config
+            self._py3status_module = module.module_class
 
     def __getattr__(self, name):
         """
@@ -313,7 +318,10 @@ class Py3:
                     if block_level is None:
                         block_level = level
                 continue
-            if n[0] == '\\':
+            if n == '\?':
+                # this is for future functionality
+                n = ''
+            if n and n[0] == '\\':
                 # The item was escaped remove the escape character
                 n = n[1:]
             if n == '{':
@@ -326,7 +334,21 @@ class Py3:
 
         return ''.join([p[0] for p in parts if p[1]])
 
-    def safe_format(self, format_string, param_dict):
+    def _get_missing_placeholder(self, format_string, param_dict):
+        """
+        Look for missing placeholders in the module.
+        """
+        parsed = [x[1] for x in Formatter().parse(format_string) if x[1]]
+        for item in parsed:
+            if (item not in param_dict and
+                    hasattr(self._py3status_module, item)):
+                attribute = getattr(self._py3status_module, item)
+                if hasattr(attribute, '__call__'):
+                    # ignore if a function
+                    continue
+                param_dict[item] = attribute
+
+    def safe_format(self, format_string, param_dict=None):
         """
         Parser for advanced formating.
 
@@ -335,10 +357,13 @@ class Py3:
         Square brackets `[]` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
         They can also be nested.
+
         A pipe (vertical bar) `|` can be used to divide sections the first
         valid section only will be shown in the output.
+
         A backslash `\` can be used to escape a character eg `\[` will show `[`
-        in the output.
+        in the output.  Note: `\?` is reserved for future use and is removed.
+
         `{<placeholder>}` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
         `{number:03.2f}`.
@@ -348,7 +373,16 @@ class Py3:
         This will show `artist - title` if artist is present,
         `title` if title but no artist,
         and `file` if file is present but not artist or title.
+
+        param_dict is a dictionary of palceholders that will be substituted.
+        If a placeholder is not in the dictionary then if the py3status module
+        has an attribute with the same name then it will be used.
         """
+        if param_dict is None:
+            param_dict = {}
+
+        self._get_missing_placeholder(format_string, param_dict)
+
         if self._is_python_2:
             self._fix_unicode_dict(param_dict)
         # Output our format string with the placeholders substituted.
@@ -367,6 +401,8 @@ class Py3:
             param_dict = {}
         if composites is None:
             composites = {}
+
+        self._get_missing_placeholder(format_string, param_dict)
 
         if self._is_python_2:
             self._fix_unicode_dict(param_dict)

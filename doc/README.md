@@ -692,7 +692,7 @@ Returns the time a given number of seconds into the future.
 Helpful for creating the `cached_until` value for the module
 output.
 
-__safe_format(format_string, param_dict)__
+__safe_format(format_string, param_dict=None)__
 
 Parser for advanced formating.
 
@@ -706,7 +706,7 @@ A pipe (vertical bar) `|` can be used to divide sections the first
 valid section only will be shown in the output.
 
 A backslash `\` can be used to escape a character eg `\[` will show `[`
-in the output.
+in the output. Note: `\?` is reserved for future use and is removed.
 
 `{<placeholder>}` will be converted, or removed if it is None or empty.
 
@@ -719,6 +719,11 @@ Formating can also be applied to the placeholder eg
 This will show `artist - title` if artist is present,
 `title` if title but no artist,
 and `file` if file is present but not artist or title.
+
+
+param_dict is a dictionary of palceholders that will be substituted.
+If a placeholder is not in the dictionary then if the py3status module
+has an attribute with the same name then it will be used.
 
 __build_composite(format_string, param_dict=None, composites=None)__
 
