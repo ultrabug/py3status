@@ -595,7 +595,7 @@ def process_config(config_path, py3_wrapper=None):
     allowed_modules = module_names()
 
     # create config for modules in order
-    for name in config_info['order']:
+    for name in config_info.get('order', []):
         module = modules.get(name, {})
         module_type = get_module_type(name)
         if allowed_modules and name.split()[0] not in allowed_modules:
@@ -626,6 +626,9 @@ def process_config(config_path, py3_wrapper=None):
             else:
                 config[name]['format'] = TZTIME_FORMAT
 
+    if not config['order']:
+        notify_user('Your configuration file does not list any module'
+                    ' to be loaded with the "order" directive.')
     return config
 
 
