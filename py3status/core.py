@@ -253,7 +253,7 @@ class Py3statusWrapper():
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'Loading module "{}" failed ({}).'.format(module, err)
-                self.notify_user(msg, level='warning')
+                self.report_exception(msg, level='warning')
 
     def setup(self):
         """
@@ -344,11 +344,11 @@ class Py3statusWrapper():
         dbus = self.config.get('dbus_notify')
         if dbus:
             # force msg to be a string
-            msg = '{}'.format(msg)
+            msg = u'{}'.format(msg)
         else:
-            msg = 'py3status: {}'.format(msg)
+            msg = u'py3status: {}'.format(msg)
         if level != 'info' and module_name == '':
-            fix_msg = '{} Please try to fix this and reload i3wm (Mod+Shift+R)'
+            fix_msg = u'{} Please try to fix this and reload i3wm (Mod+Shift+R)'
             msg = fix_msg.format(msg)
         # Rate limiting. If rate limiting then we need to calculate the time
         # period for which the message should not be repeated.  We just use
@@ -364,7 +364,7 @@ class Py3statusWrapper():
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash('{}#{}#{}'.format(module_name, limit_key, msg))
+        msg_hash = hash(u'{}#{}#{}'.format(module_name, limit_key, msg))
         if msg_hash in self.notified_messages:
             return
         else:
@@ -486,9 +486,13 @@ class Py3statusWrapper():
         else:
             with open(self.config['log_file'], 'a') as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
-                f.write('{} {} {}\n'.format(log_time, level.upper(), msg))
+                out = u'{} {} {}\n'.format(log_time, level.upper(), msg)
+                try:
+                    f.write(out)
+                except UnicodeEncodeError:
+                    f.write(out.encode('utf-8'))
 
-    def report_exception(self, msg, notify_user=True):
+    def report_exception(self, msg, notify_user=True, level='error'):
         """
         Report details of an exception to the user.
         This should only be called within an except: block Details of the
@@ -540,7 +544,7 @@ class Py3statusWrapper():
         if traceback and self.config['log_file']:
             self.log(''.join(['Traceback\n'] + traceback))
         if notify_user:
-            self.notify_user(msg, level='error')
+            self.notify_user(msg, level=level)
 
     def create_output_modules(self):
         """
