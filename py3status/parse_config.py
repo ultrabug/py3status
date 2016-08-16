@@ -627,7 +627,8 @@ def process_config(config_path, py3_wrapper=None):
                 config[name]['format'] = TZTIME_FORMAT
 
     if not config['order']:
-        notify_user('There are no modules in your py3status config')
+        notify_user('Your configuration file does not list any module'
+                    ' to be loaded with the "order" directive.')
     return config
 
 
