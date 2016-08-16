@@ -3,18 +3,17 @@
 Display if a TCP port is available on the given host.
 
 Configuration parameters:
-    cache_timeout: how often to run the check, default 10s
+    cache_timeout: how often to run the check (default 10)
     color_down: color of format_down
     color_up: color of format_up
     format_down: what to display when tcp port is down
     format_up: what to display when tcp port is up
-    host: check if tcp port on host is up, default localhost
-    port: the tcp port, default 22
+    host: check if tcp port on host is up (default localhost)
+    port: the tcp port (default 22)
 
 @author obb, Moritz Lüdecke
 """
 
-from time import time
 import socket
 
 
