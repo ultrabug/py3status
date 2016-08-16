@@ -464,6 +464,11 @@ __update(module_name=None)__
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
 
+__is_python_2()__
+
+True if the version of python being used is 2.x
+Can be helpful for fixing python 2 compatability issues
+
 __get_output(module_name)__
 
 Return the output of the named module. This will be a list.

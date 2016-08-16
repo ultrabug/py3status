@@ -36,7 +36,7 @@ class Py3:
         self._audio = None
         self._module = module
         self._i3s_config = i3s_config or {}
-        self.is_python_2 = sys.version_info < (3, 0)
+        self._is_python_2 = sys.version_info < (3, 0)
         # we are running through the whole stack.
         # If testing then module is None.
         if module:
@@ -62,6 +62,13 @@ class Py3:
         returns the i3s_config dict.
         """
         return self._i3s_config
+
+    def is_python_2(self):
+        """
+        True if the version of python being used is 2.x
+        Can be helpful for fixing python 2 compatability issues
+        """
+        return self._is_python_2
 
     def log(self, message, level=LOG_INFO):
         """
@@ -124,6 +131,9 @@ class Py3:
         should not be repeated.
         """
         if self._module:
+            # force unicode for python2 str
+            if self._is_python_2 and isinstance(msg, str):
+                msg = msg.decode('utf-8')
             module_name = self._module.module_full_name
             self._module._py3_wrapper.notify_user(
                 msg, level=level, rate_limit=rate_limit, module_name=module_name)
@@ -318,7 +328,7 @@ class Py3:
         `title` if title but no artist,
         and `file` if file is present but not artist or title.
         """
-        if self.is_python_2:
+        if self._is_python_2:
             self._fix_unicode_dict(param_dict)
         # Output our format string with the placeholders substituted.
         return self._safe_format(format_string, param_dict).format(**param_dict)
@@ -337,7 +347,7 @@ class Py3:
         if composites is None:
             composites = {}
 
-        if self.is_python_2:
+        if self._is_python_2:
             self._fix_unicode_dict(param_dict)
 
         # Make sure that placeholders for our composites are kept by adding
