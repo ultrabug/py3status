@@ -108,7 +108,7 @@ general {
     color = '#FFFFFF'
     color_good = '#00FF00'
     color_bad = '#FF0000'
-    color_good = '#FFFF00'
+    color_degraded = '#FFFF00'
 }
 
 time {
@@ -119,7 +119,7 @@ time {
 battery_level {
     color_good = '#00AA00'
     color_bad = '#AA0000'
-    color_good = '#AAAA00'
+    color_degraded = '#AAAA00'
     color_charging = '#FFFF00'
 }
 ```
@@ -486,7 +486,7 @@ __Note: py3 colors constants require py3status 3.1 or higher__
 ```
 # -*- coding: utf-8 -*-
 """
-Example module that uses colors
+Example module that uses colors.
 
 We generate a random number between and color it depending on its value.
 Clicking on the module will update it an a new number will be chosen.
