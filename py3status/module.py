@@ -28,7 +28,7 @@ class Module(Thread):
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
-        self.has_init = False
+        self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
@@ -87,8 +87,8 @@ class Module(Thread):
         Start the module running.
         """
         # Call modules init() method if it has one
-        if self.has_init:
-            self.module_class.init()
+        if self.has_post_config_hook:
+            self.module_class.post_config_hook()
         self.start()
 
     def force_update(self):
@@ -332,8 +332,8 @@ class Module(Thread):
                             self.click_events = params_type
                         elif method == 'kill':
                             self.has_kill = params_type
-                        elif method == 'init':
-                            self.has_init = True
+                        elif method == 'post_config_hook':
+                            self.has_post_config_hook = True
                         else:
                             # the method_obj stores infos about each method
                             # of this module.

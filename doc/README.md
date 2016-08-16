@@ -608,21 +608,20 @@ If `True` the output will be shown as urgent in i3bar.
 
 Some special method are also defined.
 
-__init()__
+__kill()__
 
-Called once an instance of a module has been created and the configuration
-parameters have been set.  This is useful for any work a module must do before
-its output methods are run for the first time. `init()` introduced in version
-3.1
+Called just before a module is destroyed.
 
 __on_click(event)__
 
 Called when an event is recieved by a module.
 
-__kill()__
+__post_config_hook()__
 
-Called just before a module is destroyed.
-
+Called once an instance of a module has been created and the configuration
+parameters have been set.  This is useful for any work a module must do before
+its output methods are run for the first time. `post_config_hook()`
+introduced in version 3.1
 
 ***
 
