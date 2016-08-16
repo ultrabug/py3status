@@ -22,6 +22,7 @@ py3status documentation
 * [Example 3: Events](#example_3)
 * [Example 4: Status string placeholders](#example_4)
 * [Example 5: Using color constants](#example_5)
+* [Module methods](#module_methods)
 * [Py3 module helper](#py3)
 * [Composites](#composites)
 * [Module documentation](#docstring)
@@ -303,6 +304,7 @@ show up in the status bar.
 The `Py3status` class tells py3status that this is a module. The module gets
 loaded. py3status then calls any public methods that the class contains to get
 a response. In our example there is a single method `hello_world()`.
+Read more here: [module methods](#module_methods).
 
 ####The response
 
@@ -541,6 +543,85 @@ number {
     color_low = '#00FF00'
 }
 ```
+
+***
+
+
+## <a name="module_methods"></a>Module methods
+
+Py3status will call a method in a module to provide output to the i3bar.
+Methods that have names starting with an underscore will not be used in this
+way.  Any methods defined as static methods will also not be used.
+
+### Outputs
+
+Output methods should provide a response dict.
+
+Example response:
+
+```
+{
+    'full_text': "This text will be displayed",
+    'cached_until': 1470922537,  # Time in seconds since the epoch
+}
+```
+
+The response can include the folowing keys
+
+__cached_until__
+
+The time (in seconds since the epoch) that the output will be classed as no longer valid and the output
+function will be called again.  If no `cached_until` value is provided the the
+output will be cached for `cache_timeout` seconds by default this is
+`60` and can be set using the `-t` or `--timeout` option when running
+py3status.  To never expire the `self.py3.CACHE_FOREVER` constant should be
+used.
+
+__color__
+
+The color that the module output will be displayed in.
+
+__composite__
+
+Used to output more than one item to i3bar from a single output method.  If this is provided then `full_text` should not be.
+
+__full_text__
+
+This is the text output that will be sent to i3bar.
+
+__index__
+
+The index of the output.  Allows composite output to identify which component
+of their output had an event triggered.
+
+__separator__
+
+If `False` no separator will be shown after the output block (requires i3bar
+4.12).
+
+__urgent__
+
+If `True` the output will be shown as urgent in i3bar.
+
+
+### Special methods
+
+Some special method are also defined.
+
+__kill()__
+
+Called just before a module is destroyed.
+
+__on_click(event)__
+
+Called when an event is recieved by a module.
+
+__post_config_hook()__
+
+Called once an instance of a module has been created and the configuration
+parameters have been set.  This is useful for any work a module must do before
+its output methods are run for the first time. `post_config_hook()`
+introduced in version 3.1
 
 ***
 

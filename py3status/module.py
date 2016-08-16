@@ -28,6 +28,7 @@ class Module(Thread):
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
+        self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
@@ -80,6 +81,15 @@ class Module(Thread):
             py_mod = getattr(py_mod, comp)
         class_inst = py_mod.Py3status()
         return class_inst
+
+    def start_module(self):
+        """
+        Start the module running.
+        """
+        # Call modules init() method if it has one
+        if self.has_post_config_hook:
+            self.module_class.post_config_hook()
+        self.start()
 
     def force_update(self):
         """
@@ -290,6 +300,14 @@ class Module(Thread):
 
         if class_inst:
             self.module_class = class_inst
+            try:
+                # containers have items attribute set to a list of contained
+                # module instance names.  If there are no contained items then
+                # ensure that we have a empty list.
+                if class_inst.Meta.container:
+                    class_inst.items = []
+            except AttributeError:
+                pass
 
             # apply module configuration from i3status config
             mod_config = self.i3status_thread.config.get(module, {})
@@ -314,6 +332,8 @@ class Module(Thread):
                             self.click_events = params_type
                         elif method == 'kill':
                             self.has_kill = params_type
+                        elif method == 'post_config_hook':
+                            self.has_post_config_hook = True
                         else:
                             # the method_obj stores infos about each method
                             # of this module.
