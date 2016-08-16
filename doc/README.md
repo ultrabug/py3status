@@ -21,6 +21,7 @@ py3status documentation
 * [Example 3: Events](#example_3)
 * [Example 4: Status string placeholders](#example_4)
 * [Py3 module helper](#py3)
+* [Composites](#composites)
 * [Module documentation](#docstring)
 * [Module testing](#testing)
 
@@ -358,7 +359,10 @@ class Py3status:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}
         """
         button = event['button']
-        self.full_text = 'You pressed button {}'.format(button)
+        # update our output (self.full_text)
+        format_string = 'You pressed button {button}'
+        data = {'button': button}
+        self.full_text = self.py3.safe_format(format_string, data)
         # Our modules update methods will get called automatically.
 ```
 
@@ -374,6 +378,8 @@ generally we only care about the button.
 
 The `__init__()` method is called when our class is instantiated. __Note: this
 is called before any config parameters have been set.__
+
+We use the `safe_format()` method of `py3` for formatting. Read more here: [Py3 module helper](#py3)
 
 ## <a name="example_4"></a>Example 4: Status string placeholders
 
@@ -405,7 +411,8 @@ class Py3status:
 
     def click_info(self):
         if self.button:
-            full_text = self.format_clicked.format(button=self.button)
+            data = {'button': self.button}
+            full_text = self.py3.safe_format(self.format_clicked, data)
         else:
             full_text = self.format
 
@@ -533,6 +540,50 @@ Plays sound_file if possible. Requires `paplay` or `play`.
 __stop_sound()__
 
 Stops any currently playing sounds for this module.
+
+***
+
+
+## <a name="composites"></a>Composites
+
+
+Whilst most modules return a simple response eg:
+```
+{
+    'full_text': <some text>,
+    'cached_until': <cache time>,
+}
+```
+
+Sometimes it is useful to provide a more complex, composite response.  A
+composite is made up of more than one simple response which allows for example
+a response that has multiple colors.  Different parts of the response can also
+be differentiated between when a click event occures and so allow clicking on
+different parts of the response to have different outcomes.  The different
+parts of the composite will not have separators between them in the output so
+they will appear as a single module to the user.
+
+The format of a composite is as follows:
+
+```
+{
+    'cached_until': <cache time>,
+    'composite': [
+        {
+            'full_text': <some text>,
+        },
+        {
+            'full_text': <some more text>,
+            'index': <some index>
+        },
+    ]
+}
+```
+
+The `index` key in the response is used to identify the individual block and
+when the the modules `on_click()` method is called the event will include this.
+Supplied index values should be strings.  If no index is given then it will
+have an integer value indicating its position in the composite.
 
 ***
 
