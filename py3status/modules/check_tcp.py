@@ -44,9 +44,7 @@ class Py3status:
             response['color'] = self.color_down or self.py3.COLOR_BAD
 
         response['full_text'] = self.py3.safe_format(self.format,
-                                                     {'host': self.host,
-                                                      'port': self.port,
-                                                      'state': state})
+                                                     {'state': state})
         return response
 
 
