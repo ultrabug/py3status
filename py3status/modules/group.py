@@ -177,15 +177,13 @@ class Py3status:
         """
 
         # hide if no contents
-        # FIXME the module shouldn't even run if no content
         if not self.items:
             return {
                 'cached_until': self.py3.CACHE_FOREVER,
                 'full_text': '',
             }
 
-        ready = self.initialized
-        if not ready:
+        if not self.initialized:
             self._init()
 
         if self.open:
@@ -211,12 +209,6 @@ class Py3status:
             'button': button,
         }
         output = self.py3.build_composite(format, composites=composites)
-
-        # FIXME always start contained items after container so they trigger
-        # on the first run contained items may not be displayed so make sure we
-        # check them again to ensure all is correct
-        if not ready:
-            update_time = 0
 
         if update_time is not None:
             cached_until = time() + update_time
