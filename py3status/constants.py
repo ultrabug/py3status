@@ -18,12 +18,14 @@ TZTIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 
 TIME_MODULES = ['time', 'tztime']
 
-I3STATUS_MODULES = [
+I3S_INSTANCE_MODULES = [
     'battery', 'cpu_temperature', 'disk', 'ethernet', 'path_exists',
     'run_watch', 'tztime', 'volume', 'wireless'
 ]
 
 I3S_SINGLE_NAMES = ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
+
+I3S_MODULE_NAMES = I3S_SINGLE_NAMES + I3S_INSTANCE_MODULES
 
 ERROR_CONFIG = '''
     general {colors = true interval = 60}
