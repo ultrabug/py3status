@@ -518,7 +518,7 @@ Build a composite output using a format string.
 
 Takes a format_string and treats it the same way as `safe_format` but
 also takes a composites dict where each key/value is the name of the
-placeholderand either an output eg `{'full_text': 'something'}` or a
+placeholder and either an output eg `{'full_text': 'something'}` or a
 list of outputs.
 
 __check_commands(cmd_list)__
