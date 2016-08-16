@@ -14,7 +14,7 @@ from py3status.profiling import profile
 from py3status.events import IOPoller
 from py3status.constants import (
     I3S_ALLOWED_COLORS, I3S_COLOR_MODULES,
-    TIME_FORMAT,TIME_MODULES, TZTIME_FORMAT,
+    TIME_FORMAT, TIME_MODULES, TZTIME_FORMAT,
 )
 
 

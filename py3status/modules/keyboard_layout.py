@@ -49,10 +49,10 @@ class Py3status:
         self.colors_dict = {}
         # old default values for backwards compatability
         self.defaults = {
-            'us': '#729FCF',
             'fr': '#268BD2',
-            'ua': '#FCE94F',
             'ru': '#F75252',
+            'ua': '#FCE94F',
+            'us': '#729FCF',
         }
 
     def keyboard_layout(self):
