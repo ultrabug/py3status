@@ -157,7 +157,7 @@ class Py3status:
         self._mpris_names = {}
         self._mpris_name_index = {}
         self._player = None
-        self._player_name = None
+        self._player_details = {}
 
     def post_config_hook(self):
         self._dbus = SessionBus()
@@ -256,7 +256,7 @@ class Py3status:
             'length': self._data['length'],
             'time': ptime,
             'title': self._data['title'] or 'No Track',
-            'full_name': self._player_name,  # for debugging ;p
+            'full_name': self._player_details.get('full_name'),  # for debugging ;p
         }
 
         return (placeholders, color, update)
@@ -322,7 +322,7 @@ class Py3status:
 
     def _set_player(self):
         """
-        Sort the current players into priority order and return the first.
+        Sort the current players into priority order and set self._player
         Players are ordered by working state then prefernce supplied by user
         and finally by instance if a player has more than one running.
         """
@@ -350,14 +350,12 @@ class Py3status:
         if players:
             top_player = self._mpris_players.get(sorted(players)[0][3])
         else:
-            top_player = None
+            top_player = {}
         if top_player:
             self._player = top_player.get('_dbus_player')
-            player_name = top_player.get('full_name')
         else:
             self._player = None
-            player_name = None
-        self._player_name = player_name
+        self._player_details = top_player
         self.py3.update()
 
     def _player_monitor(self, player_id):
