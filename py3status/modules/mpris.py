@@ -12,11 +12,6 @@ Configuration parameters:
     button_toggle: mouse button to toggle between play and pause mode (default 1)
     button_next: mouse button to play the next entry (default 4)
     button_previous: mouse button to play the previous entry (default 5)
-    color_control_inactive: button color if button is not clickable
-    color_control_active: button color if button is clickable
-    color_paused: text color when song is paused, defaults to color_degraded
-    color_playing: text color when song is playing, defaults to color_good
-    color_stopped: text color when song is stopped, defaults to color_bad
     format: see placeholders below
     format_none: define output if no player is running
     icon_pause: text for the pause button in the button control panel (default '▮')
@@ -48,6 +43,16 @@ Format of button placeholders:
     {previous} play the previous title
     {stop} stop the player
     {toggle} toggle between play and pause
+
+Color options:
+    color_control_inactive: button is not clickable
+    color_control_active: button is clickable
+    color_paused: song is paused, defaults to color_degraded
+    color_playing: song is playing, defaults to color_good
+    color_stopped: song is stopped, defaults to color_bad
+
+Requires:
+    pydbus: python library module
 
 i3status.conf example:
 
@@ -83,9 +88,6 @@ mpris {
 }
 ```
 
-Requires:
-    pydbus
-
 Tested players:
     bomi
     Cantata
@@ -104,9 +106,9 @@ from pydbus import SessionBus
 
 
 SERVICE_BUS = 'org.mpris.MediaPlayer2'
-INTERFACE = SERVICE_BUS + '.Player'
 SERVICE_BUS_URL = '/org/mpris/MediaPlayer2'
-SERVICE_BUS_REGEX = '^' + re.sub(r'\.', '\.', SERVICE_BUS) + '.'
+
+WORKING_STATES = ['Playing', 'Paused']
 
 PLAYING = 0
 PAUSED = 1
@@ -137,7 +139,7 @@ class Py3status:
     color_paused = None
     color_playing = None
     color_stopped = None
-    format = '{previous}{toggle}{next} {state}[ [{artist} - {title}]| {title}]'
+    format = '{previous}{toggle}{next} {state} [{artist} - ][{title}]'
     format_none = 'no player running'
     icon_pause = u'▮'
     icon_play = u'▶'
@@ -151,9 +153,15 @@ class Py3status:
 
     def __init__(self):
         self._dbus = None
+        self._mpris_players = {}
+        self._mpris_names = {}
+        self._mpris_name_index = {}
         self._player = None
-        self._player_name = 'None'
-        self._player_subscription = None
+        self._player_details = {}
+
+    def post_config_hook(self):
+        self._dbus = SessionBus()
+        self._start_listener()
 
     def _init_data(self):
         self._data = {
@@ -176,23 +184,6 @@ class Py3status:
         except Exception:
             self._data['error_occurred'] = True
 
-    def _on_available_players_changed(self, *args):
-        if len(args) < 6:
-            return
-        if args[5][0].startswith('org.mpris.MediaPlayer2'):
-            self.py3.update()
-
-    def _on_change(self, bus, data, nop):
-        self._data['error_occurred'] = False
-
-        for field in data:
-            if field == 'Metadata':
-                self._update_metadata(data[field])
-            elif field == 'PlaybackStatus':
-                self._data['state'] = self._get_state(state=data[field])
-
-        self.py3.update()
-
     def _get_button_state(self, control_state):
         if self._player:
             # Workaround: The last parameter returns True for the Stop button.
@@ -213,68 +204,6 @@ class Py3status:
 
         return clickable
 
-    def _get_highest_prioritized(self):
-        """
-        Detect running player process, if any
-        """
-        players_paused = []
-        players_stopped = []
-        players = []
-        players_prioritized = []
-
-        dbus = self._dbus.get('org.freedesktop.DBus')
-        for player in dbus.ListNames():
-            if SERVICE_BUS in player:
-                player = re.sub(r'%s' % SERVICE_BUS_REGEX, '', player)
-                players.append(player)
-
-        if len(self.player_priority) == 0:
-            players_prioritized = players
-        else:
-            wildcard = []
-            lowest = []
-            for player_name in self.player_priority:
-                if player_name is '*':
-                    wildcard = players
-                elif player_name in players:
-                    players.remove(player_name)
-                    if len(wildcard) > 0:
-                        if player_name in wildcard:
-                            wildcard.remove(player_name)
-                        lowest.append(player_name)
-                    else:
-                        players_prioritized.append(player_name)
-            players_prioritized = players_prioritized + wildcard + lowest
-
-        for player_name in players_prioritized:
-            player = self._get_player(player_name)
-            if player is None:
-                continue
-            player_state = self._get_state(player)
-
-            if player_state == PLAYING:
-                return player_name
-            elif player_state == PAUSED:
-                players_paused.append(player_name)
-            else:
-                players_stopped.append(player_name)
-
-        if players_paused:
-            return players_paused[0]
-        if players_stopped:
-            return players_stopped[0]
-
-        return 'None'
-
-    def _get_player(self, player):
-        """
-        Get dbus object
-        """
-        try:
-            return self._dbus.get(SERVICE_BUS + '.%s' % player, SERVICE_BUS_URL)
-        except Exception:
-            return None
-
     def _get_state(self, player=None, state=None):
         if state:
             playback_status = state
@@ -290,22 +219,22 @@ class Py3status:
         else:
             return STOPPED
 
-    def _get_text(self, i3s_config):
+    def _get_text(self):
         """
         Get the current metadata
         """
         if self._data['state'] == PLAYING:
-            color = self.color_playing or i3s_config['color_good']
+            color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
             state_symbol = self.state_play
         elif self._data['state'] == PAUSED:
-            color = self.color_paused or i3s_config['color_degraded']
+            color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
             state_symbol = self.state_pause
         else:
-            color = self.color_stopped or i3s_config['color_bad']
+            color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
             state_symbol = self.state_stop
 
         if self._data['error_occurred']:
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
 
         try:
             ptime_ms = self._player.Position
@@ -326,7 +255,8 @@ class Py3status:
             'artist': self._data['artist'],
             'length': self._data['length'],
             'time': ptime,
-            'title': self._data['title']
+            'title': self._data['title'] or 'No Track',
+            'full_name': self._player_details.get('full_name'),  # for debugging ;p
         }
 
         return (placeholders, color, update)
@@ -356,16 +286,16 @@ class Py3status:
 
         return control_states
 
-    def _get_response_buttons(self, i3s_config):
+    def _get_response_buttons(self):
         response = {}
 
         for button in self._control_states.keys():
             control_state = self._control_states[button]
 
             if self._get_button_state(control_state):
-                color = self.color_control_active or i3s_config['color_good']
+                color = self.py3.COLOR_CONTROL_ACTIVE or self.py3.COLOR_GOOD
             else:
-                color = self.color_control_inactive or i3s_config['color_bad']
+                color = self.py3.COLOR_CONTROL_INACTIVE or self.py3.COLOR_BAD
 
             response[button] = {
                 'color': color,
@@ -381,6 +311,124 @@ class Py3status:
         self._loop = GObject.MainLoop()
         self._loop.run()
 
+    def _name_owner_changed(self, *args):
+        player_add = args[5][2]
+        player_remove = args[5][1]
+        if player_add:
+            self._add_player(player_add)
+        if player_remove:
+            self._remove_player(player_remove)
+        self._set_player()
+
+    def _set_player(self):
+        """
+        Sort the current players into priority order and set self._player
+        Players are ordered by working state then prefernce supplied by user
+        and finally by instance if a player has more than one running.
+        """
+        players = []
+        for name, p in self._mpris_players.items():
+            # we set the priority here as we need to establish the player name
+            # which might not be immediately available.
+            if '_priority' not in p:
+                if self.player_priority:
+                    try:
+                        priority = self.player_priority.index(p['name'])
+                    except ValueError:
+                        try:
+                            priority = self.player_priority.index('*')
+                        except ValueError:
+                            priority = None
+                else:
+                    priority = 0
+                if priority is not None:
+                    p['_priority'] = priority
+            if p.get('_priority') is not None:
+                players.append(
+                    (not p['_working'], p['_priority'], p['index'], name)
+                )
+        if players:
+            top_player = self._mpris_players.get(sorted(players)[0][3])
+        else:
+            top_player = {}
+        if top_player:
+            self._player = top_player.get('_dbus_player')
+        else:
+            self._player = None
+        self._player_details = top_player
+        self.py3.update()
+
+    def _player_monitor(self, player_id):
+        def player_on_change(*args):
+            """
+            Monitor a player and update its status.
+            """
+            data = args[1]
+            status = data.get('PlaybackStatus')
+            if status:
+                player = self._mpris_players[player_id]
+                player['status'] = status
+                player['_working'] = status in WORKING_STATES
+            self._set_player()
+        return player_on_change
+
+    def _add_player(self, player_id):
+        """
+        Add player to mpris_players
+        """
+        try:
+            player = self._dbus.get(player_id, SERVICE_BUS_URL)
+            if player_id.startswith(SERVICE_BUS):
+                if player.Identity not in self._mpris_names:
+                    self._mpris_names[player.Identity] = player_id.split('.')[-1]
+                    for p in self._mpris_players.values():
+                        if not p['name'] and p['identity'] in self._mpris_names:
+                            p['name'] = self._mpris_names[p['identity']]
+                            p['full_name'] = u'{} {}'.format(p['name'], p['index'])
+                return
+            status = player.PlaybackStatus
+            working = status in WORKING_STATES
+            identity = player.Identity
+            if identity not in self._mpris_name_index:
+                self._mpris_name_index[identity] = 0
+            index = self._mpris_name_index[identity]
+            self._mpris_name_index[identity] += 1
+            name = self._mpris_names.get(identity)
+            subscription = player.PropertiesChanged.connect(
+                self._player_monitor(player_id)
+            )
+        except:
+            return
+        self._mpris_players[player_id] = {
+            '_dbus_player': player,
+            '_working': working,
+            'index': index,
+            'identity': identity,
+            'name': name,
+            'full_name': u'{} {}'.format(name, index),
+            'status': status,
+            'subscription': subscription,
+        }
+        return True
+
+    def _remove_player(self, player_id):
+        """
+        Remove player from mpris_players
+        """
+        player = self._mpris_players.get(player_id)
+        if player:
+            if player.get('subscription'):
+                player['subscription'].disconnect()
+            del self._mpris_players[player_id]
+
+    def _get_players(self):
+        bus = self._dbus.get('org.freedesktop.DBus')
+        for player in bus.ListNames():
+            if player.startswith(':') or player.startswith(SERVICE_BUS):
+                if not self._add_player(player):
+                    continue
+        self._set_player()
+
     def _start_listener(self):
         self._dbus.con.signal_subscribe(
             None,
@@ -389,8 +437,9 @@ class Py3status:
             None,
             None,
             0,
-            self._on_available_players_changed,
+            self._name_owner_changed,
         )
+        self._get_players()
         t = Thread(target=self._start_loop)
         t.daemon = True
         t.start()
@@ -428,40 +477,24 @@ class Py3status:
             # delete the file extension
             self._data['title'] = re.sub(r'\....$', '', self._data['title'])
 
-    def mpris(self, i3s_output_list, i3s_config):
+    def mpris(self):
         """
         Get the current output format and return it.
         """
         cached_until = self.py3.CACHE_FOREVER
 
-        if self._dbus is None:
-            self._dbus = SessionBus()
-            self._start_listener()
-
-        running_player = self._get_highest_prioritized()
-        if self._player is None or self._player_name != running_player:
-            if self._player_subscription:
-                self._player_subscription.disconnect()
-            self._player_name = running_player
-            self._player = self._get_player(running_player)
-            self._init_data()
-            if self._player is not None:
-                self._player_subscription = self._player.PropertiesChanged.connect(self._on_change)
-
         if self._player is None:
-            self._player = None
-            self._player_name = 'None'
-            self._player_subscription = None
             text = self.format_none
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
             composite = [{
                 'full_text': text,
                 'color': color,
             }]
         else:
-            (text, color, cached_until) = self._get_text(i3s_config)
+            self._init_data()
+            (text, color, cached_until) = self._get_text()
             self._control_states = self._get_control_states()
-            buttons = self._get_response_buttons(i3s_config)
+            buttons = self._get_response_buttons()
             composite = self.py3.build_composite(self.format,
                                                  text,
                                                  buttons)
@@ -474,7 +507,7 @@ class Py3status:
 
         return response
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Handles click events
         """

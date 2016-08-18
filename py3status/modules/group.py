@@ -80,7 +80,6 @@ group disks {
 @author tobes
 """
 
-from re import findall
 from time import time
 
 
@@ -178,15 +177,13 @@ class Py3status:
         """
 
         # hide if no contents
-        # FIXME the module shouldn't even run if no content
         if not self.items:
             return {
                 'cached_until': self.py3.CACHE_FOREVER,
                 'full_text': '',
             }
 
-        ready = self.initialized
-        if not ready:
+        if not self.initialized:
             self._init()
 
         if self.open:
@@ -206,23 +203,12 @@ class Py3status:
             format_control = self.format_button_closed
             format = self.format_closed
 
-        parts = findall('({[^}]*}|[^{]+)', format)
-
-        output = []
-        for part in parts:
-            if part == '{output}':
-                output += current_output
-            elif part == '{button}':
-                output += [{'full_text': format_control,
-                            'index': 'button'}]
-            else:
-                output += [{'full_text': part}]
-
-        # FIXME always start contained items after container so they trigger
-        # on the first run contained items may not be displayed so make sure we
-        # check them again to ensure all is correct
-        if not ready:
-            update_time = 0
+        button = {'full_text': format_control, 'index': 'button'}
+        composites = {
+            'output': current_output,
+            'button': button,
+        }
+        output = self.py3.build_composite(format, composites=composites)
 
         if update_time is not None:
             cached_until = time() + update_time
