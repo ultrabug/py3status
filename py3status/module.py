@@ -86,9 +86,13 @@ class Module(Thread):
         """
         Start the module running.
         """
-        # Call modules init() method if it has one
+        # Modules can define a post_config_hook() method which will be run
+        # after the module has had it config settings applied and before it has
+        # its main method(s) called for the first time.  This allows modules to
+        # perform any necessary setup.
         if self.has_post_config_hook:
             self.module_class.post_config_hook()
+        # Start the module and call its output method(s)
         self.start()
 
     def force_update(self):
