@@ -92,12 +92,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_degraded': '#00FFFF',
-        'color_bad': '#FF0000'
-    }
-    print(x.get_status([], config))
+    from py3status.module_test import module_test
+    module_test(Py3status)
