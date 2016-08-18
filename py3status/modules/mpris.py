@@ -185,13 +185,10 @@ class Py3status:
             self._data['error_occurred'] = True
 
     def _get_button_state(self, control_state):
-        if self._player:
+        try:
             # Workaround: The last parameter returns True for the Stop button.
             clickable = getattr(self._player, control_state['clickable'], True)
-        else:
-            # This should never be happen but sometimes self._player is None.
-            # This could be a race condition when you kill the player after
-            # checking self._player at the beginning in the mpris function.
+        except Exception:
             clickable = False
 
         if control_state['action'] == 'Play' and self._data['state'] == PLAYING:
