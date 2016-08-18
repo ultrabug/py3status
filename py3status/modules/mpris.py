@@ -108,7 +108,7 @@ from pydbus import SessionBus
 SERVICE_BUS = 'org.mpris.MediaPlayer2'
 SERVICE_BUS_URL = '/org/mpris/MediaPlayer2'
 
-WORKING_STATES = ['Playing', 'Paused']
+WORKING_STATES = ['Playing', 'Paused', 'Stopped']
 
 PLAYING = 0
 PAUSED = 1
@@ -342,7 +342,7 @@ class Py3status:
                     p['_priority'] = priority
             if p.get('_priority') is not None:
                 players.append(
-                    (not p['_working'], p['_priority'], p['index'], name)
+                    (p['_state_priority'], p['_priority'], p['index'], name)
                 )
         if players:
             top_player = self._mpris_players.get(sorted(players)[0][3])
@@ -365,7 +365,7 @@ class Py3status:
             if status:
                 player = self._mpris_players[player_id]
                 player['status'] = status
-                player['_working'] = status in WORKING_STATES
+                player['_state_priority'] = WORKING_STATES.index(status)
             self._set_player()
         return player_on_change
 
@@ -384,7 +384,7 @@ class Py3status:
                             p['full_name'] = u'{} {}'.format(p['name'], p['index'])
                 return
             status = player.PlaybackStatus
-            working = status in WORKING_STATES
+            state_priority = WORKING_STATES.index(status)
             identity = player.Identity
             if identity not in self._mpris_name_index:
                 self._mpris_name_index[identity] = 0
@@ -398,7 +398,7 @@ class Py3status:
             return
         self._mpris_players[player_id] = {
             '_dbus_player': player,
-            '_working': working,
+            '_state_priority': state_priority,
             'index': index,
             'identity': identity,
             'name': name,
