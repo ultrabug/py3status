@@ -374,6 +374,10 @@ Configuration parameters:
   - `format_off` string to display when DPMS is disabled
   - `format_on` string to display when DPMS is enabled
 
+Color options:
+  - `color_on` when dpms is enabled, defaults to color_good
+  - `color_off` when dpms is disabled, defaults to color_bad
+
 **author** Andre Doser <dosera AT tf.uni-freiburg.de>
 
 ---
@@ -902,13 +906,16 @@ Display the current active keyboard layout.
 
 Configuration parameters:
   - `cache_timeout` check for keyboard layout change every seconds
-  - `color` a single color value for all layouts. eg: "#FCE94F"
   - `colors` a comma separated string of color values for each layout,
-    eg: "us=#FCE94F, fr=#729FCF".
+    eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
   - `format` see placeholders below
 
 Format of status string placeholders:
   - `{layout}` currently active keyboard layout
+
+Color options:
+  - `color_&lt;layout&gt;` color for the layout
+    eg color_fr = '#729FCF'
 
 Requires:
   - `xkblayout-state`
