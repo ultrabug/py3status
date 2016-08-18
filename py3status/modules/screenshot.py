@@ -79,14 +79,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00',
-    }
-    while True:
-        print(x.screenshot([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

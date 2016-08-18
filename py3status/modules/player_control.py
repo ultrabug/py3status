@@ -19,7 +19,7 @@ Configuration parameters:
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.
 
-from time import time, sleep
+from time import time
 import os
 import subprocess
 
@@ -172,11 +172,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.player_control([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
