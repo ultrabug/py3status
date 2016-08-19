@@ -3,11 +3,7 @@
 Display information from mpd.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (2s default)
-    color: enable coloring output (default False)
-    color_pause: custom pause color (default i3status color degraded)
-    color_play: custom play color (default i3status color good)
-    color_stop: custom stop color (default i3status color bad)
+    cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
     hide_when_paused: hide the status if state is paused
     hide_when_stopped: hide the status if state is stopped
@@ -18,6 +14,11 @@ Configuration parameters:
     state_pause: label to display for "paused" state
     state_play: label to display for "playing" state
     state_stop: label to display for "stopped" state
+
+Color options:
+    color_pause: Paused, default color_degraded
+    color_play: Playing, default color_good
+    color_stop: Stopped, default color_bad
 
 Requires:
     python-mpd2: (NOT python2-mpd2)
@@ -147,10 +148,6 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 2
-    color = False
-    color_pause = None
-    color_play = None
-    color_stop = None
     format = '%state% [[[%artist%] - %title%]|[%file%]]'
     hide_when_paused = False
     hide_when_stopped = True
@@ -174,7 +171,7 @@ class Py3status:
             return self.state_stop
         return '?'
 
-    def current_track(self, i3s_output_list, i3s_config):
+    def current_track(self):
         try:
             c = MPDClient()
             c.connect(host=self.host, port=self.port)
@@ -237,14 +234,14 @@ class Py3status:
             'transformed': transformed
         }
 
-        if self.color and state:
+        if state:
             if state == 'play':
-                response['color'] = self.color_play or i3s_config['color_good']
+                response['color'] = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
             elif state == 'pause':
-                response['color'] = (self.color_pause or
-                                     i3s_config['color_degraded'])
+                response['color'] = (self.py3.COLOR_PAUSE or
+                                     self.py3.COLOR_DEGRADED)
             elif state == 'stop':
-                response['color'] = self.color_stop or i3s_config['color_bad']
+                response['color'] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
 
         return response
 
