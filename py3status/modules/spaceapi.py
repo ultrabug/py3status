@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# FIXME closed_color, open_color params
 """
 Display if your favorite hackerspace is open or not.
 
@@ -34,7 +35,7 @@ class Py3status:
     time_text = ' since %H:%M'
     url = 'http://status.chaospott.de/status.json'
 
-    def check(self, i3s_output_list, i3s_config):
+    def check(self):
 
         response = {
             'cached_until': time() + self.cache_timeout
@@ -43,7 +44,7 @@ class Py3status:
         try:
             # if color isn't set, set basic color schema
             if not self.open_color:
-                self.open_color = i3s_config['color_good']
+                self.open_color = self.py3.COLOR_GOOD
 
             if not self.closed_color:
                 self.closed_color = ''
