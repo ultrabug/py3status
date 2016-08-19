@@ -46,7 +46,7 @@ class Py3status:
     def _run_cmd(cmd):
         return check_output(['gpmdp-remote', cmd]).decode('utf-8').strip()
 
-    def gpmdp(self, i3s_output_list, i3s_config):
+    def gpmdp(self):
         if self._run_cmd('status') == 'Paused':
             result = ''
         else:

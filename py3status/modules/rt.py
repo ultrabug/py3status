@@ -4,21 +4,25 @@ Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
-    threshold_critical: set bad color above this threshold
     db: database to use
     format: see placeholders below
     host: database host to connect to
     password: login password
-    user: login user
+    threshold_critical: set bad color above this threshold
     threshold_warning: set degraded color above this threshold
+    user: login user
 
 Format of status string placeholders:
     {YOUR_QUEUE_NAME} number of ongoing RT tickets (open+new+stalled)
 
+Color options:
+    color_bad: Exceeded threshold_critical
+    color_degraded: Exceeded threshold_warning
+
 Requires:
-    - `PyMySQL` https://pypi.python.org/pypi/PyMySQL
+    PyMySQL: https://pypi.python.org/pypi/PyMySQL
         or
-    - `MySQL-python` http://pypi.python.org/pypi/MySQL-python
+    MySQL-python: http://pypi.python.org/pypi/MySQL-python
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
@@ -47,7 +51,7 @@ class Py3status:
     user = ''
     threshold_warning = 10
 
-    def rt_tickets(self, i3s_output_list, i3s_config):
+    def rt_tickets(self):
         has_one_queue_formatted = False
         response = {'full_text': ''}
         tickets = {}
@@ -76,10 +80,10 @@ class Py3status:
             if queue in self.format:
                 has_one_queue_formatted = True
                 if nb_tickets > self.threshold_critical:
-                    response.update({'color': i3s_config['color_bad']})
+                    response.update({'color': self.py3.COLOR_BAD})
                 elif (nb_tickets > self.threshold_warning and
                       'color' not in response):
-                    response.update({'color': i3s_config['color_degraded']})
+                    response.update({'color': self.py3.COLOR_DEGRADED})
         if has_one_queue_formatted:
             response['full_text'] = self.format.format(**tickets)
         else:

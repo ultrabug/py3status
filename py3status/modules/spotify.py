@@ -4,11 +4,6 @@ Display information about the current song playing on Spotify.
 
 Configuration parameters:
     cache_timeout: how often to update the bar
-    color_offline: text color when spotify is not running,
-        defaults to color_bad
-    color_paused: text color when song is stopped or paused,
-        defaults to color_degraded
-    color_playing: text color when song is playing, defaults to color_good
     format: see placeholders below
     format_down: define output if spotify is not running
     format_stopped: define output if spotify is not playing
@@ -18,6 +13,11 @@ Format of status string placeholders:
     {artist} artiste name (first one)
     {time} time duration of the song
     {title} name of the song
+
+Color options:
+    color_offline: Spotify is not running, defaults to color_bad
+    color_paused: Song is stopped or paused, defaults to color_degraded
+    color_playing: Song is playing, defaults to color_good
 
 i3status.conf example:
 
@@ -44,14 +44,11 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    color_offline = None
-    color_paused = None
-    color_playing = None
     format = '{artist} : {title}'
     format_down = 'Spotify not running'
     format_stopped = 'Spotify stopped'
 
-    def _get_text(self, i3s_config):
+    def _get_text(self):
         """
         Get the current song metadatas (artist - title)
         """
@@ -74,13 +71,13 @@ class Py3status:
                     'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
                 )
                 if playback_status.strip() == 'Playing':
-                    color = self.color_playing or i3s_config['color_good']
+                    color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
                 else:
-                    color = self.color_paused or i3s_config['color_degraded']
+                    color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
             except Exception:
                 return (
                     self.format_stopped,
-                    self.color_paused or i3s_config['color_degraded'])
+                    self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED)
 
             return (
                 self.format.format(title=title,
@@ -90,13 +87,13 @@ class Py3status:
         except Exception:
             return (
                 self.format_down,
-                self.color_offline or i3s_config['color_bad'])
+                self.py3.COLOR_OFFLINE or self.py3.COLOR_BAD)
 
-    def spotify(self, i3s_output_list, i3s_config):
+    def spotify(self):
         """
         Get the current "artist - title" and return it.
         """
-        (text, color) = self._get_text(i3s_config)
+        (text, color) = self._get_text()
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': text,

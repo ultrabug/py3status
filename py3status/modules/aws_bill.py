@@ -19,6 +19,10 @@ Configuration parameters:
 Format of status string placeholders:
     {bill_amount} AWS bill amount
 
+Color options:
+    color_good: Balance available
+    color_bad: An error has occured
+
 Requires:
     boto:
 
@@ -89,10 +93,10 @@ class Py3status:
 
         return False
 
-    def aws_bill(self, i3s_output_list, i3s_config):
+    def aws_bill(self):
         response = {
             'cached_until': time() + self.cache_timeout,
-            'color': i3s_config['color_bad'],
+            'color': self.py3.COLOR_BAD,
             'full_text': ''
         }
 
@@ -108,7 +112,7 @@ class Py3status:
             response['full_text'] = 'Check your internet access'
         elif bill_amount is not False:
             response['full_text'] = self.format.format(bill_amount=bill_amount)
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         else:
             response['full_text'] = 'Global error - WTF exception'
 

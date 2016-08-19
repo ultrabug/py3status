@@ -27,7 +27,7 @@ class Py3status:
     cache_timeout = 10
     format = '{current}'
 
-    def hamster(self, i3s_output_list, i3s_config):
+    def hamster(self):
         cur_task = check_output(shlex.split('hamster current'))
         cur_task = cur_task.decode('ascii', 'ignore').strip()
         if cur_task != 'No activity':

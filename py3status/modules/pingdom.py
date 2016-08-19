@@ -14,6 +14,10 @@ Configuration parameters:
     password: pingdom password
     request_timeout: pindgom API request timeout
 
+Color options:
+    color_bad: Site is down
+    color_degraded: Latency exceeded max_latency
+
 Requires:
     requests: python module from pypi
         https://pypi.python.org/pypi/requests
@@ -35,7 +39,7 @@ class Py3status:
     password = ''
     request_timeout = 15
 
-    def pingdom_checks(self, i3s_output_list, i3s_config):
+    def pingdom_checks(self):
         response = {'full_text': ''}
 
         # parse some configuration parameters
@@ -60,14 +64,14 @@ class Py3status:
                     )
                     if check['lastresponsetime'] > self.max_latency:
                         response.update(
-                            {'color': i3s_config['color_degraded']}
+                            {'color': self.py3.COLOR_DEGRADED}
                         )
                 else:
                     response['full_text'] += '{}: DOWN'.format(
                         check['name'],
                         check['lastresponsetime']
                     )
-                    response.update({'color': i3s_config['color_bad']})
+                    response.update({'color': self.py3.COLOR_BAD})
             response['full_text'] = response['full_text'].strip(', ')
             response['cached_until'] = time() + self.cache_timeout
 

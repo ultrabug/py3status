@@ -14,6 +14,11 @@ Format status string parameters:
     {status} Status of Insync
     {queued} Number of files queued
 
+Color options:
+    color_bad: Offline
+    color_degraded: Default
+    color_good: Synced
+
 Requires:
     insync: command line tool
 
@@ -30,13 +35,13 @@ class Py3status:
     cache_timeout = 10
     format = '{status} {queued}'
 
-    def check_insync(self, i3s_output_list, i3s_config):
+    def check_insync(self):
         status = check_output(["insync", "get_status"]).decode().strip()
-        color = i3s_config.get('color_degraded', '')
+        color = self.py3.COLOR_DEGRADED
         if status == "OFFLINE":
-            color = i3s_config.get('color_bad', '')
+            color = self.py3.COLOR_BAD
         if status == "SHARE":
-            color = i3s_config.get('color_good', '')
+            color = self.py3.COLOR_GOOD
             status = "INSYNC"
 
         queued = check_output(["insync", "get_sync_progress"]).decode()

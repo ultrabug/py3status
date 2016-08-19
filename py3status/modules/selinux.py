@@ -12,6 +12,11 @@ Configuration parameters:
 Format of status string placeholders:
     {state} the current selinux state
 
+Color options:
+    color_bad: Enforcing
+    color_degraded: Permissive
+    color_good: Disabled
+
 Requires:
     libselinux-python:
         or
@@ -32,22 +37,22 @@ class Py3status:
     cache_timeout = 10
     format = 'selinux: {state}'
 
-    def selinux_status(self, i3s_output_list, i3s_config):
+    def selinux_status(self):
         try:
             if selinux.security_getenforce():
                 selinuxstring = 'enforcing'
-                color = 'color_good'
+                color = self.py3.COLOR_GOOD
             else:
                 selinuxstring = 'permissive'
-                color = 'color_bad'
+                color = self.py3.COLOR_BAD
         except OSError:
             selinuxstring = 'disabled'
-            color = 'color_bad'
+            color = self.py3.COLOR_BAD
 
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': self.format.format(state=selinuxstring),
-            'color': i3s_config[color]
+            'color': color,
         }
 
         return response

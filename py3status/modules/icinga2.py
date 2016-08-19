@@ -39,7 +39,7 @@ class Py3status:
     url_parameters = "?service_state={service_state}&format=json"
     user = ''
 
-    def get_status(self, i3s_output_list, i3s_config):
+    def get_status(self):
         response = {
             'color': self.color,
             'cached_until': time() + self.cache_timeout,

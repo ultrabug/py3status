@@ -15,6 +15,13 @@ Configuration parameters:
     nameservers: comma separated list of reference DNS nameservers
     resolvers: comma separated list of DNS resolvers to use
 
+Color options:
+    color_bad: One or more lookups have failed
+    color_good: All lookups have succeeded
+
+Requires:
+    dnspython: python module
+
 @author nawadanp
 """
 
@@ -31,7 +38,7 @@ class Py3status:
     nameservers = ''
     resolvers = ''
 
-    def ns_checker(self, i3s_output_list, i3s_config):
+    def ns_checker(self):
         response = {'full_text': ''}
         counter = 0
         error = False
@@ -67,10 +74,10 @@ class Py3status:
 
         if error:
             response['full_text'] = str(counter) + ' NS NOK'
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
         else:
             response['full_text'] = str(counter) + ' NS OK'
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
 
         return response
 

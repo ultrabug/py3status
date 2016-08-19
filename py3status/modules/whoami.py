@@ -16,7 +16,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1800
 
-    def whoami(self, i3s_output_list, i3s_config):
+    def whoami(self):
         """
         We use the getpass module to get the current user.
         """

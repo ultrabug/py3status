@@ -45,7 +45,7 @@ class Py3status:
         self.status = 'stop'
         self.icon = self.play_icon
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         """
         buttons = (None, 'left', 'middle', 'right', 'up', 'down')
@@ -164,7 +164,7 @@ class Py3status:
         proxy = bus.get_object(mpris+'.vlc', mpris_slash)
         return dbus.Interface(proxy, dbus_interface=mpris+'.Player')
 
-    def player_control(self, i3s_output_list, i3s_config):
+    def player_control(self):
         return dict(
             full_text=self.icon,
             cached_until=time(),

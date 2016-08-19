@@ -42,7 +42,7 @@ class Py3status:
     def __init__(self):
         self.text = ''
 
-    def window_title(self, i3s_output_list, i3s_config):
+    def window_title(self):
         window = find_focused(i3.get_tree())
 
         transformed = False
