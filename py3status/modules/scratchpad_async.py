@@ -5,8 +5,6 @@ Display the amount of windows and indicate urgency hints on scratchpad (async).
 Configuration parameters:
     always_show: whether the indicator should be shown if there are no
         scratchpad windows (default False)
-    color_urgent: color to use if a scratchpad window is urgent (default
-        "#900000")
     format: string to format the output (default "{} ⌫")
 
 Requires:
@@ -25,7 +23,6 @@ class Py3status:
     """
     # available configuration parameters
     always_show = False
-    color_urgent = "#900000"
     format = u"{} ⌫"
 
     def __init__(self):
@@ -36,11 +33,11 @@ class Py3status:
         t.daemon = True
         t.start()
 
-    def scratchpad_counter(self, i3s_output_list, i3s_config):
+    def scratchpad_counter(self):
         response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:
-            response['color'] = self.color_urgent
+            response['urgent'] = True
 
         if self.always_show or self.count > 0:
             response['full_text'] = self.format.format(self.count)
