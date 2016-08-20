@@ -2,6 +2,9 @@
 """
 Display the total number of open tickets from GLPI.
 
+It features thresholds to colorize the output and forces a low timeout to
+limit the impact of a server connectivity problem on your i3bar freshness.
+
 Configuration parameters:
     critical: set bad color above this threshold
     db: database to use
@@ -10,11 +13,14 @@ Configuration parameters:
     user: login user
     warning: set degraded color above this threshold
 
-It features thresholds to colorize the output and forces a low timeout to
-limit the impact of a server connectivity problem on your i3bar freshness.
+Color options:
+    color_bad: Open ticket above critical threshold
+    color_degraded: Open ticket above warning threshold
+
+Requires:
+    MySQL-python: http://pypi.python.org/pypi/MySQL-python
 """
 
-# You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
 import MySQLdb
 
 
@@ -30,7 +36,7 @@ class Py3status:
     user = ''
     warning = 15
 
-    def count_glpi_open_tickets(self, i3s_output_list, i3s_config):
+    def count_glpi_open_tickets(self):
         response = {'full_text': ''}
 
         mydb = MySQLdb.connect(
@@ -47,13 +53,12 @@ class Py3status:
         row = mycr.fetchone()
         if row:
             open_tickets = int(row[0])
-            if i3s_config['colors']:
-                if open_tickets > self.critical:
-                    response.update({'color': i3s_config['color_bad']})
-                elif open_tickets > self.warning:
-                    response.update(
-                        {'color': i3s_config['color_degraded']}
-                    )
+            if open_tickets > self.critical:
+                response.update({'color': self.py3.COLOR_BAD})
+            elif open_tickets > self.warning:
+                response.update(
+                    {'color': self.py3.COLOR_DEGRADED}
+                )
             response['full_text'] = '%s tickets' % open_tickets
         mydb.close()
 
