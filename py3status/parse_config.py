@@ -10,7 +10,7 @@ from subprocess import check_output
 
 from py3status.constants import (
     I3S_SINGLE_NAMES,
-    I3STATUS_MODULES,
+    I3S_MODULE_NAMES,
     MAX_NESTING_LEVELS,
     ERROR_CONFIG,
     GENERAL_DEFAULTS,
@@ -119,6 +119,7 @@ class ConfigParser:
         self.line_start = 0
         self.raw = config.split('\n')
         self.container_modules = []
+        self.anon_count = 0
 
     class ParseEnd(Exception):
         '''
@@ -427,8 +428,19 @@ class ConfigParser:
                 if self.level == 1 and name == 'order':
                     self.check_module_name(value, offset=1)
                     dictionary.setdefault(name, []).append(value)
-                # assignment of value or module definition
-                elif t_value in ['=', '{']:
+                # assignment of  module definition
+                elif t_value == '{':
+                    # If this is an py3status module and in a container and has
+                    # no instance name then give it an anon one.  This allows
+                    # us to have multiple non-instance named modules defined
+                    # without them clashing.
+                    if (self.level > 1 and ' ' not in name and
+                            name not in I3S_MODULE_NAMES):
+                        name = '{} _anon_module_{}'.format(name, self.anon_count)
+                        self.anon_count += 1
+                    dictionary[name] = value
+                # assignment of value
+                elif t_value == '=':
                     dictionary[name] = value
                 # appending to existing values
                 elif t_value == '+=':
@@ -451,7 +463,7 @@ def process_config(config_path, py3_wrapper=None):
 
     def module_names():
         # get list of all module names
-        modules = I3S_SINGLE_NAMES + I3STATUS_MODULES
+        modules = I3S_MODULE_NAMES[:]
         root = os.path.dirname(os.path.realpath(__file__))
         module_path = os.path.join(root, 'modules', '*.py')
         for file in glob.glob(module_path):
@@ -478,7 +490,7 @@ def process_config(config_path, py3_wrapper=None):
     config = {}
 
     # get the file encoding this is important with multi-byte unicode chars
-    encoding = check_output(['file', '-b', '--mime-encoding', config_path])
+    encoding = check_output(['file', '-b', '--mime-encoding', '--dereference', config_path])
     encoding = encoding.strip().decode('utf-8')
     with codecs.open(config_path, 'r', encoding) as f:
         try:
@@ -528,7 +540,7 @@ def process_config(config_path, py3_wrapper=None):
         '''
         i3status or py3status?
         '''
-        if name.split()[0] in I3S_SINGLE_NAMES + I3STATUS_MODULES:
+        if name.split()[0] in I3S_MODULE_NAMES:
             return 'i3status'
         return 'py3status'
 
@@ -541,7 +553,7 @@ def process_config(config_path, py3_wrapper=None):
                 module['.group'] = parent
 
         # check module content
-        for k, v in module.items():
+        for k, v in list(module.items()):
             if k.startswith('on_click'):
                 # on_click event
                 process_onclick(k, v, name)
@@ -595,7 +607,7 @@ def process_config(config_path, py3_wrapper=None):
     allowed_modules = module_names()
 
     # create config for modules in order
-    for name in config_info['order']:
+    for name in config_info.get('order', []):
         module = modules.get(name, {})
         module_type = get_module_type(name)
         if allowed_modules and name.split()[0] not in allowed_modules:
@@ -626,6 +638,9 @@ def process_config(config_path, py3_wrapper=None):
             else:
                 config[name]['format'] = TZTIME_FORMAT
 
+    if not config['order']:
+        notify_user('Your configuration file does not list any module'
+                    ' to be loaded with the "order" directive.')
     return config
 
 

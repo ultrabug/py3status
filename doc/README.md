@@ -7,6 +7,7 @@ py3status documentation
 * [Available modules](#available_modules)
 * [Ordering modules](#ordering_modules)
 * [Configuring modules](#configuring_modules)
+* [Configuring colors](#configuring_color)
 * [Grouping modules](#group_modules)
 
 [Custom click events](#on_click)
@@ -20,7 +21,10 @@ py3status documentation
 * [Example 2: Configuration parameters](#example_2)
 * [Example 3: Events](#example_3)
 * [Example 4: Status string placeholders](#example_4)
+* [Example 5: Using color constants](#example_5)
+* [Module methods](#module_methods)
 * [Py3 module helper](#py3)
+* [Composites](#composites)
 * [Module documentation](#docstring)
 * [Module testing](#testing)
 
@@ -84,6 +88,40 @@ imap {
     port = '993'
     user = 'mylogin'
     on_click 1 = "exec thunderbird"
+}
+```
+
+#### <a name="configuring_color"></a>Configuring colors
+
+Since version 3.1 py3status allows greater color configuration.
+Colors can be set in the general section of your `i3status.conf` or in an
+individual modules configuration.  If a color is not in a modules configuration
+the the values from the general section will be used.
+
+If a module does not specify colors but it is in a container, then the colors
+of the container will be used if they are set, before using ones defined in the
+general section.
+
+Example:
+```
+general {
+    # These will be used if not supplied by a module
+    color = '#FFFFFF'
+    color_good = '#00FF00'
+    color_bad = '#FF0000'
+    color_degraded = '#FFFF00'
+}
+
+time {
+    color = 'FF00FF'
+    format = "%H:%M"
+}
+
+battery_level {
+    color_good = '#00AA00'
+    color_bad = '#AA0000'
+    color_degraded = '#AAAA00'
+    color_charging = '#FFFF00'
 }
 ```
 
@@ -308,6 +346,7 @@ show up in the status bar.
 The `Py3status` class tells py3status that this is a module. The module gets
 loaded. py3status then calls any public methods that the class contains to get
 a response. In our example there is a single method `hello_world()`.
+Read more here: [module methods](#module_methods).
 
 ####The response
 
@@ -400,7 +439,10 @@ class Py3status:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}
         """
         button = event['button']
-        self.full_text = 'You pressed button {}'.format(button)
+        # update our output (self.full_text)
+        format_string = 'You pressed button {button}'
+        data = {'button': button}
+        self.full_text = self.py3.safe_format(format_string, data)
         # Our modules update methods will get called automatically.
 ```
 
@@ -416,6 +458,8 @@ generally we only care about the button.
 
 The `__init__()` method is called when our class is instantiated. __Note: this
 is called before any config parameters have been set.__
+
+We use the `safe_format()` method of `py3` for formatting. Read more here: [Py3 module helper](#py3)
 
 ## <a name="example_4"></a>Example 4: Status string placeholders
 
@@ -447,7 +491,8 @@ class Py3status:
 
     def click_info(self):
         if self.button:
-            full_text = self.format_clicked.format(button=self.button)
+            data = {'button': self.button}
+            full_text = self.py3.safe_format(self.format_clicked, data)
         else:
             full_text = self.format
 
@@ -475,6 +520,151 @@ click_info {
 }
 ```
 
+## <a name="example_5"></a>Example 5: Using color constants
+
+`self.py3` in our module has color constants that we can access, these allow the user to set colors easily in their config.
+
+__Note: py3 colors constants require py3status 3.1 or higher__
+
+
+```
+# -*- coding: utf-8 -*-
+"""
+Example module that uses colors.
+
+We generate a random number between and color it depending on its value.
+Clicking on the module will update it an a new number will be chosen.
+
+Configuration parameters:
+    format: Initial format to use
+        (default 'Number {number}')
+
+Format status string parameters:
+    {number} Our random number
+
+Color options:
+    color_high: number is 5 or higher
+    color_low: number is less than 5
+"""
+
+from random import randint
+
+
+class Py3status:
+    format = 'Number {number}'
+
+    def random(self):
+        number = randint(0, 9)
+        full_text = self.py3.safe_format(self.format, {'number': number})
+
+        if number < 5:
+            color = self.py3.COLOR_LOW
+        else:
+            color = self.py3.COLOR_HIGH
+
+        return {
+            'full_text': full_text,
+            'color': color,
+            'cache_until': self.py3.CACHE_FOREVER
+        }
+
+    def on_click(self, event):
+        # by defining on_click pressing any mouse button will refresh the
+        # module.
+        pass
+```
+
+The colors can be set in the config in the module or its container or in the
+general section.  The following example assumes that our module has been saved
+as `number.py`.  Although the constants are capitalized they are defined in the
+config in lower case.
+
+```
+number {
+    color_high = '#FF0000'
+    color_low = '#00FF00'
+}
+```
+
+***
+
+
+## <a name="module_methods"></a>Module methods
+
+Py3status will call a method in a module to provide output to the i3bar.
+Methods that have names starting with an underscore will not be used in this
+way.  Any methods defined as static methods will also not be used.
+
+### Outputs
+
+Output methods should provide a response dict.
+
+Example response:
+
+```
+{
+    'full_text': "This text will be displayed",
+    'cached_until': 1470922537,  # Time in seconds since the epoch
+}
+```
+
+The response can include the folowing keys
+
+__cached_until__
+
+The time (in seconds since the epoch) that the output will be classed as no longer valid and the output
+function will be called again.  If no `cached_until` value is provided the the
+output will be cached for `cache_timeout` seconds by default this is
+`60` and can be set using the `-t` or `--timeout` option when running
+py3status.  To never expire the `self.py3.CACHE_FOREVER` constant should be
+used.
+
+__color__
+
+The color that the module output will be displayed in.
+
+__composite__
+
+Used to output more than one item to i3bar from a single output method.  If this is provided then `full_text` should not be.
+
+__full_text__
+
+This is the text output that will be sent to i3bar.
+
+__index__
+
+The index of the output.  Allows composite output to identify which component
+of their output had an event triggered.
+
+__separator__
+
+If `False` no separator will be shown after the output block (requires i3bar
+4.12).
+
+__urgent__
+
+If `True` the output will be shown as urgent in i3bar.
+
+
+### Special methods
+
+Some special method are also defined.
+
+__kill()__
+
+Called just before a module is destroyed.
+
+__on_click(event)__
+
+Called when an event is recieved by a module.
+
+__post_config_hook()__
+
+Called once an instance of a module has been created and the configuration
+parameters have been set.  This is useful for any work a module must do before
+its output methods are run for the first time. `post_config_hook()`
+introduced in version 3.1
+
 ***
 
 
@@ -492,12 +682,30 @@ __CACHE_FOREVER__
 If this is returned as the value for `cached_until` then the module will not be
 updated. This is useful for static modules and ones updating asynchronously.
 
+__COLOR_&lt;VALUE&gt;__
+
+Introduced in py3status version 3.1
+
+This will have the value of the requested color as defined by the user config.
+eg `COLOR_GOOD` will have the value `color_good` that the user had in their
+config.  This may have been defined in the modules config, that of a container
+or the general section.
+
+Custom colors like `COLOR_CHARGING` can be used and are setable by the user in
+their `i3status.conf` just like any other color.  If the color is undefined
+then it will be the default color value.
+
 #### Methods
 
 __update(module_name=None)__
 
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
+
+__is_python_2()__
+
+True if the version of python being used is 2.x
+Can be helpful for fixing python 2 compatability issues
 
 __get_output(module_name)__
 
@@ -526,13 +734,47 @@ Returns the time a given number of seconds into the future.
 Helpful for creating the `cached_until` value for the module
 output.
 
-__safe_format(format_string, param_dict)__
+__safe_format(format_string, param_dict=None)__
 
-Perform a safe formatting of a string. Using format fails if the
-format string contains placeholders which are missing. Since these can
-be set by the user it is possible that they add unsupported items.
-This function will show missing placeholders so that modules do not
-crash hard.
+Parser for advanced formating.
+
+Unknown placeholders will be shown in the output eg `{foo}`
+
+Square brackets `[]` can be used. The content of them will be removed
+from the output if there is no valid placeholder contained within.
+They can also be nested.
+
+A pipe (vertical bar) `|` can be used to divide sections the first
+valid section only will be shown in the output.
+
+A backslash `\` can be used to escape a character eg `\[` will show `[`
+in the output. Note: `\?` is reserved for future use and is removed.
+
+`{<placeholder>}` will be converted, or removed if it is None or empty.
+
+Formating can also be applied to the placeholder eg
+`{number:03.2f}`.
+
+*example format_string:*
+
+`"[[{artist} - ]{title}]|{file}"`
+This will show `artist - title` if artist is present,
+`title` if title but no artist,
+and `file` if file is present but not artist or title.
+
+
+param_dict is a dictionary of palceholders that will be substituted.
+If a placeholder is not in the dictionary then if the py3status module
+has an attribute with the same name then it will be used.
+
+__build_composite(format_string, param_dict=None, composites=None)__
+
+Build a composite output using a format string.
+
+Takes a format_string and treats it the same way as `safe_format` but
+also takes a composites dict where each key/value is the name of the
+placeholder and either an output eg `{'full_text': 'something'}` or a
+list of outputs.
 
 __check_commands(cmd_list)__
 
@@ -546,6 +788,50 @@ Plays sound_file if possible. Requires `paplay` or `play`.
 __stop_sound()__
 
 Stops any currently playing sounds for this module.
+
+***
+
+
+## <a name="composites"></a>Composites
+
+
+Whilst most modules return a simple response eg:
+```
+{
+    'full_text': <some text>,
+    'cached_until': <cache time>,
+}
+```
+
+Sometimes it is useful to provide a more complex, composite response.  A
+composite is made up of more than one simple response which allows for example
+a response that has multiple colors.  Different parts of the response can also
+be differentiated between when a click event occures and so allow clicking on
+different parts of the response to have different outcomes.  The different
+parts of the composite will not have separators between them in the output so
+they will appear as a single module to the user.
+
+The format of a composite is as follows:
+
+```
+{
+    'cached_until': <cache time>,
+    'composite': [
+        {
+            'full_text': <some text>,
+        },
+        {
+            'full_text': <some more text>,
+            'index': <some index>
+        },
+    ]
+}
+```
+
+The `index` key in the response is used to identify the individual block and
+when the the modules `on_click()` method is called the event will include this.
+Supplied index values should be strings.  If no index is given then it will
+have an integer value indicating its position in the composite.
 
 ***
 
@@ -568,6 +854,10 @@ The docsting of a module is used.  The format is as follows:
 - Format status string parameters.  These are used for substituting values in
   format strings. All parameters should be listed (in alphabetical
   order) and describe the output that they provide.
+
+- Color options.  These are the color options that can be provided for this
+  module.  All color options should be listed (in alphabetical order) that the
+  module uses.
 
 - Requires.  A list of all the additional requirements for the module to work.
   These may be command line utilities, python librarys etc.
@@ -593,6 +883,10 @@ Here is an example of a docstring.
 
     Format status string parameters:
         {info} Description of the parameter
+
+    Color options:
+        color_meaning: what this signifies, defaults to color_good
+        color_meaning2: what this signifies
 
     Requires:
         program: Information about the program

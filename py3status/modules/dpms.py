@@ -10,6 +10,10 @@ Configuration parameters:
     format_off: string to display when DPMS is disabled
     format_on: string to display when DPMS is enabled
 
+Color options:
+    color_on: when dpms is enabled, defaults to color_good
+    color_off: when dpms is disabled, defaults to color_bad
+
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
 
@@ -22,10 +26,8 @@ class Py3status:
     # available configuration parameters
     format_off = "DPMS"
     format_on = "DPMS"
-    color_on = None
-    color_off = None
 
-    def dpms(self, i3s_output_list, i3s_config):
+    def dpms(self):
         """
         Display a colorful state of DPMS.
         """
@@ -34,11 +36,11 @@ class Py3status:
 
         return {
             'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good'] if self.run
-            else self.color_off or i3s_config['color_bad']
+            'color': self.py3.COLOR_ON or self.py3.COLOR_GOOD if self.run
+            else self.py3.COLOR_OFF or self.py3.COLOR_BAD
         }
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Enable/Disable DPMS on left click.
         """
@@ -52,15 +54,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_good': '#00FF00',
-    }
-
-    while True:
-        print(x.dpms([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

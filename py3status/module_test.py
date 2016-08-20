@@ -10,7 +10,7 @@ def module_test(module_class, config=None):
         'color_good': '#00FF00'
     }
     module = module_class()
-    setattr(module, 'py3', Py3(i3s_config=i3s_config))
+    setattr(module, 'py3', Py3(i3s_config=i3s_config, py3status=module))
     if config:
         for key, value in config.items():
             setattr(module, key, value)
