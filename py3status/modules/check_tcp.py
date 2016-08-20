@@ -38,10 +38,10 @@ class Py3status:
 
         if result == 0:
             state = 'UP'
-            response['color'] = self.COLOR_UP or self.py3.COLOR_GOOD
+            response['color'] = self.py3.COLOR_UP or self.py3.COLOR_GOOD
         else:
             state = 'DOWN'
-            response['color'] = self.COLOR_DOWN or self.py3.COLOR_BAD
+            response['color'] = self.py3.COLOR_DOWN or self.py3.COLOR_BAD
 
         response['full_text'] = self.py3.safe_format(self.format,
                                                      {'state': state})
