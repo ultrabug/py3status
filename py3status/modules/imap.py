@@ -13,6 +13,7 @@ Configuration parameters:
     password: login password
     port: IMAP server port
     user: login user
+    base64: use base64 encoded password (bool) (default: False)
 
 Format of status string placeholders:
     {unseen} number of unread emails
@@ -22,6 +23,7 @@ Format of status string placeholders:
 
 import imaplib
 from time import time
+import base64
 
 
 class Py3status:
@@ -38,6 +40,7 @@ class Py3status:
     password = '<PASSWORD>'
     port = '993'
     user = '<USERNAME>'
+    base64 = False
 
     def check_mail(self, i3s_output_list, i3s_config):
         mail_count = self._get_mail_count()
@@ -65,7 +68,7 @@ class Py3status:
             mail_count = 0
             directories = self.mailbox.split(',')
             connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
-            connection.login(self.user, self.password)
+            connection.login(self.user, self.passwd)
 
             for directory in directories:
                 connection.select(directory)
@@ -78,6 +81,12 @@ class Py3status:
 
         except:
             return 'N/A'
+
+    @property
+    def passwd(self):
+        if self.base64:
+            return base64.b64decode(self.password).decode('utf-8')
+        return self.password
 
 
 if __name__ == "__main__":
