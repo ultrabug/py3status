@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import base64
 import codecs
-import re
 import glob
-import os
 import imp
+import os
+import re
+
 from collections import OrderedDict
 from string import Template
 from subprocess import check_output
@@ -100,7 +102,7 @@ class ConfigParser:
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
         r"|('(?:[^'\\]|\\.)*')"  # single quoted string
-        '|([a-z_][a-z0-9_]*)'  # token
+        '|([a-z_][a-z0-9_]*(:[a-z0-9_]+)?)'  # token
         '|(-?\d+\.\d*)|(-?\.\d+)'  # float
         '|(-?\d+)'  # int
         ')'
@@ -383,6 +385,22 @@ class ConfigParser:
         elif token['value'] in ['{']:
             return self.module_def()
 
+    def process_value(self, name, value):
+        '''
+        This method allow any encodings to be dealt with.
+        Currently only base64 is supported.
+
+        Note: If other encodings are added then this should be split so that
+        there is a method for each encoding.
+        '''
+        # if we have a colon in the name of a setting then it
+        # indicates that it has been encoded.
+        if ':' in name:
+            (name, scheme) = name.split(':')
+            if scheme == 'base64':
+                value = base64.b64decode(value)
+        return name, value
+
     def parse(self, dictionary=None, end_token=None):
         '''
         Parse through the tokens. Finding names and values.
@@ -415,9 +433,11 @@ class ConfigParser:
                 if not name:
                     self.error('Name expected')
                 elif t_value == '+=' and name not in dictionary:
-                    # order is treated specially
-                    if not (self.level == 1 and name == 'order'):
-                        self.error('{} does not exist'.format(name))
+                    # deal with encoded names
+                    if name.split(':')[0] not in dictionary:
+                        # order is treated specially
+                        if not (self.level == 1 and name == 'order'):
+                            self.error('{} does not exist'.format(name))
                 if t_value in ['{']:
                     if self.current_module:
                         self.check_child_friendly(self.current_module[-1])
@@ -441,9 +461,11 @@ class ConfigParser:
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == '=':
+                    name, value = self.process_value(name, value)
                     dictionary[name] = value
                 # appending to existing values
                 elif t_value == '+=':
+                    name, value = self.process_value(name, value)
                     dictionary[name] += value
                 else:
                     self.error('Unexpected character')
