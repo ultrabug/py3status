@@ -5,10 +5,6 @@ Display current network and ip address for newer Huwei modems.
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III but may work on other devices, too.
 
-DEPENDENCIES:
-    netifaces:
-    pyserial:
-
 Configuration parameters:
     baudrate: There should be no need to configure this, but
         feel free to experiment.
@@ -40,6 +36,15 @@ Configuration parameters:
         collecting the response.
         Default is 0.4 (which should be sufficient)
 
+Color options:
+    color_bad: Error or no connection
+    color_degraded: Low generation connection eg 2G
+    color_good: Good connection
+
+Requires:
+    netifaces:
+    pyserial:
+
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
 """
@@ -63,7 +68,7 @@ class Py3status:
     modem = "/dev/ttyUSB1"
     modem_timeout = 0.4
 
-    def wwan_status(self, i3s_output_list, i3s_config):
+    def wwan_status(self):
 
         query = "AT^SYSINFOEX"
         target_line = "^SYSINFOEX"
@@ -109,7 +114,7 @@ class Py3status:
                 print("Permission error")
                 response['full_text'] = self.format_error.format(
                     error="no access to " + self.modem)
-                response['color'] = i3s_config['color_bad']
+                response['color'] = self.py3.COLOR_BAD
                 return response
             # Dissect response
             for line in modem_response.decode("utf-8").split('\n'):
@@ -126,19 +131,19 @@ class Py3status:
                         response['full_text'] = self.format_no_service.format(
                             status=netmode,
                             ip=ip)
-                        response['color'] = i3s_config['color_bad']
+                        response['color'] = self.py3.COLOR_BAD
                     else:
                         response['full_text'] = self.format_up.format(
                             status=netmode,
                             netgen=str(netgen) + "G",
                             ip=ip)
                         if netgen <= degraded_netgen:
-                            response['color'] = i3s_config['color_degraded']
+                            response['color'] = self.py3.COLOR_DEGRADED
                         else:
-                            response['color'] = i3s_config['color_good']
+                            response['color'] = self.py3.COLOR_GOOD
                 elif line.startswith("COMMAND NOT SUPPORT") or line.startswith(
                         "ERROR"):
-                    response['color'] = i3s_config['color_bad']
+                    response['color'] = self.py3.COLOR_BAD
                     response['full_text'] = self.format_error.format(
                         error="unsupported modem")
                 else:
@@ -146,7 +151,7 @@ class Py3status:
                     pass
         else:
             print(self.modem + " not found")
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
             response['full_text'] = self.format_down
         return response
 

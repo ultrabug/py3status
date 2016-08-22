@@ -7,6 +7,11 @@ Configuration parameters:
     low_*: / `med_*` coloration thresholds
     nic: the network interface to monitor (defaults to eth0)
 
+Color options:
+    color_bad: Rate is below low threshold
+    color_degraded: Rate is below med threshold
+    color_good: Rate is med threshold or higher
+
 @author Shahin Azad <ishahinism at Gmail>
 """
 
@@ -58,7 +63,7 @@ class Py3status:
         self.old_transmitted = 0
         self.old_received = 0
 
-    def net_speed(self, i3s_output_list, i3s_config):
+    def net_speed(self):
         """
         Calculate network speed ('eth0' interface) and return it.
         You can change the interface using 'nic' configuration parameter.
@@ -71,11 +76,11 @@ class Py3status:
         up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
         if dl_speed < self.low_speed:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
         elif dl_speed < self.med_speed:
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
         else:
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
 
         response['full_text'] = "LAN(Kb): {:5.1f}↓ {:5.1f}↑"\
             .format(dl_speed, up_speed)
@@ -86,7 +91,7 @@ class Py3status:
 
         return response
 
-    def net_traffic(self, i3s_output_list, i3s_config):
+    def net_traffic(self):
         """
         Calculate networks used traffic.
         You can change the interface using 'nic' configuration parameter.
@@ -100,11 +105,11 @@ class Py3status:
         total = download + upload
 
         if total < self.low_traffic:
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         elif total < self.med_traffic:
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
         else:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
 
         response['full_text'] = "T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕".format(
             download,

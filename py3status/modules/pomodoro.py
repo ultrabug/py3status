@@ -28,6 +28,11 @@ Format of status string placeholders:
     {mm} display time in total minutes (25)
     {mmss} display time in (hh-)mm-ss (25:00)
 
+Color options:
+    color_bad: Pomodoro not running
+    color_degraded: Pomodoro break
+    color_good: Pomodoro active
+
 i3status.conf example:
 ```
 pomodoro {
@@ -218,7 +223,7 @@ class Py3status:
         bar = bar.ljust(self.num_progress_bars)
         return bar
 
-    def pomodoro(self, i3s_output_list, i3s_config):
+    def pomodoro(self):
         """
         Pomodoro response handling and countdown
         """
@@ -271,12 +276,12 @@ class Py3status:
             self._alert = False
 
         if not self._running:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
         else:
             if self._active:
-                response['color'] = i3s_config['color_good']
+                response['color'] = self.py3.COLOR_GOOD
             else:
-                response['color'] = i3s_config['color_degraded']
+                response['color'] = self.py3.COLOR_DEGRADED
 
         return response
 

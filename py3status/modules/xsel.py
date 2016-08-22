@@ -33,7 +33,7 @@ class Py3status:
     symmetric = True
     color = "#0066FF"
 
-    def xsel(self, i3s_output_list, i3s_config):
+    def xsel(self):
         """
         Display the content of xsel.
         """

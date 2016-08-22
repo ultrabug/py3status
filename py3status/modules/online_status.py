@@ -9,6 +9,10 @@ Configuration parameters:
     timeout: how long before deciding we're offline
     url: connect to this url to check the connection status
 
+Color options:
+    color_bad: Offline
+    color_good: Online
+
 @author obb
 """
 
@@ -45,7 +49,7 @@ class Py3status:
             return subprocess.call(['ping', '-c', '1', self.url],
                                    stdout=fnull, stderr=fnull) == 0
 
-    def online_status(self, i3s_output_list, i3s_config):
+    def online_status(self):
         response = {
             'cached_until': time() + self.cache_timeout
         }
@@ -53,10 +57,10 @@ class Py3status:
         connected = self._connection_present()
         if connected:
             response['full_text'] = self.format_online
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         else:
             response['full_text'] = self.format_offline
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
 
         return response
 

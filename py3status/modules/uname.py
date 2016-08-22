@@ -28,7 +28,7 @@ class Py3status:
     cache_timeout = 3600
     format = '{system} {release} {machine}'
 
-    def show_uname(self, i3s_output_list, i3s_config):
+    def show_uname(self):
         system, node, release, version, machine, processor = uname()
         response = {
             'cached_until': time() + self.cache_timeout,

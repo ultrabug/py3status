@@ -110,7 +110,7 @@ class Py3status:
 
         return self.value_format.format(value=value, unit=unit)
 
-    def currentSpeed(self, i3s_output_list, i3s_config):
+    def currentSpeed(self):
         stat = get_stat(self.statistics_type)
 
         color = None

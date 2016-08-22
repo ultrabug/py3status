@@ -63,7 +63,7 @@ class Py3status:
         self.last_stat = self._get_stat()
         self.last_time = time()
 
-    def currentSpeed(self, i3s_output_list, i3s_config):
+    def currentSpeed(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):
             self.interfaces = self.interfaces.split(',')

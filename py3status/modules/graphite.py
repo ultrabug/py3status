@@ -44,6 +44,10 @@ Dynamic format placeholders:
         targets = "alias(carbon.agents.localhost-a.memUsage, 'local_memuse')"
         format = "local carbon mem usage: {local_memuse} bytes"
 
+Color options:
+    color_bad: threshold_bad has been exceeded
+    color_degraded: threshold_degraded has been exceeded
+
 @author ultrabug
 """
 from requests import get
@@ -187,7 +191,7 @@ class Py3status:
                 return 'degraded'
         return 'good'
 
-    def graphite(self, i3s_output_list, i3s_config):
+    def graphite(self):
         """
         """
         self._validate_config()
@@ -198,7 +202,7 @@ class Py3status:
 
         response = {
             'cached_until': time() + self.cache_timeout,
-            'color': i3s_config['color_{}'.format(color_key)],
+            'color': getattr(self.py3, 'COLOR_{}'.format(color_key.upper())),
             'full_text': self.format.format(**r_json)
         }
         return response

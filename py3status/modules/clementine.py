@@ -62,7 +62,7 @@ class Py3status:
 
         return now_playing
 
-    def clementine(self, i3s_output_list, i3s_config):
+    def clementine(self):
         """
         Get the current "artist - title" and return it.
         """

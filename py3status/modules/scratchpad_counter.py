@@ -32,7 +32,7 @@ class Py3status:
     def __init__(self):
         self.count = -1
 
-    def scratchpad_counter(self, i3s_output_list, i3s_config):
+    def scratchpad_counter(self):
         count = len(find_scratch(i3.get_tree()).get("floating_nodes", []))
 
         if self.count != count:

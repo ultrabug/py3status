@@ -8,6 +8,10 @@ Configuration parameters:
     hour_price: your price per hour
     tax: tax value (1.02 = 2%)
 
+Color options:
+    color_bad: Running
+    color_good: Stopped
+
 @author Amaury Brisou <py3status AT puzzledge.org>
 """
 import os
@@ -39,13 +43,13 @@ class Py3status:
         except:
             pass
 
-    def kill(self, i3s_output_list, i3s_config):
+    def kill(self):
         if self.started is True:
             self.saved_time = self.current_time - self.start_time
         with open(self.config_file, 'w') as f:
             f.write(str(self.saved_time))
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         if event['button'] == 1:
             if self.started is True:
                 self.saved_time = time.time() - self.start_time
@@ -61,7 +65,7 @@ class Py3status:
         with open(self.config_file, 'w') as f:
             f.write('0')
 
-    def counter(self, i3s_output_list, i3s_config):
+    def counter(self):
         if self.started:
             self.current_time = time.time()
             self.diff_time = time.gmtime(self.current_time - self.start_time)
@@ -74,7 +78,7 @@ class Py3status:
             self.full_text = 'Time: %d day %d:%d Cost: %.2f$' % (
                 self.diff_time.tm_mday - 1, self.diff_time.tm_hour,
                 self.diff_time.tm_min, float(cost) * float(self.tax))
-            color = i3s_config['color_good']
+            color = self.py3.COLOR_GOOD
         else:
             if self.full_text == '':
                 if self.saved_time != 0:
@@ -90,7 +94,7 @@ class Py3status:
                 else:
                     self.full_text = "Time: 0 day 0:0 Cost: 0$"
 
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
 
         response = {
             'cached_until': time.time() + self.cache_timeout,

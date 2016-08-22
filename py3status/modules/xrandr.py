@@ -52,6 +52,11 @@ Dynamic configuration parameters:
         the given OUTPUT when it is activated
         Example: DP1_workspaces = "1,2,3"
 
+Color options:
+    color_bad: Displayed layout unavailable
+    color_degraded: Using a fallback layout
+    color_good: Displayed layout active
+
 Example config:
 
 ```
@@ -337,7 +342,7 @@ class Py3status:
         self.available_combinations.rotate(direction)
         self.displayed = self.available_combinations[0]
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Click events
             - left click & scroll up/down: switch between modes
@@ -354,7 +359,7 @@ class Py3status:
         if button == 3:
             self._apply()
 
-    def xrandr(self, i3s_output_list, i3s_config):
+    def xrandr(self):
         """
         This is the main py3status method, it will orchestrate what's being
         displayed on the bar.
@@ -375,9 +380,9 @@ class Py3status:
 
         # coloration
         if self.displayed == self.active_layout:
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         elif self.displayed not in self.available_combinations:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
 
         # force default layout setup
         if self.force_on_start is not None:
@@ -386,7 +391,7 @@ class Py3status:
 
         # fallback detection
         if self.active_layout not in self.available_combinations:
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
             if self.fallback is True:
                 self._fallback_to_available_output()
 
