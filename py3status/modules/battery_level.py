@@ -14,18 +14,6 @@ Configuration parameters:
     charging_character: a character to represent charging battery
         especially useful when using icon fonts (e.g. FontAwesome)
         default is "⚡"
-    color_bad: a color to use when the battery level is bad
-        None means get it from i3status config
-        default is None
-    color_charging: a color to use when the battery is charging
-        None means get it from i3status config
-        default is "#FCE94F"
-    color_degraded: a color to use when the battery level is degraded
-        None means get it from i3status config
-        default is None
-    color_good: a color to use when the battery level is good
-        None means get it from i3status config
-        default is None
     format: string that formats the output. See placeholders below.
         default is "{icon}"
     format_notify_charging: format of the notification received when you click
@@ -61,6 +49,12 @@ Format of status string placeholders:
         as defined by the 'blocks' and 'charging_character' parameters
     {percent} - the remaining battery percentage (previously '{}')
     {time_remaining} - the remaining time until the battery is empty
+
+Color options:
+    color_bad: Battery level is below threshold_bad
+    color_charging: Battery is charging (default "#FCE94F")
+    color_degraded: Battery level is below threshold_degraded
+    color_good: Battery level is above thresholds
 
 Obsolete configuration parameters:
     mode: an old way to define `format` parameter. The current behavior is:
@@ -111,10 +105,6 @@ class Py3status:
     blocks = BLOCKS
     cache_timeout = 30
     charging_character = CHARGING_CHARACTER
-    color_bad = None
-    color_charging = "#FCE94F"
-    color_degraded = None
-    color_good = None
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
@@ -129,9 +119,7 @@ class Py3status:
     mode = None
     show_percent_with_blocks = None
 
-    def battery_level(self, i3s_output_list, i3s_config):
-        self.i3s_config = i3s_config
-        self.i3s_output_list = i3s_output_list
+    def battery_level(self):
 
         self._refresh_battery_info()
 
@@ -142,7 +130,7 @@ class Py3status:
 
         return self._build_response()
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Display a notification following the specified format
         """
@@ -341,26 +329,23 @@ class Py3status:
 
     def _set_bar_color(self):
         if self.charging:
-            self.response['color'] = self.color_charging
+            self.response['color'] = self.py3.COLOR_CHARGING or "#FCE94F"
             battery_status = 'charging'
         elif self.percent_charged < self.threshold_bad:
-            self.response['color'] = self.color_bad or self.i3s_config[
-                'color_bad']
+            self.response['color'] = self.py3.COLOR_BAD
             battery_status = 'bad'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
                 self._notify('Battery level is critically low ({}%)',
                              'critical')
         elif self.percent_charged < self.threshold_degraded:
-            self.response['color'] = self.color_degraded or self.i3s_config[
-                'color_degraded']
+            self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
                 self._notify('Battery level is running low ({}%)', 'normal')
         elif self.percent_charged >= self.threshold_full:
-            self.response['color'] = self.color_good or self.i3s_config[
-                'color_good']
+            self.response['color'] = self.py3.COLOR_GOOD
             battery_status = 'full'
         else:
             battery_status = 'good'
