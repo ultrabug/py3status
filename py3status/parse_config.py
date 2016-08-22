@@ -398,7 +398,12 @@ class ConfigParser:
         if ':' in name:
             (name, scheme) = name.split(':')
             if scheme == 'base64':
-                value = base64.b64decode(value)
+                new_value = base64.b64decode(value)
+                try:
+                    value = new_value.decode('utf-8')
+                except UnicodeDecodeError:
+                    pass
+
         return name, value
 
     def parse(self, dictionary=None, end_token=None):
