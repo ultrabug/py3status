@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
+# FIXME color_index param
 """
 Display bitcoin prices using bitcoincharts.com.
 
 Configuration parameters:
     cache_timeout: Should be at least 15 min according to bitcoincharts.
     color_index: Index of the market responsible for coloration,
-        meaning that the output is going to be green if the
-        price went up and red if it went down.
-        default: -1 means no coloration,
-        except when only one market is selected
+        -1 means no coloration, except when only one market is selected
+        (default -1)
     field: Field that is displayed per market,
         see http://bitcoincharts.com/about/markets-api/
     hide_on_error: Display empty response if True, else an error message
@@ -16,6 +15,10 @@ Configuration parameters:
         be found at http://bitcoincharts.com/markets/list/
     symbols: Try to match currency abbreviations to symbols,
         e.g. USD -> $, EUR -> € and so on
+
+Color options:
+    color_bad:  Price has dropped or not available
+    color_good: Price has increased
 
 @author Andre Doser <doser.andre AT gmail.com>
 """
@@ -68,7 +71,7 @@ class Py3status:
             if m['symbol'] == market:
                 return m[field]
 
-    def get_rate(self, i3s_output_list, i3s_config):
+    def get_rate(self):
         response = {
             'cached_until': time() + self.cache_timeout,
             'full_text': ''
@@ -79,7 +82,7 @@ class Py3status:
             data = json.loads(urlopen(self.url).read().decode())
         except URLError:
             if not self.hide_on_error:
-                response['color'] = i3s_config['color_bad']
+                response['color'] = self.py3.COLOR_BAD
                 response['full_text'] = 'Bitcoincharts unreachable'
             return response
 
@@ -110,9 +113,9 @@ class Py3status:
             if self.last_price == 0:
                 pass
             elif color_rate < self.last_price:
-                response['color'] = i3s_config['color_bad']
+                response['color'] = self.py3.COLOR_BAD
             elif color_rate > self.last_price:
-                response['color'] = i3s_config['color_good']
+                response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
         response['full_text'] = ', '.join(rates)
