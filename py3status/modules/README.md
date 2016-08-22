@@ -1497,19 +1497,19 @@ Checks if a Twitch streamer is online.
 Checks if a streamer is online using the Twitch Kraken API to see
 if a channel is currently streaming or not.
 
-Configuration parameters
-    cache_timeout: how often we refresh this module in seconds
-        *(default 10)*
-    format: Display format when online
-        *(default "{stream_name} is live!")*
-    format_offline: Display format when offline
-        *(default "{stream_name} is offline.")*
-    format_invalid: Display format when streamer does not exist
-        *(default "{stream_name} does not exist!")*
-    stream_name: name of streamer(twitch.tv/&lt;stream_name&gt;)
-        *(default None)*
+Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds
+    *(default 10)*
+  - `format` Display format when online
+    *(default "{stream_name} is live!")*
+  - `format_offline` Display format when offline
+    *(default "{stream_name} is offline.")*
+  - `format_invalid` Display format when streamer does not exist
+    *(default "{stream_name} does not exist!")*
+  - `stream_name` name of streamer(twitch.tv/&lt;stream_name&gt;)
+    *(default None)*
 
-Format of status string placeholders
+Format of status string placeholders:
     {stream_name}:  name of the streamer
 
 **author** Alex Caswell horatioesf@virginmedia.com
