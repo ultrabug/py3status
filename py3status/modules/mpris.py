@@ -102,6 +102,7 @@ from time import time
 from gi.repository import GObject
 from threading import Thread
 import re
+import sys
 from pydbus import SessionBus
 
 
@@ -153,6 +154,7 @@ class Py3status:
 
     def __init__(self):
         self._dbus = None
+        self._kill = False
         self._mpris_players = {}
         self._mpris_names = {}
         self._mpris_name_index = {}
@@ -306,7 +308,12 @@ class Py3status:
 
     def _start_loop(self):
         self._loop = GObject.MainLoop()
-        self._loop.run()
+        GObject.timeout_add(1000, self._timeout)
+        try:
+            self._loop.run()
+        except KeyboardInterrupt:
+            # This branch is only needed for the test mode
+            self._kill = True
 
     def _name_owner_changed(self, *args):
         player_add = args[5][2]
@@ -441,6 +448,11 @@ class Py3status:
         t.daemon = True
         t.start()
 
+    def _timeout(self):
+        if self._kill:
+            self._loop.quit()
+            sys.exit(0)
+
     def _update_metadata(self, metadata=None):
         is_stream = False
 
@@ -473,6 +485,9 @@ class Py3status:
         if is_stream and self._data['title']:
             # delete the file extension
             self._data['title'] = re.sub(r'\....$', '', self._data['title'])
+
+    def kill(self):
+        self._kill = True
 
     def mpris(self):
         """
