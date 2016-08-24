@@ -96,6 +96,23 @@ class Py3:
         """
         return self._is_python_2
 
+    def is_my_event(self, event):
+        """
+        Checks if an event triggered belongs to the module recieving it.  This
+        is mainly for containers who will also recieve events from any children
+        they have.
+
+        Returns True if the event name and instance match that of the module
+        checking.
+        """
+        if not self._module:
+            return False
+
+        return (
+            event.get('name') == self._module.module_name and
+            event.get('instance') == self._module.module_inst
+        )
+
     def log(self, message, level=LOG_INFO):
         """
         Log the message.
