@@ -154,12 +154,14 @@ class Py3status:
 
     def __init__(self):
         self._dbus = None
+        self._data = {}
         self._kill = False
         self._mpris_players = {}
         self._mpris_names = {}
         self._mpris_name_index = {}
         self._player = None
         self._player_details = {}
+        self._tries = 0
 
     def post_config_hook(self):
         self._dbus = SessionBus()
@@ -181,8 +183,10 @@ class Py3status:
 
         try:
             self._data['player'] = self._player.Identity
-            self._data['state'] = self._get_state()
-            self._update_metadata()
+            playback_status = self._player.PlaybackStatus
+            self._data['state'] = self._get_state(playback_status)
+            metadata = self._player.Metadata
+            self._update_metadata(metadata)
         except Exception:
             self._data['error_occurred'] = True
 
@@ -193,24 +197,17 @@ class Py3status:
         except Exception:
             clickable = False
 
-        if control_state['action'] == 'Play' and self._data['state'] == PLAYING:
+        state = self._data.get('state')
+        if control_state['action'] == 'Play' and state == PLAYING:
             clickable = False
-        elif control_state['action'] == 'Pause' and (
-             self._data['state'] == STOPPED or self._data['state'] == PAUSED):
+        elif control_state['action'] == 'Pause' and state in [STOPPED, PAUSED]:
             clickable = False
-        elif control_state['action'] == 'Stop' and self._data['state'] == STOPPED:
+        elif control_state['action'] == 'Stop' and state == STOPPED:
             clickable = False
 
         return clickable
 
-    def _get_state(self, player=None, state=None):
-        if state:
-            playback_status = state
-        elif player:
-            playback_status = player.PlaybackStatus
-        else:
-            playback_status = self._player.PlaybackStatus
-
+    def _get_state(self, playback_status):
         if playback_status == 'Playing':
             return PLAYING
         elif playback_status == 'Paused':
@@ -222,17 +219,17 @@ class Py3status:
         """
         Get the current metadata
         """
-        if self._data['state'] == PLAYING:
+        if self._data.get('state') == PLAYING:
             color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
             state_symbol = self.state_play
-        elif self._data['state'] == PAUSED:
+        elif self._data.get('state') == PAUSED:
             color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
             state_symbol = self.state_pause
         else:
             color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
             state_symbol = self.state_stop
 
-        if self._data['error_occurred']:
+        if self._data.get('error_occurred'):
             color = self.py3.COLOR_BAD
 
         try:
@@ -241,20 +238,20 @@ class Py3status:
         except Exception:
             ptime = None
 
-        if '{time}' in self.format and self._data['state'] == PLAYING:
+        if '{time}' in self.format and self._data.get('state') == PLAYING:
             # Don't get trapped in aliasing errors!
             update = time() + 0.5
         else:
             update = self.py3.CACHE_FOREVER
 
         placeholders = {
-            'player': self._data['player'],
+            'player': self._data.get('player'),
             'state': state_symbol,
-            'album': self._data['album'],
-            'artist': self._data['artist'],
-            'length': self._data['length'],
+            'album': self._data.get('album'),
+            'artist': self._data.get('artist'),
+            'length': self._data.get('length'),
             'time': ptime,
-            'title': self._data['title'] or 'No Track',
+            'title': self._data.get('title') or 'No Track',
             'full_name': self._player_details.get('full_name'),  # for debugging ;p
         }
 
@@ -280,7 +277,7 @@ class Py3status:
                          'icon':      self.icon_previous}
         }
 
-        state = 'pause' if self._data['state'] == PLAYING else 'play'
+        state = 'pause' if self._data.get('state') == PLAYING else 'play'
         control_states['toggle'] = control_states[state]
 
         return control_states
@@ -355,11 +352,10 @@ class Py3status:
             top_player = self._mpris_players.get(sorted(players)[0][3])
         else:
             top_player = {}
-        if top_player:
-            self._player = top_player.get('_dbus_player')
-        else:
-            self._player = None
+
+        self._player = top_player.get('_dbus_player')
         self._player_details = top_player
+
         self.py3.update()
 
     def _player_monitor(self, player_id):
@@ -403,8 +399,10 @@ class Py3status:
             )
         except:
             return
+
         self._mpris_players[player_id] = {
             '_dbus_player': player,
+            '_id': player_id,
             '_state_priority': state_priority,
             'index': index,
             'identity': identity,
@@ -453,11 +451,8 @@ class Py3status:
             self._loop.quit()
             sys.exit(0)
 
-    def _update_metadata(self, metadata=None):
+    def _update_metadata(self, metadata):
         is_stream = False
-
-        if metadata is None:
-            metadata = self._player.Metadata
 
         try:
             if len(metadata) > 0:
@@ -482,9 +477,9 @@ class Py3status:
         except Exception:
             self._data['error_occurred'] = True
 
-        if is_stream and self._data['title']:
+        if is_stream and self._data.get('title'):
             # delete the file extension
-            self._data['title'] = re.sub(r'\....$', '', self._data['title'])
+            self._data['title'] = re.sub(r'\....$', '', self._data.get('title'))
 
     def kill(self):
         self._kill = True
@@ -493,6 +488,7 @@ class Py3status:
         """
         Get the current output format and return it.
         """
+        current_player_id = self._player_details.get('id')
         cached_until = self.py3.CACHE_FOREVER
 
         if self._player is None:
@@ -502,6 +498,7 @@ class Py3status:
                 'full_text': text,
                 'color': color,
             }]
+            self._data = {}
         else:
             self._init_data()
             (text, color, cached_until) = self._get_text()
@@ -511,12 +508,30 @@ class Py3status:
                                                  text,
                                                  buttons)
 
+        if (self._data.get('error_occurred') or
+                current_player_id != self._player_details.get('id')):
+            # Something went wrong or the player changed during our processing
+            # This is usually due to something like a player being killed
+            # whilst we are checking its details
+            # Retry but limit the number of attempts
+            self._tries += 1
+            if self._tries < 3:
+                return self.mpris()
+            # Max retries hit we need to output something
+            composite = [{
+                'full_text': 'Something went wrong',
+                'color': self.py3.COLOR_BAD,
+            }]
+            cached_until = self.py3.time_in(1)
+
         response = {
             'cached_until': cached_until,
             'color': color,
             'composite': composite
         }
 
+        # we are outputing so reset tries
+        self._tries = 0
         return response
 
     def on_click(self, event):
