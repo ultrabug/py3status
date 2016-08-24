@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import base64
 import codecs
 import glob
 import imp
@@ -20,6 +19,8 @@ from py3status.constants import (
     TIME_FORMAT,
     TZTIME_FORMAT,
 )
+
+from py3status.private import PrivateHide, PrivateBase64
 
 
 class ParseException(Exception):
@@ -398,11 +399,9 @@ class ConfigParser:
         if ':' in name:
             (name, scheme) = name.split(':')
             if scheme == 'base64':
-                new_value = base64.b64decode(value)
-                try:
-                    value = new_value.decode('utf-8')
-                except UnicodeDecodeError:
-                    pass
+                value = PrivateBase64(value, self.current_module[-1])
+            if scheme == 'hide':
+                value = PrivateHide(value, self.current_module[-1])
 
         return name, value
 

@@ -112,6 +112,24 @@ imap {
 }
 ```
 
+As well as disguising the value in your configuration py3status also tries to
+prevent the information leaking, eg into log files or i3bar output.  Due to the
+workings of python it is easy for an attacker to counter these efforts.  When
+requested in an inappropriate place `***` will be used.
+
+If you just want py3status to prevent leakage you can use `:hide` to do
+this whilst keeping your configuration in plain text.
+
+```
+# Example of private configuration
+imap {
+    imap_server = 'imap.myprovider.com'
+    password:hide = 'coconut'
+    user = 'mylogin'
+}
+```
+
+
 #### <a name="configuring_color"></a>Configuring colors
 
 Since version 3.1 py3status allows greater color configuration.
