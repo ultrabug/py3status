@@ -95,11 +95,29 @@ imap {
 
 __New in version 3.1__
 
-In the previous example configuration the users password is in plain text.  Users may
-want to make it less easy to read. Py3status allows strings to be base64
-encoded.
+Py3status allows you to hide individual configuration parameters so that they
+do not leak into log files, user notifications or to the i3bar. Additionally
+they allow you to obfuscate configuration parameters using base64 encoding.
 
-__Base64 encoding is very simple and should not be considered secure in any way.__
+To do this you need to add an obfuscation option to the configuration
+parameter. Obfuscation options are added by adding `:hide` or `:base64` to the
+name of the parameters.
+__Obfuscation is only available for string parameters.__
+
+Example:
+
+```
+# normal_parameter will be shown in log files etc as 'some value'
+# obfuscated_parameter will be shown in log files etc as '***'
+module {
+    normal_parameter: 'some value'
+    obfuscated_parameter:hide 'some value'
+}
+```
+
+In the previous example configuration the users password is in plain text.
+Users may want to make it less easy to read. Py3status allows strings to be
+base64 encoded.
 
 To use an encoded string add `:base64` to the name of the parameter.
 
@@ -112,23 +130,7 @@ imap {
 }
 ```
 
-As well as disguising the value in your configuration py3status also tries to
-prevent the information leaking, eg into log files or i3bar output.  Due to the
-workings of python it is easy for an attacker to counter these efforts.  When
-requested in an inappropriate place `***` will be used.
-
-If you just want py3status to prevent leakage you can use `:hide` to do
-this whilst keeping your configuration in plain text.
-
-```
-# Example of private configuration
-imap {
-    imap_server = 'imap.myprovider.com'
-    password:hide = 'coconut'
-    user = 'mylogin'
-}
-```
-
+__Base64 encoding is very simple and should not be considered secure in any way.__
 
 #### <a name="configuring_color"></a>Configuring colors
 

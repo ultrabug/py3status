@@ -386,7 +386,7 @@ class ConfigParser:
         elif token['value'] in ['{']:
             return self.module_def()
 
-    def process_value(self, name, value):
+    def process_value(self, name, value, module_name):
         '''
         This method allow any encodings to be dealt with.
         Currently only base64 is supported.
@@ -397,11 +397,20 @@ class ConfigParser:
         # if we have a colon in the name of a setting then it
         # indicates that it has been encoded.
         if ':' in name:
+
+            if module_name.split(' ')[0] in I3S_MODULE_NAMES + ['general']:
+                self.error('Only py3status modules can use obfuscated')
+
+            if type(value).__name__ not in ['str', 'unicode']:
+                self.error('Only strings can be obfuscated')
+
             (name, scheme) = name.split(':')
             if scheme == 'base64':
-                value = PrivateBase64(value, self.current_module[-1])
-            if scheme == 'hide':
-                value = PrivateHide(value, self.current_module[-1])
+                value = PrivateBase64(value, module_name)
+            elif scheme == 'hide':
+                value = PrivateHide(value,  module_name)
+            else:
+                self.error('Unknown scheme {} for data'.format(scheme))
 
         return name, value
 
@@ -465,11 +474,12 @@ class ConfigParser:
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == '=':
-                    name, value = self.process_value(name, value)
+                    name, value = self.process_value(
+                        name, value, self.current_module[-1]
+                    )
                     dictionary[name] = value
                 # appending to existing values
                 elif t_value == '+=':
-                    name, value = self.process_value(name, value)
                     dictionary[name] += value
                 else:
                     self.error('Unexpected character')

@@ -34,9 +34,18 @@ class Private(object):
         if not self._decoded:
             self._decode(key)
 
+    def __setattr__(self, name, value):
+        """
+        Do not allow this object to be updated outside of this module
+        """
+        stack = inspect.stack()
+        if inspect.getmodule(stack[1][0]).__name__ != __name__:
+            return
+        return object.__setattr__(self, name, value)
+
     def __getattribute__(self, name):
         """
-        Check if user can acces this attribute.
+        Check if user can access this attribute.
         """
         # allowed by all users
         if name in ['_decrypt', '_decode']:
