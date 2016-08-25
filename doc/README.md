@@ -686,11 +686,24 @@ Calling this function during the on_click() method of a module will
 request that the module is not refreshed after the event. By default
 the module is updated after the on_click event has been processed.
 
-__time_in(seconds=0)__
+__time_in(seconds=None, sync_to=None, offset=0)__
 
-Returns the time a given number of seconds into the future.
-Helpful for creating the `cached_until` value for the module
-output.
+Returns the time a given number of seconds into the future.  Helpful
+for creating the `cached_until` value for the module output.
+
+Note: form version 3.1 modules no longer need to explicitly set a
+`cached_until` in their response unless they wish to directly control it.
+
+seconds specifies the number of seconds that should occure before the
+update is required.
+
+sync_to causes the update to be syncronised to a time period.  1 would
+cause the update on the second, 60 to the nearest minute. By defalt we
+syncronise to the nearest second. 0 will disable this feature.
+
+offset is used to alter the base time used. A timer that started at a
+certain time could set that as the offset and any syncronisation would
+then be relative to that time.
 
 __safe_format(format_string, param_dict=None)__
 
