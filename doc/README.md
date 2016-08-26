@@ -110,8 +110,8 @@ Example:
 # normal_parameter will be shown in log files etc as 'some value'
 # obfuscated_parameter will be shown in log files etc as '***'
 module {
-    normal_parameter: 'some value'
-    obfuscated_parameter:hide 'some value'
+    normal_parameter = 'some value'
+    obfuscated_parameter:hide = 'some value'
 }
 ```
 
