@@ -826,6 +826,7 @@ Configuration parameters:
   - `password` login password
   - `port` IMAP server port
   - `user` login user
+  - `base64` use base64 encoded password (bool) *(default: False)*
 
 Format of status string placeholders:
   - `{unseen}` number of unread emails
