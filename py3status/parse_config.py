@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import codecs
-import re
 import glob
-import os
 import imp
+import os
+import re
+
 from collections import OrderedDict
 from string import Template
 from subprocess import check_output
@@ -18,6 +19,8 @@ from py3status.constants import (
     TIME_FORMAT,
     TZTIME_FORMAT,
 )
+
+from py3status.private import PrivateHide, PrivateBase64
 
 
 class ParseException(Exception):
@@ -100,7 +103,7 @@ class ConfigParser:
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
         r"|('(?:[^'\\]|\\.)*')"  # single quoted string
-        '|([a-z_][a-z0-9_]*)'  # token
+        '|([a-z_][a-z0-9_]*(:[a-z0-9_]+)?)'  # token
         '|(-?\d+\.\d*)|(-?\.\d+)'  # float
         '|(-?\d+)'  # int
         ')'
@@ -383,6 +386,34 @@ class ConfigParser:
         elif token['value'] in ['{']:
             return self.module_def()
 
+    def process_value(self, name, value, module_name):
+        '''
+        This method allow any encodings to be dealt with.
+        Currently only base64 is supported.
+
+        Note: If other encodings are added then this should be split so that
+        there is a method for each encoding.
+        '''
+        # if we have a colon in the name of a setting then it
+        # indicates that it has been encoded.
+        if ':' in name:
+
+            if module_name.split(' ')[0] in I3S_MODULE_NAMES + ['general']:
+                self.error('Only py3status modules can use obfuscated')
+
+            if type(value).__name__ not in ['str', 'unicode']:
+                self.error('Only strings can be obfuscated')
+
+            (name, scheme) = name.split(':')
+            if scheme == 'base64':
+                value = PrivateBase64(value, module_name)
+            elif scheme == 'hide':
+                value = PrivateHide(value,  module_name)
+            else:
+                self.error('Unknown scheme {} for data'.format(scheme))
+
+        return name, value
+
     def parse(self, dictionary=None, end_token=None):
         '''
         Parse through the tokens. Finding names and values.
@@ -415,9 +446,11 @@ class ConfigParser:
                 if not name:
                     self.error('Name expected')
                 elif t_value == '+=' and name not in dictionary:
-                    # order is treated specially
-                    if not (self.level == 1 and name == 'order'):
-                        self.error('{} does not exist'.format(name))
+                    # deal with encoded names
+                    if name.split(':')[0] not in dictionary:
+                        # order is treated specially
+                        if not (self.level == 1 and name == 'order'):
+                            self.error('{} does not exist'.format(name))
                 if t_value in ['{']:
                     if self.current_module:
                         self.check_child_friendly(self.current_module[-1])
@@ -441,6 +474,9 @@ class ConfigParser:
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == '=':
+                    name, value = self.process_value(
+                        name, value, self.current_module[-1]
+                    )
                     dictionary[name] = value
                 # appending to existing values
                 elif t_value == '+=':
