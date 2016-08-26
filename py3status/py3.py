@@ -239,7 +239,7 @@ class Py3:
         try:
             return self._formatter.format(
                 format_string,
-                self._module,
+                self._py3status_module,
                 param_dict
             )
         except Exception:
@@ -257,7 +257,7 @@ class Py3:
         try:
             return self._formatter.format(
                 format_string,
-                self._module,
+                self._py3status_module,
                 param_dict,
                 composites,
             )
