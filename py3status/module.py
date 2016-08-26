@@ -439,8 +439,13 @@ class Module(Thread):
                     else:
                         # validate the response
                         if 'full_text' not in result:
-                            err = 'missing "full_text" key in response'
-                            raise KeyError(err)
+                            try:
+                                # try to set the full_text automatically
+                                full_text = self.module_class.py3.safe_format()
+                                result['full_text'] = full_text
+                            except:
+                                err = 'missing "full_text" key in response'
+                                raise KeyError(err)
                         # set universal module options in result
                         result.update(self.module_options)
 
