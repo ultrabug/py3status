@@ -161,6 +161,77 @@ group tz {
 }
 ```
 
+The [frame](
+https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md#frame
+)
+module also allows you to group several modules together, however in a frame
+all the modules are shown.  This allows you to have more than one module shown
+in a group.
+Example usage:
+```
+order += "group frames"
+
+# group showing disk space or times using button to change what is shown.
+group frames {
+    click_mode = "button"
+
+    frame time {
+        tztime la {
+            format = "LA %H:%M"
+            timezone = "America/Los_Angeles"
+        }
+
+        tztime ny {
+            format = "NY %H:%M"
+            timezone = "America/New_York"
+        }
+
+        tztime du {
+            format = "DU %H:%M"
+            timezone = "Asia/Dubai"
+        }
+    }
+
+    frame disks {
+        disk "/" {
+            format = "/ %avail"
+        }
+
+        disk "/home" {
+            format = "/home %avail"
+        }
+    }
+}
+```
+
+Frames can also have a toggle button to hide/show the content
+
+Example:
+```
+# A frame showing times in different cities.
+# We also have a button to hide/show the content
+
+frame time {
+    format = '{output}{button}'
+    format_separator = ' '  # have space instead of usual i3bar separator
+
+    tztime la {
+        format = "LA %H:%M"
+        timezone = "America/Los_Angeles"
+    }
+
+    tztime ny {
+        format = "NY %H:%M"
+        timezone = "America/New_York"
+    }
+
+    tztime du {
+        format = "DU %H:%M"
+        timezone = "Asia/Dubai"
+    }
+}
+```
+
 ## <a name="on_click"></a>Custom click events
 
 py3status allows you to easily add click events to modules in your i3bar.
@@ -664,6 +735,15 @@ __is_python_2()__
 
 True if the version of python being used is 2.x
 Can be helpful for fixing python 2 compatability issues
+
+__is_my_event(event)__
+
+Checks if an event triggered belongs to the module recieving it.  This
+is mainly for containers who will also recieve events from any children
+they have.
+
+Returns True if the event name and instance match that of the module
+checking.
 
 __get_output(module_name)__
 

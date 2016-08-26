@@ -243,7 +243,7 @@ class Py3statusWrapper():
                 continue
             try:
                 my_m = Module(module, user_modules, self)
-                # only start and handle modules with available methods
+                # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
                 elif self.config['debug']:
