@@ -189,7 +189,64 @@ class Py3:
         """
         return time() + seconds
 
-    def safe_format(self, format_string, param_dict=None):
+    def _sort_formatter_params(self, args, kw, allow_composites=False):
+        """
+        This helper function attempts to work out the parameters that have been
+        passed to safe_format() and build_composite().
+
+        If the first passed parameter is a dict then it is assumed to be
+        `param_dict` and the next (only for build_composite()) is treated as
+        `composites`.  Otherwise it is assummed to be `format_string`.
+
+        Parameters can therefore be passed by position or by name.
+        """
+
+        def error():
+            """
+            Generate and raise Exception due to an error
+            """
+            fn = 'build_composite' if allow_composites else 'safe_format'
+            raise TypeError('bad parameters passed to {}'.format(fn))
+
+        # get any named parameters
+        format_string = kw.pop('format_string', None)
+        param_dict = kw.pop('param_dict', None)
+        if allow_composites:
+            composites = kw.pop('composites', None)
+
+        # if we still have parameters the fuction was called incorrectly
+        if kw:
+            error()
+
+        # now go through any positional parameters we got
+        for index, arg in enumerate(args):
+            if not isinstance(arg, dict):
+                # not a dict so this is our format_string.
+                # This must be the first parameter and it should not have been
+                # set by keyword
+                if format_string is not None or index:
+                    error()
+                format_string = arg
+            else:
+                # a dict first one will be param_dict next will be composites
+                if param_dict is None:
+                    param_dict = arg
+                elif composites is None and allow_composites:
+                    composites = arg
+                else:
+                    error()
+
+        # If no format_string is supplied we try to get `format` from the
+        # Py3status module and use that instead or use 'No format'
+        if format_string is None:
+            format_string = getattr(self._py3status_module, 'format', 'No format')
+
+        # return the parameters to the calling function
+        if allow_composites:
+            return format_string, param_dict, composites
+        return format_string, param_dict
+
+    def safe_format(self, *args, **kw):
         """
         Parser for advanced formating.
 
@@ -219,16 +276,19 @@ class Py3:
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
         """
+
+        format_string, param_dict = self._sort_formatter_params(args, kw)
+
         try:
             return self._formatter.format(
                 format_string,
                 self._module,
-                param_dict
+                param_dict,
             )
         except Exception:
             return 'invalid format'
 
-    def build_composite(self, format_string, param_dict=None, composites=None):
+    def build_composite(self, *args, **kw):
         """
         Build a composite output using a format string.
 
@@ -237,6 +297,10 @@ class Py3:
         placeholder and either an output eg `{'full_text': 'something'}` or a
         list of outputs.
         """
+        format_string, param_dict, composites = self. _sort_formatter_params(
+            args, kw, allow_composites=True
+        )
+
         try:
             return self._formatter.format(
                 format_string,
