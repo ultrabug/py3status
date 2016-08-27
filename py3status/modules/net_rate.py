@@ -11,6 +11,8 @@ Configuration parameters:
     interfaces: comma separated list of interfaces to track
     interfaces_blacklist: comma separated list of interfaces to ignore
     precision: amount of numbers after dot
+    color: colorise output according to the value of 'up|down|total'
+    threshold_bad / threshold_degraded: thresholds for color change
 
 Format of status string placeholders:
     {down} download rate
@@ -50,6 +52,9 @@ class Py3status:
     interfaces = ''
     interfaces_blacklist = 'lo'
     precision = 1
+    color = False
+    threshold_bad = 1
+    threshold_degraded = 1024
 
     def __init__(self, *args, **kwargs):
         """
@@ -119,16 +124,30 @@ class Py3status:
             interface = None
             hide = self.hide_if_zero
 
-        return {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': "" if hide else
-            self.format.format(
-                total=self._divide_and_format(delta['total']),
-                up=self._divide_and_format(delta['up']),
-                down=self._divide_and_format(delta['down']),
-                interface=interface[:-1],
-            ) if interface else self.format_no_connection
-        }
+        ret_value = {'cached_until': time() + self.cache_timeout}
+
+        if hide:
+            ret_value['full_text'] = ""
+        elif interface:
+            ret_value['full_text'] = self.format.format(
+                    total=self._divide_and_format(delta['total']),
+                    up=self._divide_and_format(delta['up']),
+                    down=self._divide_and_format(delta['down']),
+                    interface=interface[:-1],
+                    )
+        else:
+            ret_value['full_text'] = self.format_no_connection
+
+        color = self.color
+        if color and interface:
+            if delta[color] < self.threshold_bad:
+                ret_value['color'] = self.py3.COLOR_BAD
+            elif delta[color] < self.threshold_degraded:
+                ret_value['color'] = self.py3.COLOR_DEGRADED
+            else:
+                ret_value['color'] = self.py3.COLOR_GOOD
+
+        return ret_value
 
     def _get_stat(self):
         """
