@@ -40,22 +40,6 @@ UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
 
 
 class Py3status:
-    """
-    """
-    # available configuration parameters
-    all_interfaces = True
-    cache_timeout = 2
-    devfile = '/proc/net/dev'
-    format = "{interface}: {total}"
-    format_no_connection = ''
-    hide_if_zero = False
-    interfaces = ''
-    interfaces_blacklist = 'lo'
-    precision = 1
-    color = False
-    threshold_bad = 1
-    threshold_degraded = 1024
-
     def __init__(self, *args, **kwargs):
         """
         Format of total, up and down placeholders under self.format.
@@ -64,6 +48,19 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
+        self.all_interfaces = True
+        self.cache_timeout = 2
+        self.devfile = '/proc/net/dev'
+        self.format = "{interface}: {total}"
+        self.format_no_connection = ''
+        self.hide_if_zero = False
+        self.interfaces = ''
+        self.interfaces_blacklist = 'lo'
+        self.precision = 1
+        self.color = False
+        self.threshold_bad = 1
+        self.threshold_degraded = 1024
+
         self.last_interface = None
         self.last_stat = self._get_stat()
         self.last_time = time()
@@ -124,30 +121,31 @@ class Py3status:
             interface = None
             hide = self.hide_if_zero
 
-        ret_value = {'cached_until': time() + self.cache_timeout}
+        response = {'cached_until':
+                self.py3.time_in(seconds=self.cache_timeout)}
 
         if hide:
-            ret_value['full_text'] = ""
+            response['full_text'] = ""
         elif interface:
-            ret_value['full_text'] = self.format.format(
-                    total=self._divide_and_format(delta['total']),
-                    up=self._divide_and_format(delta['up']),
-                    down=self._divide_and_format(delta['down']),
-                    interface=interface[:-1],
-                    )
+            response['full_text'] = self.py3.safe_format(self.format,{
+                'total': self._divide_and_format(delta['total']),
+                'up': self._divide_and_format(delta['up']),
+                'down': self._divide_and_format(delta['down']),
+                'interface': interface[:-1],
+                })
         else:
-            ret_value['full_text'] = self.format_no_connection
+            response['full_text'] = self.format_no_connection
 
         color = self.color
         if color and interface:
             if delta[color] < self.threshold_bad:
-                ret_value['color'] = self.py3.COLOR_BAD
+                response['color'] = self.py3.COLOR_BAD
             elif delta[color] < self.threshold_degraded:
-                ret_value['color'] = self.py3.COLOR_DEGRADED
+                response['color'] = self.py3.COLOR_DEGRADED
             else:
-                ret_value['color'] = self.py3.COLOR_GOOD
+                response['color'] = self.py3.COLOR_GOOD
 
-        return ret_value
+        return response
 
     def _get_stat(self):
         """
