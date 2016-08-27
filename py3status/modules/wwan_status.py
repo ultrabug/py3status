@@ -150,7 +150,6 @@ class Py3status:
                     # Outputs can be multiline, so just try the next one
                     pass
         else:
-            print(self.modem + " not found")
             response['color'] = self.py3.COLOR_BAD
             response['full_text'] = self.format_down
         return response
