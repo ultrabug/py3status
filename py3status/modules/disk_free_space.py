@@ -16,7 +16,6 @@ Format string parameters:
 """
 
 # import your useful libs here
-from time import time
 import psutil
 
 
@@ -31,8 +30,8 @@ class Py3status:
 
     def disk_usage(self, i3s_output_list, i3s_config):
         response = {
-            'cached_until': self.py3.time_in(seconds=self.cache_timeout)
-            'full_text': ''
+            'cached_until': self.py3.time_in(seconds=self.cache_timeout),
+            'full_text': '',
         }
         space = psutil.disk_usage(self.path).free / 1024 / 1024 / 1024
         if space < self.threshold_bad:
