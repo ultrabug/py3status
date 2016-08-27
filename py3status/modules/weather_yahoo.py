@@ -48,7 +48,6 @@ weather_yahoo {
 @author ultrabug, rail
 """
 
-from time import time
 import requests
 
 
@@ -146,13 +145,13 @@ class Py3status:
         if not self.woeid:
             raise Exception('missing woeid setting, please configure it')
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
 
         today, forecasts = self._get_forecast()
         if today is None and forecasts is None:
-            response['cached_until'] = time() + 30
+            response['cached_until'] = self.py3.time_in(30)
             return response
         units = self.units.upper()[0]
         today_text = self.format_today.format(icon=self._get_icon(today),

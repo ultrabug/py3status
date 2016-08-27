@@ -16,7 +16,6 @@ I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 """
 
 import i3
-from time import time
 
 
 def find_focused(tree):
@@ -53,7 +52,7 @@ class Py3status:
             transformed = True
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.text,
             'transformed': transformed
         }

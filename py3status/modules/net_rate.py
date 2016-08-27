@@ -120,7 +120,7 @@ class Py3status:
             hide = self.hide_if_zero
 
         return {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': "" if hide else
             self.format.format(
                 total=self._divide_and_format(delta['total']),

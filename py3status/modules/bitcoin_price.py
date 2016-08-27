@@ -24,7 +24,6 @@ Color options:
 """
 import json
 
-from time import time
 try:
     # python 3
     from urllib.error import URLError
@@ -73,7 +72,7 @@ class Py3status:
 
     def get_rate(self):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
 

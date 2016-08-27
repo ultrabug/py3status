@@ -47,7 +47,6 @@ Requires:
 """
 
 from pydbus import SessionBus
-from time import time
 
 
 SERVICE_BUS = 'org.kde.kdeconnect'
@@ -224,7 +223,7 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': text,
             'color': color
         }

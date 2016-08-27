@@ -19,7 +19,6 @@ Configuration Parameters:
 import codecs
 import datetime
 import json
-from time import time
 import urllib.request
 
 
@@ -38,7 +37,7 @@ class Py3status:
     def check(self):
 
         response = {
-            'cached_until': time() + self.cache_timeout
+            'cached_until': self.py3.time_in(self.cache_timeout),
             }
 
         try:

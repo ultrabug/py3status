@@ -49,7 +49,6 @@ Requires:
 import re
 import subprocess
 import math
-from time import time
 
 
 class Py3status:
@@ -188,7 +187,7 @@ class Py3status:
                                               ssid=ssid)
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
             'color': color
         }

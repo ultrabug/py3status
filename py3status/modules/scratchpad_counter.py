@@ -7,7 +7,6 @@ Display the amount of windows in your i3 scratchpad.
 """
 
 import i3
-from time import time
 
 
 def find_scratch(tree):
@@ -42,7 +41,7 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'transformed': transformed
         }
         if self.hide_when_none and count == 0:

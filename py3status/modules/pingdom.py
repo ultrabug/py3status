@@ -24,7 +24,6 @@ Requires:
 """
 
 import requests
-from time import time
 
 
 class Py3status:
@@ -73,7 +72,7 @@ class Py3status:
                     )
                     response.update({'color': self.py3.COLOR_BAD})
             response['full_text'] = response['full_text'].strip(', ')
-            response['cached_until'] = time() + self.cache_timeout
+            response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         return response
 
