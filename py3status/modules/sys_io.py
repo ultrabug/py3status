@@ -4,9 +4,14 @@ Display the I/O activity on all disks
 This modules requires the psutil python module.
 
 Configuration parameters:
-    path: filesystem path to check
-        (default: "/")
+    format: format status string
+        (default: "{total}")
+    precision: precision to display
+        (default: 1)
     threshold_degraded / threshold_bad: thresholds for color change
+
+Format status string parameters:
+    {total} total IO on all disks
 """
 
 # import your useful libs here
@@ -21,20 +26,20 @@ UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]  # list of units, first one - value/I
 
 
 class Py3status:
-    # available configuration parameters
-    threshold_degraded = 1024
-    threshold_bad = 10240
-    format = "{interface}: {total}"
-    precision = 1
-    cache_timeout = 1
 
     def __init__(self):
+        self.threshold_degraded = 1024
+        self.threshold_bad = 10240
+        self.format = "{total}"
+        self.precision = 1
+        self.cache_timeout = 1
+
         self.last_stat = self._get_stat()
         self.last_time = time()
 
     def disk_io(self, i3s_output_list, i3s_config):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(seconds=self.cache_timeout),
             'full_text': ''
         }
 
@@ -57,7 +62,8 @@ class Py3status:
             response['color'] = self.py3.COLOR_DEGRADED
         else:
             response['color'] = self.py3.COLOR_BAD
-        response['full_text'] = "({:s})".format(self._divide_and_format(io_speed))
+        response['full_text'] = self.py3.safe_format(self.format,
+                {'total': self._divide_and_format(io_speed)})
 
         return response
 
