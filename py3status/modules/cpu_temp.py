@@ -14,7 +14,6 @@ Format status string parameters:
 """
 
 # import your useful libs here
-from time import time
 import subprocess
 
 
