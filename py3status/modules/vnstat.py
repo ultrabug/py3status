@@ -124,10 +124,11 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.format.format(
-                total=self._divide_and_format(stat['total']),
-                up=self._divide_and_format(stat['up']),
-                down=self._divide_and_format(stat['down']),
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(total=self._divide_and_format(stat['total']),
+                     up=self._divide_and_format(stat['up']),
+                     down=self._divide_and_format(stat['down'])),
             ),
             'transformed': True
         }

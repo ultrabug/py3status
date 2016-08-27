@@ -59,16 +59,22 @@ class Py3status:
             self._get_display_name()
         if 'error' in r.json():
             colour = self.py3.COLOR_BAD
-            full_text = self.format_invalid.format(stream_name=self.stream_name)
+            format = self.format_invalid
+            stream_name = self.stream_name
         elif r.json().get('stream') is None:
             colour = self.py3.COLOR_BAD
-            full_text = self.format_offline.format(stream_name=self._display_name)
+            format = self.format_offline
+            stream_name = self._display_name
         elif r.json().get('stream') is not None:
             colour = self.py3.COLOR_GOOD
-            full_text = self.format.format(stream_name=self._display_name)
+            format = self.format
+            stream_name = self._display_name
         else:
             colour = self.py3.COLOR_BAD
-            full_text = "An unknown error has occurred."
+            format = "An unknown error has occurred."
+            stream_name = None
+
+        full_text = self.py3.safe_format(format, {'stream_name': stream_name})
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

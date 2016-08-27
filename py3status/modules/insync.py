@@ -51,7 +51,9 @@ class Py3status:
         else:
             queued = ""
 
-        results = self.format.format(status=status, queued=queued)
+        results = self.py3.safe_format(
+            self.format, {'status': status, 'queued': queued}
+        )
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

@@ -80,12 +80,14 @@ class Py3status:
 
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.format.format(artist=artist,
-                                                title=title,
-                                                length=length,
-                                                elapsed=elapsed,
-                                                year=year,
-                                                tracknum=tracknum)
+                'full_text': self.py3.safe_format(self.format,
+                                                  dict(artist=artist,
+                                                       title=title,
+                                                       length=length,
+                                                       elapsed=elapsed,
+                                                       year=year,
+                                                       tracknum=tracknum)
+                                                  )
             }
             return response
         except:

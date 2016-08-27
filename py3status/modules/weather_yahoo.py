@@ -157,15 +157,19 @@ class Py3status:
             response['cached_until'] = self.py3.time_in(30)
             return response
         units = self.units.upper()[0]
-        today_text = self.format_today.format(icon=self._get_icon(today),
-                                              units=units, **today)
+        today_text = self.py3.safe_format(
+            self.format_today,
+            dict(icon=self._get_icon(today), units=units, **today)
+        )
         forecast_text = self.forecast_text_separator.join(
-            self.format_forecast.format(icon=self._get_icon(f), units=units,
-                                        **f)
-            for f in forecasts)
+            self.py3.safe_format(
+                self.format_forecast,
+                dict(icon=self._get_icon(f), units=units, **f)
+            ) for f in forecasts)
 
-        response['full_text'] = self.format.format(today=today_text,
-                                                   forecasts=forecast_text)
+        response['full_text'] = self.py3.safe_format(
+            self.format, dict(today=today_text, forecasts=forecast_text)
+        )
         return response
 
 if __name__ == "__main__":

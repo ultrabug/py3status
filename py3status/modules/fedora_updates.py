@@ -45,7 +45,7 @@ class Py3status:
             self._first = False
             response = {
                 'cached_until': self.py3.time_in(),
-                'full_text': self.format.format(updates='?')
+                'full_text': self.py3.safe_format(self.format, {'updates': '?'})
             }
             return response
 
@@ -77,7 +77,7 @@ class Py3status:
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
-            'full_text': self.format.format(updates=updates)
+            'full_text': self.py3.safe_format(self.format, {'updates': updates})
         }
         return response
 

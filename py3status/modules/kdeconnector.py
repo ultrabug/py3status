@@ -200,7 +200,8 @@ class Py3status:
             return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
         if not device['isReachable'] or not device['isPaired']():
-            return (self.format_disconnected.format(name=device['name']),
+            return (self.py3.safe_format(self.format_disconnected,
+                                         {'name': device['name']}),
                     self.py3.COLOR_BAD)
 
         battery = self._get_battery()
@@ -209,11 +210,13 @@ class Py3status:
         notif = self._get_notifications()
         (notif_size, notif_status) = self._get_notifications_status(notif)
 
-        return (self.format.format(name=device['name'],
-                                   charge=charge,
-                                   bat_status=bat_status,
-                                   notif_size=notif_size,
-                                   notif_status=notif_status), color)
+        return (self.py3.safe_format(self.format,
+                                     dict(name=device['name'],
+                                          charge=charge,
+                                          bat_status=bat_status,
+                                          notif_size=notif_size,
+                                          notif_status=notif_status)),
+                color)
 
     def kdeconnector(self):
         """

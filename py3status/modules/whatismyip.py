@@ -73,7 +73,7 @@ class Py3status:
         elif ip is not None:
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
             if self.mode == 'ip':
-                response['full_text'] = self.format.format(ip=ip)
+                response['full_text'] = self.py3.safe_format(self.format, {'ip': ip})
             else:
                 response['full_text'] = self.format_online
                 response['color'] = self.py3.COLOR_GOOD

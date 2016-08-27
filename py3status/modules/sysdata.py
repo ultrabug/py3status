@@ -145,12 +145,15 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.format.format(
-                cpu_usage='%.2f' % (cpu_usage),
-                cpu_temp=cpu_temp,
-                mem_used='%.2f' % mem_used,
-                mem_total='%.2f' % mem_total,
-                mem_used_percent='%.2f' % mem_used_percent,
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(
+                    cpu_usage='%.2f' % (cpu_usage),
+                    cpu_temp=cpu_temp,
+                    mem_used='%.2f' % mem_used,
+                    mem_total='%.2f' % mem_total,
+                    mem_used_percent='%.2f' % mem_used_percent,
+                )
             )
         }
 

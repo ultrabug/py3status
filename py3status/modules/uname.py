@@ -31,12 +31,14 @@ class Py3status:
         system, node, release, version, machine, processor = uname()
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.format.format(system=system,
-                                            node=node,
-                                            release=release,
-                                            version=version,
-                                            machine=machine,
-                                            processor=processor)
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(system=system,
+                     node=node,
+                     release=release,
+                     version=version,
+                     machine=machine,
+                     processor=processor))
         }
         return response
 

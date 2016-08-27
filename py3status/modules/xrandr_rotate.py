@@ -126,8 +126,9 @@ class Py3status:
                 screen = self.screen or all_outputs[0]
             else:
                 screen = 'ALL'
-            full_text = self.format.format(icon=self.displayed or '?',
-                                           screen=screen)
+            full_text = self.py3.safe_format(self.format.format,
+                                             dict(icon=self.displayed or '?',
+                                                  screen=screen))
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
