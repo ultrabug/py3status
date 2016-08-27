@@ -12,7 +12,7 @@ Configuration parameters:
     format: Display format to use
         (default 'DNF: {updates}')
 
-Format status string parameters:
+Format placeholders:
     {updates} number of pending dnf updates
 
 Color options:

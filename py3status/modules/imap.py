@@ -15,7 +15,7 @@ Configuration parameters:
     port: IMAP server port
     user: login user
 
-Format of status string placeholders:
+Format placeholders:
     {unseen} number of unread emails
 
 @author obb

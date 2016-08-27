@@ -12,7 +12,7 @@ Configuration parameters:
     interfaces_blacklist: comma separated list of interfaces to ignore
     precision: amount of numbers after dot
 
-Format of status string placeholders:
+Format placeholders:
     {down} download rate
     {interface} name of interface
     {total} total rate

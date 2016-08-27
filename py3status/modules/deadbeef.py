@@ -7,7 +7,7 @@ Configuration parameters:
     format: see placeholders below
     delimiter: delimiter character for parsing (default: ¥)
 
-Format of status string placeholders:
+Format placeholders:
     {artist} artist
     {title} title
     {elapsed} elapsed time

@@ -10,7 +10,7 @@ Confiuration parameters:
     device_separator: the separator char between devices (only if more than one
         device)
 
-Format of status string placeholders
+Format placeholders:
     {name} device name
     {mac} device MAC address
 

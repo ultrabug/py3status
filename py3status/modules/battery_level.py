@@ -42,7 +42,7 @@ Configuration parameters:
         should be considered full
         default is 100
 
-Format of status string placeholders:
+Format placeholders:
     {ascii_bar} - a string of ascii characters representing the battery level,
         an alternative visualization to '{icon}' option
     {icon} - a character representing the battery level,

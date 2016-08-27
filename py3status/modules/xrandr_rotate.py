@@ -26,7 +26,7 @@ Configuration parameters:
         available options: 'left' or 'right'.
         (default is 'left')
 
-Available placeholders for formatting the output:
+Format placeholders:
     {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
     {screen} a screen name, specified by `screen` option or detected
         automatically if only one screen is connected, otherwise 'ALL'.

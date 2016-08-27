@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (5s default)
     format: see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
     {current} hamster current
 
 Requires:

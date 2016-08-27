@@ -16,7 +16,7 @@ Configuration parameters:
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
 
-Format of status string placeholders:
+Format placeholders:
     {stream_name}:  name of the streamer
 
 Color options:

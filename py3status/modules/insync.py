@@ -10,7 +10,7 @@ Configuration parameters:
         (default 10)
     format: Display format to use (default '{status} {queued}')
 
-Format status string parameters:
+Format placeholders:
     {status} Status of Insync
     {queued} Number of files queued
 

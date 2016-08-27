@@ -12,7 +12,7 @@ Configuration parameters:
     threshold_warning: set degraded color above this threshold
     user: login user
 
-Format of status string placeholders:
+Format placeholders:
     {YOUR_QUEUE_NAME} number of ongoing RT tickets (open+new+stalled)
 
 Color options:

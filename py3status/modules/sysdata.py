@@ -7,7 +7,7 @@ Configuration parameters:
     high_threshold: percent to consider CPU or RAM usage as 'high load'
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
 
-Format of status string placeholders:
+Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {mem_total} total memory

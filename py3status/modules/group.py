@@ -49,7 +49,7 @@ Configuration parameters:
         `{button}` not in format (default True)
 
 
-Format of status string placeholders:
+Format placeholders:
     {button} The button to open/close or change the displayed group
     {output} Output of current active module
 
