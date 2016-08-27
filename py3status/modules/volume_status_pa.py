@@ -4,9 +4,16 @@ Display current sound volume using pamixer.
 
 Configuration parameters:
     threshold_bad: Volume above which the color is set to bad
-        (default 90)
+        (default: 90)
     threshold_degraded: Volume above which the color is set to degraded
-        (default 50)
+        (default: 50)
+    format: format string
+        (default: "♪{volume:3d}%")
+    format_mute: format string when sound is muted
+        (default: "♪ -- ")
+
+Format status string parameters:
+    {volume} the volume percent
 
 Color options:
     color_bad: Volume above threshold_bad
@@ -15,20 +22,16 @@ Color options:
 """
 
 # import your useful libs here
-from time import time
 import subprocess
 
 
 class Py3status:
-    # available configuration parameters
-    cache_timeout = 10
-    threshold_degraded = 50
-    threshold_bad = 90
-
     def __init__(self):
-        """
-        This is the class constructor which will be executed once.
-        """
+        self.cache_timeout = 10
+        self.threshold_degraded = 50
+        self.threshold_bad = 90
+        self.format = "♪{volume:3d}%"
+        self.format_mute = "♪ -- "
         pass
 
     def volume(self):
@@ -43,7 +46,7 @@ class Py3status:
         http://i3wm.org/docs/i3bar-protocol.html
         """
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(seconds=self.cache_timeout),
             'full_text': ''
         }
         volume = int(subprocess.check_output(["pamixer", "--get-volume"]).decode('utf-8'))
@@ -55,9 +58,11 @@ class Py3status:
         else:
             response['color'] = self.py3.COLOR_BAD
         if mute:
-            response['full_text'] = "♪ -- "
+            format_string = self.format_mute
         else:
-            response['full_text'] = "♪{:3d}%".format(volume)
+            format_string = self.format
+        response['full_text'] = self.py3.safe_format(format_string,
+                {'volume': volume})
 
         return response
 
