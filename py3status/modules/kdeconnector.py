@@ -21,7 +21,7 @@ Format of status string placeholders:
     {charge} the battery charge
     {name} name of the device
     {notif_size} number of notifications
-    {notif_status} shows if a notification is available or nor
+    {notif_status} shows if a notification is available or not
 
 Color options:
     color_bad: Device unknown, unavailable
@@ -197,7 +197,7 @@ class Py3status:
         if device is None:
             return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
-        if not device['isReachable'] or not device['isPaired']:
+        if not device['isReachable'] or not device['isPaired']():
             return (self.format_disconnected.format(name=device['name']),
                     self.py3.COLOR_BAD)
 
