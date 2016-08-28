@@ -258,26 +258,37 @@ def update_docstrings():
     print_stderr('Modules updated from README.md')
 
 
-def check_docstrings(show_diff=False, config=None):
+def check_docstrings(show_diff=False, config=None, mods=None):
     '''
     Check docstrings in module match the README.md
     '''
 
     readme = parse_readme()
     modules_readme = core_module_docstrings(config=config)
+    warned = False
     if (create_readme(readme) != create_readme(modules_readme)):
-        print_stderr('Documentation does not match!\n')
-        for module in readme:
+        for module in sorted(readme):
+            if mods and module not in mods:
+                continue
+            err = None
             if module not in modules_readme:
-                print_stderr(
-                    '\tModule {} in README but not in /modules'.format(module))
+                err = '\tModule {} in README but not in /modules'.format(
+                    module
+                )
             elif ''.join(readme[module]).strip() != ''.join(modules_readme[
                     module]).strip():
-                print_stderr(
-                    '\tModule {} docstring does not match README'.format(
-                        module))
+                err = '\tModule {} docstring does not match README'.format(
+                    module
+                )
+            if err:
+                if not warned:
+                    print_stderr('Documentation does not match!\n')
+                    warned = True
+                print_stderr(err)
 
         for module in modules_readme:
+            if mods and module not in mods:
+                continue
             if module not in readme:
                 print_stderr(
                     '\tModule {} in /modules but not in README'.format(module))
@@ -286,8 +297,10 @@ def check_docstrings(show_diff=False, config=None):
                 create_readme(readme).split('\n'), create_readme(
                     modules_readme).split('\n'))))
         else:
-            print_stderr()
-            print_stderr('Use `py3status docstring check diff` to view diff.')
+            if warned:
+                print_stderr(
+                    '\nUse `py3status docstring check diff` to view diff.'
+                )
 
 
 def update_readme_for_modules(modules):
