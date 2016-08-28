@@ -37,7 +37,7 @@ class Py3status:
         else:
             response['color'] = self.py3.COLOR_BAD
         response['full_text'] = self.py3.safe_format(self.format,
-                {'ram': used_mem_percent})
+                                                     {'ram': used_mem_percent})
 
         return response
 
