@@ -40,7 +40,7 @@ class Py3status:
             response['color'] = self.py3.COLOR_DEGRADED
         else:
             response['color'] = self.py3.COLOR_GOOD
-        response['full_text'] = self.py3.safe_format(self.format,{
+        response['full_text'] = self.py3.safe_format(self.format, {
             'path': self.path,
             'space': space,
             })
