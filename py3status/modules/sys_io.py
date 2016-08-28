@@ -19,10 +19,12 @@ from time import time
 import psutil
 
 
-INITIAL_MULTI = 1024  # initial multiplier, if you want to get rid of first bytes, set to 1 to disable
+# initial multiplier, if you want to get rid of first bytes set to 1 to disable
+INITIAL_MULTI = 1024
 MULTIPLIER_TOP = 999  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
 UNIT_MULTI = 1024  # value to divide if rate is greater than MULTIPLIER_TOP
-UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]  # list of units, first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
+# list of units: first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
+UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
 
 
 class Py3status:
@@ -63,7 +65,7 @@ class Py3status:
         else:
             response['color'] = self.py3.COLOR_BAD
         response['full_text'] = self.py3.safe_format(self.format,
-                {'total': self._divide_and_format(io_speed)})
+                                                     {'total': self._divide_and_format(io_speed)})
 
         return response
 
