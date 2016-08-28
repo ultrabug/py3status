@@ -32,8 +32,8 @@ class Py3status:
             'full_text': ''
         }
         temp = float(subprocess.check_output(['sensors', self.zone])
-                .split()[7]
-                .decode("utf-8")[1:-2])
+                     .split()[7]
+                     .decode("utf-8")[1:-2])
         if temp < self.threshold_degraded:
             response['color'] = self.py3.COLOR_GOOD
         elif temp < self.threshold_bad:
