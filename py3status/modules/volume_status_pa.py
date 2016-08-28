@@ -62,7 +62,10 @@ class Py3status:
             'full_text': ''
         }
         volume = int(subprocess.check_output(["pamixer", "--get-volume"]).decode('utf-8'))
-        mute = (subprocess.run(["pamixer", "--get-mute"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0)
+        mute = (subprocess.run(["pamixer", "--get-mute"],
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+                .returncode == 0)
         if volume < self.threshold_degraded:
             response['color'] = self.py3.COLOR_GOOD
         elif volume < self.threshold_bad:
@@ -74,7 +77,7 @@ class Py3status:
         else:
             format_string = self.format
         response['full_text'] = self.py3.safe_format(format_string,
-                {'volume': volume})
+                                                     {'volume': volume})
 
         return response
 
@@ -86,18 +89,18 @@ class Py3status:
         # volume up
         if self.button_up and button == self.button_up:
             subprocess.run(["pamixer", "-i", str(self.volume_delta)],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL)
+                           stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
         # volume down
         elif self.button_down and button == self.button_down:
             subprocess.run(["pamixer", "-d", str(self.volume_delta)],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL)
+                           stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
         # toggle mute
         elif self.button_mute and button == self.button_mute:
             subprocess.run(["pamixer", "-t"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL)
+                           stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
 
 if __name__ == "__main__":
     """
