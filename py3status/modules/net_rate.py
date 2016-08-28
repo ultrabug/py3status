@@ -122,12 +122,12 @@ class Py3status:
             hide = self.hide_if_zero
 
         response = {'cached_until':
-                self.py3.time_in(seconds=self.cache_timeout)}
+                    self.py3.time_in(seconds=self.cache_timeout)}
 
         if hide:
             response['full_text'] = ""
         elif interface:
-            response['full_text'] = self.py3.safe_format(self.format,{
+            response['full_text'] = self.py3.safe_format(self.format, {
                 'total': self._divide_and_format(delta['total']),
                 'up': self._divide_and_format(delta['up']),
                 'down': self._divide_and_format(delta['down']),
