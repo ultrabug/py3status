@@ -11,6 +11,15 @@ Configuration parameters:
         (default: "♪{volume:3d}%")
     format_mute: format string when sound is muted
         (default: "♪ -- ")
+    button_down: Button to click to decrease volume. Setting to 0 disables.
+        (default 0)
+    button_up: Button to click to increase volume. Setting to 0 disables.
+        (default 0)
+    button_mute: Button to click to toggle mute. Setting to 0 disables.
+        (default 0)
+    volume_delta: Percentage amount that the volume is increased or
+        decreased by when volume buttons pressed.
+        (default 5)
 
 Format status string parameters:
     {volume} the volume percent
@@ -32,7 +41,10 @@ class Py3status:
         self.threshold_bad = 90
         self.format = "♪{volume:3d}%"
         self.format_mute = "♪ -- "
-        pass
+        self.button_down = 0
+        self.button_up = 0
+        self.button_mute = 0
+        self.volume_delta = 5
 
     def volume(self):
         """
@@ -65,6 +77,27 @@ class Py3status:
                 {'volume': volume})
 
         return response
+
+    def on_click(self, event):
+        '''
+        Volume up/down and toggle mute.
+        '''
+        button = event['button']
+        # volume up
+        if self.button_up and button == self.button_up:
+            subprocess.run(["pamixer", "-i", str(self.volume_delta)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+        # volume down
+        elif self.button_down and button == self.button_down:
+            subprocess.run(["pamixer", "-d", str(self.volume_delta)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+        # toggle mute
+        elif self.button_mute and button == self.button_mute:
+            subprocess.run(["pamixer", "-t"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
 
 if __name__ == "__main__":
     """
