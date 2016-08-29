@@ -3,9 +3,10 @@
 Display the load average.
 
 Configuration parameters:
-    threshold_degraded / threshold_bad: thresholds for color change
     format: format string
         (default: "{one:.2f} {five:.2f} {fifteen:.2f}")
+    threshold_degraded: use color_degraded between this and threshold_bad
+    threshold_bad: use color_bad above this
 
 Format status string parameters:
     {one} load average over the last minute
@@ -18,11 +19,11 @@ import os
 
 
 class Py3status:
+    threshold_degraded = 2
+    threshold_bad = 4
+    cache_timeout = 5
+    format = "{one:.2f} {five:.2f} {fifteen:.2f}"
     def __init__(self):
-        self.threshold_degraded = 2
-        self.threshold_bad = 4
-        self.cache_timeout = 5
-        self.format = "{one:.2f} {five:.2f} {fifteen:.2f}"
         pass
 
     def load(self, i3s_output_list, i3s_config):
