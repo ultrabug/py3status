@@ -103,6 +103,10 @@ class Py3status:
                         out += [{'full_text': self.format_separator}]
                 output += out
 
+            # Remove last separator
+            if self.format_separator:
+                output = output[:-1]
+
         if '{button}' in self.format:
             if self.open:
                 format_control = self.format_button_open
