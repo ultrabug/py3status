@@ -3,20 +3,20 @@
 Display current sound volume using pamixer.
 
 Configuration parameters:
-    threshold_bad: Volume above which the color is set to bad
-        (default: 90)
-    threshold_degraded: Volume above which the color is set to degraded
-        (default: 50)
+    button_down: Button to click to decrease volume. Setting to 0 disables.
+        (default 0)
+    button_mute: Button to click to toggle mute. Setting to 0 disables.
+        (default 0)
+    button_up: Button to click to increase volume. Setting to 0 disables.
+        (default 0)
     format: format string
         (default: "♪{volume:3d}%")
     format_mute: format string when sound is muted
         (default: "♪ -- ")
-    button_down: Button to click to decrease volume. Setting to 0 disables.
-        (default 0)
-    button_up: Button to click to increase volume. Setting to 0 disables.
-        (default 0)
-    button_mute: Button to click to toggle mute. Setting to 0 disables.
-        (default 0)
+    threshold_bad: Volume above which the color is set to bad
+        (default: 90)
+    threshold_degraded: Volume above which the color is set to degraded
+        (default: 50)
     volume_delta: Percentage amount that the volume is increased or
         decreased by when volume buttons pressed.
         (default 5)
@@ -35,16 +35,18 @@ import subprocess
 
 
 class Py3status:
+    cache_timeout = 10
+    threshold_degraded = 50
+    threshold_bad = 90
+    format = "♪{volume:3d}%"
+    format_mute = "♪ -- "
+    button_down = 0
+    button_up = 0
+    button_mute = 0
+    volume_delta = 5
+
     def __init__(self):
-        self.cache_timeout = 10
-        self.threshold_degraded = 50
-        self.threshold_bad = 90
-        self.format = "♪{volume:3d}%"
-        self.format_mute = "♪ -- "
-        self.button_down = 0
-        self.button_up = 0
-        self.button_mute = 0
-        self.volume_delta = 5
+        pass
 
     def volume(self):
         """
