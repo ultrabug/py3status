@@ -131,7 +131,7 @@ class Py3status:
                     self.py3.time_in(seconds=self.cache_timeout)}
 
         if hide:
-            ret_value['full_text'] = ""
+            response['full_text'] = ""
         elif interface:
             response['full_text'] = self.py3.safe_format(self.format, {
                 'total': self._divide_and_format(delta['total']),
@@ -140,18 +140,18 @@ class Py3status:
                 'interface': interface[:-1],
                 })
         else:
-            ret_value['full_text'] = self.format_no_connection
+            response['full_text'] = self.format_no_connection
 
         threshold_value = self.threshold_value
         if threshold_value and interface:
             if delta[threshold_value] < self.threshold_bad:
-                ret_value['color'] = self.py3.COLOR_BAD
+                response['color'] = self.py3.COLOR_BAD
             elif delta[threshold_value] < self.threshold_degraded:
-                ret_value['color'] = self.py3.COLOR_DEGRADED
+                response['color'] = self.py3.COLOR_DEGRADED
             else:
-                ret_value['color'] = self.py3.COLOR_GOOD
+                response['color'] = self.py3.COLOR_GOOD
 
-        return ret_value
+        return response
 
     def _get_stat(self):
         """
