@@ -11,8 +11,11 @@ Configuration parameters:
     interfaces: comma separated list of interfaces to track
     interfaces_blacklist: comma separated list of interfaces to ignore
     precision: amount of numbers after dot
-    color: colorise output according to the value of 'up|down|total'
-    threshold_bad / threshold_degraded: thresholds for color change
+    threshold_bad: use color_bad below this value
+    threshold_degraded: use color_degraded between this value and threshold_bad
+    threshold_value: value to check thresholds against. Can be 'up|down|total'.
+        Don't color if set to False.
+        (default: False)
 
 Format of status string placeholders:
     {down} download rate
@@ -52,7 +55,7 @@ class Py3status:
     interfaces = ''
     interfaces_blacklist = 'lo'
     precision = 1
-    color = False
+    threshold_value = False
     threshold_bad = 1
     threshold_degraded = 1024
 
@@ -139,11 +142,11 @@ class Py3status:
         else:
             ret_value['full_text'] = self.format_no_connection
 
-        color = self.color
-        if color and interface:
-            if delta[color] < self.threshold_bad:
+        threshold_value = self.threshold_value
+        if threshold_value and interface:
+            if delta[threshold_value] < self.threshold_bad:
                 ret_value['color'] = self.py3.COLOR_BAD
-            elif delta[color] < self.threshold_degraded:
+            elif delta[threshold_value] < self.threshold_degraded:
                 ret_value['color'] = self.py3.COLOR_DEGRADED
             else:
                 ret_value['color'] = self.py3.COLOR_GOOD
