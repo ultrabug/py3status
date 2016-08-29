@@ -23,6 +23,7 @@ class Py3status:
     threshold_bad = 4
     cache_timeout = 5
     format = "{one:.2f} {five:.2f} {fifteen:.2f}"
+
     def __init__(self):
         pass
 
