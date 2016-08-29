@@ -6,9 +6,10 @@ This modules requires the psutil python module.
 Configuration parameters:
     path: filesystem path to check
         (default: "/")
-    threshold_degraded / threshold_bad: thresholds for color change
     format: format string
         (default: "{space:.1f}G")
+    threshold_bad: use color_bad below this
+    threshold_degraded: use color_degraded between this and threshold_bad
 
 Format string parameters:
     {space} space left (in GB)
@@ -20,12 +21,13 @@ import psutil
 
 
 class Py3status:
+    cache_timeout = 10
+    threshold_degraded = 50
+    threshold_bad = 10
+    path = "/"
+    format = '{space:.1f}G'
+
     def __init__(self):
-        self.cache_timeout = 10
-        self.threshold_degraded = 50
-        self.threshold_bad = 10
-        self.path = "/"
-        self.format = '{space:.1f}G'
         pass
 
     def disk_usage(self, i3s_output_list, i3s_config):
