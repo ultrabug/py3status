@@ -8,7 +8,8 @@ Configuration parameters:
         (default: "{total}")
     precision: precision to display
         (default: 1)
-    threshold_degraded / threshold_bad: thresholds for color change
+    threshold_bad: use color_bad below this
+    threshold_degraded: use color_degraded above this and threshold_bad
 
 Format status string parameters:
     {total} total IO on all disks
@@ -28,14 +29,13 @@ UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
 
 
 class Py3status:
+    threshold_degraded = 1024
+    threshold_bad = 10240
+    format = "{total}"
+    precision = 1
+    cache_timeout = 1
 
     def __init__(self):
-        self.threshold_degraded = 1024
-        self.threshold_bad = 10240
-        self.format = "{total}"
-        self.precision = 1
-        self.cache_timeout = 1
-
         self.last_stat = self._get_stat()
         self.last_time = time()
 
