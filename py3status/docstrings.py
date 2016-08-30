@@ -106,11 +106,11 @@ re_to_tag = re.compile('&lt;([^.]*)&gt;')
 re_to_defaults = re.compile('\*(\(default.*\))\*')
 
 # match in module docstring
-re_from_param = re.compile('^    ([a-z]\S+):($|[ \t])')
-re_from_status = re.compile('^\s+({\S+})($|[ \t])')
+re_from_param = re.compile('^    ([a-z]\S+):($|[ \t])(.*)$')
+re_from_status = re.compile('^\s+({\S+})($|[ \t])(.*)$')
 re_from_item = re.compile('^\s+-')
 re_from_data = re.compile('^@(author|license|source)($|[ \t])')
-re_from_tag = re.compile('<([^.]*)>')
+re_from_tag = re.compile('((`[^`]*`)|[<>&])')
 re_from_defaults = re.compile('(\(default.*\))')
 
 
@@ -187,8 +187,24 @@ def _from_docstring(doc):
     '''
     def format_fn(line, status):
         ''' format function '''
-        # swap < > to &lt; &gt;
-        line = re_from_tag.sub(r'&lt;\1&gt;', line)
+
+        def fix_tags(line):
+            # In markdown we need to escape < > and & for display
+            # but we don't want to do this is the value is quoted
+            # by backticks ``
+
+            def fn(match):
+                # swap matched chars
+                found = match.group(1)
+                if found == '<':
+                    return '&lt;'
+                if found == '>':
+                    return '&gt;'
+                if found == '&':
+                    return '&amp;'
+                return match.group(0)
+            return re_from_tag.sub(fn, line)
+
         if re_from_data.match(line):
             line = re_from_data.sub(r'**\1** ', line)
             status['add_line'] = True
@@ -196,16 +212,21 @@ def _from_docstring(doc):
         if status['listing']:
             # parameters
             if re_from_param.match(line):
-                line = re_from_param.sub(r'  - `\1` ', line)
+                m = re_from_param.match(line)
+                line = '  - `{}` {}'.format(m.group(1), fix_tags(m. group(3)))
             # status items
             elif re_from_status.match(line):
-                line = re_from_status.sub(r'  - `\1` ', line)
+                m = re_from_status.match(line)
+                line = '  - `{}` {}'.format(m.group(1), fix_tags(m. group(3)))
             # bullets
             elif re_from_item.match(line):
-                line = re_from_item.sub(r'  -', line)
+                line = re_from_item.sub(r'  -', fix_tags(line))
             # is continuation line
             else:
+                line = fix_tags(line)
                 line = ' ' * 4 + line.lstrip()
+        else:
+            line = fix_tags(line)
         return line
 
     return _reformat_docstring(doc, format_fn, code_newline='\n')
