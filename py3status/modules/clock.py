@@ -29,18 +29,25 @@ Configuration parameters:
     button_reset: button that switches display to the first timezone. setting
         to 0 disables (default 3)
     cycle: If more than one display then how many seconds between changing the
-        display (default 10)
-    format: defines the timezones displayed these can be separated by `;` for
-        multiple displays that are switched between (default '{Local}')
+        display (default 0)
+    format: defines the timezones displayed. This can be a single string or a
+        list.  If a list is supplied then the formats can be cycled through
+        using `cycle` or by button click.  (default '{Local}')
     format_time: format to use for the time, strftime directives such as `%H`
-        can be used
-        (default ['[{name_} ]%c', '[{name_} ]%x %X',
-        '[{name_} ]%a %H:%M', '[{name_} ]{icon}'])
+        can be used this can be either a string or to allow multiple formats as
+        a list.  The one used can be changed by button click.
+        (default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
+        '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])
 
-Format of status string placeholders:
+Format placeholders:
     {icon} a character representing the time from `blocks`
     {name} friendly timezone name eg `Buenos Aires`
+    {name_unclear} friendly timezone name eg `Buenos Aires` but is empty if
+        only one timezone is provided
     {timezone} full timezone name eg `America/Argentina/Buenos_Aires`
+    {timezone_unclear} full timezone name eg `America/Argentina/Buenos_Aires`
+        but is empty if only one timezone is provided
+
 
 Requires:
     pytz: python library
@@ -51,7 +58,8 @@ i3status.conf example:
 ```
 # cycling through London, Warsaw, Tokyo
 clock {
-    format = "{Europe/London};{Europe/Warsaw};{Asia/Tokyo}"
+    cycle = 30
+    format = ["{Europe/London}", "{Europe/Warsaw}", "{Asia/Tokyo}"]
     format_time = "{name} %H:%M"
 }
 
@@ -98,10 +106,10 @@ class Py3status:
     cycle = 0
     format = "{Local}"
     format_time = [
-        '[{name_} ]%c',
-        '[{name_} ]%x %X',
-        '[{name_} ]%a %H:%M',
-        '[{name_} ]{icon}',
+        '[{name_unclear} ]%c',
+        '[{name_unclear} ]%x %X',
+        '[{name_unclear} ]%a %H:%M',
+        '[{name_unclear} ]{icon}',
     ]
 
     def post_config_hook(self):
@@ -223,15 +231,23 @@ class Py3status:
 
                 timezone = zone.zone
                 tzname = timezone.split('/')[-1].replace('_', ' ')
-                name_ = tzname if self.multiple_tz else None
 
-                format_time = self.py3.safe_format(format_time,
-                                                   dict(
-                                                       icon=icon,
-                                                       name=tzname,
-                                                       name_=name_,
-                                                       timezone=timezone
-                                                    ))
+                if self.multiple_tz:
+                    name_unclear = tzname
+                    timezone_unclear = timezone
+                else:
+                    name_unclear = ''
+                    timezone_unclear = ''
+
+                format_time = self.py3.safe_format(
+                    format_time,
+                    dict(
+                        icon=icon,
+                        name=tzname,
+                        name_unclear=name_unclear,
+                        timezone=timezone,
+                        timezone_unclear=timezone_unclear,
+                    ))
                 if self.py3.is_python_2():
                     format_time = t.strftime(format_time.encode('utf-8'))
                 else:
@@ -239,12 +255,9 @@ class Py3status:
                 times[name] = format_time
 
         # work out when we need to update
-        now = time()
-        if self.time_deltas[self.active_time_format]:
-            timeout = (now + self.time_deltas[self.active_time_format]
-                       - now % self.time_deltas[self.active_time_format])
-        else:
-            timeout = 0
+        timeout = self.py3.time_in(
+            sync_to=self.time_deltas[self.active_time_format]
+        )
 
         # if cycling we need to make sure we update when they are needed
         if self.cycle:
