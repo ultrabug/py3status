@@ -12,6 +12,9 @@ Configuration parameters:
 Format of status string placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
+    {load1} one minute load average
+    {load5} five minute load average
+    {load15} fifteen minute load average
     {mem_total} total memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
@@ -31,6 +34,7 @@ from __future__ import division
 
 import re
 import subprocess
+import os
 
 
 class GetData:
@@ -111,6 +115,8 @@ class GetData:
 
         return cpu_temp
 
+    def load(self):
+        return os.getloadavg()
 
 class Py3status:
     """
@@ -150,6 +156,12 @@ class Py3status:
             (self.values['mem_total'],
              self.values['mem_used'],
              self.values['mem_used_percent']) = self.data.memory()
+
+        # get load
+        if '{load' in self.format:
+            (self.values['load1'],
+             self.values['load5'],
+             self.values['load15']) = self.data.load()
 
         response = {
             'cached_until': self.py3.time_in(seconds=self.cache_timeout),
