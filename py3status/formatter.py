@@ -204,7 +204,7 @@ class Formatter:
             """
             if self.python2 and isinstance(param, str):
                 param = param.decode('utf-8')
-            if param:
+            if param or param is 0:
                 value = value.format(**{key: param})
                 block.add(value)
                 block.mark_valid()
@@ -308,6 +308,7 @@ if __name__ == '__main__':
         'long_str': 'I am a long string though not too long',
         'python2_unicode': u'Björk',
         'python2_str': 'Björk',
+        'zero': 0,
     }
 
     composites = {
@@ -418,6 +419,67 @@ if __name__ == '__main__':
         {
             'format': 'zero [one [two [three [{no}]]]]|Numbers',
             'expected': 'Numbers',
+        },
+        # zero/False/None etc
+        {
+            'format': '{zero}',
+            'expected': '0',
+        },
+        {
+            'format': '[{zero}] hello',
+            'expected': '0 hello',
+        },
+        {
+            'format': '[{zero} ping] hello',
+            'expected': '0 ping hello',
+        },
+        {
+            'format': '{None}',
+            'expected': '',
+        },
+        {
+            'format': '[{None}] hello',
+            'expected': ' hello',
+        },
+        {
+            'format': '[{None} ping] hello',
+            'expected': ' hello',
+        },
+        {
+            'format': '{no}',
+            'expected': '',
+        },
+        {
+            'format': '[{no}] hello',
+            'expected': ' hello',
+        },
+        {
+            'format': '[{no} ping] hello',
+            'expected': ' hello',
+        },
+        {
+            'format': '{yes}',
+            'expected': 'True',
+        },
+        {
+            'format': '[{yes}] hello',
+            'expected': 'True hello',
+        },
+        {
+            'format': '[{yes} ping] hello',
+            'expected': 'True ping hello',
+        },
+        {
+            'format': '{empty}',
+            'expected': '',
+        },
+        {
+            'format': '[{empty}] hello',
+            'expected': ' hello',
+        },
+        {
+            'format': '[{empty} ping] hello',
+            'expected': ' hello',
         },
         # python 2 unicode
         {
