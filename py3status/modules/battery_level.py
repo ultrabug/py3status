@@ -16,6 +16,10 @@ Configuration parameters:
         default is "⚡"
     format: string that formats the output. See placeholders below.
         default is "{icon}"
+    format_charging: string that formats the output when charging. Defaults to
+        the value of format. See placeholders below.
+    format_full: string that formats the output when the battery is full.
+        Defaults to the value of format. See placeholders below.
     format_notify_charging: format of the notification received when you click
         on the module while your computer is plugged
         default is "Charging ({percent}%)"
@@ -106,6 +110,8 @@ class Py3status:
     cache_timeout = 30
     charging_character = CHARGING_CHARACTER
     format = FORMAT
+    format_charging = None
+    format_full = None
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
     hide_when_full = False
@@ -118,6 +124,9 @@ class Py3status:
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = None
+
+    def __init__(self):
+        self.last_known_status = None
 
     def battery_level(self):
 
@@ -309,10 +318,27 @@ class Py3status:
                                                   (len(self.blocks) - 1)))]
 
     def _update_full_text(self):
-        self.full_text = self.format.format(ascii_bar=self.ascii_bar,
-                                            icon=self.icon,
-                                            percent=self.percent_charged,
-                                            time_remaining=self.time_remaining)
+        if self.charging and self.format_charging:
+            self.full_text = self.py3.safe_format(self.format_charging,
+                                                  {'ascii_bar': self.ascii_bar,
+                                                   'icon': self.icon,
+                                                   'percent': self.percent_charged,
+                                                   'time_remaining': self.time_remaining,
+                                                   })
+        elif self.last_known_status == 'full' and self.format_full:
+            self.full_text = self.py3.safe_format(self.format_full,
+                                                  {'ascii_bar': self.ascii_bar,
+                                                   'icon': self.icon,
+                                                   'percent': self.percent_charged,
+                                                   'time_remaining': self.time_remaining,
+                                                   })
+        else:
+            self.full_text = self.py3.safe_format(self.format,
+                                                  {'ascii_bar': self.ascii_bar,
+                                                   'icon': self.icon,
+                                                   'percent': self.percent_charged,
+                                                   'time_remaining': self.time_remaining,
+                                                   })
 
     def _build_response(self):
         self.response = {}
