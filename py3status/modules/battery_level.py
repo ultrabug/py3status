@@ -85,7 +85,6 @@ Requires:
 """
 
 from __future__ import division  # python2 compatibility
-from time import time
 from re import findall
 
 import math
