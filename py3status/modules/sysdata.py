@@ -6,10 +6,15 @@ Configuration parameters:
     format: output format string
     high_threshold: percent to consider CPU or RAM usage as 'high load'
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
+    threshold_values: list of values to use for setting the color
+        (default: ['cpu_usage', 'mem_used_percent'])
 
 Format of status string placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
+    {load1} one minute load average
+    {load5} five minute load average
+    {load15} fifteen minute load average
     {mem_total} total memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
@@ -29,7 +34,7 @@ from __future__ import division
 
 import re
 import subprocess
-from time import time
+import os
 
 
 class GetData:
@@ -110,59 +115,63 @@ class GetData:
 
         return cpu_temp
 
+    def load(self):
+        return os.getloadavg()
 
 class Py3status:
     """
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "CPU: {cpu_usage}%, " \
-        "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
+    format = "CPU: {cpu_usage:.2f}%,"\
+             "Mem: {mem_used:.2f}/{mem_total:.2f} GB ({mem_used_percent:.2f}%)"
     high_threshold = 75
     med_threshold = 40
+    threshold_values = ['cpu_usage', 'mem_used_percent']
 
     def __init__(self):
         self.data = GetData()
         self.cpu_total = 0
         self.cpu_idle = 0
+        self.values = {}
 
     def sysData(self):
         # get CPU usage info
-        cpu_total, cpu_idle = self.data.cpu()
-        cpu_usage = (1 - (
-            float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
-            )) * 100
-        self.cpu_total = cpu_total
-        self.cpu_idle = cpu_idle
+        if '{cpu_usage' in self.format:
+            cpu_total, cpu_idle = self.data.cpu()
+            self.values['cpu_usage'] = (1 - (
+                float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
+                )) * 100
+            self.cpu_total = cpu_total
+            self.cpu_idle = cpu_idle
 
         # if specified as a formatting option, also get the CPU temperature
-        if '{cpu_temp}' in self.format:
-            cpu_temp = self.data.cpuTemp()
-        else:
-            cpu_temp = ''
+        if '{cpu_temp' in self.format:
+            self.values['cpu_temp'] = self.data.cpuTemp()
 
         # get RAM usage info
-        mem_total, mem_used, mem_used_percent = self.data.memory()
+        if ('{mem_total' in self.format or
+                '{mem_used' in self.format or
+                '{mem_used_percent' in self.format):
+            (self.values['mem_total'],
+             self.values['mem_used'],
+             self.values['mem_used_percent']) = self.data.memory()
+
+        # get load
+        if '{load' in self.format:
+            (self.values['load1'],
+             self.values['load5'],
+             self.values['load15']) = self.data.load()
 
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': self.format.format(
-                cpu_usage='%.2f' % (cpu_usage),
-                cpu_temp=cpu_temp,
-                mem_used='%.2f' % mem_used,
-                mem_total='%.2f' % mem_total,
-                mem_used_percent='%.2f' % mem_used_percent,
-            )
+            'cached_until': self.py3.time_in(seconds=self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, self.values),
         }
 
-        if '{cpu_usage}' in self.format:
-            if ('{mem_used_percent}' in self.format
-                    or '{mem_used}' in self.format):
-                threshold = max(cpu_usage, mem_used_percent)
-            else:
-                threshold = cpu_usage
-        else:
-            threshold = mem_used_percent
+        threshold = 0
+        for value in self.threshold_values:
+            if value in self.format:
+                threshold = max(threshold, self.values[value])
 
         if threshold <= self.med_threshold:
             response['color'] = self.py3.COLOR_GOOD
