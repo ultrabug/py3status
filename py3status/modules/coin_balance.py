@@ -185,9 +185,9 @@ class Py3status:
         if coin not in COIN_PORTS:
             return 'Unsupported coin'
 
-        try:
-            credentials = self._get_credentials(coin)
+        credentials = self._get_credentials(coin)
 
+        try:
             auth_data = requests.auth.HTTPBasicAuth(**credentials)
             url = '{protocol}://{host}:{port}'.format(protocol=self.protocol,
                                                       host=self.host,
