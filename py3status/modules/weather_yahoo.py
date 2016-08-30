@@ -90,8 +90,11 @@ class Py3status:
             return None, None
         q.raise_for_status()
         r = q.json()
-        today = r['query']['results']['channel']['item']['condition']
-        forecasts = r['query']['results']['channel']['item']['forecast']
+        try:
+            today = r['query']['results']['channel']['item']['condition']
+            forecasts = r['query']['results']['channel']['item']['forecast']
+        except TypeError:
+            return None, None
         if not self.forecast_include_today:
             # Do not include today in forecasts
             forecasts.pop(0)
