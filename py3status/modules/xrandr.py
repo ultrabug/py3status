@@ -51,6 +51,8 @@ Dynamic configuration parameters:
     - <OUTPUT>_workspaces: comma separated list of workspaces to move to
         the given OUTPUT when it is activated
         Example: DP1_workspaces = "1,2,3"
+    - <OUTPUT>_rotate: rotate the output as told
+        Example: DP1_rotate = "left"
 
 Color options:
     color_bad: Displayed layout unavailable
@@ -248,15 +250,16 @@ class Py3status:
             #
             if output in combination:
                 pos = getattr(self, '{}_pos'.format(output), '0x0')
+                rotation = getattr(self, '{}_rotate'.format(output), 'normal')
                 #
                 if mode == 'clone' and previous_output is not None:
                     cmd += ' --auto --same-as {}'.format(previous_output)
                 else:
                     if ('above' in pos or 'below' in pos or 'left-of' in pos or
                             'right-of' in pos):
-                        cmd += ' --auto --{} --rotate normal'.format(pos)
+                        cmd += ' --auto --{} --rotate {}'.format(pos, rotation)
                     else:
-                        cmd += ' --auto --pos {} --rotate normal'.format(pos)
+                        cmd += ' --auto --pos {} --rotate {}'.format(pos, rotation)
                 previous_output = output
             else:
                 cmd += ' --off'
