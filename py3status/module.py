@@ -461,7 +461,8 @@ class Module(Thread):
                         # remove this so we can check later for output changes
                         del result['cached_until']
                     else:
-                        cached_until = time() + self.config['cache_timeout']
+                        # get module default cached_until
+                        cached_until = self.module_class.py3.time_in()
                     my_method['cached_until'] = cached_until
                     if not cache_time or cached_until < cache_time:
                         cache_time = cached_until

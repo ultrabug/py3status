@@ -199,12 +199,54 @@ class Py3:
             my_info = self._get_module_info(self._module.module_full_name)
             my_info['content_function'] = content_function
 
-    def time_in(self, seconds=0):
+    def time_in(self, seconds=None, sync_to=None, offset=0):
         """
         Returns the time a given number of seconds into the future.  Helpful
         for creating the `cached_until` value for the module output.
+
+        Note: form version 3.1 modules no longer need to explicitly set a
+        `cached_until` in their response unless they wish to directly control
+        it.
+
+        seconds specifies the number of seconds that should occure before the
+        update is required.
+
+        sync_to causes the update to be syncronised to a time period.  1 would
+        cause the update on the second, 60 to the nearest minute. By defalt we
+        syncronise to the nearest second. 0 will disable this feature.
+
+        offset is used to alter the base time used. A timer that started at a
+        certain time could set that as the offset and any syncronisation would
+        then be relative to that time.
         """
-        return time() + seconds
+
+        if seconds is None:
+            # If we have a sync_to then seconds can be 0
+            if sync_to and sync_to > 0:
+                seconds = 0
+            else:
+                try:
+                    # use py3status modules cache_timeout
+                    seconds = self._py3status_module.cache_timeout
+                except AttributeError:
+                    # use default cache_timeout
+                    seconds = self._module.config['cache_timeout']
+
+        # Unless explicitly set we sync to the nearest second
+        # Unless the requested update is in less than a second
+        if sync_to is None:
+            if seconds and seconds < 1:
+                sync_to = 0
+            else:
+                sync_to = 1
+
+        requested = time() + seconds - offset
+
+        # if sync_to then we find the sync time for the requested time
+        if sync_to:
+            requested = (requested + sync_to) - (requested % sync_to)
+
+        return requested + offset
 
     def safe_format(self, format_string, param_dict=None):
         """
