@@ -378,7 +378,7 @@ class Py3status:
         self.last_known_status = battery_status
 
     def _set_cache_timeout(self):
-        self.response['cached_until'] = time() + self.cache_timeout
+        self.response['cached_until'] = self.py3.time_in(seconds=self.cache_timeout)
 
     def _notify(self, text, urgency):
         subprocess.call(
