@@ -144,7 +144,7 @@ class Block:
                 text += item
             else:
                 if text:
-                    if is_composite:
+                    if is_composite and self.parent is None:
                         data.append({'full_text': text})
                     else:
                         data.append(text)
@@ -159,7 +159,7 @@ class Block:
                 else:
                     data.append(item)
         if text:
-            if is_composite:
+            if is_composite and self.parent is None:
                 data.append({'full_text': text})
             else:
                 data.append(text)
@@ -649,6 +649,11 @@ if __name__ == '__main__':
         {
             'format': 'TEST [{simple}]',
             'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
+            'composite': True,
+        },
+        {
+            'format': '{simple} TEST [{name}[ {number}]]',
+            'expected':  [{'full_text': 'NY 12:34'}, {'full_text': u' TEST Björk 42'}],
             'composite': True,
         },
     ]
