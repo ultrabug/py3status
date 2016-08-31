@@ -19,7 +19,7 @@ Configuration parameters:
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.
 
-from time import time, sleep
+from time import time
 import os
 import subprocess
 
@@ -45,7 +45,7 @@ class Py3status:
         self.status = 'stop'
         self.icon = self.play_icon
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         """
         buttons = (None, 'left', 'middle', 'right', 'up', 'down')
@@ -164,7 +164,7 @@ class Py3status:
         proxy = bus.get_object(mpris+'.vlc', mpris_slash)
         return dbus.Interface(proxy, dbus_interface=mpris+'.Player')
 
-    def player_control(self, i3s_output_list, i3s_config):
+    def player_control(self):
         return dict(
             full_text=self.icon,
             cached_until=time(),
@@ -172,11 +172,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.player_control([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -8,6 +8,10 @@ Configuration parameters:
     format_unavailable: what to display when unavailable
     path: the path to a file or dir to check if it exists
 
+Color options:
+    color_bad: Error or file/directory does not exist
+    color_good: File or directory exists
+
 @author obb, Moritz Lüdecke
 """
 
@@ -27,23 +31,23 @@ class Py3status:
     format_unavailable = u'■'
     path = None
 
-    def _get_text(self, i3s_config):
+    def _get_text(self):
         fnull = open(os.devnull, 'w')
         if subprocess.call(["ls", self.path], stdout=fnull, stderr=fnull) == 0:
             text = self.format_available
-            color = i3s_config['color_good']
+            color = self.py3.COLOR_GOOD
         else:
             text = self.format_unavailable
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
 
         return (color, text)
 
-    def file_status(self, i3s_output_list, i3s_config):
+    def file_status(self):
         if self.path is None:
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
             text = ERR_NO_PATH
         else:
-            (color, text) = self._get_text(i3s_config)
+            (color, text) = self._get_text()
 
         response = {
             'cached_until': time() + self.cache_timeout,

@@ -33,6 +33,11 @@ Format of status string placeholders:
     {signal_percent} Display signal in percent
     {ssid} Display SSID
 
+Color options:
+    color_bad: Signal strength signal_bad or lower
+    color_degraded: Signal strength signal_degraded or lower
+    color_good: Signal strength above signal_degraded
+
 Requires:
     iw:
     ip: if {ip} is used
@@ -80,7 +85,7 @@ class Py3status:
         except:
             pass
 
-    def get_wifi(self, i3s_output_list, i3s_config):
+    def get_wifi(self):
         """
         Get WiFi status using iw.
         """
@@ -144,7 +149,7 @@ class Py3status:
 
         if ssid is None:
             full_text = self.format_down
-            color = i3s_config['color_{}'.format(self.down_color)]
+            color = getattr(self.py3, 'COLOR_{}'.format(self.down_color.upper()))
         else:
             bad = False
             degraded = False
@@ -168,11 +173,11 @@ class Py3status:
                 signal_percent = '?%'
 
             if bad:
-                color = i3s_config['color_bad']
+                color = self.py3.COLOR_BAD
             elif degraded:
-                color = i3s_config['color_degraded']
+                color = self.py3.COLOR_DEGRADED
             else:
-                color = i3s_config['color_good']
+                color = self.py3.COLOR_GOOD
 
             full_text = self.format_up.format(bitrate=bitrate,
                                               signal_dbm=signal_dbm,
@@ -198,16 +203,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
-    This SHOULD work before contributing your module please.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.get_wifi([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

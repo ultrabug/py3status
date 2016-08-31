@@ -3,6 +3,7 @@
 Display information of your android device over KDEConnector.
 
 Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 30)
     device: the device name, you need this if you have more than one device
             connected to your PC
     device_id: alternatively to the device name you can set your device id here
@@ -21,6 +22,12 @@ Format of status string placeholders:
     {name} name of the device
     {notif_size} number of notifications
     {notif_status} shows if a notification is available or nor
+
+Color options:
+    color_bad: Device unknown, unavailable
+        or battery below low_threshold and not charging
+    color_degraded: Connected and battery not charging
+    color_good: Connected and battery charging
 
 i3status.conf example:
 
@@ -59,6 +66,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 30
     device = None
     device_id = None
     format = '{name}{notif_status} {bat_status} {charge}%'
@@ -150,7 +158,7 @@ class Py3status:
 
         return notifications
 
-    def _get_battery_status(self, i3s_config, battery):
+    def _get_battery_status(self, battery):
         """
         Get the battery status
         """
@@ -159,13 +167,13 @@ class Py3status:
 
         if battery['isCharging']:
             status = self.status_chr
-            color = i3s_config['color_good']
+            color = self.py3.COLOR_GOOD
         else:
             status = self.status_bat
-            color = i3s_config['color_degraded']
+            color = self.py3.COLOR_DEGRADED
 
         if not battery['isCharging'] and battery['charge'] <= self.low_threshold:
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
 
         if battery['charge'] > 99:
             status = self.status_full
@@ -181,20 +189,20 @@ class Py3status:
 
         return (size, status)
 
-    def _get_text(self, i3s_config):
+    def _get_text(self):
         """
         Get the current metadatas
         """
         device = self._get_device()
         if device is None:
-            return (UNKNOWN_DEVICE, i3s_config['color_bad'])
+            return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
         if not device['isReachable'] or not device['isPaired']:
             return (self.format_disconnected.format(name=device['name']),
-                    i3s_config['color_bad'])
+                    self.py3.COLOR_BAD)
 
         battery = self._get_battery()
-        (charge, bat_status, color) = self._get_battery_status(i3s_config, battery)
+        (charge, bat_status, color) = self._get_battery_status(battery)
 
         notif = self._get_notifications()
         (notif_size, notif_status) = self._get_notifications_status(notif)
@@ -205,18 +213,18 @@ class Py3status:
                                    notif_size=notif_size,
                                    notif_status=notif_status), color)
 
-    def kdeconnector(self, i3s_output_list, i3s_config):
+    def kdeconnector(self):
         """
         Get the current state and return it.
         """
         if self._init_dbus():
-            (text, color) = self._get_text(i3s_config)
+            (text, color) = self._get_text()
         else:
             text = UNKNOWN_DEVICE
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
 
         response = {
-            'cached_until': time() + i3s_config['interval'],
+            'cached_until': time() + self.cache_timeout,
             'full_text': text,
             'color': color
         }

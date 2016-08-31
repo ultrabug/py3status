@@ -15,6 +15,8 @@ Format of status string placeholders:
     {year} year
     {tracknum} track number
 
+Color options:
+    color_bad: An error occurred
 
 Requires:
         deadbeef:
@@ -49,7 +51,7 @@ class Py3status:
         return response
 
     # return track currently playing in deadbeef
-    def get_status(self, i3s_output_list, i3s_config):
+    def get_status(self):
         try:
             # check if we have deadbeef running
             check_output(['pidof', 'deadbeef'])
@@ -75,7 +77,7 @@ class Py3status:
             if len(parts) == 6:
                 artist, title, length, elapsed, year, tracknum = parts
             else:
-                return self._error_response(i3s_config['color_bad'])
+                return self._error_response(self.py3.COLOR_BAD)
 
             response = {
                 'cached_until': time() + self.cache_timeout,
@@ -88,16 +90,11 @@ class Py3status:
             }
             return response
         except:
-            return self._error_response(i3s_config['color_bad'])
+            return self._error_response(self.py3.COLOR_BAD)
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_degraded': '#00FFFF',
-        'color_bad': '#FF0000'
-    }
-    print(x.get_status([], config))
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -18,6 +18,10 @@ Configuration parameters:
 Format string parameters:
     {name} The name and/or status of the VPN.
 
+Color options:
+    color_bad: VPN connected
+    color_good: VPN down
+
 Requires:
     pydbus: Which further requires PyGi. Check your distribution's repositories.
 
@@ -91,7 +95,7 @@ class Py3status:
         return path.isfile(self.pidfile)
 
     # Method run by py3status
-    def return_status(self, i3s_output_list, i3s_config):
+    def return_status(self):
         """Returns response dict"""
 
         # Start signal handler thread if it should be running
@@ -100,20 +104,20 @@ class Py3status:
 
         # Set 'no', color_bad as default output. Replaced if VPN active.
         name = "no"
-        color = i3s_config["color_bad"]
+        color = self.py3.COLOR_BAD
 
         # If we are acting like the default i3status module
         if self.check_pid:
             if self._check_pid():
                 name = "yes"
-                color = i3s_config["color_good"]
+                color = self.py3.COLOR_GOOD
 
         # Otherwise, find the VPN name, if it is active
         else:
             vpn = self._get_vpn_status()
             if vpn:
                 name = vpn
-                color = i3s_config["color_good"]
+                color = self.py3.COLOR_GOOD
 
         # Format and create the response dict
         full_text = self.format.format(name=name)

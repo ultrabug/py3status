@@ -44,6 +44,10 @@ Dynamic format placeholders:
         targets = "alias(carbon.agents.localhost-a.memUsage, 'local_memuse')"
         format = "local carbon mem usage: {local_memuse} bytes"
 
+Color options:
+    color_bad: threshold_bad has been exceeded
+    color_degraded: threshold_degraded has been exceeded
+
 @author ultrabug
 """
 from requests import get
@@ -187,7 +191,7 @@ class Py3status:
                 return 'degraded'
         return 'good'
 
-    def graphite(self, i3s_output_list, i3s_config):
+    def graphite(self):
         """
         """
         self._validate_config()
@@ -198,7 +202,7 @@ class Py3status:
 
         response = {
             'cached_until': time() + self.cache_timeout,
-            'color': i3s_config['color_{}'.format(color_key)],
+            'color': getattr(self.py3, 'COLOR_{}'.format(color_key.upper())),
             'full_text': self.format.format(**r_json)
         }
         return response
@@ -206,15 +210,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.graphite([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

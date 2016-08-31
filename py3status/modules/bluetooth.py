@@ -11,8 +11,12 @@ Confiuration parameters:
         device)
 
 Format of status string placeholders
-  - `{name}`  device name
-  - `{mac}`  device MAC address
+    {name} device name
+    {mac} device MAC address
+
+Color options:
+    color_bad: Conection on
+    color_good: Connection off
 
 Requires:
     hcitool:
@@ -35,22 +39,20 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    color_bad = None
-    color_good = None
     format = '{name}'
     format_no_conn = 'OFF'
     format_no_conn_prefix = 'BT: '
     format_prefix = 'BT: '
     device_separator = '|'
 
-    def bluetooth(self, i3s_output_list, i3s_config):
+    def bluetooth(self):
         """
         The whole command:
         hcitool name `hcitool con | sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'`
         """
         out = check_output(shlex.split('hcitool con'))
         macs = re.findall(BTMAC_RE, out.decode('utf-8'))
-        color = self.color_bad or i3s_config['color_bad']
+        color = self.py3.COLOR_BAD
 
         if macs != []:
             data = []
@@ -67,7 +69,7 @@ class Py3status:
                 data=self.device_separator.join(data)
             )
 
-            color = self.color_good or i3s_config['color_good']
+            color = self.py3.COLOR_GOOD
         else:
             output = '{format_prefix}{format}'.format(
                 format_prefix=self.format_no_conn_prefix,
@@ -84,14 +86,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.bluetooth([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

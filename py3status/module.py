@@ -86,9 +86,13 @@ class Module(Thread):
         """
         Start the module running.
         """
-        # Call modules init() method if it has one
+        # Modules can define a post_config_hook() method which will be run
+        # after the module has had it config settings applied and before it has
+        # its main method(s) called for the first time.  This allows modules to
+        # perform any necessary setup.
         if self.has_post_config_hook:
             self.module_class.post_config_hook()
+        # Start the module and call its output method(s)
         self.start()
 
     def force_update(self):
@@ -457,7 +461,8 @@ class Module(Thread):
                         # remove this so we can check later for output changes
                         del result['cached_until']
                     else:
-                        cached_until = time() + self.config['cache_timeout']
+                        # get module default cached_until
+                        cached_until = self.module_class.py3.time_in()
                     my_method['cached_until'] = cached_until
                     if not cache_time or cached_until < cache_time:
                         cache_time = cached_until

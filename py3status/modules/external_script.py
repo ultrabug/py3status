@@ -8,7 +8,6 @@ The script should not have any parameters, but it could work.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
-    color: color of printed text
     format: see placeholders below
     script_path: script you want to show output of (compulsory)
     strip_output: shall we strip leading and trailing spaces from output
@@ -21,7 +20,6 @@ i3status.conf example:
 
 ```
 external_script {
-    color = "#00FF00"
     format = "my name is {output}"
     script_path = "/usr/bin/whoami"
 }
@@ -39,12 +37,11 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 15
-    color = None
     format = '{output}'
     script_path = None
     strip_output = False
 
-    def external_script(self, i3s_output_list, i3s_config):
+    def external_script(self):
         if self.script_path:
             return_value = subprocess.check_output(self.script_path,
                                                    shell=True,
@@ -67,7 +64,6 @@ class Py3status:
 
             response = {
                 'cached_until': time() + self.cache_timeout,
-                'color': self.color,
                 'full_text': self.format.format(output=return_value)
             }
         else:
@@ -79,13 +75,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.external_script([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
