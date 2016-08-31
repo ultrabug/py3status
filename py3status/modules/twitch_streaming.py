@@ -4,7 +4,7 @@ Checks if a Twitch streamer is online.
 Checks if a streamer is online using the Twitch Kraken API to see
 if a channel is currently streaming or not.
 
-Configuration parameters
+Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 10)
     format: Display format when online
@@ -16,8 +16,12 @@ Configuration parameters
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
 
-Format of status string placeholders
+Format of status string placeholders:
     {stream_name}:  name of the streamer
+
+Color options:
+    color_bad: Stream offline or error
+    color_good: Stream is live
 
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
@@ -43,7 +47,7 @@ class Py3status:
         display_name_request = requests.get(url)
         self._display_name = display_name_request.json().get('display_name')
 
-    def is_streaming(self, i3s_output_list, i3s_config):
+    def is_streaming(self):
         if self.stream_name is None:
             return {
                 'full_text': 'stream_name missing',
@@ -54,16 +58,16 @@ class Py3status:
         if not self._display_name:
             self._get_display_name()
         if 'error' in r.json():
-            colour = i3s_config['color_bad']
+            colour = self.py3.COLOR_BAD
             full_text = self.format_invalid.format(stream_name=self.stream_name)
         elif r.json().get('stream') is None:
-            colour = i3s_config['color_bad']
+            colour = self.py3.COLOR_BAD
             full_text = self.format_offline.format(stream_name=self._display_name)
         elif r.json().get('stream') is not None:
-            colour = i3s_config['color_good']
+            colour = self.py3.COLOR_GOOD
             full_text = self.format.format(stream_name=self._display_name)
         else:
-            colour = i3s_config['color_bad']
+            colour = self.py3.COLOR_BAD
             full_text = "An unknown error has occurred."
 
         response = {

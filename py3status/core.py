@@ -243,7 +243,7 @@ class Py3statusWrapper():
                 continue
             try:
                 my_m = Module(module, user_modules, self)
-                # only start and handle modules with available methods
+                # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
                 elif self.config['debug']:
@@ -761,7 +761,11 @@ class Py3statusWrapper():
         elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
             if cmd[1] == 'check':
                 show_diff = len(cmd) > 2 and cmd[2] == 'diff'
-                docstrings.check_docstrings(show_diff, config)
+                if show_diff:
+                    mods = cmd[3:]
+                else:
+                    mods = cmd[2:]
+                docstrings.check_docstrings(show_diff, config, mods)
             if cmd[1] == 'update':
                 if len(cmd) < 3:
                     print_stderr('Error: you must specify what to update')

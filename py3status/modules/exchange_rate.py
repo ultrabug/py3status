@@ -64,8 +64,12 @@ class Py3status:
             except KeyError:
                 pass
         output = {}
-        for rate in rates:
-            output[rate['id'][3:]] = rate['Rate']
+        # Single currency is not passed as a 1 element list
+        if isinstance(rates, list):
+            for rate in rates:
+                output[rate['id'][3:]] = rate['Rate']
+        else:
+            output[rates['id'][3:]] = rates['Rate']
         for currency in self.currencies:
             if currency not in output:
                 output[currency] = '?'

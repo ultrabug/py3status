@@ -39,7 +39,7 @@ class Py3status:
     url_parameters = "?service_state={service_state}&format=json"
     user = ''
 
-    def get_status(self, i3s_output_list, i3s_config):
+    def get_status(self):
         response = {
             'color': self.color,
             'cached_until': time() + self.cache_timeout,
@@ -61,13 +61,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.get_status([], config)['full_text'])
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

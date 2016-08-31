@@ -231,7 +231,8 @@ class Py3status:
         # if click_mode is button then we only action clicks that are
         # directly on the group not its contents.
         if self.click_mode == 'button':
-            if event['name'] != 'group' or event.get('index') != 'button':
+            if (not self.py3.is_my_event(event) or
+                    event.get('index') != 'button'):
                 return
 
         # reset cycle time

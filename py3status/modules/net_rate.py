@@ -63,7 +63,7 @@ class Py3status:
         self.last_stat = self._get_stat()
         self.last_time = time()
 
-    def currentSpeed(self, i3s_output_list, i3s_config):
+    def currentSpeed(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):
             self.interfaces = self.interfaces.split(',')
@@ -173,14 +173,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.currentSpeed([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

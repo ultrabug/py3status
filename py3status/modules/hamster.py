@@ -27,7 +27,7 @@ class Py3status:
     cache_timeout = 10
     format = '{current}'
 
-    def hamster(self, i3s_output_list, i3s_config):
+    def hamster(self):
         cur_task = check_output(shlex.split('hamster current'))
         cur_task = cur_task.decode('ascii', 'ignore').strip()
         if cur_task != 'No activity':
@@ -43,13 +43,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.hamster([], config)['full_text'])
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

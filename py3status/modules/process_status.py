@@ -8,6 +8,10 @@ Configuration parameters:
     format_not_running: what to display when process is not running
     process: the process name to check if it is running
 
+Color options:
+    color_bad: Process not running or error
+    color_good: Process running
+
 @author obb, Moritz Lüdecke
 """
 
@@ -27,24 +31,24 @@ class Py3status:
     format_not_running = u'■'
     process = None
 
-    def _get_text(self, i3s_config):
+    def _get_text(self):
         fnull = open(os.devnull, 'w')
         if subprocess.call(["pgrep", self.process],
                            stdout=fnull, stderr=fnull) == 0:
             text = self.format_running
-            color = i3s_config['color_good']
+            color = self.py3.COLOR_GOOD
         else:
             text = self.format_not_running
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
 
         return (color, text)
 
-    def process_status(self, i3s_output_list, i3s_config):
+    def process_status(self):
         if self.process is None:
-            color = i3s_config['color_bad']
+            color = self.py3.COLOR_BAD
             text = ERR_NO_PROCESS
         else:
-            (color, text) = self._get_text(i3s_config)
+            (color, text) = self._get_text()
 
         response = {
             'cached_until': time() + self.cache_timeout,

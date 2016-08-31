@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# FIXME new_mail_color param
 """
 Display the unread messages count from your IMAP account.
 
@@ -39,13 +40,13 @@ class Py3status:
     port = '993'
     user = '<USERNAME>'
 
-    def check_mail(self, i3s_output_list, i3s_config):
+    def check_mail(self):
         mail_count = self._get_mail_count()
 
         response = {'cached_until': time() + self.cache_timeout}
 
         if not self.new_mail_color:
-            self.new_mail_color = i3s_config['color_good']
+            self.new_mail_color = self.py3.COLOR_GOOD
 
         if mail_count == 'N/A':
             response['full_text'] = mail_count
@@ -82,14 +83,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.check_mail([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

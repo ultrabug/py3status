@@ -110,7 +110,7 @@ class Py3status:
 
         return self.value_format.format(value=value, unit=unit)
 
-    def currentSpeed(self, i3s_output_list, i3s_config):
+    def currentSpeed(self):
         stat = get_stat(self.statistics_type)
 
         color = None
@@ -139,14 +139,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.currentSpeed([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

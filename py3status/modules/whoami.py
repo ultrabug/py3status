@@ -16,7 +16,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1800
 
-    def whoami(self, i3s_output_list, i3s_config):
+    def whoami(self):
         """
         We use the getpass module to get the current user.
         """
@@ -32,14 +32,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.whoami([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

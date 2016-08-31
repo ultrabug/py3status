@@ -32,7 +32,7 @@ class Py3status:
     def __init__(self):
         self.count = -1
 
-    def scratchpad_counter(self, i3s_output_list, i3s_config):
+    def scratchpad_counter(self):
         count = len(find_scratch(i3.get_tree()).get("floating_nodes", []))
 
         if self.count != count:
@@ -54,14 +54,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.scratchpad_counter([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

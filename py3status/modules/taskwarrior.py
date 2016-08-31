@@ -3,10 +3,10 @@
 Display currently active (started) taskwarrior tasks.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (5s default)
+    cache_timeout: how often we refresh this module in seconds (default 5)
 
 Requires
-  - `task`
+    task: https://taskwarrior.org/download/
 
 @author James Smith http://jazmit.github.io/
 @license BSD
@@ -25,7 +25,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
 
-    def taskWarrior(self, i3s_output_list, i3s_config):
+    def taskWarrior(self):
         command = 'task start.before:tomorrow status:pending export'
         taskwarrior_output = check_output(shlex.split(command))
         tasks_json = json.loads(taskwarrior_output.decode('utf-8'))
@@ -43,15 +43,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.taskWarrior([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
