@@ -11,9 +11,11 @@ except ImportError:
 class Composite:
     """
     Helper class to identify a composite
+    and store its content
     """
 
-    def __init__(self, name):
+    def __init__(self, content, name='__Anon__'):
+        self.content = content
         self.name = name
 
     def __repr__(self):
@@ -32,6 +34,7 @@ class Block:
     def __init__(self, param_dict, composites, module, parent=None):
         self.commands = {}
         self.composites = composites
+        self.is_composite = False
         self.content = []
         self.module = module
         self.options = []
@@ -105,7 +108,7 @@ class Block:
             # This enables the second option in a block if \?if=.. is false.
             self.mark_valid(index=1)
 
-    def show(self, is_composite):
+    def show(self):
         """
         This is where we go output the content of a block and any valid child
         block that it contains.
@@ -128,22 +131,68 @@ class Block:
                 # to the output
                 for item in option:
                     if isinstance(item, Block):
-                        output.extend(item.show(is_composite))
+                        content = item.show()
+                        if isinstance(content, list):
+                            output.extend(content)
+                        else:
+                            output.append(content)
+                        if item.is_composite:
+                            self.is_composite = True
                     else:
                         output.append(item)
                 break
 
         # if not building a composite then we can simply
         # build our output and return it here
-        if not is_composite:
+        if not self.is_composite:
             data = ''.join(output)
             # apply our max length command
             if 'max_length' in self.commands:
                 data = data[:int(self.commands['max_length'])]
+            if 'color' in self.commands:
+                block_composite = {
+                    'full_text': data,
+                    'color': self.commands['color'],
+                }
+                data = Composite(block_composite)
+                self.is_composite = True
             return data
 
         # Build up our output.  We join any text pieces togeather and if we
         # have composites we keep them for final substitution in the main block
+        class Options:
+            max_length = self.commands.get('max_length')
+            if max_length is not None:
+                max_length = int(max_length)
+            color = self.commands.get('color')
+
+        def process_text_chunk(text, Options):
+            if Options.max_length is not None:
+                text = text[:Options.max_length]
+                Options.max_length -= len(text)
+            if text and Options.color or self.is_composite:
+                text = {'full_text': text}
+                if Options.color:
+                    text['color'] = Options.color
+                if self.parent:
+                    text = Composite(text)
+            return text
+
+        def process_composite_chunk(composite, Options):
+            out = []
+            for item in composite:
+                process_composite_chunk_item(item, Options)
+                if item['full_text']:
+                    out.append(item)
+            return out
+
+        def process_composite_chunk_item(item, Options):
+            if Options.max_length is not None:
+                item['full_text'] = item['full_text'][:Options.max_length]
+                Options.max_length -= len(item['full_text'])
+            if Options.color and not 'color' in item:
+                item['color'] = Options.color
+
         data = []
         text = ''
         for item in output:
@@ -151,25 +200,19 @@ class Block:
                 text += item
             else:
                 if text:
-                    if is_composite and self.parent is None:
-                        data.append({'full_text': text})
-                    else:
-                        data.append(text)
+                    data.append(process_text_chunk(text, Options))
                 text = ''
                 if self.parent is None:
                     # This is the main block so we get the actual composites
-                    composite = self.composites.get(item.name)
-                    if isinstance(composite, list):
-                        data += composite
-                    else:
-                        data.append(composite)
+                    composite = item.content
+                    if not isinstance(composite, list):
+                        composite = [composite]
+                    data += process_composite_chunk(composite, Options)
                 else:
+                    process_composite_chunk_item(item.content, Options)
                     data.append(item)
         if text:
-            if is_composite and self.parent is None:
-                data.append({'full_text': text})
-            else:
-                data.append(text)
+            data.append(process_text_chunk(text, Options))
 
         return data
 
@@ -253,7 +296,8 @@ class Formatter:
                 if key in composites:
                     # Add the composite
                     if composites[key]:
-                        block.add(Composite(key))
+                        block.add(Composite(composites[key], key))
+                        block.is_composite = True
                         block.mark_valid()
                 elif key in param_dict:
                     # was a supplied parameter
@@ -291,7 +335,53 @@ class Formatter:
         # one for situations like '{placeholder}|Nothing'
         if not block.valid_blocks:
             block.mark_valid()
-        return block.show(is_composite)
+        output = block.show()
+        if composites and not isinstance(output, list):
+            if output == '':
+                output = []
+            else:
+                output = [{'full_text': output}]
+
+        # post format
+        # swap color names to values
+        # merge items if possible
+
+        if isinstance(output, list):
+            final_output = []
+            diff_last = None
+            item_last = None
+            for item in output:
+                # ignore empty items
+                if not item['full_text'] and not item.get('separator'):
+                    continue
+                # colors
+                color_this = item.get('color')
+                if color_this and color_this[0] != '#':
+                    color_name = 'color_%s' % color_this
+                    # substitute color
+                    color_this = (
+                        getattr(module, color_name, None) or
+                        getattr(module.py3, color_name.upper(), None)
+                    )
+                    if color_this:
+                            item['color'] = color_this
+                    else:
+                        del item['color']
+                # merge items if we can
+                diff = (
+                    item.get('index'),
+                    item.get('instance'),
+                    item.get('name'),
+                    color_this,
+                )
+                if diff == diff_last:
+                    item_last['full_text'] += item['full_text']
+                else:
+                    diff_last = diff
+                    item_last = item.copy()  # copy item as we may change it
+                    final_output.append(item_last)
+            return final_output
+        return output
 
 
 if __name__ == '__main__':
@@ -319,8 +409,9 @@ if __name__ == '__main__':
     }
 
     composites = {
-        'complex': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
+        'complex': [{'full_text': 'LA 09:34'}, {'full_text': ' NY 12:34'}],
         'simple': {'full_text': 'NY 12:34'},
+        'indexed': {'full_text': 'NY 12:34'},
         'empty': [],
     }
 
@@ -330,9 +421,15 @@ if __name__ == '__main__':
         def module_method(self):
             return 'method'
 
-        @ property
+        @property
         def module_property(self):
             return 'property'
+
+        class py3:
+            COLOR_BAD = '#FF0000'
+            COLOR_DEGRADED = '#FF00'
+            COLOR_GOOD = '#00FF00'
+
 
     tests = [
         {
@@ -638,12 +735,12 @@ if __name__ == '__main__':
         },
         {
             'format': '{complex}',
-            'expected': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
+            'expected': [{'full_text': 'LA 09:34 NY 12:34'}],
             'composite': True,
         },
         {
             'format': 'TEST {simple}',
-            'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
+            'expected': [{'full_text': u'TEST NY 12:34'}],
             'composite': True,
         },
         {
@@ -658,18 +755,64 @@ if __name__ == '__main__':
         },
         {
             'format': '[{complex}]',
-            'expected': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
+            'expected': [{'full_text': 'LA 09:34 NY 12:34'}],
             'composite': True,
         },
         {
-            'format': 'TEST [{simple}]',
-            'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
+            'format': 'test [{simple}]',
+            'expected': [{'full_text': u'test NY 12:34'}],
             'composite': True,
         },
         {
             'format': '{simple} TEST [{name}[ {number}]]',
-            'expected':  [{'full_text': 'NY 12:34'}, {'full_text': u' TEST Björk 42'}],
+            'expected': [
+                {'full_text': 'NY 12:34 TEST Björk 42'}
+            ],
             'composite': True,
+        },
+        # block colors
+        {
+            'format': '[\?color=bad {name}]',
+            'expected':  [{'full_text': 'Björk', 'color': '#FF0000'}],
+        },
+        {
+            'format': '[\?color=good Name [\?color=bad {name}] hello]',
+            'expected':  [
+                {'full_text': 'Name ', 'color': '#00FF00'},
+                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': ' hello', 'color': '#00FF00'}
+            ],
+        },
+        {
+            'format': '[\?max_length=20&color=good Name [\?color=bad {name}] hello]',
+            'expected':  [
+                {'full_text': 'Name ', 'color': '#00FF00'},
+                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': ' hello', 'color': '#00FF00'}
+            ],
+        },
+        {
+            'format': '[\?max_length=8&color=good Name [\?color=bad {name}] hello]',
+            'expected':  [
+                {'full_text': 'Name ', 'color': '#00FF00'},
+                {'full_text': 'Bjö', 'color': '#FF0000'}
+            ],
+
+        },
+        {
+            'format': '[\?color=bad {name}][\?color=good {name}]',
+            'expected': [
+                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': 'Björk', 'color': '#00FF00'}
+            ],
+        },
+        {
+            'format': '[\?color=bad {name}] [\?color=good {name}]',
+            'expected': [
+                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': ' '},
+                {'full_text': 'Björk', 'color': '#00FF00'}
+            ],
         },
     ]
 

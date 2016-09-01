@@ -434,6 +434,9 @@ class Module(Thread):
                     else:
                         raise TypeError('response should be a dict')
 
+                    if isinstance(response.get('full_text'), list):
+                        response['composite'] = response['full_text']
+                        del response['full_text']
                     if 'composite' in response:
                         self.process_composite(response)
                     else:
