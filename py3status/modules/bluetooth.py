@@ -51,7 +51,7 @@ class Py3status:
         hcitool name `hcitool con | sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'`
         """
         out = check_output(shlex.split('hcitool con'))
-        macs = re.findall(BTMAC_RE, out.decode('utf-8'))
+        macs = set(re.findall(BTMAC_RE, out.decode('utf-8')))
         color = self.py3.COLOR_BAD
 
         if macs != []:
