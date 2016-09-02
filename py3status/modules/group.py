@@ -211,7 +211,7 @@ class Py3status:
         output = self.py3.build_composite(format, composites=composites)
 
         if update_time is not None:
-            cached_until = time() + update_time
+            cached_until = self.py3.time_in(update_time)
         else:
             cached_until = self.py3.CACHE_FOREVER
 

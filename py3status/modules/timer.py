@@ -77,7 +77,7 @@ class Py3status:
         seconds = t
 
         if self.running:
-            cached_until = time() + 1
+            cached_until = self.py3.time_in(1),
         else:
             cached_until = self.py3.CACHE_FOREVER
 

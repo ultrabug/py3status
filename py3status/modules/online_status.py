@@ -16,7 +16,6 @@ Color options:
 @author obb
 """
 
-from time import time
 import os
 import subprocess
 try:
@@ -51,7 +50,7 @@ class Py3status:
 
     def online_status(self):
         response = {
-            'cached_until': time() + self.cache_timeout
+            'cached_until': self.py3.time_in(self.cache_timeout)
         }
 
         connected = self._connection_present()

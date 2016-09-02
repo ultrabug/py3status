@@ -34,7 +34,6 @@ try:
     import pymysql as mysql
 except:
     import MySQLdb as mysql
-from time import time
 
 
 class Py3status:
@@ -91,7 +90,7 @@ class Py3status:
                 self.format)
         mydb.close()
 
-        response['cached_until'] = time() + self.cache_timeout
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
         return response
 
 

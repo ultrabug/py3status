@@ -25,7 +25,6 @@ Requires:
 @license BSD
 """
 
-from time import time
 import subprocess
 import sys
 
@@ -56,8 +55,8 @@ class Py3status:
             results = self.format.format(pacman=str(pacman_updates))
 
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': results
+            'full_text': results,
+            'cached_until': self.py3.time_in(self.cache_timeout),
         }
         return response
 

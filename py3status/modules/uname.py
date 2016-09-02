@@ -17,7 +17,6 @@ Format placeholders:
 @author ultrabug (inspired by ndalliard)
 """
 
-from time import time
 from platform import uname
 
 
@@ -31,7 +30,7 @@ class Py3status:
     def show_uname(self):
         system, node, release, version, machine, processor = uname()
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(system=system,
                                             node=node,
                                             release=release,

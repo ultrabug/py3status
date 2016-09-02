@@ -7,7 +7,6 @@ Inspired by i3 FAQ:
 """
 
 from getpass import getuser
-from time import time
 
 
 class Py3status:
@@ -25,7 +24,7 @@ class Py3status:
         username = '{}'.format(getuser())
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': username
         }
         return response

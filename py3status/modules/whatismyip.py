@@ -19,7 +19,7 @@ Color options:
 
 @author ultrabug
 """
-from time import time
+
 try:
     # python3
     from urllib.request import urlopen
@@ -64,12 +64,14 @@ class Py3status:
         """
         """
         ip = self._get_my_ip()
-        response = {'cached_until': time() + self.negative_cache_timeout}
+        response = {
+            'cached_until': self.py3.time_in(self.negative_cache_timeout)
+        }
 
         if ip is None and self.hide_when_offline:
             response['full_text'] = ''
         elif ip is not None:
-            response['cached_until'] = time() + self.cache_timeout
+            response['cached_until'] = self.py3.time_in(self.cache_timeout)
             if self.mode == 'ip':
                 response['full_text'] = self.format.format(ip=ip)
             else:

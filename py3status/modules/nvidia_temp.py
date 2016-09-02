@@ -23,7 +23,6 @@ Requires:
 import re
 import shlex
 from subprocess import check_output
-from time import time
 
 TEMP_RE = re.compile(r"Current Temp\s+:\s+([0-9]+)")
 
@@ -64,7 +63,7 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': output
         }

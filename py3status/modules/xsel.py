@@ -19,7 +19,6 @@ Requires:
 
 import shlex
 
-from time import time
 from subprocess import check_output
 
 
@@ -46,7 +45,7 @@ class Py3status:
             else:
                 current_value = current_value[:self.max_size]
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': current_value,
             'color': self.color
         }

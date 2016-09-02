@@ -27,7 +27,6 @@ Requires:
 """
 
 import selinux
-from time import time
 
 
 class Py3status:
@@ -50,7 +49,7 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(state=selinuxstring),
             'color': color,
         }

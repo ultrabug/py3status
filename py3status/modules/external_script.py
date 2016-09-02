@@ -29,7 +29,6 @@ external_script {
 """
 
 import subprocess
-from time import time
 
 
 class Py3status:
@@ -63,12 +62,12 @@ class Py3status:
                 return_value = return_value.strip()
 
             response = {
-                'cached_until': time() + self.cache_timeout,
+                'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': self.format.format(output=return_value)
             }
         else:
             response = {
-                'cached_until': time() + self.cache_timeout,
+                'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': ''
             }
         return response

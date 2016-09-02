@@ -31,7 +31,6 @@ Requires:
 @license BSD
 """
 
-from time import time
 from subprocess import check_output
 
 
@@ -60,7 +59,7 @@ class Py3status:
             result = self.format.format(**data)
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': result
         }
         return response

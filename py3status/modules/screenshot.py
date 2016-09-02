@@ -27,7 +27,6 @@ import os
 import random
 import string
 import subprocess
-import time
 
 
 class Py3status:
@@ -74,7 +73,7 @@ class Py3status:
             self.full_text = 'SHOT'
 
         response = {
-            'cached_until': time.time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': self.py3.COLOR_GOOD,
             'full_text': self.full_text
         }

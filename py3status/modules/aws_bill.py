@@ -34,7 +34,6 @@ import csv
 import datetime
 
 from boto.s3.connection import Key
-from time import time
 
 
 class Py3status:
@@ -95,7 +94,7 @@ class Py3status:
 
     def aws_bill(self):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': self.py3.COLOR_BAD,
             'full_text': ''
         }
