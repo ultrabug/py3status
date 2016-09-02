@@ -10,7 +10,7 @@ Configuration parameters:
         (default 10)
     format: Display format to use (default '{status} {queued}')
 
-Format status string parameters:
+Format placeholders:
     {status} Status of Insync
     {queued} Number of files queued
 
@@ -26,7 +26,6 @@ Requires:
 @license BSD
 """
 
-from time import time
 from subprocess import check_output
 
 
@@ -55,7 +54,7 @@ class Py3status:
         results = self.format.format(status=status, queued=queued)
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': results,
             'color': color
         }

@@ -10,7 +10,7 @@ Confiuration parameters:
     device_separator: the separator char between devices (only if more than one
         device)
 
-Format of status string placeholders
+Format placeholders:
     {name} device name
     {mac} device MAC address
 
@@ -29,7 +29,6 @@ import re
 import shlex
 
 from subprocess import check_output
-from time import time
 
 BTMAC_RE = re.compile(r'[0-9A-F:]{17}')
 
@@ -77,7 +76,7 @@ class Py3status:
             )
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': output,
             'color': color,
         }

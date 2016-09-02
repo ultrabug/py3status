@@ -52,7 +52,6 @@ Color options:
 """
 from requests import get
 from syslog import syslog, LOG_INFO
-from time import time
 
 
 def format_value(num, value_round=True):
@@ -201,7 +200,7 @@ class Py3status:
         self._notify_user()
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': getattr(self.py3, 'COLOR_{}'.format(color_key.upper())),
             'full_text': self.format.format(**r_json)
         }

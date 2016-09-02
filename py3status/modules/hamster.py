@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (5s default)
     format: see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
     {current} hamster current
 
 Requires:
@@ -17,7 +17,6 @@ Requires:
 """
 import shlex
 from subprocess import check_output
-from time import time
 
 
 class Py3status:
@@ -37,7 +36,7 @@ class Py3status:
             cur_task = "%s (%s)" % (" ".join(cur_task), time_elapsed)
 
         response = {}
-        response['cached_until'] = time() + self.cache_timeout
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
         response['full_text'] = self.format.format(current=cur_task)
         return response
 

@@ -18,7 +18,7 @@ Configuration Parameters:
 @license BSD License <https://opensource.org/licenses/BSD-2-Clause>
 @source https://github.com/nazco/i3status-modules
 """
-from time import time
+
 import requests
 
 STATUS_NAMES = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
@@ -42,7 +42,7 @@ class Py3status:
     def get_status(self):
         response = {
             'color': self.color,
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(
                 status_name=STATUS_NAMES.get(self.status, "INVALID STATUS"),
                 count=self._query_service_count(self.status))

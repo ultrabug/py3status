@@ -7,7 +7,7 @@ Configuration parameters:
     high_threshold: percent to consider CPU or RAM usage as 'high load'
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
 
-Format of status string placeholders:
+Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {mem_total} total memory
@@ -29,7 +29,6 @@ from __future__ import division
 
 import re
 import subprocess
-from time import time
 
 
 class GetData:
@@ -145,7 +144,7 @@ class Py3status:
         mem_total, mem_used, mem_used_percent = self.data.memory()
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(
                 cpu_usage='%.2f' % (cpu_usage),
                 cpu_temp=cpu_temp,

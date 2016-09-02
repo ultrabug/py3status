@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (1h default)
     format: see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
     {system} system/OS name, e.g. 'Linux', 'Windows', or 'Java'
     {node} computer’s network name (may not be fully qualified!)
     {release} system’s release, e.g. '2.2.0' or 'NT'
@@ -17,7 +17,6 @@ Format of status string placeholders:
 @author ultrabug (inspired by ndalliard)
 """
 
-from time import time
 from platform import uname
 
 
@@ -31,7 +30,7 @@ class Py3status:
     def show_uname(self):
         system, node, release, version, machine, processor = uname()
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(system=system,
                                             node=node,
                                             release=release,

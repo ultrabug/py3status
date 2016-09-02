@@ -15,7 +15,7 @@ Configuration parameters:
     pidfile: Same as i3status.conf pidfile, checked when check_pid is True.
         (default '/sys/class/net/vpn0/dev_id')
 
-Format string parameters:
+Format placeholders:
     {name} The name and/or status of the VPN.
 
 Color options:

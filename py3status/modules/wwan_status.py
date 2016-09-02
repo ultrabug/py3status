@@ -53,7 +53,7 @@ import netifaces as ni
 import os
 import stat
 import serial
-from time import time, sleep
+from time import sleep
 
 
 class Py3status:
@@ -80,7 +80,7 @@ class Py3status:
             degraded_netgen = 2
 
         response = {}
-        response['cached_until'] = time() + self.cache_timeout
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         # Check if path exists and is a character device
         if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(

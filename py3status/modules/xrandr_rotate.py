@@ -26,7 +26,7 @@ Configuration parameters:
         available options: 'left' or 'right'.
         (default is 'left')
 
-Available placeholders for formatting the output:
+Format placeholders:
     {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
     {screen} a screen name, specified by `screen` option or detected
         automatically if only one screen is connected, otherwise 'ALL'.
@@ -40,7 +40,6 @@ Color options:
 """
 
 from subprocess import Popen, PIPE
-from time import time
 
 
 class Py3status:
@@ -131,7 +130,7 @@ class Py3status:
                                            screen=screen)
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text
         }
 

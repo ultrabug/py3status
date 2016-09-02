@@ -15,14 +15,13 @@ Configuration parameters:
     port: IMAP server port
     user: login user
 
-Format of status string placeholders:
+Format placeholders:
     {unseen} number of unread emails
 
 @author obb
 """
 
 import imaplib
-from time import time
 
 
 class Py3status:
@@ -43,7 +42,7 @@ class Py3status:
     def check_mail(self):
         mail_count = self._get_mail_count()
 
-        response = {'cached_until': time() + self.cache_timeout}
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         if not self.new_mail_color:
             self.new_mail_color = self.py3.COLOR_GOOD

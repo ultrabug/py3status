@@ -435,6 +435,8 @@ our example our response will not need to be updated so we can use the special
 `self.py3.CACHE_FOREVER` constant. This tells py3status to consider our
 response always valid.
 
+`cached_until` should be generated via the `self.py3.time_in()` method.
+
 ####self.py3
 
 This is a special object that gets injected into py3status
@@ -547,7 +549,7 @@ Configuration parameters:
     format_clicked: Display format to use when we are clicked
         (default 'You pressed button {button}')
 
-Format status string parameters:
+Format placeholders:
     {button} The button that was pressed
 """
 
@@ -609,7 +611,7 @@ Configuration parameters:
     format: Initial format to use
         (default 'Number {number}')
 
-Format status string parameters:
+Format placeholders:
     {number} Our random number
 
 Color options:
@@ -683,11 +685,15 @@ The response can include the folowing keys
 __cached_until__
 
 The time (in seconds since the epoch) that the output will be classed as no longer valid and the output
-function will be called again.  If no `cached_until` value is provided the the
+function will be called again.
+
+Since version 3.1, if no `cached_until` value is provided the the
 output will be cached for `cache_timeout` seconds by default this is
 `60` and can be set using the `-t` or `--timeout` option when running
 py3status.  To never expire the `self.py3.CACHE_FOREVER` constant should be
 used.
+
+`cached_until` should be generated via the `self.py3.time_in()` method.
 
 __color__
 
@@ -943,8 +949,8 @@ The docsting of a module is used.  The format is as follows:
   parameters for the module.  All parameters should be listed (in alphabetical
   order). default values should be given in parentheses eg `(default 7)`.
 
-- Format status string parameters.  These are used for substituting values in
-  format strings. All parameters should be listed (in alphabetical
+- Format placeholders.  These are used for substituting values in
+  format strings. All placeholders should be listed (in alphabetical
   order) and describe the output that they provide.
 
 - Color options.  These are the color options that can be provided for this
@@ -973,8 +979,8 @@ Here is an example of a docstring.
             onto a second line so it is indented.
             (default <value>)
 
-    Format status string parameters:
-        {info} Description of the parameter
+    Format placeholders:
+        {info} Description of the placeholder
 
     Color options:
         color_meaning: what this signifies, defaults to color_good

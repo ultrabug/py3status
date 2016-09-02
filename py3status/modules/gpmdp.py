@@ -7,7 +7,7 @@ Configuration parameters:
     format:         specify the items and ordering of the data in the status bar.
                     These area 1:1 match to gpmdp-remote's options (default is '♫ {info}').
 
-Format of status string placeholders:
+Format placeholders:
     See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
     with curly braces (i.e. `{album}`) and place as-desired in the format string.
 
@@ -31,7 +31,6 @@ Requires:
 @license BSD
 """
 
-from time import time
 from subprocess import check_output
 
 
@@ -60,7 +59,7 @@ class Py3status:
             result = self.format.format(**data)
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': result
         }
         return response

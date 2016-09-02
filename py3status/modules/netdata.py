@@ -16,7 +16,6 @@ Color options:
 """
 
 import subprocess
-from time import time
 
 
 class GetData:
@@ -84,7 +83,7 @@ class Py3status:
 
         response['full_text'] = "LAN(Kb): {:5.1f}↓ {:5.1f}↑"\
             .format(dl_speed, up_speed)
-        response['cached_until'] = time() + self.cache_timeout
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         self.old_received = received_bytes
         self.old_transmitted = transmitted_bytes

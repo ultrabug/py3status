@@ -64,6 +64,14 @@ class I3statusModule:
         self.i3status = py3_wrapper.i3status_thread
         self.py3_wrapper = py3_wrapper
 
+        # color map for if color good/bad etc are set for the module
+        color_map = {}
+        config = py3_wrapper.i3status_thread.config
+        for key, value in config[module_name].items():
+            if key in I3S_ALLOWED_COLORS:
+                color_map[config['general'][key]] = value
+        self.color_map = color_map
+
         self.is_time_module = name in TIME_MODULES
         if self.is_time_module:
             self.tz = None
@@ -82,6 +90,10 @@ class I3statusModule:
         # Restore the name/instance.
         item['name'] = self.name
         item['instance'] = self.instance
+
+        # change color good/bad is set specifically for module
+        if 'color' in item and item['color'] in self.color_map:
+            item['color'] = self.color_map[item['color']]
 
         # have we updated?
         is_updated = self.item != item

@@ -10,8 +10,6 @@ Currently Bitcoin, Dogecoin, and Litecoin are supported.
 Configuration parameters:
     cache_timeout: An integer specifying the cache life-time of the output in
         seconds (default 30).
-    color: A string containing the hexadecimal representation of the desired
-        output color in 'HTML-style'. (default color_good)
     coin_username: A string containing the username for the server for
         'coin'. The 'coin' part must be replaced by a supported coin identifier
         (see below for a list of identifiers). If no value is supplied,
@@ -41,7 +39,7 @@ Configuration parameters:
     protocol: A string to select the server communication protocol.
         (default 'http')
 
-Format status string parameters:
+Format placeholders:
     {<coin>} Your balance for the coin <coin> where <coin> is one of:
         - bitcoin
         - dogecoin
@@ -57,7 +55,6 @@ Example:
 # Get your Bitcoin balance using automatic credential detection
 coin_balance {
     cache_timeout = 45
-    color = "#ffcd18"
     format = "My BTC: {bitcoin}"
     host = "localhost"
     protocol = "http"
@@ -119,7 +116,6 @@ REQUEST = {
 
 class Py3status:
     cache_timeout = 30
-    color = None
     credentials = None
     format = 'LTC: {litecoin}'
     host = 'localhost'
@@ -131,8 +127,6 @@ class Py3status:
 
     def coin_balance(self, outputs, config):
         self._config = config
-        if self.color is None:
-            self.color = config['color_good']
 
         self._active_coins = [e[1] for e in Formatter().parse(self.format)]
         balances = {}
@@ -142,7 +136,6 @@ class Py3status:
         return {
             'full_text': self.py3.safe_format(self.format, balances),
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': self.color,
         }
 
     def _get_daemon_config_value(self, coin, key):

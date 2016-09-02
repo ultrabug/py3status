@@ -75,7 +75,7 @@ from collections import deque
 from collections import OrderedDict
 from itertools import combinations
 from subprocess import call, Popen, PIPE
-from time import sleep, time
+from time import sleep
 
 
 class Py3status:
@@ -374,7 +374,7 @@ class Py3status:
             full_text = self.displayed
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text
         }
 

@@ -27,7 +27,6 @@ Requires:
 
 import shlex
 import subprocess
-from time import time
 
 
 class Py3status:
@@ -38,7 +37,7 @@ class Py3status:
     format = 'Dropbox: {}'
 
     def dropbox(self):
-        response = {'cached_until': time() + self.cache_timeout}
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         lines = subprocess.check_output(
             shlex.split('dropbox-cli status')).decode('utf-8').split('\n')

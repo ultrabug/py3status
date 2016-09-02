@@ -14,7 +14,7 @@ Example:
         }
         (0 - 800: white, 800-900: yellow, >900 - red)
 
-Format of status string placeholders:
+Format placeholders:
     {down} download
     {total} total
     {up} upload
@@ -123,7 +123,7 @@ class Py3status:
                 color = self.coloring[k]
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(
                 total=self._divide_and_format(stat['total']),
                 up=self._divide_and_format(stat['up']),

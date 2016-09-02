@@ -8,7 +8,7 @@ Configuration parameters:
     host: check if tcp port on host is up (default 'localhost')
     port: the tcp port (default 22)
 
-Format of status string placeholders:
+Format placeholders:
     {state} port state ('DOWN' or 'UP')
 
 Color options:

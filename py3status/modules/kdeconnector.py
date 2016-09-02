@@ -16,12 +16,12 @@ Configuration parameters:
     status_no_notif: text when you have no notifications
     status_notif: text when notifications are available
 
-Format of status string placeholders:
+Format placeholders:
     {bat_status} battery state
     {charge} the battery charge
     {name} name of the device
     {notif_size} number of notifications
-    {notif_status} shows if a notification is available or nor
+    {notif_status} shows if a notification is available or not
 
 Color options:
     color_bad: Device unknown, unavailable
@@ -47,7 +47,6 @@ Requires:
 """
 
 from pydbus import SessionBus
-from time import time
 
 
 SERVICE_BUS = 'org.kde.kdeconnect'
@@ -184,7 +183,10 @@ class Py3status:
         """
         Get the notifications status
         """
-        size = len(notifications['activeNotifications'])
+        if notifications:
+            size = len(notifications['activeNotifications'])
+        else:
+            size = 0
         status = self.status_notif if size > 0 else self.status_no_notif
 
         return (size, status)
@@ -197,7 +199,7 @@ class Py3status:
         if device is None:
             return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
-        if not device['isReachable'] or not device['isPaired']:
+        if not device['isReachable'] or not device['isPaired']():
             return (self.format_disconnected.format(name=device['name']),
                     self.py3.COLOR_BAD)
 
@@ -224,7 +226,7 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': text,
             'color': color
         }

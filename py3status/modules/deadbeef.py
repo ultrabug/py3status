@@ -7,7 +7,7 @@ Configuration parameters:
     format: see placeholders below
     delimiter: delimiter character for parsing (default: ¥)
 
-Format of status string placeholders:
+Format placeholders:
     {artist} artist
     {title} title
     {elapsed} elapsed time
@@ -24,7 +24,6 @@ Requires:
 @author mrt-prodz
 """
 from subprocess import check_output, CalledProcessError
-from time import time
 
 
 class Py3status:
@@ -36,7 +35,7 @@ class Py3status:
     # return error occurs
     def _error_response(self, color):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': 'deadbeef: error',
             'color': color
         }
@@ -45,7 +44,7 @@ class Py3status:
     # return empty response
     def _empty_response(self):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
         return response
@@ -80,7 +79,7 @@ class Py3status:
                 return self._error_response(self.py3.COLOR_BAD)
 
             response = {
-                'cached_until': time() + self.cache_timeout,
+                'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': self.format.format(artist=artist,
                                                 title=title,
                                                 length=length,

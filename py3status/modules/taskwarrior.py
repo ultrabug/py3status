@@ -13,7 +13,6 @@ Requires
 """
 
 # import your useful libs here
-from time import time
 from subprocess import check_output
 import json
 import shlex
@@ -35,7 +34,7 @@ class Py3status:
 
         result = ', '.join(map(describeTask, tasks_json))
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': result
         }
         return response

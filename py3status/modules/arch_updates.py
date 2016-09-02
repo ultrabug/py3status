@@ -14,7 +14,7 @@ Configuration parameters:
     include_aur: Set to True to use 'cower' to check for AUR updates
         (default False)
 
-Format of status string parameters:
+Format placeholders:
     {aur} Number of pending aur updates
     {pacman} Number of pending pacman updates
 
@@ -25,7 +25,6 @@ Requires:
 @license BSD
 """
 
-from time import time
 import subprocess
 import sys
 
@@ -56,8 +55,8 @@ class Py3status:
             results = self.format.format(pacman=str(pacman_updates))
 
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': results
+            'full_text': results,
+            'cached_until': self.py3.time_in(self.cache_timeout),
         }
         return response
 

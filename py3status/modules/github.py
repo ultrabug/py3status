@@ -36,7 +36,7 @@ Configuration parameters:
     username: Github username, needed to check notifications.
         (default None)
 
-Format of status string placeholders:
+Format placeholders:
     {repo} the short name of the repository being checked.
         eg py3status
     {repo_full} the full name of the repository being checked.
@@ -45,7 +45,7 @@ Format of status string placeholders:
     {pull_requests} Number of open pull requests
     {notifications} Notifications.  If no notifications this will be empty.
     {notifications_count} Number of notifications.  This is also the __Only__
-        status string available to `format_notifications`.
+        placeholder available to `format_notifications`.
 
 Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests

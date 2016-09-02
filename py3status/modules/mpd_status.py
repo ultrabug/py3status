@@ -55,7 +55,6 @@ import ast
 import datetime
 import itertools
 import socket
-import time
 from mpd import MPDClient, CommandError
 
 
@@ -229,7 +228,7 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': time.time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.text,
             'transformed': transformed
         }

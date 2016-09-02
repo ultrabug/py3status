@@ -8,7 +8,7 @@ Configuration parameters:
     format_down: define output if spotify is not running
     format_stopped: define output if spotify is not playing
 
-Format of status string placeholders:
+Format placeholders:
     {album} album name
     {artist} artiste name (first one)
     {time} time duration of the song
@@ -35,7 +35,6 @@ Requires:
 """
 
 from datetime import timedelta
-from time import time
 import dbus
 
 
@@ -95,7 +94,7 @@ class Py3status:
         """
         (text, color) = self._get_text()
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': text,
             'color': color
         }
