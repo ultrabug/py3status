@@ -11,6 +11,11 @@ Configuration parameters:
     interfaces: comma separated list of interfaces to track
     interfaces_blacklist: comma separated list of interfaces to ignore
     precision: amount of numbers after dot
+    threshold_bad: use color_bad below this value
+    threshold_degraded: use color_degraded between this value and threshold_bad
+    threshold_value: value to check thresholds against. Can be 'up|down|total'.
+        Don't color if set to False.
+        (default: False)
 
 Format placeholders:
     {down} download rate
@@ -50,6 +55,9 @@ class Py3status:
     interfaces = ''
     interfaces_blacklist = 'lo'
     precision = 1
+    threshold_value = False
+    threshold_bad = 1
+    threshold_degraded = 1024
 
     def __init__(self, *args, **kwargs):
         """
@@ -119,16 +127,31 @@ class Py3status:
             interface = None
             hide = self.hide_if_zero
 
-        return {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': "" if hide else
-            self.format.format(
-                total=self._divide_and_format(delta['total']),
-                up=self._divide_and_format(delta['up']),
-                down=self._divide_and_format(delta['down']),
-                interface=interface[:-1],
-            ) if interface else self.format_no_connection
-        }
+        response = {'cached_until':
+                    self.py3.time_in(seconds=self.cache_timeout)}
+
+        if hide:
+            response['full_text'] = ""
+        elif interface:
+            response['full_text'] = self.py3.safe_format(self.format, {
+                'total': self._divide_and_format(delta['total']),
+                'up': self._divide_and_format(delta['up']),
+                'down': self._divide_and_format(delta['down']),
+                'interface': interface[:-1],
+                })
+        else:
+            response['full_text'] = self.format_no_connection
+
+        threshold_value = self.threshold_value
+        if threshold_value and interface:
+            if delta[threshold_value] < self.threshold_bad:
+                response['color'] = self.py3.COLOR_BAD
+            elif delta[threshold_value] < self.threshold_degraded:
+                response['color'] = self.py3.COLOR_DEGRADED
+            else:
+                response['color'] = self.py3.COLOR_GOOD
+
+        return response
 
     def _get_stat(self):
         """
