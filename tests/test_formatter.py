@@ -492,3 +492,15 @@ def test_77():
         'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
         'composite': True,
     })
+
+
+def test_78():
+    run_formatter({
+        'format': '{simple} TEST [{name}[ {number}]]',
+        'expected': [
+            {'full_text': 'NY 12:34'},
+            {'full_text': u' TEST Björk 42'}
+        ],
+        'composite': True,
+
+    })
