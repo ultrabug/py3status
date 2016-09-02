@@ -482,7 +482,7 @@ class Py3statusWrapper():
         if not self.config['log_file']:
             # If level was given as a str then convert to actual level
             level = LOG_LEVELS.get(level, level)
-            syslog(level, msg)
+            syslog(level, u'{}'.format(msg))
         else:
             with open(self.config['log_file'], 'a') as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
