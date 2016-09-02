@@ -435,6 +435,8 @@ our example our response will not need to be updated so we can use the special
 `self.py3.CACHE_FOREVER` constant. This tells py3status to consider our
 response always valid.
 
+`cached_until` should be generated via the `self.py3.time_in()` method.
+
 ####self.py3
 
 This is a special object that gets injected into py3status
@@ -683,11 +685,15 @@ The response can include the folowing keys
 __cached_until__
 
 The time (in seconds since the epoch) that the output will be classed as no longer valid and the output
-function will be called again.  If no `cached_until` value is provided the the
+function will be called again.
+
+Since version 3.1, if no `cached_until` value is provided the the
 output will be cached for `cache_timeout` seconds by default this is
 `60` and can be set using the `-t` or `--timeout` option when running
 py3status.  To never expire the `self.py3.CACHE_FOREVER` constant should be
 used.
+
+`cached_until` should be generated via the `self.py3.time_in()` method.
 
 __color__
 
