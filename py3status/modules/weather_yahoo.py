@@ -48,7 +48,6 @@ weather_yahoo {
 @author ultrabug, rail
 """
 
-from time import time
 import requests
 
 
@@ -90,8 +89,11 @@ class Py3status:
             return None, None
         q.raise_for_status()
         r = q.json()
-        today = r['query']['results']['channel']['item']['condition']
-        forecasts = r['query']['results']['channel']['item']['forecast']
+        try:
+            today = r['query']['results']['channel']['item']['condition']
+            forecasts = r['query']['results']['channel']['item']['forecast']
+        except TypeError:
+            return None, None
         if not self.forecast_include_today:
             # Do not include today in forecasts
             forecasts.pop(0)
@@ -139,20 +141,20 @@ class Py3status:
 
         return self.icon_default
 
-    def weather_yahoo(self, i3s_output_list, i3s_config):
+    def weather_yahoo(self):
         """
         This method gets executed by py3status
         """
         if not self.woeid:
             raise Exception('missing woeid setting, please configure it')
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
 
         today, forecasts = self._get_forecast()
         if today is None and forecasts is None:
-            response['cached_until'] = time() + 30
+            response['cached_until'] = self.py3.time_in(30)
             return response
         units = self.units.upper()[0]
         today_text = self.format_today.format(icon=self._get_icon(today),
@@ -168,15 +170,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.weather_yahoo([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

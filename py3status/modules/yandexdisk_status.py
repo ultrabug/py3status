@@ -8,8 +8,13 @@ Configuration parameters:
     format: prefix text for the Yandex.Disk status
         (default 'Yandex.Disk: {status}')
 
-Format of status string placeholders:
+Format placeholders:
     {status} daemon status
+
+Color options:
+    color_bad: Not started
+    color_degraded: Idle
+    color_good: Busy
 
 Requires:
     yandex-disk: command line tool (link: https://disk.yandex.com/)
@@ -20,7 +25,6 @@ Requires:
 
 import shlex
 import subprocess
-from time import time
 
 
 class Py3status:
@@ -30,8 +34,8 @@ class Py3status:
     cache_timeout = 10
     format = 'Yandex.Disk: {status}'
 
-    def yadisk(self, i3s_output_list, i3s_config):
-        response = {'cached_until': time() + self.cache_timeout}
+    def yadisk(self):
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         raw_lines = b''
         try:
@@ -45,13 +49,13 @@ class Py3status:
 
         if status == "Error: daemon not started":
             status = 'Not started'
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
         elif status == "Synchronization core status: idle":
             status = 'Idle'
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         else:
             status = 'Busy'
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
 
         full_text = self.format.format(status=status)
         response['full_text'] = full_text
@@ -59,13 +63,8 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.yadisk([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

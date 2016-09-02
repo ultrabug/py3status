@@ -51,7 +51,7 @@ class Py3status:
             self.alarm = True
         self.timer()
 
-    def timer(self, i3s_output_list, i3s_config):
+    def timer(self):
 
         def make_2_didget(value):
             value = str(value)
@@ -77,7 +77,7 @@ class Py3status:
         seconds = t
 
         if self.running:
-            cached_until = time() + 1
+            cached_until = self.py3.time_in(1),
         else:
             cached_until = self.py3.CACHE_FOREVER
 
@@ -115,7 +115,7 @@ class Py3status:
         }
         return response
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         deltas = {
             'hours': 3600,
             'mins': 60,

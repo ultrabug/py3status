@@ -16,7 +16,6 @@ I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 """
 
 import i3
-from time import time
 
 
 def find_focused(tree):
@@ -42,7 +41,7 @@ class Py3status:
     def __init__(self):
         self.text = ''
 
-    def window_title(self, i3s_output_list, i3s_config):
+    def window_title(self):
         window = find_focused(i3.get_tree())
 
         transformed = False
@@ -53,7 +52,7 @@ class Py3status:
             transformed = True
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.text,
             'transformed': transformed
         }
@@ -61,14 +60,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.window_title([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -16,8 +16,12 @@ Configuration parameters:
         Follow this article to activate this feature:
         http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
 
-Format of status string placeholders:
+Format placeholders:
     {bill_amount} AWS bill amount
+
+Color options:
+    color_good: Balance available
+    color_bad: An error has occured
 
 Requires:
     boto:
@@ -30,7 +34,6 @@ import csv
 import datetime
 
 from boto.s3.connection import Key
-from time import time
 
 
 class Py3status:
@@ -89,10 +92,10 @@ class Py3status:
 
         return False
 
-    def aws_bill(self, i3s_output_list, i3s_config):
+    def aws_bill(self):
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'color': i3s_config['color_bad'],
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': self.py3.COLOR_BAD,
             'full_text': ''
         }
 
@@ -108,7 +111,7 @@ class Py3status:
             response['full_text'] = 'Check your internet access'
         elif bill_amount is not False:
             response['full_text'] = self.format.format(bill_amount=bill_amount)
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         else:
             response['full_text'] = 'Global error - WTF exception'
 
@@ -117,15 +120,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.aws_bill([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -49,7 +49,7 @@ Configuration parameters:
         `{button}` not in format (default True)
 
 
-Format of status string placeholders:
+Format placeholders:
     {button} The button to open/close or change the displayed group
     {output} Output of current active module
 
@@ -211,7 +211,7 @@ class Py3status:
         output = self.py3.build_composite(format, composites=composites)
 
         if update_time is not None:
-            cached_until = time() + update_time
+            cached_until = self.py3.time_in(update_time)
         else:
             cached_until = self.py3.CACHE_FOREVER
 
@@ -231,7 +231,8 @@ class Py3status:
         # if click_mode is button then we only action clicks that are
         # directly on the group not its contents.
         if self.click_mode == 'button':
-            if event['name'] != 'group' or event.get('index') != 'button':
+            if (not self.py3.is_my_event(event) or
+                    event.get('index') != 'button'):
                 return
 
         # reset cycle time

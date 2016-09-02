@@ -18,13 +18,15 @@ Configuration parameters:
     upload_server: your server address
     upload_user: your ssh user
 
+Color options:
+    color_good: Displayed color
+
 @author Amaury Brisou <py3status AT puzzledge.org>
 """
 import os
 import random
 import string
 import subprocess
-import time
 
 
 class Py3status:
@@ -43,7 +45,7 @@ class Py3status:
     def __init__(self):
         self.full_text = ''
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
 
         file_name = self._filename_generator(self.file_length)
 
@@ -66,27 +68,21 @@ class Py3status:
                             chars=string.ascii_lowercase + string.digits):
         return ''.join(random.choice(chars) for _ in range(size))
 
-    def screenshot(self, i3s_output_list, i3s_config):
+    def screenshot(self):
         if self.full_text == '':
             self.full_text = 'SHOT'
 
         response = {
-            'cached_until': time.time() + self.cache_timeout,
-            'color': i3s_config['color_good'],
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': self.py3.COLOR_GOOD,
             'full_text': self.full_text
         }
         return response
 
 
 if __name__ == "__main__":
-
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00',
-    }
-    while True:
-        print(x.screenshot([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

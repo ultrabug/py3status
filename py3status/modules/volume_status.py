@@ -32,8 +32,13 @@ Configuration parameters:
         decreased by when volume buttons pressed.
         (default 5)
 
-Format status string parameters:
+Format placeholders:
     {percentage} Percentage volume
+
+Color options:
+    color_bad: Volume below threshold_bad or muted
+    color_degraded: Volume below threshold_degraded
+    color_good: Volume above or equal to threshold_degraded
 
 Example:
 
@@ -64,7 +69,6 @@ import re
 import shlex
 
 from subprocess import check_output, call
-from time import time
 
 
 class Py3status:
@@ -84,18 +88,18 @@ class Py3status:
     volume_delta = 5
 
     # compares current volume to the thresholds, returns a color code
-    def _perc_to_color(self, i3s_config, string):
+    def _perc_to_color(self, string):
         try:
             value = int(string)
         except ValueError:
-            return i3s_config['color_bad']
+            return self.py3.COLOR_BAD
 
         if value < self.threshold_bad:
-            return i3s_config['color_bad']
+            return self.py3.COLOR_BAD
         elif value < self.threshold_degraded:
-            return i3s_config['color_degraded']
+            return self.py3.COLOR_DEGRADED
         else:
-            return i3s_config['color_good']
+            return self.py3.COLOR_GOOD
 
     # return the format string formatted with available variables
     def _format_output(self, format, percentage):
@@ -133,7 +137,7 @@ class Py3status:
 
     # this method is ran by py3status
     # returns a response dict
-    def current_volume(self, i3s_output_list, i3s_config):
+    def current_volume(self):
 
         # call amixer
         output = check_output(shlex.split('amixer -D {} sget {}'.format(
@@ -146,20 +150,20 @@ class Py3status:
         muted = self._get_muted(output)
 
         # determine the color based on the current volume level
-        color = self._perc_to_color(i3s_config, perc if not muted else '0')
+        color = self._perc_to_color(perc if not muted else '0')
 
         # format the output
         text = self._format_output(self.format_muted
                                    if muted else self.format, perc)
         # create response dict
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': text,
         }
         return response
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         '''
         Volume up/down and toggle mute.
         '''
@@ -178,14 +182,8 @@ class Py3status:
 
 # test if run directly
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-
-    while True:
-        print(x.current_volume([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

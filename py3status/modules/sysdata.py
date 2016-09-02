@@ -7,12 +7,17 @@ Configuration parameters:
     high_threshold: percent to consider CPU or RAM usage as 'high load'
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
 
-Format of status string placeholders:
+Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {mem_total} total memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
+
+Color options:
+    color_bad: Above high_threshold
+    color_degraded: Above med_threshold
+    color_good: Below or equal to med_threshold
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
@@ -24,7 +29,6 @@ from __future__ import division
 
 import re
 import subprocess
-from time import time
 
 
 class GetData:
@@ -121,7 +125,7 @@ class Py3status:
         self.cpu_total = 0
         self.cpu_idle = 0
 
-    def sysData(self, i3s_output_list, i3s_config):
+    def sysData(self):
         # get CPU usage info
         cpu_total, cpu_idle = self.data.cpu()
         cpu_usage = (1 - (
@@ -140,7 +144,7 @@ class Py3status:
         mem_total, mem_used, mem_used_percent = self.data.memory()
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.format.format(
                 cpu_usage='%.2f' % (cpu_usage),
                 cpu_temp=cpu_temp,
@@ -160,26 +164,17 @@ class Py3status:
             threshold = mem_used_percent
 
         if threshold <= self.med_threshold:
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         elif (threshold <= self.high_threshold):
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
         else:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
 
         return response
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00',
-    }
-
-    while True:
-        print(x.sysData([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

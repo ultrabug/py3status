@@ -12,7 +12,7 @@ Configuration parameters:
     interfaces_blacklist: comma separated list of interfaces to ignore
     precision: amount of numbers after dot
 
-Format of status string placeholders:
+Format placeholders:
     {down} download rate
     {interface} name of interface
     {total} total rate
@@ -63,7 +63,7 @@ class Py3status:
         self.last_stat = self._get_stat()
         self.last_time = time()
 
-    def currentSpeed(self, i3s_output_list, i3s_config):
+    def currentSpeed(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):
             self.interfaces = self.interfaces.split(',')
@@ -120,7 +120,7 @@ class Py3status:
             hide = self.hide_if_zero
 
         return {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': "" if hide else
             self.format.format(
                 total=self._divide_and_format(delta['total']),
@@ -173,14 +173,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.currentSpeed([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -26,17 +26,20 @@ Configuration parameters:
         available options: 'left' or 'right'.
         (default is 'left')
 
-Available placeholders for formatting the output:
+Format placeholders:
     {icon} a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
     {screen} a screen name, specified by `screen` option or detected
         automatically if only one screen is connected, otherwise 'ALL'.
+
+Color options:
+    color_degraded: Screen is disconnected
+    color_good: Displayed rotation is active
 
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
 """
 
 from subprocess import Popen, PIPE
-from time import sleep, time
 
 
 class Py3status:
@@ -95,7 +98,7 @@ class Py3status:
         else:
             self.displayed = self.horizontal_icon
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Click events
             - left click & scroll up/down: switch between rotations
@@ -107,7 +110,7 @@ class Py3status:
         elif button == 3:
             self._apply()
 
-    def xrandr_rotate(self, i3s_output_list, i3s_config):
+    def xrandr_rotate(self):
         all_outputs = self._get_all_outputs()
         selected_screen_disconnected = (
             self.screen is not None and self.screen not in all_outputs
@@ -127,29 +130,22 @@ class Py3status:
                                            screen=screen)
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text
         }
 
         # coloration
         if selected_screen_disconnected and not self.hide_if_disconnected:
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
         elif self.displayed == self._get_current_rotation_icon(all_outputs):
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
 
         return response
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.xrandr_rotate([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

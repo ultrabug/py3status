@@ -8,7 +8,7 @@ Configuration parameters:
         eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
     format: see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
     {layout} currently active keyboard layout
 
 Color options:
@@ -25,7 +25,6 @@ Requires:
 """
 
 from subprocess import check_output
-from time import time
 import re
 
 
@@ -57,7 +56,7 @@ class Py3status:
 
     def keyboard_layout(self):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
         if self.colors and not self.colors_dict:
