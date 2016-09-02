@@ -9,7 +9,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (10s default)
     format: see placeholders below, default is 'selinux: {state}'
 
-Format of status string placeholders:
+Format placeholders:
     {state} the current selinux state
 
 Color options:

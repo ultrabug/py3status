@@ -22,7 +22,7 @@ Configuration parameters:
     timer_long_break: long break time (seconds)
     timer_pomodoro: pomodoro time (seconds)
 
-Format of status string placeholders:
+Format placeholders:
     {bar} display time in bars
     {ss} display time in total seconds (1500)
     {mm} display time in total minutes (25)

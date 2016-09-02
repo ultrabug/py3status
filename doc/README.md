@@ -547,7 +547,7 @@ Configuration parameters:
     format_clicked: Display format to use when we are clicked
         (default 'You pressed button {button}')
 
-Format status string parameters:
+Format placeholders:
     {button} The button that was pressed
 """
 
@@ -609,7 +609,7 @@ Configuration parameters:
     format: Initial format to use
         (default 'Number {number}')
 
-Format status string parameters:
+Format placeholders:
     {number} Our random number
 
 Color options:
@@ -943,8 +943,8 @@ The docsting of a module is used.  The format is as follows:
   parameters for the module.  All parameters should be listed (in alphabetical
   order). default values should be given in parentheses eg `(default 7)`.
 
-- Format status string parameters.  These are used for substituting values in
-  format strings. All parameters should be listed (in alphabetical
+- Format placeholders.  These are used for substituting values in
+  format strings. All placeholders should be listed (in alphabetical
   order) and describe the output that they provide.
 
 - Color options.  These are the color options that can be provided for this
@@ -973,8 +973,8 @@ Here is an example of a docstring.
             onto a second line so it is indented.
             (default <value>)
 
-    Format status string parameters:
-        {info} Description of the parameter
+    Format placeholders:
+        {info} Description of the placeholder
 
     Color options:
         color_meaning: what this signifies, defaults to color_good

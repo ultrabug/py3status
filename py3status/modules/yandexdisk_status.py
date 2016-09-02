@@ -8,7 +8,7 @@ Configuration parameters:
     format: prefix text for the Yandex.Disk status
         (default 'Yandex.Disk: {status}')
 
-Format of status string placeholders:
+Format placeholders:
     {status} daemon status
 
 Color options:

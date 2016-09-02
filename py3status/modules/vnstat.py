@@ -14,7 +14,7 @@ Example:
         }
         (0 - 800: white, 800-900: yellow, >900 - red)
 
-Format of status string placeholders:
+Format placeholders:
     {down} download
     {total} total
     {up} upload

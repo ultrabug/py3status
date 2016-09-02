@@ -16,7 +16,7 @@ Configuration parameters:
         Follow this article to activate this feature:
         http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
 
-Format of status string placeholders:
+Format placeholders:
     {bill_amount} AWS bill amount
 
 Color options:

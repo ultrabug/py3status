@@ -32,7 +32,7 @@ Configuration parameters:
         decreased by when volume buttons pressed.
         (default 5)
 
-Format status string parameters:
+Format placeholders:
     {percentage} Percentage volume
 
 Color options:

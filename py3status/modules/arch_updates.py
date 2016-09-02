@@ -14,7 +14,7 @@ Configuration parameters:
     include_aur: Set to True to use 'cower' to check for AUR updates
         (default False)
 
-Format of status string parameters:
+Format placeholders:
     {aur} Number of pending aur updates
     {pacman} Number of pending pacman updates
 

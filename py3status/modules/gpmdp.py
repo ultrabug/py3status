@@ -7,7 +7,7 @@ Configuration parameters:
     format:         specify the items and ordering of the data in the status bar.
                     These area 1:1 match to gpmdp-remote's options (default is '♫ {info}').
 
-Format of status string placeholders:
+Format placeholders:
     See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
     with curly braces (i.e. `{album}`) and place as-desired in the format string.
 

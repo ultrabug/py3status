@@ -8,7 +8,7 @@ Configuration parameters:
         eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
     format: see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
     {layout} currently active keyboard layout
 
 Color options:

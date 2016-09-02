@@ -13,7 +13,7 @@ Configuration parameters:
     strip_output: shall we strip leading and trailing spaces from output
         (default False)
 
-Format of status string placeholders:
+Format placeholders:
     {output} output of script given by "script_path"
 
 i3status.conf example:

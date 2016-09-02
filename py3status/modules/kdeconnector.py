@@ -16,7 +16,7 @@ Configuration parameters:
     status_no_notif: text when you have no notifications
     status_notif: text when notifications are available
 
-Format of status string placeholders:
+Format placeholders:
     {bat_status} battery state
     {charge} the battery charge
     {name} name of the device

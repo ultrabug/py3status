@@ -8,7 +8,7 @@ Configuration parameters:
     format_down: define output if spotify is not running
     format_stopped: define output if spotify is not playing
 
-Format of status string placeholders:
+Format placeholders:
     {album} album name
     {artist} artiste name (first one)
     {time} time duration of the song

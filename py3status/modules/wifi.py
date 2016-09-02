@@ -23,7 +23,7 @@ Configuration parameters:
         "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
         (default: false)
 
-Format of status string placeholders:
+Format placeholders:
     {bitrate} Display bit rate
     {device} Display device name
     {icon} Character representing the quality based on bitrate,
