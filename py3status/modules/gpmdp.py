@@ -8,9 +8,6 @@ Configuration parameters:
                     These area 1:1 match to gpmdp-remote's options (default is '♫ {info}').
 
 Format placeholders:
-    See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
-    with curly braces (i.e. `{album}`) and place as-desired in the format string.
-
     {info}            Print info about now playing song
     {title}           Print current song title
     {artist}          Print current song artist

@@ -828,19 +828,16 @@ Configuration parameters:
     These area 1:1 match to gpmdp-remote's options *(default is '♫ {info}')*.
 
 Format placeholders:
-    See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
-    with curly braces (i.e. `{album}`) and place as-desired in the format string.
-
-    {info}            Print info about now playing song
-    {title}           Print current song title
-    {artist}          Print current song artist
-    {album}           Print current song album
-    {album_art}       Print current song album art URL
-    {time_current}    Print current song time in milliseconds
-    {time_total}      Print total song time in milliseconds
-    {status}          Print whether GPMDP is paused or playing
-    {current}         Print now playing song in "artist - song" format
-    {help}            Print this help message
+  - `{info}`            Print info about now playing song
+  - `{title}`           Print current song title
+  - `{artist}`          Print current song artist
+  - `{album}`           Print current song album
+  - `{album_art}`       Print current song album art URL
+  - `{time_current}`    Print current song time in milliseconds
+  - `{time_total}`      Print total song time in milliseconds
+  - `{status}`          Print whether GPMDP is paused or playing
+  - `{current}`         Print now playing song in "artist - song" format
+  - `{help}`            Print this help message
 
 
 Requires:
