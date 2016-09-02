@@ -1593,6 +1593,7 @@ Configuration parameters:
   - `format_not_running` what to display when process is not running
     *(default '■')*
   - `format_running` what to display when process running *(default '●')*
+  - `full`: if True, match against the full command line and not just the process name
   - `process` the process name to check if it is running *(default None)*
 
 Color options:
