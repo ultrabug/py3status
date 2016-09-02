@@ -184,7 +184,10 @@ class Py3status:
         """
         Get the notifications status
         """
-        size = len(notifications['activeNotifications'])
+        if notifications:
+            size = len(notifications['activeNotifications'])
+        else:
+            size = 0
         status = self.status_notif if size > 0 else self.status_no_notif
 
         return (size, status)
