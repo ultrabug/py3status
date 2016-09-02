@@ -9,7 +9,9 @@ Configuration parameters:
     format: format to display
     hide_if_zero: don't show on bar if 0
     imap_server: IMAP server to connect to
+    local_mailbox: full path of your mbox location
     mailbox: name of the mailbox to check
+    maildir: full path of your maildir location
     new_mail_color: what color to output on new mail
     password: login password
     port: IMAP server port
@@ -22,6 +24,7 @@ Format placeholders:
 """
 
 import imaplib
+from mailbox import Maildir, mbox as Mailbox
 from time import time
 
 
@@ -33,7 +36,9 @@ class Py3status:
     criterion = 'UNSEEN'
     hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
+    local_mailbox = ''
     mailbox = 'INBOX'
+    maildir = ''
     format = 'Mail: {unseen}'
     new_mail_color = ''
     password = '<PASSWORD>'
@@ -62,23 +67,40 @@ class Py3status:
         return response
 
     def _get_mail_count(self):
+        mail_count = 0
+
         try:
-            mail_count = 0
-            directories = self.mailbox.split(',')
-            connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
-            connection.login(self.user, self.password)
+            # check for local maildir if variable is defined
+            if len(self.maildir) > 0:
+                directories = self.maildir.split(';')
+                for directory in directories:
+                    mbox = Maildir(directory, create=False)
+                    mail_count += mbox.__len__()
 
-            for directory in directories:
-                connection.select(directory)
-                unseen_response = connection.search(None, self.criterion)
-                mails = unseen_response[1][0].split()
-                mail_count += len(mails)
+            # check for local mbox if variable is defined
+            if len(self.local_mailbox) > 0:
+                directories = self.local_mailbox.split(';')
+                for directory in directories:
+                    mbox = Mailbox(directory, create=False)
+                    mail_count += mbox.__len__()
 
-            connection.close()
-            return mail_count
+            # check for remote mailbox if variable is defined
+            if self.imap_server != '<IMAP_SERVER>':
+                directories = self.mailbox.split(',')
+                connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
+                connection.login(self.user, self.password)
 
+                for directory in directories:
+                    connection.select(directory)
+                    unseen_response = connection.search(None, self.criterion)
+                    mails = unseen_response[1][0].split()
+                    mail_count += len(mails)
+
+                connection.close()
         except:
             return 'N/A'
+
+        return mail_count
 
 
 if __name__ == "__main__":
