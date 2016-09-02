@@ -12,7 +12,11 @@
 
 **[bluetooth](#bluetooth)** — Display bluetooth status.
 
+**[check_tcp](#check_tcp)** — Display if a TCP port is available on the given host.
+
 **[clementine](#clementine)** — Display the current "artist - title" playing in Clementine.
+
+**[coin_balance](#coin_balance)** — Display balances of diverse crypto-currencies
 
 **[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
 
@@ -27,6 +31,8 @@
 **[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
 
 **[file_status](#file_status)** — Display if a file or dir exists.
+
+**[frame](#frame)** — Group modules and treat them as a single one.
 
 **[github](#github)** — Display Github notifications and issue/pull requests for a repo.
 
@@ -51,6 +57,8 @@
 **[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
 
 **[mpd_status](#mpd_status)** — Display information from mpd.
+
+**[mpris](#mpris)** — Display information about the current song and video playing on player with
 
 **[net_rate](#net_rate)** — Display the current network transfer rate.
 
@@ -145,14 +153,14 @@ Configuration parameters:
   - `include_aur` Set to True to use 'cower' to check for AUR updates
     *(default False)*
 
-Format of status string parameters:
+Format placeholders:
   - `{aur}` Number of pending aur updates
   - `{pacman}` Number of pending pacman updates
 
 Requires:
   - `cower` Needed to display pending 'aur' updates
 
-**author** Iain Tatch <iain.tatch@gmail.com>
+**author** Iain Tatch &lt;iain.tatch@gmail.com&gt;
 
 **license** BSD
 
@@ -176,8 +184,12 @@ Configuration parameters:
     Follow this article to activate this feature:
     http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
 
-Format of status string placeholders:
+Format placeholders:
   - `{bill_amount}` AWS bill amount
+
+Color options:
+  - `color_good` Balance available
+  - `color_bad` An error has occured
 
 Requires:
   - `boto`
@@ -202,18 +214,6 @@ Configuration parameters:
   - `charging_character` a character to represent charging battery
     especially useful when using icon fonts (e.g. FontAwesome)
     default is "⚡"
-  - `color_bad` a color to use when the battery level is bad
-    None means get it from i3status config
-    default is None
-  - `color_charging` a color to use when the battery is charging
-    None means get it from i3status config
-    default is "#FCE94F"
-  - `color_degraded` a color to use when the battery level is degraded
-    None means get it from i3status config
-    default is None
-  - `color_good` a color to use when the battery level is good
-    None means get it from i3status config
-    default is None
   - `format` string that formats the output. See placeholders below.
     default is "{icon}"
   - `format_notify_charging` format of the notification received when you click
@@ -242,13 +242,19 @@ Configuration parameters:
     should be considered full
     default is 100
 
-Format of status string placeholders:
+Format placeholders:
   - `{ascii_bar}` - a string of ascii characters representing the battery level,
     an alternative visualization to '{icon}' option
   - `{icon}` - a character representing the battery level,
     as defined by the 'blocks' and 'charging_character' parameters
   - `{percent}` - the remaining battery percentage (previously '{}')
   - `{time_remaining}` - the remaining time until the battery is empty
+
+Color options:
+  - `color_bad` Battery level is below threshold_bad
+  - `color_charging` Battery is charging *(default "#FCE94F")*
+  - `color_degraded` Battery level is below threshold_degraded
+  - `color_good` Battery level is above thresholds
 
 Obsolete configuration parameters:
   - `mode` an old way to define `format` parameter. The current behavior is:
@@ -283,19 +289,21 @@ Display bitcoin prices using bitcoincharts.com.
 Configuration parameters:
   - `cache_timeout` Should be at least 15 min according to bitcoincharts.
   - `color_index` Index of the market responsible for coloration,
-    meaning that the output is going to be green if the
-    price went up and red if it went down.
-    default: -1 means no coloration,
-    except when only one market is selected
+  -1 means no coloration, except when only one market is selected
+    *(default -1)*
   - `field` Field that is displayed per market,
     see http://bitcoincharts.com/about/markets-api/
   - `hide_on_error` Display empty response if True, else an error message
   - `markets` Comma-separated list of markets. Supported markets can
     be found at http://bitcoincharts.com/markets/list/
   - `symbols` Try to match currency abbreviations to symbols,
-    e.g. USD -> $, EUR -> € and so on
+    e.g. USD -&gt; $, EUR -&gt; € and so on
 
-**author** Andre Doser <doser.andre AT gmail.com>
+Color options:
+  - `color_bad`  Price has dropped or not available
+  - `color_good` Price has increased
+
+**author** Andre Doser &lt;doser.andre AT gmail.com&gt;
 
 ---
 
@@ -311,16 +319,41 @@ Confiuration parameters:
   - `device_separator` the separator char between devices (only if more than one
     device)
 
-Format of status string placeholders
-  - `{name}`  device name
-  - `{mac}`  device MAC address
+Format placeholders:
+  - `{name}` device name
+  - `{mac}` device MAC address
+
+Color options:
+  - `color_bad` Conection on
+  - `color_good` Connection off
 
 Requires:
   - `hcitool`
 
-**author** jmdana <https://github.com/jmdana>
+**author** jmdana &lt;https://github.com/jmdana&gt;
 
-**license** GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
+**license** GPLv3 &lt;http://www.gnu.org/licenses/gpl-3.0.txt&gt;
+
+---
+
+### <a name="check_tcp"></a>check_tcp
+
+Display if a TCP port is available on the given host.
+
+Configuration parameters:
+  - `cache_timeout` how often to run the check *(default 10)*
+  - `format` what to display on the bar *(default '{host}:{port} {state}')*
+  - `host` check if tcp port on host is up *(default 'localhost')*
+  - `port` the tcp port *(default 22)*
+
+Format placeholders:
+  - `{state}` port state ('DOWN' or 'UP')
+
+Color options:
+  - `color_down` Unavailable, default color_bad
+  - `color_up` Available, default color_good
+
+**author** obb, Moritz Lüdecke
 
 ---
 
@@ -331,9 +364,109 @@ Display the current "artist - title" playing in Clementine.
 Requires:
   - `clementine`
 
-**author** Francois LASSERRE <choiz@me.com>
+**author** Francois LASSERRE &lt;choiz@me.com&gt;
 
 **license** GNU GPL http://www.gnu.org/licenses/gpl.html
+
+---
+
+### <a name="coin_balance"></a>coin_balance
+
+Display balances of diverse crypto-currencies
+
+This module grabs your current balance of different crypto-currents from a
+wallet server. The server must conform to the bitcoin RPC specification.
+Currently Bitcoin, Dogecoin, and Litecoin are supported.
+
+Configuration parameters:
+  - `cache_timeout` An integer specifying the cache life-time of the output in
+    seconds *(default 30)*.
+  - `coin_username` A string containing the username for the server for
+    'coin'. The 'coin' part must be replaced by a supported coin identifier
+    (see below for a list of identifiers). If no value is supplied,
+    the value of 'username' (see below) will be used.  If 'username' too is
+    not set, the value will be retrieved from the standard 'coin' daemon
+    configuration file. *(default None)*
+  - `coin_password` A string containing the password for the server for
+    'coin'. The 'coin' part must be replaced by a supported coin identifier
+    (see below for a list of identifiers). If no value is supplied,
+    the value of 'password' (see below) will be used.  If 'password' too is
+    not set, the value will be retrieved from the standard 'coin' daemon
+    configuration file. *(default None)*
+  - `format` A string describing the output format for the module. The {&lt;coin&gt;}
+    placeholder (see below) will be used to determine how to fetch the
+    coin balance. Multiple placeholders are allowed, but all balances will
+    be fetched from the same host. *(default 'LTC: {litecoin}')*
+  - `host` The coin-server hostname. Note that all coins will use the same host
+    for their querries. *(default 'localhost')*
+  - `username` A string containing the username for all coin-servers. If neither
+    this setting, nor a specific coin_username (see above) is specified,
+    the username for each coin will be read from the respective standard
+    daemon configuration file. *(default None)*
+  - `password` A string containing the password for all coin-servers. If neither
+    this setting, nor a specific coin_password (see above) is specified,
+    the password for each coin will be read from the respective standard
+    daemon configuration file. *(default None)*
+  - `protocol` A string to select the server communication protocol.
+    *(default 'http')*
+
+Format placeholders:
+  - `{<coin>}` Your balance for the coin &lt;coin&gt; where &lt;coin&gt; is one of:
+  - bitcoin
+  - dogecoin
+  - litecoin
+
+Requires:
+  - `requests` python module from pypi https://pypi.python.org/pypi/requests
+    At least version 2.4.2 is required.
+
+Example:
+
+```
+# Get your Bitcoin balance using automatic credential detection
+coin_balance {
+    cache_timeout = 45
+    format = "My BTC: {bitcoin}"
+    host = "localhost"
+    protocol = "http"
+}
+
+# Get your Bitcoin, Dogecoin and Litecoin balances using specific credentials
+# for Bitcoin and automatic detection for Dogecoin and Litecoin
+coin_balance {
+    # ...
+    format = "{bitcoin} BTC {dogecoin} XDG {litecoin} LTC"
+    bitcoin_username = "lcdata"
+    bitcoin_password = "omikron-theta"
+    # ...
+}
+
+# Get your Dogecoin and Litecoin balances using 'global' credentials
+coin_balance {
+    # ...
+    format = "XDG: {dogecoin} LTC: {litecoin}"
+    username = "crusher_b"
+    password = "WezRulez"
+    # ...
+}
+
+# Get you Dogecoin, Litecoin, and Bitcoin balances by using 'global'
+# credentials for Bitcoin and Dogecoin but specific credentials for
+# Litecoin.
+coin_balance {
+    # ...
+    format = "XDG: {dogecoin} LTC: {litecoin} BTC: {bitcoin}"
+    username = "zcochrane"
+    password = "sunny_islands"
+    litecoin_username = 'locutus'
+    litecoin_password = 'NCC-1791-D'
+    # ...
+}
+```
+
+**author** Felix Morgner &lt;felix.morgner@gmail.com&gt;
+
+**license** 3-clause-BSD
 
 ---
 
@@ -346,7 +479,7 @@ Configuration parameters:
   - `format` see placeholders below
   - `delimiter` delimiter character for parsing *(default: ¥)*
 
-Format of status string placeholders:
+Format placeholders:
   - `{artist}` artist
   - `{title}` title
   - `{elapsed}` elapsed time
@@ -354,6 +487,8 @@ Format of status string placeholders:
   - `{year}` year
   - `{tracknum}` track number
 
+Color options:
+  - `color_bad` An error occurred
 
 Requires:
     deadbeef:
@@ -378,7 +513,7 @@ Color options:
   - `color_on` when dpms is enabled, defaults to color_good
   - `color_off` when dpms is disabled, defaults to color_bad
 
-**author** Andre Doser <dosera AT tf.uni-freiburg.de>
+**author** Andre Doser &lt;dosera AT tf.uni-freiburg.de&gt;
 
 ---
 
@@ -396,6 +531,11 @@ Valid status values include:
   - Downloading file list...
   - Syncing "filename"
   - Up to date
+
+Color options:
+  - `color_bad` Dropbox is unavailable
+  - `color_degraded` All other statuses
+  - `color_good` Dropbox up-to-date
 
 Requires:
   - `dropbox-cli` command line tool
@@ -443,20 +583,18 @@ The script should not have any parameters, but it could work.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds
-  - `color` color of printed text
   - `format` see placeholders below
   - `script_path` script you want to show output of (compulsory)
   - `strip_output` shall we strip leading and trailing spaces from output
     *(default False)*
 
-Format of status string placeholders:
+Format placeholders:
   - `{output}` output of script given by "script_path"
 
 i3status.conf example:
 
 ```
 external_script {
-    color = "#00FF00"
     format = "my name is {output}"
     script_path = "/usr/bin/whoami"
 }
@@ -477,19 +615,18 @@ Additionally check if any update security notices.
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds
     *(default 600)*
-  - `color_bad` Color when security notice
-    *(default global color_bad)*
-  - `color_degraded` Color when upgrade available
-    *(default global color_degraded)*
-  - `color_good` Color when no upgrades needed
-    *(default global color_good)*
   - `format` Display format to use
     *(default 'DNF: {updates}')*
 
-Format status string parameters:
+Format placeholders:
   - `{updates}` number of pending dnf updates
 
-**author** Toby Dacre
+Color options:
+  - `color_bad` Security notice
+  - `color_degraded` Upgrade available
+  - `color_good` No upgrades needed
+
+**author** tobes
 
 **license** BSD
 
@@ -505,7 +642,82 @@ Configuration parameters:
   - `format_unavailable` what to display when unavailable
   - `path` the path to a file or dir to check if it exists
 
+Color options:
+  - `color_bad` Error or file/directory does not exist
+  - `color_good` File or directory exists
+
 **author** obb, Moritz Lüdecke
+
+---
+
+### <a name="frame"></a>frame
+
+Group modules and treat them as a single one.
+
+This can be useful for example when adding modules to a group and you wish two
+modules to be shown at the same time.
+
+By adding the `{button}` placeholder in the format you can enable a toggle
+button to hide or show the content.
+
+Configuration parameters:
+  - `button_toggle` Button used to toggle if one in format.
+    Setting to None disables *(default 1)*
+  - `format` Display format to use *(default '{output}')*
+  - `format_button_open` Format for the button when frame closed *(default '-')*
+  - `format_button_closed` Format for the button when frame open *(default '+')*
+  - `format_separator` Specify separator between contents.
+    If this is None then the default i3bar separator will be used
+    *(default None)*
+  - `open` If button then the frame can be set to be open or close
+    *(default True)*
+
+Format of status string parameters:
+  - `{button}` If used a button will be used that can be clicked to hide/show
+    the contents of the frame.
+  - `{output}` The output of the modules in the frame
+
+Example config:
+
+```
+# A frame showing times in different cities.
+# We also have a button to hide/show the content
+
+frame time {
+    format = '{output}{button}'
+    format_separator = ' '  # have space instead of usual i3bar separator
+
+    tztime la {
+        format = "LA %H:%M"
+        timezone = "America/Los_Angeles"
+    }
+
+    tztime ny {
+        format = "NY %H:%M"
+        timezone = "America/New_York"
+    }
+
+    tztime du {
+        format = "DU %H:%M"
+        timezone = "Asia/Dubai"
+    }
+}
+
+# Define a group which shows volume and battery info
+# or the current time.
+# The frame, volume_status and battery_level modules are named
+# to prevent them clashing with any other defined modules of the same type.
+group {
+    frame {
+        volume_status {}
+        battery_level {}
+    }
+
+    time {}
+}
+```
+
+**author** tobes
 
 ---
 
@@ -547,7 +759,7 @@ Configuration parameters:
   - `username` Github username, needed to check notifications.
     *(default None)*
 
-Format of status string placeholders:
+Format placeholders:
   - `{repo}` the short name of the repository being checked.
     eg py3status
   - `{repo_full}` the full name of the repository being checked.
@@ -556,7 +768,7 @@ Format of status string placeholders:
   - `{pull_requests}` Number of open pull requests
   - `{notifications}` Notifications.  If no notifications this will be empty.
   - `{notifications_count}` Number of notifications.  This is also the __Only__
-    status string available to `format_notifications`.
+    placeholder available to `format_notifications`.
 
 Requires:
   - `requests` python module from pypi https://pypi.python.org/pypi/requests
@@ -586,6 +798,9 @@ github {
 
 Display the total number of open tickets from GLPI.
 
+It features thresholds to colorize the output and forces a low timeout to
+limit the impact of a server connectivity problem on your i3bar freshness.
+
 Configuration parameters:
   - `critical` set bad color above this threshold
   - `db` database to use
@@ -594,8 +809,12 @@ Configuration parameters:
   - `user` login user
   - `warning` set degraded color above this threshold
 
-It features thresholds to colorize the output and forces a low timeout to
-limit the impact of a server connectivity problem on your i3bar freshness.
+Color options:
+  - `color_bad` Open ticket above critical threshold
+  - `color_degraded` Open ticket above warning threshold
+
+Requires:
+    MySQL-python: http://pypi.python.org/pypi/MySQL-python
 
 ---
 
@@ -608,7 +827,7 @@ Configuration parameters:
   - `format`         specify the items and ordering of the data in the status bar.
     These area 1:1 match to gpmdp-remote's options *(default is '♫ {info}')*.
 
-Format of status string placeholders:
+Format placeholders:
     See `gpmdp-remote help`. Simply surround the items you want displayed (i.e. `album`)
     with curly braces (i.e. `{album}`) and place as-desired in the format string.
 
@@ -680,6 +899,10 @@ Dynamic format placeholders:
         targets = "alias(carbon.agents.localhost-a.memUsage, 'local_memuse')"
         format = "local carbon mem usage: {local_memuse} bytes"
 
+Color options:
+  - `color_bad` threshold_bad has been exceeded
+  - `color_degraded` threshold_degraded has been exceeded
+
 **author** ultrabug
 
 ---
@@ -735,7 +958,7 @@ Configuration parameters:
     `{button}` not in format *(default True)*
 
 
-Format of status string placeholders:
+Format placeholders:
   - `{button}` The button to open/close or change the displayed group
   - `{output}` Output of current active module
 
@@ -775,7 +998,7 @@ Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds (5s default)
   - `format` see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
   - `{current}` hamster current
 
 Requires:
@@ -803,9 +1026,9 @@ Configuration Parameters:
     (0=OK,1=WARNING,2=CRITICAL,3=UNKNOWN)
   - `user` username to authenticate against the icinga-web2 interface
 
-**author** Ben Oswald <ben.oswald@root-space.de>
+**author** Ben Oswald &lt;ben.oswald@root-space.de&gt;
 
-**license** BSD License <https://opensource.org/licenses/BSD-2-Clause>
+**license** BSD License &lt;https://opensource.org/licenses/BSD-2-Clause&gt;
 
 **source** https://github.com/nazco/i3status-modules
 
@@ -827,7 +1050,7 @@ Configuration parameters:
   - `port` IMAP server port
   - `user` login user
 
-Format of status string placeholders:
+Format placeholders:
   - `{unseen}` number of unread emails
 
 **author** obb
@@ -838,21 +1061,26 @@ Format of status string placeholders:
 
 Get current insync status
 
-Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
+Thanks to Iain Tatch &lt;iain.tatch@gmail.com&gt; for the script that this is based on.
 
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds
     *(default 10)*
   - `format` Display format to use *(default '{status} {queued}')*
 
-Format status string parameters:
+Format placeholders:
   - `{status}` Status of Insync
   - `{queued}` Number of files queued
+
+Color options:
+  - `color_bad` Offline
+  - `color_degraded` Default
+  - `color_good` Synced
 
 Requires:
   - `insync` command line tool
 
-**author** Joshua Pratt <jp10010101010000@gmail.com>
+**author** Joshua Pratt &lt;jp10010101010000@gmail.com&gt;
 
 **license** BSD
 
@@ -863,6 +1091,7 @@ Requires:
 Display information of your android device over KDEConnector.
 
 Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds *(default 30)*
   - `device` the device name, you need this if you have more than one device
     connected to your PC
   - `device_id` alternatively to the device name you can set your device id here
@@ -875,12 +1104,18 @@ Configuration parameters:
   - `status_no_notif` text when you have no notifications
   - `status_notif` text when notifications are available
 
-Format of status string placeholders:
+Format placeholders:
   - `{bat_status}` battery state
   - `{charge}` the battery charge
   - `{name}` name of the device
   - `{notif_size}` number of notifications
-  - `{notif_status}` shows if a notification is available or nor
+  - `{notif_status}` shows if a notification is available or not
+
+Color options:
+  - `color_bad` Device unknown, unavailable
+    or battery below low_threshold and not charging
+  - `color_degraded` Connected and battery not charging
+  - `color_good` Connected and battery charging
 
 i3status.conf example:
 
@@ -910,11 +1145,11 @@ Configuration parameters:
     eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
   - `format` see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
   - `{layout}` currently active keyboard layout
 
 Color options:
-  - `color_&lt;layout&gt;` color for the layout
+  - `color_<layout>` color for the layout
     eg color_fr = '#729FCF'
 
 Requires:
@@ -933,11 +1168,7 @@ Requires:
 Display information from mpd.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (2s default)
-  - `color` enable coloring output *(default False)*
-  - `color_pause` custom pause color *(default i3status color degraded)*
-  - `color_play` custom play color *(default i3status color good)*
-  - `color_stop` custom stop color *(default i3status color bad)*
+  - `cache_timeout` how often we refresh this module in seconds *(default 2)*
   - `format` template string (see below)
   - `hide_when_paused` hide the status if state is paused
   - `hide_when_stopped` hide the status if state is stopped
@@ -948,6 +1179,11 @@ Configuration parameters:
   - `state_pause` label to display for "paused" state
   - `state_play` label to display for "playing" state
   - `state_stop` label to display for "stopped" state
+
+Color options:
+  - `color_pause` Paused, default color_degraded
+  - `color_play` Playing, default color_good
+  - `color_stop` Stopped, default color_bad
 
 Requires:
   - `python-mpd2` (NOT python2-mpd2)
@@ -982,6 +1218,106 @@ Examples of `format`
 
 ---
 
+### <a name="mpris"></a>mpris
+
+Display information about the current song and video playing on player with
+mpris support.
+
+There are two ways to control the media player. Either by clicking with a mouse
+button in the text information or by using buttons. For former you have
+to define the button parameters in the i3status config.
+
+Configuration parameters:
+  - `button_stop` mouse button to stop the player *(default None)*
+  - `button_toggle` mouse button to toggle between play and pause mode *(default 1)*
+  - `button_next` mouse button to play the next entry *(default 4)*
+  - `button_previous` mouse button to play the previous entry *(default 5)*
+  - `format` see placeholders below
+  - `format_none` define output if no player is running
+  - `icon_pause` text for the pause button in the button control panel *(default '▮')*
+  - `icon_play` text for the play button in the button control panel *(default '▶')*
+  - `icon_stop` text for the stop button in the button control panel *(default '◾')*
+  - `icon_next` text for the next button in the button control panel *(default '»')*
+  - `icon_previous` text for the previous button in the button control panel *(default '«')*
+  - `state_pause` text for placeholder {state} when song is paused *(default '▮')*
+  - `state_play` text for placeholder {state} when song is playing *(default '▶')*
+  - `state_stop` text for placeholder {state} when song is stopped *(default '◾')*
+  - `player_priority` priority of the players. *(default [])*
+    Keep in mind that the state has a higher priority than
+    player_priority. So when player_priority is "[mpd, bomi]" and mpd is
+    paused and bomi is playing than bomi wins.
+
+Format of status string placeholders:
+  - `{album}` album name
+  - `{artist}` artiste name (first one)
+  - `{length}` time duration of the song
+  - `{player}` show name of the player
+  - `{state}` playback status of the player
+  - `{time}` played time of the song
+  - `{title}` name of the song
+
+Format of button placeholders:
+  - `{next}` play the next title
+  - `{pause}` pause the player
+  - `{play}` play the player
+  - `{previous}` play the previous title
+  - `{stop}` stop the player
+  - `{toggle}` toggle between play and pause
+
+Color options:
+  - `color_control_inactive` button is not clickable
+  - `color_control_active` button is clickable
+  - `color_paused` song is paused, defaults to color_degraded
+  - `color_playing` song is playing, defaults to color_good
+  - `color_stopped` song is stopped, defaults to color_bad
+
+Requires:
+  - `pydbus` python library module
+
+i3status.conf example:
+
+```
+mpris {
+    format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]]"
+    format_none = "no player"
+    player_priority = "[mpd, cantata, vlc, bomi, *]"
+}
+```
+
+only show information from mpd and vlc, but mpd has a higher priority:
+
+```
+mpris {
+    player_priority = "[mpd, vlc]"
+}
+```
+
+show information of all players, but mpd and vlc have the highest priority:
+
+```
+mpris {
+    player_priority = "[mpd, vlc, *]"
+}
+```
+
+vlc has the lowest priority:
+
+```
+mpris {
+    player_priority = "[*, vlc]"
+}
+```
+
+Tested players:
+    bomi
+    Cantata
+    mpDris2 (mpris extension for mpd)
+    vlc
+
+**author** Moritz Lüdecke, tobes
+
+---
+
 ### <a name="net_rate"></a>net_rate
 
 Display the current network transfer rate.
@@ -996,7 +1332,7 @@ Configuration parameters:
   - `interfaces_blacklist` comma separated list of interfaces to ignore
   - `precision` amount of numbers after dot
 
-Format of status string placeholders:
+Format placeholders:
   - `{down}` download rate
   - `{interface}` name of interface
   - `{total}` total rate
@@ -1016,6 +1352,11 @@ Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds (2s default)
   - `low_*` / `med_*` coloration thresholds
   - `nic` the network interface to monitor *(defaults to eth0)*
+
+Color options:
+  - `color_bad` Rate is below low threshold
+  - `color_degraded` Rate is below med threshold
+  - `color_good` Rate is med threshold or higher
 
 **author** Shahin Azad &lt;ishahinism at Gmail&gt;
 
@@ -1038,6 +1379,13 @@ Configuration parameters:
   - `nameservers` comma separated list of reference DNS nameservers
   - `resolvers` comma separated list of DNS resolvers to use
 
+Color options:
+  - `color_bad` One or more lookups have failed
+  - `color_good` All lookups have succeeded
+
+Requires:
+  - `dnspython` python module
+
 **author** nawadanp
 
 ---
@@ -1048,17 +1396,19 @@ Display NVIDIA GPU temperature.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds
-  - `color_bad` the color used if the temperature can't be read.
-  - `color_good` the color used if everything is OK.
   - `format_prefix` a prefix for the output.
   - `format_units` the temperature units. Will appear at the end.
   - `temp_separator` the separator char between temperatures (only if more than
     one GPU)
 
+Color options:
+  - `color_bad` Temperature can't be read.
+  - `color_good` Everything is OK.
+
 Requires:
   - `nvidia-smi`
 
-**author** jmdana <https://github.com/jmdana>
+**author** jmdana &lt;https://github.com/jmdana&gt;
 
 **license** BSD
 
@@ -1074,6 +1424,10 @@ Configuration parameters:
   - `format_online` what to display when online
   - `timeout` how long before deciding we're offline
   - `url` connect to this url to check the connection status
+
+Color options:
+  - `color_bad` Offline
+  - `color_good` Online
 
 **author** obb
 
@@ -1095,6 +1449,10 @@ Configuration parameters:
   - `password` pingdom password
   - `request_timeout` pindgom API request timeout
 
+Color options:
+  - `color_bad` Site is down
+  - `color_degraded` Latency exceeded max_latency
+
 Requires:
   - `requests` python module from pypi
     https://pypi.python.org/pypi/requests
@@ -1111,12 +1469,13 @@ Provides an icon to control simple functions of audio/video players:
   - pause (middle click)
 
 Configuration parameters:
+  - `cache_timeout` how often to update in seconds *(default 10)*
   - `debug` enable verbose logging (bool) *(default: False)*
   - `supported_players` supported players (str) (comma separated list)
   - `volume_tick` percentage volume change on mouse wheel (int) (positive number
     or None to disable it)
 
-**author** Federico Ceratto <federico.ceratto@gmail.com>, rixx
+**author** Federico Ceratto &lt;federico.ceratto@gmail.com&gt;, rixx
 
 **license** BSD
 
@@ -1146,11 +1505,16 @@ Configuration parameters:
   - `timer_long_break` long break time (seconds)
   - `timer_pomodoro` pomodoro time (seconds)
 
-Format of status string placeholders:
+Format placeholders:
   - `{bar}` display time in bars
   - `{ss}` display time in total seconds (1500)
   - `{mm}` display time in total minutes (25)
   - `{mmss}` display time in (hh-)mm-ss (25:00)
+
+Color options:
+  - `color_bad` Pomodoro not running
+  - `color_degraded` Pomodoro break
+  - `color_good` Pomodoro active
 
 i3status.conf example:
 ```
@@ -1172,6 +1536,10 @@ Configuration parameters:
   - `format_running` what to display when process running
   - `format_not_running` what to display when process is not running
   - `process` the process name to check if it is running
+
+Color options:
+  - `color_bad` Process not running or error
+  - `color_good` Process running
 
 **author** obb, Moritz Lüdecke
 
@@ -1250,7 +1618,11 @@ Configuration parameters:
   - `hour_price` your price per hour
   - `tax` tax value (1.02 = 2%)
 
-**author** Amaury Brisou <py3status AT puzzledge.org>
+Color options:
+  - `color_bad` Running
+  - `color_good` Stopped
+
+**author** Amaury Brisou &lt;py3status AT puzzledge.org&gt;
 
 ---
 
@@ -1260,21 +1632,25 @@ Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 300)*
-  - `threshold_critical` set bad color above this threshold
   - `db` database to use
   - `format` see placeholders below
   - `host` database host to connect to
   - `password` login password
-  - `user` login user
+  - `threshold_critical` set bad color above this threshold
   - `threshold_warning` set degraded color above this threshold
+  - `user` login user
 
-Format of status string placeholders:
+Format placeholders:
   - `{YOUR_QUEUE_NAME}` number of ongoing RT tickets (open+new+stalled)
 
+Color options:
+  - `color_bad` Exceeded threshold_critical
+  - `color_degraded` Exceeded threshold_warning
+
 Requires:
-  - `PyMySQL` https://pypi.python.org/pypi/PyMySQL
+    PyMySQL: https://pypi.python.org/pypi/PyMySQL
     or
-  - `MySQL-python` http://pypi.python.org/pypi/MySQL-python
+    MySQL-python: http://pypi.python.org/pypi/MySQL-python
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
@@ -1333,7 +1709,10 @@ Configuration parameters:
   - `upload_server` your server address
   - `upload_user` your ssh user
 
-**author** Amaury Brisou <py3status AT puzzledge.org>
+Color options:
+  - `color_good` Displayed color
+
+**author** Amaury Brisou &lt;py3status AT puzzledge.org&gt;
 
 ---
 
@@ -1348,8 +1727,13 @@ Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds (10s default)
   - `format` see placeholders below, default is 'selinux: {state}'
 
-Format of status string placeholders:
+Format placeholders:
   - `{state}` the current selinux state
+
+Color options:
+  - `color_bad` Enforcing
+  - `color_degraded` Permissive
+  - `color_good` Disabled
 
 Requires:
   - `libselinux-python`
@@ -1377,7 +1761,7 @@ Configuration Parameters:
 
 **author** timmszigat
 
-**license** WTFPL <http://www.wtfpl.net/txt/copying/>
+**license** WTFPL &lt;http://www.wtfpl.net/txt/copying/&gt;
 
 ---
 
@@ -1387,20 +1771,20 @@ Display information about the current song playing on Spotify.
 
 Configuration parameters:
   - `cache_timeout` how often to update the bar
-  - `color_offline` text color when spotify is not running,
-    defaults to color_bad
-  - `color_paused` text color when song is stopped or paused,
-    defaults to color_degraded
-  - `color_playing` text color when song is playing, defaults to color_good
   - `format` see placeholders below
   - `format_down` define output if spotify is not running
   - `format_stopped` define output if spotify is not playing
 
-Format of status string placeholders:
+Format placeholders:
   - `{album}` album name
   - `{artist}` artiste name (first one)
   - `{time}` time duration of the song
   - `{title}` name of the song
+
+Color options:
+  - `color_offline` Spotify is not running, defaults to color_bad
+  - `color_paused` Song is stopped or paused, defaults to color_degraded
+  - `color_playing` Song is playing, defaults to color_good
 
 i3status.conf example:
 
@@ -1412,7 +1796,7 @@ spotify {
 ```
 
 Requires:
-    spotify (>=1.0.27.71.g0a26e3b2)
+    spotify (&gt;=1.0.27.71.g0a26e3b2)
 
 **author** Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 
@@ -1423,7 +1807,6 @@ Requires:
 Display static text.
 
 Configuration parameters:
-  - `color` color of printed text
   - `format` text that should be printed
 
 **author** frimdo ztracenastopa@centrum.cz
@@ -1439,12 +1822,17 @@ Configuration parameters:
   - `high_threshold` percent to consider CPU or RAM usage as 'high load'
   - `med_threshold` percent to consider CPU or RAM usage as 'medium load'
 
-Format of status string placeholders:
+Format placeholders:
   - `{cpu_temp}` cpu temperature
   - `{cpu_usage}` cpu usage percentage
   - `{mem_total}` total memory
   - `{mem_used}` used memory
   - `{mem_used_percent}` used memory percentage
+
+Color options:
+  - `color_bad` Above high_threshold
+  - `color_degraded` Above med_threshold
+  - `color_good` Below or equal to med_threshold
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
@@ -1458,10 +1846,10 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 Display currently active (started) taskwarrior tasks.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds (5s default)
+  - `cache_timeout` how often we refresh this module in seconds *(default 5)*
 
 Requires
-  - `task`
+    task: https://taskwarrior.org/download/
 
 **author** James Smith http://jazmit.github.io/
 
@@ -1509,8 +1897,12 @@ Configuration parameters:
   - `stream_name` name of streamer(twitch.tv/&lt;stream_name&gt;)
     *(default None)*
 
-Format of status string placeholders:
+Format placeholders:
     {stream_name}:  name of the streamer
+
+Color options:
+  - `color_bad` Stream offline or error
+  - `color_good` Stream is live
 
 **author** Alex Caswell horatioesf@virginmedia.com
 
@@ -1526,7 +1918,7 @@ Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds (1h default)
   - `format` see placeholders below
 
-Format of status string placeholders:
+Format placeholders:
   - `{system}` system/OS name, e.g. 'Linux', 'Windows', or 'Java'
   - `{node}` computer’s network name (may not be fully qualified!)
   - `{release}` system’s release, e.g. '2.2.0' or 'NT'
@@ -1552,9 +1944,9 @@ Example:
     800: "#dddd00",
     900: "#dd0000",
     }
-    (0 - 800: white, 800-900: yellow, >900 - red)
+    (0 - 800: white, 800-900: yellow, &gt;900 - red)
 
-Format of status string placeholders:
+Format placeholders:
   - `{down}` download
   - `{total}` total
   - `{up}` upload
@@ -1602,8 +1994,13 @@ Configuration parameters:
     decreased by when volume buttons pressed.
     *(default 5)*
 
-Format status string parameters:
+Format placeholders:
   - `{percentage}` Percentage volume
+
+Color options:
+  - `color_bad` Volume below threshold_bad or muted
+  - `color_degraded` Volume below threshold_degraded
+  - `color_good` Volume above or equal to threshold_degraded
 
 Example:
 
@@ -1626,7 +2023,7 @@ NOTE:
     send a USR1 signal to py3status in the keybinding.
     Example: killall -s USR1 py3status
 
-**author** &lt;Jan T&gt; <jans.tuomi@gmail.com>
+**author** &lt;Jan T&gt; &lt;jans.tuomi@gmail.com&gt;
 
 **license** BSD
 
@@ -1649,13 +2046,17 @@ Configuration parameters:
   - `pidfile` Same as i3status.conf pidfile, checked when check_pid is True.
     *(default '/sys/class/net/vpn0/dev_id')*
 
-Format string parameters:
+Format placeholders:
   - `{name}` The name and/or status of the VPN.
+
+Color options:
+  - `color_bad` VPN connected
+  - `color_good` VPN down
 
 Requires:
   - `pydbus` Which further requires PyGi. Check your distribution's repositories.
 
-**author** Nathan Smith <nathan AT praisetopia.org>
+**author** Nathan Smith &lt;nathan AT praisetopia.org&gt;
 
 ---
 
@@ -1696,7 +2097,7 @@ Configuration parameters:
   - `units` Celsius (C) or Fahrenheit (F)
   - `woeid` Yahoo woeid (extended location)
 
-The WOEID in this example is for Paris, France => 615702
+The WOEID in this example is for Paris, France =&gt; 615702
 
 ```
 weather_yahoo {
@@ -1724,6 +2125,10 @@ Configuration parameters:
   - `negative_cache_timeout` how often to check again when offline
   - `timeout` how long before deciding we're offline
   - `url` change IP check url (must output a plain text IP address)
+
+Color options:
+  - `color_bad` Offline
+  - `color_good` Online
 
 **author** ultrabug
 
@@ -1763,7 +2168,7 @@ Configuration parameters:
     "&lt;username&gt; ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
     *(default: false)*
 
-Format of status string placeholders:
+Format placeholders:
   - `{bitrate}` Display bit rate
   - `{device}` Display device name
   - `{icon}` Character representing the quality based on bitrate,
@@ -1773,11 +2178,16 @@ Format of status string placeholders:
   - `{signal_percent}` Display signal in percent
   - `{ssid}` Display SSID
 
+Color options:
+  - `color_bad` Signal strength signal_bad or lower
+  - `color_degraded` Signal strength signal_degraded or lower
+  - `color_good` Signal strength above signal_degraded
+
 Requires:
   - `iw`
   - `ip` if {ip} is used
 
-**author** Markus Weimar <mail@markusweimar.de>
+**author** Markus Weimar &lt;mail@markusweimar.de&gt;
 
 **license** BSD
 
@@ -1836,10 +2246,6 @@ Display current network and ip address for newer Huwei modems.
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III but may work on other devices, too.
 
-DEPENDENCIES:
-  - `netifaces`
-  - `pyserial`
-
 Configuration parameters:
   - `baudrate` There should be no need to configure this, but
     feel free to experiment.
@@ -1870,6 +2276,15 @@ Configuration parameters:
   - `modem_timeout` The timespan betwenn querying the modem and
     collecting the response.
     Default is 0.4 (which should be sufficient)
+
+Color options:
+  - `color_bad` Error or no connection
+  - `color_degraded` Low generation connection eg 2G
+  - `color_good` Good connection
+
+Requires:
+  - `netifaces`
+  - `pyserial`
 
 **author** Timo Kohorst timo@kohorst-online.com
 
@@ -1931,6 +2346,11 @@ Dynamic configuration parameters:
     the given OUTPUT when it is activated
     Example: DP1_workspaces = "1,2,3"
 
+Color options:
+  - `color_bad` Displayed layout unavailable
+  - `color_degraded` Using a fallback layout
+  - `color_good` Displayed layout active
+
 Example config:
 
 ```
@@ -1972,10 +2392,14 @@ Configuration parameters:
     available options: 'left' or 'right'.
     *(default is 'left')*
 
-Available placeholders for formatting the output:
+Format placeholders:
   - `{icon}` a rotation icon, specified by `horizontal_icon` or `vertical_icon`.
   - `{screen}` a screen name, specified by `screen` option or detected
     automatically if only one screen is connected, otherwise 'ALL'.
+
+Color options:
+  - `color_degraded` Screen is disconnected
+  - `color_good` Displayed rotation is active
 
 **author** Maxim Baz (https://github.com/maximbaz)
 
@@ -2014,8 +2438,13 @@ Configuration parameters:
   - `format` prefix text for the Yandex.Disk status
     *(default 'Yandex.Disk: {status}')*
 
-Format of status string placeholders:
+Format placeholders:
   - `{status}` daemon status
+
+Color options:
+  - `color_bad` Not started
+  - `color_degraded` Idle
+  - `color_good` Busy
 
 Requires:
   - `yandex-disk` command line tool (link: https://disk.yandex.com/)
