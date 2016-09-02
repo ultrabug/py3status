@@ -22,6 +22,33 @@ class Composite:
         return u'<Composite `{}`>'.format(self.name)
 
 
+class BlockConfig:
+    """
+    Block commands eg [\?color=bad ...] are stored in this object
+    """
+
+    # defaults
+    _if = None
+    color = None
+    max_length = None
+    show = None
+
+    def update(self, commands_str):
+        """
+        update with commands from the block
+        """
+        commands = dict(parse_qsl(commands_str, keep_blank_values=True))
+
+        self._if = commands.get('if', self._if)
+        self.color = commands.get('color', self.color)
+
+        max_length = commands.get('max_length')
+        if max_length is not None:
+            self.max_length = int(max_length)
+
+        self.show = 'show' in commands or self.show
+
+
 class Block:
     """
     Represents a block of our format.  Block being contained inside [..]
@@ -32,10 +59,11 @@ class Block:
     """
 
     def __init__(self, param_dict, composites, module, parent=None):
+        self.block_config = BlockConfig()
         self.commands = {}
         self.composites = composites
-        self.is_composite = False
         self.content = []
+        self.is_composite = False
         self.module = module
         self.options = []
         self.param_dict = param_dict
@@ -43,7 +71,7 @@ class Block:
         self.valid_blocks = set()
 
     def __repr__(self):
-        return repr(self.options)
+        return u'<Block {!r}>'.format(self.options)
 
     def add(self, item):
         """
@@ -71,7 +99,7 @@ class Block:
         Process any commands into a dict and store
         commands are url query string encoded
         """
-        self.commands.update(parse_qsl(commands, keep_blank_values=True))
+        self.block_config.update(commands)
 
     def is_valid_by_command(self, index=None):
         """
@@ -80,8 +108,8 @@ class Block:
         # If this is not the first option in a block we ignore it.
         if index:
             return None
-        if 'if' in self.commands:
-            _if = self.commands['if']
+        if self.block_config._if:
+            _if = self.block_config._if
             if _if and _if.startswith('!'):
                 if not self.param_dict.get(_if[1:]):
                     return True
@@ -92,7 +120,7 @@ class Block:
                     return True
                 else:
                     return False
-        if 'show' in self.commands:
+        if self.block_config.show:
             return True
         # explicitly return None to aid code readability
         return None
@@ -107,6 +135,35 @@ class Block:
         elif cmd_state is False:
             # This enables the second option in a block if \?if=.. is false.
             self.mark_valid(index=1)
+
+    def process_text_chunk(self, text):
+        block_config = self.block_config
+        if block_config.max_length is not None:
+            text = text[:block_config.max_length]
+            block_config.max_length -= len(text)
+        if text and block_config.color or self.is_composite:
+            text = {'full_text': text}
+            if block_config.color:
+                text['color'] = block_config.color
+            if self.parent:
+                text = Composite(text)
+        return text
+
+    def process_composite_chunk(self, composite):
+        out = []
+        for item in composite:
+            self.process_composite_chunk_item(item)
+            if item['full_text']:
+                out.append(item)
+        return out
+
+    def process_composite_chunk_item(self, item):
+        block_config = self.block_config
+        if block_config.max_length is not None:
+            item['full_text'] = item['full_text'][:block_config.max_length]
+            block_config.max_length -= len(item['full_text'])
+        if block_config.color and 'color' not in item:
+            item['color'] = block_config.color
 
     def show(self):
         """
@@ -147,12 +204,12 @@ class Block:
         if not self.is_composite:
             data = ''.join(output)
             # apply our max length command
-            if 'max_length' in self.commands:
-                data = data[:int(self.commands['max_length'])]
-            if 'color' in self.commands:
+            if self.block_config.max_length is not None:
+                data = data[:self.block_config.max_length]
+            if self.block_config.color:
                 block_composite = {
                     'full_text': data,
-                    'color': self.commands['color'],
+                    'color': self.block_config.color,
                 }
                 data = Composite(block_composite)
                 self.is_composite = True
@@ -160,39 +217,6 @@ class Block:
 
         # Build up our output.  We join any text pieces togeather and if we
         # have composites we keep them for final substitution in the main block
-        class Options:
-            max_length = self.commands.get('max_length')
-            if max_length is not None:
-                max_length = int(max_length)
-            color = self.commands.get('color')
-
-        def process_text_chunk(text, Options):
-            if Options.max_length is not None:
-                text = text[:Options.max_length]
-                Options.max_length -= len(text)
-            if text and Options.color or self.is_composite:
-                text = {'full_text': text}
-                if Options.color:
-                    text['color'] = Options.color
-                if self.parent:
-                    text = Composite(text)
-            return text
-
-        def process_composite_chunk(composite, Options):
-            out = []
-            for item in composite:
-                process_composite_chunk_item(item, Options)
-                if item['full_text']:
-                    out.append(item)
-            return out
-
-        def process_composite_chunk_item(item, Options):
-            if Options.max_length is not None:
-                item['full_text'] = item['full_text'][:Options.max_length]
-                Options.max_length -= len(item['full_text'])
-            if Options.color and not 'color' in item:
-                item['color'] = Options.color
-
         data = []
         text = ''
         for item in output:
@@ -200,19 +224,19 @@ class Block:
                 text += item
             else:
                 if text:
-                    data.append(process_text_chunk(text, Options))
+                    data.append(self.process_text_chunk(text))
                 text = ''
                 if self.parent is None:
                     # This is the main block so we get the actual composites
                     composite = item.content
                     if not isinstance(composite, list):
                         composite = [composite]
-                    data += process_composite_chunk(composite, Options)
+                    data += self.process_composite_chunk(composite)
                 else:
-                    process_composite_chunk_item(item.content, Options)
+                    self.process_composite_chunk_item(item.content)
                     data.append(item)
         if text:
-            data.append(process_text_chunk(text, Options))
+            data.append(self.process_text_chunk(text))
 
         return data
 
@@ -243,8 +267,6 @@ class Formatter:
         substituting place holders which can be found in
         composites, param_dict or as attributes of the supplied module.
         """
-
-        is_composite = composites is not None
 
         def set_param(param, value, key):
             """
@@ -429,7 +451,6 @@ if __name__ == '__main__':
             COLOR_BAD = '#FF0000'
             COLOR_DEGRADED = '#FF00'
             COLOR_GOOD = '#00FF00'
-
 
     tests = [
         {
@@ -766,20 +787,20 @@ if __name__ == '__main__':
         {
             'format': '{simple} TEST [{name}[ {number}]]',
             'expected': [
-                {'full_text': 'NY 12:34 TEST Björk 42'}
+                {'full_text': u'NY 12:34 TEST Björk 42'}
             ],
             'composite': True,
         },
         # block colors
         {
             'format': '[\?color=bad {name}]',
-            'expected':  [{'full_text': 'Björk', 'color': '#FF0000'}],
+            'expected':  [{'full_text': u'Björk', 'color': '#FF0000'}],
         },
         {
             'format': '[\?color=good Name [\?color=bad {name}] hello]',
             'expected':  [
                 {'full_text': 'Name ', 'color': '#00FF00'},
-                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': u'Björk', 'color': '#FF0000'},
                 {'full_text': ' hello', 'color': '#00FF00'}
             ],
         },
@@ -787,7 +808,7 @@ if __name__ == '__main__':
             'format': '[\?max_length=20&color=good Name [\?color=bad {name}] hello]',
             'expected':  [
                 {'full_text': 'Name ', 'color': '#00FF00'},
-                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': u'Björk', 'color': '#FF0000'},
                 {'full_text': ' hello', 'color': '#00FF00'}
             ],
         },
@@ -795,23 +816,23 @@ if __name__ == '__main__':
             'format': '[\?max_length=8&color=good Name [\?color=bad {name}] hello]',
             'expected':  [
                 {'full_text': 'Name ', 'color': '#00FF00'},
-                {'full_text': 'Bjö', 'color': '#FF0000'}
+                {'full_text': u'Bjö', 'color': '#FF0000'}
             ],
 
         },
         {
             'format': '[\?color=bad {name}][\?color=good {name}]',
             'expected': [
-                {'full_text': 'Björk', 'color': '#FF0000'},
-                {'full_text': 'Björk', 'color': '#00FF00'}
+                {'full_text': u'Björk', 'color': '#FF0000'},
+                {'full_text': u'Björk', 'color': '#00FF00'}
             ],
         },
         {
             'format': '[\?color=bad {name}] [\?color=good {name}]',
             'expected': [
-                {'full_text': 'Björk', 'color': '#FF0000'},
+                {'full_text': u'Björk', 'color': '#FF0000'},
                 {'full_text': ' '},
-                {'full_text': 'Björk', 'color': '#00FF00'}
+                {'full_text': u'Björk', 'color': '#00FF00'}
             ],
         },
     ]
@@ -840,7 +861,8 @@ if __name__ == '__main__':
             else:
                 print('Fail %r' % test['format'])
                 print('exception raised %r' % e)
-                print('')
+                import traceback
+                print(traceback.format_exc())
                 failed += 1
         expected = test.get('expected')
         if f.python2 and isinstance(expected, str):
