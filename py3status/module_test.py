@@ -15,20 +15,36 @@ def module_test(module_class, config=None):
         for key, value in config.items():
             setattr(module, key, value)
     methods = []
-    for method_name in sorted(dir(module)):
-        if method_name.startswith('_'):
+
+    for attribute_name in sorted(dir(module)):
+        # find methods that we should test.
+        attribute = getattr(module, attribute_name)
+
+        if 'method' not in str(attribute):
             continue
-        if method_name in ['on_click', 'kill', 'py3']:
+        if attribute_name.startswith('_'):
             continue
-        if not hasattr(getattr(module_class, method_name, ''), '__call__'):
+        if attribute_name in ['on_click', 'kill', 'py3', 'post_config_hook']:
             continue
 
-        method = getattr(module, method_name, None)
-        args, vargs, kw, defaults = inspect.getargspec(method)
+        # set calling parameter for method to allow legacy calling signature
+        args, vargs, kw, defaults = inspect.getargspec(attribute)
         if len(args) == 1:
-            methods.append((method_name, []))
+            methods.append((attribute_name, []))
         else:
-            methods.append((method_name, [[], i3s_config]))
+            methods.append((attribute_name, [[], i3s_config]))
+
+    # If we are a container then self.items must be set as a list
+    try:
+        if module.Meta.container:
+            module.items = []
+    except AttributeError:
+        pass
+
+    # run any post_config_hook
+    if hasattr(module, 'post_config_hook'):
+        module.post_config_hook()
+
     while True:
         try:
             for method, method_args in methods:
