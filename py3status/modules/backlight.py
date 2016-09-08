@@ -19,7 +19,6 @@ Format status string parameters:
 from __future__ import division
 
 import os
-from time import time
 
 
 def get_device_path():
@@ -55,16 +54,15 @@ class Py3status:
 
         full_text = self.format.format(level=(brightness * 100 // brightness_max))
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
             'color': self.color
         }
         return response
 
-
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    while True:
-        print(x.backlight([], None))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
