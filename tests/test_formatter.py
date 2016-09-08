@@ -502,5 +502,18 @@ def test_78():
             {'full_text': u' TEST Björk 42'}
         ],
         'composite': True,
+    })
 
+
+def test_else_true():
+    run_formatter({
+            'format': '[\?if=yes Hello|Goodbye]',
+            'expected': 'Hello',
+    })
+
+
+def test_else_false():
+    run_formatter({
+            'format': '[\?if=no Hello|Goodbye|Something else]',
+            'expected': 'Goodbye',
     })
