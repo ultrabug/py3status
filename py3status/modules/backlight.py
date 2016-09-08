@@ -36,12 +36,14 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     color = '#FFFFFF'
+    device = None
     device_path = None
     format = u'☼: {level}%'
 
     def backlight(self,  i3s_output_list, i3s_config):
+        print(self.device_path)
         if not self.device_path:
-            if not hasattr(self, 'device'):
+            if not self.device:
                 self.device_path = get_device_path()
             else:
                 self.device_path = "/sys/class/backlight/%s" % self.device
