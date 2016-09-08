@@ -3,38 +3,32 @@
 Display static text.
 
 Configuration parameters:
-    color: color of printed text
     format: text that should be printed
-    separator: whether the separator is shown or not (true or false)
 
 @author frimdo ztracenastopa@centrum.cz
 """
-
-from time import time
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    color = None
     format = ''
-    separator = True
 
-    def static_string(self, i3s_output_list, i3s_config):
+    def static_string(self):
         response = {
-            'cached_until': time() + 60,
-            'color': self.color,
+            'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.format,
-            'separator': self.separator
         }
         return response
 
 
 if __name__ == "__main__":
-    x = Py3status()
+    """
+    Run module in test mode.
+    """
     config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
+        'format': 'Hello World!'
     }
-    print(x.static_string([], config))
+    from py3status.module_test import module_test
+    module_test(Py3status, config=config)

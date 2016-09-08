@@ -8,9 +8,11 @@ Provides an icon to control simple functions of audio/video players:
     - pause (middle click)
 
 Configuration parameters:
+    cache_timeout: how often to update in seconds (default 10)
     debug: enable verbose logging (bool) (default: False)
     supported_players: supported players (str) (comma separated list)
-    volume_tick: percentage volume change on mouse wheel (int) (positive number or None to disable it)
+    volume_tick: percentage volume change on mouse wheel (int) (positive number
+        or None to disable it)
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
@@ -18,8 +20,6 @@ Configuration parameters:
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.
 
-from syslog import syslog, LOG_INFO
-from time import time, sleep
 import os
 import subprocess
 
@@ -30,14 +30,11 @@ except:
     dbus_available = False
 
 
-def log(msg):
-    syslog(LOG_INFO, "player_control: %s" % msg[:100])
-
-
 class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 10
     debug = False
     pause_icon = u'❚❚'
     play_icon = u'▶'
@@ -49,7 +46,7 @@ class Py3status:
         self.status = 'stop'
         self.icon = self.play_icon
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         """
         buttons = (None, 'left', 'middle', 'right', 'up', 'down')
@@ -82,7 +79,7 @@ class Py3status:
 
     def _run(self, *args):
         if self.debug:
-            log('running %s' % repr(*args))
+            self.py3.log('running %s' % repr(*args))
 
         subprocess.check_output(*args, stderr=subprocess.STDOUT)
 
@@ -150,11 +147,11 @@ class Py3status:
         for player_name in supported_players:
             if player_name in running_players:
                 if self.debug:
-                    log('found player: %s' % player_name)
+                    self.py3.log('found player: %s' % player_name)
 
                 # those players need the dbus module
                 if player_name in ('vlc') and not dbus_available:
-                    log('%s requires the dbus python module' % player_name)
+                    self.py3.log('%s requires the dbus python module' % player_name)
                     return None
 
                 return player_name
@@ -168,19 +165,16 @@ class Py3status:
         proxy = bus.get_object(mpris+'.vlc', mpris_slash)
         return dbus.Interface(proxy, dbus_interface=mpris+'.Player')
 
-    def player_control(self, i3s_output_list, i3s_config):
+    def player_control(self):
         return dict(
             full_text=self.icon,
-            cached_until=time(),
+            cached_until=self.py3.time_in(self.cache_timeout),
         )
 
 
 if __name__ == "__main__":
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.player_control([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

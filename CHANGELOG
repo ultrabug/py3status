@@ -1,3 +1,40 @@
+version 3.0 (2016-06-23)
+* IMPORTANT NOTE: the changelog is so big that this is a condensed version, apologize for missing contribution reports
+* split the monolithic code into proper modules, by Alexis 'Horgix' Chotard, @tobes and Daniel Foerster
+* major improvements on modules output orchestration and output resulting in considerable CPU consumption reduction, by @tobes
+* refactoring of user notifications with added dbus support and rate limiting, by @tobes
+* refactoring of i3status.conf file generation, by @tobes
+* improved modules error reporting, by @tobes
+* py3status can now survive an i3status crash and will try to respawn it, by @tobes
+* enhanced modules README formatting with CLI support, by @tobes
+* countless of code cleanup and improvements, by @tobes
+* implement a 'container' module output type to give the ability to group modules together, by @tobes
+* implement a helper named 'py3' for modules to ease their development, by @tobes
+* fix and refactoring of the time and tztime modules support, by @tobes
+* some py3status modules using i3-ipc could crash i3 when the i3bar was hidden, py3status now requests i3bar to use SIGTSTP instead of SIGSTOP, by @tobes
+* add min_width and align as universal module options, by johannes karoff
+* add separator and separator_block_width as universal module options, by johannes karoff
+* improved and normalized i3status and modules folder detection, by @tobes
+* added module dosctrings sanity check and modules README generation from CLI, by @tobes
+* qa: flake8 CI to 99 chars, by @tobes
+* docs: added contribution guidlines, by Alexis 'Horgix' Chotard and @tobes
+* docs: migrate over from the wiki to a proper doc/README.md, by @tobes and Daniel Foerster
+* new group module to cycle display of several modules, by @tobes
+* new fedora_updates module to check for your Fedora packages updates, by @tobes
+* new github module to check a github repository and notifications, by @tobes
+* new graphite module to check metrics from graphite
+* new insync module to check your current insync status, by Joshua Pratt
+* new timer module to have a simple countdown displayed, by @tobes
+* new twitch_streaming module to check is a Twitch Streamer is online, by Alex Caswell
+* new vpn_status module to check your VPN status, by Nathan Smith
+* new xrandr_rotate module to rotate your screens, by Maxim Baz
+* new yandexdisk_status module to display Yandex.Disk status, by Vladimir Potapev
+* keyboard_layout module: enhanced by Themistokle Benetatos
+* pomodoro module: now supports more options and still runs when the i3bar is hidden, by @tobes and @egeskow
+* sysdata module: fix python3 compatibility, by Yongming Lai
+* weather_yahoo module: remove deprecated city_code setting in favor of woeid, fixes #228
+* wifi module: enhanced by @tobes
+
 version 2.9 (2016-03-01)
 * fix: handle format_time tztime parameter thx to @cornerman, fix issue #177
 * fix: issue #166, by Daniel Foerster

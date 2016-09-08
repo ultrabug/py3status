@@ -9,23 +9,21 @@ Additionally check if any update security notices.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds
         (default 600)
-    color_bad: Color when security notice
-        (default global color_bad)
-    color_degraded: Color when upgrade available
-        (default global color_degraded)
-    color_good: Color when no upgrades needed
-        (default global color_good)
     format: Display format to use
         (default 'DNF: {updates}')
 
-Format status string parameters:
+Format placeholders:
     {updates} number of pending dnf updates
 
-@author Toby Dacre
+Color options:
+    color_bad: Security notice
+    color_degraded: Upgrade available
+    color_good: No upgrades needed
+
+@author tobes
 @license BSD
 """
 
-from time import time
 import subprocess
 import re
 
@@ -33,9 +31,6 @@ import re
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    color_bad = None
-    color_degraded = None
-    color_good = None
     format = 'DNF: {updates}'
 
     def __init__(self):
@@ -45,11 +40,11 @@ class Py3status:
         self._updates = None
         self._security_notice = False
 
-    def check_updates(self, i3s_output_list, i3s_config):
+    def check_updates(self):
         if self._first:
             self._first = False
             response = {
-                'cached_until': time() + 1,
+                'cached_until': self.py3.time_in(),
                 'full_text': self.format.format(updates='?')
             }
             return response
@@ -62,21 +57,25 @@ class Py3status:
         updates = len(self._reg_ex_pkg.findall(output))
 
         if updates == 0:
-            color = self.color_good or i3s_config['color_good']
+            color = self.py3.COLOR_GOOD
             self._updates = 0
             self._security_notice = False
         else:
             if not self._security_notice and self._updates != updates:
-                notices = str(subprocess.check_output(['dnf', 'updateinfo']))
+                output, error = subprocess.Popen(
+                    ['dnf', 'updateinfo'],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE).communicate()
+                notices = str(output)
                 self._security_notice = len(self._reg_ex_sec.findall(notices))
                 self._updates = updates
             if self._security_notice:
-                color = self.color_bad or i3s_config['color_bad']
+                color = self.py3.COLOR_BAD
             else:
-                color = self.color_degraded or i3s_config['color_degraded']
+                color = self.py3.COLOR_DEGRADED
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': self.format.format(updates=updates)
         }
@@ -87,13 +86,8 @@ if __name__ == "__main__":
     """
     Test this module by calling it directly.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.check_updates([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

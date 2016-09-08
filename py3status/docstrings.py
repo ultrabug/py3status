@@ -98,19 +98,19 @@ def create_readme(data):
 re_listing = re.compile('^\w.*:$')
 
 # match in README.md
-re_to_param = re.compile('^  - `([a-z]\S+)`[ \t]*')
-re_to_status = re.compile('^  - `({\S+})`[ \t]*')
+re_to_param = re.compile('^  - `([a-z]\S+)`($|[ \t])')
+re_to_status = re.compile('^  - `({\S+})`($|[ \t])')
 re_to_item = re.compile('^\s+-')
-re_to_data = re.compile('^\*\*(author|license|source)\*\*[ \t]*')
+re_to_data = re.compile('^\*\*(author|license|source)\*\*($|[ \t])')
 re_to_tag = re.compile('&lt;([^.]*)&gt;')
 re_to_defaults = re.compile('\*(\(default.*\))\*')
 
 # match in module docstring
-re_from_param = re.compile('^    ([a-z]\S+):[ \t]*')
-re_from_status = re.compile('^\s+({\S+})[ \t]*')
+re_from_param = re.compile('^    ([a-z]\S+):($|[ \t])(.*)$')
+re_from_status = re.compile('^\s+({\S+})($|[ \t])(.*)$')
 re_from_item = re.compile('^\s+-')
-re_from_data = re.compile('^@(author|license|source)[ \t]*')
-re_from_tag = re.compile('<([^.]*)>')
+re_from_data = re.compile('^@(author|license|source)($|[ \t])')
+re_from_tag = re.compile('((`[^`]*`)|[<>&])')
 re_from_defaults = re.compile('(\(default.*\))')
 
 
@@ -187,8 +187,24 @@ def _from_docstring(doc):
     '''
     def format_fn(line, status):
         ''' format function '''
-        # swap < > to &lt; &gt;
-        line = re_from_tag.sub(r'&lt;\1&gt;', line)
+
+        def fix_tags(line):
+            # In markdown we need to escape < > and & for display
+            # but we don't want to do this is the value is quoted
+            # by backticks ``
+
+            def fn(match):
+                # swap matched chars
+                found = match.group(1)
+                if found == '<':
+                    return '&lt;'
+                if found == '>':
+                    return '&gt;'
+                if found == '&':
+                    return '&amp;'
+                return match.group(0)
+            return re_from_tag.sub(fn, line)
+
         if re_from_data.match(line):
             line = re_from_data.sub(r'**\1** ', line)
             status['add_line'] = True
@@ -196,16 +212,21 @@ def _from_docstring(doc):
         if status['listing']:
             # parameters
             if re_from_param.match(line):
-                line = re_from_param.sub(r'  - `\1` ', line)
+                m = re_from_param.match(line)
+                line = '  - `{}` {}'.format(m.group(1), fix_tags(m. group(3)))
             # status items
             elif re_from_status.match(line):
-                line = re_from_status.sub(r'  - `\1` ', line)
+                m = re_from_status.match(line)
+                line = '  - `{}` {}'.format(m.group(1), fix_tags(m. group(3)))
             # bullets
             elif re_from_item.match(line):
-                line = re_from_item.sub(r'  -', line)
+                line = re_from_item.sub(r'  -', fix_tags(line))
             # is continuation line
             else:
+                line = fix_tags(line)
                 line = ' ' * 4 + line.lstrip()
+        else:
+            line = fix_tags(line)
         return line
 
     return _reformat_docstring(doc, format_fn, code_newline='\n')
@@ -241,7 +262,8 @@ def update_docstrings():
                 out.append(row)
                 if not replaced:
                     out = out + [
-                        ''.join(_to_docstring(modules_dict[mod])).strip() + '\n'
+                        ''.join(_to_docstring(modules_dict[mod])).strip() +
+                        '\n'
                     ]
                     replaced = True
                 if lines:
@@ -257,26 +279,37 @@ def update_docstrings():
     print_stderr('Modules updated from README.md')
 
 
-def check_docstrings(show_diff=False, config=None):
+def check_docstrings(show_diff=False, config=None, mods=None):
     '''
     Check docstrings in module match the README.md
     '''
 
     readme = parse_readme()
     modules_readme = core_module_docstrings(config=config)
+    warned = False
     if (create_readme(readme) != create_readme(modules_readme)):
-        print_stderr('Documentation does not match!\n')
-        for module in readme:
+        for module in sorted(readme):
+            if mods and module not in mods:
+                continue
+            err = None
             if module not in modules_readme:
-                print_stderr(
-                    '\tModule {} in README but not in /modules'.format(module))
+                err = '\tModule {} in README but not in /modules'.format(
+                    module
+                )
             elif ''.join(readme[module]).strip() != ''.join(modules_readme[
                     module]).strip():
-                print_stderr(
-                    '\tModule {} docstring does not match README'.format(
-                        module))
+                err = '\tModule {} docstring does not match README'.format(
+                    module
+                )
+            if err:
+                if not warned:
+                    print_stderr('Documentation does not match!\n')
+                    warned = True
+                print_stderr(err)
 
         for module in modules_readme:
+            if mods and module not in mods:
+                continue
             if module not in readme:
                 print_stderr(
                     '\tModule {} in /modules but not in README'.format(module))
@@ -285,7 +318,10 @@ def check_docstrings(show_diff=False, config=None):
                 create_readme(readme).split('\n'), create_readme(
                     modules_readme).split('\n'))))
         else:
-            print_stderr('\nUse `py3satus docstring check diff` to view diff.')
+            if warned:
+                print_stderr(
+                    '\nUse `py3status docstring check diff` to view diff.'
+                )
 
 
 def update_readme_for_modules(modules):

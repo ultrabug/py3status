@@ -7,25 +7,50 @@ shown in the i3bar.  The active group can be changed by a user click.  If the
 click is not used by the group module then it will be passed down to the
 displayed module.
 
-Modules can be i3status core modules or py3status modules.
+Modules can be i3status core modules or py3status modules.  The active group
+can be cycled through automatically.
 
-Additionally the active group can be cycled through automatically.
+The group can handle clicks by reacting to any that are made on it or its
+content or it can use a button and only respond to clicks on that.
+The way it does this is selected via the `click_mode` option.
 
 Configuration parameters:
+    align: Text alignment when fixed_width is set
+        can be 'left', 'center' or 'right' (default 'center')
     button_next: Button that when clicked will switch to display next module.
-        Setting to `0` will disable this action. (default 4)
+        Setting to `0` will disable this action. (default 5)
     button_prev: Button that when clicked will switch to display previous
-        module.  Setting to `0` will disable this action. (default 5)
-    color: If the active module does not supply a color use this if set.
-        Format as hex value eg `'#0000FF'` (default None)
+        module.  Setting to `0` will disable this action. (default 4)
+    button_toggle: Button that when clicked toggles the group content being
+        displayed between open and closed.
+        This action is ignored if `{button}` is not in the format.
+        Setting to `0` will disable this action (default 1)
+    click_mode: This defines how clicks are handled by the group.
+        If set to `all` then the group will respond to all click events.  This
+        may cause issues with contained modules that use the same clicks that
+        the group captures.  If set to `button` then only clicks that are
+        directly on the `{button}` are acted on.  The group
+        will need `{button}` in its format.
+        (default 'all')
     cycle: Time in seconds till changing to next module to display.
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
-        (default True)
-    format: Format for module output. (default "GROUP: {output}")
+        (default False)
+    format: Format for module output.
+        (default "{output}" if click_mode is 'all',
+        "{output} {button}" if click_mode 'button')
+    format_button_open: Format for the button when group closed
+        (default '+')
+    format_button_closed: Format for the button when group open
+        (default  '-')
+    format_closed: Format for module output when closed.
+        (default "{button}")
+    open: Is the group open and displaying its content. Has no effect if
+        `{button}` not in format (default True)
 
 
-Format of status string placeholders:
+Format placeholders:
+    {button} The button to open/close or change the displayed group
     {output} Output of current active module
 
 Example:
@@ -39,7 +64,8 @@ order += "group disks"
 
 group disks {
     cycle = 30
-    format = "Disks: {output}"
+    format = "Disks: {output} {button}"
+    click_mode = "button"
 
     disk "/" {
         format = "/ %avail"
@@ -59,15 +85,21 @@ from time import time
 
 class Py3status:
     # available configuration parameters
-    button_next = 4
-    button_prev = 5
-    color = None
+    align = 'center'
+    button_next = 5
+    button_prev = 4
+    button_toggle = 1
+    click_mode = 'all'
     cycle = 0
-    fixed_width = True
-    format = "GROUP: {output}"
+    fixed_width = False
+    format = None
+    format_button_open = u'-'
+    format_button_closed = u'+'
+    format_closed = u'{button}'
+    open = True
 
     class Meta:
-        include_py3_module = True
+        container = True
 
     def __init__(self):
         self.items = []
@@ -75,55 +107,63 @@ class Py3status:
         self.initialized = False
 
     def _init(self):
-        try:
-            self.py3_wrapper = self.py3_module.py3_wrapper
-        except AttributeError:
-            self.py3_wrapper = None
-
+        # if no items don't cycle
+        if not self.items:
+            self.cycle = 0
         self._cycle_time = time() + self.cycle
+        self.open = bool(self.open)
+        # set default format etc based on click_mode
+        if self.format is None:
+            if self.click_mode == 'button':
+                self.format = u'{output} {button}'
+            else:
+                self.format = u'{output}'
+        # if no button then force open
+        if '{button}' not in self.format:
+                self.open = True
+        self.py3.register_content_function(self._content_function)
         self.initialized = True
 
+    def _content_function(self):
+        '''
+        This returns a set containing the actively shown module.  This is so we
+        only get update events triggered for these modules.
+        '''
+        return set([self.items[self.active]])
+
     def _get_output(self):
-        if not self.items:
-            return
         if not self.fixed_width:
-            return self._get_current_output(self.active)
-        current = None
+            return self.py3.get_output(self.items[self.active])
+        # fixed width we need to find the width of all outputs
+        # and then pad with spaces to make correct width.
+        current = []
         widths = []
         for i in range(len(self.items)):
-            output = self._get_current_output(i)
+            output = self.py3.get_output(self.items[i])
             if not output:
                 continue
+            widths.append(sum([len(x['full_text']) for x in output]))
             if i == self.active:
                 current = output
-            widths.append(len(output['full_text']))
+                current_width = widths[-1]
         if widths:
             width = max(widths)
-            current['full_text'] += ' ' * (width - len(current['full_text']))
+            padding = ' ' * (width - current_width)
+            if self.align == 'right':
+                current[0]['full_text'] = padding + current[0]['full_text']
+            elif self.align == 'center':
+                cut = len(padding) // 2
+                current[0]['full_text'] = padding[:cut] + \
+                    current[0]['full_text']
+                current[-1]['full_text'] += padding[cut:]
+            else:
+                current[-1]['full_text'] += padding
         return current
-
-    def _get_current_output(self, item):
-        output = None
-        current = self.items[item]
-        py3_wrapper = self.py3_wrapper
-        if current in py3_wrapper.output_modules:
-            output = py3_wrapper.output_modules[current]['module'].get_latest()[0]
-        return output
 
     def _get_current_module_name(self):
         if not self.items:
             return
         return self.items[self.active]
-
-    def _get_current_module(self):
-        if not self.items:
-            return
-        current = self.items[self.active]
-        py3_wrapper = self.py3_wrapper
-        if current in py3_wrapper.modules:
-            return py3_wrapper.modules[current]
-        else:
-            return py3_wrapper.config.get(current)
 
     def _next(self):
         self.active = (self.active + 1) % len(self.items)
@@ -131,91 +171,85 @@ class Py3status:
     def _prev(self):
         self.active = (self.active - 1) % len(self.items)
 
-    def group(self, i3s_output_list, i3s_config):
+    def group(self):
         """
         Display a output of current module
         """
-        ready = self.initialized
-        if not ready:
+
+        # hide if no contents
+        if not self.items:
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'full_text': '',
+            }
+
+        if not self.initialized:
             self._init()
 
-        if self.cycle and time() >= self._cycle_time:
-            self._next()
-            self._cycle_time = time() + self.cycle
-        output = '?'
-        color = None
-        current_output = self._get_output()
+        if self.open:
+            if self.cycle and time() >= self._cycle_time:
+                self._next()
+                self._cycle_time = time() + self.cycle
+            current_output = self._get_output()
+            update_time = self.cycle or None
+        else:
+            current_output = []
+            update_time = None
 
-        if current_output:
-            output = current_output['full_text']
-            color = current_output.get('color')
-        update_time = self.cycle or 1000
+        if self.open:
+            format_control = self.format_button_open
+            format = self.format
+        else:
+            format_control = self.format_button_closed
+            format = self.format_closed
 
-        # on the first run contained items may not be displayed so make sure we
-        # check them again to ensure all is correct
-        if not ready:
-            update_time = 0.1
+        button = {'full_text': format_control, 'index': 'button'}
+        composites = {
+            'output': current_output,
+            'button': button,
+        }
+        output = self.py3.build_composite(format, composites=composites)
+
+        if update_time is not None:
+            cached_until = self.py3.time_in(update_time)
+        else:
+            cached_until = self.py3.CACHE_FOREVER
 
         response = {
-            'cached_until': time() + update_time,
-            'full_text': self.format.format(output=output)
+            'cached_until': cached_until,
+            'composite': output
         }
-        if color:
-            response['color'] = color
-        elif self.color:
-            response['color'] = self.color
         return response
 
-    def _call_i3status_config_on_click(self, module_name, event):
-        """
-        call any on_click event set in the config for the named module
-        """
-        config = self.py3_module.py3_wrapper.i3status_thread.config[
-            'on_click']
-        click_info = config.get(module_name, None)
-        if click_info:
-            action = click_info.get(event['button'])
-            if action:
-                # we have an action so call it
-                self.py3_module.py3_wrapper.events_thread.i3_msg(
-                    module_name, action)
-
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Switch the displayed module or pass the event on to the active module
         """
         if not self.items:
             return
+
+        # if click_mode is button then we only action clicks that are
+        # directly on the group not its contents.
+        if self.click_mode == 'button':
+            if (not self.py3.is_my_event(event) or
+                    event.get('index') != 'button'):
+                return
+
         # reset cycle time
         self._cycle_time = time() + self.cycle
         if self.button_next and event['button'] == self.button_next:
             self._next()
         if self.button_prev and event['button'] == self.button_prev:
             self._prev()
-
-        # any event set in the config for the group
-        name = self.py3_module.module_full_name
-        self._call_i3status_config_on_click(name, event)
-
-        # any event set in the config for the active module
-        current_module = self.items[self.active]
-        self._call_i3status_config_on_click(current_module, event)
-
-        # try the modules own click event
-        current_module = self._get_current_module()
-        current_module.click_event(event)
-        self.py3_wrapper.events_thread.refresh(
-            current_module.module_full_name)
+        if self.button_toggle and event['button'] == self.button_toggle:
+            # we only toggle if button was used
+            if event.get('index') == 'button':
+                self.open = not self.open
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {}
-
-    while True:
-        print(x.group([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

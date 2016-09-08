@@ -5,15 +5,11 @@ Display Yahoo! Weather forecast as icons.
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
-Find your city code using:
-        http://answers.yahoo.com/question/index?qid=20091216132708AAf7o0g
-
 Find your woeid using:
         http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
     cache_timeout: how often to check for new forecasts
-    city_code: city code to use
     forecast_days: how many forecast days you want shown
     forecast_include_today: show today's forecast, default false. Note that
         `{today}` in `format` shows the current conditions, while this variable
@@ -37,33 +33,39 @@ Configuration parameters:
     icon_sun: sun icon, default '☀'
     request_timeout: check timeout
     units: Celsius (C) or Fahrenheit (F)
-    woeid: use Yahoo woeid (extended location) instead of city_code
+    woeid: Yahoo woeid (extended location)
 
-The city_code in this example is for Paris, France => FRXX0076
+The WOEID in this example is for Paris, France => 615702
+
+```
+weather_yahoo {
+    woeid = 615702
+    format_today = "Now: {icon}{temp}°{units} {text}"
+    forecast_days = 5
+}
+```
 
 @author ultrabug, rail
 """
 
-from time import time
 import requests
 
 
 class Py3status:
 
     # available configuration parameters
-    cache_timeout = 1800
-    city_code = 'FRXX0076'
+    cache_timeout = 7200
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{today} {forecasts}'
-    format_forecast = '{icon}'
-    format_today = '{icon}'
-    icon_cloud = '☁'
-    icon_default = '?'
-    icon_rain = '☂'
-    icon_snow = '☃'
-    icon_sun = '☀'
+    format = u'{today} {forecasts}'
+    format_forecast = u'{icon}'
+    format_today = u'{icon}'
+    icon_cloud = u'☁'
+    icon_default = u'?'
+    icon_rain = u'☂'
+    icon_snow = u'☃'
+    icon_sun = u'☀'
     request_timeout = 10
     units = 'c'
     woeid = None
@@ -72,20 +74,26 @@ class Py3status:
         """
         Ask Yahoo! Weather. for a forecast
         """
-        where = 'location="%s"' % self.city_code
-        if self.woeid:
-            where = 'woeid="%s"' % self.woeid
-        q = requests.get(
-            'http://query.yahooapis.com/v1/public/yql?q=' +
-            'select * from weather.forecast ' +
-            'where {where} and u="{units}"&format=json'.format(
-                where=where, units=self.units.lower()[0]),
-            timeout=self.request_timeout
-        )
+        try:
+            q = requests.get(
+                'https://query.yahooapis.com/v1/public/yql?q=' +
+                'select * from weather.forecast ' +
+                'where woeid="{woeid}" and u="{units}"&format=json'.format(
+                    woeid=self.woeid, units=self.units.lower()[0]) +
+                '&env=store://datatables.org/alltableswithkeys',
+                timeout=self.request_timeout
+            )
+        except requests.ConnectionError:
+            return None, None
+        except requests.ReadTimeout:
+            return None, None
         q.raise_for_status()
         r = q.json()
-        today = r['query']['results']['channel']['item']['condition']
-        forecasts = r['query']['results']['channel']['item']['forecast']
+        try:
+            today = r['query']['results']['channel']['item']['condition']
+            forecasts = r['query']['results']['channel']['item']['forecast']
+        except TypeError:
+            return None, None
         if not self.forecast_include_today:
             # Do not include today in forecasts
             forecasts.pop(0)
@@ -133,16 +141,21 @@ class Py3status:
 
         return self.icon_default
 
-    def weather_yahoo(self, i3s_output_list, i3s_config):
+    def weather_yahoo(self):
         """
         This method gets executed by py3status
         """
+        if not self.woeid:
+            raise Exception('missing woeid setting, please configure it')
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
 
         today, forecasts = self._get_forecast()
+        if today is None and forecasts is None:
+            response['cached_until'] = self.py3.time_in(30)
+            return response
         units = self.units.upper()[0]
         today_text = self.format_today.format(icon=self._get_icon(today),
                                               units=units, **today)
@@ -157,14 +170,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.weather_yahoo([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

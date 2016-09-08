@@ -5,13 +5,14 @@ Display the current network transfer rate.
 Configuration parameters:
     all_interfaces: ignore self.interfaces, but not self.interfaces_blacklist
     devfile: location of dev file under /proc
-    format_no_connection: when there is no data transmitted from the start of the plugin
+    format_no_connection: when there is no data transmitted from the
+        start of the plugin
     hide_if_zero: hide indicator if rate == 0
     interfaces: comma separated list of interfaces to track
     interfaces_blacklist: comma separated list of interfaces to ignore
     precision: amount of numbers after dot
 
-Format of status string placeholders:
+Format placeholders:
     {down} download rate
     {interface} name of interface
     {total} total rate
@@ -24,10 +25,16 @@ Format of status string placeholders:
 from __future__ import division  # python2 compatibility
 from time import time
 
-INITIAL_MULTI = 1024  # initial multiplier, if you want to get rid of first bytes, set to 1 to disable
-MULTIPLIER_TOP = 999  # if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-UNIT_MULTI = 1024  # value to divide if rate is greater than MULTIPLIER_TOP
-UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]  # list of units, first one - value/INITIAL_MULTI, second - value/1024, third - value/1024^2, etc...
+# initial multiplier, if you want to get rid of first bytes, set to 1 to
+# disable
+INITIAL_MULTI = 1024
+# if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
+MULTIPLIER_TOP = 999
+# value to divide if rate is greater than MULTIPLIER_TOP
+UNIT_MULTI = 1024
+# list of units, first one - value/INITIAL_MULTI, second - value/1024, third -
+# value/1024^2, etc...
+UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
 
 
 class Py3status:
@@ -56,7 +63,7 @@ class Py3status:
         self.last_stat = self._get_stat()
         self.last_time = time()
 
-    def currentSpeed(self, i3s_output_list, i3s_config):
+    def currentSpeed(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):
             self.interfaces = self.interfaces.split(',')
@@ -68,7 +75,9 @@ class Py3status:
             self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
         else:
             self.left_align = len(str(MULTIPLIER_TOP))
-        self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
+        self.value_format = "{value:%s.%sf} {unit}" % (
+            self.left_align, self.precision
+        )
 
         ns = self._get_stat()
         deltas = {}
@@ -111,7 +120,7 @@ class Py3status:
             hide = self.hide_if_zero
 
         return {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': "" if hide else
             self.format.format(
                 total=self._divide_and_format(delta['total']),
@@ -164,14 +173,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.currentSpeed([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

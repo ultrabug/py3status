@@ -1,22 +1,24 @@
-import sys
 import os
 import imp
 import inspect
 
 from threading import Thread, Timer
 from collections import OrderedDict
-from syslog import syslog, LOG_INFO, LOG_WARNING
 from time import time
 
+from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
 
 
 class Module(Thread):
     """
     This class represents a user module (imported file).
-    It is reponsible for executing it every given interval and
+    It is responsible for executing it every given interval and
     caching its output based on user will.
     """
+
+    PARAMS_NEW = 'new'
+    PARAMS_LEGACY = 'legacy'
 
     def __init__(self, module, user_modules, py3_wrapper):
         """
@@ -26,6 +28,7 @@ class Module(Thread):
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
+        self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
@@ -36,14 +39,20 @@ class Module(Thread):
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
         self.new_update = False
-        self.module_full_name = module
         self.nagged = False
-        self.py3_wrapper = py3_wrapper
+        self.prevent_refresh = False
+        self.sleeping = False
         self.timer = None
-        # if the module is part of a group then we want to store it's name
-        self.group = self.i3status_thread.config.get(module, {}).get('.group')
+
+        # py3wrapper this is private and any modules accessing their instance
+        # should only use it on the understanding that it is not supported.
+        self._py3_wrapper = py3_wrapper
         #
+        self.set_module_options(module)
         self.load_methods(module, user_modules)
+
+    def __repr__(self):
+        return '<Module {}>'.format(self.module_full_name)
 
     @staticmethod
     def load_from_file(filepath):
@@ -73,26 +82,202 @@ class Module(Thread):
         class_inst = py_mod.Py3status()
         return class_inst
 
-    def clear_cache(self):
+    def start_module(self):
         """
-        Reset the cache for all methods of this module.
+        Start the module running.
         """
+        # Modules can define a post_config_hook() method which will be run
+        # after the module has had it config settings applied and before it has
+        # its main method(s) called for the first time.  This allows modules to
+        # perform any necessary setup.
+        if self.has_post_config_hook:
+            self.module_class.post_config_hook()
+        # Start the module and call its output method(s)
+        self.start()
+
+    def force_update(self):
+        """
+        Forces an update of the module.
+        """
+        # clear cached_until for each method to allow update
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
-                syslog(LOG_INFO, 'clearing cache for method {}'.format(meth))
+                self._py3_wrapper.log('clearing cache for method {}'.format(meth))
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+        # get the thread to update itself
+        self.timer = Timer(0, self.run)
+        self.timer.start()
+
+    def sleep(self):
+        self.sleeping = True
+        # cancel any existing timer
+        if self.timer:
+            self.timer.cancel()
+
+    def wake(self):
+        self.sleeping = False
+        if self.cache_time is None:
+            return
+        # new style modules can signal they want to cache forever
+        if self.cache_time == PY3_CACHE_FOREVER:
+            return
+        # restart
+        delay = max(self.cache_time - time(), 0)
+        self.timer = Timer(delay, self.run)
+        self.timer.start()
 
     def set_updated(self):
         """
-        Mark the module as updated
+        Mark the module as updated.
+        We check if the actual content has changed and if so we trigger an
+        update in py3status.
         """
-        self.py3_wrapper.notify_update(self.module_full_name)
-
-    def get_latest(self):
+        # get latest output
         output = []
         for method in self.methods.values():
-            output.append(method['last_output'])
-        return output
+            data = method['last_output']
+            if isinstance(data, list):
+                output.extend(data)
+            else:
+                output.append(data)
+        # if changed store and force display update.
+        if output != self.last_output:
+            self.last_output = output
+            self._py3_wrapper.notify_update(self.module_full_name)
+
+    def get_latest(self):
+        """
+        return latest output.
+        """
+        return self.last_output
+
+    def set_module_options(self, module):
+        """
+        Set universal module options to be interpreted by i3bar
+        https://i3wm.org/i3status/manpage.html#_universal_module_options
+        """
+        self.module_options = {}
+        mod_config = self.i3status_thread.config.get(module, {})
+
+        if 'min_width' in mod_config:
+            self.module_options['min_width'] = mod_config['min_width']
+
+        if 'separator' in mod_config:
+            separator = mod_config['separator']
+            if not isinstance(separator, bool):
+                err = 'invalid "separator" attribute, should be a bool'
+                raise TypeError(err)
+
+            self.module_options['separator'] = separator
+
+        if 'separator_block_width' in mod_config:
+            sep_block_width = mod_config['separator_block_width']
+            if not isinstance(sep_block_width, int):
+                err = 'invalid "separator_block_width" attribute, '
+                err += "should be an int"
+                raise TypeError(err)
+
+            self.module_options['separator_block_width'] = sep_block_width
+
+        if 'align' in mod_config:
+            align = mod_config['align']
+            if not (isinstance(align, str) and
+                    align.lower() in ("left", "center", "right")):
+                err = 'invalid "align" attribute, valid values are:'
+                err += ' left, center, right'
+                raise ValueError(err)
+
+            self.module_options['align'] = align
+
+    def process_composite(self, response):
+        """
+        Process a composite response.
+        composites do not have inter item separators as they appear joined.
+        We need to respect the universal options too.
+        """
+        composite = response['composite']
+        if not isinstance(composite, list):
+            raise Exception('expecting "composite" key in response')
+        # if list is empty nothing to do
+        if not len(composite):
+            return
+        if 'full_text' in response:
+            err = 'conflicting "full_text" and "composite" in response'
+            raise Exception(err)
+        # set universal options on last component
+        composite[-1].update(self.module_options)
+        # calculate any min width (we split this across components)
+        min_width = None
+        if 'min_width' in self.module_options:
+            min_width = int(self.module_options['min_width'] / len(composite))
+        # store alignment
+        align = None
+        if 'align' in self.module_options:
+            align = self.module_options['align']
+
+        # update all components
+        color = response.get('color')
+        for index, item in enumerate(response['composite']):
+            # validate the response
+            if 'full_text' not in item:
+                raise KeyError('missing "full_text" key in response')
+            # make sure all components have a name
+            if 'name' not in item:
+                instance_index = item.get('index', index)
+                item['instance'] = '{} {}'.format(
+                    self.module_inst, instance_index
+                )
+                item['name'] = self.module_name
+            # hide separator for all inner components unless existing
+            if index != len(response['composite']) - 1:
+                if 'separator' not in item:
+                    item['separator'] = False
+                    item['separator_block_width'] = 0
+            # set min width
+            if min_width:
+                item['min_width'] = min_width
+            # set align
+            if align:
+                item['align'] = align
+            # If a color was supplied for the composite and a composite
+            # part does not supply a color, use the composite color.
+            if color and 'color' not in item:
+                item['color'] = color
+
+    def _params_type(self, method_name, instance):
+        """
+        Check to see if this is a legacy method or shiny new one
+
+        legacy update method:
+            def update(self, i3s_output_list, i3s_config):
+                ...
+
+        new update method:
+            def update(self):
+                ...
+
+        Returns False if the method does not exist,
+        else PARAMS_NEW or PARAMS_LEGACY
+        """
+
+        method = getattr(instance, method_name, None)
+        if not method:
+            return False
+
+        # Check the parameters we simply count the number of args and don't
+        # allow any extras like keywords.
+        arg_count = 1
+        # on_click method has extra events parameter
+        if method_name == 'on_click':
+            arg_count = 2
+        args, vargs, kw, defaults = inspect.getargspec(method)
+        if len(args) == arg_count and not vargs and not kw:
+            return self.PARAMS_NEW
+        else:
+            return self.PARAMS_LEGACY
 
     def load_methods(self, module, user_modules):
         """
@@ -106,19 +291,27 @@ class Module(Thread):
         # user provided modules take precedence over py3status provided modules
         if self.module_name in user_modules:
             include_path, f_name = user_modules[self.module_name]
-            syslog(LOG_INFO,
-                   'loading module "{}" from {}{}'.format(module, include_path,
-                                                          f_name))
+            self._py3_wrapper.log(
+                'loading module "{}" from {}{}'.format(module, include_path,
+                                                       f_name))
             class_inst = self.load_from_file(include_path + f_name)
         # load from py3status provided modules
         else:
-            syslog(LOG_INFO,
-                   'loading module "{}" from py3status.modules.{}'.format(
-                       module, self.module_name))
+            self._py3_wrapper.log(
+                'loading module "{}" from py3status.modules.{}'.format(
+                    module, self.module_name))
             class_inst = self.load_from_namespace(self.module_name)
 
         if class_inst:
             self.module_class = class_inst
+            try:
+                # containers have items attribute set to a list of contained
+                # module instance names.  If there are no contained items then
+                # ensure that we have a empty list.
+                if class_inst.Meta.container:
+                    class_inst.items = []
+            except AttributeError:
+                pass
 
             # apply module configuration from i3status config
             mod_config = self.i3status_thread.config.get(module, {})
@@ -127,13 +320,9 @@ class Module(Thread):
                 if not config.startswith('.'):
                     setattr(self.module_class, config, value)
 
-            # check if module has meta class
-            if hasattr(self.module_class, 'Meta'):
-                meta = self.module_class.Meta
-                if inspect.isclass(meta):
-                    # module wants it's Module
-                    if getattr(meta, 'include_py3_module', False):
-                        setattr(self.module_class, 'py3_module', self)
+            # Add the py3 module helper if modules self.py3 is not defined
+            if not hasattr(self.module_class, 'py3'):
+                setattr(self.module_class, 'py3', Py3(self))
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
@@ -142,15 +331,19 @@ class Module(Thread):
                 else:
                     m_type = type(getattr(class_inst, method))
                     if 'method' in str(m_type):
+                        params_type = self._params_type(method, class_inst)
                         if method == 'on_click':
-                            self.click_events = True
+                            self.click_events = params_type
                         elif method == 'kill':
-                            self.has_kill = True
+                            self.has_kill = params_type
+                        elif method == 'post_config_hook':
+                            self.has_post_config_hook = True
                         else:
                             # the method_obj stores infos about each method
                             # of this module.
                             method_obj = {
                                 'cached_until': time(),
+                                'call_type': params_type,
                                 'instance': None,
                                 'last_output': {
                                     'name': method,
@@ -161,26 +354,34 @@ class Module(Thread):
                             }
                             self.methods[method] = method_obj
 
-        # done, syslog some debug info
+        # done, log some debug info
         if self.config['debug']:
-            syslog(LOG_INFO,
-                   'module "{}" click_events={} has_kill={} methods={}'.format(
-                       module, self.click_events, self.has_kill,
-                       self.methods.keys()))
+            self._py3_wrapper.log(
+                'module "{}" click_events={} has_kill={} methods={}'.format(
+                    module, self.click_events, self.has_kill,
+                    self.methods.keys()))
 
     def click_event(self, event):
         """
         Execute the 'on_click' method of this module with the given event.
         """
+        # we can prevent request that a refresh after the event has happened
+        # by setting this to True.  Modules should do this via
+        # py3.prevent_refresh()
+        self.prevent_refresh = False
         try:
             click_method = getattr(self.module_class, 'on_click')
-            click_method(self.i3status_thread.json_list,
-                         self.i3status_thread.config['general'], event)
+            if self.click_events == self.PARAMS_NEW:
+                # new style modules
+                click_method(event)
+            else:
+                # legacy modules had extra parameters passed
+                click_method(self.i3status_thread.json_list,
+                             self.i3status_thread.config['general'], event)
             self.set_updated()
         except Exception:
-            err = sys.exc_info()[1]
-            msg = 'on_click failed with ({}) for event ({})'.format(err, event)
-            syslog(LOG_WARNING, msg)
+            msg = 'on_click event in `{}` failed'.format(self.module_full_name)
+            self._py3_wrapper.report_exception(msg)
 
     @profile
     def run(self):
@@ -213,8 +414,14 @@ class Module(Thread):
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    response = method(self.i3status_thread.json_list,
-                                      self.i3status_thread.config['general'])
+                    if my_method['call_type'] == self.PARAMS_NEW:
+                        # new style modules
+                        response = method()
+                    else:
+                        # legacy modules had parameters passed
+                        response = method(
+                            self.i3status_thread.json_list,
+                            self.i3status_thread.config['general'])
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -227,12 +434,18 @@ class Module(Thread):
                     else:
                         raise TypeError('response should be a dict')
 
-                    # validate the response
-                    if 'full_text' not in result:
-                        raise KeyError('missing "full_text" key in response')
+                    if 'composite' in response:
+                        self.process_composite(response)
                     else:
-                        result['instance'] = self.module_inst
-                        result['name'] = self.module_name
+                        # validate the response
+                        if 'full_text' not in result:
+                            err = 'missing "full_text" key in response'
+                            raise KeyError(err)
+                        # set universal module options in result
+                        result.update(self.module_options)
+
+                    result['instance'] = self.module_inst
+                    result['name'] = self.module_name
 
                     # initialize method object
                     if my_method['name'] is None:
@@ -245,48 +458,48 @@ class Module(Thread):
                     # update method object cache
                     if 'cached_until' in result:
                         cached_until = result['cached_until']
+                        # remove this so we can check later for output changes
+                        del result['cached_until']
                     else:
-                        cached_until = time() + self.config['cache_timeout']
+                        # get module default cached_until
+                        cached_until = self.module_class.py3.time_in()
                     my_method['cached_until'] = cached_until
                     if not cache_time or cached_until < cache_time:
                         cache_time = cached_until
 
                     # update method object output
-                    my_method['last_output'] = result
+                    if 'composite' in response:
+                        my_method['last_output'] = result['composite']
+                    else:
+                        my_method['last_output'] = result
 
                     # mark module as updated
                     self.set_updated()
 
                     # debug info
                     if self.config['debug']:
-                        syslog(LOG_INFO,
-                               'method {} returned {} '.format(meth, result))
+                        self._py3_wrapper.log(
+                            'method {} returned {} '.format(meth, result))
                 except Exception:
-                    err = sys.exc_info()[1]
-                    msg = 'user method {} failed ({})'.format(meth, err)
-                    syslog(LOG_WARNING, msg)
-                    if not self.nagged:
-                        self.py3_wrapper.i3_nagbar(msg, level='warning')
-                        self.nagged = True
-
-            # if in a group then force the group to update
-            if self.group:
-                group_module = self.py3_wrapper.modules.get(self.group)
-                if group_module:
-                    for obj in group_module.methods.values():
-                        obj['cached_until'] = time()
-                    group_module.run()
+                    msg = 'Instance `{}`, user method `{}` failed'
+                    msg = msg.format(self.module_full_name, meth)
+                    notify = not self.nagged
+                    self._py3_wrapper.report_exception(msg, notify_user=notify)
+                    self.nagged = True
 
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
-
+            # new style modules can signal they want to cache forever
+            if cache_time == PY3_CACHE_FOREVER:
+                return
             # don't be hasty mate
             # set timer to do update next time one is needed
-            delay = max(cache_time - time(),
-                        self.config['minimum_interval'])
-            self.timer = Timer(delay, self.run)
-            self.timer.start()
+            if not self.sleeping:
+                delay = max(cache_time - time(),
+                            self.config['minimum_interval'])
+                self.timer = Timer(delay, self.run)
+                self.timer.start()
 
     def kill(self):
         # stop timer if exists
@@ -296,8 +509,12 @@ class Module(Thread):
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, 'kill')
-                kill_method(self.i3status_thread.json_list,
-                            self.i3status_thread.config['general'])
+                if self.has_kill == self.PARAMS_NEW:
+                    kill_method()
+                else:
+                    # legacy call parameters
+                    kill_method(self.i3status_thread.json_list,
+                                self.i3status_thread.config['general'])
             except Exception:
                 # this would be stupid to die on exit
                 pass
