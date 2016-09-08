@@ -38,7 +38,7 @@ class Py3status:
     color = '#FFFFFF'
     device_path = None
     format = u'☼: {level}%'
-    
+
     def backlight(self,  i3s_output_list, i3s_config):
         if not self.device_path:
             if not hasattr(self, 'device'):
