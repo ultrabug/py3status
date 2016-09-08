@@ -43,6 +43,7 @@ class Module(Thread):
         self.prevent_refresh = False
         self.sleeping = False
         self.timer = None
+        self.urgent = False
 
         # py3wrapper this is private and any modules accessing their instance
         # should only use it on the understanding that it is not supported.
@@ -145,8 +146,16 @@ class Module(Thread):
                 output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
+            # has the modules output become urgent?
+            # we only care the update that this happens
+            # not any after then.
+            urgent = True in [x.get('urgent') for x in output]
+            if urgent != self.urgent:
+                self.urgent = urgent
+            else:
+                urgent = False
             self.last_output = output
-            self._py3_wrapper.notify_update(self.module_full_name)
+            self._py3_wrapper.notify_update(self.module_full_name, urgent)
 
     def get_latest(self):
         """

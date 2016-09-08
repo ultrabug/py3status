@@ -121,8 +121,8 @@ class Py3status:
         # if no button then force open
         if '{button}' not in self.format:
                 self.open = True
-        self.py3.register_content_function(self._content_function)
-        self.initialized = True
+        self.py3.register_function('content_function', self._content_function)
+        self.py3.register_function('urgent_function', self._urgent_function)
 
     def _content_function(self):
         '''
@@ -130,6 +130,14 @@ class Py3status:
         only get update events triggered for these modules.
         '''
         return set([self.items[self.active]])
+
+    def _urgent_function(self, module_list):
+        '''
+        A contained module has become urgent.  We want to display it to the user
+        '''
+        for module in module_list:
+            if module in self.items:
+                self.active = self.items.index(module)
 
     def _get_output(self):
         if not self.fixed_width:

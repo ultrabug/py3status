@@ -446,7 +446,7 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
-    def notify_update(self, update):
+    def notify_update(self, update, urgent=False):
         """
         Name or list of names of modules that have updated.
         """
@@ -464,6 +464,10 @@ class Py3statusWrapper():
         for container in containers_to_update:
             container_module = self.output_modules.get(container)
             if container_module:
+                # If the container registered a urgent_function then call it
+                # if this update is urgent.
+                if urgent and container_module.get('urgent_function'):
+                    container_module['urgent_function'](update)
                 # If a container has registered a content_function we use that
                 # to see if the container needs to be updated.
                 # We only need to update containers if their active content has
