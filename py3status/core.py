@@ -296,6 +296,7 @@ class Py3statusWrapper():
             i3s_mode = 'mocked'
         else:
             i3s_mode = 'started'
+            self.i3status_thread.daemon = True
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
                 if not self.i3status_thread.is_alive():
@@ -313,6 +314,7 @@ class Py3statusWrapper():
 
         # setup input events thread
         self.events_thread = Events(self)
+        self.events_thread.daemon = True
         self.events_thread.start()
         if self.config['debug']:
             self.log('events thread started')
