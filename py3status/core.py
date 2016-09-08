@@ -667,20 +667,23 @@ class Py3statusWrapper():
         # initialize usage variables
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
-        self.create_output_modules()
 
         # prepare the color mappings
         self.create_mappings(config)
 
-        # start modules
         # self.output_modules needs to have been created before modules are
         # started.  This is so that modules can do things like register their
-        # content_functionn.
+        # content_function.
+        self.create_output_modules()
+
+        # Some modules need to be prepared before they can run
+        # eg run their post_config_hook
+        for module in self.modules.values():
+            module.prepare_module()
+
+        # start modules
         for module in self.modules.values():
             module.start_module()
-
-        # update queue populate with all py3modules
-        self.queue.extend(self.modules)
 
         # this will be our output set to the correct length for the number of
         # items in the bar
