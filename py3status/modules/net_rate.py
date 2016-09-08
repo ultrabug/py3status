@@ -15,12 +15,19 @@ Configuration parameters:
     interfaces_blacklist: comma separated list of interfaces to ignore
         (default 'lo')
     precision: amount of numbers after dot (default 1)
+    threshold_fast: threshold above which the data transfer is considered fast
+    threshold_slow: threshold below which the data transfer is considered slow
 
 Format placeholders:
     {down} download rate
     {interface} name of interface
     {total} total rate
     {up} upload rate
+
+Color conditionals:
+    {down} Change color based on the value of down
+    {total} Change color based on the value of total
+    {up} Change color based on the value of up
 
 @author shadowprince
 @license Eclipse Public License
@@ -54,6 +61,8 @@ class Py3status:
     interfaces = ''
     interfaces_blacklist = 'lo'
     precision = 1
+    threshold_fast = 1024
+    threshold_slow = 1
 
     def __init__(self, *args, **kwargs):
         """
@@ -123,16 +132,44 @@ class Py3status:
             interface = None
             hide = self.hide_if_zero
 
-        return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': "" if hide else
-            self.py3.safe_format(self.format,
-                                 dict(total=self._divide_and_format(delta['total']),
-                                      up=self._divide_and_format(delta['up']),
-                                      down=self._divide_and_format(delta['down']),
-                                      interface=interface[:-1])
-                                 ) if interface else self.format_no_connection
-        }
+        if interface:
+
+            if delta['down'] < self.threshold_slow:
+                self.py3.COLOR_DOWN = self.py3.COLOR_BAD
+            elif delta['down'] < self.threshold_fast:
+                self.py3.COLOR_DOWN = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_DOWN = self.py3.COLOR_GOOD
+
+            if delta['total'] < self.threshold_slow:
+                self.py3.COLOR_TOTAL = self.py3.COLOR_BAD
+            elif delta['total'] < self.threshold_fast:
+                self.py3.COLOR_TOTAL = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_TOTAL = self.py3.COLOR_GOOD
+
+            if delta['up'] < self.threshold_slow:
+                self.py3.COLOR_UP = self.py3.COLOR_BAD
+            elif delta['up'] < self.threshold_fast:
+                self.py3.COLOR_UP = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_UP = self.py3.COLOR_GOOD
+
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+
+        if hide:
+            response['full_text'] = ""
+        elif not interface:
+            response['full_text'] = self.format_no_connection
+        else:
+            response['full_text'] = self.py3.safe_format(self.format, {
+                'down': self._divide_and_format(delta['down']),
+                'total': self._divide_and_format(delta['total']),
+                'up': self._divide_and_format(delta['up']),
+                'interface': interface[:-1],
+                })
+
+        return response
 
     def _get_stat(self):
         """
