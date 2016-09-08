@@ -192,27 +192,6 @@ class Py3status:
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, self.values)
         }
-                #'cpu_usage': '%.2f' % (cpu_usage),
-                #'cpu_temp': cpu_temp,
-                #'mem_used': '%.2f' % mem_used,
-                #'mem_total': '%.2f' % mem_total,
-                #'mem_used_percent': '%.2f' % mem_used_percent,
-
-        #if '{cpu_usage}' in self.format:
-        #    if ('{mem_used_percent}' in self.format
-        #            or '{mem_used}' in self.format):
-        #        threshold = max(cpu_usage, mem_used_percent)
-        #    else:
-        #        threshold = cpu_usage
-        #else:
-        #    threshold = mem_used_percent
-
-        #if threshold <= self.med_threshold:
-        #    response['color'] = self.py3.COLOR_GOOD
-        #elif (threshold <= self.high_threshold):
-        #    response['color'] = self.py3.COLOR_DEGRADED
-        #else:
-        #    response['color'] = self.py3.COLOR_BAD
 
         return response
 
