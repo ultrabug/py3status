@@ -3,10 +3,11 @@
 Display the current screen backlight level.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default: 10s)
-    color:  The text color (default: "#FFFFFF")
-    device: The backlight device
-            If not specified the plugin will try to detect it automatically
+    cache_timeout: How often we refresh this module in seconds (default: 10s)
+    color:         The text color (default: "#FFFFFF")
+    device:        The backlight device
+                   If not specified the plugin will detect it automatically
+    format:        Display brightness, see placeholders below
 
 Format status string parameters:
     {level} brightness
@@ -35,17 +36,19 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     color = '#FFFFFF'
+    device_path = None
     format = u'☼: {level}%'
-
+    
     def backlight(self,  i3s_output_list, i3s_config):
-        if(not hasattr(self, 'device')):
-            device_path = get_device_path()
-        else:
-            device_path = "/sys/class/backlight/%s" % self.device
+        if not self.device_path:
+            if not hasattr(self, 'device'):
+                self.device_path = get_device_path()
+            else:
+                self.device_path = "/sys/class/backlight/%s" % self.device
 
-        for brightness_line in open("%s/brightness" % device_path, 'rb'):
+        for brightness_line in open("%s/brightness" % self.device_path, 'rb'):
             brightness = int(brightness_line)
-        for brightness_max_line in open("%s/max_brightness" % device_path, 'rb'):
+        for brightness_max_line in open("%s/max_brightness" % self.device_path, 'rb'):
             brightness_max = int(brightness_max_line)
 
         full_text = self.format.format(level=(brightness * 100 // brightness_max))
