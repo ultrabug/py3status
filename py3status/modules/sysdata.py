@@ -10,6 +10,12 @@ Configuration parameters:
         (default 75)
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
         (default 40)
+    padding: length of space padding to use on the left
+        (default: 0)
+    precision: precision of values
+        (default: 2)
+    zone: thermal zone to use. If None try to guess CPU temperature
+        (default: None)
 
 Format placeholders:
     {cpu_temp} cpu temperature
@@ -22,6 +28,11 @@ Color options:
     color_bad: Above high_threshold
     color_degraded: Above med_threshold
     color_good: Below or equal to med_threshold
+
+Color conditionals:
+    cpu: change color based on the value of cpu_usage
+    mem: change color based on the value of mem_used_percent
+    temp: change color based on the value of cpu_temp
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
@@ -92,7 +103,7 @@ class GetData:
         # Results are in gigabytes
         return total_mem, used_mem, used_mem_p
 
-    def cpuTemp(self):
+    def cpuTemp(self, zone):
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
@@ -100,16 +111,21 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
-        sensors = subprocess.check_output(
-            'sensors',
-            shell=True,
-            universal_newlines=True,
-        )
-        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
-        if m:
-            cpu_temp = m.groups()[1].strip()
+        if zone:
+            cpu_temp = float(subprocess.check_output(['sensors', zone])
+                             .split()[7].decode("utf-8")[1:-2])
+
         else:
-            cpu_temp = 'Unknown'
+            sensors = subprocess.check_output(
+                'sensors',
+                shell=True,
+                universal_newlines=True,
+            )
+            m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+            if m:
+                cpu_temp = float(m.groups()[1].strip()[:-2])
+            else:
+                cpu_temp = 0
 
         return cpu_temp
 
@@ -123,59 +139,63 @@ class Py3status:
         "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
     high_threshold = 75
     med_threshold = 40
+    precision = 2
+    padding = 0
+    zone = None
 
     def __init__(self):
         self.data = GetData()
         self.cpu_total = 0
         self.cpu_idle = 0
+        self.values = {}
 
     def sysData(self):
+        value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
+
         # get CPU usage info
-        cpu_total, cpu_idle = self.data.cpu()
-        cpu_usage = (1 - (
-            float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
-            )) * 100
-        self.cpu_total = cpu_total
-        self.cpu_idle = cpu_idle
+        if '{cpu_usage}' in self.format:
+            cpu_total, cpu_idle = self.data.cpu()
+            cpu_usage = (1 - (
+                float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
+                )) * 100
+            self.values['cpu_usage'] = value_format.format(cpu_usage)
+            self.cpu_total = cpu_total
+            self.cpu_idle = cpu_idle
+            if cpu_usage > self.high_threshold:
+                self.py3.COLOR_CPU = self.py3.COLOR_BAD
+            elif cpu_usage > self.med_threshold:
+                self.py3.COLOR_CPU = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_CPU = self.py3.COLOR_GOOD
 
         # if specified as a formatting option, also get the CPU temperature
         if '{cpu_temp}' in self.format:
-            cpu_temp = self.data.cpuTemp()
-        else:
-            cpu_temp = ''
+            cpu_temp = self.data.cpuTemp(self.zone)
+            self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
+            if cpu_temp > self.high_threshold:
+                self.py3.COLOR_TEMP = self.py3.COLOR_BAD
+            elif cpu_temp > self.med_threshold:
+                self.py3.COLOR_TEMP = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_TEMP = self.py3.COLOR_GOOD
 
         # get RAM usage info
-        mem_total, mem_used, mem_used_percent = self.data.memory()
+        if '{mem_' in self.format:
+            mem_total, mem_used, mem_used_percent = self.data.memory()
+            self.values['mem_total'] = value_format.format(mem_total)
+            self.values['mem_used'] = value_format.format(mem_used)
+            self.values['mem_used_percent'] = value_format.format(mem_used_percent)
+            if mem_used_percent > self.high_threshold:
+                self.py3.COLOR_MEM = self.py3.COLOR_BAD
+            elif mem_used_percent > self.med_threshold:
+                self.py3.COLOR_MEM = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_MEM = self.py3.COLOR_GOOD
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format,
-                dict(
-                    cpu_usage='%.2f' % (cpu_usage),
-                    cpu_temp=cpu_temp,
-                    mem_used='%.2f' % mem_used,
-                    mem_total='%.2f' % mem_total,
-                    mem_used_percent='%.2f' % mem_used_percent,
-                )
-            )
+            'full_text': self.py3.safe_format(self.format, self.values)
         }
-
-        if '{cpu_usage}' in self.format:
-            if ('{mem_used_percent}' in self.format
-                    or '{mem_used}' in self.format):
-                threshold = max(cpu_usage, mem_used_percent)
-            else:
-                threshold = cpu_usage
-        else:
-            threshold = mem_used_percent
-
-        if threshold <= self.med_threshold:
-            response['color'] = self.py3.COLOR_GOOD
-        elif (threshold <= self.high_threshold):
-            response['color'] = self.py3.COLOR_DEGRADED
-        else:
-            response['color'] = self.py3.COLOR_BAD
 
         return response
 
