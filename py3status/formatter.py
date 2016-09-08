@@ -55,11 +55,11 @@ class Block:
         self.options.append(self.content)
         self.content = []
 
-    def mark_valid(self):
+    def mark_valid(self, index=None):
         """
         Mark the current block as valid. Propogate this to any parent blocks
         """
-        self.valid_blocks.add(len(self.options))
+        self.valid_blocks.add(index or len(self.options))
         if self.parent:
             self.parent.mark_valid()
 
@@ -70,10 +70,13 @@ class Block:
         """
         self.commands.update(parse_qsl(commands, keep_blank_values=True))
 
-    def is_valid_by_command(self):
+    def is_valid_by_command(self, index=None):
         """
         Check if we have a command forcing the block to be valid or not
         """
+        # If this is not the first option in a block we ignore it.
+        if index:
+            return None
         if 'if' in self.commands:
             _if = self.commands['if']
             if _if and _if.startswith('!'):
@@ -95,8 +98,12 @@ class Block:
         """
         Mark block valid if a command requests
         """
-        if self.is_valid_by_command():
+        cmd_state = self.is_valid_by_command()
+        if cmd_state is True:
             self.mark_valid()
+        elif cmd_state is False:
+            # This enables the second option in a block if \?if=.. is false.
+            self.mark_valid(index=1)
 
     def show(self, is_composite):
         """
@@ -115,7 +122,7 @@ class Block:
             if index in self.valid_blocks:
                 # A block may be valid but has a command that causes this to be
                 # disregarded.
-                if self.is_valid_by_command() is False:
+                if self.is_valid_by_command(index) is False:
                     continue
                 # add the content of the block and any children
                 # to the output
@@ -592,6 +599,14 @@ if __name__ == '__main__':
         {
             'format': '[\?if=no Hello[ {name}]]',
             'expected': '',
+        },
+        {
+            'format': '[\?if=!yes Hello|Goodbye|Something else]',
+            'expected': 'Goodbye',
+        },
+        {
+            'format': '[\?if=!no Hello|Goodbye]',
+            'expected': 'Hello',
         },
         {
             'format': '[\?max_length=10 Hello {name} {number}]',
