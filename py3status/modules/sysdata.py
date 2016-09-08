@@ -22,6 +22,9 @@ Format placeholders:
     {mem_total} total memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
+    {swap_total} total swap
+    {swap_used} used swap
+    {swap_used_percent} used swap percentage
 
 Color options:
     color_bad: Above high_threshold
@@ -33,6 +36,7 @@ Color conditionals:
     load: change color based on the value of load1
     mem: change color based on the value of mem_used_percent
     temp: change color based on the value of cpu_temp
+    swap: change color based on the value of swap_used_percent
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
@@ -141,6 +145,29 @@ class GetData:
 
         return cpu_temp
 
+    def swap(self):
+        """
+        Parse /proc/meminfo, grab the memory capacity and used size
+        then return; Memory size 'total_mem', Used_mem, and percentage
+        of used memory.
+        """
+
+        memi = {}
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1]) / (1 << 20)
+
+        try:
+            total_swap = memi["SwapTotal:"]
+            used_swap = (total_swap - memi["SwapFree:"])
+            used_swap_p = int(used_swap / (total_swap / 100))
+        except:
+            total_swap, used_swap, used_swap_p = [float('nan') for i in range(3)]
+
+        # Results are in gigabytes
+        return total_swap, used_swap, used_swap_p
+
 
 class Py3status:
     """
@@ -203,6 +230,19 @@ class Py3status:
                 self.py3.COLOR_MEM = self.py3.COLOR_DEGRADED
             else:
                 self.py3.COLOR_MEM = self.py3.COLOR_GOOD
+
+        # get SWAP usage info
+        if '{swap_' in self.format:
+            swap_total, swap_used, swap_used_percent = self.data.swap()
+            self.values['swap_total'] = value_format.format(swap_total)
+            self.values['swap_used'] = value_format.format(swap_used)
+            self.values['swap_used_percent'] = value_format.format(swap_used_percent)
+            if swap_used_percent > self.high_threshold:
+                self.py3.COLOR_SWAP = self.py3.COLOR_BAD
+            elif swap_used_percent > self.med_threshold:
+                self.py3.COLOR_SWAP = self.py3.COLOR_DEGRADED
+            else:
+                self.py3.COLOR_SWAP = self.py3.COLOR_GOOD
 
         # get load average
         if '{load' in self.format:
