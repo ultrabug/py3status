@@ -1,3 +1,28 @@
+version 3.1 (2016-09-09)
+* NOTE: the documentation is getting stronger, check it out to know more about the new features listed
+* @tobes has become the first collaborator of the py3status project !
+* new format parser allows for rich and conditional format strings, by @tobes
+* it is now possible to use obfuscation on all module parameters, by @tobes
+* colors are now configurable for all modules with dynamic naming, by @tobes
+* modules now support a post_config_hook special method to allow fine setup, by @tobes
+* click events and updates of modules refactoring, by @tobes
+* CI updates for better testing of py3status
+* fix: multiple enhancements on core performance and CPU reduction
+* fix: tztime modules glitch
+* fix: some crashes due to unicode logging
+* new module testing framework allowing feature rich standalone tests of modules, by @tobes
+* new tcp_status module to check for a given TCP port on a host, by @ritze
+* new file_status module to check the presence of a file, by @ritze
+* new process_status module to check the presence of a process, by @ritze
+* new kdeconnector module to display information about Android devices, by @ritze
+* new mpris module to control MPRIS enabled music players, by @ritze
+* new frame module to group and display multiple modules inline, by @tobes
+* new rainbow module to enlight your day, by @tobes
+* new exchange_rate module to check for your favorite currency rates, by @tobes
+* new coin_balance module to display balances of diverse crypto-currencies, by Felix Morgner
+* exchange_rate module: fix rate on singe currency, by Jan Mrázek
+* a lot of module fixes and normalization !
+
 version 3.0 (2016-06-23)
 * IMPORTANT NOTE: the changelog is so big that this is a condensed version, apologize for missing contribution reports
 * split the monolithic code into proper modules, by Alexis 'Horgix' Chotard, @tobes and Daniel Foerster
