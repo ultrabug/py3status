@@ -3,8 +3,8 @@
 Display uname information.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (1h default)
-    format: see placeholders below
+    cache_timeout: how often we refresh this module in seconds (default 3600)
+    format: see placeholders below (default '{system} {release} {machine}')
 
 Format placeholders:
     {system} system/OS name, e.g. 'Linux', 'Windows', or 'Java'

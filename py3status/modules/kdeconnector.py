@@ -5,16 +5,20 @@ Display information of your android device over KDEConnector.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
     device: the device name, you need this if you have more than one device
-            connected to your PC
+            connected to your PC (default None)
     device_id: alternatively to the device name you can set your device id here
+        (default None)
     format: see placeholders below
+        (default '{name}{notif_status} {bat_status} {charge}%')
     format_disconnected: text if device is disconnected
+        (default 'device disconnected')
     low_threshold: percentage value when text is twitch to color_bad
-    status_bat: text when battery is discharged
-    status_chr: text when device is charged
-    status_full: text when battery is full
-    status_no_notif: text when you have no notifications
-    status_notif: text when notifications are available
+        (default 20)
+    status_bat: text when battery is discharged (default '⬇')
+    status_chr: text when device is charged (default '⬆')
+    status_full: text when battery is full (default '☻')
+    status_no_notif: text when you have no notifications (default '')
+    status_notif: text when notifications are available (default ' ✉')
 
 Format placeholders:
     {bat_status} battery state

@@ -9,10 +9,10 @@ Configuration parameters:
         (default 10)
     format: Display format when online
         (default "{stream_name} is live!")
-    format_offline: Display format when offline
-        (default "{stream_name} is offline.")
     format_invalid: Display format when streamer does not exist
         (default "{stream_name} does not exist!")
+    format_offline: Display format when offline
+        (default "{stream_name} is offline.")
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
 

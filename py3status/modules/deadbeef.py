@@ -3,9 +3,9 @@
 Display track currently playing in deadbeef.
 
 Configuration parameters:
-    cache_timeout: how often we refresh usage in seconds (default: 1s)
-    format: see placeholders below
-    delimiter: delimiter character for parsing (default: ¥)
+    cache_timeout: how often we refresh usage in seconds (default 1)
+    delimiter: delimiter character for parsing (default '¥')
+    format: see placeholders below (default '{artist} - {title}')
 
 Format placeholders:
     {artist} artist

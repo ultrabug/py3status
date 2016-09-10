@@ -3,9 +3,12 @@
 Display network speed and bandwidth usage.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (2s default)
-    low_*: / `med_*` coloration thresholds
-    nic: the network interface to monitor (defaults to eth0)
+    cache_timeout: how often we refresh this module in seconds (default 2)
+    low_speed: threshold (default 30)
+    low_traffic: threshold (default 400)
+    med_speed: threshold (default 60)
+    med_traffic: threshold (default 700)
+    nic: the network interface to monitor (default 'eth0')
 
 Color options:
     color_bad: Rate is below low threshold

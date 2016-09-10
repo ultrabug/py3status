@@ -5,42 +5,42 @@ Display the battery level.
 Configuration parameters:
     battery_id: id of the battery to be displayed
         set to 'all' for combined display of all batteries
-        default is 0
+        (default 0)
     blocks: a string, where each character represents battery level
         especially useful when using icon fonts (e.g. FontAwesome)
-        default is "_▁▂▃▄▅▆▇█"
+        (default "_▁▂▃▄▅▆▇█")
     cache_timeout: a timeout to refresh the battery state
-        default is 30
+        (default 30)
     charging_character: a character to represent charging battery
         especially useful when using icon fonts (e.g. FontAwesome)
-        default is "⚡"
+        (default "⚡")
     format: string that formats the output. See placeholders below.
-        default is "{icon}"
+        (default "{icon}")
     format_notify_charging: format of the notification received when you click
-        on the module while your computer is plugged
-        default is "Charging ({percent}%)"
+        on the module while your computer is plugged in
+        (default 'Charging ({percent}%)')
     format_notify_discharging: format of the notification received when you
-        click on the module while your comupter is not plugged
-        default is "{time_remaining}"
+        click on the module while your computer is not plugged in
+        (default "{time_remaining}")
+    hide_seconds: hide seconds in remaining time
+        (default False)
     hide_when_full: hide any information when battery is fully charged (when
         the battery level is greater than or equal to 'threshold_full')
-        default is False
-    hide_seconds: hide seconds in remaining time
-        default is False
+        (default False)
     notification: show current battery state as notification on click
-        default is False
+        (default False)
     notify_low_level: display notification when battery is running low (when
         the battery level is less than 'threshold_degraded')
-        default is False
+        (default False)
     threshold_bad: a percentage below which the battery level should be
         considered bad
-        default is 10
+        (default 10)
     threshold_degraded: a percentage below which the battery level should be
         considered degraded
-        default is 30
+        (default 30)
     threshold_full: a percentage at or above which the battery level should
         should be considered full
-        default is 100
+        (default 100)
 
 Format placeholders:
     {ascii_bar} - a string of ascii characters representing the battery level,
@@ -64,14 +64,14 @@ Obsolete configuration parameters:
         if 'format' is "{icon}" and 'mode' is "text", the `format` is set to
         "Battery: {percent}"
         all other values are ignored
-        default is None
+        (default None)
     show_percent_with_blocks: an old way to define `format` parameter. The
         current behavior is:
         if 'format' is not "{icon}", this parameter is completely ignored
         if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
         parameter is completely ignored
         if the value is True, the `format` is set to "{icon} {percent}%"
-        default is None
+        (default None)
 
 Requires:
     - the `acpi` command line
@@ -87,7 +87,7 @@ from re import findall
 import math
 import subprocess
 
-BLOCKS = [u"_", u"▁", u"▂", u"▃", u"▄", u"▅", u"▆", u"▇", u"█"]
+BLOCKS = u"_▁▂▃▄▅▆▇█"
 CHARGING_CHARACTER = u"⚡"
 EMPTY_BLOCK_CHARGING = u'|'
 EMPTY_BLOCK_DISCHARGING = u'⍀'
