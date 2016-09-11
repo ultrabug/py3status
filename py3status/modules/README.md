@@ -6,6 +6,8 @@
 
 **[aws_bill](#aws_bill)** — Display the current AWS bill.
 
+**[backlight](#backlight)** — Display the current screen backlight level.
+
 **[battery_level](#battery_level)** — Display the battery level.
 
 **[bitcoin_price](#bitcoin_price)** — Display bitcoin prices using bitcoincharts.com.
@@ -195,6 +197,25 @@ Requires:
   - `boto`
 
 **author** nawadanp
+
+---
+
+### <a name="backlight"></a>backlight
+
+Display the current screen backlight level.
+
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds *(default 10)*
+  - `device`        The backlight device
+    If not specified the plugin will detect it automatically
+  - `format`        Display brightness, see placeholders below
+
+Format status string parameters:
+  - `{level}` brightness
+
+**author** Tjaart van der Walt (github:tjaartvdwalt)
+
+**license** BSD
 
 ---
 

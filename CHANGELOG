@@ -13,6 +13,7 @@ version 3.1 (2016-09-09)
 * fix: some crashes due to unicode logging
 * fix: for when config-file happened to be a symbolic link, by @Stautob
 * new module testing framework allowing feature rich standalone tests of modules, by @tobes
+* new backlight module to display the current screen backlight level, by @tjaartvdwalt
 * new coin_balance module to display balances of diverse crypto-currencies, by Felix Morgner
 * new exchange_rate module to check for your favorite currency rates, by @tobes
 * new file_status module to check the presence of a file, by @ritze
