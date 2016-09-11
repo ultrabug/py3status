@@ -1,4 +1,4 @@
-version 3.1 (2016-09-09)
+version 3.1 (2016-09-11)
 * NOTE: the documentation is getting stronger, check it out to know more about the new features listed
 * @tobes has become the first collaborator of the py3status project !
 * i3status.conf file is read with a new parser which allows for richer objects eg lists to be used in config, better unicode support for python2 and better reporting to the user for errors in the config, by @tobes
