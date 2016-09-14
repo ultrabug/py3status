@@ -76,7 +76,7 @@ class Py3status:
         if lang_color:
             response['color'] = lang_color
 
-        response['full_text'] = self.format.format(layout=lang)
+        response['full_text'] = self.py3.safe_format(self.format, {'layout': lang})
         return response
 
     def _get_layouts(self):

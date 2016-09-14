@@ -126,12 +126,12 @@ class Py3status:
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': "" if hide else
-            self.format.format(
-                total=self._divide_and_format(delta['total']),
-                up=self._divide_and_format(delta['up']),
-                down=self._divide_and_format(delta['down']),
-                interface=interface[:-1],
-            ) if interface else self.format_no_connection
+            self.py3.safe_format(self.format,
+                                 dict(total=self._divide_and_format(delta['total']),
+                                      up=self._divide_and_format(delta['up']),
+                                      down=self._divide_and_format(delta['down']),
+                                      interface=interface[:-1])
+                                 ) if interface else self.format_no_connection
         }
 
     def _get_stat(self):

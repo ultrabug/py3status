@@ -81,10 +81,13 @@ class Py3status:
                     self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED)
 
             return (
-                self.format.format(title=title,
-                                   artist=artist,
-                                   album=album,
-                                   time=rtime), color)
+                self.py3.safe_format(
+                    self.format,
+                    dict(title=title,
+                         artist=artist,
+                         album=album,
+                         time=rtime)
+                ), color)
         except Exception:
             return (
                 self.format_down,

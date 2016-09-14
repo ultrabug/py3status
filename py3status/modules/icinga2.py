@@ -47,9 +47,11 @@ class Py3status:
         response = {
             'color': self.color,
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.format.format(
-                status_name=STATUS_NAMES.get(self.status, "INVALID STATUS"),
-                count=self._query_service_count(self.status))
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(
+                    status_name=STATUS_NAMES.get(self.status, "INVALID STATUS"),
+                    count=self._query_service_count(self.status)))
         }
         return response
 

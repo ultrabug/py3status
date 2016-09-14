@@ -103,7 +103,7 @@ class Py3status:
 
     # return the format string formatted with available variables
     def _format_output(self, format, percentage):
-        text = format.format(percentage=percentage)
+        text = self.py3.safe_format(format, {'percentage': percentage})
         return text
 
     # return the current channel volume value as a string

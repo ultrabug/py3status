@@ -120,7 +120,7 @@ class Py3status:
                 color = self.py3.COLOR_GOOD
 
         # Format and create the response dict
-        full_text = self.format.format(name=name)
+        full_text = self.py3.safe_format(self.format, {'name': name})
         response = {
             'full_text': full_text,
             'color': color,

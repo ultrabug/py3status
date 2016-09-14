@@ -142,9 +142,11 @@ class Py3status:
         else:
             format = self.format_notify_charging
 
-        message = format.format(ascii_bar=self.ascii_bar, icon=self.icon,
-                                percent=self.percent_charged,
-                                time_remaining=self.time_remaining)
+        message = self.py3.safe_format(format,
+                                       dict(ascii_bar=self.ascii_bar,
+                                            icon=self.icon,
+                                            percent=self.percent_charged,
+                                            time_remaining=self.time_remaining))
 
         if message:
             self._desktop_notification(message)
@@ -309,10 +311,12 @@ class Py3status:
                                                   (len(self.blocks) - 1)))]
 
     def _update_full_text(self):
-        self.full_text = self.format.format(ascii_bar=self.ascii_bar,
-                                            icon=self.icon,
-                                            percent=self.percent_charged,
-                                            time_remaining=self.time_remaining)
+        self.full_text = self.py3.safe_format(
+                self.format,
+                dict(ascii_bar=self.ascii_bar,
+                     icon=self.icon,
+                     percent=self.percent_charged,
+                     time_remaining=self.time_remaining))
 
     def _build_response(self):
         self.response = {}

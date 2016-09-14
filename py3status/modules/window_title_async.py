@@ -65,7 +65,7 @@ class Py3status:
                 if len(title) > self.max_width:
                     title = title[:self.max_width - 1] + "…"
 
-                return self.format.format(title=title)
+                return self.py3.safe_format(self.format, {'title': title})
 
         def update_title(conn, e):
 

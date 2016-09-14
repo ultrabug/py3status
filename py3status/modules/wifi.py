@@ -178,13 +178,17 @@ class Py3status:
             else:
                 color = self.py3.COLOR_GOOD
 
-            full_text = self.format_up.format(bitrate=bitrate,
-                                              signal_dbm=signal_dbm,
-                                              signal_percent=signal_percent,
-                                              ip=ip,
-                                              device=self.device,
-                                              icon=icon,
-                                              ssid=ssid)
+            full_text = self.py3.safe_format(
+                self.format_up,
+                dict(
+                    bitrate=bitrate,
+                    signal_dbm=signal_dbm,
+                    signal_percent=signal_percent,
+                    ip=ip,
+                    device=self.device,
+                    icon=icon,
+                    ssid=ssid,
+                ))
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

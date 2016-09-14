@@ -54,7 +54,7 @@ class Py3status:
                 if '{%s}' % cmd in self.format:
                     data[cmd] = self._run_cmd(cmd)
 
-            result = self.format.format(**data)
+            result = self.py3.safe_format(self.format, data)
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

@@ -51,12 +51,16 @@ class Py3status:
             response['full_text'] = mail_count
         elif mail_count != 0:
             response['color'] = self.new_mail_color
-            response['full_text'] = self.format.format(unseen=mail_count)
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'unseen': mail_count}
+            )
         else:
             if self.hide_if_zero:
                 response['full_text'] = ''
             else:
-                response['full_text'] = self.format.format(unseen=mail_count)
+                response['full_text'] = self.py3.safe_format(
+                    self.format, {'unseen': mail_count}
+                )
 
         return response
 

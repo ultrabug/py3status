@@ -59,22 +59,24 @@ class Py3status:
             data = []
             for mac in macs:
                 out = check_output(shlex.split('hcitool name %s' % mac))
-                fmt_str = self.format.format(
-                    name=out.strip().decode('utf-8'),
-                    mac=mac
+                fmt_str = self.py3.safe_format(
+                    self.format,
+                    {'name': out.strip().decode('utf-8'), 'mac': mac}
                 )
                 data.append(fmt_str)
 
-            output = '{format_prefix}{data}'.format(
-                format_prefix=self.format_prefix,
-                data=self.device_separator.join(data)
+            output = self.py3.safe_format(
+                '{format_prefix}{data}',
+                {'format_prefix': self.format_prefix,
+                 'data': self.device_separator.join(data)}
             )
 
             color = self.py3.COLOR_GOOD
         else:
-            output = '{format_prefix}{format}'.format(
-                format_prefix=self.format_no_conn_prefix,
-                format=self.format_no_conn
+            output = self.py3.safe_format(
+                '{format_prefix}{format}',
+                dict(format_prefix=self.format_no_conn_prefix,
+                     format=self.format_no_conn)
             )
 
         response = {

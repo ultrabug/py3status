@@ -49,10 +49,12 @@ class Py3status:
         pacman_updates = self._check_pacman_updates()
         if self.include_aur:
             aur_updates = self._check_aur_updates()
-            results = self.format.format(pacman=pacman_updates,
-                                         aur=aur_updates)
         else:
-            results = self.format.format(pacman=str(pacman_updates))
+            aur_updates = ''
+
+        results = self.py3.safe_format(
+            self.format, {'pacman': pacman_updates, 'aur': aur_updates}
+        )
 
         response = {
             'full_text': results,
