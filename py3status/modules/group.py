@@ -101,16 +101,14 @@ class Py3status:
     class Meta:
         container = True
 
-    def __init__(self):
-        self.items = []
-        self.active = 0
-        self.initialized = False
-
-    def _init(self):
+    def post_config_hook(self):
         # if no items don't cycle
         if not self.items:
             self.cycle = 0
+
+        self.active = 0
         self._cycle_time = time() + self.cycle
+
         self.open = bool(self.open)
         # set default format etc based on click_mode
         if self.format is None:
@@ -182,9 +180,6 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
                 'full_text': '',
             }
-
-        if not self.initialized:
-            self._init()
 
         if self.open:
             if self.cycle and time() >= self._cycle_time:
