@@ -3,10 +3,11 @@
 Display if a process is running.
 
 Configuration parameters:
-    cache_timeout: how often to run the check
-    format_running: what to display when process running
+    cache_timeout: how often to run the check (default 10)
     format_not_running: what to display when process is not running
-    process: the process name to check if it is running
+        (default '■')
+    format_running: what to display when process running (default '●')
+    process: the process name to check if it is running (default None)
 
 Color options:
     color_bad: Process not running or error
@@ -26,8 +27,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format_running = u'●'
     format_not_running = u'■'
+    format_running = u'●'
     process = None
 
     def _get_text(self):

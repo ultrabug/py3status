@@ -3,10 +3,12 @@
 Display information about the current song playing on Spotify.
 
 Configuration parameters:
-    cache_timeout: how often to update the bar
-    format: see placeholders below
+    cache_timeout: how often to update the bar (default 5)
+    format: see placeholders below (default '{artist} : {title}')
     format_down: define output if spotify is not running
+        (default 'Spotify not running')
     format_stopped: define output if spotify is not playing
+        (default 'Spotify stopped')
 
 Format placeholders:
     {album} album name

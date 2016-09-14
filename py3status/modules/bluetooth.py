@@ -2,13 +2,15 @@
 """
 Display bluetooth status.
 
-Confiuration parameters:
-    format: format when there is a connected device
-    format_no_conn: format when there is no connected device
-    format_no_conn_prefix: prefix when there is no connected device
-    format_prefix: prefix when there is a connected device
+Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 10)
     device_separator: the separator char between devices (only if more than one
-        device)
+        device) (default '|')
+    format: format when there is a connected device (default '{name}')
+    format_no_conn: format when there is no connected device (default 'OFF')
+    format_no_conn_prefix: prefix when there is no connected device
+        (default 'BT: ')
+    format_prefix: prefix when there is a connected device (default 'BT: ')
 
 Format placeholders:
     {name} device name

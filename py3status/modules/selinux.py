@@ -6,8 +6,8 @@ This module displays the current state of selinux on your machine: Enforcing
 (good), Permissive (bad), or Disabled (bad).
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (10s default)
-    format: see placeholders below, default is 'selinux: {state}'
+    cache_timeout: how often we refresh this module in seconds (default 10)
+    format: see placeholders below, (default 'selinux: {state}')
 
 Format placeholders:
     {state} the current selinux state

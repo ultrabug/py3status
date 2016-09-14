@@ -8,8 +8,10 @@ The script should not have any parameters, but it could work.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
-    format: see placeholders below
+        (default 15)
+    format: see placeholders below (default '{output}')
     script_path: script you want to show output of (compulsory)
+        (default None)
     strip_output: shall we strip leading and trailing spaces from output
         (default False)
 

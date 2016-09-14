@@ -3,9 +3,13 @@
 Display system RAM and CPU utilization.
 
 Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
+        (default 'CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)')
     high_threshold: percent to consider CPU or RAM usage as 'high load'
+        (default 75)
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
+        (default 40)
 
 Format placeholders:
     {cpu_temp} cpu temperature

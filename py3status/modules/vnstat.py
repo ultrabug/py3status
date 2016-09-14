@@ -2,6 +2,17 @@
 """
 Display vnstat statistics.
 
+Configuration parameters:
+    cache_timeout: (default 180)
+    coloring: (default {})
+    format: (default '{total}')
+    initial_multi: (default 1024)
+    left_align: (default 0)
+    multiplier_top: (default 1024)
+    precision: (default 1)
+    statistics_type: (default 'd')
+    unit_multi: (default 1024)
+
 Coloring rules.
 
 If value is bigger that dict key, status string will turn to color, specified

@@ -37,12 +37,12 @@ Configuration parameters:
     fixed_width: Reduce the size changes when switching to new group
         (default False)
     format: Format for module output.
-        (default "{output}" if click_mode is 'all',
-        "{output} {button}" if click_mode 'button')
-    format_button_open: Format for the button when group closed
-        (default '+')
+        *(default "{output}" if click_mode is 'all',
+        "{output} {button}" if click_mode 'button')*
     format_button_closed: Format for the button when group open
-        (default  '-')
+        (default  '+')
+    format_button_open: Format for the button when group closed
+        (default '-')
     format_closed: Format for module output when closed.
         (default "{button}")
     open: Is the group open and displaying its content. Has no effect if
@@ -93,8 +93,8 @@ class Py3status:
     cycle = 0
     fixed_width = False
     format = None
-    format_button_open = u'-'
     format_button_closed = u'+'
+    format_button_open = u'-'
     format_closed = u'{button}'
     open = True
 
