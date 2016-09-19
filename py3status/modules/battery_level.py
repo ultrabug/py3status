@@ -192,8 +192,6 @@ class Py3status:
             battery["time_remaining"] = ''.join(findall(
                 "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
                 "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
-            if self.hide_seconds:
-                battery["time_remaining"] = battery["time_remaining"][:-3]
         except IndexError:
             battery["time_remaining"] = '?'
 
@@ -293,6 +291,9 @@ class Py3status:
 
             else:
                 self.time_remaining = None
+
+        if self.time_remaining and self.hide_seconds:
+            self.time_remaining = self.time_remaining[:-3]
 
     def _update_ascii_bar(self):
         self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
