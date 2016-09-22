@@ -127,7 +127,7 @@ class Py3status:
             device = {
                 'name': self._dev.name,
                 'isReachable': self._dev.isReachable,
-                'isPaired': self._dev.isPaired,
+                'isTrusted': self._dev.isTrusted,
             }
         except Exception:
             return None
@@ -203,7 +203,7 @@ class Py3status:
         if device is None:
             return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
-        if not device['isReachable'] or not device['isPaired']():
+        if not device['isReachable'] or not device['isTrusted']():
             return (self.py3.safe_format(self.format_disconnected,
                                          {'name': device['name']}),
                     self.py3.COLOR_BAD)
