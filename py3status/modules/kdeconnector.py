@@ -120,15 +120,18 @@ class Py3status:
         return None
 
     def _get_isTrusted(self):
+        if self._dev is None:
+            return False
+
         try:
             # New method which replaced 'isPaired' in version 1.0
-            return self._dev.isTrusted
-        except Exception:
+            return self._dev.isTrusted()
+        except AttributeError:
             try:
-                # Deprecated
-                return self._dev.isPaired
-            except Exception:
-                return None
+                # Deprecated since version 1.0
+                return self._dev.isPaired()
+            except AttributeError:
+                return False
 
     def _get_device(self):
         """
@@ -138,7 +141,7 @@ class Py3status:
             device = {
                 'name': self._dev.name,
                 'isReachable': self._dev.isReachable,
-                'isTrusted': self._get_isTrusted,
+                'isTrusted': self._get_isTrusted(),
             }
         except Exception:
             return None
@@ -214,7 +217,7 @@ class Py3status:
         if device is None:
             return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
-        if not device['isReachable'] or not device['isTrusted']():
+        if not device['isReachable'] or not device['isTrusted']:
             return (self.py3.safe_format(self.format_disconnected,
                                          {'name': device['name']}),
                     self.py3.COLOR_BAD)
