@@ -126,7 +126,7 @@ class Py3status:
                 screen = self.screen or all_outputs[0]
             else:
                 screen = 'ALL'
-            full_text = self.py3.safe_format(self.format.format,
+            full_text = self.py3.safe_format(self.format,
                                              dict(icon=self.displayed or '?',
                                                   screen=screen))
 
