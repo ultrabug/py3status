@@ -25,7 +25,6 @@ class Py3status:
     """
     # available configuration parameters
     always_show = False
-    color_urgent = "#900000"
     format = u"{} ⌫"
 
     def __init__(self):
@@ -36,11 +35,11 @@ class Py3status:
         t.daemon = True
         t.start()
 
-    def scratchpad_counter(self, i3s_output_list, i3s_config):
+    def scratchpad_counter(self):
         response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:
-            response['color'] = self.color_urgent
+            response['urgent'] = True
 
         if self.always_show or self.count > 0:
             response['full_text'] = self.format.format(self.count)
