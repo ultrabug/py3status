@@ -9,10 +9,14 @@ Provides an icon to control simple functions of audio/video players:
 
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 10)
-    debug: enable verbose logging (bool) (default: False)
+    debug: enable verbose logging (bool) (default False)
+    pause_icon: (default '❚❚')
+    play_icon: (default '▶')
+    stop_icon: (default '◼')
     supported_players: supported players (str) (comma separated list)
+         (default 'audacious,vlc')
     volume_tick: percentage volume change on mouse wheel (int) (positive number
-        or None to disable it)
+        or None to disable it) (default 1)
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD

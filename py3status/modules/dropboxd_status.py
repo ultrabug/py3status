@@ -3,8 +3,8 @@
 Display dropboxd status.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (10s default)
-    format: prefix text for the dropbox status
+    cache_timeout: how often we refresh this module in seconds (default 10)
+    format: prefix text for the dropbox status (default 'Dropbox: {}')
 
 Valid status values include:
     - Dropbox isn't running!

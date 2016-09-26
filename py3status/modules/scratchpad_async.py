@@ -5,6 +5,8 @@ Display the amount of windows and indicate urgency hints on scratchpad (async).
 Configuration parameters:
     always_show: whether the indicator should be shown if there are no
         scratchpad windows (default False)
+    color_urgent: color to use if a scratchpad window is urgent
+        (default "#900000")
     format: string to format the output (default "{} ⌫")
 
 Requires:

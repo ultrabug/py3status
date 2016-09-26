@@ -3,11 +3,11 @@
 Display NVIDIA GPU temperature.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds
-    format_prefix: a prefix for the output.
-    format_units: the temperature units. Will appear at the end.
+    cache_timeout: how often we refresh this module in seconds (default 10)
+    format_prefix: a prefix for the output. (default 'GPU: ')
+    format_units: the temperature units. Will appear at the end. (default '°C')
     temp_separator: the separator char between temperatures (only if more than
-        one GPU)
+        one GPU) (default '|')
 
 Color options:
     color_bad: Temperature can't be read.

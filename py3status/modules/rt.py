@@ -84,7 +84,7 @@ class Py3status:
                       'color' not in response):
                     response.update({'color': self.py3.COLOR_DEGRADED})
         if has_one_queue_formatted:
-            response['full_text'] = self.format.format(**tickets)
+            response['full_text'] = self.py3.safe_format(self.format, tickets)
         else:
             response['full_text'] = 'queue(s) not found ({})'.format(
                 self.format)

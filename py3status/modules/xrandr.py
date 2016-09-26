@@ -17,22 +17,26 @@ For convenience, this module also proposes some added features:
     - Define your own subset of output combinations to use
 
 Configuration parameters:
-    cache_timeout: how often to (re)detect the outputs
+    cache_timeout: how often to (re)detect the outputs (default 10)
     fallback: when the current output layout is not available anymore,
         fallback to this layout if available. This is very handy if you
         have a laptop and switched to an external screen for presentation
         and want to automatically fallback to your laptop screen when you
-        disconnect the external screen.
+        disconnect the external screen. (default True)
+    fixed_width: show output as fixed width (default True)
     force_on_start: switch to the given combination mode if available
         when the module starts (saves you from having to configure xorg)
+        (default None)
     format_clone: string used to display a 'clone' combination
+        (default '=')
     format_extend: string used to display a 'extend' combination
+        (default '+')
     output_combinations: string used to define your own subset of output
         combinations to use, instead of generating every possible combination
         automatically. Provide the values in the format that this module uses,
         splitting the combinations using '|' character.
         The combinations will be rotated in the exact order as you listed them.
-        When an output layout is not available anymore, the configurations
+        When an output layout is not available any more, the configurations
         are automatically filtered out.
         Example:
         Assuming the default values for `format_clone` and `format_extend`
@@ -40,6 +44,7 @@ Configuration parameters:
         following setup will reduce the number of output combinations
         from four (every possible one) down to two:
         output_combinations = "eDP1|eDP1+DP1"
+        (default None)
 
 Dynamic configuration parameters:
     - <OUTPUT>_pos: apply the given position to the OUTPUT

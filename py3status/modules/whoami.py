@@ -2,6 +2,10 @@
 """
 Display the currently logged in user.
 
+Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds
+        (default 1800)
+
 Inspired by i3 FAQ:
         https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
 """
