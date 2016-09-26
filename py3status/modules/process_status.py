@@ -7,6 +7,7 @@ Configuration parameters:
     format_not_running: what to display when process is not running
         (default '■')
     format_running: what to display when process running (default '●')
+    full: if True, match against the full command line and not just the process name
     process: the process name to check if it is running (default None)
 
 Color options:
@@ -29,11 +30,17 @@ class Py3status:
     cache_timeout = 10
     format_not_running = u'■'
     format_running = u'●'
+    full = False
     process = None
 
     def _get_text(self):
         fnull = open(os.devnull, 'w')
-        if subprocess.call(["pgrep", self.process],
+        pgrep = ["pgrep", self.process]
+
+        if self.full:
+            pgrep = ["pgrep", "-f", self.process]
+
+        if subprocess.call(pgrep,
                            stdout=fnull, stderr=fnull) == 0:
             text = self.format_running
             color = self.py3.COLOR_GOOD
