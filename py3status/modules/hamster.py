@@ -3,8 +3,8 @@
 Display current tasks from project Hamster.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (5s default)
-    format: see placeholders below
+    cache_timeout: how often we refresh this module in seconds (default 10)
+    format: see placeholders below (default '{current}')
 
 Format placeholders:
     {current} hamster current
@@ -37,7 +37,8 @@ class Py3status:
 
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
-        response['full_text'] = self.format.format(current=cur_task)
+        response['full_text'] = self.py3.safe_format(self.format,
+                                                     {'current': cur_task})
         return response
 
 

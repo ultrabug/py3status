@@ -22,9 +22,9 @@ Configuration parameters:
     cache_timeout: How often we refresh this module in seconds
         (default 60)
     format: Format of output
-        (default '{repo} {issues}/{pull_requests}{notifications}'
+        *(default '{repo} {issues}/{pull_requests}{notifications}'
         if username and auth_token provided else
-        '{repo} {issues}/{pull_requests}')
+        '{repo} {issues}/{pull_requests}')*
     format_notifications: Format of `{notification}` status placeholder.
         (default ' N{notifications_count}')
     notifications: Type of notifications can be `all` for all notifications or

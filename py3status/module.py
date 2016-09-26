@@ -82,9 +82,9 @@ class Module(Thread):
         class_inst = py_mod.Py3status()
         return class_inst
 
-    def start_module(self):
+    def prepare_module(self):
         """
-        Start the module running.
+        Ready the module to get it ready to start.
         """
         # Modules can define a post_config_hook() method which will be run
         # after the module has had it config settings applied and before it has
@@ -92,6 +92,11 @@ class Module(Thread):
         # perform any necessary setup.
         if self.has_post_config_hook:
             self.module_class.post_config_hook()
+
+    def start_module(self):
+        """
+        Start the module running.
+        """
         # Start the module and call its output method(s)
         self.start()
 
