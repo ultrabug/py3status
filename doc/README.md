@@ -832,6 +832,33 @@ offset is used to alter the base time used. A timer that started at a
 certain time could set that as the offset and any syncronisation would
 then be relative to that time.
 
+__register_function(function_name, function)__
+
+Register a function for the module.
+
+The following functions can be registered
+
+> __content_function()__
+>
+> Called to discover what modules a container is displaying.  This is
+> used to determine when updates need passing on to the container and
+> also when modules can be put to sleep.
+>
+> the function must return a set of module names that are being
+> displayed.
+>
+> Note: This function should only be used by containers.
+>
+> __urgent_function(module_names)__
+>
+> This function will be called when one of the contents of a container
+> has changed from a non-urgent to an urgent state.  It is used by the
+> group module to switch to displaying the urgent module.
+>
+> `module_names` is a list of modules that have become urgent
+>
+> Note: This function should only be used by containers.
+
 __safe_format(format_string, param_dict=None)__
 
 Parser for advanced formating.
