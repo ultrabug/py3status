@@ -4,9 +4,14 @@ Display the current screen backlight level.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 10)
-    device:        The backlight device
-                   If not specified the plugin will detect it automatically
-    format:        Display brightness, see placeholders below
+    device: The backlight device
+        If not specified the plugin will detect it automatically
+        (default None)
+    device_path: path to backlight eg /sys/class/backlight/acpi_video0
+        if None then use first device found.
+        (default None)
+    format: Display brightness, see placeholders below
+        (default '☼: {level}%')
 
 Format status string parameters:
     {level} brightness
