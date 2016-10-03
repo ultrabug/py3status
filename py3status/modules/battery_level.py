@@ -115,10 +115,12 @@ class Py3status:
     threshold_bad = 10
     threshold_degraded = 30
     threshold_full = 100
-    last_known_status = 'good'
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = None
+    # internal status variable
+    last_known_status = ''
+
 
     def battery_level(self):
 
