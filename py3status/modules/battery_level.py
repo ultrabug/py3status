@@ -119,7 +119,6 @@ class Py3status:
     mode = None
     show_percent_with_blocks = None
 
-
     def battery_level(self):
 
         self._refresh_battery_info()
@@ -342,17 +341,15 @@ class Py3status:
         elif self.percent_charged < self.threshold_bad:
             self.response['color'] = self.py3.COLOR_BAD
             battery_status = 'bad'
-            if (self.notify_low_level and
-                    last_status != battery_status):
+            if (self.notify_low_level and last_status != battery_status):
                 self.py3.notify_user('Battery level is critically low ({}%)'
-                            .format(self.percent_charged), 'error')
+                                    .format(self.percent_charged), 'error')
         elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
-            if (self.notify_low_level and
-                    last_status != battery_status):
+            if (self.notify_low_level and last_status != battery_status):
                 self.py3.notify_user('Battery level is running low ({}%)'
-                            .format(self.percent_charged), 'warning')
+                                    .format(self.percent_charged), 'warning')
         elif self.percent_charged >= self.threshold_full:
             self.response['color'] = self.py3.COLOR_GOOD
             battery_status = 'full'
