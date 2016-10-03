@@ -115,6 +115,7 @@ class Py3status:
     threshold_bad = 10
     threshold_degraded = 30
     threshold_full = 100
+    last_known_status = ''
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = None
@@ -149,7 +150,7 @@ class Py3status:
                                             time_remaining=self.time_remaining))
 
         if message:
-            self._desktop_notification(message)
+            self.py3.notify_user(message, 'info')
 
     def _desktop_notification(self, message):
         """
@@ -341,14 +342,15 @@ class Py3status:
             battery_status = 'bad'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
-                self._notify('Battery level is critically low ({}%)',
-                             'critical')
+                self.py3.notify_user('Battery level is critically low ({}%)'
+                            .format(self.percent_charged), 'error')
         elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
-                self._notify('Battery level is running low ({}%)', 'normal')
+                self.py3.notify_user('Battery level is running low ({}%)'
+                            .format(self.percent_charged), 'warning')
         elif self.percent_charged >= self.threshold_full:
             self.response['color'] = self.py3.COLOR_GOOD
             battery_status = 'full'
