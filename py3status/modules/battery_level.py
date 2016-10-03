@@ -118,8 +118,6 @@ class Py3status:
     # obsolete configuration parameters
     mode = None
     show_percent_with_blocks = None
-    # internal status variable
-    last_known_status = ''
 
 
     def battery_level(self):
@@ -336,6 +334,8 @@ class Py3status:
             self.percent_charged >= self.threshold_full else self.full_text
 
     def _set_bar_color(self):
+        # Prevent AttributeError when starting below threshold.
+        last_status = getattr(self, 'last_known_status', '')
         if self.charging:
             self.response['color'] = self.py3.COLOR_CHARGING or "#FCE94F"
             battery_status = 'charging'
@@ -343,14 +343,14 @@ class Py3status:
             self.response['color'] = self.py3.COLOR_BAD
             battery_status = 'bad'
             if (self.notify_low_level and
-                    self.last_known_status != battery_status):
+                    last_status != battery_status):
                 self.py3.notify_user('Battery level is critically low ({}%)'
                             .format(self.percent_charged), 'error')
         elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
             if (self.notify_low_level and
-                    self.last_known_status != battery_status):
+                    last_status != battery_status):
                 self.py3.notify_user('Battery level is running low ({}%)'
                             .format(self.percent_charged), 'warning')
         elif self.percent_charged >= self.threshold_full:
