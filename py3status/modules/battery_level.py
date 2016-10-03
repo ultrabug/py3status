@@ -361,12 +361,6 @@ class Py3status:
     def _set_cache_timeout(self):
         self.response['cached_until'] = time() + self.cache_timeout
 
-    def _notify(self, text, urgency):
-        subprocess.call(
-            ['notify-send', text.format(self.percent_charged), '-u', urgency],
-            stdout=open('/dev/null', 'w'),
-            stderr=open('/dev/null', 'w'))
-
 
 if __name__ == "__main__":
     """
