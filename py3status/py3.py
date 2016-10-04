@@ -4,6 +4,7 @@ import shlex
 from time import time
 from subprocess import Popen, call
 
+from py3status.exceptions import MissingDependency as _MissingDependency
 from py3status.formatter import Formatter
 
 
@@ -32,6 +33,9 @@ class Py3:
     LOG_ERROR = PY3_LOG_ERROR
     LOG_INFO = PY3_LOG_INFO
     LOG_WARNING = PY3_LOG_WARNING
+
+    # Exceptions
+    MissingDependency = _MissingDependency
 
     # All Py3 Instances can share a formatter
     _formatter = Formatter()

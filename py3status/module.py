@@ -6,6 +6,7 @@ from threading import Thread, Timer
 from collections import OrderedDict
 from time import time
 
+from py3status.exceptions import MissingDependency
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
 
@@ -28,6 +29,7 @@ class Module(Thread):
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
+        self.disabled = False
         self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
@@ -92,19 +94,26 @@ class Module(Thread):
         # its main method(s) called for the first time.  This allows modules to
         # perform any necessary setup.
         if self.has_post_config_hook:
-            self.module_class.post_config_hook()
+            try:
+                self.module_class.post_config_hook()
+            except MissingDependency as e:
+                self._py3_wrapper.log('{}'.format(e))
+                self.disabled = True
 
     def start_module(self):
         """
         Start the module running.
         """
-        # Start the module and call its output method(s)
-        self.start()
+        if not self.disabled:
+            # Start the module and call its output method(s)
+            self.start()
 
     def force_update(self):
         """
         Forces an update of the module.
         """
+        if self.disabled:
+            return
         # clear cached_until for each method to allow update
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
@@ -125,6 +134,8 @@ class Module(Thread):
 
     def wake(self):
         self.sleeping = False
+        if self.disabled:
+            return
         if self.cache_time is None:
             return
         # new style modules can signal they want to cache forever
