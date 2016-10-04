@@ -17,7 +17,6 @@ from py3status.docstrings import core_module_docstrings
 
 IGNORE_MODULE = [
     # Cannot be imported due to missing libs
-    'aws_bill',
     'glpi',
     'mpd_status',
     'ns_checker',
