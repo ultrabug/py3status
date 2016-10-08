@@ -69,7 +69,6 @@ NOTE:
 """
 
 import re
-import shlex
 
 from subprocess import check_output, call, DEVNULL
 
@@ -100,6 +99,10 @@ class AudioBackend(with_metaclass(ABCMeta)):
 
 
 class AlsaBackend(AudioBackend):
+    def __init__(self, device, channel):
+        AudioBackend.__init__(self, device, channel)
+        self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
+
     # return the current channel volume value as a string
     def _get_percentage(self, output):
 
@@ -134,8 +137,7 @@ class AlsaBackend(AudioBackend):
     def get_volume(self):
 
         # call amixer
-        output = check_output(shlex.split('amixer -D {} sget {}'.format(
-            self.device, self.channel))).decode('utf-8')
+        output = check_output(['amixer', '-D', self.device, 'sget', self.channel]).decode('utf-8')
 
         # get the current percentage value
         perc = self._get_percentage(output)
@@ -147,18 +149,15 @@ class AlsaBackend(AudioBackend):
 
     def volume_up(self, delta):
         # volume up
-        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
-        call(shlex.split('{} {}%+'.format(cmd, delta)), stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ['{}%+'.format(delta)], stdout=DEVNULL, stderr=DEVNULL)
 
     def volume_down(self, delta):
         # volume down
-        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
-        call(shlex.split('{} {}%-'.format(cmd, delta)), stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ['{}%-'.format(delta)], stdout=DEVNULL, stderr=DEVNULL)
 
-    def toggle_mute(self, delta):
+    def toggle_mute(self):
         # toggle mute
-        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
-        call(shlex.split('{} toggle'.format(cmd)), stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ['toggle'], stdout=DEVNULL, stderr=DEVNULL)
 
 
 class PulseaudioBackend(AudioBackend):
