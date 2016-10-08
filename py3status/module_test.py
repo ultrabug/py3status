@@ -20,7 +20,7 @@ def module_test(module_class, config=None):
         # find methods that we should test.
         attribute = getattr(module, attribute_name)
 
-        if 'method' not in str(attribute):
+        if 'method' not in repr(attribute):
             continue
         if attribute_name.startswith('_'):
             continue
