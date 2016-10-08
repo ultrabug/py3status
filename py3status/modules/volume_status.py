@@ -78,6 +78,7 @@ class AudioBackend():
     def __init__(self, device, channel):
         self.device = device
         self.channel = channel
+        self.devnull = open(devnull, 'wb')
 
     def get_volume(self):
         raise NotImplemented
@@ -143,18 +144,15 @@ class AlsaBackend(AudioBackend):
 
     def volume_up(self, delta):
         # volume up
-        DEVNULL = open(devnull, 'wb')
-        call(self.cmd + ['{}%+'.format(delta)], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ['{}%+'.format(delta)], stdout=self.devnull, stderr=self.devnull)
 
     def volume_down(self, delta):
         # volume down
-        DEVNULL = open(devnull, 'wb')
-        call(self.cmd + ['{}%-'.format(delta)], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ['{}%-'.format(delta)], stdout=self.devnull, stderr=self.devnull)
 
     def toggle_mute(self):
         # toggle mute
-        DEVNULL = open(devnull, 'wb')
-        call(self.cmd + ['toggle'], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ['toggle'], stdout=self.devnull, stderr=self.devnull)
 
 
 class PulseaudioBackend(AudioBackend):
@@ -165,25 +163,21 @@ class PulseaudioBackend(AudioBackend):
         self.cmd = ["pamixer", "--sink", self.device]
 
     def get_volume(self):
-        DEVNULL = open(devnull, 'wb')
         perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
-        muted = (call(self.cmd + ["--get-mute"], stdout=DEVNULL, stderr=DEVNULL) == 0)
+        muted = (call(self.cmd + ["--get-mute"], stdout=self.devnull, stderr=self.devnull) == 0)
         return perc, muted
 
     def volume_up(self, delta):
         # volume up
-        DEVNULL = open(devnull, 'wb')
-        call(self.cmd + ["-i", str(delta)], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ["-i", str(delta)], stdout=self.devnull, stderr=self.devnull)
 
     def volume_down(self, delta):
         # volume down
-        DEVNULL = open(devnull, 'wb')
-        call(self.cmd + ["-d", str(delta)], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ["-d", str(delta)], stdout=self.devnull, stderr=self.devnull)
 
     def toggle_mute(self):
         # toggle mute
-        DEVNULL = open(devnull, 'wb')
-        call(self.cmd + ["-t"], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ["-t"], stdout=self.devnull, stderr=self.devnull)
 
 
 class Py3status:
