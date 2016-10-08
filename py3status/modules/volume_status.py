@@ -20,9 +20,6 @@ Configuration parameters:
         (default 10)
     channel: Alsamixer channel to track (ignored by pulseaudio)
         (default 'Master')
-    color_muted: set to 1 to color 'format_muted' depending on the volume
-        percent.
-        (default 0)
     device: Device to use.
         (default 'default')
     format: Format of the output.
@@ -199,7 +196,6 @@ class Py3status:
     button_up = 0
     cache_timeout = 10
     channel = 'Master'
-    color_muted = 0
     device = 'default'
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
@@ -239,7 +235,7 @@ class Py3status:
         perc, muted = self.backend.get_volume()
 
         # determine the color based on the current volume level
-        color = self._perc_to_color(perc if self.color_muted or not muted else '0')
+        color = self._perc_to_color(perc if not muted else '0')
 
         # format the output
         text = self._format_output(self.format_muted
