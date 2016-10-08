@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Display the list of current IPs. This excludes loopback IPs and displays
-"no connection" if there is no connection.
+Display the list of current IPs.
 
-Configuration parameters
+This can exclude specified IPs and displays "no connection" if there are no IPs
+to display.
+
+Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds.
+        (default 30)
     ignore: list of IPs to ignore. Can use shell style wildcards.
-        (default: ['127.*'])
+        (default ['127.*'])
     no_connection: string to display if there are no non-ignored IPs
-        (default: 'no connection')
+        (default 'no connection')
     separator: string to use between IPs.
-        (default: ' ')
+        (default ' ')
 """
+
 
 # import your useful libs here
 import socket
@@ -22,9 +27,9 @@ from fnmatch import fnmatch
 
 class Py3status:
     cache_timeout = 30
-    separator = ' '
-    no_connection = 'no connection'
     ignore = ['127.*']
+    no_connection = 'no connection'
+    separator = ' '
 
     def __init__(self):
         pass
