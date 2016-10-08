@@ -77,9 +77,10 @@ import shlex
 from subprocess import check_output, call, run, DEVNULL
 
 from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 
-class AudioBackend(metaclass=ABCMeta):
+class AudioBackend(with_metaclass(ABCMeta)):
     def __init__(self, device, channel, button_up, button_down, button_mute, volume_delta):
         self.device = device
         self.channel = channel
