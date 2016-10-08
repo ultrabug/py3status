@@ -8,6 +8,8 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
+    backend: Choose between "alsa" and "pulseaudio"
+        (default "alsa")
     button_down: Button to click to decrease volume. Setting to 0 disables.
         (default 0)
     button_mute: Button to click to toggle mute. Setting to 0 disables.
@@ -18,6 +20,9 @@ Configuration parameters:
         (default 10)
     channel: Alsamixer channel to track.
         (default 'Master')
+    color_muted: set to 1 to color 'format_muted' depending on the volume
+        percent.
+        (default 0)
     device: Alsamixer device to use.
         (default 'default')
     format: Format of the output.
@@ -53,7 +58,8 @@ volume_status {
 ```
 
 Requires:
-    alsa-utils: (tested with alsa-utils 1.0.29-1)
+    alsa-utils: alsa backend (tested with alsa-utils 1.0.29-1)
+    pamixer: pulseaudio backend
 
 NOTE:
         If you are changing volume state by external scripts etc and
@@ -68,44 +74,30 @@ NOTE:
 import re
 import shlex
 
-from subprocess import check_output, call
+from subprocess import check_output, call, run, DEVNULL
+
+from abc import ABCMeta, abstractmethod
 
 
-class Py3status:
-    """
-    """
-    # available configuration parameters
-    button_down = 0
-    button_mute = 0
-    button_up = 0
-    cache_timeout = 10
-    channel = 'Master'
-    device = 'default'
-    format = u'♪: {percentage}%'
-    format_muted = u'♪: muted'
-    threshold_bad = 20
-    threshold_degraded = 50
-    volume_delta = 5
+class AudioBackend(metaclass=ABCMeta):
+    def __init__(self, device, channel, button_up, button_down, button_mute, volume_delta):
+        self.device = device
+        self.channel = channel
+        self.button_up = button_up
+        self.button_down = button_down
+        self.button_mute = button_mute
+        self.volume_delta = volume_delta
 
-    # compares current volume to the thresholds, returns a color code
-    def _perc_to_color(self, string):
-        try:
-            value = int(string)
-        except ValueError:
-            return self.py3.COLOR_BAD
+    @abstractmethod
+    def get_volume(self):
+        pass
 
-        if value < self.threshold_bad:
-            return self.py3.COLOR_BAD
-        elif value < self.threshold_degraded:
-            return self.py3.COLOR_DEGRADED
-        else:
-            return self.py3.COLOR_GOOD
+    @abstractmethod
+    def on_click(self, event):
+        pass
 
-    # return the format string formatted with available variables
-    def _format_output(self, format, percentage):
-        text = self.py3.safe_format(format, {'percentage': percentage})
-        return text
 
+class AlsaBackend(AudioBackend):
     # return the current channel volume value as a string
     def _get_percentage(self, output):
 
@@ -135,9 +127,9 @@ class Py3status:
         else:
             return False
 
-    # this method is ran by py3status
+    # this method is called by py3status
     # returns a response dict
-    def current_volume(self):
+    def get_volume(self):
 
         # call amixer
         output = check_output(shlex.split('amixer -D {} sget {}'.format(
@@ -149,19 +141,7 @@ class Py3status:
         # get info about channel mute status
         muted = self._get_muted(output)
 
-        # determine the color based on the current volume level
-        color = self._perc_to_color(perc if not muted else '0')
-
-        # format the output
-        text = self._format_output(self.format_muted
-                                   if muted else self.format, perc)
-        # create response dict
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': text,
-        }
-        return response
+        return perc, muted
 
     def on_click(self, event):
         '''
@@ -178,6 +158,105 @@ class Py3status:
         # toggle mute
         elif self.button_mute and button == self.button_mute:
             call(shlex.split('{} toggle'.format(cmd)))
+
+
+class PulseaudioBackend(AudioBackend):
+    def get_volume(self):
+        perc = check_output(["pamixer", "--get-volume"]).decode('utf-8').strip()
+        muted = (run(["pamixer", "--get-mute"], stdout=DEVNULL, stderr=DEVNULL) .returncode == 0)
+        return perc, muted
+
+    def on_click(self, event):
+        '''
+        Volume up/down and toggle mute.
+        '''
+        button = event['button']
+        # volume up
+        if self.button_up and button == self.button_up:
+            run(["pamixer", "-i", str(self.volume_delta)], stdout=DEVNULL, stderr=DEVNULL)
+        # volume down
+        elif self.button_down and button == self.button_down:
+            run(["pamixer", "-d", str(self.volume_delta)], stdout=DEVNULL, stderr=DEVNULL)
+        # toggle mute
+        elif self.button_mute and button == self.button_mute:
+            run(["pamixer", "-t"], stdout=DEVNULL, stderr=DEVNULL)
+
+
+class Py3status:
+    """
+    """
+    # available configuration parameters
+    backend = 'alsa'
+    button_down = 0
+    button_mute = 0
+    button_up = 0
+    cache_timeout = 10
+    channel = 'Master'
+    color_muted = 0
+    device = 'default'
+    format = u'♪: {percentage}%'
+    format_muted = u'♪: muted'
+    threshold_bad = 20
+    threshold_degraded = 50
+    volume_delta = 5
+
+    def post_config_hook(self):
+        if self.backend == 'alsa':
+            self.backend = AlsaBackend(self.device,
+                                       self.channel,
+                                       self.button_up,
+                                       self.button_down,
+                                       self.button_mute,
+                                       self.volume_delta)
+        elif self.backend == 'pulseaudio':
+            self.backend = PulseaudioBackend(self.device,
+                                             self.channel,
+                                             self.button_up,
+                                             self.button_down,
+                                             self.button_mute,
+                                             self.volume_delta)
+        else:
+            raise NameError("Unknown backend")
+
+    # compares current volume to the thresholds, returns a color code
+    def _perc_to_color(self, string):
+        try:
+            value = int(string)
+        except ValueError:
+            return self.py3.COLOR_BAD
+
+        if value < self.threshold_bad:
+            return self.py3.COLOR_BAD
+        elif value < self.threshold_degraded:
+            return self.py3.COLOR_DEGRADED
+        else:
+            return self.py3.COLOR_GOOD
+
+    # return the format string formatted with available variables
+    def _format_output(self, format, percentage):
+        text = self.py3.safe_format(format, {'percentage': percentage})
+        return text
+
+    def current_volume(self):
+        # call backend
+        perc, muted = self.backend.get_volume()
+
+        # determine the color based on the current volume level
+        color = self._perc_to_color(perc if self.color_muted or not muted else '0')
+
+        # format the output
+        text = self._format_output(self.format_muted
+                                   if muted else self.format, perc)
+        # create response dict
+        response = {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': text,
+        }
+        return response
+
+    def on_click(self, event):
+        self.backend.on_click(event)
 
 
 # test if run directly
