@@ -69,8 +69,9 @@ NOTE:
 """
 
 import re
+from os import devnull
 
-from subprocess import check_output, call, DEVNULL
+from subprocess import check_output, call
 
 
 class AudioBackend():
@@ -142,14 +143,17 @@ class AlsaBackend(AudioBackend):
 
     def volume_up(self, delta):
         # volume up
+        DEVNULL = open(devnull, 'wb')
         call(self.cmd + ['{}%+'.format(delta)], stdout=DEVNULL, stderr=DEVNULL)
 
     def volume_down(self, delta):
         # volume down
+        DEVNULL = open(devnull, 'wb')
         call(self.cmd + ['{}%-'.format(delta)], stdout=DEVNULL, stderr=DEVNULL)
 
     def toggle_mute(self):
         # toggle mute
+        DEVNULL = open(devnull, 'wb')
         call(self.cmd + ['toggle'], stdout=DEVNULL, stderr=DEVNULL)
 
 
@@ -161,20 +165,24 @@ class PulseaudioBackend(AudioBackend):
         self.cmd = ["pamixer", "--sink", self.device]
 
     def get_volume(self):
+        DEVNULL = open(devnull, 'wb')
         perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
         muted = (call(self.cmd + ["--get-mute"], stdout=DEVNULL, stderr=DEVNULL) == 0)
         return perc, muted
 
     def volume_up(self, delta):
         # volume up
+        DEVNULL = open(devnull, 'wb')
         call(self.cmd + ["-i", str(delta)], stdout=DEVNULL, stderr=DEVNULL)
 
     def volume_down(self, delta):
         # volume down
+        DEVNULL = open(devnull, 'wb')
         call(self.cmd + ["-d", str(delta)], stdout=DEVNULL, stderr=DEVNULL)
 
     def toggle_mute(self):
         # toggle mute
+        DEVNULL = open(devnull, 'wb')
         call(self.cmd + ["-t"], stdout=DEVNULL, stderr=DEVNULL)
 
 
