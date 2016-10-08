@@ -27,6 +27,8 @@ Configuration parameters:
         (default '♪: {percentage}%')
     format_muted: Format of the output when the volume is muted.
         (default '♪: muted')
+    mute_with_colors: Set to 1 to color format_muted depending on the volume percent.
+        (default 0)
     threshold_bad: Volume below which color is set to bad.
         (default 20)
     threshold_degraded: Volume below which color is set to degraded.
@@ -154,6 +156,7 @@ class Py3status:
     device = None
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
+    mute_with_colors = 0
     threshold_bad = 20
     threshold_degraded = 50
     volume_delta = 5
@@ -194,7 +197,7 @@ class Py3status:
         perc, muted = self.backend.get_volume()
 
         # determine the color based on the current volume level
-        color = self._perc_to_color(perc if not muted else '0')
+        color = self._perc_to_color(perc if self.mute_with_colors or not muted else '0')
 
         # format the output
         text = self._format_output(self.format_muted
