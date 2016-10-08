@@ -18,12 +18,12 @@ Configuration parameters:
         (default 0)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
-    channel: Alsamixer channel to track.
+    channel: Alsamixer channel to track (ignored by pulseaudio)
         (default 'Master')
     color_muted: set to 1 to color 'format_muted' depending on the volume
         percent.
         (default 0)
-    device: Alsamixer device to use.
+    device: Device to use.
         (default 'default')
     format: Format of the output.
         (default '♪: {percentage}%')
@@ -74,27 +74,31 @@ NOTE:
 import re
 import shlex
 
-from subprocess import check_output, call, run, DEVNULL
+from subprocess import check_output, call, DEVNULL
 
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 
 class AudioBackend(with_metaclass(ABCMeta)):
-    def __init__(self, device, channel, button_up, button_down, button_mute, volume_delta):
+    def __init__(self, device, channel):
         self.device = device
         self.channel = channel
-        self.button_up = button_up
-        self.button_down = button_down
-        self.button_mute = button_mute
-        self.volume_delta = volume_delta
 
     @abstractmethod
     def get_volume(self):
         pass
 
     @abstractmethod
-    def on_click(self, event):
+    def volume_up(self, delta):
+        pass
+
+    @abstractmethod
+    def volume_down(self, delta):
+        pass
+
+    @abstractmethod
+    def toggle_mute(self):
         pass
 
 
@@ -144,43 +148,45 @@ class AlsaBackend(AudioBackend):
 
         return perc, muted
 
-    def on_click(self, event):
-        '''
-        Volume up/down and toggle mute.
-        '''
-        button = event['button']
-        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
+    def volume_up(self, delta):
         # volume up
-        if self.button_up and button == self.button_up:
-            call(shlex.split('{} {}%+'.format(cmd, self.volume_delta)))
+        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
+        call(shlex.split('{} {}%+'.format(cmd, delta)), stdout=DEVNULL, stderr=DEVNULL)
+
+    def volume_down(self, delta):
         # volume down
-        elif self.button_down and button == self.button_down:
-            call(shlex.split('{} {}%-'.format(cmd, self.volume_delta)))
+        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
+        call(shlex.split('{} {}%-'.format(cmd, delta)), stdout=DEVNULL, stderr=DEVNULL)
+
+    def toggle_mute(self, delta):
         # toggle mute
-        elif self.button_mute and button == self.button_mute:
-            call(shlex.split('{} toggle'.format(cmd)))
+        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
+        call(shlex.split('{} toggle'.format(cmd)), stdout=DEVNULL, stderr=DEVNULL)
 
 
 class PulseaudioBackend(AudioBackend):
+    def __init__(self, device, channel):
+        AudioBackend.__init__(self, device, channel)
+        if self.device == 'default':
+            self.device = "0"
+        self.cmd = ["pamixer", "--sink", self.device]
+
     def get_volume(self):
-        perc = check_output(["pamixer", "--get-volume"]).decode('utf-8').strip()
-        muted = (run(["pamixer", "--get-mute"], stdout=DEVNULL, stderr=DEVNULL) .returncode == 0)
+        perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
+        muted = (call(self.cmd + ["--get-mute"], stdout=DEVNULL, stderr=DEVNULL) == 0)
         return perc, muted
 
-    def on_click(self, event):
-        '''
-        Volume up/down and toggle mute.
-        '''
-        button = event['button']
+    def volume_up(self, delta):
         # volume up
-        if self.button_up and button == self.button_up:
-            run(["pamixer", "-i", str(self.volume_delta)], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ["-i", str(delta)], stdout=DEVNULL, stderr=DEVNULL)
+
+    def volume_down(self, delta):
         # volume down
-        elif self.button_down and button == self.button_down:
-            run(["pamixer", "-d", str(self.volume_delta)], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ["-d", str(delta)], stdout=DEVNULL, stderr=DEVNULL)
+
+    def toggle_mute(self):
         # toggle mute
-        elif self.button_mute and button == self.button_mute:
-            run(["pamixer", "-t"], stdout=DEVNULL, stderr=DEVNULL)
+        call(self.cmd + ["-t"], stdout=DEVNULL, stderr=DEVNULL)
 
 
 class Py3status:
@@ -203,19 +209,9 @@ class Py3status:
 
     def post_config_hook(self):
         if self.backend == 'alsa':
-            self.backend = AlsaBackend(self.device,
-                                       self.channel,
-                                       self.button_up,
-                                       self.button_down,
-                                       self.button_mute,
-                                       self.volume_delta)
+            self.backend = AlsaBackend(self.device, self.channel)
         elif self.backend == 'pulseaudio':
-            self.backend = PulseaudioBackend(self.device,
-                                             self.channel,
-                                             self.button_up,
-                                             self.button_down,
-                                             self.button_mute,
-                                             self.volume_delta)
+            self.backend = PulseaudioBackend(self.device, self.channel)
         else:
             raise NameError("Unknown backend")
 
@@ -257,7 +253,19 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        self.backend.on_click(event)
+        '''
+        Volume up/down and toggle mute.
+        '''
+        button = event['button']
+        # volume up
+        if self.button_up and button == self.button_up:
+            self.backend.volume_up(self.volume_delta)
+        # volume down
+        elif self.button_down and button == self.button_down:
+            self.backend.volume_down(self.volume_delta)
+        # toggle mute
+        elif self.button_mute and button == self.button_mute:
+            self.backend.toggle_mute()
 
 
 # test if run directly
