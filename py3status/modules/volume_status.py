@@ -72,30 +72,23 @@ import re
 
 from subprocess import check_output, call, DEVNULL
 
-from abc import ABCMeta, abstractmethod
-from six import with_metaclass
 
-
-class AudioBackend(with_metaclass(ABCMeta)):
+class AudioBackend():
     def __init__(self, device, channel):
         self.device = device
         self.channel = channel
 
-    @abstractmethod
     def get_volume(self):
-        pass
+        raise NotImplemented
 
-    @abstractmethod
     def volume_up(self, delta):
-        pass
+        raise NotImplemented
 
-    @abstractmethod
     def volume_down(self, delta):
-        pass
+        raise NotImplemented
 
-    @abstractmethod
     def toggle_mute(self):
-        pass
+        raise NotImplemented
 
 
 class AlsaBackend(AudioBackend):
