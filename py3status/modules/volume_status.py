@@ -81,7 +81,7 @@ class AudioBackend():
 
     def run_cmd(self, cmd):
         with open(devnull, 'wb') as dn:
-            call(cmd, stdout=dn, stderr=dn)
+            return call(cmd, stdout=dn, stderr=dn)
 
     def get_volume(self):
         raise NotImplemented
