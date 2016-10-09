@@ -75,13 +75,17 @@ from subprocess import check_output, call
 
 
 class AudioBackend():
-    def __init__(self, device, channel):
-        self.device = device
-        self.channel = channel
+    def __init__(self, parent):
+        self.device = parent.device
+        self.channel = parent.channel
+        self.setup(parent)
 
     def run_cmd(self, cmd):
         with open(devnull, 'wb') as dn:
             return call(cmd, stdout=dn, stderr=dn)
+
+    def setup(self, parent):
+        raise NotImplemented
 
     def get_volume(self):
         raise NotImplemented
@@ -97,8 +101,7 @@ class AudioBackend():
 
 
 class AlsaBackend(AudioBackend):
-    def __init__(self, device, channel):
-        AudioBackend.__init__(self, device, channel)
+    def setup(self, parent):
         self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
 
     # return the current channel volume value as a string
@@ -146,21 +149,17 @@ class AlsaBackend(AudioBackend):
         return perc, muted
 
     def volume_up(self, delta):
-        # volume up
         self.run_cmd(self.cmd + ['{}%+'.format(delta)])
 
     def volume_down(self, delta):
-        # volume down
         self.run_cmd(self.cmd + ['{}%-'.format(delta)])
 
     def toggle_mute(self):
-        # toggle mute
         self.run_cmd(self.cmd + ['toggle'])
 
 
 class PulseaudioBackend(AudioBackend):
-    def __init__(self, device, channel):
-        AudioBackend.__init__(self, device, channel)
+    def setup(self, parent):
         if self.device == 'default':
             self.device = "0"
         self.cmd = ["pamixer", "--sink", self.device]
@@ -171,15 +170,12 @@ class PulseaudioBackend(AudioBackend):
         return perc, muted
 
     def volume_up(self, delta):
-        # volume up
         self.run_cmd(self.cmd + ["-i", str(delta)])
 
     def volume_down(self, delta):
-        # volume down
         self.run_cmd(self.cmd + ["-d", str(delta)])
 
     def toggle_mute(self):
-        # toggle mute
         self.run_cmd(self.cmd + ["-t"])
 
 
@@ -202,9 +198,9 @@ class Py3status:
 
     def post_config_hook(self):
         if self.backend == 'alsa':
-            self.backend = AlsaBackend(self.device, self.channel)
+            self.backend_obj = AlsaBackend(self)
         elif self.backend == 'pulseaudio':
-            self.backend = PulseaudioBackend(self.device, self.channel)
+            self.backend_obj = PulseaudioBackend(self)
         else:
             raise NameError("Unknown backend")
 
@@ -229,7 +225,7 @@ class Py3status:
 
     def current_volume(self):
         # call backend
-        perc, muted = self.backend.get_volume()
+        perc, muted = self.backend_obj.get_volume()
 
         # determine the color based on the current volume level
         color = self._perc_to_color(perc if not muted else '0')
@@ -252,13 +248,13 @@ class Py3status:
         button = event['button']
         # volume up
         if self.button_up and button == self.button_up:
-            self.backend.volume_up(self.volume_delta)
+            self.backend_obj.volume_up(self.volume_delta)
         # volume down
         elif self.button_down and button == self.button_down:
-            self.backend.volume_down(self.volume_delta)
+            self.backend_obj.volume_down(self.volume_delta)
         # toggle mute
         elif self.button_mute and button == self.button_mute:
-            self.backend.toggle_mute()
+            self.backend_obj.toggle_mute()
 
 
 # test if run directly
