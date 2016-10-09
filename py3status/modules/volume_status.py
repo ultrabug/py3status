@@ -84,21 +84,6 @@ class AudioBackend():
         with open(devnull, 'wb') as dn:
             return call(cmd, stdout=dn, stderr=dn)
 
-    def setup(self, parent):
-        raise NotImplemented
-
-    def get_volume(self):
-        raise NotImplemented
-
-    def volume_up(self, delta):
-        raise NotImplemented
-
-    def volume_down(self, delta):
-        raise NotImplemented
-
-    def toggle_mute(self):
-        raise NotImplemented
-
 
 class AlsaBackend(AudioBackend):
     def setup(self, parent):
