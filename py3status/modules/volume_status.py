@@ -78,7 +78,10 @@ class AudioBackend():
     def __init__(self, device, channel):
         self.device = device
         self.channel = channel
-        self.devnull = open(devnull, 'wb')
+
+    def run_cmd(self, cmd):
+        with open(devnull, 'wb') as dn:
+            call(cmd, stdout=dn, stderr=dn)
 
     def get_volume(self):
         raise NotImplemented
@@ -144,15 +147,15 @@ class AlsaBackend(AudioBackend):
 
     def volume_up(self, delta):
         # volume up
-        call(self.cmd + ['{}%+'.format(delta)], stdout=self.devnull, stderr=self.devnull)
+        self.run_cmd(self.cmd + ['{}%+'.format(delta)])
 
     def volume_down(self, delta):
         # volume down
-        call(self.cmd + ['{}%-'.format(delta)], stdout=self.devnull, stderr=self.devnull)
+        self.run_cmd(self.cmd + ['{}%-'.format(delta)])
 
     def toggle_mute(self):
         # toggle mute
-        call(self.cmd + ['toggle'], stdout=self.devnull, stderr=self.devnull)
+        self.run_cmd(self.cmd + ['toggle'])
 
 
 class PulseaudioBackend(AudioBackend):
@@ -164,20 +167,20 @@ class PulseaudioBackend(AudioBackend):
 
     def get_volume(self):
         perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
-        muted = (call(self.cmd + ["--get-mute"], stdout=self.devnull, stderr=self.devnull) == 0)
+        muted = (self.run_cmd(self.cmd + ["--get-mute"]) == 0)
         return perc, muted
 
     def volume_up(self, delta):
         # volume up
-        call(self.cmd + ["-i", str(delta)], stdout=self.devnull, stderr=self.devnull)
+        self.run_cmd(self.cmd + ["-i", str(delta)])
 
     def volume_down(self, delta):
         # volume down
-        call(self.cmd + ["-d", str(delta)], stdout=self.devnull, stderr=self.devnull)
+        self.run_cmd(self.cmd + ["-d", str(delta)])
 
     def toggle_mute(self):
         # toggle mute
-        call(self.cmd + ["-t"], stdout=self.devnull, stderr=self.devnull)
+        self.run_cmd(self.cmd + ["-t"])
 
 
 class Py3status:
