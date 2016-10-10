@@ -167,7 +167,7 @@ def check_docstrings():
                 continue
             default_doc = params[param]
             if default_doc is None:
-                msg = '`{}` (default {!r}) not in module docstring'
+                msg = '`{}` default not in docstring add (default {!r})'
                 errors.append(msg.format(param, default))
                 del params[param]
                 continue
