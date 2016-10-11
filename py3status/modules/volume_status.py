@@ -89,47 +89,18 @@ class AlsaBackend(AudioBackend):
     def setup(self, parent):
         self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
 
-    # return the current channel volume value as a string
-    def _get_percentage(self, output):
-
-        # attempt to find a percentage value in square brackets
-        p = re.compile(r'(?<=\[)\d{1,3}(?=%\])')
-        text = p.search(output).group()
-
-        # check if the parsed value is sane by checking if it's an integer
-        try:
-            int(text)
-            return text
-
-        # if not, show an error message in output
-        except ValueError:
-            return "error: can't parse amixer output."
-
-    # returns True if the channel is muted
-    def _get_muted(self, output):
-        p = re.compile(r'(?<=\[)\w{2,3}(?=\])')
-        text = p.search(output).group()
-
-        # check if the parsed string is either "off" or "on"
-        if text in ['on', 'off']:
-            return text == 'off'
-
-        # if not, return False
-        else:
-            return False
-
-    # this method is called by py3status
-    # returns a response dict
     def get_volume(self):
-
-        # call amixer
         output = check_output(['amixer', '-D', self.device, 'sget', self.channel]).decode('utf-8')
 
-        # get the current percentage value
-        perc = self._get_percentage(output)
+        # find percentage and status
+        p = re.compile(r'\[(\d{1,3})%\].*\[(\w{2,3})\]')
+        perc, muted = p.search(output).groups()
 
-        # get info about channel mute status
-        muted = self._get_muted(output)
+        # muted should be 'on' or 'off'
+        if muted in ['on', 'off']:
+            muted = (muted == 'off')
+        else:
+            muted = False
 
         return perc, muted
 
