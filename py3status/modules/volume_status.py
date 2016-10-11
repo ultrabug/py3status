@@ -18,8 +18,9 @@ Configuration parameters:
         (default 10)
     channel: Alsamixer channel to track (ignored by pulseaudio)
         (default 'Master')
-    command: Choose between "amixer" and "pamixer"
-        (default auto-guessed)
+    command: Choose between "amixer" and "pamixer". If None, try to guess based
+        on available commands.
+        (default None)
     device: Device to use.
         (default 'default')
     format: Format of the output.
@@ -154,7 +155,7 @@ class Py3status:
 
     def post_config_hook(self):
         # Guess command if not set
-        if self.command == None:
+        if self.command is None:
             self.command = self.py3.check_commands(['amixer', 'pamixer'])
 
         if self.command == 'amixer':
