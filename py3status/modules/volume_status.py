@@ -8,8 +8,6 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
-    backend: Choose between "alsa" and "pulseaudio"
-        (default "alsa")
     button_down: Button to click to decrease volume. Setting to 0 disables.
         (default 0)
     button_mute: Button to click to toggle mute. Setting to 0 disables.
@@ -20,6 +18,8 @@ Configuration parameters:
         (default 10)
     channel: Alsamixer channel to track (ignored by pulseaudio)
         (default 'Master')
+    command: Choose between "amixer" and "pamixer"
+        (default auto-guessed)
     device: Device to use.
         (default 'default')
     format: Format of the output.
@@ -139,12 +139,12 @@ class Py3status:
     """
     """
     # available configuration parameters
-    backend = 'alsa'
     button_down = 0
     button_mute = 0
     button_up = 0
     cache_timeout = 10
     channel = 'Master'
+    command = None
     device = 'default'
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
@@ -153,12 +153,16 @@ class Py3status:
     volume_delta = 5
 
     def post_config_hook(self):
-        if self.backend == 'alsa':
-            self.backend_obj = AlsaBackend(self)
-        elif self.backend == 'pulseaudio':
-            self.backend_obj = PulseaudioBackend(self)
+        # Guess command if not set
+        if self.command == None:
+            self.command = self.py3.check_commands(['amixer', 'pamixer'])
+
+        if self.command == 'amixer':
+            self.backend = AlsaBackend(self)
+        elif self.command == 'pamixer':
+            self.backend = PulseaudioBackend(self)
         else:
-            raise NameError("Unknown backend")
+            raise NameError("Unknown command")
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
@@ -181,7 +185,7 @@ class Py3status:
 
     def current_volume(self):
         # call backend
-        perc, muted = self.backend_obj.get_volume()
+        perc, muted = self.backend.get_volume()
 
         # determine the color based on the current volume level
         color = self._perc_to_color(perc if not muted else '0')
@@ -204,13 +208,13 @@ class Py3status:
         button = event['button']
         # volume up
         if self.button_up and button == self.button_up:
-            self.backend_obj.volume_up(self.volume_delta)
+            self.backend.volume_up(self.volume_delta)
         # volume down
         elif self.button_down and button == self.button_down:
-            self.backend_obj.volume_down(self.volume_delta)
+            self.backend.volume_down(self.volume_delta)
         # toggle mute
         elif self.button_mute and button == self.button_mute:
-            self.backend_obj.toggle_mute()
+            self.backend.toggle_mute()
 
 
 # test if run directly
