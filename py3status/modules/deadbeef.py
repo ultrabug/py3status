@@ -29,7 +29,7 @@ from subprocess import check_output, CalledProcessError
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
-    delimiter = '¥'
+    delimiter = u'¥'
     format = '{artist} - {title}'
 
     # return error occurs
