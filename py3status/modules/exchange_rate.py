@@ -36,20 +36,17 @@ class Py3status:
     cache_timeout = 600
     format = u'${USD} £{GBP} ¥{JPY}'
 
-    def __init__(self):
-        self._initialized = False
-        self.request_timeout = 10
+    def post_config_hook(self):
+        self.request_timeout = 20
 
-    def _init(self):
         self.currencies = re.findall('\{([^}]*)\}', self.format)
+        # create url
         currencies = ['"%s%s"' % (self.base, cur) for cur in self.currencies]
         self.data_url = URL.format(currencies=','.join(currencies))
-        self._initialized = True
+        # cache for rates data as sometimes we do not recieve valid data
+        self.rates_data = {currency: '?' for currency in self.currencies}
 
     def rates(self):
-        if not self._initialized:
-            self._init()
-
         try:
             result = requests.get(self.data_url, timeout=self.request_timeout)
         except requests.ConnectionError:
@@ -63,18 +60,16 @@ class Py3status:
                 rates = data['query']['results']['rate']
             except KeyError:
                 pass
-        output = {}
+
         # Single currency is not passed as a 1 element list
         if isinstance(rates, list):
             for rate in rates:
-                output[rate['id'][3:]] = rate['Rate']
+                self.rates_data[rate['id'][3:]] = rate['Rate']
         else:
-            output[rates['id'][3:]] = rates['Rate']
-        for currency in self.currencies:
-            if currency not in output:
-                output[currency] = '?'
+            self.rates_data[rates['id'][3:]] = rates['Rate']
+
         return {
-            'full_text': self.py3.safe_format(self.format, output),
+            'full_text': self.py3.safe_format(self.format, self.rates_data),
             'cached_until': self.py3.time_in(self.cache_timeout),
         }
 
