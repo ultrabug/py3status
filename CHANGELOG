@@ -1,3 +1,22 @@
+version 3.2 (2016-10-11)
+* NOTE: this is mainly a bugfix release
+* fix safe format refactoring regressions, by Maxim Baz
+* fix unicode escape sequences in config parsing, by @tobes
+* fix module_test unicode issue, by @tobes
+* fix module_test for post_config_hook staticmethods etc, by @tobes
+* improve error report on missing default value, by @tobes
+* run all post config hooks before starting any modules, by @tobes
+* add defaults to docstrings, by @tobes
+* container modules switch display to urgent modules' output, by @tobes
+* update defaults for modules, by @tobes
+* enhanced module testing, by @tobes
+* docstring checking tests, by @tobes
+* modules to use safe_format(), by @tobes
+* battery_level module: fix hide_seconds when a user has two batteries, by Gabriel Féron
+* bluetooth module: fix issue where duplicate bluetooth connections are shown, by Yuli Khodorkovskiy
+* kdeconnector module: improvements, by Moritz Luedecke
+* process_status module: allow process to accept full process name, by Yuli Khodorkovskiy
+
 version 3.1 (2016-09-11)
 * NOTE: the documentation is getting stronger, check it out to know more about the new features listed
 * @tobes has become the first collaborator of the py3status project !
@@ -28,7 +47,6 @@ version 3.1 (2016-09-11)
 * exchange_rate module: fix rate on singe currency, by Jan Mrázek
 * volume_status module: now shows as color bad when muted, by @chezstov
 * a lot of module fixes and normalization !
-
 
 version 3.0 (2016-06-23)
 * IMPORTANT NOTE: the changelog is so big that this is a condensed version, apologize for missing contribution reports
