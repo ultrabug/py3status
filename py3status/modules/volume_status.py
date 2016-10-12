@@ -71,7 +71,6 @@ NOTE:
 
 import re
 from os import devnull
-
 from subprocess import check_output, call
 
 
