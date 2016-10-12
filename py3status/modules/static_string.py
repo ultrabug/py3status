@@ -3,7 +3,7 @@
 Display static text.
 
 Configuration parameters:
-    format: text that should be printed
+    format: text that should be printed (default '')
 
 @author frimdo ztracenastopa@centrum.cz
 """

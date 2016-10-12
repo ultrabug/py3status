@@ -3,10 +3,12 @@
 Display days/hours/minutes spent and calculate the price of your service.
 
 Configuration parameters:
+    cache_timeout: how often to update in seconds (default 5)
     config_file: file path to store the time already spent
         and restore it the next session
-    hour_price: your price per hour
-    tax: tax value (1.02 = 2%)
+         (default '~/.i3/py3status/counter-config.save')
+    hour_price: your price per hour (default 30)
+    tax: tax value (1.02 = 2%) (default 1.02)
 
 Color options:
     color_bad: Running

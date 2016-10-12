@@ -37,12 +37,12 @@ Configuration parameters:
     fixed_width: Reduce the size changes when switching to new group
         (default False)
     format: Format for module output.
-        (default "{output}" if click_mode is 'all',
-        "{output} {button}" if click_mode 'button')
-    format_button_open: Format for the button when group closed
-        (default '+')
+        *(default "{output}" if click_mode is 'all',
+        "{output} {button}" if click_mode 'button')*
     format_button_closed: Format for the button when group open
-        (default  '-')
+        (default  '+')
+    format_button_open: Format for the button when group closed
+        (default '-')
     format_closed: Format for module output when closed.
         (default "{button}")
     open: Is the group open and displaying its content. Has no effect if
@@ -93,24 +93,22 @@ class Py3status:
     cycle = 0
     fixed_width = False
     format = None
-    format_button_open = u'-'
     format_button_closed = u'+'
+    format_button_open = u'-'
     format_closed = u'{button}'
     open = True
 
     class Meta:
         container = True
 
-    def __init__(self):
-        self.items = []
-        self.active = 0
-        self.initialized = False
-
-    def _init(self):
+    def post_config_hook(self):
         # if no items don't cycle
         if not self.items:
             self.cycle = 0
+
+        self.active = 0
         self._cycle_time = time() + self.cycle
+
         self.open = bool(self.open)
         # set default format etc based on click_mode
         if self.format is None:
@@ -121,8 +119,8 @@ class Py3status:
         # if no button then force open
         if '{button}' not in self.format:
                 self.open = True
-        self.py3.register_content_function(self._content_function)
-        self.initialized = True
+        self.py3.register_function('content_function', self._content_function)
+        self.py3.register_function('urgent_function', self._urgent_function)
 
     def _content_function(self):
         '''
@@ -130,6 +128,14 @@ class Py3status:
         only get update events triggered for these modules.
         '''
         return set([self.items[self.active]])
+
+    def _urgent_function(self, module_list):
+        '''
+        A contained module has become urgent.  We want to display it to the user
+        '''
+        for module in module_list:
+            if module in self.items:
+                self.active = self.items.index(module)
 
     def _get_output(self):
         if not self.fixed_width:
@@ -182,9 +188,6 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
                 'full_text': '',
             }
-
-        if not self.initialized:
-            self._init()
 
         if self.open:
             if self.cycle and time() >= self._cycle_time:

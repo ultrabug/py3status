@@ -12,8 +12,8 @@ Configuration parameters:
     button_toggle: Button used to toggle if one in format.
         Setting to None disables (default 1)
     format: Display format to use (default '{output}')
-    format_button_open: Format for the button when frame closed (default '-')
     format_button_closed: Format for the button when frame open (default '+')
+    format_button_open: Format for the button when frame closed (default '-')
     format_separator: Specify separator between contents.
         If this is None then the default i3bar separator will be used
         (default None)

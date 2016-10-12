@@ -184,20 +184,36 @@ class Py3:
             self._module._py3_wrapper.notify_user(
                 msg, level=level, rate_limit=rate_limit, module_name=module_name)
 
-    def register_content_function(self, content_function):
+    def register_function(self, function_name, function):
         """
-        Register a function that can be called to discover what modules a
-        container is displaying.  This is used to determine when updates need
-        passing on to the container and also when modules can be put to sleep.
+        Register a function for the module.
 
-        the function must return a set of module names that are being
-        displayed.
+        The following functions can be registered
 
-        Note: This function should only be used by containers.
+        > __content_function()__
+        >
+        > Called to discover what modules a container is displaying.  This is
+        > used to determine when updates need passing on to the container and
+        > also when modules can be put to sleep.
+        >
+        > the function must return a set of module names that are being
+        > displayed.
+        >
+        > Note: This function should only be used by containers.
+        >
+        > __urgent_function(module_names)__
+        >
+        > This function will be called when one of the contents of a container
+        > has changed from a non-urgent to an urgent state.  It is used by the
+        > group module to switch to displaying the urgent module.
+        >
+        > `module_names` is a list of modules that have become urgent
+        >
+        > Note: This function should only be used by containers.
         """
         if self._module:
             my_info = self._get_module_info(self._module.module_full_name)
-            my_info['content_function'] = content_function
+            my_info[function_name] = function
 
     def time_in(self, seconds=None, sync_to=None, offset=0):
         """

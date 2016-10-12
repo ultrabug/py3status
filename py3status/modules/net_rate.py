@@ -4,13 +4,17 @@ Display the current network transfer rate.
 
 Configuration parameters:
     all_interfaces: ignore self.interfaces, but not self.interfaces_blacklist
-    devfile: location of dev file under /proc
+        (default True)
+    cache_timeout: how often we refresh this module in seconds (default 2)
+    devfile: location of dev file under /proc (default '/proc/net/dev')
+    format: format of the module output (default '{interface}: {total}')
     format_no_connection: when there is no data transmitted from the
-        start of the plugin
-    hide_if_zero: hide indicator if rate == 0
-    interfaces: comma separated list of interfaces to track
+        start of the plugin (default '')
+    hide_if_zero: hide indicator if rate == 0 (default False)
+    interfaces: comma separated list of interfaces to track (default '')
     interfaces_blacklist: comma separated list of interfaces to ignore
-    precision: amount of numbers after dot
+        (default 'lo')
+    precision: amount of numbers after dot (default 1)
 
 Format placeholders:
     {down} download rate
@@ -122,12 +126,12 @@ class Py3status:
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': "" if hide else
-            self.format.format(
-                total=self._divide_and_format(delta['total']),
-                up=self._divide_and_format(delta['up']),
-                down=self._divide_and_format(delta['down']),
-                interface=interface[:-1],
-            ) if interface else self.format_no_connection
+            self.py3.safe_format(self.format,
+                                 dict(total=self._divide_and_format(delta['total']),
+                                      up=self._divide_and_format(delta['up']),
+                                      down=self._divide_and_format(delta['down']),
+                                      interface=interface[:-1])
+                                 ) if interface else self.format_no_connection
         }
 
     def _get_stat(self):

@@ -446,7 +446,7 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
-    def notify_update(self, update):
+    def notify_update(self, update, urgent=False):
         """
         Name or list of names of modules that have updated.
         """
@@ -464,6 +464,10 @@ class Py3statusWrapper():
         for container in containers_to_update:
             container_module = self.output_modules.get(container)
             if container_module:
+                # If the container registered a urgent_function then call it
+                # if this update is urgent.
+                if urgent and container_module.get('urgent_function'):
+                    container_module['urgent_function'](update)
                 # If a container has registered a content_function we use that
                 # to see if the container needs to be updated.
                 # We only need to update containers if their active content has
@@ -667,20 +671,23 @@ class Py3statusWrapper():
         # initialize usage variables
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
-        self.create_output_modules()
 
         # prepare the color mappings
         self.create_mappings(config)
 
-        # start modules
         # self.output_modules needs to have been created before modules are
         # started.  This is so that modules can do things like register their
-        # content_functionn.
+        # content_function.
+        self.create_output_modules()
+
+        # Some modules need to be prepared before they can run
+        # eg run their post_config_hook
+        for module in self.modules.values():
+            module.prepare_module()
+
+        # start modules
         for module in self.modules.values():
             module.start_module()
-
-        # update queue populate with all py3modules
-        self.queue.extend(self.modules)
 
         # this will be our output set to the correct length for the number of
         # items in the bar
