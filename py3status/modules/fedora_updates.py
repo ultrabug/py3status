@@ -9,6 +9,8 @@ Additionally check if any update security notices.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds
         (default 600)
+    check_security: Check for security updates
+        (default True)
     format: Display format to use
         (default 'DNF: {updates}')
 
@@ -32,6 +34,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 600
     format = 'DNF: {updates}'
+    check_security = True
 
     def __init__(self):
         self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
@@ -61,7 +64,7 @@ class Py3status:
             self._updates = 0
             self._security_notice = False
         else:
-            if not self._security_notice and self._updates != updates:
+            if self.check_security and not self._security_notice and self._updates != updates:
                 output, error = subprocess.Popen(
                     ['dnf', 'updateinfo'],
                     stdout=subprocess.PIPE,
@@ -69,7 +72,7 @@ class Py3status:
                 notices = str(output)
                 self._security_notice = len(self._reg_ex_sec.findall(notices))
                 self._updates = updates
-            if self._security_notice:
+            if self.check_security and self._security_notice:
                 color = self.py3.COLOR_BAD
             else:
                 color = self.py3.COLOR_DEGRADED
