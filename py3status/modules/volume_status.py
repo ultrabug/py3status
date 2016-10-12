@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display current sound volume using amixer.
+Display current sound volume.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
