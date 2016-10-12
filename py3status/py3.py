@@ -348,9 +348,9 @@ class Py3:
         return requested + offset
 
     def safe_format(self, format_string, param_dict=None,
-                    force_composite=False):
+                    force_composite=False, attr_getter=None):
         """
-        Parser for advanced formating.
+        Parser for advanced formatting.
 
         Unknown placeholders will be shown in the output eg `{foo}`.
 
@@ -392,6 +392,9 @@ class Py3:
 
         If force_composite parameter is True a composite will always be
         returned.
+
+        attr_getter is a function that will when called with an attribute name
+        as a parameter will return a value.
         """
         try:
             return self._formatter.format(
@@ -399,11 +402,13 @@ class Py3:
                 self._py3status_module,
                 param_dict,
                 force_composite=force_composite,
+                attr_getter=attr_getter,
             )
         except Exception:
             return 'invalid format'
 
-    def build_composite(self, format_string, param_dict=None, composites=None):
+    def build_composite(self, format_string, param_dict=None, composites=None,
+                        attr_getter=None):
         """
         __deprecated in 3.3__ use safe_format().
 
@@ -430,6 +435,8 @@ class Py3:
                 self._py3status_module,
                 param_dict,
                 force_composite=True,
+                attr_getter=attr_getter,
+                composites=composites,
             )
         except Exception:
             return [{'full_text': 'invalid format'}]

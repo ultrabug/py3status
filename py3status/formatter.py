@@ -264,7 +264,7 @@ class Formatter:
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
 
     def format(self, format_string, module=None, param_dict=None,
-               force_composite=False):
+               force_composite=False, attr_getter=None):
         """
         Format a string.
         substituting place holders which can be found in
@@ -335,6 +335,10 @@ class Formatter:
                         set_param(param, value, key)
                     else:
                         block.add(value)
+                elif attr_getter:
+                    # get value from attr_getter function
+                    param = attr_getter(key)
+                    set_param(param, value, key)
                 else:
                     # substitution not found so add as a literal
                     block.add(value)
