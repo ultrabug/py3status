@@ -16,13 +16,13 @@ Configuration parameters:
         (default 0)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
-    channel: Alsamixer channel to track (ignored by pulseaudio)
-        (default 'Master')
+    channel: channel to track. Default value is backend dependent.
+        (default None)
     command: Choose between "amixer" and "pamixer". If None, try to guess based
         on available commands.
         (default None)
-    device: Device to use.
-        (default 'default')
+    device: Device to use. Defaults value is backend dependent
+        (default None)
     format: Format of the output.
         (default '♪: {percentage}%')
     format_muted: Format of the output when the volume is muted.
@@ -87,6 +87,10 @@ class AudioBackend():
 
 class AlsaBackend(AudioBackend):
     def setup(self, parent):
+        if self.device is None:
+            self.device = 'default'
+        if self.channel is None:
+            self.channel = 'Master'
         self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
 
     def get_volume(self):
@@ -116,8 +120,10 @@ class AlsaBackend(AudioBackend):
 
 class PulseaudioBackend(AudioBackend):
     def setup(self, parent):
-        if self.device == 'default':
+        if self.device is None:
             self.device = "0"
+        # Ignore channel
+        self.channel = None
         self.cmd = ["pamixer", "--sink", self.device]
 
     def get_volume(self):
@@ -143,9 +149,9 @@ class Py3status:
     button_mute = 0
     button_up = 0
     cache_timeout = 10
-    channel = 'Master'
+    channel = None
     command = None
-    device = 'default'
+    device = None
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
     threshold_bad = 20
