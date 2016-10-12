@@ -488,13 +488,16 @@ class Py3statusWrapper():
             level = LOG_LEVELS.get(level, level)
             syslog(level, u'{}'.format(msg))
         else:
-            with open(self.config['log_file'], 'a') as f:
+            # Binary mode so fs encoding setting is not an issue
+            with open(self.config['log_file'], 'ab') as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
                 out = u'{} {} {}\n'.format(log_time, level.upper(), msg)
                 try:
-                    f.write(out)
-                except UnicodeEncodeError:
+                    # Encode unicode strings to bytes
                     f.write(out.encode('utf-8'))
+                except (AttributeError, UnicodeDecodeError):
+                    # Write any byte strings straight to log
+                    f.write(out)
 
     def report_exception(self, msg, notify_user=True, level='error'):
         """

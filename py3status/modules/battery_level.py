@@ -119,6 +119,9 @@ class Py3status:
     mode = None
     show_percent_with_blocks = None
 
+    def __init__(self):
+        self.last_known_status = ''
+
     def battery_level(self):
 
         self._refresh_battery_info()
@@ -149,7 +152,7 @@ class Py3status:
                                             time_remaining=self.time_remaining))
 
         if message:
-            self._desktop_notification(message)
+            self.py3.notify_user(message, 'info')
 
     def _desktop_notification(self, message):
         """
@@ -341,14 +344,15 @@ class Py3status:
             battery_status = 'bad'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
-                self._notify('Battery level is critically low ({}%)',
-                             'critical')
+                self.py3.notify_user('Battery level is critically low ({}%)'
+                                     .format(self.percent_charged), 'error')
         elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
             if (self.notify_low_level and
                     self.last_known_status != battery_status):
-                self._notify('Battery level is running low ({}%)', 'normal')
+                self.py3.notify_user('Battery level is running low ({}%)'
+                                     .format(self.percent_charged), 'warning')
         elif self.percent_charged >= self.threshold_full:
             self.response['color'] = self.py3.COLOR_GOOD
             battery_status = 'full'
@@ -358,12 +362,6 @@ class Py3status:
 
     def _set_cache_timeout(self):
         self.response['cached_until'] = time() + self.cache_timeout
-
-    def _notify(self, text, urgency):
-        subprocess.call(
-            ['notify-send', text.format(self.percent_charged), '-u', urgency],
-            stdout=open('/dev/null', 'w'),
-            stderr=open('/dev/null', 'w'))
 
 
 if __name__ == "__main__":

@@ -36,6 +36,11 @@ composites = {
 class Module:
     module_param = 'something'
 
+    class py3:
+        COLOR_BAD = '#FF0000'
+        COLOR_DEGRADED = '#FF00'
+        COLOR_GOOD = '#00FF00'
+
     def module_method(self):
         return 'method'
 
@@ -453,7 +458,7 @@ def test_71():
 def test_72():
     run_formatter({
         'format': '{complex}',
-        'expected': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
+        'expected': [{'full_text': 'LA 09:34NY 12:34'}],
         'composite': True,
     })
 
@@ -461,7 +466,7 @@ def test_72():
 def test_73():
     run_formatter({
         'format': 'TEST {simple}',
-        'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
+        'expected': [{'full_text': u'TEST NY 12:34'}],
         'composite': True,
     })
 
@@ -481,7 +486,7 @@ def test_75():
 def test_76():
     run_formatter({
         'format': '[{complex}]',
-        'expected': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
+        'expected': [{'full_text': 'LA 09:34NY 12:34'}],
         'composite': True,
     })
 
@@ -489,7 +494,7 @@ def test_76():
 def test_77():
     run_formatter({
         'format': 'TEST [{simple}]',
-        'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
+        'expected': [{'full_text': u'TEST NY 12:34'}],
         'composite': True,
     })
 
@@ -498,8 +503,7 @@ def test_78():
     run_formatter({
         'format': '{simple} TEST [{name}[ {number}]]',
         'expected': [
-            {'full_text': 'NY 12:34'},
-            {'full_text': u' TEST Björk 42'}
+            {'full_text': u'NY 12:34 TEST Björk 42'}
         ],
         'composite': True,
     })
@@ -507,13 +511,76 @@ def test_78():
 
 def test_else_true():
     run_formatter({
-            'format': '[\?if=yes Hello|Goodbye]',
-            'expected': 'Hello',
+        'format': '[\?if=yes Hello|Goodbye]',
+        'expected': 'Hello',
     })
 
 
 def test_else_false():
     run_formatter({
-            'format': '[\?if=no Hello|Goodbye|Something else]',
-            'expected': 'Goodbye',
+        'format': '[\?if=no Hello|Goodbye|Something else]',
+        'expected': 'Goodbye',
+    })
+
+# block colors
+
+
+def test_color_1():
+    run_formatter({
+        'format': '[\?color=bad {name}]',
+        'expected':  [{'full_text': u'Björk', 'color': '#FF0000'}],
+    })
+
+
+def test_color_2():
+    run_formatter({
+        'format': '[\?color=good Name [\?color=bad {name}] hello]',
+        'expected':  [
+            {'full_text': 'Name ', 'color': '#00FF00'},
+            {'full_text': u'Björk', 'color': '#FF0000'},
+            {'full_text': ' hello', 'color': '#00FF00'}
+        ],
+    })
+
+
+def test_color_3():
+    run_formatter({
+        'format': '[\?max_length=20&color=good Name [\?color=bad {name}] hello]',
+        'expected':  [
+            {'full_text': 'Name ', 'color': '#00FF00'},
+            {'full_text': u'Björk', 'color': '#FF0000'},
+            {'full_text': ' hello', 'color': '#00FF00'}
+        ],
+    })
+
+
+def test_color_4():
+    run_formatter({
+        'format': '[\?max_length=8&color=good Name [\?color=bad {name}] hello]',
+        'expected':  [
+            {'full_text': 'Name ', 'color': '#00FF00'},
+            {'full_text': u'Bjö', 'color': '#FF0000'}
+        ],
+
+    })
+
+
+def test_color_5():
+    run_formatter({
+        'format': '[\?color=bad {name}][\?color=good {name}]',
+        'expected': [
+            {'full_text': u'Björk', 'color': '#FF0000'},
+            {'full_text': u'Björk', 'color': '#00FF00'}
+        ],
+    })
+
+
+def test_color_6():
+    run_formatter({
+        'format': '[\?color=bad {name}] [\?color=good {name}]',
+        'expected': [
+            {'full_text': u'Björk', 'color': '#FF0000'},
+            {'full_text': ' '},
+            {'full_text': u'Björk', 'color': '#00FF00'}
+        ],
     })

@@ -11,13 +11,42 @@ except ImportError:
 class Composite:
     """
     Helper class to identify a composite
+    and store its content
     """
 
-    def __init__(self, name):
+    def __init__(self, content, name='__Anon__'):
+        self.content = content
         self.name = name
 
     def __repr__(self):
         return u'<Composite `{}`>'.format(self.name)
+
+
+class BlockConfig:
+    """
+    Block commands eg [\?color=bad ...] are stored in this object
+    """
+
+    # defaults
+    _if = None
+    color = None
+    max_length = None
+    show = False
+
+    def update(self, commands_str):
+        """
+        update with commands from the block
+        """
+        commands = dict(parse_qsl(commands_str, keep_blank_values=True))
+
+        self._if = commands.get('if', self._if)
+        self.color = commands.get('color', self.color)
+
+        max_length = commands.get('max_length')
+        if max_length is not None:
+            self.max_length = int(max_length)
+
+        self.show = 'show' in commands or self.show
 
 
 class Block:
@@ -30,9 +59,11 @@ class Block:
     """
 
     def __init__(self, param_dict, composites, module, parent=None):
+        self.block_config = BlockConfig()
         self.commands = {}
         self.composites = composites
         self.content = []
+        self.is_composite = False
         self.module = module
         self.options = []
         self.param_dict = param_dict
@@ -40,7 +71,7 @@ class Block:
         self.valid_blocks = set()
 
     def __repr__(self):
-        return repr(self.options)
+        return u'<Block {!r}>'.format(self.options)
 
     def add(self, item):
         """
@@ -68,7 +99,7 @@ class Block:
         Process any commands into a dict and store
         commands are url query string encoded
         """
-        self.commands.update(parse_qsl(commands, keep_blank_values=True))
+        self.block_config.update(commands)
 
     def is_valid_by_command(self, index=None):
         """
@@ -77,8 +108,8 @@ class Block:
         # If this is not the first option in a block we ignore it.
         if index:
             return None
-        if 'if' in self.commands:
-            _if = self.commands['if']
+        if self.block_config._if:
+            _if = self.block_config._if
             if _if and _if.startswith('!'):
                 if not self.param_dict.get(_if[1:]):
                     return True
@@ -89,7 +120,7 @@ class Block:
                     return True
                 else:
                     return False
-        if 'show' in self.commands:
+        if self.block_config.show:
             return True
         # explicitly return None to aid code readability
         return None
@@ -105,7 +136,36 @@ class Block:
             # This enables the second option in a block if \?if=.. is false.
             self.mark_valid(index=1)
 
-    def show(self, is_composite):
+    def process_text_chunk(self, text):
+        block_config = self.block_config
+        if block_config.max_length is not None:
+            text = text[:block_config.max_length]
+            block_config.max_length -= len(text)
+        if text and block_config.color or self.is_composite:
+            text = {'full_text': text}
+            if block_config.color:
+                text['color'] = block_config.color
+            if self.parent:
+                text = Composite(text)
+        return text
+
+    def process_composite_chunk(self, composite):
+        out = []
+        for item in composite:
+            self.process_composite_chunk_item(item)
+            if item['full_text']:
+                out.append(item)
+        return out
+
+    def process_composite_chunk_item(self, item):
+        block_config = self.block_config
+        if block_config.max_length is not None:
+            item['full_text'] = item['full_text'][:block_config.max_length]
+            block_config.max_length -= len(item['full_text'])
+        if block_config.color and 'color' not in item:
+            item['color'] = block_config.color
+
+    def show(self):
         """
         This is where we go output the content of a block and any valid child
         block that it contains.
@@ -128,18 +188,31 @@ class Block:
                 # to the output
                 for item in option:
                     if isinstance(item, Block):
-                        output.extend(item.show(is_composite))
+                        content = item.show()
+                        if isinstance(content, list):
+                            output.extend(content)
+                        else:
+                            output.append(content)
+                        if item.is_composite:
+                            self.is_composite = True
                     else:
                         output.append(item)
                 break
 
         # if not building a composite then we can simply
         # build our output and return it here
-        if not is_composite:
+        if not self.is_composite:
             data = ''.join(output)
             # apply our max length command
-            if 'max_length' in self.commands:
-                data = data[:int(self.commands['max_length'])]
+            if self.block_config.max_length is not None:
+                data = data[:self.block_config.max_length]
+            if self.block_config.color:
+                block_composite = {
+                    'full_text': data,
+                    'color': self.block_config.color,
+                }
+                data = Composite(block_composite)
+                self.is_composite = True
             return data
 
         # Build up our output.  We join any text pieces togeather and if we
@@ -151,25 +224,19 @@ class Block:
                 text += item
             else:
                 if text:
-                    if is_composite and self.parent is None:
-                        data.append({'full_text': text})
-                    else:
-                        data.append(text)
+                    data.append(self.process_text_chunk(text))
                 text = ''
                 if self.parent is None:
                     # This is the main block so we get the actual composites
-                    composite = self.composites.get(item.name)
-                    if isinstance(composite, list):
-                        data += composite
-                    else:
-                        data.append(composite)
+                    composite = item.content
+                    if not isinstance(composite, list):
+                        composite = [composite]
+                    data += self.process_composite_chunk(composite)
                 else:
+                    self.process_composite_chunk_item(item.content)
                     data.append(item)
         if text:
-            if is_composite and self.parent is None:
-                data.append({'full_text': text})
-            else:
-                data.append(text)
+            data.append(self.process_text_chunk(text))
 
         return data
 
@@ -200,8 +267,6 @@ class Formatter:
         substituting place holders which can be found in
         composites, param_dict or as attributes of the supplied module.
         """
-
-        is_composite = composites is not None
 
         def set_param(param, value, key):
             """
@@ -253,7 +318,8 @@ class Formatter:
                 if key in composites:
                     # Add the composite
                     if composites[key]:
-                        block.add(Composite(key))
+                        block.add(Composite(composites[key], key))
+                        block.is_composite = True
                         block.mark_valid()
                 elif key in param_dict:
                     # was a supplied parameter
@@ -291,424 +357,50 @@ class Formatter:
         # one for situations like '{placeholder}|Nothing'
         if not block.valid_blocks:
             block.mark_valid()
-        return block.show(is_composite)
+        output = block.show()
+        if composites and not isinstance(output, list):
+            if output == '':
+                output = []
+            else:
+                output = [{'full_text': output}]
 
+        # post format
+        # swap color names to values
+        # merge items if possible
 
-if __name__ == '__main__':
-
-    """
-    Run formatter tests
-    """
-
-    f = Formatter()
-
-    param_dict = {
-        'name': u'Björk',
-        'number': 42,
-        'pi': 3.14159265359,
-        'yes': True,
-        'no': False,
-        'empty': '',
-        'None': None,
-        '?bad name': 'evil',
-        u'☂ Very bad name ': u'☂ extremely evil',
-        'long_str': 'I am a long string though not too long',
-        'python2_unicode': u'Björk',
-        'python2_str': 'Björk',
-        'zero': 0,
-    }
-
-    composites = {
-        'complex': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
-        'simple': {'full_text': 'NY 12:34'},
-        'empty': [],
-    }
-
-    class Module:
-        module_param = 'something'
-
-        def module_method(self):
-            return 'method'
-
-        @ property
-        def module_property(self):
-            return 'property'
-
-    tests = [
-        {
-            'format': u'hello ☂',
-            'expected': u'hello ☂',
-        },
-        {
-            'format': 'hello ☂',
-            'expected': u'hello ☂',
-        },
-        {
-            'format': '[hello]',
-            'expected': '',
-        },
-        {
-            'format': r'\\ \[ \] \{ \}',
-            'expected': r'\ [ ] { }',
-        },
-        {
-            'format': '{{hello}}',
-            'expected': '{hello}',
-        },
-        {
-            'format': '{{hello}',
-            'expected': '{hello}',
-        },
-        {
-            'format': '{?bad name}',
-            'expected': 'evil',
-        },
-        {
-            'format': '{☂ Very bad name }',
-            'expected': '☂ extremely evil',
-        },
-        {
-            'format': '{missing} {name} {number}',
-            'expected': '{missing} Björk 42',
-        },
-        {
-            'format': '{missing}|{name}|{number}',
-            'expected': 'Björk',
-        },
-        {
-            'format': '{missing}|empty',
-            'expected': 'empty',
-        },
-        {
-            'format': '[{missing}|empty]',
-            'expected': '',
-        },
-        {
-            'format': 'pre [{missing}|empty] post',
-            'expected': 'pre  post',
-        },
-        {
-            'format': 'pre [{missing}|empty] post|After',
-            'expected': 'After',
-        },
-        {
-            'format': '{module_param}',
-            'expected': 'something',
-        },
-        {
-            'format': '{module_method}',
-            'expected': '{module_method}',
-        },
-        {
-            'format': '{module_property}',
-            'expected': 'property',
-        },
-        {
-            'format': 'Hello {name}!',
-            'expected': 'Hello Björk!',
-        },
-        {
-            'format': '[Hello {name}!]',
-            'expected': 'Hello Björk!',
-        },
-        {
-            'format': '[Hello {missing}|Anon!]',
-            'expected': '',
-        },
-        {
-            'format': 'zero [one [two [three [no]]]]|Numbers',
-            'expected': 'Numbers',
-        },
-        {
-            'format': 'zero [one [two [three [{yes}]]]]|Numbers',
-            'expected': 'zero one two three True',
-        },
-        {
-            'format': 'zero [one [two [three [{no}]]]]|Numbers',
-            'expected': 'Numbers',
-        },
-        # zero/False/None etc
-        {
-            'format': '{zero}',
-            'expected': '0',
-        },
-        {
-            'format': '[{zero}] hello',
-            'expected': '0 hello',
-        },
-        {
-            'format': '[{zero} ping] hello',
-            'expected': '0 ping hello',
-        },
-        {
-            'format': '{None}',
-            'expected': '',
-        },
-        {
-            'format': '[{None}] hello',
-            'expected': ' hello',
-        },
-        {
-            'format': '[{None} ping] hello',
-            'expected': ' hello',
-        },
-        {
-            'format': '{no}',
-            'expected': '',
-        },
-        {
-            'format': '[{no}] hello',
-            'expected': ' hello',
-        },
-        {
-            'format': '[{no} ping] hello',
-            'expected': ' hello',
-        },
-        {
-            'format': '{yes}',
-            'expected': 'True',
-        },
-        {
-            'format': '[{yes}] hello',
-            'expected': 'True hello',
-        },
-        {
-            'format': '[{yes} ping] hello',
-            'expected': 'True ping hello',
-        },
-        {
-            'format': '{empty}',
-            'expected': '',
-        },
-        {
-            'format': '[{empty}] hello',
-            'expected': ' hello',
-        },
-        {
-            'format': '[{empty} ping] hello',
-            'expected': ' hello',
-        },
-        # python 2 unicode
-        {
-            'format': 'Hello {python2_unicode}! ☂',
-            'expected': 'Hello Björk! ☂',
-        },
-        {
-            'format': u'Hello {python2_unicode}! ☂',
-            'expected': 'Hello Björk! ☂',
-        },
-        {
-            'format': 'Hello {python2_str}! ☂',
-            'expected': 'Hello Björk! ☂',
-        },
-        {
-            'format': u'Hello {python2_str}! ☂',
-            'expected': 'Hello Björk! ☂',
-        },
-        # formatting
-        {
-            'format': '{name}',
-            'expected': 'Björk',
-        },
-        {
-            'format': '{name!s}',
-            'expected': 'Björk',
-        },
-        {
-            'format': '{name!r}',
-            'expected': "'Björk'",
-            'py3only': True,
-        },
-        {
-            'format': '{name:7}',
-            'expected': 'Björk  ',
-        },
-        {
-            'format': '{name:<7}',
-            'expected': 'Björk  ',
-        },
-        {
-            'format': '{name:>7}',
-            'expected': '  Björk',
-        },
-        {
-            'format': '{name:*^9}',
-            'expected': '**Björk**',
-        },
-        {
-            'format': '{long_str}',
-            'expected': 'I am a long string though not too long',
-        },
-        {
-            'format': '{long_str:.6}',
-            'expected': 'I am a',
-        },
-        {
-            'format': '{number}',
-            'expected': '42',
-        },
-        {
-            'format': '{number:04d}',
-            'expected': '0042',
-        },
-        {
-            'format': '{pi}',
-            'expected': '3.14159265359',
-        },
-        {
-            'format': '{pi:05.2f}',
-            'expected': '03.14',
-        },
-        # commands
-        {
-            'format': '{missing}|\?show Anon',
-            'expected': 'Anon',
-        },
-        {
-            'format': 'Hello [{missing}|[\?show Anon]]!',
-            'expected': 'Hello Anon!',
-        },
-        {
-            'format': '[\?if=yes Hello]',
-            'expected': 'Hello',
-        },
-        {
-            'format': '[\?if=no Hello]',
-            'expected': '',
-        },
-        {
-            'format': '[\?if=missing Hello]',
-            'expected': '',
-        },
-        {
-            'format': '[\?if=!yes Hello]',
-            'expected': '',
-        },
-        {
-            'format': '[\?if=!no Hello]',
-            'expected': 'Hello',
-        },
-        {
-            'format': '[\?if=!missing Hello]',
-            'expected': 'Hello',
-        },
-        {
-            'format': '[\?if=yes Hello[ {name}]]',
-            'expected': 'Hello Björk',
-        },
-        {
-            'format': '[\?if=no Hello[ {name}]]',
-            'expected': '',
-        },
-        {
-            'format': '[\?if=!yes Hello|Goodbye|Something else]',
-            'expected': 'Goodbye',
-        },
-        {
-            'format': '[\?if=!no Hello|Goodbye]',
-            'expected': 'Hello',
-        },
-        {
-            'format': '[\?max_length=10 Hello {name} {number}]',
-            'expected': 'Hello Björ',
-        },
-        {
-            'format': '\?max_length=9 Hello {name} {number}',
-            'expected': 'Hello Bjö',
-        },
-        # Errors
-        {
-            'format': 'hello]',
-            'exception': 'Too many `]`',
-        },
-        {
-            'format': '[hello',
-            'exception': 'Block not closed',
-        },
-        # Composites
-        {
-            'format': '{empty}',
-            'expected': [],
-            'composite': True,
-        },
-        {
-            'format': '{simple}',
-            'expected': [{'full_text': 'NY 12:34'}],
-            'composite': True,
-        },
-        {
-            'format': '{complex}',
-            'expected': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
-            'composite': True,
-        },
-        {
-            'format': 'TEST {simple}',
-            'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
-            'composite': True,
-        },
-        {
-            'format': '[{empty}]',
-            'expected': [],
-            'composite': True,
-        },
-        {
-            'format': '[{simple}]',
-            'expected': [{'full_text': 'NY 12:34'}],
-            'composite': True,
-        },
-        {
-            'format': '[{complex}]',
-            'expected': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
-            'composite': True,
-        },
-        {
-            'format': 'TEST [{simple}]',
-            'expected': [{'full_text': u'TEST '}, {'full_text': 'NY 12:34'}],
-            'composite': True,
-        },
-        {
-            'format': '{simple} TEST [{name}[ {number}]]',
-            'expected':  [{'full_text': 'NY 12:34'}, {'full_text': u' TEST Björk 42'}],
-            'composite': True,
-        },
-    ]
-
-    passed = 0
-    failed = 0
-    module = Module()
-
-    for test in tests:
-        if test.get('py3only') and f.python2:
-            continue
-        try:
-            if test.get('composite'):
-                result = f.format(
-                    test['format'],
-                    module,
-                    param_dict,
-                    composites,
+        if isinstance(output, list):
+            final_output = []
+            diff_last = None
+            item_last = None
+            for item in output:
+                # ignore empty items
+                if not item['full_text'] and not item.get('separator'):
+                    continue
+                # colors
+                color_this = item.get('color')
+                if color_this and color_this[0] != '#':
+                    color_name = 'color_%s' % color_this
+                    # substitute color
+                    color_this = (
+                        getattr(module, color_name, None) or
+                        getattr(module.py3, color_name.upper(), None)
+                    )
+                    if color_this:
+                            item['color'] = color_this
+                    else:
+                        del item['color']
+                # merge items if we can
+                diff = (
+                    item.get('index'),
+                    item.get('instance'),
+                    item.get('name'),
+                    color_this,
                 )
-            else:
-                result = f.format(test['format'], module, param_dict)
-        except Exception as e:
-            if test.get('exception') == str(e):
-                passed += 1
-                continue
-            else:
-                print('Fail %r' % test['format'])
-                print('exception raised %r' % e)
-                print('')
-                failed += 1
-        expected = test.get('expected')
-        if f.python2 and isinstance(expected, str):
-            expected = expected.decode('utf-8')
-        if result == expected:
-            passed += 1
-        else:
-            print('Fail %r' % test['format'])
-            print('expected %r' % expected)
-            print('got      %r' % result)
-            print('')
-            failed += 1
-
-    print('Tests complete: %s passed %s failed' % (passed, failed))
+                if diff == diff_last:
+                    item_last['full_text'] += item['full_text']
+                else:
+                    diff_last = diff
+                    item_last = item.copy()  # copy item as we may change it
+                    final_output.append(item_last)
+            return final_output
+        return output
