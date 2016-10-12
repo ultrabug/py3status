@@ -15,7 +15,7 @@ py3status documentation
 [Custom click events](#on_click)
 
 * [Special on_click commands](#on_click_commands)
-* [Example config](#on_click_example)
+* [Module data and on_click commands](#on_click_data)
 
 [Writing custom modules](#writing_custom_modules)
 
@@ -341,20 +341,7 @@ As an added feature and in order to get your i3bar more responsive, every
 py3status modules and i3status modules as described in the refresh command
 below.
 
-#### <a name="on_click_commands"></a>Special on_click commands
-
-There are two commands you can pass to the `on_click` parameter that have a
-special meaning to py3status :
-
-*  `refresh` : This will refresh (expire the cache) of the clicked module.
-   This also works for i3status modules (it will send a SIGUSR1 to i3status
-   for you).
-
-*  `refresh_all` : This will refresh all the modules from your i3bar
-   (i3status included). This has the same effect has sending a SIGUSR1 to
-   py3status.
-
-#### <a name="on_click_example"></a>Example on_click usage on i3status.conf:
+Examples:
 
 ```
 # reload the i3 config when I left click on the i3status time module
@@ -408,6 +395,37 @@ weather_yahoo paris {
     request_timeout = 10
 }
 ```
+
+#### <a name="on_click_commands"></a>Special on_click commands
+
+There are two commands you can pass to the `on_click` parameter that have a
+special meaning to py3status :
+
+*  `refresh` : This will refresh (expire the cache) of the clicked module.
+   This also works for i3status modules (it will send a SIGUSR1 to i3status
+   for you).
+
+*  `refresh_all` : This will refresh all the modules from your i3bar
+   (i3status included). This has the same effect has sending a SIGUSR1 to
+   py3status.
+
+#### <a name="on_click_data"></a>Module data and on_click commands
+
+Since version 3.3 it is possible to use the output text of a module in the
+`on_click` command.  To do this `$OUTPUT` can be used in command and it will be
+substituted by the modules text output when the command is run.
+
+Example:
+
+```
+# copy module output to the clipboard using xclip
+my_module {
+    on_click 1 = 'exec echo $OUTPUT | xclip -i'
+}
+```
+
+If the output of a module is a composite then the output of the part clicked on
+can be accessed using `$OUTPUT_PART`.
 
 ***
 
