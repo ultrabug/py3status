@@ -1,3 +1,12 @@
+version 3.3 (milestone)
+* formatter now accepts per module coloring syntax on containers, by @tobes
+* module test: fix unicode error, by @tobes
+* battery_level module: stability and bugfix, by @inclementweather
+* exchange_rates module: cache value instead of reporting an error, by @tobes
+* fedora_updates module: add check_security option, by @jakubjedelsky
+* github module: open github home page if no repo is configured and you're gettin all notifications, by @rixx
+* volume_status module: add pulseaudio support, by @guiniol
+
 version 3.2 (2016-10-11)
 * NOTE: this is mainly a bugfix release
 * fix safe format refactoring regressions, by Maxim Baz
