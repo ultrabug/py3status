@@ -14,8 +14,12 @@ Configuration parameters:
     http_timeout: HTTP query timeout to graphite.
         (default 10)
     proxy: You can configure the proxy with HTTP or HTTPS.
-        See: http://docs.python-requests.org/en/master/user/advanced/#proxies
         (default: None)
+        examples:
+            proxy = 'https://myproxy.example.com:1234/'
+            proxy = 'http://user:passwd@myproxy.example.com/'
+            proxy = 'socks5://user:passwd@host:port'
+        (proxy_socks is available after an 'pip install requests[socks]')
     targets: semicolon separated list of targets to query graphite for.
         (default '')
     threshold_bad: numerical threshold,
