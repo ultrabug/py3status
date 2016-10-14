@@ -11,6 +11,12 @@ Configuration parameters:
     format: you MUST use placeholders here to display data, see below.
         (default '')
     graphite_url: URL to your graphite server. (default '')
+    http_proxy: You can configure individual requests for the scheme HTTP,
+        see http://docs.python-requests.org/en/master/user/advanced/#proxies
+        (default: None)
+    https_proxy: You can configure individual requests for the scheme HTTPS,
+        see http://docs.python-requests.org/en/master/user/advanced/#proxies
+        (default: None)
     http_timeout: HTTP query timeout to graphite.
         (default 10)
     targets: semicolon separated list of targets to query graphite for.
@@ -77,6 +83,8 @@ class Py3status:
     datapoint_selection = 'max'
     format = ''
     graphite_url = ''
+    http_proxy = None
+    https_proxy = None
     http_timeout = 10
     targets = ''
     threshold_bad = None
@@ -113,9 +121,16 @@ class Py3status:
         for target in self.targets.split(';'):
             params.append(('target', target))
 
+        proxies = {}
+        if self.http_proxy:
+            proxies['http'] = self.http_proxy
+        if self.https_proxy:
+            proxies['https'] = self.https_proxy
+
         r = get('{}/render'.format(self.graphite_url),
                 params,
-                timeout=self.http_timeout)
+                timeout=self.http_timeout,
+                proxies=proxies)
         if r.status_code != 200:
             raise Exception('HTTP error {}'.format(r.status_code))
         else:
