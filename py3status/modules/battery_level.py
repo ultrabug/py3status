@@ -83,6 +83,7 @@ Requires:
 from __future__ import division  # python2 compatibility
 from time import time
 from re import findall
+from glob import iglob
 
 import math
 import subprocess
@@ -178,38 +179,7 @@ class Py3status:
             # Backwards compatibility for '{}' option in format string
             self.format = self.format.replace('{}', '{percent}')
 
-    def _extract_battery_information_from_acpi(self, acpi_battery_lines):
-        """
-        Extract the percent charged, charging state, time remaining,
-        and capacity for a battery, given a list of two strings from acpi
-        """
-        battery = dict()
-        battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",
-                                                 acpi_battery_lines[0])[0])
-        battery["charging"] = "Charging" in acpi_battery_lines[0]
-        battery["capacity"] = int(findall("(?<= )(\d+)(?= mAh)",
-                                          acpi_battery_lines[1])[1])
-
-        # ACPI only shows time remaining if battery is discharging or charging
-        try:
-            battery["time_remaining"] = ''.join(findall(
-                "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
-                "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
-        except IndexError:
-            battery["time_remaining"] = '?'
-
-        return battery
-
-    def _hms_to_seconds(self, t):
-        h, m, s = [int(i) for i in t.split(':')]
-        return 3600 * h + 60 * m + s
-
-    def _seconds_to_hms(self, secs):
-        m, s = divmod(secs, 60)
-        h, m = divmod(m, 60)
-        return "%d:%02d:%02d" % (h, m, s)
-
-    def _refresh_battery_info(self):
+    def _extract_battery_information_from_acpi(self):
         '''
         Get the battery info from acpi
 
@@ -225,6 +195,26 @@ class Py3status:
         Battery 1: Unknown, 98%
         Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%
         '''
+
+        def _parse_battery_info(acpi_battery_lines):
+            battery = dict()
+            battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",
+                                                     acpi_battery_lines[0])[0])
+            battery["charging"] = "Charging" in acpi_battery_lines[0]
+            battery["capacity"] = int(findall("(?<= )(\d+)(?= mAh)",
+                                              acpi_battery_lines[1])[1])
+
+            # ACPI only shows time remaining if battery is discharging or
+            # charging
+            try:
+                battery["time_remaining"] = ''.join(findall(
+                    "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
+                    "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
+            except IndexError:
+                battery["time_remaining"] = '?'
+
+            return battery
+
         acpi_raw = subprocess.check_output(
             ["acpi", "-b", "-i"],
             stderr=subprocess.STDOUT)
@@ -237,9 +227,19 @@ class Py3status:
         acpi_list = [acpi_list[i:i + 2]
                      for i in range(0, len(acpi_list) - 1, 2)]
 
-        battery_list = [self._extract_battery_information_from_acpi(battery)
-                        for battery in acpi_list]
+        return [_parse_battery_info(battery) for battery in acpi_list]
 
+    def _hms_to_seconds(self, t):
+        h, m, s = [int(i) for i in t.split(':')]
+        return 3600 * h + 60 * m + s
+
+    def _seconds_to_hms(self, secs):
+        m, s = divmod(secs, 60)
+        h, m = divmod(m, 60)
+        return "%d:%02d:%02d" % (h, m, s)
+
+    def _refresh_battery_info(self):
+        battery_list = self._extract_battery_information_from_acpi()
         if type(self.battery_id) == int:
             battery = battery_list[self.battery_id]
             self.percent_charged = battery['percent_charged']
