@@ -250,23 +250,35 @@ class Py3status:
         Only available in kernel 2.6.24(?) and newer. Before kernel provided
         a similar, yet incompatible interface in /proc
         """
+        def _parse_battery_info(sys_path):
+            """
+            Extract battery information from uevent file, already convert to
+            int if necessary
+            """
+            raw_values = dict()
+            with open(sys_path + "/uevent") as f:
+                for var in f.read().split():
+                    k, v = var.split("=")
+                    try:
+                        raw_values[k] = int(v)
+                    except ValueError:
+                        raw_values[k] = v
+            return raw_values
+
         battery_list = []
         for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
+            r = _parse_battery_info(path)
             battery = dict()
-            with open(path + "/energy_full") as f:
-                battery["capacity"] = int(f.readline())
-            with open(path + "/status") as f:
-                battery["charging"] = "Charging" in f.readline()
-            with open(path + "/energy_now") as f:
-                battery["percent_charged"] = math.floor(
-                    int(f.readline()) / battery["capacity"] * 100)
-            with open(path + "/power_now") as f:
-                power_now = int(f.readline())
-                if battery["charging"]:
-                    time_in_secs = power_now / battery["capacity"] * 3600
-                else:
-                    time_in_secs = battery["capacity"] / power_now * 3600
-                battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
+            battery["capacity"] = r["POWER_SUPPLY_ENERGY_FULL"]
+            battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
+            battery["percent_charged"] = math.floor(
+                r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100)
+            power_now = r["POWER_SUPPLY_POWER_NOW"]
+            if battery["charging"]:
+                time_in_secs = power_now / battery["capacity"] * 3600
+            else:
+                time_in_secs = battery["capacity"] / power_now * 3600
+            battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
             battery_list.append(battery)
         return battery_list
 
