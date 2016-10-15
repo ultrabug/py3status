@@ -96,6 +96,8 @@ FULL_BLOCK = u'█'
 FORMAT = u"{icon}"
 FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
+SYS_BATTERY_PATH = u"/sys/class/power_supply/BAT"
+MEASUREMENT_MODE = u"sys"
 
 
 class Py3status:
@@ -109,6 +111,9 @@ class Py3status:
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
+    sys_battery_path = SYS_BATTERY_PATH
+    measurement_mode = MEASUREMENT_MODE
+    hide_when_full = False
     hide_seconds = False
     hide_when_full = False
     notification = False
@@ -229,6 +234,34 @@ class Py3status:
 
         return [_parse_battery_info(battery) for battery in acpi_list]
 
+    def _extract_battery_information_from_sys(self):
+        """
+        Extract the percent charged, charging state, time remaining,
+        and capacity for a battery, using Linux's kernel /sys interface
+
+        Only available in kernel 2.6.24(?) and newer. Before kernel provided
+        a similar, yet incompatible interface in /proc
+        """
+        battery_list = []
+        for path in iglob(self.sys_battery_path + '*'):
+            battery = dict()
+            with open(path + "/energy_full") as f:
+                battery["capacity"] = int(f.readline())
+            with open(path + "/status") as f:
+                battery["charging"] = "Charging" in f.readline()
+            with open(path + "/energy_now") as f:
+                battery["percent_charged"] = math.floor(
+                    int(f.readline()) / battery["capacity"] * 100)
+            with open(path + "/power_now") as f:
+                power_now = int(f.readline())
+                if battery["charging"]:
+                    time_in_secs = power_now / battery["capacity"] * 3600
+                else:
+                    time_in_secs = battery["capacity"] / power_now * 3600
+                battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
+            battery_list.append(battery)
+        return battery_list
+
     def _hms_to_seconds(self, t):
         h, m, s = [int(i) for i in t.split(':')]
         return 3600 * h + 60 * m + s
@@ -239,7 +272,11 @@ class Py3status:
         return "%d:%02d:%02d" % (h, m, s)
 
     def _refresh_battery_info(self):
-        battery_list = self._extract_battery_information_from_acpi()
+        if self.measurement_mode == "acpi":
+            battery_list = self._extract_battery_information_from_acpi()
+        else:
+            battery_list = self._extract_battery_information_from_sys()
+
         if type(self.battery_id) == int:
             battery = battery_list[self.battery_id]
             self.percent_charged = battery['percent_charged']
