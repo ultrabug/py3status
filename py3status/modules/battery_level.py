@@ -336,28 +336,31 @@ class Py3status:
             self.percent_charged >= self.threshold_full else self.full_text
 
     def _set_bar_color(self):
+        notify_msg = None
         if self.charging:
             self.response['color'] = self.py3.COLOR_CHARGING or "#FCE94F"
             battery_status = 'charging'
         elif self.percent_charged < self.threshold_bad:
             self.response['color'] = self.py3.COLOR_BAD
             battery_status = 'bad'
-            if (self.notify_low_level and
-                    self.last_known_status != battery_status):
-                self.py3.notify_user('Battery level is critically low ({}%)'
-                                     .format(self.percent_charged), 'error')
+            notify_msg = {'msg': 'Battery level is critically low ({}%)',
+                          'level': 'error'}
         elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
-            if (self.notify_low_level and
-                    self.last_known_status != battery_status):
-                self.py3.notify_user('Battery level is running low ({}%)'
-                                     .format(self.percent_charged), 'warning')
+            notify_msg = {'msg': 'Battery level is running low ({}%)',
+                          'level': 'warning'}
         elif self.percent_charged >= self.threshold_full:
             self.response['color'] = self.py3.COLOR_GOOD
             battery_status = 'full'
         else:
             battery_status = 'good'
+
+        if (notify_msg and self.notify_low_level
+                and self.last_known_status != battery_status):
+            self.py3.notify_user(notify_msg['msg'].format(self.percent_charged),
+                                 notify_msg['level'])
+
         self.last_known_status = battery_status
 
     def _set_cache_timeout(self):
