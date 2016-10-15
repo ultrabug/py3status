@@ -273,14 +273,19 @@ class Py3status:
             battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
             battery["percent_charged"] = math.floor(
                 r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100)
-            if battery["charging"]:
-                time_in_h = ((r["POWER_SUPPLY_ENERGY_FULL"] -
-                              r["POWER_SUPPLY_ENERGY_NOW"]) /
-                              r["POWER_SUPPLY_POWER_NOW"])
-            else:
-                time_in_h = (r["POWER_SUPPLY_ENERGY_NOW"] /
-                              r["POWER_SUPPLY_POWER_NOW"])
-            battery["time_remaining"] = self._seconds_to_hms(time_in_h * 3600)
+            try:
+                if battery["charging"]:
+                    time_in_secs = ((r["POWER_SUPPLY_ENERGY_FULL"] -
+                                    r["POWER_SUPPLY_ENERGY_NOW"]) /
+                                    r["POWER_SUPPLY_POWER_NOW"] * 3600)
+                else:
+                    time_in_secs = (r["POWER_SUPPLY_ENERGY_NOW"] /
+                                    r["POWER_SUPPLY_POWER_NOW"] * 3600)
+                battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
+            except ZeroDivisionError:
+                # Battery is either full charged or is not discharging
+                battery["time_remaining"] = "?"
+
             battery_list.append(battery)
         return battery_list
 
