@@ -27,10 +27,10 @@ Configuration parameters:
     hide_when_full: hide any information when battery is fully charged (when
         the battery level is greater than or equal to 'threshold_full')
         (default False)
-    measurement_mode: either 'acpi' or 'sys'. 'sys' should be more robust and
-        does not have any extra requirements, however the time measurement may
-        not work in some cases
-        (default "acpi")
+    measurement_mode: either 'acpi' or 'sys', or None to autodetect. 'sys'
+        should be more robust and does not have any extra requirements, however
+        the time measurement may not work in some cases
+        (default None)
     notification: show current battery state as notification on click
         (default False)
     notify_low_level: display notification when battery is running low (when
@@ -105,7 +105,7 @@ FORMAT = u"{icon}"
 FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
 SYS_BATTERY_PATH = u"/sys/class/power_supply/"
-MEASUREMENT_MODE = u"acpi"
+MEASUREMENT_MODE = None
 
 
 class Py3status:
@@ -135,6 +135,18 @@ class Py3status:
 
     def __init__(self):
         self.last_known_status = ''
+
+    def post_config_hook(self):
+        # Guess mode if not set
+        if self.measurement_mode is None:
+            if self.py3.check_commands(["acpi"]):
+                self.measurement_mode = "acpi"
+            elif os.path.isdir(self.sys_battery_path):
+                self.measurement_mode = "sys"
+
+        self.py3.log("Measurement mode: " + self.measurement_mode)
+        if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
+            raise NameError("Invalid measurement mode")
 
     def battery_level(self):
 

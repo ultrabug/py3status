@@ -248,17 +248,17 @@ Configuration parameters:
   - `hide_when_full` hide any information when battery is fully charged (when
     the battery level is greater than or equal to 'threshold_full')
     *(default False)*
-  - `measurement_mode` either 'acpi' or 'sys'. 'sys' should be more robust and
-  does not have any extra requirements, however the time measurement may not
-  work in some cases
-    *(default acpi)*
+  - `measurement_mode` either 'acpi' or 'sys', or None to autodetect. 'sys'
+  should be more robust and does not have any extra requirements, however the
+  time measurement may not work in some cases
+    *(default None)*
   - `notification` show current battery state as notification on click
     *(default False)*
   - `notify_low_level` display notification when battery is running low (when
     the battery level is less than 'threshold_degraded')
     *(default False)*
   - `sys_battery_path` set the path to kernel sys' battery interface. Used only
-  when `measurement_mode=sys`.
+  when `measurement_mode=sys`
     *(default /sys/class/power_supply/)*
   - `threshold_bad` a percentage below which the battery level should be
     considered bad
