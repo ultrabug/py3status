@@ -29,8 +29,8 @@ Configuration parameters:
         (default False)
     measurement_mode: either 'acpi' or 'sys'. 'sys' should be more robust and
         does not have any extra requirements, however the time measurement may
-        be off or not work in some cases
-        (default "sys")
+        not work in some cases
+        (default "acpi")
     notification: show current battery state as notification on click
         (default False)
     notify_low_level: display notification when battery is running low (when
@@ -105,7 +105,7 @@ FORMAT = u"{icon}"
 FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
 SYS_BATTERY_PATH = u"/sys/class/power_supply/"
-MEASUREMENT_MODE = u"sys"
+MEASUREMENT_MODE = u"acpi"
 
 
 class Py3status:

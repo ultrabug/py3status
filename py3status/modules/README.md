@@ -249,9 +249,9 @@ Configuration parameters:
     the battery level is greater than or equal to 'threshold_full')
     *(default False)*
   - `measurement_mode` either 'acpi' or 'sys'. 'sys' should be more robust and
-  does not have any extra requirements, however the time measurement may be off
-  or not work in some cases
-    *(default sys)*
+  does not have any extra requirements, however the time measurement may not
+  work in some cases
+    *(default acpi)*
   - `notification` show current battery state as notification on click
     *(default False)*
   - `notify_low_level` display notification when battery is running low (when
@@ -304,7 +304,7 @@ Obsolete configuration parameters:
 Requires:
   - the `acpi` command line (only if `measurement_mode='acpi'`)
 
-**author** shadowprince, AdamBSteele, maximbaz, 4iar
+**author** shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
 
 **license** Eclipse Public License
 
