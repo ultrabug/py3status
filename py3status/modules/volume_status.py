@@ -18,8 +18,8 @@ Configuration parameters:
         (default 10)
     channel: channel to track. Default value is backend dependent.
         (default None)
-    command: Choose between "amixer" and "pamixer". If None, try to guess based
-        on available commands.
+    command: Choose between "amixer", "pamixer" or "pactl".
+        If None, try to guess based on available commands.
         (default None)
     device: Device to use. Defaults value is backend dependent
         (default None)
@@ -27,6 +27,8 @@ Configuration parameters:
         (default '♪: {percentage}%')
     format_muted: Format of the output when the volume is muted.
         (default '♪: muted')
+    max_volume: Allow the volume to be increased past 100% if available.
+        pactl supports this (default 120)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -99,6 +101,7 @@ class AudioBackend():
     def __init__(self, parent):
         self.device = parent.device
         self.channel = parent.channel
+        self.parent = parent
         self.setup(parent)
 
     def run_cmd(self, cmd):
@@ -106,7 +109,7 @@ class AudioBackend():
             return call(cmd, stdout=dn, stderr=dn)
 
 
-class AlsaBackend(AudioBackend):
+class AmixerBackend(AudioBackend):
     def setup(self, parent):
         if self.device is None:
             self.device = 'default'
@@ -139,7 +142,7 @@ class AlsaBackend(AudioBackend):
         self.run_cmd(self.cmd + ['toggle'])
 
 
-class PulseaudioBackend(AudioBackend):
+class PamixerBackend(AudioBackend):
     def setup(self, parent):
         if self.device is None:
             self.device = "0"
@@ -162,6 +165,43 @@ class PulseaudioBackend(AudioBackend):
         self.run_cmd(self.cmd + ["-t"])
 
 
+class PactlBackend(AudioBackend):
+    def setup(self, parent):
+        if self.device is None:
+            self.device = "0"
+        self.max_volume = parent.max_volume
+        self.re_volume = re.compile(
+            r'Sink \#0.*?Mute: (\w{2,3}).*?Volume:.*?(\d{1,3})\%',
+            re.M | re.DOTALL
+        )
+
+    def get_volume(self):
+        output = check_output(['pactl', 'list', 'sinks']).decode('utf-8').strip()
+        muted, perc = self.re_volume.search(output).groups()
+
+        # muted should be 'on' or 'off'
+        if muted in ['yes', 'no']:
+            muted = (muted == 'yes')
+        else:
+            muted = False
+
+        return perc, muted
+
+    def volume_up(self, delta):
+        perc, muted = self.get_volume()
+        if int(perc) + delta >= self.max_volume:
+            change = '{}%'.format(self.max_volume)
+        else:
+            change = '+{}%'.format(delta)
+        self.run_cmd(['pactl', 'set-sink-volume', self.device, change])
+
+    def volume_down(self, delta):
+        self.run_cmd(['pactl', 'set-sink-volume', self.device, '-{}%'.format(delta)])
+
+    def toggle_mute(self):
+        self.run_cmd(['pactl', 'set-sink-mute', self.device, 'toggle'])
+
+
 class Py3status:
     """
     """
@@ -175,6 +215,7 @@ class Py3status:
     device = None
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
+    max_volume = 120
     thresholds = None
     volume_delta = 5
     # obsolete configuration parameters
@@ -184,12 +225,16 @@ class Py3status:
     def post_config_hook(self):
         # Guess command if not set
         if self.command is None:
-            self.command = self.py3.check_commands(['amixer', 'pamixer'])
+            self.command = self.py3.check_commands(
+                ['amixer', 'pamixer', 'pactl']
+            )
 
         if self.command == 'amixer':
-            self.backend = AlsaBackend(self)
+            self.backend = AmixerBackend(self)
         elif self.command == 'pamixer':
-            self.backend = PulseaudioBackend(self)
+            self.backend = PamixerBackend(self)
+        elif self.command == 'pactl':
+            self.backend = PactlBackend(self)
         else:
             raise NameError("Unknown command")
 
