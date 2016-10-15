@@ -27,11 +27,18 @@ Configuration parameters:
     hide_when_full: hide any information when battery is fully charged (when
         the battery level is greater than or equal to 'threshold_full')
         (default False)
+    measurement_mode: either 'acpi' or 'sys'. 'sys' should be more robust and
+        does not have any extra requirements, however the time measurement may
+        be off or not work in some cases
+        (default "sys")
     notification: show current battery state as notification on click
         (default False)
     notify_low_level: display notification when battery is running low (when
         the battery level is less than 'threshold_degraded')
         (default False)
+    sys_battery_path: set the path to your battery(ies), without including its
+        number
+        (default "/sys/class/power_supply/")
     threshold_bad: a percentage below which the battery level should be
         considered bad
         (default 10)
@@ -87,6 +94,7 @@ from glob import iglob
 
 import math
 import subprocess
+import os
 
 BLOCKS = u"_▁▂▃▄▅▆▇█"
 CHARGING_CHARACTER = u"⚡"
@@ -96,7 +104,7 @@ FULL_BLOCK = u'█'
 FORMAT = u"{icon}"
 FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
-SYS_BATTERY_PATH = u"/sys/class/power_supply/BAT"
+SYS_BATTERY_PATH = u"/sys/class/power_supply/"
 MEASUREMENT_MODE = u"sys"
 
 
@@ -243,7 +251,7 @@ class Py3status:
         a similar, yet incompatible interface in /proc
         """
         battery_list = []
-        for path in iglob(self.sys_battery_path + '*'):
+        for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
             battery = dict()
             with open(path + "/energy_full") as f:
                 battery["capacity"] = int(f.readline())
