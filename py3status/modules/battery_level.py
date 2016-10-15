@@ -273,12 +273,14 @@ class Py3status:
             battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
             battery["percent_charged"] = math.floor(
                 r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100)
-            power_now = r["POWER_SUPPLY_POWER_NOW"]
             if battery["charging"]:
-                time_in_secs = power_now / battery["capacity"] * 3600
+                time_in_h = ((r["POWER_SUPPLY_ENERGY_FULL"] -
+                              r["POWER_SUPPLY_ENERGY_NOW"]) /
+                              r["POWER_SUPPLY_POWER_NOW"])
             else:
-                time_in_secs = battery["capacity"] / power_now * 3600
-            battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
+                time_in_h = (r["POWER_SUPPLY_ENERGY_NOW"] /
+                              r["POWER_SUPPLY_POWER_NOW"])
+            battery["time_remaining"] = self._seconds_to_hms(time_in_h * 3600)
             battery_list.append(battery)
         return battery_list
 
