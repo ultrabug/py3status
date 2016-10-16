@@ -260,6 +260,9 @@ class Module(Thread):
             # part does not supply a color, use the composite color.
             if color and 'color' not in item:
                 item['color'] = color
+            # Remove any none color from our output
+            if hasattr(item.get('color'), 'none_color'):
+                del item['color']
 
     def _params_type(self, method_name, instance):
         """
@@ -458,6 +461,9 @@ class Module(Thread):
                         if 'full_text' not in result:
                             err = 'missing "full_text" key in response'
                             raise KeyError(err)
+                        # Remove any none color from our output
+                        if hasattr(result.get('color'), 'none_color'):
+                            del result['color']
                         # set universal module options in result
                         result.update(self.module_options)
 

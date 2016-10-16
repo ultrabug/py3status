@@ -599,7 +599,11 @@ class Py3statusWrapper():
                     color = config[module].get(attribute)
                     break
         if color == 'missing':
-            color = config['general'].get(attribute)
+            # A user can set a color to None in the config to prevent a color
+            # being used.  This is important when modules do something like
+
+            # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+            color = config['general'].get(attribute, False)
         return color
 
     def create_mappings(self, config):

@@ -19,6 +19,24 @@ except NameError:
     basestring = str
 
 
+class NoneColor:
+    """
+    This class represents a none color, that is a color that has been setto
+    None in the config.  We need this so that we can do things like
+
+    color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+    Py3 provides a helper function is_color() that will treat a NoneColor as
+    False, whereas a simple if would show True
+    """
+    # this attribute is used to identify that this is a none color
+    none_color = True
+
+    def __repr__(self):
+        # this is for output via module_test
+        return 'None'
+
+
 class Py3:
     """
     Helper object that gets injected as self.py3 into Py3status
@@ -39,8 +57,9 @@ class Py3:
     LOG_INFO = PY3_LOG_INFO
     LOG_WARNING = PY3_LOG_WARNING
 
-    # All Py3 Instances can share a formatter
+    # Shared by all Py3 Instances
     _formatter = Formatter()
+    _none_color = NoneColor()
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
@@ -76,8 +95,16 @@ class Py3:
                 color_fn = self._module._py3_wrapper.get_config_attribute
                 color = color_fn(self._module.module_full_name, name)
             else:
-                color = self._i3s_config.get(name)
-            self._colors[name] = color
+                # running in test mode so config is not available
+                color = self._i3s_config.get(name, False)
+            if color:
+                self._colors[name] = color
+            elif color is False:
+                # False indicates color is not defined
+                self._colors[name] = None
+            else:
+                # None indicates that no color is wanted
+                self._colors[name] = self._none_color
         return self._colors[name]
 
     def _get_module_info(self, module_name):
@@ -91,6 +118,20 @@ class Py3:
         """
         if self._module:
             return self._output_modules.get(module_name)
+
+    def is_color(self, color):
+        """
+        Tests to see if a color is defined.
+        Because colors can be set to None in the config and we want this to be
+        respected in an expression like.
+
+        color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+        The color is treated as True but sometimes we want to know if the color
+        has a value set in which case the color should count as False.  This
+        function is a helper for this second case.
+        """
+        return not (color is None or hasattr(color, 'none_color'))
 
     def i3s_config(self):
         """

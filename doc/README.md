@@ -778,6 +778,20 @@ __update(module_name=None)__
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
 
+__is_color(color)__
+
+Tests to see if a color is defined.
+Because colors can be set to None in the config and we want this to be
+respected in an expression like.
+
+color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+The color is treated as True but sometimes we want to know if the color
+has a value set in which case the color should count as False.  This
+function is a helper for this second case.
+
+Added in version 3.3
+
 __is_python_2()__
 
 True if the version of python being used is 2.x
