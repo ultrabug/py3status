@@ -106,6 +106,7 @@ FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
 SYS_BATTERY_PATH = u"/sys/class/power_supply/"
 MEASUREMENT_MODE = None
+FULLY_CHARGED = u'?'
 
 
 class Py3status:
@@ -222,7 +223,7 @@ class Py3status:
         '''
 
         def _parse_battery_info(acpi_battery_lines):
-            battery = dict()
+            battery = {}
             battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",
                                                      acpi_battery_lines[0])[0])
             battery["charging"] = "Charging" in acpi_battery_lines[0]
@@ -236,7 +237,7 @@ class Py3status:
                     "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
                     "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
             except IndexError:
-                battery["time_remaining"] = '?'
+                battery["time_remaining"] = FULLY_CHARGED
 
             return battery
 
@@ -267,9 +268,9 @@ class Py3status:
             Extract battery information from uevent file, already convert to
             int if necessary
             """
-            raw_values = dict()
-            with open(sys_path + "/uevent") as f:
-                for var in f.read().split():
+            raw_values = {}
+            with open(os.path.join(sys_path, u"uevent")) as f:
+                for var in f.read().splitlines():
                     k, v = var.split("=")
                     try:
                         raw_values[k] = int(v)
@@ -280,11 +281,11 @@ class Py3status:
         battery_list = []
         for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
             r = _parse_battery_info(path)
-            battery = dict()
+            battery = {}
             battery["capacity"] = r["POWER_SUPPLY_ENERGY_FULL"]
             battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
-            battery["percent_charged"] = math.floor(
-                r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100)
+            battery["percent_charged"] = int(math.floor(
+                r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100))
             try:
                 if battery["charging"]:
                     time_in_secs = ((r["POWER_SUPPLY_ENERGY_FULL"] -
@@ -296,7 +297,7 @@ class Py3status:
                 battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
             except ZeroDivisionError:
                 # Battery is either full charged or is not discharging
-                battery["time_remaining"] = "?"
+                battery["time_remaining"] = FULLY_CHARGED
 
             battery_list.append(battery)
         return battery_list
@@ -340,8 +341,9 @@ class Py3status:
             active_battery = None
             inactive_battery = battery_list[:]
             for battery_id in range(0, len(battery_list)):
-                if (battery_list[battery_id]["time_remaining"]
-                        and battery_list[battery_id]["time_remaining"] != '?'):
+                if (battery_list[battery_id]["time_remaining"] and
+                        battery_list[battery_id]["time_remaining"] !=
+                        FULLY_CHARGED):
                     active_battery = battery_list[battery_id]
                     del inactive_battery[battery_id]
 
