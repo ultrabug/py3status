@@ -81,9 +81,10 @@ Obsolete configuration parameters:
         (default None)
 
 Requires:
-    - the `acpi` command line
+    - the `acpi` the acpi command line utility (only if
+    `measurement_mode='acpi'`)
 
-@author shadowprince, AdamBSteele, maximbaz, 4iar
+@author shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
 @license Eclipse Public License
 """
 
