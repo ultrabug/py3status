@@ -181,16 +181,6 @@ class Py3status:
         if message:
             self.py3.notify_user(message, 'info')
 
-    def _desktop_notification(self, message):
-        """
-        Display the given message inside a desktop notification
-        """
-        subprocess.call(
-            ['notify-send', '{}'.format(message), '-t',
-                '4000'],
-            stdout=open('/dev/null', 'w'),
-            stderr=open('/dev/null', 'w'))
-
     def _provide_backwards_compatibility(self):
         if self.format == FORMAT:
             # Backwards compatibility for 'mode' parameter
