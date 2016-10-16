@@ -8,31 +8,52 @@ to display.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds.
         (default 30)
-    ignore: list of IPs to ignore. Can use shell style wildcards.
-        (default ['127.*'])
-    no_connection: string to display if there are no non-ignored IPs
-        (default 'no connection')
-    separator: string to use between IPs.
+    format: format of the output.
+        (default 'Network: {format_iface}')
+    format_iface: format string for the list of IPs of each interface.
+        (default '{iface}: v4{{{ip}}} v6{{{ip6}}}')
+    iface_blacklist: list of interfaces to ignore.
+        (default ['lo'])
+    iface_sep: string to write between interfaces.
         (default ' ')
+    ip_blacklist: list of IPs to ignore. Accepts shell-style wildcards.
+        (default [])
+    ip_sep: string to write between IP addresses.
+        (default ',')
+    no_connection: string to show if there are no IPs to display.
+        (default 'no connection')
+
+Format placeholders:
+    {format_iface} the format_iface string.
+
+Format placeholders for format_iface:
+    {iface} name of the interface.
+    {ip} list of IPv4 of the interface.
+    {ip6} list of IPv6 of the interface.
+
+Color options:
+    color_bad: no IPs to show
+    color_good: IPs to show
+
+Requires:
+    iproute2
 """
 
 
-# import your useful libs here
-import socket
-import struct
-import fcntl
-import array
+import re
+from subprocess import check_output
 from fnmatch import fnmatch
 
 
 class Py3status:
     cache_timeout = 30
-    ignore = ['127.*']
+    format = 'Network: {format_iface}'
+    format_iface = '{iface}: v4{{{ip}}} v6{{{ip6}}}'
+    iface_blacklist = ['lo']
+    iface_sep = ' '
+    ip_blacklist = []
+    ip_sep = ','
     no_connection = 'no connection'
-    separator = ' '
-
-    def __init__(self):
-        pass
 
     def ip_list(self):
         response = {
@@ -40,54 +61,88 @@ class Py3status:
             'full_text': ''
         }
 
-        ip = []
-        ifaces = self._list_ifaces()
-        for iface in ifaces:
-            addr = self._get_ip(iface)
-            add = True
-            for ignore in self.ignore:
-                if fnmatch(addr, ignore):
-                    add = False
-                    break
-            if add:
-                ip.append(addr)
-        if len(ip) == 0:
-            response['full_text'] = self.no_connection
+        connection = False
+        data = self._get_data()
+        iface_txt = ''
+        for iface, ips in data.items():
+            if iface in self.iface_blacklist:
+                continue
+
+            txt_ip = ''
+            txt_ip6 = ''
+            for ip in ips.get('ip', []):
+                if self._check_blacklist(ip):
+                    connection = True
+                    txt_ip += ip + self.ip_sep
+            txt_ip = txt_ip[:-len(self.ip_sep)]
+            for ip in ips.get('ip6', []):
+                if self._check_blacklist(ip):
+                    connection = True
+                    txt_ip6 += ip + self.ip_sep
+            txt_ip6 = txt_ip6[:-len(self.ip_sep)]
+            iface_txt += self.py3.safe_format(self.format_iface, {'iface': iface,
+                                                                  'ip': txt_ip,
+                                                                  'ip6': txt_ip6})
+            iface_txt += self.iface_sep
+            iface_txt = iface_txt[:-len(self.iface_sep)]
+        if not connection:
+            response['full_text'] = self.py3.safe_format(self.no_connection,
+                                                         {'format_iface': iface_txt})
             response['color'] = self.py3.COLOR_BAD
         else:
-            response['full_text'] = self.separator.join(ip)
+            response['full_text'] = self.py3.safe_format(self.format,
+                                                         {'format_iface': iface_txt})
             response['color'] = self.py3.COLOR_GOOD
 
         return response
 
-    def _list_ifaces(self):
-        SIOCGIFCONF = 0x8912
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sockfd = sock.fileno()
-        max_possible = 128  # arbitrary. raise if needed.
-        data = max_possible * 32
-        names = array.array('B', [0]) * data
-        outbytes = struct.unpack('iL', fcntl.ioctl(sockfd, SIOCGIFCONF,
-                                 struct.pack('iL', data,
-                                             names.buffer_info()[0])))[0]
-        namestr = names.tostring()
-        lst = []
-        for i in range(0, outbytes, 40):
-            name = namestr[i:i+16].split(b'\x00', 1)[0]
-            lst.append(name)
-        return lst
+    def _get_data(self):
+        iface_re = re.compile(r'\d+: (\w+):')
+        ip_re = re.compile(r'\s+inet (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
+        ip6_re = re.compile(r'\s+inet6 ([\da-f:]+)/')
 
-    def _get_ip(self, iface):
-        SIOCGIFADDR = 0x8915
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sockfd = sock.fileno()
-        ifreq = struct.pack('16sH14s', iface, socket.AF_INET, b'\x00'*14)
-        try:
-            res = fcntl.ioctl(sockfd, SIOCGIFADDR, ifreq)
-        except:
-            return None
-        ip = struct.unpack('16sH2x4s8x', res)[2]
-        return socket.inet_ntoa(ip)
+        txt = check_output(['ip', 'address', 'show']).decode('utf-8').split('\n')
+        len_txt = len(txt)
+
+        idx = 0
+        data = {}
+        while idx < len_txt:
+            iface = iface_re.match(txt[idx])
+            idx += 1
+
+            if iface is None:
+                continue
+
+            iface = iface.groups()[0]
+            iface_data = data.setdefault(iface, {})
+            while idx < len_txt and not iface_re.match(txt[idx]):
+                ip = ip_re.match(txt[idx])
+                if ip:
+                    iface_data.setdefault('ip', []).append(ip.groups()[0])
+                    idx += 1
+                    continue
+                ip6 = ip6_re.match(txt[idx])
+                if ip6:
+                    iface_data.setdefault('ip6', []).append(ip6.groups()[0])
+                    idx += 1
+                    continue
+                idx += 1
+
+        to_del = set()
+        for iface, ips in data.items():
+            if ips == {}:
+                to_del.add(iface)
+        for iface in to_del:
+            del data[iface]
+
+        return data
+
+    def _check_blacklist(self, ip):
+        for ignore in self.ip_blacklist:
+            if fnmatch(ip, ignore):
+                return False
+        return True
+
 
 if __name__ == "__main__":
     """
