@@ -2,7 +2,7 @@ import sys
 import os
 import shlex
 from time import time
-from subprocess import Popen, call
+from subprocess import Popen, PIPE
 
 from py3status.formatter import Formatter
 
@@ -11,6 +11,12 @@ PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = 'error'
 PY3_LOG_INFO = 'info'
 PY3_LOG_WARNING = 'warning'
+
+# basestring does not exist in python3
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 class Py3:
@@ -327,11 +333,55 @@ class Py3:
         Checks to see if commands in list are available using `which`.
         Returns the first available command.
         """
-        devnull = open(os.devnull, 'w')
         for cmd in cmd_list:
-            c = shlex.split('which {}'.format(cmd))
-            if call(c, stdout=devnull, stderr=devnull) == 0:
+            if self.command_run('which {}'.format(cmd)) == 0:
                 return cmd
+
+    def command_run(self, command):
+        """
+        Runs a command and returns the exit code.
+        The command can either be supplied as a sequence or string.
+
+        An Exception is raised if an error occurs
+        """
+        # convert the command to sequence if a string
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        try:
+            return Popen(command, stdout=PIPE, stderr=PIPE).wait()
+        except Exception as e:
+            msg = "Command '{cmd}' {error}"
+            raise Exception(msg.format(cmd=command[0], error=e))
+
+    def command_output(self, command):
+        """
+        Run a command and return its output as unicode.
+        The command can either be supplied as a sequence or string.
+
+        An Exception is raised if an error occurs
+        """
+        # convert the command to sequence if a string
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        try:
+            process = Popen(command, stdout=PIPE, stderr=PIPE,
+                            universal_newlines=True)
+        except Exception as e:
+            msg = "Command '{cmd}' {error}"
+            raise Exception(msg.format(cmd=command[0], error=e))
+
+        output, error = process.communicate()
+        if self._is_python_2:
+            output = output.decode('utf-8')
+            error = error.decode('utf-8')
+        retcode = process.poll()
+        if retcode:
+            msg = "Command '{cmd}' returned non-zero exit status {error}"
+            raise Exception(msg.format(cmd=command[0], error=retcode))
+        if error:
+            msg = "Command '{cmd}' had error {error}"
+            raise Exception(msg.format(cmd=command[0], error=error))
+        return output
 
     def play_sound(self, sound_file):
         """
