@@ -110,7 +110,7 @@ class Py3status:
         ip_re = re.compile(r'\s+inet (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
         ip6_re = re.compile(r'\s+inet6 ([\da-f:]+)/')
 
-        txt = check_output(['ip', 'address', 'show']).decode('utf-8').split('\n')
+        txt = check_output(['ip', 'address', 'show']).decode('utf-8').splitlines()
         len_txt = len(txt)
 
         idx = 0
