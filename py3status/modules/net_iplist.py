@@ -67,6 +67,11 @@ class Py3status:
     ip_sep = ','
     remove_empty = True
 
+    def __init__(self):
+        self.iface_re = re.compile(r'\d+: (\w+):')
+        self.ip_re = re.compile(r'\s+inet (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
+        self.ip6_re = re.compile(r'\s+inet6 ([\da-f:]+)/')
+
     def ip_list(self):
         response = {
             'cached_until': self.py3.time_in(seconds=self.cache_timeout),
@@ -108,17 +113,13 @@ class Py3status:
         return response
 
     def _get_data(self):
-        iface_re = re.compile(r'\d+: (\w+):')
-        ip_re = re.compile(r'\s+inet (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
-        ip6_re = re.compile(r'\s+inet6 ([\da-f:]+)/')
-
         txt = check_output(['ip', 'address', 'show']).decode('utf-8').splitlines()
         len_txt = len(txt)
 
         idx = 0
         data = {}
         while idx < len_txt:
-            iface = iface_re.match(txt[idx])
+            iface = self.iface_re.match(txt[idx])
             idx += 1
 
             if iface is None:
@@ -126,13 +127,13 @@ class Py3status:
 
             iface = iface.groups()[0]
             iface_data = {}
-            while idx < len_txt and not iface_re.match(txt[idx]):
-                ip = ip_re.match(txt[idx])
+            while idx < len_txt and not self.iface_re.match(txt[idx]):
+                ip = self.ip_re.match(txt[idx])
                 if ip:
                     iface_data.setdefault('ip', []).append(ip.groups()[0])
                     idx += 1
                     continue
-                ip6 = ip6_re.match(txt[idx])
+                ip6 = self.ip6_re.match(txt[idx])
                 if ip6:
                     iface_data.setdefault('ip6', []).append(ip6.groups()[0])
                     idx += 1
