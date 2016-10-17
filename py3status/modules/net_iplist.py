@@ -114,34 +114,25 @@ class Py3status:
 
     def _get_data(self):
         txt = check_output(['ip', 'address', 'show']).decode('utf-8').splitlines()
-        len_txt = len(txt)
 
-        idx = 0
         data = {}
-        while idx < len_txt:
-            iface = self.iface_re.match(txt[idx])
-            idx += 1
-
-            if iface is None:
+        for line in txt:
+            iface = self.iface_re.match(line)
+            if iface:
+                cur_iface = iface.group('iface')
+                if not self.remove_empty:
+                    data[cur_iface] = {}
                 continue
 
-            iface = iface.group('iface')
-            iface_data = {}
-            while idx < len_txt and not self.iface_re.match(txt[idx]):
-                ip = self.ip_re.match(txt[idx])
-                if ip:
-                    iface_data.setdefault('ip', []).append(ip.group('ip'))
-                    idx += 1
-                    continue
-                ip6 = self.ip6_re.match(txt[idx])
-                if ip6:
-                    iface_data.setdefault('ip6', []).append(ip6.group('ip6'))
-                    idx += 1
-                    continue
-                idx += 1
-            if self.remove_empty and iface_data == {}:
+            ip = self.ip_re.match(line)
+            if ip:
+                data.setdefault(cur_iface, {}).setdefault('ip', []).append(ip.group('ip'))
                 continue
-            data[iface] = iface_data
+
+            ip6 = self.ip6_re.match(line)
+            if ip6:
+                data.setdefault(cur_iface, {}).setdefault('ip6', []).append(ip6.group('ip6'))
+                continue
 
         return data
 
