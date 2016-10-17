@@ -14,7 +14,7 @@ Configuration parameters:
         (default '{iface}: v4{{{ip}}} v6{{{ip6}}}')
     format_no_ip: string to show if there are no IPs to display.
         (default 'no connection')
-    iface_blacklist: list of interfaces to ignore.
+    iface_blacklist: list of interfaces to ignore. Accepts shell-style wildcards.
         (default ['lo'])
     iface_sep: string to write between interfaces.
         (default ' ')
@@ -72,35 +72,34 @@ class Py3status:
 
         connection = False
         data = self._get_data()
-        iface_txt = ''
+        iface_list = []
         for iface, ips in data.items():
-            if iface in self.iface_blacklist:
+            if not self._check_blacklist(iface, self.iface_blacklist):
                 continue
 
-            txt_ip = ''
-            txt_ip6 = ''
+            ip_list = []
+            ip6_list = []
             for ip in ips.get('ip', []):
-                if self._check_blacklist(ip):
+                if self._check_blacklist(ip, self.ip_blacklist):
                     connection = True
-                    txt_ip += ip + self.ip_sep
-            txt_ip = txt_ip[:-len(self.ip_sep)]
-            for ip in ips.get('ip6', []):
-                if self._check_blacklist(ip):
+                    ip_list.append(ip)
+            for ip6 in ips.get('ip6', []):
+                if self._check_blacklist(ip6, self.ip_blacklist):
                     connection = True
-                    txt_ip6 += ip + self.ip_sep
-            txt_ip6 = txt_ip6[:-len(self.ip_sep)]
-            iface_txt += self.py3.safe_format(self.format_iface, {'iface': iface,
-                                                                  'ip': txt_ip,
-                                                                  'ip6': txt_ip6})
-            iface_txt += self.iface_sep
-            iface_txt = iface_txt[:-len(self.iface_sep)]
+                    ip6_list.append(ip6)
+            iface_list.append(self.py3.safe_format(self.format_iface,
+                                                   {'iface': iface,
+                                                    'ip': self.ip_sep.join(ip_list),
+                                                    'ip6': self.ip_sep.join(ip6_list)}))
         if not connection:
             response['full_text'] = self.py3.safe_format(self.format_no_ip,
-                                                         {'format_iface': iface_txt})
+                                                         {'format_iface':
+                                                             self.iface_sep.join(iface_list)})
             response['color'] = self.py3.COLOR_BAD
         else:
             response['full_text'] = self.py3.safe_format(self.format,
-                                                         {'format_iface': iface_txt})
+                                                         {'format_iface':
+                                                             self.iface_sep.join(iface_list)})
             response['color'] = self.py3.COLOR_GOOD
 
         return response
@@ -146,9 +145,9 @@ class Py3status:
 
         return data
 
-    def _check_blacklist(self, ip):
-        for ignore in self.ip_blacklist:
-            if fnmatch(ip, ignore):
+    def _check_blacklist(self, string, blacklist):
+        for ignore in blacklist:
+            if fnmatch(string, ignore):
                 return False
         return True
 
