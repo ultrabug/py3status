@@ -22,6 +22,8 @@ Configuration parameters:
         (default [])
     ip_sep: string to write between IP addresses.
         (default ',')
+    remove_empty: do not show interfaces with no IP.
+        (default True)
 
 Format placeholders:
     {format_iface} the format_iface string.
@@ -58,11 +60,12 @@ class Py3status:
     cache_timeout = 30
     format = 'Network: {format_iface}'
     format_iface = '{iface}: v4{{{ip}}} v6{{{ip6}}}'
+    format_no_ip = 'no connection'
     iface_blacklist = ['lo']
     iface_sep = ' '
     ip_blacklist = []
     ip_sep = ','
-    format_no_ip = 'no connection'
+    remove_empty = True
 
     def ip_list(self):
         response = {
@@ -122,7 +125,7 @@ class Py3status:
                 continue
 
             iface = iface.groups()[0]
-            iface_data = data.setdefault(iface, {})
+            iface_data = {}
             while idx < len_txt and not iface_re.match(txt[idx]):
                 ip = ip_re.match(txt[idx])
                 if ip:
@@ -135,13 +138,9 @@ class Py3status:
                     idx += 1
                     continue
                 idx += 1
-
-        to_del = set()
-        for iface, ips in data.items():
-            if ips == {}:
-                to_del.add(iface)
-        for iface in to_del:
-            del data[iface]
+            if self.remove_empty and iface_data == {}:
+                continue
+            data[iface] = iface_data
 
         return data
 
