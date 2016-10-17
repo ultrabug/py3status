@@ -12,6 +12,8 @@ Configuration parameters:
         (default 'Network: {format_iface}')
     format_iface: format string for the list of IPs of each interface.
         (default '{iface}: v4{{{ip}}} v6{{{ip6}}}')
+    format_no_ip: string to show if there are no IPs to display.
+        (default 'no connection')
     iface_blacklist: list of interfaces to ignore.
         (default ['lo'])
     iface_sep: string to write between interfaces.
@@ -20,8 +22,6 @@ Configuration parameters:
         (default [])
     ip_sep: string to write between IP addresses.
         (default ',')
-    no_connection: string to show if there are no IPs to display.
-        (default 'no connection')
 
 Format placeholders:
     {format_iface} the format_iface string.
@@ -62,7 +62,7 @@ class Py3status:
     iface_sep = ' '
     ip_blacklist = []
     ip_sep = ','
-    no_connection = 'no connection'
+    format_no_ip = 'no connection'
 
     def ip_list(self):
         response = {
@@ -95,7 +95,7 @@ class Py3status:
             iface_txt += self.iface_sep
             iface_txt = iface_txt[:-len(self.iface_sep)]
         if not connection:
-            response['full_text'] = self.py3.safe_format(self.no_connection,
+            response['full_text'] = self.py3.safe_format(self.format_no_ip,
                                                          {'format_iface': iface_txt})
             response['color'] = self.py3.COLOR_BAD
         else:
