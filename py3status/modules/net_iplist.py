@@ -68,9 +68,9 @@ class Py3status:
     remove_empty = True
 
     def __init__(self):
-        self.iface_re = re.compile(r'\d+: (\w+):')
-        self.ip_re = re.compile(r'\s+inet (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
-        self.ip6_re = re.compile(r'\s+inet6 ([\da-f:]+)/')
+        self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
+        self.ip_re = re.compile(r'\s+inet (?P<ip>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
+        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)/')
 
     def ip_list(self):
         response = {
@@ -125,17 +125,17 @@ class Py3status:
             if iface is None:
                 continue
 
-            iface = iface.groups()[0]
+            iface = iface.group('iface')
             iface_data = {}
             while idx < len_txt and not self.iface_re.match(txt[idx]):
                 ip = self.ip_re.match(txt[idx])
                 if ip:
-                    iface_data.setdefault('ip', []).append(ip.groups()[0])
+                    iface_data.setdefault('ip', []).append(ip.group('ip'))
                     idx += 1
                     continue
                 ip6 = self.ip6_re.match(txt[idx])
                 if ip6:
-                    iface_data.setdefault('ip6', []).append(ip6.groups()[0])
+                    iface_data.setdefault('ip6', []).append(ip6.group('ip6'))
                     idx += 1
                     continue
                 idx += 1
