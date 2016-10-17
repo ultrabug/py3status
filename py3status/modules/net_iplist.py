@@ -35,8 +35,17 @@ Color options:
     color_bad: no IPs to show
     color_good: IPs to show
 
+Example:
+
+```
+net_iplist {
+    iface_blacklist = []
+    ip_blacklist = ['127.*', '::1']
+}
+```
+
 Requires:
-    iproute2
+    ip: utility found in iproute2 package
 """
 
 
