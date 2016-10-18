@@ -6,6 +6,7 @@ It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
 
 Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 300)
     critical: set bad color above this threshold
     db: database to use
     host: database host to connect to
@@ -28,6 +29,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 300
     critical = 20
     db = ''
     host = ''
@@ -61,6 +63,7 @@ class Py3status:
                 )
             response['full_text'] = '%s tickets' % open_tickets
         mydb.close()
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         return response
 
