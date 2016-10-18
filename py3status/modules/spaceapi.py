@@ -4,6 +4,8 @@
 Display if your favorite hackerspace is open or not.
 
 Configuration parameters:
+    button_url: Button that when clicked opens the URL sent in the space's API.
+        Setting to None disables. (default 3)
     cache_timeout: Set timeout between calls in seconds (default 60)
     closed_color: color if space is closed (default None)
     closed_text: text if space is closed, strftime parameters
@@ -23,12 +25,15 @@ import codecs
 import datetime
 import json
 import urllib.request
+import shlex
+import subprocess
 
 
 class Py3status:
     """
     """
     # available configuration parameters
+    button_url = 3
     cache_timeout = 60
     closed_color = None
     closed_text = 'closed'
@@ -56,6 +61,7 @@ class Py3status:
             reader = codecs.getreader("utf-8")
             data = json.load(reader(json_file))
             json_file.close()
+            self._url = data.get('url')
 
             if(data['state']['open'] is True):
                 if self.open_color:
@@ -89,6 +95,14 @@ class Py3status:
             response['full_text'] = ''
 
         return response
+
+    def on_click(self, event):
+        button = event['button']
+        if self._url and self.button_url == button:
+            cmd = 'xdg-open {}'.format(self._url)
+            subprocess.call(shlex.split(cmd))
+            self.py3.prevent_refresh()
+
 
 if __name__ == "__main__":
     """

@@ -140,10 +140,10 @@ class Py3status:
         if not self.notification:
             return
 
-        if self.time_remaining:
-            format = self.format_notify_discharging
-        else:
+        if self.charging:
             format = self.format_notify_charging
+        else:
+            format = self.format_notify_discharging
 
         message = self.py3.safe_format(format,
                                        dict(ascii_bar=self.ascii_bar,
