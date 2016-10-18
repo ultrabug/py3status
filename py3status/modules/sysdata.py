@@ -77,28 +77,40 @@ class GetData:
     def memory(self):
         """
         Parse /proc/meminfo, grab the memory capacity and used size
-        then return; Memory size 'total_mem', Used_mem, and percentage
-        of used memory.
+        then return; Memory size 'total_mem', Used_mem, percentage
+        of used memory, and units of mem (GB or MB).
         """
 
         memi = {}
+        mem_unit = ''
         with open('/proc/meminfo', 'r') as fd:
             for s in fd:
                 tok = s.split()
-                memi[tok[0]] = float(tok[1]) / (1 << 20)
+                memi[tok[0]] = float(tok[1])
 
         try:
-            total_mem = memi["MemTotal:"]
-            used_mem = (total_mem -
-                        memi["MemFree:"] -
-                        memi["Buffers:"] -
-                        memi["Cached:"])
-            used_mem_p = int(used_mem / (total_mem / 100))
+            total_mem_kb = memi["MemTotal:"]
+            used_mem_kb = (total_mem_kb -
+                           memi["MemFree:"] -
+                           memi["Buffers:"] -
+                           memi["Cached:"])
+            used_mem_p = 100 * used_mem_kb / total_mem_kb
+            one_mb = 1 << 10  # 1 MB in KB
+            one_gb = 1 << 20  # 1 GB in KB
+            if total_mem_kb < one_gb:
+                total_mem = total_mem_kb / one_mb
+                used_mem = used_mem_kb / one_mb
+                mem_unit = 'MB'
+            else:
+                total_mem = total_mem_kb / one_gb
+                used_mem = used_mem_kb / one_gb
+                mem_unit = 'GB'
         except:
             total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
 
-        # Results are in gigabytes
-        return total_mem, used_mem, used_mem_p
+        # If total memory is <1GB, results are in megabytes.
+        # Otherwise, results are in gigabytes.
+        return total_mem, used_mem, used_mem_p, mem_unit
 
     def cpuTemp(self, zone):
         """
@@ -196,10 +208,11 @@ class Py3status:
 
         # get RAM usage info
         if self.py3.format_contains(self.format, 'mem_*'):
-            mem_total, mem_used, mem_used_percent = self.data.memory()
+            mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory()
             self.values['mem_total'] = value_format.format(mem_total)
             self.values['mem_used'] = value_format.format(mem_used)
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
+            self.values['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
 
         try:
