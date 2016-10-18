@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Display the list of current IPs.
+Display the list of network interfaces and their IPs.
 
-This can exclude specified IPs and displays "no connection" if there are no IPs
-to display.
+This module supports both IPv4 and IPv6. There is the possibility to blacklist
+interfaces and IPs, as well as to show interfaces with no IP address. It will
+show an alternate text if no IP are available.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds.
@@ -11,7 +12,7 @@ Configuration parameters:
     format: format of the output.
         (default 'Network: {format_iface}')
     format_iface: format string for the list of IPs of each interface.
-        (default '{iface}: v4{{{ip}}} v6{{{ip6}}}')
+        (default '{iface}:[ {ip4}][ {ip6}]')
     format_no_ip: string to show if there are no IPs to display.
         (default 'no connection')
     iface_blacklist: list of interfaces to ignore. Accepts shell-style wildcards.
@@ -30,7 +31,7 @@ Format placeholders:
 
 Format placeholders for format_iface:
     {iface} name of the interface.
-    {ip} list of IPv4 of the interface.
+    {ip4} list of IPv4 of the interface.
     {ip6} list of IPv6 of the interface.
 
 Color options:
@@ -59,7 +60,7 @@ from fnmatch import fnmatch
 class Py3status:
     cache_timeout = 30
     format = 'Network: {format_iface}'
-    format_iface = '{iface}: v4{{{ip}}} v6{{{ip6}}}'
+    format_iface = '{iface}:[ {ip4}][ {ip6}]'
     format_no_ip = 'no connection'
     iface_blacklist = ['lo']
     iface_sep = ' '
@@ -69,7 +70,7 @@ class Py3status:
 
     def __init__(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
-        self.ip_re = re.compile(r'\s+inet (?P<ip>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/')
+        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)/')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)/')
 
     def ip_list(self):
@@ -85,19 +86,19 @@ class Py3status:
             if not self._check_blacklist(iface, self.iface_blacklist):
                 continue
 
-            ip_list = []
+            ip4_list = []
             ip6_list = []
-            for ip in ips.get('ip', []):
-                if self._check_blacklist(ip, self.ip_blacklist):
+            for ip4 in ips.get('ip4', []):
+                if self._check_blacklist(ip4, self.ip_blacklist):
                     connection = True
-                    ip_list.append(ip)
+                    ip4_list.append(ip4)
             for ip6 in ips.get('ip6', []):
                 if self._check_blacklist(ip6, self.ip_blacklist):
                     connection = True
                     ip6_list.append(ip6)
             iface_list.append(self.py3.safe_format(self.format_iface,
                                                    {'iface': iface,
-                                                    'ip': self.ip_sep.join(ip_list),
+                                                    'ip4': self.ip_sep.join(ip4_list),
                                                     'ip6': self.ip_sep.join(ip6_list)}))
         if not connection:
             response['full_text'] = self.py3.safe_format(self.format_no_ip,
@@ -124,9 +125,9 @@ class Py3status:
                     data[cur_iface] = {}
                 continue
 
-            ip = self.ip_re.match(line)
-            if ip:
-                data.setdefault(cur_iface, {}).setdefault('ip', []).append(ip.group('ip'))
+            ip4 = self.ip_re.match(line)
+            if ip4:
+                data.setdefault(cur_iface, {}).setdefault('ip4', []).append(ip4.group('ip4'))
                 continue
 
             ip6 = self.ip6_re.match(line)
