@@ -7,6 +7,8 @@ Configuration parameters:
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+    mem_unit: the unit of memory to use in report, case insensitive.
+        ['dynamic', 'mb', 'mib', 'gb', 'gib'] (default 'GiB')
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -20,6 +22,7 @@ Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {mem_total} total memory
+    {mem_unit} unit for memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
 
@@ -74,7 +77,7 @@ class GetData:
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
 
-    def memory(self):
+    def memory(self, unit='GiB'):
         """
         Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, percentage
@@ -82,7 +85,6 @@ class GetData:
         """
 
         memi = {}
-        mem_unit = ''
         with open('/proc/meminfo', 'r') as fd:
             for s in fd:
                 tok = s.split()
@@ -97,20 +99,27 @@ class GetData:
             used_mem_p = 100 * used_mem_kb / total_mem_kb
             one_mb = 1 << 10  # 1 MB in KB
             one_gb = 1 << 20  # 1 GB in KB
-            if total_mem_kb < one_gb:
+            if unit.lower() == 'dynamic':
+                if total_mem_kb < one_gb:
+                    unit = 'MiB'
+                else:
+                    unit = 'GiB'
+            if unit.lower() in ['mb', 'mib']:
                 total_mem = total_mem_kb / one_mb
                 used_mem = used_mem_kb / one_mb
-                mem_unit = 'MB'
-            else:
+            elif unit.lower() in ['gb', 'gib']:
                 total_mem = total_mem_kb / one_gb
                 used_mem = used_mem_kb / one_gb
-                mem_unit = 'GB'
+            else:
+                raise ValueError(
+                    'unit [{0}] must be one of: mb, mib, gb, gib, dynamic.'.format(unit))
         except:
             total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
+            unit = 'UNKOWN'
 
         # If total memory is <1GB, results are in megabytes.
         # Otherwise, results are in gigabytes.
-        return total_mem, used_mem, used_mem_p, mem_unit
+        return total_mem, used_mem, used_mem_p, unit
 
     def cpuTemp(self, zone):
         """
@@ -144,6 +153,7 @@ class Py3status:
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
         "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    mem_unit = 'GiB'
     padding = 0
     precision = 2
     thresholds = [(0, "good"), (40, "degraded"), (75, "high")]
@@ -208,7 +218,7 @@ class Py3status:
 
         # get RAM usage info
         if self.py3.format_contains(self.format, 'mem_*'):
-            mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory()
+            mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory(self.mem_unit)
             self.values['mem_total'] = value_format.format(mem_total)
             self.values['mem_used'] = value_format.format(mem_used)
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
