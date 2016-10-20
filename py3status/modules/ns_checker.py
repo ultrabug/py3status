@@ -16,6 +16,12 @@ Configuration parameters:
     nameservers: comma separated list of reference DNS nameservers
     resolvers: comma separated list of DNS resolvers to use
 
+Format placeholders:
+    {ns_nok_count} The number of failed name servers
+    {ns_ok_count} The number of working name servers
+    {ns_status} The overall status of the name servers (OK or NOK)
+    {ns_total} The total number of name servers
+
 Color options:
     color_bad: One or more lookups have failed
     color_good: All lookups have succeeded
@@ -36,16 +42,19 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 300
     domain = ''
+    format = '{ns_total} NS {ns_status}'
     lifetime = 0.3
     nameservers = ''
     resolvers = ''
 
     def ns_checker(self):
         response = {'cached_until': self.py3.time_in(self.cache_timeout),
+                    'color': self.py3.COLOR_GOOD,
                     'full_text': ''}
-        counter = 0
-        error = False
+        count_nok = 0
+        count_ok = 0
         nameservers = []
+        ns_status = 'OK'
 
         # parse some configuration parameters
         if not isinstance(self.nameservers, list):
@@ -69,20 +78,24 @@ class Py3status:
         # Perform a simple DNS query, for each NS servers
         for ns in nameservers:
             my_resolver.nameservers = [ns]
-            counter += 1
             try:
                 my_resolver.query(self.domain, 'A')
+                count_ok += 1
             except:
-                error = True
+                count_nok += 1
+                ns_status = 'NOK'
+                response['color'] = self.py3.COLOR_BAD
 
-        if error:
-            response['full_text'] = str(counter) + ' NS NOK'
-            response['color'] = self.py3.COLOR_BAD
-        else:
-            response['full_text'] = str(counter) + ' NS OK'
-            response['color'] = self.py3.COLOR_GOOD
+        response['full_text'] = self.py3.safe_format(
+            self.format,
+            dict(ns_total=len(nameservers),
+                 ns_nok_count=count_nok,
+                 ns_ok_count=count_ok,
+                 ns_status=ns_status,
+                 ))
 
         return response
+
 
 if __name__ == "__main__":
     """
