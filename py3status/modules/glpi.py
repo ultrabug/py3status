@@ -9,11 +9,15 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
     critical: set bad color above this threshold (default 20)
     db: database to use (default '')
+    format: format of the module output (default '{num_open} tickets')
     host: database host to connect to (default '')
     password: login password (default '')
     timeout: timeout for database connection (default 5)
     user: login user (default '')
     warning: set degraded color above this threshold (default 15)
+
+Format placeholders:
+    {num_open} The number of open tickets
 
 Color options:
     color_bad: Open ticket above critical threshold
@@ -33,6 +37,7 @@ class Py3status:
     cache_timeout = 300
     critical = 20
     db = ''
+    format = '{num_open} tickets'
     host = ''
     password = ''
     timeout = 5
@@ -62,11 +67,13 @@ class Py3status:
                 response.update(
                     {'color': self.py3.COLOR_DEGRADED}
                 )
-            response['full_text'] = '%s tickets' % open_tickets
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'num_open': open_tickets})
         mydb.close()
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         return response
+
 
 if __name__ == "__main__":
     """
