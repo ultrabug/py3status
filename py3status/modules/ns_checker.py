@@ -10,6 +10,7 @@ in nameservers list.
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 
 Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 300)
     domain: domain name to check
     lifetime: resolver lifetime
     nameservers: comma separated list of reference DNS nameservers
@@ -33,13 +34,15 @@ class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 300
     domain = ''
     lifetime = 0.3
     nameservers = ''
     resolvers = ''
 
     def ns_checker(self):
-        response = {'full_text': ''}
+        response = {'cached_until': self.py3.time_in(self.cache_timeout),
+                    'full_text': ''}
         counter = 0
         error = False
         nameservers = []
