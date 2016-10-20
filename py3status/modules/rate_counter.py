@@ -7,8 +7,26 @@ Configuration parameters:
     config_file: file path to store the time already spent
         and restore it the next session
          (default '~/.i3/py3status/counter-config.save')
+    format: output format string
+        (default 'Time: {days} day {hours}:{mins} Cost: {total}')
+    format_money: output format string
+        (default '{price}$')
     hour_price: your price per hour (default 30)
     tax: tax value (1.02 = 2%) (default 1.02)
+
+Format placeholders:
+    {days} The number of whole days in running timer
+    {hours} The remaining number of whole hours in running timer
+    {mins} The remaining number of whole minutes in running timer
+    {secs} The remaining number of seconds in running timer
+    {subtotal} The subtotal cost (time * rate)
+    {tax} The tax cost, based on the subtotal cost
+    {total} The total cost (subtotal + tax)
+    {total_hours} The total number of whole hours in running timer
+    {total_mins} The total number of whole minutes in running timer
+
+Money placeholders:
+    {price} numeric value of money
 
 Color options:
     color_bad: Running
@@ -16,8 +34,16 @@ Color options:
 
 @author Amaury Brisou <py3status AT puzzledge.org>
 """
+
+
 import os
 import time
+
+
+# No "magic numbers"
+SECS_IN_MIN = 60.0
+SECS_IN_HOUR = 60 * SECS_IN_MIN  # 3600
+SECS_IN_DAY = 24 * SECS_IN_HOUR  # 86400
 
 
 class Py3status:
@@ -27,17 +53,15 @@ class Py3status:
     cache_timeout = 5
     config_file = '%s%s' % (os.environ['HOME'],
                             '/.i3/py3status/counter-config.save')
+    format = 'Time: {days} day {hours}:{mins} Cost: {total}'
+    format_money = '{price}$'
     hour_price = 30
     tax = 1.02
 
     def __init__(self):
-        self.current_time = time.time()
-        self.diff_time = 0
-        self.full_text = ''
-        self.restarted = False
+        self.running = False
         self.saved_time = 0
-        self.start_time = time.time()
-        self.started = False
+        self.start_time = self.current_time
         try:
             # Use file to refer to the file object
             with open(self.config_file) as file:
@@ -45,63 +69,90 @@ class Py3status:
         except:
             pass
 
+    @property
+    def current_time(self):
+        """Get the current time.
+
+        Using a helper property to make it easy to keep consitency.
+        """
+        return time.time()
+
+    @staticmethod
+    def secs_to_dhms(time_in_secs):
+        """Convert seconds to days, hours, minutes, seconds.
+
+        Using days as the largest unit of time.  Blindly using the days in
+        `time.gmtime()` will fail if it's more than one month (days > 31).
+        """
+        days = int(time_in_secs / SECS_IN_DAY)
+        remaining_secs = time_in_secs % SECS_IN_DAY
+        hours = int(remaining_secs / SECS_IN_HOUR)
+        remaining_secs = remaining_secs % SECS_IN_HOUR
+        mins = int(remaining_secs / SECS_IN_MIN)
+        secs = remaining_secs % SECS_IN_MIN
+        return days, hours, mins, secs
+
+    def _start_timer(self):
+        self.start_time = self.current_time - self.saved_time
+        self.running = True
+
+    def _stop_timer(self):
+        self.saved_time = self.current_time - self.start_time
+        self.running = False
+
     def kill(self):
-        if self.started is True:
-            self.saved_time = self.current_time - self.start_time
+        if self.running is True:
+            self._stop_timer()
         with open(self.config_file, 'w') as f:
             f.write(str(self.saved_time))
 
     def on_click(self, event):
         if event['button'] == 1:
-            if self.started is True:
-                self.saved_time = time.time() - self.start_time
-                self.started = False
+            if self.running is True:
+                self._stop_timer()
             else:
-                self.start_time = time.time() - self.saved_time
-                self.started = True
+                self._start_timer()
         elif event['button'] == 3:
             self._reset()
 
     def _reset(self):
-        self.saved_time = 0
+        self.saved_time = 0.0
         with open(self.config_file, 'w') as f:
             f.write('0')
 
     def counter(self):
-        if self.started:
-            self.current_time = time.time()
-            self.diff_time = time.gmtime(self.current_time - self.start_time)
-            cost = (
-                24 * float(self.hour_price) *
-                float(self.diff_time.tm_mday - 1) +
-                float(self.hour_price) * float(self.diff_time.tm_hour) +
-                float(self.diff_time.tm_min) * float(self.hour_price) / 60 +
-                float(self.diff_time.tm_sec) * float(self.hour_price) / 3600)
-            self.full_text = 'Time: %d day %d:%d Cost: %.2f$' % (
-                self.diff_time.tm_mday - 1, self.diff_time.tm_hour,
-                self.diff_time.tm_min, float(cost) * float(self.tax))
+        running_time = 0.0
+        if self.running:
             color = self.py3.COLOR_GOOD
+            running_time = self.current_time - self.start_time
         else:
-            if self.full_text == '':
-                if self.saved_time != 0:
-                    t = time.gmtime(self.saved_time)
-                    cost = float(self.hour_price) * float(
-                        t.tm_mday - 1) * 24 + float(self.hour_price) * float(
-                            t.tm_hour) + float(t.tm_min) * float(
-                                self.hour_price) / 60 + float(
-                                    t.tm_sec) * float(self.hour_price) / 3600
-                    self.full_text = 'Time: %d day %d:%d Cost: %.2f$' % (
-                        t.tm_mday - 1, t.tm_hour, t.tm_min, float(cost) *
-                        float(self.tax))
-                else:
-                    self.full_text = "Time: 0 day 0:0 Cost: 0$"
-
             color = self.py3.COLOR_BAD
+            running_time = self.saved_time
 
+        days, hours, mins, secs = self.secs_to_dhms(running_time)
+        subtotal = float(self.hour_price) * (running_time / SECS_IN_HOUR)
+        total = subtotal * float(self.tax)
+        subtotal_cost = self.py3.safe_format(self.format_money,
+                                             {'price': '%.2f' % subtotal})
+        total_cost = self.py3.safe_format(self.format_money,
+                                          {'price': '%.2f' % total})
+        tax_cost = self.py3.safe_format(self.format_money,
+                                        {'price': '%.2f' % (total - subtotal)})
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.full_text,
             'color': color,
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(days=days,
+                     hours='%02d' % hours,
+                     mins='%02d' % mins,
+                     secs='%02d' % secs,
+                     total_hours='%02d' % (running_time / SECS_IN_HOUR),
+                     total_mins='%02d' % (running_time / SECS_IN_MIN),
+                     subtotal=subtotal_cost,
+                     total=total_cost,
+                     tax=tax_cost,)
+            )
         }
         return response
 
