@@ -29,8 +29,8 @@ Money placeholders:
     {price} numeric value of money
 
 Color options:
-    color_bad: Running
-    color_good: Stopped
+    color_running: Running, default color_good
+    color_stopped: Stopped, default color_bad
 
 @author Amaury Brisou <py3status AT puzzledge.org>
 """
@@ -123,10 +123,10 @@ class Py3status:
     def counter(self):
         running_time = 0.0
         if self.running:
-            color = self.py3.COLOR_GOOD
+            color = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD
             running_time = self.current_time - self.start_time
         else:
-            color = self.py3.COLOR_BAD
+            color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
             running_time = self.saved_time
 
         days, hours, mins, secs = self.secs_to_dhms(running_time)
