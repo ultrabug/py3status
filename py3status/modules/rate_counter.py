@@ -93,32 +93,37 @@ class Py3status:
         return days, hours, mins, secs
 
     def _start_timer(self):
-        self.start_time = self.current_time - self.saved_time
-        self.running = True
+        if not self.running:
+            self.start_time = self.current_time - self.saved_time
+            self.running = True
 
     def _stop_timer(self):
-        self.saved_time = self.current_time - self.start_time
-        self.running = False
+        if self.running:
+            self.saved_time = self.current_time - self.start_time
+            self.running = False
+
+    def _toggle_timer(self):
+        if self.running:
+            self._stop_timer()
+        else:
+            self._start_timer()
 
     def kill(self):
-        if self.running is True:
-            self._stop_timer()
+        self._stop_timer()
         with open(self.config_file, 'w') as f:
             f.write(str(self.saved_time))
 
     def on_click(self, event):
         if event['button'] == 1:
-            if self.running is True:
-                self._stop_timer()
-            else:
-                self._start_timer()
+            self._toggle_timer()
         elif event['button'] == 3:
             self._reset()
 
     def _reset(self):
-        self.saved_time = 0.0
-        with open(self.config_file, 'w') as f:
-            f.write('0')
+        if not self.running:
+            self.saved_time = 0.0
+            with open(self.config_file, 'w') as f:
+                f.write('0')
 
     def counter(self):
         running_time = 0.0
