@@ -4,7 +4,7 @@ import shlex
 from time import time
 from subprocess import Popen, call
 
-from py3status.formatter import Formatter
+from py3status.formatter import Formatter, Composite
 
 
 PY3_CACHE_FOREVER = -1
@@ -264,11 +264,12 @@ class Py3:
 
         return requested + offset
 
-    def safe_format(self, format_string, param_dict=None):
+    def safe_format(self, format_string, param_dict=None,
+                    force_composite=False):
         """
         Parser for advanced formating.
 
-        Unknown placeholders will be shown in the output eg `{foo}`
+        Unknown placeholders will be shown in the output eg `{foo}`.
 
         Square brackets `[]` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
@@ -278,14 +279,19 @@ class Py3:
         valid section only will be shown in the output.
 
         A backslash `\` can be used to escape a character eg `\[` will show `[`
-        in the output.  Note: `\?` is reserved for future use and is removed.
+        in the output.
+
+        `\?` is special and is used to provide extra commands to the format
+        string,  example `\?color=#FF00FF`. Multiple commands can be given
+        using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
 
         `{<placeholder>}` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
         `{number:03.2f}`.
 
         example format_string:
-        "[[{artist} - ]{title}]|{file}"
+
+        `"[[{artist} - ]{title}]|{file}"`
         This will show `artist - title` if artist is present,
         `title` if title but no artist,
         and `file` if file is present but not artist or title.
@@ -293,18 +299,31 @@ class Py3:
         param_dict is a dictionary of palceholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
+
+        __Since version 3.3__
+
+        Composites can be included in the param_dict.
+
+        The result returned from this function can either be a string in the
+        case of simple parsing or a Composite if more complex.
+
+        If force_composite parameter is True a composite will always be
+        returned.
         """
         try:
             return self._formatter.format(
                 format_string,
                 self._py3status_module,
-                param_dict
+                param_dict,
+                force_composite=force_composite,
             )
         except Exception:
             return 'invalid format'
 
     def build_composite(self, format_string, param_dict=None, composites=None):
         """
+        __deprecated in 3.3__ use safe_format().
+
         Build a composite output using a format string.
 
         Takes a format_string and treats it the same way as `safe_format` but
@@ -312,15 +331,59 @@ class Py3:
         placeholder and either an output eg `{'full_text': 'something'}` or a
         list of outputs.
         """
+
+        if param_dict is None:
+            param_dict = {}
+
+        # merge any composites into the param_dict.
+        # as they are no longer dealt with separately
+        if composites:
+            for key, value in composites.items():
+                param_dict[key] = Composite(value)
+
         try:
             return self._formatter.format(
                 format_string,
                 self._py3status_module,
                 param_dict,
-                composites,
+                force_composite=True,
             )
         except Exception:
             return [{'full_text': 'invalid format'}]
+
+    def composite_update(self, item, update_dict, soft=False):
+        """
+        Takes a Composite (item) if item is a type that can be converted into a
+        Composite then this is done automatically.  Updates all entries it the
+        Composite with values from update_dict.  Updates can be soft in which
+        case existing values are not overwritten.
+
+        A Composite object will be returned.
+        """
+        return Composite.composite_update(item, update_dict, soft=False)
+
+    def composite_join(self, separator, items):
+        """
+        Join a list of items with a separator.
+        This is used in joining strings, responses and Composites.
+
+        A Composite object will be returned.
+        """
+        return Composite.composite_join(separator, items)
+
+    def composite_create(self, item):
+        """
+        Create and return a Composite.
+
+        The item may be a string, dict, list of dicts or a Composite.
+        """
+        return Composite(item)
+
+    def is_composite(self, item):
+        """
+        Check if item is a Composite and return True if it is.
+        """
+        return isinstance(item, Composite)
 
     def check_commands(self, cmd_list):
         """

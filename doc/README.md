@@ -873,26 +873,41 @@ A pipe (vertical bar) `|` can be used to divide sections the first
 valid section only will be shown in the output.
 
 A backslash `\` can be used to escape a character eg `\[` will show `[`
-in the output. Note: `\?` is reserved for future use and is removed.
+in the output.
+
+`\?` is special and is used to provide extra commands to the format
+string,  example `\?color=#FF00FF`. Multiple commands can be given
+using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
 
 `{<placeholder>}` will be converted, or removed if it is None or empty.
-
 Formating can also be applied to the placeholder eg
 `{number:03.2f}`.
 
-*example format_string:*
+example format_string:
 
 `"[[{artist} - ]{title}]|{file}"`
 This will show `artist - title` if artist is present,
 `title` if title but no artist,
 and `file` if file is present but not artist or title.
 
-
 param_dict is a dictionary of palceholders that will be substituted.
 If a placeholder is not in the dictionary then if the py3status module
 has an attribute with the same name then it will be used.
 
+__Since version 3.3__
+
+Composites can be included in the param_dict.
+
+
+The result returned from this function can either be a string in the
+case of simple parsing or a Composite if more complex.
+
+If force_composite parameter is True a composite will always be
+returned.
+
 __build_composite(format_string, param_dict=None, composites=None)__
+
+__deprecated in 3.3__ use safe_format()
 
 Build a composite output using a format string.
 
@@ -900,6 +915,32 @@ Takes a format_string and treats it the same way as `safe_format` but
 also takes a composites dict where each key/value is the name of the
 placeholder and either an output eg `{'full_text': 'something'}` or a
 list of outputs.
+
+__composite_update(item, update_dict, soft=False)__
+
+Takes a Composite (item) if item is a type that can be converted into a
+Composite then this is done automatically.  Updates all entries it the
+Composite with values from update_dict.  Updates can be soft in which
+case existing values are not overwritten.
+
+A Composite object will be returned.
+
+__composite_join(separator, items)__
+
+Join a list of items with a separator.
+This is used in joining strings, responses and Composites.
+
+A Composite object will be returned.
+
+__composite_create(item)__
+
+Create and return a Composite.
+
+The item may be a string, dict, list of dicts or a Composite.
+
+__is_composite(item)__
+
+Check if item is a Composite and return True if it is.
 
 __check_commands(cmd_list)__
 
