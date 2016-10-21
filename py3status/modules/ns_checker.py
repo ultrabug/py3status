@@ -12,15 +12,17 @@ The default resolver can be overwritten with my_resolver.nameservers parameter.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
     domain: domain name to check
+    format: output format string
+        (default '{total_count} NS {status}')
     lifetime: resolver lifetime
     nameservers: comma separated list of reference DNS nameservers
     resolvers: comma separated list of DNS resolvers to use
 
 Format placeholders:
-    {ns_nok_count} The number of failed name servers
-    {ns_ok_count} The number of working name servers
-    {ns_status} The overall status of the name servers (OK or NOK)
-    {ns_total} The total number of name servers
+    {nok_count} The number of failed name servers
+    {ok_count} The number of working name servers
+    {status} The overall status of the name servers (OK or NOK)
+    {total_count} The total number of name servers
 
 Color options:
     color_bad: One or more lookups have failed
@@ -42,7 +44,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 300
     domain = ''
-    format = '{ns_total} NS {ns_status}'
+    format = '{total_count} NS {status}'
     lifetime = 0.3
     nameservers = ''
     resolvers = ''
@@ -54,7 +56,7 @@ class Py3status:
         count_nok = 0
         count_ok = 0
         nameservers = []
-        ns_status = 'OK'
+        status = 'OK'
 
         # parse some configuration parameters
         if not isinstance(self.nameservers, list):
@@ -83,15 +85,15 @@ class Py3status:
                 count_ok += 1
             except:
                 count_nok += 1
-                ns_status = 'NOK'
+                status = 'NOK'
                 response['color'] = self.py3.COLOR_BAD
 
         response['full_text'] = self.py3.safe_format(
             self.format,
-            dict(ns_total=len(nameservers),
-                 ns_nok_count=count_nok,
-                 ns_ok_count=count_ok,
-                 ns_status=ns_status,
+            dict(total_count=len(nameservers),
+                 nok_count=count_nok,
+                 ok_count=count_ok,
+                 status=status,
                  ))
 
         return response
