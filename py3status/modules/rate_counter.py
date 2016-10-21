@@ -8,7 +8,7 @@ Configuration parameters:
         and restore it the next session
          (default '~/.i3/py3status/counter-config.save')
     format: output format string
-        (default 'Time: {days} day {hours}:{mins} Cost: {total}')
+        (default 'Time: {days} day {hours}:{mins:02d} Cost: {total}')
     format_money: output format string
         (default '{price}$')
     hour_price: your price per hour (default 30)
@@ -53,7 +53,7 @@ class Py3status:
     cache_timeout = 5
     config_file = '%s%s' % (os.environ['HOME'],
                             '/.i3/py3status/counter-config.save')
-    format = 'Time: {days} day {hours}:{mins} Cost: {total}'
+    format = 'Time: {days} day {hours}:{mins:02d} Cost: {total}'
     format_money = '{price}$'
     hour_price = 30
     tax = 1.02
@@ -89,7 +89,7 @@ class Py3status:
         hours = int(remaining_secs / SECS_IN_HOUR)
         remaining_secs = remaining_secs % SECS_IN_HOUR
         mins = int(remaining_secs / SECS_IN_MIN)
-        secs = remaining_secs % SECS_IN_MIN
+        secs = int(remaining_secs % SECS_IN_MIN)
         return days, hours, mins, secs
 
     def _start_timer(self):
@@ -144,11 +144,11 @@ class Py3status:
             'full_text': self.py3.safe_format(
                 self.format,
                 dict(days=days,
-                     hours='%02d' % hours,
-                     mins='%02d' % mins,
-                     secs='%02d' % secs,
-                     total_hours='%02d' % (running_time / SECS_IN_HOUR),
-                     total_mins='%02d' % (running_time / SECS_IN_MIN),
+                     hours=hours,
+                     mins=mins,
+                     secs=secs,
+                     total_hours=running_time // SECS_IN_HOUR,
+                     total_mins=running_time // SECS_IN_MIN,
                      subtotal=subtotal_cost,
                      total=total_cost,
                      tax=tax_cost,)
