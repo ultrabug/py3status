@@ -818,7 +818,7 @@ __time_in(seconds=None, sync_to=None, offset=0)__
 Returns the time a given number of seconds into the future.  Helpful
 for creating the `cached_until` value for the module output.
 
-Note: form version 3.1 modules no longer need to explicitly set a
+Note: from version 3.1 modules no longer need to explicitly set a
 `cached_until` in their response unless they wish to directly control it.
 
 seconds specifies the number of seconds that should occure before the

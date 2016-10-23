@@ -133,21 +133,21 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_stop = None
-    button_toggle = 1
     button_next = 4
     button_previous = 5
+    button_stop = None
+    button_toggle = 1
     format = '{previous}{toggle}{next} {state} [{artist} - ][{title}]'
     format_none = 'no player running'
+    icon_next = u'»'
     icon_pause = u'▮'
     icon_play = u'▶'
-    icon_stop = u'◾'
-    icon_next = u'»'
     icon_previous = u'«'
+    icon_stop = u'◾'
+    player_priority = []
     state_pause = u'▮'
     state_play = u'▶'
     state_stop = u'◾'
-    player_priority = []
 
     def __init__(self):
         self._dbus = None

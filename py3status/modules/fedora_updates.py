@@ -33,8 +33,8 @@ import re
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    format = 'DNF: {updates}'
     check_security = True
+    format = 'DNF: {updates}'
 
     def __init__(self):
         self._reg_ex_sec = re.compile('\d+(?=\s+Security)')

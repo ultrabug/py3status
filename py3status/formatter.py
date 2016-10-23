@@ -279,7 +279,9 @@ class Formatter:
             """
             if self.python2 and isinstance(param, str):
                 param = param.decode('utf-8')
-            if param or param is 0:
+            # '', None, and False are ignored
+            # numbers like 0 and 0.0 are not.
+            if not (param in ['', None] or param is False):
                 value = value.format(**{key: param})
                 block.add(value)
                 block.mark_valid()

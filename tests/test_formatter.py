@@ -25,6 +25,9 @@ param_dict = {
     'python2_unicode': u'Björk',
     'python2_str': 'Björk',
     'zero': 0,
+    'zero_str': '0',
+    'zero_float': 0.0,
+
     'composite_basic': Composite([{'full_text': 'red ', 'color': '#FF0000'},
                                   {'full_text': 'green ', 'color': '#00FF00'},
                                   {'full_text': 'blue', 'color': '#0000FF'}]),
@@ -197,12 +200,29 @@ def test_23():
     })
 
 
+# zero/False/None etc
+
 def test_24():
     run_formatter(
-        # zero/False/None etc
         {
             'format': '{zero}',
             'expected': '0',
+        })
+
+
+def test_24a():
+    run_formatter(
+        {
+            'format': '{zero_str}',
+            'expected': '0',
+        })
+
+
+def test_24b():
+    run_formatter(
+        {
+            'format': '{zero_float}',
+            'expected': '0.0',
         })
 
 

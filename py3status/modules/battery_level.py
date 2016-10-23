@@ -108,8 +108,8 @@ class Py3status:
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
-    hide_when_full = False
     hide_seconds = False
+    hide_when_full = False
     notification = False
     notify_low_level = False
     threshold_bad = 10

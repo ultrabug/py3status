@@ -30,10 +30,10 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 60
     criterion = 'UNSEEN'
+    format = 'Mail: {unseen}'
     hide_if_zero = False
     imap_server = '<IMAP_SERVER>'
     mailbox = 'INBOX'
-    format = 'Mail: {unseen}'
     new_mail_color = ''
     password = '<PASSWORD>'
     port = '993'
