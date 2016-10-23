@@ -5,18 +5,34 @@ Display the current network transfer rate.
 Configuration parameters:
     all_interfaces: ignore self.interfaces, but not self.interfaces_blacklist
         (default True)
-    cache_timeout: how often we refresh this module in seconds (default 2)
-    devfile: location of dev file under /proc (default '/proc/net/dev')
-    format: format of the module output (default '{interface}: {total}')
-    format_no_connection: when there is no data transmitted from the
-        start of the plugin (default '')
-    hide_if_zero: hide indicator if rate == 0 (default False)
-    interfaces: comma separated list of interfaces to track (default '')
+    cache_timeout: how often we refresh this module in seconds
+        (default 2)
+    devfile: location of dev file under /proc
+        (default '/proc/net/dev')
+    format: format of the module output
+        (default '{interface}: {total}')
+    format_no_connection: when there is no data transmitted from the start of the plugin
+        (default '')
+    hide_if_zero: hide indicator if rate == 0
+        (default False)
+    initial_multi: initial multiplier, if you want to get rid of first bytes, set to 1 to disable
+        (default 1024)
+    interfaces: comma separated list of interfaces to track
+        (default '')
     interfaces_blacklist: comma separated list of interfaces to ignore
         (default 'lo')
-    precision: amount of numbers after dot (default 1)
+    multiplier_top: if value is greater, divide it with unit_multi and get next unit from units
+        (default 999)
+    precision: amount of numbers after dot
+        (default 1)
     threshold_fast: threshold above which the data transfer is considered fast
+        (default 1024)
     threshold_slow: threshold below which the data transfer is considered slow
+        (default 1)
+    unit_multi: value to divide if rate is greater than multiplier_top
+        (default 1024)
+    units: list of units, value/initial_multi, value/1024, value/1024^2, etc...
+        (default ["kb/s", "mb/s", "gb/s", "tb/s"])
 
 Format placeholders:
     {down} download rate
@@ -36,17 +52,6 @@ Color conditionals:
 from __future__ import division  # python2 compatibility
 from time import time
 
-# initial multiplier, if you want to get rid of first bytes, set to 1 to
-# disable
-INITIAL_MULTI = 1024
-# if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-MULTIPLIER_TOP = 999
-# value to divide if rate is greater than MULTIPLIER_TOP
-UNIT_MULTI = 1024
-# list of units, first one - value/INITIAL_MULTI, second - value/1024, third -
-# value/1024^2, etc...
-UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
-
 
 class Py3status:
     """
@@ -58,11 +63,15 @@ class Py3status:
     format = "{interface}: {total}"
     format_no_connection = ''
     hide_if_zero = False
+    initial_multi = 1024
     interfaces = ''
     interfaces_blacklist = 'lo'
+    multiplier_top = 999
     precision = 1
     threshold_fast = 1024
     threshold_slow = 1
+    unit_multi = 1024
+    units = ["kb/s", "mb/s", "gb/s", "tb/s"]
 
     def __init__(self, *args, **kwargs):
         """
@@ -83,11 +92,11 @@ class Py3status:
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(',')
 
-        # == 6 characters (from MULTIPLIER_TOP + dot + self.precision)
+        # == 6 characters (from self.multiplier_top + dot + self.precision)
         if self.precision > 0:
-            self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
+            self.left_align = len(str(self.multiplier_top)) + 1 + self.precision
         else:
-            self.left_align = len(str(MULTIPLIER_TOP))
+            self.left_align = len(str(self.multiplier_top))
         self.value_format = "{value:%s.%sf} {unit}" % (
             self.left_align, self.precision
         )
@@ -103,8 +112,8 @@ class Py3status:
                 down = int(new[1]) - int(old[1])
                 up = int(new[9]) - int(old[9])
 
-                down /= timedelta * INITIAL_MULTI
-                up /= timedelta * INITIAL_MULTI
+                down /= timedelta * self.initial_multi
+                up /= timedelta * self.initial_multi
 
                 deltas[new[0]] = {'total': up+down, 'up': up, 'down': down, }
 
@@ -204,9 +213,9 @@ class Py3status:
         """
         Divide a value and return formatted string
         """
-        for i, unit in enumerate(UNITS):
-            if value > MULTIPLIER_TOP:
-                value /= UNIT_MULTI
+        for i, unit in enumerate(self.units):
+            if value > self.multiplier_top:
+                value /= self.unit_multi
             else:
                 break
 
