@@ -20,6 +20,7 @@ Configuration parameters:
             proxy = 'http://user:passwd@myproxy.example.com/'
             proxy = 'socks5://user:passwd@host:port'
         (proxy_socks is available after an 'pip install requests[socks]')
+        (default None)
     targets: semicolon separated list of targets to query graphite for.
         (default '')
     threshold_bad: numerical threshold,
@@ -84,8 +85,8 @@ class Py3status:
     datapoint_selection = 'max'
     format = ''
     graphite_url = ''
-    proxy = None
     http_timeout = 10
+    proxy = None
     targets = ''
     threshold_bad = None
     threshold_degraded = None
