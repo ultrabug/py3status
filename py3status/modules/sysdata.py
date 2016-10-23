@@ -11,11 +11,11 @@ Configuration parameters:
     med_threshold: percent to consider CPU or RAM usage as 'medium load'
         (default 40)
     padding: length of space padding to use on the left
-        (default: 0)
+        (default 0)
     precision: precision of values
-        (default: 2)
+        (default 2)
     zone: thermal zone to use. If None try to guess CPU temperature
-        (default: None)
+        (default None)
 
 Format placeholders:
     {cpu_temp} cpu temperature
@@ -182,8 +182,8 @@ class Py3status:
         "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
     high_threshold = 75
     med_threshold = 40
-    precision = 2
     padding = 0
+    precision = 2
     zone = None
 
     def __init__(self):
