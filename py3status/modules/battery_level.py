@@ -121,13 +121,12 @@ class Py3status:
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
-    sys_battery_path = SYS_BATTERY_PATH
-    measurement_mode = MEASUREMENT_MODE
-    hide_when_full = False
     hide_seconds = False
     hide_when_full = False
+    measurement_mode = MEASUREMENT_MODE
     notification = False
     notify_low_level = False
+    sys_battery_path = SYS_BATTERY_PATH
     threshold_bad = 10
     threshold_degraded = 30
     threshold_full = 100
