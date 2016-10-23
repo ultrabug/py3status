@@ -3,10 +3,32 @@
 Display the current disk status.
 
 Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds.
+        (default 10)
     disk: disk whose stat to check. Set to 'all' to get global stats.
-    precision: amount of numbers after dot
-    threshold_fast: threshold above which the data transfer is considered fast
-    threshold_slow: threshold below which the data transfer is considered slow
+        (default None)
+    format: format of the output.
+        (default "{disk}: {used_percent}% ({total})")
+    initial_multi: initial multiplier, if you want to get rid of first bytes, set to 1 to disable
+        (default 1024)
+    multiplier_top: if value is greater, divide it with `unit_multi` and get next unit from `units`
+        (default 999)
+    precision: precision to use for values.
+        (default 1)
+    sector_size: size of the disk's sectors.
+        (default 512)
+    threshold_bad: threshold below which the amount of free space is bad.
+        (default 10)
+    threshold_degraded: threshold below which the amount of free space is degraded.
+        (default 100)
+    threshold_fast: threshold above which the data transfer is considered fast.
+        (default 1024)
+    threshold_slow: threshold below which the data transfer is considered slow.
+        (default 1)
+    unit_multi: value to divide if rate is greater than MULTIPLIER_TOP
+        (default 1024)
+    units: list of units, for `value/initial_multi`, value/1024, value/1024^2, etc...
+        (default ["kb/s", "mb/s", "gb/s", "tb/s"])
 
 Format placeholders:
     {disk} the selected disk
@@ -32,18 +54,6 @@ from __future__ import division  # python2 compatibility
 from time import time
 import subprocess
 
-# initial multiplier, if you want to get rid of first bytes, set to 1 to
-# disable
-INITIAL_MULTI = 1024
-# if value is greater, divide it with UNIT_MULTI and get next unit from UNITS
-MULTIPLIER_TOP = 999
-# value to divide if rate is greater than MULTIPLIER_TOP
-UNIT_MULTI = 1024
-# list of units, first one - value/INITIAL_MULTI, second - value/1024, third -
-# value/1024^2, etc...
-UNITS = ["kb/s", "mb/s", "gb/s", "tb/s", ]
-
-SECTOR_SIZE = 512
 
 class Py3status:
     """
@@ -52,11 +62,16 @@ class Py3status:
     cache_timeout = 10
     disk = None
     format = "{disk}: {used_percent}% ({total})"
+    initial_multi = 1024
+    multiplier_top = 999
     precision = 1
+    sector_size = 512
     threshold_bad = 10
     threshold_degraded = 100
     threshold_fast = 1024
     threshold_slow = 1
+    unit_multi = 1024
+    units = ["kb/s", "mb/s", "gb/s", "tb/s"]
 
     def __init__(self, *args, **kwargs):
         """
@@ -71,11 +86,11 @@ class Py3status:
         self.last_time = time()
 
     def currentSpeed(self):
-        # == 6 characters (from MULTIPLIER_TOP + dot + self.precision)
+        # == 6 characters (from multiplier_top + dot + self.precision)
         if self.precision > 0:
-            self.left_align = len(str(MULTIPLIER_TOP)) + 1 + self.precision
+            self.left_align = len(str(self.multiplier_top)) + 1 + self.precision
         else:
-            self.left_align = len(str(MULTIPLIER_TOP))
+            self.left_align = len(str(self.multiplier_top))
         self.value_format = "{value:%s.%sf} {unit}" % (
             self.left_align, self.precision
         )
@@ -94,8 +109,8 @@ class Py3status:
             self.last_stat = self._get_io_stats(self.disk)
             self.last_time = time()
 
-            read /= timedelta * INITIAL_MULTI
-            write /= timedelta * INITIAL_MULTI
+            read /= timedelta * self.initial_multi
+            write /= timedelta * self.initial_multi
 
             total = read + write
 
@@ -182,22 +197,22 @@ class Py3status:
             for line in fd:
                 if disk and disk in line:
                     data = line.split()
-                    read += int(data[5]) * SECTOR_SIZE
-                    write += int(data[9]) * SECTOR_SIZE
+                    read += int(data[5]) * self.sector_size
+                    write += int(data[9]) * self.sector_size
                 else:
                     data = line.split()
                     if data[1] == '0':
-                        read += int(data[5]) * SECTOR_SIZE
-                        write += int(data[9]) * SECTOR_SIZE
+                        read += int(data[5]) * self.sector_size
+                        write += int(data[9]) * self.sector_size
         return read, write
 
     def _divide_and_format(self, value):
         """
         Divide a value and return formatted string
         """
-        for i, unit in enumerate(UNITS):
-            if value > MULTIPLIER_TOP:
-                value /= UNIT_MULTI
+        for i, unit in enumerate(self.units):
+            if value > self.multiplier_top:
+                value /= self.unit_multi
             else:
                 break
 
