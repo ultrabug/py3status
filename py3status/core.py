@@ -585,12 +585,11 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
-    def get_config_attribute(self, name, attribute, default=None):
+    def get_config_attribute(self, name, attribute):
         """
         Look for the attribute in the config.  Start with the named module and
         then walk up through any containing group and then try the general
-        section of the config.  If none found then try again with the default
-        as the attribute.  this is used for finding colors for modules.
+        section of the config.
         """
         config = self.i3status_thread.config
         color = config[name].get(attribute, 'missing')
@@ -601,9 +600,6 @@ class Py3statusWrapper():
                     break
         if color == 'missing':
             color = config['general'].get(attribute)
-        if color == 'missing':
-            if default:
-                color = self.get_config_attribute(name, default)
         return color
 
     def create_mappings(self, config):
