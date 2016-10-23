@@ -906,6 +906,20 @@ __check_commands(cmd_list)__
 Checks to see if the shell commands in list are available using `which`.
 Returns the first available command.
 
+__command_run(command)__
+
+Runs a command and returns the exit code.
+The command can either be supplied as a sequence or string.
+
+An Exception is raised if an error occurs
+
+__command_output(command)__
+
+Run a command and return its output as unicode.
+The command can either be supplied as a sequence or string.
+
+An Exception is raised if an error occurs
+
 __play_sound(sound_file)__
 
 Plays sound_file if possible. Requires `paplay` or `play`.
