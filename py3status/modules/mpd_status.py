@@ -5,15 +5,16 @@ Display information from mpd.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
-    hide_when_paused: hide the status if state is paused
-    hide_when_stopped: hide the status if state is stopped
-    host: mpd host
-    max_width: maximum status length
-    password: mpd password
-    port: mpd port
-    state_pause: label to display for "paused" state
-    state_play: label to display for "playing" state
-    state_stop: label to display for "stopped" state
+        (default '%state% [[[%artist%] - %title%]|[%file%]]')
+    hide_when_paused: hide the status if state is paused (default False)
+    hide_when_stopped: hide the status if state is stopped (default True)
+    host: mpd host (default 'localhost')
+    max_width: maximum status length (default 120)
+    password: mpd password (default None)
+    port: mpd port (default '6600')
+    state_pause: label to display for "paused" state (default '[pause]')
+    state_play: label to display for "playing" state (default '[play]')
+    state_stop: label to display for "stopped" state (default '[stop]')
 
 Color options:
     color_pause: Paused, default color_degraded

@@ -33,7 +33,7 @@ class Py3status:
     # configuration parameters
     cache_timeout = 10
     format_prefix = "GPU: "
-    format_units = "°C"
+    format_units = u"°C"
     temp_separator = '|'
 
     def nvidia_temp(self):

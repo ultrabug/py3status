@@ -73,8 +73,8 @@ class Py3status:
 
     button_toggle = 1
     format = '{output}'
-    format_button_open = u'-'
     format_button_closed = u'+'
+    format_button_open = u'-'
     format_separator = None
     open = True
 

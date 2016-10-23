@@ -35,8 +35,8 @@ class Py3status:
     # can be customized in i3status.conf
     cache_timeout = 10
     format = "{stream_name} is live!"
-    format_offline = "{stream_name} is offline."
     format_invalid = "{stream_name} does not exist!"
+    format_offline = "{stream_name} is offline."
     stream_name = None
 
     def __init__(self):

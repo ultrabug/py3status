@@ -11,12 +11,11 @@ The default resolver can be overwritten with my_resolver.nameservers parameter.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
-    domain: domain name to check
-    format: output format string
-        (default '{total_count} NS {status}')
-    lifetime: resolver lifetime
-    nameservers: comma separated list of reference DNS nameservers
-    resolvers: comma separated list of DNS resolvers to use
+    domain: domain name to check (default '')
+    format: output format string (default '{total_count} NS {status}')
+    lifetime: resolver lifetime (default 0.3)
+    nameservers: comma separated list of reference DNS nameservers (default '')
+    resolvers: comma separated list of DNS resolvers to use (default '')
 
 Format placeholders:
     {nok_count} The number of failed name servers

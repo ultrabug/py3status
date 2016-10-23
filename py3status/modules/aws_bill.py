@@ -6,15 +6,19 @@ Display the current AWS bill.
 Take care about the cache_timeout to limit these fees!**
 
 Configuration parameters:
-    aws_access_key_id: Your AWS access key
-    aws_account_id: The root ID of the AWS account.
+    aws_access_key_id: Your AWS access key (default '')
+    aws_account_id: The root ID of the AWS account
         Can be found here` https://console.aws.amazon.com/billing/home#/account
-    aws_secret_access_key: Your AWS secret key
-    billing_file: Csv file location
-    cache_timeout: How often we refresh this module in seconds
+        (default '')
+    aws_secret_access_key: Your AWS secret key (default '')
+    billing_file: Csv file location (default '/tmp/.aws_billing.csv')
+    cache_timeout: How often we refresh this module in seconds (default 3600)
+    format:  string that formats the output. See placeholders below.
+        (default '{bill_amount}$')
     s3_bucket_name: The bucket where billing files are sent by AWS.
         Follow this article to activate this feature:
         http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
+        (default '')
 
 Format placeholders:
     {bill_amount} AWS bill amount

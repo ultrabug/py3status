@@ -4,13 +4,14 @@ Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
-    db: database to use
-    format: see placeholders below
-    host: database host to connect to
-    password: login password
-    threshold_critical: set bad color above this threshold
-    threshold_warning: set degraded color above this threshold
-    user: login user
+    db: database to use (default '')
+    format: see placeholders below (default 'general: {General}')
+    host: database host to connect to (default '')
+    password: login password (default '')
+    threshold_critical: set bad color above this threshold (default 20)
+    threshold_warning: set degraded color above this threshold (default 10)
+    timeout: timeout for database connection (default 5)
+    user: login user (default '')
 
 Format placeholders:
     {YOUR_QUEUE_NAME} number of ongoing RT tickets (open+new+stalled)
@@ -41,14 +42,14 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 300
-    threshold_critical = 20
     db = ''
     format = 'general: {General}'
     host = ''
     password = ''
+    threshold_critical = 20
+    threshold_warning = 10
     timeout = 5
     user = ''
-    threshold_warning = 10
 
     def rt_tickets(self):
         has_one_queue_formatted = False

@@ -35,8 +35,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = '{ip}'
-    format_offline = '■'
-    format_online = '●'
+    format_offline = u'■'
+    format_online = u'●'
     hide_when_offline = False
     mode = 'ip'
     negative_cache_timeout = 2

@@ -117,18 +117,19 @@ REQUEST = {
 
 class Py3status:
     cache_timeout = 30
-    credentials = None
     coin_password = None
     coin_username = None
+    credentials = None
     format = 'LTC: {litecoin}'
     host = 'localhost'
     password = None
     protocol = 'http'
     username = None
 
-    _active_coins = []
-    _config = None
-    _credential_cache = {}
+    def __init__(self):
+        self._active_coins = []
+        self._config = None
+        self._credential_cache = {}
 
     def coin_balance(self, outputs, config):
         self._config = config

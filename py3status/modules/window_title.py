@@ -2,6 +2,11 @@
 """
 Display the current window title.
 
+Configuration parameters:
+    cache_timeout: How often we refresh this module in seconds (default 0.5)
+    max_width: If width of title is greater, shrink it and add '...'
+        (default 120)
+
 Requires:
     i3-py: (https://github.com/ziberna/i3-py)
         `pip install i3-py`
@@ -36,7 +41,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 0.5
-    max_width = 120  # if width of title is greater, shrink it and add '...'
+    max_width = 120
 
     def __init__(self):
         self.text = ''
