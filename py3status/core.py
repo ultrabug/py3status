@@ -55,6 +55,7 @@ class Py3statusWrapper():
         self.notified_messages = set()
         self.output_modules = {}
         self.py3_modules = []
+        self.py3_modules_initialized = False
         self.queue = deque()
 
     def get_config(self):
@@ -454,6 +455,11 @@ class Py3statusWrapper():
             update = [update]
         self.queue.extend(update)
 
+        # if all our py3status modules are not ready to receive updates then we
+        # don't want to get them to update.
+        if not self.py3_modules_initialized:
+            return
+
         # find containers that use the modules that updated
         containers = self.i3status_thread.config['.module_groups']
         containers_to_update = set()
@@ -683,6 +689,9 @@ class Py3statusWrapper():
         # eg run their post_config_hook
         for module in self.modules.values():
             module.prepare_module()
+
+        # modules can now receive updates
+        self.py3_modules_initialized = True
 
         # start modules
         for module in self.modules.values():
