@@ -27,11 +27,18 @@ Configuration parameters:
     hide_when_full: hide any information when battery is fully charged (when
         the battery level is greater than or equal to 'threshold_full')
         (default False)
+    measurement_mode: either 'acpi' or 'sys', or None to autodetect. 'sys'
+        should be more robust and does not have any extra requirements, however
+        the time measurement may not work in some cases
+        (default None)
     notification: show current battery state as notification on click
         (default False)
     notify_low_level: display notification when battery is running low (when
         the battery level is less than 'threshold_degraded')
         (default False)
+    sys_battery_path: set the path to your battery(ies), without including its
+        number
+        (default "/sys/class/power_supply/")
     threshold_bad: a percentage below which the battery level should be
         considered bad
         (default 10)
@@ -74,18 +81,21 @@ Obsolete configuration parameters:
         (default None)
 
 Requires:
-    - the `acpi` command line
+    - the `acpi` the acpi command line utility (only if
+        `measurement_mode='acpi'`)
 
-@author shadowprince, AdamBSteele, maximbaz, 4iar
+@author shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
 @license Eclipse Public License
 """
 
 from __future__ import division  # python2 compatibility
 from time import time
 from re import findall
+from glob import iglob
 
 import math
 import subprocess
+import os
 
 BLOCKS = u"_▁▂▃▄▅▆▇█"
 CHARGING_CHARACTER = u"⚡"
@@ -95,6 +105,9 @@ FULL_BLOCK = u'█'
 FORMAT = u"{icon}"
 FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
+SYS_BATTERY_PATH = u"/sys/class/power_supply/"
+MEASUREMENT_MODE = None
+FULLY_CHARGED = u'?'
 
 
 class Py3status:
@@ -110,8 +123,10 @@ class Py3status:
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
     hide_seconds = False
     hide_when_full = False
+    measurement_mode = MEASUREMENT_MODE
     notification = False
     notify_low_level = False
+    sys_battery_path = SYS_BATTERY_PATH
     threshold_bad = 10
     threshold_degraded = 30
     threshold_full = 100
@@ -121,6 +136,18 @@ class Py3status:
 
     def __init__(self):
         self.last_known_status = ''
+
+    def post_config_hook(self):
+        # Guess mode if not set
+        if self.measurement_mode is None:
+            if self.py3.check_commands(["acpi"]):
+                self.measurement_mode = "acpi"
+            elif os.path.isdir(self.sys_battery_path):
+                self.measurement_mode = "sys"
+
+        self.py3.log("Measurement mode: " + self.measurement_mode)
+        if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
+            raise NameError("Invalid measurement mode")
 
     def battery_level(self):
 
@@ -154,16 +181,6 @@ class Py3status:
         if message:
             self.py3.notify_user(message, 'info')
 
-    def _desktop_notification(self, message):
-        """
-        Display the given message inside a desktop notification
-        """
-        subprocess.call(
-            ['notify-send', '{}'.format(message), '-t',
-                '4000'],
-            stdout=open('/dev/null', 'w'),
-            stderr=open('/dev/null', 'w'))
-
     def _provide_backwards_compatibility(self):
         if self.format == FORMAT:
             # Backwards compatibility for 'mode' parameter
@@ -178,38 +195,7 @@ class Py3status:
             # Backwards compatibility for '{}' option in format string
             self.format = self.format.replace('{}', '{percent}')
 
-    def _extract_battery_information_from_acpi(self, acpi_battery_lines):
-        """
-        Extract the percent charged, charging state, time remaining,
-        and capacity for a battery, given a list of two strings from acpi
-        """
-        battery = dict()
-        battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",
-                                                 acpi_battery_lines[0])[0])
-        battery["charging"] = "Charging" in acpi_battery_lines[0]
-        battery["capacity"] = int(findall("(?<= )(\d+)(?= mAh)",
-                                          acpi_battery_lines[1])[1])
-
-        # ACPI only shows time remaining if battery is discharging or charging
-        try:
-            battery["time_remaining"] = ''.join(findall(
-                "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
-                "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
-        except IndexError:
-            battery["time_remaining"] = '?'
-
-        return battery
-
-    def _hms_to_seconds(self, t):
-        h, m, s = [int(i) for i in t.split(':')]
-        return 3600 * h + 60 * m + s
-
-    def _seconds_to_hms(self, secs):
-        m, s = divmod(secs, 60)
-        h, m = divmod(m, 60)
-        return "%d:%02d:%02d" % (h, m, s)
-
-    def _refresh_battery_info(self):
+    def _extract_battery_information_from_acpi(self):
         '''
         Get the battery info from acpi
 
@@ -225,6 +211,26 @@ class Py3status:
         Battery 1: Unknown, 98%
         Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%
         '''
+
+        def _parse_battery_info(acpi_battery_lines):
+            battery = {}
+            battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",
+                                                     acpi_battery_lines[0])[0])
+            battery["charging"] = "Charging" in acpi_battery_lines[0]
+            battery["capacity"] = int(findall("(?<= )(\d+)(?= mAh)",
+                                              acpi_battery_lines[1])[1])
+
+            # ACPI only shows time remaining if battery is discharging or
+            # charging
+            try:
+                battery["time_remaining"] = ''.join(findall(
+                    "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
+                    "(?<=, )(\d+:\d+:\d+)(?= until)", acpi_battery_lines[0])[0])
+            except IndexError:
+                battery["time_remaining"] = FULLY_CHARGED
+
+            return battery
+
         acpi_raw = subprocess.check_output(
             ["acpi", "-b", "-i"],
             stderr=subprocess.STDOUT)
@@ -237,8 +243,69 @@ class Py3status:
         acpi_list = [acpi_list[i:i + 2]
                      for i in range(0, len(acpi_list) - 1, 2)]
 
-        battery_list = [self._extract_battery_information_from_acpi(battery)
-                        for battery in acpi_list]
+        return [_parse_battery_info(battery) for battery in acpi_list]
+
+    def _extract_battery_information_from_sys(self):
+        """
+        Extract the percent charged, charging state, time remaining,
+        and capacity for a battery, using Linux's kernel /sys interface
+
+        Only available in kernel 2.6.24(?) and newer. Before kernel provided
+        a similar, yet incompatible interface in /proc
+        """
+        def _parse_battery_info(sys_path):
+            """
+            Extract battery information from uevent file, already convert to
+            int if necessary
+            """
+            raw_values = {}
+            with open(os.path.join(sys_path, u"uevent")) as f:
+                for var in f.read().splitlines():
+                    k, v = var.split("=")
+                    try:
+                        raw_values[k] = int(v)
+                    except ValueError:
+                        raw_values[k] = v
+            return raw_values
+
+        battery_list = []
+        for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
+            r = _parse_battery_info(path)
+            battery = {}
+            battery["capacity"] = r["POWER_SUPPLY_ENERGY_FULL"]
+            battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
+            battery["percent_charged"] = int(math.floor(
+                r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100))
+            try:
+                if battery["charging"]:
+                    time_in_secs = ((r["POWER_SUPPLY_ENERGY_FULL"] -
+                                    r["POWER_SUPPLY_ENERGY_NOW"]) /
+                                    r["POWER_SUPPLY_POWER_NOW"] * 3600)
+                else:
+                    time_in_secs = (r["POWER_SUPPLY_ENERGY_NOW"] /
+                                    r["POWER_SUPPLY_POWER_NOW"] * 3600)
+                battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
+            except ZeroDivisionError:
+                # Battery is either full charged or is not discharging
+                battery["time_remaining"] = FULLY_CHARGED
+
+            battery_list.append(battery)
+        return battery_list
+
+    def _hms_to_seconds(self, t):
+        h, m, s = [int(i) for i in t.split(':')]
+        return 3600 * h + 60 * m + s
+
+    def _seconds_to_hms(self, secs):
+        m, s = divmod(secs, 60)
+        h, m = divmod(m, 60)
+        return "%d:%02d:%02d" % (h, m, s)
+
+    def _refresh_battery_info(self):
+        if self.measurement_mode == "acpi":
+            battery_list = self._extract_battery_information_from_acpi()
+        else:
+            battery_list = self._extract_battery_information_from_sys()
 
         if type(self.battery_id) == int:
             battery = battery_list[self.battery_id]
@@ -264,8 +331,9 @@ class Py3status:
             active_battery = None
             inactive_battery = battery_list[:]
             for battery_id in range(0, len(battery_list)):
-                if (battery_list[battery_id]["time_remaining"]
-                        and battery_list[battery_id]["time_remaining"] != '?'):
+                if (battery_list[battery_id]["time_remaining"] and
+                        battery_list[battery_id]["time_remaining"] !=
+                        FULLY_CHARGED):
                     active_battery = battery_list[battery_id]
                     del inactive_battery[battery_id]
 
@@ -336,28 +404,31 @@ class Py3status:
             self.percent_charged >= self.threshold_full else self.full_text
 
     def _set_bar_color(self):
+        notify_msg = None
         if self.charging:
             self.response['color'] = self.py3.COLOR_CHARGING or "#FCE94F"
             battery_status = 'charging'
         elif self.percent_charged < self.threshold_bad:
             self.response['color'] = self.py3.COLOR_BAD
             battery_status = 'bad'
-            if (self.notify_low_level and
-                    self.last_known_status != battery_status):
-                self.py3.notify_user('Battery level is critically low ({}%)'
-                                     .format(self.percent_charged), 'error')
+            notify_msg = {'msg': 'Battery level is critically low ({}%)',
+                          'level': 'error'}
         elif self.percent_charged < self.threshold_degraded:
             self.response['color'] = self.py3.COLOR_DEGRADED
             battery_status = 'degraded'
-            if (self.notify_low_level and
-                    self.last_known_status != battery_status):
-                self.py3.notify_user('Battery level is running low ({}%)'
-                                     .format(self.percent_charged), 'warning')
+            notify_msg = {'msg': 'Battery level is running low ({}%)',
+                          'level': 'warning'}
         elif self.percent_charged >= self.threshold_full:
             self.response['color'] = self.py3.COLOR_GOOD
             battery_status = 'full'
         else:
             battery_status = 'good'
+
+        if (notify_msg and self.notify_low_level
+                and self.last_known_status != battery_status):
+            self.py3.notify_user(notify_msg['msg'].format(self.percent_charged),
+                                 notify_msg['level'])
+
         self.last_known_status = battery_status
 
     def _set_cache_timeout(self):
