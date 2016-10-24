@@ -101,10 +101,10 @@ class I3statusModule:
         if self.is_time_module:
             # If no timezone or a minute has passed update timezone
             # FIXME we should also check if resuming from suspended
-            if not self.tz or int(time()) % 60 != 0:
+            if not self.tz or int(time()) % 60 == 0:
                 self.set_time_zone()
             # update time to be shown
-            is_updated = self.update_time_value()
+            is_updated = self.update_time_value() or is_updated
         return is_updated
 
     def set_time_format(self):
