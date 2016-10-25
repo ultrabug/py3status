@@ -2,30 +2,20 @@
 import re
 import sys
 
+from py3status.composite import Composite
+
 try:
     from urllib.parse import parse_qsl
 except ImportError:
     from urlparse import parse_qsl
 
 
-class Composite:
-    """
-    Helper class to identify a composite
-    and store its content
-    """
-
-    def __init__(self, content, name='__Anon__'):
-        self.content = content
-        self.name = name
-
-    def __repr__(self):
-        return u'<Composite `{}`>'.format(self.name)
-
-
 class BlockConfig:
     """
     Block commands eg [\?color=bad ...] are stored in this object
     """
+
+    REGEX_COLOR = re.compile('#[0-9A-F]{6}')
 
     # defaults
     _if = None
@@ -40,13 +30,27 @@ class BlockConfig:
         commands = dict(parse_qsl(commands_str, keep_blank_values=True))
 
         self._if = commands.get('if', self._if)
-        self.color = commands.get('color', self.color)
+        self.color = self._check_color(commands.get('color'))
 
         max_length = commands.get('max_length')
         if max_length is not None:
             self.max_length = int(max_length)
 
         self.show = 'show' in commands or self.show
+
+    def _check_color(self, color):
+        if not color:
+            return self.color
+        # fix any hex colors so they are #RRGGBB
+        if color.startswith('#'):
+            color = color.upper()
+            if len(color) == 4:
+                color = ('#' + color[1] + color[1] + color[2]
+                         + color[2] + color[3] + color[3])
+            # check color is valid
+            if not self.REGEX_COLOR.match(color):
+                return self.color
+        return color
 
 
 class Block:
@@ -58,10 +62,9 @@ class Block:
     know about their parent block (if they have one)
     """
 
-    def __init__(self, param_dict, composites, module, parent=None):
+    def __init__(self, param_dict, module, parent=None):
         self.block_config = BlockConfig()
         self.commands = {}
-        self.composites = composites
         self.content = []
         self.is_composite = False
         self.module = module
@@ -157,13 +160,16 @@ class Block:
                 out.append(item)
         return out
 
-    def process_composite_chunk_item(self, item):
+    def process_composite_chunk_item(self, items):
         block_config = self.block_config
-        if block_config.max_length is not None:
-            item['full_text'] = item['full_text'][:block_config.max_length]
-            block_config.max_length -= len(item['full_text'])
-        if block_config.color and 'color' not in item:
-            item['color'] = block_config.color
+        if not isinstance(items, list):
+            items = [items]
+        for item in items:
+            if block_config.max_length is not None:
+                item['full_text'] = item['full_text'][:block_config.max_length]
+                block_config.max_length -= len(item['full_text'])
+            if block_config.color and 'color' not in item:
+                item['color'] = block_config.color
 
     def show(self):
         """
@@ -228,12 +234,9 @@ class Block:
                 text = ''
                 if self.parent is None:
                     # This is the main block so we get the actual composites
-                    composite = item.content
-                    if not isinstance(composite, list):
-                        composite = [composite]
-                    data += self.process_composite_chunk(composite)
+                    data += self.process_composite_chunk(item.get_content())
                 else:
-                    self.process_composite_chunk_item(item.content)
+                    self.process_composite_chunk_item(item.get_content())
                     data.append(item)
         if text:
             data.append(self.process_text_chunk(text))
@@ -261,7 +264,7 @@ class Formatter:
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
 
     def format(self, format_string, module=None, param_dict=None,
-               composites=None):
+               force_composite=False):
         """
         Format a string.
         substituting place holders which can be found in
@@ -290,17 +293,14 @@ class Formatter:
         if param_dict is None:
             param_dict = {}
 
-        if composites is None:
-            composites = {}
-
-        block = Block(param_dict, composites, module)
+        block = Block(param_dict, module)
 
         # Tokenize the format string and process them
         for token in re.finditer(self.reg_ex, format_string):
             value = token.group(0)
             if token.group('block_start'):
                 # Create new block
-                new_block = Block(param_dict, composites, module, block)
+                new_block = Block(param_dict, module, block)
                 block.add(new_block)
                 block = new_block
             elif token.group('block_end'):
@@ -317,16 +317,17 @@ class Formatter:
             elif token.group('placeholder'):
                 # Found a {placeholder}
                 key = token.group('key')
-                if key in composites:
-                    # Add the composite
-                    if composites[key]:
-                        block.add(Composite(composites[key], key))
-                        block.is_composite = True
-                        block.mark_valid()
-                elif key in param_dict:
+                if key in param_dict:
                     # was a supplied parameter
                     param = param_dict.get(key)
-                    set_param(param, value, key)
+                    if isinstance(param, Composite):
+                        # supplied parameter is a composite
+                        if param.get_content():
+                            block.add(param.copy())
+                            block.is_composite = True
+                            block.mark_valid()
+                    else:
+                        set_param(param, value, key)
                 elif module and hasattr(module, key):
                     # attribute of the module
                     param = getattr(module, key)
@@ -360,23 +361,19 @@ class Formatter:
         if not block.valid_blocks:
             block.mark_valid()
         output = block.show()
-        if composites and not isinstance(output, list):
-            if output == '':
-                output = []
-            else:
-                output = [{'full_text': output}]
+
+        if force_composite and not isinstance(output, list):
+            output = [{'full_text': output}]
+
+        if isinstance(output, Composite):
+            output = output.get_content()
 
         # post format
         # swap color names to values
-        # merge items if possible
-
         if isinstance(output, list):
-            final_output = []
-            diff_last = None
-            item_last = None
             for item in output:
                 # ignore empty items
-                if not item['full_text'] and not item.get('separator'):
+                if not item.get('full_text') and not item.get('separator'):
                     continue
                 # colors
                 color_this = item.get('color')
@@ -391,18 +388,5 @@ class Formatter:
                             item['color'] = color_this
                     else:
                         del item['color']
-                # merge items if we can
-                diff = (
-                    item.get('index'),
-                    item.get('instance'),
-                    item.get('name'),
-                    color_this,
-                )
-                if diff == diff_last:
-                    item_last['full_text'] += item['full_text']
-                else:
-                    diff_last = diff
-                    item_last = item.copy()  # copy item as we may change it
-                    final_output.append(item_last)
-            return final_output
+            return Composite(output).simplify()
         return output
