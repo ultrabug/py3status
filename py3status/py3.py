@@ -1,11 +1,21 @@
 from __future__ import division
 
+import json
 import sys
 import os
 import shlex
 from math import log10
 from time import time
 from subprocess import Popen, PIPE
+
+try:
+    # Python 3
+    from urllib.error import URLError
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import URLError
+    from urllib2 import urlopen
 
 from py3status.formatter import Formatter, Composite
 
@@ -679,3 +689,16 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    @staticmethod
+    def get_json_data(url):
+        """
+        Deserialize JSON from `url` into a Python object.
+
+        Returns None on error.
+        """
+        try:
+            data = json.loads(urlopen(url).read().decode())
+        except URLError:
+            data = None
+        return data
