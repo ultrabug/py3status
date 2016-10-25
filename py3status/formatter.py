@@ -379,9 +379,11 @@ class Formatter:
                 color_this = item.get('color')
                 if color_this and color_this[0] != '#':
                     color_name = 'color_%s' % color_this
+                    threshold_color_name = 'color_threshold_%s' % color_this
                     # substitute color
                     color_this = (
                         getattr(module, color_name, None) or
+                        getattr(module, threshold_color_name, None) or
                         getattr(module.py3, color_name.upper(), None)
                     )
                     if color_this:

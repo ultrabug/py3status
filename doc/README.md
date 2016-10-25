@@ -9,6 +9,7 @@ py3status documentation
 * [Configuring modules](#configuring_modules)
 * [Configuration obfuscation](#obfuscation)
 * [Configuring colors](#configuring_color)
+* [Configuring thresholds](#configuring_thresholds)
 * [Grouping modules](#group_modules)
 
 [Custom click events](#on_click)
@@ -165,6 +166,55 @@ battery_level {
     color_charging = '#FFFF00'
 }
 ```
+
+#### <a name="configuring_thresholds"></a>Configuring thresholds
+
+Some modules allow you to define thresholds in a module.  These are used to
+determine which color to use when displaying the module.  Thresholds are
+defined in the config as a list of tuples. With each tuple containing a value
+and a color. The color can either be a named color eg `good` referring to
+`color_good` or a hex value.
+
+Example:
+```
+volume_status {
+    thresholds = [
+        (0, "#FF0000"),
+        (20, "degraded"),
+        (50, "bad"),
+    ]
+}
+```
+
+If the value checked against the threshold is equal to or more than a threshold
+then that color supplied will be used.
+
+In the above example the logic would be
+
+if 0 >= value < 20 use #FF0000
+else if 20 >= value < 50 use color_degraded
+else if 50 >= value use color_good
+
+
+Some modules may allow more than one threshold to be defined.  If all the thresholds are the same they can be defined as above but if you wish to specify them separately you can by giving a dict of lists.
+
+Example:
+```
+my_module {
+    thresholds = {
+        'threshold_1': [
+            (0, "#FF0000"),
+            (20, "degraded"),
+            (50, "bad"),
+        ],
+        'threshold_2': [
+            (0, "good"),
+            (30, "bad"),
+        ],
+    }
+}
+```
+
 
 #### <a name="group_modules"></a>Grouping Modules
 
@@ -968,6 +1018,16 @@ Plays sound_file if possible. Requires `paplay` or `play`.
 __stop_sound()__
 
 Stops any currently playing sounds for this module.
+
+__threshold_get_color(value, name=None)__
+
+Obtain color for a value using thresholds.
+
+The value will be checked against any defined thresholds.  These should
+have been set in the i3status configuration.  If more than one
+threshold is needed for a module then the name can also be supplied.
+If the user has not supplied a named threshold but has defined a
+general one that will be used.
 
 ***
 
