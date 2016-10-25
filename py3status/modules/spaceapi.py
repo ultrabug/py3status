@@ -21,10 +21,7 @@ Configuration parameters:
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
 """
 
-import codecs
 import datetime
-import json
-import urllib.request
 import shlex
 import subprocess
 
@@ -44,9 +41,7 @@ class Py3status:
 
     def check(self):
 
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            }
+        response = {'cached_until': self.py3.time_in(self.cache_timeout), }
 
         try:
             # if color isn't set, set basic color schema
@@ -57,10 +52,7 @@ class Py3status:
                 self.closed_color = ''
 
             # grab json file
-            json_file = urllib.request.urlopen(self.url)
-            reader = codecs.getreader("utf-8")
-            data = json.load(reader(json_file))
-            json_file.close()
+            data = self.py3.get_json_data(self.url)
             self._url = data.get('url')
 
             if(data['state']['open'] is True):
