@@ -2,23 +2,33 @@
 """
 Display Graphite metrics.
 
-Confiuration parameters:
+Configuration parameters:
     cache_timeout: how often we refresh this module in seconds.
-        (default 10)
+        (default 120)
     datapoint_selection: when multiple data points are returned,
         use "max" or "min" to determine which one to display.
         (default "max")
     format: you MUST use placeholders here to display data, see below.
-    graphite_url: URL to your graphite server.
+        (default '')
+    graphite_url: URL to your graphite server. (default '')
     http_timeout: HTTP query timeout to graphite.
         (default 10)
+    proxy: You can configure the proxy with HTTP or HTTPS.
+        (default: None)
+        examples:
+            proxy = 'https://myproxy.example.com:1234/'
+            proxy = 'http://user:passwd@myproxy.example.com/'
+            proxy = 'socks5://user:passwd@host:port'
+        (proxy_socks is available after an 'pip install requests[socks]')
+        (default None)
     targets: semicolon separated list of targets to query graphite for.
+        (default '')
     threshold_bad: numerical threshold,
         if set will send a notification and colorize the output.
-        (default None means no notification and color)
+        (default None)
     threshold_degraded: numerical threshold,
         if set will send a notification and colorize the output.
-        (default None means no notification and color)
+        (default None)
     timespan: time range to query graphite for.
         (default "-2minutes")
     value_comparator: choose between "max" and "min" to compare thresholds
@@ -76,6 +86,7 @@ class Py3status:
     format = ''
     graphite_url = ''
     http_timeout = 10
+    proxy = None
     targets = ''
     threshold_bad = None
     threshold_degraded = None
@@ -111,9 +122,17 @@ class Py3status:
         for target in self.targets.split(';'):
             params.append(('target', target))
 
+        proxies = {}
+        if self.proxy:
+            if self.proxy.startswith('https'):
+                proxies['https'] = self.proxy
+            else:
+                proxies['http'] = self.proxy
+
         r = get('{}/render'.format(self.graphite_url),
                 params,
-                timeout=self.http_timeout)
+                timeout=self.http_timeout,
+                proxies=proxies)
         if r.status_code != 200:
             raise Exception('HTTP error {}'.format(r.status_code))
         else:
@@ -202,7 +221,7 @@ class Py3status:
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': getattr(self.py3, 'COLOR_{}'.format(color_key.upper())),
-            'full_text': self.format.format(**r_json)
+            'full_text': self.py3.safe_format(self.format, r_json)
         }
         return response
 

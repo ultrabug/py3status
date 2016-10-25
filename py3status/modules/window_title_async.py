@@ -7,14 +7,14 @@ Provides instant title update only when it required.
 
 Configuration parameters:
     always_show: do not hide the title when it can be already
-        visible (e.g. in tabbed layout), default: False.
+        visible (e.g. in tabbed layout). (default False)
     empty_title: string that will be shown instead of the title when
-        the title is hidden, default: "" (empty string).
-    format: format of the title, default: "{title}".
+        the title is hidden. (default "")
+    format: format of the title, (default "{title}")
     max_width: maximum width of block (in symbols).
         If the title is longer than `max_width`,
         the title will be truncated to `max_width - 1`
-        first symbols with ellipsis appended. Default: 120.
+        first symbols with ellipsis appended. (default 120)
 
 Requires:
     i3ipc: (https://github.com/acrisci/i3ipc-python)
@@ -65,7 +65,7 @@ class Py3status:
                 if len(title) > self.max_width:
                     title = title[:self.max_width - 1] + "…"
 
-                return self.format.format(title=title)
+                return self.py3.safe_format(self.format, {'title': title})
 
         def update_title(conn, e):
 

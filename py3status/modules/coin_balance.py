@@ -9,35 +9,36 @@ Currently Bitcoin, Dogecoin, and Litecoin are supported.
 
 Configuration parameters:
     cache_timeout: An integer specifying the cache life-time of the output in
-        seconds (default 30).
-    coin_username: A string containing the username for the server for
-        'coin'. The 'coin' part must be replaced by a supported coin identifier
-        (see below for a list of identifiers). If no value is supplied,
-        the value of 'username' (see below) will be used.  If 'username' too is
-        not set, the value will be retrieved from the standard 'coin' daemon
-        configuration file. (default None)
+        seconds (default 30)
     coin_password: A string containing the password for the server for
         'coin'. The 'coin' part must be replaced by a supported coin identifier
         (see below for a list of identifiers). If no value is supplied,
         the value of 'password' (see below) will be used.  If 'password' too is
         not set, the value will be retrieved from the standard 'coin' daemon
         configuration file. (default None)
+    coin_username: A string containing the username for the server for
+        'coin'. The 'coin' part must be replaced by a supported coin identifier
+        (see below for a list of identifiers). If no value is supplied,
+        the value of 'username' (see below) will be used.  If 'username' too is
+        not set, the value will be retrieved from the standard 'coin' daemon
+        configuration file. (default None)
+    credentials: (default None)
     format: A string describing the output format for the module. The {<coin>}
         placeholder (see below) will be used to determine how to fetch the
         coin balance. Multiple placeholders are allowed, but all balances will
         be fetched from the same host. (default 'LTC: {litecoin}')
     host: The coin-server hostname. Note that all coins will use the same host
         for their querries. (default 'localhost')
-    username: A string containing the username for all coin-servers. If neither
-        this setting, nor a specific coin_username (see above) is specified,
-        the username for each coin will be read from the respective standard
-        daemon configuration file. (default None)
     password: A string containing the password for all coin-servers. If neither
         this setting, nor a specific coin_password (see above) is specified,
         the password for each coin will be read from the respective standard
         daemon configuration file. (default None)
     protocol: A string to select the server communication protocol.
         (default 'http')
+    username: A string containing the username for all coin-servers. If neither
+        this setting, nor a specific coin_username (see above) is specified,
+        the username for each coin will be read from the respective standard
+        daemon configuration file. (default None)
 
 Format placeholders:
     {<coin>} Your balance for the coin <coin> where <coin> is one of:
@@ -116,14 +117,19 @@ REQUEST = {
 
 class Py3status:
     cache_timeout = 30
+    coin_password = None
+    coin_username = None
     credentials = None
     format = 'LTC: {litecoin}'
     host = 'localhost'
+    password = None
     protocol = 'http'
+    username = None
 
-    _active_coins = []
-    _config = None
-    _credential_cache = {}
+    def __init__(self):
+        self._active_coins = []
+        self._config = None
+        self._credential_cache = {}
 
     def coin_balance(self, outputs, config):
         self._config = config

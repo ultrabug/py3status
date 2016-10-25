@@ -24,8 +24,8 @@ Configuration parameters:
         only be changed if it has not been set by a module.
         (default False)
     gradient: The colors we will cycle through, This is a list of hex values
-        (default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
-        '#0000FF', '#FF00FF', '#FF0000', ])
+        *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
+        '#0000FF', '#FF00FF', '#FF0000', ])*
     steps: Number of steps between each color in the gradient
         (default 10)
 

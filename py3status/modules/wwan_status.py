@@ -8,33 +8,33 @@ Stick LTE III but may work on other devices, too.
 Configuration parameters:
     baudrate: There should be no need to configure this, but
         feel free to experiment.
-        Default is 115200.
+        (default 115200)
     cache_timeout: How often we refresh this module in seconds.
-        Default is 5.
+        (default 5)
     consider_3G_degraded: If set to True, only 4G-networks will be
         considered 'good'; 3G connections are shown
         as 'degraded', which is yellow by default. Mostly
         useful if you want to keep track of where there
         is a 4G connection.
-        Default is False.
+        (default False)
     format_down: What to display when the modem is not plugged in
-        Default is: 'WWAN: down'
+        (default 'WWAN: down')
     format_error: What to display when modem can't be accessed.
-        Default is 'WWAN: {error}'
+        (default 'WWAN: {error}')
     format_no_service: What to display when the modem does not have a
-        network connection. This allows to omit the then
-        meaningless network generation. Therefore the
-        default is 'WWAN: ({status}) {ip}'
+        network connection. This allows to omit the (then
+        meaningless) network generation.
+        (default 'WWAN: {status} {ip}')
     format_up: What to display upon regular connection
-        Default is 'WWAN: ({status}/{netgen}) {ip}'
+        (default 'WWAN: {status} ({netgen}) {ip}')
     interface: The default interface to obtain the IP address
         from. For wvdial this is most likely ppp0.
         For netctl it can be different.
-        Default is: ppp0
-    modem: The device to send commands to. Default is
-    modem_timeout: The timespan betwenn querying the modem and
+        (default 'ppp0')
+    modem: The device to send commands to. (default '/dev/ttyUSB1')
+    modem_timeout: The timespan between querying the modem and
         collecting the response.
-        Default is 0.4 (which should be sufficient)
+        (default 0.4)
 
 Color options:
     color_bad: Error or no connection
@@ -112,8 +112,10 @@ class Py3status:
                 # file
                 # 2) if/when you unplug the device
                 print("Permission error")
-                response['full_text'] = self.format_error.format(
-                    error="no access to " + self.modem)
+                response['full_text'] = self.py3.safe_format(
+                    self.format_error,
+                    dict(error="no access to " + self.modem)
+                )
                 response['color'] = self.py3.COLOR_BAD
                 return response
             # Dissect response
@@ -128,15 +130,16 @@ class Py3status:
                     netgen = len(modem_answer[-2]) + 1
                     netmode = modem_answer[-1].rstrip()[1:-1]
                     if netmode == "NO SERVICE":
-                        response['full_text'] = self.format_no_service.format(
-                            status=netmode,
-                            ip=ip)
+                        response['full_text'] = self.py3.safe_format(
+                            self.format_no_service,
+                            dict(status=netmode, ip=ip)
+                        )
                         response['color'] = self.py3.COLOR_BAD
                     else:
-                        response['full_text'] = self.format_up.format(
-                            status=netmode,
-                            netgen=str(netgen) + "G",
-                            ip=ip)
+                        response['full_text'] = self.py3.safe_format(
+                            self.format_up,
+                            dict(status=netmode, netgen=str(netgen) + "G", ip=ip)
+                        )
                         if netgen <= degraded_netgen:
                             response['color'] = self.py3.COLOR_DEGRADED
                         else:
@@ -144,8 +147,9 @@ class Py3status:
                 elif line.startswith("COMMAND NOT SUPPORT") or line.startswith(
                         "ERROR"):
                     response['color'] = self.py3.COLOR_BAD
-                    response['full_text'] = self.format_error.format(
-                        error="unsupported modem")
+                    response['full_text'] = self.py3.safe_format(
+                        self.format_error, {'error': "unsupported modem"}
+                    )
                 else:
                     # Outputs can be multiline, so just try the next one
                     pass

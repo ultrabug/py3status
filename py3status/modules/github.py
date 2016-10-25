@@ -16,15 +16,15 @@ Configuration parameters:
         see above.
         (default None)
     button_action: Button that when clicked opens the Github notification page
-        if notifications, else the project page for the repository . Setting to
-        `0` disables.
+        if notifications, else the project page for the repository if there is
+        one (otherwise the github home page). Setting to `0` disables.
         (default 3)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
     format: Format of output
-        (default '{repo} {issues}/{pull_requests}{notifications}'
+        *(default '{repo} {issues}/{pull_requests}{notifications}'
         if username and auth_token provided else
-        '{repo} {issues}/{pull_requests}')
+        '{repo} {issues}/{pull_requests}')*
     format_notifications: Format of `{notification}` status placeholder.
         (default ' N{notifications_count}')
     notifications: Type of notifications can be `all` for all notifications or
@@ -220,11 +220,16 @@ class Py3status:
         button = event['button']
         if self.button_action and self.button_action == button:
             if self._notify and self._notify != '?':
-                # open github notifications page in default browser
+                # open github notifications page
                 url = GITHUB_URL + 'notifications'
             else:
-                # open repo page
-                url = GITHUB_URL + self.repo
+                if self.notifications == 'all' and not self.repo:
+                    # open github.com if there are no unread notifications and no repo
+                    url = GITHUB_URL
+                else:
+                    # open repo page if there are no unread notifications
+                    url = GITHUB_URL + self.repo
+            # open url in default browser
             cmd = 'xdg-open {}'.format(url)
             call(split(cmd))
             self.py3.prevent_refresh()

@@ -818,7 +818,7 @@ __time_in(seconds=None, sync_to=None, offset=0)__
 Returns the time a given number of seconds into the future.  Helpful
 for creating the `cached_until` value for the module output.
 
-Note: form version 3.1 modules no longer need to explicitly set a
+Note: from version 3.1 modules no longer need to explicitly set a
 `cached_until` in their response unless they wish to directly control it.
 
 seconds specifies the number of seconds that should occure before the
@@ -831,6 +831,33 @@ syncronise to the nearest second. 0 will disable this feature.
 offset is used to alter the base time used. A timer that started at a
 certain time could set that as the offset and any syncronisation would
 then be relative to that time.
+
+__register_function(function_name, function)__
+
+Register a function for the module.
+
+The following functions can be registered
+
+> __content_function()__
+>
+> Called to discover what modules a container is displaying.  This is
+> used to determine when updates need passing on to the container and
+> also when modules can be put to sleep.
+>
+> the function must return a set of module names that are being
+> displayed.
+>
+> Note: This function should only be used by containers.
+>
+> __urgent_function(module_names)__
+>
+> This function will be called when one of the contents of a container
+> has changed from a non-urgent to an urgent state.  It is used by the
+> group module to switch to displaying the urgent module.
+>
+> `module_names` is a list of modules that have become urgent
+>
+> Note: This function should only be used by containers.
 
 __safe_format(format_string, param_dict=None)__
 
@@ -846,26 +873,41 @@ A pipe (vertical bar) `|` can be used to divide sections the first
 valid section only will be shown in the output.
 
 A backslash `\` can be used to escape a character eg `\[` will show `[`
-in the output. Note: `\?` is reserved for future use and is removed.
+in the output.
+
+`\?` is special and is used to provide extra commands to the format
+string,  example `\?color=#FF00FF`. Multiple commands can be given
+using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
 
 `{<placeholder>}` will be converted, or removed if it is None or empty.
-
 Formating can also be applied to the placeholder eg
 `{number:03.2f}`.
 
-*example format_string:*
+example format_string:
 
 `"[[{artist} - ]{title}]|{file}"`
 This will show `artist - title` if artist is present,
 `title` if title but no artist,
 and `file` if file is present but not artist or title.
 
-
 param_dict is a dictionary of palceholders that will be substituted.
 If a placeholder is not in the dictionary then if the py3status module
 has an attribute with the same name then it will be used.
 
+__Since version 3.3__
+
+Composites can be included in the param_dict.
+
+
+The result returned from this function can either be a string in the
+case of simple parsing or a Composite if more complex.
+
+If force_composite parameter is True a composite will always be
+returned.
+
 __build_composite(format_string, param_dict=None, composites=None)__
+
+__deprecated in 3.3__ use safe_format()
 
 Build a composite output using a format string.
 
@@ -874,10 +916,50 @@ also takes a composites dict where each key/value is the name of the
 placeholder and either an output eg `{'full_text': 'something'}` or a
 list of outputs.
 
+__composite_update(item, update_dict, soft=False)__
+
+Takes a Composite (item) if item is a type that can be converted into a
+Composite then this is done automatically.  Updates all entries it the
+Composite with values from update_dict.  Updates can be soft in which
+case existing values are not overwritten.
+
+A Composite object will be returned.
+
+__composite_join(separator, items)__
+
+Join a list of items with a separator.
+This is used in joining strings, responses and Composites.
+
+A Composite object will be returned.
+
+__composite_create(item)__
+
+Create and return a Composite.
+
+The item may be a string, dict, list of dicts or a Composite.
+
+__is_composite(item)__
+
+Check if item is a Composite and return True if it is.
+
 __check_commands(cmd_list)__
 
 Checks to see if the shell commands in list are available using `which`.
 Returns the first available command.
+
+__command_run(command)__
+
+Runs a command and returns the exit code.
+The command can either be supplied as a sequence or string.
+
+An Exception is raised if an error occurs
+
+__command_output(command)__
+
+Run a command and return its output as unicode.
+The command can either be supplied as a sequence or string.
+
+An Exception is raised if an error occurs
 
 __play_sound(sound_file)__
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display current sound volume using amixer.
+Display current sound volume.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
@@ -16,10 +16,13 @@ Configuration parameters:
         (default 0)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
-    channel: Alsamixer channel to track.
-        (default 'Master')
-    device: Alsamixer device to use.
-        (default 'default')
+    channel: channel to track. Default value is backend dependent.
+        (default None)
+    command: Choose between "amixer" and "pamixer". If None, try to guess based
+        on available commands.
+        (default None)
+    device: Device to use. Defaults value is backend dependent
+        (default None)
     format: Format of the output.
         (default '♪: {percentage}%')
     format_muted: Format of the output when the volume is muted.
@@ -53,7 +56,8 @@ volume_status {
 ```
 
 Requires:
-    alsa-utils: (tested with alsa-utils 1.0.29-1)
+    alsa-utils: alsa backend (tested with alsa-utils 1.0.29-1)
+    pamixer: pulseaudio backend
 
 NOTE:
         If you are changing volume state by external scripts etc and
@@ -66,9 +70,75 @@ NOTE:
 """
 
 import re
-import shlex
-
+from os import devnull
 from subprocess import check_output, call
+
+
+class AudioBackend():
+    def __init__(self, parent):
+        self.device = parent.device
+        self.channel = parent.channel
+        self.setup(parent)
+
+    def run_cmd(self, cmd):
+        with open(devnull, 'wb') as dn:
+            return call(cmd, stdout=dn, stderr=dn)
+
+
+class AlsaBackend(AudioBackend):
+    def setup(self, parent):
+        if self.device is None:
+            self.device = 'default'
+        if self.channel is None:
+            self.channel = 'Master'
+        self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
+
+    def get_volume(self):
+        output = check_output(['amixer', '-D', self.device, 'sget', self.channel]).decode('utf-8')
+
+        # find percentage and status
+        p = re.compile(r'\[(\d{1,3})%\].*\[(\w{2,3})\]')
+        perc, muted = p.search(output).groups()
+
+        # muted should be 'on' or 'off'
+        if muted in ['on', 'off']:
+            muted = (muted == 'off')
+        else:
+            muted = False
+
+        return perc, muted
+
+    def volume_up(self, delta):
+        self.run_cmd(self.cmd + ['{}%+'.format(delta)])
+
+    def volume_down(self, delta):
+        self.run_cmd(self.cmd + ['{}%-'.format(delta)])
+
+    def toggle_mute(self):
+        self.run_cmd(self.cmd + ['toggle'])
+
+
+class PulseaudioBackend(AudioBackend):
+    def setup(self, parent):
+        if self.device is None:
+            self.device = "0"
+        # Ignore channel
+        self.channel = None
+        self.cmd = ["pamixer", "--sink", self.device]
+
+    def get_volume(self):
+        perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
+        muted = (self.run_cmd(self.cmd + ["--get-mute"]) == 0)
+        return perc, muted
+
+    def volume_up(self, delta):
+        self.run_cmd(self.cmd + ["-i", str(delta)])
+
+    def volume_down(self, delta):
+        self.run_cmd(self.cmd + ["-d", str(delta)])
+
+    def toggle_mute(self):
+        self.run_cmd(self.cmd + ["-t"])
 
 
 class Py3status:
@@ -79,13 +149,26 @@ class Py3status:
     button_mute = 0
     button_up = 0
     cache_timeout = 10
-    channel = 'Master'
-    device = 'default'
+    channel = None
+    command = None
+    device = None
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
     threshold_bad = 20
     threshold_degraded = 50
     volume_delta = 5
+
+    def post_config_hook(self):
+        # Guess command if not set
+        if self.command is None:
+            self.command = self.py3.check_commands(['amixer', 'pamixer'])
+
+        if self.command == 'amixer':
+            self.backend = AlsaBackend(self)
+        elif self.command == 'pamixer':
+            self.backend = PulseaudioBackend(self)
+        else:
+            raise NameError("Unknown command")
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
@@ -103,51 +186,12 @@ class Py3status:
 
     # return the format string formatted with available variables
     def _format_output(self, format, percentage):
-        text = format.format(percentage=percentage)
+        text = self.py3.safe_format(format, {'percentage': percentage})
         return text
 
-    # return the current channel volume value as a string
-    def _get_percentage(self, output):
-
-        # attempt to find a percentage value in square brackets
-        p = re.compile(r'(?<=\[)\d{1,3}(?=%\])')
-        text = p.search(output).group()
-
-        # check if the parsed value is sane by checking if it's an integer
-        try:
-            int(text)
-            return text
-
-        # if not, show an error message in output
-        except ValueError:
-            return "error: can't parse amixer output."
-
-    # returns True if the channel is muted
-    def _get_muted(self, output):
-        p = re.compile(r'(?<=\[)\w{2,3}(?=\])')
-        text = p.search(output).group()
-
-        # check if the parsed string is either "off" or "on"
-        if text in ['on', 'off']:
-            return text == 'off'
-
-        # if not, return False
-        else:
-            return False
-
-    # this method is ran by py3status
-    # returns a response dict
     def current_volume(self):
-
-        # call amixer
-        output = check_output(shlex.split('amixer -D {} sget {}'.format(
-            self.device, self.channel))).decode('utf-8')
-
-        # get the current percentage value
-        perc = self._get_percentage(output)
-
-        # get info about channel mute status
-        muted = self._get_muted(output)
+        # call backend
+        perc, muted = self.backend.get_volume()
 
         # determine the color based on the current volume level
         color = self._perc_to_color(perc if not muted else '0')
@@ -168,16 +212,15 @@ class Py3status:
         Volume up/down and toggle mute.
         '''
         button = event['button']
-        cmd = 'amixer -q -D {} sset {} '.format(self.device, self.channel)
         # volume up
         if self.button_up and button == self.button_up:
-            call(shlex.split('{} {}%+'.format(cmd, self.volume_delta)))
+            self.backend.volume_up(self.volume_delta)
         # volume down
         elif self.button_down and button == self.button_down:
-            call(shlex.split('{} {}%-'.format(cmd, self.volume_delta)))
+            self.backend.volume_down(self.volume_delta)
         # toggle mute
         elif self.button_mute and button == self.button_mute:
-            call(shlex.split('{} toggle'.format(cmd)))
+            self.backend.toggle_mute()
 
 
 # test if run directly

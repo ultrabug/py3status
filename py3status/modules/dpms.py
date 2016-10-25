@@ -7,8 +7,8 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-    format_off: string to display when DPMS is disabled
-    format_on: string to display when DPMS is enabled
+    format_off: string to display when DPMS is disabled (default 'DPMS')
+    format_on: string to display when DPMS is enabled (default 'DPMS')
 
 Color options:
     color_on: when dpms is enabled, defaults to color_good

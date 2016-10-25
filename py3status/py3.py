@@ -2,15 +2,21 @@ import sys
 import os
 import shlex
 from time import time
-from subprocess import Popen, call
+from subprocess import Popen, PIPE
 
-from py3status.formatter import Formatter
+from py3status.formatter import Formatter, Composite
 
 
 PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = 'error'
 PY3_LOG_INFO = 'info'
 PY3_LOG_WARNING = 'warning'
+
+# basestring does not exist in python3
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 class Py3:
@@ -184,27 +190,43 @@ class Py3:
             self._module._py3_wrapper.notify_user(
                 msg, level=level, rate_limit=rate_limit, module_name=module_name)
 
-    def register_content_function(self, content_function):
+    def register_function(self, function_name, function):
         """
-        Register a function that can be called to discover what modules a
-        container is displaying.  This is used to determine when updates need
-        passing on to the container and also when modules can be put to sleep.
+        Register a function for the module.
 
-        the function must return a set of module names that are being
-        displayed.
+        The following functions can be registered
 
-        Note: This function should only be used by containers.
+        > __content_function()__
+        >
+        > Called to discover what modules a container is displaying.  This is
+        > used to determine when updates need passing on to the container and
+        > also when modules can be put to sleep.
+        >
+        > the function must return a set of module names that are being
+        > displayed.
+        >
+        > Note: This function should only be used by containers.
+        >
+        > __urgent_function(module_names)__
+        >
+        > This function will be called when one of the contents of a container
+        > has changed from a non-urgent to an urgent state.  It is used by the
+        > group module to switch to displaying the urgent module.
+        >
+        > `module_names` is a list of modules that have become urgent
+        >
+        > Note: This function should only be used by containers.
         """
         if self._module:
             my_info = self._get_module_info(self._module.module_full_name)
-            my_info['content_function'] = content_function
+            my_info[function_name] = function
 
     def time_in(self, seconds=None, sync_to=None, offset=0):
         """
         Returns the time a given number of seconds into the future.  Helpful
         for creating the `cached_until` value for the module output.
 
-        Note: form version 3.1 modules no longer need to explicitly set a
+        Note: from version 3.1 modules no longer need to explicitly set a
         `cached_until` in their response unless they wish to directly control
         it.
 
@@ -248,11 +270,12 @@ class Py3:
 
         return requested + offset
 
-    def safe_format(self, format_string, param_dict=None):
+    def safe_format(self, format_string, param_dict=None,
+                    force_composite=False):
         """
         Parser for advanced formating.
 
-        Unknown placeholders will be shown in the output eg `{foo}`
+        Unknown placeholders will be shown in the output eg `{foo}`.
 
         Square brackets `[]` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
@@ -262,14 +285,19 @@ class Py3:
         valid section only will be shown in the output.
 
         A backslash `\` can be used to escape a character eg `\[` will show `[`
-        in the output.  Note: `\?` is reserved for future use and is removed.
+        in the output.
+
+        `\?` is special and is used to provide extra commands to the format
+        string,  example `\?color=#FF00FF`. Multiple commands can be given
+        using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
 
         `{<placeholder>}` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
         `{number:03.2f}`.
 
         example format_string:
-        "[[{artist} - ]{title}]|{file}"
+
+        `"[[{artist} - ]{title}]|{file}"`
         This will show `artist - title` if artist is present,
         `title` if title but no artist,
         and `file` if file is present but not artist or title.
@@ -277,18 +305,31 @@ class Py3:
         param_dict is a dictionary of palceholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
+
+        __Since version 3.3__
+
+        Composites can be included in the param_dict.
+
+        The result returned from this function can either be a string in the
+        case of simple parsing or a Composite if more complex.
+
+        If force_composite parameter is True a composite will always be
+        returned.
         """
         try:
             return self._formatter.format(
                 format_string,
                 self._py3status_module,
-                param_dict
+                param_dict,
+                force_composite=force_composite,
             )
         except Exception:
             return 'invalid format'
 
     def build_composite(self, format_string, param_dict=None, composites=None):
         """
+        __deprecated in 3.3__ use safe_format().
+
         Build a composite output using a format string.
 
         Takes a format_string and treats it the same way as `safe_format` but
@@ -296,26 +337,114 @@ class Py3:
         placeholder and either an output eg `{'full_text': 'something'}` or a
         list of outputs.
         """
+
+        if param_dict is None:
+            param_dict = {}
+
+        # merge any composites into the param_dict.
+        # as they are no longer dealt with separately
+        if composites:
+            for key, value in composites.items():
+                param_dict[key] = Composite(value)
+
         try:
             return self._formatter.format(
                 format_string,
                 self._py3status_module,
                 param_dict,
-                composites,
+                force_composite=True,
             )
         except Exception:
             return [{'full_text': 'invalid format'}]
+
+    def composite_update(self, item, update_dict, soft=False):
+        """
+        Takes a Composite (item) if item is a type that can be converted into a
+        Composite then this is done automatically.  Updates all entries it the
+        Composite with values from update_dict.  Updates can be soft in which
+        case existing values are not overwritten.
+
+        A Composite object will be returned.
+        """
+        return Composite.composite_update(item, update_dict, soft=False)
+
+    def composite_join(self, separator, items):
+        """
+        Join a list of items with a separator.
+        This is used in joining strings, responses and Composites.
+
+        A Composite object will be returned.
+        """
+        return Composite.composite_join(separator, items)
+
+    def composite_create(self, item):
+        """
+        Create and return a Composite.
+
+        The item may be a string, dict, list of dicts or a Composite.
+        """
+        return Composite(item)
+
+    def is_composite(self, item):
+        """
+        Check if item is a Composite and return True if it is.
+        """
+        return isinstance(item, Composite)
 
     def check_commands(self, cmd_list):
         """
         Checks to see if commands in list are available using `which`.
         Returns the first available command.
         """
-        devnull = open(os.devnull, 'w')
         for cmd in cmd_list:
-            c = shlex.split('which {}'.format(cmd))
-            if call(c, stdout=devnull, stderr=devnull) == 0:
+            if self.command_run('which {}'.format(cmd)) == 0:
                 return cmd
+
+    def command_run(self, command):
+        """
+        Runs a command and returns the exit code.
+        The command can either be supplied as a sequence or string.
+
+        An Exception is raised if an error occurs
+        """
+        # convert the command to sequence if a string
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        try:
+            return Popen(command, stdout=PIPE, stderr=PIPE).wait()
+        except Exception as e:
+            msg = "Command '{cmd}' {error}"
+            raise Exception(msg.format(cmd=command[0], error=e))
+
+    def command_output(self, command):
+        """
+        Run a command and return its output as unicode.
+        The command can either be supplied as a sequence or string.
+
+        An Exception is raised if an error occurs
+        """
+        # convert the command to sequence if a string
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        try:
+            process = Popen(command, stdout=PIPE, stderr=PIPE,
+                            universal_newlines=True)
+        except Exception as e:
+            msg = "Command '{cmd}' {error}"
+            raise Exception(msg.format(cmd=command[0], error=e))
+
+        output, error = process.communicate()
+        if self._is_python_2:
+            output = output.decode('utf-8')
+            error = error.decode('utf-8')
+        retcode = process.poll()
+        if retcode:
+            msg = "Command '{cmd}' returned non-zero exit status {error}"
+            raise Exception(msg.format(cmd=command[0], error=retcode))
+        if error:
+            msg = "Command '{cmd}' had error {error}"
+            raise Exception(msg.format(cmd=command[0], error=error))
+        return output
 
     def play_sound(self, sound_file):
         """

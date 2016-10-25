@@ -6,13 +6,13 @@ We also verify the status of the checks and colorize if needed.
 Pingdom API doc : https://www.pingdom.com/features/api/documentation/
 
 Configuration parameters:
-    app_key: create an APP KEY on pingdom first
-    cache_timeout: how often to refresh the check from pingdom
-    checks: comma separated pindgom check names to display
-    login: pingdom login
-    max_latency: maximal latency before coloring the output
-    password: pingdom password
-    request_timeout: pindgom API request timeout
+    app_key: create an APP KEY on pingdom first (default '')
+    cache_timeout: how often to refresh the check from pingdom (default 600)
+    checks: comma separated pindgom check names to display (default '')
+    login: pingdom login (default '')
+    max_latency: maximal latency before coloring the output (default 500)
+    password: pingdom password (default '')
+    request_timeout: pindgom API request timeout (default 15)
 
 Color options:
     color_bad: Site is down

@@ -3,9 +3,9 @@
 Display track currently playing in deadbeef.
 
 Configuration parameters:
-    cache_timeout: how often we refresh usage in seconds (default: 1s)
-    format: see placeholders below
-    delimiter: delimiter character for parsing (default: ¥)
+    cache_timeout: how often we refresh usage in seconds (default 1)
+    delimiter: delimiter character for parsing (default '¥')
+    format: see placeholders below (default '{artist} - {title}')
 
 Format placeholders:
     {artist} artist
@@ -29,7 +29,7 @@ from subprocess import check_output, CalledProcessError
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
-    delimiter = '¥'
+    delimiter = u'¥'
     format = '{artist} - {title}'
 
     # return error occurs
@@ -80,12 +80,14 @@ class Py3status:
 
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.format.format(artist=artist,
-                                                title=title,
-                                                length=length,
-                                                elapsed=elapsed,
-                                                year=year,
-                                                tracknum=tracknum)
+                'full_text': self.py3.safe_format(self.format,
+                                                  dict(artist=artist,
+                                                       title=title,
+                                                       length=length,
+                                                       elapsed=elapsed,
+                                                       year=year,
+                                                       tracknum=tracknum)
+                                                  )
             }
             return response
         except:

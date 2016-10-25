@@ -8,24 +8,26 @@ button in the text information or by using buttons. For former you have
 to define the button parameters in the i3status config.
 
 Configuration parameters:
-    button_stop: mouse button to stop the player (default None)
-    button_toggle: mouse button to toggle between play and pause mode (default 1)
     button_next: mouse button to play the next entry (default 4)
     button_previous: mouse button to play the previous entry (default 5)
+    button_stop: mouse button to stop the player (default None)
+    button_toggle: mouse button to toggle between play and pause mode (default 1)
     format: see placeholders below
+        (default '{previous}{toggle}{next} {state} [{artist} - ][{title}]')
     format_none: define output if no player is running
+        (default 'no player running')
+    icon_next: text for the next button in the button control panel (default '»')
     icon_pause: text for the pause button in the button control panel (default '▮')
     icon_play: text for the play button in the button control panel (default '▶')
-    icon_stop: text for the stop button in the button control panel (default '◾')
-    icon_next: text for the next button in the button control panel (default '»')
     icon_previous: text for the previous button in the button control panel (default '«')
+    icon_stop: text for the stop button in the button control panel (default '◾')
+    player_priority: priority of the players.
+            Keep in mind that the state has a higher priority than
+            player_priority. So when player_priority is "[mpd, bomi]" and mpd is
+            paused and bomi is playing than bomi wins. (default [])
     state_pause: text for placeholder {state} when song is paused (default '▮')
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')
-    player_priority: priority of the players. (default [])
-            Keep in mind that the state has a higher priority than
-            player_priority. So when player_priority is "[mpd, bomi]" and mpd is
-            paused and bomi is playing than bomi wins.
 
 Format of status string placeholders:
     {album} album name
@@ -131,26 +133,21 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_stop = None
-    button_toggle = 1
     button_next = 4
     button_previous = 5
-    color_control_inactive = None
-    color_control_active = None
-    color_paused = None
-    color_playing = None
-    color_stopped = None
+    button_stop = None
+    button_toggle = 1
     format = '{previous}{toggle}{next} {state} [{artist} - ][{title}]'
     format_none = 'no player running'
+    icon_next = u'»'
     icon_pause = u'▮'
     icon_play = u'▶'
-    icon_stop = u'◾'
-    icon_next = u'»'
     icon_previous = u'«'
+    icon_stop = u'◾'
+    player_priority = []
     state_pause = u'▮'
     state_play = u'▶'
     state_stop = u'◾'
-    player_priority = []
 
     def __init__(self):
         self._dbus = None

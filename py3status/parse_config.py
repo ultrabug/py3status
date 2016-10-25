@@ -250,10 +250,28 @@ class ConfigParser:
             return value[1:-1].replace("\\'", "'")
         return value
 
+    def unicode_escape_sequence_fix(self, value):
+        '''
+        It is possible to define unicode characters in the config either as the
+        actual utf-8 character or using escape sequences the following all will
+        show the Greek delta character.
+        Δ \N{GREEK CAPITAL LETTER DELTA} \U00000394  \u0349
+        '''
+        def fix_fn(match):
+            # we don't escape an escaped backslash
+            if match.group(0) == r'\\':
+                return r'\\'
+            return match.group(0).encode('utf-8').decode('unicode-escape')
+        return re.sub(
+            '\\\\\\\\|\\\\u\w{4}|\\\\U\w{8}|\\\\N\{.+\}', fix_fn, value
+        )
+
     def make_value(self, value):
         '''
         Converts to actual value, or remains as string.
         '''
+        # ensure any escape sequences are converted to unicode
+        value = self.unicode_escape_sequence_fix(value)
 
         if value.startswith('"'):
             return value[1:-1].replace('\\"', '"')

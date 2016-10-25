@@ -6,6 +6,7 @@ from threading import Thread, Timer
 from collections import OrderedDict
 from time import time
 
+from py3status.composite import Composite
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
 
@@ -43,6 +44,7 @@ class Module(Thread):
         self.prevent_refresh = False
         self.sleeping = False
         self.timer = None
+        self.urgent = False
 
         # py3wrapper this is private and any modules accessing their instance
         # should only use it on the understanding that it is not supported.
@@ -82,9 +84,9 @@ class Module(Thread):
         class_inst = py_mod.Py3status()
         return class_inst
 
-    def start_module(self):
+    def prepare_module(self):
         """
-        Start the module running.
+        Ready the module to get it ready to start.
         """
         # Modules can define a post_config_hook() method which will be run
         # after the module has had it config settings applied and before it has
@@ -92,6 +94,11 @@ class Module(Thread):
         # perform any necessary setup.
         if self.has_post_config_hook:
             self.module_class.post_config_hook()
+
+    def start_module(self):
+        """
+        Start the module running.
+        """
         # Start the module and call its output method(s)
         self.start()
 
@@ -145,8 +152,16 @@ class Module(Thread):
                 output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
+            # has the modules output become urgent?
+            # we only care the update that this happens
+            # not any after then.
+            urgent = True in [x.get('urgent') for x in output]
+            if urgent != self.urgent:
+                self.urgent = urgent
+            else:
+                urgent = False
             self.last_output = output
-            self._py3_wrapper.notify_update(self.module_full_name)
+            self._py3_wrapper.notify_update(self.module_full_name, urgent)
 
     def get_latest(self):
         """
@@ -199,6 +214,13 @@ class Module(Thread):
         We need to respect the universal options too.
         """
         composite = response['composite']
+
+        # if the composite is of Composite type then convert this into the
+        # underlying list, simplifying it first.
+        if isinstance(composite, Composite):
+            composite = composite.simplify().get_content()
+            response['composite'] = composite
+
         if not isinstance(composite, list):
             raise Exception('expecting "composite" key in response')
         # if list is empty nothing to do
@@ -434,6 +456,9 @@ class Module(Thread):
                     else:
                         raise TypeError('response should be a dict')
 
+                    if isinstance(response.get('full_text'), (list, Composite)):
+                        response['composite'] = response['full_text']
+                        del response['full_text']
                     if 'composite' in response:
                         self.process_composite(response)
                     else:

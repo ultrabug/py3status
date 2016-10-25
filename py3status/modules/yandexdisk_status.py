@@ -57,7 +57,7 @@ class Py3status:
             status = 'Busy'
             response['color'] = self.py3.COLOR_DEGRADED
 
-        full_text = self.format.format(status=status)
+        full_text = self.py3.safe_format(self.format, {'status': status})
         response['full_text'] = full_text
         return response
 

@@ -55,6 +55,7 @@ class Py3statusWrapper():
         self.notified_messages = set()
         self.output_modules = {}
         self.py3_modules = []
+        self.py3_modules_initialized = False
         self.queue = deque()
 
     def get_config(self):
@@ -446,13 +447,18 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
-    def notify_update(self, update):
+    def notify_update(self, update, urgent=False):
         """
         Name or list of names of modules that have updated.
         """
         if not isinstance(update, list):
             update = [update]
         self.queue.extend(update)
+
+        # if all our py3status modules are not ready to receive updates then we
+        # don't want to get them to update.
+        if not self.py3_modules_initialized:
+            return
 
         # find containers that use the modules that updated
         containers = self.i3status_thread.config['.module_groups']
@@ -464,6 +470,10 @@ class Py3statusWrapper():
         for container in containers_to_update:
             container_module = self.output_modules.get(container)
             if container_module:
+                # If the container registered a urgent_function then call it
+                # if this update is urgent.
+                if urgent and container_module.get('urgent_function'):
+                    container_module['urgent_function'](update)
                 # If a container has registered a content_function we use that
                 # to see if the container needs to be updated.
                 # We only need to update containers if their active content has
@@ -484,13 +494,16 @@ class Py3statusWrapper():
             level = LOG_LEVELS.get(level, level)
             syslog(level, u'{}'.format(msg))
         else:
-            with open(self.config['log_file'], 'a') as f:
+            # Binary mode so fs encoding setting is not an issue
+            with open(self.config['log_file'], 'ab') as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
                 out = u'{} {} {}\n'.format(log_time, level.upper(), msg)
                 try:
-                    f.write(out)
-                except UnicodeEncodeError:
+                    # Encode unicode strings to bytes
                     f.write(out.encode('utf-8'))
+                except (AttributeError, UnicodeDecodeError):
+                    # Write any byte strings straight to log
+                    f.write(out)
 
     def report_exception(self, msg, notify_user=True, level='error'):
         """
@@ -578,12 +591,11 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
-    def get_config_attribute(self, name, attribute, default=None):
+    def get_config_attribute(self, name, attribute):
         """
         Look for the attribute in the config.  Start with the named module and
         then walk up through any containing group and then try the general
-        section of the config.  If none found then try again with the default
-        as the attribute.  this is used for finding colors for modules.
+        section of the config.
         """
         config = self.i3status_thread.config
         color = config[name].get(attribute, 'missing')
@@ -594,9 +606,6 @@ class Py3statusWrapper():
                     break
         if color == 'missing':
             color = config['general'].get(attribute)
-        if color == 'missing':
-            if default:
-                color = self.get_config_attribute(name, default)
         return color
 
     def create_mappings(self, config):
@@ -667,20 +676,26 @@ class Py3statusWrapper():
         # initialize usage variables
         i3status_thread = self.i3status_thread
         config = i3status_thread.config
-        self.create_output_modules()
 
         # prepare the color mappings
         self.create_mappings(config)
 
-        # start modules
         # self.output_modules needs to have been created before modules are
         # started.  This is so that modules can do things like register their
-        # content_functionn.
+        # content_function.
+        self.create_output_modules()
+
+        # Some modules need to be prepared before they can run
+        # eg run their post_config_hook
+        for module in self.modules.values():
+            module.prepare_module()
+
+        # modules can now receive updates
+        self.py3_modules_initialized = True
+
+        # start modules
         for module in self.modules.values():
             module.start_module()
-
-        # update queue populate with all py3modules
-        self.queue.extend(self.modules)
 
         # this will be our output set to the correct length for the number of
         # items in the bar

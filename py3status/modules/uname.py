@@ -3,8 +3,8 @@
 Display uname information.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (1h default)
-    format: see placeholders below
+    cache_timeout: how often we refresh this module in seconds (default 3600)
+    format: see placeholders below (default '{system} {release} {machine}')
 
 Format placeholders:
     {system} system/OS name, e.g. 'Linux', 'Windows', or 'Java'
@@ -31,12 +31,14 @@ class Py3status:
         system, node, release, version, machine, processor = uname()
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.format.format(system=system,
-                                            node=node,
-                                            release=release,
-                                            version=version,
-                                            machine=machine,
-                                            processor=processor)
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(system=system,
+                     node=node,
+                     release=release,
+                     version=version,
+                     machine=machine,
+                     processor=processor))
         }
         return response
 
