@@ -18,16 +18,16 @@ A full list of timezones can be found at
 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 Configuration parameters:
+    block_hours: length of time period for all blocks in hours (default 12)
     blocks: a string, where each character represents time period
         from the start of a time period.
         (default '🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦')
-    block_hours: length of time period for all blocks in hours (default 12)
-    button_change_format: button that switches format used setting to 0
+    button_change_format: button that switches format used setting to None
         disables (default 1)
-    button_change_time_format: button that switches format_time used. setting
-        to 0 disables (default 2)
-    button_reset: button that switches display to the first timezone. setting
-        to 0 disables (default 3)
+    button_change_time_format: button that switches format_time used. Setting
+        to None disables (default 2)
+    button_reset: button that switches display to the first timezone. Setting
+        to None disables (default 3)
     cycle: If more than one display then how many seconds between changing the
         display (default 0)
     format: defines the timezones displayed. This can be a single string or a
@@ -36,8 +36,8 @@ Configuration parameters:
     format_time: format to use for the time, strftime directives such as `%H`
         can be used this can be either a string or to allow multiple formats as
         a list.  The one used can be changed by button click.
-        (default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
-        '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])
+        *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
+        '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
 
 Format placeholders:
     {icon} a character representing the time from `blocks`
@@ -98,8 +98,8 @@ class Py3status:
     """
     """
     # available configuration parameters
-    blocks = CLOCK_BLOCKS
     block_hours = 12
+    blocks = CLOCK_BLOCKS
     button_change_format = 1
     button_change_time_format = 2
     button_reset = 3
