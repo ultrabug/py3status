@@ -1,5 +1,6 @@
 from __future__ import division
 
+import codecs
 import json
 import sys
 import os
@@ -690,15 +691,30 @@ class Py3:
 
         return color
 
-    @staticmethod
-    def get_json_data(url):
+    def get_url(self, url):
         """
-        Deserialize JSON from `url` into a Python object.
+        Get the HTTP response for the HTTP GET request to `url`.
 
-        Returns None on error.
+        Raises `URLError` on errors.
         """
         try:
-            data = json.loads(urlopen(url).read().decode())
+            response = urlopen(url)
         except URLError:
-            data = None
+            self.log('Unable to access [{}]'.format(url),
+                     level=self.LOG_ERROR)
+            raise
+        return response
+
+    def get_json_data(self, url):
+        """
+        Deserialize JSON from `url` into a Python object.
+        """
+        response = self.get_url(url)
+        reader = codecs.getreader('utf-8')
+        try:
+            data = json.load(reader(response))
+        except (TypeError, ValueError) as e:
+            self.log('Error in json.load for [URL: {}] [{}]'.format(url, e),
+                     level=self.LOG_ERROR)
+            raise
         return data
