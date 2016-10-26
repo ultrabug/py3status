@@ -62,10 +62,10 @@ class Events(Thread):
         Thread.__init__(self)
         self.config = py3_wrapper.config
         self.error = None
-        self.i3s_config = py3_wrapper.i3status_thread.config
+        self.i3s_config = {}
         self.lock = py3_wrapper.lock
         self.modules = py3_wrapper.modules
-        self.on_click = self.i3s_config['on_click']
+        self.on_click = {}
         self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
@@ -96,6 +96,10 @@ class Events(Thread):
             else:
                 partial_text = full_text
         return full_text, partial_text
+
+    def set_config(self, config):
+        self.i3s_config = config
+        self.on_click = config['on_click']
 
     def on_click_dispatcher(self, module_name, event, command):
         """
@@ -182,7 +186,7 @@ class Events(Thread):
             self.py3_wrapper.refresh_modules(module_name)
 
         # find container that holds the module and call its onclick
-        module_groups = self.i3s_config['.module_groups']
+        module_groups = self.i3s_config.get('.module_groups', {})
         containers = module_groups.get(module_name, [])
         for container in containers:
             self.process_event(container, event, top_level=False)

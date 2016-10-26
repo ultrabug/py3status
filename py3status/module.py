@@ -33,7 +33,8 @@ class Module(Thread):
         self.disabled = False
         self.has_post_config_hook = False
         self.has_kill = False
-        self.i3status_thread = py3_wrapper.i3status_thread
+        self.i3status_config = py3_wrapper.i3status_config
+        self.i3status_runner = py3_wrapper.i3status_runner
         self.last_output = []
         self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
@@ -192,7 +193,7 @@ class Module(Thread):
         https://i3wm.org/i3status/manpage.html#_universal_module_options
         """
         self.module_options = {}
-        mod_config = self.i3status_thread.config.get(module, {})
+        mod_config = self._py3_wrapper.i3status_config.get(module, {})
 
         if 'min_width' in mod_config:
             self.module_options['min_width'] = mod_config['min_width']
@@ -356,7 +357,7 @@ class Module(Thread):
                 pass
 
             # module configuration
-            mod_config = self.i3status_thread.config.get(module, {})
+            mod_config = self._py3_wrapper.i3status_config.get(module, {})
 
             # process any deprecated configuration settings
             try:
@@ -541,8 +542,8 @@ class Module(Thread):
                 click_method(event)
             else:
                 # legacy modules had extra parameters passed
-                click_method(self.i3status_thread.json_list,
-                             self.i3status_thread.config['general'], event)
+                click_method(self.i3status_runner.json_list,
+                             self.i3status_config['general'], event)
             self.set_updated()
         except Exception:
             msg = 'on_click event in `{}` failed'.format(self.module_full_name)
@@ -585,8 +586,8 @@ class Module(Thread):
                     else:
                         # legacy modules had parameters passed
                         response = method(
-                            self.i3status_thread.json_list,
-                            self.i3status_thread.config['general'])
+                            self.i3status_runner.json_list,
+                            self.i3status_config['general'])
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -684,8 +685,8 @@ class Module(Thread):
                     kill_method()
                 else:
                     # legacy call parameters
-                    kill_method(self.i3status_thread.json_list,
-                                self.i3status_thread.config['general'])
+                    kill_method(self.i3status_runner.json_list,
+                                self.i3status_config['general'])
             except Exception:
                 # this would be stupid to die on exit
                 pass

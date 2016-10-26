@@ -7,13 +7,13 @@ from subprocess import Popen
 from subprocess import PIPE
 from signal import SIGTSTP, SIGSTOP, SIGUSR1, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
-from threading import Thread
+from threading import Thread, Event
 from time import time, sleep
 
 from py3status.profiling import profile
 from py3status.events import IOPoller
 from py3status.constants import (
-    I3S_ALLOWED_COLORS, I3S_COLOR_MODULES,
+    I3S_ALLOWED_COLORS, I3S_COLOR_MODULES, I3S_SINGLE_NAMES, I3S_MODULE_NAMES,
     TIME_FORMAT, TIME_MODULES, TZTIME_FORMAT,
 )
 
@@ -56,20 +56,23 @@ class I3statusModule:
         except:
             name = self.module_name
             instance = ''
+
+        i3status_config = py3_wrapper.i3status_config
+
         self.name = name
         self.instance = instance
 
         self.item = {}
 
-        self.i3status = py3_wrapper.i3status_thread
+        self.i3status = py3_wrapper.i3status_runner
+        self.i3status_config = i3status_config
         self.py3_wrapper = py3_wrapper
 
         # color map for if color good/bad etc are set for the module
         color_map = {}
-        config = py3_wrapper.i3status_thread.config
-        for key, value in config[module_name].items():
+        for key, value in i3status_config[module_name].items():
             if key in I3S_ALLOWED_COLORS:
-                color_map[config['general'][key]] = value
+                color_map[i3status_config['general'][key]] = value
         self.color_map = color_map
 
         self.is_time_module = name in TIME_MODULES
@@ -108,7 +111,7 @@ class I3statusModule:
         return is_updated
 
     def set_time_format(self):
-        config = self.i3status.config.get(self.module_name, {})
+        config = self.i3status_config.get(self.module_name, {})
         time_format = config.get('format', TIME_FORMAT)
         # Handle format_time parameter if exists
         # Not sure if i3status supports this but docs say it does
@@ -157,29 +160,117 @@ class I3statusModule:
         self.tz = Tz(i3s_time_tz, delta)
 
 
+class I3statusRunner:
+    """
+    In charge of i3status.
+    Creates I3status threads as needed and acts as an intermediary with the
+    rest of py3status.  Passes on most functions directly to the I3sataus
+    thread.
+    """
+
+    def __init__(self, py3_wrapper):
+        self.lock_i3status = None
+        self.i3status_thread = None
+        self.i3status_starting = False
+        self.py3_wrapper = py3_wrapper
+
+    def refresh_i3status(self):
+        self.i3status_thread.refresh_i3status()
+
+    def suspend_i3status(self):
+        self.i3status_thread.suspend_i3status()
+
+    def is_alive(self):
+        # when the tread is starting is_alive() may not be True but this does
+        # not mean that i3status has died.
+        return self.i3status_starting or self.i3status_thread.is_alive()
+
+    def update_times(self):
+        self.i3status_thread.update_times()
+
+    @property
+    def error(self):
+        return self.i3status_thread.error
+
+    @property
+    def i3modules(self):
+        return self.i3status_thread.i3modules
+
+    @property
+    def json_list(self):
+        return self.i3status_thread.json_list
+
+    def set_config(self, config):
+        # in case we the i3status thread has not started by the time the main
+        # loop in core.py has started we need make sure we know that the
+        # i3status thread is starting up. So we have i3status_starting to let
+        # us not report that the is not yet alive.
+        self.i3status_starting = True
+        lock = Event()
+        lock.set()
+        self.lock_i3status = lock
+        self.config = config
+        self.i3status_thread = I3status(self.py3_wrapper, config, lock)
+        thread = Thread(target=self.start_i3status, args=())
+        thread.daemon = True
+        thread.start()
+
+    def start_i3status(self):
+        # If standalone or no i3status modules then use the mock i3status
+        # else start i3status thread.
+        i3s_modules = self.config['i3s_modules']
+        if self.py3_wrapper.config['standalone'] or not i3s_modules:
+            self.i3status_thread.mock()
+            i3s_mode = 'mocked'
+        else:
+            i3s_mode = 'started'
+            self.i3status_thread.daemon = True
+            self.i3status_thread.start()
+            while not self.i3status_thread.ready:
+                if not self.i3status_thread.is_alive():
+                    # i3status is having a bad day, so tell the user what went
+                    # wrong and do the best we can with just py3status modules.
+                    err = self.i3status_thread.error
+                    self.py3_wrapper.notify_user(err)
+                    self.i3status_thread.mock()
+                    i3s_mode = 'mocked'
+                    break
+                sleep(0.1)
+        if self.py3_wrapper.config['debug']:
+            self.log('i3status thread {} with config {}'.format(
+                i3s_mode, self.i3status_thread.config))
+        # The i3status thread is running (or not) we no longer need to hide
+        # this from the main loop.
+        self.i3status_starting = False
+
+    def kill(self):
+        """
+        Stop any i3status process
+        """
+        if self.lock_i3status:
+            self.lock_i3status.clear()
+        if self.i3status_thread and self.i3status_thread.i3status_pipe:
+            self.i3status_thread.i3status_pipe.kill()
+
+
 class I3status(Thread):
     """
     This class is responsible for spawning i3status and reading its output.
     """
 
-    def __init__(self, py3_wrapper, config):
+    def __init__(self, py3_wrapper, config, lock):
         """
         Our output will be read asynchronously from 'last_output'.
         """
         Thread.__init__(self)
         self.config = config
         self.error = None
-        self.i3status_module_names = [
-            'battery', 'cpu_temperature', 'cpu_usage', 'ddate', 'disk',
-            'ethernet', 'ipv6', 'load', 'path_exists', 'run_watch', 'time',
-            'tztime', 'volume', 'wireless'
-        ]
         self.i3modules = {}
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
         self.last_refresh_ts = time()
-        self.lock = py3_wrapper.lock
+        self.lock = lock
         self.new_update = False
         self.py3_wrapper = py3_wrapper
         self.ready = False
@@ -208,11 +299,11 @@ class I3status(Thread):
         if cleanup:
             valid_config_params = [
                 _
-                for _ in self.i3status_module_names
-                if _ not in ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
+                for _ in I3S_MODULE_NAMES
+                if _ not in I3S_SINGLE_NAMES
             ]
         else:
-            valid_config_params = self.i3status_module_names + [
+            valid_config_params = I3S_MODULE_NAMES + [
                 'general', 'order'
             ]
         return param_name.split(' ')[0] in valid_config_params
@@ -226,8 +317,12 @@ class I3status(Thread):
         for index, item in enumerate(self.json_list):
             conf_name = self.config['i3s_modules'][index]
             if conf_name not in self.i3modules:
-                self.i3modules[conf_name] = I3statusModule(conf_name,
-                                                           self.py3_wrapper)
+                i3status_module = I3statusModule(conf_name, self.py3_wrapper)
+                self.i3modules[conf_name] = i3status_module
+
+                self.py3_wrapper.add_i3status_output_module(
+                    conf_name, i3status_module
+                )
             if self.i3modules[conf_name].update_from_item(item):
                 updates.append(conf_name)
         self.py3_wrapper.notify_update(updates)
@@ -341,7 +436,7 @@ class I3status(Thread):
 
                 try:
                     # loop on i3status output
-                    while self.lock.is_set():
+                    while True:
                         line = self.poller_inp.readline()
                         if line:
                             # remove leading comma if present
@@ -355,6 +450,12 @@ class I3status(Thread):
                         else:
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
+                            # if lock is not set we kill i3status thread
+                            # intentionally
+                            if not self.lock.is_set():
+                                message = 'i3status processess shut down'
+                                self.py3_wrapper.log(message)
+                                break
                             if code is not None:
                                 msg = 'i3status died'
                                 if err:
