@@ -8,7 +8,7 @@ Configuration parameters:
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
-        ['dynamic', 'mb', 'mib', 'gb', 'gib'] (default 'GiB')
+        ['dynamic', 'kB', 'KiB', 'MB', 'MiB', 'GB', 'GIB'] (default 'GiB')
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -41,6 +41,14 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 from __future__ import division
 
 import re
+
+
+ONE_KIB = pow(1024, 1)  # 1 KiB in B
+ONE_MIB = pow(1024, 2)  # 1 MiB in B
+ONE_GIB = pow(1024, 3)  # 1 GiB in B
+ONE_KB = pow(1000, 1)  # 1 KiB in B
+ONE_MB = pow(1000, 2)  # 1 MiB in B
+ONE_GB = pow(1000, 3)  # 1 GiB in B
 
 
 class GetData:
@@ -81,7 +89,7 @@ class GetData:
         """
         Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, percentage
-        of used memory, and units of mem (GB or MB).
+        of used memory, and units of mem (kB, KiB, MB, MiB, GB, GiB).
         """
 
         memi = {}
@@ -91,31 +99,35 @@ class GetData:
                 memi[tok[0]] = float(tok[1])
 
         try:
-            total_mem_kb = memi["MemTotal:"]
-            used_mem_kb = (total_mem_kb -
-                           memi["MemFree:"] -
-                           memi["Buffers:"] -
-                           memi["Cached:"])
-            used_mem_p = 100 * used_mem_kb / total_mem_kb
-            one_mb = 1 << 10  # 1 MB in KB
-            one_gb = 1 << 20  # 1 GB in KB
+            total_mem_kib = memi["MemTotal:"]
+            used_mem_kib = (total_mem_kib -
+                            memi["MemFree:"] -
+                            memi["Buffers:"] -
+                            memi["Cached:"])
+            used_mem_p = 100 * used_mem_kib / total_mem_kib
+            multiplier = {
+                'KiB': ONE_KIB / ONE_KIB,
+                'MiB': ONE_KIB / ONE_MIB,
+                'GiB': ONE_KIB / ONE_GIB,
+                'kB': ONE_KIB / ONE_KB,
+                'MB': ONE_KIB / ONE_MB,
+                'GB': ONE_KIB / ONE_GB,
+            }
             if unit.lower() == 'dynamic':
-                if total_mem_kb < one_gb:
+                # If less than 1 GiB, use MiB
+                if (multiplier['GiB'] * total_mem_kib) < 1:
                     unit = 'MiB'
                 else:
                     unit = 'GiB'
-            if unit.lower() in ['mb', 'mib']:
-                total_mem = total_mem_kb / one_mb
-                used_mem = used_mem_kb / one_mb
-            elif unit.lower() in ['gb', 'gib']:
-                total_mem = total_mem_kb / one_gb
-                used_mem = used_mem_kb / one_gb
+            if unit in multiplier.keys():
+                total_mem = multiplier[unit] * total_mem_kib
+                used_mem = multiplier[unit] * used_mem_kib
             else:
                 raise ValueError(
-                    'unit [{0}] must be one of: mb, mib, gb, gib, dynamic.'.format(unit))
+                    'unit [{0}] must be one of: kB, KiB, MB, MiB, GB, GiB, dynamic.'.format(unit))
         except:
             total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
-            unit = 'UNKOWN'
+            unit = 'UNKNOWN'
 
         # If total memory is <1GB, results are in megabytes.
         # Otherwise, results are in gigabytes.
