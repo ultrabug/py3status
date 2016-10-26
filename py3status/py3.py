@@ -48,6 +48,7 @@ class Py3:
         self._i3s_config = i3s_config or {}
         self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
+        self._thresholds = None
 
         if py3status:
             self._py3status_module = py3status
@@ -70,6 +71,9 @@ class Py3:
         """
         if not name.startswith('COLOR_'):
             raise AttributeError
+        return self._get_color_by_name(name)
+
+    def _get_color_by_name(self, name):
         name = name.lower()
         if name not in self._colors:
             if self._module:
@@ -79,6 +83,38 @@ class Py3:
                 color = self._i3s_config.get(name)
             self._colors[name] = color
         return self._colors[name]
+
+    def _get_color(self, color):
+        if not color:
+            return
+        # fix any hex colors so they are #RRGGBB
+        if color.startswith('#'):
+            color = color.upper()
+            if len(color) == 4:
+                color = ('#' + color[1] + color[1] + color[2]
+                         + color[2] + color[3] + color[3])
+            return color
+
+        name = 'color_%s' % color
+        return self._get_color_by_name(name)
+
+    def _thresholds_init(self):
+        """
+        Initiate and check any thresholds set
+        """
+        thresholds = getattr(self._py3status_module, 'thresholds', [])
+        self._thresholds = {}
+        if isinstance(thresholds, list):
+            thresholds.sort()
+            self._thresholds[None] = [(x[0], self._get_color(x[1]))
+                                      for x in thresholds]
+            return
+        elif isinstance(thresholds, dict):
+            for key, value in thresholds.items():
+                if isinstance(value, list):
+                    value.sort()
+                    self._thresholds[key] = [(x[0], self._get_color(x[1]))
+                                             for x in value]
 
     def _get_module_info(self, module_name):
         """
@@ -464,3 +500,44 @@ class Py3:
         if self._audio:
             self._audio.kill()
             self._audio = None
+
+    def threshold_get_color(self, value, name=None):
+        """
+        Obtain color for a value using thresholds.
+
+        The value will be checked against any defined thresholds.  These should
+        have been set in the i3status configuration.  If more than one
+        threshold is needed for a module then the name can also be supplied.
+        If the user has not supplied a named threshold but has defined a
+        general one that will be used.
+        """
+        # If first run then process the threshold data.
+        if self._thresholds is None:
+            self._thresholds_init()
+
+        color = None
+        try:
+            value = float(value)
+        except ValueError:
+            color = self._get_color('error') or self._get_color('bad')
+
+        # if name not in thresholds info then use defaults
+        name_used = name
+        if name_used not in self._thresholds:
+            name_used = None
+
+        if color is None:
+            for threshold in self._thresholds.get(name_used, []):
+                if value >= threshold[0]:
+                    color = threshold[1]
+                else:
+                    break
+
+        # save color so it can be accessed via safe_format()
+        if name:
+            color_name = 'color_threshold_%s' % name
+        else:
+            color_name = 'color_threshold'
+        setattr(self._py3status_module, color_name, color)
+
+        return color
