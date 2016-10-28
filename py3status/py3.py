@@ -1,6 +1,9 @@
+from __future__ import division
+
 import sys
 import os
 import shlex
+from math import log10
 from time import time
 from subprocess import Popen, PIPE
 
@@ -154,6 +157,94 @@ class Py3:
         """
         if self._module:
             return self._output_modules.get(module_name)
+
+    def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
+        """
+        Takes a value and formats it for user output, we can choose the unit to
+        use eg B, MiB, kbits/second.  This is mainly for use with bytes/bits it
+        converts the value into a human readable form.  It has various
+        additional options but they are really only for special cases.
+
+        The function returns a tuple containing the new value (this is a number
+        so that the user can still format it if required) and a unit that is
+        the units that we have been converted to.
+
+        By supplying unit to the function we can force those units to be used
+        eg `unit=KiB` would force the output to be in Kibibytes.  By default we
+        use non-si units but if the unit is si eg kB then we will switch to si
+        units.  Units can also be things like `Mbit/sec`.
+
+        If the auto parameter is False then we use the unit provided.  This
+        only makes sense when the unit is singular eg 'Bytes' and we want the
+        result in bytes and not say converted to MBytes.
+
+        optimal is used to control the size of the output value.  We try to
+        provide an output value of that number of characters (including decimal
+        point), it may also be less due to rounding.  If a fixed unit is used
+        the output may be more than this number of characters.
+        """
+
+        UNITS = 'KMGTPEZY'
+        DECIMAL_SIZE = 1000
+        BINARY_SIZE = 1024
+        CUTOFF = 1000
+
+        can_round = False
+
+        if unit:
+            # try to guess the unit.  Do we have a known prefix too it?
+            if unit[0].upper() in UNITS:
+                index = UNITS.index(unit[0].upper()) + 1
+                post = unit[1:]
+                si = len(unit) > 1 and unit[1] != 'i'
+                if si:
+                    post = post[1:]
+                auto = False
+            else:
+                index = 0
+                post = unit
+        if si:
+            size = DECIMAL_SIZE
+        else:
+            size = BINARY_SIZE
+
+        if auto:
+            # we will try to use an appropriate prefix
+            if value < CUTOFF:
+                unit_out = post
+            else:
+                value /= size
+                for prefix in UNITS:
+                    if abs(value) < CUTOFF:
+                        break
+                    value /= size
+                if si:
+                    # si kilo is lowercase
+                    if prefix == 'K':
+                        prefix = 'k'
+                else:
+                    post = 'i' + post
+
+                unit_out = prefix + post
+                can_round = True
+        else:
+            # we are using a fixed unit
+            unit_out = unit
+            size = pow(size, index)
+            if size:
+                value /= size
+                can_round = True
+
+        if can_round and optimal:
+            # we will try to make the output value the desired size
+            # we need to keep out value as a numeric type
+            places = int(log10(value))
+            if places >= optimal - 2:
+                value = int(value)
+            else:
+                value = round(value, max(optimal - places - 2, 0))
+
+        return value, unit_out
 
     def is_color(self, color):
         """
