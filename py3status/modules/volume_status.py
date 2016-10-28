@@ -40,6 +40,8 @@ Color options:
     color_bad: Volume below threshold_bad or muted
     color_degraded: Volume below threshold_degraded
     color_good: Volume above or equal to threshold_degraded
+    color_muted: Volume is muted, if not supplied color_bad is used
+        if set to `None` then the threshold color will be used.
 
 
 Obsolete configuration parameters:
@@ -212,8 +214,12 @@ class Py3status:
         # call backend
         perc, muted = self.backend.get_volume()
 
-        # determine the color based on the current volume level
-        color = self._perc_to_color(perc if not muted else '0')
+        color = None
+        if muted:
+            color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+        if not self.py3.is_color(color):
+            # determine the color based on the current volume level
+            color = self._perc_to_color(perc)
 
         # format the output
         text = self._format_output(self.format_muted
