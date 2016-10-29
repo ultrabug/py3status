@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current disk status.
+Display advanced disk usage information
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds.
@@ -39,15 +39,15 @@ Format placeholders:
     {total} total IO rate
     {write} writing rate
 
-Color conditionals:
+Color thresholds:
     {free} Change color based on the value of free
     {used} Change color based on the value of used_percent
     {read} Change color based on the value of read
     {total} Change color based on the value of total
     {write} Change color based on the value of write
 
-@author shadowprince
-@license Eclipse Public License
+@author guiniol
+@license BSD
 """
 
 from __future__ import division  # python2 compatibility
