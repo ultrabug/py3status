@@ -18,9 +18,6 @@ Configuration parameters:
 Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
-    {load1} load average over the last minute
-    {load5} load average over the five minutes
-    {load15} load average over the fifteen minutes
     {mem_total} total memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
@@ -32,7 +29,6 @@ Color options:
 
 Color conditionals:
     cpu: change color based on the value of cpu_usage
-    load: change color based on the value of load1
     mem: change color based on the value of mem_used_percent
     temp: change color based on the value of cpu_temp
 
@@ -84,18 +80,6 @@ class GetData:
 
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
-
-    def load(self):
-        """
-        Get the load average from /proc/loadavg :
-        """
-        with open('/proc/loadavg', 'r') as fd:
-            line = fd.readline()
-        load_data = line.split()
-        load1 = float(load_data[0])
-        load5 = float(load_data[1])
-        load15 = float(load_data[2])
-        return load1, load5, load15
 
     def memory(self):
         """
@@ -207,14 +191,6 @@ class Py3status:
             self.values['mem_used'] = value_format.format(mem_used)
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
             self.py3.threshold_get_color(mem_used_percent, 'mem')
-
-        # get load average
-        if '{load' in self.format:
-            load1, load5, load15 = self.data.load()
-            self.values['load1'] = value_format.format(load1)
-            self.values['load5'] = value_format.format(load5)
-            self.values['load15'] = value_format.format(load15)
-            self.py3.threshold_get_color(load1, 'load')
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
