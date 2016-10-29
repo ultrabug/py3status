@@ -25,10 +25,8 @@ Configuration parameters:
         (default 999)
     precision: amount of numbers after dot
         (default 1)
-    threshold_fast: threshold above which the data transfer is considered fast
-        (default 1024)
-    threshold_slow: threshold below which the data transfer is considered slow
-        (default 1)
+    thresholds: thresholds to use for colors
+        (default [(0, 'bad'), (1, 'degraded'), (1024, 'good')])
     unit_multi: value to divide if rate is greater than multiplier_top
         (default 1024)
     units: list of units, value/initial_multi, value/1024, value/1024^2, etc...
@@ -68,8 +66,7 @@ class Py3status:
     interfaces_blacklist = 'lo'
     multiplier_top = 999
     precision = 1
-    threshold_fast = 1024
-    threshold_slow = 1
+    thresholds = [(0, "bad"), (1, "degraded"), (1024, "good")]
     unit_multi = 1024
     units = ["kb/s", "mb/s", "gb/s", "tb/s"]
 
@@ -141,29 +138,6 @@ class Py3status:
             interface = None
             hide = self.hide_if_zero
 
-        if interface:
-
-            if delta['down'] < self.threshold_slow:
-                self.py3.COLOR_DOWN = self.py3.COLOR_BAD
-            elif delta['down'] < self.threshold_fast:
-                self.py3.COLOR_DOWN = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_DOWN = self.py3.COLOR_GOOD
-
-            if delta['total'] < self.threshold_slow:
-                self.py3.COLOR_TOTAL = self.py3.COLOR_BAD
-            elif delta['total'] < self.threshold_fast:
-                self.py3.COLOR_TOTAL = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_TOTAL = self.py3.COLOR_GOOD
-
-            if delta['up'] < self.threshold_slow:
-                self.py3.COLOR_UP = self.py3.COLOR_BAD
-            elif delta['up'] < self.threshold_fast:
-                self.py3.COLOR_UP = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_UP = self.py3.COLOR_GOOD
-
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         if hide:
@@ -171,6 +145,9 @@ class Py3status:
         elif not interface:
             response['full_text'] = self.format_no_connection
         else:
+            self.py3.threshold_get_color(delta['down'], 'down')
+            self.py3.threshold_get_color(delta['total'], 'total')
+            self.py3.threshold_get_color(delta['up'], 'up')
             response['full_text'] = self.py3.safe_format(self.format, {
                 'down': self._divide_and_format(delta['down']),
                 'total': self._divide_and_format(delta['total']),
