@@ -13,6 +13,14 @@ Configuration parameters:
     graphite_url: URL to your graphite server. (default '')
     http_timeout: HTTP query timeout to graphite.
         (default 10)
+    proxy: You can configure the proxy with HTTP or HTTPS.
+        (default: None)
+        examples:
+            proxy = 'https://myproxy.example.com:1234/'
+            proxy = 'http://user:passwd@myproxy.example.com/'
+            proxy = 'socks5://user:passwd@host:port'
+        (proxy_socks is available after an 'pip install requests[socks]')
+        (default None)
     targets: semicolon separated list of targets to query graphite for.
         (default '')
     threshold_bad: numerical threshold,
@@ -78,6 +86,7 @@ class Py3status:
     format = ''
     graphite_url = ''
     http_timeout = 10
+    proxy = None
     targets = ''
     threshold_bad = None
     threshold_degraded = None
@@ -113,9 +122,17 @@ class Py3status:
         for target in self.targets.split(';'):
             params.append(('target', target))
 
+        proxies = {}
+        if self.proxy:
+            if self.proxy.startswith('https'):
+                proxies['https'] = self.proxy
+            else:
+                proxies['http'] = self.proxy
+
         r = get('{}/render'.format(self.graphite_url),
                 params,
-                timeout=self.http_timeout)
+                timeout=self.http_timeout,
+                proxies=proxies)
         if r.status_code != 200:
             raise Exception('HTTP error {}'.format(r.status_code))
         else:

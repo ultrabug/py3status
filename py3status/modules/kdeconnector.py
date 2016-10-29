@@ -75,11 +75,11 @@ class Py3status:
     format = '{name}{notif_status} {bat_status} {charge}%'
     format_disconnected = 'device disconnected'
     low_threshold = 20
-    status_bat = '⬇'
-    status_chr = '⬆'
-    status_full = '☻'
+    status_bat = u'⬇'
+    status_chr = u'⬆'
+    status_full = u'☻'
     status_no_notif = ''
-    status_notif = ' ✉'
+    status_notif = u' ✉'
 
     _dev = None
 

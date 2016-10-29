@@ -2,15 +2,39 @@ import sys
 import os
 import shlex
 from time import time
-from subprocess import Popen, call
+from subprocess import Popen, PIPE
 
-from py3status.formatter import Formatter
+from py3status.formatter import Formatter, Composite
 
 
 PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = 'error'
 PY3_LOG_INFO = 'info'
 PY3_LOG_WARNING = 'warning'
+
+# basestring does not exist in python3
+try:
+    basestring
+except NameError:
+    basestring = str
+
+
+class NoneColor:
+    """
+    This class represents a none color, that is a color that has been setto
+    None in the config.  We need this so that we can do things like
+
+    color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+    Py3 provides a helper function is_color() that will treat a NoneColor as
+    False, whereas a simple if would show True
+    """
+    # this attribute is used to identify that this is a none color
+    none_color = True
+
+    def __repr__(self):
+        # this is for output via module_test
+        return 'None'
 
 
 class Py3:
@@ -33,8 +57,9 @@ class Py3:
     LOG_INFO = PY3_LOG_INFO
     LOG_WARNING = PY3_LOG_WARNING
 
-    # All Py3 Instances can share a formatter
+    # Shared by all Py3 Instances
     _formatter = Formatter()
+    _none_color = NoneColor()
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
@@ -42,6 +67,7 @@ class Py3:
         self._i3s_config = i3s_config or {}
         self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
+        self._thresholds = None
 
         if py3status:
             self._py3status_module = py3status
@@ -64,15 +90,58 @@ class Py3:
         """
         if not name.startswith('COLOR_'):
             raise AttributeError
+        return self._get_color_by_name(name)
+
+    def _get_color_by_name(self, name):
         name = name.lower()
         if name not in self._colors:
             if self._module:
                 color_fn = self._module._py3_wrapper.get_config_attribute
                 color = color_fn(self._module.module_full_name, name)
             else:
-                color = self._i3s_config.get(name)
-            self._colors[name] = color
+                # running in test mode so config is not available
+                color = self._i3s_config.get(name, False)
+            if color:
+                self._colors[name] = color
+            elif color is False:
+                # False indicates color is not defined
+                self._colors[name] = None
+            else:
+                # None indicates that no color is wanted
+                self._colors[name] = self._none_color
         return self._colors[name]
+
+    def _get_color(self, color):
+        if not color:
+            return
+        # fix any hex colors so they are #RRGGBB
+        if color.startswith('#'):
+            color = color.upper()
+            if len(color) == 4:
+                color = ('#' + color[1] + color[1] + color[2]
+                         + color[2] + color[3] + color[3])
+            return color
+
+        name = 'color_%s' % color
+        return self._get_color_by_name(name)
+
+    def _thresholds_init(self):
+        """
+        Initiate and check any thresholds set
+        """
+        thresholds = getattr(self._py3status_module, 'thresholds', [])
+        self._thresholds = {}
+        if isinstance(thresholds, list):
+            thresholds.sort()
+            self._thresholds[None] = [(x[0], self._get_color(x[1]))
+                                      for x in thresholds]
+            return
+        elif isinstance(thresholds, dict):
+            for key, value in thresholds.items():
+                if isinstance(value, list):
+                    value.sort()
+                    self._thresholds[key] = [(x[0], self._get_color(x[1]))
+                                             for x in value]
 
     def _get_module_info(self, module_name):
         """
@@ -85,6 +154,20 @@ class Py3:
         """
         if self._module:
             return self._output_modules.get(module_name)
+
+    def is_color(self, color):
+        """
+        Tests to see if a color is defined.
+        Because colors can be set to None in the config and we want this to be
+        respected in an expression like.
+
+        color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+        The color is treated as True but sometimes we want to know if the color
+        has a value set in which case the color should count as False.  This
+        function is a helper for this second case.
+        """
+        return not (color is None or hasattr(color, 'none_color'))
 
     def i3s_config(self):
         """
@@ -220,7 +303,7 @@ class Py3:
         Returns the time a given number of seconds into the future.  Helpful
         for creating the `cached_until` value for the module output.
 
-        Note: form version 3.1 modules no longer need to explicitly set a
+        Note: from version 3.1 modules no longer need to explicitly set a
         `cached_until` in their response unless they wish to directly control
         it.
 
@@ -264,11 +347,12 @@ class Py3:
 
         return requested + offset
 
-    def safe_format(self, format_string, param_dict=None):
+    def safe_format(self, format_string, param_dict=None,
+                    force_composite=False):
         """
         Parser for advanced formating.
 
-        Unknown placeholders will be shown in the output eg `{foo}`
+        Unknown placeholders will be shown in the output eg `{foo}`.
 
         Square brackets `[]` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
@@ -278,14 +362,19 @@ class Py3:
         valid section only will be shown in the output.
 
         A backslash `\` can be used to escape a character eg `\[` will show `[`
-        in the output.  Note: `\?` is reserved for future use and is removed.
+        in the output.
+
+        `\?` is special and is used to provide extra commands to the format
+        string,  example `\?color=#FF00FF`. Multiple commands can be given
+        using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
 
         `{<placeholder>}` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
         `{number:03.2f}`.
 
         example format_string:
-        "[[{artist} - ]{title}]|{file}"
+
+        `"[[{artist} - ]{title}]|{file}"`
         This will show `artist - title` if artist is present,
         `title` if title but no artist,
         and `file` if file is present but not artist or title.
@@ -293,18 +382,31 @@ class Py3:
         param_dict is a dictionary of palceholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
+
+        __Since version 3.3__
+
+        Composites can be included in the param_dict.
+
+        The result returned from this function can either be a string in the
+        case of simple parsing or a Composite if more complex.
+
+        If force_composite parameter is True a composite will always be
+        returned.
         """
         try:
             return self._formatter.format(
                 format_string,
                 self._py3status_module,
-                param_dict
+                param_dict,
+                force_composite=force_composite,
             )
         except Exception:
             return 'invalid format'
 
     def build_composite(self, format_string, param_dict=None, composites=None):
         """
+        __deprecated in 3.3__ use safe_format().
+
         Build a composite output using a format string.
 
         Takes a format_string and treats it the same way as `safe_format` but
@@ -312,26 +414,114 @@ class Py3:
         placeholder and either an output eg `{'full_text': 'something'}` or a
         list of outputs.
         """
+
+        if param_dict is None:
+            param_dict = {}
+
+        # merge any composites into the param_dict.
+        # as they are no longer dealt with separately
+        if composites:
+            for key, value in composites.items():
+                param_dict[key] = Composite(value)
+
         try:
             return self._formatter.format(
                 format_string,
                 self._py3status_module,
                 param_dict,
-                composites,
+                force_composite=True,
             )
         except Exception:
             return [{'full_text': 'invalid format'}]
+
+    def composite_update(self, item, update_dict, soft=False):
+        """
+        Takes a Composite (item) if item is a type that can be converted into a
+        Composite then this is done automatically.  Updates all entries it the
+        Composite with values from update_dict.  Updates can be soft in which
+        case existing values are not overwritten.
+
+        A Composite object will be returned.
+        """
+        return Composite.composite_update(item, update_dict, soft=False)
+
+    def composite_join(self, separator, items):
+        """
+        Join a list of items with a separator.
+        This is used in joining strings, responses and Composites.
+
+        A Composite object will be returned.
+        """
+        return Composite.composite_join(separator, items)
+
+    def composite_create(self, item):
+        """
+        Create and return a Composite.
+
+        The item may be a string, dict, list of dicts or a Composite.
+        """
+        return Composite(item)
+
+    def is_composite(self, item):
+        """
+        Check if item is a Composite and return True if it is.
+        """
+        return isinstance(item, Composite)
 
     def check_commands(self, cmd_list):
         """
         Checks to see if commands in list are available using `which`.
         Returns the first available command.
         """
-        devnull = open(os.devnull, 'w')
         for cmd in cmd_list:
-            c = shlex.split('which {}'.format(cmd))
-            if call(c, stdout=devnull, stderr=devnull) == 0:
+            if self.command_run('which {}'.format(cmd)) == 0:
                 return cmd
+
+    def command_run(self, command):
+        """
+        Runs a command and returns the exit code.
+        The command can either be supplied as a sequence or string.
+
+        An Exception is raised if an error occurs
+        """
+        # convert the command to sequence if a string
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        try:
+            return Popen(command, stdout=PIPE, stderr=PIPE).wait()
+        except Exception as e:
+            msg = "Command '{cmd}' {error}"
+            raise Exception(msg.format(cmd=command[0], error=e))
+
+    def command_output(self, command):
+        """
+        Run a command and return its output as unicode.
+        The command can either be supplied as a sequence or string.
+
+        An Exception is raised if an error occurs
+        """
+        # convert the command to sequence if a string
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        try:
+            process = Popen(command, stdout=PIPE, stderr=PIPE,
+                            universal_newlines=True)
+        except Exception as e:
+            msg = "Command '{cmd}' {error}"
+            raise Exception(msg.format(cmd=command[0], error=e))
+
+        output, error = process.communicate()
+        if self._is_python_2:
+            output = output.decode('utf-8')
+            error = error.decode('utf-8')
+        retcode = process.poll()
+        if retcode:
+            msg = "Command '{cmd}' returned non-zero exit status {error}"
+            raise Exception(msg.format(cmd=command[0], error=retcode))
+        if error:
+            msg = "Command '{cmd}' had error {error}"
+            raise Exception(msg.format(cmd=command[0], error=error))
+        return output
 
     def play_sound(self, sound_file):
         """
@@ -351,3 +541,44 @@ class Py3:
         if self._audio:
             self._audio.kill()
             self._audio = None
+
+    def threshold_get_color(self, value, name=None):
+        """
+        Obtain color for a value using thresholds.
+
+        The value will be checked against any defined thresholds.  These should
+        have been set in the i3status configuration.  If more than one
+        threshold is needed for a module then the name can also be supplied.
+        If the user has not supplied a named threshold but has defined a
+        general one that will be used.
+        """
+        # If first run then process the threshold data.
+        if self._thresholds is None:
+            self._thresholds_init()
+
+        color = None
+        try:
+            value = float(value)
+        except ValueError:
+            color = self._get_color('error') or self._get_color('bad')
+
+        # if name not in thresholds info then use defaults
+        name_used = name
+        if name_used not in self._thresholds:
+            name_used = None
+
+        if color is None:
+            for threshold in self._thresholds.get(name_used, []):
+                if value >= threshold[0]:
+                    color = threshold[1]
+                else:
+                    break
+
+        # save color so it can be accessed via safe_format()
+        if name:
+            color_name = 'color_threshold_%s' % name
+        else:
+            color_name = 'color_threshold'
+        setattr(self._py3status_module, color_name, color)
+
+        return color

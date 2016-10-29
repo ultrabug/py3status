@@ -9,6 +9,7 @@ py3status documentation
 * [Configuring modules](#configuring_modules)
 * [Configuration obfuscation](#obfuscation)
 * [Configuring colors](#configuring_color)
+* [Configuring thresholds](#configuring_thresholds)
 * [Grouping modules](#group_modules)
 
 [Custom click events](#on_click)
@@ -165,6 +166,55 @@ battery_level {
     color_charging = '#FFFF00'
 }
 ```
+
+#### <a name="configuring_thresholds"></a>Configuring thresholds
+
+Some modules allow you to define thresholds in a module.  These are used to
+determine which color to use when displaying the module.  Thresholds are
+defined in the config as a list of tuples. With each tuple containing a value
+and a color. The color can either be a named color eg `good` referring to
+`color_good` or a hex value.
+
+Example:
+```
+volume_status {
+    thresholds = [
+        (0, "#FF0000"),
+        (20, "degraded"),
+        (50, "bad"),
+    ]
+}
+```
+
+If the value checked against the threshold is equal to or more than a threshold
+then that color supplied will be used.
+
+In the above example the logic would be
+
+if 0 >= value < 20 use #FF0000
+else if 20 >= value < 50 use color_degraded
+else if 50 >= value use color_good
+
+
+Some modules may allow more than one threshold to be defined.  If all the thresholds are the same they can be defined as above but if you wish to specify them separately you can by giving a dict of lists.
+
+Example:
+```
+my_module {
+    thresholds = {
+        'threshold_1': [
+            (0, "#FF0000"),
+            (20, "degraded"),
+            (50, "bad"),
+        ],
+        'threshold_2': [
+            (0, "good"),
+            (30, "bad"),
+        ],
+    }
+}
+```
+
 
 #### <a name="group_modules"></a>Grouping Modules
 
@@ -778,6 +828,20 @@ __update(module_name=None)__
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
 
+__is_color(color)__
+
+Tests to see if a color is defined.
+Because colors can be set to None in the config and we want this to be
+respected in an expression like.
+
+color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+The color is treated as True but sometimes we want to know if the color
+has a value set in which case the color should count as False.  This
+function is a helper for this second case.
+
+Added in version 3.3
+
 __is_python_2()__
 
 True if the version of python being used is 2.x
@@ -818,7 +882,7 @@ __time_in(seconds=None, sync_to=None, offset=0)__
 Returns the time a given number of seconds into the future.  Helpful
 for creating the `cached_until` value for the module output.
 
-Note: form version 3.1 modules no longer need to explicitly set a
+Note: from version 3.1 modules no longer need to explicitly set a
 `cached_until` in their response unless they wish to directly control it.
 
 seconds specifies the number of seconds that should occure before the
@@ -873,26 +937,41 @@ A pipe (vertical bar) `|` can be used to divide sections the first
 valid section only will be shown in the output.
 
 A backslash `\` can be used to escape a character eg `\[` will show `[`
-in the output. Note: `\?` is reserved for future use and is removed.
+in the output.
+
+`\?` is special and is used to provide extra commands to the format
+string,  example `\?color=#FF00FF`. Multiple commands can be given
+using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
 
 `{<placeholder>}` will be converted, or removed if it is None or empty.
-
 Formating can also be applied to the placeholder eg
 `{number:03.2f}`.
 
-*example format_string:*
+example format_string:
 
 `"[[{artist} - ]{title}]|{file}"`
 This will show `artist - title` if artist is present,
 `title` if title but no artist,
 and `file` if file is present but not artist or title.
 
-
 param_dict is a dictionary of palceholders that will be substituted.
 If a placeholder is not in the dictionary then if the py3status module
 has an attribute with the same name then it will be used.
 
+__Since version 3.3__
+
+Composites can be included in the param_dict.
+
+
+The result returned from this function can either be a string in the
+case of simple parsing or a Composite if more complex.
+
+If force_composite parameter is True a composite will always be
+returned.
+
 __build_composite(format_string, param_dict=None, composites=None)__
+
+__deprecated in 3.3__ use safe_format()
 
 Build a composite output using a format string.
 
@@ -901,10 +980,50 @@ also takes a composites dict where each key/value is the name of the
 placeholder and either an output eg `{'full_text': 'something'}` or a
 list of outputs.
 
+__composite_update(item, update_dict, soft=False)__
+
+Takes a Composite (item) if item is a type that can be converted into a
+Composite then this is done automatically.  Updates all entries it the
+Composite with values from update_dict.  Updates can be soft in which
+case existing values are not overwritten.
+
+A Composite object will be returned.
+
+__composite_join(separator, items)__
+
+Join a list of items with a separator.
+This is used in joining strings, responses and Composites.
+
+A Composite object will be returned.
+
+__composite_create(item)__
+
+Create and return a Composite.
+
+The item may be a string, dict, list of dicts or a Composite.
+
+__is_composite(item)__
+
+Check if item is a Composite and return True if it is.
+
 __check_commands(cmd_list)__
 
 Checks to see if the shell commands in list are available using `which`.
 Returns the first available command.
+
+__command_run(command)__
+
+Runs a command and returns the exit code.
+The command can either be supplied as a sequence or string.
+
+An Exception is raised if an error occurs
+
+__command_output(command)__
+
+Run a command and return its output as unicode.
+The command can either be supplied as a sequence or string.
+
+An Exception is raised if an error occurs
 
 __play_sound(sound_file)__
 
@@ -913,6 +1032,16 @@ Plays sound_file if possible. Requires `paplay` or `play`.
 __stop_sound()__
 
 Stops any currently playing sounds for this module.
+
+__threshold_get_color(value, name=None)__
+
+Obtain color for a value using thresholds.
+
+The value will be checked against any defined thresholds.  These should
+have been set in the i3status configuration.  If more than one
+threshold is needed for a module then the name can also be supplied.
+If the user has not supplied a named threshold but has defined a
+general one that will be used.
 
 ***
 

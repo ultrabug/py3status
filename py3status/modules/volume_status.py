@@ -27,10 +27,8 @@ Configuration parameters:
         (default '♪: {percentage}%')
     format_muted: Format of the output when the volume is muted.
         (default '♪: muted')
-    threshold_bad: Volume below which color is set to bad.
-        (default 20)
-    threshold_degraded: Volume below which color is set to degraded.
-        (default 50)
+    thresholds: Threshold for percent volume.
+        (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
         decreased by when volume buttons pressed.
         (default 5)
@@ -42,16 +40,39 @@ Color options:
     color_bad: Volume below threshold_bad or muted
     color_degraded: Volume below threshold_degraded
     color_good: Volume above or equal to threshold_degraded
+    color_muted: Volume is muted, if not supplied color_bad is used
+        if set to `None` then the threshold color will be used.
+
+
+Obsolete configuration parameters:
+    threshold_bad: Volume below which color is set to bad.
+        (default 20)
+    threshold_degraded: Volume below which color is set to degraded.
+        (default 50)
 
 Example:
 
 ```
 # Add mouse clicks to change volume
+# Set thresholds to rainbow colors
 
 volume_status {
     button_up = 4
     button_down = 5
     button_mute = 2
+
+    thresholds = [
+        (0, "#FF0000"),
+        (10, "#E2571E"),
+        (20, "#FF7F00"),
+        (30, "#FFFF00"),
+        (40, "#00FF00"),
+        (50, "#96BF33"),
+        (60, "#0000FF"),
+        (70, "#4B0082"),
+        (80, "#8B00FF"),
+        (90, "#FFFFFF")
+    ]
 }
 ```
 
@@ -154,9 +175,11 @@ class Py3status:
     device = None
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
+    thresholds = None
+    volume_delta = 5
+    # obsolete configuration parameters
     threshold_bad = 20
     threshold_degraded = 50
-    volume_delta = 5
 
     def post_config_hook(self):
         # Guess command if not set
@@ -170,19 +193,17 @@ class Py3status:
         else:
             raise NameError("Unknown command")
 
+        # support old thresholds
+        if self.thresholds is None:
+            self.thresholds = [
+                (0, 'bad'),
+                (self.threshold_bad, 'degraded'),
+                (self.threshold_degraded, 'good'),
+            ]
+
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
-        try:
-            value = int(string)
-        except ValueError:
-            return self.py3.COLOR_BAD
-
-        if value < self.threshold_bad:
-            return self.py3.COLOR_BAD
-        elif value < self.threshold_degraded:
-            return self.py3.COLOR_DEGRADED
-        else:
-            return self.py3.COLOR_GOOD
+        return self.py3.threshold_get_color(string)
 
     # return the format string formatted with available variables
     def _format_output(self, format, percentage):
@@ -193,8 +214,12 @@ class Py3status:
         # call backend
         perc, muted = self.backend.get_volume()
 
-        # determine the color based on the current volume level
-        color = self._perc_to_color(perc if not muted else '0')
+        color = None
+        if muted:
+            color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+        if not self.py3.is_color(color):
+            # determine the color based on the current volume level
+            color = self._perc_to_color(perc)
 
         # format the output
         text = self._format_output(self.format_muted

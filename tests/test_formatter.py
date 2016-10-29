@@ -5,6 +5,7 @@ Run formatter tests
 
 import platform
 
+from py3status.composite import Composite
 from py3status.formatter import Formatter
 
 is_pypy = platform.python_implementation() == 'PyPy'
@@ -24,12 +25,18 @@ param_dict = {
     'python2_unicode': u'Björk',
     'python2_str': 'Björk',
     'zero': 0,
-}
+    'zero_str': '0',
+    'zero_float': 0.0,
 
-composites = {
-    'complex': [{'full_text': 'LA 09:34'}, {'full_text': 'NY 12:34'}],
-    'simple': {'full_text': 'NY 12:34'},
-    'empty': [],
+    'composite_basic': Composite([{'full_text': 'red ', 'color': '#FF0000'},
+                                  {'full_text': 'green ', 'color': '#00FF00'},
+                                  {'full_text': 'blue', 'color': '#0000FF'}]),
+    'complex': Composite([{'full_text': 'LA 09:34'},
+                          {'full_text': 'NY 12:34'}]),
+    'complex2': Composite([{'full_text': 'LA 09:34', 'color': '#FF0000'},
+                           {'full_text': 'NY 12:34'}]),
+    'simple': Composite({'full_text': 'NY 12:34'}),
+    'empty_composite': Composite(),
 }
 
 
@@ -56,20 +63,20 @@ def run_formatter(test_dict):
         return
     try:
         module = Module()
-        if test_dict.get('composite'):
-            result = f.format(test_dict['format'], module, param_dict, composites, )
-        else:
-            result = f.format(test_dict['format'], module, param_dict)
+        result = f.format(test_dict['format'], module, param_dict,
+                          force_composite=test_dict.get('composite'))
     except Exception as e:
         if test_dict.get('exception') == str(e):
-            assert(True)
             return
         raise e
+
+    if hasattr(result, 'get_content'):
+        result = result.get_content()
 
     expected = test_dict.get('expected')
     if f.python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
-    assert (result == expected)
+    assert result == expected
 
 
 def test_1():
@@ -193,12 +200,29 @@ def test_23():
     })
 
 
+# zero/False/None etc
+
 def test_24():
     run_formatter(
-        # zero/False/None etc
         {
             'format': '{zero}',
             'expected': '0',
+        })
+
+
+def test_24a():
+    run_formatter(
+        {
+            'format': '{zero_str}',
+            'expected': '0',
+        })
+
+
+def test_24b():
+    run_formatter(
+        {
+            'format': '{zero_float}',
+            'expected': '0.0',
         })
 
 
@@ -379,8 +403,16 @@ def test_58():
     run_formatter({'format': '[\?if=yes Hello]', 'expected': 'Hello', })
 
 
+def test_58a():
+    run_formatter({'format': '\?if=yes Hello', 'expected': 'Hello', })
+
+
 def test_59():
     run_formatter({'format': '[\?if=no Hello]', 'expected': '', })
+
+
+def test_59a():
+    run_formatter({'format': '\?if=no Hello', 'expected': '', })
 
 
 def test_60():
@@ -441,7 +473,17 @@ def test_70():
     run_formatter(
         # Composites
         {
-            'format': '{empty}',
+            'format': '{empty_composite}',
+            'expected': [],
+            'composite': True,
+        })
+
+
+def test_70a():
+    run_formatter(
+        # Composites
+        {
+            'format': '[{empty_composite} hello]',
             'expected': [],
             'composite': True,
         })
@@ -525,9 +567,86 @@ def test_else_false():
 # block colors
 
 
+def test_color_name_1():
+    run_formatter({
+        'format': '\?color=bad color',
+        'expected':  [{'full_text': 'color', 'color': '#FF0000'}],
+    })
+
+
+def test_color_name_2():
+    run_formatter({
+        'format': '\?color=no_name color',
+        'expected':  [{'full_text': 'color'}],
+    })
+
+
+def test_color_name_3():
+    run_formatter({
+        'format': '\?color=#FF00FF color',
+        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_name_4():
+    run_formatter({
+        'format': '\?color=#ff00ff color',
+        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_name_4a():
+    run_formatter({
+        'format': '[\?color=#ff00ff&show color]',
+        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_name_5():
+    run_formatter({
+        'format': '\?color=#F0F color',
+        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_name_5a():
+    run_formatter({
+        'format': '[\?color=#F0F&show color]',
+        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_name_6():
+    run_formatter({
+        'format': '\?color=#f0f color',
+        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_name_7():
+    run_formatter({
+        'format': '\?color=#BADHEX color',
+        'expected': 'color',
+    })
+
+
+def test_color_name_7a():
+    run_formatter({
+        'format': '[\?color=#BADHEX&show color]',
+        'expected': 'color',
+    })
+
+
 def test_color_1():
     run_formatter({
         'format': '[\?color=bad {name}]',
+        'expected':  [{'full_text': u'Björk', 'color': '#FF0000'}],
+    })
+
+
+def test_color_1a():
+    run_formatter({
+        'format': '\?color=bad {name}',
         'expected':  [{'full_text': u'Björk', 'color': '#FF0000'}],
     })
 
@@ -579,8 +698,129 @@ def test_color_6():
     run_formatter({
         'format': '[\?color=bad {name}] [\?color=good {name}]',
         'expected': [
-            {'full_text': u'Björk', 'color': '#FF0000'},
-            {'full_text': ' '},
+            {'full_text': u'Björk ', 'color': '#FF0000'},
             {'full_text': u'Björk', 'color': '#00FF00'}
         ],
+    })
+
+
+def test_color_7():
+    run_formatter({
+        'format': '\?color=bad {simple}',
+        'expected': [{'full_text': 'NY 12:34', 'color': '#FF0000'}],
+    })
+
+
+def test_color_7a():
+    run_formatter({
+        'format': '[\?color=bad {simple}]',
+        'expected': [{'full_text': 'NY 12:34', 'color': '#FF0000'}],
+    })
+
+
+def test_color_8():
+    run_formatter({
+        'format': '\?color=bad {complex}',
+        'expected': [{'full_text': 'LA 09:34NY 12:34', 'color': '#FF0000'}],
+    })
+
+
+def test_color_8a():
+    run_formatter({
+        'format': '[\?color=#FF00FF {complex}]',
+        'expected': [{'full_text': 'LA 09:34NY 12:34', 'color': '#FF00FF'}],
+    })
+
+
+def test_color_9():
+    run_formatter({
+        'format': '\?color=good {complex2}',
+        'expected': [
+            {'color': '#FF0000', 'full_text': 'LA 09:34'},
+            {'color': '#00FF00', 'full_text': 'NY 12:34'}
+        ],
+    })
+
+
+def test_color_9a():
+    run_formatter({
+        'format': '[\?color=good {complex2}]',
+        'expected': [
+            {'color': '#FF0000', 'full_text': 'LA 09:34'},
+            {'color': '#00FF00', 'full_text': 'NY 12:34'}
+        ],
+    })
+
+
+# Composite tests
+
+def test_composite_1():
+    run_formatter({
+        'format': '{composite_basic}',
+        'expected': [
+            {'color': '#FF0000', 'full_text': 'red '},
+            {'color': '#00FF00', 'full_text': 'green '},
+            {'color': '#0000FF', 'full_text': 'blue'}
+        ],
+    })
+
+
+def test_composite_2():
+    run_formatter({
+        'format': '{composite_basic}',
+        'expected': [
+            {'color': '#FF0000', 'full_text': 'red '},
+            {'color': '#00FF00', 'full_text': 'green '},
+            {'color': '#0000FF', 'full_text': 'blue'}
+        ],
+        'composite': True,
+    })
+
+
+def test_composite_3():
+    run_formatter({
+        'format': 'RGB: {composite_basic}',
+        'expected': [
+            {'full_text': 'RGB: '},
+            {'color': '#FF0000', 'full_text': 'red '},
+            {'color': '#00FF00', 'full_text': 'green '},
+            {'color': '#0000FF', 'full_text': 'blue'}
+        ],
+    })
+
+
+def test_composite_4():
+    run_formatter({
+        'format': '\?color=good {simple} {composite_basic} {complex}',
+        'expected': [
+            {'full_text': 'NY 12:34 ', 'color': '#00FF00'},
+            {'color': '#FF0000', 'full_text': 'red '},
+            {'color': '#00FF00', 'full_text': 'green '},
+            {'color': '#0000FF', 'full_text': 'blue '},
+            {'full_text': 'LA 09:34NY 12:34', 'color': '#00FF00'}
+        ],
+        'composite': True,
+    })
+
+
+def test_composite_5():
+    run_formatter({
+        'format': '[\?color=#FF00FF {simple} {composite_basic} {complex2}]',
+        'expected': [
+            {'full_text': 'NY 12:34 ', 'color': '#FF00FF'},
+            {'color': '#FF0000', 'full_text': 'red '},
+            {'color': '#00FF00', 'full_text': 'green '},
+            {'color': '#0000FF', 'full_text': 'blue '},
+            {'color': '#FF0000', 'full_text': 'LA 09:34'},
+            {'color': '#FF00FF', 'full_text': 'NY 12:34'}
+        ],
+        'composite': True,
+    })
+
+
+def test_composite_6():
+    run_formatter({
+        'format': 'hello',
+        'expected': [{'full_text': 'hello'}],
+        'composite': True,
     })

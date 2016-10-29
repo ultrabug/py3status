@@ -55,6 +55,7 @@ class Py3statusWrapper():
         self.notified_messages = set()
         self.output_modules = {}
         self.py3_modules = []
+        self.py3_modules_initialized = False
         self.queue = deque()
 
     def get_config(self):
@@ -454,6 +455,11 @@ class Py3statusWrapper():
             update = [update]
         self.queue.extend(update)
 
+        # if all our py3status modules are not ready to receive updates then we
+        # don't want to get them to update.
+        if not self.py3_modules_initialized:
+            return
+
         # find containers that use the modules that updated
         containers = self.i3status_thread.config['.module_groups']
         containers_to_update = set()
@@ -585,12 +591,11 @@ class Py3statusWrapper():
 
         self.output_modules = output_modules
 
-    def get_config_attribute(self, name, attribute, default=None):
+    def get_config_attribute(self, name, attribute):
         """
         Look for the attribute in the config.  Start with the named module and
         then walk up through any containing group and then try the general
-        section of the config.  If none found then try again with the default
-        as the attribute.  this is used for finding colors for modules.
+        section of the config.
         """
         config = self.i3status_thread.config
         color = config[name].get(attribute, 'missing')
@@ -600,10 +605,11 @@ class Py3statusWrapper():
                     color = config[module].get(attribute)
                     break
         if color == 'missing':
-            color = config['general'].get(attribute)
-        if color == 'missing':
-            if default:
-                color = self.get_config_attribute(name, default)
+            # A user can set a color to None in the config to prevent a color
+            # being used.  This is important when modules do something like
+
+            # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+            color = config['general'].get(attribute, False)
         return color
 
     def create_mappings(self, config):
@@ -687,6 +693,9 @@ class Py3statusWrapper():
         # eg run their post_config_hook
         for module in self.modules.values():
             module.prepare_module()
+
+        # modules can now receive updates
+        self.py3_modules_initialized = True
 
         # start modules
         for module in self.modules.values():

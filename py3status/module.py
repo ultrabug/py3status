@@ -6,6 +6,7 @@ from threading import Thread, Timer
 from collections import OrderedDict
 from time import time
 
+from py3status.composite import Composite
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
 
@@ -213,6 +214,13 @@ class Module(Thread):
         We need to respect the universal options too.
         """
         composite = response['composite']
+
+        # if the composite is of Composite type then convert this into the
+        # underlying list, simplifying it first.
+        if isinstance(composite, Composite):
+            composite = composite.simplify().get_content()
+            response['composite'] = composite
+
         if not isinstance(composite, list):
             raise Exception('expecting "composite" key in response')
         # if list is empty nothing to do
@@ -260,6 +268,9 @@ class Module(Thread):
             # part does not supply a color, use the composite color.
             if color and 'color' not in item:
                 item['color'] = color
+            # Remove any none color from our output
+            if hasattr(item.get('color'), 'none_color'):
+                del item['color']
 
     def _params_type(self, method_name, instance):
         """
@@ -448,7 +459,7 @@ class Module(Thread):
                     else:
                         raise TypeError('response should be a dict')
 
-                    if isinstance(response.get('full_text'), list):
+                    if isinstance(response.get('full_text'), (list, Composite)):
                         response['composite'] = response['full_text']
                         del response['full_text']
                     if 'composite' in response:
@@ -458,6 +469,9 @@ class Module(Thread):
                         if 'full_text' not in result:
                             err = 'missing "full_text" key in response'
                             raise KeyError(err)
+                        # Remove any none color from our output
+                        if hasattr(result.get('color'), 'none_color'):
+                            del result['color']
                         # set universal module options in result
                         result.update(self.module_options)
 

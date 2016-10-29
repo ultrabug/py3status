@@ -40,11 +40,11 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    device_separator = '|'
     format = '{name}'
     format_no_conn = 'OFF'
     format_no_conn_prefix = 'BT: '
     format_prefix = 'BT: '
-    device_separator = '|'
 
     def bluetooth(self):
         """
