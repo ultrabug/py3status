@@ -6,14 +6,12 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
         (default 'CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)')
-    high_threshold: percent to consider CPU or RAM usage as 'high load'
-        (default 75)
-    med_threshold: percent to consider CPU or RAM usage as 'medium load'
-        (default 40)
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
         (default 2)
+    thresholds: thresholds to use for color changes
+        (default [(0, "good"), (40, "degraded"), (75, "high")])
     zone: thermal zone to use. If None try to guess CPU temperature
         (default None)
 
@@ -41,6 +39,12 @@ Color conditionals:
     mem: change color based on the value of mem_used_percent
     temp: change color based on the value of cpu_temp
     swap: change color based on the value of swap_used_percent
+
+Obsolete configuration parameters:
+    high_threshold: percent to consider CPU or RAM usage as 'high load'
+        (default 75)
+    med_threshold: percent to consider CPU or RAM usage as 'medium load'
+        (default 40)
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
@@ -180,17 +184,28 @@ class Py3status:
     cache_timeout = 10
     format = "CPU: {cpu_usage}%, " \
         "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
-    high_threshold = 75
-    med_threshold = 40
     padding = 0
     precision = 2
+    thresholds = None
     zone = None
+    # obsolete configuration parameters
+    high_threshold = 75
+    med_threshold = 40
 
     def __init__(self):
         self.data = GetData()
         self.cpu_total = 0
         self.cpu_idle = 0
         self.values = {}
+
+    def post_config_hook(self):
+        # support old thresholds
+        if self.thresholds is None:
+            self.thresholds = [
+                (0, 'good'),
+                (self.med_threshold, 'degraded'),
+                (self.high_threshold, 'bad'),
+                ]
 
     def sysData(self):
         value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
@@ -204,23 +219,13 @@ class Py3status:
             self.values['cpu_usage'] = value_format.format(cpu_usage)
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
-            if cpu_usage > self.high_threshold:
-                self.py3.COLOR_CPU = self.py3.COLOR_BAD
-            elif cpu_usage > self.med_threshold:
-                self.py3.COLOR_CPU = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_CPU = self.py3.COLOR_GOOD
+            self.py3.threshold_get_color(cpu_usage, 'cpu')
 
         # if specified as a formatting option, also get the CPU temperature
         if '{cpu_temp}' in self.format:
             cpu_temp = self.data.cpuTemp(self.zone)
             self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
-            if cpu_temp > self.high_threshold:
-                self.py3.COLOR_TEMP = self.py3.COLOR_BAD
-            elif cpu_temp > self.med_threshold:
-                self.py3.COLOR_TEMP = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_TEMP = self.py3.COLOR_GOOD
+            self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM usage info
         if '{mem_' in self.format:
@@ -228,12 +233,7 @@ class Py3status:
             self.values['mem_total'] = value_format.format(mem_total)
             self.values['mem_used'] = value_format.format(mem_used)
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
-            if mem_used_percent > self.high_threshold:
-                self.py3.COLOR_MEM = self.py3.COLOR_BAD
-            elif mem_used_percent > self.med_threshold:
-                self.py3.COLOR_MEM = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_MEM = self.py3.COLOR_GOOD
+            self.py3.threshold_get_color(mem_used_percent, 'mem')
 
         # get SWAP usage info
         if '{swap_' in self.format:
@@ -241,12 +241,7 @@ class Py3status:
             self.values['swap_total'] = value_format.format(swap_total)
             self.values['swap_used'] = value_format.format(swap_used)
             self.values['swap_used_percent'] = value_format.format(swap_used_percent)
-            if swap_used_percent > self.high_threshold:
-                self.py3.COLOR_SWAP = self.py3.COLOR_BAD
-            elif swap_used_percent > self.med_threshold:
-                self.py3.COLOR_SWAP = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_SWAP = self.py3.COLOR_GOOD
+            self.py3.threshold_get_color(swap_used_percent, 'swap')
 
         # get load average
         if '{load' in self.format:
@@ -254,12 +249,7 @@ class Py3status:
             self.values['load1'] = value_format.format(load1)
             self.values['load5'] = value_format.format(load5)
             self.values['load15'] = value_format.format(load15)
-            if load1 > self.high_threshold:
-                self.py3.COLOR_LOAD = self.py3.COLOR_BAD
-            elif load1 > self.med_threshold:
-                self.py3.COLOR_LOAD = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_LOAD = self.py3.COLOR_GOOD
+            self.py3.threshold_get_color(load1, 'load')
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
