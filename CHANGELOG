@@ -1,17 +1,24 @@
 version 3.3 (milestone)
 * py3 helper: add command_run and command_output methods, by @tobes
+* py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
 * formatter now accepts per module coloring syntax on containers, by @tobes
+* formatter and composite overall updates, refactoring, tests, by @tobes
+* fix i3status time modules updating, by @tobes
+* don't call updates on modules before they have been fully initialised, by @tobes
 * module test: fix unicode error, by @tobes
 * module test: check for alphabetical variable declaration and unicode semantics, by @tobes
+* new clock module to display multiple times and dates informations in a flexible way, by @tobes
+* new net_iplist module to display interfaces and their IPv4 and IPv6 IP addresses, by @guiniol
 * battery_level module: stability and bugfix, by @inclementweather
 * battery_level module: fix on_click() method logic, by @m45t3r
 * battery_level module: add measurement_mode parameter to check for battery using /sys, by @m45t3r
 * exchange_rates module: cache value instead of reporting an error, by @tobes
 * fedora_updates module: add check_security option, by @jakubjedelsky
 * github module: open github home page if no repo is configured and you're gettin all notifications, by @rixx
-* glpi module: add cache_timeout parameter, by @pferate
+* glpi module: add cache_timeout and format parameters, by @pferate
 * graphite module: add proxy parameter to allow usage of request's proxy feature, by @btall
 * ns_checker module: add format and cache_timeout, by @pferate
+* rate_counter module: add format and majorly refactor code, by @pferate
 * spaceapi module: go to a space's website onclick, by @rixx
 * volume_status module: add pulseaudio support, by @guiniol
 
