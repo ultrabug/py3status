@@ -17,14 +17,9 @@ Configuration parameters:
         (default 1)
     sector_size: size of the disk's sectors.
         (default 512)
-    threshold_bad: threshold below which the amount of free space is bad.
-        (default 10)
-    threshold_degraded: threshold below which the amount of free space is degraded.
-        (default 100)
-    threshold_fast: threshold above which the data transfer is considered fast.
-        (default 1024)
-    threshold_slow: threshold below which the data transfer is considered slow.
-        (default 1)
+    thresholds: thresholds to use for color changes
+        (default {'free': [(0, "bad"), (10, "degraded"), (100, "good")],
+        'total': [(0, "good"), (1, "degraded"), (1024, "bad")]})
     unit_multi: value to divide if rate is greater than MULTIPLIER_TOP
         (default 1024)
     units: list of units, for `value/initial_multi`, value/1024, value/1024^2, etc...
@@ -66,10 +61,10 @@ class Py3status:
     multiplier_top = 999
     precision = 1
     sector_size = 512
-    threshold_bad = 10
-    threshold_degraded = 100
-    threshold_fast = 1024
-    threshold_slow = 1
+    thresholds = {
+            'free': [(0, "bad"), (10, "degraded"), (100, "good")],
+            'total': [(0, "good"), (1, "degraded"), (1024, "bad")]
+            }
     unit_multi = 1024
     units = ["kb/s", "mb/s", "gb/s", "tb/s"]
 
@@ -117,50 +112,18 @@ class Py3status:
             self.values['read'] = self._divide_and_format(read)
             self.values['total'] = self._divide_and_format(total)
             self.values['write'] = self._divide_and_format(write)
-
-            if read > self.threshold_fast:
-                self.py3.COLOR_READ = self.py3.COLOR_BAD
-            elif read > self.threshold_slow:
-                self.py3.COLOR_READ = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_READ = self.py3.COLOR_GOOD
-
-            if total > self.threshold_fast:
-                self.py3.COLOR_TOTAL = self.py3.COLOR_BAD
-            elif total > self.threshold_slow:
-                self.py3.COLOR_TOTAL = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_TOTAL = self.py3.COLOR_GOOD
-
-            if write > self.threshold_fast:
-                self.py3.COLOR_WRITE = self.py3.COLOR_BAD
-            elif write > self.threshold_slow:
-                self.py3.COLOR_WRITE = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_WRITE = self.py3.COLOR_GOOD
+            self.py3.threshold_get_color(read, 'read')
+            self.py3.threshold_get_color(total, 'total')
+            self.py3.threshold_get_color(write, 'write')
 
         if '{free}' in self.format or '{used' in self.format:
             free, used, used_percent = self._get_free_space(self.disk)
 
-            if free < self.threshold_bad:
-                self.py3.COLOR_FREE = self.py3.COLOR_BAD
-            elif free < self.threshold_degraded:
-                self.py3.COLOR_FREE = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_FREE = self.py3.COLOR_GOOD
-
-            if used_percent == 'err':
-                self.py3.COLOR_USED = self.py3.COLOR_BAD
-            elif used_percent > self.threshold_bad:
-                self.py3.COLOR_USED = self.py3.COLOR_BAD
-            elif used_percent > self.threshold_degraded:
-                self.py3.COLOR_USED = self.py3.COLOR_DEGRADED
-            else:
-                self.py3.COLOR_USED = self.py3.COLOR_GOOD
-
             self.values['free'] = '{{:.{}f}}'.format(self.precision).format(free)
             self.values['used'] = '{{:.{}f}}'.format(self.precision).format(used)
             self.values['used_percent'] = '{{:.{}f}}'.format(self.precision).format(used_percent)
+            self.py3.threshold_get_color(free, 'free')
+            self.py3.threshold_get_color(used, 'used')
 
         return {'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': self.py3.safe_format(self.format, self.values)}
