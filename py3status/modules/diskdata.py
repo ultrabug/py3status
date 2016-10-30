@@ -15,9 +15,14 @@ Configuration parameters:
         (default "{value:3.1f}")
     sector_size: size of the disk's sectors.
         (default 512)
+    si_units: use SI units
+        (default False)
     thresholds: thresholds to use for color changes
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
         'total': [(0, "good"), (1024, 'degraded'), (1024*1024, 'bad')]})*
+    unit: unit to use. If the unit contains a multiplier prefix, only this
+        exact unit will ever be used
+        (default "B/s")
 
 Format placeholders:
     {disk} the selected disk
@@ -61,10 +66,12 @@ class Py3status:
     format_rate= "{value:5.1f} {unit:>5s}"
     format_space = "{value:3.1f}"
     sector_size = 512
+    si_units = False
     thresholds = {
             'free': [(0, "bad"), (10, "degraded"), (100, "good")],
             'total': [(0, "good"), (1024, "degraded"), (1024*1024, "bad")]
             }
+    unit = "B/s"
 
     def __init__(self, *args, **kwargs):
         """
@@ -161,7 +168,7 @@ class Py3status:
         """
         Return formatted string
         """
-        value, unit = self.py3.format_units(value, unit="Bps")
+        value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
         return self.py3.safe_format(self.format_rate, {'value': value, 'unit': unit})
 
 if __name__ == "__main__":
