@@ -18,6 +18,8 @@
 
 **[clementine](#clementine)** — Display the current "artist - title" playing in Clementine.
 
+**[clock](#clock)** — Display time and date information.
+
 **[coin_balance](#coin_balance)** — Display balances of diverse crypto-currencies
 
 **[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
@@ -61,6 +63,8 @@
 **[mpd_status](#mpd_status)** — Display information from mpd.
 
 **[mpris](#mpris)** — Display information about the current song and video playing on player with
+
+**[net_iplist](#net_iplist)** — Display the list of network interfaces and their IPs.
 
 **[net_rate](#net_rate)** — Display the current network transfer rate.
 
@@ -112,7 +116,7 @@
 
 **[vnstat](#vnstat)** — Display vnstat statistics.
 
-**[volume_status](#volume_status)** — Display current sound volume using amixer.
+**[volume_status](#volume_status)** — Display current sound volume.
 
 **[vpn_status](#vpn_status)** — Drop-in replacement for i3status run_watch VPN module.
 
@@ -176,15 +180,19 @@ Display the current AWS bill.
 Take care about the cache_timeout to limit these fees!**
 
 Configuration parameters:
-  - `aws_access_key_id` Your AWS access key
-  - `aws_account_id` The root ID of the AWS account.
+  - `aws_access_key_id` Your AWS access key *(default '')*
+  - `aws_account_id` The root ID of the AWS account
     Can be found here` https://console.aws.amazon.com/billing/home#/account
-  - `aws_secret_access_key` Your AWS secret key
-  - `billing_file` Csv file location
-  - `cache_timeout` How often we refresh this module in seconds
+    *(default '')*
+  - `aws_secret_access_key` Your AWS secret key *(default '')*
+  - `billing_file` Csv file location *(default '/tmp/.aws_billing.csv')*
+  - `cache_timeout` How often we refresh this module in seconds *(default 3600)*
+  - `format`  string that formats the output. See placeholders below.
+    *(default '{bill_amount}$')*
   - `s3_bucket_name` The bucket where billing files are sent by AWS.
     Follow this article to activate this feature:
     http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
+    *(default '')*
 
 Format placeholders:
   - `{bill_amount}` AWS bill amount
@@ -205,13 +213,31 @@ Requires:
 Display the current screen backlight level.
 
 Configuration parameters:
+  - `brightness_delta` Change the brightness by this step.
+    *(default 5)*
+  - `brightness_initial` Set brightness to this value on start.
+    *(default None)*
+  - `brightness_minimal` Don't go below this brightness to avoid black screen
+    *(default 1)*
+  - `button_down` Button to click to decrease brightness. Setting to 0 disables.
+    *(default 5)*
+  - `button_up` Button to click to increase brightness. Setting to 0 disables.
+    *(default 4)*
   - `cache_timeout` How often we refresh this module in seconds *(default 10)*
-  - `device`        The backlight device
+  - `device` The backlight device
     If not specified the plugin will detect it automatically
-  - `format`        Display brightness, see placeholders below
+    *(default None)*
+  - `device_path` path to backlight eg /sys/class/backlight/acpi_video0
+    if None then use first device found.
+    *(default None)*
+  - `format` Display brightness, see placeholders below
+    *(default '☼: {level}%')*
 
 Format status string parameters:
   - `{level}` brightness
+
+Requires:
+  - `xbacklight` need for changing brightness, not detection
 
 **author** Tjaart van der Walt (github:tjaartvdwalt)
 
@@ -249,17 +275,17 @@ Configuration parameters:
     the battery level is greater than or equal to 'threshold_full')
     *(default False)*
   - `measurement_mode` either 'acpi' or 'sys', or None to autodetect. 'sys'
-  should be more robust and does not have any extra requirements, however the
-  time measurement may not work in some cases
+    should be more robust and does not have any extra requirements, however
+    the time measurement may not work in some cases
     *(default None)*
   - `notification` show current battery state as notification on click
     *(default False)*
   - `notify_low_level` display notification when battery is running low (when
     the battery level is less than 'threshold_degraded')
     *(default False)*
-  - `sys_battery_path` set the path to kernel sys' battery interface. Used only
-  when `measurement_mode=sys`
-    *(default /sys/class/power_supply/)*
+  - `sys_battery_path` set the path to your battery(ies), without including its
+    number
+    *(default "/sys/class/power_supply/")*
   - `threshold_bad` a percentage below which the battery level should be
     considered bad
     *(default 10)*
@@ -302,7 +328,8 @@ Obsolete configuration parameters:
     *(default None)*
 
 Requires:
-  - the `acpi` command line (only if `measurement_mode='acpi'`)
+  - the `acpi` the acpi command line utility (only if
+    `measurement_mode='acpi'`)
 
 **author** shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
 
@@ -403,6 +430,92 @@ Requires:
 **author** Francois LASSERRE &lt;choiz@me.com&gt;
 
 **license** GNU GPL http://www.gnu.org/licenses/gpl.html
+
+---
+
+### <a name="clock"></a>clock
+
+Display time and date information.
+
+This module allows one or more datetimes to be displayed.
+All datetimes share the same format_time but can set their own timezones.
+Timezones are defined in the `format` using the TZ name in squiggly brackets eg
+`{GMT}`, `{Portugal}`, `{Europe/Paris}`, `{America/Argentina/Buenos_Aires}`.
+
+ISO-3166 two letter country codes eg `{de}` can also be used but if more than
+one timezone exists for the country eg `{us}` the first one will be selected.
+
+`{Local}` can be used for the local settings of your computer.
+
+Note: Timezones are case sensitive
+
+A full list of timezones can be found at
+https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+Configuration parameters:
+  - `block_hours` length of time period for all blocks in hours *(default 12)*
+  - `blocks` a string, where each character represents time period
+    from the start of a time period.
+    *(default '🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦')*
+  - `button_change_format` button that switches format used setting to None
+    disables *(default 1)*
+  - `button_change_time_format` button that switches format_time used. Setting
+    to None disables *(default 2)*
+  - `button_reset` button that switches display to the first timezone. Setting
+    to None disables *(default 3)*
+  - `cycle` If more than one display then how many seconds between changing the
+    display *(default 0)*
+  - `format` defines the timezones displayed. This can be a single string or a
+    list.  If a list is supplied then the formats can be cycled through
+    using `cycle` or by button click.  *(default '{Local}')*
+  - `format_time` format to use for the time, strftime directives such as `%H`
+    can be used this can be either a string or to allow multiple formats as
+    a list.  The one used can be changed by button click.
+    *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
+    '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+
+Format placeholders:
+  - `{icon}` a character representing the time from `blocks`
+  - `{name}` friendly timezone name eg `Buenos Aires`
+  - `{name_unclear}` friendly timezone name eg `Buenos Aires` but is empty if
+    only one timezone is provided
+  - `{timezone}` full timezone name eg `America/Argentina/Buenos_Aires`
+  - `{timezone_unclear}` full timezone name eg `America/Argentina/Buenos_Aires`
+    but is empty if only one timezone is provided
+
+
+Requires:
+  - `pytz` python library
+  - `tzlocal` python library
+
+i3status.conf example:
+
+```
+# cycling through London, Warsaw, Tokyo
+clock {
+    cycle = 30
+    format = ["{Europe/London}", "{Europe/Warsaw}", "{Asia/Tokyo}"]
+    format_time = "{name} %H:%M"
+}
+
+
+# Show the time and date in New York
+clock {
+   format = "Big Apple {America/New_York}"
+   format_time = "%Y-%m-%d %H:%M:%S"
+}
+
+
+# wall clocks
+clock {
+    format = "{Asia/Calcutta} {Africa/Nairobi} {Asia/Bangkok}"
+    format_time = "{name} {icon}"
+}
+```
+
+**author** tobes
+
+**license** BSD
 
 ---
 
@@ -654,6 +767,8 @@ Additionally check if any update security notices.
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds
     *(default 600)*
+  - `check_security` Check for security updates
+    *(default True)*
   - `format` Display format to use
     *(default 'DNF: {updates}')*
 
@@ -778,8 +893,8 @@ Configuration parameters:
     see above.
     *(default None)*
   - `button_action` Button that when clicked opens the Github notification page
-    if notifications, else the project page for the repository . Setting to
-    `0` disables.
+    if notifications, else the project page for the repository if there is
+    one (otherwise the github home page). Setting to `0` disables.
     *(default 3)*
   - `cache_timeout` How often we refresh this module in seconds
     *(default 60)*
@@ -841,12 +956,18 @@ It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
 
 Configuration parameters:
-  - `critical` set bad color above this threshold
-  - `db` database to use
-  - `host` database host to connect to
-  - `password` login password
-  - `user` login user
-  - `warning` set degraded color above this threshold
+  - `cache_timeout` how often we refresh this module in seconds *(default 300)*
+  - `critical` set bad color above this threshold *(default 20)*
+  - `db` database to use *(default '')*
+  - `format` format of the module output *(default '{tickets_open} tickets')*
+  - `host` database host to connect to *(default '')*
+  - `password` login password *(default '')*
+  - `timeout` timeout for database connection *(default 5)*
+  - `user` login user *(default '')*
+  - `warning` set degraded color above this threshold *(default 15)*
+
+Format placeholders:
+  - `{tickets_open}` The number of open tickets
 
 Color options:
   - `color_bad` Open ticket above critical threshold
@@ -905,6 +1026,14 @@ Configuration parameters:
   - `graphite_url` URL to your graphite server. *(default '')*
   - `http_timeout` HTTP query timeout to graphite.
     *(default 10)*
+  - `proxy` You can configure the proxy with HTTP or HTTPS.
+    *(default: None)*
+    examples:
+    proxy = 'https://myproxy.example.com:1234/'
+    proxy = 'http://user:passwd@myproxy.example.com/'
+    proxy = 'socks5://user:passwd@host:port'
+    (proxy_socks is available after an 'pip install requests[socks]')
+    *(default None)*
   - `targets` semicolon separated list of targets to query graphite for.
     *(default '')*
   - `threshold_bad` numerical threshold,
@@ -1219,15 +1348,16 @@ Display information from mpd.
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 2)*
   - `format` template string (see below)
-  - `hide_when_paused` hide the status if state is paused
-  - `hide_when_stopped` hide the status if state is stopped
-  - `host` mpd host
-  - `max_width` maximum status length
-  - `password` mpd password
-  - `port` mpd port
-  - `state_pause` label to display for "paused" state
-  - `state_play` label to display for "playing" state
-  - `state_stop` label to display for "stopped" state
+    *(default '%state% [[[%artist%] - %title%]|[%file%]]')*
+  - `hide_when_paused` hide the status if state is paused *(default False)*
+  - `hide_when_stopped` hide the status if state is stopped *(default True)*
+  - `host` mpd host *(default 'localhost')*
+  - `max_width` maximum status length *(default 120)*
+  - `password` mpd password *(default None)*
+  - `port` mpd port *(default '6600')*
+  - `state_pause` label to display for "paused" state *(default '[pause]')*
+  - `state_play` label to display for "playing" state *(default '[play]')*
+  - `state_stop` label to display for "stopped" state *(default '[stop]')*
 
 Color options:
   - `color_pause` Paused, default color_degraded
@@ -1369,6 +1499,60 @@ Tested players:
 
 ---
 
+### <a name="net_iplist"></a>net_iplist
+
+Display the list of network interfaces and their IPs.
+
+This module supports both IPv4 and IPv6. There is the possibility to blacklist
+interfaces and IPs, as well as to show interfaces with no IP address. It will
+show an alternate text if no IP are available.
+
+Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds.
+    *(default 30)*
+  - `format` format of the output.
+    *(default 'Network: {format_iface}')*
+  - `format_iface` format string for the list of IPs of each interface.
+    *(default '{iface}:[ {ip4}][ {ip6}]')*
+  - `format_no_ip` string to show if there are no IPs to display.
+    *(default 'no connection')*
+  - `iface_blacklist` list of interfaces to ignore. Accepts shell-style wildcards.
+    *(default ['lo'])*
+  - `iface_sep` string to write between interfaces.
+    *(default ' ')*
+  - `ip_blacklist` list of IPs to ignore. Accepts shell-style wildcards.
+    *(default [])*
+  - `ip_sep` string to write between IP addresses.
+    *(default ',')*
+  - `remove_empty` do not show interfaces with no IP.
+    *(default True)*
+
+Format placeholders:
+  - `{format_iface}` the format_iface string.
+
+Format placeholders for format_iface:
+  - `{iface}` name of the interface.
+  - `{ip4}` list of IPv4 of the interface.
+  - `{ip6}` list of IPv6 of the interface.
+
+Color options:
+  - `color_bad` no IPs to show
+  - `color_good` IPs to show
+
+Example:
+
+```
+net_iplist {
+    iface_blacklist = []
+    ip_blacklist = ['127.*', '::1']
+}
+```
+
+Requires:
+  - `ip` utility found in iproute2 package
+
+---
+
 ### <a name="net_rate"></a>net_rate
 
 Display the current network transfer rate.
@@ -1432,10 +1616,18 @@ in nameservers list.
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 
 Configuration parameters:
-  - `domain` domain name to check
-  - `lifetime` resolver lifetime
-  - `nameservers` comma separated list of reference DNS nameservers
-  - `resolvers` comma separated list of DNS resolvers to use
+  - `cache_timeout` how often we refresh this module in seconds *(default 300)*
+  - `domain` domain name to check *(default '')*
+  - `format` output format string *(default '{total_count} NS {status}')*
+  - `lifetime` resolver lifetime *(default 0.3)*
+  - `nameservers` comma separated list of reference DNS nameservers *(default '')*
+  - `resolvers` comma separated list of DNS resolvers to use *(default '')*
+
+Format placeholders:
+  - `{nok_count}` The number of failed name servers
+  - `{ok_count}` The number of working name servers
+  - `{status}` The overall status of the name servers (OK or NOK)
+  - `{total_count}` The total number of name servers
 
 Color options:
   - `color_bad` One or more lookups have failed
@@ -1600,7 +1792,8 @@ Configuration parameters:
   - `format_not_running` what to display when process is not running
     *(default '■')*
   - `format_running` what to display when process running *(default '●')*
-  - `full`: if True, match against the full command line and not just the process name
+  - `full` if True, match against the full command line and not just the
+    process name *(default False)*
   - `process` the process name to check if it is running *(default None)*
 
 Color options:
@@ -1683,12 +1876,30 @@ Configuration parameters:
   - `config_file` file path to store the time already spent
     and restore it the next session
     *(default '~/.i3/py3status/counter-config.save')*
+  - `format` output format string
+    *(default 'Time: {days} day {hours}:{mins:02d} Cost: {total}')*
+  - `format_money` output format string
+    *(default '{price}$')*
   - `hour_price` your price per hour *(default 30)*
   - `tax` tax value (1.02 = 2%) *(default 1.02)*
 
+Format placeholders:
+  - `{days}` The number of whole days in running timer
+  - `{hours}` The remaining number of whole hours in running timer
+  - `{mins}` The remaining number of whole minutes in running timer
+  - `{secs}` The remaining number of seconds in running timer
+  - `{subtotal}` The subtotal cost (time * rate)
+  - `{tax}` The tax cost, based on the subtotal cost
+  - `{total}` The total cost (subtotal + tax)
+  - `{total_hours}` The total number of whole hours in running timer
+  - `{total_mins}` The total number of whole minutes in running timer
+
+Money placeholders:
+  - `{price}` numeric value of money
+
 Color options:
-  - `color_bad` Running
-  - `color_good` Stopped
+  - `color_running` Running, default color_good
+  - `color_stopped` Stopped, default color_bad
 
 **author** Amaury Brisou &lt;py3status AT puzzledge.org&gt;
 
@@ -1700,13 +1911,14 @@ Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 300)*
-  - `db` database to use
-  - `format` see placeholders below
-  - `host` database host to connect to
-  - `password` login password
-  - `threshold_critical` set bad color above this threshold
-  - `threshold_warning` set degraded color above this threshold
-  - `user` login user
+  - `db` database to use *(default '')*
+  - `format` see placeholders below *(default 'general: {General}')*
+  - `host` database host to connect to *(default '')*
+  - `password` login password *(default '')*
+  - `threshold_critical` set bad color above this threshold *(default 20)*
+  - `threshold_warning` set degraded color above this threshold *(default 10)*
+  - `timeout` timeout for database connection *(default 5)*
+  - `user` login user *(default '')*
 
 Format placeholders:
   - `{YOUR_QUEUE_NAME}` number of ongoing RT tickets (open+new+stalled)
@@ -1734,8 +1946,6 @@ Display the amount of windows and indicate urgency hints on scratchpad (async).
 Configuration parameters:
   - `always_show` whether the indicator should be shown if there are no
     scratchpad windows *(default False)*
-  - `color_urgent` color to use if a scratchpad window is urgent
-    *(default "#900000")*
   - `format` string to format the output *(default "{} ⌫")*
 
 Requires:
@@ -1750,6 +1960,13 @@ Requires:
 ### <a name="scratchpad_counter"></a>scratchpad_counter
 
 Display the amount of windows in your i3 scratchpad.
+
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds *(default 5)*
+  - `format` Format of indicator. {} replaces with count of windows
+    *(default '{} ⌫')*
+  - `hide_when_none` Hide indicator when there is no windows *(default False)*
+
 
 **author** shadowprince
 
@@ -1822,6 +2039,8 @@ Requires:
 Display if your favorite hackerspace is open or not.
 
 Configuration parameters:
+  - `button_url` Button that when clicked opens the URL sent in the space's API.
+    Setting to None disables. *(default 3)*
   - `cache_timeout` Set timeout between calls in seconds *(default 60)*
   - `closed_color` color if space is closed *(default None)*
   - `closed_text` text if space is closed, strftime parameters
@@ -2053,7 +2272,7 @@ Requires:
 
 ### <a name="volume_status"></a>volume_status
 
-Display current sound volume using amixer.
+Display current sound volume.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
@@ -2069,18 +2288,21 @@ Configuration parameters:
     *(default 0)*
   - `cache_timeout` how often we refresh this module in seconds.
     *(default 10)*
-  - `channel` Alsamixer channel to track.
-    *(default 'Master')*
-  - `device` Alsamixer device to use.
-    *(default 'default')*
+  - `channel` channel to track. Default value is backend dependent.
+    *(default None)*
+  - `command` Choose between "amixer", "pamixer" or "pactl".
+    If None, try to guess based on available commands.
+    *(default None)*
+  - `device` Device to use. Defaults value is backend dependent
+    *(default None)*
   - `format` Format of the output.
     *(default '♪: {percentage}%')*
   - `format_muted` Format of the output when the volume is muted.
     *(default '♪: muted')*
-  - `threshold_bad` Volume below which color is set to bad.
-    *(default 20)*
-  - `threshold_degraded` Volume below which color is set to degraded.
-    *(default 50)*
+  - `max_volume` Allow the volume to be increased past 100% if available.
+    pactl supports this *(default 120)*
+  - `thresholds` Threshold for percent volume.
+    *(default [(0, 'bad'), (20, 'degraded'), (50, 'good')])*
   - `volume_delta` Percentage amount that the volume is increased or
     decreased by when volume buttons pressed.
     *(default 5)*
@@ -2092,21 +2314,45 @@ Color options:
   - `color_bad` Volume below threshold_bad or muted
   - `color_degraded` Volume below threshold_degraded
   - `color_good` Volume above or equal to threshold_degraded
+  - `color_muted` Volume is muted, if not supplied color_bad is used
+    if set to `None` then the threshold color will be used.
+
+
+Obsolete configuration parameters:
+  - `threshold_bad` Volume below which color is set to bad.
+    *(default 20)*
+  - `threshold_degraded` Volume below which color is set to degraded.
+    *(default 50)*
 
 Example:
 
 ```
 # Add mouse clicks to change volume
+# Set thresholds to rainbow colors
 
 volume_status {
     button_up = 4
     button_down = 5
     button_mute = 2
+
+    thresholds = [
+        (0, "#FF0000"),
+        (10, "#E2571E"),
+        (20, "#FF7F00"),
+        (30, "#FFFF00"),
+        (40, "#00FF00"),
+        (50, "#96BF33"),
+        (60, "#0000FF"),
+        (70, "#4B0082"),
+        (80, "#8B00FF"),
+        (90, "#FFFFFF")
+    ]
 }
 ```
 
 Requires:
-  - `alsa-utils` (tested with alsa-utils 1.0.29-1)
+  - `alsa-utils` alsa backend (tested with alsa-utils 1.0.29-1)
+  - `pamixer` pulseaudio backend
 
 NOTE:
     If you are changing volume state by external scripts etc and
@@ -2304,6 +2550,11 @@ Requires:
 
 Display the current window title.
 
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds *(default 0.5)*
+  - `max_width` If width of title is greater, shrink it and add '...'
+    *(default 120)*
+
 Requires:
   - `i3-py` (https://github.com/ziberna/i3-py)
     `pip install i3-py`
@@ -2356,33 +2607,33 @@ Stick LTE III but may work on other devices, too.
 Configuration parameters:
   - `baudrate` There should be no need to configure this, but
     feel free to experiment.
-    Default is 115200.
+    *(default 115200)*
   - `cache_timeout` How often we refresh this module in seconds.
-    Default is 5.
+    *(default 5)*
   - `consider_3G_degraded` If set to True, only 4G-networks will be
     considered 'good'; 3G connections are shown
     as 'degraded', which is yellow by default. Mostly
     useful if you want to keep track of where there
     is a 4G connection.
-    Default is False.
+    *(default False)*
   - `format_down` What to display when the modem is not plugged in
-    Default is: 'WWAN: down'
+    *(default 'WWAN: down')*
   - `format_error` What to display when modem can't be accessed.
-    Default is 'WWAN: {error}'
+    *(default 'WWAN: {error}')*
   - `format_no_service` What to display when the modem does not have a
-    network connection. This allows to omit the then
-    meaningless network generation. Therefore the
-    default is 'WWAN: ({status}) {ip}'
+    network connection. This allows to omit the (then
+    meaningless) network generation.
+    *(default 'WWAN: {status} {ip}')*
   - `format_up` What to display upon regular connection
-    Default is 'WWAN: ({status}/{netgen}) {ip}'
+    *(default 'WWAN: {status} ({netgen}) {ip}')*
   - `interface` The default interface to obtain the IP address
     from. For wvdial this is most likely ppp0.
     For netctl it can be different.
-    Default is: ppp0
-  - `modem` The device to send commands to. Default is
-  - `modem_timeout` The timespan betwenn querying the modem and
+    *(default 'ppp0')*
+  - `modem` The device to send commands to. *(default '/dev/ttyUSB1')*
+  - `modem_timeout` The timespan between querying the modem and
     collecting the response.
-    Default is 0.4 (which should be sufficient)
+    *(default 0.4)*
 
 Color options:
   - `color_bad` Error or no connection
