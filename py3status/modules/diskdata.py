@@ -9,12 +9,12 @@ Configuration parameters:
         (default None)
     format: format of the output.
         (default "{disk}: {used_percent}% ({total})")
-    rate_format: format for the rates value
-        (default "{value:5.1f} {unit:>4s}")
+    format_rate: format for the rates value
+        (default "{value:5.1f} {unit:>5s}")
+    format_space: format for the disk space values
+        (default "{value:3.1f}")
     sector_size: size of the disk's sectors.
         (default 512)
-    space_format: format for the disk space values
-        (default "{value:3.1f}")
     thresholds: thresholds to use for color changes
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
         'total': [(0, "good"), (1024, 'degraded'), (1024*1024, 'bad')]})*
@@ -55,9 +55,9 @@ class Py3status:
     cache_timeout = 10
     disk = None
     format = "{disk}: {used_percent}% ({total})"
-    rate_format = "{value:5.1f} {unit:>4s}"
+    format_rate= "{value:5.1f} {unit:>5s}"
     sector_size = 512
-    space_format = "{value:3.1f}"
+    format_space = "{value:3.1f}"
     thresholds = {
             'free': [(0, "bad"), (10, "degraded"), (100, "good")],
             'total': [(0, "good"), (1024, "degraded"), (1024*1024, "bad")]
@@ -96,9 +96,9 @@ class Py3status:
 
             total = read + write
 
-            self.values['read'] = self._divide_and_format(read)
-            self.values['total'] = self._divide_and_format(total)
-            self.values['write'] = self._divide_and_format(write)
+            self.values['read'] = self._format_rate(read)
+            self.values['total'] = self._format_rate(total)
+            self.values['write'] = self._format_rate(write)
             self.py3.threshold_get_color(read, 'read')
             self.py3.threshold_get_color(total, 'total')
             self.py3.threshold_get_color(write, 'write')
@@ -106,9 +106,9 @@ class Py3status:
         if '{free}' in self.format or '{used' in self.format:
             free, used, used_percent = self._get_free_space(self.disk)
 
-            self.values['free'] = self.space_format.format(free)
-            self.values['used'] = self.space_format.format(used)
-            self.values['used_percent'] = self.space_format.format(used_percent)
+            self.values['free'] = self.py3.safe_format(self.format_space, {'value':free})
+            self.values['used'] = self.py3.safe_format(self.format_space, {'value':used})
+            self.values['used_percent'] = self.py3.safe_format(self.format_space, {'value':used_percent})
             self.py3.threshold_get_color(free, 'free')
             self.py3.threshold_get_color(used, 'used')
 
@@ -156,12 +156,12 @@ class Py3status:
                         write += int(data[9]) * self.sector_size
         return read, write
 
-    def _divide_and_format(self, value):
+    def _format_rate(self, value):
         """
         Return formatted string
         """
-        value, unit = self.py3.format_units(value, unit="b/s", si=True)
-        return self.rate_format.format(value=value, unit=unit)
+        value, unit = self.py3.format_units(value, unit="bps")
+        return self.py3.safe_format(self.format_rate, {'value': value, 'unit': unit})
 
 if __name__ == "__main__":
     """
