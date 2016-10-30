@@ -47,11 +47,7 @@ OBSELETE_PARAM = [
 RE_PARAM = re.compile(
     '^  - `(?P<name>[^`]*)`.*?('
     '\*\(default (?P<value>('
-    '("[^"]*")'  # double quote strings
-    '|'
-    "('[^']*')"  # quote strings
-    '|'
-    '([^)]*)'  # anything else
+    '.*'
     '))\)\*)?$'
 )
 
@@ -164,6 +160,8 @@ def get_module_attributes(path):
                     # NameConstant so we use them for the default
                     default = python2_names.get(value.id)
                     attr_value = extra.get(value.id, default)
+                elif class_name == 'Tuple':
+                    attr_value = tuple(map(get_value, value.elts))
                 elif class_name == 'UnaryOp':
                     op = value.op.__class__.__name__
                     attr_value = get_value(value.operand)
