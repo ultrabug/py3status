@@ -15,22 +15,14 @@ Configuration parameters:
         (default '')
     hide_if_zero: hide indicator if rate == 0
         (default False)
-    initial_multi: initial multiplier, if you want to get rid of first bytes, set to 1 to disable
-        (default 1024)
     interfaces: comma separated list of interfaces to track
         (default '')
     interfaces_blacklist: comma separated list of interfaces to ignore
         (default 'lo')
-    multiplier_top: if value is greater, divide it with unit_multi and get next unit from units
-        (default 999)
-    precision: amount of numbers after dot
-        (default 1)
     thresholds: thresholds to use for colors
-        (default [(0, 'bad'), (1, 'degraded'), (1024, 'good')])
-    unit_multi: value to divide if rate is greater than multiplier_top
-        (default 1024)
-    units: list of units, value/initial_multi, value/1024, value/1024^2, etc...
-        (default ["kb/s", "mb/s", "gb/s", "tb/s"])
+        (default [(0, 'bad'), (1024, 'degraded'), (1024*1024, 'good')])
+    value_format: format to use for values
+        (default "{value:5.1f} {unit:>4s}")
 
 Format placeholders:
     {down} download rate
@@ -38,10 +30,18 @@ Format placeholders:
     {total} total rate
     {up} upload rate
 
+Value placeholders:
+    {unit} current unit
+    {value} numeric value
+
 Color conditionals:
     {down} Change color based on the value of down
     {total} Change color based on the value of total
     {up} Change color based on the value of up
+
+Obsolete configuration parameters:
+    precision: amount of numbers after dot
+        (default 1)
 
 @author shadowprince
 @license Eclipse Public License
@@ -61,43 +61,33 @@ class Py3status:
     format = "{interface}: {total}"
     format_no_connection = ''
     hide_if_zero = False
-    initial_multi = 1024
     interfaces = ''
     interfaces_blacklist = 'lo'
-    multiplier_top = 999
-    precision = 1
-    thresholds = [(0, "bad"), (1, "degraded"), (1024, "good")]
-    unit_multi = 1024
-    units = ["kb/s", "mb/s", "gb/s", "tb/s"]
+    thresholds = [(0, "bad"), (1024, "degraded"), (1024*1024, "good")]
+    value_format = "{value:5.1f} {unit:>4s}"
+    # obsolete configuration parameters
+    precision = None
 
     def __init__(self, *args, **kwargs):
-        """
-        Format of total, up and down placeholders under self.format.
-        As default, substitutes self.left_align and self.precision as %s and %s
-        Placeholders:
-            value - value (float)
-            unit - unit (string)
-        """
         self.last_interface = None
         self.last_stat = self._get_stat()
         self.last_time = time()
 
-    def currentSpeed(self):
+    def post_config_hook(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):
             self.interfaces = self.interfaces.split(',')
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(',')
 
-        # == 6 characters (from self.multiplier_top + dot + self.precision)
-        if self.precision > 0:
-            self.left_align = len(str(self.multiplier_top)) + 1 + self.precision
-        else:
-            self.left_align = len(str(self.multiplier_top))
-        self.value_format = "{value:%s.%sf} {unit}" % (
-            self.left_align, self.precision
-        )
+        if self.precision is not None:
+            if self.precision > 0:
+                self.left_align = 3 + 1 + self.precision
+            else:
+                self.left_align = 3
+            self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
 
+    def currentSpeed(self):
         ns = self._get_stat()
         deltas = {}
         try:
@@ -109,8 +99,8 @@ class Py3status:
                 down = int(new[1]) - int(old[1])
                 up = int(new[9]) - int(old[9])
 
-                down /= timedelta * self.initial_multi
-                up /= timedelta * self.initial_multi
+                down /= timedelta
+                up /= timedelta
 
                 deltas[new[0]] = {'total': up+down, 'up': up, 'down': down, }
 
@@ -188,14 +178,9 @@ class Py3status:
 
     def _divide_and_format(self, value):
         """
-        Divide a value and return formatted string
+        Return formatted string
         """
-        for i, unit in enumerate(self.units):
-            if value > self.multiplier_top:
-                value /= self.unit_multi
-            else:
-                break
-
+        value, unit = self.py3.format_units(value, unit="b/s", si=True)
         return self.value_format.format(value=value, unit=unit)
 
 if __name__ == "__main__":
