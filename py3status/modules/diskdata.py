@@ -9,21 +9,15 @@ Configuration parameters:
         (default None)
     format: format of the output.
         (default "{disk}: {used_percent}% ({total})")
-    initial_multi: initial multiplier, if you want to get rid of first bytes, set to 1 to disable
-        (default 1024)
-    multiplier_top: if value is greater, divide it with `unit_multi` and get next unit from `units`
-        (default 999)
-    precision: precision to use for values.
-        (default 1)
+    rate_format: format for the rates value
+        (default "{value:5.1f} {unit:>4s}")
     sector_size: size of the disk's sectors.
         (default 512)
+    space_format: format for the disk space values
+        (default "{value:3.1f}")
     thresholds: thresholds to use for color changes
-        (default {'free': [(0, "bad"), (10, "degraded"), (100, "good")],
-        'total': [(0, "good"), (1, "degraded"), (1024, "bad")]})
-    unit_multi: value to divide if rate is greater than MULTIPLIER_TOP
-        (default 1024)
-    units: list of units, for `value/initial_multi`, value/1024, value/1024^2, etc...
-        (default ["kb/s", "mb/s", "gb/s", "tb/s"])
+        *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
+        'total': [(0, "good"), (1024, 'degraded'), (1024*1024, 'bad')]})*
 
 Format placeholders:
     {disk} the selected disk
@@ -33,6 +27,10 @@ Format placeholders:
     {read} reading rate
     {total} total IO rate
     {write} writing rate
+
+Rate format placeholders:
+    {unit} name of the unit
+    {value} numeric value of the rate
 
 Color thresholds:
     {free} Change color based on the value of free
@@ -57,16 +55,13 @@ class Py3status:
     cache_timeout = 10
     disk = None
     format = "{disk}: {used_percent}% ({total})"
-    initial_multi = 1024
-    multiplier_top = 999
-    precision = 1
+    rate_format = "{value:5.1f} {unit:>4s}"
     sector_size = 512
+    space_format = "{value:3.1f}"
     thresholds = {
             'free': [(0, "bad"), (10, "degraded"), (100, "good")],
-            'total': [(0, "good"), (1, "degraded"), (1024, "bad")]
+            'total': [(0, "good"), (1024, "degraded"), (1024*1024, "bad")]
             }
-    unit_multi = 1024
-    units = ["kb/s", "mb/s", "gb/s", "tb/s"]
 
     def __init__(self, *args, **kwargs):
         """
@@ -81,14 +76,6 @@ class Py3status:
         self.last_time = time()
 
     def currentSpeed(self):
-        # == 6 characters (from multiplier_top + dot + self.precision)
-        if self.precision > 0:
-            self.left_align = len(str(self.multiplier_top)) + 1 + self.precision
-        else:
-            self.left_align = len(str(self.multiplier_top))
-        self.value_format = "{value:%s.%sf} {unit}" % (
-            self.left_align, self.precision
-        )
 
         self.values = {'disk': self.disk}
 
@@ -104,8 +91,8 @@ class Py3status:
             self.last_stat = self._get_io_stats(self.disk)
             self.last_time = time()
 
-            read /= timedelta * self.initial_multi
-            write /= timedelta * self.initial_multi
+            read /= timedelta
+            write /= timedelta
 
             total = read + write
 
@@ -119,9 +106,9 @@ class Py3status:
         if '{free}' in self.format or '{used' in self.format:
             free, used, used_percent = self._get_free_space(self.disk)
 
-            self.values['free'] = '{{:.{}f}}'.format(self.precision).format(free)
-            self.values['used'] = '{{:.{}f}}'.format(self.precision).format(used)
-            self.values['used_percent'] = '{{:.{}f}}'.format(self.precision).format(used_percent)
+            self.values['free'] = self.space_format.format(free)
+            self.values['used'] = self.space_format.format(used)
+            self.values['used_percent'] = self.space_format.format(used_percent)
             self.py3.threshold_get_color(free, 'free')
             self.py3.threshold_get_color(used, 'used')
 
@@ -171,15 +158,10 @@ class Py3status:
 
     def _divide_and_format(self, value):
         """
-        Divide a value and return formatted string
+        Return formatted string
         """
-        for i, unit in enumerate(self.units):
-            if value > self.multiplier_top:
-                value /= self.unit_multi
-            else:
-                break
-
-        return self.value_format.format(value=value, unit=unit)
+        value, unit = self.py3.format_units(value, unit="b/s", si=True)
+        return self.rate_format.format(value=value, unit=unit)
 
 if __name__ == "__main__":
     """
