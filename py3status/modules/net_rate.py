@@ -14,7 +14,7 @@ Configuration parameters:
     format_no_connection: when there is no data transmitted from the start of the plugin
         (default '')
     format_value: format to use for values
-        (default "{value:5.1f} {unit:>4s}")
+        (default "{value:5.1f} {unit:>5s}")
     hide_if_zero: hide indicator if rate == 0
         (default False)
     interfaces: comma separated list of interfaces to track
@@ -60,7 +60,7 @@ class Py3status:
     devfile = '/proc/net/dev'
     format = "{interface}: {total}"
     format_no_connection = ''
-    format_value = "{value:5.1f} {unit:>4s}"
+    format_value = "{value:5.1f} {unit:>5s}"
     hide_if_zero = False
     interfaces = []
     interfaces_blacklist = 'lo'
@@ -139,9 +139,9 @@ class Py3status:
             self.py3.threshold_get_color(delta['total'], 'total')
             self.py3.threshold_get_color(delta['up'], 'up')
             response['full_text'] = self.py3.safe_format(self.format, {
-                'down': self._divide_and_format(delta['down']),
-                'total': self._divide_and_format(delta['total']),
-                'up': self._divide_and_format(delta['up']),
+                'down': self._format_value(delta['down']),
+                'total': self._format_value(delta['total']),
+                'up': self._format_value(delta['up']),
                 'interface': interface[:-1],
                 })
 
@@ -176,11 +176,11 @@ class Py3status:
         except StopIteration:
             return None
 
-    def _divide_and_format(self, value):
+    def _format_value(self, value):
         """
         Return formatted string
         """
-        value, unit = self.py3.format_units(value, unit="b/s", si=True)
+        value, unit = self.py3.format_units(value, unit="bps")
         return self.py3.safe_format(self.format_value, {'value': value, 'unit': unit})
 
 if __name__ == "__main__":
