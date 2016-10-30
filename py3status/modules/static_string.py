@@ -18,7 +18,7 @@ class Py3status:
     def static_string(self):
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.format,
+            'full_text': self.py3.safe_format(self.format),
         }
         return response
 

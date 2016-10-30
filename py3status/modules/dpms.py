@@ -34,8 +34,10 @@ class Py3status:
 
         self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
 
+        format = self.format_on if self.run else self.format_off
+
         return {
-            'full_text': self.format_on if self.run else self.format_off,
+            'full_text': self.py3.safe_format(format),
             'color': self.py3.COLOR_ON or self.py3.COLOR_GOOD if self.run
             else self.py3.COLOR_OFF or self.py3.COLOR_BAD
         }
