@@ -13,6 +13,8 @@ Configuration parameters:
         (default '{interface}: {total}')
     format_no_connection: when there is no data transmitted from the start of the plugin
         (default '')
+    format_value: format to use for values
+        (default "{value:5.1f} {unit:>4s}")
     hide_if_zero: hide indicator if rate == 0
         (default False)
     interfaces: comma separated list of interfaces to track
@@ -21,8 +23,6 @@ Configuration parameters:
         (default 'lo')
     thresholds: thresholds to use for colors
         (default [(0, 'bad'), (1024, 'degraded'), (1024*1024, 'good')])
-    value_format: format to use for values
-        (default "{value:5.1f} {unit:>4s}")
 
 Format placeholders:
     {down} download rate
@@ -60,11 +60,11 @@ class Py3status:
     devfile = '/proc/net/dev'
     format = "{interface}: {total}"
     format_no_connection = ''
+    format_value = "{value:5.1f} {unit:>4s}"
     hide_if_zero = False
     interfaces = ''
     interfaces_blacklist = 'lo'
     thresholds = [(0, "bad"), (1024, "degraded"), (1024*1024, "good")]
-    value_format = "{value:5.1f} {unit:>4s}"
     # obsolete configuration parameters
     precision = None
 
@@ -85,7 +85,7 @@ class Py3status:
                 self.left_align = 3 + 1 + self.precision
             else:
                 self.left_align = 3
-            self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
+            self.format_value = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
 
     def currentSpeed(self):
         ns = self._get_stat()
@@ -181,7 +181,7 @@ class Py3status:
         Return formatted string
         """
         value, unit = self.py3.format_units(value, unit="b/s", si=True)
-        return self.value_format.format(value=value, unit=unit)
+        return self.py3.safe_format(self.format_value, {'value': value, 'unit': unit})
 
 if __name__ == "__main__":
     """
