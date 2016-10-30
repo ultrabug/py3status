@@ -56,15 +56,26 @@ class Module:
         return 'property'
 
 
+def attr_getter_fn(attr):
+    '''
+    test attr_getter function
+    '''
+    return '*{}*'.format(attr)
+
+
 def run_formatter(test_dict):
     if test_dict.get('py3only') and f.python2:
         return
     if not test_dict.get('pypy', True) and is_pypy:
         return
+    if test_dict.get('attr_getter'):
+        attr_getter = attr_getter_fn
+    else:
+        attr_getter = None
     try:
         module = Module()
         result = f.format(test_dict['format'], module, param_dict,
-                          force_composite=test_dict.get('composite'))
+                          force_composite=test_dict.get('composite'), attr_getter=attr_getter)
     except Exception as e:
         if test_dict.get('exception') == str(e):
             return
@@ -76,7 +87,10 @@ def run_formatter(test_dict):
     expected = test_dict.get('expected')
     if f.python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
-    assert result == expected
+    if result != expected:
+        print('Expected {!r}'.format(expected))
+        print('Got {!r}'.format(result))
+    assert (result == expected)
 
 
 def test_1():
@@ -823,4 +837,12 @@ def test_composite_6():
         'format': 'hello',
         'expected': [{'full_text': 'hello'}],
         'composite': True,
+    })
+
+
+def test_attr_getter():
+    run_formatter({
+        'format': '{test_attr_getter}',
+        'expected': '*test_attr_getter*',
+        'attr_getter': True,
     })

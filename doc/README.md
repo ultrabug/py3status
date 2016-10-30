@@ -950,9 +950,10 @@ The following functions can be registered
 >
 > Note: This function should only be used by containers.
 
-__safe_format(format_string, param_dict=None)__
+__safe_format(format_string, param_dict=None, force_composite=False,
+attr_getter=None)__
 
-Parser for advanced formating.
+Parser for advanced formatting.
 
 Unknown placeholders will be shown in the output eg `{foo}`
 
@@ -996,7 +997,11 @@ case of simple parsing or a Composite if more complex.
 If force_composite parameter is True a composite will always be
 returned.
 
-__build_composite(format_string, param_dict=None, composites=None)__
+attr_getter is a function that will when called with a an attribute name
+as a parameter will return a value.
+
+__build_composite(format_string, param_dict=None, composites=None,
+attr_getter=None)__
 
 __deprecated in 3.3__ use safe_format()
 
