@@ -38,7 +38,7 @@ format_rate placeholders:
     {value} numeric value of the rate
 
 format_space placeholders:
-    {value} numeric value of the space
+    {value} numeric value of the free/used space on the device
 
 Color thresholds:
     {free} Change color based on the value of free
