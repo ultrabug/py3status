@@ -856,6 +856,33 @@ they have.
 Returns True if the event name and instance match that of the module
 checking.
 
+___format_units(value, unit='B', optimal=5, auto=True, si=False)__
+
+Takes a value and formats it for user output, we can choose the unit to
+use eg B, MiB, kbits/second.  This is mainly for use with bytes/bits it
+converts the value into a human readable form.  It has various
+additional options but they are really only for special cases.
+
+The function returns a tuple containing the new value (this is a number
+so that the user can still format it if required) and a unit that is
+the units that we have been converted to.
+
+By supplying unit to the function we can force those units to be used
+eg `unit=KiB` would force the output to be in Kibibytes.  By default we
+use non-si units but if the unit is si eg kB then we will switch to si
+units.  Units can also be things like `Mbit/sec`.
+
+If the auto parameter is False then we use the unit provided.  This
+only makes sense when the unit is singular eg 'Bytes' and we want the
+result in bytes and not say converted to MBytes.
+
+optimal is used to control the size of the output value.  We try to
+provide an output value of that number of characters (including decimal
+point), it may also be less due to rounding.  If a fixed unit is used
+the output may be more than this number of characters.
+
+Added in version 3.3
+
 __get_output(module_name)__
 
 Return the output of the named module. This will be a list.
