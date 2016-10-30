@@ -18,7 +18,7 @@ Configuration parameters:
     hide_if_zero: hide indicator if rate == 0
         (default False)
     interfaces: comma separated list of interfaces to track
-        (default '')
+        (default [])
     interfaces_blacklist: comma separated list of interfaces to ignore
         (default 'lo')
     thresholds: thresholds to use for colors
@@ -34,7 +34,7 @@ Value placeholders:
     {unit} current unit
     {value} numeric value
 
-Color conditionals:
+Color thresholds:
     {down} Change color based on the value of down
     {total} Change color based on the value of total
     {up} Change color based on the value of up
@@ -62,7 +62,7 @@ class Py3status:
     format_no_connection = ''
     format_value = "{value:5.1f} {unit:>4s}"
     hide_if_zero = False
-    interfaces = ''
+    interfaces = []
     interfaces_blacklist = 'lo'
     thresholds = [(0, "bad"), (1024, "degraded"), (1024*1024, "good")]
     # obsolete configuration parameters
