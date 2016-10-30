@@ -13,7 +13,8 @@ Configuration parameters:
         (default '{interface}: {total}')
     format_no_connection: when there is no data transmitted from the start of the plugin
         (default '')
-    format_value: format to use for values
+    format_value: format to use for values (will be ignored if precision is
+        set, prefer this over precision which has been obsoleted)
         (default "{value:5.1f} {unit:>5s}")
     hide_if_zero: hide indicator if rate == 0
         (default False)
@@ -92,7 +93,7 @@ class Py3status:
                 self.left_align = 3 + 1 + self.precision
             else:
                 self.left_align = 3
-            self.format_value = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
+            self.format_value = "{value:%s.%sf} {unit:>5s}" % (self.left_align, self.precision)
 
     def currentSpeed(self):
         ns = self._get_stat()
