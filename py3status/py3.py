@@ -527,7 +527,6 @@ class Py3:
                 param_dict,
                 force_composite=True,
                 attr_getter=attr_getter,
-                composites=composites,
             )
         except Exception:
             return [{'full_text': 'invalid format'}]
