@@ -5,7 +5,7 @@ Display advanced disk usage information
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
-    disk: disk whose stat to check. Set to 'all' to get global stats.
+    disk: disk or partition whose stat to check. Set to None to get global stats.
         (default None)
     format: format of the output.
         (default "{disk}: {used_percent}% ({total})")
@@ -28,9 +28,12 @@ Format placeholders:
     {total} total IO rate
     {write} writing rate
 
-Rate format placeholders:
+format_rate placeholders:
     {unit} name of the unit
     {value} numeric value of the rate
+
+format_space placeholders:
+    {value} numeric value of the space
 
 Color thresholds:
     {free} Change color based on the value of free
@@ -56,8 +59,8 @@ class Py3status:
     disk = None
     format = "{disk}: {used_percent}% ({total})"
     format_rate= "{value:5.1f} {unit:>5s}"
-    sector_size = 512
     format_space = "{value:3.1f}"
+    sector_size = 512
     thresholds = {
             'free': [(0, "bad"), (10, "degraded"), (100, "good")],
             'total': [(0, "good"), (1024, "degraded"), (1024*1024, "bad")]
@@ -75,9 +78,9 @@ class Py3status:
         self.last_stat = self._get_io_stats(self.disk)
         self.last_time = time()
 
-    def currentSpeed(self):
+    def space_and_io(self):
 
-        self.values = {'disk': self.disk}
+        self.values = {'disk': self.disk if self.disk else 'all'}
 
         if '{read}' in self.format or '{write}' in self.format or '{total}' in self.format:
             # time from previous check
@@ -116,9 +119,7 @@ class Py3status:
                 'full_text': self.py3.safe_format(self.format, self.values)}
 
     def _get_free_space(self, disk):
-        if not disk:
-            disk = '/'
-        elif not disk.startswith('/dev/'):
+        if disk and not disk.startswith('/dev/'):
             disk = '/dev/' + disk
 
         total = 0
@@ -126,8 +127,8 @@ class Py3status:
         free = 0
 
         df = subprocess.check_output(['df']).decode('utf-8')
-        for line in df.split('\n'):
-            if line.startswith(disk):
+        for line in df.splitlines():
+            if (disk and line.startswith(disk)) or (disk is None and line.startswith('/dev/')):
                 data = line.split()
                 total += int(data[1]) / 1024 / 1024
                 used += int(data[2]) / 1024 / 1024
