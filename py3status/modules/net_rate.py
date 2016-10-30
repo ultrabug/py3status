@@ -180,7 +180,7 @@ class Py3status:
         """
         Return formatted string
         """
-        value, unit = self.py3.format_units(value, unit="bps")
+        value, unit = self.py3.format_units(value, unit="Bps")
         return self.py3.safe_format(self.format_value, {'value': value, 'unit': unit})
 
 if __name__ == "__main__":
