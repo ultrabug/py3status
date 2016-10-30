@@ -21,8 +21,13 @@ Configuration parameters:
         (default [])
     interfaces_blacklist: comma separated list of interfaces to ignore
         (default 'lo')
+    si_units: use SI units
+        (default False)
     thresholds: thresholds to use for colors
         (default [(0, 'bad'), (1024, 'degraded'), (1024*1024, 'good')])
+    unit: unit to use. If the unit contains a multiplier prefix, only this
+        exact unit will ever be used
+        (default "B/s")
 
 Format placeholders:
     {down} download rate
@@ -64,7 +69,9 @@ class Py3status:
     hide_if_zero = False
     interfaces = []
     interfaces_blacklist = 'lo'
+    si_units = False
     thresholds = [(0, "bad"), (1024, "degraded"), (1024*1024, "good")]
+    unit = "B/s"
     # obsolete configuration parameters
     precision = None
 
@@ -180,7 +187,7 @@ class Py3status:
         """
         Return formatted string
         """
-        value, unit = self.py3.format_units(value, unit="Bps")
+        value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
         return self.py3.safe_format(self.format_value, {'value': value, 'unit': unit})
 
 if __name__ == "__main__":
