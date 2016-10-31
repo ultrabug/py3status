@@ -20,10 +20,12 @@ class BlockConfig:
     # defaults
     _if = None
     color = None
+    has_commands = False
     max_length = None
+    min_length = 0
     show = False
 
-    def update(self, commands_str):
+    def update_commands(self, commands_str):
         """
         update with commands from the block
         """
@@ -31,12 +33,23 @@ class BlockConfig:
 
         self._if = commands.get('if', self._if)
         self.color = self._check_color(commands.get('color'))
-
-        max_length = commands.get('max_length')
-        if max_length is not None:
-            self.max_length = int(max_length)
+        self._set_int(commands, 'max_length')
+        self._set_int(commands, 'min_length')
 
         self.show = 'show' in commands or self.show
+
+        self.has_commands = True
+
+    def _set_int(self, commands, name):
+        """
+        set integer value from commands
+        """
+        if name in commands:
+            try:
+                value = int(commands[name])
+                setattr(self, name, value)
+            except ValueError:
+                pass
 
     def _check_color(self, color):
         if not color:
@@ -66,7 +79,6 @@ class Block:
         self.block_config = BlockConfig()
         self.commands = {}
         self.content = []
-        self.is_composite = False
         self.module = module
         self.options = []
         self.param_dict = param_dict
@@ -80,6 +92,8 @@ class Block:
         """
         Add item to the block
         """
+        if not isinstance(item, Block):
+            item = Composite(item)
         self.content.append(item)
 
     def switch(self):
@@ -102,7 +116,7 @@ class Block:
         Process any commands into a dict and store
         commands are url query string encoded
         """
-        self.block_config.update(commands)
+        self.block_config.update_commands(commands)
 
     def is_valid_by_command(self, index=None):
         """
@@ -139,37 +153,21 @@ class Block:
             # This enables the second option in a block if \?if=.. is false.
             self.mark_valid(index=1)
 
-    def process_text_chunk(self, text):
-        block_config = self.block_config
-        if block_config.max_length is not None:
-            text = text[:block_config.max_length]
-            block_config.max_length -= len(text)
-        if text and block_config.color or self.is_composite:
-            text = {'full_text': text}
-            if block_config.color:
-                text['color'] = block_config.color
-            if self.parent:
-                text = Composite(text)
-        return text
-
-    def process_composite_chunk(self, composite):
-        out = []
-        for item in composite:
-            self.process_composite_chunk_item(item)
-            if item['full_text']:
-                out.append(item)
-        return out
-
     def process_composite_chunk_item(self, items):
         block_config = self.block_config
-        if not isinstance(items, list):
-            items = [items]
+        if not block_config.has_commands:
+            return
         for item in items:
             if block_config.max_length is not None:
                 item['full_text'] = item['full_text'][:block_config.max_length]
                 block_config.max_length -= len(item['full_text'])
+            if block_config.min_length:
+                block_config.min_length -= len(item['full_text'])
             if block_config.color and 'color' not in item:
                 item['color'] = block_config.color
+        if block_config.min_length > 0:
+            items[0]['full_text'] = u' ' * block_config.min_length + items[0]['full_text']
+            block_config.min_length = 0
 
     def show(self):
         """
@@ -182,7 +180,7 @@ class Block:
         if self.content:
             self.options.append(self.content)
 
-        output = []
+        output = Composite()
 
         for index, option in enumerate(self.options):
             if index in self.valid_blocks:
@@ -194,54 +192,14 @@ class Block:
                 # to the output
                 for item in option:
                     if isinstance(item, Block):
-                        content = item.show()
-                        if isinstance(content, list):
-                            output.extend(content)
-                        else:
-                            output.append(content)
-                        if item.is_composite:
-                            self.is_composite = True
+                        output.append(item.show())
                     else:
                         output.append(item)
                 break
 
-        # if not building a composite then we can simply
-        # build our output and return it here
-        if not self.is_composite:
-            data = ''.join(output)
-            # apply our max length command
-            if self.block_config.max_length is not None:
-                data = data[:self.block_config.max_length]
-            if self.block_config.color:
-                block_composite = {
-                    'full_text': data,
-                    'color': self.block_config.color,
-                }
-                data = Composite(block_composite)
-                self.is_composite = True
-            return data
-
-        # Build up our output.  We join any text pieces togeather and if we
-        # have composites we keep them for final substitution in the main block
-        data = []
-        text = ''
-        for item in output:
-            if not isinstance(item, Composite):
-                text += item
-            else:
-                if text:
-                    data.append(self.process_text_chunk(text))
-                text = ''
-                if self.parent is None:
-                    # This is the main block so we get the actual composites
-                    data += self.process_composite_chunk(item.get_content())
-                else:
-                    self.process_composite_chunk_item(item.get_content())
-                    data.append(item)
-        if text:
-            data.append(self.process_text_chunk(text))
-
-        return data
+        # Build up our output.
+        self.process_composite_chunk_item(output.get_content())
+        return output
 
 
 class Formatter:
@@ -324,7 +282,6 @@ class Formatter:
                         # supplied parameter is a composite
                         if param.get_content():
                             block.add(param.copy())
-                            block.is_composite = True
                             block.mark_valid()
                     else:
                         set_param(param, value, key)
@@ -366,33 +323,33 @@ class Formatter:
             block.mark_valid()
         output = block.show()
 
-        if force_composite and not isinstance(output, list):
-            output = [{'full_text': output}]
-
-        if isinstance(output, Composite):
-            output = output.get_content()
-
         # post format
         # swap color names to values
-        if isinstance(output, list):
-            for item in output:
-                # ignore empty items
-                if not item.get('full_text') and not item.get('separator'):
-                    continue
-                # colors
-                color_this = item.get('color')
-                if color_this and color_this[0] != '#':
-                    color_name = 'color_%s' % color_this
-                    threshold_color_name = 'color_threshold_%s' % color_this
-                    # substitute color
-                    color_this = (
-                        getattr(module, color_name, None) or
-                        getattr(module, threshold_color_name, None) or
-                        getattr(module.py3, color_name.upper(), None)
-                    )
-                    if color_this:
-                            item['color'] = color_this
-                    else:
-                        del item['color']
-            return Composite(output).simplify()
+        for item in output:
+            # ignore empty items
+            if not item.get('full_text') and not item.get('separator'):
+                continue
+            # colors
+            color_this = item.get('color')
+            if color_this and color_this[0] != '#':
+                color_name = 'color_%s' % color_this
+                threshold_color_name = 'color_threshold_%s' % color_this
+                # substitute color
+                color_this = (
+                    getattr(module, color_name, None) or
+                    getattr(module, threshold_color_name, None) or
+                    getattr(module.py3, color_name.upper(), None)
+                )
+                if color_this:
+                        item['color'] = color_this
+                else:
+                    del item['color']
+        output = Composite(output).simplify()
+        # if only text then we can become a string
+        if not force_composite:
+            if len(output) == 0:
+                return ''
+            elif (len(output) == 1 and list(output[0].keys()) == ['full_text']):
+                output = output[0]['full_text']
+
         return output

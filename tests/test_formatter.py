@@ -591,7 +591,7 @@ def test_color_name_1():
 def test_color_name_2():
     run_formatter({
         'format': '\?color=no_name color',
-        'expected':  [{'full_text': 'color'}],
+        'expected':  'color',
     })
 
 
@@ -845,4 +845,48 @@ def test_attr_getter():
         'format': '{test_attr_getter}',
         'expected': '*test_attr_getter*',
         'attr_getter': True,
+    })
+
+
+def test_min_length_1():
+    run_formatter({
+        'format': '\?min_length=9 Hello',
+        'expected': '    Hello',
+    })
+
+
+def test_min_length_2():
+    run_formatter({
+        'format': '[\?min_length=9&show Hello]',
+        'expected': '    Hello',
+    })
+
+
+def test_min_length_3():
+    run_formatter({
+        'format': '[\?min_length=9 [{name}]]',
+        'expected': u'    Björk',
+    })
+
+
+def test_min_length_4():
+    run_formatter({
+        'format': '[\?min_length=9 [\?color=good {name}]]',
+        'expected':  [{'color': '#00FF00', 'full_text': u'    Björk'}],
+    })
+
+
+def test_min_length_5():
+    run_formatter({
+        'format': '\?min_length=9 [\?color=bad {number}][\?color=good {name}]',
+        'expected':  [{'full_text': '  42', 'color': '#FF0000'},
+                      {'full_text': u'Björk', 'color': '#00FF00'}],
+    })
+
+
+def test_min_length_6():
+    run_formatter({
+        'format': '[\?min_length=9 [\?color=bad {number}][\?color=good {name}]]',
+        'expected':  [{'full_text': '  42', 'color': '#FF0000'},
+                      {'full_text': u'Björk', 'color': '#00FF00'}],
     })
