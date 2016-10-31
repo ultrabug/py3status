@@ -33,6 +33,7 @@ IGNORE_ITEM = [
     ('arch_updates', '_format_pacman_only'),  # need moving into __init__ etc
     ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
+    ('net_rate', 'format_value'),  # dynamic
     ('net_rate', 'precision'),  # dynamic
     ('sysdata', 'thresholds'),  # dynamic
 ]

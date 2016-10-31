@@ -13,8 +13,7 @@ Configuration parameters:
         (default '{interface}: {total}')
     format_no_connection: when there is no data transmitted from the start of the plugin
         (default '')
-    format_value: format to use for values (will be ignored if precision is
-        set, prefer this over precision which has been obsoleted)
+    format_value: format to use for values
         (default "[\?min_length=11 {value:.1f} {unit}]")
     hide_if_zero: hide indicator if rate == 0
         (default False)
@@ -46,7 +45,7 @@ Color thresholds:
     {up} Change color based on the value of up
 
 Obsolete configuration parameters:
-    precision: amount of numbers after dot (prefer the use of format_value instead)
+    precision: amount of numbers after dot (will be ignored if format_value is set)
         (default 1)
 
 @author shadowprince
@@ -66,7 +65,7 @@ class Py3status:
     devfile = '/proc/net/dev'
     format = "{interface}: {total}"
     format_no_connection = ''
-    format_value = "[\?min_length=11 {value:.1f} {unit}]"
+    format_value = None
     hide_if_zero = False
     interfaces = []
     interfaces_blacklist = 'lo'
@@ -88,13 +87,19 @@ class Py3status:
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(',')
 
-        if self.precision is not None:
-            if self.precision > 0:
-                self.left_align = 3 + 1 + self.precision + 1 + 5
+        if self.format_value is None:
+            if self.precision is not None:
+                if self.precision > 0:
+                    self.left_align = 3 + 1 + self.precision + 1 + 5
+                else:
+                    self.left_align = 3 + 1 + 5
+                self.format_value = "[\?min_length=%s {value:.%sf} {unit}]" % (self.left_align,
+                                                                               self.precision)
             else:
-                self.left_align = 3 + 1 + 5
-            self.format_value = "[\?min_length=%s {value:.%sf} {unit}]" % (self.left_align,
-                                                                           self.precision)
+                self.format_value = "[\?min_length=11 {value:.1f} {unit}]"
+        elif self.precision is not None:
+            self.py3.notify_user('net_rate.py: Both format_value and precision are set.'
+                                 ' precision will be ignored')
 
     def currentSpeed(self):
         ns = self._get_stat()
