@@ -15,7 +15,7 @@ Configuration parameters:
         (default '')
     format_value: format to use for values (will be ignored if precision is
         set, prefer this over precision which has been obsoleted)
-        (default "{value:5.1f} {unit:>5s}")
+        (default "[\?min_length=11 {value:.1f} {unit}]")
     hide_if_zero: hide indicator if rate == 0
         (default False)
     interfaces: comma separated list of interfaces to track
@@ -46,7 +46,7 @@ Color thresholds:
     {up} Change color based on the value of up
 
 Obsolete configuration parameters:
-    precision: amount of numbers after dot
+    precision: amount of numbers after dot (prefer the use of format_value instead)
         (default 1)
 
 @author shadowprince
@@ -66,7 +66,7 @@ class Py3status:
     devfile = '/proc/net/dev'
     format = "{interface}: {total}"
     format_no_connection = ''
-    format_value = "{value:5.1f} {unit:>5s}"
+    format_value = "[\?min_length=11 {value:.1f} {unit}]"
     hide_if_zero = False
     interfaces = []
     interfaces_blacklist = 'lo'
@@ -90,10 +90,11 @@ class Py3status:
 
         if self.precision is not None:
             if self.precision > 0:
-                self.left_align = 3 + 1 + self.precision
+                self.left_align = 3 + 1 + self.precision + 1 + 5
             else:
-                self.left_align = 3
-            self.format_value = "{value:%s.%sf} {unit:>5s}" % (self.left_align, self.precision)
+                self.left_align = 3 + 1 + 5
+            self.format_value = "[\?min_length=%s {value:.%sf} {unit}]" % (self.left_align,
+                                                                           self.precision)
 
     def currentSpeed(self):
         ns = self._get_stat()
