@@ -10,9 +10,9 @@ Configuration parameters:
     format: format of the output.
         (default "{disk}: {used_percent}% ({total})")
     format_rate: format for the rates value
-        (default "{value:5.1f} {unit:>5s}")
+        (default "[\?min_length=11 {value:.1f} {unit}]")
     format_space: format for the disk space values
-        (default "{value:3.1f}")
+        (default "[\?min_length=5 {value:.1f}]")
     sector_size: size of the disk's sectors.
         (default 512)
     si_units: use SI units
@@ -63,8 +63,8 @@ class Py3status:
     cache_timeout = 10
     disk = None
     format = "{disk}: {used_percent}% ({total})"
-    format_rate= "{value:5.1f} {unit:>5s}"
-    format_space = "{value:3.1f}"
+    format_rate = "[\?min_length=11 {value:.1f} {unit}]"
+    format_space = "[\?min_length=5 {value:.1f}]"
     sector_size = 512
     si_units = False
     thresholds = {
@@ -116,9 +116,10 @@ class Py3status:
         if '{free}' in self.format or '{used' in self.format:
             free, used, used_percent = self._get_free_space(self.disk)
 
-            self.values['free'] = self.py3.safe_format(self.format_space, {'value':free})
-            self.values['used'] = self.py3.safe_format(self.format_space, {'value':used})
-            self.values['used_percent'] = self.py3.safe_format(self.format_space, {'value':used_percent})
+            self.values['free'] = self.py3.safe_format(self.format_space, {'value': free})
+            self.values['used'] = self.py3.safe_format(self.format_space, {'value': used})
+            self.values['used_percent'] = self.py3.safe_format(self.format_space,
+                                                               {'value': used_percent})
             self.py3.threshold_get_color(free, 'free')
             self.py3.threshold_get_color(used, 'used')
 
