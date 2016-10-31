@@ -8,7 +8,7 @@ Configuration parameters:
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
-        ['dynamic', 'kB', 'KiB', 'MB', 'MiB', 'GB', 'GIB'] (default 'GiB')
+        ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -46,9 +46,6 @@ import re
 ONE_KIB = pow(1024, 1)  # 1 KiB in B
 ONE_MIB = pow(1024, 2)  # 1 MiB in B
 ONE_GIB = pow(1024, 3)  # 1 GiB in B
-ONE_KB = pow(1000, 1)  # 1 KiB in B
-ONE_MB = pow(1000, 2)  # 1 MiB in B
-ONE_GB = pow(1000, 3)  # 1 GiB in B
 
 
 class GetData:
@@ -89,7 +86,7 @@ class GetData:
         """
         Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, percentage
-        of used memory, and units of mem (kB, KiB, MB, MiB, GB, GiB).
+        of used memory, and units of mem (KiB, MiB, GiB).
         """
 
         memi = {}
@@ -109,9 +106,6 @@ class GetData:
                 'KiB': ONE_KIB / ONE_KIB,
                 'MiB': ONE_KIB / ONE_MIB,
                 'GiB': ONE_KIB / ONE_GIB,
-                'kB': ONE_KIB / ONE_KB,
-                'MB': ONE_KIB / ONE_MB,
-                'GB': ONE_KIB / ONE_GB,
             }
             if unit.lower() == 'dynamic':
                 # If less than 1 GiB, use MiB
@@ -124,7 +118,7 @@ class GetData:
                 used_mem = multiplier[unit] * used_mem_kib
             else:
                 raise ValueError(
-                    'unit [{0}] must be one of: kB, KiB, MB, MiB, GB, GiB, dynamic.'.format(unit))
+                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
         except:
             total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
             unit = 'UNKNOWN'
