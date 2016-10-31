@@ -235,10 +235,10 @@ class Py3:
                 value /= size
                 can_round = True
 
-        if can_round and optimal:
+        if can_round and optimal and value:
             # we will try to make the output value the desired size
             # we need to keep out value as a numeric type
-            places = int(log10(value))
+            places = int(log10(abs(value)))
             if places >= optimal - 2:
                 value = int(value)
             else:
