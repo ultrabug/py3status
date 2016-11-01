@@ -60,27 +60,34 @@ class HTTPResponse:
     @TODO: Implement the header attribute
     """
 
-    def __init__(self, resp_obj):
-        self._resp_obj = resp_obj
+    def __init__(self, original_response):
+        self._original_response = original_response
+        self._status = None
         self._data = None
         self._json = None
 
-    def __getattr__(self, name):
-        # If trying to access an attribute that doesn't exist in this class,
-        # try accessing that attribute from the response object.
-        return getattr(self._resp_obj, name)
-
     @property
     def status(self):
-        return self._resp_obj.getcode()
+        """
+        The HTTP status code for the response.
+        """
+        if self._status is None:
+            self._status = self._original_response.getcode()
+        return self._status
 
     @property
     def data(self):
+        """
+        A bytestring representing the content.
+        """
         if self._data is None:
-            self._data = self._resp_obj.read()
+            self._data = self._original_response.read()
         return self._data
 
     def json(self):
+        """
+        A deserialized Python object, generated from the response data.
+        """
         if self._json is None:
             self._json = json.loads(self.data.decode('utf-8'))
         return self._json
