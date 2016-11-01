@@ -796,7 +796,12 @@ class Py3:
                 return None
         try:
             # Using py3status.py3.HTTPResponse Object
-            json_data = response.json()
+            try:
+                json_data = response.json()
+            except (TypeError, ValueError) as e:
+                self.log('Error in json.load for [URL: {}] [{}]'.format(url, e),
+                         level=self.LOG_ERROR)
+                return None
         except:
             # Using the built-in HTTPResponse Object
             reader = codecs.getreader('utf-8')
