@@ -741,7 +741,7 @@ class Py3:
 
         return color
 
-    def get_url(self, url):
+    def _get_url(self, url):
         """
         Get the HTTPResponse for the HTTP GET request to `url`.
 
@@ -779,7 +779,7 @@ class Py3:
             response = url
         else:
             try:
-                response = self.get_url(url)
+                response = self._get_url(url)
             except self.HTTPError:
                 # Any Exceptions extended from `Py3.Py3Exception.HTTPError`
                 return None
