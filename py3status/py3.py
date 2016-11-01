@@ -51,6 +51,41 @@ class NoneColor:
         return 'None'
 
 
+class HTTPResponse:
+    """
+    This class is like a simplified version of `urllib3.response.HTTPResponse`.
+
+    The HTTPResponse object provides status, data, and json attributes.
+
+    @TODO: Implement the header attribute
+    """
+
+    def __init__(self, resp_obj):
+        self._resp_obj = resp_obj
+        self._data = None
+        self._json = None
+
+    def __getattr__(self, name):
+        # If trying to access an attribute that doesn't exist in this class,
+        # try accessing that attribute from the response object.
+        return getattr(self._resp_obj, name)
+
+    @property
+    def status(self):
+        return self._resp_obj.getcode()
+
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = self._resp_obj.read()
+        return self._data
+
+    def json(self):
+        if self._json is None:
+            self._json = json.loads(self.data.decode('utf-8'))
+        return self._json
+
+
 class Py3:
     """
     Helper object that gets injected as self.py3 into Py3status
@@ -708,25 +743,24 @@ class Py3:
 
     def get_url(self, url):
         """
-        Get the HTTP Response for the HTTP GET request to `url`.
+        Get the HTTPResponse for the HTTP GET request to `url`.
 
         Raises `Py3.URLError` on Connection Errors.
         Raises `Py3.ClientError` on HTTP 4xx Errors.
         Raises `Py3.ServerError` on HTTP 5xx Errors.
         """
         try:
-            response = urlopen(url)
+            response = HTTPResponse(urlopen(url))
         except URLError as e:
             self.log('Unable to access [{}]'.format(url),
                      level=self.LOG_ERROR)
             raise self.URLError(e)
-        return_code = response.getcode()
         status_message = '{url} returned a {http_status} status.'.format(
-            url=url, http_status=return_code)
-        if 400 <= return_code < 500:
+            url=url, http_status=response.status)
+        if 400 <= response.status < 500:
             self.log(status_message, level=self.LOG_ERROR)
             raise self.ClientError(status_message)
-        elif 500 <= return_code < 600:
+        elif 500 <= response.status < 600:
             self.log(status_message, level=self.LOG_WARNING)
             raise self.ServerError(status_message)
         return response
@@ -735,11 +769,12 @@ class Py3:
         """
         Deserialize JSON from `url` into a Python object.
 
-        `url` can be str or a HTTP Response object.
+        `url` can be str or a HTTPResponse object.
 
         Returns JSON object on success, or None on error.
         Does not raise any exceptions to caller.
         """
+        json_data = None
         if hasattr(url, 'getcode'):
             response = url
         else:
@@ -752,15 +787,20 @@ class Py3:
                 self.log('An uncaught exception was raised [{}]'.format(e),
                          level=self.LOG_ERROR)
                 return None
-        reader = codecs.getreader('utf-8')
         try:
-            data = json.load(reader(response))
-        except (TypeError, ValueError) as e:
-            self.log('Error in json.load for [URL: {}] [{}]'.format(url, e),
-                     level=self.LOG_ERROR)
-            return None
-        except Exception as e:
-            self.log('An uncaught exception was raised [{}]'.format(e),
-                     level=self.LOG_ERROR)
-            return None
-        return data
+            # Using py3status.py3.HTTPResponse Object
+            json_data = response.json()
+        except:
+            # Using the built-in HTTPResponse Object
+            reader = codecs.getreader('utf-8')
+            try:
+                json_data = json.load(reader(response))
+            except (TypeError, ValueError) as e:
+                self.log('Error in json.load for [URL: {}] [{}]'.format(url, e),
+                         level=self.LOG_ERROR)
+                return None
+            except Exception as e:
+                self.log('An uncaught exception was raised [{}]'.format(e),
+                         level=self.LOG_ERROR)
+                return None
+        return json_data
