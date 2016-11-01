@@ -28,6 +28,7 @@ py3status documentation
 * [Py3 module helper](#py3)
 * [Composites](#composites)
 * [Module documentation](#docstring)
+* [Deprecation of configuration parameters](#deprecation)
 * [Module testing](#testing)
 
 [Contributing](#contributing)
@@ -1193,6 +1194,130 @@ Here is an example of a docstring.
 
 ***
 
+## <a name="deprecation"></a>Deprecation of configuration parameters
+
+Sometimes it is necessary to deprecate configuration parameters.  Modules
+are able to specify information about deprecation so that it can be done
+automatically.  Deprecation information is specified in the Meta class of a
+py3status module using the deprecated attribute.  The following types of
+deprecation are supported.
+
+The deprecation types will be performed in the order here.
+
+__rename__
+
+The parameter has been renamed.  We will update the configuration to use the
+new name.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_available',  # parameter name to be renamed
+                    'new': 'icon_available',   # the parameter that will get the value
+                    'msg': 'obsolete parameter use `icon_available`',  # message
+                },
+            ],
+        }
+```
+
+__format_fix_unnamed_param__
+
+Some formats used `{}` as a placeholder this needs to be updated to a named
+placeholder eg `{value}`.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',  # parameter to be changed
+                    'placeholder': 'percent',  # the place holder to use
+                    'msg': '{} should not be used in format use `{percent}`',  # message
+                },
+            ],
+        }
+```
+
+__substitute_by_value__
+
+This allows one configuration parameter to set the value of another.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'substitute_by_value': [
+                {
+                    'param': 'mode',  # parameter to be checked for substitution
+                    'value': 'ascii_bar',  # value that will trigger the substitution
+                    'substitute': {
+                        'param': 'format',  # parameter to be updated
+                        'value': '{ascii_bar}',  # the value that will be set
+                    },
+                    'msg': 'obsolete parameter use `format = "{ascii_bar}"`',  #message
+                },
+            ],
+        }
+```
+
+__function__
+
+For more complex substitutions a function can be defined that will be called with the config as a parameter.  This function must return a dict of key value pairs of parameters to update
+
+```
+class Py3status:
+
+    class Meta:
+
+        # Create a function to be called
+        def deprecate_function(config):
+            # This function must return a dict
+            return {'thresholds': [
+                        (0, 'bad'),
+                        (config.get('threshold_bad', 20), 'degraded'),
+                        (config.get('threshold_degraded', 50), 'good'),
+                    ],
+            }
+
+        deprecated = {
+            'function': [
+                {
+                    'function': deprecate_function,  # function to be called
+                },
+            ],
+        }
+```
+
+__remove__
+
+The parameters will be removed.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'threshold_bad',  # name of parameter to remove
+                    'msg': 'obsolete set using thresholds parameter',  #message
+                },
+            ],
+        }
+```
+
+***
 
 ## <a name="testing"></a>Module testing
 
