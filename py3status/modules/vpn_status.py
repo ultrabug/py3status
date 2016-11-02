@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Drop-in replacement for i3status run_watch VPN module.
 
