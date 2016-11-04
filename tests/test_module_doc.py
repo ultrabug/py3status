@@ -34,6 +34,7 @@ IGNORE_ITEM = [
     ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
     ('volume_status', 'thresholds'),  # dynamic
+    ('sysdata', 'thresholds'),  # dynamic
 ]
 
 # Obsolete parameters will not have alphabetical order checked
@@ -42,6 +43,8 @@ OBSELETE_PARAM = [
     ('battery_level', 'show_percent_with_blocks'),
     ('volume_status', 'threshold_bad'),
     ('volume_status', 'threshold_degraded'),
+    ('sysdata', 'high_threshold'),
+    ('sysdata', 'med_threshold'),
 ]
 
 RE_PARAM = re.compile(
