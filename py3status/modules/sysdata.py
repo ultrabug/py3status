@@ -5,7 +5,8 @@ Display system RAM and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        (default 'CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)')
+        *(default '[\?color=max_cpu_mem CPU: {cpu_usage}%, '
+        'Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -22,13 +23,9 @@ Format placeholders:
     {mem_used} used memory
     {mem_used_percent} used memory percentage
 
-Color options:
-    color_bad: Above high_threshold
-    color_degraded: Above med_threshold
-    color_good: Below or equal to med_threshold
-
-Color conditionals:
+Color thresholds:
     cpu: change color based on the value of cpu_usage
+    max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
     mem: change color based on the value of mem_used_percent
     temp: change color based on the value of cpu_temp
 
@@ -139,8 +136,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "CPU: {cpu_usage}%, " \
-        "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)"
+    format = "[\?color=max_cpu_mem CPU: {cpu_usage}%, " \
+        "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     padding = 0
     precision = 2
     thresholds = None
@@ -191,6 +188,17 @@ class Py3status:
             self.values['mem_used'] = value_format.format(mem_used)
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
             self.py3.threshold_get_color(mem_used_percent, 'mem')
+
+        try:
+            self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
+        except:
+            try:
+                self.py3.threshold_get_color(cpu_usage, 'max_cpu_mem')
+            except:
+                try:
+                    self.py3.threshold_get_color(mem_used_percent, 'max_cpu_mem')
+                except:
+                    pass
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
