@@ -7,12 +7,14 @@ Configuration parameters:
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+    format_mem: format for the flat values
+        (default "{value:.2f}")
+    format_percent: format for the values in percent
+        (default "{value:.2f}")
+    format_temp: format for the temperature value
+        (default "{value:.2f}{unit}")
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
-    padding: length of space padding to use on the left
-        (default 0)
-    precision: precision of values
-        (default 2)
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: thermal zone to use. If None try to guess CPU temperature
@@ -25,6 +27,16 @@ Format placeholders:
     {mem_unit} unit for memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
+
+format_mem placeholders:
+    {value} numeric value
+
+format_percent placeholders:
+    {value} numeric value
+
+format_temp placeholders:
+    {unit} temperature unit
+    {value} numeric value
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
@@ -159,9 +171,10 @@ class Py3status:
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
         "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    format_mem = "{value:.2f}"
+    format_percent = "{value:.2f}"
+    format_temp = "{value:.2f}{unit}"
     mem_unit = 'GiB'
-    padding = 0
-    precision = 2
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
@@ -169,12 +182,21 @@ class Py3status:
 
         def deprecate_function(config):
             # support old thresholds
+            padding = config.get('padding', 0)
+            precision = config.get('precision', 2)
+            format_vals = '[\?min_length={padding} {{value:.{precision}f}}]'.format(
+                    padding=padding, precision=precision)
+            format_temp = '[\?min_length={padding} {{value:.{precision}f}}{{unit}}]'.format(
+                    padding=padding, precision=precision)
             return {
                     'thresholds': [
                         (0, 'good'),
                         (config.get('med_threshold', 40), 'degraded'),
                         (config.get('high_threshold', 75), 'bad'),
-                        ]
+                        ],
+                    'format_percent': format_vals,
+                    'format_temp': format_temp,
+                    'format_mem': format_vals,
                     }
 
         deprecated = {
@@ -190,6 +212,14 @@ class Py3status:
                         'param': 'med_threshold',
                         'msg': 'obsolete, set using thresholds parameter',
                         },
+                    {
+                        'param': 'padding',
+                        'msg': 'obsolete, use the format_* parameters',
+                        },
+                    {
+                        'param': 'precision',
+                        'msg': 'obsolete, use the format_* parameters',
+                        },
                     ]
                 }
 
@@ -200,15 +230,14 @@ class Py3status:
         self.values = {}
 
     def sysData(self):
-        value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
-
         # get CPU usage info
         if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = (1 - (
                 float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
                 )) * 100
-            self.values['cpu_usage'] = value_format.format(cpu_usage)
+            self.values['cpu_usage'] = self.py3.safe_format(self.format_percent,
+                                                            {'value': cpu_usage})
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
             self.py3.threshold_get_color(cpu_usage, 'cpu')
@@ -217,17 +246,20 @@ class Py3status:
         if self.py3.format_contains(self.format, 'cpu_temp'):
             cpu_temp = self.data.cpuTemp(self.zone)
             try:
-                self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
+                self.values['cpu_temp'] = self.py3.safe_format(self.format_temp,
+                                                               {'value': cpu_temp, 'unit': '°C'})
             except ValueError:
-                self.values['cpu_temp'] = u'{}°C'.format(cpu_temp)
+                self.values['cpu_temp'] = self.py3.safe_format('{value}{unit}',
+                                                               {'value': cpu_temp, 'unit': '°C'})
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM usage info
         if self.py3.format_contains(self.format, 'mem_*'):
             mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory(self.mem_unit)
-            self.values['mem_total'] = value_format.format(mem_total)
-            self.values['mem_used'] = value_format.format(mem_used)
-            self.values['mem_used_percent'] = value_format.format(mem_used_percent)
+            self.values['mem_total'] = self.py3.safe_format(self.format_mem, {'value': mem_total})
+            self.values['mem_used'] = self.py3.safe_format(self.format_mem, {'value': mem_used})
+            self.values['mem_used_percent'] = self.py3.safe_format(self.format_percent,
+                                                                   {'value': mem_used_percent})
             self.values['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
 
