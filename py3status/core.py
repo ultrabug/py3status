@@ -719,6 +719,11 @@ class Py3statusWrapper():
 
         # main loop
         while True:
+            # sleep a bit to avoid killing the CPU
+            # by doing this at the begining rather than the end
+            # of the loop we ensure a smoother first render of the i3bar
+            time.sleep(0.1)
+
             while not self.i3bar_running:
                 time.sleep(0.1)
 
@@ -761,9 +766,6 @@ class Py3statusWrapper():
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
                 print_line(',[{}]'.format(out))
-
-            # sleep a bit before doing this again to avoid killing the CPU
-            time.sleep(0.1)
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.
