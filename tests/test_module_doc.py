@@ -33,10 +33,13 @@ IGNORE_ITEM = [
     ('arch_updates', '_format_pacman_only'),  # need moving into __init__ etc
     ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
+    ('sysdata', 'thresholds'),  # dynamic
 ]
 
 # Obsolete parameters will not have alphabetical order checked
 OBSELETE_PARAM = [
+    ('sysdata', 'high_threshold'),
+    ('sysdata', 'med_threshold'),
 ]
 
 RE_PARAM = re.compile(
