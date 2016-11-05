@@ -63,23 +63,6 @@ Color options:
     color_degraded: Battery level is below threshold_degraded
     color_good: Battery level is above thresholds
 
-Obsolete configuration parameters:
-    mode: an old way to define `format` parameter. The current behavior is:
-        if 'format' is not "{icon}", this parameter is completely ignored
-        if 'format' is "{icon}" and 'mode' is "ascii_bar", the `format` is
-        set to "{ascii_bar}"
-        if 'format' is "{icon}" and 'mode' is "text", the `format` is set to
-        "Battery: {percent}"
-        all other values are ignored
-        (default None)
-    show_percent_with_blocks: an old way to define `format` parameter. The
-        current behavior is:
-        if 'format' is not "{icon}", this parameter is completely ignored
-        if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
-        parameter is completely ignored
-        if the value is True, the `format` is set to "{icon} {percent}%"
-        (default None)
-
 Requires:
     - the `acpi` the acpi command line utility (only if
         `measurement_mode='acpi'`)
@@ -130,12 +113,49 @@ class Py3status:
     threshold_bad = 10
     threshold_degraded = 30
     threshold_full = 100
-    # obsolete configuration parameters
-    mode = None
-    show_percent_with_blocks = None
 
     def __init__(self):
         self.last_known_status = ''
+
+    class Meta:
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',
+                    'placeholder': 'percent',
+                    'msg': '{} should not be used in format use `{percent}`',
+                },
+            ],
+            'substitute_by_value': [
+                {
+                    'param': 'mode',
+                    'value': 'ascii_bar',
+                    'substitute': {
+                        'param': 'format',
+                        'value': '{ascii_bar}',
+                    },
+                    'msg': 'obsolete parameter use `format = "{ascii_bar}"`',
+                },
+                {
+                    'param': 'mode',
+                    'value': 'text',
+                    'substitute': {
+                        'param': 'format',
+                        'value': 'Battery: {percent}',
+                    },
+                    'msg': 'obsolete parameter use `format = "{percent}"`',
+                },
+                {
+                    'param': 'show_percent_with_blocks',
+                    'value': True,
+                    'substitute': {
+                        'param': 'format',
+                        'value': '{icon} {percent}%',
+                    },
+                    'msg': 'obsolete parameter use `format = "{icon} {percent}%"`',
+                },
+            ],
+        }
 
     def post_config_hook(self):
         # Guess mode if not set
@@ -153,7 +173,6 @@ class Py3status:
 
         self._refresh_battery_info()
 
-        self._provide_backwards_compatibility()
         self._update_icon()
         self._update_ascii_bar()
         self._update_full_text()
@@ -180,20 +199,6 @@ class Py3status:
 
         if message:
             self.py3.notify_user(message, 'info')
-
-    def _provide_backwards_compatibility(self):
-        if self.format == FORMAT:
-            # Backwards compatibility for 'mode' parameter
-            if self.mode == 'ascii_bar':
-                self.format = "{ascii_bar}"
-            elif self.mode == 'text':
-                self.format = "Battery: {percent}"
-            # Backwards compatibility for 'show_percent_with_blocks' parameter
-            elif self.show_percent_with_blocks:
-                self.format = "{icon} {percent}%"
-        else:
-            # Backwards compatibility for '{}' option in format string
-            self.format = self.format.replace('{}', '{percent}')
 
     def _extract_battery_information_from_acpi(self):
         '''

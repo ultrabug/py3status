@@ -39,18 +39,8 @@ Format placeholders:
     {percentage} Percentage volume
 
 Color options:
-    color_bad: Volume below threshold_bad or muted
-    color_degraded: Volume below threshold_degraded
-    color_good: Volume above or equal to threshold_degraded
     color_muted: Volume is muted, if not supplied color_bad is used
         if set to `None` then the threshold color will be used.
-
-
-Obsolete configuration parameters:
-    threshold_bad: Volume below which color is set to bad.
-        (default 20)
-    threshold_degraded: Volume below which color is set to degraded.
-        (default 50)
 
 Example:
 
@@ -216,11 +206,36 @@ class Py3status:
     format = u'♪: {percentage}%'
     format_muted = u'♪: muted'
     max_volume = 120
-    thresholds = None
+    thresholds = [(0, 'bad'), (20, 'degraded'), (50, 'good')]
     volume_delta = 5
-    # obsolete configuration parameters
-    threshold_bad = 20
-    threshold_degraded = 50
+
+    class Meta:
+
+        def deprecate_function(config):
+            # support old thresholds
+            return {
+                'thresholds': [
+                    (0, 'bad'),
+                    (config.get('threshold_bad', 20), 'degraded'),
+                    (config.get('threshold_degraded', 50), 'good'),
+                ]
+            }
+
+        deprecated = {
+            'function': [
+                {'function': deprecate_function},
+            ],
+            'remove': [
+                {
+                    'param': 'threshold_bad',
+                    'msg': 'obsolete set using thresholds parameter',
+                },
+                {
+                    'param': 'threshold_degraded',
+                    'msg': 'obsolete set using thresholds parameter',
+                },
+            ]
+        }
 
     def post_config_hook(self):
         # Guess command if not set
@@ -237,14 +252,6 @@ class Py3status:
             self.backend = PactlBackend(self)
         else:
             raise NameError("Unknown command")
-
-        # support old thresholds
-        if self.thresholds is None:
-            self.thresholds = [
-                (0, 'bad'),
-                (self.threshold_bad, 'degraded'),
-                (self.threshold_degraded, 'good'),
-            ]
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
