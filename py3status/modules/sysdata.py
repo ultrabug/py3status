@@ -7,6 +7,12 @@ Configuration parameters:
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+    format_mem: format for the flat values
+        (default "{value:.2f}")
+    format_percent: format for the values in percent
+        (default "{value:.2f}")
+    format_temp: format for the temperature value
+        (default "{value:.2f}{unit}")
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -30,6 +36,16 @@ Format placeholders:
     {swap_used} used swap
     {swap_used_percent} used swap percentage
     {temp_unit} temperature unit
+
+format_mem placeholders:
+    {value} numeric value
+
+format_percent placeholders:
+    {value} numeric value
+
+format_temp placeholders:
+    {unit} temperature unit
+    {value} numeric value
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
@@ -206,6 +222,12 @@ class Py3status:
 
         def deprecate_function(config):
             # support old thresholds
+            padding = config.get('padding', 0)
+            precision = config.get('precision', 2)
+            format_vals = '[\?min_length={padding} {{value:.{precision}f}}]'.format(
+                    padding=padding, precision=precision)
+            format_temp = '[\?min_length={padding} {{value:.{precision}f}}{{unit}}]'.format(
+                    padding=padding, precision=precision)
             return {
                 'thresholds': [
                     (0, 'good'),
