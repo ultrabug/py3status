@@ -875,7 +875,7 @@ they have.
 Returns True if the event name and instance match that of the module
 checking.
 
-___format_units(value, unit='B', optimal=5, auto=True, si=False)__
+__format_units(value, unit='B', optimal=5, auto=True, si=False)__
 
 Takes a value and formats it for user output, we can choose the unit to
 use eg B, MiB, kbits/second.  This is mainly for use with bytes/bits it
