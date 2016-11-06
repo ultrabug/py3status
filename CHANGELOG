@@ -1,4 +1,5 @@
 version 3.3 (milestone)
+* allow module output to be used in on_click commands, by @tobes
 * py3 helper: add command_run and command_output methods, by @tobes
 * py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
 * formatter now accepts per module coloring syntax on containers, by @tobes
