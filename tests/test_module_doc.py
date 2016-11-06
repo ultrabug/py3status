@@ -37,7 +37,7 @@ IGNORE_ITEM = [
 ]
 
 # Obsolete parameters will not have alphabetical order checked
-OBSELETE_PARAM = [
+OBSOLETE_PARAM = [
     ('sysdata', 'high_threshold'),
     ('sysdata', 'med_threshold'),
 ]
@@ -239,7 +239,7 @@ def check_docstrings():
         for item in IGNORE_ITEM:
             if item[0] == module_name and item[1] in keys:
                 keys.remove(item[1])
-        for item in OBSELETE_PARAM:
+        for item in OBSOLETE_PARAM:
             if item[0] == module_name and item[1] in keys:
                 keys.remove(item[1])
         if keys != sorted(keys):
