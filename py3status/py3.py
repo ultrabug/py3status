@@ -70,6 +70,7 @@ class Py3:
         self._i3s_config = i3s_config or {}
         self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
+        self._report_exception_cache = set()
         self._thresholds = None
 
         if py3status:
@@ -157,6 +158,37 @@ class Py3:
         """
         if self._module:
             return self._output_modules.get(module_name)
+
+    def _report_exception(self, msg, frame_skip=2):
+        """
+        THIS IS PRIVATE AND UNSUPPORTED.
+        logs an exception that occurs inside of a Py3 method.  We only log the
+        exception once to prevent spamming the logs and we do not notify the
+        user.
+
+        frame_skip is used to change the place in the code that the error is
+        reported as coming from.  We want to show it as coming from the
+        py3status module where the Py3 method was called.
+        """
+        # We use a hash to see if the message is being repeated.
+        msg_hash = hash(msg)
+        if msg_hash in self._report_exception_cache:
+            return
+        self._report_exception_cache.add(msg_hash)
+
+        if self._module:
+            # If we just report the error the traceback will end in the try
+            # except block that we are calling from.
+            # We want to show the traceback originating from the module that
+            # called the Py3 method so get the correct error frame and pass this
+            # along.
+            error_frame = sys._getframe(0)
+            while frame_skip:
+                error_frame = error_frame.f_back
+                frame_skip -= 1
+            self._module._py3_wrapper.report_exception(
+                msg, notify_user=False, error_frame=error_frame
+            )
 
     def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
         """
@@ -496,6 +528,9 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
+            self._report_exception(
+                u'Invalid format `{}`'.format(format_string)
+            )
             return 'invalid format'
 
     def build_composite(self, format_string, param_dict=None, composites=None,
@@ -529,6 +564,9 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
+            self._report_exception(
+                u'Invalid format `{}`'.format(format_string)
+            )
             return [{'full_text': 'invalid format'}]
 
     def composite_update(self, item, update_dict, soft=False):

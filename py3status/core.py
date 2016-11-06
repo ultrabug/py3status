@@ -12,7 +12,7 @@ from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
 from threading import Event
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
-from traceback import extract_tb, format_tb
+from traceback import extract_tb, format_tb, format_stack
 
 import py3status.docstrings as docstrings
 from py3status.events import Events
@@ -505,7 +505,8 @@ class Py3statusWrapper():
                     # Write any byte strings straight to log
                     f.write(out)
 
-    def report_exception(self, msg, notify_user=True, level='error'):
+    def report_exception(self, msg, notify_user=True, level='error',
+                         error_frame=None):
         """
         Report details of an exception to the user.
         This should only be called within an except: block Details of the
@@ -514,6 +515,10 @@ class Py3statusWrapper():
         Because stack trace information outside of py3status or it's modules is
         not helpful in actually finding and fixing the error, we try to locate
         the first place that the exception affected our code.
+
+        Alternatively if the error occurs in a module via a Py3 call that
+        catches and reports the error then we receive an error_frame and use
+        that as the source of the error.
 
         NOTE: msg should not end in a '.' for consistency.
         """
@@ -528,21 +533,32 @@ class Py3statusWrapper():
             exc_type, exc_obj, tb = sys.exc_info()
             stack = extract_tb(tb)
             error_str = '{}: {}\n'.format(exc_type.__name__, exc_obj)
-            traceback = [error_str] + format_tb(tb)
-            # Find first relevant trace in the stack.
-            # it should be in py3status or one of it's modules.
-            found = False
-            for item in reversed(stack):
-                filename = item[0]
-                for path in py3_paths:
-                    if filename.startswith(path):
-                        # Found a good trace
-                        filename = os.path.basename(item[0])
-                        line_no = item[1]
-                        found = True
+            traceback = [error_str]
+
+            if error_frame:
+                # The error occurred in a py3status module so the traceback
+                # should be made to appear correct.  We caught the exception
+                # but make it look as though we did not.
+                traceback += format_stack(error_frame, 1) + format_tb(tb)
+                filename = os.path.basename(error_frame.f_code.co_filename)
+                line_no = error_frame.f_lineno
+            else:
+                # This is a none module based error
+                traceback += format_tb(tb)
+                # Find first relevant trace in the stack.
+                # it should be in py3status or one of it's modules.
+                found = False
+                for item in reversed(stack):
+                    filename = item[0]
+                    for path in py3_paths:
+                        if filename.startswith(path):
+                            # Found a good trace
+                            filename = os.path.basename(item[0])
+                            line_no = item[1]
+                            found = True
+                            break
+                    if found:
                         break
-                if found:
-                    break
             # all done!  create our message.
             msg = '{} ({}) {} line {}.'.format(
                 msg, exc_type.__name__, filename, line_no)
