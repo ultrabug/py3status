@@ -38,7 +38,6 @@ Requires:
 """
 
 from __future__ import division  # python2 compatibility
-from time import time
 from subprocess import check_output
 
 
@@ -98,9 +97,6 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
-        self.last_stat = get_stat(self.statistics_type)
-        self.last_time = time()
-        self.last_interface = None
         self.value_format = "{value:%s.%sf} {unit}" % (
             self.left_align, self.precision
         )
