@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# FIXME closed_color, open_color params
 """
 Display if your favorite hackerspace is open or not.
 
@@ -7,15 +6,17 @@ Configuration parameters:
     button_url: Button that when clicked opens the URL sent in the space's API.
         Setting to None disables. (default 3)
     cache_timeout: Set timeout between calls in seconds (default 60)
-    closed_color: color if space is closed (default None)
     closed_text: text if space is closed, strftime parameters
         will be translated (default 'closed')
-    open_color: color if space is open (default None)
     open_text: text if space is open, strftime parmeters will be translated
         (default 'open')
     time_text: format used for time display (default ' since %H:%M')
     url: URL to SpaceAPI json file of your space
         (default 'http://status.chaospott.de/status.json')
+
+Color options:
+    color_closed: Space is open, defaults to color_bad
+    color_open: Space is closed, defaults to color_good
 
 @author timmszigat
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
@@ -35,12 +36,26 @@ class Py3status:
     # available configuration parameters
     button_url = 3
     cache_timeout = 60
-    closed_color = None
     closed_text = 'closed'
-    open_color = None
     open_text = 'open'
     time_text = ' since %H:%M'
     url = 'http://status.chaospott.de/status.json'
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'open_color',
+                    'new': 'color_open',
+                    'msg': 'obsolete parameter use `color_open`',
+                },
+                {
+                    'param': 'closed_color',
+                    'new': 'color_closed',
+                    'msg': 'obsolete parameter use `color_closed`',
+                },
+            ],
+        }
 
     def check(self):
 
@@ -49,13 +64,6 @@ class Py3status:
             }
 
         try:
-            # if color isn't set, set basic color schema
-            if not self.open_color:
-                self.open_color = self.py3.COLOR_GOOD
-
-            if not self.closed_color:
-                self.closed_color = ''
-
             # grab json file
             json_file = urllib.request.urlopen(self.url)
             reader = codecs.getreader("utf-8")
@@ -64,8 +72,7 @@ class Py3status:
             self._url = data.get('url')
 
             if(data['state']['open'] is True):
-                if self.open_color:
-                    response['color'] = self.open_color
+                response['color'] = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD
                 if 'lastchange' in data['state'].keys():
                     response['full_text'] = self.open_text + self.time_text
                     response['short_text'] = '%H:%M'
@@ -74,8 +81,7 @@ class Py3status:
                     response['short_text'] = self.open_text
 
             else:
-                if self.closed_color:
-                    response['color'] = self.closed_color
+                response['color'] = self.py3.COLOR_CLOSED or self.py3.COLOR_BAD
                 if 'lastchange' in data['state'].keys():
                     response['full_text'] = self.closed_text + self.time_text
                     response['short_text'] = ''

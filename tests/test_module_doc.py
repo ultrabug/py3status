@@ -33,15 +33,13 @@ IGNORE_ITEM = [
     ('arch_updates', '_format_pacman_only'),  # need moving into __init__ etc
     ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
-    ('volume_status', 'thresholds'),  # dynamic
+    ('sysdata', 'thresholds'),  # dynamic
 ]
 
 # Obsolete parameters will not have alphabetical order checked
-OBSELETE_PARAM = [
-    ('battery_level', 'mode'),
-    ('battery_level', 'show_percent_with_blocks'),
-    ('volume_status', 'threshold_bad'),
-    ('volume_status', 'threshold_degraded'),
+OBSOLETE_PARAM = [
+    ('sysdata', 'high_threshold'),
+    ('sysdata', 'med_threshold'),
 ]
 
 RE_PARAM = re.compile(
@@ -241,7 +239,7 @@ def check_docstrings():
         for item in IGNORE_ITEM:
             if item[0] == module_name and item[1] in keys:
                 keys.remove(item[1])
-        for item in OBSELETE_PARAM:
+        for item in OBSOLETE_PARAM:
             if item[0] == module_name and item[1] in keys:
                 keys.remove(item[1])
         if keys != sorted(keys):

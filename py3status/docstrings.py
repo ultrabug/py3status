@@ -111,7 +111,7 @@ re_from_status = re.compile('^\s+({\S+})($|[ \t])(.*)$')
 re_from_item = re.compile('^\s+-')
 re_from_data = re.compile('^@(author|license|source)($|[ \t])')
 re_from_tag = re.compile('((`[^`]*`)|[<>&])')
-re_from_defaults = re.compile('(\(default.*\))')
+re_from_defaults = re.compile('(\(default.*\))\s*$')
 
 
 def _reformat_docstring(doc, format_fn, code_newline=''):
