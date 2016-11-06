@@ -7,6 +7,13 @@ from json import loads
 
 from py3status.profiling import profile
 
+try:
+    # Python 3
+    from shlex import quote as shell_quote
+except ImportError:
+    # Python 2
+    from pipes import quote as shell_quote
+
 
 class IOPoller:
     """
@@ -63,7 +70,34 @@ class Events(Thread):
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
 
-    def on_click_dispatcher(self, module_name, command):
+    def get_module_text(self, module_name, event):
+        """
+        Get the full text for the module as well as the partial text if the
+        module is a composite.  Partial text is the text for just the single
+        section of a composite.
+        """
+        index = event.get('index')
+        module_info = self.py3_wrapper.output_modules.get(module_name)
+        if module_info:
+            output = module_info['module'].get_latest()
+            full_text = u''.join([out['full_text'] for out in output])
+
+            partial = None
+            if index is not None:
+                if isinstance(index, int):
+                    partial = output[index]
+                else:
+                    for item in output:
+                        if item.get('index') == index:
+                            partial = item
+                            break
+            if partial:
+                partial_text = partial['full_text']
+            else:
+                partial_text = full_text
+        return full_text, partial_text
+
+    def on_click_dispatcher(self, module_name, event, command):
         """
         Dispatch on_click config parameters to either:
             - Our own methods for special py3status commands (listed below)
@@ -76,6 +110,15 @@ class Events(Thread):
         elif command == 'refresh':
             self.py3_wrapper.refresh_modules(module_name)
         else:
+            # In commands we are able to use substitutions for the text output
+            # of a module
+            if '$OUTPUT' in command or '$OUTPUT_PART' in command:
+                full_text, partial_text = self.get_module_text(module_name,
+                                                               event)
+                command = command.replace('$OUTPUT_PART',
+                                          shell_quote(partial_text))
+                command = command.replace('$OUTPUT', shell_quote(full_text))
+
             # this is a i3 message
             self.i3_msg(module_name, command)
             # to make the bar more responsive to users we ask for a refresh
@@ -107,6 +150,7 @@ class Events(Thread):
             btn = str(button)
             if self.on_click.get(click_module, {}).get(btn):
                 self.on_click_dispatcher(click_module,
+                                         event,
                                          self.on_click[module_name].get(btn))
             # otherwise setup default action on button 2 press
             elif button == 2:
