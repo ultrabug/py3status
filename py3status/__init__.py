@@ -9,6 +9,13 @@ try:
 except ImportError:
     pass
 
+try:
+    # python3
+    IOPipeError = BrokenPipeError
+except NameError:
+    # python2
+    IOPipeError = IOError
+
 
 def main():
     try:
@@ -21,9 +28,9 @@ def main():
     try:
         py3 = Py3statusWrapper()
         py3.setup()
-    except KeyboardInterrupt:
+    except (IOPipeError, KeyboardInterrupt):
         if py3:
-            py3.notify_user('Setup interrupted (KeyboardInterrupt).')
+            py3.notify_user('Setup interrupted')
         sys.exit(0)
     except Exception as e:
         if py3:
@@ -35,11 +42,11 @@ def main():
 
     try:
         py3.run()
+    except (IOPipeError, KeyboardInterrupt):
+        pass
     except Exception:
         py3.report_exception('Runtime error')
         sys.exit(3)
-    except KeyboardInterrupt:
-        pass
     finally:
         py3.stop()
         sys.exit(0)
