@@ -4,6 +4,7 @@ version 3.3 (milestone)
 * formatter now accepts per module coloring syntax on containers, by @tobes
 * formatter and composite overall updates, refactoring, tests, by @tobes
 * formatter add attr_getter option, by @tobes
+* universal module config parameter deprecation feature, by @tobes
 * fix multi-line default values support on docstrings, by @guiniol
 * fix i3status time modules updating, by @tobes
 * add tuples support to doc checker, by @guiniol
