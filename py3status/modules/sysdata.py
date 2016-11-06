@@ -29,12 +29,6 @@ Color thresholds:
     mem: change color based on the value of mem_used_percent
     temp: change color based on the value of cpu_temp
 
-Obsolete configuration parameters:
-    high_threshold: percent to consider CPU or RAM usage as 'high load'
-        (default 75)
-    med_threshold: percent to consider CPU or RAM usage as 'medium load'
-        (default 40)
-
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
@@ -140,26 +134,42 @@ class Py3status:
         "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     padding = 0
     precision = 2
-    thresholds = None
+    thresholds = [(0, "good"), (40, "degraded"), (75, "high")]
     zone = None
-    # obsolete configuration parameters
-    high_threshold = 75
-    med_threshold = 40
+
+    class Meta:
+
+        def deprecate_function(config):
+            # support old thresholds
+            return {
+                    'thresholds': [
+                        (0, 'good'),
+                        (config.get('med_threshold', 40), 'degraded'),
+                        (config.get('high_threshold', 75), 'bad'),
+                        ]
+                    }
+
+        deprecated = {
+                'function': [
+                    {'function': deprecate_function},
+                    ],
+                'remove': [
+                    {
+                        'param': 'high_threshold',
+                        'msg': 'obsolete, set using thresholds parameter',
+                        },
+                    {
+                        'param': 'med_threshold',
+                        'msg': 'obsolete, set using thresholds parameter',
+                        },
+                    ]
+                }
 
     def __init__(self):
         self.data = GetData()
         self.cpu_total = 0
         self.cpu_idle = 0
         self.values = {}
-
-    def post_config_hook(self):
-        # support old thresholds
-        if self.thresholds is None:
-            self.thresholds = [
-                (0, 'good'),
-                (self.med_threshold, 'degraded'),
-                (self.high_threshold, 'bad'),
-                ]
 
     def sysData(self):
         value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
