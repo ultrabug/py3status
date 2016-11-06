@@ -8,6 +8,7 @@ import time
 
 from collections import deque
 from json import dumps
+from platform import python_version
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
 from threading import Event
@@ -171,7 +172,6 @@ class Py3statusWrapper():
 
         # only asked for version
         if options.version:
-            from platform import python_version
             print('py3status version {} (python {})'.format(config['version'],
                                                             python_version()))
             sys.exit(0)
@@ -277,6 +277,32 @@ class Py3statusWrapper():
         if self.config.get('cli_command'):
             self.handle_cli_command(self.config)
             sys.exit()
+
+        # logging functionality now available
+        # log py3status and python versions
+        self.log('=' * 8)
+        self.log('Starting py3status version {} python {}'.format(
+            self.config['version'], python_version())
+        )
+
+        try:
+            # if running from git then log the branch and last commit
+            # we do this by looking in the .git directory
+            git_path = os.path.join(os.path.dirname(__file__), '..', '.git')
+            # branch
+            with open(os.path.join(git_path, 'HEAD'), 'r') as f:
+                out = f.readline()
+            branch = '/'.join(out.strip().split('/')[2:])
+            self.log('git branch: {}'.format(branch))
+            # last commit
+            log_path = os.path.join(git_path, 'logs', 'refs', 'heads', branch)
+            with open(log_path, 'r') as f:
+                out = f.readlines()[-1]
+            sha = out.split(' ')[1][:7]
+            msg = ':'.join(out.strip().split('\t')[-1].split(':')[1:])
+            self.log('git commit: {}{}'.format(sha, msg))
+        except:
+            pass
 
         if self.config['debug']:
             self.log(
