@@ -15,7 +15,7 @@ py3status documentation
 [Custom click events](#on_click)
 
 * [Special on_click commands](#on_click_commands)
-* [Example config](#on_click_example)
+* [Module data and on_click commands](#on_click_data)
 
 [Writing custom modules](#writing_custom_modules)
 
@@ -28,6 +28,7 @@ py3status documentation
 * [Py3 module helper](#py3)
 * [Composites](#composites)
 * [Module documentation](#docstring)
+* [Deprecation of configuration parameters](#deprecation)
 * [Module testing](#testing)
 
 [Contributing](#contributing)
@@ -341,20 +342,7 @@ As an added feature and in order to get your i3bar more responsive, every
 py3status modules and i3status modules as described in the refresh command
 below.
 
-#### <a name="on_click_commands"></a>Special on_click commands
-
-There are two commands you can pass to the `on_click` parameter that have a
-special meaning to py3status :
-
-*  `refresh` : This will refresh (expire the cache) of the clicked module.
-   This also works for i3status modules (it will send a SIGUSR1 to i3status
-   for you).
-
-*  `refresh_all` : This will refresh all the modules from your i3bar
-   (i3status included). This has the same effect has sending a SIGUSR1 to
-   py3status.
-
-#### <a name="on_click_example"></a>Example on_click usage on i3status.conf:
+Examples:
 
 ```
 # reload the i3 config when I left click on the i3status time module
@@ -408,6 +396,37 @@ weather_yahoo paris {
     request_timeout = 10
 }
 ```
+
+#### <a name="on_click_commands"></a>Special on_click commands
+
+There are two commands you can pass to the `on_click` parameter that have a
+special meaning to py3status :
+
+*  `refresh` : This will refresh (expire the cache) of the clicked module.
+   This also works for i3status modules (it will send a SIGUSR1 to i3status
+   for you).
+
+*  `refresh_all` : This will refresh all the modules from your i3bar
+   (i3status included). This has the same effect has sending a SIGUSR1 to
+   py3status.
+
+#### <a name="on_click_data"></a>Module data and on_click commands
+
+Since version 3.3 it is possible to use the output text of a module in the
+`on_click` command.  To do this `$OUTPUT` can be used in command and it will be
+substituted by the modules text output when the command is run.
+
+Example:
+
+```
+# copy module output to the clipboard using xclip
+my_module {
+    on_click 1 = 'exec echo $OUTPUT | xclip -i'
+}
+```
+
+If the output of a module is a composite then the output of the part clicked on
+can be accessed using `$OUTPUT_PART`.
 
 ***
 
@@ -856,7 +875,7 @@ they have.
 Returns True if the event name and instance match that of the module
 checking.
 
-___format_units(value, unit='B', optimal=5, auto=True, si=False)__
+__format_units(value, unit='B', optimal=5, auto=True, si=False)__
 
 Takes a value and formats it for user output, we can choose the unit to
 use eg B, MiB, kbits/second.  This is mainly for use with bytes/bits it
@@ -1193,6 +1212,130 @@ Here is an example of a docstring.
 
 ***
 
+## <a name="deprecation"></a>Deprecation of configuration parameters
+
+Sometimes it is necessary to deprecate configuration parameters.  Modules
+are able to specify information about deprecation so that it can be done
+automatically.  Deprecation information is specified in the Meta class of a
+py3status module using the deprecated attribute.  The following types of
+deprecation are supported.
+
+The deprecation types will be performed in the order here.
+
+__rename__
+
+The parameter has been renamed.  We will update the configuration to use the
+new name.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_available',  # parameter name to be renamed
+                    'new': 'icon_available',   # the parameter that will get the value
+                    'msg': 'obsolete parameter use `icon_available`',  # message
+                },
+            ],
+        }
+```
+
+__format_fix_unnamed_param__
+
+Some formats used `{}` as a placeholder this needs to be updated to a named
+placeholder eg `{value}`.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',  # parameter to be changed
+                    'placeholder': 'percent',  # the place holder to use
+                    'msg': '{} should not be used in format use `{percent}`',  # message
+                },
+            ],
+        }
+```
+
+__substitute_by_value__
+
+This allows one configuration parameter to set the value of another.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'substitute_by_value': [
+                {
+                    'param': 'mode',  # parameter to be checked for substitution
+                    'value': 'ascii_bar',  # value that will trigger the substitution
+                    'substitute': {
+                        'param': 'format',  # parameter to be updated
+                        'value': '{ascii_bar}',  # the value that will be set
+                    },
+                    'msg': 'obsolete parameter use `format = "{ascii_bar}"`',  #message
+                },
+            ],
+        }
+```
+
+__function__
+
+For more complex substitutions a function can be defined that will be called with the config as a parameter.  This function must return a dict of key value pairs of parameters to update
+
+```
+class Py3status:
+
+    class Meta:
+
+        # Create a function to be called
+        def deprecate_function(config):
+            # This function must return a dict
+            return {'thresholds': [
+                        (0, 'bad'),
+                        (config.get('threshold_bad', 20), 'degraded'),
+                        (config.get('threshold_degraded', 50), 'good'),
+                    ],
+            }
+
+        deprecated = {
+            'function': [
+                {
+                    'function': deprecate_function,  # function to be called
+                },
+            ],
+        }
+```
+
+__remove__
+
+The parameters will be removed.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'threshold_bad',  # name of parameter to remove
+                    'msg': 'obsolete set using thresholds parameter',  #message
+                },
+            ],
+        }
+```
+
+***
 
 ## <a name="testing"></a>Module testing
 

@@ -338,8 +338,80 @@ class Module(Thread):
             except AttributeError:
                 pass
 
-            # apply module configuration from i3status config
+            # module configuration
             mod_config = self.i3status_thread.config.get(module, {})
+
+            # process any deprecated configuration settings
+            try:
+                deprecated = class_inst.Meta.deprecated
+            except AttributeError:
+                deprecated = None
+
+            if deprecated:
+
+                def deprecation_log(item):
+                    # log the deprecation
+                    # currently this is just done to the log file as the user
+                    # does not need to take any action.
+                    if 'msg' in item:
+                        msg = item['msg']
+                        param = item.get('param')
+                        if param:
+                            msg = '`{}` {}'.format(param, msg)
+                        msg = 'DEPRECATION WARNING: {} {}'.format(
+                            self.module_full_name, msg
+                        )
+                        self._py3_wrapper.log(msg)
+
+                if 'rename' in deprecated:
+                    # renamed parameters
+                    for item in deprecated['rename']:
+                        param = item['param']
+                        new_name = item['new']
+                        if param in mod_config:
+                            if new_name not in mod_config:
+                                mod_config[new_name] = mod_config[param]
+                                # remove from config
+                                del mod_config[param]
+                            deprecation_log(item)
+                if 'format_fix_unnamed_param' in deprecated:
+                    # format update where {} was previously allowed
+                    for item in deprecated['format_fix_unnamed_param']:
+                        param = item['param']
+                        placeholder = item['placeholder']
+                        if '{}' in mod_config.get(param, ''):
+                            mod_config[param] = mod_config[param].replace(
+                                '{}', '{%s}' % placeholder
+                            )
+                            deprecation_log(item)
+                if 'substitute_by_value' in deprecated:
+                    # one parameter sets the value of another
+                    for item in deprecated['substitute_by_value']:
+                        param = item['param']
+                        value = item['value']
+                        substitute = item['substitute']
+                        substitute_param = substitute['param']
+                        substitute_value = substitute['value']
+                        if (mod_config.get(param) == value and
+                                substitute_param not in mod_config):
+                            mod_config[substitute_param] = substitute_value
+                            deprecation_log(item)
+                if 'function' in deprecated:
+                    # parameter set by function
+                    for item in deprecated['function']:
+                        updates = item['function'](mod_config)
+                        for name, value in updates.items():
+                            if name not in mod_config:
+                                mod_config[name] = value
+                if 'remove' in deprecated:
+                    # obsolete parameters forcibly removed
+                    for item in deprecated['remove']:
+                        param = item['param']
+                        if param in mod_config:
+                            del mod_config[param]
+                            deprecation_log(item)
+
+            # apply module configuration
             for config, value in mod_config.items():
                 # names starting with '.' are private
                 if not config.startswith('.'):

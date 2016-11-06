@@ -1,15 +1,19 @@
 version 3.3 (milestone)
+* allow module output to be used in on_click commands, by @tobes
 * py3 helper: add command_run and command_output methods, by @tobes
 * py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
 * formatter now accepts per module coloring syntax on containers, by @tobes
 * formatter and composite overall updates, refactoring, tests, by @tobes
 * formatter add attr_getter option, by @tobes
+* universal module config parameter deprecation feature, by @tobes
+* fix multi-line default values support on docstrings, by @guiniol
 * fix i3status time modules updating, by @tobes
 * add tuples support to doc checker, by @guiniol
 * don't call updates on modules before they have been fully initialised, by @tobes
 * module test: fix unicode error, by @tobes
 * module test: check for alphabetical variable declaration and unicode semantics, by @tobes
 * new clock module to display multiple times and dates informations in a flexible way, by @tobes
+* new diskdata module to shows both usage data and IO data from disks, by @guiniol
 * new net_iplist module to display interfaces and their IPv4 and IPv6 IP addresses, by @guiniol
 * backlight module: allow chaging brightness using mouse click events
 * battery_level module: stability and bugfix, by @inclementweather
@@ -24,8 +28,10 @@ version 3.3 (milestone)
 * ns_checker module: add format and cache_timeout, by @pferate
 * rate_counter module: add format and majorly refactor code, by @pferate
 * spaceapi module: go to a space's website onclick, by @rixx
+* sysdata module: add support for colors/thresholds, by @guiniol
 * volume_status module: add pulseaudio support, by @guiniol
 * volume_status module: add pactl support, by @tobes
+* vpn_status module: remove shebang, by @jakubjedelsky
 
 version 3.2 (2016-10-11)
 * NOTE: this is mainly a bugfix release
