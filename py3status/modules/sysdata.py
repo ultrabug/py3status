@@ -5,8 +5,8 @@ Display system RAM and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        *(default '[\?color=max_cpu_mem CPU: {cpu_usage}%, '
-        'Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+        *(default '[\?color=cpu CPU: {cpu_usage}%], '
+        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -130,8 +130,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "[\?color=max_cpu_mem CPU: {cpu_usage}%, " \
-        "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    format = "[\?color=cpu CPU: {cpu_usage}%], " \
+        "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     padding = 0
     precision = 2
     thresholds = [(0, "good"), (40, "degraded"), (75, "high")]
