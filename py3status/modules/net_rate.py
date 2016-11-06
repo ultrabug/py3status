@@ -35,7 +35,7 @@ Format placeholders:
     {total} total rate
     {up} upload rate
 
-Value placeholders:
+format_value placeholders:
     {unit} current unit
     {value} numeric value
 
@@ -43,10 +43,6 @@ Color thresholds:
     {down} Change color based on the value of down
     {total} Change color based on the value of total
     {up} Change color based on the value of up
-
-Obsolete configuration parameters:
-    precision: amount of numbers after dot (will be ignored if format_value is set)
-        (default 1)
 
 @author shadowprince
 @license Eclipse Public License
@@ -65,15 +61,35 @@ class Py3status:
     devfile = '/proc/net/dev'
     format = "{interface}: {total}"
     format_no_connection = ''
-    format_value = None
+    format_value = "[\?min_length=11 {value:.1f} {unit}]"
     hide_if_zero = False
     interfaces = []
     interfaces_blacklist = 'lo'
     si_units = False
     thresholds = [(0, "bad"), (1024, "degraded"), (1024*1024, "good")]
     unit = "B/s"
-    # obsolete configuration parameters
-    precision = None
+
+    class Meta:
+
+        def deprecate_function(config):
+            # support old thresholds
+            precision = config.get('precision', 1)
+            padding = 3 + 1 + precision + 1 + 5
+            format_value = "[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
+                    padding=padding, precision=precision)
+            return {'format_value': format_value}
+
+        deprecated = {
+            'function': [
+                {'function': deprecate_function},
+            ],
+            'remove': [
+                {
+                    'param': 'precision',
+                    'msg': 'obsolete, use format_value instead',
+                },
+            ]
+        }
 
     def __init__(self, *args, **kwargs):
         self.last_interface = None
@@ -86,20 +102,6 @@ class Py3status:
             self.interfaces = self.interfaces.split(',')
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(',')
-
-        if self.format_value is None:
-            if self.precision is not None:
-                if self.precision > 0:
-                    self.left_align = 3 + 1 + self.precision + 1 + 5
-                else:
-                    self.left_align = 3 + 1 + 5
-                self.format_value = "[\?min_length=%s {value:.%sf} {unit}]" % (self.left_align,
-                                                                               self.precision)
-            else:
-                self.format_value = "[\?min_length=11 {value:.1f} {unit}]"
-        elif self.precision is not None:
-            self.py3.notify_user('net_rate.py: Both format_value and precision are set.'
-                                 ' precision will be ignored')
 
     def currentSpeed(self):
         ns = self._get_stat()

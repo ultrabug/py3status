@@ -33,14 +33,11 @@ IGNORE_ITEM = [
     ('arch_updates', '_format_pacman_only'),  # need moving into __init__ etc
     ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
-    ('net_rate', 'format_value'),  # dynamic
-    ('net_rate', 'precision'),  # dynamic
     ('sysdata', 'thresholds'),  # dynamic
 ]
 
 # Obsolete parameters will not have alphabetical order checked
 OBSOLETE_PARAM = [
-    ('net_rate', 'precision'),
     ('sysdata', 'high_threshold'),
     ('sysdata', 'med_threshold'),
 ]
