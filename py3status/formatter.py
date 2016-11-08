@@ -232,12 +232,49 @@ class Formatter:
                 placeholders.add(token.group('key'))
         return placeholders
 
+    def update_placeholders(self, format_string, placeholders):
+        """
+        Update a format string renaming placeholders.
+        """
+
+        # Tokenize the format string and process them
+        output = []
+        for token in re.finditer(self.reg_ex, format_string):
+            if token.group('key') in placeholders:
+                output.append('{%s%s}' % (
+                    placeholders[token.group('key')],
+                    token.group('format'))
+                )
+                continue
+            value = token.group(0)
+            output.append(value)
+        return u''.join(output)
+
+    def update_placeholder_formats(self, format_string, placeholder_formats):
+        """
+        Update a format string adding formats if they are not already present.
+        """
+        # Tokenize the format string and process them
+        output = []
+        for token in re.finditer(self.reg_ex, format_string):
+            if (token.group('placeholder') and
+                    (not token.group('format')) and
+                    token.group('key') in placeholder_formats):
+                output.append('{%s%s}' % (
+                    token.group('key'),
+                    placeholder_formats[token.group('key')])
+                )
+                continue
+            value = token.group(0)
+            output.append(value)
+        return u''.join(output)
+
     def format(self, format_string, module=None, param_dict=None,
                force_composite=False, attr_getter=None):
         """
-        Format a string.
-        substituting place holders which can be found in
-        composites, param_dict or as attributes of the supplied module.
+        Format a string, substituting place holders which can be found in
+        param_dict, attributes of the supplied module, or provided via calls to
+        the attr_getter function.
         """
 
         def set_param(param, value, key, format=''):

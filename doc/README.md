@@ -1281,6 +1281,52 @@ class Py3status:
         }
 ```
 
+__rename_placeholder__
+
+We can use this to rename placeholders in format strings
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'rename_placeholder': [
+                {
+                    'placeholder': 'cpu',  # old placeholder name
+                    'new': 'cpu_usage',  # new placeholder name
+                    'format_strings': ['format'],  # config settings to update
+                },
+            ],
+        }
+```
+
+__update_placeholder_format'__
+
+This allows us to update the format of a placeholder in format strings.
+The key value pairs {placeholder: format} can be supplied as a dict in
+`placeholder_formats` or the dict can be provided by `function` the
+function will be called with the current config and must return a dict.
+If both are supplied then `placeholder_formats` will be updated using
+the dict supplied by the function.
+
+```
+class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'update_placeholder_format': [
+                {
+                    'function': update_placeholder_format,  # function returning dict
+                    'placeholder_formats': {   # dict of placeholder:format
+                        'cpu_usage': ':.2f',
+                    },
+                    'format_strings': ['format'],  # config settings to update
+                }
+            ],
+        }
+```
 __substitute_by_value__
 
 This allows one configuration parameter to set the value of another.
