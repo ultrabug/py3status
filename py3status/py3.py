@@ -1,11 +1,22 @@
 from __future__ import division
 
+import codecs
+import json
 import sys
 import os
 import shlex
 from math import log10
 from time import time
 from subprocess import Popen, PIPE
+
+try:
+    # Python 3
+    from urllib.error import URLError
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import URLError
+    from urllib2 import urlopen
 
 from py3status.formatter import Formatter, Composite
 
@@ -38,6 +49,48 @@ class NoneColor:
     def __repr__(self):
         # this is for output via module_test
         return 'None'
+
+
+class HTTPResponse:
+    """
+    This class is like a simplified version of `urllib3.response.HTTPResponse`.
+
+    The HTTPResponse object provides status, data, and json attributes.
+
+    @TODO: Implement the header attribute
+    """
+
+    def __init__(self, original_response):
+        self._original_response = original_response
+        self._status = None
+        self._data = None
+        self._json = None
+
+    @property
+    def status(self):
+        """
+        The HTTP status code for the response.
+        """
+        if self._status is None:
+            self._status = self._original_response.getcode()
+        return self._status
+
+    @property
+    def data(self):
+        """
+        A bytestring representing the content.
+        """
+        if self._data is None:
+            self._data = self._original_response.read()
+        return self._data
+
+    def json(self):
+        """
+        A deserialized Python object, generated from the response data.
+        """
+        if self._json is None:
+            self._json = json.loads(self.data.decode('utf-8'))
+        return self._json
 
 
 class Py3:
@@ -83,6 +136,21 @@ class Py3:
                 config = self._module.i3status_thread.config['general']
                 self._i3s_config = config
             self._py3status_module = module.module_class
+
+    class Py3Exception(Exception):
+        """ Base exception class """
+
+    class HTTPError(Py3Exception):
+        """ HTTP exception class """
+
+    class URLError(HTTPError):
+        """ A unified interface for URLError """
+
+    class ClientError(HTTPError):
+        """ A 4xx Client Error was returned """
+
+    class ServerError(HTTPError):
+        """ A 5xx Server Error was returned """
 
     def __getattr__(self, name):
         """
@@ -679,3 +747,72 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def _get_url(self, url):
+        """
+        Get the HTTPResponse for the HTTP GET request to `url`.
+
+        Raises `Py3.URLError` on Connection Errors.
+        Raises `Py3.ClientError` on HTTP 4xx Errors.
+        Raises `Py3.ServerError` on HTTP 5xx Errors.
+        """
+        try:
+            response = HTTPResponse(urlopen(url))
+        except URLError as e:
+            self.log('Unable to access [{}]'.format(url),
+                     level=self.LOG_ERROR)
+            raise self.URLError(e)
+        status_message = '{url} returned a {http_status} status.'.format(
+            url=url, http_status=response.status)
+        if 400 <= response.status < 500:
+            self.log(status_message, level=self.LOG_ERROR)
+            raise self.ClientError(status_message)
+        elif 500 <= response.status < 600:
+            self.log(status_message, level=self.LOG_WARNING)
+            raise self.ServerError(status_message)
+        return response
+
+    def get_json_data(self, url):
+        """
+        Deserialize JSON from `url` into a Python object.
+
+        `url` can be str or a HTTPResponse object.
+
+        Returns JSON object on success, or None on error.
+        Does not raise any exceptions to caller.
+        """
+        json_data = None
+        if hasattr(url, 'getcode'):
+            response = url
+        else:
+            try:
+                response = self._get_url(url)
+            except self.HTTPError:
+                # Any Exceptions extended from `Py3.Py3Exception.HTTPError`
+                return None
+            except Exception as e:
+                self.log('An uncaught exception was raised [{}]'.format(e),
+                         level=self.LOG_ERROR)
+                return None
+        try:
+            # Using py3status.py3.HTTPResponse Object
+            try:
+                json_data = response.json()
+            except (TypeError, ValueError) as e:
+                self.log('Error in json.load for [URL: {}] [{}]'.format(url, e),
+                         level=self.LOG_ERROR)
+                return None
+        except:
+            # Using the built-in HTTPResponse Object
+            reader = codecs.getreader('utf-8')
+            try:
+                json_data = json.load(reader(response))
+            except (TypeError, ValueError) as e:
+                self.log('Error in json.load for [URL: {}] [{}]'.format(url, e),
+                         level=self.LOG_ERROR)
+                return None
+            except Exception as e:
+                self.log('An uncaught exception was raised [{}]'.format(e),
+                         level=self.LOG_ERROR)
+                return None
+        return json_data
