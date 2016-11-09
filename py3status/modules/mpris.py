@@ -256,22 +256,22 @@ class Py3status:
 
     def _get_control_states(self):
         control_states = {
-            'pause':    {'action':    'Pause',
-                         'clickable': 'CanPause',
-                         'icon':      self.icon_pause},
-            'play':     {'action':    'Play',
-                         'clickable': 'CanPlay',
-                         'icon':      self.icon_play},
-            'stop':     {'action':    'Stop',
-                         # Workaround: The MPRIS API has no CanStop function.
-                         'clickable': 'True',
-                         'icon':      self.icon_stop},
-            'next':     {'action':    'Next',
-                         'clickable': 'CanGoNext',
-                         'icon':      self.icon_next},
-            'previous': {'action':    'Previous',
+            'pause': {'action': 'Pause',
+                      'clickable': 'CanPause',
+                      'icon': self.icon_pause},
+            'play': {'action': 'Play',
+                     'clickable': 'CanPlay',
+                     'icon': self.icon_play},
+            'stop': {'action': 'Stop',
+                     # Workaround: The MPRIS API has no CanStop function.
+                     'clickable': 'True',
+                     'icon': self.icon_stop},
+            'next': {'action': 'Next',
+                     'clickable': 'CanGoNext',
+                     'icon': self.icon_next},
+            'previous': {'action': 'Previous',
                          'clickable': 'CanGoPrevious',
-                         'icon':      self.icon_previous}
+                         'icon': self.icon_previous}
         }
 
         state = 'pause' if self._data.get('state') == PLAYING else 'play'

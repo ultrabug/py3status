@@ -426,7 +426,7 @@ class ConfigParser:
             if scheme == 'base64':
                 value = PrivateBase64(value, module_name)
             elif scheme == 'hide':
-                value = PrivateHide(value,  module_name)
+                value = PrivateHide(value, module_name)
             else:
                 self.error('Unknown scheme {} for data'.format(scheme))
 

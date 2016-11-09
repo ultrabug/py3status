@@ -67,7 +67,7 @@ def get_stat(statistics_type):
     return {
         "up": up,
         "down": down,
-        "total": up+down
+        "total": up + down
     }
 
 

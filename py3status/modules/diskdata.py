@@ -19,7 +19,7 @@ Configuration parameters:
         (default False)
     thresholds: thresholds to use for color changes
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
-        'total': [(0, "good"), (1024, 'degraded'), (1024*1024, 'bad')]})*
+        'total': [(0, "good"), (1024, 'degraded'), (1024 * 1024, 'bad')]})*
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
         (default "B/s")
@@ -68,9 +68,9 @@ class Py3status:
     sector_size = 512
     si_units = False
     thresholds = {
-            'free': [(0, "bad"), (10, "degraded"), (100, "good")],
-            'total': [(0, "good"), (1024, "degraded"), (1024*1024, "bad")]
-            }
+        'free': [(0, "bad"), (10, "degraded"), (100, "good")],
+        'total': [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")]
+    }
     unit = "B/s"
 
     def __init__(self, *args, **kwargs):

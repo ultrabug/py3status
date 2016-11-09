@@ -330,7 +330,7 @@ class I3status(Thread):
                     stdout=PIPE,
                     stderr=PIPE,
                     # Ignore the SIGTSTP signal for this subprocess
-                    preexec_fn=lambda:  signal(SIGTSTP, SIG_IGN)
+                    preexec_fn=lambda: signal(SIGTSTP, SIG_IGN)
                 )
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)

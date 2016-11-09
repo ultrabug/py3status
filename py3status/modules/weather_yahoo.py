@@ -128,7 +128,7 @@ class Py3status:
         if 'cloud' in text or code in [
                 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
                 44
-                ]:
+        ]:
             return self.icon_cloud
 
         # rain
@@ -137,7 +137,7 @@ class Py3status:
                 11, 12,
                 37, 38, 39,
                 40, 45, 47
-                ]:
+        ]:
             return self.icon_rain
 
         # snow
@@ -146,7 +146,7 @@ class Py3status:
                 10, 13, 14, 15, 16, 17, 18,
                 35,
                 41, 42, 43, 46
-                ]:
+        ]:
             return self.icon_snow
 
         return self.icon_default
