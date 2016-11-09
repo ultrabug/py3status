@@ -213,13 +213,24 @@ class Formatter:
         r'|(?P<switch>\|)'
         r'|(\\\?(?P<command>\S*)\s)'
         r'|(?P<escaped>(\\.|\{\{|\}\}))'
-        r'|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(([^}\\]|\\.)*)?\}))'
+        r'|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(?P<format>([^}\\]|\\.)*)?\}))'
         r'|(?P<literal>([^\[\]\\\{\}\|])+)'
         r'|(?P<lost_brace>(\}))'
     ]
 
     python2 = sys.version_info < (3, 0)
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
+
+    def get_placeholders(self, format_string):
+        """
+        Parses the format_string and returns a set of placeholders.
+        """
+        placeholders = set()
+        # Tokenize the format string and process them
+        for token in re.finditer(self.reg_ex, format_string):
+            if token.group('placeholder'):
+                placeholders.add(token.group('key'))
+        return placeholders
 
     def format(self, format_string, module=None, param_dict=None,
                force_composite=False, attr_getter=None):
@@ -229,7 +240,7 @@ class Formatter:
         composites, param_dict or as attributes of the supplied module.
         """
 
-        def set_param(param, value, key):
+        def set_param(param, value, key, format=''):
             """
             Converts a placeholder to a string value.
             We fix python 2 unicode issues and use string.format()
@@ -240,6 +251,20 @@ class Formatter:
             # '', None, and False are ignored
             # numbers like 0 and 0.0 are not.
             if not (param in ['', None] or param is False):
+                if format.startswith(':'):
+                    # if a parameter has been set to be formatted as a numeric
+                    # type then we see if we can coerce it to be.  This allows
+                    # the user to format types that normally would not be
+                    # allowed eg '123' it also allows {:d} to be used as a
+                    # shorthand for {:.0f}.  If the parameter cannot be
+                    # successfully converted then the format is removed.
+                    try:
+                        if 'f' in format:
+                            param = float(param)
+                        if 'd' in format:
+                            param = int(float(param))
+                    except ValueError:
+                        value = u'{%s}' % key
                 value = value.format(**{key: param})
                 block.add(value)
                 block.mark_valid()
@@ -284,7 +309,8 @@ class Formatter:
                             block.add(param.copy())
                             block.mark_valid()
                     else:
-                        set_param(param, value, key)
+                        format = token.group('format')
+                        set_param(param, value, key, format)
                 elif module and hasattr(module, key):
                     # attribute of the module
                     param = getattr(module, key)
@@ -303,7 +329,7 @@ class Formatter:
                 block.add(value)
             elif token.group('lost_brace'):
                 # due to how parsing happens we can get a lonesome }
-                # eg in format_sting '{{something}' this fixes that issue
+                # eg in format_string '{{something}' this fixes that issue
                 block.add(value)
             elif token.group('command'):
                 # a block command has been found

@@ -1,8 +1,10 @@
 from __future__ import division
 
-import sys
 import os
+import sys
 import shlex
+
+from fnmatch import fnmatch
 from math import log10
 from time import time
 from subprocess import Popen, PIPE
@@ -67,6 +69,8 @@ class Py3:
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
         self._colors = {}
+        self._format_placeholders = {}
+        self._format_placeholders_cache = {}
         self._i3s_config = i3s_config or {}
         self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
@@ -437,6 +441,46 @@ class Py3:
             requested = (requested + sync_to) - (requested % sync_to)
 
         return requested + offset
+
+    def format_contains(self, format_string, name):
+        """
+        Determines if `format_string` contains placeholder `name`
+
+        `name` is tested against placeholders using fnmatch so the following
+        patterns can be used:
+
+            * 	    matches everything
+            ? 	    matches any single character
+            [seq] 	matches any character in seq
+            [!seq] 	matches any character not in seq
+
+        This is useful because a simple test like
+        `'{placeholder}' in format_string`
+        will fail if the format string contains placeholder formatting
+        eg `'{placeholder:.2f}'`
+        """
+
+        # We cache things to prevent parsing the format_string more than needed
+        try:
+            return self._format_placeholders_cache[format_string][name]
+        except KeyError:
+            pass
+
+        if format_string not in self._format_placeholders:
+            placeholders = self._formatter.get_placeholders(format_string)
+            self._format_placeholders[format_string] = placeholders
+        else:
+            placeholders = self._format_placeholders[format_string]
+
+        result = False
+        for placeholder in placeholders:
+            if fnmatch(placeholder, name):
+                result = True
+                break
+        if format_string not in self._format_placeholders_cache:
+            self._format_placeholders_cache[format_string] = {}
+        self._format_placeholders_cache[format_string][name] = result
+        return result
 
     def safe_format(self, format_string, param_dict=None,
                     force_composite=False, attr_getter=None):
