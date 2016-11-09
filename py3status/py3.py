@@ -125,8 +125,8 @@ class Py3:
         if color.startswith('#'):
             color = color.upper()
             if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2]
-                         + color[2] + color[3] + color[3])
+                color = ('#' + color[1] + color[1] + color[2] +
+                         color[2] + color[3] + color[3])
             return color
 
         name = 'color_%s' % color

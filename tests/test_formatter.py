@@ -587,56 +587,56 @@ def test_else_false():
 def test_color_name_1():
     run_formatter({
         'format': '\?color=bad color',
-        'expected':  [{'full_text': 'color', 'color': '#FF0000'}],
+        'expected': [{'full_text': 'color', 'color': '#FF0000'}],
     })
 
 
 def test_color_name_2():
     run_formatter({
         'format': '\?color=no_name color',
-        'expected':  'color',
+        'expected': 'color',
     })
 
 
 def test_color_name_3():
     run_formatter({
         'format': '\?color=#FF00FF color',
-        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+        'expected': [{'full_text': 'color', 'color': '#FF00FF'}],
     })
 
 
 def test_color_name_4():
     run_formatter({
         'format': '\?color=#ff00ff color',
-        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+        'expected': [{'full_text': 'color', 'color': '#FF00FF'}],
     })
 
 
 def test_color_name_4a():
     run_formatter({
         'format': '[\?color=#ff00ff&show color]',
-        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+        'expected': [{'full_text': 'color', 'color': '#FF00FF'}],
     })
 
 
 def test_color_name_5():
     run_formatter({
         'format': '\?color=#F0F color',
-        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+        'expected': [{'full_text': 'color', 'color': '#FF00FF'}],
     })
 
 
 def test_color_name_5a():
     run_formatter({
         'format': '[\?color=#F0F&show color]',
-        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+        'expected': [{'full_text': 'color', 'color': '#FF00FF'}],
     })
 
 
 def test_color_name_6():
     run_formatter({
         'format': '\?color=#f0f color',
-        'expected':  [{'full_text': 'color', 'color': '#FF00FF'}],
+        'expected': [{'full_text': 'color', 'color': '#FF00FF'}],
     })
 
 
@@ -657,21 +657,21 @@ def test_color_name_7a():
 def test_color_1():
     run_formatter({
         'format': '[\?color=bad {name}]',
-        'expected':  [{'full_text': u'Björk', 'color': '#FF0000'}],
+        'expected': [{'full_text': u'Björk', 'color': '#FF0000'}],
     })
 
 
 def test_color_1a():
     run_formatter({
         'format': '\?color=bad {name}',
-        'expected':  [{'full_text': u'Björk', 'color': '#FF0000'}],
+        'expected': [{'full_text': u'Björk', 'color': '#FF0000'}],
     })
 
 
 def test_color_2():
     run_formatter({
         'format': '[\?color=good Name [\?color=bad {name}] hello]',
-        'expected':  [
+        'expected': [
             {'full_text': 'Name ', 'color': '#00FF00'},
             {'full_text': u'Björk', 'color': '#FF0000'},
             {'full_text': ' hello', 'color': '#00FF00'}
@@ -682,7 +682,7 @@ def test_color_2():
 def test_color_3():
     run_formatter({
         'format': '[\?max_length=20&color=good Name [\?color=bad {name}] hello]',
-        'expected':  [
+        'expected': [
             {'full_text': 'Name ', 'color': '#00FF00'},
             {'full_text': u'Björk', 'color': '#FF0000'},
             {'full_text': ' hello', 'color': '#00FF00'}
@@ -693,7 +693,7 @@ def test_color_3():
 def test_color_4():
     run_formatter({
         'format': '[\?max_length=8&color=good Name [\?color=bad {name}] hello]',
-        'expected':  [
+        'expected': [
             {'full_text': 'Name ', 'color': '#00FF00'},
             {'full_text': u'Bjö', 'color': '#FF0000'}
         ],
@@ -875,23 +875,23 @@ def test_min_length_3():
 def test_min_length_4():
     run_formatter({
         'format': '[\?min_length=9 [\?color=good {name}]]',
-        'expected':  [{'color': '#00FF00', 'full_text': u'    Björk'}],
+        'expected': [{'color': '#00FF00', 'full_text': u'    Björk'}],
     })
 
 
 def test_min_length_5():
     run_formatter({
         'format': '\?min_length=9 [\?color=bad {number}][\?color=good {name}]',
-        'expected':  [{'full_text': '  42', 'color': '#FF0000'},
-                      {'full_text': u'Björk', 'color': '#00FF00'}],
+        'expected': [{'full_text': '  42', 'color': '#FF0000'},
+                     {'full_text': u'Björk', 'color': '#00FF00'}],
     })
 
 
 def test_min_length_6():
     run_formatter({
         'format': '[\?min_length=9 [\?color=bad {number}][\?color=good {name}]]',
-        'expected':  [{'full_text': '  42', 'color': '#FF0000'},
-                      {'full_text': u'Björk', 'color': '#00FF00'}],
+        'expected': [{'full_text': '  42', 'color': '#FF0000'},
+                     {'full_text': u'Björk', 'color': '#00FF00'}],
     })
 
 

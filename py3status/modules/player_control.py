@@ -166,8 +166,8 @@ class Py3status:
         mpris = 'org.mpris.MediaPlayer2'
         mpris_slash = '/' + mpris.replace('.', '/')
         bus = dbus.SessionBus()
-        proxy = bus.get_object(mpris+'.vlc', mpris_slash)
-        return dbus.Interface(proxy, dbus_interface=mpris+'.Player')
+        proxy = bus.get_object(mpris + '.vlc', mpris_slash)
+        return dbus.Interface(proxy, dbus_interface=mpris + '.Player')
 
     def player_control(self):
         return dict(

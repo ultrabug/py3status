@@ -1400,24 +1400,26 @@ existing modules are welcome.
 - i3status
     - http://i3wm.org/i3status/
     - https://github.com/i3/i3status
-- flake8
-    - https://pypi.python.org/pypi/flake8
-    - https://github.com/PyCQA/flake8
+- pytest pytest-flake8
+    - https://pypi.python.org/pypi/pytest
+    - https://pypi.python.org/pypi/pytest-flake8
 
 # Python versions
 
 py3status code, including modules, should run under both python 2 and python 3.
 
-# Flake 8
+# Pytest
 
-Before making any Pull Request, make sure that flake8 tests pass without any
-error/warning:
+Py3status uses pytest and the pytest-flake8 plugin for testing. All submissions to the project must pass testing. To install these via pip use
 
-- Code what you want to
-- Run `flake8 .` at the root of the repository
-- Fix potential errors/warnings
-- If you already commited your code, make sure to amend (`git commit --amend`)
-  or rebase your commit with the flake8 fixes !
+```
+pip install pytest
+pip install pytest-flake8
+```
+
+The tests can be run by using `py.test --flake8` in the py3status root directory.
+
+Tests are kept in the `tests` directory.
 
 # Travis CI
 

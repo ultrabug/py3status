@@ -356,7 +356,7 @@ class Py3status:
                     active_battery["capacity"] *
                     (active_battery["percent_charged"] / 100))
                 time_remaining_seconds += inactive_battery["capacity"] * \
-                    inactive_battery["percent_charged"]/100 * \
+                    inactive_battery["percent_charged"] / 100 * \
                     rate_second_per_mah
 
                 self.time_remaining = self._seconds_to_hms(
@@ -389,11 +389,12 @@ class Py3status:
 
     def _update_full_text(self):
         self.full_text = self.py3.safe_format(
-                self.format,
-                dict(ascii_bar=self.ascii_bar,
-                     icon=self.icon,
-                     percent=self.percent_charged,
-                     time_remaining=self.time_remaining))
+            self.format,
+            dict(ascii_bar=self.ascii_bar,
+                 icon=self.icon,
+                 percent=self.percent_charged,
+                 time_remaining=self.time_remaining)
+        )
 
     def _build_response(self):
         self.response = {}
@@ -429,8 +430,8 @@ class Py3status:
         else:
             battery_status = 'good'
 
-        if (notify_msg and self.notify_low_level
-                and self.last_known_status != battery_status):
+        if (notify_msg and self.notify_low_level and
+                self.last_known_status != battery_status):
             self.py3.notify_user(notify_msg['msg'].format(self.percent_charged),
                                  notify_msg['level'])
 

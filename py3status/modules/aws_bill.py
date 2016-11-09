@@ -115,7 +115,7 @@ class Py3status:
             response['full_text'] = 'Check your internet access'
         elif bill_amount is not False:
             response['full_text'] = self.py3.safe_format(
-                    self.format, {'bill_amount': bill_amount}
+                self.format, {'bill_amount': bill_amount}
             )
             response['color'] = self.py3.COLOR_GOOD
         else:
