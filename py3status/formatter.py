@@ -58,8 +58,8 @@ class BlockConfig:
         if color.startswith('#'):
             color = color.upper()
             if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2]
-                         + color[2] + color[3] + color[3])
+                color = ('#' + color[1] + color[1] + color[2] +
+                         color[2] + color[3] + color[3])
             # check color is valid
             if not self.REGEX_COLOR.match(color):
                 return self.color

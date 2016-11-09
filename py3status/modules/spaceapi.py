@@ -61,7 +61,7 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            }
+        }
 
         try:
             # grab json file

@@ -386,7 +386,7 @@ class Py3statusWrapper():
         limit_key = ''
         if rate_limit:
             try:
-                limit_key = time.time()//rate_limit
+                limit_key = time.time() // rate_limit
             except TypeError:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude

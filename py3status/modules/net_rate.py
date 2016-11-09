@@ -24,7 +24,7 @@ Configuration parameters:
     si_units: use SI units
         (default False)
     thresholds: thresholds to use for colors
-        (default [(0, 'bad'), (1024, 'degraded'), (1024*1024, 'good')])
+        (default [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')])
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
         (default "B/s")
@@ -66,7 +66,7 @@ class Py3status:
     interfaces = []
     interfaces_blacklist = 'lo'
     si_units = False
-    thresholds = [(0, "bad"), (1024, "degraded"), (1024*1024, "good")]
+    thresholds = [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")]
     unit = "B/s"
 
     class Meta:
@@ -76,7 +76,8 @@ class Py3status:
             precision = config.get('precision', 1)
             padding = 3 + 1 + precision + 1 + 5
             format_value = "[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
-                    padding=padding, precision=precision)
+                padding=padding, precision=precision
+            )
             return {'format_value': format_value}
 
         deprecated = {
@@ -118,7 +119,7 @@ class Py3status:
                 down /= timedelta
                 up /= timedelta
 
-                deltas[new[0]] = {'total': up+down, 'up': up, 'down': down, }
+                deltas[new[0]] = {'total': up + down, 'up': up, 'down': down, }
 
             # update last_ info
             self.last_stat = self._get_stat()
@@ -159,7 +160,7 @@ class Py3status:
                 'total': self._format_value(delta['total']),
                 'up': self._format_value(delta['up']),
                 'interface': interface[:-1],
-                })
+            })
 
         return response
 
