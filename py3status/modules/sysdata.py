@@ -5,8 +5,8 @@ Display system RAM and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        *(default '[\?color=max_cpu_mem CPU: {cpu_usage}%, '
-        'Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+        *(default '[\?color=cpu CPU: {cpu_usage}%], '
+        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -38,13 +38,15 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 from __future__ import division
 
 import re
-import subprocess
 
 
 class GetData:
     """
     Get system status
     """
+    def __init__(self, parent):
+        self.py3 = parent.py3
+
     def cpu(self):
         """
         Get the cpu usage data from /proc/stat :
@@ -106,21 +108,19 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
+        sensors = None
         if zone:
-            cpu_temp = float(subprocess.check_output(['sensors', zone])
-                             .split()[7].decode("utf-8")[1:-2])
-
+            try:
+                sensors = self.py3.command_output(['sensors', zone])
+            except:
+                sensors = None
+        if not sensors:
+            sensors = self.py3.command_output('sensors')
+        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        if m:
+            cpu_temp = float(m.groups()[1].strip()[:-2])
         else:
-            sensors = subprocess.check_output(
-                'sensors',
-                shell=True,
-                universal_newlines=True,
-            )
-            m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
-            if m:
-                cpu_temp = float(m.groups()[1].strip()[:-2])
-            else:
-                cpu_temp = 0
+            cpu_temp = '?'
 
         return cpu_temp
 
@@ -130,8 +130,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "[\?color=max_cpu_mem CPU: {cpu_usage}%, " \
-        "Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    format = "[\?color=cpu CPU: {cpu_usage}%], " \
+        "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     padding = 0
     precision = 2
     thresholds = [(0, "good"), (40, "degraded"), (75, "high")]
@@ -165,8 +165,8 @@ class Py3status:
                     ]
                 }
 
-    def __init__(self):
-        self.data = GetData()
+    def post_config_hook(self):
+        self.data = GetData(self)
         self.cpu_total = 0
         self.cpu_idle = 0
         self.values = {}
@@ -175,7 +175,7 @@ class Py3status:
         value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
 
         # get CPU usage info
-        if '{cpu_usage}' in self.format:
+        if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = (1 - (
                 float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
@@ -186,13 +186,16 @@ class Py3status:
             self.py3.threshold_get_color(cpu_usage, 'cpu')
 
         # if specified as a formatting option, also get the CPU temperature
-        if '{cpu_temp}' in self.format:
+        if self.py3.format_contains(self.format, 'cpu_temp'):
             cpu_temp = self.data.cpuTemp(self.zone)
-            self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
+            try:
+                self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
+            except ValueError:
+                self.values['cpu_temp'] = u'{}°C'.format(cpu_temp)
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM usage info
-        if '{mem_' in self.format:
+        if self.py3.format_contains(self.format, 'mem_*'):
             mem_total, mem_used, mem_used_percent = self.data.memory()
             self.values['mem_total'] = value_format.format(mem_total)
             self.values['mem_used'] = value_format.format(mem_used)

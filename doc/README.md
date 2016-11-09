@@ -969,6 +969,23 @@ The following functions can be registered
 >
 > Note: This function should only be used by containers.
 
+__format_contains(format_string, name)__
+
+Determines if `format_string` contains placeholder `name`
+
+`name` is tested against placeholders using fnmatch so the following
+patterns can be used:
+
+    * 	    matches everything
+    ? 	    matches any single character
+    [seq] 	matches any character in seq
+    [!seq] 	matches any character not in seq
+
+This is useful because a simple test like
+`'{placeholder}' in format_string`
+will fail if the format string contains placeholder formatting
+eg `'{placeholder:.2f}'`
+
 __safe_format(format_string, param_dict=None, force_composite=False,
 attr_getter=None)__
 

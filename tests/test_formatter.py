@@ -27,6 +27,9 @@ param_dict = {
     'zero': 0,
     'zero_str': '0',
     'zero_float': 0.0,
+    'str_int': '123',
+    'str_float': '123.456',
+    'str_nan': "I'm not a number",
 
     'composite_basic': Composite([{'full_text': 'red ', 'color': '#FF0000'},
                                   {'full_text': 'green ', 'color': '#00FF00'},
@@ -889,4 +892,46 @@ def test_min_length_6():
         'format': '[\?min_length=9 [\?color=bad {number}][\?color=good {name}]]',
         'expected':  [{'full_text': '  42', 'color': '#FF0000'},
                       {'full_text': u'Björk', 'color': '#00FF00'}],
+    })
+
+
+def test_numeric_strings_1():
+    run_formatter({
+        'format': '{str_int: d}',
+        'expected': ' 123',
+    })
+
+
+def test_numeric_strings_2():
+    run_formatter({
+        'format': '{str_int:.2f}',
+        'expected': '123.00',
+    })
+
+
+def test_numeric_strings_3():
+    run_formatter({
+        'format': '{str_float: d}',
+        'expected': ' 123',
+    })
+
+
+def test_numeric_strings_4():
+    run_formatter({
+        'format': '{str_float:.1f}',
+        'expected': '123.5',
+    })
+
+
+def test_numeric_strings_5():
+    run_formatter({
+        'format': '{str_nan: d}',
+        'expected': "I'm not a number",
+    })
+
+
+def test_numeric_strings_6():
+    run_formatter({
+        'format': '{str_nan:.1f}',
+        'expected': "I'm not a number",
     })
