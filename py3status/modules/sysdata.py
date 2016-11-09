@@ -175,7 +175,7 @@ class Py3status:
         value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
 
         # get CPU usage info
-        if '{cpu_usage}' in self.format:
+        if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = (1 - (
                 float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
@@ -186,7 +186,7 @@ class Py3status:
             self.py3.threshold_get_color(cpu_usage, 'cpu')
 
         # if specified as a formatting option, also get the CPU temperature
-        if '{cpu_temp}' in self.format:
+        if self.py3.format_contains(self.format, 'cpu_temp'):
             cpu_temp = self.data.cpuTemp(self.zone)
             try:
                 self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
@@ -195,7 +195,7 @@ class Py3status:
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM usage info
-        if '{mem_' in self.format:
+        if self.py3.format_contains(self.format, 'mem_*'):
             mem_total, mem_used, mem_used_percent = self.data.memory()
             self.values['mem_total'] = value_format.format(mem_total)
             self.values['mem_used'] = value_format.format(mem_used)
