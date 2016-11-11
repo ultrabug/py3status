@@ -5,8 +5,8 @@ Display system RAM, SWAP and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        *(default '[\?color=cpu CPU: {cpu_usage:.2f}%], '
-        '[\?color=mem Mem: {mem_used:.2f}/{mem_total:.2f} GB ({mem_used_percent:.2f}%)]')*
+        *(default '[\?color=cpu CPU: {cpu_usage}%], '
+        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -216,12 +216,6 @@ class Py3status:
 
         def deprecate_function(config):
             # support old thresholds
-            padding = config.get('padding', 0)
-            precision = config.get('precision', 2)
-            format_vals = '[\?min_length={padding} {{value:.{precision}f}}]'.format(
-                    padding=padding, precision=precision)
-            format_temp = '[\?min_length={padding} {{value:.{precision}f}}{{unit}}]'.format(
-                    padding=padding, precision=precision)
             return {
                 'thresholds': [
                     (0, 'good'),
