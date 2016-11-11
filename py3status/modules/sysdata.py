@@ -5,8 +5,8 @@ Display system RAM and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        *(default '[\?color=cpu CPU: {cpu_usage:.2f}%], '
-        '[\?color=mem Mem: {mem_used:.2f}/{mem_total:.2f} GB ({mem_used_percent:.2f}%)]')*
+        *(default '[\?color=cpu CPU: {cpu_usage}%], '
+        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     temp_unit: unit used for measuring the temperature
@@ -156,8 +156,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "[\?color=cpu CPU: {cpu_usage:.2f}%], " \
-             "[\?color=mem Mem: {mem_used:.2f}/{mem_total:.2f} GB ({mem_used_percent:.2f}%)]"
+    format = "[\?color=cpu CPU: {cpu_usage}%], " \
+             "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
     temp_unit = '°C'
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
@@ -167,21 +167,24 @@ class Py3status:
 
         def deprecate_function(config):
             # support old thresholds
-            padding = config.get('padding', 0)
-            precision = config.get('precision', 2)
-            format_vals = '[\?min_length={padding} {{value:.{precision}f}}]'.format(
-                    padding=padding, precision=precision)
-            format_temp = '[\?min_length={padding} {{value:.{precision}f}}{{unit}}]'.format(
-                    padding=padding, precision=precision)
             return {
                     'thresholds': [
                         (0, 'good'),
                         (config.get('med_threshold', 40), 'degraded'),
                         (config.get('high_threshold', 75), 'bad'),
                         ],
-                    'format_percent': format_vals,
-                    'format_temp': format_temp,
-                    'format_mem': format_vals,
+                    }
+
+        def update_placeholder_format(config):
+            # padding = config.get('padding', 0)
+            precision = config.get('precision', 2)
+            format_vals = ':.{precision}f'.format(precision=precision)
+            return {
+                    'cpu_usage': format_vals,
+                    'cpu_temp': format_vals,
+                    'mem_total': format_vals,
+                    'mem_used': format_vals,
+                    'mem_used_percent': format_vals,
                     }
 
         deprecated = {
@@ -205,6 +208,19 @@ class Py3status:
                         'param': 'precision',
                         'msg': 'obsolete, use the format_* parameters',
                         },
+                    ],
+                'update_placeholder_format': [
+                    {
+                        'function': update_placeholder_format,
+                        'placeholder_formats': {
+                            'cpu_usage': ':.2f',
+                            'cpu_temp': ':.2f',
+                            'mem_total': ':.2f',
+                            'mem_used': ':.2f',
+                            'mem_used_percent': ':.2f',
+                            },
+                        'format_strings': ['format']
+                        }
                     ]
                 }
 
@@ -212,7 +228,7 @@ class Py3status:
         self.data = GetData(self)
         self.cpu_total = 0
         self.cpu_idle = 0
-        self.values = {'temp_unit': self.temp_unit}
+        self.values = {'temp_unit': '°C'}
 
     def sysData(self):
         # get CPU usage info
