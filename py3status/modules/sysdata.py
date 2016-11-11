@@ -5,14 +5,8 @@ Display system RAM, SWAP and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        *(default '[\?color=cpu CPU: {cpu_usage}%], '
-        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
-    format_mem: format for the flat values
-        (default "{value:.2f}")
-    format_percent: format for the values in percent
-        (default "{value:.2f}")
-    format_temp: format for the temperature value
-        (default "{value:.2f}{unit}")
+        *(default '[\?color=cpu CPU: {cpu_usage:.2f}%], '
+        '[\?color=mem Mem: {mem_used:.2f}/{mem_total:.2f} GB ({mem_used_percent:.2f}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
