@@ -9,6 +9,7 @@ from time import time
 from py3status.composite import Composite
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
+from py3status.formatter import Formatter
 
 
 class Module(Thread):
@@ -384,6 +385,36 @@ class Module(Thread):
                                 '{}', '{%s}' % placeholder
                             )
                             deprecation_log(item)
+                if 'rename_placeholder' in deprecated:
+                    # rename placeholders
+                    placeholders = {}
+                    for item in deprecated['rename_placeholder']:
+                        placeholders[item['placeholder']] = item['new']
+                        format_strings = item['format_strings']
+                        for format_param in format_strings:
+                            format_string = mod_config.get(format_param)
+                            if not format_string:
+                                continue
+                            format = Formatter().update_placeholders(
+                                format_string, placeholders
+                            )
+                            mod_config[format_param] = format
+
+                if 'update_placeholder_format' in deprecated:
+                    # update formats for placeholders if a format is not set
+                    for item in deprecated['update_placeholder_format']:
+                        placeholder_formats = item.get('placeholder_formats', {})
+                        if 'function' in item:
+                            placeholder_formats.update(item['function'](mod_config))
+                        format_strings = item['format_strings']
+                        for format_param in format_strings:
+                            format_string = mod_config.get(format_param)
+                            if not format_string:
+                                continue
+                            format = Formatter().update_placeholder_formats(
+                                format_string, placeholder_formats
+                            )
+                            mod_config[format_param] = format
                 if 'substitute_by_value' in deprecated:
                     # one parameter sets the value of another
                     for item in deprecated['substitute_by_value']:
