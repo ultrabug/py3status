@@ -30,6 +30,7 @@ class Module(Thread):
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
+        self.disabled = False
         self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
@@ -94,19 +95,31 @@ class Module(Thread):
         # its main method(s) called for the first time.  This allows modules to
         # perform any necessary setup.
         if self.has_post_config_hook:
-            self.module_class.post_config_hook()
+            try:
+                self.module_class.post_config_hook()
+            except:
+                # An exception has been thrown in post_config_hook() disable
+                # the module.
+                msg = 'post_config_hook in `{}` raised an exception'.format(
+                    self.module_full_name
+                )
+                self._py3_wrapper.report_exception(msg)
+                self.disabled = True
 
     def start_module(self):
         """
         Start the module running.
         """
-        # Start the module and call its output method(s)
-        self.start()
+        if not self.disabled:
+            # Start the module and call its output method(s)
+            self.start()
 
     def force_update(self):
         """
         Forces an update of the module.
         """
+        if self.disabled:
+            return
         # clear cached_until for each method to allow update
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
@@ -127,6 +140,9 @@ class Module(Thread):
 
     def wake(self):
         self.sleeping = False
+        if self.disabled:
+            # module is disabled so don't wake
+            return
         if self.cache_time is None:
             return
         # new style modules can signal they want to cache forever
