@@ -442,6 +442,27 @@ class Module(Thread):
                             del mod_config[param]
                             deprecation_log(item)
 
+            # process any update_config settings
+            try:
+                update_config = class_inst.Meta.update_config
+            except AttributeError:
+                update_config = None
+
+            if update_config:
+                if 'update_placeholder_format' in update_config:
+                    # update formats for placeholders if a format is not set
+                    for item in update_config['update_placeholder_format']:
+                        placeholder_formats = item.get('placeholder_formats', {})
+                        format_strings = item['format_strings']
+                        for format_param in format_strings:
+                            format_string = getattr(class_inst, format_param, None)
+                            if not format_string:
+                                continue
+                            format = Formatter().update_placeholder_formats(
+                                format_string, placeholder_formats
+                            )
+                            mod_config[format_param] = format
+
             # apply module configuration
             for config, value in mod_config.items():
                 # names starting with '.' are private

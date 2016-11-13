@@ -29,6 +29,7 @@ py3status documentation
 * [Composites](#composites)
 * [Module documentation](#docstring)
 * [Deprecation of configuration parameters](#deprecation)
+* [Updating configuration parameters](#update_config)
 * [Module testing](#testing)
 
 [Contributing](#contributing)
@@ -1160,8 +1161,8 @@ have an integer value indicating its position in the composite.
 
 ## <a name="docstring"></a>Module documentation
 
-All contributed modules should have correct documentation.  This documentation is in a
-specific format and is used to generate user documentation.
+All contributed modules should have correct documentation.  This documentation
+is in a specific format and is used to generate user documentation.
 
 The docsting of a module is used.  The format is as follows:
 
@@ -1301,7 +1302,7 @@ class Py3status:
         }
 ```
 
-__update_placeholder_format'__
+__update_placeholder_format__
 
 This allows us to update the format of a placeholder in format strings.
 The key value pairs {placeholder: format} can be supplied as a dict in
@@ -1353,7 +1354,9 @@ class Py3status:
 
 __function__
 
-For more complex substitutions a function can be defined that will be called with the config as a parameter.  This function must return a dict of key value pairs of parameters to update
+For more complex substitutions a function can be defined that will be called
+with the config as a parameter.  This function must return a dict of key value
+pairs of parameters to update
 
 ```
 class Py3status:
@@ -1394,6 +1397,58 @@ class Py3status:
                     'param': 'threshold_bad',  # name of parameter to remove
                     'msg': 'obsolete set using thresholds parameter',  #message
                 },
+            ],
+        }
+```
+
+***
+
+## <a name="update_config"></a>Updating of configuration parameters
+
+Sometimes it is necessary to update configuration parameters.  Modules
+are able to specify information about updates so that it can be done
+automatically.  Config updating information is specified in the Meta class of a
+py3status module using the update_config attribute.  The following types of
+updates are supported.
+
+__update_placeholder_format__
+
+This allows us to update the format of a placeholder in format strings.
+The key value pairs {placeholder: format} can be supplied as a dict in
+`placeholder_formats` or the dict can be provided by `function` the
+function will be called with the current config and must return a dict.
+If both are supplied then `placeholder_formats` will be updated using
+the dict supplied by the function.
+
+This is similar to the deprecation method but is to allow default formatting of
+placeholders to be set.
+
+In a module like sysdata we have placeholders eg `{cpu_usage}` this ends up
+having a value something like `20.542317173377157` which is strange as the
+value to use but gives the user the ability to have as much precision as they
+want. A module writer may decide that they want this displayed as `20.54` so
+`{cpu_usage:.2f}` would do this. Having a default format containing that
+just looks long/silly and the user setting a custom format just wants to do
+`format = 'CPU: {cpu_usage}%'` and get expected results ie not the full
+precision. If they don't like the default formatting of the number they could
+still do format = 'CPU: {cpu_usage:d}%' etc.
+
+So using this allows sensible defaults formatting and allows simple
+placeholders for user configurations.
+
+```
+class Py3status:
+
+    class Meta:
+
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {   # dict of placeholder:format
+                        'cpu_usage': ':.2f',
+                    },
+                    'format_strings': ['format'],  # config settings to update
+                }
             ],
         }
 ```
@@ -1456,7 +1511,8 @@ py3status code, including modules, should run under both python 2 and python 3.
 
 # Pytest
 
-Py3status uses pytest and the pytest-flake8 plugin for testing. All submissions to the project must pass testing. To install these via pip use
+Py3status uses pytest and the pytest-flake8 plugin for testing. All submissions
+to the project must pass testing. To install these via pip use
 
 ```
 pip install pytest
