@@ -24,6 +24,8 @@
 
 **[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
 
+**[diskdata](#diskdata)** — Display advanced disk usage information
+
 **[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
 
 **[dropboxd_status](#dropboxd_status)** — Display dropboxd status.
@@ -309,23 +311,6 @@ Color options:
   - `color_charging` Battery is charging *(default "#FCE94F")*
   - `color_degraded` Battery level is below threshold_degraded
   - `color_good` Battery level is above thresholds
-
-Obsolete configuration parameters:
-  - `mode` an old way to define `format` parameter. The current behavior is:
-    if 'format' is not "{icon}", this parameter is completely ignored
-    if 'format' is "{icon}" and 'mode' is "ascii_bar", the `format` is
-    set to "{ascii_bar}"
-    if 'format' is "{icon}" and 'mode' is "text", the `format` is set to
-    "Battery: {percent}"
-    all other values are ignored
-    *(default None)*
-  - `show_percent_with_blocks` an old way to define `format` parameter. The
-    current behavior is:
-    if 'format' is not "{icon}", this parameter is completely ignored
-    if 'format' is "{icon}" and 'mode' is "ascii_bar" or "text", this
-    parameter is completely ignored
-    if the value is True, the `format` is set to "{icon} {percent}%"
-    *(default None)*
 
 Requires:
   - the `acpi` the acpi command line utility (only if
@@ -647,6 +632,61 @@ Requires:
 
 ---
 
+### <a name="diskdata"></a>diskdata
+
+Display advanced disk usage information
+
+Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds.
+    *(default 10)*
+  - `disk` disk or partition whose stat to check. Set to None to get global stats.
+    *(default None)*
+  - `format` format of the output.
+    *(default "{disk}: {used_percent}% ({total})")*
+  - `format_rate` format for the rates value
+    *(default "[\?min_length=11 {value:.1f} {unit}]")*
+  - `format_space` format for the disk space values
+    *(default "[\?min_length=5 {value:.1f}]")*
+  - `sector_size` size of the disk's sectors.
+    *(default 512)*
+  - `si_units` use SI units
+    *(default False)*
+  - `thresholds` thresholds to use for color changes
+    *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
+    'total': [(0, "good"), (1024, 'degraded'), (1024 * 1024, 'bad')]})*
+  - `unit` unit to use. If the unit contains a multiplier prefix, only this
+    exact unit will ever be used
+    *(default "B/s")*
+
+Format placeholders:
+  - `{disk}` the selected disk
+  - `{free}` free space on disk in GB
+  - `{used}` used space on disk in GB
+  - `{used_percent}` used space on disk in %
+  - `{read}` reading rate
+  - `{total}` total IO rate
+  - `{write}` writing rate
+
+format_rate placeholders:
+  - `{unit}` name of the unit
+  - `{value}` numeric value of the rate
+
+format_space placeholders:
+  - `{value}` numeric value of the free/used space on the device
+
+Color thresholds:
+  - `{free}` Change color based on the value of free
+  - `{used}` Change color based on the value of used_percent
+  - `{read}` Change color based on the value of read
+  - `{total}` Change color based on the value of total
+  - `{write}` Change color based on the value of write
+
+**author** guiniol
+
+**license** BSD
+
+---
+
 ### <a name="dpms"></a>dpms
 
 Activate or deactivate DPMS and screen blanking.
@@ -792,13 +832,17 @@ Display if a file or dir exists.
 
 Configuration parameters:
   - `cache_timeout` how often to run the check *(default 10)*
-  - `format_available` what to display when available *(default '●')*
-  - `format_unavailable` what to display when unavailable *(default '■')*
+  - `format` format of the output. *(default '{icon}')*
+  - `icon_available` icon to display when available *(default '●')*
+  - `icon_unavailable` icon to display when unavailable *(default '■')*
   - `path` the path to a file or dir to check if it exists *(default None)*
 
 Color options:
   - `color_bad` Error or file/directory does not exist
   - `color_good` File or directory exists
+
+Format placeholders:
+  - `{icon}` icon for the current availability
 
 **author** obb, Moritz Lüdecke
 
@@ -1560,22 +1604,44 @@ Display the current network transfer rate.
 Configuration parameters:
   - `all_interfaces` ignore self.interfaces, but not self.interfaces_blacklist
     *(default True)*
-  - `cache_timeout` how often we refresh this module in seconds *(default 2)*
-  - `devfile` location of dev file under /proc *(default '/proc/net/dev')*
-  - `format` format of the module output *(default '{interface}: {total}')*
-  - `format_no_connection` when there is no data transmitted from the
-    start of the plugin *(default '')*
-  - `hide_if_zero` hide indicator if rate == 0 *(default False)*
-  - `interfaces` comma separated list of interfaces to track *(default '')*
+  - `cache_timeout` how often we refresh this module in seconds
+    *(default 2)*
+  - `devfile` location of dev file under /proc
+    *(default '/proc/net/dev')*
+  - `format` format of the module output
+    *(default '{interface}: {total}')*
+  - `format_no_connection` when there is no data transmitted from the start of the plugin
+    *(default '')*
+  - `format_value` format to use for values
+    *(default "[\?min_length=11 {value:.1f} {unit}]")*
+  - `hide_if_zero` hide indicator if rate == 0
+    *(default False)*
+  - `interfaces` comma separated list of interfaces to track
+    *(default [])*
   - `interfaces_blacklist` comma separated list of interfaces to ignore
     *(default 'lo')*
-  - `precision` amount of numbers after dot *(default 1)*
+  - `si_units` use SI units
+    *(default False)*
+  - `thresholds` thresholds to use for colors
+    *(default [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')])*
+  - `unit` unit to use. If the unit contains a multiplier prefix, only this
+    exact unit will ever be used
+    *(default "B/s")*
 
 Format placeholders:
   - `{down}` download rate
   - `{interface}` name of interface
   - `{total}` total rate
   - `{up}` upload rate
+
+format_value placeholders:
+  - `{unit}` current unit
+  - `{value}` numeric value
+
+Color thresholds:
+  - `{down}` Change color based on the value of down
+  - `{total}` Change color based on the value of total
+  - `{up}` Change color based on the value of up
 
 **author** shadowprince
 
@@ -2042,15 +2108,17 @@ Configuration parameters:
   - `button_url` Button that when clicked opens the URL sent in the space's API.
     Setting to None disables. *(default 3)*
   - `cache_timeout` Set timeout between calls in seconds *(default 60)*
-  - `closed_color` color if space is closed *(default None)*
   - `closed_text` text if space is closed, strftime parameters
     will be translated *(default 'closed')*
-  - `open_color` color if space is open *(default None)*
   - `open_text` text if space is open, strftime parmeters will be translated
     *(default 'open')*
   - `time_text` format used for time display *(default ' since %H:%M')*
   - `url` URL to SpaceAPI json file of your space
     *(default 'http://status.chaospott.de/status.json')*
+
+Color options:
+  - `color_closed` Space is open, defaults to color_bad
+  - `color_open` Space is closed, defaults to color_good
 
 **author** timmszigat
 
@@ -2115,11 +2183,16 @@ Display system RAM and CPU utilization.
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 10)*
   - `format` output format string
-    *(default 'CPU: {cpu_usage}%, Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)')*
-  - `high_threshold` percent to consider CPU or RAM usage as 'high load'
-    *(default 75)*
-  - `med_threshold` percent to consider CPU or RAM usage as 'medium load'
-    *(default 40)*
+    *(default '[\?color=cpu CPU: {cpu_usage}%], '
+    '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+  - `padding` length of space padding to use on the left
+    *(default 0)*
+  - `precision` precision of values
+    *(default 2)*
+  - `thresholds` thresholds to use for color changes
+    *(default [(0, "good"), (40, "degraded"), (75, "high")])*
+  - `zone` thermal zone to use. If None try to guess CPU temperature
+    *(default None)*
 
 Format placeholders:
   - `{cpu_temp}` cpu temperature
@@ -2128,15 +2201,16 @@ Format placeholders:
   - `{mem_used}` used memory
   - `{mem_used_percent}` used memory percentage
 
-Color options:
-  - `color_bad` Above high_threshold
-  - `color_degraded` Above med_threshold
-  - `color_good` Below or equal to med_threshold
+Color thresholds:
+  - `cpu` change color based on the value of cpu_usage
+  - `max_cpu_mem` change the color based on the max value of cpu_usage and mem_used_percent
+  - `mem` change color based on the value of mem_used_percent
+  - `temp` change color based on the value of cpu_temp
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
-**author** Shahin Azad &lt;ishahinism at Gmail&gt;, shrimpza
+**author** Shahin Azad &lt;ishahinism at Gmail&gt;, shrimpza, guiniol
 
 ---
 
@@ -2311,18 +2385,8 @@ Format placeholders:
   - `{percentage}` Percentage volume
 
 Color options:
-  - `color_bad` Volume below threshold_bad or muted
-  - `color_degraded` Volume below threshold_degraded
-  - `color_good` Volume above or equal to threshold_degraded
   - `color_muted` Volume is muted, if not supplied color_bad is used
     if set to `None` then the threshold color will be used.
-
-
-Obsolete configuration parameters:
-  - `threshold_bad` Volume below which color is set to bad.
-    *(default 20)*
-  - `threshold_degraded` Volume below which color is set to degraded.
-    *(default 50)*
 
 Example:
 
@@ -2708,6 +2772,8 @@ Dynamic configuration parameters:
   - &lt;OUTPUT&gt;_workspaces: comma separated list of workspaces to move to
     the given OUTPUT when it is activated
     Example: DP1_workspaces = "1,2,3"
+  - &lt;OUTPUT&gt;_rotate: rotate the output as told
+    Example: DP1_rotate = "left"
 
 Color options:
   - `color_bad` Displayed layout unavailable
