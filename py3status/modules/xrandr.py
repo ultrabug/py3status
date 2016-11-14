@@ -256,6 +256,10 @@ class Py3status:
             if output in combination:
                 pos = getattr(self, '{}_pos'.format(output), '0x0')
                 rotation = getattr(self, '{}_rotate'.format(output), 'normal')
+                if rotation not in ['inverted', 'left', 'normal', 'right']:
+                    self.py3.log('configured rotation {} is not valid'.format(
+                        rotation))
+                    rotation = 'normal'
                 #
                 if mode == 'clone' and previous_output is not None:
                     cmd += ' --auto --same-as {}'.format(previous_output)
@@ -264,7 +268,8 @@ class Py3status:
                             'right-of' in pos):
                         cmd += ' --auto --{} --rotate {}'.format(pos, rotation)
                     else:
-                        cmd += ' --auto --pos {} --rotate {}'.format(pos, rotation)
+                        cmd += ' --auto --pos {} --rotate {}'.format(pos,
+                                                                     rotation)
                 previous_output = output
             else:
                 cmd += ' --off'
@@ -302,9 +307,8 @@ class Py3status:
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
                     call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
                     # log this
-                    self.py3.log(
-                        'moved workspace {} to output {}'.format(workspace,
-                                                                 output))
+                    self.py3.log('moved workspace {} to output {}'.format(
+                        workspace, output))
 
     def _refresh_py3status(self):
         """
