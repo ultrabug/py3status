@@ -559,6 +559,7 @@ class Py3status:
         if self._player and self._get_button_state(control_state):
             getattr(self._player, self._control_states[index]['action'])()
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.

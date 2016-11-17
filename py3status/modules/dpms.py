@@ -54,6 +54,7 @@ class Py3status:
                 self.run = True
                 system("xset +dpms;xset s on")
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.

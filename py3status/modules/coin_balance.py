@@ -203,6 +203,7 @@ class Py3status:
         except:
             return 'Connection to \'' + url + '\' failed'
 
+
 if __name__ == "__main__":
     from py3status.module_test import module_test
     config = {

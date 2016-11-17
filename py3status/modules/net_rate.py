@@ -200,6 +200,7 @@ class Py3status:
         value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
         return self.py3.safe_format(self.format_value, {'value': value, 'unit': unit})
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.

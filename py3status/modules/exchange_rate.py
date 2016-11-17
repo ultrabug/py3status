@@ -73,6 +73,7 @@ class Py3status:
             'cached_until': self.py3.time_in(self.cache_timeout),
         }
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.
