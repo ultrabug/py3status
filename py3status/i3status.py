@@ -272,6 +272,9 @@ class I3status(Thread):
                     if (section_name.split(' ')[0] not in I3S_COLOR_MODULES or
                             key not in I3S_ALLOWED_COLORS):
                         continue
+                # don't include any popup_* options
+                if key.startswith('popup_'):
+                    continue
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
                 if section_name.split()[0] in TIME_MODULES:
