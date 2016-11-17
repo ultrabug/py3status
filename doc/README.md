@@ -27,6 +27,7 @@ py3status documentation
 * [Example 5: Using color constants](#example_5)
 * [Module methods](#module_methods)
 * [Py3 module helper](#py3)
+* [Py3 popups](#py3_popup)
 * [Composites](#composites)
 * [Module documentation](#docstring)
 * [Deprecation of configuration parameters](#deprecation)
@@ -1160,6 +1161,58 @@ general one that will be used.
 
 ***
 
+
+## <a name="py3_popup"></a>Popups
+
+the Py3 helper contains popup functionality allowing. modules to create popups
+these can be of two types.
+
+`info` these are just plain text.
+
+`menu` these allow the user to click on an item in the popup to trigger an
+action.  It also allows items to be selected or not and the user is able to
+change this selection.
+
+The data for the popup can be one of the following
+
+`string` the data contains the text to display `\n` is used to separate lines.
+
+`'hello\nhow are you?'` would create a popup with two lines.
+
+`list` each line is a separate item in the list.
+
+`['hello', 'how are you?']` would create a popup with two lines.
+
+As well as strings in the list tuples can be provided that contains the the
+text and a value as to if the item is selected.
+
+`['Alarm', ('enabled', true)]` would create a popup an option showing if the
+alarm is enabled or not.
+
+when the user clicks on the popup a callback function will be called if it was
+provided. The function will receive the text of the line that was clicked by
+the user and a dict containing all items as keys and a value corresponding to
+if the item is selected or not.
+
+The following helper functions are defined in the modules `self.py3`.
+
+__popup_open(data, type='info', callback=None)__
+
+Open a popup for the module.
+
+__popup_close()__
+
+Close the modules popup.
+
+__popup_toggle(data, type='info', callback=None)__
+
+Close the menu if it is open else open it.
+
+__popup_update(data)__
+
+Update the popup displaying the new data.
+
+***
 
 ## <a name="composites"></a>Composites
 
