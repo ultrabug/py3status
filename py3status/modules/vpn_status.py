@@ -131,6 +131,7 @@ class Py3status:
             response["cached_until"] = self.py3.time_in(self.cache_timeout)
         return response
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.
