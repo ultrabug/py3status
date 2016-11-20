@@ -120,6 +120,7 @@ class Py3status:
         }
         return response
 
+
 if __name__ == "__main__":
     """
     Test this module by calling it directly.

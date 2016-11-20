@@ -9,6 +9,7 @@ from time import time
 from py3status.composite import Composite
 from py3status.py3 import Py3, PY3_CACHE_FOREVER
 from py3status.profiling import profile
+from py3status.formatter import Formatter
 
 
 class Module(Thread):
@@ -29,6 +30,7 @@ class Module(Thread):
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
+        self.disabled = False
         self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
@@ -93,19 +95,31 @@ class Module(Thread):
         # its main method(s) called for the first time.  This allows modules to
         # perform any necessary setup.
         if self.has_post_config_hook:
-            self.module_class.post_config_hook()
+            try:
+                self.module_class.post_config_hook()
+            except:
+                # An exception has been thrown in post_config_hook() disable
+                # the module.
+                msg = 'post_config_hook in `{}` raised an exception'.format(
+                    self.module_full_name
+                )
+                self._py3_wrapper.report_exception(msg)
+                self.disabled = True
 
     def start_module(self):
         """
         Start the module running.
         """
-        # Start the module and call its output method(s)
-        self.start()
+        if not self.disabled:
+            # Start the module and call its output method(s)
+            self.start()
 
     def force_update(self):
         """
         Forces an update of the module.
         """
+        if self.disabled:
+            return
         # clear cached_until for each method to allow update
         for meth in self.methods:
             self.methods[meth]['cached_until'] = time()
@@ -126,6 +140,9 @@ class Module(Thread):
 
     def wake(self):
         self.sleeping = False
+        if self.disabled:
+            # module is disabled so don't wake
+            return
         if self.cache_time is None:
             return
         # new style modules can signal they want to cache forever
@@ -384,6 +401,36 @@ class Module(Thread):
                                 '{}', '{%s}' % placeholder
                             )
                             deprecation_log(item)
+                if 'rename_placeholder' in deprecated:
+                    # rename placeholders
+                    placeholders = {}
+                    for item in deprecated['rename_placeholder']:
+                        placeholders[item['placeholder']] = item['new']
+                        format_strings = item['format_strings']
+                        for format_param in format_strings:
+                            format_string = mod_config.get(format_param)
+                            if not format_string:
+                                continue
+                            format = Formatter().update_placeholders(
+                                format_string, placeholders
+                            )
+                            mod_config[format_param] = format
+
+                if 'update_placeholder_format' in deprecated:
+                    # update formats for placeholders if a format is not set
+                    for item in deprecated['update_placeholder_format']:
+                        placeholder_formats = item.get('placeholder_formats', {})
+                        if 'function' in item:
+                            placeholder_formats.update(item['function'](mod_config))
+                        format_strings = item['format_strings']
+                        for format_param in format_strings:
+                            format_string = mod_config.get(format_param)
+                            if not format_string:
+                                continue
+                            format = Formatter().update_placeholder_formats(
+                                format_string, placeholder_formats
+                            )
+                            mod_config[format_param] = format
                 if 'substitute_by_value' in deprecated:
                     # one parameter sets the value of another
                     for item in deprecated['substitute_by_value']:
@@ -410,6 +457,27 @@ class Module(Thread):
                         if param in mod_config:
                             del mod_config[param]
                             deprecation_log(item)
+
+            # process any update_config settings
+            try:
+                update_config = class_inst.Meta.update_config
+            except AttributeError:
+                update_config = None
+
+            if update_config:
+                if 'update_placeholder_format' in update_config:
+                    # update formats for placeholders if a format is not set
+                    for item in update_config['update_placeholder_format']:
+                        placeholder_formats = item.get('placeholder_formats', {})
+                        format_strings = item['format_strings']
+                        for format_param in format_strings:
+                            format_string = getattr(class_inst, format_param, None)
+                            if not format_string:
+                                continue
+                            format = Formatter().update_placeholder_formats(
+                                format_string, placeholder_formats
+                            )
+                            mod_config[format_param] = format
 
             # apply module configuration
             for config, value in mod_config.items():
