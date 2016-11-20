@@ -1,4 +1,4 @@
-version 3.3 (milestone)
+version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
 * py3 helper: add command_run and command_output methods, by @tobes
 * py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
