@@ -2185,6 +2185,8 @@ Configuration parameters:
   - `format` output format string
     *(default '[\?color=cpu CPU: {cpu_usage}%], '
     '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+  - `mem_unit` the unit of memory to use in report, case insensitive.
+    ['dynamic', 'KiB', 'MiB', 'GiB'] *(default 'GiB')*
   - `padding` length of space padding to use on the left
     *(default 0)*
   - `precision` precision of values
@@ -2198,6 +2200,7 @@ Format placeholders:
   - `{cpu_temp}` cpu temperature
   - `{cpu_usage}` cpu usage percentage
   - `{mem_total}` total memory
+  - `{mem_unit}` unit for memory
   - `{mem_used}` used memory
   - `{mem_used_percent}` used memory percentage
 

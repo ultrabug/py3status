@@ -1,4 +1,6 @@
-version 3.3 (milestone)
+version 3.4 (milestone)
+
+version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
 * py3 helper: add command_run and command_output methods, by @tobes
 * py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
@@ -35,6 +37,7 @@ version 3.3 (milestone)
 * ns_checker module: add format and cache_timeout, by @pferate
 * rate_counter module: add format and majorly refactor code, by @pferate
 * spaceapi module: go to a space's website onclick, by @rixx
+* sysdata module: add dynamic memory unitn by @pferate
 * sysdata module: add support for colors/thresholds, by @guiniol
 * xrandr module: add rotation support, by @coxley
 * volume_status module: add pulseaudio support, by @guiniol
