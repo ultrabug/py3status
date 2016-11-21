@@ -13,7 +13,7 @@ Configuration parameters:
     new_mail_color: what color to output on new mail (default '')
     password: login password (default '<PASSWORD>')
     port: IMAP server port (default '993')
-    security: what authentication method is used: 'ssl', 'starttls' or 'none' (default 'ssl')
+    security: what authentication method is used: 'ssl' or 'starttls' (default 'ssl')
     user: login user (default '<USERNAME>')
 
 Format placeholders:
@@ -75,17 +75,12 @@ class Py3status:
         connection.starttls()
         return connection
 
-    def _connection_none(self):
-        connection = imaplib.IMAP4(self.imap_server, self.port)
-        return connection
-
     def _get_mail_count(self):
         try:
             mail_count = 0
             directories = self.mailbox.split(',')
             switch = {"ssl": self._connection_ssl,
                       "starttls": self._connection_starttls,
-                      "none": self._connection_none,
                       }
             connection = switch[self.security]()
             connection.login(self.user, self.password)
