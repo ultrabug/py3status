@@ -28,6 +28,7 @@ py3status documentation
 * [Py3 module helper](#py3)
 * [Py3 storage](#py3_storage)
 * [Py3 popups](#py3_popup)
+* [Py3 storage](#py3_storage)
 * [Composites](#composites)
 * [Module documentation](#docstring)
 * [Deprecation of configuration parameters](#deprecation)
