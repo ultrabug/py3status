@@ -8,6 +8,7 @@ import time
 
 from collections import deque
 from json import dumps
+from operator import itemgetter
 from platform import python_version
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
@@ -476,6 +477,26 @@ class Py3statusWrapper():
         Received request to terminate (SIGTERM), exit nicely.
         """
         raise KeyboardInterrupt()
+
+    def py3status_function(self, name, data):
+        """
+        Expose core functionality to modules.
+        """
+        if name == 'module_info':
+            output = []
+            for module_name, module in self.output_modules.items():
+                output.append({
+                    'name': module_name,
+                    'enabled': not module['module'].disabled,
+                    'type': not module['type'],
+                })
+            return sorted(output, key=itemgetter('name'))
+        elif name == 'module_enable':
+            if data in self.output_modules:
+                self.output_modules[data]['module'].enable()
+        elif name == 'module_disable':
+            if data in self.output_modules:
+                self.output_modules[data]['module'].disable()
 
     def notify_update(self, update, urgent=False):
         """

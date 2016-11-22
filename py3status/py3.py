@@ -848,6 +848,15 @@ class Py3:
             self._audio.kill()
             self._audio = None
 
+    def py3status_function(self, name, data=None):
+        """
+        Exposes core functionality to modules.
+        """
+        if self._module:
+            return self._module._py3_wrapper.py3status_function(
+                name=name, data=data
+            )
+
     def threshold_get_color(self, value, name=None):
         """
         Obtain color for a value using thresholds.

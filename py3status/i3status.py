@@ -48,6 +48,7 @@ class I3statusModule:
 
     def __init__(self, module_name, py3_wrapper):
         self.module_name = module_name
+        self.disabled = False
 
         # i3status returns different name/instances than it is sent we want to
         # be able to restore the correct ones.
@@ -80,7 +81,17 @@ class I3statusModule:
     def __repr__(self):
         return '<I3statusModule {}>'.format(self.module_name)
 
+    def enable(self):
+        self.disabled = False
+        self.py3_wrapper.notify_update(self.module_name)
+
+    def disable(self):
+        self.disabled = True
+        self.py3_wrapper.notify_update(self.module_name)
+
     def get_latest(self):
+        if self.disabled:
+            return []
         return [self.item.copy()]
 
     def update_from_item(self, item):
