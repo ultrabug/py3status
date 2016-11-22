@@ -879,6 +879,14 @@ they have.
 Returns True if the event name and instance match that of the module
 checking.
 
+__module_name()__
+
+Returns the name of the module, this will be the module name plus its instance
+name if that exists. The name is the same as used in the `order += "..."`
+section of the configuration file.  For modules that are defined inside
+containers and are not given an explicit name, they will have an instance name
+automatically generated.
+
 __format_units(value, unit='B', optimal=5, auto=True, si=False)__
 
 Takes a value and formats it for user output, we can choose the unit to

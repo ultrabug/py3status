@@ -313,6 +313,13 @@ class Py3:
         """
         return self._is_python_2
 
+    def module_name(self):
+        """
+        Returns the modules name.
+        """
+        if self._module:
+            return self._module.module_full_name
+
     def is_my_event(self, event):
         """
         Checks if an event triggered belongs to the module recieving it.  This
