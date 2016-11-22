@@ -26,6 +26,7 @@ py3status documentation
 * [Example 5: Using color constants](#example_5)
 * [Module methods](#module_methods)
 * [Py3 module helper](#py3)
+* [Py3 storage](#py3_storage)
 * [Composites](#composites)
 * [Module documentation](#docstring)
 * [Deprecation of configuration parameters](#deprecation)
@@ -1114,6 +1115,36 @@ general one that will be used.
 
 ***
 
+## <a name="py3_storage"></a>Storage
+
+Py3status allows modules to maintain state through the use of the storage
+functions of the Py3 helper.
+
+Currently bool, int, float, None and unicode types are supported as well as
+dicts or lists made of these simple types.  Basically anything that can be
+converted to json.
+
+The following helper functions are defined in the modules `self.py3`.
+
+__storage_set(key, value)__
+
+Store a value for the module under the given key.
+
+__storage_get(key)__
+
+Retrieve a value of a key for the module. Or `None` if the key has no value for
+the given key.
+
+__storage_clear(key=None)__
+
+Remove the value stored with the key from storage.
+If key is not supplied then all values for the module are removed.
+
+__storage_keys()__
+
+Return a list of the keys for values stored for the module.
+
+***
 
 ## <a name="composites"></a>Composites
 

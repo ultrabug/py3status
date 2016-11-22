@@ -1,8 +1,10 @@
 from __future__ import division
 
+import json
 import os
 import sys
 import shlex
+import sqlite3
 
 from fnmatch import fnmatch
 from math import log10
@@ -65,6 +67,8 @@ class Py3:
     # Shared by all Py3 Instances
     _formatter = Formatter()
     _none_color = NoneColor()
+
+    _storage_path = None
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
@@ -701,6 +705,122 @@ class Py3:
             msg = "Command '{cmd}' had error {error}"
             raise Exception(msg.format(cmd=command[0], error=error))
         return output
+
+    def _storage_get_connection(self):
+        if not self._module:
+            return
+        storage_path = self.__class__._storage_path
+
+        if storage_path:
+            return sqlite3.connect(storage_path)
+
+        # get storage path
+        config_dir = os.path.dirname(
+            self._module._py3_wrapper.config['i3status_config_path']
+        )
+        storage_path = os.path.join(config_dir, 'py3status.sqlite')
+        self.__class__._storage_path = storage_path
+        con = sqlite3.connect(storage_path)
+        # initialize the database if needed
+        sql = """
+            CREATE TABLE IF NOT EXISTS module_data (
+            module TEXT,
+            key TEXT,
+            data_type TEXT,
+            data TEXT,
+            UNIQUE(module, key) ON CONFLICT REPLACE
+            );
+        """
+        with con:
+            con.execute(sql)
+        return con
+
+    def storage_set(self, key, value):
+        """
+        Store a value for the module
+        """
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+
+        data = json.dumps(value)
+        data_type = 'json'
+
+        sql = """
+            INSERT INTO module_data
+            (module, key, data_type, data)
+            values (?, ?, ?, ?)
+        """
+        params = (module_name, key, data_type, data)
+        with con:
+            con.execute(sql, params)
+
+    def storage_get(self, key):
+        """
+        Retrieve a value for the module
+        """
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+        cur = con.cursor()
+        sql = """
+            SELECT data_type, data FROM module_data
+            WHERE module = ? AND key = ?
+        """
+        params = (module_name, key)
+        cur.execute(sql, params)
+        result = cur.fetchone()
+        if result:
+            data_type = result[0]
+            data = result[1]
+
+            if data_type == 'json':
+                value = json.loads(data)
+                return value
+
+    def storage_clear(self, key=None):
+        """
+        Remove the value stored with the key from storage.
+        If key is not supplied then all values for the module are removed.
+        """
+
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+        if key:
+            sql = """
+            DELETE FROM module_data WHERE module = ? AND key = ?
+            """
+            params = (module_name, key)
+        else:
+            sql = 'DELETE FROM module_data WHERE module = ?'
+            params = (module_name,)
+        with con:
+            con.execute(sql, params)
+
+    def storage_keys(self):
+        """
+        Return a list of the keys for values stored for the module.
+        """
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+        cur = con.cursor()
+        sql = """
+            SELECT key FROM module_data
+            WHERE module = ?
+        """
+        params = (module_name,)
+        cur.execute(sql, params)
+        result = cur.fetchall()
+        if result:
+            return [row[0] for row in result]
+        else:
+            return []
 
     def play_sound(self, sound_file):
         """

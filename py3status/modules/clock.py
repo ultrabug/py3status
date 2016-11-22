@@ -152,10 +152,21 @@ class Py3status:
                 time_delta = 60
             self.time_deltas.append(time_delta)
 
-        self.active_time_format = 0
+        # If we have saved details we use them.
+        saved_format = self.py3.storage_get('time_format')
+        if saved_format in self.format_time:
+            self.active_time_format = self.format_time.index(saved_format)
+        else:
+            self.active_time_format = 0
 
+        saved_timezone = self.py3.storage_get('timezone')
+        if saved_timezone in self.format:
+            self.active = self.format.index(saved_timezone)
+        else:
+            self.active = 0
+
+        # reset the cycle time
         self._cycle_time = time() + self.cycle
-        self.active = 0
 
     def _get_timezone(self, tz):
         '''
@@ -187,20 +198,25 @@ class Py3status:
 
     def _change_active(self, diff):
         self.active = (self.active + diff) % len(self.format)
+        # reset the cycle time
+        self._cycle_time = time() + self.cycle
+        # save the active format
+        timezone = self.format[self.active]
+        self.py3.storage_set('timezone', timezone)
 
     def on_click(self, i3s_output_list, i3s_config, event):
         """
         Switch the displayed module or pass the event on to the active module
         """
-        # reset cycle time
         if event['button'] == self.button_reset:
-            self.active = 0
-            # reset the cycle time
-            self._cycle_time = time() + self.cycle
+            self._change_active(0)
         elif event['button'] == self.button_change_time_format:
             self.active_time_format += 1
             if self.active_time_format >= len(self.format_time):
                 self.active_time_format = 0
+            # save the active format_time
+            time_format = self.format_time[self.active_time_format]
+            self.py3.storage_set('time_format', time_format)
         elif event['button'] == self.button_change_format:
             self._change_active(1)
 
