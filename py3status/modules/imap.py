@@ -68,7 +68,10 @@ class Py3status:
         return response
 
     def _connection_ssl(self):
-        connection = imaplib.IMAP4_SSL(self.imap_server, self.port, ssl_context = create_default_context())
+        connection = imaplib.IMAP4_SSL(self.imap_server,
+                                       self.port,
+                                       ssl_context=create_default_context()
+                                       )
         return connection
 
     def _connection_starttls(self):
@@ -86,7 +89,7 @@ class Py3status:
             elif self.security == "starttls":
                 connection = self._connection_starttls()
             else:
-                raise ValueError("Unknown security protocol") from error
+                raise ValueError("Unknown security protocol")
 
             connection.login(self.user, self.password)
 
