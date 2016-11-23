@@ -13,7 +13,8 @@ Configuration parameters:
     new_mail_color: what color to output on new mail (default '')
     password: login password (default '<PASSWORD>')
     port: IMAP server port (default '993')
-    security: what authentication method is used: 'ssl' or 'starttls' (default 'ssl')
+    security: what authentication method is used: 'ssl' or 'starttls'
+        (startssl needs python 3.2 or later) (default 'ssl')
     user: login user (default '<USERNAME>')
 
 Format placeholders:
@@ -42,6 +43,10 @@ class Py3status:
     security = 'ssl'
     user = '<USERNAME>'
 
+    def post_config_hook(self):
+        if self.security not in ["ssl", "starttls"]:
+            raise ValueError("Unknown security protocol")
+
     def check_mail(self):
         mail_count = self._get_mail_count()
 
@@ -68,10 +73,7 @@ class Py3status:
         return response
 
     def _connection_ssl(self):
-        connection = imaplib.IMAP4_SSL(self.imap_server,
-                                       self.port,
-                                       ssl_context=create_default_context()
-                                       )
+        connection = imaplib.IMAP4_SSL(self.imap_server, self.port)
         return connection
 
     def _connection_starttls(self):
@@ -88,8 +90,6 @@ class Py3status:
                 connection = self._connection_ssl()
             elif self.security == "starttls":
                 connection = self._connection_starttls()
-            else:
-                raise ValueError("Unknown security protocol")
 
             connection.login(self.user, self.password)
 
