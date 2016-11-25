@@ -106,7 +106,9 @@ class Py3status:
         try:
             rss_count = 0
             api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
-            r = requests.get(api_url + "feeds", auth=(self.user, self.password))
+            r = requests.get(api_url + "feeds",
+                             auth=(self.user, self.password),
+                             timeout=1)
             for feed in r.json()["feeds"]:
                 if (
                     (not self.feed_ids and not self.folder_ids) or
