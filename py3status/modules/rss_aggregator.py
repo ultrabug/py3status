@@ -2,36 +2,40 @@
 """
 Display the unread feed items in your OwnCloud/NextCloud account.
 
-Configuration parameters:
-    aggregator: feed aggregator used, see note below (default 'owncloud')
-    cache_timeout: how often to run this check (default 60)
-    feeds_id: list of IDs of feeds to watch, see note below (default [])
-    folders_id: list of IDs of folders ro watch, see note below (default [])
-    format: format to display (default 'Feed: {unseen}')
-    hide_if_zero: don't show on bar if False (default False)
-    new_items_color: text color when counter isn't zero (default '')
-    password: login password (default '<PASSWORD>')
-    server: IMAP server to connect to (default 'https://yourcloudinstance.com')
-    user: login user (default '<USERNAME>')
-
-Format placeholders:
-    {unseen} sum of numbers of unread feed elements
-
-For now, the only supported value of `aggregator` is `'owncloud'`, that means that you'll
-only be able to configure a OwnCloud/NextCloud instance. Other feed aggregator may be
-supported in future releases.
-
-`feeds_id` and `folders_id` enable to restrict feed items counting to the given feeds and
-folders IDs. You can get those ID by clicking on the desired feed or folder and watching
-the URL:
+You can also decide to check only for specific feeds or folders of feeds. To use this
+feature, you have to first get the IDs of those feeds or folders. You can get those IDs
+by clicking on the desired feed or folder and watching the URL:
 ```
 https://yourcloudinstance.com/index.php/apps/news/#/items/feeds/FEED_ID
 https://yourcloudinstance.com/index.php/apps/news/#/items/folders/FOLDER_ID
 
 ```
-If both are left empty, all unread feed items will be counted. Counted items don't need
-to match both feeds and folders lists. Items matching both a given feed ID and a given
-folder ID will be counted only once.
+If both feeds list and folders list are left empty, all unread feed items will be counted.
+Counted items don't need to match both feeds and folders lists. Items matching both a
+given feed ID and a given folder ID will be counted only once.
+
+Configuration parameters:
+    aggregator: feed aggregator used, see note below. For now, the only supported value is
+        `'owncloud'`, that means that you'll only be able to configure a
+        OwnCloud/NextCloud instance. Other feed aggregator may be supported in future
+        releases. (default 'owncloud')
+    cache_timeout: how often to run this check (default 60)
+    feed_ids: list of IDs of feeds to watch, see note below (default [])
+    folder_ids: list of IDs of folders ro watch (default [])
+    format: format to display (default 'Feed: {unseen}')
+    password: login password (default '<PASSWORD>')
+    server: aggregator server to connect to (default 'https://yourcloudinstance.com')
+    user: login user (default '<USERNAME>')
+
+Format placeholders:
+    {unseen} sum of numbers of unread feed elements
+
+Color options:
+    color_new_items: text color when there is new items (default color_good)
+    color_error: text color when there is an error (default color_bad)
+
+Requires:
+    python-requests: library to make web requests
 
 @author raspbeguy
 """
@@ -45,11 +49,9 @@ class Py3status:
     # available configuration parameters
     aggregator = 'owncloud'
     cache_timeout = 60
-    feeds_id = []
-    folders_id = []
+    feed_ids = []
+    folder_ids = []
     format = 'Feed: {unseen}'
-    hide_if_zero = False
-    new_items_color = ''
     password = '<PASSWORD>'
     server = 'https://yourcloudinstance.com'
     user = '<USERNAME>'
@@ -57,6 +59,27 @@ class Py3status:
     def post_config_hook(self):
         if self.aggregator not in ['owncloud']:  # more options coming
             raise ValueError('%s is not a supported feed aggregator' % self.aggregator)
+        if self.aggregator == "owncloud":
+            self._verify_owncloud()
+
+    def _verify_owncloud(self):
+        api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
+        try:
+            r = requests.get(api_url + "feeds",
+                             auth=(self.user, self.password),
+                             timeout=1)
+        except requests.exceptions.MissingSchema:
+            raise ValueError('Unconsistent server URL')
+        except requests.exceptions.ConnectionError:
+            raise ValueError('Cannot resolve URL')
+        except requests.exceptions.ConnectTimeout:
+            raise ValueError('Timeout reached')
+        if r.status_code != 200:
+            raise ValueError('Not sure this is a Owncloud/Nextcloud instance')
+        try:
+            r.json()
+        except:
+            raise ValueError('Server returning bad content, possible bad credentials')
 
     def check_news(self):
         if self.aggregator == "owncloud":
@@ -64,24 +87,18 @@ class Py3status:
 
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
-        if not self.new_items_color:
-            self.new_items_color = self.py3.COLOR_GOOD
-
         if rss_count == 'Error':
             response['full_text'] = rss_count
-            response['color'] = self.py3.COLOR_BAD
+            response['color'] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
         elif rss_count != 0:
-            response['color'] = self.new_items_color
+            response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': rss_count}
             )
         else:
-            if self.hide_if_zero:
-                response['full_text'] = ''
-            else:
-                response['full_text'] = self.py3.safe_format(
-                    self.format, {'unseen': rss_count}
-                )
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'unseen': rss_count}
+            )
 
         return response
 
@@ -92,15 +109,15 @@ class Py3status:
             r = requests.get(api_url + "feeds", auth=(self.user, self.password))
             for feed in r.json()["feeds"]:
                 if (
-                    (not self.feeds_id and not self.folders_id) or
-                    feed["id"] in self.feeds_id or
-                    feed["folderId"] in self.folders_id
+                    (not self.feed_ids and not self.folder_ids) or
+                    feed["id"] in self.feed_ids or
+                    feed["folderId"] in self.folder_ids
                 ):
                     rss_count += feed["unreadCount"]
 
             return rss_count
 
-        except:
+        except requests.exceptions.MissingSchema:
             return 'Error'
 
 
