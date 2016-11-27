@@ -9,6 +9,7 @@ import time
 from collections import deque
 from json import dumps
 from platform import python_version
+from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
 from threading import Event
@@ -523,6 +524,13 @@ class Py3statusWrapper():
             # Binary mode so fs encoding setting is not an issue
             with open(self.config['log_file'], 'ab') as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
+                # nice formating of data structures using pretty print
+                if isinstance(msg, (dict, list, set, tuple)):
+                    msg = pformat(msg)
+                    # if multiline then start the data output on a fresh line
+                    # to aid readability.
+                    if '\n' in msg:
+                        msg = u'\n' + msg
                 out = u'{} {} {}\n'.format(log_time, level.upper(), msg)
                 try:
                     # Encode unicode strings to bytes
