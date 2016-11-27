@@ -40,7 +40,7 @@ class Py3status:
         self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
         self._reg_ex_pkg = re.compile(b'^\S+\.', re.M)
         self._first = True
-        self._updates = None
+        self._updates = 0
         self._security_notice = False
 
     def check_updates(self):
@@ -64,6 +64,9 @@ class Py3status:
             self._updates = 0
             self._security_notice = False
         else:
+            if self._updates > updates:
+                # we have installed some updates so re-check security
+                self._security_notice = False
             if self.check_security and not self._security_notice and self._updates != updates:
                 output, error = subprocess.Popen(
                     ['dnf', 'updateinfo'],
