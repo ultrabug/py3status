@@ -26,6 +26,7 @@ Requires:
 @license BSD
 """
 
+from __future__ import absolute_import
 import selinux
 
 
