@@ -23,9 +23,9 @@ Configuration parameters:
     feed_ids: list of IDs of feeds to watch, see note below (default [])
     folder_ids: list of IDs of folders ro watch (default [])
     format: format to display (default 'Feed: {unseen}')
-    password: login password (default '<PASSWORD>')
+    password: login password (default None)
     server: aggregator server to connect to (default 'https://yourcloudinstance.com')
-    user: login user (default '<USERNAME>')
+    user: login user (default None)
 
 Format placeholders:
     {unseen} sum of numbers of unread feed elements
@@ -35,7 +35,7 @@ Color options:
     color_error: text color when there is an error (default color_bad)
 
 Requires:
-    python-requests: library to make web requests
+    requests: python module from pypi https://pypi.python.org/pypi/requests
 
 @author raspbeguy
 """
@@ -52,34 +52,38 @@ class Py3status:
     feed_ids = []
     folder_ids = []
     format = 'Feed: {unseen}'
-    password = '<PASSWORD>'
+    password = None
     server = 'https://yourcloudinstance.com'
-    user = '<USERNAME>'
+    user = None
 
     def post_config_hook(self):
         if self.aggregator not in ['owncloud']:  # more options coming
             raise ValueError('%s is not a supported feed aggregator' % self.aggregator)
         if self.aggregator == "owncloud":
             self._verify_owncloud()
+        if self.user is None or self.password is None:
+            raise ValueError("user and password must be provided")
 
     def _verify_owncloud(self):
         api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
         try:
             r = requests.get(api_url + "feeds",
                              auth=(self.user, self.password),
-                             timeout=1)
+                             timeout=10)
         except requests.exceptions.MissingSchema:
             raise ValueError('Unconsistent server URL')
-        except requests.exceptions.ConnectionError:
-            raise ValueError('Cannot resolve URL')
-        except requests.exceptions.ConnectTimeout:
-            raise ValueError('Timeout reached')
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ConnectTimeout
+        ):
+            return
         if r.status_code != 200:
             raise ValueError('Not sure this is a Owncloud/Nextcloud instance')
-        try:
-            r.json()
-        except:
-            raise ValueError('Server returning bad content, possible bad credentials')
+        else:
+            try:
+                r.json()
+            except:
+                raise ValueError('Server returning bad content, check credentials')
 
     def check_news(self):
         if self.aggregator == "owncloud":
@@ -87,18 +91,15 @@ class Py3status:
 
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
-        if rss_count == 'Error':
-            response['full_text'] = rss_count
+        if rss_count is None:
+            response['full_text'] = "Unreachable"
             response['color'] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
-        elif rss_count != 0:
-            response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
-            response['full_text'] = self.py3.safe_format(
-                self.format, {'unseen': rss_count}
-            )
         else:
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': rss_count}
             )
+            if rss_count != 0:
+                response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
 
         return response
 
@@ -108,7 +109,7 @@ class Py3status:
             api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
             r = requests.get(api_url + "feeds",
                              auth=(self.user, self.password),
-                             timeout=1)
+                             timeout=10)
             for feed in r.json()["feeds"]:
                 if (
                     (not self.feed_ids and not self.folder_ids) or
@@ -119,8 +120,8 @@ class Py3status:
 
             return rss_count
 
-        except requests.exceptions.MissingSchema:
-            return 'Error'
+        except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+            return None
 
 
 if __name__ == "__main__":
