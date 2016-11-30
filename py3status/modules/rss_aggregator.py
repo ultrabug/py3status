@@ -41,6 +41,7 @@ Requires:
 """
 
 import requests
+from requests.exceptions import ConnectionError, ConnectTimeout
 
 
 class Py3status:
@@ -57,12 +58,18 @@ class Py3status:
     user = None
 
     def post_config_hook(self):
+        self._cached = {'cached_until': self.py3.time_in(self.cache_timeout),
+                        'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                        'full_text': '?'
+                        }
         if self.aggregator not in ['owncloud']:  # more options coming
-            raise ValueError('%s is not a supported feed aggregator' % self.aggregator)
+            self.py3.notify_user('%s is not a supported feed aggregator' % self.aggregator)
+            return
         if self.aggregator == "owncloud":
             self._verify_owncloud()
         if self.user is None or self.password is None:
-            raise ValueError("user and password must be provided")
+            self.py3.notify_user("user and password must be provided")
+            return
 
     def _verify_owncloud(self):
         api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
@@ -71,19 +78,20 @@ class Py3status:
                              auth=(self.user, self.password),
                              timeout=10)
         except requests.exceptions.MissingSchema:
-            raise ValueError('Unconsistent server URL')
+            self.py3.notify_user('Unconsistent server URL')
+            return
         except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.ConnectTimeout
+            ConnectionError,
+            ConnectTimeout
         ):
             return
         if r.status_code != 200:
-            raise ValueError('Not sure this is a Owncloud/Nextcloud instance')
+            self.py3.notify_user('Not sure this is a Owncloud/Nextcloud instance')
         else:
             try:
                 r.json()
             except:
-                raise ValueError('Server returning bad content, check credentials')
+                self.py3.notify_user('Server returning bad content, check credentials')
 
     def check_news(self):
         if self.aggregator == "owncloud":
@@ -92,14 +100,14 @@ class Py3status:
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         if rss_count is None:
-            response['full_text'] = "Unreachable"
-            response['color'] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
+            return self._cached
         else:
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': rss_count}
             )
             if rss_count != 0:
                 response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
+        self._cached = response
 
         return response
 
@@ -120,7 +128,7 @@ class Py3status:
 
             return rss_count
 
-        except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        except (ConnectionError, ConnectTimeout):
             return None
 
 
