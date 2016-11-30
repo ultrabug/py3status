@@ -58,7 +58,7 @@ class Py3status:
     user = None
 
     def post_config_hook(self):
-        self._cached = {'cached_until': self.py3.time_in(self.cache_timeout),
+        self._cached = {'cached_until': self.py3.CACHE_FOREVER,
                         'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
                         'full_text': '?'
                         }
