@@ -41,7 +41,6 @@ Requires:
 """
 
 import requests
-from requests.exceptions import ConnectionError, ConnectTimeout
 
 
 class Py3status:
@@ -58,40 +57,14 @@ class Py3status:
     user = None
 
     def post_config_hook(self):
-        self._cached = {'cached_until': self.py3.CACHE_FOREVER,
-                        'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                        'full_text': '?'
+        self._cached = {'cached_until': self.py3.time_in(self.cache_timeout),
+                        'full_text': "?",
+                        'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD
                         }
         if self.aggregator not in ['owncloud']:  # more options coming
-            self.py3.notify_user('%s is not a supported feed aggregator' % self.aggregator)
-            return
-        if self.aggregator == "owncloud":
-            self._verify_owncloud()
+            raise ValueError('%s is not a supported feed aggregator' % self.aggregator)
         if self.user is None or self.password is None:
-            self.py3.notify_user("user and password must be provided")
-            return
-
-    def _verify_owncloud(self):
-        api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
-        try:
-            r = requests.get(api_url + "feeds",
-                             auth=(self.user, self.password),
-                             timeout=10)
-        except requests.exceptions.MissingSchema:
-            self.py3.notify_user('Unconsistent server URL')
-            return
-        except (
-            ConnectionError,
-            ConnectTimeout
-        ):
-            return
-        if r.status_code != 200:
-            self.py3.notify_user('Not sure this is a Owncloud/Nextcloud instance')
-        else:
-            try:
-                r.json()
-            except:
-                self.py3.notify_user('Server returning bad content, check credentials')
+            raise ValueError("user and password must be provided")
 
     def check_news(self):
         if self.aggregator == "owncloud":
@@ -128,7 +101,7 @@ class Py3status:
 
             return rss_count
 
-        except (ConnectionError, ConnectTimeout):
+        except:
             return None
 
 
