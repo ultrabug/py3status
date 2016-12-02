@@ -70,8 +70,7 @@ class Py3status:
 
         response = {'cached_until': self.py3.time_in(self.cache_timeout),
                     'full_text': self.py3.safe_format(
-                        self.format, {'unseen': self._cached}
-                    )
+                        self.format, {'unseen': self._cached})
                     }
 
         if rss_count is None:
