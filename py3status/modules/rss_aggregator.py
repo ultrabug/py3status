@@ -66,21 +66,18 @@ class Py3status:
     def check_news(self):
         if self.aggregator == "owncloud":
             rss_count = self._get_count_owncloud()
+            self._cached = rss_count or self._cached
 
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        response = {'cached_until': self.py3.time_in(self.cache_timeout),
+                    'full_text': self.py3.safe_format(
+                        self.format, {'unseen': self._cached}
+                    )
+                    }
 
         if rss_count is None:
-            response['full_text'] = self.py3.safe_format(
-                self.format, {'unseen': self._cached}
-            )
             response['color'] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
-        else:
-            response['full_text'] = self.py3.safe_format(
-                self.format, {'unseen': rss_count}
-            )
-            if rss_count != 0:
-                response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
-        self._cached = rss_count
+        elif rss_count != 0:
+            response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
 
         return response
 
