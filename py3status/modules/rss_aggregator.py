@@ -57,10 +57,7 @@ class Py3status:
     user = None
 
     def post_config_hook(self):
-        self._cached = {'cached_until': self.py3.time_in(self.cache_timeout),
-                        'full_text': "?",
-                        'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD
-                        }
+        self._cached = "?"
         if self.aggregator not in ['owncloud']:  # more options coming
             raise ValueError('%s is not a supported feed aggregator' % self.aggregator)
         if self.user is None or self.password is None:
@@ -73,14 +70,17 @@ class Py3status:
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         if rss_count is None:
-            return self._cached
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'unseen': self._cached}
+            )
+            response['color'] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
         else:
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': rss_count}
             )
             if rss_count != 0:
                 response['color'] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
-        self._cached = response
+        self._cached = rss_count
 
         return response
 
