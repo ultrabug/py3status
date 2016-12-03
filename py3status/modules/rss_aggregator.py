@@ -154,10 +154,10 @@ class Py3status:
                     for feed in r.json()['content']:
                         if feed['id'] in self.feed_ids:
                             rss_count += feed['unread']
-            requests.post(api_url, data={
+            requests.post(api_url, data=json.dumps({
                 'sid': sid,
                 'op': "logOut"
-            })
+            }))
 
             return rss_count
 
