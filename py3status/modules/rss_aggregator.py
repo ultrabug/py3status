@@ -50,7 +50,6 @@ Color options:
 
 Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests
-    json: python module from pypi https://pypi.python.org/pypi/json
 
 @author raspbeguy
 """
@@ -169,11 +168,5 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {
-        'aggregator': "ttrss",
-        'server': "http://localhost:8080",
-        'user': "admin",
-        'password': "password"
-    }
     from py3status.module_test import module_test
     module_test(Py3status)
