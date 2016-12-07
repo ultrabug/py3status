@@ -221,13 +221,25 @@ class Formatter:
     python2 = sys.version_info < (3, 0)
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
 
+    format_string_cache = {}
+
+    def tokens(self, format_string):
+        """
+        Get the tokenized format_string.
+        Tokenizing is resource intensive so we only do it once and cache it
+        """
+        if format_string not in self.format_string_cache:
+            tokens = list(re.finditer(self.reg_ex, format_string))
+            self.format_string_cache[format_string] = tokens
+        return self.format_string_cache[format_string]
+
     def get_placeholders(self, format_string):
         """
         Parses the format_string and returns a set of placeholders.
         """
         placeholders = set()
         # Tokenize the format string and process them
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             if token.group('placeholder'):
                 placeholders.add(token.group('key'))
         return placeholders
@@ -239,7 +251,7 @@ class Formatter:
 
         # Tokenize the format string and process them
         output = []
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             if token.group('key') in placeholders:
                 output.append('{%s%s}' % (
                     placeholders[token.group('key')],
@@ -256,7 +268,7 @@ class Formatter:
         """
         # Tokenize the format string and process them
         output = []
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             if (token.group('placeholder') and
                     (not token.group('format')) and
                     token.group('key') in placeholder_formats):
@@ -316,7 +328,7 @@ class Formatter:
         block = Block(param_dict, module)
 
         # Tokenize the format string and process them
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             value = token.group(0)
             if token.group('block_start'):
                 # Create new block
