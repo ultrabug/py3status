@@ -276,19 +276,22 @@ class Py3status:
         battery_list = []
         for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
             r = _parse_battery_info(path)
+
+            capacity = r.get("POWER_SUPPLY_ENERGY_FULL") or r.get("POWER_SUPPLY_CHARGE_FULL")
+            present_rate = r.get("POWER_SUPPLY_POWER_NOW") or r.get("POWER_SUPPLY_CURRENT_NOW")
+            remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW") or r.get("POWER_SUPPLY_CHARGE_NOW")
+
             battery = {}
-            battery["capacity"] = r["POWER_SUPPLY_ENERGY_FULL"]
+            battery["capacity"] = capacity
             battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
             battery["percent_charged"] = int(math.floor(
-                r["POWER_SUPPLY_ENERGY_NOW"] / battery["capacity"] * 100))
+                remaining_energy / capacity * 100))
             try:
                 if battery["charging"]:
-                    time_in_secs = ((r["POWER_SUPPLY_ENERGY_FULL"] -
-                                    r["POWER_SUPPLY_ENERGY_NOW"]) /
-                                    r["POWER_SUPPLY_POWER_NOW"] * 3600)
+                    time_in_secs = ((capacity - remaining_energy) /
+                                    present_rate * 3600)
                 else:
-                    time_in_secs = (r["POWER_SUPPLY_ENERGY_NOW"] /
-                                    r["POWER_SUPPLY_POWER_NOW"] * 3600)
+                    time_in_secs = (remaining_energy / present_rate * 3600)
                 battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
             except ZeroDivisionError:
                 # Battery is either full charged or is not discharging
