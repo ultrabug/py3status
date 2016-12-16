@@ -935,3 +935,80 @@ def test_numeric_strings_6():
         'format': '{str_nan:.1f}',
         'expected': "I'm not a number",
     })
+
+
+def test_not_zero_1():
+    run_formatter({
+        'format': '[\?not_zero {zero}]',
+        'expected': '',
+    })
+
+
+def test_not_zero_2():
+    run_formatter({
+        'format': '[\?not_zero {zero_str}]',
+        'expected': '',
+    })
+
+
+def test_not_zero_3():
+    run_formatter({
+        'format': '[\?not_zero {zero_float}]',
+        'expected': '',
+    })
+
+
+def test_not_zero_4():
+    run_formatter({
+        'format': '[\?not_zero {yes}]',
+        'expected': 'True',
+    })
+
+
+def test_not_zero_5():
+    run_formatter({
+        'format': '[\?not_zero {no}]',
+        'expected': '',
+    })
+
+
+def test_not_zero_6():
+    run_formatter({
+        'format': '[\?not_zero {number}]',
+        'expected': '42',
+    })
+
+
+def test_not_zero_7():
+    run_formatter({
+        'format': '[\?not_zero {pi}]',
+        'expected': '3.14159265359',
+    })
+
+
+def test_not_zero_8():
+    run_formatter({
+        'format': '[\?not_zero {name}]',
+        'expected': u'Björk',
+    })
+
+
+def test_not_zero_9():
+    run_formatter({
+        'format': '[\?not_zero {str_nan}]',
+        'expected': "I'm not a number",
+    })
+
+
+def test_not_zero_10():
+    run_formatter({
+        'format': '[\?not_zero {zero} {str_nan}]',
+        'expected': "0 I'm not a number",
+    })
+
+
+def test_not_zero_11():
+    run_formatter({
+        'format': '[\?not_zero {zero_str} {zero}]',
+        'expected': '',
+    })
