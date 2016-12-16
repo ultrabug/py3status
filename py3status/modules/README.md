@@ -90,6 +90,8 @@
 
 **[rate_counter](#rate_counter)** — Display days/hours/minutes spent and calculate the price of your service.
 
+**[rss_aggregator](#rss_aggregator)** — Display the unread feed items in your favorite RSS aggregator.
+
 **[rt](#rt)** — Display the number of ongoing tickets from selected RT queues.
 
 **[scratchpad_async](#scratchpad_async)** — Display the amount of windows and indicate urgency hints on scratchpad (async).
@@ -1265,6 +1267,8 @@ Configuration parameters:
   - `new_mail_color` what color to output on new mail *(default '')*
   - `password` login password *(default '&lt;PASSWORD&gt;')*
   - `port` IMAP server port *(default '993')*
+  - `security` what authentication method is used: 'ssl' or 'starttls'
+    (startssl needs python 3.2 or later) *(default 'ssl')*
   - `user` login user *(default '&lt;USERNAME&gt;')*
 
 Format placeholders:
@@ -1968,6 +1972,63 @@ Color options:
   - `color_stopped` Stopped, default color_bad
 
 **author** Amaury Brisou &lt;py3status AT puzzledge.org&gt;
+
+---
+
+### <a name="rss_aggregator"></a>rss_aggregator
+
+Display the unread feed items in your favorite RSS aggregator.
+
+For now, supported aggregators are:
+    * OwnCloud/NextCloud with News application
+    * Tiny Tiny RSS 1.6 or newer
+
+You can also decide to check only for specific feeds or folders of feeds. To use this
+feature, you have to first get the IDs of those feeds or folders. You can get those IDs
+by clicking on the desired feed or folder and watching the URL.
+
+For OwnCloud/NextCloud:
+```
+https://yourcloudinstance.com/index.php/apps/news/#/items/feeds/FEED_ID
+https://yourcloudinstance.com/index.php/apps/news/#/items/folders/FOLDER_ID
+
+```
+    For Tiny Tiny RSS:
+
+```
+https://yourttrssinstance.com/index.php#f=FEED_ID&c=0
+https://yourttrssinstance.com/index.php#f=FOLDER_ID&c=1
+```
+
+If both feeds list and folders list are left empty, all unread feed items will be counted.
+You may use both feeds list and folders list, but given feeds shouldn't be included in
+given folders, else unread count number behavior is unpredictable. Same warning when
+aggregator allows subfolders: the folders list shouldn't include a folder and one of its
+subfolder.
+
+Configuration parameters:
+  - `aggregator` feed aggregator used. Supported values are `owncloud` and `ttrss`.
+    Other aggregators might be supported in future releases. Contributions are
+    welcome. *(default 'owncloud')*
+  - `cache_timeout` how often to run this check *(default 60)*
+  - `feed_ids` list of IDs of feeds to watch, see note below *(default [])*
+  - `folder_ids` list of IDs of folders ro watch *(default [])*
+  - `format` format to display *(default 'Feed: {unseen}')*
+  - `password` login password *(default None)*
+  - `server` aggregator server to connect to *(default 'https://yourcloudinstance.com')*
+  - `user` login user *(default None)*
+
+Format placeholders:
+  - `{unseen}` sum of numbers of unread feed elements
+
+Color options:
+  - `color_new_items` text color when there is new items *(default color_good)*
+  - `color_error` text color when there is an error *(default color_bad)*
+
+Requires:
+  - `requests` python module from pypi https://pypi.python.org/pypi/requests
+
+**author** raspbeguy
 
 ---
 
