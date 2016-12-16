@@ -1,4 +1,9 @@
 version 3.4 (milestone)
+* fix python2 unicode use in i3status time modules, by @tobes
+* cache format string tokens to reduce work done, by @tobes
+* formatter: new not_zero format command, by @tobes
+* new rss_aggregator module to display your unread feed items, by @raspbeguy
+* battery_level module: support a different type of battery, by @bpinto
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
