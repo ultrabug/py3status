@@ -1,6 +1,7 @@
 *.pyc
 build
 dist
+tags
 *.egg-info
 .tox/
 .cache/
