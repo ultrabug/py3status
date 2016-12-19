@@ -23,6 +23,7 @@ class BlockConfig:
     has_commands = False
     max_length = None
     min_length = 0
+    not_zero = False
     show = False
 
     def update_commands(self, commands_str):
@@ -36,6 +37,7 @@ class BlockConfig:
         self._set_int(commands, 'max_length')
         self._set_int(commands, 'min_length')
 
+        self.not_zero = 'not_zero' in commands or self.not_zero
         self.show = 'show' in commands or self.show
 
         self.has_commands = True
@@ -221,13 +223,25 @@ class Formatter:
     python2 = sys.version_info < (3, 0)
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
 
+    format_string_cache = {}
+
+    def tokens(self, format_string):
+        """
+        Get the tokenized format_string.
+        Tokenizing is resource intensive so we only do it once and cache it
+        """
+        if format_string not in self.format_string_cache:
+            tokens = list(re.finditer(self.reg_ex, format_string))
+            self.format_string_cache[format_string] = tokens
+        return self.format_string_cache[format_string]
+
     def get_placeholders(self, format_string):
         """
         Parses the format_string and returns a set of placeholders.
         """
         placeholders = set()
         # Tokenize the format string and process them
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             if token.group('placeholder'):
                 placeholders.add(token.group('key'))
         return placeholders
@@ -239,7 +253,7 @@ class Formatter:
 
         # Tokenize the format string and process them
         output = []
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             if token.group('key') in placeholders:
                 output.append('{%s%s}' % (
                     placeholders[token.group('key')],
@@ -256,7 +270,7 @@ class Formatter:
         """
         # Tokenize the format string and process them
         output = []
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             if (token.group('placeholder') and
                     (not token.group('format')) and
                     token.group('key') in placeholder_formats):
@@ -277,7 +291,7 @@ class Formatter:
         the attr_getter function.
         """
 
-        def set_param(param, value, key, format=''):
+        def set_param(param, value, key, block, format=''):
             """
             Converts a placeholder to a string value.
             We fix python 2 unicode issues and use string.format()
@@ -304,6 +318,15 @@ class Formatter:
                         value = u'{%s}' % key
                 value = value.format(**{key: param})
                 block.add(value)
+                # If not_zero block command is used we do not want to mark this
+                # block as valid if the parameter is zero.
+                # we do of course want to et the parameter in case the block is
+                # valid via another route, eg second parameter
+                try:
+                    if block.block_config.not_zero and float(param) == 0:
+                        return
+                except ValueError:
+                    pass
                 block.mark_valid()
 
         # fix python 2 unicode issues
@@ -316,7 +339,7 @@ class Formatter:
         block = Block(param_dict, module)
 
         # Tokenize the format string and process them
-        for token in re.finditer(self.reg_ex, format_string):
+        for token in self.tokens(format_string):
             value = token.group(0)
             if token.group('block_start'):
                 # Create new block
@@ -347,18 +370,18 @@ class Formatter:
                             block.mark_valid()
                     else:
                         format = token.group('format')
-                        set_param(param, value, key, format)
+                        set_param(param, value, key, block, format)
                 elif module and hasattr(module, key):
                     # attribute of the module
                     param = getattr(module, key)
                     if not hasattr(param, '__call__'):
-                        set_param(param, value, key)
+                        set_param(param, value, key, block)
                     else:
                         block.add(value)
                 elif attr_getter:
                     # get value from attr_getter function
                     param = attr_getter(key)
-                    set_param(param, value, key)
+                    set_param(param, value, key, block)
                 else:
                     # substitution not found so add as a literal
                     block.add(value)
