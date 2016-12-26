@@ -159,7 +159,7 @@ class Py3status:
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
-    temp_unit = '°C'
+    temp_unit = u'°C'
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
@@ -175,10 +175,11 @@ class Py3status:
                         ],
                     }
 
-        def update_placeholder_format(config):
-            # padding = config.get('padding', 0)
+        def update_deprecated_placeholder_format(config):
+            padding = config.get('padding', 0)
             precision = config.get('precision', 2)
-            format_vals = ':.{precision}f'.format(precision=precision)
+            format_vals = ':{padding}.{precision}f'.format(padding=padding,
+                                                           precision=precision)
             return {
                     'cpu_usage': format_vals,
                     'cpu_temp': format_vals,
@@ -211,7 +212,15 @@ class Py3status:
                     ],
                 'update_placeholder_format': [
                     {
-                        'function': update_placeholder_format,
+                        'function': update_deprecated_placeholder_format,
+                        'format_strings': ['format']
+                        },
+                    ],
+                }
+
+        update_config = {
+                'update_placeholder_format': [
+                    {
                         'placeholder_formats': {
                             'cpu_usage': ':.2f',
                             'cpu_temp': ':.2f',
@@ -220,15 +229,15 @@ class Py3status:
                             'mem_used_percent': ':.2f',
                             },
                         'format_strings': ['format']
-                        }
-                    ]
+                        },
+                    ],
                 }
 
     def post_config_hook(self):
         self.data = GetData(self)
         self.cpu_total = 0
         self.cpu_idle = 0
-        self.values = {'temp_unit': '°C'}
+        self.values = {'temp_unit': self.temp_unit}
 
     def sysData(self):
         # get CPU usage info
