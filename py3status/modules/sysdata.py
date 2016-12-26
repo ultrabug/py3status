@@ -248,6 +248,9 @@ class Py3status:
             return {
                 'cpu_usage': format_vals,
                 'cpu_temp': format_vals,
+                'load1': format_vals,
+                'load5': format_vals,
+                'load15': format_vals,
                 'mem_total': format_vals,
                 'mem_used': format_vals,
                 'mem_used_percent': format_vals,
@@ -292,6 +295,9 @@ class Py3status:
                     'placeholder_formats': {
                         'cpu_usage': ':.2f',
                         'cpu_temp': ':.2f',
+                        'load1': ':.2f',
+                        'load5': ':.2f',
+                        'load15': ':.2f',
                         'mem_total': ':.2f',
                         'mem_used': ':.2f',
                         'mem_used_percent': ':.2f',
@@ -364,9 +370,9 @@ class Py3status:
         # get load average
         if '{load' in self.format:
             load1, load5, load15 = self.data.load()
-            self.values['load1'] = value_format.format(load1)
-            self.values['load5'] = value_format.format(load5)
-            self.values['load15'] = value_format.format(load15)
+            self.values['load1'] = load1
+            self.values['load5'] = load5
+            self.values['load15'] = load15
             self.py3.threshold_get_color(load1, 'load')
 
         try:
