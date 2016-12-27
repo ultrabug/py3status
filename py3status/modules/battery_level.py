@@ -277,9 +277,9 @@ class Py3status:
         for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
             r = _parse_battery_info(path)
 
-            capacity = r.get("POWER_SUPPLY_ENERGY_FULL") or r.get("POWER_SUPPLY_CHARGE_FULL")
-            present_rate = r.get("POWER_SUPPLY_POWER_NOW") or r.get("POWER_SUPPLY_CURRENT_NOW")
-            remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW") or r.get("POWER_SUPPLY_CHARGE_NOW")
+            capacity = r.get("POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL"))
+            present_rate = r.get("POWER_SUPPLY_POWER_NOW", r.get("POWER_SUPPLY_CURRENT_NOW"))
+            remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW"))
 
             battery = {}
             battery["capacity"] = capacity

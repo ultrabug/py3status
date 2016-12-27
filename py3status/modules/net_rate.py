@@ -23,6 +23,8 @@ Configuration parameters:
         (default 'lo')
     si_units: use SI units
         (default False)
+    sum_values: sum values of each interface instead of taking the top one
+        (default False)
     thresholds: thresholds to use for colors
         (default [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')])
     unit: unit to use. If the unit contains a multiplier prefix, only this
@@ -66,6 +68,7 @@ class Py3status:
     interfaces = []
     interfaces_blacklist = 'lo'
     si_units = False
+    sum_values = False
     thresholds = [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")]
     unit = "B/s"
 
@@ -126,7 +129,13 @@ class Py3status:
             self.last_time = time()
 
             # get the interface with max rate
-            interface = max(deltas, key=lambda x: deltas[x]['total'])
+            if self.sum_values:
+                interface = 'sum'
+                sum_up = sum([itm['up'] for _, itm in deltas.items()])
+                sum_down = sum([itm['down'] for _, itm in deltas.items()])
+                deltas[interface] = {'total': sum_up + sum_down, 'up': sum_up, 'down': sum_down}
+            else:
+                interface = max(deltas, key=lambda x: deltas[x]['total'])
 
             # if there is no rate - show last active interface, or hide
             if deltas[interface]['total'] == 0:
