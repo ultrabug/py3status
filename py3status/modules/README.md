@@ -1626,6 +1626,8 @@ Configuration parameters:
     *(default 'lo')*
   - `si_units` use SI units
     *(default False)*
+  - `sum_values` sum values of each interface instead of taking the top one
+    *(default False)*
   - `thresholds` thresholds to use for colors
     *(default [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')])*
   - `unit` unit to use. If the unit contains a multiplier prefix, only this

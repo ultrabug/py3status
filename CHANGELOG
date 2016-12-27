@@ -4,6 +4,8 @@ version 3.4 (milestone)
 * formatter: new not_zero format command, by @tobes
 * new rss_aggregator module to display your unread feed items, by @raspbeguy
 * battery_level module: support a different type of battery, by @bpinto
+* battery_level module: prevent logic issues when zero, by @tobes
+* net_rate module: add option to aggregate rate from all interfaces, by @guiniol
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
