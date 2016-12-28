@@ -126,7 +126,7 @@ class GetData:
         # Otherwise, results are in gigabytes.
         return total_mem, used_mem, used_mem_p, unit
 
-    def cpuTemp(self, zone):
+    def cpuTemp(self, zone, unit):
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
@@ -134,17 +134,23 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
-        sensors = None
+        command = ['sensors']
+        if unit.lower() == 'F' or unit == u'°F':
+            command.append('-f')
+        elif unit.lower() not in ['C', u'°C', 'K']:
+            return 'unknown unit'
         if zone:
             try:
-                sensors = self.py3.command_output(['sensors', zone])
+                sensors = self.py3.command_output(command + [zone])
             except:
                 sensors = None
         if not sensors:
-            sensors = self.py3.command_output('sensors')
+            sensors = self.py3.command_output(command)
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
             cpu_temp = float(m.groups()[1].strip()[:-2])
+            if unit == 'K':
+                cpu_temp += 273.15
         else:
             cpu_temp = '?'
 
@@ -253,7 +259,7 @@ class Py3status:
 
         # if specified as a formatting option, also get the CPU temperature
         if self.py3.format_contains(self.format, 'cpu_temp'):
-            cpu_temp = self.data.cpuTemp(self.zone)
+            cpu_temp = self.data.cpuTemp(self.zone, self.temp_unit)
             self.values['cpu_temp'] = cpu_temp
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
