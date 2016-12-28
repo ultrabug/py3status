@@ -5,14 +5,16 @@ A simple "Do Not Disturb" module that can turn on and off all system notificatio
 A left mouse click will toggle the state of this module.
 
 Configuration parameters:
-    format_off: Display format when the "Do Not Disturb" mode is disabled.
-        (default 'OFF')
-    format_on: Display format when the "Do Not Disturb" mode is enabled.
-        (default 'ON')
+    format: Display format for the "Do Not Disturb" module.
+        (default '{state}')
     notification_manager: The process name of your notification manager.
         (default 'dunst')
     refresh_interval: Refresh interval to use for killing notification manager process.
         (default 0.25)
+    state_off: Message when the "Do Not Disturb" mode is disabled.
+        (default 'OFF')
+    state_on: Message when the "Do Not Disturb" mode is enabled.
+        (default 'ON')
 
 Color options:
     color_bad: "Do Not Disturb" mode is enabled.
@@ -29,10 +31,11 @@ class Py3status:
     """
 
     # available configuration parameters
-    format_off = 'OFF'
-    format_on = 'ON'
+    format = '{state}'
     notification_manager = 'dunst'
     refresh_interval = 0.25
+    state_off = 'OFF'
+    state_on = 'ON'
 
     def __init__(self):
         self.running = Event()
@@ -48,9 +51,10 @@ class Py3status:
         MyThread().start()
 
     def do_not_disturb(self):
+        state = self.state_on if self.running.is_set() else self.state_off
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.format_on if self.running.is_set() else self.format_off,
+            'full_text': self.py3.safe_format(self.format, {'state': state}),
             'color': self.py3.COLOR_BAD if self.running.is_set() else self.py3.COLOR_GOOD
         }
         return response
