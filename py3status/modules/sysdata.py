@@ -14,7 +14,7 @@ Configuration parameters:
     precision: precision of values
         (default 2)
     thresholds: thresholds to use for color changes
-        (default [(0, "good"), (40, "degraded"), (75, "high")])
+        (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: thermal zone to use. If None try to guess CPU temperature
         (default None)
 
@@ -162,7 +162,7 @@ class Py3status:
     mem_unit = 'GiB'
     padding = 0
     precision = 2
-    thresholds = [(0, "good"), (40, "degraded"), (75, "high")]
+    thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
     class Meta:
