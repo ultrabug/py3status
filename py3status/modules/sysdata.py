@@ -135,9 +135,10 @@ class GetData:
         """
 
         command = ['sensors']
-        if unit.lower() == 'F' or unit == u'°F':
+        unit = unit.upper()
+        if unit in ['F', u'°F']:
             command.append('-f')
-        elif unit.lower() not in ['C', u'°C', 'K']:
+        elif unit not in ['C', u'°C', 'K']:
             return 'unknown unit'
         if zone:
             try:
