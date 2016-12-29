@@ -458,6 +458,12 @@ class Module(Thread):
                             del mod_config[param]
                             deprecation_log(item)
 
+            # apply module configuration
+            for config, value in mod_config.items():
+                # names starting with '.' are private
+                if not config.startswith('.'):
+                    setattr(self.module_class, config, value)
+
             # process any update_config settings
             try:
                 update_config = class_inst.Meta.update_config
@@ -478,12 +484,6 @@ class Module(Thread):
                                 format_string, placeholder_formats
                             )
                             mod_config[format_param] = format
-
-            # apply module configuration
-            for config, value in mod_config.items():
-                # names starting with '.' are private
-                if not config.startswith('.'):
-                    setattr(self.module_class, config, value)
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
