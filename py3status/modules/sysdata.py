@@ -135,10 +135,9 @@ class GetData:
         """
 
         command = ['sensors']
-        unit = unit.upper()
-        if unit in ['F', u'°F']:
+        if unit == u'°F':
             command.append('-f')
-        elif unit not in ['C', u'°C', 'K']:
+        elif unit not in [u'°C', 'K']:
             return 'unknown unit'
         if zone:
             try:
@@ -244,7 +243,15 @@ class Py3status:
         self.data = GetData(self)
         self.cpu_total = 0
         self.cpu_idle = 0
-        self.values = {'temp_unit': self.temp_unit}
+        temp_unit = self.temp_unit.upper()
+        if temp_unit in ['C', u'°C']:
+            temp_unit = u'°C'
+        elif temp_unit in ['F', u'°F']:
+            temp_unit = u'°F'
+        elif not temp_unit == 'K':
+            temp_unit = 'unknown unit'
+        self.values = {'temp_unit': temp_unit}
+        self.temp_unit = temp_unit
 
     def sysData(self):
         # get CPU usage info
