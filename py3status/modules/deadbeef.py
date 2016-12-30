@@ -93,6 +93,7 @@ class Py3status:
         except:
             return self._error_response(self.py3.COLOR_BAD)
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.

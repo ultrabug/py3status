@@ -123,6 +123,7 @@ class Py3status:
         response['full_text'] = ', '.join(rates)
         return response
 
+
 if __name__ == '__main__':
     """
     Run module in test mode.

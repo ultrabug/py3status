@@ -119,7 +119,12 @@ class I3statusModule:
     def update_time_value(self):
         date = datetime.now(self.tz)
         # set the full_text with the correctly formatted date
-        new_value = date.strftime(self.time_format)
+        try:
+            new_value = date.strftime(self.time_format)
+        except:
+            # python 2 unicode
+            new_value = date.strftime(self.time_format.encode('utf-8'))
+            new_value = new_value.decode('utf-8')
         updated = self.item['full_text'] != new_value
         if updated:
             self.item['full_text'] = new_value

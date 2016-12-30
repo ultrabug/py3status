@@ -1,13 +1,28 @@
-version 3.3 (milestone)
+version 3.4 (milestone)
+* fix python2 unicode use in i3status time modules, by @tobes
+* cache format string tokens to reduce work done, by @tobes
+* formatter: new not_zero format command, by @tobes
+* new rss_aggregator module to display your unread feed items, by @raspbeguy
+* battery_level module: support a different type of battery, by @bpinto
+* battery_level module: prevent logic issues when zero, by @tobes
+* net_rate module: add option to aggregate rate from all interfaces, by @guiniol
+
+version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
 * py3 helper: add command_run and command_output methods, by @tobes
 * py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
+* py3 helper: report better exceptions, by @tobes
 * formatter now accepts per module coloring syntax on containers, by @tobes
 * formatter and composite overall updates, refactoring, tests, by @tobes
 * formatter add attr_getter option, by @tobes
+* formatter: allow formatting numeric strings, by @tobes
+* Allow updating of placeholder formatting of modules, by @tobes
 * universal module config parameter deprecation feature, by @tobes
+* disable modules if post-config_hook() raises Exception, by @tobes
+* log py3status/python versions and git info on start, by @tobes
 * fix multi-line default values support on docstrings, by @guiniol
 * fix i3status time modules updating, by @tobes
+* flake8 fixes and testing improvements, by @tobes
 * add tuples support to doc checker, by @guiniol
 * don't call updates on modules before they have been fully initialised, by @tobes
 * module test: fix unicode error, by @tobes
@@ -25,10 +40,13 @@ version 3.3 (milestone)
 * glpi module: add cache_timeout and format parameters, by @pferate
 * graphite module: add proxy parameter to allow usage of request's proxy feature, by @btall
 * mpris module: fix AttributeError when click without a running player, by @ritze
+* net_rate module: make compatible with formatter colors, by @guiniol
 * ns_checker module: add format and cache_timeout, by @pferate
 * rate_counter module: add format and majorly refactor code, by @pferate
 * spaceapi module: go to a space's website onclick, by @rixx
+* sysdata module: add dynamic memory unitn by @pferate
 * sysdata module: add support for colors/thresholds, by @guiniol
+* xrandr module: add rotation support, by @coxley
 * volume_status module: add pulseaudio support, by @guiniol
 * volume_status module: add pactl support, by @tobes
 * vpn_status module: remove shebang, by @jakubjedelsky

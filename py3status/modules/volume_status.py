@@ -161,7 +161,7 @@ class PactlBackend(AudioBackend):
             self.device = "0"
         self.max_volume = parent.max_volume
         self.re_volume = re.compile(
-            r'Sink \#0.*?Mute: (\w{2,3}).*?Volume:.*?(\d{1,3})\%',
+            r'Sink \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(self.device),
             re.M | re.DOTALL
         )
 

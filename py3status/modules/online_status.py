@@ -64,6 +64,7 @@ class Py3status:
 
         return response
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.

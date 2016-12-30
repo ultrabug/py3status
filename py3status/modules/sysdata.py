@@ -7,12 +7,14 @@ Configuration parameters:
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+    mem_unit: the unit of memory to use in report, case insensitive.
+        ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
         (default 2)
     thresholds: thresholds to use for color changes
-        (default [(0, "good"), (40, "degraded"), (75, "high")])
+        (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: thermal zone to use. If None try to guess CPU temperature
         (default None)
 
@@ -20,6 +22,7 @@ Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {mem_total} total memory
+    {mem_unit} unit for memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
 
@@ -38,6 +41,11 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 from __future__ import division
 
 import re
+
+
+ONE_KIB = pow(1024, 1)  # 1 KiB in B
+ONE_MIB = pow(1024, 2)  # 1 MiB in B
+ONE_GIB = pow(1024, 3)  # 1 GiB in B
 
 
 class GetData:
@@ -74,31 +82,50 @@ class GetData:
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
 
-    def memory(self):
+    def memory(self, unit='GiB'):
         """
         Parse /proc/meminfo, grab the memory capacity and used size
-        then return; Memory size 'total_mem', Used_mem, and percentage
-        of used memory.
+        then return; Memory size 'total_mem', Used_mem, percentage
+        of used memory, and units of mem (KiB, MiB, GiB).
         """
 
         memi = {}
         with open('/proc/meminfo', 'r') as fd:
             for s in fd:
                 tok = s.split()
-                memi[tok[0]] = float(tok[1]) / (1 << 20)
+                memi[tok[0]] = float(tok[1])
 
         try:
-            total_mem = memi["MemTotal:"]
-            used_mem = (total_mem -
-                        memi["MemFree:"] -
-                        memi["Buffers:"] -
-                        memi["Cached:"])
-            used_mem_p = int(used_mem / (total_mem / 100))
+            total_mem_kib = memi["MemTotal:"]
+            used_mem_kib = (total_mem_kib -
+                            memi["MemFree:"] -
+                            memi["Buffers:"] -
+                            memi["Cached:"])
+            used_mem_p = 100 * used_mem_kib / total_mem_kib
+            multiplier = {
+                'KiB': ONE_KIB / ONE_KIB,
+                'MiB': ONE_KIB / ONE_MIB,
+                'GiB': ONE_KIB / ONE_GIB,
+            }
+            if unit.lower() == 'dynamic':
+                # If less than 1 GiB, use MiB
+                if (multiplier['GiB'] * total_mem_kib) < 1:
+                    unit = 'MiB'
+                else:
+                    unit = 'GiB'
+            if unit in multiplier.keys():
+                total_mem = multiplier[unit] * total_mem_kib
+                used_mem = multiplier[unit] * used_mem_kib
+            else:
+                raise ValueError(
+                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
         except:
             total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
+            unit = 'UNKNOWN'
 
-        # Results are in gigabytes
-        return total_mem, used_mem, used_mem_p
+        # If total memory is <1GB, results are in megabytes.
+        # Otherwise, results are in gigabytes.
+        return total_mem, used_mem, used_mem_p, unit
 
     def cpuTemp(self, zone):
         """
@@ -132,9 +159,10 @@ class Py3status:
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
         "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    mem_unit = 'GiB'
     padding = 0
     precision = 2
-    thresholds = [(0, "good"), (40, "degraded"), (75, "high")]
+    thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
     class Meta:
@@ -196,10 +224,11 @@ class Py3status:
 
         # get RAM usage info
         if self.py3.format_contains(self.format, 'mem_*'):
-            mem_total, mem_used, mem_used_percent = self.data.memory()
+            mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory(self.mem_unit)
             self.values['mem_total'] = value_format.format(mem_total)
             self.values['mem_used'] = value_format.format(mem_used)
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
+            self.values['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
 
         try:
@@ -219,6 +248,7 @@ class Py3status:
         }
 
         return response
+
 
 if __name__ == "__main__":
     """

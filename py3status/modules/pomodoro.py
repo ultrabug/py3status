@@ -96,6 +96,7 @@ class Player(object):
     def __call__(self, sound_fname):
         getattr(self, self._default)(os.path.expanduser(sound_fname))
 
+
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
 
 
