@@ -34,6 +34,7 @@ class Py3status:
     cache_timeout = 600
     format = ''
     include_aur = False
+    hide_if_zero = False
 
     _format_pacman_only = 'UPD: {pacman}'
     _format_pacman_and_aur = 'UPD: {pacman}/{aur}'
@@ -47,19 +48,21 @@ class Py3status:
 
     def check_updates(self):
         pacman_updates = self._check_pacman_updates()
+
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+
         if self.include_aur:
             aur_updates = self._check_aur_updates()
         else:
             aur_updates = ''
 
-        results = self.py3.safe_format(
-            self.format, {'pacman': pacman_updates, 'aur': aur_updates}
-        )
+        if self.hide_if_zero and pacman_updates == 0 and aur_updates == 0:
+            response['full_text'] = ''
+        else:
+            response['full_text'] = self.py3.safe_format(
+                    self.format, {'pacman': pacman_updates, 'aur': aur_updates}
+                    )
 
-        response = {
-            'full_text': results,
-            'cached_until': self.py3.time_in(self.cache_timeout),
-        }
         return response
 
     def _check_pacman_updates(self):
