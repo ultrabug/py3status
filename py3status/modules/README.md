@@ -159,6 +159,7 @@ also waiting.
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 600)*
   - `format` Display format to use
+  - `hide_if_zero` Don't show on bar if True *(default False)*
     *(default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')*
   - `include_aur` Set to True to use 'cower' to check for AUR updates
     *(default False)*
