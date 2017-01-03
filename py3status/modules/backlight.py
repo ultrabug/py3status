@@ -96,8 +96,11 @@ class Py3status:
         return brightness * 100 // brightness_max
 
     def backlight(self):
-        level = self._get_backlight_level()
-        full_text = self.py3.safe_format(self.format, {'level': level})
+        full_text = ""
+        if self.device_path is not None:
+            level = self._get_backlight_level()
+            full_text = self.py3.safe_format(self.format, {'level': level})
+
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text
