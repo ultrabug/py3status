@@ -3,9 +3,14 @@ version 3.4 (milestone)
 * cache format string tokens to reduce work done, by @tobes
 * formatter: new not_zero format command, by @tobes
 * new rss_aggregator module to display your unread feed items, by @raspbeguy
+* arch_updates module: add hide_if_zero option, by @lasers
+* backlight module: fix crash when monitor doesn't support backlight change, by @laxd
 * battery_level module: support a different type of battery, by @bpinto
 * battery_level module: prevent logic issues when zero, by @tobes
+* battery_level module: fix crash when running on a machien with no battery, by @laxd
 * net_rate module: add option to aggregate rate from all interfaces, by @guiniol
+* sysdata module: use color 'bad' instead of 'high' as a default threshold, by @maximbaz
+* volume_status module: PactlBackend does not read user-specified device, by @vicyap
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
