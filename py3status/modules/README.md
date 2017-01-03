@@ -160,6 +160,7 @@ Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 600)*
   - `format` Display format to use
     *(default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')*
+  - `hide_if_zero` Don't show on bar if True *(default False)*
   - `include_aur` Set to True to use 'cower' to check for AUR updates
     *(default False)*
 
@@ -1261,7 +1262,7 @@ Configuration parameters:
   - `cache_timeout` how often to run this check *(default 60)*
   - `criterion` status of emails to check for *(default 'UNSEEN')*
   - `format` format to display *(default 'Mail: {unseen}')*
-  - `hide_if_zero` don't show on bar if False *(default False)*
+  - `hide_if_zero` don't show on bar if True *(default False)*
   - `imap_server` IMAP server to connect to *(default '&lt;IMAP_SERVER&gt;')*
   - `mailbox` name of the mailbox to check *(default 'INBOX')*
   - `new_mail_color` what color to output on new mail *(default '')*
