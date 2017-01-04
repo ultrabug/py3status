@@ -9,11 +9,10 @@ also waiting.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
-    format_pacman: Display Pacman only, (default 'PAC: {pacman}')
-    format_aur: Display AUR only, (default 'AUR: {aur}')
-    format_full: Display Pacman/AUR, (default 'UPD: {pacman}/{aur}')
-    include_aur: Set to True to use 'cower' to check for AUR updates
-        (default False)
+    format_pacman: Display Pacman only (default 'PAC: {pacman}')
+    format_aur: Display AUR only (default 'AUR: {aur}')
+    format_full: Display Pacman/AUR (default 'UPD: {pacman}/{aur}')
+    include_aur: Set to True to use 'cower' to check for AUR updates (default False)
 
 Format placeholders:
     {aur} Number of pending aur updates
@@ -59,7 +58,8 @@ class Py3status:
                 response['full_text'] = ''
             else:
                 self.format = self.format_pacman
-                response['full_text'] = self.py3.safe_format(self.format, {'pacman': pacman_updates})
+                response['full_text'] = self.py3.safe_format(self.format,
+                                                             {'pacman': pacman_updates})
 
         # print pacman and/or aur
         else:
@@ -69,14 +69,16 @@ class Py3status:
                 response['full_text'] = ''
             elif pacman_updates == 1 and aur_updates == 0:
                 self.format = self.format_pacman
-                response['full_text'] = self.py3.safe_format(self.format, {'pacman': pacman_updates})
+                response['full_text'] = self.py3.safe_format(self.format,
+                                                             {'pacman': pacman_updates})
             elif pacman_updates == 0 and aur_updates == 1:
                 self.format = self.format_aur
                 response['full_text'] = self.py3.safe_format(self.format, {'aur': aur_updates})
             else:
                 self.format = self.format_full
                 response['full_text'] = self.py3.safe_format(self.format,
-                                                             {'pacman': pacman_updates, 'aur': aur_updates})
+                                                             {'pacman': pacman_updates,
+                                                                 'aur': aur_updates})
         return response
 
     def _check_pacman_updates(self):
