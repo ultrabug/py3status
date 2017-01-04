@@ -7,7 +7,7 @@ version 3.4 (milestone)
 * backlight module: fix crash when monitor doesn't support backlight change, by @laxd
 * battery_level module: support a different type of battery, by @bpinto
 * battery_level module: prevent logic issues when zero, by @tobes
-* battery_level module: fix crash when running on a machien with no battery, by @laxd
+* battery_level module: fix crash when running on a machine with no battery, by @laxd
 * net_rate module: add option to aggregate rate from all interfaces, by @guiniol
 * sysdata module: use color 'bad' instead of 'high' as a default threshold, by @maximbaz
 * volume_status module: PactlBackend does not read user-specified device, by @vicyap
@@ -35,13 +35,13 @@ version 3.3 (2016-11-20)
 * new clock module to display multiple times and dates informations in a flexible way, by @tobes
 * new diskdata module to shows both usage data and IO data from disks, by @guiniol
 * new net_iplist module to display interfaces and their IPv4 and IPv6 IP addresses, by @guiniol
-* backlight module: allow chaging brightness using mouse click events
+* backlight module: allow changing brightness using mouse click events
 * battery_level module: stability and bugfix, by @inclementweather
 * battery_level module: fix on_click() method logic, by @m45t3r
 * battery_level module: add measurement_mode parameter to check for battery using /sys, by @m45t3r
 * exchange_rates module: cache value instead of reporting an error, by @tobes
 * fedora_updates module: add check_security option, by @jakubjedelsky
-* github module: open github home page if no repo is configured and you're gettin all notifications, by @rixx
+* github module: open github home page if no repo is configured and you're getting all notifications, by @rixx
 * glpi module: add cache_timeout and format parameters, by @pferate
 * graphite module: add proxy parameter to allow usage of request's proxy feature, by @btall
 * mpris module: fix AttributeError when click without a running player, by @ritze
