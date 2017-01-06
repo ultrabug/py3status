@@ -9,7 +9,7 @@ Configuration parameters:
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
-    temp_unit: unit used for measuring the temperature
+    temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
         (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
