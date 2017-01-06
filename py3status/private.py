@@ -113,7 +113,7 @@ def catch_factory(attr):
 # We need to populate our base class with all the methods that unicode
 # has.  We will implement them using the _catch function created by out
 # factory.  We want to exclude a few select methods
-EXCLUDE = ['__init__', '__getattribute__', '__new__', '__setattr__']
+EXCLUDE = ['__init__', '__getattribute__', '__new__', '__setattr__', '__init_subclass__']
 for attr in dir(u''):
     if attr.startswith('__') and attr in EXCLUDE:
         continue
