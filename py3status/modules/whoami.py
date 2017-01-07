@@ -7,7 +7,7 @@ Configuration parameters:
         (default 1800)
 
 Inspired by i3 FAQ:
-        https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
+        https://faq.i3wm.org/question/1618/add-user-name-to-status-bar.1.html
 """
 
 from getpass import getuser
