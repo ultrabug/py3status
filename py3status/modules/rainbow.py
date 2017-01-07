@@ -16,10 +16,9 @@ gradient by default this is the colors of the rainbow.  This module will
 increase the amount of updates that py3status needs to do so should be used
 sparingly.
 
-
 Configuration parameters:
-    cycle_time: How often we cdo a color change in seconds
-    (default 1)
+    cycle_time: How often we change this color in seconds
+        (default 1)
     force: If True then the color will always be set.  If false the color will
         only be changed if it has not been set by a module.
         (default False)
