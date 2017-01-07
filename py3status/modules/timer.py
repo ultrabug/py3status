@@ -77,7 +77,7 @@ class Py3status:
         seconds = t
 
         if self.running:
-            cached_until = self.py3.time_in(1),
+            cached_until = self.py3.time_in(0, offset=self.cache_offset)
         else:
             cached_until = self.py3.CACHE_FOREVER
 
@@ -145,6 +145,7 @@ class Py3status:
                     self.end_time = time() + self.time_left
                 else:
                     self.end_time = time() + self.time
+                self.cache_offset = self.end_time % 1
                 self.color = '#00FF00'
                 if self.alarm_timer:
                     self.alarm_timer.cancel()
