@@ -17,7 +17,7 @@ Format placeholders:
     {mac} device MAC address
 
 Color options:
-    color_bad: Conection on
+    color_bad: Connection on
     color_good: Connection off
 
 Requires:
