@@ -12,7 +12,7 @@ but this can be configured with the `screenshot_command` configuration parameter
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)
     file_length: generated file_name length (default 4)
-    push: True/False if yo want to push your screenshot to your server
+    push: True/False if you want to push your screenshot to your server
         (default True)
     save_path: Directory where to store your screenshots. (default '~/Pictures/')
     screenshot_command: the command used to generate the screenshot
