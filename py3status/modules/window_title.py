@@ -6,6 +6,8 @@ Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
+    empty_title: string that will be shown instead of the title when
+            the title is hidden. (default "")
 
 Requires:
     i3-py: (https://github.com/ziberna/i3-py)
@@ -42,6 +44,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 0.5
     max_width = 120
+    empty_title = ""
 
     def __init__(self):
         self.text = ''
@@ -51,6 +54,9 @@ class Py3status:
 
         transformed = False
         if window and 'name' in window and window['name'] != self.text:
+            if window['name'] is None:
+                window['name'] = self.empty_title
+
             self.text = (len(window['name']) > self.max_width and
                          "..." + window['name'][-(self.max_width - 3):] or
                          window['name'])
