@@ -33,7 +33,7 @@ class Py3status:
         t.daemon = True
         t.start()
 
-    def scratchpad_counter(self):
+    def scratchpad_async(self):
         response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:
@@ -47,7 +47,7 @@ class Py3status:
         return response
 
     def _listen(self):
-        def update_scratchpad_counter(conn, e=None):
+        def update_scratchpad_async(conn, e=None):
             cons = conn.get_tree().scratchpad().leaves()
             self.urgent = any(con for con in cons if con.urgent)
             self.count = len(cons)
@@ -55,10 +55,10 @@ class Py3status:
 
         conn = i3ipc.Connection()
 
-        update_scratchpad_counter(conn)
+        update_scratchpad_async(conn)
 
-        conn.on('window::move', update_scratchpad_counter)
-        conn.on('window::urgent', update_scratchpad_counter)
+        conn.on('window::move', update_scratchpad_async)
+        conn.on('window::urgent', update_scratchpad_async)
 
         conn.main()
 
