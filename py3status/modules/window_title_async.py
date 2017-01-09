@@ -62,7 +62,7 @@ class Py3status:
             else:
                 title = w.name
                 if title is None:
-                    return self.empty_title
+                    title = ''
 
                 if len(title) > self.max_width:
                     title = title[:self.max_width - 1] + "…"
