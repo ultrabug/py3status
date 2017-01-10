@@ -50,21 +50,33 @@ class Py3status:
 
     def on_click(self, event):
 
-        file_name = self._filename_generator(self.file_length)
+        buttons = (None, 'left', 'middle', 'right', 'up', 'down')
+        try:
+            button = buttons[event['button']]
+        except IndexError:
+            return
 
-        command = '%s %s/%s%s' % (self.screenshot_command, self.save_path,
-                                  file_name, '.jpg')
+        if button in ('middle','right'):
+            self.full_text = self.format
 
-        subprocess.Popen(command.split())
+        if button == 'left':
+
+            file_name = self._filename_generator(self.file_length)
 
         self.full_text = '%s%s' % (file_name, '.jpg')
 
-        if (self.push and self.upload_server and self.upload_user and
-                self.upload_path):
-            command = 'scp %s/%s%s %s@%s:%s' % (
-                self.save_path, file_name, '.jpg', self.upload_user,
-                self.upload_server, self.upload_path)
             subprocess.Popen(command.split())
+
+            self.full_text = '%s%s' % (file_name, '.jpg')
+            self.full_text = self.py3.safe_format(self.format_screenshot,
+                                                 {'filename': self.full_text})
+
+            if (self.push and self.upload_server and self.upload_user and
+                    self.upload_path):
+                command = 'scp %s/%s%s %s@%s:%s' % (
+                    self.save_path, file_name, '.jpg', self.upload_user,
+                    self.upload_server, self.upload_path)
+                subprocess.Popen(command.split())
 
     def _filename_generator(self,
                             size=6,
