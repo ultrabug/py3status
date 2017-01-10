@@ -5,6 +5,7 @@ Display the currently logged in user.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 1800)
+    format: string to print (default '{username}')
 
 Inspired by i3 FAQ:
         https://faq.i3wm.org/question/1618/add-user-name-to-status-bar.1.html
@@ -18,20 +19,18 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 1800
+    format = '{username}'
 
     def whoami(self):
         """
         We use the getpass module to get the current user.
         """
-        # here you can change the format of the output
-        # default is just to show the username
         username = '{}'.format(getuser())
 
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': username
+            'full_text': self.py3.safe_format(self.format, {'username': username})
         }
-        return response
 
 
 if __name__ == "__main__":
