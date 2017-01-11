@@ -55,9 +55,7 @@ class Py3status:
                                    stdout=fnull, stderr=fnull) == 0
 
     def online_status(self):
-        response = { 'cached_until': self.py3.time_in(self.cache_timeout) }
-
-        connected = self._connection_present()
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         if self._connection_present():
             response = {
