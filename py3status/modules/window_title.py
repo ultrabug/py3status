@@ -6,6 +6,7 @@ Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
+    format: string to print (default "{title}")
 
 Requires:
     i3-py: (https://github.com/ziberna/i3-py)
@@ -40,6 +41,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    format = "{title}"
     cache_timeout = 0.5
     max_width = 120
 
@@ -56,12 +58,11 @@ class Py3status:
                          window['name'])
             transformed = True
 
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.text,
+            'full_text': self.py3.safe_format(self.format, {'title': self.text}),
             'transformed': transformed
         }
-        return response
 
 
 if __name__ == "__main__":
