@@ -8,15 +8,15 @@ by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
     format: string to display (default '{query}')
-    format_off: string to display when disabled (default 'DPMS')
-    format_on: string to display when enabled (default 'DPMS')
+    format_off: string to display when dpms is disabled (default 'DPMS')
+    format_on: string to display when dpms is enabled (default 'DPMS')
 
 Format placeholders:
     {query} display current dpms setting
 
 Color options:
-    color_on: when enabled, defaults to color_good
-    color_off: when disabled, defaults to color_bad
+    color_on: when dpms is enabled, defaults to color_good
+    color_off: when dpms is disabled, defaults to color_bad
 
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
