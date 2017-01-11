@@ -10,7 +10,7 @@ Provides an icon to control simple functions of audio/video players:
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 10)
     debug: enable verbose logging (bool) (default False)
-    format: string to print (default "{icon}")
+    format: format of the output (default "{icon}")
     pause_icon: (default '❚❚')
     play_icon: (default '▶')
     stop_icon: (default '◼')
