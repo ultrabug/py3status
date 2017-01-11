@@ -77,7 +77,8 @@ class Py3status:
 
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         response['full_text'] = self._getMetadatas()
-        response['full_text'] = self.py3.safe_format(self.format, {'current': self._getMetadatas()})
+        response['full_text'] = self.py3.safe_format(self.format,
+                                                     {'current': self._getMetadatas()})
 
         return response
 
