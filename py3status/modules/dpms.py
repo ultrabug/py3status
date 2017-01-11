@@ -7,12 +7,12 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-    format: string to display (default '{format_dpms}')
+    format: string to display (default '{state}')
     format_off: string to display when dpms is disabled (default 'DPMS')
     format_on: string to display when dpms is enabled (default 'DPMS')
 
 Format placeholders:
-    {format_dpms} display current dpms setting
+    {state} display current dpms state
 
 Color options:
     color_on: when dpms is enabled, defaults to color_good
@@ -28,7 +28,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = "{format_dpms}"
+    format = "{state}"
     format_off = "DPMS"
     format_on = "DPMS"
 
