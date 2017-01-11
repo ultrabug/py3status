@@ -4,9 +4,9 @@ Display the current window title.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)
+    format: string to print (default '{title}')
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
-    format: string to print (default "{title}")
 
 Requires:
     i3-py: (https://github.com/ziberna/i3-py)
@@ -41,8 +41,8 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = "{title}"
     cache_timeout = 0.5
+    format = '{title}'
     max_width = 120
 
     def __init__(self):
