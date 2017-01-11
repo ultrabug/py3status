@@ -59,11 +59,13 @@ class Py3status:
 
         if self._connection_present():
             response = {
+                'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': self.py3.safe_format(self.format, {'state': self.format_online}),
                 'color': self.py3.COLOR_GOOD
             }
         else:
             response = {
+                'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': self.py3.safe_format(self.format, {'state': self.format_offline}),
                 'color': self.py3.COLOR_BAD
             }
