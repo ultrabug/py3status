@@ -4,6 +4,10 @@ Display the current "artist - title" playing in Clementine.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 5)
+    format: string to print (default '{current}')
+
+Format placeholders:
+    {current} print current song, artist, title, and/or internet radio
 
 Requires:
     clementine:
@@ -22,6 +26,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
+    format = '{current}'
 
     def _getMetadatas(self):
         """
@@ -72,6 +77,7 @@ class Py3status:
 
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         response['full_text'] = self._getMetadatas()
+        response['full_text'] = self.py3.safe_format(self.format, {'current': self._getMetadatas()})
 
         return response
 
