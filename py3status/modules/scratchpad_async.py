@@ -3,9 +3,8 @@
 Display the amount of windows and indicate urgency hints on scratchpad (async).
 
 Configuration parameters:
-    always_show: whether the indicator should be shown if there are no
-        scratchpad windows (default False)
-    format: string to format the output (default "{} ⌫")
+    always_show: old setting. use format_none instead (default False)
+    format: Display format when one or more scratchpad window(s) (default "{counter} ⌫")
 
 Requires:
     i3ipc: (https://github.com/acrisci/i3ipc-python)
@@ -23,7 +22,8 @@ class Py3status:
     """
     # available configuration parameters
     always_show = False
-    format = u"{} ⌫"
+    format = u'{counter} ⌫'
+    format_none = ''
 
     def __init__(self):
         self.count = 0
@@ -39,10 +39,12 @@ class Py3status:
         if self.urgent:
             response['urgent'] = True
 
-        if self.always_show or self.count > 0:
-            response['full_text'] = self.format.format(self.count)
-        else:
-            response['full_text'] = ''
+        if self.count > 0:
+            response['full_text'] = self.py3.safe_format(self.format, {'counter': self.count})
+
+        # backward compatible (1/11/17)
+        if self.always_show:
+            response['full_text'] = self.py3.safe_format(self.format, {'counter': self.count})
 
         return response
 
@@ -54,12 +56,8 @@ class Py3status:
             self.py3.update()
 
         conn = i3ipc.Connection()
-
-        update_scratchpad_async(conn)
-
         conn.on('window::move', update_scratchpad_async)
         conn.on('window::urgent', update_scratchpad_async)
-
         conn.main()
 
 
