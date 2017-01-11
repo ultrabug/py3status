@@ -10,6 +10,7 @@ Provides an icon to control simple functions of audio/video players:
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 10)
     debug: enable verbose logging (bool) (default False)
+    format: string to print (default "{icon}")
     pause_icon: (default '❚❚')
     play_icon: (default '▶')
     stop_icon: (default '◼')
@@ -17,6 +18,9 @@ Configuration parameters:
          (default 'audacious,vlc')
     volume_tick: percentage volume change on mouse wheel (int) (positive number
         or None to disable it) (default 1)
+
+Format placeholders:
+    {icon} an icon to control music/video players
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
@@ -40,6 +44,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     debug = False
+    format = '{icon}'
     pause_icon = u'❚❚'
     play_icon = u'▶'
     stop_icon = u'◼'
@@ -171,7 +176,7 @@ class Py3status:
 
     def player_control(self):
         return dict(
-            full_text=self.icon,
+            full_text=self.py3.safe_format(self.format, {'icon': self.icon}),
             cached_until=self.py3.time_in(self.cache_timeout),
         )
 
