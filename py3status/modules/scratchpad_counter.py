@@ -38,6 +38,18 @@ class Py3status:
     format_none = u"{counter} ⌫"
     hide_when_none = False
 
+    class Meta:
+
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',
+                    'placeholder': 'counter',
+                    'msg': '{} should not be used in format use `{counter}`',
+                },
+            ],
+        }
+
     def __init__(self):
         self.count = -1
 
