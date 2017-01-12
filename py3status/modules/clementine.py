@@ -61,9 +61,9 @@ class Py3status:
             if artist and title:
                 now_playing = '{} - {}'.format(artist, title)
             elif artist:
-                now_playing = '{}'.format(artist)
+                now_playing = artist
             elif title:
-                now_playing = '{}'.format(title)
+                now_playing = title
             elif internet_radio:
                 now_playing = 'Internet Radio'
 
