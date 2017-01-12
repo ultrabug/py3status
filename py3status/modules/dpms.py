@@ -7,12 +7,12 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-    format: string to display (default '{state}')
+    format: string to display (default '{icon}')
     icon_off: string to display when dpms is disabled (default 'DPMS')
     icon_on: string to display when dpms is enabled (default 'DPMS')
 
 Format placeholders:
-    {state} display current dpms state
+    {icon} display current dpms icon
 
 Color options:
     color_on: when dpms is enabled, defaults to color_good
@@ -28,7 +28,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = "{state}"
+    format = "{icon}"
     icon_off = "DPMS"
     icon_on = "DPMS"
 
@@ -38,12 +38,12 @@ class Py3status:
                 {
                     'param': 'format_on',
                     'new': 'icon_on',
-                    'msg': 'obsolete parameter // use `icon_on`',
+                    'msg': 'obsolete parameter use `icon_on`',
                 },
                 {
                     'param': 'format_off',
                     'new': 'icon_off',
-                    'msg': 'obsolete parameter // use `icon_off`',
+                    'msg': 'obsolete parameter use `icon_off`',
                 },
             ],
         }
@@ -53,10 +53,10 @@ class Py3status:
         Display a colorful state of DPMS.
         """
         self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
-        format_dpms = self.icon_on if self.run else self.icon_off
+        icon = self.icon_on if self.run else self.icon_off
 
         return {
-            'full_text': self.py3.safe_format(self.format, {'state': format_dpms}),
+            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
             'color': self.py3.COLOR_ON or self.py3.COLOR_GOOD if self.run
             else self.py3.COLOR_OFF or self.py3.COLOR_BAD
         }
