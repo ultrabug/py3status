@@ -61,12 +61,13 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'counter': count}),
             'transformed': transformed
         }
 
         if self.hide_when_none and count == 0:
             response['full_text'] = ''
+        else:
+            response['full_text'] = self.py3.safe_format(self.format, {'counter': count})
 
         return response
 
