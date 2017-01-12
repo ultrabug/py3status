@@ -4,7 +4,11 @@ Display the amount of windows in your i3 scratchpad.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 5)
-    format: string to print (default '{counter} ⌫')
+    format: string to print
+        To make empty windows go away, use 'format = '[\?not_zero {counter} ⌫]'
+        To print something else instead, use 'format = '[\?not_zero {counter} ⌫]|Empty`
+        (default '{counter} ⌫')
+    hide_when_none: obsolete parameter - use 'format' (default False)
 
 Format placeholders:
     {counter} number of scratchpad windows
@@ -33,6 +37,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = u"{counter} ⌫"
+    hide_when_none = False
 
     class Meta:
         deprecated = {
@@ -62,9 +67,6 @@ class Py3status:
             'full_text': self.py3.safe_format(self.format, {'counter': count}),
             'transformed': transformed
         }
-
-        #if count > 0:
-        #    response['full_text'] = self.py3.safe_format(self.format, {'counter': count})
 
         # backward compatible (1/11/17)
         if self.hide_when_none and count == 0:
