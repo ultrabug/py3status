@@ -4,7 +4,7 @@ Display the current "artist - title" playing in Clementine.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 5)
-    format: string to print (default '{current}')
+    format: string to print (default '♫ {current}')
 
 Format placeholders:
     {current} print current song, artist, title, and/or internet radio
@@ -26,7 +26,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = '{current}'
+    format = '♫ {current}'
 
     def _getMetadatas(self):
         """
@@ -59,13 +59,13 @@ class Py3status:
                 internet_radio = True
 
             if artist and title:
-                now_playing = '♫ {} - {}'.format(artist, title)
+                now_playing = '{} - {}'.format(artist, title)
             elif artist:
-                now_playing = '♫ {}'.format(artist)
+                now_playing = '{}'.format(artist)
             elif title:
-                now_playing = '♫ {}'.format(title)
+                now_playing = '{}'.format(title)
             elif internet_radio:
-                now_playing = '♫ Internet Radio'
+                now_playing = 'Internet Radio'
 
         return now_playing
 
