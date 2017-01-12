@@ -4,7 +4,7 @@ Display the current "artist - title" playing in Clementine.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 5)
-    format: string to print (default '♫ {current}')
+    format: Display format for Clementine (default '♫ {current}')
 
 Format placeholders:
     {current} print current song, artist, title, and/or internet radio
