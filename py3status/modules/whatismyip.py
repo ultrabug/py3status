@@ -4,7 +4,7 @@ Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
-    format: the only placeholder available is {ip} (default '{ip}')
+    format: what to display (default '{ip}')
     format_offline: what to display when offline (default '■')
     format_online: what to display when online (default '●')
     hide_when_offline: hide the module output when offline (default False)
@@ -14,6 +14,9 @@ Configuration parameters:
     timeout: how long before deciding we're offline (default 5)
     url: change IP check url (must output a plain text IP address)
         (default 'http://ultrabug.fr/py3status/whatismyip')
+
+Format placeholders:
+    {ip} display current ip address
 
 Color options:
     color_bad: Offline
