@@ -4,7 +4,7 @@ Display the amount of windows in your i3 scratchpad.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 5)
-    format: string to print (default '{counter} ⌫')
+    format: Format of indicator (default '{counter} ⌫')
     hide_when_none: Hide indicator when there is no windows (default False)
 
 Format placeholders:
