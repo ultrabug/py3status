@@ -26,7 +26,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = '♫ {current}'
+    format = u'♫ {current}'
 
     def _getMetadatas(self):
         """
