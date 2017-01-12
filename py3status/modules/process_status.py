@@ -4,16 +4,20 @@ Display if a process is running.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
-    format_not_running: what to display when process is not running
-        (default '■')
-    format_running: what to display when process running (default '●')
-    full: if True, match against the full command line and not just the
-        process name (default False)
+    format: display format for process status (default '{icon}')
+    full: if True, match against the full command line (default False)
+    icon_off: display when the process is not running (default '■')
+    icon_on: display when the process is running (default '●')
+    msg_unavailable: display when no process name (default 'process_status: N/A')
     process: the process name to check if it is running (default None)
 
+Format placeholders:
+    {icon} display icon based on process status
+    {process} display process name
+
 Color options:
-    color_bad: Process not running or error
-    color_good: Process running
+    color_bad: the process is not running or unavailable
+    color_good: the process is running
 
 @author obb, Moritz Lüdecke
 """
@@ -21,18 +25,34 @@ Color options:
 import os
 import subprocess
 
-ERR_NO_PROCESS = 'no process name given'
-
 
 class Py3status:
     """
     """
     # available configuration parameters
     cache_timeout = 10
-    format_not_running = u'■'
-    format_running = u'●'
+    format = '{icon}'
     full = False
+    icon_off = u'■'
+    icon_on = u'●'
+    msg_unavailable = 'process_status: N/A'
     process = None
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_running',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter use `icon_on`',
+                },
+                {
+                    'param': 'format_not_running',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter use `icon_off`',
+                },
+            ],
+        }
 
     def _get_text(self):
         fnull = open(os.devnull, 'w')
@@ -43,28 +63,29 @@ class Py3status:
 
         if subprocess.call(pgrep,
                            stdout=fnull, stderr=fnull) == 0:
-            text = self.format_running
             color = self.py3.COLOR_GOOD
+            text = self.py3.safe_format(self.icon_on,
+                                        {'process': self.process})
         else:
-            text = self.format_not_running
             color = self.py3.COLOR_BAD
+            text = self.py3.safe_format(self.icon_off,
+                                        {'process': self.process})
 
         return (color, text)
 
     def process_status(self):
         if self.process is None:
             color = self.py3.COLOR_BAD
-            text = ERR_NO_PROCESS
+            text = self.msg_unavailable
         else:
             (color, text) = self._get_text()
 
-        response = {
+        return {
+            'color': color,
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
-            'color': color
+            'full_text': self.py3.safe_format(self.format,
+                                              {'icon': text, 'process': self.process})
         }
-
-        return response
 
 
 if __name__ == "__main__":
