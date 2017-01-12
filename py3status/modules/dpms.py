@@ -32,6 +32,22 @@ class Py3status:
     icon_off = "DPMS"
     icon_on = "DPMS"
 
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_on',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter // use `icon_on`',
+                },
+                {
+                    'param': 'format_off',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter // use `icon_off`',
+                },
+            ],
+        }
+
     def dpms(self):
         """
         Display a colorful state of DPMS.
