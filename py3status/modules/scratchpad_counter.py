@@ -35,7 +35,6 @@ class Py3status:
     format = u"{counter} ⌫"
 
     class Meta:
-
         deprecated = {
             'format_fix_unnamed_param': [
                 {
@@ -68,8 +67,8 @@ class Py3status:
         #    response['full_text'] = self.py3.safe_format(self.format, {'counter': count})
 
         # backward compatible (1/11/17)
-        #if self.hide_when_none and count == 0:
-        #    response['full_text'] = ''
+        if self.hide_when_none and count == 0:
+            response['full_text'] = ''
 
         return response
 
