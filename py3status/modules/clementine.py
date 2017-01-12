@@ -7,7 +7,7 @@ Configuration parameters:
     format: Display format for Clementine (default '♫ {current}')
 
 Format placeholders:
-    {current} print current song, artist, title, and/or internet radio
+    {current} currently playing
 
 Requires:
     clementine:
