@@ -4,6 +4,10 @@ Display currently active (started) taskwarrior tasks.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 5)
+    format: string to print (default '{task}')
+
+Format placeholders:
+    {task} to-do list of active tasks
 
 Requires
     task: https://taskwarrior.org/download/
@@ -23,6 +27,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
+    format = '{task}'
 
     def taskWarrior(self):
         command = 'task start.before:tomorrow status:pending export'
@@ -33,11 +38,10 @@ class Py3status:
             return str(taskObj['id']) + ' ' + taskObj['description']
 
         result = ', '.join(map(describeTask, tasks_json))
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': result
+            'full_text': self.py3.safe_format(self.format, {'task': result})
         }
-        return response
 
 
 if __name__ == "__main__":
