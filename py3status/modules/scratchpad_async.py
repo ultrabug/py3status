@@ -3,7 +3,8 @@
 Display the amount of windows and indicate urgency hints on scratchpad (async).
 
 Configuration parameters:
-    always_show: old setting. use format_none instead (default False)
+    always_show: whether the indicator should be shown if there are no
+        scratchpad windows (default False)
     format: Display format when one or more scratchpad window(s) (default "{counter} ⌫")
 
 Requires:
@@ -23,7 +24,6 @@ class Py3status:
     # available configuration parameters
     always_show = False
     format = u'{counter} ⌫'
-    format_none = ''
 
     def __init__(self):
         self.count = 0
@@ -39,12 +39,10 @@ class Py3status:
         if self.urgent:
             response['urgent'] = True
 
-        if self.count > 0:
+        if self.always_show or self.count > 0:
             response['full_text'] = self.py3.safe_format(self.format, {'counter': self.count})
-
-        # backward compatible (1/11/17)
-        if self.always_show:
-            response['full_text'] = self.py3.safe_format(self.format, {'counter': self.count})
+        else:
+            response['full_text'] = ''
 
         return response
 
