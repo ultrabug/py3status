@@ -2,12 +2,19 @@
 """
 Display the amount of windows in your i3 scratchpad.
 
+Configuration parameters:
+    cache_timeout: How often we refresh this module in seconds (default 5)
+    format: Format of indicator (default '{counter} ⌫')
+    hide_when_none: Hide indicator when there is no windows (default False)
+
+Format placeholders:
+    {counter} number of scratchpad windows
+
 @author shadowprince
 @license Eclipse Public License
 """
 
 import i3
-from time import time
 
 
 def find_scratch(tree):
@@ -26,13 +33,24 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = "{} ⌫"  # format of indicator. {} replaces with count of windows
-    hide_when_none = False  # hide indicator when there is no windows
+    format = u"{counter} ⌫"
+    hide_when_none = False
+
+    class Meta:
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',
+                    'placeholder': 'counter',
+                    'msg': '{} should not be used in format use `{counter}`',
+                },
+            ],
+        }
 
     def __init__(self):
         self.count = -1
 
-    def scratchpad_counter(self, i3s_output_list, i3s_config):
+    def scratchpad_counter(self):
         count = len(find_scratch(i3.get_tree()).get("floating_nodes", []))
 
         if self.count != count:
@@ -42,26 +60,21 @@ class Py3status:
             transformed = False
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'transformed': transformed
         }
+
         if self.hide_when_none and count == 0:
             response['full_text'] = ''
         else:
-            response['full_text'] = self.format.format(count)
+            response['full_text'] = self.py3.safe_format(self.format, {'counter': count})
 
         return response
 
+
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.scratchpad_counter([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

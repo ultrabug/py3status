@@ -4,21 +4,26 @@ Display the number of ongoing tickets from selected RT queues.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
-    threshold_critical: set bad color above this threshold
-    db: database to use
-    format: see placeholders below
-    host: database host to connect to
-    password: login password
-    user: login user
-    threshold_warning: set degraded color above this threshold
+    db: database to use (default '')
+    format: see placeholders below (default 'general: {General}')
+    host: database host to connect to (default '')
+    password: login password (default '')
+    threshold_critical: set bad color above this threshold (default 20)
+    threshold_warning: set degraded color above this threshold (default 10)
+    timeout: timeout for database connection (default 5)
+    user: login user (default '')
 
-Format of status string placeholders:
+Format placeholders:
     {YOUR_QUEUE_NAME} number of ongoing RT tickets (open+new+stalled)
 
+Color options:
+    color_bad: Exceeded threshold_critical
+    color_degraded: Exceeded threshold_warning
+
 Requires:
-    - `PyMySQL` https://pypi.python.org/pypi/PyMySQL
+    PyMySQL: https://pypi.python.org/pypi/PyMySQL
         or
-    - `MySQL-python` http://pypi.python.org/pypi/MySQL-python
+    MySQL-python: http://pypi.python.org/pypi/MySQL-python
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
@@ -30,7 +35,6 @@ try:
     import pymysql as mysql
 except:
     import MySQLdb as mysql
-from time import time
 
 
 class Py3status:
@@ -38,16 +42,16 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 300
-    threshold_critical = 20
     db = ''
     format = 'general: {General}'
     host = ''
     password = ''
+    threshold_critical = 20
+    threshold_warning = 10
     timeout = 5
     user = ''
-    threshold_warning = 10
 
-    def rt_tickets(self, i3s_output_list, i3s_config):
+    def rt_tickets(self):
         has_one_queue_formatted = False
         response = {'full_text': ''}
         tickets = {}
@@ -76,32 +80,24 @@ class Py3status:
             if queue in self.format:
                 has_one_queue_formatted = True
                 if nb_tickets > self.threshold_critical:
-                    response.update({'color': i3s_config['color_bad']})
+                    response.update({'color': self.py3.COLOR_BAD})
                 elif (nb_tickets > self.threshold_warning and
                       'color' not in response):
-                    response.update({'color': i3s_config['color_degraded']})
+                    response.update({'color': self.py3.COLOR_DEGRADED})
         if has_one_queue_formatted:
-            response['full_text'] = self.format.format(**tickets)
+            response['full_text'] = self.py3.safe_format(self.format, tickets)
         else:
             response['full_text'] = 'queue(s) not found ({})'.format(
                 self.format)
         mydb.close()
 
-        response['cached_until'] = time() + self.cache_timeout
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
         return response
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.rt_tickets([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -2,6 +2,9 @@
 """
 Display the current "artist - title" playing in Clementine.
 
+Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 5)
+
 Requires:
     clementine:
 
@@ -9,8 +12,9 @@ Requires:
 @license GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
-from time import time
 from subprocess import check_output
+
+CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
 
 
 class Py3status:
@@ -23,8 +27,10 @@ class Py3status:
         """
         Get the current song metadatas (artist - title)
         """
-        track_id = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetCurrentTrack', shell=True)
-        metadatas = check_output('qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer.GetMetadata {}'.format(track_id.decode()), shell=True)
+        track_id = check_output(CMD + '.GetCurrentTrack', shell=True)
+        metadatas = check_output(
+            CMD + '.GetMetadata {}'.format(track_id.decode()), shell=True
+        )
         lines = metadatas.decode('utf-8').split('\n')
         lines = filter(None, lines)
 
@@ -58,27 +64,21 @@ class Py3status:
 
         return now_playing
 
-    def clementine(self, i3s_output_list, i3s_config):
+    def clementine(self):
         """
         Get the current "artist - title" and return it.
         """
         response = {'full_text': ''}
 
-        response['cached_until'] = time() + self.cache_timeout
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
         response['full_text'] = self._getMetadatas()
 
         return response
 
+
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.clementine([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -7,8 +7,16 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-    format_off: string to display when DPMS is disabled
-    format_on: string to display when DPMS is enabled
+    format: string to display (default '{icon}')
+    icon_off: string to display when dpms is disabled (default 'DPMS')
+    icon_on: string to display when dpms is enabled (default 'DPMS')
+
+Format placeholders:
+    {icon} display current dpms icon
+
+Color options:
+    color_on: when dpms is enabled, defaults to color_good
+    color_off: when dpms is disabled, defaults to color_bad
 
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
@@ -20,24 +28,40 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format_off = "DPMS"
-    format_on = "DPMS"
-    color_on = None
-    color_off = None
+    format = "{icon}"
+    icon_off = "DPMS"
+    icon_on = "DPMS"
 
-    def dpms(self, i3s_output_list, i3s_config):
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_on',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter use `icon_on`',
+                },
+                {
+                    'param': 'format_off',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter use `icon_off`',
+                },
+            ],
+        }
+
+    def dpms(self):
         """
         Display a colorful state of DPMS.
         """
-
         self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
+        icon = self.icon_on if self.run else self.icon_off
 
         return {
-            'full_text': self.format_on if self.run else self.format_off,
-            'color': self.color_on or i3s_config['color_good'] if self.run else self.color_off or i3s_config['color_bad']
+            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
+            'color': self.py3.COLOR_ON or self.py3.COLOR_GOOD if self.run
+            else self.py3.COLOR_OFF or self.py3.COLOR_BAD
         }
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Enable/Disable DPMS on left click.
         """
@@ -49,17 +73,10 @@ class Py3status:
                 self.run = True
                 system("xset +dpms;xset s on")
 
+
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_good': '#00FF00',
-    }
-
-    while True:
-        print(x.dpms([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -3,10 +3,10 @@
 Display current tasks from project Hamster.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (5s default)
-    format: see placeholders below
+    cache_timeout: how often we refresh this module in seconds (default 10)
+    format: see placeholders below (default '{current}')
 
-Format of status string placeholders:
+Format placeholders:
     {current} hamster current
 
 Requires:
@@ -17,7 +17,6 @@ Requires:
 """
 import shlex
 from subprocess import check_output
-from time import time
 
 
 class Py3status:
@@ -27,7 +26,7 @@ class Py3status:
     cache_timeout = 10
     format = '{current}'
 
-    def hamster(self, i3s_output_list, i3s_config):
+    def hamster(self):
         cur_task = check_output(shlex.split('hamster current'))
         cur_task = cur_task.decode('ascii', 'ignore').strip()
         if cur_task != 'No activity':
@@ -37,19 +36,15 @@ class Py3status:
             cur_task = "%s (%s)" % (" ".join(cur_task), time_elapsed)
 
         response = {}
-        response['cached_until'] = time() + self.cache_timeout
-        response['full_text'] = self.format.format(current=cur_task)
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        response['full_text'] = self.py3.safe_format(self.format,
+                                                     {'current': cur_task})
         return response
 
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.hamster([], config)['full_text'])
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

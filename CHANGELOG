@@ -1,3 +1,148 @@
+version 3.4 (milestone)
+* fix python2 unicode use in i3status time modules, by @tobes
+* cache format string tokens to reduce work done, by @tobes
+* formatter: new not_zero format command, by @tobes
+* new rss_aggregator module to display your unread feed items, by @raspbeguy
+* arch_updates module: add hide_if_zero option, by @lasers
+* backlight module: fix crash when monitor doesn't support backlight change, by @laxd
+* battery_level module: support a different type of battery, by @bpinto
+* battery_level module: prevent logic issues when zero, by @tobes
+* battery_level module: fix crash when running on a machine with no battery, by @laxd
+* net_rate module: add option to aggregate rate from all interfaces, by @guiniol
+* sysdata module: use color 'bad' instead of 'high' as a default threshold, by @maximbaz
+* volume_status module: PactlBackend does not read user-specified device, by @vicyap
+
+version 3.3 (2016-11-20)
+* allow module output to be used in on_click commands, by @tobes
+* py3 helper: add command_run and command_output methods, by @tobes
+* py3 helper: add support for ranged thresholds to dynamically select the color output, by @tobes
+* py3 helper: report better exceptions, by @tobes
+* formatter now accepts per module coloring syntax on containers, by @tobes
+* formatter and composite overall updates, refactoring, tests, by @tobes
+* formatter add attr_getter option, by @tobes
+* formatter: allow formatting numeric strings, by @tobes
+* Allow updating of placeholder formatting of modules, by @tobes
+* universal module config parameter deprecation feature, by @tobes
+* disable modules if post-config_hook() raises Exception, by @tobes
+* log py3status/python versions and git info on start, by @tobes
+* fix multi-line default values support on docstrings, by @guiniol
+* fix i3status time modules updating, by @tobes
+* flake8 fixes and testing improvements, by @tobes
+* add tuples support to doc checker, by @guiniol
+* don't call updates on modules before they have been fully initialised, by @tobes
+* module test: fix unicode error, by @tobes
+* module test: check for alphabetical variable declaration and unicode semantics, by @tobes
+* new clock module to display multiple times and dates informations in a flexible way, by @tobes
+* new diskdata module to shows both usage data and IO data from disks, by @guiniol
+* new net_iplist module to display interfaces and their IPv4 and IPv6 IP addresses, by @guiniol
+* backlight module: allow changing brightness using mouse click events
+* battery_level module: stability and bugfix, by @inclementweather
+* battery_level module: fix on_click() method logic, by @m45t3r
+* battery_level module: add measurement_mode parameter to check for battery using /sys, by @m45t3r
+* exchange_rates module: cache value instead of reporting an error, by @tobes
+* fedora_updates module: add check_security option, by @jakubjedelsky
+* github module: open github home page if no repo is configured and you're getting all notifications, by @rixx
+* glpi module: add cache_timeout and format parameters, by @pferate
+* graphite module: add proxy parameter to allow usage of request's proxy feature, by @btall
+* mpris module: fix AttributeError when click without a running player, by @ritze
+* net_rate module: make compatible with formatter colors, by @guiniol
+* ns_checker module: add format and cache_timeout, by @pferate
+* rate_counter module: add format and majorly refactor code, by @pferate
+* spaceapi module: go to a space's website onclick, by @rixx
+* sysdata module: add dynamic memory unitn by @pferate
+* sysdata module: add support for colors/thresholds, by @guiniol
+* xrandr module: add rotation support, by @coxley
+* volume_status module: add pulseaudio support, by @guiniol
+* volume_status module: add pactl support, by @tobes
+* vpn_status module: remove shebang, by @jakubjedelsky
+
+version 3.2 (2016-10-11)
+* NOTE: this is mainly a bugfix release
+* fix safe format refactoring regressions, by Maxim Baz
+* fix unicode escape sequences in config parsing, by @tobes
+* fix module_test unicode issue, by @tobes
+* fix module_test for post_config_hook staticmethods etc, by @tobes
+* improve error report on missing default value, by @tobes
+* run all post config hooks before starting any modules, by @tobes
+* add defaults to docstrings, by @tobes
+* container modules switch display to urgent modules' output, by @tobes
+* update defaults for modules, by @tobes
+* enhanced module testing, by @tobes
+* docstring checking tests, by @tobes
+* modules to use safe_format(), by @tobes
+* battery_level module: fix hide_seconds when a user has two batteries, by Gabriel Féron
+* bluetooth module: fix issue where duplicate bluetooth connections are shown, by Yuli Khodorkovskiy
+* kdeconnector module: improvements, by Moritz Luedecke
+* process_status module: allow process to accept full process name, by Yuli Khodorkovskiy
+
+version 3.1 (2016-09-11)
+* NOTE: the documentation is getting stronger, check it out to know more about the new features listed
+* @tobes has become the first collaborator of the py3status project !
+* i3status.conf file is read with a new parser which allows for richer objects eg lists to be used in config, better unicode support for python2 and better reporting to the user for errors in the config, by @tobes
+* new format parser allows for rich and conditional format strings, by @tobes
+* it is now possible to use obfuscation on all string module parameters, by @tobes
+* colors are now configurable for all modules with dynamic naming, by @tobes
+* modules now support a post_config_hook special method to allow fine setup, by @tobes
+* click events and updates of modules refactoring, by @tobes
+* CI updates for better testing of py3status
+* fix: multiple enhancements on core performance and CPU reduction
+* fix: tztime modules glitch
+* fix: some crashes due to unicode logging
+* fix: for when config-file happened to be a symbolic link, by @Stautob
+* new module testing framework allowing feature rich standalone tests of modules, by @tobes
+* new backlight module to display the current screen backlight level, by @tjaartvdwalt
+* new coin_balance module to display balances of diverse crypto-currencies, by Felix Morgner
+* new exchange_rate module to check for your favorite currency rates, by @tobes
+* new file_status module to check the presence of a file, by @ritze
+* new frame module to group and display multiple modules inline, by @tobes
+* new gpmdp module for Google Play Music Desktop Player by @Spirotot
+* new kdeconnector module to display information about Android devices, by @ritze
+* new mpris module to control MPRIS enabled music players, by @ritze
+* new process_status module to check the presence of a process, by @ritze
+* new rainbow module to enlight your day, by @tobes
+* new tcp_status module to check for a given TCP port on a host, by @ritze
+* battery_level module: improved detection of active battery, by @ZeiP
+* exchange_rate module: fix rate on singe currency, by Jan Mrázek
+* volume_status module: now shows as color bad when muted, by @chezstov
+* a lot of module fixes and normalization !
+
+version 3.0 (2016-06-23)
+* IMPORTANT NOTE: the changelog is so big that this is a condensed version, apologize for missing contribution reports
+* split the monolithic code into proper modules, by Alexis 'Horgix' Chotard, @tobes and Daniel Foerster
+* major improvements on modules output orchestration and output resulting in considerable CPU consumption reduction, by @tobes
+* refactoring of user notifications with added dbus support and rate limiting, by @tobes
+* refactoring of i3status.conf file generation, by @tobes
+* improved modules error reporting, by @tobes
+* py3status can now survive an i3status crash and will try to respawn it, by @tobes
+* enhanced modules README formatting with CLI support, by @tobes
+* countless of code cleanup and improvements, by @tobes
+* implement a 'container' module output type to give the ability to group modules together, by @tobes
+* implement a helper named 'py3' for modules to ease their development, by @tobes
+* fix and refactoring of the time and tztime modules support, by @tobes
+* some py3status modules using i3-ipc could crash i3 when the i3bar was hidden, py3status now requests i3bar to use SIGTSTP instead of SIGSTOP, by @tobes
+* add min_width and align as universal module options, by johannes karoff
+* add separator and separator_block_width as universal module options, by johannes karoff
+* improved and normalized i3status and modules folder detection, by @tobes
+* added module dosctrings sanity check and modules README generation from CLI, by @tobes
+* qa: flake8 CI to 99 chars, by @tobes
+* docs: added contribution guidlines, by Alexis 'Horgix' Chotard and @tobes
+* docs: migrate over from the wiki to a proper doc/README.md, by @tobes and Daniel Foerster
+* new group module to cycle display of several modules, by @tobes
+* new fedora_updates module to check for your Fedora packages updates, by @tobes
+* new github module to check a github repository and notifications, by @tobes
+* new graphite module to check metrics from graphite
+* new insync module to check your current insync status, by Joshua Pratt
+* new timer module to have a simple countdown displayed, by @tobes
+* new twitch_streaming module to check is a Twitch Streamer is online, by Alex Caswell
+* new vpn_status module to check your VPN status, by Nathan Smith
+* new xrandr_rotate module to rotate your screens, by Maxim Baz
+* new yandexdisk_status module to display Yandex.Disk status, by Vladimir Potapev
+* keyboard_layout module: enhanced by Themistokle Benetatos
+* pomodoro module: now supports more options and still runs when the i3bar is hidden, by @tobes and @egeskow
+* sysdata module: fix python3 compatibility, by Yongming Lai
+* weather_yahoo module: remove deprecated city_code setting in favor of woeid, fixes #228
+* wifi module: enhanced by @tobes
+
 version 2.9 (2016-03-01)
 * fix: handle format_time tztime parameter thx to @cornerman, fix issue #177
 * fix: issue #166, by Daniel Foerster

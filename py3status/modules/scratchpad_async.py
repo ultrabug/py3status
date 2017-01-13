@@ -5,8 +5,6 @@ Display the amount of windows and indicate urgency hints on scratchpad (async).
 Configuration parameters:
     always_show: whether the indicator should be shown if there are no
         scratchpad windows (default False)
-    color_urgent: color to use if a scratchpad window is urgent (default
-        "#900000")
     format: string to format the output (default "{} ⌫")
 
 Requires:
@@ -25,8 +23,7 @@ class Py3status:
     """
     # available configuration parameters
     always_show = False
-    color_urgent = "#900000"
-    format = "{} ⌫"
+    format = u"{} ⌫"
 
     def __init__(self):
         self.count = 0
@@ -36,11 +33,11 @@ class Py3status:
         t.daemon = True
         t.start()
 
-    def scratchpad_counter(self, i3s_output_list, i3s_config):
-        response = {'cached_until': 0}
+    def scratchpad_async(self):
+        response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:
-            response['color'] = self.color_urgent
+            response['urgent'] = True
 
         if self.always_show or self.count > 0:
             response['full_text'] = self.format.format(self.count)
@@ -50,32 +47,28 @@ class Py3status:
         return response
 
     def _listen(self):
-        def update_scratchpad_counter(conn, e=None):
+        def update_scratchpad_async(conn, e=None):
             cons = conn.get_tree().scratchpad().leaves()
             self.urgent = any(con for con in cons if con.urgent)
             self.count = len(cons)
+            self.py3.update()
 
         conn = i3ipc.Connection()
 
-        update_scratchpad_counter(conn)
+        update_scratchpad_async(conn)
 
-        conn.on('window::move', update_scratchpad_counter)
-        conn.on('window::urgent', update_scratchpad_counter)
+        conn.on('window::move', update_scratchpad_async)
+        conn.on('window::urgent', update_scratchpad_async)
 
         conn.main()
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
     config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
+        'always_show': True
     }
-    while True:
-        print(x.scratchpad_counter([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status, config=config)

@@ -3,19 +3,23 @@
 Display information about the current song playing on Spotify.
 
 Configuration parameters:
-    cache_timeout: how often to update the bar
-    color_offline: text color when spotify is not running, defaults to color_bad
-    color_paused: text color when song is stopped or paused, defaults to color_degraded
-    color_playing: text color when song is playing, defaults to color_good
-    format: see placeholders below
+    cache_timeout: how often to update the bar (default 5)
+    format: see placeholders below (default '{artist} : {title}')
     format_down: define output if spotify is not running
+        (default 'Spotify not running')
     format_stopped: define output if spotify is not playing
+        (default 'Spotify stopped')
 
-Format of status string placeholders:
+Format placeholders:
     {album} album name
     {artist} artiste name (first one)
     {time} time duration of the song
     {title} name of the song
+
+Color options:
+    color_offline: Spotify is not running, defaults to color_bad
+    color_paused: Song is stopped or paused, defaults to color_degraded
+    color_playing: Song is playing, defaults to color_good
 
 i3status.conf example:
 
@@ -26,11 +30,13 @@ spotify {
 }
 ```
 
+Requires:
+        spotify (>=1.0.27.71.g0a26e3b2)
+
 @author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 """
 
 from datetime import timedelta
-from time import time
 import dbus
 
 
@@ -39,20 +45,13 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    color_offline = None
-    color_paused = None
-    color_playing = None
     format = '{artist} : {title}'
     format_down = 'Spotify not running'
     format_stopped = 'Spotify stopped'
 
-    def _get_text(self, i3s_config):
+    def _get_text(self):
         """
         Get the current song metadatas (artist - title)
-
-        there is a known bug for dbus property PlaybackStatus:
-          https://community.spotify.com/t5/Help-Desktop-Linux-Windows-Web/DBus-MPRIS-interface-bug/td-p/1262889
-          retested on : 2016-02-22
         """
         bus = dbus.SessionBus()
         try:
@@ -69,29 +68,38 @@ class Py3status:
                 microtime = metadata.get('mpris:length')
                 rtime = str(timedelta(microseconds=microtime))[:-7]
                 title = metadata.get('xesam:title')
-                color = self.color_playing or i3s_config['color_good']
+                playback_status = self.player.Get(
+                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
+                )
+                if playback_status.strip() == 'Playing':
+                    color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+                else:
+                    color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
             except Exception:
                 return (
                     self.format_stopped,
-                    self.color_paused or i3s_config['color_degraded'])
+                    self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED)
 
             return (
-                self.format.format(title=title,
-                                   artist=artist,
-                                   album=album,
-                                   time=rtime), color)
+                self.py3.safe_format(
+                    self.format,
+                    dict(title=title,
+                         artist=artist,
+                         album=album,
+                         time=rtime)
+                ), color)
         except Exception:
             return (
                 self.format_down,
-                self.color_offline or i3s_config['color_bad'])
+                self.py3.COLOR_OFFLINE or self.py3.COLOR_BAD)
 
-    def spotify(self, i3s_output_list, i3s_config):
+    def spotify(self):
         """
         Get the current "artist - title" and return it.
         """
-        (text, color) = self._get_text(i3s_config)
+        (text, color) = self._get_text()
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': text,
             'color': color
         }
@@ -100,15 +108,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.spotify([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

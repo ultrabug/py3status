@@ -4,24 +4,35 @@ Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30s)
-    format: avalable placeholders are {ip} and {country} (default '{ip}')
+    format: available placeholders are {ip} and {country} (default '{ip}')
             If {country} is used the data is queried from
             "http://ip-api.com/csv"
             instead of
             "http://ultrabug.fr/py3status/whatismyip".
-    format_offline: what to display when offline
-    format_online: what to display when online
+    format_offline: what to display when offline (default '■')
+    format_online: what to display when online (default '●')
     hide_when_offline: hide the module output when offline (default False)
     mode: default mode to display is 'ip' or 'status' (click to toggle)
-    negative_cache_timeout: how often to check again when offline
-    timeout: how long before deciding we're offline
+        (default 'ip')
+    negative_cache_timeout: how often to check again when offline (default 2)
+    timeout: how long before deciding we're offline (default 5)
     url: change IP check url (must output a plain text IP address)
+        (default 'http://ultrabug.fr/py3status/whatismyip')
     color_good_online_ip_mode: sets the good color when an ip/country lookup
                                was successful in IP mode (default: false)
 
+
+Format placeholders:
+    {ip} display current ip address
+    {country} display the country
+
+Color options:
+    color_bad: Offline
+    color_good: Online
+
 @author ultrabug
 """
-from time import time
+
 try:
     # python3
     from urllib.request import urlopen
@@ -35,8 +46,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = '{ip}'
-    format_offline = '■'
-    format_online = '●'
+    format_offline = u'■'
+    format_online = u'●'
     hide_when_offline = False
     mode = 'ip'
     negative_cache_timeout = 2
@@ -45,7 +56,7 @@ class Py3status:
     url_geo = 'http://ip-api.com/csv'
     color_good_online_ip_mode = False
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Toggle between display modes 'ip' and 'status'
         """
@@ -70,40 +81,36 @@ class Py3status:
             ip = None
         return ip, country
 
-    def whatismyip(self, i3s_output_list, i3s_config):
+    def whatismyip(self):
         """
         """
         ip, country = self._get_my_ip()
-        response = {'cached_until': time() + self.negative_cache_timeout}
+        response = {
+            'cached_until': self.py3.time_in(self.negative_cache_timeout)
+        }
+
         if ip is None and self.hide_when_offline:
             response['full_text'] = ''
         elif ip is not None:
-            response['cached_until'] = time() + self.cache_timeout
+            response['cached_until'] = self.py3.time_in(self.cache_timeout)
             if self.mode == 'ip':
-                response['full_text'] = self.format.format(ip=ip,
-                                                           country=country)
+                response['full_text'] = self.py3.safe_format(self.format, {
+                    'ip': ip,
+                    'country': country})
                 if self.color_good_online_ip_mode:
-                    response['color'] = i3s_config['color_good']
+                    response['color'] = self.py3.COLOR_GOOD
             else:
                 response['full_text'] = self.format_online
-                response['color'] = i3s_config['color_good']
+                response['color'] = self.py3.COLOR_GOOD
         else:
             response['full_text'] = self.format_offline
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
         return response
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.whatismyip([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

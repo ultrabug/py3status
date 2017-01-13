@@ -3,8 +3,8 @@
 Display dropboxd status.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (10s default)
-    format: prefix text for the dropbox status
+    cache_timeout: how often we refresh this module in seconds (default 10)
+    format: prefix text for the dropbox status (default 'Dropbox: {}')
 
 Valid status values include:
     - Dropbox isn't running!
@@ -12,6 +12,11 @@ Valid status values include:
     - Downloading file list...
     - Syncing "filename"
     - Up to date
+
+Color options:
+    color_bad: Dropbox is unavailable
+    color_degraded: All other statuses
+    color_good: Dropbox up-to-date
 
 Requires:
     dropbox-cli: command line tool
@@ -22,7 +27,6 @@ Requires:
 
 import shlex
 import subprocess
-from time import time
 
 
 class Py3status:
@@ -32,8 +36,8 @@ class Py3status:
     cache_timeout = 10
     format = 'Dropbox: {}'
 
-    def dropbox(self, i3s_output_list, i3s_config):
-        response = {'cached_until': time() + self.cache_timeout}
+    def dropbox(self):
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         lines = subprocess.check_output(
             shlex.split('dropbox-cli status')).decode('utf-8').split('\n')
@@ -42,22 +46,17 @@ class Py3status:
         response['full_text'] = full_text
 
         if status == "Dropbox isn't running!":
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
         elif status == "Up to date":
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         else:
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
         return response
 
 
 if __name__ == "__main__":
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.dropbox([], config))
-        sleep(1)
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -1,27 +1,32 @@
 # -*- coding: utf-8 -*-
+# FIXME color_index param
 """
 Display bitcoin prices using bitcoincharts.com.
 
 Configuration parameters:
     cache_timeout: Should be at least 15 min according to bitcoincharts.
+        (default 900)
     color_index: Index of the market responsible for coloration,
-        meaning that the output is going to be green if the
-        price went up and red if it went down.
-        default: -1 means no coloration,
-        except when only one market is selected
+        -1 means no coloration, except when only one market is selected
+        (default -1)
     field: Field that is displayed per market,
-        see http://bitcoincharts.com/about/markets-api/
+        see http://bitcoincharts.com/about/markets-api/ (default 'close')
     hide_on_error: Display empty response if True, else an error message
+         (default False)
     markets: Comma-separated list of markets. Supported markets can
         be found at http://bitcoincharts.com/markets/list/
+         (default 'btceUSD, btcdeEUR')
     symbols: Try to match currency abbreviations to symbols,
-        e.g. USD -> $, EUR -> € and so on
+        e.g. USD -> $, EUR -> € and so on (default True)
+
+Color options:
+    color_bad:  Price has dropped or not available
+    color_good: Price has increased
 
 @author Andre Doser <doser.andre AT gmail.com>
 """
 import json
 
-from time import time
 try:
     # python 3
     from urllib.error import URLError
@@ -68,9 +73,9 @@ class Py3status:
             if m['symbol'] == market:
                 return m[field]
 
-    def get_rate(self, i3s_output_list, i3s_config):
+    def get_rate(self):
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''
         }
 
@@ -79,7 +84,7 @@ class Py3status:
             data = json.loads(urlopen(self.url).read().decode())
         except URLError:
             if not self.hide_on_error:
-                response['color'] = i3s_config['color_bad']
+                response['color'] = self.py3.COLOR_BAD
                 response['full_text'] = 'Bitcoincharts unreachable'
             return response
 
@@ -110,24 +115,18 @@ class Py3status:
             if self.last_price == 0:
                 pass
             elif color_rate < self.last_price:
-                response['color'] = i3s_config['color_bad']
+                response['color'] = self.py3.COLOR_BAD
             elif color_rate > self.last_price:
-                response['color'] = i3s_config['color_good']
+                response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
         response['full_text'] = ', '.join(rates)
         return response
 
+
 if __name__ == '__main__':
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.get_rate([], config))
-        sleep(5)
+    from py3status.module_test import module_test
+    module_test(Py3status)

@@ -3,16 +3,32 @@
 Display DNS resolution success on a configured domain.
 
 This module launch a simple query on each nameservers for the specified domain.
-Nameservers are dynamically retrieved. The FQDN is the only one mandatory parameter.
-It's also possible to add additional nameservers by appending them in nameservers list.
+Nameservers are dynamically retrieved. The FQDN is the only one mandatory
+parameter.  It's also possible to add additional nameservers by appending them
+in nameservers list.
 
 The default resolver can be overwritten with my_resolver.nameservers parameter.
 
 Configuration parameters:
-    domain: domain name to check
-    lifetime: resolver lifetime
-    nameservers: comma separated list of reference DNS nameservers
-    resolvers: comma separated list of DNS resolvers to use
+    cache_timeout: how often we refresh this module in seconds (default 300)
+    domain: domain name to check (default '')
+    format: output format string (default '{total_count} NS {status}')
+    lifetime: resolver lifetime (default 0.3)
+    nameservers: comma separated list of reference DNS nameservers (default '')
+    resolvers: comma separated list of DNS resolvers to use (default '')
+
+Format placeholders:
+    {nok_count} The number of failed name servers
+    {ok_count} The number of working name servers
+    {status} The overall status of the name servers (OK or NOK)
+    {total_count} The total number of name servers
+
+Color options:
+    color_bad: One or more lookups have failed
+    color_good: All lookups have succeeded
+
+Requires:
+    dnspython: python module
 
 @author nawadanp
 """
@@ -25,16 +41,21 @@ class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 300
     domain = ''
+    format = '{total_count} NS {status}'
     lifetime = 0.3
     nameservers = ''
     resolvers = ''
 
-    def ns_checker(self, i3s_output_list, i3s_config):
-        response = {'full_text': ''}
-        counter = 0
-        error = False
+    def ns_checker(self):
+        response = {'cached_until': self.py3.time_in(self.cache_timeout),
+                    'color': self.py3.COLOR_GOOD,
+                    'full_text': ''}
+        count_nok = 0
+        count_ok = 0
         nameservers = []
+        status = 'OK'
 
         # parse some configuration parameters
         if not isinstance(self.nameservers, list):
@@ -58,31 +79,28 @@ class Py3status:
         # Perform a simple DNS query, for each NS servers
         for ns in nameservers:
             my_resolver.nameservers = [ns]
-            counter += 1
             try:
                 my_resolver.query(self.domain, 'A')
+                count_ok += 1
             except:
-                error = True
+                count_nok += 1
+                status = 'NOK'
+                response['color'] = self.py3.COLOR_BAD
 
-        if error:
-            response['full_text'] = str(counter) + ' NS NOK'
-            response['color'] = i3s_config['color_bad']
-        else:
-            response['full_text'] = str(counter) + ' NS OK'
-            response['color'] = i3s_config['color_good']
+        response['full_text'] = self.py3.safe_format(
+            self.format,
+            dict(total_count=len(nameservers),
+                 nok_count=count_nok,
+                 ok_count=count_ok,
+                 status=status,
+                 ))
 
         return response
 
+
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.ns_checker([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
