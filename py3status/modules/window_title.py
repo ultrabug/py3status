@@ -4,7 +4,7 @@ Display the current window title.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)
-    format: string to print (default '{title}')
+    format: display format for window_title (default '{title}')
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
 
@@ -46,21 +46,21 @@ class Py3status:
     max_width = 120
 
     def __init__(self):
-        self.text = ''
+        self.title = ''
 
     def window_title(self):
         window = find_focused(i3.get_tree())
 
         transformed = False
-        if window and 'name' in window and window['name'] != self.text:
-            self.text = (len(window['name']) > self.max_width and
-                         "..." + window['name'][-(self.max_width - 3):] or
-                         window['name'])
+        if window and 'name' in window and window['name'] != self.title:
+            self.title = (len(window['name']) > self.max_width and
+                          u"...{}".format(window['name'][-(self.max_width - 3):]) or
+                          window['name'])
             transformed = True
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'title': self.text}),
+            'full_text': self.py3.safe_format(self.format, {'title': self.title}),
             'transformed': transformed
         }
 
