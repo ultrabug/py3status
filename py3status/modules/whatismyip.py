@@ -18,8 +18,6 @@ Configuration parameters:
     timeout: how long before deciding we're offline (default 5)
     url: change IP check url (must output a plain text IP address)
         (default 'http://ultrabug.fr/py3status/whatismyip')
-    color_good_online_ip_mode: sets the good color when an ip/country lookup
-                               was successful in IP mode (default: false)
 
 
 Format placeholders:
@@ -54,7 +52,6 @@ class Py3status:
     timeout = 5
     url = 'http://ultrabug.fr/py3status/whatismyip'
     url_geo = 'http://ip-api.com/csv'
-    color_good_online_ip_mode = False
 
     def on_click(self, event):
         """
@@ -97,8 +94,6 @@ class Py3status:
                 response['full_text'] = self.py3.safe_format(self.format, {
                     'ip': ip,
                     'country': country})
-                if self.color_good_online_ip_mode:
-                    response['color'] = self.py3.COLOR_GOOD
             else:
                 response['full_text'] = self.format_online
                 response['color'] = self.py3.COLOR_GOOD
