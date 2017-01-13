@@ -5,8 +5,8 @@ Display if a connection to the internet is established.
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
     format: string to print (default '{state}')
-    format_offline: what to display when offline (default '■')
-    format_online: what to display when online (default '●')
+    icon_off: what to display when offline (default '■')
+    icon_on: what to display when online (default '●')
     timeout: how long before deciding we're offline (default 2)
     url: connect to this url to check the connection status
          (default 'http://www.google.com')
@@ -36,10 +36,26 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = '{state}'
-    format_offline = u'■'
-    format_online = u'●'
+    icon_off = u'■'
+    icon_on = u'●'
     timeout = 2
     url = 'http://www.google.com'
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_online',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter use `icon_on`',
+                },
+                {
+                    'param': 'format_offline',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter use `icon_off`',
+                },
+            ],
+        }
 
     def _connection_present(self):
         if '://' in self.url:
@@ -59,13 +75,13 @@ class Py3status:
         if self._connection_present():
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'state': self.format_online}),
+                'full_text': self.py3.safe_format(self.format, {'state': self.icon_on}),
                 'color': self.py3.COLOR_GOOD
             }
         else:
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'state': self.format_offline}),
+                'full_text': self.py3.safe_format(self.format, {'state': self.icon_off}),
                 'color': self.py3.COLOR_BAD
             }
 
