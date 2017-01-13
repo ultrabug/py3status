@@ -220,7 +220,7 @@ class Py3status:
             c.disconnect()
 
         if len(text) > self.max_width:
-            text = text[:-self.max_width - 3] + '...'
+            text = u'{}...'.format(text[:self.max_width - 3])
 
         if self.text != text:
             transformed = True
