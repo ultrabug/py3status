@@ -4,7 +4,7 @@ Display if a connection to the internet is established.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
-    format: string to print (default '{state}')
+    format: display format for online_status (default '{icon}')
     icon_off: what to display when offline (default '■')
     icon_on: what to display when online (default '●')
     timeout: how long before deciding we're offline (default 2)
@@ -12,7 +12,7 @@ Configuration parameters:
          (default 'http://www.google.com')
 
 Format placeholders:
-    {state} display current connection state
+    {icon} display current online status
 
 Color options:
     color_bad: Offline
@@ -35,7 +35,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = '{state}'
+    format = '{icon}'
     icon_off = u'■'
     icon_on = u'●'
     timeout = 2
@@ -75,13 +75,13 @@ class Py3status:
         if self._connection_present():
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'state': self.icon_on}),
+                'full_text': self.py3.safe_format(self.format, {'icon': self.icon_on}),
                 'color': self.py3.COLOR_GOOD
             }
         else:
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'state': self.icon_off}),
+                'full_text': self.py3.safe_format(self.format, {'icon': self.icon_off}),
                 'color': self.py3.COLOR_BAD
             }
 
