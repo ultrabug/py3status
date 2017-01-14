@@ -51,12 +51,12 @@ class Py3status:
     def window_title(self):
         window = find_focused(i3.get_tree())
 
+        if window['name'] is None:
+            window['name'] = ''
+
         transformed = False
 
         if window and 'name' in window and window['name'] != self.title:
-            if window['name'] is None:
-                window['name'] = ''
-                
             self.title = (len(window['name']) > self.max_width and
                           u"...{}".format(window['name'][-(self.max_width - 3):]) or
                           window['name'])
