@@ -5,10 +5,6 @@ Display your public/external IP address and toggle to online status on click.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
     format: available placeholders are {ip} and {country}
-            If {country} is used the data is queried from
-            "http://ip-api.com/csv"
-            instead of
-            "http://ultrabug.fr/py3status/whatismyip".
             (default '{ip}')
     format_offline: what to display when offline (default '■')
     format_online: what to display when online (default '●')
@@ -19,7 +15,8 @@ Configuration parameters:
     timeout: how long before deciding we're offline (default 5)
     url: change IP check url (must output a plain text IP address)
         (default 'http://ultrabug.fr/py3status/whatismyip')
-    url_geo: (default 'http://ip-api.com/csv')
+    url_geo: IP to check for geo location (must output json)
+        (default 'http://ip-api.com/json')
 
 Format placeholders:
     {ip} display current ip address
@@ -32,6 +29,7 @@ Color options:
 @author ultrabug
 """
 
+import json
 try:
     # python3
     from urllib.request import urlopen
@@ -52,7 +50,7 @@ class Py3status:
     negative_cache_timeout = 2
     timeout = 5
     url = 'http://ultrabug.fr/py3status/whatismyip'
-    url_geo = 'http://ip-api.com/csv'
+    url_geo = 'http://ip-api.com/json'
 
     def on_click(self, event):
         """
@@ -66,23 +64,29 @@ class Py3status:
     def _get_my_ip(self):
         """
         """
-        country = ""
         try:
-            if '{country}' in self.format:
-                self.url = self.url_geo
             ip = urlopen(self.url, timeout=self.timeout).read()
             ip = ip.decode('utf-8')
-            if '{country}' in self.format:
-                ip = ip.split(",")
-                ip, country = ip[-1], ip[1]
         except Exception:
             ip = None
-        return ip, country
+        return ip
+
+    def _get_my_country(self):
+        """
+        """
+        try:
+            resp = urlopen(self.url_geo, timeout=self.timeout).read()
+            resp = json.loads(resp)
+            country = resp['country']
+        except Exception:
+            country = ""
+        return country
 
     def whatismyip(self):
         """
         """
-        ip, country = self._get_my_ip()
+        ip = self._get_my_ip()
+        country = self._get_my_country()
         response = {
             'cached_until': self.py3.time_in(self.negative_cache_timeout)
         }
