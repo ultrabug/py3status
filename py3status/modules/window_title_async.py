@@ -111,7 +111,7 @@ class Py3status:
 
         conn.main()  # run the event loop
 
-    def window_title(self):
+    def window_title_async(self):
         resp = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.title,

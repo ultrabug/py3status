@@ -26,6 +26,8 @@
 
 **[diskdata](#diskdata)** — Display advanced disk usage information
 
+**[do_not_disturb](#do_not_disturb)** — A simple "Do Not Disturb" module that can turn on and off all system notifications.
+
 **[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
 
 **[dropboxd_status](#dropboxd_status)** — Display dropboxd status.
@@ -373,7 +375,7 @@ Format placeholders:
   - `{mac}` device MAC address
 
 Color options:
-  - `color_bad` Conection on
+  - `color_bad` Connection on
   - `color_good` Connection off
 
 Requires:
@@ -691,6 +693,30 @@ Color thresholds:
 
 ---
 
+### <a name="do_not_disturb"></a>do_not_disturb
+
+A simple "Do Not Disturb" module that can turn on and off all system notifications.
+
+A left mouse click will toggle the state of this module.
+
+Configuration parameters:
+  - `format` Display format for the "Do Not Disturb" module.
+    *(default '{state}')*
+  - `notification_manager` The process name of your notification manager.
+    *(default 'dunst')*
+  - `refresh_interval` Refresh interval to use for killing notification manager process.
+    *(default 0.25)*
+  - `state_off` Message when the "Do Not Disturb" mode is disabled.
+    *(default 'OFF')*
+  - `state_on` Message when the "Do Not Disturb" mode is enabled.
+    *(default 'ON')*
+
+Color options:
+  - `color_bad` "Do Not Disturb" mode is enabled.
+  - `color_good` "Do Not Disturb" mode is disabled.
+
+---
+
 ### <a name="dpms"></a>dpms
 
 Activate or deactivate DPMS and screen blanking.
@@ -700,8 +726,12 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-  - `format_off` string to display when DPMS is disabled *(default 'DPMS')*
-  - `format_on` string to display when DPMS is enabled *(default 'DPMS')*
+  - `format` string to display *(default '{icon}')*
+  - `icon_off` string to display when dpms is disabled *(default 'DPMS')*
+  - `icon_on` string to display when dpms is enabled *(default 'DPMS')*
+
+Format placeholders:
+  - `{icon}` display current dpms icon
 
 Color options:
   - `color_on` when dpms is enabled, defaults to color_good
@@ -1744,11 +1774,15 @@ Display if a connection to the internet is established.
 
 Configuration parameters:
   - `cache_timeout` how often to run the check *(default 10)*
+  - `format` string to print *(default '{state}')*
   - `format_offline` what to display when offline *(default '■')*
   - `format_online` what to display when online *(default '●')*
   - `timeout` how long before deciding we're offline *(default 2)*
   - `url` connect to this url to check the connection status
     *(default 'http://www.google.com')*
+
+Format placeholders:
+  - `{state}` display current connection state
 
 Color options:
   - `color_bad` Offline
@@ -1796,6 +1830,7 @@ Provides an icon to control simple functions of audio/video players:
 Configuration parameters:
   - `cache_timeout` how often to update in seconds *(default 10)*
   - `debug` enable verbose logging (bool) *(default False)*
+  - `format` format of the output *(default "{icon}")*
   - `pause_icon` *(default '❚❚')*
   - `play_icon` *(default '▶')*
   - `stop_icon` *(default '◼')*
@@ -1803,6 +1838,9 @@ Configuration parameters:
     *(default 'audacious,vlc')*
   - `volume_tick` percentage volume change on mouse wheel (int) (positive number
     or None to disable it) *(default 1)*
+
+Format placeholders:
+  - `{icon}` an icon to control music/video players
 
 **author** Federico Ceratto &lt;federico.ceratto@gmail.com&gt;, rixx
 
@@ -1896,9 +1934,8 @@ gradient by default this is the colors of the rainbow.  This module will
 increase the amount of updates that py3status needs to do so should be used
 sparingly.
 
-
 Configuration parameters:
-  - `cycle_time` How often we cdo a color change in seconds
+  - `cycle_time` How often we change this color in seconds
     *(default 1)*
   - `force` If True then the color will always be set.  If false the color will
     only be changed if it has not been set by a module.
@@ -2094,10 +2131,11 @@ Display the amount of windows in your i3 scratchpad.
 
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 5)*
-  - `format` Format of indicator. {} replaces with count of windows
-    *(default '{} ⌫')*
+  - `format` Format of indicator *(default '{counter} ⌫')*
   - `hide_when_none` Hide indicator when there is no windows *(default False)*
 
+Format placeholders:
+  - `{counter}` number of scratchpad windows
 
 **author** shadowprince
 
@@ -2119,7 +2157,7 @@ but this can be configured with the `screenshot_command` configuration parameter
 Configuration parameters:
   - `cache_timeout` how often to update in seconds *(default 5)*
   - `file_length` generated file_name length *(default 4)*
-  - `push` True/False if yo want to push your screenshot to your server
+  - `push` True/False if you want to push your screenshot to your server
     *(default True)*
   - `save_path` Directory where to store your screenshots. *(default '~/Pictures/')*
   - `screenshot_command` the command used to generate the screenshot
@@ -2288,6 +2326,10 @@ Display currently active (started) taskwarrior tasks.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 5)*
+  - `format` string to print *(default '{task}')*
+
+Format placeholders:
+  - `{task}` to-do list of active tasks
 
 Requires
     task: https://taskwarrior.org/download/
@@ -2596,7 +2638,7 @@ Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 30)*
-  - `format` the only placeholder available is {ip} *(default '{ip}')*
+  - `format` what to display *(default '{ip}')*
   - `format_offline` what to display when offline *(default '■')*
   - `format_online` what to display when online *(default '●')*
   - `hide_when_offline` hide the module output when offline *(default False)*
@@ -2606,6 +2648,9 @@ Configuration parameters:
   - `timeout` how long before deciding we're offline *(default 5)*
   - `url` change IP check url (must output a plain text IP address)
     *(default 'http://ultrabug.fr/py3status/whatismyip')*
+
+Format placeholders:
+  - `{ip}` display current ip address
 
 Color options:
   - `color_bad` Offline
@@ -2622,9 +2667,13 @@ Display the currently logged in user.
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds
     *(default 1800)*
+  - `format` string to print *(default '{username}')*
+
+Format placeholders:
+  - `{username}` display current username
 
 Inspired by i3 FAQ:
-    https://faq.i3wm.org/question/1618/add-user-name-to-status-bar/
+    https://faq.i3wm.org/question/1618/add-user-name-to-status-bar.1.html
 
 ---
 
