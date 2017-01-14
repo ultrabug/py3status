@@ -483,7 +483,7 @@ class Module(Thread):
                             format = Formatter().update_placeholder_formats(
                                 format_string, placeholder_formats
                             )
-                            mod_config[format_param] = format
+                            setattr(class_inst, format_param, format)
 
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, 'py3'):
