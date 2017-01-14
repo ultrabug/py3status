@@ -100,6 +100,22 @@ class Py3status:
     icon_extend = '+'
     output_combinations = None
 
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_clone',
+                    'new': 'icon_clone',
+                    'msg': 'obsolete parameter use `icon_clone`',
+                },
+                {
+                    'param': 'format_extend',
+                    'new': 'icon_extend',
+                    'msg': 'obsolete parameter use `icon_extend`',
+                },
+            ],
+        }
+
     def __init__(self):
         """
         """
