@@ -27,9 +27,11 @@ Configuration parameters:
     force_on_start: switch to the given combination mode if available
         when the module starts (saves you from having to configure xorg)
         (default None)
-    format_clone: string used to display a 'clone' combination
+    format: display format for xrandr
+        (default '{output}')
+    icon_clone: icon used to display a 'clone' combination
         (default '=')
-    format_extend: string used to display a 'extend' combination
+    icon_extend: icon used to display a 'extend' combination
         (default '+')
     output_combinations: string used to define your own subset of output
         combinations to use, instead of generating every possible combination
@@ -39,7 +41,7 @@ Configuration parameters:
         When an output layout is not available any more, the configurations
         are automatically filtered out.
         Example:
-        Assuming the default values for `format_clone` and `format_extend`
+        Assuming the default values for `icon_clone` and `icon_extend`
         are used, and assuming you have two screens 'eDP1' and 'DP1', the
         following setup will reduce the number of output combinations
         from four (every possible one) down to two:
@@ -93,9 +95,26 @@ class Py3status:
     fallback = True
     fixed_width = True
     force_on_start = None
-    format_clone = '='
-    format_extend = '+'
+    format = '{output}'
+    icon_clone = '='
+    icon_extend = '+'
     output_combinations = None
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_clone',
+                    'new': 'icon_clone',
+                    'msg': 'obsolete parameter use `icon_clone`',
+                },
+                {
+                    'param': 'format_extend',
+                    'new': 'icon_extend',
+                    'msg': 'obsolete parameter use `icon_extend`',
+                },
+            ],
+        }
 
     def __init__(self):
         """
@@ -346,9 +365,9 @@ class Py3status:
         Return the separator for the given mode.
         """
         if mode == 'extend':
-            return self.format_extend
+            return self.icon_extend
         if mode == 'clone':
-            return self.format_clone
+            return self.icon_clone
 
     def _switch_selection(self, direction):
         self.available_combinations.rotate(direction)
@@ -381,9 +400,10 @@ class Py3status:
         self._choose_what_to_display()
 
         if self.fixed_width is True:
-            full_text = self._center(self.displayed)
+            output = self._center(self.displayed)
         else:
-            full_text = self.displayed
+            output = self.displayed
+        full_text = self.py3.safe_format(self.format, {'output': output})
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
