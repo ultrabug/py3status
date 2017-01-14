@@ -61,32 +61,27 @@ class Py3status:
         else:
             self.mode = 'ip'
 
-    def _get_my_ip(self):
+    def _get_my_ip_and_location(self):
         """
         """
         try:
-            ip = urlopen(self.url, timeout=self.timeout).read()
-            ip = ip.decode('utf-8')
+            if self.py3.format_contains(self.format, 'country'):
+                resp = urlopen(self.url_geo, timeout=self.timeout).read()
+                resp = json.loads(resp)
+                ip = resp['query']
+                country = resp['country']
+            else:
+                ip = urlopen(self.url, timeout=self.timeout).read()
+                ip = ip.decode('utf-8')
         except Exception:
             ip = None
-        return ip
-
-    def _get_my_country(self):
-        """
-        """
-        try:
-            resp = urlopen(self.url_geo, timeout=self.timeout).read()
-            resp = json.loads(resp)
-            country = resp['country']
-        except Exception:
             country = ""
-        return country
+        return ip, country
 
     def whatismyip(self):
         """
         """
-        ip = self._get_my_ip()
-        country = self._get_my_country()
+        ip, country = self._get_my_ip_and_location()
         response = {
             'cached_until': self.py3.time_in(self.negative_cache_timeout)
         }
