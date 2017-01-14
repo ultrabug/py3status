@@ -73,9 +73,10 @@ class Py3status:
             else:
                 ip = urlopen(self.url, timeout=self.timeout).read()
                 ip = ip.decode('utf-8')
+                country = None
         except Exception:
             ip = None
-            country = ""
+            country = None
         return ip, country
 
     def whatismyip(self):
