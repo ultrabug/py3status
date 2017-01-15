@@ -89,19 +89,19 @@ class GetData:
         of used memory, and units of mem (KiB, MiB, GiB).
         """
 
-        memi = {}
+        m = {}
         with open('/proc/meminfo', 'r') as fd:
             for s in fd:
                 tok = s.split()
-                memi[tok[0]] = float(tok[1])
+                m[tok[0]] = float(tok[1])
 
         try:
-            total_mem_kib = memi["MemTotal:"]
-            used_mem_kib = (total_mem_kib -
-                            memi["MemFree:"] -
-                            memi["Buffers:"] -
-                            memi["Cached:"])
-            used_mem_p = 100 * used_mem_kib / total_mem_kib
+            total_mem_kib = m["MemTotal:"]
+            total_used_mem_kib = m["MemTotal:"] - m["MemFree:"]
+            cached_mem_kib = m["Cached:"] + m["SReclaimable:"] - m["Shmem:"]
+            used_mem_kib = total_used_mem_kib - (m["Buffers:"] + cached_mem_kib)
+
+            used_mem_percent = 100 * used_mem_kib / total_used_mem_kib
             multiplier = {
                 'KiB': ONE_KIB / ONE_KIB,
                 'MiB': ONE_KIB / ONE_MIB,
@@ -109,7 +109,7 @@ class GetData:
             }
             if unit.lower() == 'dynamic':
                 # If less than 1 GiB, use MiB
-                if (multiplier['GiB'] * total_mem_kib) < 1:
+                if (multiplier['GiB'] * total_used_mem_kib) < 1:
                     unit = 'MiB'
                 else:
                     unit = 'GiB'
@@ -120,12 +120,12 @@ class GetData:
                 raise ValueError(
                     'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
         except:
-            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
+            total_mem, used_mem, used_mem_percent = [float('nan') for i in range(3)]
             unit = 'UNKNOWN'
 
         # If total memory is <1GB, results are in megabytes.
         # Otherwise, results are in gigabytes.
-        return total_mem, used_mem, used_mem_p, unit
+        return total_mem, used_mem, used_mem_percent, unit
 
     def cpuTemp(self, zone):
         """
