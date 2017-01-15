@@ -51,7 +51,8 @@ class Py3status:
     def window_title(self):
         window = find_focused(i3.get_tree())
 
-        if not window or window.get('name') is None or str(window.get('num')) == window.get('name'):
+        if not window or window.get('name') is None or \
+           str(window.get('num')) == window.get('name'):
             window = {'name': ''}
 
         transformed = False
