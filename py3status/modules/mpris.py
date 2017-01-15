@@ -310,12 +310,13 @@ class Py3status:
             self._kill = True
 
     def _name_owner_changed(self, *args):
-        player_add = args[5][0]
+        player_id = args[5][0]
+        player_add = args[5][2]
         player_remove = args[5][1]
         if player_add:
-            self._add_player(player_add)
+            self._add_player(player_id)
         if player_remove:
-            self._remove_player(player_remove)
+            self._remove_player(player_id)
         self._set_player()
 
     def _set_player(self):
