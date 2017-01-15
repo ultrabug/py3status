@@ -19,8 +19,8 @@ Configuration parameters:
         (default 'http://ip-api.com/json')
 
 Format placeholders:
-    {ip} display current ip address
     {country} display the country
+    {ip} display current ip address
 
 Color options:
     color_bad: Offline
@@ -68,21 +68,21 @@ class Py3status:
             if self.py3.format_contains(self.format, 'country'):
                 resp = urlopen(self.url_geo, timeout=self.timeout).read()
                 resp = json.loads(resp)
-                ip = resp['query']
                 country = resp['country']
+                ip = resp['query']
             else:
+                country = None
                 ip = urlopen(self.url, timeout=self.timeout).read()
                 ip = ip.decode('utf-8')
-                country = None
         except Exception:
-            ip = None
             country = None
-        return ip, country
+            ip = None
+        return country, ip
 
     def whatismyip(self):
         """
         """
-        ip, country = self._get_my_ip_and_location()
+        country, ip = self._get_my_ip_and_location()
         response = {
             'cached_until': self.py3.time_in(self.negative_cache_timeout)
         }
@@ -93,8 +93,8 @@ class Py3status:
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
             if self.mode == 'ip':
                 response['full_text'] = self.py3.safe_format(self.format, {
-                    'ip': ip,
-                    'country': country})
+                    'country': country,
+                    'ip': ip})
             else:
                 response['full_text'] = self.format_online
                 response['color'] = self.py3.COLOR_GOOD

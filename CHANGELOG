@@ -1,16 +1,38 @@
 version 3.4 (milestone)
 * fix python2 unicode use in i3status time modules, by @tobes
+* fix python3.6 travis CI, by @tobes
 * cache format string tokens to reduce work done, by @tobes
 * formatter: new not_zero format command, by @tobes
+* new do_not_disturb module to toggle notifications, by @maximbaz
 * new rss_aggregator module to display your unread feed items, by @raspbeguy
 * arch_updates module: add hide_if_zero option, by @lasers
 * backlight module: fix crash when monitor doesn't support backlight change, by @laxd
-* battery_level module: support a different type of battery, by @bpinto
-* battery_level module: prevent logic issues when zero, by @tobes
 * battery_level module: fix crash when running on a machine with no battery, by @laxd
+* battery_level module: prevent logic issues when zero, by @tobes
+* battery_level module: support a different type of battery, by @bpinto
+* clementine module: add format parameter, by @lasers
+* dpms: add format parameter, by @lasers
+* mpd_status module: fix max_width, by @lasers thanks to report by @girst
 * net_rate module: add option to aggregate rate from all interfaces, by @guiniol
+* online_status module: add deprecation warning, by @lasers
+* online_status module: add format parameter, by @lasers
+* player_control module: add format parameter, by @lasers
+* scratchpad_async module: cleanup format parameter, by @lasers
+* scratchpad_async: fix method names, by @lasers
+* scratchpad_counter module: add format parameter, by @lasers
 * sysdata module: use color 'bad' instead of 'high' as a default threshold, by @maximbaz
+* taskwarrior module: add format parameter, by @lasers
+* timer module: fix cache_timeout as reported by @lasers, by @tobes
+* uname modume: add deprecation warning, by @lasers
 * volume_status module: PactlBackend does not read user-specified device, by @vicyap
+* whatismyip module: document format placeholder, by @lasers
+* whatsmyip module: added geolocation support using ip-api.com, by @vicyap with original code from @neutronst4r
+* whoami module: add deprecation warning, by @lasers
+* whoami module: add format parameter, by @lasers
+* whoami module: document format placeholder, by @lasers
+* window_title module: add format parameter, by @lasers
+* window_title_async module: fix method name, by @lasers
+* xrandr module: update format parameter, by @lasers
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
