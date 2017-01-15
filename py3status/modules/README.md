@@ -414,6 +414,10 @@ Display the current "artist - title" playing in Clementine.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 5)*
+  - `format` Display format for Clementine *(default '♫ {current}')*
+
+Format placeholders:
+  - `{current}` currently playing
 
 Requires:
   - `clementine`
@@ -1774,15 +1778,15 @@ Display if a connection to the internet is established.
 
 Configuration parameters:
   - `cache_timeout` how often to run the check *(default 10)*
-  - `format` string to print *(default '{state}')*
-  - `format_offline` what to display when offline *(default '■')*
-  - `format_online` what to display when online *(default '●')*
+  - `format` display format for online_status *(default '{icon}')*
+  - `icon_off` what to display when offline *(default '■')*
+  - `icon_on` what to display when online *(default '●')*
   - `timeout` how long before deciding we're offline *(default 2)*
   - `url` connect to this url to check the connection status
     *(default 'http://www.google.com')*
 
 Format placeholders:
-  - `{state}` display current connection state
+  - `{icon}` display current online status
 
 Color options:
   - `color_bad` Offline
@@ -2112,9 +2116,11 @@ limit the impact of a server connectivity problem on your i3bar freshness.
 Display the amount of windows and indicate urgency hints on scratchpad (async).
 
 Configuration parameters:
-  - `always_show` whether the indicator should be shown if there are no
-    scratchpad windows *(default False)*
-  - `format` string to format the output *(default "{} ⌫")*
+  - `always_show` always display the format *(default False)*
+  - `format` display format for scratchpad_async *(default "{counter} ⌫")*
+
+Format placeholders:
+  - `{counter}` number of scratchpad windows
 
 Requires:
   - `i3ipc` (https://github.com/acrisci/i3ipc-python)
@@ -2398,7 +2404,6 @@ Color options:
 Display uname information.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 3600)*
   - `format` see placeholders below *(default '{system} {release} {machine}')*
 
 Format placeholders:
@@ -2638,7 +2643,8 @@ Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 30)*
-  - `format` what to display *(default '{ip}')*
+  - `format` available placeholders are {ip} and {country}
+    *(default '{ip}')*
   - `format_offline` what to display when offline *(default '■')*
   - `format_online` what to display when online *(default '●')*
   - `hide_when_offline` hide the module output when offline *(default False)*
@@ -2648,8 +2654,11 @@ Configuration parameters:
   - `timeout` how long before deciding we're offline *(default 5)*
   - `url` change IP check url (must output a plain text IP address)
     *(default 'http://ultrabug.fr/py3status/whatismyip')*
+  - `url_geo` IP to check for geo location (must output json)
+    *(default 'http://ip-api.com/json')*
 
 Format placeholders:
+  - `{country}` display the country
   - `{ip}` display current ip address
 
 Color options:
@@ -2665,8 +2674,6 @@ Color options:
 Display the currently logged in user.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds
-    *(default 1800)*
   - `format` string to print *(default '{username}')*
 
 Format placeholders:
@@ -2733,6 +2740,7 @@ Display the current window title.
 
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 0.5)*
+  - `format` display format for window_title *(default '{title}')*
   - `max_width` If width of title is greater, shrink it and add '...'
     *(default 120)*
 
@@ -2860,9 +2868,11 @@ Configuration parameters:
   - `force_on_start` switch to the given combination mode if available
     when the module starts (saves you from having to configure xorg)
     *(default None)*
-  - `format_clone` string used to display a 'clone' combination
+  - `format` display format for xrandr
+    *(default '{output}')*
+  - `icon_clone` icon used to display a 'clone' combination
     *(default '=')*
-  - `format_extend` string used to display a 'extend' combination
+  - `icon_extend` icon used to display a 'extend' combination
     *(default '+')*
   - `output_combinations` string used to define your own subset of output
     combinations to use, instead of generating every possible combination
@@ -2872,7 +2882,7 @@ Configuration parameters:
     When an output layout is not available any more, the configurations
     are automatically filtered out.
     Example:
-    Assuming the default values for `format_clone` and `format_extend`
+    Assuming the default values for `icon_clone` and `icon_extend`
     are used, and assuming you have two screens 'eDP1' and 'DP1', the
     following setup will reduce the number of output combinations
     from four (every possible one) down to two:
