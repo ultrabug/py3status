@@ -44,7 +44,11 @@ class Py3status:
         tree = loads(self.py3.command_output('i3-msg -t get_tree'))
         window = find_focused(tree)
 
+        if not window or window.get('name') is None or window.get('type') == 'workspace':
+            window = {'name': ''}
+
         transformed = False
+
         if window and 'name' in window and window['name'] != self.title:
             self.title = (len(window['name']) > self.max_width and
                           u"...{}".format(window['name'][-(self.max_width - 3):]) or
