@@ -99,7 +99,9 @@ class Py3status:
                     if out and 'separator' not in out[-1]:
                         # we copy the item as we do not want to change the
                         # original.
-                        out[-1] = out[-1].copy()['separator'] = True
+                        last_item = out[-1].copy()
+                        last_item['separator'] = True
+                        out[-1] = last_item
                 else:
                     if self.format_separator:
                         out += [{'full_text': self.format_separator}]
