@@ -64,6 +64,9 @@ github {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'py3status 34/24'}
 """
 
 import requests

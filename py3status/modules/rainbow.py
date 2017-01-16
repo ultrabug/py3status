@@ -59,6 +59,14 @@ rainbow blink_time{
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+[
+    {'color': '#FFE500', 'full_text': 'module 1', 'separator': True},
+    {'color': '#00FF66', 'full_text': 'module 2', 'separator': True},
+    {'color': '#0019FF', 'full_text': 'module 3', 'separator': True},
+    {'color': '#FF0099', 'full_text': 'module 4', 'separator': True}
+]
 """
 
 from __future__ import division

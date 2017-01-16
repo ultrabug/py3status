@@ -81,6 +81,8 @@ clock {
 @author tobes
 @license BSD
 
+SAMPLE OUTPUT
+{'full_text': 'Sun 15 Jan 2017 23:27:17 GMT'}
 """
 
 import re

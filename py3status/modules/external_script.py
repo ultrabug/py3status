@@ -28,6 +28,9 @@ external_script {
 ```
 
 @author frimdo ztracenastopa@centrum.cz
+
+SAMPLE OUTPUT
+{'full_text': 'script output'}
 """
 
 import subprocess

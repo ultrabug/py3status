@@ -25,6 +25,9 @@ Color options:
 
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'stream_name missing'}
 """
 
 import requests

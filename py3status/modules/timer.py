@@ -16,6 +16,17 @@ Configuration parameters:
         (default None)
     time: how long in seconds for the timer
         (default 60)
+
+
+SAMPLE OUTPUT
+[
+{'color': '#CCCCCC', 'full_text': 'Timer '},
+{'color': None, 'full_text': '0'},
+{'color': '#CCCCCC', 'full_text': ':'},
+{'color': None, 'full_text': '01'},
+{'color': '#CCCCCC', 'full_text': ':'},
+{'color': None, 'full_text': '00'}
+]
 """
 
 from time import time

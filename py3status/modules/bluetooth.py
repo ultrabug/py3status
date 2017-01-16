@@ -25,6 +25,9 @@ Requires:
 
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': u'BT: OFF'}
 """
 
 import re

@@ -21,6 +21,9 @@ Format placeholders:
     {unseen} number of unread emails
 
 @author obb
+
+SAMPLE OUTPUT
+{'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
 
 import imaplib

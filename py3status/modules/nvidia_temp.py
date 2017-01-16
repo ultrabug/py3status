@@ -18,6 +18,9 @@ Requires:
 
 @author jmdana <https://github.com/jmdana>
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'GPU: 62°C', 'color': '#00FF00'}
 """
 
 import re

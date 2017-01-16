@@ -66,6 +66,13 @@ group {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+[
+    {'full_text': 'module 1', 'separator': True},
+    {'full_text': 'module 2', 'separator': True},
+    {'full_text': 'module 3', 'separator': True}
+]
 """
 
 

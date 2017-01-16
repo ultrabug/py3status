@@ -21,6 +21,9 @@ Color options:
 Requires:
     requests: python module from pypi
         https://pypi.python.org/pypi/requests
+
+SAMPLE OUTPUT
+{'full_text': ''}
 """
 
 import requests

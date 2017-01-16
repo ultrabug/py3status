@@ -78,6 +78,9 @@ group disks {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'output of another module'}
 """
 
 from time import time

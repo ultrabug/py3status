@@ -23,6 +23,9 @@ Requires:
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': 'gb'}
 """
 
 import re

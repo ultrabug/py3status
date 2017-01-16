@@ -19,6 +19,9 @@ Color options:
     color_good: Online
 
 @author obb
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
 import os

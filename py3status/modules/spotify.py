@@ -34,6 +34,9 @@ Requires:
         spotify (>=1.0.27.71.g0a26e3b2)
 
 @author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': 'Spotify not running'}
 """
 
 from datetime import timedelta

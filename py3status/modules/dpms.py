@@ -22,6 +22,9 @@ Color options:
     color_off: Disabled, defaults to color_bad
 
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'DPMS'}
 """
 
 

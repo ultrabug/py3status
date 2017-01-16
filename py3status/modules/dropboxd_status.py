@@ -23,6 +23,9 @@ Requires:
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'Dropbox: Up to date'}
 """
 
 import shlex

@@ -14,6 +14,9 @@ Format placeholders:
     {processor} the (real) processor name, e.g. 'amdk6'
 
 @author ultrabug (inspired by ndalliard)
+
+SAMPLE OUTPUT
+{'full_text': 'Linux 4.8.15-300.fc25.x86_64 x86_64'}
 """
 
 from platform import uname

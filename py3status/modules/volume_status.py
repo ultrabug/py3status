@@ -80,6 +80,9 @@ NOTE:
 
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u266a: 95%'}
 """
 
 import re
