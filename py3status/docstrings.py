@@ -5,6 +5,7 @@ import os.path
 import difflib
 
 from py3status.helpers import print_stderr
+from py3status.docimages import create_screenshots
 
 
 def modules_directory():
@@ -12,6 +13,20 @@ def modules_directory():
     Get the core modules directory.
     '''
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules')
+
+
+def summary_directory():
+    '''
+    Get the core doc directory.
+    '''
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'doc')
+
+
+def screenshots_directory():
+    '''
+    Get the screenshots modules directory.
+    '''
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'screenshots')
 
 
 def parse_readme():
@@ -25,13 +40,15 @@ def parse_readme():
     modules_dict = {}
     with open(readme_file) as f:
         for row in f.readlines():
-            match = re_mod.match(row)
-            if match:
+            match = re_mod.search(row)
+            if match and not name:
                 name = match.group('name')
                 modules_dict[name] = []
                 continue
             if row.startswith('---'):
                 name = None
+                continue
+            if row.startswith('![screenshot]'):
                 continue
             if name:
                 modules_dict[name].append(row)
@@ -66,14 +83,88 @@ def core_module_docstrings(include_core=True, include_user=False, config=None):
                 paths[name] = (os.path.join(include_path, file), 'user')
     for name in paths:
         path, module_type = paths[name]
+        samples = {}
         with open(path) as f:
             module = ast.parse(f.read())
-            docstring = ast.get_docstring(module)
+            raw_docstring = ast.get_docstring(module)
+            if raw_docstring is None:
+                continue
+            parts = re.split('^SAMPLE OUTPUT$', raw_docstring, flags=re.M)
+            docstring = parts[0]
+            if len(parts) > 1:
+                samples[name] = parts[1]
             docstring = [
                 d for d in _from_docstring(str(docstring).strip().split('\n'))
             ]
             docstrings[name] = docstring + ['\n']
     return docstrings
+
+
+def find_screenshots(modules):
+    """
+    Find all the screenshots and match them to the module they are for
+    """
+    module_screenshots = {}
+    for file in os.listdir(screenshots_directory()):
+        if file.endswith('.png'):
+            selected = file[:-4].split('-')[0]
+            if selected not in module_screenshots:
+                module_screenshots[selected] = []
+            module_screenshots[selected].append(file)
+    return module_screenshots
+
+
+def file_sort(my_list):
+    """
+    Sort a list in a nice way.
+    """
+    def convert(text):
+        return int(text) if text.isdigit() else text
+
+    def alphanum_key(key):
+        # remove extension
+        key = key.rsplit('.', 1)[0]
+        return [convert(c) for c in re.split('([0-9]+)', key)]
+
+    my_list.sort(key=alphanum_key)
+    return my_list
+
+
+def screenshots(screenshots_data, module_name, path):
+    """
+    Create markdown output for any screenshots a module may have.
+    """
+    shots = screenshots_data.get(module_name)
+    if not shots:
+        return('')
+
+    out = []
+    for shot in file_sort(shots):
+        out.append(
+            u'\n![screenshot]({}{})'.format(path, shot)
+        )
+    return u''.join(out)
+
+
+def create_module_summary(data):
+    '''
+    Create README.md text for the given module data.
+    '''
+    out = ['Modules\n========\n\n']
+    screenshots_data = find_screenshots(data.keys())
+    # details
+    path = '../screenshots/'
+    for module in sorted(data.keys()):
+        desc = ''.join(data[module]).strip().split('\n')[0]
+        out.append(
+            ('\n### <a name="{name}"></a>{name}{screenshot}\n<details><summary>'
+             '{desc}</summary>\n{details}\n'
+             '</details>\n').format(
+                desc=desc,
+                name=module,
+                screenshot=screenshots(screenshots_data, module, path),
+                details='\n'.join((''.join(data[module]).strip()).split('\n')[1:])))
+    return ''.join(out)
 
 
 def create_readme(data):
@@ -89,6 +180,7 @@ def create_readme(data):
     # details
     for module in sorted(data.keys()):
         out.append(
+
             '\n---\n\n### <a name="{name}"></a>{name}\n\n{details}\n'.format(
                 name=module,
                 details=''.join(data[module]).strip()))
@@ -343,6 +435,11 @@ def update_readme_for_modules(modules):
     readme_file = os.path.join(modules_directory(), 'README.md')
     with open(readme_file, 'w') as f:
         f.write(create_readme(readme))
+    create_screenshots(quiet=True)
+    readme_file = os.path.join(summary_directory(), 'modules.md')
+    with open(readme_file, 'w') as f:
+        f.write(create_module_summary(readme))
+    print_stderr('modules.md updated')
 
 
 def show_modules(config, params):

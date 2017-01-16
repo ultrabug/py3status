@@ -26,6 +26,15 @@ Requires:
 
 @author Joshua Pratt <jp10010101010000@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'INSYNC 3'}
+
+busy
+{'color': '#FFFF00', 'full_text': u'PAUSED 3'}
+
+offline
+{'color': '#FF0000', 'full_text': u'OFFLINE 3'}
 """
 STRING_UNAVAILABLE = "Insync: isn't installed"
 STRING_ERROR = "Insync: isn't running"

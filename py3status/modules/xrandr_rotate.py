@@ -37,6 +37,12 @@ Color options:
 
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'V'}
+
+h
+{'color': '#00FF00', 'full_text': u'H'}
 """
 
 from subprocess import Popen, PIPE

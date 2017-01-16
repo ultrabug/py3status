@@ -31,6 +31,9 @@ Requires:
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': u'\u263c: 100%'}
 """
 
 from __future__ import division

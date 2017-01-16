@@ -64,6 +64,12 @@ github {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'py3status 34/24'}
+
+notification
+{'full_text': 'py3status 34/24 N3', 'urgent': True}
 """
 
 import requests

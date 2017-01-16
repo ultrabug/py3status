@@ -21,6 +21,9 @@ Requires:
 
 @author tobes
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': u'$1.0617 \xa30.8841 \xa5121.5380'}
 """
 
 import re

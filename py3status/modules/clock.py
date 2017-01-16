@@ -81,6 +81,11 @@ clock {
 @author tobes
 @license BSD
 
+SAMPLE OUTPUT
+{'full_text': 'Sun 15 Jan 2017 23:27:17 GMT'}
+
+london
+{'full_text': 'Thursday Feb 23 🕜 1:42 AM LONDON'}
 """
 
 import re

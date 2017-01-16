@@ -887,6 +887,9 @@ class Py3statusWrapper():
                     docstrings.update_docstrings()
                 else:
                     docstrings.update_readme_for_modules(cmd[2:])
+        elif cmd[0] == 'screenshots':
+            from py3status.docimages import create_screenshots
+            create_screenshots()
         elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
             # TODO: to be implemented
             pass

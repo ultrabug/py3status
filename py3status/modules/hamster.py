@@ -14,6 +14,12 @@ Requires:
 
 @author Aaron Fields (spirotot [at] gmail.com)
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'Watering flowers@Day-to-day (00:03)'}
+
+inactive
+{'full_text': 'No activity'}
 """
 
 

@@ -16,6 +16,9 @@ Requires:
 
 @author Francois LASSERRE <choiz@me.com>
 @license GNU GPL http://www.gnu.org/licenses/gpl.html
+
+SAMPLE OUTPUT
+{'full_text': '♫ Music For Programming - Hivemind'}
 """
 CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
 STRING_UNAVAILABLE = "clementine: isn't installed"

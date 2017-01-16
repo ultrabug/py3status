@@ -24,6 +24,9 @@ Color options:
     color_good: Price has increased
 
 @author Andre Doser <doser.andre AT gmail.com>
+
+SAMPLE OUTPUT
+{'full_text': u'btce: 809.40$, btcde: 785.00\u20ac'}
 """
 import json
 

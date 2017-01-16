@@ -28,6 +28,15 @@ Requires:
 
 @author bstinsonmhk
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'selinux: enforcing', 'color': '#00FF00'}
+
+permissive
+{'full_text': 'selinux: permissive', 'color': '#FFFF00'}
+
+disabled
+{'full_text': 'selinux: disabled', 'color': '#FF0000'}
 """
 from __future__ import absolute_import
 import selinux

@@ -22,6 +22,9 @@ Requires:
         deadbeef:
 
 @author mrt-prodz
+
+SAMPLE OUTPUT
+{'full_text': 'Music For Programming - Lackluster'}
 """
 from subprocess import check_output, CalledProcessError
 
