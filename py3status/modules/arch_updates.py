@@ -9,12 +9,10 @@ also waiting.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
-    format: Display format to use
-        (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
-    hide_if_zero: Don't show on bar if True
-        (default False)
-    include_aur: Set to True to use 'cower' to check for AUR updates
-        (default False)
+    format_pacman: Display Pacman only (default 'PAC: {pacman}')
+    format_aur: Display AUR only (default 'AUR: {aur}')
+    format_full: Display Pacman/AUR (default 'UPD: {pacman}/{aur}')
+    include_aur: Set to True to use 'cower' to check for AUR updates (default False)
 
 Format placeholders:
     {aur} Number of pending aur updates
@@ -34,36 +32,53 @@ import sys
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    format = ''
-    hide_if_zero = False
+    format_aur = 'AUR: {aur}'
+    format_full = 'UPD: {pacman}/{aur}'
+    format_pacman = 'PAC: {pacman}'
     include_aur = False
-
-    _format_pacman_only = 'UPD: {pacman}'
-    _format_pacman_and_aur = 'UPD: {pacman}/{aur}'
+    format = ''
     _line_separator = "\\n" if sys.version_info > (3, 0) else "\n"
 
-    if format == '':
+    if format_full == '':
         if not include_aur:
-            format = _format_pacman_only
+            format = format_pacman
         else:
-            format = _format_pacman_and_aur
+            format = format_full
 
     def check_updates(self):
-        pacman_updates = self._check_pacman_updates()
-
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
-        if self.include_aur:
-            aur_updates = self._check_aur_updates()
-        else:
+        pacman_updates = self._check_pacman_updates()
+
+        # print pacman only
+        if not self.include_aur:
             aur_updates = ''
 
-        if self.hide_if_zero and pacman_updates == 0 and aur_updates == 0:
-            response['full_text'] = ''
+            if pacman_updates == 0:
+                response['full_text'] = ''
+            else:
+                self.format = self.format_pacman
+                response['full_text'] = self.py3.safe_format(self.format,
+                                                             {'pacman': pacman_updates})
+
+        # print pacman and/or aur
         else:
-            response['full_text'] = self.py3.safe_format(self.format,
-                                                         {'pacman': pacman_updates,
-                                                          'aur': aur_updates})
+            aur_updates = self._check_aur_updates()
+
+            if pacman_updates == 0 and aur_updates == 0:
+                response['full_text'] = ''
+            elif pacman_updates == 1 and aur_updates == 0:
+                self.format = self.format_pacman
+                response['full_text'] = self.py3.safe_format(self.format,
+                                                             {'pacman': pacman_updates})
+            elif pacman_updates == 0 and aur_updates == 1:
+                self.format = self.format_aur
+                response['full_text'] = self.py3.safe_format(self.format, {'aur': aur_updates})
+            else:
+                self.format = self.format_full
+                response['full_text'] = self.py3.safe_format(self.format,
+                                                             {'pacman': pacman_updates,
+                                                                 'aur': aur_updates})
         return response
 
     def _check_pacman_updates(self):
