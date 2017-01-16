@@ -358,7 +358,7 @@ class Py3status:
             self.py3.threshold_get_color(swap_used_percent, 'swap')
 
         # get load average
-        if '{load' in self.format:
+        if self.py3.format_contains(self.format, 'load*'):
             load1, load5, load15 = self.data.load()
             self.values['load1'] = load1
             self.values['load5'] = load5
