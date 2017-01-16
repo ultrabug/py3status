@@ -34,16 +34,6 @@ Format placeholders:
     {swap_used_percent} used swap percentage
     {temp_unit} temperature unit
 
-format_mem placeholders:
-    {value} numeric value
-
-format_percent placeholders:
-    {value} numeric value
-
-format_temp placeholders:
-    {unit} temperature unit
-    {value} numeric value
-
 Color thresholds:
     cpu: change color based on the value of cpu_usage
     max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
