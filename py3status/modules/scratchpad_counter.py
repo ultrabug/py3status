@@ -14,7 +14,7 @@ Format placeholders:
 @license Eclipse Public License
 """
 
-import i3
+from json import loads
 
 
 def find_scratch(tree):
@@ -25,7 +25,7 @@ def find_scratch(tree):
             result = find_scratch(x)
             if result:
                 return result
-        return None
+        return {}
 
 
 class Py3status:
@@ -51,7 +51,8 @@ class Py3status:
         self.count = -1
 
     def scratchpad_counter(self):
-        count = len(find_scratch(i3.get_tree()).get("floating_nodes", []))
+        tree = loads(self.py3.command_output('i3-msg -t get_tree'))
+        count = len(find_scratch(tree).get("floating_nodes", []))
 
         if self.count != count:
             transformed = True

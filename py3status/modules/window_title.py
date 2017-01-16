@@ -8,20 +8,11 @@ Configuration parameters:
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
 
-Requires:
-    i3-py: (https://github.com/ziberna/i3-py)
-        `pip install i3-py`
-
-If payload from server contains wierd utf-8
-(for example one window have something bad in title) - the plugin will
-give empty output UNTIL this window is closed.
-I can't fix or workaround that in PLUGIN, problem is in i3-py library.
-
 @author shadowprince
 @license Eclipse Public License
 """
 
-import i3
+from json import loads
 
 
 def find_focused(tree):
@@ -35,6 +26,7 @@ def find_focused(tree):
             return tree
         else:
             return find_focused(tree['nodes'] + tree['floating_nodes'])
+    return ''
 
 
 class Py3status:
@@ -49,7 +41,8 @@ class Py3status:
         self.title = ''
 
     def window_title(self):
-        window = find_focused(i3.get_tree())
+        tree = loads(self.py3.command_output('i3-msg -t get_tree'))
+        window = find_focused(tree)
 
         transformed = False
         if window and 'name' in window and window['name'] != self.title:
