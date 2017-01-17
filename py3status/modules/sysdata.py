@@ -9,6 +9,8 @@ Configuration parameters:
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
+    swap_unit: the unit of swap to use in report, case insensitive.
+        ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     padding: length of space padding to use on the left
         (default 0)
     precision: precision of values
@@ -25,11 +27,16 @@ Format placeholders:
     {mem_unit} unit for memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
+    {swap_total} total swap
+    {swap_unit} unit for swap
+    {swap_used} used swap
+    {swap_used_percent} used swap percentage
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
     max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
     mem: change color based on the value of mem_used_percent
+    swap: change color based on the value of swap_used_percent
     temp: change color based on the value of cpu_temp
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
@@ -127,6 +134,49 @@ class GetData:
         # Otherwise, results are in gigabytes.
         return total_mem, used_mem, used_mem_p, unit
 
+    def swap(self, unit='GiB'):
+        """
+        Parse /proc/meminfo, grab the swwap capacity and used size
+        then return; Memory size 'total_swap', Used_swap, percentage
+        of used swap, and units of swap (KiB, MiB, GiB).
+        """
+
+        memi = {}
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1])
+
+        try:
+            total_swap_kib = memi["SwapTotal:"]
+            used_swap_kib = (total_swap_kib -
+                            memi["SwapFree:"])
+            used_swap_p = 100 * used_swap_kib / total_swap_kib
+            multiplier = {
+                'KiB': ONE_KIB / ONE_KIB,
+                'MiB': ONE_KIB / ONE_MIB,
+                'GiB': ONE_KIB / ONE_GIB,
+            }
+            if unit.lower() == 'dynamic':
+                # If less than 1 GiB, use MiB
+                if (multiplier['GiB'] * total_swap_kib) < 1:
+                    unit = 'MiB'
+                else:
+                    unit = 'GiB'
+            if unit in multiplier.keys():
+                total_swap = multiplier[unit] * total_swap_kib
+                used_swap = multiplier[unit] * used_swap_kib
+            else:
+                raise ValueError(
+                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
+        except:
+            total_swap, used_swap, used_swap_p = [float('nan') for i in range(3)]
+            unit = 'UNKNOWN'
+
+        # If total memory is <1GB, results are in megabytes.
+        # Otherwise, results are in gigabytes.
+        return total_swap, used_swap, used_swap_p, unit
+
     def cpuTemp(self, zone):
         """
         Tries to determine CPU temperature using the 'sensors' command.
@@ -158,8 +208,10 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
-        "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+        "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)], " \
+        "[\?color=swap Swap: {swap_used}/{swap_total} GB ({swap_used_percent}%)]"
     mem_unit = 'GiB'
+    swap_unit = 'GiB'
     padding = 0
     precision = 2
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
@@ -230,6 +282,15 @@ class Py3status:
             self.values['mem_used_percent'] = value_format.format(mem_used_percent)
             self.values['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
+
+        # get SWAP usage info
+        if self.py3.format_contains(self.format, 'swap_*') or True:
+            swap_total, swap_used, swap_used_percent, swap_unit = self.data.swap(self.swap_unit)
+            self.values['swap_total'] = value_format.format(swap_total)
+            self.values['swap_used'] = value_format.format(swap_used)
+            self.values['swap_used_percent'] = value_format.format(swap_used_percent)
+            self.values['swap_unit'] = swap_unit
+            self.py3.threshold_get_color(swap_used_percent, 'swap')
 
         try:
             self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
