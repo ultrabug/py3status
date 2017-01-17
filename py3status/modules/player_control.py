@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Control music/video players.
+Control your music/video players.
 
 Provides an icon to control simple functions of audio/video players:
     - start (left click)

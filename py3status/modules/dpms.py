@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Activate or deactivate DPMS and screen blanking.
+Control your DPMS and screen blanking easily.
 
 This module allows activation and deactivation
 of DPMS (Display Power Management Signaling)

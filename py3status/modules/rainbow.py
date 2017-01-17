@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Add color cycling fun to your i3bar.
+Colorize your statuses like a rainbow.
 
 This is the most pointless yet most exciting module you can imagine.
 

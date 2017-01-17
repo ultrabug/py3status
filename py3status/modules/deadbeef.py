@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display track currently playing in deadbeef.
+Display song currently playing in deadbeef.
 
 Configuration parameters:
     cache_timeout: how often we refresh usage in seconds (default 1)

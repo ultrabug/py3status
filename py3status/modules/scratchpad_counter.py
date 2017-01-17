@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the amount of windows in your i3 scratchpad.
+Display total number of windows in your i3 scratchpad.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 5)

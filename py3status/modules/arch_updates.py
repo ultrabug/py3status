@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Displays the number of package updates pending for an Arch Linux installation.
+Display total number of pending updates for Arch Linux.
 
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are

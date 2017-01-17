@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current "artist - title" playing in Clementine.
+Display song currently playing in Clementine.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 5)

@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Display information from mpd.
+Display song currently playing in mpd.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)

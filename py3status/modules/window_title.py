@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current window title.
+Display window title.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)

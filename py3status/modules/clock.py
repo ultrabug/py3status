@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display time and date information.
+Display date and time.
 
 This module allows one or more datetimes to be displayed.
 All datetimes share the same format_time but can set their own timezones.
