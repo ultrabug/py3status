@@ -159,9 +159,6 @@ class Py3status:
     state_play = '[play]'
     state_stop = '[stop]'
 
-    def __init__(self):
-        self.text = ''
-
     def _state_character(self, state):
         if state == 'play':
             return self.state_play
@@ -222,16 +219,9 @@ class Py3status:
         if len(text) > self.max_width:
             text = u'{}...'.format(text[:self.max_width - 3])
 
-        if self.text != text:
-            transformed = True
-            self.text = text
-        else:
-            transformed = False
-
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.text,
-            'transformed': transformed
+            'full_text': text,
         }
 
         if state:
