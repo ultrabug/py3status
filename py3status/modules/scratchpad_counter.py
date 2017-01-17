@@ -18,14 +18,14 @@ from json import loads
 
 
 def find_scratch(tree):
-    if tree["name"] == "__i3_scratch":
+    if tree.get("name") == "__i3_scratch":
         return tree
     else:
-        for x in tree["nodes"]:
+        for x in tree.get("nodes", []):
             result = find_scratch(x)
             if result:
                 return result
-        return {}
+    return {}
 
 
 class Py3status:
