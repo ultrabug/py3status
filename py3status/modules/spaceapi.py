@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Follow your favorite hackerspace with this status notification.
+Display status of your favorite hackerspace.
 
 Configuration parameters:
     button_url: Button that when clicked opens the URL sent in the space's API.

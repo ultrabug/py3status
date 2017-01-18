@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display number of windows in scratchpad asynchronously and indicate urgency hints.
+Display number of windows and urgency hints asynchronously.
 
 Configuration parameters:
     always_show: always display the format (default False)
