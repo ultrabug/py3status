@@ -1,5 +1,5 @@
 """
-Checks if a Twitch streamer is online.
+Follow Twitch streamer with this status notification.
 
 Checks if a streamer is online using the Twitch Kraken API to see
 if a channel is currently streaming or not.

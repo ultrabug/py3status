@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display if a TCP port is available on the given host.
+Display the status of TCP port on a given host.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)

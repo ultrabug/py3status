@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Determine if you have an Internet Connection
+Determine if you have an Internet Connection.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)

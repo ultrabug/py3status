@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display screen backlight level.
+Display and adjust backlight brightness.
 
 Configuration parameters:
     brightness_delta: Change the brightness by this step.
