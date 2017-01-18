@@ -1,32 +1,56 @@
 # -*- coding: utf-8 -*-
-
 """
-Display the system's uptime
+Display system uptime.
 
 Configuration parameters:
+    format: display format for this module
+        (default 'up {days} days {hours} hours {minutes} minutes')
 
-    - format: what will be displayed, formatted with predefined placeholders;
-      defaults to "{days} days, {hours} hours, {minutes} mins"
+Format placeholders:
+    {decades} decades
+    {years}   years
+    {weeks}   weeks
+    {days}    days
+    {hours}   hours
+    {minutes} minutes
+    {seconds} seconds
 
-Available placeholders in format string:
+Note: If you don't use one of the placeholders, the value will be carried over
+to the next unit. For example, given an uptime of 1h 30min:
+    If you use {minutes} as your only placeholder, then its value will be 90.
+    If you use {hours} and {minutes}, then its values will be 1 and 30, respectively.
 
-    - {days}: days part of the uptime
-    - {hours}: hours part of the uptime
-    - {minutes}: minutes part of the uptime
-    - {seconds}: seconds part of the uptime
-    - {years}:  years part of the uptime
+Examples:
+```
+# show uptime without zeroes
+uptime {
+    format = 'up [\?if=weeks {weeks} weeks ][\?if=days {days} days ]
+        [\?if=hours {hours} hours ][\?if=minutes {minutes} minutes ]'
+}
 
-Hint: if you don't use one of the placeholders, the value will be carried over
-the next unit! For example, given an uptime of 1h30min:
+# show uptime in multiple formats using group module
+group uptime {
+    format = "up {output}"
+    uptime {
+        format = '[\?if=weeks {weeks} weeks ][\?if=days {days} days ]
+            [\?if=hours {hours} hours ][\?if=minutes {minutes} minutes]'
+    }
+    uptime {
+        format = '[\?if=weeks {weeks}w ][\?if=days {days}d ]
+            [\?if=hours {hours}h ][\?if=minutes {minutes}m]'
+    }
+    uptime {
+        format = '[\?if=days {days}, ][\?if=hours {hours}:]
+            [\?if=minutes {minutes:02d}]'
+    }
+}
+```
 
-    - if the only placeholder you use is {minutes}, its value will be 90
-    - if you use both {hours} and {minutes}, they will be respectively 1 and 30
-
-The cache_timeout will be automatically set depending on the precision you
-ask for in the format string.
-
-@author Alexis "Horgix" Chotard <alexis.horgix.chotard@gmail.com>
+@author Alexis "Horgix" Chotard <alexis.horgix.chotard@gmail.com>, tobes, lasers
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'up 1 days 18 hours 20 minutes'}
 """
 
 from time import time
@@ -35,66 +59,73 @@ from time import time
 class Py3status:
     """
     """
-    # Available configuration parameters
-    format = "{days} days, {hours} hours, {minutes} mins"
+    # available configuration parameters
+    format = 'up {days} days {hours} hours {minutes} minutes'
 
-    def uptime(self, i3s_output_list, i3s_config):
+    def post_config_hook(self):
+        self._decades = self.py3.format_contains(self.format, 'decades')
+        self._years = self.py3.format_contains(self.format, 'years')
+        self._weeks = self.py3.format_contains(self.format, 'weeks')
+        self._days = self.py3.format_contains(self.format, 'days')
+        self._hours = self.py3.format_contains(self.format, 'hours')
+        self._minutes = self.py3.format_contains(self.format, 'minutes')
+        self._seconds = self.py3.format_contains(self.format, 'seconds')
+
+    def uptime(self):
         # Units will be computed from bare seconds since timedelta only
-        # provides .days and .seconds anyway
-        try:
-            with open('/proc/uptime', 'r') as f:
-                # Getting rid of the seconds part. Keeping the floating point
-                # part would make divmod return floats, and thus would require
-                # days/hours/minutes/seconds to be casted to int before
-                # formatting, which would be dirty to handle since we can't
-                # cast None to int
-                up = int(float(f.readline().split()[0]))
-        except:
-            return {'full_text': "None"}
-        # Setting things to None directly to avoid an else clause everywhere
-        cache_timeout = years = days = hours = minutes = seconds = None
+        # provides .days and .seconds anyway. Getting rid of the seconds
+        # part. Keeping the floating point part would make divmod return
+        # floats, and thus would require days/hours/minutes/seconds to be
+        # casted to int before formatting, which would be dirty to handle
+        # since we can't cast None to int.
+        with open('/proc/uptime', 'r') as f:
+            up = int(float(f.readline().split()[0]))
+            offset = time() - up
+
+        cache_timeout = decades = years = weeks = days = hours = minutes = seconds = 0
+
+        # Decades
+        if self._decades:
+            decades, up = divmod(up, 315360000)  # 10 years -> decade
+            cache_timeout = 315360000
         # Years
-        if '{years}' in self.format:
-            years, up = divmod(up, 31536000)  # 365 days year
+        if self._years:
+            years, up = divmod(up, 31536000)  # 365 days -> year
             cache_timeout = 31536000
+        # Weeks
+        if self._weeks:
+            weeks, up = divmod(up, 604800)  # 7 days -> week
+            cache_timeout = 604800
         # Days
-        if '{days}' in self.format:
-            days, up = divmod(up, 86400)
+        if self._days:
+            days, up = divmod(up, 86400)  # 24 hours -> day
             cache_timeout = 86400
         # Hours
-        if '{hours}' in self.format:
-            hours, up = divmod(up, 3600)
+        if self._hours:
+            hours, up = divmod(up, 3600)  # 60 minutes -> hour
             cache_timeout = 3600
         # Minutes
-        if '{minutes}' in self.format:
-            minutes, up = divmod(up, 60)
+        if self._minutes:
+            minutes, up = divmod(up, 60)  # 60 seconds -> minute
             cache_timeout = 60
         # Seconds
-        if '{seconds}' in self.format:
-            seconds = up
-            cache_timeout = None
+        if self._seconds:
+            seconds = up  # 1000000000 nanoseconds -> second
+            cache_timeout = 1
 
-        response = {}
-        if cache_timeout:
-            response['cached_until'] = time() + cache_timeout
-        response['full_text'] = self.format.format(years=years,
-                                                   days=days,
-                                                   hours=hours,
-                                                   minutes=minutes,
-                                                   seconds=seconds)
-        return response
+        uptime = self.py3.safe_format(self.format, dict(
+            decades=decades, years=years, weeks=weeks, days=days,
+            hours=hours, minutes=minutes, seconds=seconds))
+
+        return {
+            'cached_until': self.py3.time_in(sync_to=cache_timeout, offset=offset),
+            'full_text': uptime
+        }
+
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.uptime([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
