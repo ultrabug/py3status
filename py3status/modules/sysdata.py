@@ -9,10 +9,8 @@ Configuration parameters:
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
-    padding: length of space padding to use on the left
-        (default 0)
-    precision: precision of values
-        (default 2)
+    temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
+        (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: thermal zone to use. If None try to guess CPU temperature
@@ -25,6 +23,7 @@ Format placeholders:
     {mem_unit} unit for memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
+    {temp_unit} temperature unit
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
@@ -127,7 +126,7 @@ class GetData:
         # Otherwise, results are in gigabytes.
         return total_mem, used_mem, used_mem_p, unit
 
-    def cpuTemp(self, zone):
+    def cpuTemp(self, zone, unit):
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
@@ -135,17 +134,23 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
-        sensors = None
+        command = ['sensors']
+        if unit == u'°F':
+            command.append('-f')
+        elif unit not in [u'°C', 'K']:
+            return 'unknown unit'
         if zone:
             try:
-                sensors = self.py3.command_output(['sensors', zone])
+                sensors = self.py3.command_output(command + [zone])
             except:
                 sensors = None
         if not sensors:
-            sensors = self.py3.command_output('sensors')
+            sensors = self.py3.command_output(command)
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
             cpu_temp = float(m.groups()[1].strip()[:-2])
+            if unit == 'K':
+                cpu_temp += 273.15
         else:
             cpu_temp = '?'
 
@@ -158,10 +163,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
-        "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+             "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
-    padding = 0
-    precision = 2
+    temp_unit = u'°C'
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
@@ -174,7 +178,20 @@ class Py3status:
                         (0, 'good'),
                         (config.get('med_threshold', 40), 'degraded'),
                         (config.get('high_threshold', 75), 'bad'),
-                        ]
+                        ],
+                    }
+
+        def update_deprecated_placeholder_format(config):
+            padding = config.get('padding', 0)
+            precision = config.get('precision', 2)
+            format_vals = ':{padding}.{precision}f'.format(padding=padding,
+                                                           precision=precision)
+            return {
+                    'cpu_usage': format_vals,
+                    'cpu_temp': format_vals,
+                    'mem_total': format_vals,
+                    'mem_used': format_vals,
+                    'mem_used_percent': format_vals,
                     }
 
         deprecated = {
@@ -190,44 +207,76 @@ class Py3status:
                         'param': 'med_threshold',
                         'msg': 'obsolete, set using thresholds parameter',
                         },
-                    ]
+                    {
+                        'param': 'padding',
+                        'msg': 'obsolete, use the format_* parameters',
+                        },
+                    {
+                        'param': 'precision',
+                        'msg': 'obsolete, use the format_* parameters',
+                        },
+                    ],
+                'update_placeholder_format': [
+                    {
+                        'function': update_deprecated_placeholder_format,
+                        'format_strings': ['format']
+                        },
+                    ],
+                }
+
+        update_config = {
+                'update_placeholder_format': [
+                    {
+                        'placeholder_formats': {
+                            'cpu_usage': ':.2f',
+                            'cpu_temp': ':.2f',
+                            'mem_total': ':.2f',
+                            'mem_used': ':.2f',
+                            'mem_used_percent': ':.2f',
+                            },
+                        'format_strings': ['format']
+                        },
+                    ],
                 }
 
     def post_config_hook(self):
         self.data = GetData(self)
         self.cpu_total = 0
         self.cpu_idle = 0
-        self.values = {}
+        temp_unit = self.temp_unit.upper()
+        if temp_unit in ['C', u'°C']:
+            temp_unit = u'°C'
+        elif temp_unit in ['F', u'°F']:
+            temp_unit = u'°F'
+        elif not temp_unit == 'K':
+            temp_unit = 'unknown unit'
+        self.values = {'temp_unit': temp_unit}
+        self.temp_unit = temp_unit
 
     def sysData(self):
-        value_format = '{{:{}.{}f}}'.format(self.padding, self.precision)
-
         # get CPU usage info
         if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = (1 - (
                 float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
                 )) * 100
-            self.values['cpu_usage'] = value_format.format(cpu_usage)
+            self.values['cpu_usage'] = cpu_usage
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
             self.py3.threshold_get_color(cpu_usage, 'cpu')
 
         # if specified as a formatting option, also get the CPU temperature
         if self.py3.format_contains(self.format, 'cpu_temp'):
-            cpu_temp = self.data.cpuTemp(self.zone)
-            try:
-                self.values['cpu_temp'] = (value_format + '°C').format(cpu_temp)
-            except ValueError:
-                self.values['cpu_temp'] = u'{}°C'.format(cpu_temp)
+            cpu_temp = self.data.cpuTemp(self.zone, self.temp_unit)
+            self.values['cpu_temp'] = cpu_temp
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM usage info
         if self.py3.format_contains(self.format, 'mem_*'):
             mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory(self.mem_unit)
-            self.values['mem_total'] = value_format.format(mem_total)
-            self.values['mem_used'] = value_format.format(mem_used)
-            self.values['mem_used_percent'] = value_format.format(mem_used_percent)
+            self.values['mem_total'] = mem_total
+            self.values['mem_used'] = mem_used
+            self.values['mem_used_percent'] = mem_used_percent
             self.values['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
 
