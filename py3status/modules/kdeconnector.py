@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 """
-Display information of your android device over KDEConnector.
+Retrieve notifications and others from your smartphone using KDEConnector.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)

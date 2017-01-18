@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Colorize your statuses like a rainbow.
+Colorize your modules.
 
 This is the most pointless yet most exciting module you can imagine.
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display battery level.
+Display battery information.
 
 Configuration parameters:
     battery_id: id of the battery to be displayed
