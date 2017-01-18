@@ -2,7 +2,7 @@
 """
 Display current window title.
 
-Prints the name of a focused window at frequent interval.
+Prints the name of focused window at frequent intervals.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)
