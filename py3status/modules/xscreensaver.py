@@ -1,92 +1,90 @@
 # -*- coding: utf-8 -*-
 """
-Indicator for Xscreensaver, can be toggled by left clicking.
+Control Xscreensaver.
 
-This is a partial rewrite of dpms.py. Most credit
-goes to the original author Andre Doser. This module shows the status
-of Xscreensaver and activates or deactivates it upon left click.
-
-This script is useful for people who let Xscreensaver manage dpms
-settings. Xscreensaver has its own dpms variables separate from xset.
-Dpms can be safely turned off in xset as long as xscreensaver is running.
+This script is useful for people who let Xscreensaver manage DPMS settings.
+Xscreensaver has its own DPMS variables separate from xset. DPMS can be
+safely turned off in xset as long as Xscreensaver is running.
 Settings can be managed using "xscreensaver-demo".
 
 Configuration parameters:
-    format_off:    string to display when Xscreensaver is disabled
-    format_on:     string to display when Xscreensaver is enabled
-    cache_timeout: interval for checking whether Xscreensaver is running
-                   (default 30s)
+    button_activate: mouse button to activate Xscreensaver (default 3)
+    button_toggle: mouse button to toggle Xscreensaver (default 1)
+    cache_timeout: refresh interval for this module (default 15)
+    format: display format for this module (default '{icon}')
+    icon_off: show when Xscreensaver is not running (default 'XSCR')
+    icon_on: show when Xscreensaver is running (default 'XSCR')
 
-Example configuration in py3status.conf:
+ Format placeholders:
+    {icon} Xscreensaver icon
 
-```
-order += "xscreensaver"
-xscreensaver {
-    format_off = "xscreensaver off"
-    format_on  = "xscreensaver on"
-}
-```
-
-@author neutronst4r <c7420{at}gmx{dot}net>
+@author neutronst4r <c7420{at}posteo{dot}net>, lasers
 """
+
 from os import setpgrp
-from subprocess import call, Popen, DEVNULL
-from time import time
+from subprocess import Popen, PIPE
+
+STRING_UNAVAILABLE = "isn't installed"
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    format_off = "xscreensaver off"
-    format_on = "xscreensaver on"
-    color_on = None
-    color_off = None
-    cache_timeout = 5
+    button_activate = 3
+    button_toggle = 1
+    cache_timeout = 15
+    format = '{icon}'
+    icon_off = 'XSCR'
+    icon_on = 'XSCR'
 
-    def xscreensaver(self, i3s_output_list, i3s_config):
-        """
-        Display a colorful state of xscreensaver.
-        """
-        self.run = call(["pidof", "xscreensaver"],
-                        stdout=DEVNULL,
-                        stderr=DEVNULL,
-                        preexec_fn=setpgrp) == 0
-        full_text = self.format_on if self.run else self.format_off
-        if self.run:
-            color = self.color_on or i3s_config['color_good']
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+        if not self.py3.check_commands(['xscreensaver']):
+            raise Exception(STRING_UNAVAILABLE)
+
+    def _is_running(self):
+        try:
+            self.py3.command_output(['pidof', 'xscreensaver'])
+        except:
+            return False
         else:
-            color = self.color_off or i3s_config['color_bad']
-        return {'full_text': full_text,
-                'color': color,
-                'cached_until': time() + self.cache_timeout}
+            return True
 
-    def on_click(self, i3s_output_list, i3s_config, event):
-        """
-        Enable/Disable xscreensaver on left click.
-        """
-        if event['button'] == 1:
-            if self.run:
-                self.run = Popen(["killall", "xscreensaver"],
-                                 stdout=DEVNULL,
-                                 stderr=DEVNULL,
-                                 preexec_fn=setpgrp) == 0
+    def xscreensaver(self):
+        run = self._is_running()
+        if run:
+            icon = self.icon_on
+            color = self.color_on
+        else:
+            icon = self.icon_off
+            color = self.color_off
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
+            'color': color
+        }
+
+    def on_click(self, event):
+        run = self._is_running()
+        if event['button'] == self.button_activate:
+            self.py3.command_run(['xscreensaver-command', '-activate'])
+
+        if event['button'] == self.button_toggle:
+            if run:
+                self.py3.command_run(['xscreensaver-command', '-exit'])
             else:
-                self.run = Popen(["xscreensaver",
-                                  "-no-splash",
-                                  "-no-capture-stderr"],
-                                 stdout=DEVNULL,
-                                 stderr=DEVNULL,
-                                 preexec_fn=setpgrp) == 1
+                # Because we want xscreensaver to continue running after
+                # exit, we instead use preexec_fn=setpgrp here.
+                Popen(['xscreensaver', '-no-splash', '-no-capture-stderr'],
+                      stdout=PIPE, stderr=PIPE, preexec_fn=setpgrp)
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {'color_bad': '#FF0000', 'color_good': '#00FF00', }
-    while True:
-        print(x.xscreensaver([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)
