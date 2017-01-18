@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Display your public/external IP address and toggle to online status on click.
+Query http://ip-api.com and display information returned. ip-api will ban your ip address if you make over 150 requests
+per minute. If your IP was banned, go here: http://ip-api.com/docs/unban
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 60)
     format: available placeholders are {ip} and {country}
             (default '{city}, {region} {zip_code}')
-    negative_cache_timeout: how often to check again when offline (default 10)
-    timeout: how long before deciding we're offline (default 5)
     lang: language returned, choices are {en,de,es,pt-BR,fr,ja,zh-CN,ru}
         (default 'en')
+    negative_cache_timeout: how often to refresh if failed or timeout (default 10)
+    timeout: how long before query times out (default 5)
 
 Format placeholders:
     {as_name} display AS number and name, separated by space
@@ -49,11 +50,11 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 30
+    cache_timeout = 60
     format = '{city}, {region} {zip_code}'
+    lang = 'en'
     negative_cache_timeout = 10
     timeout = 5
-    lang = 'en'
 
 
     def _fields_generator(self):
