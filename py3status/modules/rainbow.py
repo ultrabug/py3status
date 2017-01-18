@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Colorize your modules.
+Add color cycling fun to your i3bar.
 
 This is the most pointless yet most exciting module you can imagine.
 

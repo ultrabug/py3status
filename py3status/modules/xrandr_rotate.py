@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Control screen rotation easily.
+Control screen rotation.
 
 Configuration parameters:
     cache_timeout: how often to refresh this module.

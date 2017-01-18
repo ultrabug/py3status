@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display total number of ongoing tickets from RT queues.
+Display number of ongoing tickets from RT queues.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)

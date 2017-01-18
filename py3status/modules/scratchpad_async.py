@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display total number of windows and indicate urgency hints on your i3 scratchpad asynchronously.
+Display number of windows in scratchpad asynchronously and indicate urgency hints.
 
 Configuration parameters:
     always_show: always display the format (default False)

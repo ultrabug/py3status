@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display window title frequently.
+Display current window title.
 
 Prints the name of a focused window at frequent interval.
 

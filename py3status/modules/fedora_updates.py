@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display total number of pending updates for Fedora Linux.
+Display number of pending updates for Fedora Linux.
 
 This will display a count of how many `dnf` updates are waiting
 to be installed.
