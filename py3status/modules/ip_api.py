@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Query http://ip-api.com and display information returned. ip-api will ban your ip address if you make over 150 requests
-per minute. If your IP was banned, go here: http://ip-api.com/docs/unban
+Query http://ip-api.com and display information returned. ip-api will ban your
+ip address if you make over 150 requests per minute. If your IP was banned,
+go here: http://ip-api.com/docs/unban
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 60)
-    format: available placeholders are listed below
-            (default '{city}, {region} {zip_code}')
+    format_fail: format for when a query status fails
+        (default '{message}')
+    format_success: format for when a query status is successful
+        (default '{city}, {region} {zip_code}')
     lang: language returned, choices are {en,de,es,pt-BR,fr,ja,zh-CN,ru}
         (default 'en')
-    negative_cache_timeout: how often to refresh if failed or timeout (default 10)
+    negative_cache_timeout: how often to refresh if failed or network error (default 10)
     timeout: how long before query times out (default 5)
 
 Format placeholders:
@@ -51,7 +54,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 60
-    format = '{city}, {region} {zip_code}'
+    format_fail = '{message}'
+    format_success = '{city}, {region} {zip_code}'
     lang = 'en'
     negative_cache_timeout = 10
     timeout = 5
@@ -81,9 +85,9 @@ class Py3status:
 
         fields = 0
         for name in fieldvalues:
-            if self.py3.format_contains(self.format, name):
+            if self.py3.format_contains(self.format_success, name):
                 fields += fieldvalues[name]
-        if not self.py3.format_contains(self.format, 'status'):
+        if not self.py3.format_contains(self.format_success, 'status'):
             fields += fieldvalues['status']  # always include status
         return fields
 
@@ -106,56 +110,42 @@ class Py3status:
         """
         """
         response = {
-            'cached_until': self.py3.time_in(self.negative_cache_timeout)
+            'cached_until': self.py3.time_in(self.negative_cache_timeout),
+            'color': self.py3.COLOR_BAD
         }
 
         resp, status = self._query_ip_api()
 
-        as_name = resp.get('as', '')
-        city = resp.get('city', '')
-        country = resp.get('country', '')
-        country_code = resp.get('countryCode', '')
-        isp = resp.get('isp', '')
-        lat = resp.get('lat', 0)
-        lon = resp.get('lon', 0)
-        message = resp.get('message', '')
-        org = resp.get('org', '')
-        proxy = resp.get('proxy', True)
-        query = resp.get('query', '')
-        region = resp.get('region', '')
-        region_name = resp.get('regionName', '')
-        reverse = resp.get('reverse', '')
-        status = resp.get('status', '')
-        timezone = resp.get('timezone', '')
-        zip_code = resp.get('zip', '')
-
-        if status == "success":
-            response['cached_until'] = self.py3.time_in(self.cache_timeout)
-            response['full_text'] = self.py3.safe_format(self.format, {
-                'as_name': as_name,
-                'city': city,
-                'country': country,
-                'country_code': country_code,
-                'isp': isp,
-                'lat': lat,
-                'lon': lon,
-                'org': org,
-                'proxy': str(proxy),
-                'query': query,
-                'region': region,
-                'region_name': region_name,
-                'reverse': reverse,
-                'status': status,
-                'timezone': timezone,
-                'zip_code': zip_code})
-        elif status == "fail":
-            response['full_text'] = self.py3.safe_format(self.format, {
-                'message': message,
-                'status': status,
-                'query': query
-                })
+        if status is None:
+            response['full_text'] = 'network error'
         else:
-            response['full_text'] = ''
+            query = resp.get('query', '')
+            if status == "success":
+                response['cached_until'] = self.py3.time_in(self.cache_timeout)
+                response['color'] = self.py3.COLOR_GOOD
+                response['full_text'] = self.py3.safe_format(self.format_success, {
+                    'as_name': resp.get('as', ''),
+                    'city': resp.get('city', ''),
+                    'country': resp.get('country', ''),
+                    'country_code': resp.get('countryCode', ''),
+                    'isp': resp.get('isp', ''),
+                    'lat': resp.get('lat', ''),
+                    'lon': resp.get('lon', ''),
+                    'org': resp.get('org', ''),
+                    'proxy': str(resp.get('proxy', False)),
+                    'query': query,
+                    'region': resp.get('region', ''),
+                    'region_name': resp.get('regionName', ''),
+                    'reverse': resp.get('reverse', ''),
+                    'status': status,
+                    'timezone': resp.get('timezone', ''),
+                    'zip_code': resp.get('zip', '')})
+            elif status == "fail":
+                response['full_text'] = self.py3.safe_format(self.format_fail, {
+                    'message': resp.get('message', ''),
+                    'status': status,
+                    'query': query
+                    })
         return response
 
 
@@ -163,8 +153,5 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {
-            'format': '{as_name}, {city}, {country}, {country_code}, {isp}, {lat}, {lon}, {org}, {proxy}, {query}, {region}, {region_name}, {reverse}, {status}, {timezone}, {zip_code}'
-    }
     from py3status.module_test import module_test
     module_test(Py3status, config=config)
