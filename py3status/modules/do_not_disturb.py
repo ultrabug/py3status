@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A simple "Do Not Disturb" module that can turn on and off all system notifications.
+Do not disturb by turning on and off all system notifications.
 
 A left mouse click will toggle the state of this module.
 
