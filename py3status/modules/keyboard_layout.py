@@ -13,7 +13,7 @@ Format placeholders:
     {layout} currently active keyboard layout
 
 Color options:
-    color_<layout>: color for the layout
+    color_[layout]: color for the layout
         eg color_fr = '#729FCF'
 
 Requires:
