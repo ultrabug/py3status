@@ -5,7 +5,7 @@ per minute. If your IP was banned, go here: http://ip-api.com/docs/unban
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 60)
-    format: available placeholders are {ip} and {country}
+    format: available placeholders are listed below
             (default '{city}, {region} {zip_code}')
     lang: language returned, choices are {en,de,es,pt-BR,fr,ja,zh-CN,ru}
         (default 'en')
@@ -62,17 +62,17 @@ class Py3status:
         """
         fieldvalues = {
             'country': 1,
-            'countryCode': 2,
+            'country_code': 2,
             'region': 4,
-            'regionName': 8,
+            'region_name': 8,
             'city': 16,
-            'zipCode': 32,
+            'zip_code': 32,
             'lat': 64,
             'lon': 128,
             'timezone': 256,
             'isp': 512,
             'org': 1024,
-            'as': 2048,
+            'as_name': 2048,
             'reverse': 4096,
             'query': 8192,
             'status': 16384,
