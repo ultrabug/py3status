@@ -3,24 +3,32 @@
 Display your public/external IP address and toggle to online status on click.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 30)
+    cache_timeout: how often we refresh this module in seconds (default 60)
     format: available placeholders are {ip} and {country}
-            (default '{country}')
-    negative_cache_timeout: how often to check again when offline (default 2)
+            (default '{city}, {region} {zip_code}')
+    negative_cache_timeout: how often to check again when offline (default 10)
     timeout: how long before deciding we're offline (default 5)
-    url: IP to check for geo location (must output json)
-        (default 'http://ip-api.com/json')
+    lang: language returned, choices are {en,de,es,pt-BR,fr,ja,zh-CN,ru}
+        (default 'en')
 
 Format placeholders:
-    {country} display the country
-    {country_code} display country code
-    {region} display region
-    {region_name} display region name
+    {as_name} display AS number and name, separated by space
     {city} display city
-    {zip_code} display zip code
+    {country} display country
+    {country_code} display country code
+    {isp} display ISP name
     {lat} display latitude
     {lon} display longitude
-
+    {message} display error message
+    {org} display Organization name
+    {proxy} display proxy status
+    {query} display IP used for query
+    {region} display region/state short
+    {region_name} display region/state
+    {reverse} display Reverse DNS of the IP
+    {status} display query status
+    {timezone} display city timezone
+    {zip_code} display zip code
 
 Color options:
     color_bad: Offline
@@ -42,66 +50,111 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    format = '{country}'
-    negative_cache_timeout = 2
+    format = '{city}, {region} {zip_code}'
+    negative_cache_timeout = 10
     timeout = 5
-    url = 'http://ip-api.com/json'
-    country = None
-    country_code = None
-    region = None
-    region_name = None
-    city = None
-    zip_code = None
-    lat = None
-    lon = None
+    lang = 'en'
 
-    def on_click(self, event):
-        """
-        Toggle between display modes
-        """
-        if self.mode == 'ip':
-            self.mode = 'status'
-        else:
-            self.mode = 'ip'
 
-    def _get_my_location(self):
+    def _fields_generator(self):
         """
         """
+        fieldvalues = {
+            'country': 1,
+            'countryCode': 2,
+            'region': 4,
+            'regionName': 8,
+            'city': 16,
+            'zipCode': 32,
+            'lat': 64,
+            'lon': 128,
+            'timezone': 256,
+            'isp': 512,
+            'org': 1024,
+            'as': 2048,
+            'reverse': 4096,
+            'query': 8192,
+            'status': 16384,
+            'message': 32768,
+            'proxy': 131072}
+
+        fields = 0
+        for name in fieldvalues:
+            if self.py3.format_contains(self.format, name):
+                fields += fieldvalues[name]
+        if not self.py3.format_contains(self.format, 'status'):
+            fields += fieldvalues['status']  # always include status
+        return fields
+
+
+    def _query_ip_api(self):
+        """
+        """
+        fields = self._fields_generator()
         try:
-            resp = urlopen(self.url, timeout=self.timeout).read()
+            url = 'http://ip-api.com/json/?fields={}&?lang={}'.format(fields, self.lang)
+            resp = urlopen(url, timeout=self.timeout).read()
             resp = json.loads(resp)
-            status = resp['status']
-            self.country = resp['country']
-            self.country_code = resp['countryCode']
-            self.region = resp['region']
-            self.region_name = resp['regionName']
-            self.city = resp['city']
-            self.zip_code = resp['zip']
-            self.lat = resp['lat']
-            self.lon = resp['lon']
+            status = resp.get('status', None)
         except Exception:
-            self.status = False
-        return status == "success"
+            resp = None
+            status = None
+        return resp, status
 
     def ip_api(self):
         """
         """
-        status = self._get_my_location()
         response = {
             'cached_until': self.py3.time_in(self.negative_cache_timeout)
         }
 
-        if status:
+        resp, status = self._query_ip_api()
+
+        as_name = resp.get('as', '')
+        city = resp.get('city', '')
+        country = resp.get('country', '')
+        country_code = resp.get('countryCode', '')
+        isp = resp.get('isp', '')
+        lat = resp.get('lat', 0)
+        lon = resp.get('lon', 0)
+        message = resp.get('message', '')
+        org = resp.get('org', '')
+        proxy = resp.get('proxy', True)
+        query = resp.get('query', '')
+        region = resp.get('region', '')
+        region_name = resp.get('regionName', '')
+        reverse = resp.get('reverse', '')
+        status = resp.get('status', '')
+        timezone = resp.get('timezone', '')
+        zip_code = resp.get('zip', '')
+
+        if status == "success":
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
             response['full_text'] = self.py3.safe_format(self.format, {
-                'country': self.country,
-                'country_code': self.country_code,
-                'region': self.region,
-                'region_name': self.region_name,
-                'city': self.city,
-                'zip_code': self.zip_code,
-                'lat': self.lat,
-                'lon': self.lon})
+                'as_name': as_name,
+                'city': city,
+                'country': country,
+                'country_code': country_code,
+                'isp': isp,
+                'lat': lat,
+                'lon': lon,
+                'org': org,
+                'proxy': str(proxy),
+                'query': query,
+                'region': region,
+                'region_name': region_name,
+                'reverse': reverse,
+                'status': status,
+                'timezone': timezone,
+                'zip_code': zip_code})
+        elif status == "fail":
+            response['full_text'] = self.py3.safe_format(self.format, {
+                'message': message,
+                'status': status,
+                'query': query
+                })
+        else:
+            response['full_text'] = ''
         return response
 
 
@@ -110,7 +163,7 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     config = {
-            'format': '{country}, {country_code}, {region}, {region_name}, {city}, {zip_code}, {lat}, {lon}'
+            'format': '{as_name}, {city}, {country}, {country_code}, {isp}, {lat}, {lon}, {org}, {proxy}, {query}, {region}, {region_name}, {reverse}, {status}, {timezone}, {zip_code}'
     }
     from py3status.module_test import module_test
     module_test(Py3status, config=config)
