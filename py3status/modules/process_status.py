@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the status of a process.
+Display status of a given process.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)

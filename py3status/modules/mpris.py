@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display current media and control MPRIS compatible players.
+Display song/video and control MPRIS compatible players.
 
 There are two ways to control the media player. Either by clicking with a mouse
 button in the text information or by using buttons. For former you have
