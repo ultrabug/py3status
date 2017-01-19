@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display AWS bill.
+Display bill for Amazon Web Services.
 
 **WARNING: This module generate some costs on the AWS bill.
 Take care about the cache_timeout to limit these fees!**

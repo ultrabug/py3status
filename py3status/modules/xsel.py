@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the X selection.
+Display X selection.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds

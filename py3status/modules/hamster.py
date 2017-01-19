@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display your time tracking activities from Hamster.
+Display time tracking activities from Hamster.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)

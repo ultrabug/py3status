@@ -1,5 +1,5 @@
 """
-Display status on your favorite Twitch streamer.
+Display status on a given Twitch streamer.
 
 Checks if a streamer is online using the Twitch Kraken API to see
 if a channel is currently streaming or not.

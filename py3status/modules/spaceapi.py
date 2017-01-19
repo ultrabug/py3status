@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display status of your favorite hackerspace.
+Display status of a given hackerspace.
 
 Configuration parameters:
     button_url: Button that when clicked opens the URL sent in the space's API.
