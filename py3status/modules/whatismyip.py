@@ -108,7 +108,7 @@ class Py3status:
         """
         fields = self._fields_generator()
         try:
-            url = 'http://ip-api.com/json/?fields={}&?lang={}'.format(fields, self.lang)
+            url = 'http://ip-api.com/json/?fields={}&lang={}'.format(fields, self.lang)
             resp = urlopen(url, timeout=self.timeout).read()
             resp = json.loads(resp)
             status = resp.get('status', None)
