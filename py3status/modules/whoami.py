@@ -3,13 +3,15 @@
 Display the currently logged in user.
 
 Configuration parameters:
-    format: string to print (default '{username}')
+    format: display format for whoami (default '{username}')
 
 Format placeholders:
     {username} display current username
 
 Inspired by i3 FAQ:
     https://faq.i3wm.org/question/1618/add-user-name-to-status-bar.1.html
+
+@author ultrabug
 """
 
 from getpass import getuser
