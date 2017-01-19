@@ -14,18 +14,39 @@ For convenience, this module also proposes some added features:
         screen is available (handy for laptops)
     - Automatically apply this screen combination on start: no need for xorg!
     - Automatically move workspaces to screens when they are available
+    - Define your own subset of output combinations to use
 
 Configuration parameters:
-    cache_timeout: how often to (re)detect the outputs
+    cache_timeout: how often to (re)detect the outputs (default 10)
     fallback: when the current output layout is not available anymore,
         fallback to this layout if available. This is very handy if you
         have a laptop and switched to an external screen for presentation
         and want to automatically fallback to your laptop screen when you
-        disconnect the external screen.
+        disconnect the external screen. (default True)
+    fixed_width: show output as fixed width (default True)
     force_on_start: switch to the given combination mode if available
         when the module starts (saves you from having to configure xorg)
-    format_clone: string used to display a 'clone' combination
-    format_extend: string used to display a 'extend' combination
+        (default None)
+    format: display format for xrandr
+        (default '{output}')
+    icon_clone: icon used to display a 'clone' combination
+        (default '=')
+    icon_extend: icon used to display a 'extend' combination
+        (default '+')
+    output_combinations: string used to define your own subset of output
+        combinations to use, instead of generating every possible combination
+        automatically. Provide the values in the format that this module uses,
+        splitting the combinations using '|' character.
+        The combinations will be rotated in the exact order as you listed them.
+        When an output layout is not available any more, the configurations
+        are automatically filtered out.
+        Example:
+        Assuming the default values for `icon_clone` and `icon_extend`
+        are used, and assuming you have two screens 'eDP1' and 'DP1', the
+        following setup will reduce the number of output combinations
+        from four (every possible one) down to two:
+        output_combinations = "eDP1|eDP1+DP1"
+        (default None)
 
 Dynamic configuration parameters:
     - <OUTPUT>_pos: apply the given position to the OUTPUT
@@ -37,6 +58,13 @@ Dynamic configuration parameters:
     - <OUTPUT>_workspaces: comma separated list of workspaces to move to
         the given OUTPUT when it is activated
         Example: DP1_workspaces = "1,2,3"
+    - <OUTPUT>_rotate: rotate the output as told
+        Example: DP1_rotate = "left"
+
+Color options:
+    color_bad: Displayed layout unavailable
+    color_degraded: Using a fallback layout
+    color_good: Displayed layout active
 
 Example config:
 
@@ -56,8 +84,7 @@ from collections import deque
 from collections import OrderedDict
 from itertools import combinations
 from subprocess import call, Popen, PIPE
-from syslog import syslog, LOG_INFO
-from time import sleep, time
+from time import sleep
 
 
 class Py3status:
@@ -68,8 +95,26 @@ class Py3status:
     fallback = True
     fixed_width = True
     force_on_start = None
-    format_clone = '='
-    format_extend = '+'
+    format = '{output}'
+    icon_clone = '='
+    icon_extend = '+'
+    output_combinations = None
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_clone',
+                    'new': 'icon_clone',
+                    'msg': 'obsolete parameter use `icon_clone`',
+                },
+                {
+                    'param': 'format_extend',
+                    'new': 'icon_extend',
+                    'msg': 'obsolete parameter use `icon_extend`',
+                },
+            ],
+        }
 
     def __init__(self):
         """
@@ -117,7 +162,7 @@ class Py3status:
                 else:
                     continue
             except Exception as err:
-                syslog(LOG_INFO, 'xrandr error="{}"'.format(err))
+                self.py3.log('xrandr error="{}"'.format(err))
             else:
                 layout[state][output] = {
                     'infos': infos,
@@ -138,21 +183,32 @@ class Py3status:
         Generate all connected outputs combinations and
         set the max display width while iterating.
         """
-        available_combinations = set()
+        available = set()
         combinations_map = {}
 
+        whitelist = None
+        if self.output_combinations:
+            whitelist = self.output_combinations.split('|')
+
         self.max_width = 0
-        for output in range(len(self.layout['connected']) + 1):
-            for comb in combinations(self.layout['connected'], output):
-                if comb:
-                    for mode in ['clone', 'extend']:
-                        string = self._get_string_and_set_width(comb, mode)
-                        if len(comb) == 1:
-                            combinations_map[string] = (comb, None)
-                        else:
-                            combinations_map[string] = (comb, mode)
-                        available_combinations.add(string)
-        self.available_combinations = deque(available_combinations)
+        for output in range(len(self.layout['connected'])):
+            for comb in combinations(self.layout['connected'], output + 1):
+                for mode in ['clone', 'extend']:
+                    string = self._get_string_and_set_width(comb, mode)
+                    if whitelist and string not in whitelist:
+                        continue
+                    if len(comb) == 1:
+                        combinations_map[string] = (comb, None)
+                    else:
+                        combinations_map[string] = (comb, mode)
+                    available.add(string)
+
+        # Preserve the order in which user defined the output combinations
+        if whitelist:
+            available = reversed([comb for comb in whitelist
+                                  if comb in available])
+
+        self.available_combinations = deque(available)
         self.combinations_map = combinations_map
 
     def _get_string_and_set_width(self, combination, mode):
@@ -185,8 +241,8 @@ class Py3status:
             if force_refresh:
                 self.displayed = self.available_combinations[0]
             else:
-                syslog(LOG_INFO,
-                       'xrandr error="displayed combination is not available"')
+                self.py3.log(
+                    'xrandr error="displayed combination is not available"')
 
     def _center(self, s):
         """
@@ -218,15 +274,21 @@ class Py3status:
             #
             if output in combination:
                 pos = getattr(self, '{}_pos'.format(output), '0x0')
+                rotation = getattr(self, '{}_rotate'.format(output), 'normal')
+                if rotation not in ['inverted', 'left', 'normal', 'right']:
+                    self.py3.log('configured rotation {} is not valid'.format(
+                        rotation))
+                    rotation = 'normal'
                 #
                 if mode == 'clone' and previous_output is not None:
                     cmd += ' --auto --same-as {}'.format(previous_output)
                 else:
                     if ('above' in pos or 'below' in pos or 'left-of' in pos or
                             'right-of' in pos):
-                        cmd += ' --auto --{} --rotate normal'.format(pos)
+                        cmd += ' --auto --{} --rotate {}'.format(pos, rotation)
                     else:
-                        cmd += ' --auto --pos {} --rotate normal'.format(pos)
+                        cmd += ' --auto --pos {} --rotate {}'.format(pos,
+                                                                     rotation)
                 previous_output = output
             else:
                 cmd += ' --off'
@@ -236,7 +298,7 @@ class Py3status:
             self.active_comb = combination
             self.active_layout = self.displayed
             self.active_mode = mode
-        syslog(LOG_INFO, 'command "{}" exit code {}'.format(cmd, code))
+        self.py3.log('command "{}" exit code {}'.format(cmd, code))
 
         # move workspaces to outputs as configured
         self._apply_workspaces(combination, mode)
@@ -264,9 +326,8 @@ class Py3status:
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
                     call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
                     # log this
-                    syslog(LOG_INFO,
-                           'moved workspace {} to output {}'.format(workspace,
-                                                                    output))
+                    self.py3.log('moved workspace {} to output {}'.format(
+                        workspace, output))
 
     def _refresh_py3status(self):
         """
@@ -304,15 +365,15 @@ class Py3status:
         Return the separator for the given mode.
         """
         if mode == 'extend':
-            return self.format_extend
+            return self.icon_extend
         if mode == 'clone':
-            return self.format_clone
+            return self.icon_clone
 
     def _switch_selection(self, direction):
         self.available_combinations.rotate(direction)
         self.displayed = self.available_combinations[0]
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Click events
             - left click & scroll up/down: switch between modes
@@ -329,7 +390,7 @@ class Py3status:
         if button == 3:
             self._apply()
 
-    def xrandr(self, i3s_output_list, i3s_config):
+    def xrandr(self):
         """
         This is the main py3status method, it will orchestrate what's being
         displayed on the bar.
@@ -339,20 +400,21 @@ class Py3status:
         self._choose_what_to_display()
 
         if self.fixed_width is True:
-            full_text = self._center(self.displayed)
+            output = self._center(self.displayed)
         else:
-            full_text = self.displayed
+            output = self.displayed
+        full_text = self.py3.safe_format(self.format, {'output': output})
 
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text
         }
 
         # coloration
         if self.displayed == self.active_layout:
-            response['color'] = i3s_config['color_good']
+            response['color'] = self.py3.COLOR_GOOD
         elif self.displayed not in self.available_combinations:
-            response['color'] = i3s_config['color_bad']
+            response['color'] = self.py3.COLOR_BAD
 
         # force default layout setup
         if self.force_on_start is not None:
@@ -361,7 +423,7 @@ class Py3status:
 
         # fallback detection
         if self.active_layout not in self.available_combinations:
-            response['color'] = i3s_config['color_degraded']
+            response['color'] = self.py3.COLOR_DEGRADED
             if self.fallback is True:
                 self._fallback_to_available_output()
 
@@ -370,14 +432,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    while True:
-        print(x.xrandr([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

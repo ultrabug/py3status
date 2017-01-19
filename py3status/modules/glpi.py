@@ -2,19 +2,31 @@
 """
 Display the total number of open tickets from GLPI.
 
-Configuration parameters:
-    critical: set bad color above this threshold
-    db: database to use
-    host: database host to connect to
-    password: login password
-    user: login user
-    warning: set degraded color above this threshold
-
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
+
+Configuration parameters:
+    cache_timeout: how often we refresh this module in seconds (default 300)
+    critical: set bad color above this threshold (default 20)
+    db: database to use (default '')
+    format: format of the module output (default '{tickets_open} tickets')
+    host: database host to connect to (default '')
+    password: login password (default '')
+    timeout: timeout for database connection (default 5)
+    user: login user (default '')
+    warning: set degraded color above this threshold (default 15)
+
+Format placeholders:
+    {tickets_open} The number of open tickets
+
+Color options:
+    color_bad: Open ticket above critical threshold
+    color_degraded: Open ticket above warning threshold
+
+Requires:
+    MySQL-python: http://pypi.python.org/pypi/MySQL-python
 """
 
-# You need MySQL-python from http://pypi.python.org/pypi/MySQL-python
 import MySQLdb
 
 
@@ -22,15 +34,17 @@ class Py3status:
     """
     """
     # available configuration parameters
+    cache_timeout = 300
     critical = 20
     db = ''
+    format = '{tickets_open} tickets'
     host = ''
     password = ''
     timeout = 5
     user = ''
     warning = 15
 
-    def count_glpi_open_tickets(self, i3s_output_list, i3s_config):
+    def count_glpi_open_tickets(self):
         response = {'full_text': ''}
 
         mydb = MySQLdb.connect(
@@ -47,28 +61,23 @@ class Py3status:
         row = mycr.fetchone()
         if row:
             open_tickets = int(row[0])
-            if i3s_config['colors']:
-                if open_tickets > self.critical:
-                    response.update({'color': i3s_config['color_bad']})
-                elif open_tickets > self.warning:
-                    response.update(
-                        {'color': i3s_config['color_degraded']}
-                    )
-            response['full_text'] = '%s tickets' % open_tickets
+            if open_tickets > self.critical:
+                response.update({'color': self.py3.COLOR_BAD})
+            elif open_tickets > self.warning:
+                response.update(
+                    {'color': self.py3.COLOR_DEGRADED}
+                )
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'tickets_open': open_tickets})
         mydb.close()
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         return response
 
+
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
-    from time import sleep
-    x = Py3status()
-    config = {
-        'color_good': '#00FF00',
-        'color_bad': '#FF0000',
-    }
-    while True:
-        print(x.count_glpi_open_tickets([], config))
-        sleep(1)
+    from py3status.module_test import module_test
+    module_test(Py3status)

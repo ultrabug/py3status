@@ -3,10 +3,9 @@
 Display uname information.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (1h default)
-    format: see placeholders below
+    format: see placeholders below (default '{system} {release} {machine}')
 
-Format of status string placeholders:
+Format placeholders:
     {system} system/OS name, e.g. 'Linux', 'Windows', or 'Java'
     {node} computer’s network name (may not be fully qualified!)
     {release} system’s release, e.g. '2.2.0' or 'NT'
@@ -17,7 +16,6 @@ Format of status string placeholders:
 @author ultrabug (inspired by ndalliard)
 """
 
-from time import time
 from platform import uname
 
 
@@ -25,28 +23,37 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 3600
     format = '{system} {release} {machine}'
 
-    def show_uname(self, i3s_output_list, i3s_config):
+    class Meta:
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'cache_timeout',
+                    'msg': 'obsolete parameter',
+                },
+            ],
+        }
+
+    def show_uname(self):
         system, node, release, version, machine, processor = uname()
         response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': self.format.format(system=system,
-                                            node=node,
-                                            release=release,
-                                            version=version,
-                                            machine=machine,
-                                            processor=processor)
+            'cached_until': self.py3.CACHE_FOREVER,
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(system=system,
+                     node=node,
+                     release=release,
+                     version=version,
+                     machine=machine,
+                     processor=processor))
         }
         return response
 
 
 if __name__ == "__main__":
-    x = Py3status()
-    config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
-    }
-    print(x.show_uname([], config))
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
