@@ -334,10 +334,7 @@ class Py3status:
                 try:
                     self.py3.threshold_get_color(mem_used_percent, 'max_cpu_mem')
                 except:
-                    try:
-                        self.py3.threshold_get_color(swap_used_percent, 'max_cpu_mem')
-                    except:
-                        pass
+                    pass
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
