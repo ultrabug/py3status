@@ -48,7 +48,6 @@ from __future__ import division
 
 import re
 
-
 ONE_KIB = pow(1024, 1)  # 1 KiB in B
 ONE_MIB = pow(1024, 2)  # 1 MiB in B
 ONE_GIB = pow(1024, 3)  # 1 GiB in B
@@ -58,6 +57,7 @@ class GetData:
     """
     Get system status
     """
+
     def __init__(self, parent):
         self.py3 = parent.py3
 
@@ -199,12 +199,12 @@ class Py3status:
         def deprecate_function(config):
             # support old thresholds
             return {
-                    'thresholds': [
-                        (0, 'good'),
-                        (config.get('med_threshold', 40), 'degraded'),
-                        (config.get('high_threshold', 75), 'bad'),
-                        ],
-                    }
+                'thresholds': [
+                    (0, 'good'),
+                    (config.get('med_threshold', 40), 'degraded'),
+                    (config.get('high_threshold', 75), 'bad'),
+                ],
+            }
 
         def update_deprecated_placeholder_format(config):
             padding = config.get('padding', 0)
@@ -212,63 +212,63 @@ class Py3status:
             format_vals = ':{padding}.{precision}f'.format(padding=padding,
                                                            precision=precision)
             return {
-                    'cpu_usage': format_vals,
-                    'cpu_temp': format_vals,
-                    'mem_total': format_vals,
-                    'mem_used': format_vals,
-                    'mem_used_percent': format_vals,
-                    'swap_total': format_vals,
-                    'swap_used': format_vals,
-                    'swap_used_percent': format_vals,
-                    }
+                'cpu_usage': format_vals,
+                'cpu_temp': format_vals,
+                'mem_total': format_vals,
+                'mem_used': format_vals,
+                'mem_used_percent': format_vals,
+                'swap_total': format_vals,
+                'swap_used': format_vals,
+                'swap_used_percent': format_vals,
+            }
 
         deprecated = {
-                'function': [
-                    {'function': deprecate_function},
-                    ],
-                'remove': [
-                    {
-                        'param': 'high_threshold',
-                        'msg': 'obsolete, set using thresholds parameter',
-                        },
-                    {
-                        'param': 'med_threshold',
-                        'msg': 'obsolete, set using thresholds parameter',
-                        },
-                    {
-                        'param': 'padding',
-                        'msg': 'obsolete, use the format_* parameters',
-                        },
-                    {
-                        'param': 'precision',
-                        'msg': 'obsolete, use the format_* parameters',
-                        },
-                    ],
-                'update_placeholder_format': [
-                    {
-                        'function': update_deprecated_placeholder_format,
-                        'format_strings': ['format']
-                        },
-                    ],
-                }
+            'function': [
+                {'function': deprecate_function},
+            ],
+            'remove': [
+                {
+                    'param': 'high_threshold',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'med_threshold',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'padding',
+                    'msg': 'obsolete, use the format_* parameters',
+                },
+                {
+                    'param': 'precision',
+                    'msg': 'obsolete, use the format_* parameters',
+                },
+            ],
+            'update_placeholder_format': [
+                {
+                    'function': update_deprecated_placeholder_format,
+                    'format_strings': ['format']
+                },
+            ],
+        }
 
         update_config = {
-                'update_placeholder_format': [
-                    {
-                        'placeholder_formats': {
-                            'cpu_usage': ':.2f',
-                            'cpu_temp': ':.2f',
-                            'mem_total': ':.2f',
-                            'mem_used': ':.2f',
-                            'mem_used_percent': ':.2f',
-                            'swap_total': ':.2f',
-                            'swap_used': ':.2f',
-                            'swap_used_percent': ':.2f',
-                            },
-                        'format_strings': ['format']
-                        },
-                    ],
-                }
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'cpu_usage': ':.2f',
+                        'cpu_temp': ':.2f',
+                        'mem_total': ':.2f',
+                        'mem_used': ':.2f',
+                        'mem_used_percent': ':.2f',
+                        'swap_total': ':.2f',
+                        'swap_used': ':.2f',
+                        'swap_used_percent': ':.2f',
+                    },
+                    'format_strings': ['format']
+                },
+            ],
+        }
 
     def post_config_hook(self):
         self.data = GetData(self)
@@ -291,8 +291,8 @@ class Py3status:
         if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = (1 - (
-                float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
-                )) * 100
+                float(cpu_idle - self.cpu_idle) / float(cpu_total - self.cpu_total)
+            )) * 100
             self.values['cpu_usage'] = cpu_usage
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
@@ -352,4 +352,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
