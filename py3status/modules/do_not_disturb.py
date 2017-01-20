@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Do not disturb by turning on and off all system notifications.
+Turn on and off dbus notifications.
 
 A left mouse click will toggle the state of this module.
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display status for file or directory.
+Display if a file or directory exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
