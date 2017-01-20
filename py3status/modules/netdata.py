@@ -8,7 +8,7 @@ Configuration parameters:
     low_traffic: threshold (default 400)
     med_speed: threshold (default 60)
     med_traffic: threshold (default 700)
-    nic: the network interface to monitor (default 'eth0')
+    nic: the network interface to monitor (default None)
 
 Color options:
     color_bad: Rate is below low threshold
@@ -59,11 +59,27 @@ class Py3status:
     low_traffic = 400
     med_speed = 60
     med_traffic = 700
-    nic = 'eth0'
+    nic = None
 
     def __init__(self):
         self.old_transmitted = 0
         self.old_received = 0
+
+    def post_config_hook(self):
+        if self.nic is None:
+            # Read default gateway directly from /proc.
+            with open("/proc/net/route") as fh:
+                for line in fh:
+                    fields = line.strip().split()
+                    if fields[1] == '00000000' and int(fields[3], 16) & 2:
+                        self.nic = fields[0]
+                        break
+            if self.nic is None:
+                self.nic = 'lo'
+                self.py3.notify_user(
+                    'netdata: cannot find a nic to use. selected nic: lo instead.'
+                )
+            self.py3.log('selected nic: %s' % self.nic)
 
     def net_speed(self):
         """
