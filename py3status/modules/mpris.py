@@ -538,9 +538,6 @@ class Py3status:
         index = event['index']
         button = event['button']
 
-        if not index:
-            return
-
         if index not in self._control_states.keys():
             if button == self.button_toggle:
                 index = 'toggle'
@@ -555,9 +552,10 @@ class Py3status:
         elif button != 1:
             return
 
-        control_state = self._control_states[index]
-        if self._player and self._get_button_state(control_state):
-            getattr(self._player, self._control_states[index]['action'])()
+        if index:
+            control_state = self._control_states[index]
+            if self._player and self._get_button_state(control_state):
+                getattr(self._player, self._control_states[index]['action'])()
 
 
 if __name__ == "__main__":
