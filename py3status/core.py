@@ -32,12 +32,12 @@ DBUS_LEVELS = {'error': 'critical', 'warning': 'normal', 'info': 'low', }
 CONFIG_SPECIAL_SECTIONS = [
     '.group_extras',
     '.module_groups',
-    'custom'
     'general',
     'i3s_modules',
     'on_click',
     'order',
     'py3_modules',
+    'py3status',
 ]
 
 
@@ -410,7 +410,7 @@ class Py3statusWrapper():
                        '-t', '10000', 'py3status', msg]
             else:
                 config = self.i3status_thread.config
-                nagbar_font = config.get('custom').get('nagbar_font')
+                nagbar_font = config.get('py3status').get('nagbar_font')
                 if nagbar_font:
                     cmd = ['i3-nagbar', '-f', nagbar_font, '-m', msg, '-t', level]
                 else:
