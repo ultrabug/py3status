@@ -563,6 +563,8 @@ def process_config(config_path, py3_wrapper=None):
         general_defaults.update(config_info['general'])
     config['general'] = general_defaults
 
+    if 'custom' in config_info:
+        config['custom'] = config_info['custom']
     modules = {}
     on_click = {}
     i3s_modules = []
