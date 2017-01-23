@@ -94,6 +94,16 @@ imap {
 }
 ```
 
+#### <a name="nagbar-font"></a>i3-nagbar font
+
+The config file allows you to adjust the font used for calls to i3-nagbar. Use
+the special section 'py3status' to set it:
+```
+py3status {
+    nagbar_font = 'pango:Ubuntu Mono 12'
+}
+```
+
 #### <a name="obfuscation"></a>Configuration obfuscation
 
 __New in version 3.1__
