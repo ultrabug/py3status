@@ -97,7 +97,8 @@ imap {
 
 #### <a name="py3status_section"></a>py3status configuration section
 This special section holds py3status specific configuration. As of now, the
-only possible key is 'nagbar_font'. Example usage:
+only possible key is 'nagbar_font'. It will be used as an argument to
+i3-nagbar -f, thus setting its font. Example usage:
 ```
 py3status {
     nagbar_font = 'pango:Ubuntu Mono 12'
