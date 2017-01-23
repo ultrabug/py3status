@@ -152,6 +152,7 @@ class Py3status:
     def __init__(self):
         self._dbus = None
         self._data = {}
+        self._control_states = {}
         self._kill = False
         self._mpris_players = {}
         self._mpris_names = {}
@@ -176,6 +177,7 @@ class Py3status:
         }
 
         if self._player is None:
+            self._control_states = {}
             return
 
         try:
@@ -552,10 +554,9 @@ class Py3status:
         elif button != 1:
             return
 
-        if index:
-            control_state = self._control_states[index]
-            if self._player and self._get_button_state(control_state):
-                getattr(self._player, self._control_states[index]['action'])()
+        control_state = self._control_states.get(index)
+        if self._player and self._get_button_state(control_state):
+            getattr(self._player, self._control_states[index]['action'])()
 
 
 if __name__ == "__main__":
