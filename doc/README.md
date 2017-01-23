@@ -7,6 +7,7 @@ py3status documentation
 * [Available modules](#available_modules)
 * [Ordering modules](#ordering_modules)
 * [Configuring modules](#configuring_modules)
+* [Py3status configuration](#py3status_section)
 * [Configuration obfuscation](#obfuscation)
 * [Configuring colors](#configuring_color)
 * [Configuring thresholds](#configuring_thresholds)
