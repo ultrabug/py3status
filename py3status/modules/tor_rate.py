@@ -71,7 +71,7 @@ class Py3status:
             try:
                 self._register_event_handler()
             except ProtocolError:
-                text = 'Error: Failed to register even handler!'
+                text = 'Error: Failed to register event handler!'
             except SocketError:
                 text = 'Error: Failed to establish control connection!'
             except AuthenticationFailure:
