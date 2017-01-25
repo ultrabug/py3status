@@ -7,10 +7,6 @@ Configuration parameters:
         (default 30)
     format: placeholders will be replaced by the returned json key names
         (default '')
-    negative_cache_timeout: how often to check again when offline
-        (default 2)
-    params: specify the parameters to pass to the url as a dict
-        (default {})
     sep: the separator between parent and child objects
         (default '_')
     timeout: how long before deciding we're offline
@@ -30,10 +26,8 @@ import collections
 import json
 try:
     # python3
-    from urllib.parse import urlencode
     from urllib.request import urlopen
 except:
-    from urllib import urlencode
     from urllib2 import urlopen
 
 
@@ -43,16 +37,14 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = ''
-    negative_cache_timeout = 2
-    params = {}
     sep = '_'
     timeout = 5
     url = ''
 
     def _flatten(self, d, parent_key=None):
-        '''
+        """
         modified from http://stackoverflow.com/a/6027615
-        '''
+        """
         items = []
         for k, v in d.iteritems():
             new_key = parent_key + self.sep + k if parent_key else k
@@ -66,8 +58,7 @@ class Py3status:
         """
         """
         try:
-            url = '{}?{}'.format(self.url, urlencode(self.params, True))
-            resp = urlopen(url, timeout=self.timeout)
+            resp = urlopen(self.url, timeout=self.timeout)
             status = resp.getcode() == 200
             resp = json.loads(resp.read())
         except Exception:
@@ -79,13 +70,12 @@ class Py3status:
         """
         """
         response = {
-            'cached_until': self.py3.time_in(self.negative_cache_timeout),
+            'cached_until': self.py3.time_in(self.cache_timeout),
         }
 
         resp, status = self._query_url()
 
         if status:
-            response['cached_until'] = self.py3.time_in(self.cache_timeout)
             response['full_text'] = self.py3.safe_format(self.format, self._flatten(resp))
         else:
             response['full_text'] = ''
