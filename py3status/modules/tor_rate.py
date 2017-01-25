@@ -13,16 +13,20 @@ Configuration parameters:
         connections (default 9051)
     format: A string describing the output format for the module
         (default "↑ {up} ↓ {down}")
+    format_value: A string describing how to format the transfer rates
+        (default "[\?min_length=12 {rate:.1f} {unit}]")
     rate_unit: The unit to use for the transfer rates
         (default "B/s")
     si_units: A boolean value selecting whether or not to use SI units
-        (default 0)
-    value_format: A string describing how to format the transfer rates
-        (default "[\?min_length=12 {rate:.1f} {unit}]")
+        (default False)
 
 Format placeholders:
     {down} The incoming transfer rate
     {up} The outgoing transfer rate
+
+format_value placeholders:
+    {rate} The current transfer-rate's value
+    {unit} The current transfer-rate's unit
 
 Requires:
     stem: python module from pypi https://pypi.python.org/pypi/stem
@@ -35,7 +39,7 @@ tor_rate {
     format = "IN: {down} | OUT: {up}"
     control_port = 1337
     control_password = "TertiaryAdjunctOfUnimatrix01"
-    si_units = 1
+    si_units = True
 }
 
 order += "tor_rate"
@@ -50,32 +54,41 @@ from stem.connection import AuthenticationFailure
 from stem.control import Controller, EventType
 
 
+ERROR_AUTHENTICATION = 'Error: Failed to authenticate with Tor daemon!'
+ERROR_CONNECTION = 'Error: Failed to establish control connection!'
+ERROR_PROTOCOL = 'Error: Failed to register event handler!'
+
+
 class Py3status:
     cache_timeout = 2
     control_address = '127.0.0.1'
     control_password = None
     control_port = 9051
     format = u'↑ {up} ↓ {down}'
+    format_value = '[\?min_length=12 {rate:.1f} {unit}]'
     rate_unit = 'B/s'
     si_units = False
-    value_format = '[\?min_length=12 {rate:.1f} {unit}]'
 
     def __init__(self):
         self._down = 0
         self._handler_active = False
+        self._auth_failure = False
         self._up = 0
 
     def tor_rate(self, outputs, config):
         text = ''
-        if not self._handler_active:
+        if not self._handler_active and not self._auth_failure:
             try:
                 self._register_event_handler()
             except ProtocolError:
-                text = 'Error: Failed to register event handler!'
+                text = ERROR_PROTOCOL
             except SocketError:
-                text = 'Error: Failed to establish control connection!'
+                text = ERROR_CONNECTION
             except AuthenticationFailure:
-                text = 'Error: Failed to authenticate with Tor daemon!'
+                text = ERROR_AUTHENTICATION
+                self._auth_failure = True
+        elif self._auth_failure:
+            text = ERROR_AUTHENTICATION
         else:
             text = self.py3.safe_format(self.format, self._get_rates())
 
@@ -96,11 +109,11 @@ class Py3status:
             si=self.si_units
         )
         return {
-            'up': self.py3.safe_format(self.value_format, {
+            'up': self.py3.safe_format(self.format_value, {
                 'rate': up,
                 'unit': up_unit,
             }),
-            'down': self.py3.safe_format(self.value_format, {
+            'down': self.py3.safe_format(self.format_value, {
                 'rate': down,
                 'unit': down_unit,
             }),
