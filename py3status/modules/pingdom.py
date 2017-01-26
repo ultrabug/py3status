@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the latest response time of the configured Pingdom checks.
+Display response times of the configured Pingdom checks.
 
 We also verify the status of the checks and colorize if needed.
 Pingdom API doc : https://www.pingdom.com/features/api/documentation/

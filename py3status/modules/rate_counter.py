@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display days/hours/minutes spent and calculate the price of your service.
+Display time spent and calculate the price of your service.
 
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)

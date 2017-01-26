@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display and control a Pomodoro countdown.
+Use Pomodoro technique to get things done easily.
 
 Button 1 starts/pauses countdown.
 Button 2 switch Pomodoro/Break.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the list of network interfaces and their IPs.
+Display list of network interfaces and IP addresses.
 
 This module supports both IPv4 and IPv6. There is the possibility to blacklist
 interfaces and IPs, as well as to show interfaces with no IP address. It will

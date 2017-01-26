@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display currently playing song from Google Play Music Desktop Player.
+Display song currently playing in Google Play Music Desktop Player.
 
 Configuration parameters:
     cache_timeout:  how often we refresh this module in seconds (default 5)

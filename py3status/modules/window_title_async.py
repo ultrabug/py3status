@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current window title with async update.
+Display current window title asynchronously.
 
 Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Display current tasks from project Hamster.
+Display time tracking activities from Hamster.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: see placeholders below (default '{current}')
 
 Format placeholders:
-    {current} hamster current
+    {current} current activity
 
 Requires:
     hamster:
