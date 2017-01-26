@@ -57,7 +57,7 @@ class Py3status:
 
         # check cower installed
         if self.include_aur and not self.py3.check_commands(['cower']):
-            self.pys.notify_user('cower is not installed cannot check aur')
+            self.py3.notify_user('cower is not installed cannot check aur')
             self.include_aur = False
 
     def check_updates(self):
