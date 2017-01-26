@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Group a bunch of modules together and switch between them.
+Group modules and switch between them.
 
 In `i3status.conf` groups can be configured. The active one of these groups is
 shown in the i3bar.  The active group can be changed by a user click.  If the

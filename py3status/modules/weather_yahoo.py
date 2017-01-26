@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display Yahoo! Weather forecast as icons.
+Display Yahoo! Weather forecast.
 
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/

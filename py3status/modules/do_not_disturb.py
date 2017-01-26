@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A simple "Do Not Disturb" module that can turn on and off all system notifications.
+Turn on and off dbus notifications.
 
 A left mouse click will toggle the state of this module.
 

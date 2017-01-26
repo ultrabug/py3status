@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Displays the number of package updates pending for an Arch Linux installation.
+Display number of pending updates for Arch Linux.
 
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are
@@ -57,7 +57,7 @@ class Py3status:
 
         # check cower installed
         if self.include_aur and not self.py3.check_commands(['cower']):
-            self.pys.notify_user('cower is not installed cannot check aur')
+            self.py3.notify_user('cower is not installed cannot check aur')
             self.include_aur = False
 
     def check_updates(self):

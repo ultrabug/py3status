@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display your public/external IP address and toggle to online status on click.
+Display public IP address and online status.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display current network and ip address for newer Huwei modems.
+Display network and IP address for newer Huwei modems.
 
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III but may work on other devices, too.

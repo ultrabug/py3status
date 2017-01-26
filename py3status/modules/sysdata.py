@@ -9,6 +9,8 @@ Configuration parameters:
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
+    swap_unit: the unit of swap to use in report, case insensitive.
+        ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
         (default '°C')
     thresholds: thresholds to use for color changes
@@ -23,12 +25,17 @@ Format placeholders:
     {mem_unit} unit for memory
     {mem_used} used memory
     {mem_used_percent} used memory percentage
+    {swap_total} total swap
+    {swap_unit} unit for swap
+    {swap_used} used swap
+    {swap_used_percent} used swap percentage
     {temp_unit} temperature unit
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
     max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
     mem: change color based on the value of mem_used_percent
+    swap: change color based on the value of swap_used_percent
     temp: change color based on the value of cpu_temp
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
@@ -41,7 +48,6 @@ from __future__ import division
 
 import re
 
-
 ONE_KIB = pow(1024, 1)  # 1 KiB in B
 ONE_MIB = pow(1024, 2)  # 1 MiB in B
 ONE_GIB = pow(1024, 3)  # 1 GiB in B
@@ -51,6 +57,7 @@ class GetData:
     """
     Get system status
     """
+
     def __init__(self, parent):
         self.py3 = parent.py3
 
@@ -81,25 +88,18 @@ class GetData:
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
 
-    def memory(self, unit='GiB'):
+    def calc_mem_info(self, unit='GiB', memi=dict, keys=list):
         """
         Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, percentage
         of used memory, and units of mem (KiB, MiB, GiB).
         """
 
-        memi = {}
-        with open('/proc/meminfo', 'r') as fd:
-            for s in fd:
-                tok = s.split()
-                memi[tok[0]] = float(tok[1])
+        total_mem_kib = memi[keys[0]]
+        mem_free = sum([memi[item] for item in keys[1:]])
 
         try:
-            total_mem_kib = memi["MemTotal:"]
-            used_mem_kib = (total_mem_kib -
-                            memi["MemFree:"] -
-                            memi["Buffers:"] -
-                            memi["Cached:"])
+            used_mem_kib = (total_mem_kib - mem_free)
             used_mem_p = 100 * used_mem_kib / total_mem_kib
             multiplier = {
                 'KiB': ONE_KIB / ONE_KIB,
@@ -126,6 +126,30 @@ class GetData:
         # Otherwise, results are in gigabytes.
         return total_mem, used_mem, used_mem_p, unit
 
+    def mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
+        memi = {}
+        result = {}
+
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1])
+
+        if mem:
+            result["mem"] = self.calc_mem_info(
+                mem_unit,
+                memi,
+                ["MemTotal:", "MemFree:", "Buffers:", "Cached:"]
+            )
+        if swap:
+            result["swap"] = self.calc_mem_info(
+                swap_unit,
+                memi,
+                ["SwapTotal:", "SwapFree:"]
+            )
+
+        return result
+
     def cpuTemp(self, zone, unit):
         """
         Tries to determine CPU temperature using the 'sensors' command.
@@ -134,6 +158,7 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
+        sensors = None
         command = ['sensors']
         if unit == u'°F':
             command.append('-f')
@@ -143,7 +168,7 @@ class GetData:
             try:
                 sensors = self.py3.command_output(command + [zone])
             except:
-                sensors = None
+                pass
         if not sensors:
             sensors = self.py3.command_output(command)
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
@@ -165,6 +190,7 @@ class Py3status:
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
+    swap_unit = 'GiB'
     temp_unit = u'°C'
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
@@ -174,12 +200,12 @@ class Py3status:
         def deprecate_function(config):
             # support old thresholds
             return {
-                    'thresholds': [
-                        (0, 'good'),
-                        (config.get('med_threshold', 40), 'degraded'),
-                        (config.get('high_threshold', 75), 'bad'),
-                        ],
-                    }
+                'thresholds': [
+                    (0, 'good'),
+                    (config.get('med_threshold', 40), 'degraded'),
+                    (config.get('high_threshold', 75), 'bad'),
+                ],
+            }
 
         def update_deprecated_placeholder_format(config):
             padding = config.get('padding', 0)
@@ -187,57 +213,63 @@ class Py3status:
             format_vals = ':{padding}.{precision}f'.format(padding=padding,
                                                            precision=precision)
             return {
-                    'cpu_usage': format_vals,
-                    'cpu_temp': format_vals,
-                    'mem_total': format_vals,
-                    'mem_used': format_vals,
-                    'mem_used_percent': format_vals,
-                    }
+                'cpu_usage': format_vals,
+                'cpu_temp': format_vals,
+                'mem_total': format_vals,
+                'mem_used': format_vals,
+                'mem_used_percent': format_vals,
+                'swap_total': format_vals,
+                'swap_used': format_vals,
+                'swap_used_percent': format_vals,
+            }
 
         deprecated = {
-                'function': [
-                    {'function': deprecate_function},
-                    ],
-                'remove': [
-                    {
-                        'param': 'high_threshold',
-                        'msg': 'obsolete, set using thresholds parameter',
-                        },
-                    {
-                        'param': 'med_threshold',
-                        'msg': 'obsolete, set using thresholds parameter',
-                        },
-                    {
-                        'param': 'padding',
-                        'msg': 'obsolete, use the format_* parameters',
-                        },
-                    {
-                        'param': 'precision',
-                        'msg': 'obsolete, use the format_* parameters',
-                        },
-                    ],
-                'update_placeholder_format': [
-                    {
-                        'function': update_deprecated_placeholder_format,
-                        'format_strings': ['format']
-                        },
-                    ],
-                }
+            'function': [
+                {'function': deprecate_function},
+            ],
+            'remove': [
+                {
+                    'param': 'high_threshold',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'med_threshold',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'padding',
+                    'msg': 'obsolete, use the format_* parameters',
+                },
+                {
+                    'param': 'precision',
+                    'msg': 'obsolete, use the format_* parameters',
+                },
+            ],
+            'update_placeholder_format': [
+                {
+                    'function': update_deprecated_placeholder_format,
+                    'format_strings': ['format']
+                },
+            ],
+        }
 
         update_config = {
-                'update_placeholder_format': [
-                    {
-                        'placeholder_formats': {
-                            'cpu_usage': ':.2f',
-                            'cpu_temp': ':.2f',
-                            'mem_total': ':.2f',
-                            'mem_used': ':.2f',
-                            'mem_used_percent': ':.2f',
-                            },
-                        'format_strings': ['format']
-                        },
-                    ],
-                }
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'cpu_usage': ':.2f',
+                        'cpu_temp': ':.2f',
+                        'mem_total': ':.2f',
+                        'mem_used': ':.2f',
+                        'mem_used_percent': ':.2f',
+                        'swap_total': ':.2f',
+                        'swap_used': ':.2f',
+                        'swap_used_percent': ':.2f',
+                    },
+                    'format_strings': ['format']
+                },
+            ],
+        }
 
     def post_config_hook(self):
         self.data = GetData(self)
@@ -252,14 +284,16 @@ class Py3status:
             temp_unit = 'unknown unit'
         self.values = {'temp_unit': temp_unit}
         self.temp_unit = temp_unit
+        self.mem_info = self.py3.format_contains(self.format, 'mem_*')
+        self.swap_info = self.py3.format_contains(self.format, 'swap_*')
 
     def sysData(self):
         # get CPU usage info
         if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = (1 - (
-                float(cpu_idle-self.cpu_idle) / float(cpu_total-self.cpu_total)
-                )) * 100
+                float(cpu_idle - self.cpu_idle) / float(cpu_total - self.cpu_total)
+            )) * 100
             self.values['cpu_usage'] = cpu_usage
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
@@ -271,14 +305,26 @@ class Py3status:
             self.values['cpu_temp'] = cpu_temp
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
-        # get RAM usage info
-        if self.py3.format_contains(self.format, 'mem_*'):
-            mem_total, mem_used, mem_used_percent, mem_unit = self.data.memory(self.mem_unit)
+        # get RAM/SWAP usage info
+        memi = self.data.mem(self.mem_unit, self.swap_unit, self.mem_info, self.swap_info)
+
+        # set RAM usage info
+        if self.mem_info:
+            mem_total, mem_used, mem_used_percent, mem_unit = memi["mem"]
             self.values['mem_total'] = mem_total
             self.values['mem_used'] = mem_used
             self.values['mem_used_percent'] = mem_used_percent
             self.values['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
+
+        # set SWAP usage info
+        if self.swap_info:
+            swap_total, swap_used, swap_used_percent, swap_unit = memi["swap"]
+            self.values['swap_total'] = swap_total
+            self.values['swap_used'] = swap_used
+            self.values['swap_used_percent'] = swap_used_percent
+            self.values['swap_unit'] = swap_unit
+            self.py3.threshold_get_color(swap_used_percent, 'swap')
 
         try:
             self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
@@ -304,4 +350,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

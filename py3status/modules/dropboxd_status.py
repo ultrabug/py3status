@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display dropboxd status.
+Display status of Dropbox daemon.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)

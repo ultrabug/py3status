@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # FIXME new_mail_color param
 """
-Display the unread messages count from your IMAP account.
+Display number of unread messages from IMAP account.
 
 Configuration parameters:
     cache_timeout: how often to run this check (default 60)
