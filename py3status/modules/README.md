@@ -2,75 +2,75 @@
 ========
 
 
-**[arch_updates](#arch_updates)** — Displays the number of package updates pending for an Arch Linux installation.
+**[arch_updates](#arch_updates)** — Display number of pending updates for Arch Linux.
 
-**[aws_bill](#aws_bill)** — Display the current AWS bill.
+**[aws_bill](#aws_bill)** — Display bill for Amazon Web Services.
 
-**[backlight](#backlight)** — Display the current screen backlight level.
+**[backlight](#backlight)** — Adjust screen backlight brightness.
 
-**[battery_level](#battery_level)** — Display the battery level.
+**[battery_level](#battery_level)** — Display battery information.
 
 **[bitcoin_price](#bitcoin_price)** — Display bitcoin prices using bitcoincharts.com.
 
 **[bluetooth](#bluetooth)** — Display bluetooth status.
 
-**[check_tcp](#check_tcp)** — Display if a TCP port is available on the given host.
+**[check_tcp](#check_tcp)** — Display status of a TCP port on a given host.
 
-**[clementine](#clementine)** — Display the current "artist - title" playing in Clementine.
+**[clementine](#clementine)** — Display song currently playing in Clementine.
 
-**[clock](#clock)** — Display time and date information.
+**[clock](#clock)** — Display date and time.
 
-**[coin_balance](#coin_balance)** — Display balances of diverse crypto-currencies
+**[coin_balance](#coin_balance)** — Display balances of diverse crypto-currencies.
 
-**[deadbeef](#deadbeef)** — Display track currently playing in deadbeef.
+**[deadbeef](#deadbeef)** — Display song currently playing in deadbeef.
 
-**[diskdata](#diskdata)** — Display advanced disk usage information
+**[diskdata](#diskdata)** — Display disk information.
 
-**[do_not_disturb](#do_not_disturb)** — A simple "Do Not Disturb" module that can turn on and off all system notifications.
+**[do_not_disturb](#do_not_disturb)** — Turn on and off dbus notifications.
 
-**[dpms](#dpms)** — Activate or deactivate DPMS and screen blanking.
+**[dpms](#dpms)** — Turn on and off DPMS and screen saver blanking.
 
-**[dropboxd_status](#dropboxd_status)** — Display dropboxd status.
+**[dropboxd_status](#dropboxd_status)** — Display status of Dropbox daemon.
 
 **[exchange_rate](#exchange_rate)** — Display foreign exchange rates.
 
-**[external_script](#external_script)** — Display output of given script.
+**[external_script](#external_script)** — Display output of a given script.
 
-**[fedora_updates](#fedora_updates)** — The number of package updates pending for a Fedora Linux installation.
+**[fedora_updates](#fedora_updates)** — Display number of pending updates for Fedora Linux.
 
-**[file_status](#file_status)** — Display if a file or dir exists.
+**[file_status](#file_status)** — Display if a file or directory exists.
 
 **[frame](#frame)** — Group modules and treat them as a single one.
 
 **[github](#github)** — Display Github notifications and issue/pull requests for a repo.
 
-**[glpi](#glpi)** — Display the total number of open tickets from GLPI.
+**[glpi](#glpi)** — Display number of open tickets from GLPI.
 
-**[gpmdp](#gpmdp)** — Display currently playing song from Google Play Music Desktop Player.
+**[gpmdp](#gpmdp)** — Display song currently playing in Google Play Music Desktop Player.
 
 **[graphite](#graphite)** — Display Graphite metrics.
 
-**[group](#group)** — Group a bunch of modules together and switch between them.
+**[group](#group)** — Group modules and switch between them.
 
-**[hamster](#hamster)** — Display current tasks from project Hamster.
+**[hamster](#hamster)** — Display time tracking activities from Hamster.
 
-**[icinga2](#icinga2)** — Display Icinga2 service status information.
+**[icinga2](#icinga2)** — Display service status for Icinga2.
 
-**[imap](#imap)** — Display the unread messages count from your IMAP account.
+**[imap](#imap)** — Display number of unread messages from IMAP account.
 
-**[insync](#insync)** — Get current insync status
+**[insync](#insync)** — Display insync status
 
-**[kdeconnector](#kdeconnector)** — Display information of your android device over KDEConnector.
+**[kdeconnector](#kdeconnector)** — Display information about your smartphone with KDEConnector.
 
-**[keyboard_layout](#keyboard_layout)** — Display the current active keyboard layout.
+**[keyboard_layout](#keyboard_layout)** — Display keyboard layout.
 
-**[mpd_status](#mpd_status)** — Display information from mpd.
+**[mpd_status](#mpd_status)** — Display song currently playing in mpd.
 
-**[mpris](#mpris)** — Display information about the current song and video playing on player with
+**[mpris](#mpris)** — Display song/video and control MPRIS compatible players.
 
-**[net_iplist](#net_iplist)** — Display the list of network interfaces and their IPs.
+**[net_iplist](#net_iplist)** — Display list of network interfaces and IP addresses.
 
-**[net_rate](#net_rate)** — Display the current network transfer rate.
+**[net_rate](#net_rate)** — Display network transfer rate.
 
 **[netdata](#netdata)** — Display network speed and bandwidth usage.
 
@@ -78,73 +78,73 @@
 
 **[nvidia_temp](#nvidia_temp)** — Display NVIDIA GPU temperature.
 
-**[online_status](#online_status)** — Display if a connection to the internet is established.
+**[online_status](#online_status)** — Determine if you have an Internet Connection.
 
-**[pingdom](#pingdom)** — Display the latest response time of the configured Pingdom checks.
+**[pingdom](#pingdom)** — Display response times of the configured Pingdom checks.
 
-**[player_control](#player_control)** — Control music/video players.
+**[player_control](#player_control)** — Control Audacious or VLC media player.
 
-**[pomodoro](#pomodoro)** — Display and control a Pomodoro countdown.
+**[pomodoro](#pomodoro)** — Use Pomodoro technique to get things done easily.
 
 **[process_status](#process_status)** — Display if a process is running.
 
 **[rainbow](#rainbow)** — Add color cycling fun to your i3bar.
 
-**[rate_counter](#rate_counter)** — Display days/hours/minutes spent and calculate the price of your service.
+**[rate_counter](#rate_counter)** — Display time spent and calculate the price of your service.
 
-**[rss_aggregator](#rss_aggregator)** — Display the unread feed items in your favorite RSS aggregator.
+**[rss_aggregator](#rss_aggregator)** — Display unread feeds in your favorite RSS aggregator.
 
-**[rt](#rt)** — Display the number of ongoing tickets from selected RT queues.
+**[rt](#rt)** — Display number of ongoing tickets from RT queues.
 
-**[scratchpad_async](#scratchpad_async)** — Display the amount of windows and indicate urgency hints on scratchpad (async).
+**[scratchpad_async](#scratchpad_async)** — Display number of windows and urgency hints asynchronously.
 
-**[scratchpad_counter](#scratchpad_counter)** — Display the amount of windows in your i3 scratchpad.
+**[scratchpad_counter](#scratchpad_counter)** — Display number of windows in scratchpad.
 
-**[screenshot](#screenshot)** — Take a screenshot and optionally upload it to your online server.
+**[screenshot](#screenshot)** — Take screenshots and upload them to a given server.
 
-**[selinux](#selinux)** — Display the current selinux state.
+**[selinux](#selinux)** — Display SELinux state.
 
-**[spaceapi](#spaceapi)** — Display if your favorite hackerspace is open or not.
+**[spaceapi](#spaceapi)** — Display status of a given hackerspace.
 
-**[spotify](#spotify)** — Display information about the current song playing on Spotify.
+**[spotify](#spotify)** — Display song currently playing in Spotify.
 
 **[static_string](#static_string)** — Display static text.
 
 **[sysdata](#sysdata)** — Display system RAM and CPU utilization.
 
-**[taskwarrior](#taskwarrior)** — Display currently active (started) taskwarrior tasks.
+**[taskwarrior](#taskwarrior)** — Display tasks currently running in taskwarrior.
 
 **[timer](#timer)** — A simple countdown timer.
 
-**[twitch_streaming](#twitch_streaming)** — Checks if a Twitch streamer is online.
+**[twitch_streaming](#twitch_streaming)** — Display status on a given Twitch streamer.
 
-**[uname](#uname)** — Display uname information.
+**[uname](#uname)** — Display system information from uname.
 
 **[vnstat](#vnstat)** — Display vnstat statistics.
 
-**[volume_status](#volume_status)** — Display current sound volume.
+**[volume_status](#volume_status)** — Volume control.
 
 **[vpn_status](#vpn_status)** — Drop-in replacement for i3status run_watch VPN module.
 
-**[weather_yahoo](#weather_yahoo)** — Display Yahoo! Weather forecast as icons.
+**[weather_yahoo](#weather_yahoo)** — Display Yahoo! Weather forecast.
 
-**[whatismyip](#whatismyip)** — Display your public/external IP address and toggle to online status on click.
+**[whatismyip](#whatismyip)** — Display public IP address and online status.
 
-**[whoami](#whoami)** — Display the currently logged in user.
+**[whoami](#whoami)** — Display logged-in username.
 
 **[wifi](#wifi)** — Display WiFi bit rate, quality, signal and SSID using iw.
 
-**[window_title](#window_title)** — Display the current window title.
+**[window_title](#window_title)** — Display current window title.
 
-**[window_title_async](#window_title_async)** — Display the current window title with async update.
+**[window_title_async](#window_title_async)** — Display current window title asynchronously.
 
-**[wwan_status](#wwan_status)** — Display current network and ip address for newer Huwei modems.
+**[wwan_status](#wwan_status)** — Display network and IP address for newer Huwei modems.
 
-**[xrandr](#xrandr)** — Control your screen(s) layout easily.
+**[xrandr](#xrandr)** — Control screen layout.
 
-**[xrandr_rotate](#xrandr_rotate)** — Switch between horizontal and vertical screen rotation on a single click.
+**[xrandr_rotate](#xrandr_rotate)** — Control screen rotation.
 
-**[xsel](#xsel)** — Display the X selection.
+**[xsel](#xsel)** — Display X selection.
 
 **[yandexdisk_status](#yandexdisk_status)** — Display Yandex.Disk status.
 
@@ -152,7 +152,7 @@
 
 ### <a name="arch_updates"></a>arch_updates
 
-Displays the number of package updates pending for an Arch Linux installation.
+Display number of pending updates for Arch Linux.
 
 This will display a count of how many 'pacman' updates are waiting
 to be installed and optionally a count of how many 'aur' updates are
@@ -170,6 +170,7 @@ Configuration parameters:
 Format placeholders:
   - `{aur}` Number of pending aur updates
   - `{pacman}` Number of pending pacman updates
+  - `{total}` Total updates pending
 
 Requires:
   - `cower` Needed to display pending 'aur' updates
@@ -182,7 +183,7 @@ Requires:
 
 ### <a name="aws_bill"></a>aws_bill
 
-Display the current AWS bill.
+Display bill for Amazon Web Services.
 
 **WARNING: This module generate some costs on the AWS bill.
 Take care about the cache_timeout to limit these fees!**
@@ -218,7 +219,7 @@ Requires:
 
 ### <a name="backlight"></a>backlight
 
-Display the current screen backlight level.
+Adjust screen backlight brightness.
 
 Configuration parameters:
   - `brightness_delta` Change the brightness by this step.
@@ -255,7 +256,7 @@ Requires:
 
 ### <a name="battery_level"></a>battery_level
 
-Display the battery level.
+Display battery information.
 
 Configuration parameters:
   - `battery_id` id of the battery to be displayed
@@ -389,7 +390,7 @@ Requires:
 
 ### <a name="check_tcp"></a>check_tcp
 
-Display if a TCP port is available on the given host.
+Display status of a TCP port on a given host.
 
 Configuration parameters:
   - `cache_timeout` how often to run the check *(default 10)*
@@ -410,7 +411,7 @@ Color options:
 
 ### <a name="clementine"></a>clementine
 
-Display the current "artist - title" playing in Clementine.
+Display song currently playing in Clementine.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 5)*
@@ -430,7 +431,7 @@ Requires:
 
 ### <a name="clock"></a>clock
 
-Display time and date information.
+Display date and time.
 
 This module allows one or more datetimes to be displayed.
 All datetimes share the same format_time but can set their own timezones.
@@ -516,7 +517,7 @@ clock {
 
 ### <a name="coin_balance"></a>coin_balance
 
-Display balances of diverse crypto-currencies
+Display balances of diverse crypto-currencies.
 
 This module grabs your current balance of different crypto-currents from a
 wallet server. The server must conform to the bitcoin RPC specification.
@@ -617,7 +618,7 @@ coin_balance {
 
 ### <a name="deadbeef"></a>deadbeef
 
-Display track currently playing in deadbeef.
+Display song currently playing in deadbeef.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh usage in seconds *(default 1)*
@@ -644,7 +645,7 @@ Requires:
 
 ### <a name="diskdata"></a>diskdata
 
-Display advanced disk usage information
+Display disk information.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds.
@@ -699,7 +700,7 @@ Color thresholds:
 
 ### <a name="do_not_disturb"></a>do_not_disturb
 
-A simple "Do Not Disturb" module that can turn on and off all system notifications.
+Turn on and off dbus notifications.
 
 A left mouse click will toggle the state of this module.
 
@@ -723,7 +724,7 @@ Color options:
 
 ### <a name="dpms"></a>dpms
 
-Activate or deactivate DPMS and screen blanking.
+Turn on and off DPMS and screen saver blanking.
 
 This module allows activation and deactivation
 of DPMS (Display Power Management Signaling)
@@ -747,7 +748,7 @@ Color options:
 
 ### <a name="dropboxd_status"></a>dropboxd_status
 
-Display dropboxd status.
+Display status of Dropbox daemon.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 10)*
@@ -803,7 +804,7 @@ Requires:
 
 ### <a name="external_script"></a>external_script
 
-Display output of given script.
+Display output of a given script.
 
 Display output of any executable script set by `script_path`.
 Pay attention. The output must be one liner, or will break your i3status !
@@ -836,7 +837,7 @@ external_script {
 
 ### <a name="fedora_updates"></a>fedora_updates
 
-The number of package updates pending for a Fedora Linux installation.
+Display number of pending updates for Fedora Linux.
 
 This will display a count of how many `dnf` updates are waiting
 to be installed.
@@ -866,7 +867,7 @@ Color options:
 
 ### <a name="file_status"></a>file_status
 
-Display if a file or dir exists.
+Display if a file or directory exists.
 
 Configuration parameters:
   - `cache_timeout` how often to run the check *(default 10)*
@@ -1032,7 +1033,7 @@ github {
 
 ### <a name="glpi"></a>glpi
 
-Display the total number of open tickets from GLPI.
+Display number of open tickets from GLPI.
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
@@ -1062,7 +1063,7 @@ Requires:
 
 ### <a name="gpmdp"></a>gpmdp
 
-Display currently playing song from Google Play Music Desktop Player.
+Display song currently playing in Google Play Music Desktop Player.
 
 Configuration parameters:
   - `cache_timeout`  how often we refresh this module in seconds *(default 5)*
@@ -1159,7 +1160,7 @@ Color options:
 
 ### <a name="group"></a>group
 
-Group a bunch of modules together and switch between them.
+Group modules and switch between them.
 
 In `i3status.conf` groups can be configured. The active one of these groups is
 shown in the i3bar.  The active group can be changed by a user click.  If the
@@ -1242,14 +1243,14 @@ group disks {
 
 ### <a name="hamster"></a>hamster
 
-Display current tasks from project Hamster.
+Display time tracking activities from Hamster.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 10)*
   - `format` see placeholders below *(default '{current}')*
 
 Format placeholders:
-  - `{current}` hamster current
+  - `{current}` current activity
 
 Requires:
   - `hamster`
@@ -1262,7 +1263,7 @@ Requires:
 
 ### <a name="icinga2"></a>icinga2
 
-Display Icinga2 service status information.
+Display service status for Icinga2.
 
 Configuration parameters:
   - `base_url` the base url to the icinga-web2 services list *(default '')*
@@ -1291,7 +1292,7 @@ Configuration parameters:
 
 ### <a name="imap"></a>imap
 
-Display the unread messages count from your IMAP account.
+Display number of unread messages from IMAP account.
 
 Configuration parameters:
   - `cache_timeout` how often to run this check *(default 60)*
@@ -1316,7 +1317,7 @@ Format placeholders:
 
 ### <a name="insync"></a>insync
 
-Get current insync status
+Display insync status
 
 Thanks to Iain Tatch &lt;iain.tatch@gmail.com&gt; for the script that this is based on.
 
@@ -1345,7 +1346,7 @@ Requires:
 
 ### <a name="kdeconnector"></a>kdeconnector
 
-Display information of your android device over KDEConnector.
+Display information about your smartphone with KDEConnector.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 30)*
@@ -1398,7 +1399,7 @@ Requires:
 
 ### <a name="keyboard_layout"></a>keyboard_layout
 
-Display the current active keyboard layout.
+Display keyboard layout.
 
 Configuration parameters:
   - `cache_timeout` check for keyboard layout change every seconds *(default 10)*
@@ -1427,7 +1428,7 @@ Requires:
 
 ### <a name="mpd_status"></a>mpd_status
 
-Display information from mpd.
+Display song currently playing in mpd.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 2)*
@@ -1483,8 +1484,7 @@ Examples of `format`
 
 ### <a name="mpris"></a>mpris
 
-Display information about the current song and video playing on player with
-mpris support.
+Display song/video and control MPRIS compatible players.
 
 There are two ways to control the media player. Either by clicking with a mouse
 button in the text information or by using buttons. For former you have
@@ -1585,7 +1585,7 @@ Tested players:
 
 ### <a name="net_iplist"></a>net_iplist
 
-Display the list of network interfaces and their IPs.
+Display list of network interfaces and IP addresses.
 
 This module supports both IPv4 and IPv6. There is the possibility to blacklist
 interfaces and IPs, as well as to show interfaces with no IP address. It will
@@ -1639,7 +1639,7 @@ Requires:
 
 ### <a name="net_rate"></a>net_rate
 
-Display the current network transfer rate.
+Display network transfer rate.
 
 Configuration parameters:
   - `all_interfaces` ignore self.interfaces, but not self.interfaces_blacklist
@@ -1701,7 +1701,7 @@ Configuration parameters:
   - `low_traffic` threshold *(default 400)*
   - `med_speed` threshold *(default 60)*
   - `med_traffic` threshold *(default 700)*
-  - `nic` the network interface to monitor *(default 'eth0')*
+  - `nic` the network interface to monitor *(default None)*
 
 Color options:
   - `color_bad` Rate is below low threshold
@@ -1774,7 +1774,7 @@ Requires:
 
 ### <a name="online_status"></a>online_status
 
-Display if a connection to the internet is established.
+Determine if you have an Internet Connection.
 
 Configuration parameters:
   - `cache_timeout` how often to run the check *(default 10)*
@@ -1798,7 +1798,7 @@ Color options:
 
 ### <a name="pingdom"></a>pingdom
 
-Display the latest response time of the configured Pingdom checks.
+Display response times of the configured Pingdom checks.
 
 We also verify the status of the checks and colorize if needed.
 Pingdom API doc : https://www.pingdom.com/features/api/documentation/
@@ -1824,7 +1824,7 @@ Requires:
 
 ### <a name="player_control"></a>player_control
 
-Control music/video players.
+Control Audacious or VLC media player.
 
 Provides an icon to control simple functions of audio/video players:
   - start (left click)
@@ -1854,7 +1854,7 @@ Format placeholders:
 
 ### <a name="pomodoro"></a>pomodoro
 
-Display and control a Pomodoro countdown.
+Use Pomodoro technique to get things done easily.
 
 Button 1 starts/pauses countdown.
 Button 2 switch Pomodoro/Break.
@@ -1947,6 +1947,8 @@ Configuration parameters:
   - `gradient` The colors we will cycle through, This is a list of hex values
     *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
     '#0000FF', '#FF00FF', '#FF0000', ])*
+  - `multi_color` If True then each module the rainbow contains will be colored
+    differently *(default True)*
   - `steps` Number of steps between each color in the gradient
     *(default 10)*
 
@@ -1984,7 +1986,7 @@ rainbow blink_time{
 
 ### <a name="rate_counter"></a>rate_counter
 
-Display days/hours/minutes spent and calculate the price of your service.
+Display time spent and calculate the price of your service.
 
 Configuration parameters:
   - `cache_timeout` how often to update in seconds *(default 5)*
@@ -2022,7 +2024,7 @@ Color options:
 
 ### <a name="rss_aggregator"></a>rss_aggregator
 
-Display the unread feed items in your favorite RSS aggregator.
+Display unread feeds in your favorite RSS aggregator.
 
 For now, supported aggregators are:
     * OwnCloud/NextCloud with News application
@@ -2079,7 +2081,7 @@ Requires:
 
 ### <a name="rt"></a>rt
 
-Display the number of ongoing tickets from selected RT queues.
+Display number of ongoing tickets from RT queues.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 300)*
@@ -2113,7 +2115,7 @@ limit the impact of a server connectivity problem on your i3bar freshness.
 
 ### <a name="scratchpad_async"></a>scratchpad_async
 
-Display the amount of windows and indicate urgency hints on scratchpad (async).
+Display number of windows and urgency hints asynchronously.
 
 Configuration parameters:
   - `always_show` always display the format *(default False)*
@@ -2133,7 +2135,7 @@ Requires:
 
 ### <a name="scratchpad_counter"></a>scratchpad_counter
 
-Display the amount of windows in your i3 scratchpad.
+Display number of windows in scratchpad.
 
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 5)*
@@ -2151,7 +2153,7 @@ Format placeholders:
 
 ### <a name="screenshot"></a>screenshot
 
-Take a screenshot and optionally upload it to your online server.
+Take screenshots and upload them to a given server.
 
 Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
 directly send (if wanted) the file to your online server.
@@ -2181,7 +2183,7 @@ Color options:
 
 ### <a name="selinux"></a>selinux
 
-Display the current selinux state.
+Display SELinux state.
 
 This module displays the current state of selinux on your machine: Enforcing
 (good), Permissive (bad), or Disabled (bad).
@@ -2211,7 +2213,7 @@ Requires:
 
 ### <a name="spaceapi"></a>spaceapi
 
-Display if your favorite hackerspace is open or not.
+Display status of a given hackerspace.
 
 Configuration parameters:
   - `button_url` Button that when clicked opens the URL sent in the space's API.
@@ -2237,7 +2239,7 @@ Color options:
 
 ### <a name="spotify"></a>spotify
 
-Display information about the current song playing on Spotify.
+Display song currently playing in Spotify.
 
 Configuration parameters:
   - `cache_timeout` how often to update the bar *(default 5)*
@@ -2296,10 +2298,10 @@ Configuration parameters:
     '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
   - `mem_unit` the unit of memory to use in report, case insensitive.
     ['dynamic', 'KiB', 'MiB', 'GiB'] *(default 'GiB')*
-  - `padding` length of space padding to use on the left
-    *(default 0)*
-  - `precision` precision of values
-    *(default 2)*
+  - `swap_unit` the unit of swap to use in report, case insensitive.
+    ['dynamic', 'KiB', 'MiB', 'GiB'] *(default 'GiB')*
+  - `temp_unit` unit used for measuring the temperature ('C', 'F' or 'K')
+    *(default '°C')*
   - `thresholds` thresholds to use for color changes
     *(default [(0, "good"), (40, "degraded"), (75, "bad")])*
   - `zone` thermal zone to use. If None try to guess CPU temperature
@@ -2312,11 +2314,17 @@ Format placeholders:
   - `{mem_unit}` unit for memory
   - `{mem_used}` used memory
   - `{mem_used_percent}` used memory percentage
+  - `{swap_total}` total swap
+  - `{swap_unit}` unit for swap
+  - `{swap_used}` used swap
+  - `{swap_used_percent}` used swap percentage
+  - `{temp_unit}` temperature unit
 
 Color thresholds:
   - `cpu` change color based on the value of cpu_usage
   - `max_cpu_mem` change the color based on the max value of cpu_usage and mem_used_percent
   - `mem` change color based on the value of mem_used_percent
+  - `swap` change color based on the value of swap_used_percent
   - `temp` change color based on the value of cpu_temp
 
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
@@ -2328,14 +2336,14 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 
 ### <a name="taskwarrior"></a>taskwarrior
 
-Display currently active (started) taskwarrior tasks.
+Display tasks currently running in taskwarrior.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 5)*
-  - `format` string to print *(default '{task}')*
+  - `format` display format for taskwarrior *(default '{task}')*
 
 Format placeholders:
-  - `{task}` to-do list of active tasks
+  - `{task}` active tasks
 
 Requires
     task: https://taskwarrior.org/download/
@@ -2369,7 +2377,7 @@ Configuration parameters:
 
 ### <a name="twitch_streaming"></a>twitch_streaming
 
-Checks if a Twitch streamer is online.
+Display status on a given Twitch streamer.
 
 Checks if a streamer is online using the Twitch Kraken API to see
 if a channel is currently streaming or not.
@@ -2401,7 +2409,7 @@ Color options:
 
 ### <a name="uname"></a>uname
 
-Display uname information.
+Display system information from uname.
 
 Configuration parameters:
   - `format` see placeholders below *(default '{system} {release} {machine}')*
@@ -2461,7 +2469,7 @@ Requires:
 
 ### <a name="volume_status"></a>volume_status
 
-Display current sound volume.
+Volume control.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
@@ -2578,7 +2586,7 @@ Requires:
 
 ### <a name="weather_yahoo"></a>weather_yahoo
 
-Display Yahoo! Weather forecast as icons.
+Display Yahoo! Weather forecast.
 
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
@@ -2639,7 +2647,7 @@ weather_yahoo {
 
 ### <a name="whatismyip"></a>whatismyip
 
-Display your public/external IP address and toggle to online status on click.
+Display public IP address and online status.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 30)*
@@ -2671,16 +2679,18 @@ Color options:
 
 ### <a name="whoami"></a>whoami
 
-Display the currently logged in user.
+Display logged-in username.
 
 Configuration parameters:
-  - `format` string to print *(default '{username}')*
+  - `format` display format for whoami *(default '{username}')*
 
 Format placeholders:
   - `{username}` display current username
 
 Inspired by i3 FAQ:
     https://faq.i3wm.org/question/1618/add-user-name-to-status-bar.1.html
+
+**author** ultrabug
 
 ---
 
@@ -2736,22 +2746,15 @@ Requires:
 
 ### <a name="window_title"></a>window_title
 
-Display the current window title.
+Display current window title.
+
+Prints the name of focused window at frequent intervals.
 
 Configuration parameters:
   - `cache_timeout` How often we refresh this module in seconds *(default 0.5)*
   - `format` display format for window_title *(default '{title}')*
   - `max_width` If width of title is greater, shrink it and add '...'
     *(default 120)*
-
-Requires:
-  - `i3-py` (https://github.com/ziberna/i3-py)
-    `pip install i3-py`
-
-If payload from server contains wierd utf-8
-(for example one window have something bad in title) - the plugin will
-give empty output UNTIL this window is closed.
-I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 
 **author** shadowprince
 
@@ -2761,7 +2764,7 @@ I can't fix or workaround that in PLUGIN, problem is in i3-py library.
 
 ### <a name="window_title_async"></a>window_title_async
 
-Display the current window title with async update.
+Display current window title asynchronously.
 
 Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.
@@ -2788,7 +2791,7 @@ Requires:
 
 ### <a name="wwan_status"></a>wwan_status
 
-Display current network and ip address for newer Huwei modems.
+Display network and IP address for newer Huwei modems.
 
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III but may work on other devices, too.
@@ -2841,7 +2844,7 @@ PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
 
 ### <a name="xrandr"></a>xrandr
 
-Control your screen(s) layout easily.
+Control screen layout.
 
 This modules allows you to handle your screens outputs directly from your bar!
   - Detect and propose every possible screen combinations
@@ -2923,7 +2926,7 @@ xrandr {
 
 ### <a name="xrandr_rotate"></a>xrandr_rotate
 
-Switch between horizontal and vertical screen rotation on a single click.
+Control screen rotation.
 
 Configuration parameters:
   - `cache_timeout` how often to refresh this module.
@@ -2965,12 +2968,12 @@ Color options:
 
 ### <a name="xsel"></a>xsel
 
-Display the X selection.
+Display X selection.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds
     *(default 0.5)*
-  - `command` the xsel command to run *(default 'xsel')*
+  - `command` the xsel command to run *(default 'xsel -o')*
   - `max_size` stip the selection to this value *(default 15)*
   - `symmetric` show the beginning and the end of the selection string
     with respect to configured max_size. *(default True)*
