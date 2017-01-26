@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current active keyboard layout.
+Display keyboard layout.
 
 Configuration parameters:
     cache_timeout: check for keyboard layout change every seconds (default 10)

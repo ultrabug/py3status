@@ -1,11 +1,13 @@
-version 3.4 (milestone)
+version 3.4 (2017-01-26)
 * fix python2 unicode use in i3status time modules, by @tobes
 * fix python3.6 travis CI, by @tobes
 * cache format string tokens to reduce work done, by @tobes
 * formatter: new not_zero format command, by @tobes
+* simplify the descriptions for all modules, by @lasers
 * new do_not_disturb module to toggle notifications, by @maximbaz
 * new rss_aggregator module to display your unread feed items, by @raspbeguy
 * arch_updates module: add hide_if_zero option, by @lasers
+* arch_updates module: multiple fixes, by @tobes
 * backlight module: fix crash when monitor doesn't support backlight change, by @laxd
 * battery_level module: fix crash when running on a machine with no battery, by @laxd
 * battery_level module: prevent logic issues when zero, by @tobes
@@ -13,13 +15,20 @@ version 3.4 (milestone)
 * clementine module: add format parameter, by @lasers
 * dpms: add format parameter, by @lasers
 * mpd_status module: fix max_width, by @lasers thanks to report by @girst
+* mpris module: detect players starting after py3status, by @ritze
 * net_rate module: add option to aggregate rate from all interfaces, by @guiniol
+* netdata module: use next available nic, by @lasers
 * online_status module: add deprecation warning, by @lasers
 * online_status module: add format parameter, by @lasers
 * player_control module: add format parameter, by @lasers
+* rainbow module: add multi_color option, by @tobes
 * scratchpad_async module: cleanup format parameter, by @lasers
 * scratchpad_async: fix method names, by @lasers
+* scratchpad_counter and window_title modules: remove i3-py dependencies, by @tones
 * scratchpad_counter module: add format parameter, by @lasers
+* sysdata module: add swap support, by @valdur55
+* sysdata module: cpu temp no zone bugfix, by @tobes
+* sysdata module: deprecate precision and padding, by @guiniol
 * sysdata module: use color 'bad' instead of 'high' as a default threshold, by @maximbaz
 * taskwarrior module: add format parameter, by @lasers
 * timer module: fix cache_timeout as reported by @lasers, by @tobes
@@ -31,8 +40,10 @@ version 3.4 (milestone)
 * whoami module: add format parameter, by @lasers
 * whoami module: document format placeholder, by @lasers
 * window_title module: add format parameter, by @lasers
+* window_title modules: window without name will not crash py3status, by @valdur55
 * window_title_async module: fix method name, by @lasers
 * xrandr module: update format parameter, by @lasers
+* xsel: fix xsel, by @tobes
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes

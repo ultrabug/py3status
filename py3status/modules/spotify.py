@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display information about the current song playing on Spotify.
+Display song currently playing in Spotify.
 
 Configuration parameters:
     cache_timeout: how often to update the bar (default 5)

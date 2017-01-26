@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Get current insync status
+Display insync status
 
 Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current selinux state.
+Display SELinux state.
 
 This module displays the current state of selinux on your machine: Enforcing
 (good), Permissive (bad), or Disabled (bad).

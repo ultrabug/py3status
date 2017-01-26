@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Display currently active (started) taskwarrior tasks.
+Display tasks currently running in taskwarrior.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 5)
-    format: string to print (default '{task}')
+    format: display format for taskwarrior (default '{task}')
 
 Format placeholders:
-    {task} to-do list of active tasks
+    {task} active tasks
 
 Requires
     task: https://taskwarrior.org/download/

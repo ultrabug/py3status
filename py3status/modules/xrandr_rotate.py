@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Switch between horizontal and vertical screen rotation on a single click.
+Control screen rotation.
 
 Configuration parameters:
     cache_timeout: how often to refresh this module.

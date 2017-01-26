@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display output of given script.
+Display output of a given script.
 
 Display output of any executable script set by `script_path`.
 Pay attention. The output must be one liner, or will break your i3status !

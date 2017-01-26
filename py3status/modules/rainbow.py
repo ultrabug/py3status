@@ -25,6 +25,8 @@ Configuration parameters:
     gradient: The colors we will cycle through, This is a list of hex values
         *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
         '#0000FF', '#FF00FF', '#FF0000', ])*
+    multi_color: If True then each module the rainbow contains will be colored
+        differently (default True)
     steps: Number of steps between each color in the gradient
         (default 10)
 
@@ -78,6 +80,7 @@ class Py3status:
         '#FF00FF',
         '#FF0000',
     ]
+    multi_color = True
     steps = 10
 
     class Meta:
@@ -176,7 +179,13 @@ class Py3status:
         content = self._get_current_output()
 
         output = []
-        for item in content:
+
+        if content:
+            step = len(self.colors) // len(content)
+        for index, item in enumerate(content):
+            if self.multi_color:
+                offset = (self.active_color + (index * step)) % len(self.colors)
+                color = self.colors[offset]
             obj = item.copy()
             if self.force or not obj.get('color'):
                 obj['color'] = color
