@@ -134,6 +134,7 @@ class GetData:
         out temperatures of all codes if more than one.
         """
 
+        sensors = None
         command = ['sensors']
         if unit == u'°F':
             command.append('-f')
@@ -143,7 +144,7 @@ class GetData:
             try:
                 sensors = self.py3.command_output(command + [zone])
             except:
-                sensors = None
+                pass
         if not sensors:
             sensors = self.py3.command_output(command)
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
