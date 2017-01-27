@@ -1,3 +1,5 @@
+version 3.5 (milestone)
+
 version 3.4 (2017-01-26)
 * fix python2 unicode use in i3status time modules, by @tobes
 * fix python3.6 travis CI, by @tobes
@@ -24,7 +26,7 @@ version 3.4 (2017-01-26)
 * rainbow module: add multi_color option, by @tobes
 * scratchpad_async module: cleanup format parameter, by @lasers
 * scratchpad_async: fix method names, by @lasers
-* scratchpad_counter and window_title modules: remove i3-py dependencies, by @tones
+* scratchpad_counter and window_title modules: remove i3-py dependencies, by @tobes
 * scratchpad_counter module: add format parameter, by @lasers
 * sysdata module: add swap support, by @valdur55
 * sysdata module: cpu temp no zone bugfix, by @tobes
@@ -39,11 +41,12 @@ version 3.4 (2017-01-26)
 * whoami module: add deprecation warning, by @lasers
 * whoami module: add format parameter, by @lasers
 * whoami module: document format placeholder, by @lasers
+* window_title and window_title_async modules: window without name will not crash py3status, by @valdur55
 * window_title module: add format parameter, by @lasers
-* window_title modules: window without name will not crash py3status, by @valdur55
+* window_title module: fix display of workspace number instead of empty window title, by @valdur55
 * window_title_async module: fix method name, by @lasers
 * xrandr module: update format parameter, by @lasers
-* xsel: fix xsel, by @tobes
+* xsel: fix xsel, by @lasers
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
