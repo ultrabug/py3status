@@ -42,10 +42,10 @@ version 3.4 (2017-01-26)
 * whoami module: add format parameter, by @lasers
 * whoami module: document format placeholder, by @lasers
 * window_title module: add format parameter, by @lasers
-* window_title modules: window without name will not crash py3status, by @valdur55
+* window_title and window_title_async modules: window without name will not crash py3status, by @valdur55
 * window_title_async module: fix method name, by @lasers
 * xrandr module: update format parameter, by @lasers
-* xsel: fix xsel, by @tobes
+* xsel: fix xsel, by @lasers
 
 version 3.3 (2016-11-20)
 * allow module output to be used in on_click commands, by @tobes
