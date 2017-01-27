@@ -3,6 +3,7 @@ import ast
 import re
 import os.path
 import difflib
+from glob import glob
 
 from py3status.helpers import print_stderr
 
@@ -52,6 +53,8 @@ def core_module_docstrings(include_core=True, include_user=False, config=None):
                 if name != '__init__':
                     paths[name] = (os.path.join(modules_directory(), file),
                                    'core')
+        for fl in glob(os.path.join(modules_directory(), '*', '__init__.py')):
+            paths[os.path.basename(os.path.dirname(fl))] = (fl, 'core')
 
     if include_user:
         # include user modules
