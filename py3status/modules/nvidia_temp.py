@@ -3,9 +3,9 @@
 Display NVIDIA GPU temperatures.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module in seconds (default 10)
+    cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default 'GPU: {format_temp}')
-    format_temp: display format for this placeholder (default '{temp}°C')
+    format_temp: display format for temperatures (default '{temp}°C')
     string_separator: display separator (only if more than one) (default '|')
     string_unavailable: display unavailable (default 'nvidia_temp: N/A')
 
@@ -13,11 +13,11 @@ Format placeholders:
     {format_temp} display format for temperatures
 
 format_temp placeholders:
-    {temp} current temperature
+    {temp} current temperatures
 
 Color options:
-    color_bad: Unavailable
-    color_good: Available
+    color_bad: Temperature unavailable
+    color_good: Temperature available
 
 Requires:
     nvidia-smi:
@@ -27,10 +27,6 @@ Requires:
 """
 
 import re
-import shlex
-from subprocess import check_output
-
-TEMP_RE = re.compile(r"Current Temp\s+:\s+([0-9]+)")
 
 
 class Py3status:
@@ -55,26 +51,27 @@ class Py3status:
         }
 
     def nvidia_temp(self):
-        out = check_output(shlex.split("nvidia-smi -q -d TEMPERATURE"))
-        temps = re.findall(TEMP_RE, out.decode("utf-8"))
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
-        if temps != []:
+        temps = self.py3.command_output("nvidia-smi -q -d TEMPERATURE")
+        temps = re.findall(re.compile(r"Current Temp\s+:\s+([0-9]+)"), temps)
+
+        if temps == []:
+            response['cached_until'] = self.py3.CACHE_FOREVER
+            response['color'] = self.py3.COLOR_BAD
+            response['full_text'] = self.string_unavailable
+        else:
             data = []
             for temp in temps:
                 data.append(self.py3.safe_format(self.format_temp, {'temp': temp}))
 
             data = self.py3.composite_join(self.string_separator, data)
-            color = self.py3.COLOR_GOOD
-            full_text = self.py3.safe_format(self.format, {'format_temp': data})
-        else:
-            color = self.py3.COLOR_BAD
-            full_text = self.py3.safe_format(self.format,
-                                             {'format_temp': self.string_unavailable})
-        return {
-            'full_text': full_text,
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-        }
+            data = self.py3.safe_format(self.format, {'format_temp': data})
+
+            response['color'] = self.py3.COLOR_GOOD
+            response['full_text'] = data
+
+        return response
 
 
 if __name__ == "__main__":
