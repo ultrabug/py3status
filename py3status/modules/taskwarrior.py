@@ -3,8 +3,8 @@
 Display tasks currently running in taskwarrior.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 5)
-    format: display format for taskwarrior (default '{task}')
+    cache_timeout: refresh interval for this module (default 5)
+    format: display format for this module (default '{task}')
 
 Format placeholders:
     {task} active tasks
@@ -16,10 +16,7 @@ Requires
 @license BSD
 """
 
-# import your useful libs here
-from subprocess import check_output
 import json
-import shlex
 
 
 class Py3status:
@@ -30,17 +27,15 @@ class Py3status:
     format = '{task}'
 
     def taskWarrior(self):
-        command = 'task start.before:tomorrow status:pending export'
-        taskwarrior_output = check_output(shlex.split(command))
-        tasks_json = json.loads(taskwarrior_output.decode('utf-8'))
-
         def describeTask(taskObj):
             return str(taskObj['id']) + ' ' + taskObj['description']
 
-        result = ', '.join(map(describeTask, tasks_json))
+        task_command = 'task start.before:tomorrow status:pending export'
+        task_json = json.loads(self.py3.command_output(task_command))
+        task_result = ', '.join(map(describeTask, task_json))
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'task': result})
+            'full_text': self.py3.safe_format(self.format, {'task': task_result})
         }
 
 
