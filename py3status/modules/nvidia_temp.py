@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Display NVIDIA GPU temperature.
+Display NVIDIA GPU temperatures.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 10)
-    format_prefix: a prefix for the output. (default 'GPU: ')
-    format_units: the temperature units. Will appear at the end. (default '°C')
-    temp_separator: the separator char between temperatures (only if more than
-        one GPU) (default '|')
+    cache_timeout: refresh interval for this module in seconds (default 10)
+    format: display format for this module (default 'GPU: {format_temp}')
+    format_temp: display format for this placeholder (default '{temp}°C')
+    string_separator: display separator (only if more than one) (default '|')
+    string_unavailable: display unavailable (default 'nvidia_temp: N/A')
+
+Format placeholders:
+    {format_temp} display format for temperatures
+
+format_temp placeholders:
+    {temp} current temperature
 
 Color options:
-    color_bad: Temperature can't be read.
-    color_good: Everything is OK.
+    color_bad: Unavailable
+    color_good: Available
 
 Requires:
     nvidia-smi:
@@ -32,9 +38,21 @@ class Py3status:
     """
     # configuration parameters
     cache_timeout = 10
-    format_prefix = "GPU: "
-    format_units = u"°C"
-    temp_separator = '|'
+    format = "GPU: {format_temp}"
+    format_temp = u"{temp}°C"
+    string_separator = '|'
+    string_unavailable = "nvidia_temp: N/A"
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'temp_separator',
+                    'new': 'string_separator',
+                    'msg': 'obsolete parameter use `string_separator`',
+                },
+            ],
+        }
 
     def nvidia_temp(self):
         out = check_output(shlex.split("nvidia-smi -q -d TEMPERATURE"))
@@ -43,32 +61,20 @@ class Py3status:
         if temps != []:
             data = []
             for temp in temps:
-                fmt_str = "{temp}{format_units}".format(
-                    temp=temp,
-                    format_units=self.format_units
-                )
-                data.append(fmt_str)
+                data.append(self.py3.safe_format(self.format_temp, {'temp': temp}))
 
-            output = "{format_prefix}{data}".format(
-                format_prefix=self.format_prefix,
-                data=self.temp_separator.join(data)
-            )
-
+            data = self.py3.composite_join(self.string_separator, data)
             color = self.py3.COLOR_GOOD
+            full_text = self.py3.safe_format(self.format, {'format_temp': data})
         else:
-            output = "{format_prefix}OFF".format(
-                format_prefix=self.format_prefix
-            )
-
             color = self.py3.COLOR_BAD
-
-        response = {
+            full_text = self.py3.safe_format(self.format,
+                                             {'format_temp': self.string_unavailable})
+        return {
+            'full_text': full_text,
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
-            'full_text': output
         }
-
-        return response
 
 
 if __name__ == "__main__":
