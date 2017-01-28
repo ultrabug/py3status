@@ -25,7 +25,6 @@ Requires:
 @license Eclipse Public License
 """
 
-from subprocess import check_output
 import re
 
 
@@ -84,7 +83,8 @@ class Py3status:
         Returns a list of predefined keyboard layouts
         """
         layouts_re = re.compile(r".*layout:\s*((\w+,?)+).*", flags=re.DOTALL)
-        out = check_output(["setxkbmap", "-query"]).decode("utf-8")
+        out = self.py3.command_output(["setxkbmap", "-query"])
+
         layouts = re.match(layouts_re, out).group(1).split(",")
         return layouts
 
@@ -92,7 +92,7 @@ class Py3status:
         """
         check using xkblayout-state
         """
-        return check_output(["xkblayout-state", "print", "%s"]).decode('utf-8')
+        return self.py3.command_output(["xkblayout-state", "print", "%s"])
 
     def _xset(self):
         """
@@ -104,7 +104,8 @@ class Py3status:
         layouts = self._get_layouts()
         if len(layouts) == 1:
             return layouts[0]
-        xset_output = check_output(["xset", "-q"]).decode("utf-8")
+        xset_output = self.py3.command_output(["xset", "-q"])
+
         led_mask = re.match(ledmask_re, xset_output).groups(0)[0]
         return layouts[int(led_mask)]
 
