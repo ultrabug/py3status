@@ -110,7 +110,7 @@
 
 **[static_string](#static_string)** — Display static text.
 
-**[sysdata](#sysdata)** — Display system RAM and CPU utilization.
+**[sysdata](#sysdata)** — Display system RAM, SWAP and CPU utilization.
 
 **[taskwarrior](#taskwarrior)** — Display tasks currently running in taskwarrior.
 
@@ -2289,7 +2289,7 @@ Configuration parameters:
 
 ### <a name="sysdata"></a>sysdata
 
-Display system RAM and CPU utilization.
+Display system RAM, SWAP and CPU utilization.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 10)*
