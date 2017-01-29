@@ -29,8 +29,7 @@ external_script {
 
 @author frimdo ztracenastopa@centrum.cz
 """
-
-import subprocess
+import os
 
 
 class Py3status:
@@ -44,10 +43,7 @@ class Py3status:
 
     def external_script(self):
         if self.script_path:
-            return_value = subprocess.check_output(self.script_path,
-                                                   shell=True,
-                                                   universal_newlines=True)
-
+            return_value = self.py3.command_output(os.path.expanduser(self.script_path))
             # this is a convenience cleanup code to avoid breaking i3bar which
             # does not support multi lines output
             if len(return_value.split('\n')) > 2:
