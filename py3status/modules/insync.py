@@ -26,8 +26,6 @@ Requires:
 @license BSD
 """
 
-from subprocess import check_output
-
 
 class Py3status:
     # available configuration parameters
@@ -35,7 +33,7 @@ class Py3status:
     format = '{status} {queued}'
 
     def check_insync(self):
-        status = check_output(["insync", "get_status"]).decode().strip()
+        status = self.py3.command_output(["insync", "get_status"]).strip()
         color = self.py3.COLOR_DEGRADED
         if status == "OFFLINE":
             color = self.py3.COLOR_BAD
@@ -43,7 +41,7 @@ class Py3status:
             color = self.py3.COLOR_GOOD
             status = "INSYNC"
 
-        queued = check_output(["insync", "get_sync_progress"]).decode()
+        queued = self.py3.command_output(["insync", "get_sync_progress"])
         queued = [q for q in queued.split("\n") if q != '']
         if len(queued) > 0 and "queued" in queued[-1]:
             queued = queued[-1]
