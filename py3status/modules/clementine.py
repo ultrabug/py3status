@@ -16,8 +16,6 @@ Requires:
 @license GNU GPL http://www.gnu.org/licenses/gpl.html
 """
 
-from subprocess import check_output
-
 CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
 
 
@@ -32,12 +30,9 @@ class Py3status:
         """
         Get the current song metadatas (artist - title)
         """
-        track_id = check_output(CMD + '.GetCurrentTrack', shell=True)
-        metadatas = check_output(
-            CMD + '.GetMetadata {}'.format(track_id.decode()), shell=True
-        )
-        lines = metadatas.decode('utf-8').split('\n')
-        lines = filter(None, lines)
+        track_id = self.py3.command_output(CMD + '.GetCurrentTrack')
+        metadatas = self.py3.command_output(CMD + '.GetMetadata {}'.format(track_id))
+        lines = filter(None, metadatas.splitlines())
 
         now_playing = ''
 
