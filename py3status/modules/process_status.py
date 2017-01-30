@@ -3,27 +3,24 @@
 Display if a process is running.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format: display format for process status (default '{icon}')
+    cache_timeout: refresh interval for this module (default 10)
+    format: default format for this module (default '{icon}')
     full: if True, match against the full command line (default False)
     icon_off: display when the process is not running (default '■')
     icon_on: display when the process is running (default '●')
-    msg_unavailable: display when no process name (default 'process_status: N/A')
     process: the process name to check if it is running (default None)
+    string_unavailable: no process name (default 'process_status: N/A')
 
 Format placeholders:
-    {icon} display icon based on process status
-    {process} display process name
+    {icon} process icon
+    {process} process name
 
 Color options:
-    color_bad: the process is not running or unavailable
-    color_good: the process is running
+    color_bad: process currently not running or unavailable
+    color_good: process currently running
 
 @author obb, Moritz Lüdecke
 """
-
-import os
-import subprocess
 
 
 class Py3status:
@@ -35,8 +32,8 @@ class Py3status:
     full = False
     icon_off = u'■'
     icon_on = u'●'
-    msg_unavailable = 'process_status: N/A'
     process = None
+    string_unavailable = 'process_status: N/A'
 
     class Meta:
         deprecated = {
@@ -54,38 +51,38 @@ class Py3status:
             ],
         }
 
-    def _get_text(self):
-        fnull = open(os.devnull, 'w')
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+
+    def _is_running(self):
         pgrep = ["pgrep", self.process]
 
         if self.full:
             pgrep = ["pgrep", "-f", self.process]
-
-        if subprocess.call(pgrep,
-                           stdout=fnull, stderr=fnull) == 0:
-            color = self.py3.COLOR_GOOD
-            text = self.py3.safe_format(self.icon_on,
-                                        {'process': self.process})
+        try:
+            self.py3.command_output(pgrep)
+        except:
+            return False
         else:
-            color = self.py3.COLOR_BAD
-            text = self.py3.safe_format(self.icon_off,
-                                        {'process': self.process})
-
-        return (color, text)
+            return True
 
     def process_status(self):
-        if self.process is None:
-            color = self.py3.COLOR_BAD
-            text = self.msg_unavailable
-        else:
-            (color, text) = self._get_text()
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
-        return {
-            'color': color,
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format,
-                                              {'icon': text, 'process': self.process})
-        }
+        if self.process is None:
+            response['cached_until'] = self.py3.CACHE_FOREVER
+            response['color'] = self.py3.COLOR_BAD
+            response['full_text'] = self.string_unavailable
+        else:
+            run = self._is_running()
+            icon = self.icon_on if run else self.icon_off
+
+            response['color'] = self.color_on if run else self.color_off
+            response['full_text'] = self.py3.safe_format(self.format, {'icon': icon,
+                                                         'process': self.process}),
+
+        return response
 
 
 if __name__ == "__main__":
