@@ -7,7 +7,7 @@ interfaces and IPs, as well as to show interfaces with no IP address. It will
 show an alternate text if no IP are available.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds.
+    cache_timeout: refresh interval for this module in seconds.
         (default 30)
     format: format of the output.
         (default 'Network: {format_iface}')
@@ -49,11 +49,12 @@ net_iplist {
 
 Requires:
     ip: utility found in iproute2 package
+
+@author guiniol
 """
 
 
 import re
-from subprocess import check_output
 from fnmatch import fnmatch
 
 
@@ -114,7 +115,7 @@ class Py3status:
         return response
 
     def _get_data(self):
-        txt = check_output(['ip', 'address', 'show']).decode('utf-8').splitlines()
+        txt = self.py3.command_output(['ip', 'address', 'show']).splitlines()
 
         data = {}
         for line in txt:
