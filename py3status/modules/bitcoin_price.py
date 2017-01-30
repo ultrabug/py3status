@@ -4,20 +4,29 @@
 Display bitcoin prices using bitcoincharts.com.
 
 Configuration parameters:
-    cache_timeout: Should be at least 15 min according to bitcoincharts.
+    cache_timeout: refresh interval for this module. A message from
+        the site: Don't query more often than once every 15 minutes!
         (default 900)
     color_index: Index of the market responsible for coloration,
         -1 means no coloration, except when only one market is selected
         (default -1)
     field: Field that is displayed per market,
         see http://bitcoincharts.com/about/markets-api/ (default 'close')
+    format: display format for this module (default '{price}')
     hide_on_error: Display empty response if True, else an error message
          (default False)
     markets: Comma-separated list of markets. Supported markets can
         be found at http://bitcoincharts.com/markets/list/
          (default 'btceUSD, btcdeEUR')
+    string_separator1: first separator (default ': ')
+    string_separator2: second separator (default ', ')
+    string_unavailable: no price (default 'N/A ')
+    string_unreachable: no connection (default 'Bitcoincharts unreachable')
     symbols: Try to match currency abbreviations to symbols,
         e.g. USD -> $, EUR -> € and so on (default True)
+
+Format placeholders:
+    {price} display bitcoin prices
 
 Color options:
     color_bad:  Price has dropped or not available
@@ -44,8 +53,13 @@ class Py3status:
     cache_timeout = 900
     color_index = -1
     field = 'close'
+    format = '{price}'
     hide_on_error = False
     markets = 'btceUSD, btcdeEUR'
+    string_separator1 = ': '
+    string_separator2 = ', '
+    string_unavailable = 'N/A '
+    string_unreachable = 'Bitcoincharts unreachable'
     symbols = True
 
     def __init__(self):
@@ -74,10 +88,7 @@ class Py3status:
                 return m[field]
 
     def get_rate(self):
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': ''
-        }
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         # get the data from the bitcoincharts website
         try:
@@ -85,7 +96,7 @@ class Py3status:
         except URLError:
             if not self.hide_on_error:
                 response['color'] = self.py3.COLOR_BAD
-                response['full_text'] = 'Bitcoincharts unreachable'
+                response['full_text'] = self.string_unavailable
             return response
 
         # get the rate for each market given
@@ -102,9 +113,9 @@ class Py3status:
                 continue
             # market name
             out = market[:-3] if rate else market
-            out += ': '
+            out += self.string_separator1
             # rate
-            out += 'N/A' if not rate else '{:.2f}'.format(rate)
+            out += self.string_unavailable if not rate else '{:.2f}'.format(rate)
             currency_sym = self.currency_map.get(market[-3:], market[-3:])
             out += currency_sym if self.symbols else market
             rates.append(out)
@@ -120,7 +131,9 @@ class Py3status:
                 response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
-        response['full_text'] = ', '.join(rates)
+        price = self.string_separator2.join(rates)
+        price = self.py3.safe_format(self.format, {'price': price})
+        response['full_text'] = price
         return response
 
 
