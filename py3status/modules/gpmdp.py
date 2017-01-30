@@ -3,7 +3,7 @@
 Display song currently playing in Google Play Music Desktop Player.
 
 Configuration parameters:
-    cache_timeout:  how often we refresh this module in seconds (default 5)
+    cache_timeout:  refresh interval for this module (default 5)
     format:         specify the items and ordering of the data in the status bar.
                     These area 1:1 match to gpmdp-remote's options
                     (default '♫ {info}')
@@ -18,7 +18,6 @@ Format placeholders:
     {time_total}      Print total song time in milliseconds
     {status}          Print whether GPMDP is paused or playing
     {current}         Print now playing song in "artist - song" format
-    {help}            Print this help message
 
 
 Requires:
@@ -29,8 +28,6 @@ Requires:
 @license BSD
 """
 
-from subprocess import check_output
-
 
 class Py3status:
     """
@@ -39,28 +36,24 @@ class Py3status:
     cache_timeout = 5
     format = u'♫ {info}'
 
-    @staticmethod
-    def _run_cmd(cmd):
-        return check_output(['gpmdp-remote', cmd]).decode('utf-8').strip()
-
     def gpmdp(self):
-        if self._run_cmd('status') == 'Paused':
-            result = ''
-        else:
+        def _run_cmd(cmd):
+            return self.py3.command_output(['gpmdp-remote', cmd]).strip()
+
+        full_text = ''
+        if _run_cmd('status') == 'Playing':
             cmds = ['info', 'title', 'artist', 'album', 'status', 'current',
                     'time_total', 'time_current', 'album_art']
             data = {}
             for cmd in cmds:
-                if '{%s}' % cmd in self.format:
-                    data[cmd] = self._run_cmd(cmd)
+                if self.py3.format_contains(self.format, '{0}'.format(cmd)):
+                    data[cmd] = _run_cmd(cmd)
+            full_text = self.py3.safe_format(self.format, data)
 
-            result = self.py3.safe_format(self.format, data)
-
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': result
+            'full_text': full_text
         }
-        return response
 
 
 if __name__ == "__main__":
