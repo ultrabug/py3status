@@ -3,8 +3,9 @@
 Display song currently playing in Clementine.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 5)
-    format: Display format for Clementine (default '♫ {current}')
+    cache_timeout: refresh interval for this module (default 5)
+    format: display format for this module (default '♫ {current}')
+    string_unavailable: unavailable format (default 'clementine: N/A')
 
 Format placeholders:
     {current} currently playing
@@ -25,53 +26,50 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = u'♫ {current}'
-
-    def _getMetadatas(self):
-        """
-        Get the current song metadatas (artist - title)
-        """
-        track_id = self.py3.command_output(CMD + '.GetCurrentTrack')
-        metadatas = self.py3.command_output(CMD + '.GetMetadata {}'.format(track_id))
-        lines = filter(None, metadatas.splitlines())
-
-        now_playing = ''
-
-        if lines:
-            artist = ''
-            title = ''
-            internet_radio = False
-
-            for item in lines:
-                if item.find('artist:') != -1:
-                    artist = item[8:]
-                if item.find('title:') != -1:
-                    title = item[7:]
-
-            if title.find('.wav') != -1 or title.find('.mp3') != -1:
-                title = title[:-4]
-            if title.find('http') != -1:
-                title = ''
-                internet_radio = True
-
-            if artist and title:
-                now_playing = '{} - {}'.format(artist, title)
-            elif artist:
-                now_playing = artist
-            elif title:
-                now_playing = title
-            elif internet_radio:
-                now_playing = 'Internet Radio'
-
-        return now_playing
+    string_unavailable = 'clementine: N/A'
 
     def clementine(self):
         """
-        Get the current "artist - title" and return it.
+        Get current song metadata: "artist - title"
         """
-        return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'current': self._getMetadatas()})
-        }
+        artist = lines = now_playing = title = ''
+        internet_radio = False
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+
+        try:
+            track_id = self.py3.command_output(CMD + '.GetCurrentTrack')
+            metadata = self.py3.command_output(CMD + '.GetMetadata {}'.format(track_id))
+            lines = filter(None, metadata.splitlines())
+        except:
+            response['color'] = self.py3.COLOR_BAD
+            response['full_text'] = self.string_unavailable
+        else:
+            if lines:
+                for item in lines:
+                    if item.find('artist:') != -1:
+                        artist = item[8:]
+                    if item.find('title:') != -1:
+                        title = item[7:]
+
+                if title.find('.wav') != -1 or title.find('.mp3') != -1:
+                    title = title[:-4]
+                if title.find('http') != -1:
+                    title = ''
+                    internet_radio = True
+
+                if artist and title:
+                    now_playing = '{} - {}'.format(artist, title)
+                elif artist:
+                    now_playing = artist
+                elif title:
+                    now_playing = title
+                elif internet_radio:
+                    now_playing = 'Internet Radio'
+
+                response['full_text'] = self.py3.safe_format(
+                    self.format, {'current': now_playing}).strip()
+
+        return response
 
 
 if __name__ == "__main__":
