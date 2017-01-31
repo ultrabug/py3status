@@ -77,7 +77,6 @@ from re import findall
 from glob import iglob
 
 import math
-import subprocess
 import os
 
 BLOCKS = u"_▁▂▃▄▅▆▇█"
@@ -240,11 +239,7 @@ class Py3status:
 
             return battery
 
-        acpi_raw = subprocess.check_output(
-            ["acpi", "-b", "-i"],
-            stderr=subprocess.STDOUT)
-
-        acpi_list = acpi_raw.decode("UTF-8").split('\n')
+        acpi_list = self.py3.command_output(["acpi", "-b", "-i"]).splitlines()
 
         # Separate the output because each pair of lines corresponds to a
         # single battery.  Now the list index will correspond to the index of
