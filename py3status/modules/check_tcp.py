@@ -3,13 +3,15 @@
 Display status of a TCP port on a given host.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format: what to display on the bar (default '{host}:{port} {state}')
-    host: check if tcp port on host is up (default 'localhost')
-    port: the tcp port (default 22)
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default '{host}:{port} {state}')
+    host: check host (default 'localhost')
+    port: check port number (default 22)
+    string_down: show string when available (default 'UP')
+    string_up: show string when unavailable (default 'DOWN')
 
 Format placeholders:
-    {state} port state ('DOWN' or 'UP')
+    {state} port state
 
 Color options:
     color_down: Unavailable, default color_bad
@@ -29,23 +31,23 @@ class Py3status:
     format = '{host}:{port} {state}'
     host = 'localhost'
     port = 22
+    string_down = 'DOWN'
+    string_up = 'UP'
+
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_UP or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_DOWN or self.py3.COLOR_BAD
 
     def check_tcp(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = sock.connect_ex((self.host, self.port))
+        state = self.string_down if result else self.string_up
 
-        if result == 0:
-            state = 'UP'
-            response['color'] = self.py3.COLOR_UP or self.py3.COLOR_GOOD
-        else:
-            state = 'DOWN'
-            response['color'] = self.py3.COLOR_DOWN or self.py3.COLOR_BAD
-
-        response['full_text'] = self.py3.safe_format(self.format,
-                                                     {'state': state})
-        return response
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'state': state}),
+            'color': self.color_off if result else self.color_on
+        }
 
 
 if __name__ == "__main__":
