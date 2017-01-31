@@ -3,8 +3,12 @@
 Display status of Dropbox daemon.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 10)
-    format: prefix text for the dropbox status (default 'Dropbox: {}')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default 'Dropbox: {status}')
+    string_busy: show when Dropbox is busy (default None)
+    string_off: show when Dropbox isn't running (default None)
+    string_on: show when Dropbox is up to date (default None)
+    string_unavailable: show when Dropbox isn't installed (default "Dropbox isn't installed!")
 
 Valid status values include:
     - Dropbox isn't running!
@@ -13,20 +17,20 @@ Valid status values include:
     - Syncing "filename"
     - Up to date
 
+Format placeholders:
+    {status} current Dropbox status
+
 Color options:
-    color_bad: Dropbox is unavailable
-    color_degraded: All other statuses
-    color_good: Dropbox up-to-date
+    color_bad: Not running
+    color_degraded: Busy
+    color_good: Up to date
 
 Requires:
-    dropbox-cli: command line tool
+    dropbox-cli: command line interface for dropbox
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
 """
-
-import shlex
-import subprocess
 
 
 class Py3status:
@@ -34,23 +38,51 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = 'Dropbox: {}'
+    format = 'Dropbox: {status}'
+    string_busy = None
+    string_off = None
+    string_on = None
+    string_unavailable = "Dropbox isn't installed!"
+
+    class Meta:
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',
+                    'placeholder': 'status',
+                    'msg': '{} should not be used in format use `{status}`',
+                },
+            ],
+        }
 
     def dropbox(self):
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
-        lines = subprocess.check_output(
-            shlex.split('dropbox-cli status')).decode('utf-8').split('\n')
-        status = lines[0]
-        full_text = self.format.format(str(status))
-        response['full_text'] = full_text
-
-        if status == "Dropbox isn't running!":
+        try:
+            status = self.py3.command_output('dropbox-cli status').splitlines()[0]
+        except:
+            response['cached_until'] = self.py3.CACHE_FOREVER
             response['color'] = self.py3.COLOR_BAD
-        elif status == "Up to date":
-            response['color'] = self.py3.COLOR_GOOD
+            response['full_text'] = self.string_unavailable
         else:
-            response['color'] = self.py3.COLOR_DEGRADED
+            if status == "Dropbox isn't running!":
+                status = status.replace('Dropbox ', '')
+                response['color'] = self.py3.COLOR_BAD
+                if self.string_off != '':
+                    status = self.string_off
+
+            elif status == "Up to date":
+                response['color'] = self.py3.COLOR_GOOD
+                if self.string_on != '':
+                    status = self.string_on
+            else:
+                response['color'] = self.py3.COLOR_DEGRADED
+                if self.string_busy != '':
+                    status = self.string_busy
+
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'status': status})
+
         return response
 
 
