@@ -10,8 +10,9 @@ from pprint import pformat
 from subprocess import Popen, PIPE
 from time import time
 
+from py3status import exceptions
 from py3status.formatter import Formatter, Composite
-
+from py3status.request import HttpResponse
 
 PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = 'error'
@@ -66,6 +67,12 @@ class Py3:
     # Shared by all Py3 Instances
     _formatter = Formatter()
     _none_color = NoneColor()
+
+    # Exceptions
+    Py3Exception = exceptions.Py3Exception
+    RequestException = exceptions.RequestException
+    RequestTimeout = exceptions.RequestTimeout
+    RequestURLError = exceptions.RequestURLError
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
@@ -787,3 +794,37 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def request(self, url, params=None, data=None, headers=None,
+                timeout=None, auth=None):
+        """
+        Make a request to a url and retrieve the results.
+
+        :param url: url to request eg `http://example.com`
+        :param params: extra query string parameters as a dict
+        :param data: POST data as a dict.  If this is not supplied the GET method will be used
+        :param headers: http headers to be added to the request as a dict
+        :param timeout: timeout for the request in seconds
+        :param auth: authentication info as tuple `(username, password)`
+
+        :returns: HttpResponse
+        """
+
+        # The aim of this function is to be a lmited lightweight replacement
+        # for the requests library but using only pythons standard libs.
+
+        # IMPORTANT NOTICE
+        # This function is excluded from private variable hiding as it is
+        # likely to need api keys etc which people may have obfuscated.
+        # Therefore it is important that no logging is done in this function
+        # that might reveal this information.
+
+        if headers is None:
+            headers = {}
+
+        return HttpResponse(url,
+                            params=params,
+                            data=data,
+                            headers=headers,
+                            timeout=timeout,
+                            auth=auth)
