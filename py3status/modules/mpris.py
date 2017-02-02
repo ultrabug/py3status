@@ -234,7 +234,7 @@ class Py3status:
         except Exception:
             ptime = None
 
-        if '{time}' in self.format and self._data.get('state') == PLAYING:
+        if self.py3.format_contains(self.format, 'time') and self._data.get('state') == PLAYING:
             # Don't get trapped in aliasing errors!
             update = time() + 0.5
         else:
