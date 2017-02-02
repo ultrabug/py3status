@@ -28,10 +28,6 @@ Requires:
 """
 
 import re
-import shlex
-
-from subprocess import check_output
-
 BTMAC_RE = re.compile(r'[0-9A-F:]{17}')
 
 
@@ -51,17 +47,16 @@ class Py3status:
         The whole command:
         hcitool name `hcitool con | sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'`
         """
-        out = check_output(shlex.split('hcitool con'))
-        macs = set(re.findall(BTMAC_RE, out.decode('utf-8')))
+        macs = set(BTMAC_RE.findall(self.py3.command_output('hcitool con')))
         color = self.py3.COLOR_BAD
 
         if macs:
             data = []
             for mac in macs:
-                out = check_output(shlex.split('hcitool name %s' % mac))
+                name = self.py3.command_output('hcitool name %s' % mac).strip()
                 fmt_str = self.py3.safe_format(
                     self.format,
-                    {'name': out.strip().decode('utf-8'), 'mac': mac}
+                    {'name': name, 'mac': mac}
                 )
                 data.append(fmt_str)
 

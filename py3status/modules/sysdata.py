@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display system RAM and CPU utilization.
+Display system RAM, SWAP and CPU utilization.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
