@@ -18,6 +18,8 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
+    string_error: show when iw command failed (default "iw: command failed")
+    string_unavailable: show when iw isn't installed (default "iw: isn't installed")
     use_sudo: Use sudo to run iw, make sure iw requires no password by
         adding a sudoers entry like
         "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
@@ -39,15 +41,14 @@ Color options:
     color_good: Signal strength above signal_degraded
 
 Requires:
-    iw:
-    ip: if {ip} is used
+    iw: nl80211 based cli configuration utility for wireless devices
+    ip: only for {ip}. may be part of iproute2: ip routing utilities
 
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
 """
 
 import re
-import subprocess
 import math
 
 
@@ -66,6 +67,8 @@ class Py3status:
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
+    string_error = "iw: command failed"
+    string_unavailable = "iw: isn't installed"
     use_sudo = False
 
     def __init__(self):
@@ -74,7 +77,7 @@ class Py3status:
         # Try and guess the wifi interface
         try:
             cmd = ['iw', 'dev']
-            iw = subprocess.check_output(cmd).decode('utf-8')
+            iw = self.py3.command_output(cmd)
 
             devices = re.findall('Interface\s*([^\s]+)', iw)
             if not devices or 'wlan0' in devices:
@@ -84,17 +87,27 @@ class Py3status:
         except:
             pass
 
-    def get_wifi(self):
+    def wifi(self):
         """
         Get WiFi status using iw.
         """
+        if not self.py3.check_commands(['iw']):
+            return {'cache_until': self.py3.CACHE_FOREVER,
+                    'color': self.py3.COLOR_BAD,
+                    'full_text': self.string_unavailable}
+
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
-
         cmd = ['iw', 'dev', self.device, 'link']
+
         if self.use_sudo:
             cmd.insert(0, 'sudo')
-        iw = subprocess.check_output(cmd).decode('utf-8')
+        try:
+            iw = self.py3.command_output(cmd)
+        except:
+            return {'cache_until': self.py3.CACHE_FOREVER,
+                    'color': self.py3.COLOR_BAD,
+                    'full_text': self.string_error}
 
         bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
         if bitrate_out:
@@ -120,11 +133,11 @@ class Py3status:
         else:
             ssid = None
 
-        if '{ip}' in self.format_up:
+        if self.py3.format_contains(self.format_up, 'ip'):
             cmd = ['ip', 'addr', 'list', self.device]
             if self.use_sudo:
                 cmd.insert(0, 'sudo')
-            ip_info = subprocess.check_output(cmd).decode('utf-8')
+            ip_info = self.py3.command_output(cmd)
             ip_match = re.search('inet\s+([0-9.]+)', ip_info)
             if ip_match:
                 ip = ip_match.group(1)
@@ -143,40 +156,31 @@ class Py3status:
             quality = int((bitrate / self._max_bitrate) * 100)
         else:
             quality = 0
-        icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1
-                                                          )))]
+        icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1)))]
 
         if ssid is None:
             full_text = self.format_down
             color = getattr(self.py3, 'COLOR_{}'.format(self.down_color.upper()))
         else:
-            bad = False
-            degraded = False
+            color = self.py3.COLOR_GOOD
             if bitrate:
                 if bitrate <= self.bitrate_bad:
-                    bad = True
+                    color = self.py3.COLOR_BAD
                 elif bitrate <= self.bitrate_degraded:
-                    degraded = True
+                    color = self.py3.COLOR_DEGRADED
                 bitrate = '{} {}'.format(bitrate, bitrate_unit)
             else:
                 bitrate = '? MBit/s'
             if signal_dbm:
                 if signal_dbm <= self.signal_dbm_bad:
-                    bad = True
+                    color = self.py3.COLOR_BAD
                 elif signal_dbm <= self.signal_dbm_degraded:
-                    degraded = True
+                    color = self.py3.COLOR_DEGRADED
                 signal_dbm = '{} dBm'.format(signal_dbm)
                 signal_percent = '{}%'.format(signal_percent)
             else:
                 signal_dbm = '? dBm'
                 signal_percent = '?%'
-
-            if bad:
-                color = self.py3.COLOR_BAD
-            elif degraded:
-                color = self.py3.COLOR_DEGRADED
-            else:
-                color = self.py3.COLOR_GOOD
 
             full_text = self.py3.safe_format(
                 self.format_up,
@@ -190,12 +194,11 @@ class Py3status:
                     ssid=ssid,
                 ))
 
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text,
-            'color': color
+        return {
+            'cache_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': full_text
         }
-        return response
 
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)
