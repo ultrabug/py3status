@@ -6,23 +6,23 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 30)
     delimiter: the delimiter between parent and child objects
-        (default '_')
+        (default '-')
     format: placeholders will be replaced by the returned json key names
-        (default '')
+        (default None)
     timeout: how long before deciding we're offline
         (default 5)
     url: specify a url to fetch json from
-        (default '')
+        (default None)
 
 Format placeholders:
     Placeholders will be replaced by the json keys
 
     Placeholders for objects with sub-objects are flattened using 'delimiter' in between
-        (eg. {'parent': {'child': 'value'}} will use placeholder {parent_child}
+        (eg. {'parent': {'child': 'value'}} will use placeholder {parent-child}
 
     Placeholders for list elements have 'delimiter' followed by the index
-        (eg. {'parent': ['this', 'that']) will use placeholders {parent_0} for 'this' and
-        {parent_1} for 'that'
+        (eg. {'parent': ['this', 'that']) will use placeholders {parent-0} for 'this' and
+        {parent-1} for 'that'
 
 @author vicyap
 """
@@ -41,29 +41,30 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    delimiter = '_'
-    format = ''
+    delimiter = '-'
+    format = None
     timeout = 5
-    url = ''
+    url = None
 
     def _flatten(self, d, parent_key=None):
         """Flatten a dictionary.
 
         Values that are dictionaries are flattened using self.delimiter in between
-            (eg. parent_child)
+            (eg. parent-child)
         Values that are lists are flattened using self.delimiter followed by the index
-            (eg. parent_0)
+            (eg. parent-0)
         """
         items = []
         for k, v in d.items():
-            new_key = parent_key + self.delimiter + k if parent_key else k
+            if parent_key:
+                k = u'{}{}{}'.format(parent_key, self.delimiter, k)
+            if isinstance(v, list):
+                v = dict(enumerate(v))
             if isinstance(v, collections.Mapping):
-                items.extend(self._flatten(v, new_key).items())
-            elif isinstance(v, list):
-                items.extend(
-                    [(new_key + self.delimiter + str(i), str(x)) for i, x in enumerate(v)])
+                items.append((k, v))
+                items.extend(self._flatten(v, k).items())
             else:
-                items.append((new_key, v))
+                items.append((k, v))
         return dict(items)
 
     def _query_url(self):
