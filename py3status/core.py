@@ -493,6 +493,21 @@ class Py3statusWrapper():
         """
         raise KeyboardInterrupt()
 
+    def purge_module(self, module_name):
+        """
+        A module has been removed e.g. a module that had an error.
+        We need to find any containers and remove the module from them.
+        """
+        containers = self.config['py3_config']['.module_groups']
+        containers_to_update = set()
+        if module_name in containers:
+            containers_to_update.update(set(containers[module_name]))
+        for container in containers_to_update:
+            try:
+                self.modules[container].module_class.items.remove(module_name)
+            except ValueError:
+                pass
+
     def notify_update(self, update, urgent=False):
         """
         Name or list of names of modules that have updated.

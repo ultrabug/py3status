@@ -161,9 +161,8 @@ class Events(Thread):
         if not module_info:
             return
         module = module_info['module']
-        # if module is a py3status one and it has an on_click function then
-        # call it.
-        if module_info['type'] == 'py3status' and module.click_events:
+        # if module is a py3status one call it.
+        if module_info['type'] == 'py3status':
             module.click_event(event)
             if self.config['debug']:
                 self.py3_wrapper.log('dispatching event {}'.format(event))
