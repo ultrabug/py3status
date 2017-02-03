@@ -5,9 +5,9 @@ Display Yandex.Disk status.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default 'Yandex.Disk: {status}')
-    string_busy: show when Yandex.Disk is busy (default 'Busy')
-    string_off: show when Yandex.Disk isn't running (default 'Not started')
-    string_on: show when Yandex.Disk is idling (default 'Idle')
+    status_busy: show when Yandex.Disk is busy (default None)
+    status_off: show when Yandex.Disk isn't running (default 'Not started')
+    status_on: show when Yandex.Disk is idling (default 'Idle')
 
 Format placeholders:
     {status} Yandex.Disk status
@@ -23,7 +23,6 @@ Requires:
 @author Vladimir Potapev (github:vpotapev)
 @license BSD
 """
-
 string_error = "Yandex.Disk: isn't configured"
 string_unavailable = "Yandex.Disk: isn't installed"
 
@@ -34,11 +33,11 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = 'Yandex.Disk: {status}'
-    string_busy = 'Busy'
-    string_off = 'Not started'
-    string_on = 'Idle'
+    status_busy = None
+    status_off = 'Not started'
+    status_on = 'Idle'
 
-    def yandex(self):
+    def yandexdisk(self):
         if not self.py3.check_commands(["yandex-disk"]):
             return {'cached_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_BAD,
@@ -52,13 +51,14 @@ class Py3status:
 
         if status == "Error: daemon not started":
             color = self.py3.COLOR_BAD
-            status = self.string_off
+            status = self.status_off
         elif status == "Synchronization core status: idle":
             color = self.py3.COLOR_GOOD
-            status = self.string_on
+            status = self.status_on
         else:
             color = self.py3.COLOR_DEGRADED
-            status = self.string_busy
+            if self.status_busy is not None:
+                status = self.status_busy
 
         return {'cached_until': self.py3.time_in(self.cache_timeout),
                 'color': color,
