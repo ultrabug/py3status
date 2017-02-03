@@ -4,21 +4,23 @@ Display status of Dropbox daemon.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    format: display format for this module (default 'Dropbox: {status}')
-    string_busy: show when Dropbox is busy (default None)
-    string_off: show when Dropbox isn't running (default None)
-    string_on: show when Dropbox is up to date (default None)
-    string_unavailable: show when Dropbox isn't installed (default "Dropbox isn't installed!")
+    format: display format for this module (default "Dropbox: {status}")
+    status_busy: text for placeholder {status} when Dropbox is busy (default None)
+    status_off: text for placeholder {status} when Dropbox isn't running (default "isn't running")
+    status_on: text for placeholder {status} when Dropbox is up to date (default "Up to date")
 
-Valid status values include:
+Value for `status_off` if not set:
     - Dropbox isn't running!
+Value for `status_on` if not set:
+    - Up to date
+Values for `status_busy` if not set:
+    - Connecting...
     - Starting...
     - Downloading file list...
     - Syncing "filename"
-    - Up to date
 
 Format placeholders:
-    {status} current Dropbox status
+    {status} Dropbox status
 
 Color options:
     color_bad: Not running
@@ -32,17 +34,19 @@ Requires:
 @license BSD
 """
 
+STRING_UNAVAILABLE = "Dropbox: isn't installed"
+STRING_ERROR = "Dropbox: command failed"
+
 
 class Py3status:
     """
     """
     # available configuration parameters
     cache_timeout = 10
-    format = 'Dropbox: {status}'
-    string_busy = None
-    string_off = None
-    string_on = None
-    string_unavailable = "Dropbox isn't installed!"
+    format = "Dropbox: {status}"
+    status_busy = None
+    status_off = "isn't running"
+    status_on = "Up to date"
 
     class Meta:
         deprecated = {
@@ -56,34 +60,37 @@ class Py3status:
         }
 
     def dropbox(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
+        if not self.py3.check_commands(['dropbox-cli']):
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_UNAVAILABLE
+            }
         try:
             status = self.py3.command_output('dropbox-cli status').splitlines()[0]
         except:
-            response['cached_until'] = self.py3.CACHE_FOREVER
-            response['color'] = self.py3.COLOR_BAD
-            response['full_text'] = self.string_unavailable
+            return {
+                'cache_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+
+        if status == "Dropbox isn't running!":
+            color = self.py3.COLOR_BAD
+            status = self.status_off
+        elif status == "Up to date":
+            color = self.py3.COLOR_GOOD
+            status = self.status_on
         else:
-            if status == "Dropbox isn't running!":
-                status = status.replace('Dropbox ', '')
-                response['color'] = self.py3.COLOR_BAD
-                if self.string_off != '':
-                    status = self.string_off
+            color = self.py3.COLOR_DEGRADED
+            if self.status_busy is not None:
+                status = self.status_busy
 
-            elif status == "Up to date":
-                response['color'] = self.py3.COLOR_GOOD
-                if self.string_on != '':
-                    status = self.string_on
-            else:
-                response['color'] = self.py3.COLOR_DEGRADED
-                if self.string_busy != '':
-                    status = self.string_busy
-
-            response['full_text'] = self.py3.safe_format(
-                self.format, {'status': status})
-
-        return response
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': self.py3.safe_format(self.format, {'status': status})
+        }
 
 
 if __name__ == "__main__":
