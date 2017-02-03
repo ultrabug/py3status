@@ -5,22 +5,22 @@ Display if a process is running.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: default format for this module (default '{icon}')
-    full: if True, match against the full command line (default False)
-    icon_off: display when the process is not running (default '■')
-    icon_on: display when the process is running (default '●')
-    process: the process name to check if it is running (default None)
-    string_unavailable: no process name (default 'process_status: N/A')
+    full: if True, match against full command line (default False)
+    icon_off: show when process not running (default '■')
+    icon_on: show when process running (default '●')
+    process: process name to check for (default None)
 
 Format placeholders:
     {icon} process icon
     {process} process name
 
 Color options:
-    color_bad: process currently not running or unavailable
-    color_good: process currently running
+    color_bad: Not running
+    color_good: Running
 
 @author obb, Moritz Lüdecke
 """
+STRING_ERROR = 'process_status: N/A'
 
 
 class Py3status:
@@ -33,7 +33,6 @@ class Py3status:
     icon_off = u'■'
     icon_on = u'●'
     process = None
-    string_unavailable = 'process_status: N/A'
 
     class Meta:
         deprecated = {
@@ -56,33 +55,36 @@ class Py3status:
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
 
     def _is_running(self):
-        pgrep = ["pgrep", self.process]
-
-        if self.full:
-            pgrep = ["pgrep", "-f", self.process]
         try:
+            pgrep = ["pgrep", self.process]
+            if self.full:
+                pgrep = ["pgrep", "-f", self.process]
             self.py3.command_output(pgrep)
+            return True
         except:
             return False
-        else:
-            return True
 
     def process_status(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
         if self.process is None:
-            response['cached_until'] = self.py3.CACHE_FOREVER
-            response['color'] = self.py3.COLOR_BAD
-            response['full_text'] = self.string_unavailable
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+
+        if self._is_running():
+            icon = self.icon_on
+            color = self.color_on
         else:
-            run = self._is_running()
-            icon = self.icon_on if run else self.icon_off
+            icon = self.icon_off
+            color = self.color_off
 
-            response['color'] = self.color_on if run else self.color_off
-            response['full_text'] = self.py3.safe_format(self.format, {'icon': icon,
-                                                         'process': self.process}),
-
-        return response
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': self.py3.safe_format(
+                self.format, {'icon': icon, 'process': self.process})
+        }
 
 
 if __name__ == "__main__":
