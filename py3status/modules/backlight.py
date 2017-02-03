@@ -86,7 +86,7 @@ class Py3status:
         self._set_backlight_level(level)
 
     def _set_backlight_level(self, level):
-        self.py3.command_run(['xbacklight', '-set', str(level)])
+        os.system("xbacklight -set %d" % level)
 
     def _get_backlight_level(self):
         for brightness_line in open("%s/brightness" % self.device_path, 'rb'):
