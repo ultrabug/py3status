@@ -7,11 +7,10 @@ Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default '{status} {queued}')
-    string_offline: show when Insync is offline (default 'OFFLINE')
-    string_paused: show when Insync is paused (default 'PAUSED')
-    string_share: show when Insync is sharing (default 'SHARE')
-    string_syncing: show when Insync is syncing (default 'SYNCING')
-    string_unavailable: show when unavailable (default "Insync: isn't installed")
+    status_offline: show when Insync is offline (default 'OFFLINE')
+    status_paused: show when Insync is paused (default 'PAUSED')
+    status_share: show when Insync is sharing (default 'SHARE')
+    status_syncing: show when Insync is syncing (default 'SYNCING')
 
 Format placeholders:
     {status} Insync status
@@ -29,23 +28,24 @@ Requires:
 @author Joshua Pratt <jp10010101010000@gmail.com>
 @license BSD
 """
+STRING_UNAVAILABLE = "Insync: isn't installed"
+STRING_ERROR = "Insync: isn't running"
 
 
 class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = '{status} {queued}'
-    string_offline = 'OFFLINE'
-    string_paused = 'PAUSED'
-    string_share = 'SHARE'
-    string_syncing = 'SYNCING'
-    string_unavailable = "Insync: isn't installed"
+    status_offline = 'OFFLINE'
+    status_paused = 'PAUSED'
+    status_share = 'SHARE'
+    status_syncing = 'SYNCING'
 
     def insync(self):
         if not self.py3.check_commands(["insync"]):
             return {'cached_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_BAD,
-                    'full_text': self.string_unavailable}
+                    'full_text': STRING_UNAVAILABLE}
 
         # get sync progress
         queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()
@@ -59,16 +59,19 @@ class Py3status:
         # get status
         status = self.py3.command_output(["insync", "get_status"]).strip()
         color = self.py3.COLOR_DEGRADED
-        if status == "SHARE":
-            color = self.py3.COLOR_GOOD
-            status = self.string_share
+        if status == "Insync doesn't seem to be running. Start it first.":
+            color = self.py3.COLOR_BAD
+            status = STRING_ERROR
         elif status == "OFFLINE":
             color = self.py3.COLOR_BAD
-            status = self.string_offline
+            status = self.status_offline
+        elif status == "SHARE":
+            color = self.py3.COLOR_GOOD
+            status = self.status_share
         elif status == "PAUSED":
-            status = self.string_paused
+            status = self.status_paused
         elif status == "SYNCING":
-            status = self.string_syncing
+            status = self.status_syncing
 
         return {
             'color': color,
