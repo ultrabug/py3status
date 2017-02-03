@@ -12,6 +12,8 @@ but this can be configured with the `screenshot_command` configuration parameter
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)
     file_length: generated file_name length (default 4)
+    format: format to display (default 'SHOT')
+    format_screenshot: format to display (default '{filename}')
     push: True/False if you want to push your screenshot to your server
         (default True)
     save_path: Directory where to store your screenshots. (default '~/Pictures/')
@@ -20,6 +22,9 @@ Configuration parameters:
     upload_path: the remote path where to push the screenshot (default '/files')
     upload_server: your server address (default 'puzzledge.org')
     upload_user: your ssh user (default 'erol')
+
+format_screenshot placeholder:
+    {filename} randomized filename
 
 Color options:
     color_good: Displayed color
@@ -38,6 +43,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     file_length = 4
+    format = 'SHOT'
+    format_screenshot = '{filename}'
     push = True
     save_path = '%s%s' % (os.environ['HOME'], '/Pictures/')
     screenshot_command = 'gnome-screenshot -f'
@@ -58,6 +65,8 @@ class Py3status:
         subprocess.Popen(command.split())
 
         self.full_text = '%s%s' % (file_name, '.jpg')
+        self.full_text = self.py3.safe_format(self.format_screenshot,
+                                              {'filename': self.full_text})
 
         if (self.push and self.upload_server and self.upload_user and
                 self.upload_path):
@@ -73,14 +82,13 @@ class Py3status:
 
     def screenshot(self):
         if self.full_text == '':
-            self.full_text = 'SHOT'
+            self.full_text = self.format
 
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': self.py3.COLOR_GOOD,
             'full_text': self.full_text
         }
-        return response
 
 
 if __name__ == "__main__":
