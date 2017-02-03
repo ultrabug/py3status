@@ -220,7 +220,7 @@ class Py3status:
                 t = datetime.now(zone)
                 format_time = self.format_time[self.active_time_format]
                 icon = None
-                if '{icon}' in format_time:
+                if self.py3.format_contains(format_time, 'icon'):
                     # calculate the decimal hour
                     h = t.hour + t.minute / 60.
                     # make 12 hourly etc
