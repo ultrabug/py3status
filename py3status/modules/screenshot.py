@@ -34,7 +34,6 @@ Color options:
 import os
 import random
 import string
-import subprocess
 
 
 class Py3status:
@@ -62,7 +61,7 @@ class Py3status:
         command = '%s %s/%s%s' % (self.screenshot_command, self.save_path,
                                   file_name, '.jpg')
 
-        subprocess.Popen(command.split())
+        self.py3.command_run(command.split())
 
         self.full_text = '%s%s' % (file_name, '.jpg')
         self.full_text = self.py3.safe_format(self.format_screenshot,
@@ -73,7 +72,7 @@ class Py3status:
             command = 'scp %s/%s%s %s@%s:%s' % (
                 self.save_path, file_name, '.jpg', self.upload_user,
                 self.upload_server, self.upload_path)
-            subprocess.Popen(command.split())
+            self.py3.command_run(command.split())
 
     def _filename_generator(self,
                             size=6,
