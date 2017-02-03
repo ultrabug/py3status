@@ -1,32 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-Display NVIDIA GPU temperatures.
+Display NVIDIA GPU temperature.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default 'GPU: {format_temp}')
     format_temp: display format for temperatures (default '{temp}°C')
-    string_separator: display separator (only if more than one) (default '|')
-    string_unavailable: display unavailable (default 'nvidia_temp: N/A')
+    temp_separator: temperature separator (if more than one) (default '|')
 
 Format placeholders:
-    {format_temp} display format for temperatures
+    {format_temp} format for temperatures
 
 format_temp placeholders:
-    {temp} current temperatures
+    {temp} temperatures
 
 Color options:
-    color_bad: Temperature unavailable
-    color_good: Temperature available
+    color_bad: Unavailable
+    color_good: Available
 
 Requires:
-    nvidia-smi:
+    nvidia-smi: NVIDIA System Management Interface program
 
 @author jmdana <https://github.com/jmdana>
 @license BSD
 """
 
 import re
+TEMP_RE = re.compile(r"Current Temp\s+:\s+([0-9]+)")
+STRING_UNAVAILABLE = "nvidia-smi: isn't installed"
+STRING_ERROR = "nvidia_temp: N/A"
 
 
 class Py3status:
@@ -36,42 +38,51 @@ class Py3status:
     cache_timeout = 10
     format = "GPU: {format_temp}"
     format_temp = u"{temp}°C"
-    string_separator = '|'
-    string_unavailable = "nvidia_temp: N/A"
+    temp_separator = '|'
 
     class Meta:
+
+        def deprecate_function(config):
+            out = {}
+            if 'format_units' in config:
+                out['format_temp'] = u'{{temp}}{}'.format(config['format_units'])
+            if 'format_prefix' in config:
+                out['format'] = u'{}{{format_temp}}'.format(config['format_prefix'])
+            return out
+
         deprecated = {
-            'rename': [
-                {
-                    'param': 'temp_separator',
-                    'new': 'string_separator',
-                    'msg': 'obsolete parameter use `string_separator`',
-                },
+            'function': [
+                {'function': deprecate_function},
             ],
         }
 
     def nvidia_temp(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        if not self.py3.check_commands('nvidia-smi'):
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_UNAVAILABLE
+            }
 
-        temps = self.py3.command_output("nvidia-smi -q -d TEMPERATURE")
-        temps = re.findall(re.compile(r"Current Temp\s+:\s+([0-9]+)"), temps)
-
+        temps = self.py3.command_output('nvidia-smi -q -d TEMPERATURE')
+        temps = set(TEMP_RE.findall(temps))
         if temps == []:
-            response['cached_until'] = self.py3.CACHE_FOREVER
-            response['color'] = self.py3.COLOR_BAD
-            response['full_text'] = self.string_unavailable
-        else:
-            data = []
-            for temp in temps:
-                data.append(self.py3.safe_format(self.format_temp, {'temp': temp}))
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+        data = []
+        for temp in temps:
+            data.append(self.py3.safe_format(self.format_temp, {'temp': temp}))
+        data = self.py3.composite_join(self.temp_separator, data)
+        full_text = self.py3.safe_format(self.format, {'format_temp': data})
 
-            data = self.py3.composite_join(self.string_separator, data)
-            data = self.py3.safe_format(self.format, {'format_temp': data})
-
-            response['color'] = self.py3.COLOR_GOOD
-            response['full_text'] = data
-
-        return response
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': self.py3.COLOR_GOOD,
+            'full_text': full_text
+        }
 
 
 if __name__ == "__main__":
