@@ -18,8 +18,6 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
-    string_error: show when iw command failed (default "iw: command failed")
-    string_unavailable: show when iw isn't installed (default "iw: isn't installed")
     use_sudo: Use sudo to run iw, make sure iw requires no password by
         adding a sudoers entry like
         "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
@@ -41,7 +39,7 @@ Color options:
     color_good: Signal strength above signal_degraded
 
 Requires:
-    iw: nl80211 based cli configuration utility for wireless devices
+    iw: cli configuration utility for wireless devices
     ip: only for {ip}. may be part of iproute2: ip routing utilities
 
 @author Markus Weimar <mail@markusweimar.de>
@@ -50,6 +48,8 @@ Requires:
 
 import re
 import math
+string_error = "iw: command failed"
+string_unavailable = "iw: isn't installed"
 
 
 class Py3status:
@@ -67,8 +67,6 @@ class Py3status:
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
-    string_error = "iw: command failed"
-    string_unavailable = "iw: isn't installed"
     use_sudo = False
 
     def __init__(self):
@@ -78,7 +76,6 @@ class Py3status:
         try:
             cmd = ['iw', 'dev']
             iw = self.py3.command_output(cmd)
-
             devices = re.findall('Interface\s*([^\s]+)', iw)
             if not devices or 'wlan0' in devices:
                 self.device = 'wlan0'
@@ -94,21 +91,20 @@ class Py3status:
         if not self.py3.check_commands(['iw']):
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_BAD,
-                    'full_text': self.string_unavailable}
+                    'full_text': string_unavailable}
 
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
         cmd = ['iw', 'dev', self.device, 'link']
-
         if self.use_sudo:
             cmd.insert(0, 'sudo')
         try:
             iw = self.py3.command_output(cmd)
         except:
             return {'cache_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_BAD,
-                    'full_text': self.string_error}
-
+                    'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                    'full_text': string_error}
+        # bitrate
         bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
         if bitrate_out:
             bitrate = float(bitrate_out.group(1))
@@ -120,6 +116,8 @@ class Py3status:
         else:
             bitrate = None
             bitrate_unit = None
+
+        # signal
         signal_out = re.search('signal: ([\-0-9]+)', iw)
         if signal_out:
             signal_dbm = int(signal_out.group(1))
@@ -133,6 +131,7 @@ class Py3status:
         else:
             ssid = None
 
+        # check command
         if self.py3.format_contains(self.format_up, 'ip'):
             cmd = ['ip', 'addr', 'list', self.device]
             if self.use_sudo:
@@ -194,11 +193,9 @@ class Py3status:
                     ssid=ssid,
                 ))
 
-        return {
-            'cache_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': full_text
-        }
+        return {'cache_until': self.py3.time_in(self.cache_timeout),
+                'color': color,
+                'full_text': full_text}
 
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)
