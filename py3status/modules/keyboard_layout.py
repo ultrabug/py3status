@@ -3,18 +3,15 @@
 Display keyboard layout.
 
 Configuration parameters:
-    cache_timeout: check for keyboard layout change every seconds (default 10)
-    colors: a comma separated string of color values for each layout,
-        eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
-         (default None)
-    format: see placeholders below (default '{layout}')
+    cache_timeout: refresh interval for this module (default 10)
+    colors: deprecated. see color options below (default None)
+    format: display format for this module (default '{layout}')
 
 Format placeholders:
-    {layout} currently active keyboard layout
+    {layout} keyboard layout
 
 Color options:
-    color_<layout>: color for the layout
-        eg color_fr = '#729FCF'
+    color_<layout>: colorize the layout. eg color_fr = '#729FCF'
 
 Requires:
     xkblayout-state:
@@ -26,6 +23,8 @@ Requires:
 """
 
 import re
+LAYOUTS_RE = re.compile(r".*layout:\s*((\w+,?)+).*", flags=re.DOTALL)
+LEDMASK_RE = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*", flags=re.DOTALL)
 
 
 class Py3status:
@@ -36,17 +35,15 @@ class Py3status:
     colors = None
     format = '{layout}'
 
-    def __init__(self):
-        """
-        find the best implementation to get the keyboard's layout
-        """
+    def post_config_hook(self):
         try:
             self._xkblayout()
             self._command = self._xkblayout
         except:
-            self._command = self._xset
+            self._command = self._setxkbmap
+
         self.colors_dict = {}
-        # old default values for backwards compatability
+        # old compatability: set default values
         self.defaults = {
             'fr': '#268BD2',
             'ru': '#F75252',
@@ -55,58 +52,38 @@ class Py3status:
         }
 
     def keyboard_layout(self):
+        lang = self._command().strip() or '??'
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': ''
+            'full_text': self.py3.safe_format(self.format, {'layout': lang})
         }
+
         if self.colors and not self.colors_dict:
             self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
                 layout.split('=') for layout in self.colors.split(',')))
 
-        lang = self._command().strip() or '??'
-
         lang_color = getattr(self.py3, 'COLOR_%s' % lang.upper())
         if not lang_color:
             lang_color = self.colors_dict.get(lang)
-        if not lang_color:
-            # If not found try to use old default value
+        if not lang_color:  # old compatability: try default value
             lang_color = self.defaults.get(lang)
-
         if lang_color:
             response['color'] = lang_color
 
-        response['full_text'] = self.py3.safe_format(self.format, {'layout': lang})
         return response
 
-    def _get_layouts(self):
-        """
-        Returns a list of predefined keyboard layouts
-        """
-        layouts_re = re.compile(r".*layout:\s*((\w+,?)+).*", flags=re.DOTALL)
-        out = self.py3.command_output(["setxkbmap", "-query"])
-
-        layouts = re.match(layouts_re, out).group(1).split(",")
-        return layouts
-
     def _xkblayout(self):
-        """
-        check using xkblayout-state
-        """
         return self.py3.command_output(["xkblayout-state", "print", "%s"])
 
-    def _xset(self):
-        """
-        Check using setxkbmap >= 1.3.0 and xset
-        This method works only for the first two predefined layouts.
-        """
-        ledmask_re = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*",
-                                flags=re.DOTALL)
-        layouts = self._get_layouts()
+    def _setxkbmap(self):
+        # this method works only for the first two predefined layouts.
+        out = self.py3.command_output(["setxkbmap", "-query"])
+        layouts = re.match(LAYOUTS_RE, out).group(1).split(",")
         if len(layouts) == 1:
             return layouts[0]
-        xset_output = self.py3.command_output(["xset", "-q"])
 
-        led_mask = re.match(ledmask_re, xset_output).groups(0)[0]
+        xset_output = self.py3.command_output(["xset", "-q"])
+        led_mask = re.match(LEDMASK_RE, xset_output).groups(0)[0]
         return layouts[int(led_mask)]
 
 
