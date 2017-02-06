@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Display the current window title.
+Display current window title.
+
+Prints the name of focused window at frequent intervals.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 0.5)

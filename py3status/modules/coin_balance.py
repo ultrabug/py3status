@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Display balances of diverse crypto-currencies
+Display balances of diverse crypto-currencies.
 
 This module grabs your current balance of different crypto-currents from a
 wallet server. The server must conform to the bitcoin RPC specification.

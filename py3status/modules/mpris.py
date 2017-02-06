@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display information about the current song and video playing on player with
-mpris support.
+Display song/video and control MPRIS compatible players.
 
 There are two ways to control the media player. Either by clicking with a mouse
 button in the text information or by using buttons. For former you have
@@ -310,12 +309,13 @@ class Py3status:
             self._kill = True
 
     def _name_owner_changed(self, *args):
+        player_id = args[5][0]
         player_add = args[5][2]
         player_remove = args[5][1]
         if player_add:
-            self._add_player(player_add)
+            self._add_player(player_id)
         if player_remove:
-            self._remove_player(player_remove)
+            self._remove_player(player_id)
         self._set_player()
 
     def _set_player(self):
@@ -382,7 +382,7 @@ class Py3status:
                         if not p['name'] and p['identity'] in self._mpris_names:
                             p['name'] = self._mpris_names[p['identity']]
                             p['full_name'] = u'{} {}'.format(p['name'], p['index'])
-                return
+                return False
             status = player.PlaybackStatus
             state_priority = WORKING_STATES.index(status)
             identity = player.Identity
@@ -395,7 +395,7 @@ class Py3status:
                 self._player_monitor(player_id)
             )
         except:
-            return
+            return False
 
         self._mpris_players[player_id] = {
             '_dbus_player': player,
@@ -408,6 +408,7 @@ class Py3status:
             'status': status,
             'subscription': subscription,
         }
+
         return True
 
     def _remove_player(self, player_id):

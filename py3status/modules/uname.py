@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display uname information.
+Display system information from uname.
 
 Configuration parameters:
     format: see placeholders below (default '{system} {release} {machine}')

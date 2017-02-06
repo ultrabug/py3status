@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the currently logged in user.
+Display logged-in username.
 
 Configuration parameters:
     format: display format for whoami (default '{username}')

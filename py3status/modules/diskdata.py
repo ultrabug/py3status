@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display advanced disk usage information
+Display disk information.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Take a screenshot and optionally upload it to your online server.
+Take screenshots and upload them to a given server.
 
 Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
 directly send (if wanted) the file to your online server.

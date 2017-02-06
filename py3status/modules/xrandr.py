@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Control your screen(s) layout easily.
+Control screen layout.
 
 This modules allows you to handle your screens outputs directly from your bar!
   - Detect and propose every possible screen combinations
