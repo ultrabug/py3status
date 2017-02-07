@@ -695,8 +695,16 @@ class Py3:
             error = error.decode('utf-8')
         retcode = process.poll()
         if retcode:
-            msg = "Command '{cmd}' returned non-zero exit status {error}"
-            raise Exception(msg.format(cmd=command[0], error=retcode))
+            # under certain conditions a successfully run command may get a
+            # return code of -15 even though correct output was returned see
+            # #664.  This issue seems to be related to arch linux but the
+            # reason is not entirely clear.
+            if retcode == -15:
+                msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
+                self.log(msg.format(cmd=command))
+            else:
+                msg = "Command '{cmd}' returned non-zero exit status {error}"
+                raise Exception(msg.format(cmd=command[0], error=retcode))
         if error:
             msg = "Command '{cmd}' had error {error}"
             raise Exception(msg.format(cmd=command[0], error=error))
