@@ -10,7 +10,6 @@ which provides readonly access to notifications.
 The Github API is rate limited so setting `cache_timeout` too small may cause
 issues see https://developer.github.com/v3/#rate-limiting for details
 
-
 Configuration parameters:
     auth_token: Github personal access token, needed to check notifications
         see above.
@@ -37,21 +36,18 @@ Configuration parameters:
         (default None)
 
 Format placeholders:
-    {repo} the short name of the repository being checked.
-        eg py3status
-    {repo_full} the full name of the repository being checked.
-        eg ultrabug/py3status
     {issues} Number of open issues.
-    {pull_requests} Number of open pull requests
     {notifications} Notifications.  If no notifications this will be empty.
     {notifications_count} Number of notifications.  This is also the __Only__
         placeholder available to `format_notifications`.
+    {pull_requests} Number of open pull requests
+    {repo} short name of the repository being checked. eg py3status
+    {repo_full} full name of the repository being checked. eg ultrabug/py3status
 
 Requires:
-    requests: python module from pypi https://pypi.python.org/pypi/requests
+    python-requests: Python HTTP for Humans https://pypi.python.org/pypi/requests
 
 Examples:
-
 ```
 # set github access credentials
 github {
@@ -69,12 +65,8 @@ github {
 
 @author tobes
 """
-from shlex import split
-from subprocess import call
 
 import requests
-
-
 GITHUB_API_URL = 'https://api.github.com'
 GITHUB_URL = 'https://github.com/'
 
@@ -170,18 +162,18 @@ class Py3status:
         status = {}
         urgent = False
         # issues
-        if self.repo and '{issues}' in self.format:
+        if self.repo and self.py3.format_contains(self.format, 'issues'):
             url = '/search/issues?q=state:open+type:issue+repo:' + self.repo
             self._issues = self._github_count(url) or self._issues
         status['issues'] = self._issues
         # pull requests
-        if self.repo and '{pull_requests}' in self.format:
+        if self.repo and self.py3.format_contains(self.format, 'pull_requests'):
             url = '/search/issues?q=state:open+type:pr+repo:' + self.repo
             self._pulls = self._github_count(url) or self._pulls
         status['pull_requests'] = self._pulls
         # notifications
-        if ('{notifications}' in self.format or
-                '{notifications_count}' in self.format):
+        if (self.py3.format_contains(self.format, 'notifications') or
+                self.py3.format_contains(self.format, 'notifications_count')):
             count = self._notifications()
             # if we don't have a notification count, then use the last value
             # that we did have.
@@ -230,8 +222,7 @@ class Py3status:
                     # open repo page if there are no unread notifications
                     url = GITHUB_URL + self.repo
             # open url in default browser
-            cmd = 'xdg-open {}'.format(url)
-            call(split(cmd))
+            self.py3.command_run('xdg-open {}'.format(url))
             self.py3.prevent_refresh()
 
 
