@@ -7,6 +7,7 @@ py3status documentation
 * [Available modules](#available_modules)
 * [Ordering modules](#ordering_modules)
 * [Configuring modules](#configuring_modules)
+* [Py3status configuration section](#py3status_section)
 * [Configuration obfuscation](#obfuscation)
 * [Configuring colors](#configuring_color)
 * [Configuring thresholds](#configuring_thresholds)
@@ -91,6 +92,16 @@ imap {
     port = '993'
     user = 'mylogin'
     on_click 1 = "exec thunderbird"
+}
+```
+
+#### <a name="py3status_section"></a>py3status configuration section
+This special section holds py3status specific configuration. As of now, the
+only possible key is 'nagbar_font'. It will be used as an argument to
+`i3-nagbar -f`, thus setting its font. Example usage:
+```
+py3status {
+    nagbar_font = 'pango:Ubuntu Mono 12'
 }
 ```
 

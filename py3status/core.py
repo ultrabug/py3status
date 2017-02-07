@@ -37,6 +37,7 @@ CONFIG_SPECIAL_SECTIONS = [
     'on_click',
     'order',
     'py3_modules',
+    'py3status',
 ]
 
 
@@ -408,7 +409,12 @@ class Py3statusWrapper():
                 cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
                        '-t', '10000', 'py3status', msg]
             else:
-                cmd = ['i3-nagbar', '-m', msg, '-t', level]
+                config = self.i3status_thread.config
+                nagbar_font = config.get('py3status').get('nagbar_font')
+                if nagbar_font:
+                    cmd = ['i3-nagbar', '-f', nagbar_font, '-m', msg, '-t', level]
+                else:
+                    cmd = ['i3-nagbar', '-m', msg, '-t', level]
             Popen(cmd,
                   stdout=open('/dev/null', 'w'),
                   stderr=open('/dev/null', 'w'))
