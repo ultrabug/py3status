@@ -3,13 +3,14 @@
 Display Yandex.Disk status.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds
-        (default 10)
-    format: prefix text for the Yandex.Disk status
-        (default 'Yandex.Disk: {status}')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default 'Yandex.Disk: {status}')
+    status_busy: show when Yandex.Disk is busy (default None)
+    status_off: show when Yandex.Disk isn't running (default 'Not started')
+    status_on: show when Yandex.Disk is idling (default 'Idle')
 
 Format placeholders:
-    {status} daemon status
+    {status} Yandex.Disk status
 
 Color options:
     color_bad: Not started
@@ -17,14 +18,13 @@ Color options:
     color_good: Busy
 
 Requires:
-    yandex-disk: command line tool (link: https://disk.yandex.com/)
+    yandex-disk: command line interface for Yandex.Disk
 
 @author Vladimir Potapev (github:vpotapev)
 @license BSD
 """
-
-import shlex
-import subprocess
+string_error = "Yandex.Disk: isn't configured"
+string_unavailable = "Yandex.Disk: isn't installed"
 
 
 class Py3status:
@@ -33,33 +33,36 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = 'Yandex.Disk: {status}'
+    status_busy = None
+    status_off = 'Not started'
+    status_on = 'Idle'
 
-    def yadisk(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
-        raw_lines = b''
+    def yandexdisk(self):
+        if not self.py3.check_commands(["yandex-disk"]):
+            return {'cached_until': self.py3.CACHE_FOREVER,
+                    'color': self.py3.COLOR_BAD,
+                    'full_text': string_unavailable}
         try:
-            raw_lines = subprocess.check_output(shlex.split('yandex-disk status'))
-        except subprocess.CalledProcessError as e:
-            if e.returncode == 1:
-                raw_lines = e.output
-
-        lines = raw_lines.decode('utf-8').split('\n')
-        status = lines[0]
+            status = self.py3.command_output('yandex-disk status').splitlines()[0]
+        except:
+            return {'cache_until': self.py3.CACHE_FOREVER,
+                    'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                    'full_text': string_error}
 
         if status == "Error: daemon not started":
-            status = 'Not started'
-            response['color'] = self.py3.COLOR_BAD
+            color = self.py3.COLOR_BAD
+            status = self.status_off
         elif status == "Synchronization core status: idle":
-            status = 'Idle'
-            response['color'] = self.py3.COLOR_GOOD
+            color = self.py3.COLOR_GOOD
+            status = self.status_on
         else:
-            status = 'Busy'
-            response['color'] = self.py3.COLOR_DEGRADED
+            color = self.py3.COLOR_DEGRADED
+            if self.status_busy is not None:
+                status = self.status_busy
 
-        full_text = self.py3.safe_format(self.format, {'status': status})
-        response['full_text'] = full_text
-        return response
+        return {'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': color,
+                'full_text': self.py3.safe_format(self.format, {'status': status})}
 
 
 if __name__ == "__main__":
