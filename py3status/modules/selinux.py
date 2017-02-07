@@ -2,15 +2,21 @@
 """
 Display SELinux state.
 
-This module displays the current state of selinux on your machine: Enforcing
-(good), Permissive (bad), or Disabled (bad).
+This module displays the state of SELinux on your machine:
+Enforcing (good), Permissive (bad), or Disabled (bad).
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 10)
-    format: see placeholders below, (default 'selinux: {state}')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default 'selinux: {state}')
+    state_disabled: show when no SELinux policy is loaded.
+        (default 'disabled')
+    state_enforcing: show when SELinux security policy is enforced.
+        (default 'enforcing')
+    state_permissive: show when SELinux prints warnings instead of enforcing.
+        (default 'permissive')
 
 Format placeholders:
-    {state} the current selinux state
+    {state} SELinux state
 
 Color options:
     color_bad: Enforcing
@@ -18,16 +24,14 @@ Color options:
     color_good: Disabled
 
 Requires:
-    libselinux-python:
-        or
-    libselinux-python3: (optional for python3 support)
+    libselinux-python: SELinux python bindings for libselinux
 
 @author bstinsonmhk
 @license BSD
 """
-
 from __future__ import absolute_import
 import selinux
+STRING_UNAVAILABLE = "selinux: isn't installed"
 
 
 class Py3status:
@@ -36,26 +40,29 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = 'selinux: {state}'
+    state_disabled = 'disabled'
+    state_enforcing = 'enforcing'
+    state_permissive = 'permissive'
 
-    def selinux_status(self):
+    def selinux(self):
+        if not self.py3.check_commands(['getenforce']):
+            return {'cache_until': self.py3.CACHE_FOREVER,
+                    'color': self.py3.COLOR_BAD,
+                    'full_text': STRING_UNAVAILABLE}
         try:
             if selinux.security_getenforce():
-                selinuxstring = 'enforcing'
+                state = self.state_enforcing
                 color = self.py3.COLOR_GOOD
             else:
-                selinuxstring = 'permissive'
+                state = self.state_permissive
                 color = self.py3.COLOR_BAD
-        except OSError:
-            selinuxstring = 'disabled'
+        except:
+            state = self.state_disabled
             color = self.py3.COLOR_BAD
 
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'state': selinuxstring}),
-            'color': color,
-        }
-
-        return response
+        return {'cached_until': self.py3.time_in(self.cache_timeout),
+                'full_text': self.py3.safe_format(self.format, {'state': state}),
+                'color': color}
 
 
 if __name__ == '__main__':
