@@ -244,7 +244,7 @@ class Py3status:
             'mm': int(ceil(time_left / 60)),
         }
 
-        if '{mmss}' in self.format:
+        if self.py3.format_contains(self.format, 'mmss'):
             hours, rest = divmod(time_left, 3600)
             mins, seconds = divmod(rest, 60)
 
@@ -259,7 +259,7 @@ class Py3status:
                                               self.format_separator,
                                               seconds)
 
-        if '{bar}' in self.format:
+        if self.py3.format_contains(self.format, 'bar'):
             vals['bar'] = self._setup_bar()
 
         if self._running:
