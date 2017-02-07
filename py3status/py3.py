@@ -651,7 +651,14 @@ class Py3:
         """
         Checks to see if commands in list are available using `which`.
         Returns the first available command.
+
+        If a string is passed then that command will be checked for.
         """
+        # if a string is passed then convert it to a list.  This prevents an
+        # easy mistake that could be made
+        if isinstance(cmd_list, basestring):
+            cmd_list = [cmd_list]
+
         for cmd in cmd_list:
             if self.command_run('which {}'.format(cmd)) == 0:
                 return cmd

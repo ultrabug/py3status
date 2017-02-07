@@ -1091,6 +1091,8 @@ __check_commands(cmd_list)__
 Checks to see if the shell commands in list are available using `which`.
 Returns the first available command.
 
+If a string is passed then that command will be checked for.
+
 __command_run(command)__
 
 Runs a command and returns the exit code.
