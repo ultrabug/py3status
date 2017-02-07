@@ -47,20 +47,15 @@ class Py3status:
         window = find_focused(tree)
 
         if not window or window.get('name') is None or window.get('type') == 'workspace':
-            window = {'name': ''}
-
-        transformed = False
-
-        if window and 'name' in window and window['name'] != self.title:
-            self.title = (len(window['name']) > self.max_width and
-                          u"...{}".format(window['name'][-(self.max_width - 3):]) or
-                          window['name'])
-            transformed = True
+            title = ''
+        elif len(window['name']) > self.max_width:
+            title = u"...{}".format(window['name'][-(self.max_width - 3):])
+        else:
+            title = window['name']
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'title': self.title}),
-            'transformed': transformed
+            'full_text': self.py3.safe_format(self.format, {'title': title}),
         }
 
 
