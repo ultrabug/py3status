@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-
 """
-Display insync status
+Display Insync status
 
 Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds
-        (default 10)
-    format: Display format to use (default '{status} {queued}')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default '{status} {queued}')
+    status_offline: show when Insync is offline (default 'OFFLINE')
+    status_paused: show when Insync is paused (default 'PAUSED')
+    status_share: show when Insync is sharing (default 'SHARE')
+    status_syncing: show when Insync is syncing (default 'SYNCING')
 
 Format placeholders:
-    {status} Status of Insync
+    {status} Insync status
     {queued} Number of files queued
 
 Color options:
@@ -20,47 +22,63 @@ Color options:
     color_good: Synced
 
 Requires:
-    insync: command line tool
+    insync: an unofficial Google Drive client with support for various desktops
+
 
 @author Joshua Pratt <jp10010101010000@gmail.com>
 @license BSD
 """
-
-from subprocess import check_output
+STRING_UNAVAILABLE = "Insync: isn't installed"
+STRING_ERROR = "Insync: isn't running"
 
 
 class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = '{status} {queued}'
+    status_offline = 'OFFLINE'
+    status_paused = 'PAUSED'
+    status_share = 'SHARE'
+    status_syncing = 'SYNCING'
 
-    def check_insync(self):
-        status = check_output(["insync", "get_status"]).decode().strip()
-        color = self.py3.COLOR_DEGRADED
-        if status == "OFFLINE":
-            color = self.py3.COLOR_BAD
-        if status == "SHARE":
-            color = self.py3.COLOR_GOOD
-            status = "INSYNC"
+    def insync(self):
+        if not self.py3.check_commands(["insync"]):
+            return {'cached_until': self.py3.CACHE_FOREVER,
+                    'color': self.py3.COLOR_BAD,
+                    'full_text': STRING_UNAVAILABLE}
 
-        queued = check_output(["insync", "get_sync_progress"]).decode()
-        queued = [q for q in queued.split("\n") if q != '']
+        # get sync progress
+        queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()
+        queued = [q for q in queued if q != '']
         if len(queued) > 0 and "queued" in queued[-1]:
             queued = queued[-1]
             queued = queued.split(" ")[0]
         else:
-            queued = ""
+            queued = ''
 
-        results = self.py3.safe_format(
-            self.format, {'status': status, 'queued': queued}
-        )
+        # get status
+        status = self.py3.command_output(["insync", "get_status"]).strip()
+        color = self.py3.COLOR_DEGRADED
+        if status == "Insync doesn't seem to be running. Start it first.":
+            color = self.py3.COLOR_BAD
+            status = STRING_ERROR
+        elif status == "OFFLINE":
+            color = self.py3.COLOR_BAD
+            status = self.status_offline
+        elif status == "SHARE":
+            color = self.py3.COLOR_GOOD
+            status = self.status_share
+        elif status == "PAUSED":
+            status = self.status_paused
+        elif status == "SYNCING":
+            status = self.status_syncing
 
-        response = {
+        return {
+            'color': color,
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': results,
-            'color': color
+            'full_text': self.py3.safe_format(
+                self.format, {'status': status, 'queued': queued})
         }
-        return response
 
 
 if __name__ == "__main__":
