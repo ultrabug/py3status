@@ -86,6 +86,9 @@ class Composite:
         diff_last = None
         item_last = None
         for item in self._content:
+            # remove any undefined colors
+            if hasattr(item.get('color'), 'none_setting'):
+                del item['color']
             # ignore empty items
             if not item.get('full_text') and not item.get('separator'):
                 continue

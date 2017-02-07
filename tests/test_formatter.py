@@ -4,6 +4,9 @@ Run formatter tests
 """
 
 import platform
+import sys
+
+from pprint import pformat
 
 from py3status.composite import Composite
 from py3status.formatter import Formatter
@@ -11,6 +14,8 @@ from py3status.py3 import NoneColor
 
 is_pypy = platform.python_implementation() == 'PyPy'
 f = Formatter()
+
+python2 = sys.version_info < (3, 0)
 
 param_dict = {
     'name': u'Björk',
@@ -47,6 +52,8 @@ param_dict = {
 
 class Module:
     module_param = 'something'
+    module_true = True
+    module_false = False
 
     class py3:
         COLOR_BAD = '#FF0000'
@@ -69,7 +76,7 @@ def attr_getter_fn(attr):
 
 
 def run_formatter(test_dict):
-    if test_dict.get('py3only') and f.python2:
+    if test_dict.get('py3only') and python2:
         return
     if not test_dict.get('pypy', True) and is_pypy:
         return
@@ -86,15 +93,22 @@ def run_formatter(test_dict):
             return
         raise e
 
+    # simplify the composite and convert to text if possible
+    if isinstance(result, Composite):
+        result.simplify()
+        if (not test_dict.get('composite') and
+                len(result) == 1 and len(result[0].keys()) == 1):
+            result = result[0]['full_text']
+
     if hasattr(result, 'get_content'):
         result = result.get_content()
 
     expected = test_dict.get('expected')
-    if f.python2 and isinstance(expected, str):
+    if python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
     if result != expected:
-        print('Expected {!r}'.format(expected))
-        print('Got {!r}'.format(result))
+        print('Expected\n{}'.format(pformat(expected)))
+        print('Got\n{}'.format(pformat(result)))
     assert (result == expected)
 
 
@@ -179,6 +193,20 @@ def test_16():
     run_formatter({
         'format': '{module_method}',
         'expected': '{module_method}',
+    })
+
+
+def test_16a():
+    run_formatter({
+        'format': 'x {module_method}',
+        'expected': 'x {module_method}',
+    })
+
+
+def test_16b():
+    run_formatter({
+        'format': '[x {module_method}]',
+        'expected': '',
     })
 
 
@@ -1021,3 +1049,85 @@ def test_bad_composite_color():
         'format': '{comp_bad_color}',
         'expected': 'BAD',
     })
+
+
+def test_soft_1():
+    run_formatter({
+        'format': '{name}[\?soft  ]{name}',
+        'expected': 'Björk Björk',
+    })
+
+
+def test_soft_2():
+    run_formatter({
+        'format': '{name}[\?soft  ]{empty}',
+        'expected': 'Björk',
+    })
+
+
+def test_soft_3():
+    run_formatter({
+        'format': '{empty}[\?soft  ]{empty}',
+        'expected': '',
+    })
+
+
+def test_soft_4():
+    run_formatter({
+        'format': '[\?soft  ]',
+        'expected': '',
+    })
+
+
+def test_soft_5():
+    run_formatter({
+        'format': '{number}[\?soft  {name} ]{number}',
+        'expected': '42 Björk 42',
+    })
+
+
+def test_soft_6():
+    run_formatter({
+        'format': '{number}[\?soft  {name} ]{empty}',
+        'expected': '42',
+    })
+
+
+def test_soft_7():
+    run_formatter({
+        'format': '\?soft {number}',
+        'expected': '42',
+    })
+
+
+def test_module_true():
+    run_formatter({
+        'format': '[\?if=module_true something]',
+        'expected': 'something',
+    })
+
+
+def test_module_false():
+    run_formatter({
+        'format': '[\?if=module_false something]',
+        'expected': '',
+    })
+
+
+def test_module_true_value():
+    run_formatter({'format': '{module_true}', 'expected': 'True'})
+
+
+def test_module_false_value():
+    run_formatter({'format': '{module_false}', 'expected': ''})
+
+
+if __name__ == '__main__':
+    # run tests
+    import sys
+    this_module = sys.modules[__name__]
+    for x in range(10):
+        for name in dir(this_module):
+            if not name.startswith('test_'):
+                continue
+            getattr(this_module, name)()

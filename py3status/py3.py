@@ -83,7 +83,7 @@ class Py3:
     """Show as Warning"""
 
     # Shared by all Py3 Instances
-    _formatter = Formatter()
+    _formatter = None
     _none_color = NoneColor()
 
     # Exceptions
@@ -114,6 +114,14 @@ class Py3:
                 i3s_config = self._module.config['py3_config']['general']
                 self._i3s_config = i3s_config
             self._py3status_module = module.module_class
+        # create formatter we only if need one but want to pass py3_wrapper so
+        # that we can do logging etc.
+        if not self._formatter:
+            if module:
+                py3_wrapper = module._py3_wrapper
+            else:
+                py3_wrapper = None
+            self.__class__._formatter = Formatter(py3_wrapper)
 
     def __getattr__(self, name):
         """
