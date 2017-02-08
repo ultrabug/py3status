@@ -86,7 +86,7 @@ class Py3:
         if module:
             self._output_modules = module._py3_wrapper.output_modules
             if not i3s_config:
-                config = self._module.i3status_thread.config['general']
+                config = self._module._py3_wrapper.i3status_config['general']
                 self._i3s_config = config
             self._py3status_module = module.module_class
 
@@ -98,7 +98,7 @@ class Py3:
         if it exists
         """
         if not name.startswith('COLOR_'):
-            raise AttributeError
+            raise AttributeError(name)
         return self._get_color_by_name(name)
 
     def _get_color_by_name(self, name):
@@ -303,12 +303,24 @@ class Py3:
         """
         return self._i3s_config
 
+    def py3status_config(self):
+        """
+        returns the py3status config dict.
+        """
+        if self._module:
+            return self._module._py3_wrapper.config.copy()
+        return {}
+
     def is_python_2(self):
         """
         True if the version of python being used is 2.x
         Can be helpful for fixing python 2 compatability issues
         """
         return self._is_python_2
+
+    def set_config_file(self, path):
+        if self._module:
+            self._module._py3_wrapper.new_config_path = path
 
     def is_my_event(self, event):
         """
