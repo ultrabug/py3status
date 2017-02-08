@@ -6,8 +6,9 @@ import shlex
 
 from fnmatch import fnmatch
 from math import log10
-from time import time
+from pprint import pformat
 from subprocess import Popen, PIPE
+from time import time
 
 from py3status.formatter import Formatter, Composite
 
@@ -336,6 +337,11 @@ class Py3:
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
         if self._module:
+            # nicely format logs if we can using pretty print
+            message = pformat(message)
+            # start on new line if multi-line output
+            if '\n' in message:
+                message = '\n' + message
             message = 'Module `{}`: {}'.format(
                 self._module.module_full_name, message)
             self._module._py3_wrapper.log(message, level)
