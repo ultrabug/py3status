@@ -24,12 +24,12 @@ Color options:
 Requires:
     insync: an unofficial Google Drive client with support for various desktops
 
-
 @author Joshua Pratt <jp10010101010000@gmail.com>
 @license BSD
 """
 STRING_UNAVAILABLE = "Insync: isn't installed"
 STRING_ERROR = "Insync: isn't running"
+STRING_UNEXPECTED = "Insync: N/A"
 
 
 class Py3status:
@@ -43,12 +43,21 @@ class Py3status:
 
     def insync(self):
         if not self.py3.check_commands(["insync"]):
-            return {'cached_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_BAD,
-                    'full_text': STRING_UNAVAILABLE}
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_UNAVAILABLE
+            }
 
-        # get sync progress
-        queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()
+        # sync progress
+        try:
+            queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()
+        except:
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                'full_text': STRING_UNEXPECTED
+            }
         queued = [q for q in queued if q != '']
         if len(queued) > 0 and "queued" in queued[-1]:
             queued = queued[-1]
@@ -56,8 +65,16 @@ class Py3status:
         else:
             queued = ''
 
-        # get status
-        status = self.py3.command_output(["insync", "get_status"]).strip()
+        # status
+        try:
+            status = self.py3.command_output(["insync", "get_status"]).strip()
+        except:
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                'full_text': STRING_UNEXPECTED
+            }
+
         color = self.py3.COLOR_DEGRADED
         if status == "Insync doesn't seem to be running. Start it first.":
             color = self.py3.COLOR_BAD
