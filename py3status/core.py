@@ -312,14 +312,14 @@ class Py3statusWrapper():
 
         # read i3status.conf
         config_path = self.config['i3status_config_path']
-        config = process_config(config_path, self)
+        self.config['py3_config'] = process_config(config_path, self)
 
         # setup i3status thread
-        self.i3status_thread = I3status(self, config)
+        self.i3status_thread = I3status(self)
 
         # If standalone or no i3status modules then use the mock i3status
         # else start i3status thread.
-        i3s_modules = self.i3status_thread.config['i3s_modules']
+        i3s_modules = self.config['py3_config']['i3s_modules']
         if self.config['standalone'] or not i3s_modules:
             self.i3status_thread.mock()
             i3s_mode = 'mocked'
@@ -338,7 +338,7 @@ class Py3statusWrapper():
                 time.sleep(0.1)
         if self.config['debug']:
             self.log('i3status thread {} with config {}'.format(
-                i3s_mode, self.i3status_thread.config))
+                i3s_mode, self.config['py3_config']))
 
         # setup input events thread
         self.events_thread = Events(self)
@@ -352,7 +352,7 @@ class Py3statusWrapper():
             sys.stderr = open('/dev/null', 'w')
 
         # get the list of py3status configured modules
-        self.py3_modules = self.i3status_thread.config['py3_modules']
+        self.py3_modules = self.config['py3_config']['py3_modules']
 
         # get a dict of all user provided modules
         user_modules = self.get_user_configured_modules()
@@ -409,8 +409,8 @@ class Py3statusWrapper():
                 cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
                        '-t', '10000', 'py3status', msg]
             else:
-                config = self.i3status_thread.config
-                nagbar_font = config.get('py3status').get('nagbar_font')
+                py3_config = self.config['py3_config']
+                nagbar_font = py3_config.get('py3status').get('nagbar_font')
                 if nagbar_font:
                     cmd = ['i3-nagbar', '-f', nagbar_font, '-m', msg, '-t', level]
                 else:
@@ -494,7 +494,7 @@ class Py3statusWrapper():
             return
 
         # find containers that use the modules that updated
-        containers = self.i3status_thread.config['.module_groups']
+        containers = self.config['py3_config']['.module_groups']
         containers_to_update = set()
         for item in update:
             if item in containers:
@@ -620,12 +620,12 @@ class Py3statusWrapper():
         Setup our output modules to allow easy updating of py3modules and
         i3status modules allows the same module to be used multiple times.
         """
-        config = self.i3status_thread.config
+        py3_config = self.config['py3_config']
         i3modules = self.i3status_thread.i3modules
         output_modules = self.output_modules
         # position in the bar of the modules
         positions = {}
-        for index, name in enumerate(config['order']):
+        for index, name in enumerate(py3_config['order']):
             if name not in positions:
                 positions[name] = []
             positions[name].append(index)
@@ -653,19 +653,19 @@ class Py3statusWrapper():
         then walk up through any containing group and then try the general
         section of the config.
         """
-        config = self.i3status_thread.config
-        color = config[name].get(attribute, 'missing')
-        if color == 'missing' and name in config['.module_groups']:
-            for module in config['.module_groups'][name]:
-                if attribute in config.get(module, {}):
-                    color = config[module].get(attribute)
+        py3_config = self.config['py3_config']
+        color = py3_config[name].get(attribute, 'missing')
+        if color == 'missing' and name in py3_config['.module_groups']:
+            for module in py3_config['.module_groups'][name]:
+                if attribute in py3_config.get(module, {}):
+                    color = py3_config[module].get(attribute)
                     break
         if color == 'missing':
             # A user can set a color to None in the config to prevent a color
             # being used.  This is important when modules do something like
 
             # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-            color = config['general'].get(attribute, False)
+            color = py3_config['general'].get(attribute, False)
         return color
 
     def create_mappings(self, config):
@@ -735,10 +735,10 @@ class Py3statusWrapper():
 
         # initialize usage variables
         i3status_thread = self.i3status_thread
-        config = i3status_thread.config
+        py3_config = self.config['py3_config']
 
         # prepare the color mappings
-        self.create_mappings(config)
+        self.create_mappings(py3_config)
 
         # self.output_modules needs to have been created before modules are
         # started.  This is so that modules can do things like register their
@@ -759,7 +759,7 @@ class Py3statusWrapper():
 
         # this will be our output set to the correct length for the number of
         # items in the bar
-        output = [None] * len(config['order'])
+        output = [None] * len(py3_config['order'])
 
         interval = self.config['interval']
         last_sec = 0
