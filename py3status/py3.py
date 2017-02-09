@@ -6,8 +6,9 @@ import shlex
 
 from fnmatch import fnmatch
 from math import log10
-from time import time
+from pprint import pformat
 from subprocess import Popen, PIPE
+from time import time
 
 from py3status.formatter import Formatter, Composite
 
@@ -336,6 +337,11 @@ class Py3:
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
         if self._module:
+            # nicely format logs if we can using pretty print
+            message = pformat(message)
+            # start on new line if multi-line output
+            if '\n' in message:
+                message = '\n' + message
             message = 'Module `{}`: {}'.format(
                 self._module.module_full_name, message)
             self._module._py3_wrapper.log(message, level)
@@ -651,7 +657,14 @@ class Py3:
         """
         Checks to see if commands in list are available using `which`.
         Returns the first available command.
+
+        If a string is passed then that command will be checked for.
         """
+        # if a string is passed then convert it to a list.  This prevents an
+        # easy mistake that could be made
+        if isinstance(cmd_list, basestring):
+            cmd_list = [cmd_list]
+
         for cmd in cmd_list:
             if self.command_run('which {}'.format(cmd)) == 0:
                 return cmd
@@ -695,8 +708,16 @@ class Py3:
             error = error.decode('utf-8')
         retcode = process.poll()
         if retcode:
-            msg = "Command '{cmd}' returned non-zero exit status {error}"
-            raise Exception(msg.format(cmd=command[0], error=retcode))
+            # under certain conditions a successfully run command may get a
+            # return code of -15 even though correct output was returned see
+            # #664.  This issue seems to be related to arch linux but the
+            # reason is not entirely clear.
+            if retcode == -15:
+                msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
+                self.log(msg.format(cmd=command))
+            else:
+                msg = "Command '{cmd}' returned non-zero exit status {error}"
+                raise Exception(msg.format(cmd=command[0], error=retcode))
         if error:
             msg = "Command '{cmd}' had error {error}"
             raise Exception(msg.format(cmd=command[0], error=error))

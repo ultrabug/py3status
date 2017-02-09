@@ -111,7 +111,7 @@ class Py3status:
             if self.format_separator:
                 output = output[:-1]
 
-        if '{button}' in self.format:
+        if self.py3.format_contains(self.format, 'button'):
             if self.open:
                 format_control = self.format_button_open
             else:

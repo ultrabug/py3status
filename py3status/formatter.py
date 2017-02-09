@@ -231,6 +231,8 @@ class Formatter:
         Tokenizing is resource intensive so we only do it once and cache it
         """
         if format_string not in self.format_string_cache:
+            if self.python2 and isinstance(format_string, str):
+                format_string = format_string.decode('utf-8')
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]

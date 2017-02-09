@@ -18,14 +18,14 @@ from json import loads
 
 
 def find_scratch(tree):
-    if tree["name"] == "__i3_scratch":
+    if tree.get("name") == "__i3_scratch":
         return tree
     else:
-        for x in tree["nodes"]:
+        for x in tree.get("nodes", []):
             result = find_scratch(x)
             if result:
                 return result
-        return {}
+    return {}
 
 
 class Py3status:
@@ -47,22 +47,12 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
-        self.count = -1
-
     def scratchpad_counter(self):
         tree = loads(self.py3.command_output('i3-msg -t get_tree'))
         count = len(find_scratch(tree).get("floating_nodes", []))
 
-        if self.count != count:
-            transformed = True
-            self.count = count
-        else:
-            transformed = False
-
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'transformed': transformed
         }
 
         if self.hide_when_none and count == 0:

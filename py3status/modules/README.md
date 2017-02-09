@@ -58,7 +58,7 @@
 
 **[imap](#imap)** — Display number of unread messages from IMAP account.
 
-**[insync](#insync)** — Display insync status
+**[insync](#insync)** — Display Insync status
 
 **[kdeconnector](#kdeconnector)** — Display information about your smartphone with KDEConnector.
 
@@ -115,6 +115,8 @@
 **[taskwarrior](#taskwarrior)** — Display tasks currently running in taskwarrior.
 
 **[timer](#timer)** — A simple countdown timer.
+
+**[tor_rate](#tor_rate)** — Display the current transfer rates of a tor instance
 
 **[twitch_streaming](#twitch_streaming)** — Display status on a given Twitch streamer.
 
@@ -393,17 +395,19 @@ Requires:
 Display status of a TCP port on a given host.
 
 Configuration parameters:
-  - `cache_timeout` how often to run the check *(default 10)*
-  - `format` what to display on the bar *(default '{host}:{port} {state}')*
-  - `host` check if tcp port on host is up *(default 'localhost')*
-  - `port` the tcp port *(default 22)*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default '{host}:{port} {state}')*
+  - `host` name of host to check for *(default 'localhost')*
+  - `icon_off` show this when unavailable *(default 'DOWN')*
+  - `icon_on` show this when available *(default 'UP')*
+  - `port` number of port to check for *(default 22)*
 
 Format placeholders:
-  - `{state}` port state ('DOWN' or 'UP')
+  - `{state}` port state
 
 Color options:
-  - `color_down` Unavailable, default color_bad
-  - `color_up` Available, default color_good
+  - `color_down` Closed, default to color_bad
+  - `color_up` Open, default to color_good
 
 **author** obb, Moritz Lüdecke
 
@@ -970,7 +974,6 @@ which provides readonly access to notifications.
 The Github API is rate limited so setting `cache_timeout` too small may cause
 issues see https://developer.github.com/v3/#rate-limiting for details
 
-
 Configuration parameters:
   - `auth_token` Github personal access token, needed to check notifications
     see above.
@@ -997,21 +1000,18 @@ Configuration parameters:
     *(default None)*
 
 Format placeholders:
-  - `{repo}` the short name of the repository being checked.
-    eg py3status
-  - `{repo_full}` the full name of the repository being checked.
-    eg ultrabug/py3status
   - `{issues}` Number of open issues.
-  - `{pull_requests}` Number of open pull requests
   - `{notifications}` Notifications.  If no notifications this will be empty.
   - `{notifications_count}` Number of notifications.  This is also the __Only__
     placeholder available to `format_notifications`.
+  - `{pull_requests}` Number of open pull requests
+  - `{repo}` short name of the repository being checked. eg py3status
+  - `{repo_full}` full name of the repository being checked. eg ultrabug/py3status
 
 Requires:
-  - `requests` python module from pypi https://pypi.python.org/pypi/requests
+  - `python-requests` Python HTTP for Humans https://pypi.python.org/pypi/requests
 
 Examples:
-
 ```
 # set github access credentials
 github {
@@ -1066,7 +1066,7 @@ Requires:
 Display song currently playing in Google Play Music Desktop Player.
 
 Configuration parameters:
-  - `cache_timeout`  how often we refresh this module in seconds *(default 5)*
+  - `cache_timeout`  refresh interval for this module *(default 5)*
   - `format`         specify the items and ordering of the data in the status bar.
     These area 1:1 match to gpmdp-remote's options
     *(default '♫ {info}')*
@@ -1081,7 +1081,6 @@ Format placeholders:
   - `{time_total}`      Print total song time in milliseconds
   - `{status}`          Print whether GPMDP is paused or playing
   - `{current}`         Print now playing song in "artist - song" format
-  - `{help}`            Print this help message
 
 
 Requires:
@@ -1317,17 +1316,20 @@ Format placeholders:
 
 ### <a name="insync"></a>insync
 
-Display insync status
+Display Insync status
 
 Thanks to Iain Tatch &lt;iain.tatch@gmail.com&gt; for the script that this is based on.
 
 Configuration parameters:
-  - `cache_timeout` How often we refresh this module in seconds
-    *(default 10)*
-  - `format` Display format to use *(default '{status} {queued}')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default '{status} {queued}')*
+  - `status_offline` show when Insync is offline *(default 'OFFLINE')*
+  - `status_paused` show when Insync is paused *(default 'PAUSED')*
+  - `status_share` show when Insync is sharing *(default 'SHARE')*
+  - `status_syncing` show when Insync is syncing *(default 'SYNCING')*
 
 Format placeholders:
-  - `{status}` Status of Insync
+  - `{status}` Insync status
   - `{queued}` Number of files queued
 
 Color options:
@@ -1336,7 +1338,8 @@ Color options:
   - `color_good` Synced
 
 Requires:
-  - `insync` command line tool
+  - `insync` an unofficial Google Drive client with support for various desktops
+
 
 **author** Joshua Pratt &lt;jp10010101010000@gmail.com&gt;
 
@@ -1592,7 +1595,7 @@ interfaces and IPs, as well as to show interfaces with no IP address. It will
 show an alternate text if no IP are available.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds.
+  - `cache_timeout` refresh interval for this module in seconds.
     *(default 30)*
   - `format` format of the output.
     *(default 'Network: {format_iface}')*
@@ -1634,6 +1637,8 @@ net_iplist {
 
 Requires:
   - `ip` utility found in iproute2 package
+
+**author** guiniol
 
 ---
 
@@ -2185,15 +2190,21 @@ Color options:
 
 Display SELinux state.
 
-This module displays the current state of selinux on your machine: Enforcing
-(good), Permissive (bad), or Disabled (bad).
+This module displays the state of SELinux on your machine:
+    Enforcing (good), Permissive (bad), or Disabled (bad).
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 10)*
-  - `format` see placeholders below, *(default 'selinux: {state}')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default 'selinux: {state}')*
+  - `state_disabled` show when no SELinux policy is loaded.
+    *(default 'disabled')*
+  - `state_enforcing` show when SELinux security policy is enforced.
+    *(default 'enforcing')*
+  - `state_permissive` show when SELinux prints warnings instead of enforcing.
+    *(default 'permissive')*
 
 Format placeholders:
-  - `{state}` the current selinux state
+  - `{state}` SELinux state
 
 Color options:
   - `color_bad` Enforcing
@@ -2201,9 +2212,7 @@ Color options:
   - `color_good` Disabled
 
 Requires:
-  - `libselinux-python`
-    or
-  - `libselinux-python3` (optional for python3 support)
+  - `libselinux-python` SELinux python bindings for libselinux
 
 **author** bstinsonmhk
 
@@ -2339,8 +2348,8 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 Display tasks currently running in taskwarrior.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 5)*
-  - `format` display format for taskwarrior *(default '{task}')*
+  - `cache_timeout` refresh interval for this module *(default 5)*
+  - `format` display format for this module *(default '{task}')*
 
 Format placeholders:
   - `{task}` active tasks
@@ -2372,6 +2381,59 @@ Configuration parameters:
     *(default None)*
   - `time` how long in seconds for the timer
     *(default 60)*
+
+---
+
+### <a name="tor_rate"></a>tor_rate
+
+Display the current transfer rates of a tor instance
+
+Configuration parameters:
+  - `cache_timeout` An integer specifying the cache life-time of the modules
+    output in seconds *(default 2)*
+  - `control_address` The address on which the Tor daemon listens for control
+    connections *(default "127.0.0.1")*
+  - `control_password` The password to use for the Tor control connection
+    *(default None)*
+  - `control_port` The port on which the Tor daemon listens for control
+    connections *(default 9051)*
+  - `format` A string describing the output format for the module
+    *(default "↑ {up} ↓ {down}")*
+  - `format_value` A string describing how to format the transfer rates
+    *(default "[\?min_length=12 {rate:.1f} {unit}]")*
+  - `rate_unit` The unit to use for the transfer rates
+    *(default "B/s")*
+  - `si_units` A boolean value selecting whether or not to use SI units
+    *(default False)*
+
+Format placeholders:
+  - `{down}` The incoming transfer rate
+  - `{up}` The outgoing transfer rate
+
+format_value placeholders:
+  - `{rate}` The current transfer-rate's value
+  - `{unit}` The current transfer-rate's unit
+
+Requires:
+  - `stem` python module from pypi https://pypi.python.org/pypi/stem
+
+Example:
+
+```
+tor_rate {
+    cache_timeout = 10
+    format = "IN: {down} | OUT: {up}"
+    control_port = 1337
+    control_password = "TertiaryAdjunctOfUnimatrix01"
+    si_units = True
+}
+
+order += "tor_rate"
+```
+
+**author** Felix Morgner &lt;felix.morgner@gmail.com&gt;
+
+**license** 3-clause-BSD
 
 ---
 
@@ -2735,8 +2797,8 @@ Color options:
   - `color_good` Signal strength above signal_degraded
 
 Requires:
-  - `iw`
-  - `ip` if {ip} is used
+  - `iw` cli configuration utility for wireless devices
+  - `ip` only for {ip}. may be part of iproute2: ip routing utilities
 
 **author** Markus Weimar &lt;mail@markusweimar.de&gt;
 
@@ -2992,13 +3054,14 @@ Requires:
 Display Yandex.Disk status.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds
-    *(default 10)*
-  - `format` prefix text for the Yandex.Disk status
-    *(default 'Yandex.Disk: {status}')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default 'Yandex.Disk: {status}')*
+  - `status_busy` show when Yandex.Disk is busy *(default None)*
+  - `status_off` show when Yandex.Disk isn't running *(default 'Not started')*
+  - `status_on` show when Yandex.Disk is idling *(default 'Idle')*
 
 Format placeholders:
-  - `{status}` daemon status
+  - `{status}` Yandex.Disk status
 
 Color options:
   - `color_bad` Not started
@@ -3006,7 +3069,7 @@ Color options:
   - `color_good` Busy
 
 Requires:
-  - `yandex-disk` command line tool (link: https://disk.yandex.com/)
+  - `yandex-disk` command line interface for Yandex.Disk
 
 **author** Vladimir Potapev (github:vpotapev)
 

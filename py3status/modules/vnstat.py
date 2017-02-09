@@ -137,7 +137,6 @@ class Py3status:
                      up=self._divide_and_format(stat['up']),
                      down=self._divide_and_format(stat['down'])),
             ),
-            'transformed': True
         }
 
         if color:
