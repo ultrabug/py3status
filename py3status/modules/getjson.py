@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Query a url and display the json response
+Display a json response from a url.
+
+This module gets the given `url` configuration parameter and assumes the response is a
+json object. The keys of the json object are used as the format placeholders. The format
+placeholders are replaced by the value. Objects that are nested can be accessed by using
+the `delimiter` configuration parameter in between.
+
+Examples:
+```
+# Straightforward key replacement
+url = 'http://ip-api.com/json'
+format = '{lat}, {lon}'
+
+# Access child objects
+url = 'http://api.icndb.com/jokes/random'
+format = '{value-joke}'
+
+# Access title from 0th element of articles list
+url = 'https://newsapi.org/v1/articles?source=bbc-news&sortBy=top&apiKey={API_KEY}'
+format = '{articles-0-title}'
+
+# Access if top-level object is a list
+url = 'https://jsonplaceholder.typicode.com/posts/1/comments'
+format = '{0-name}'
+```
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
@@ -55,6 +79,8 @@ class Py3status:
             (eg. parent-0)
         """
         items = []
+        if isinstance(d, list):
+            d = dict(enumerate(d))
         for k, v in d.items():
             if parent_key:
                 k = u'{}{}{}'.format(parent_key, self.delimiter, k)
@@ -62,9 +88,9 @@ class Py3status:
                 v = dict(enumerate(v))
             if isinstance(v, collections.Mapping):
                 items.append((k, v))
-                items.extend(self._flatten(v, k).items())
+                items.extend(self._flatten(v, str(k)).items())
             else:
-                items.append((k, v))
+                items.append((str(k), v))
         return dict(items)
 
     def _query_url(self):
