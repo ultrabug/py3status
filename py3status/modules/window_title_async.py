@@ -61,7 +61,7 @@ class Py3status:
 
             else:
                 title = w.name
-                if title is None:
+                if title is None or w.type == "workspace":
                     title = ''
 
                 if len(title) > self.max_width:
