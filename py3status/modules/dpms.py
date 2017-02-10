@@ -7,27 +7,31 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-    format: string to display (default '{icon}')
-    icon_off: string to display when dpms is disabled (default 'DPMS')
-    icon_on: string to display when dpms is enabled (default 'DPMS')
+    button_off: mouse button to turn off screen (default None)
+    button_toggle: mouse button to toggle DPMS (default 1)
+    cache_timeout: refresh interval for this module (default 15)
+    format: display format for this module (default '{icon}')
+    icon_off: show when DPMS is disabled (default 'DPMS')
+    icon_on: show when DPMS is enabled (default 'DPMS')
 
 Format placeholders:
-    {icon} display current dpms icon
+    {icon} DPMS icon
 
 Color options:
-    color_on: when dpms is enabled, defaults to color_good
-    color_off: when dpms is disabled, defaults to color_bad
+    color_on: Enabled, defaults to color_good
+    color_off: Disabled, defaults to color_bad
 
 @author Andre Doser <dosera AT tf.uni-freiburg.de>
 """
-
-from os import system
 
 
 class Py3status:
     """
     """
     # available configuration parameters
+    button_off = None
+    button_toggle = 1
+    cache_timeout = 15
     format = "{icon}"
     icon_off = "DPMS"
     icon_on = "DPMS"
@@ -48,30 +52,39 @@ class Py3status:
             ],
         }
 
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+
     def dpms(self):
         """
         Display a colorful state of DPMS.
         """
-        self.run = system('xset -q | grep -iq "DPMS is enabled"') == 0
-        icon = self.icon_on if self.run else self.icon_off
+        if 'DPMS is Enabled' in self.py3.command_output('xset -q'):
+            icon = self.icon_on
+            color = self.color_on
+        else:
+            icon = self.icon_off
+            color = self.color_off
 
         return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, {'icon': icon}),
-            'color': self.py3.COLOR_ON or self.py3.COLOR_GOOD if self.run
-            else self.py3.COLOR_OFF or self.py3.COLOR_BAD
+            'color': color
         }
 
     def on_click(self, event):
         """
-        Enable/Disable DPMS on left click.
+        Control DPMS with mouse clicks.
         """
-        if event['button'] == 1:
-            if self.run:
-                self.run = False
-                system("xset -dpms;xset s off")
+        if event['button'] == self.button_toggle:
+            if 'DPMS is Enabled' in self.py3.command_output('xset -q'):
+                self.py3.command_run("xset -dpms s off")
             else:
-                self.run = True
-                system("xset +dpms;xset s on")
+                self.py3.command_run("xset +dpms s on")
+
+        if event['button'] == self.button_off:
+                self.py3.command_run("xset dpms force off")
 
 
 if __name__ == "__main__":
