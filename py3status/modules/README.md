@@ -42,6 +42,8 @@
 
 **[frame](#frame)** — Group modules and treat them as a single one.
 
+**[getjson](#getjson)** — Display a json response from a url.
+
 **[github](#github)** — Display Github notifications and issue/pull requests for a repo.
 
 **[glpi](#glpi)** — Display number of open tickets from GLPI.
@@ -735,16 +737,19 @@ of DPMS (Display Power Management Signaling)
 by clicking on 'DPMS' in the status bar.
 
 Configuration parameters:
-  - `format` string to display *(default '{icon}')*
-  - `icon_off` string to display when dpms is disabled *(default 'DPMS')*
-  - `icon_on` string to display when dpms is enabled *(default 'DPMS')*
+  - `button_off` mouse button to turn off screen *(default None)*
+  - `button_toggle` mouse button to toggle DPMS *(default 1)*
+  - `cache_timeout` refresh interval for this module *(default 15)*
+  - `format` display format for this module *(default '{icon}')*
+  - `icon_off` show when DPMS is disabled *(default 'DPMS')*
+  - `icon_on` show when DPMS is enabled *(default 'DPMS')*
 
 Format placeholders:
-  - `{icon}` display current dpms icon
+  - `{icon}` DPMS icon
 
 Color options:
-  - `color_on` when dpms is enabled, defaults to color_good
-  - `color_off` when dpms is disabled, defaults to color_bad
+  - `color_on` Enabled, defaults to color_good
+  - `color_off` Disabled, defaults to color_bad
 
 **author** Andre Doser &lt;dosera AT tf.uni-freiburg.de&gt;
 
@@ -959,6 +964,60 @@ group {
 ```
 
 **author** tobes
+
+---
+
+### <a name="getjson"></a>getjson
+
+Display a json response from a url.
+
+This module gets the given `url` configuration parameter and assumes the response is a
+json object. The keys of the json object are used as the format placeholders. The format
+placeholders are replaced by the value. Objects that are nested can be accessed by using
+the `delimiter` configuration parameter in between.
+
+Examples:
+```
+# Straightforward key replacement
+url = 'http://ip-api.com/json'
+format = '{lat}, {lon}'
+
+# Access child objects
+url = 'http://api.icndb.com/jokes/random'
+format = '{value-joke}'
+
+# Access title from 0th element of articles list
+url = 'https://newsapi.org/v1/articles?source=bbc-news&sortBy=top&apiKey={API_KEY}'
+format = '{articles-0-title}'
+
+# Access if top-level object is a list
+url = 'https://jsonplaceholder.typicode.com/posts/1/comments'
+format = '{0-name}'
+```
+
+Configuration parameters:
+  - `cache_timeout` how often we refresh this module in seconds
+    *(default 30)*
+  - `delimiter` the delimiter between parent and child objects
+    *(default '-')*
+  - `format` placeholders will be replaced by the returned json key names
+    *(default None)*
+  - `timeout` how long before deciding we're offline
+    *(default 5)*
+  - `url` specify a url to fetch json from
+    *(default None)*
+
+Format placeholders:
+    Placeholders will be replaced by the json keys
+
+    Placeholders for objects with sub-objects are flattened using 'delimiter' in between
+        (eg. {'parent': {'child': 'value'}} will use placeholder {parent-child}
+
+    Placeholders for list elements have 'delimiter' followed by the index
+        (eg. {'parent': ['this', 'that']) will use placeholders {parent-0} for 'this' and
+        {parent-1} for 'that'
+
+**author** vicyap
 
 ---
 
@@ -1339,7 +1398,6 @@ Color options:
 
 Requires:
   - `insync` an unofficial Google Drive client with support for various desktops
-
 
 **author** Joshua Pratt &lt;jp10010101010000@gmail.com&gt;
 
@@ -1909,17 +1967,20 @@ pomodoro {
 Display if a process is running.
 
 Configuration parameters:
-  - `cache_timeout` how often to run the check *(default 10)*
-  - `format_not_running` what to display when process is not running
-    *(default '■')*
-  - `format_running` what to display when process running *(default '●')*
-  - `full` if True, match against the full command line and not just the
-    process name *(default False)*
-  - `process` the process name to check if it is running *(default None)*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` default format for this module *(default '{icon}')*
+  - `full` if True, match against full command line *(default False)*
+  - `icon_off` show when process not running *(default '■')*
+  - `icon_on` show when process running *(default '●')*
+  - `process` process name to check for *(default None)*
+
+Format placeholders:
+  - `{icon}` process icon
+  - `{process}` process name
 
 Color options:
-  - `color_bad` Process not running or error
-  - `color_good` Process running
+  - `color_bad` Not running
+  - `color_good` Running
 
 **author** obb, Moritz Lüdecke
 
