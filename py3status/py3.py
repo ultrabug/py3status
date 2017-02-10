@@ -86,8 +86,8 @@ class Py3:
         if module:
             self._output_modules = module._py3_wrapper.output_modules
             if not i3s_config:
-                config = self._module.i3status_thread.config['general']
-                self._i3s_config = config
+                i3s_config = self._module.config['py3_config']['general']
+                self._i3s_config = i3s_config
             self._py3status_module = module.module_class
 
     def __getattr__(self, name):
