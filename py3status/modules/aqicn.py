@@ -64,6 +64,14 @@ AQI = (
 BASE_URL = 'http://api.waqi.info'
 
 
+def get_in(coll, path, default=None):
+    first = path[0]
+    rest = path[1:len(path)]
+    if len(path) == 1:
+        return coll.get(first, default)
+    return get_in(coll.get(first, default), rest, default)
+
+
 class Py3status:
     good = 'Good'
     moderate = 'Moderate'
@@ -109,22 +117,27 @@ class Py3status:
 
     def _key(self, data):
         if data.get('status') == 'ok':
-            try:
-                aqi = int(data['data']['aqi'])
-            except:
-                return None
+            aqi = get_in(data, ['data', 'aqi'], -1)
 
             for start, end, key in AQI:
                 if aqi >= start and aqi <= end:
                     return key
 
-        return None
+        return 'unknown'
 
-    def _full_text(self, key):
-       aqicn = getattr(self, key, self.unknown)
-       return self.format.format(aqicn=aqicn)
+    def _full_text(self, data):
+        key = self._key(data)
+        aqicn = getattr(self, key, self.unknown)
+        iaqi = get_in(data, ['data', 'iaqi'], {})
+        aqi = get_in(data, ['data', 'aqi'])
+        return self.format.format(
+            aqicn=aqicn,
+            aqi=aqi,
+            **{k: _v.get('v') for k, _v in iaqi.items()}
+        )
 
-    def _color(self, key):
+    def _color(self, data):
+        key = self._key(data)
         color_key_default = 'color_{}'.format(key)
         color_key = color_key_default.upper()
         return getattr(
@@ -134,14 +147,14 @@ class Py3status:
         )
 
     def aqicn(self):
-       data = self._call_api()
-       key = self._key(data)
+        data = self._call_api()
+        key = self._key(data)
 
-       return {
+        return {
            'cached_until': self.py3.time_in(self.cache_timeout),
-           'full_text': self._full_text(key),
-           'color': self._color(key)
-       }
+           'full_text': self._full_text(data),
+           'color': self._color(data)
+        }
 
 
 if __name__ == "__main__":
