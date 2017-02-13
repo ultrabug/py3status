@@ -1,27 +1,39 @@
 # -*- coding: utf-8 -*-
 """
-# TODO: fill this docstring
-Single line summary
+Air quality plugin
 
-Longer description of the module.  This should help users understand the
-modules purpose.
+Plugin show data fetched form aqicn.org public API
 
 Configuration parameters:
-    parameter: Explanation of this parameter (default <value>)
-    parameter_other: This parameter has a longer explanation that continues
-        onto a second line so it is indented.
-        (default <value>)
+    cache_timeout: timeout for refresh data from api (default 900)
+    city: city or id of city
+        for search for Your city use curl, for example (sarching for stations in Kraków):
+        `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
+        best option is choice uid instead city name: city = '@8691'
+        (default 'shanghai')
+    format: format string used for text in bar (default 'aqicn: {aqicn}')
+    good: (default 'Good')
+    hazardous: (default 'Hazardous')
+    moderate: (default 'Moderate')
+    token: token from http://aqicn.org (default 'demo')
+    unhealty: (default 'Unhealty')
+    unhealty_sensitive: (default 'Kinda Unhealty')
+    unknown: (default 'Unknown')
+    very_unhealty: (default 'Very Unhealthy')
 
 Format placeholders:
-    {info} Description of the placeholder
+    {aqicn} air quality (text, configurable by options)
+    {aqi} air quality
+    {pm25} paramers from `iaqi` array
 
 Color options:
-    color_meaning: what this signifies, defaults to color_good
-    color_meaning2: what this signifies
-
-Requires:
-    program: Information about the program
-    python_lib: Information on the library
+    color_good: for good aqi
+    color_hazardous: for hazardous aqi
+    color_moderate: for moderate aqi
+    color_unhealty: for unhealty aqi
+    color_unhealty_sensitive: for unhealty for sensitive persons aqi
+    color_unknown: for unknow
+    color_very_unhealty: for very uhealty
 
 Example:
 
@@ -29,13 +41,22 @@ Example:
 aqicn {
     token = 'demo'
     city = 'shanghai'
+
+    format = 'shanghai: {aqicn}'
+
+    color_good = '#009966'
+    color_hazardous = '#7E0023'
+    color_moderate = '#FFDE33'
+    color_unhealty = '#CC0033'
+    color_unhealty_sensitive = '#FF9933'
+    color_unknown = '#FFFFFF'
+    color_very_unhealty = '#660099'
 }
 ```
 
 @author beetleman
 @license BSD
 """
-import functools
 
 try:
     # python 3
@@ -73,28 +94,18 @@ def get_in(coll, path, default=None):
 
 
 class Py3status:
-    good = 'Good'
-    moderate = 'Moderate'
-    unhealty_sensitive = 'Kinda Unhealty'
-    unhealty = 'Unhealty'
-    very_unhelty = 'Very Unhealthy'
-    hazardous = 'Hazardous'
-    unknown = 'Unknown'
-
-    color_good = '#009966'
-    color_moderate = '#FFDE33'
-    color_unhealty_sensitive = '#FF9933'
-    color_unhealty = '#CC0033'
-    color_very_unhelty = '#660099'
-    color_hazardous = '#7E0023'
-    color_unknown = '#FFFFFF'
-
-    token = 'demo'
+    cache_timeout = 900
     city = 'shanghai'
 
-    cache_timeout = 900
-
     format = 'aqicn: {aqicn}'
+    good = 'Good'
+    hazardous = 'Hazardous'
+    moderate = 'Moderate'
+    token = 'demo'
+    unhealty = 'Unhealty'
+    unhealty_sensitive = 'Kinda Unhealty'
+    unknown = 'Unknown'
+    very_unhealty = 'Very Unhealthy'
 
     def _call_api(self):
         kwargs = {
@@ -148,12 +159,11 @@ class Py3status:
 
     def aqicn(self):
         data = self._call_api()
-        key = self._key(data)
 
         return {
-           'cached_until': self.py3.time_in(self.cache_timeout),
-           'full_text': self._full_text(data),
-           'color': self._color(data)
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self._full_text(data),
+            'color': self._color(data)
         }
 
 
