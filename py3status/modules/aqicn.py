@@ -65,7 +65,7 @@ try:
     from urllib.parse import urlencode
 except ImportError:
     # python 2
-    from utllib2 import urlencode
+    from urllib import urlencode
     from urllib2 import URLError
     from urllib2 import urlopen, Request
 
@@ -153,8 +153,6 @@ class Py3status:
         color_key = color_key_default.upper()
         return getattr(
             self.py3, color_key
-        ) or getattr(
-            self, color_key_default, self.color_unknown
         )
 
     def aqicn(self):
