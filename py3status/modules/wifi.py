@@ -18,9 +18,9 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
-    use_sudo: Use sudo to run iw, make sure iw requires no password by
-        adding a sudoers entry like
-        "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
+    use_sudo: Use sudo to run iw, make sure iw requires some root rights
+        without a password by adding a sudoers entry.
+        Example: "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
         (default False)
 
 Format placeholders:
@@ -42,14 +42,15 @@ Requires:
     iw: cli configuration utility for wireless devices
     ip: only for {ip}. may be part of iproute2: ip routing utilities
 
+__Note: Some distributions eg Debian require `iw` to be run with privileges.
+In this case you will need to use the `use_sudo` configuration parameter.__
+
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
 """
-
 import re
 import math
-string_error = "iw: command failed"
-string_unavailable = "iw: isn't installed"
+STRING_ERROR = "iw: command failed"
 
 
 class Py3status:
@@ -88,11 +89,6 @@ class Py3status:
         """
         Get WiFi status using iw.
         """
-        if not self.py3.check_commands(['iw']):
-            return {'cache_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_BAD,
-                    'full_text': string_unavailable}
-
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
         cmd = ['iw', 'dev', self.device, 'link']
@@ -103,7 +99,7 @@ class Py3status:
         except:
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                    'full_text': string_error}
+                    'full_text': STRING_ERROR}
         # bitrate
         bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
         if bitrate_out:
