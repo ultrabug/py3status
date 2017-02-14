@@ -142,6 +142,12 @@ class Py3status:
             elif '%S' in format_time:
                 # seconds
                 time_delta = 1
+            elif '%s' in format_time:
+                # seconds since unix epoch start
+                time_delta = 1
+            elif '%T' in format_time:
+                # seconds included in "%H:%M:%S"
+                time_delta = 1
             elif '%c' in format_time:
                 # Locale’s appropriate date and time representation
                 time_delta = 1
