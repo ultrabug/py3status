@@ -13,6 +13,8 @@ version 3.5 (milestone)
 * battery_level module: use helpers, by @lasers
 * bluetooth module: use helpers, by @lasers
 * check_tcp module: remove hardcoded strings, by @lasers
+* clementine module: use helpers, fix exception, by @lasers
+* clock module: add %s, %T for time_delta calculation, by @ShareDVI
 * clock module: use helpers, by @lasers
 * diskdata module: use helpers, by @lasers
 * dpms module: add button_off, button_toggle, cache_timeout by @lasers
@@ -24,6 +26,7 @@ version 3.5 (milestone)
 * hamster module: use helpers, by @lasers
 * insync module: use helpers, by @lasers
 * keyboard_layout module: use helpers, by @lasers
+* mpris module: fix mouse clicks by @ritze
 * mpris module: use helpers, by @lasers
 * net_iplist module: use helpers, by @lasers
 * pomodoro module: use helpers, by @lasers
@@ -32,6 +35,7 @@ version 3.5 (milestone)
 * taskwarrior module: use helpers, by @lasers
 * process_status module: add format, use helpers, by @lasers
 * wifi module: use helpers, fix exception, by @lasers
+* wifi module: remove command_checks(iw), by @lasers
 * window_title_async module: do not treat workspace name as window name, by @valdur55
 * yandexdisk_status module: use helpers, remove hardcoded strings, fix exception, by @lasers
 

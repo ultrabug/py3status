@@ -420,14 +420,16 @@ Color options:
 Display song currently playing in Clementine.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 5)*
-  - `format` Display format for Clementine *(default '♫ {current}')*
+  - `cache_timeout` refresh interval for this module *(default 5)*
+  - `format` display format for this module *(default '♫ {current}')*
 
 Format placeholders:
   - `{current}` currently playing
 
 Requires:
-  - `clementine`
+  - `clementine` a modern music player and library organizer
+  - `qdbus` a communication-interface for qt-based applications
+    (may be part of qt5-tools)
 
 **author** Francois LASSERRE &lt;choiz@me.com&gt;
 
@@ -2837,9 +2839,9 @@ Configuration parameters:
     *(default True)*
   - `signal_bad` Bad signal strength in percent *(default 29)*
   - `signal_degraded` Degraded signal strength in percent *(default 49)*
-  - `use_sudo` Use sudo to run iw, make sure iw requires no password by
-    adding a sudoers entry like
-    "&lt;username&gt; ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
+  - `use_sudo` Use sudo to run iw, make sure iw requires some root rights
+    without a password by adding a sudoers entry.
+    Example: "&lt;username&gt; ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
     *(default False)*
 
 Format placeholders:
@@ -2860,6 +2862,9 @@ Color options:
 Requires:
   - `iw` cli configuration utility for wireless devices
   - `ip` only for {ip}. may be part of iproute2: ip routing utilities
+
+__Note: Some distributions eg Debian require `iw` to be run with privileges.
+In this case you will need to use the `use_sudo` configuration parameter.__
 
 **author** Markus Weimar &lt;mail@markusweimar.de&gt;
 
