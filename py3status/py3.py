@@ -685,7 +685,7 @@ class Py3:
             msg = "Command '{cmd}' {error}"
             raise Exception(msg.format(cmd=command[0], error=e))
 
-    def command_output(self, command):
+    def command_output(self, command, shell=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -697,7 +697,7 @@ class Py3:
             command = shlex.split(command)
         try:
             process = Popen(command, stdout=PIPE, stderr=PIPE,
-                            universal_newlines=True)
+                            universal_newlines=True, shell=shell)
         except Exception as e:
             msg = "Command '{cmd}' {error}"
             raise Exception(msg.format(cmd=command[0], error=e))
