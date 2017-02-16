@@ -3,15 +3,14 @@
 Display disk information.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds.
-        (default 10)
-    disk: disk or partition whose stat to check. Set to None to get global stats.
+    cache_timeout: refresh interval for this module. (default 10)
+    disk: show stats for disk or partition, i.e. `sda1`. None for all disks.
         (default None)
-    format: format of the output.
+    format: display format for this module.
         (default "{disk}: {used_percent}% ({total})")
-    format_rate: format for the rates value
+    format_rate: display format for rates value
         (default "[\?min_length=11 {value:.1f} {unit}]")
-    format_space: format for the disk space values
+    format_space: display format for disk space values
         (default "[\?min_length=5 {value:.1f}]")
     sector_size: size of the disk's sectors.
         (default 512)
@@ -53,7 +52,6 @@ Color thresholds:
 
 from __future__ import division  # python2 compatibility
 from time import time
-import subprocess
 
 
 class Py3status:
@@ -73,7 +71,7 @@ class Py3status:
     }
     unit = "B/s"
 
-    def __init__(self, *args, **kwargs):
+    def post_config_hook(self):
         """
         Format of total, up and down placeholders under self.format.
         As default, substitutes self.left_align and self.precision as %s and %s
@@ -86,7 +84,6 @@ class Py3status:
         self.last_time = time()
 
     def space_and_io(self):
-
         self.values = {'disk': self.disk if self.disk else 'all'}
 
         if (self.py3.format_contains(self.format, 'read') or
@@ -126,8 +123,10 @@ class Py3status:
             self.py3.threshold_get_color(free, 'free')
             self.py3.threshold_get_color(used, 'used')
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, self.values)}
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, self.values)
+        }
 
     def _get_free_space(self, disk):
         if disk and not disk.startswith('/dev/'):
@@ -137,7 +136,7 @@ class Py3status:
         used = 0
         free = 0
 
-        df = subprocess.check_output(['df']).decode('utf-8')
+        df = self.py3.command_output('df')
         for line in df.splitlines():
             if (disk and line.startswith(disk)) or (disk is None and line.startswith('/dev/')):
                 data = line.split()
