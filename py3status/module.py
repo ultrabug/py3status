@@ -27,7 +27,7 @@ class Module(Thread):
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
-        self.cache_time = None
+        self.cache_time = False
         self.click_events = False
         self.config = py3_wrapper.config
         self.disabled = False
@@ -105,6 +105,36 @@ class Module(Thread):
                 )
                 self._py3_wrapper.report_exception(msg)
                 self.disabled = True
+
+    def enable(self):
+        if self.disabled:
+            self.disabled = False
+            # update if needed
+            if self.cache_time is False:
+                # The module was never started so start it running
+                self.start_module()
+                return
+            if self.cache_time is None:
+                # module is updating
+                return
+
+            # ensure we update
+            self._py3_wrapper.notify_update(self.module_full_name)
+
+            # new style modules can signal they want to cache forever
+            if self.cache_time == PY3_CACHE_FOREVER:
+                return
+            # restart
+            delay = max(self.cache_time - time(), 0)
+
+            self.timer = Timer(delay, self.run)
+            self.timer.start()
+
+    def disable(self):
+        if not self.disabled:
+            self.disabled = True
+            # ensure we update
+            self._py3_wrapper.notify_update(self.module_full_name)
 
     def start_module(self):
         """
@@ -184,6 +214,8 @@ class Module(Thread):
         """
         return latest output.
         """
+        if self.disabled:
+            return []
         return self.last_output
 
     def set_module_options(self, module):
@@ -559,6 +591,9 @@ class Module(Thread):
         # cancel any existing timer
         if self.timer:
             self.timer.cancel()
+
+        if self.disabled:
+            return
 
         if self.lock.is_set():
             cache_time = None

@@ -1,8 +1,10 @@
+import re
 import select
+import shlex
 import sys
 
 from threading import Thread
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, check_output
 from json import loads
 
 from py3status.profiling import profile
@@ -107,8 +109,10 @@ class Events(Thread):
             return
         elif command == 'refresh_all':
             self.py3_wrapper.refresh_modules()
+            return
         elif command == 'refresh':
             self.py3_wrapper.refresh_modules(module_name)
+            return
         else:
             # In commands we are able to use substitutions for the text output
             # of a module
@@ -119,11 +123,49 @@ class Events(Thread):
                                           shell_quote(partial_text))
                 command = command.replace('$OUTPUT', shell_quote(full_text))
 
+        if command.startswith('popup '):
+            # this is a popup
+            self.process_popup(event, command, module_name)
+
+        else:
             # this is a i3 message
             self.i3_msg(module_name, command)
             # to make the bar more responsive to users we ask for a refresh
             # of the module or of i3status if the module is an i3status one
             self.py3_wrapper.refresh_modules(module_name)
+
+    def process_popup(self, event, command, module_name):
+        """
+        Process the command and use it to open a popup.
+        """
+        reg_exp = r'(([^\\:]|\\[^n])+)(:([^\\]|\\[^n])*)?(\\n|$)'
+        parsed = re.findall(reg_exp, command[6:])
+        data = [x[0].replace('\\\\', '\\') for x in parsed]
+        callbacks = dict((x[0].replace('\\\\', '\\'), x[2][1:])
+                         for x in parsed if x[2])
+        if callbacks:
+            def callback(item, data):
+                self.py3_wrapper.popup_controller.close()
+                if item in callbacks:
+                    self.on_click_dispatcher(module_name, event, callbacks[item])
+            type = 'menu'
+        else:
+            callback = None
+            type = 'info'
+        # We have a command to run for popup output
+        if len(data) == 1 and data[0][0] == '`' and data[0][-1] == '`':
+            try:
+                data = check_output(shlex.split(data[0][1:-1]),
+                                    universal_newlines=True).strip()
+            except:
+                self.py3_wrapper.notify_user(
+                    'popup command {} failed'.format(data[0])
+                )
+                return
+
+        self.py3_wrapper.popup_controller.popup_toggle(
+            module_name, data, type=type, callback=callback
+        )
 
     def i3_msg(self, module_name, command):
         """
@@ -139,6 +181,8 @@ class Events(Thread):
         Events may have been declared in i3status.conf, modules may have
         on_click() functions. There is a default middle click event etc.
         """
+        self.py3_wrapper.popup_controller.close(module_name)
+        self.py3_wrapper.popup_controller.event_x = event['x']
         button = event.get('button', 0)
         default_event = False
         # execute any configured i3-msg command
@@ -219,7 +263,10 @@ class Events(Thread):
         # guess the module config name
         module_name = '{} {}'.format(name, instance).strip()
         # do the work
-        self.process_event(module_name, event)
+        try:
+            self.process_event(module_name, event)
+        except Exception:
+            self.py3_wrapper.report_exception('Error processing event')
 
     @profile
     def run(self):

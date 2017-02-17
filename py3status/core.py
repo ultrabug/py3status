@@ -8,6 +8,7 @@ import time
 
 from collections import deque
 from json import dumps
+from operator import itemgetter
 from platform import python_version
 from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
@@ -21,6 +22,7 @@ from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
+from py3status.popup import PopupController
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.version import version
@@ -340,6 +342,9 @@ class Py3statusWrapper():
             self.log('i3status thread {} with config {}'.format(
                 i3s_mode, self.config['py3_config']))
 
+        # popup_controller
+        self.popup_controller = PopupController(self)
+
         # setup input events thread
         self.events_thread = Events(self)
         self.events_thread.start()
@@ -479,6 +484,26 @@ class Py3statusWrapper():
         Received request to terminate (SIGTERM), exit nicely.
         """
         raise KeyboardInterrupt()
+
+    def py3status_function(self, name, data):
+        """
+        Expose core functionality to modules.
+        """
+        if name == 'module_info':
+            output = []
+            for module_name, module in self.output_modules.items():
+                output.append({
+                    'name': module_name,
+                    'enabled': not module['module'].disabled,
+                    'type': not module['type'],
+                })
+            return sorted(output, key=itemgetter('name'))
+        elif name == 'module_enable':
+            if data in self.output_modules:
+                self.output_modules[data]['module'].enable()
+        elif name == 'module_disable':
+            if data in self.output_modules:
+                self.output_modules[data]['module'].disable()
 
     def notify_update(self, update, urgent=False):
         """

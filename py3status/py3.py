@@ -1,8 +1,10 @@
 from __future__ import division
 
+import json
 import os
 import sys
 import shlex
+import sqlite3
 
 from fnmatch import fnmatch
 from math import log10
@@ -66,6 +68,8 @@ class Py3:
     # Shared by all Py3 Instances
     _formatter = Formatter()
     _none_color = NoneColor()
+
+    _storage_path = None
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
@@ -309,6 +313,13 @@ class Py3:
         Can be helpful for fixing python 2 compatability issues
         """
         return self._is_python_2
+
+    def module_name(self):
+        """
+        Returns the modules name.
+        """
+        if self._module:
+            return self._module.module_full_name
 
     def is_my_event(self, event):
         """
@@ -723,6 +734,122 @@ class Py3:
             raise Exception(msg.format(cmd=command[0], error=error))
         return output
 
+    def _storage_get_connection(self):
+        if not self._module:
+            return
+        storage_path = self.__class__._storage_path
+
+        if storage_path:
+            return sqlite3.connect(storage_path)
+
+        # get storage path
+        config_dir = os.path.dirname(
+            self._module._py3_wrapper.config['i3status_config_path']
+        )
+        storage_path = os.path.join(config_dir, 'py3status.sqlite')
+        self.__class__._storage_path = storage_path
+        con = sqlite3.connect(storage_path)
+        # initialize the database if needed
+        sql = """
+            CREATE TABLE IF NOT EXISTS module_data (
+            module TEXT,
+            key TEXT,
+            data_type TEXT,
+            data TEXT,
+            UNIQUE(module, key) ON CONFLICT REPLACE
+            );
+        """
+        with con:
+            con.execute(sql)
+        return con
+
+    def storage_set(self, key, value):
+        """
+        Store a value for the module
+        """
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+
+        data = json.dumps(value)
+        data_type = 'json'
+
+        sql = """
+            INSERT INTO module_data
+            (module, key, data_type, data)
+            values (?, ?, ?, ?)
+        """
+        params = (module_name, key, data_type, data)
+        with con:
+            con.execute(sql, params)
+
+    def storage_get(self, key):
+        """
+        Retrieve a value for the module
+        """
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+        cur = con.cursor()
+        sql = """
+            SELECT data_type, data FROM module_data
+            WHERE module = ? AND key = ?
+        """
+        params = (module_name, key)
+        cur.execute(sql, params)
+        result = cur.fetchone()
+        if result:
+            data_type = result[0]
+            data = result[1]
+
+            if data_type == 'json':
+                value = json.loads(data)
+                return value
+
+    def storage_clear(self, key=None):
+        """
+        Remove the value stored with the key from storage.
+        If key is not supplied then all values for the module are removed.
+        """
+
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+        if key:
+            sql = """
+            DELETE FROM module_data WHERE module = ? AND key = ?
+            """
+            params = (module_name, key)
+        else:
+            sql = 'DELETE FROM module_data WHERE module = ?'
+            params = (module_name,)
+        with con:
+            con.execute(sql, params)
+
+    def storage_keys(self):
+        """
+        Return a list of the keys for values stored for the module.
+        """
+        con = self._storage_get_connection()
+        if not con:
+            return
+        module_name = self._module.module_full_name
+        cur = con.cursor()
+        sql = """
+            SELECT key FROM module_data
+            WHERE module = ?
+        """
+        params = (module_name,)
+        cur.execute(sql, params)
+        result = cur.fetchall()
+        if result:
+            return [row[0] for row in result]
+        else:
+            return []
+
     def play_sound(self, sound_file):
         """
         Plays sound_file if possible.
@@ -741,6 +868,15 @@ class Py3:
         if self._audio:
             self._audio.kill()
             self._audio = None
+
+    def py3status_function(self, name, data=None):
+        """
+        Exposes core functionality to modules.
+        """
+        if self._module:
+            return self._module._py3_wrapper.py3status_function(
+                name=name, data=data
+            )
 
     def threshold_get_color(self, value, name=None):
         """
@@ -782,3 +918,53 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def popup_open(self, data, type='info', callback=None):
+        """
+        Open a popup for the module.
+
+        `type` can be 'info' in which case the popup will contain just text, or
+        'menu' in which case the popup will respond to user actions and call
+        the callback function.
+
+        `data` can be a string using \n to separate each line, a list of
+        strings or a list of tuples (text, value) where text is the string to
+        be displayed and value can be True (item is selected), False (item is
+        not selected), None (item not selectable).
+
+        `callback` is a function that will receive the text of the line that
+        was clicked by the user and a dict containing all items as keys and a
+        value corresponding to if the item is selected or not.
+        """
+        if self._module:
+            module_name = self._module.module_full_name
+            self._module._py3_wrapper.popup_controller.popup(
+                module_name, data, type=type, callback=callback
+            )
+
+    def popup_close(self):
+        """
+        Close the modules popup.
+        """
+        if self._module:
+            self._module._py3_wrapper.popup_controller.close()
+
+    def popup_toggle(self, data, type='info', callback=None):
+        """
+        Close the menu if it is open else open it.
+        """
+        if self._module:
+            module_name = self._module.module_full_name
+            self._module._py3_wrapper.popup_controller.popup_toggle(
+                module_name, data, type=type, callback=callback
+            )
+
+    def popup_update(self, data):
+        """
+        Update the popup displaying the new data.
+        """
+        if self._module:
+            module_name = self._module.module_full_name
+            self._module._py3_wrapper.popup_controller.popup_update(
+                module_name, data
+            )

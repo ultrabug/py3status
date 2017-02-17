@@ -48,6 +48,7 @@ class I3statusModule:
 
     def __init__(self, module_name, py3_wrapper):
         self.module_name = module_name
+        self.disabled = False
 
         # i3status returns different name/instances than it is sent we want to
         # be able to restore the correct ones.
@@ -80,7 +81,17 @@ class I3statusModule:
     def __repr__(self):
         return '<I3statusModule {}>'.format(self.module_name)
 
+    def enable(self):
+        self.disabled = False
+        self.py3_wrapper.notify_update(self.module_name)
+
+    def disable(self):
+        self.disabled = True
+        self.py3_wrapper.notify_update(self.module_name)
+
     def get_latest(self):
+        if self.disabled:
+            return []
         return [self.item.copy()]
 
     def update_from_item(self, item):
@@ -277,6 +288,9 @@ class I3status(Thread):
                     if (section_name.split(' ')[0] not in I3S_COLOR_MODULES or
                             key not in I3S_ALLOWED_COLORS):
                         continue
+                # don't include any popup_* options
+                if key.startswith('popup_'):
+                    continue
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
                 if section_name.split()[0] in TIME_MODULES:
