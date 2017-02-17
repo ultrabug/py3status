@@ -658,7 +658,7 @@ Display disk information.
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds.
     *(default 10)*
-  - `disk` disk or partition whose stat to check. Set to None to get global stats.
+  - `disk` disk  or partition whose stat to check, i.e. `sda1`. Set to None to get global stats.
     *(default None)*
   - `format` format of the output.
     *(default "{disk}: {used_percent}% ({total})")*
