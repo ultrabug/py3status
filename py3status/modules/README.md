@@ -656,15 +656,14 @@ Requires:
 Display disk information.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds.
-    *(default 10)*
-  - `disk` disk or partition whose stat to check. Set to None to get global stats.
+  - `cache_timeout` refresh interval for this module. *(default 10)*
+  - `disk` show stats for disk or partition, i.e. `sda1`. None for all disks.
     *(default None)*
-  - `format` format of the output.
+  - `format` display format for this module.
     *(default "{disk}: {used_percent}% ({total})")*
-  - `format_rate` format for the rates value
+  - `format_rate` display format for rates value
     *(default "[\?min_length=11 {value:.1f} {unit}]")*
-  - `format_space` format for the disk space values
+  - `format_space` display format for disk space values
     *(default "[\?min_length=5 {value:.1f}]")*
   - `sector_size` size of the disk's sectors.
     *(default 512)*

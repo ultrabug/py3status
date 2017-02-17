@@ -18,6 +18,8 @@ version 3.5 (milestone)
 * clock module: use helpers, by @lasers
 * diskdata module: use helpers, by @lasers
 * dpms module: add button_off, button_toggle, cache_timeout by @lasers
+* dropbox: use helpers and format fix, by @lasers
+* external_script: use helpers, by @lasers
 * frame module: use helpers, by @lasers
 * github module: use helpers, by @lasers
 * insync module: fix exception, by @lasers
