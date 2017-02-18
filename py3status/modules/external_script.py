@@ -51,31 +51,21 @@ class Py3status:
                 'full_text': STRING_UNAVAILABLE
             }
         try:
-            full_text = self.py3.command_output(self.script_path, shell=True)
+            output = self.py3.command_output(self.script_path, shell=True)
+            output = output.splitlines()[0]
         except:
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
                 'color': self.py3.COLOR_BAD,
                 'full_text': STRING_ERROR
             }
-        # this is a convenience cleanup code to avoid breaking i3bar which
-        # does not support multi lines output
-        if len(full_text.split('\n')) > 2:
-            full_text = full_text.split('\n')[0]
-            self.py3.notify_user(
-                'Script {} output contains new lines.'.format(
-                    self.script_path) +
-                ' Only the first one is being displayed to avoid breaking your i3bar',
-                rate_limit=None)
-        elif full_text[-1] == '\n':
-            full_text = full_text.rstrip('\n')
 
         if self.strip_output:
-            full_text = full_text.strip()
+            output = output.strip()
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'output': full_text})
+            'full_text': self.py3.safe_format(self.format, {'output': output})
         }
 
 
