@@ -1,29 +1,44 @@
 version 3.5 (milestone)
 * add a new py3status configuration section and the ability to set i3-nagbar font, by @randomguy
 * update sysdata documentation, by @valdur55
+* cleanup i3status config access, by @tobes
+* nicer exceptions on cli-commands, by @tobes
+* py3 logging nicer formatting, by @tobes
 * cleanup: remove transformed from module responses, by @tobes
-* py3 helper command_output() signal fix, by @tobes
+* py3 helper: command_output() signal fix, by @tobes
+* py3 helper: allow check_commands() to take a string, by @tobes
 * formatter unicode fixup for python2, by @tobes
+* new getjson module to display fields from a json url, by @vicyap
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
 * battery_level module: use helpers, by @lasers
 * bluetooth module: use helpers, by @lasers
 * check_tcp module: remove hardcoded strings, by @lasers
+* clementine module: use helpers, fix exception, by @lasers
+* clock module: add %s, %T for time_delta calculation, by @ShareDVI
 * clock module: use helpers, by @lasers
 * diskdata module: use helpers, by @lasers
+* dpms module: add button_off, button_toggle, cache_timeout by @lasers
+* dropbox: use helpers and format fix, by @lasers
+* external_script: use helpers, by @lasers
 * frame module: use helpers, by @lasers
 * github module: use helpers, by @lasers
+* insync module: fix exception, by @lasers
 * gpmdp module: fix permission, by @lasers
 * gpmdp module: use helpers, by @lasers
 * hamster module: use helpers, by @lasers
 * insync module: use helpers, by @lasers
 * keyboard_layout module: use helpers, by @lasers
+* mpris module: fix mouse clicks by @ritze
 * mpris module: use helpers, by @lasers
 * net_iplist module: use helpers, by @lasers
 * pomodoro module: use helpers, by @lasers
 * selinux module: fix exception, remove hardcoded strings, by @lasers
 * sysdata module: avoid dividing by 0, by @guiniol
 * taskwarrior module: use helpers, by @lasers
+* process_status module: add format, use helpers, by @lasers
 * wifi module: use helpers, fix exception, by @lasers
+* wifi module: remove command_checks(iw), by @lasers
+* window_title_async module: do not treat workspace name as window name, by @valdur55
 * yandexdisk_status module: use helpers, remove hardcoded strings, fix exception, by @lasers
 
 version 3.4 (2017-01-26)

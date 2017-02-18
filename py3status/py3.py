@@ -6,8 +6,9 @@ import shlex
 
 from fnmatch import fnmatch
 from math import log10
-from time import time
+from pprint import pformat
 from subprocess import Popen, PIPE
+from time import time
 
 from py3status.formatter import Formatter, Composite
 
@@ -85,8 +86,8 @@ class Py3:
         if module:
             self._output_modules = module._py3_wrapper.output_modules
             if not i3s_config:
-                config = self._module.i3status_thread.config['general']
-                self._i3s_config = config
+                i3s_config = self._module.config['py3_config']['general']
+                self._i3s_config = i3s_config
             self._py3status_module = module.module_class
 
     def __getattr__(self, name):
@@ -336,6 +337,11 @@ class Py3:
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
         if self._module:
+            # nicely format logs if we can using pretty print
+            message = pformat(message)
+            # start on new line if multi-line output
+            if '\n' in message:
+                message = '\n' + message
             message = 'Module `{}`: {}'.format(
                 self._module.module_full_name, message)
             self._module._py3_wrapper.log(message, level)
@@ -679,7 +685,7 @@ class Py3:
             msg = "Command '{cmd}' {error}"
             raise Exception(msg.format(cmd=command[0], error=e))
 
-    def command_output(self, command):
+    def command_output(self, command, shell=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -691,7 +697,7 @@ class Py3:
             command = shlex.split(command)
         try:
             process = Popen(command, stdout=PIPE, stderr=PIPE,
-                            universal_newlines=True)
+                            universal_newlines=True, shell=shell)
         except Exception as e:
             msg = "Command '{cmd}' {error}"
             raise Exception(msg.format(cmd=command[0], error=e))
