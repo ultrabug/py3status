@@ -70,12 +70,14 @@ class Py3status:
     signal_degraded = 49
     use_sudo = False
 
-    def __init__(self):
+    def post_config_hook(self):
         self._ssid = None
         self._max_bitrate = 0
         # Try and guess the wifi interface
+        cmd = ['iw', 'dev']
+        if self.use_sudo:
+            cmd.insert(0, 'sudo')
         try:
-            cmd = ['iw', 'dev']
             iw = self.py3.command_output(cmd)
             devices = re.findall('Interface\s*([^\s]+)', iw)
             if not devices or 'wlan0' in devices:
