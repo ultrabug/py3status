@@ -522,6 +522,8 @@ def process_config(config_path, py3_wrapper=None):
         module_path = os.path.join(root, 'modules', '*.py')
         for file in glob.glob(module_path):
             modules.append(os.path.basename(file)[:-3])
+        for fl in glob.glob(os.path.join(root, 'modules', '*', '__init__.py')):
+            modules.append(os.path.basename(os.path.dirname(fl)))
 
         # FIXME we can do this better
         if py3_wrapper:
