@@ -124,6 +124,8 @@ class Py3status:
         ssid_out = re.search('SSID: (.+)', iw)
         if ssid_out:
             ssid = ssid_out.group(1)
+            ssid = ssid.encode('latin-1').decode('unicode_escape')
+            ssid = ssid.encode('latin-1').decode()
         else:
             ssid = None
 
