@@ -3,28 +3,32 @@
 Display NVIDIA GPU temperature.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 10)
-    format_prefix: a prefix for the output. (default 'GPU: ')
-    format_units: the temperature units. Will appear at the end. (default '°C')
-    temp_separator: the separator char between temperatures (only if more than
-        one GPU) (default '|')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default 'GPU: {format_temp}')
+    format_temp: display format for temperatures (default '{temp}°C')
+    temp_separator: temperature separator (if more than one) (default '|')
+
+Format placeholders:
+    {format_temp} format for temperatures
+
+format_temp placeholders:
+    {temp} temperatures
 
 Color options:
-    color_bad: Temperature can't be read.
-    color_good: Everything is OK.
+    color_bad: Unavailable
+    color_good: Available
 
 Requires:
-    nvidia-smi:
+    nvidia-smi: NVIDIA System Management Interface program
 
 @author jmdana <https://github.com/jmdana>
 @license BSD
 """
 
 import re
-import shlex
-from subprocess import check_output
-
 TEMP_RE = re.compile(r"Current Temp\s+:\s+([0-9]+)")
+STRING_UNAVAILABLE = "nvidia-smi: isn't installed"
+STRING_ERROR = "nvidia_temp: N/A"
 
 
 class Py3status:
@@ -32,43 +36,53 @@ class Py3status:
     """
     # configuration parameters
     cache_timeout = 10
-    format_prefix = "GPU: "
-    format_units = u"°C"
+    format = "GPU: {format_temp}"
+    format_temp = u"{temp}°C"
     temp_separator = '|'
 
-    def nvidia_temp(self):
-        out = check_output(shlex.split("nvidia-smi -q -d TEMPERATURE"))
-        temps = re.findall(TEMP_RE, out.decode("utf-8"))
+    class Meta:
 
-        if temps != []:
-            data = []
-            for temp in temps:
-                fmt_str = "{temp}{format_units}".format(
-                    temp=temp,
-                    format_units=self.format_units
-                )
-                data.append(fmt_str)
+        def deprecate_function(config):
+            out = {}
+            if 'format_units' in config:
+                out['format_temp'] = u'{{temp}}{}'.format(config['format_units'])
+            if 'format_prefix' in config:
+                out['format'] = u'{}{{format_temp}}'.format(config['format_prefix'])
+            return out
 
-            output = "{format_prefix}{data}".format(
-                format_prefix=self.format_prefix,
-                data=self.temp_separator.join(data)
-            )
-
-            color = self.py3.COLOR_GOOD
-        else:
-            output = "{format_prefix}OFF".format(
-                format_prefix=self.format_prefix
-            )
-
-            color = self.py3.COLOR_BAD
-
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': output
+        deprecated = {
+            'function': [
+                {'function': deprecate_function},
+            ],
         }
 
-        return response
+    def nvidia_temp(self):
+        if not self.py3.check_commands('nvidia-smi'):
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_UNAVAILABLE
+            }
+
+        temps = self.py3.command_output('nvidia-smi -q -d TEMPERATURE')
+        temps = set(TEMP_RE.findall(temps))
+        if temps == []:
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+        data = []
+        for temp in temps:
+            data.append(self.py3.safe_format(self.format_temp, {'temp': temp}))
+        data = self.py3.composite_join(self.temp_separator, data)
+        full_text = self.py3.safe_format(self.format, {'format_temp': data})
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': self.py3.COLOR_GOOD,
+            'full_text': full_text
+        }
 
 
 if __name__ == "__main__":
