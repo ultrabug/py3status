@@ -19,7 +19,7 @@ Format placeholders:
     {unseen} number of unread emails
 
 Color options:
-    color_good: use color when new mail arrives
+    color_new_mail: use color when new mail arrives, default to color_good
 
 @author obb
 """
@@ -49,7 +49,7 @@ class Py3status:
                 {
                     'param': 'new_mail_color',
                     'new': 'color_new_mail',
-                    'msg': 'obsolete parameter use `color_good`',
+                    'msg': 'obsolete parameter use `color_new_mail`',
                 },
                 {
                     'param': 'imap_server',
@@ -73,7 +73,7 @@ class Py3status:
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': STRING_UNAVAILABLE})
         elif mail_count > 0:
-            response['color'] = self.py3.COLOR_GOOD
+            response['color'] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
 
         if mail_count == 0 and self.hide_if_zero:
             response['full_text'] = ''
