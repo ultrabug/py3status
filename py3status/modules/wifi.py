@@ -125,7 +125,7 @@ class Py3status:
         if ssid_out:
             ssid = ssid_out.group(1)
             ssid = ssid.encode('latin-1').decode('unicode_escape')
-            ssid = ssid.encode('latin-1').decode()
+            ssid = ssid.encode('latin-1').decode('utf-8')
         else:
             ssid = None
 
