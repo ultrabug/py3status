@@ -27,7 +27,9 @@ class Module(Thread):
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
+
         self.allow_config_clicks = True
+        self.allow_urgent = None
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
@@ -400,8 +402,13 @@ class Module(Thread):
             # Remove any none color from our output
             if hasattr(item.get('color'), 'none_setting'):
                 del item['color']
+
+            # remove urgent if not allowed
+            if not self.allow_urgent:
+                if 'urgent' in item:
+                    del item['urgent']
             # if urgent we want to set this to all parts
-            if urgent and 'urgent' not in item:
+            elif urgent and 'urgent' not in item:
                 item['urgent'] = urgent
 
     def _params_type(self, method_name, instance):
@@ -604,6 +611,15 @@ class Module(Thread):
             if not hasattr(self.module_class, 'py3'):
                 setattr(self.module_class, 'py3', Py3(self))
 
+            # allow_urgent
+            # get the value form the config or use the module default if
+            # supplied.
+            fn = self._py3_wrapper.get_config_attribute
+            param = fn(self.module_full_name, 'allow_urgent')
+            if hasattr(param, 'none_setting'):
+                param = True
+            self.allow_urgent = param
+
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
                 if method.startswith('_'):
@@ -744,6 +760,9 @@ class Module(Thread):
                         # Remove any none color from our output
                         if hasattr(result.get('color'), 'none_setting'):
                             del result['color']
+                        # remove urgent if not allowed
+                        if not self.allow_urgent and 'urgent' in result:
+                            del result['urgent']
                         # set universal module options in result
                         result.update(self.module_options)
 
