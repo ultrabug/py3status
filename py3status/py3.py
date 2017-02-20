@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import division
 
 import collections
@@ -14,7 +16,7 @@ from time import time
 from py3status import exceptions
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
-from py3status.util import Gradiants
+from py3status.util import Gradiants, Graph
 
 
 PY3_CACHE_FOREVER = -1
@@ -302,6 +304,25 @@ class Py3:
             else:
                 items.append((str(k), v))
         return dict(items)
+
+    def graph(self, type='bar', size=12, thresholds=None, multi_color=True):
+        """
+        Create a graph.
+
+        Once the graph is created it is updated by calling it with the current
+        value.  The value should be between 0 and 100.
+
+        Graph types:
+
+        `vbar` a single character vertical bar eg `▅`
+        `graph` a multi character vertical bar chart eg `▁▅▄▂▃▇▆█` showing the
+        output over time.
+        'bar' a multi character continuous horizontal bar showing a single
+        value eg `████  `
+        'sbar' a multi character segmented horizontal bar showing a single value
+        eg `▊▊▊▊▍ `
+        """
+        return Graph(type=type, size=size, py3=self, thresholds=thresholds, multi_color=multi_color)
 
     def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
         """

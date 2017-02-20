@@ -2,8 +2,10 @@
 from __future__ import division
 
 import re
+
+from collections import deque
 from colorsys import rgb_to_hsv, hsv_to_rgb
-from math import modf
+from math import modf, ceil
 
 
 class Gradiants:
@@ -138,3 +140,114 @@ class Gradiants:
         # cache gradient
         self._gradients_cache[key] = colors
         return colors
+
+
+class Graph:
+    """
+    Pretty graphs
+    """
+
+    H_BLOCKS = u'\u258f\u258e\u258d\u258c\u258b\u258a\u2589\u2588'
+    V_BLOCKS = u' ▁▂▃▄▅▆▇█'
+    TYPES = ['graph', 'vbar', 'bar', 'sbar']
+
+    def __call__(self, value):
+        return self.call(value)
+
+    def __init__(self, type, size, py3, thresholds=None, multi_color=False):
+        if type not in self.TYPES:
+            raise Exception('Unknown graph type %s' % type)
+
+        self.py3 = py3
+        self.size = size
+        self.multi_color = multi_color
+        if type == 'bar':
+            self.blocks = self.H_BLOCKS
+            self.call = self.bar
+        elif type == 'sbar':
+            self.blocks = self.H_BLOCKS[:-1]
+            self.call = self.bar
+        elif type == 'graph':
+            self.blocks = self.V_BLOCKS
+            self.call = self.graph
+            if self.multi_color:
+                self._graph = deque()
+                for x in range(size):
+                    self._graph.append({'full_text': ' '})
+            else:
+                self._graph = u' ' * size
+        else:
+            self.blocks = self.V_BLOCKS
+            self.call = self.icon
+        self.full_block = self.blocks[-1]
+        self._block_len = len(self.blocks)
+
+    def icon(self, percent):
+        index = int(ceil(percent / 100 * (self._block_len))) - 1
+        if index < 0:
+            index = 0
+        elif index >= self._block_len:
+            index = self._block_len - 1
+        if self.gradient:
+            return self.py3.composite_create({
+                'full_text': self.blocks[index],
+                'color': self.py3.threshold_get_color(percent)
+            })
+        return self.blocks[index]
+
+    def graph(self, percent):
+        index = int(ceil(percent / 100 * (self._block_len))) - 1
+        if index < 0:
+            index = 0
+        elif index >= self._block_len:
+            index = self._block_len - 1
+        if self.multi_color:
+            self._graph.appendleft({
+                'full_text': self.blocks[index],
+                'color': self.py3.threshold_get_color(percent)
+            })
+            self._graph.pop()
+            return self.py3.composite_create(self._graph)
+        self._graph = self.blocks[index] + self._graph[:-1]
+        if True: #self.gradient:
+            return self.py3.composite_create(
+                {
+                    'full_text': self._graph,
+                    'color': self.py3.threshold_get_color(percent)
+                }
+            )
+
+        return self._graph
+
+    def bar(self, percent):
+        size = self.size
+        index = int(ceil(percent / 100 * (self._block_len * size))) - 1
+        if index < 0:
+            index = 0
+        elif index >= self._block_len * size:
+            index = self._block_len * size - 1
+        full = index // self._block_len
+        empty = size - full - 1
+
+        out = ((self.full_block * full) +
+               self.blocks[index % self._block_len] + (' ' * empty))
+        grad_per_block = 100/self.size
+        if True: #self.gradient:
+            if self.multi_color:
+                composite = []
+                for x in range(full + 1):
+                    composite.append({
+                        'full_text': out[x],
+                        'color': self.py3.threshold_get_color(int(grad_per_block * x))
+                    })
+                if empty:
+                    composite.append({'full_text': ' ' * empty})
+                out = self.py3.composite_create(composite)
+            else:
+                out = self.py3.composite_create(
+                    {
+                        'full_text': out,
+                        'color': self.py3.threshold_get_color(int(grad_per_block * full))
+                    }
+                )
+        return out
