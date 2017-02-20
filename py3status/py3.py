@@ -14,6 +14,8 @@ from time import time
 from py3status import exceptions
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
+from py3status.util import Gradiants
+
 
 PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = 'error'
@@ -85,6 +87,7 @@ class Py3:
 
     # Shared by all Py3 Instances
     _formatter = None
+    _gradients = Gradiants()
     _none_color = NoneColor()
 
     # Exceptions
@@ -100,10 +103,11 @@ class Py3:
         self._config_setting = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
-        self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
+        self._module = module
         self._report_exception_cache = set()
         self._thresholds = None
+        self._threshold_gradients = {}
 
         if module:
             self._i3s_config = module._py3_wrapper.config['py3_config']['general']
@@ -916,6 +920,9 @@ class Py3:
         threshold is needed for a module then the name can also be supplied.
         If the user has not supplied a named threshold but has defined a
         general one that will be used.
+
+        If the gradients config parameter is True then rather than sharp
+        thresholds we will use a gradient between the color values.
         """
         # If first run then process the threshold data.
         if self._thresholds is None:
@@ -931,13 +938,33 @@ class Py3:
         name_used = name
         if name_used not in self._thresholds:
             name_used = None
+        thresholds = self._thresholds.get(name_used)
+        if color is None and thresholds:
+            # if gradients are enabled then we use them
+            if self._get_config_setting('gradients'):
+                try:
+                    colors, minimum, maximum = self._threshold_gradients[name_used]
+                except KeyError:
+                    colors = self._gradients.make_threshold_gradient(self, thresholds)
+                    minimum = min(thresholds)[0]
+                    maximum = max(thresholds)[0]
+                    self._threshold_gradients[name_used] = (colors, minimum, maximum)
 
-        if color is None:
-            for threshold in self._thresholds.get(name_used, []):
-                if value >= threshold[0]:
-                    color = threshold[1]
-                else:
-                    break
+                if value < minimum:
+                    return colors[0]
+                if value > maximum:
+                    return colors[-1]
+                value -= minimum
+                col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
+                color = colors[col_index]
+
+            elif color is None:
+                color = thresholds[0][1]
+                for threshold in thresholds:
+                    if value >= threshold[0]:
+                        color = threshold[1]
+                    else:
+                        break
 
         # save color so it can be accessed via safe_format()
         if name:
