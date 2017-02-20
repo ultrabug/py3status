@@ -41,6 +41,24 @@ CONFIG_SPECIAL_SECTIONS = [
 ]
 
 
+class NoneSetting:
+    """
+    This class represents no
+    setting in the config.  We need this so that we can do things like
+
+    color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+    Py3 provides a helper function is_color() that will treat a NoneSetting as
+    False, whereas a simple if would show True
+    """
+    # this attribute is used to identify that this is a none color
+    none_setting = True
+
+    def __repr__(self):
+        # this is for output via module_test
+        return 'None'
+
+
 class Py3statusWrapper():
     """
     This is the py3status wrapper.
@@ -55,6 +73,7 @@ class Py3statusWrapper():
         self.last_refresh_ts = time.time()
         self.lock = Event()
         self.modules = {}
+        self.none_setting = NoneSetting()
         self.notified_messages = set()
         self.output_modules = {}
         self.py3_modules = []
@@ -653,20 +672,25 @@ class Py3statusWrapper():
         then walk up through any containing group and then try the general
         section of the config.
         """
+
         py3_config = self.config['py3_config']
-        color = py3_config[name].get(attribute, 'missing')
-        if color == 'missing' and name in py3_config['.module_groups']:
+        # A user can set a param to None in the config to prevent a param
+        # being used.  This is important when modules do something like
+        #
+        # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+        param = py3_config[name].get(attribute, self.none_setting)
+        if hasattr(param, 'none_setting') and name in py3_config['.module_groups']:
             for module in py3_config['.module_groups'][name]:
                 if attribute in py3_config.get(module, {}):
-                    color = py3_config[module].get(attribute)
+                    param = py3_config[module].get(attribute)
                     break
-        if color == 'missing':
-            # A user can set a color to None in the config to prevent a color
-            # being used.  This is important when modules do something like
-
-            # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-            color = py3_config['general'].get(attribute, False)
-        return color
+        if hasattr(param, 'none_setting'):
+            # check py3status config section
+            param = py3_config['py3status'].get(attribute, self.none_setting)
+        if hasattr(param, 'none_setting'):
+            # check py3status general section
+            param = py3_config['general'].get(attribute, self.none_setting)
+        return param
 
     def create_mappings(self, config):
         """
@@ -678,6 +702,8 @@ class Py3statusWrapper():
             if name in CONFIG_SPECIAL_SECTIONS:
                 continue
             color = self.get_config_attribute(name, 'color')
+            if hasattr(color, 'none_setting'):
+                color = None
             mappings[name] = color
         # Store mappings for later use.
         self.mappings_color = mappings
