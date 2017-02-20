@@ -525,6 +525,37 @@ class Py3:
         self._format_placeholders_cache[format_string][name] = result
         return result
 
+    def get_placeholders_list(self, format_string, match=None):
+        """
+        Returns a list of placeholders in `format_string`.
+
+        If `match` is provided then it is used to filter the result using
+        fnmatch so the following patterns can be used:
+
+            * 	    matches everything
+            ? 	    matches any single character
+            [seq] 	matches any character in seq
+            [!seq] 	matches any character not in seq
+
+        This is useful because we just get simple placeholder without any
+        formatting that may be applied to them
+        eg `'{placeholder:.2f}'` will give `['{placeholder}']`
+        """
+        if format_string not in self._format_placeholders:
+            placeholders = self._formatter.get_placeholders(format_string)
+            self._format_placeholders[format_string] = placeholders
+        else:
+            placeholders = self._format_placeholders[format_string]
+
+        if not match:
+            return list(placeholders)
+        # filter matches
+        found = []
+        for placeholder in placeholders:
+            if fnmatch(placeholder, match):
+                found.append(placeholder)
+        return found
+
     def safe_format(self, format_string, param_dict=None,
                     force_composite=False, attr_getter=None):
         """

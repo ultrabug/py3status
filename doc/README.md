@@ -1005,6 +1005,22 @@ This is useful because a simple test like
 will fail if the format string contains placeholder formatting
 eg `'{placeholder:.2f}'`
 
+__get_placeholders_list(format_string, match=None)__
+
+Returns a list of placeholders in `format_string`.
+
+If `match` is provided then it is used to filter the result using
+fnmatch so the following patterns can be used:
+
+    * 	    matches everything
+    ? 	    matches any single character
+    [seq] 	matches any character in seq
+    [!seq] 	matches any character not in seq
+
+This is useful because we just get simple placeholder without any
+formatting that may be applied to them
+eg `'{placeholder:.2f}'` will give `['{placeholder}']`
+
 __safe_format(format_string, param_dict=None, force_composite=False,
 attr_getter=None)__
 
