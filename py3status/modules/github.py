@@ -11,6 +11,7 @@ The Github API is rate limited so setting `cache_timeout` too small may cause
 issues see https://developer.github.com/v3/#rate-limiting for details
 
 Configuration parameters:
+    allow_urgent: display urgency on unread notifications (default True)
     auth_token: Github personal access token, needed to check notifications
         see above.
         (default None)
@@ -72,6 +73,7 @@ GITHUB_URL = 'https://github.com/'
 
 
 class Py3status:
+    allow_urgent = True
     auth_token = None
     button_action = 3
     cache_timeout = 60
@@ -184,7 +186,8 @@ class Py3status:
                 notify = self.py3.safe_format(
                     self.format_notifications,
                     {'notifications_count': count})
-                urgent = True
+                if self.allow_urgent:
+                    urgent = True
             else:
                 notify = ''
             status['notifications'] = notify
