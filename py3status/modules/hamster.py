@@ -16,6 +16,9 @@ Requires:
 @license BSD
 """
 
+STRING_NOT_INSTALLED = "hamster: isn't installed"
+STRING_ERROR = "hamster: unknown error"
+
 
 class Py3status:
     """
@@ -25,7 +28,21 @@ class Py3status:
     format = '{current}'
 
     def hamster(self):
-        cur_task = self.py3.command_output('hamster current').strip()
+        if not self.py3.check_commands('hamster'):
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_NOT_INSTALLED
+            }
+        try:
+            cur_task = self.py3.command_output('hamster current').strip()
+        except:
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+
         if cur_task != 'No activity':
             cur_task = cur_task.split()
             time_elapsed = cur_task[-1]
