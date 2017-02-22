@@ -43,15 +43,9 @@ CONFIG_SPECIAL_SECTIONS = [
 
 class NoneSetting:
     """
-    This class represents no
-    setting in the config.  We need this so that we can do things like
-
-    color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-
-    Py3 provides a helper function is_color() that will treat a NoneSetting as
-    False, whereas a simple if would show True
+    This class represents no setting in the config.
     """
-    # this attribute is used to identify that this is a none color
+    # this attribute is used to identify that this is a none setting
     none_setting = True
 
     def __repr__(self):

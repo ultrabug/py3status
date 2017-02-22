@@ -25,6 +25,24 @@ except NameError:
     basestring = str
 
 
+class NoneColor:
+    """
+    This class represents a color that has explicitly been set as None by the user.
+    We need this so that we can do things like
+
+    color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+    Py3 provides a helper function is_color() that will treat a NoneColor as
+    False, whereas a simple if would show True
+    """
+    # this attribute is used to identify that this is a none color
+    none_setting = True
+
+    def __repr__(self):
+        # this is for output via module_test
+        return 'None'
+
+
 class Py3:
     """
     Helper object that gets injected as self.py3 into Py3status
@@ -47,6 +65,7 @@ class Py3:
 
     # Shared by all Py3 Instances
     _formatter = Formatter()
+    _none_color = NoneColor()
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
@@ -79,7 +98,7 @@ class Py3:
         if it exists
         """
         if not name.startswith('COLOR_'):
-            raise AttributeError
+            raise AttributeError(name)
         return self._get_config_setting(name.lower())
 
     def _get_config_setting(self, name, default=None):
@@ -92,8 +111,16 @@ class Py3:
             else:
                 # running in test mode so config is not available
                 param = self._i3s_config.get(name, None)
-            # if a non-color parameter and was not set then set to None
-            if hasattr(param, 'none_setting') and not name.startswith('color_'):
+            # colors are special we want to make sure that we treat a color
+            # that was explicitly set to None as a True value.  Ones that are
+            # not set should be treated as None
+            if name.startswith('color_'):
+                if hasattr(param, 'none_setting'):
+                    param = None
+                elif param is None:
+                    param = self._none_color
+            # if a non-color parameter and was not set then set to default
+            elif hasattr(param, 'none_setting'):
                 param = default
             self._config_setting[name] = param
         return self._config_setting[name]
