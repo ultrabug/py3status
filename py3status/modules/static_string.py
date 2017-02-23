@@ -8,7 +8,7 @@ Configuration parameters:
 @author frimdo ztracenastopa@centrum.cz
 
 SAMPLE OUTPUT
-{'full_text': 'Hello World!'}
+{'full_text': 'Hello world!'}
 """
 
 

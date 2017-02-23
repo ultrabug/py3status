@@ -25,6 +25,9 @@ Color options:
 
 Requires:
     MySQL-python: http://pypi.python.org/pypi/MySQL-python
+
+SAMPLE OUTPUT
+{'full_text': '(fixme)'}
 """
 
 import MySQLdb

@@ -14,7 +14,7 @@ Inspired by i3 FAQ:
 @author ultrabug
 
 SAMPLE OUTPUT
-{'full_text': u'username'}
+{'full_text': u'david'}
 """
 
 from getpass import getuser

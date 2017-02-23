@@ -52,6 +52,9 @@ Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests
 
 @author raspbeguy
+
+SAMPLE OUTPUT
+{'full_text': 'Feed: 488'}
 """
 
 import requests

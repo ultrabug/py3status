@@ -82,7 +82,10 @@ clock {
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'Sun 15 Jan 2017 23:27:17 GMT'}
+{'full_text': 'Wednesday Feb 22 🕢 7:44 PM CHICAGO'}
+
+lon
+{'full_text': 'Thursday Feb 23 🕜 1:45 AM LONDON'}
 """
 
 import re

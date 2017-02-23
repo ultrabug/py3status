@@ -83,6 +83,9 @@ NOTE:
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u266a: 95%'}
+
+mute
+{'color': '#FF0000', 'full_text': u'\u266a: muted'}
 """
 
 import re

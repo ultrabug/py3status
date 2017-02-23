@@ -34,6 +34,7 @@ Requires:
 </details>
 
 ### <a name="aws_bill"></a>aws_bill
+![screenshot](../screenshots/aws_bill.png)
 <details><summary>Display bill for Amazon Web Services.</summary>
 
 **WARNING: This module generate some costs on the AWS bill.
@@ -105,6 +106,7 @@ Requires:
 
 ### <a name="battery_level"></a>battery_level
 ![screenshot](../screenshots/battery_level.png)
+![screenshot](../screenshots/battery_level-1-discharging.png)
 <details><summary>Display battery information.</summary>
 
 Configuration parameters:
@@ -206,6 +208,7 @@ Color options:
 
 ### <a name="bluetooth"></a>bluetooth
 ![screenshot](../screenshots/bluetooth.png)
+![screenshot](../screenshots/bluetooth-1-off.png)
 <details><summary>Display bluetooth status.</summary>
 
 Configuration parameters:
@@ -280,6 +283,7 @@ Requires:
 
 ### <a name="clock"></a>clock
 ![screenshot](../screenshots/clock.png)
+![screenshot](../screenshots/clock-1-lon.png)
 <details><summary>Display date and time.</summary>
 
 This module allows one or more datetimes to be displayed.
@@ -545,6 +549,7 @@ Color thresholds:
 
 ### <a name="do_not_disturb"></a>do_not_disturb
 ![screenshot](../screenshots/do_not_disturb.png)
+![screenshot](../screenshots/do_not_disturb-1-off.png)
 <details><summary>Turn on and off dbus notifications.</summary>
 
 A left mouse click will toggle the state of this module.
@@ -568,6 +573,7 @@ Color options:
 
 ### <a name="dpms"></a>dpms
 ![screenshot](../screenshots/dpms.png)
+![screenshot](../screenshots/dpms-1-off.png)
 <details><summary>Turn on and off DPMS and screen saver blanking.</summary>
 
 This module allows activation and deactivation
@@ -594,6 +600,8 @@ Color options:
 
 ### <a name="dropboxd_status"></a>dropboxd_status
 ![screenshot](../screenshots/dropboxd_status.png)
+![screenshot](../screenshots/dropboxd_status-1-busy.png)
+![screenshot](../screenshots/dropboxd_status-2-off.png)
 <details><summary>Display status of Dropbox daemon.</summary>
 
 Configuration parameters:
@@ -731,6 +739,7 @@ Format placeholders:
 
 ### <a name="frame"></a>frame
 ![screenshot](../screenshots/frame.png)
+![screenshot](../screenshots/frame-1-closed.png)
 <details><summary>Group modules and treat them as a single one.</summary>
 
 This can be useful for example when adding modules to a group and you wish two
@@ -800,6 +809,7 @@ group {
 </details>
 
 ### <a name="getjson"></a>getjson
+![screenshot](../screenshots/getjson.png)
 <details><summary>Display a json response from a url.</summary>
 
 This module gets the given `url` configuration parameter and assumes the response is a
@@ -853,6 +863,7 @@ Format placeholders:
 
 ### <a name="github"></a>github
 ![screenshot](../screenshots/github.png)
+![screenshot](../screenshots/github-1-notification.png)
 <details><summary>Display Github notifications and issue/pull requests for a repo.</summary>
 
 To check notifications a Github `username` and `personal access token` are
@@ -920,6 +931,7 @@ github {
 </details>
 
 ### <a name="glpi"></a>glpi
+![screenshot](../screenshots/glpi.png)
 <details><summary>Display number of open tickets from GLPI.</summary>
 
 It features thresholds to colorize the output and forces a low timeout to
@@ -979,6 +991,7 @@ Requires:
 </details>
 
 ### <a name="graphite"></a>graphite
+![screenshot](../screenshots/graphite.png)
 <details><summary>Display Graphite metrics.</summary>
 
 Configuration parameters:
@@ -1042,6 +1055,8 @@ Color options:
 
 ### <a name="group"></a>group
 ![screenshot](../screenshots/group.png)
+![screenshot](../screenshots/group-1-cycle.png)
+![screenshot](../screenshots/group-2-cycle.png)
 <details><summary>Group modules and switch between them.</summary>
 
 In `i3status.conf` groups can be configured. The active one of these groups is
@@ -1143,6 +1158,7 @@ Requires:
 </details>
 
 ### <a name="icinga2"></a>icinga2
+![screenshot](../screenshots/icinga2.png)
 <details><summary>Display service status for Icinga2.</summary>
 
 Configuration parameters:
@@ -1194,6 +1210,9 @@ Format placeholders:
 </details>
 
 ### <a name="insync"></a>insync
+![screenshot](../screenshots/insync.png)
+![screenshot](../screenshots/insync-1-busy.png)
+![screenshot](../screenshots/insync-2-offline.png)
 <details><summary>Display Insync status</summary>
 
 Thanks to Iain Tatch &lt;iain.tatch@gmail.com&gt; for the script that this is based on.
@@ -1224,6 +1243,12 @@ Requires:
 </details>
 
 ### <a name="kdeconnector"></a>kdeconnector
+![screenshot](../screenshots/kdeconnector.png)
+![screenshot](../screenshots/kdeconnector-1-charging.png)
+![screenshot](../screenshots/kdeconnector-2-transition.png)
+![screenshot](../screenshots/kdeconnector-3-not-plugged.png)
+![screenshot](../screenshots/kdeconnector-4-disconnected.png)
+![screenshot](../screenshots/kdeconnector-5-unknown.png)
 <details><summary>Display information about your smartphone with KDEConnector.</summary>
 
 Configuration parameters:
@@ -1276,6 +1301,10 @@ Requires:
 
 ### <a name="keyboard_layout"></a>keyboard_layout
 ![screenshot](../screenshots/keyboard_layout.png)
+![screenshot](../screenshots/keyboard_layout-1-fr.png)
+![screenshot](../screenshots/keyboard_layout-2-ru.png)
+![screenshot](../screenshots/keyboard_layout-3-ua.png)
+![screenshot](../screenshots/keyboard_layout-4-us.png)
 <details><summary>Display keyboard layout.</summary>
 
 Configuration parameters:
@@ -1566,6 +1595,7 @@ Color thresholds:
 </details>
 
 ### <a name="netdata"></a>netdata
+![screenshot](../screenshots/netdata.png)
 <details><summary>Display network speed and bandwidth usage.</summary>
 
 Configuration parameters:
@@ -1585,6 +1615,7 @@ Color options:
 </details>
 
 ### <a name="ns_checker"></a>ns_checker
+![screenshot](../screenshots/ns_checker.png)
 <details><summary>Display DNS resolution success on a configured domain.</summary>
 
 This module launch a simple query on each nameservers for the specified domain.
@@ -1643,6 +1674,7 @@ Requires:
 
 ### <a name="online_status"></a>online_status
 ![screenshot](../screenshots/online_status.png)
+![screenshot](../screenshots/online_status-1-off.png)
 <details><summary>Determine if you have an Internet Connection.</summary>
 
 Configuration parameters:
@@ -1769,7 +1801,7 @@ pomodoro {
 
 ### <a name="process_status"></a>process_status
 ![screenshot](../screenshots/process_status.png)
-![screenshot](../screenshots/process_status-1-error.png)
+![screenshot](../screenshots/process_status-1-off.png)
 <details><summary>Display if a process is running.</summary>
 
 Configuration parameters:
@@ -1892,6 +1924,7 @@ Color options:
 </details>
 
 ### <a name="rss_aggregator"></a>rss_aggregator
+![screenshot](../screenshots/rss_aggregator.png)
 <details><summary>Display unread feeds in your favorite RSS aggregator.</summary>
 
 For now, supported aggregators are:
@@ -1947,6 +1980,7 @@ Requires:
 </details>
 
 ### <a name="rt"></a>rt
+![screenshot](../screenshots/rt.png)
 <details><summary>Display number of ongoing tickets from RT queues.</summary>
 
 Configuration parameters:
@@ -2105,6 +2139,8 @@ Color options:
 
 ### <a name="spotify"></a>spotify
 ![screenshot](../screenshots/spotify.png)
+![screenshot](../screenshots/spotify-1-paused.png)
+![screenshot](../screenshots/spotify-2-stopped.png)
 <details><summary>Display song currently playing in Spotify.</summary>
 
 Configuration parameters:
@@ -2218,6 +2254,8 @@ Requires
 
 ### <a name="timer"></a>timer
 ![screenshot](../screenshots/timer.png)
+![screenshot](../screenshots/timer-1-running.png)
+![screenshot](../screenshots/timer-2-paused.png)
 <details><summary>A simple countdown timer.</summary>
 
 This is a very basic countdown timer.  You can change the timer length as well
@@ -2237,6 +2275,7 @@ Configuration parameters:
 </details>
 
 ### <a name="tor_rate"></a>tor_rate
+![screenshot](../screenshots/tor_rate.png)
 <details><summary>Display the current transfer rates of a tor instance</summary>
 
 Configuration parameters:
@@ -2289,6 +2328,7 @@ order += "tor_rate"
 
 ### <a name="twitch_streaming"></a>twitch_streaming
 ![screenshot](../screenshots/twitch_streaming.png)
+![screenshot](../screenshots/twitch_streaming-1-offline.png)
 <details><summary>Display status on a given Twitch streamer.</summary>
 
 Checks if a streamer is online using the Twitch Kraken API to see
@@ -2378,6 +2418,7 @@ Requires:
 
 ### <a name="volume_status"></a>volume_status
 ![screenshot](../screenshots/volume_status.png)
+![screenshot](../screenshots/volume_status-1-mute.png)
 <details><summary>Volume control.</summary>
 
 Expands on the standard i3status volume module by adding color
@@ -2462,6 +2503,8 @@ NOTE:
 </details>
 
 ### <a name="vpn_status"></a>vpn_status
+![screenshot](../screenshots/vpn_status.png)
+![screenshot](../screenshots/vpn_status-1-off.png)
 <details><summary>Drop-in replacement for i3status run_watch VPN module.</summary>
 
 Expands on the i3status module by displaying the name of the connected vpn
@@ -2552,7 +2595,7 @@ weather_yahoo {
 
 ### <a name="whatismyip"></a>whatismyip
 ![screenshot](../screenshots/whatismyip.png)
-![screenshot](../screenshots/whatismyip-1-geo.png)
+![screenshot](../screenshots/whatismyip-1-mode.png)
 <details><summary>Display public IP address and online status.</summary>
 
 Configuration parameters:
@@ -2694,6 +2737,8 @@ Requires:
 </details>
 
 ### <a name="wwan_status"></a>wwan_status
+![screenshot](../screenshots/wwan_status.png)
+![screenshot](../screenshots/wwan_status-1-off.png)
 <details><summary>Display network and IP address for newer Huwei modems.</summary>
 
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
@@ -2748,6 +2793,7 @@ PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
 ![screenshot](../screenshots/xrandr.png)
 ![screenshot](../screenshots/xrandr-1-extend.png)
 ![screenshot](../screenshots/xrandr-2-mirror.png)
+![screenshot](../screenshots/xrandr-3-single.png)
 <details><summary>Control screen layout.</summary>
 
 This modules allows you to handle your screens outputs directly from your bar!
@@ -2829,6 +2875,7 @@ xrandr {
 
 ### <a name="xrandr_rotate"></a>xrandr_rotate
 ![screenshot](../screenshots/xrandr_rotate.png)
+![screenshot](../screenshots/xrandr_rotate-1-h.png)
 <details><summary>Control screen rotation.</summary>
 
 Configuration parameters:
@@ -2889,6 +2936,9 @@ Requires:
 </details>
 
 ### <a name="yandexdisk_status"></a>yandexdisk_status
+![screenshot](../screenshots/yandexdisk_status.png)
+![screenshot](../screenshots/yandexdisk_status-1-idle.png)
+![screenshot](../screenshots/yandexdisk_status-2-off.png)
 <details><summary>Display Yandex.Disk status.</summary>
 
 Configuration parameters:

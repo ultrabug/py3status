@@ -23,8 +23,8 @@ Color options:
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 
-error
-{'color': '#FF0000', 'full_text': 'no process name given'}
+off
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 STRING_ERROR = 'process_status: N/A'
 

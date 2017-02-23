@@ -25,6 +25,9 @@ Color options:
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'DPMS'}
+
+off
+{'color': '#FF0000', 'full_text': 'DPMS'}
 """
 
 

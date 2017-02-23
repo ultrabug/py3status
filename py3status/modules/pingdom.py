@@ -23,7 +23,7 @@ Requires:
         https://pypi.python.org/pypi/requests
 
 SAMPLE OUTPUT
-{'full_text': ''}
+{'full_text': '(fixme)'}
 """
 
 import requests

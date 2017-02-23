@@ -17,7 +17,7 @@ Requires:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'selected text'}
+{'full_text': 'rrrrr > wtf is a warlock doing in here'}
 """
 
 

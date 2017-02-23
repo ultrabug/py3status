@@ -26,6 +26,19 @@ Requires:
 
 SAMPLE OUTPUT
 {'full_text': 'gb'}
+
+fr
+{'color': '#268BD2', 'full_text': 'fr'}
+
+ru
+{'color': '#F75252', 'full_text': 'ru'}
+
+ua
+{'color': '#FCE94F', 'full_text': 'ua'}
+
+us
+{'color': '#729FCF', 'full_text': 'us'}
+
 """
 
 import re

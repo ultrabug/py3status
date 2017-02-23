@@ -20,7 +20,7 @@ Color options:
 @author obb, Moritz Lüdecke
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': 'localhost: 22 UP'}
+{'color': '#00FF00', 'full_text': u'localhost:22 UP'}
 
 down
 {'color': '#FF0000', 'full_text': u'localhost:22 DOWN'}

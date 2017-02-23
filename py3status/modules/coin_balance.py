@@ -98,7 +98,7 @@ coin_balance {
 @license 3-clause-BSD
 
 SAMPLE OUTPUT
-{'full_text': "LTC: Connection to 'http:#localhost:9332' failed"}
+{'full_text': 'LTC: 90.6428'}
 """
 
 from errno import ENOENT

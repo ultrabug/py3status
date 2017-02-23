@@ -69,10 +69,15 @@ group {
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'module 1', 'separator': True},
-    {'full_text': 'module 2', 'separator': True},
-    {'full_text': 'module 3', 'separator': True}
+    {'full_text': u'module 1', 'separator': True},
+    {'full_text': u'module 2', 'separator': True},
+    {'full_text': u'module 3', 'separator': True},
+    {'full_text': u'-', 'separator': True}
 ]
+
+closed
+{'full_text': u'+'}
+
 """
 
 

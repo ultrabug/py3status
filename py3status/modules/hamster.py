@@ -16,7 +16,7 @@ Requires:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'Watering flowers@Day-to-day (00:10)'}
+{'full_text': 'Watering flowers@Day-to-day (00:03)'}
 
 inactive
 {'full_text': 'No activity'}

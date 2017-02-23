@@ -20,8 +20,12 @@ Color options:
 
 @author obb
 
+
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf'}
+
+off
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
 import os

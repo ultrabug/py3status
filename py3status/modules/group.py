@@ -80,7 +80,13 @@ group disks {
 @author tobes
 
 SAMPLE OUTPUT
-{'full_text': 'output of another module'}
+{'full_text': 'module 1'}
+
+cycle
+{'full_text': 'module 2'}
+
+cycle
+{'full_text': 'module 3'}
 """
 
 from time import time

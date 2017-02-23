@@ -52,7 +52,7 @@ Examples of `format`
 @license Eclipse Public License
 
 SAMPLE OUTPUT
-{'full_text': '[play] Music For Programming - Compiled'}
+{'full_text': '[play] Music For Programming - Idol Eyes'}
 """
 
 import ast

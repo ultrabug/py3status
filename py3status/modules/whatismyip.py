@@ -29,10 +29,10 @@ Color options:
 @author ultrabug
 
 SAMPLE OUTPUT
-{'full_text': '37.48.108.0'}
+{'full_text': '37.48.108.0 Russia'}
 
-geo
-{'full_text': 'Russia'}
+mode
+{'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
 import json

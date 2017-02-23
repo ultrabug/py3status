@@ -36,7 +36,13 @@ Requires:
 @author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 
 SAMPLE OUTPUT
-{'color': '#FF0000', 'full_text': 'Spotify not running'}
+{'color': '#00FF00', 'full_text': 'Rick Astley : Never Gonna Give You Up'}
+
+paused
+{'color': '#FFFF00', 'full_text': 'Rick Astley : Never Gonna Give You Up'}
+
+stopped
+{'color': '#FF0000', 'full_text': 'Spotify stopped'}
 """
 
 from datetime import timedelta

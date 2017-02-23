@@ -30,7 +30,7 @@ external_script {
 @author frimdo ztracenastopa@centrum.cz
 
 SAMPLE OUTPUT
-{'full_text': 'script output'}
+{'full_text': 'It is now: Wed Feb 22 22:24:13'}
 """
 
 import subprocess

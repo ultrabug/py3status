@@ -37,7 +37,7 @@ Requires:
 @license Eclipse Public License
 
 SAMPLE OUTPUT
-{'full_text': '26.4 mb'}
+{'full_text': '826.4 mb'}
 """
 
 from __future__ import division  # python2 compatibility

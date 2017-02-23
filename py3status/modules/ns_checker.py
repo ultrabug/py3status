@@ -31,6 +31,9 @@ Requires:
     dnspython: python module
 
 @author nawadanp
+
+SAMPLE OUTPUT
+{'full_text': '(fixme)'}
 """
 
 import dns.resolver
