@@ -17,6 +17,8 @@ Requires
 """
 
 import json
+STRING_NOT_INSTALLED = "taskwarrior: isn't installed"
+STRING_ERROR = "taskwarrior: unknown error"
 
 
 class Py3status:
@@ -27,12 +29,25 @@ class Py3status:
     format = '{task}'
 
     def taskWarrior(self):
+        if not self.py3.check_commands('task'):
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_NOT_INSTALLED
+            }
+
         def describeTask(taskObj):
             return str(taskObj['id']) + ' ' + taskObj['description']
-
-        task_command = 'task start.before:tomorrow status:pending export'
-        task_json = json.loads(self.py3.command_output(task_command))
-        task_result = ', '.join(map(describeTask, task_json))
+        try:
+            task_command = 'task start.before:tomorrow status:pending export'
+            task_json = json.loads(self.py3.command_output(task_command))
+            task_result = ', '.join(map(describeTask, task_json))
+        except:
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, {'task': task_result})
