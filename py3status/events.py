@@ -141,9 +141,17 @@ class Events(Thread):
         """
         button = event.get('button', 0)
         default_event = False
+
+        # get the module that the event is for
+        module_info = self.output_modules.get(module_name)
+        if not module_info:
+            return
+        module = module_info['module']
+
         # execute any configured i3-msg command
         # we do not do this for containers
-        if top_level:
+        # modules that have failed do not execute their config on_click
+        if top_level and not module.error_messages:
             click_module = event['name']
             if event['instance']:
                 click_module += ' ' + event['instance']
@@ -156,11 +164,6 @@ class Events(Thread):
             elif button == 2:
                 default_event = True
 
-        # get the module that the event is for
-        module_info = self.output_modules.get(module_name)
-        if not module_info:
-            return
-        module = module_info['module']
         # if module is a py3status one call it.
         if module_info['type'] == 'py3status':
             module.click_event(event)

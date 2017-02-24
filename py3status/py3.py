@@ -98,7 +98,7 @@ class Py3:
         if it exists
         """
         if not name.startswith('COLOR_'):
-            raise AttributeError(name)
+            raise AttributeError('Attribute `%s` not in Py3' % name)
         return self._get_config_setting(name.lower())
 
     def _get_config_setting(self, name, default=None):
