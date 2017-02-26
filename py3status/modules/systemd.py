@@ -3,9 +3,6 @@
 Check systemd unit status.
 
 Check the status of a systemd unit.
-Color will be GOOD if is active.
-BAD if inactive.
-DEGRADED if unit could not be found.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 5)
@@ -31,7 +28,7 @@ systemd vpn {
     unit = 'vpn.service'
     on_click 1 = "exec sudo systemctl start vpn"
     on_click 3 = "exec sudo systemctl stop vpn"
-    format = '🏢'
+    format = '{unit} is {status}'
 }
 ```
 
@@ -42,7 +39,6 @@ Requires:
 @license BSD
 """
 
-from time import time
 from pydbus import SystemBus
 
 
@@ -51,12 +47,6 @@ class Py3status:
     cache_timeout = 5
     format = '{unit}: {status}'
     unit = None
-
-    def __init__(self):
-        """
-        This is the class constructor which will be executed once.
-        """
-        self.systemd_unit = None
 
     def post_config_hook(self):
         bus = SystemBus()
@@ -81,9 +71,9 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
-        full_text = self.format.format(unit=self.unit, status=status)
+        full_text = self.py3.safe_format(self.format, {'unit': self.unit, 'status': status})
         response = {
-            'cached_until': time() + self.cache_timeout,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
             'color': color
         }
