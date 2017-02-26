@@ -135,14 +135,18 @@ class Py3status:
         total = 0
         used = 0
         free = 0
+        devs = []
 
         df = self.py3.command_output('df')
         for line in df.splitlines():
             if (disk and line.startswith(disk)) or (disk is None and line.startswith('/dev/')):
                 data = line.split()
+                if data[0] in devs:
+                    continue
                 total += int(data[1]) / 1024 / 1024
                 used += int(data[2]) / 1024 / 1024
                 free += int(data[3]) / 1024 / 1024
+                devs.append(data[0])
 
         if total == 0:
             return free, used, 'err'
