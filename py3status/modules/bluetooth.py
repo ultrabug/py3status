@@ -20,15 +20,33 @@ Color options:
     color_bad: Connection on
     color_good: Connection off
 
-Requires:
-    hcitool:
-
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
 """
 
-import re
-BTMAC_RE = re.compile(r'[0-9A-F:]{17}')
+import dbus
+
+
+def get_connected_devices():
+    bus = dbus.SystemBus()
+
+    manager = dbus.Interface(
+        bus.get_object("org.bluez", "/"),
+        "org.freedesktop.DBus.ObjectManager"
+    )
+
+    objects = manager.GetManagedObjects()
+
+    devices = []
+
+    for dev_path, interfaces in objects.items():
+        if "org.bluez.Device1" in interfaces.keys():
+            properties = objects[dev_path]["org.bluez.Device1"]
+
+            if properties["Connected"] == 1:
+                devices.append((properties["Address"], properties["Name"]))
+
+    return devices
 
 
 class Py3status:
@@ -43,17 +61,13 @@ class Py3status:
     format_prefix = 'BT: '
 
     def bluetooth(self):
-        """
-        The whole command:
-        hcitool name `hcitool con | sed -n -r 's/.*([0-9A-F:]{17}).*/\\1/p'`
-        """
-        macs = set(BTMAC_RE.findall(self.py3.command_output('hcitool con')))
         color = self.py3.COLOR_BAD
 
-        if macs:
+        devices = get_connected_devices()
+
+        if devices:
             data = []
-            for mac in macs:
-                name = self.py3.command_output('hcitool name %s' % mac).strip()
+            for mac, name in devices:
                 fmt_str = self.py3.safe_format(
                     self.format,
                     {'name': name, 'mac': mac}
