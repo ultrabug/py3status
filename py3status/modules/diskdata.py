@@ -142,6 +142,7 @@ class Py3status:
             if (disk and line.startswith(disk)) or (disk is None and line.startswith('/dev/')):
                 data = line.split()
                 if data[0] in devs:
+                    # Make sure to count each block device only one time
                     continue
                 total += int(data[1]) / 1024 / 1024
                 used += int(data[2]) / 1024 / 1024
