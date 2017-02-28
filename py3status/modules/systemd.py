@@ -7,7 +7,7 @@ Check the status of a systemd unit.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 5)
     format: Format for module output (default "{unit}: {status}")
-    unit: Name of the unit (default None)
+    unit: Name of the unit (default dbus.service)
 
 Format of status string placeholders:
     {unit} name of the unit
