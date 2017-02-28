@@ -84,9 +84,5 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {
-        'unit': 'dbus.service',
-        'format': '{status} -> {unit}'
-    }
     from py3status.module_test import module_test
     module_test(Py3status, config=config)
