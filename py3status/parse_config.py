@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import codecs
-import glob
 import imp
 import os
 import re
@@ -515,19 +514,6 @@ def process_config(config_path, py3_wrapper=None):
         else:
             print(error)
 
-    def module_names():
-        # get list of all module names
-        modules = I3S_MODULE_NAMES[:]
-        root = os.path.dirname(os.path.realpath(__file__))
-        module_path = os.path.join(root, 'modules', '*.py')
-        for file in glob.glob(module_path):
-            modules.append(os.path.basename(file)[:-3])
-
-        # FIXME we can do this better
-        if py3_wrapper:
-            modules += list(py3_wrapper.get_user_modules().keys())
-        return modules
-
     def parse_config(config):
         '''
         Parse text or file as a py3status config file.
@@ -659,17 +645,10 @@ def process_config(config_path, py3_wrapper=None):
             # add any children
             add_container_items(item)
 
-    allowed_modules = module_names()
-
     # create config for modules in order
     for name in config_info.get('order', []):
         module = modules.get(name, {})
         module_type = get_module_type(name)
-        if allowed_modules and name.split()[0] not in allowed_modules:
-            if py3_wrapper:
-                error = 'Module {} cannot be found'.format(name.split()[0])
-                py3_wrapper.notify_user(error)
-            continue
         config['order'].append(name)
         add_container_items(name)
         if module_type == 'i3status':

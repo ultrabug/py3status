@@ -31,6 +31,7 @@ class Module(Thread):
         self.click_events = False
         self.config = py3_wrapper.config
         self.disabled = False
+        self.error_messages = None
         self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
@@ -45,6 +46,7 @@ class Module(Thread):
         self.nagged = False
         self.prevent_refresh = False
         self.sleeping = False
+        self.terminated = False
         self.timer = None
         self.urgent = False
 
@@ -53,7 +55,29 @@ class Module(Thread):
         self._py3_wrapper = py3_wrapper
         #
         self.set_module_options(module)
-        self.load_methods(module, user_modules)
+
+        try:
+            self.load_methods(module, user_modules)
+        except Exception as e:
+            # Import failed notify user in module error output
+            self.disabled = True
+            self.methods['error'] = {}
+            self.error_index = 0
+            if self.module_inst.startswith('_anon_module_'):
+                module_name = self.module_name
+            else:
+                module_name = self.module_full_name
+
+            self.error_messages = [
+                self.module_name,
+                u'{}: Import Error, {}'.format(module_name, str(e)),
+            ]
+            self.error_output(self.error_messages[0])
+            # log the error
+            msg = 'Module `{}` could not be loaded'.format(
+                self.module_full_name
+            )
+            self._py3_wrapper.report_exception(msg, notify_user=False)
 
     def __repr__(self):
         return '<Module {}>'.format(self.module_full_name)
@@ -97,21 +121,55 @@ class Module(Thread):
         if self.has_post_config_hook:
             try:
                 self.module_class.post_config_hook()
-            except:
+            except Exception as e:
                 # An exception has been thrown in post_config_hook() disable
-                # the module.
-                msg = 'post_config_hook in `{}` raised an exception'.format(
-                    self.module_full_name
-                )
-                self._py3_wrapper.report_exception(msg)
-                self.disabled = True
+                # the module and show error in module output
+                self.terminated = True
+                self.error_index = 0
+                if self.module_inst.startswith('_anon_module_'):
+                    module_name = self.module_name
+                else:
+                    module_name = self.module_full_name
+
+                self.error_messages = [
+                    module_name,
+                    u'{}: {}'.format(module_name, str(e) or e.__class__.__name__),
+                ]
+                self.error_output(self.error_messages[0])
+                msg = 'Exception in `%s` post_config_hook()' % self.module_full_name
+                self._py3_wrapper.report_exception(msg, notify_user=False)
+                self._py3_wrapper.log('terminating module %s' % self.module_full_name)
+
+    def error_output(self, message):
+        """
+        Something is wrong with the module so we want to output the error to
+        the i3bar
+        """
+        color_fn = self._py3_wrapper.get_config_attribute
+        color = color_fn(self.module_full_name, 'color_error')
+        if hasattr(color, 'none_setting'):
+            color = color_fn(self.module_full_name, 'color_bad')
+        if hasattr(color, 'none_setting'):
+            color = None
+
+        error = {
+            'full_text': message,
+            'color': color,
+            'instance': self.module_inst,
+            'name': self.module_name,
+        }
+        for method in self.methods.values():
+            method['last_output'] = [error]
+
+        self.set_updated()
 
     def start_module(self):
         """
         Start the module running.
         """
-        if not self.disabled:
+        if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
+            self._py3_wrapper.log('starting module %s' % self.module_full_name)
             self.start()
 
     def force_update(self):
@@ -137,6 +195,14 @@ class Module(Thread):
         # cancel any existing timer
         if self.timer:
             self.timer.cancel()
+
+    def disable_module(self):
+        # hide message
+        self.disabled = True
+        # purge from any container modules
+        self._py3_wrapper.purge_module(self.module_full_name)
+        self.error_output(u'')
+        self._py3_wrapper.log('disabling module `%s`' % self.module_full_name)
 
     def wake(self):
         self.sleeping = False
@@ -286,7 +352,7 @@ class Module(Thread):
             if color and 'color' not in item:
                 item['color'] = color
             # Remove any none color from our output
-            if hasattr(item.get('color'), 'none_color'):
+            if hasattr(item.get('color'), 'none_setting'):
                 del item['color']
 
     def _params_type(self, method_name, instance):
@@ -535,15 +601,28 @@ class Module(Thread):
         # py3.prevent_refresh()
         self.prevent_refresh = False
         try:
-            click_method = getattr(self.module_class, 'on_click')
-            if self.click_events == self.PARAMS_NEW:
-                # new style modules
-                click_method(event)
-            else:
-                # legacy modules had extra parameters passed
-                click_method(self.i3status_thread.json_list,
-                             self.config['py3_config']['general'], event)
-            self.set_updated()
+            if self.error_messages:
+                # we have error messages
+                button = event['button']
+                if button == 1:
+                    # cycle through to next message
+                    self.error_index = (self.error_index + 1) % len(self.error_messages)
+                    error = self.error_messages[self.error_index]
+                    self.error_output(error)
+                if button == 3:
+                    self.disable_module()
+                self.prevent_refresh = True
+
+            elif self.click_events:
+                click_method = getattr(self.module_class, 'on_click')
+                if self.click_events == self.PARAMS_NEW:
+                    # new style modules
+                    click_method(event)
+                else:
+                    # legacy modules had extra parameters passed
+                    click_method(self.i3status_thread.json_list,
+                                 self.config['py3_config']['general'], event)
+                self.set_updated()
         except Exception:
             msg = 'on_click event in `{}` failed'.format(self.module_full_name)
             self._py3_wrapper.report_exception(msg)
@@ -610,7 +689,7 @@ class Module(Thread):
                             err = 'missing "full_text" key in response'
                             raise KeyError(err)
                         # Remove any none color from our output
-                        if hasattr(result.get('color'), 'none_color'):
+                        if hasattr(result.get('color'), 'none_setting'):
                             del result['color']
                         # set universal module options in result
                         result.update(self.module_options)

@@ -761,23 +761,32 @@ Color options:
 Display status of Dropbox daemon.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 10)*
-  - `format` prefix text for the dropbox status *(default 'Dropbox: {}')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default "Dropbox: {status}")*
+  - `status_busy` text for placeholder {status} when Dropbox is busy *(default None)*
+  - `status_off` text for placeholder {status} when Dropbox isn't running *(default "isn't running")*
+  - `status_on` text for placeholder {status} when Dropbox is up to date *(default "Up to date")*
 
-Valid status values include:
+Value for `status_off` if not set:
   - Dropbox isn't running!
+    Value for `status_on` if not set:
+  - Up to date
+    Values for `status_busy` if not set:
+  - Connecting...
   - Starting...
   - Downloading file list...
   - Syncing "filename"
-  - Up to date
+
+Format placeholders:
+  - `{status}` Dropbox status
 
 Color options:
-  - `color_bad` Dropbox is unavailable
-  - `color_degraded` All other statuses
-  - `color_good` Dropbox up-to-date
+  - `color_bad` Not running
+  - `color_degraded` Busy
+  - `color_good` Up to date
 
 Requires:
-  - `dropbox-cli` command line tool
+  - `dropbox-cli` command line interface for dropbox
 
 **author** Tjaart van der Walt (github:tjaartvdwalt)
 
@@ -1354,21 +1363,23 @@ Configuration parameters:
 Display number of unread messages from IMAP account.
 
 Configuration parameters:
-  - `cache_timeout` how often to run this check *(default 60)*
+  - `cache_timeout` refresh interval for this module *(default 60)*
   - `criterion` status of emails to check for *(default 'UNSEEN')*
-  - `format` format to display *(default 'Mail: {unseen}')*
-  - `hide_if_zero` don't show on bar if True *(default False)*
-  - `imap_server` IMAP server to connect to *(default '&lt;IMAP_SERVER&gt;')*
+  - `format` display format for this module *(default 'Mail: {unseen}')*
+  - `hide_if_zero` hide this module when no new mail *(default False)*
   - `mailbox` name of the mailbox to check *(default 'INBOX')*
-  - `new_mail_color` what color to output on new mail *(default '')*
-  - `password` login password *(default '&lt;PASSWORD&gt;')*
-  - `port` IMAP server port *(default '993')*
-  - `security` what authentication method is used: 'ssl' or 'starttls'
+  - `password` login password *(default None)*
+  - `port` number to use *(default '993')*
+  - `security` login authentication method: 'ssl' or 'starttls'
     (startssl needs python 3.2 or later) *(default 'ssl')*
-  - `user` login user *(default '&lt;USERNAME&gt;')*
+  - `server` server to connect *(default None)*
+  - `user` login user *(default None)*
 
 Format placeholders:
   - `{unseen}` number of unread emails
+
+Color options:
+  - `color_new_mail` use color when new mail arrives, default to color_good
 
 **author** obb
 
@@ -1464,18 +1475,15 @@ Requires:
 Display keyboard layout.
 
 Configuration parameters:
-  - `cache_timeout` check for keyboard layout change every seconds *(default 10)*
-  - `colors` a comma separated string of color values for each layout,
-    eg: "us=#FCE94F, fr=#729FCF". (deprecated use color options)
-    *(default None)*
-  - `format` see placeholders below *(default '{layout}')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `colors` deprecated. see color options below *(default None)*
+  - `format` display format for this module *(default '{layout}')*
 
 Format placeholders:
-  - `{layout}` currently active keyboard layout
+  - `{layout}` keyboard layout
 
 Color options:
-  - `color_<layout>` color for the layout
-    eg color_fr = '#729FCF'
+  - `color_<layout>` colorize the layout. eg color_fr = '#729FCF'
 
 Requires:
   - `xkblayout-state`
@@ -1817,18 +1825,23 @@ Requires:
 Display NVIDIA GPU temperature.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 10)*
-  - `format_prefix` a prefix for the output. *(default 'GPU: ')*
-  - `format_units` the temperature units. Will appear at the end. *(default '°C')*
-  - `temp_separator` the separator char between temperatures (only if more than
-    one GPU) *(default '|')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default 'GPU: {format_temp}')*
+  - `format_temp` display format for temperatures *(default '{temp}°C')*
+  - `temp_separator` temperature separator (if more than one) *(default '|')*
+
+Format placeholders:
+  - `{format_temp}` format for temperatures
+
+format_temp placeholders:
+  - `{temp}` temperatures
 
 Color options:
-  - `color_bad` Temperature can't be read.
-  - `color_good` Everything is OK.
+  - `color_bad` Unavailable
+  - `color_good` Available
 
 Requires:
-  - `nvidia-smi`
+  - `nvidia-smi` NVIDIA System Management Interface program
 
 **author** jmdana &lt;https://github.com/jmdana&gt;
 
@@ -2555,27 +2568,28 @@ Format placeholders:
 Display vnstat statistics.
 
 Configuration parameters:
-  - `cache_timeout` *(default 180)*
-  - `coloring` *(default {})*
-  - `format` *(default '{total}')*
-  - `initial_multi` *(default 1024)*
+  - `cache_timeout` refresh interval for this module *(default 180)*
+  - `coloring` see coloring rules below *(default {})*
+  - `format` display format for this module *(default '{total}')*
+  - `initial_multi` set to 1 to disable first bytes
+    *(default 1024)*
   - `left_align` *(default 0)*
-  - `multiplier_top` *(default 1024)*
+  - `multiplier_top` if value is greater, divide it with unit_multi and get
+    next unit from units *(default 1024)*
   - `precision` *(default 1)*
-  - `statistics_type` *(default 'd')*
-  - `unit_multi` *(default 1024)*
+  - `statistics_type` d for daily, m for monthly *(default 'd')*
+  - `unit_multi` value to divide if rate is greater than multiplier_top
+    *(default 1024)*
 
-Coloring rules.
-
-If value is bigger that dict key, status string will turn to color, specified
-in the value.
+Coloring rules:
+    If value is more than dict key, the string will change color based on the
+    specified values in the coloring section.
 
 Example:
     coloring = {
-    800: "#dddd00",
-    900: "#dd0000",
+    800: "#dddd00",     # over 800: yellow
+    900: "#dd0000",     # over 900: red
     }
-    (0 - 800: white, 800-900: yellow, &gt;900 - red)
 
 Format placeholders:
   - `{down}` download
@@ -2583,7 +2597,7 @@ Format placeholders:
   - `{up}` upload
 
 Requires:
-  - external program called `vnstat` installed and configured to work.
+  - `vnstat` a console-based network traffic monitor
 
 **author** shadowprince
 

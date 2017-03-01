@@ -27,8 +27,8 @@ except NameError:
 
 class NoneColor:
     """
-    This class represents a none color, that is a color that has been setto
-    None in the config.  We need this so that we can do things like
+    This class represents a color that has explicitly been set as None by the user.
+    We need this so that we can do things like
 
     color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
 
@@ -36,7 +36,7 @@ class NoneColor:
     False, whereas a simple if would show True
     """
     # this attribute is used to identify that this is a none color
-    none_color = True
+    none_setting = True
 
     def __repr__(self):
         # this is for output via module_test
@@ -69,7 +69,7 @@ class Py3:
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
-        self._colors = {}
+        self._config_setting = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._i3s_config = i3s_config or {}
@@ -98,27 +98,32 @@ class Py3:
         if it exists
         """
         if not name.startswith('COLOR_'):
-            raise AttributeError
-        return self._get_color_by_name(name)
+            raise AttributeError('Attribute `%s` not in Py3' % name)
+        return self._get_config_setting(name.lower())
 
-    def _get_color_by_name(self, name):
-        name = name.lower()
-        if name not in self._colors:
+    def _get_config_setting(self, name, default=None):
+        try:
+            return self._config_setting[name]
+        except KeyError:
             if self._module:
-                color_fn = self._module._py3_wrapper.get_config_attribute
-                color = color_fn(self._module.module_full_name, name)
+                fn = self._module._py3_wrapper.get_config_attribute
+                param = fn(self._module.module_full_name, name)
             else:
                 # running in test mode so config is not available
-                color = self._i3s_config.get(name, False)
-            if color:
-                self._colors[name] = color
-            elif color is False:
-                # False indicates color is not defined
-                self._colors[name] = None
-            else:
-                # None indicates that no color is wanted
-                self._colors[name] = self._none_color
-        return self._colors[name]
+                param = self._i3s_config.get(name, None)
+            # colors are special we want to make sure that we treat a color
+            # that was explicitly set to None as a True value.  Ones that are
+            # not set should be treated as None
+            if name.startswith('color_'):
+                if hasattr(param, 'none_setting'):
+                    param = None
+                elif param is None:
+                    param = self._none_color
+            # if a non-color parameter and was not set then set to default
+            elif hasattr(param, 'none_setting'):
+                param = default
+            self._config_setting[name] = param
+        return self._config_setting[name]
 
     def _get_color(self, color):
         if not color:
@@ -132,7 +137,7 @@ class Py3:
             return color
 
         name = 'color_%s' % color
-        return self._get_color_by_name(name)
+        return self._get_config_setting(name)
 
     def _thresholds_init(self):
         """
@@ -295,7 +300,7 @@ class Py3:
         has a value set in which case the color should count as False.  This
         function is a helper for this second case.
         """
-        return not (color is None or hasattr(color, 'none_color'))
+        return not (color is None or hasattr(color, 'none_setting'))
 
     def i3s_config(self):
         """

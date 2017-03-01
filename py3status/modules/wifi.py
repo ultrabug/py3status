@@ -126,6 +126,11 @@ class Py3status:
         ssid_out = re.search('SSID: (.+)', iw)
         if ssid_out:
             ssid = ssid_out.group(1)
+            # `iw` command would prints unicode SSID like `\xe8\x8b\x9f`
+            # the the `ssid` here would be '\\xe8\\x8b\\x9f' (note the escape)
+            # it needs to be decoded using 'unicode_escape', to '苟'
+            ssid = ssid.encode('latin-1').decode('unicode_escape')
+            ssid = ssid.encode('latin-1').decode('utf-8')
         else:
             ssid = None
 
