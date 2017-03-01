@@ -43,15 +43,9 @@ CONFIG_SPECIAL_SECTIONS = [
 
 class NoneSetting:
     """
-    This class represents no
-    setting in the config.  We need this so that we can do things like
-
-    color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-
-    Py3 provides a helper function is_color() that will treat a NoneSetting as
-    False, whereas a simple if would show True
+    This class represents no setting in the config.
     """
-    # this attribute is used to identify that this is a none color
+    # this attribute is used to identify that this is a none setting
     none_setting = True
 
     def __repr__(self):
@@ -498,6 +492,21 @@ class Py3statusWrapper():
         Received request to terminate (SIGTERM), exit nicely.
         """
         raise KeyboardInterrupt()
+
+    def purge_module(self, module_name):
+        """
+        A module has been removed e.g. a module that had an error.
+        We need to find any containers and remove the module from them.
+        """
+        containers = self.config['py3_config']['.module_groups']
+        containers_to_update = set()
+        if module_name in containers:
+            containers_to_update.update(set(containers[module_name]))
+        for container in containers_to_update:
+            try:
+                self.modules[container].module_class.items.remove(module_name)
+            except ValueError:
+                pass
 
     def notify_update(self, update, urgent=False):
         """

@@ -127,6 +127,9 @@ class Py3status:
         This returns a set containing the actively shown module.  This is so we
         only get update events triggered for these modules.
         '''
+        # ensure that active is valid
+        self.active = self.active % len(self.items)
+
         return set([self.items[self.active]])
 
     def _urgent_function(self, module_list):

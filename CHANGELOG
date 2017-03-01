@@ -1,6 +1,8 @@
 version 3.5 (milestone)
+* allow improved access to settings from py3status section, by @tobes
 * add a new py3status configuration section and the ability to set i3-nagbar font, by @randomguy
 * update sysdata documentation, by @valdur55
+* fix color comparison bug, by @tobes
 * cleanup i3status config access, by @tobes
 * nicer exceptions on cli-commands, by @tobes
 * py3 logging nicer formatting, by @tobes
@@ -19,25 +21,31 @@ version 3.5 (milestone)
 * diskdata module: use helpers, by @lasers
 * dpms module: add button_off, button_toggle, cache_timeout by @lasers
 * dropbox: use helpers and format fix, by @lasers
+* external_script module: fix exception, remove warning, by @lasers
 * external_script: use helpers, by @lasers
 * frame module: use helpers, by @lasers
 * github module: use helpers, by @lasers
-* insync module: fix exception, by @lasers
 * gpmdp module: fix permission, by @lasers
 * gpmdp module: use helpers, by @lasers
 * hamster module: use helpers, by @lasers
+* imap module: add depreciation stuffs, by @lasers
+* insync module: fix exception, by @lasers
 * insync module: use helpers, by @lasers
 * keyboard_layout module: use helpers, by @lasers
 * mpris module: fix mouse clicks by @ritze
 * mpris module: use helpers, by @lasers
 * net_iplist module: use helpers, by @lasers
+* nvidia_temp module: use helpers, by @lasers
 * pomodoro module: use helpers, by @lasers
+* process_status module: add format, use helpers, by @lasers
 * selinux module: fix exception, remove hardcoded strings, by @lasers
 * sysdata module: avoid dividing by 0, by @guiniol
 * taskwarrior module: use helpers, by @lasers
-* process_status module: add format, use helpers, by @lasers
-* wifi module: use helpers, fix exception, by @lasers
+* vnstat module: use helpers, add exception, cleanup, by @lasers
+* wifi module: fix device autodetection magic, by @lasers
 * wifi module: remove command_checks(iw), by @lasers
+* wifi module: support unicode wifi SSID, by @blahgeek
+* wifi module: use helpers, fix exception, by @lasers
 * window_title_async module: do not treat workspace name as window name, by @valdur55
 * yandexdisk_status module: use helpers, remove hardcoded strings, fix exception, by @lasers
 
