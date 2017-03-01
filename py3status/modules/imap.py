@@ -3,6 +3,7 @@
 Display number of unread messages from IMAP account.
 
 Configuration parameters:
+    allow_urgent: display urgency on unread messages (default False)
     cache_timeout: refresh interval for this module (default 60)
     criterion: status of emails to check for (default 'UNSEEN')
     format: display format for this module (default 'Mail: {unseen}')
@@ -32,6 +33,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    allow_urgent = False
     cache_timeout = 60
     criterion = 'UNSEEN'
     format = 'Mail: {unseen}'
@@ -74,6 +76,8 @@ class Py3status:
                 self.format, {'unseen': STRING_UNAVAILABLE})
         elif mail_count > 0:
             response['color'] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
+            if self.allow_urgent:
+                response['urgent'] = True
 
         if mail_count == 0 and self.hide_if_zero:
             response['full_text'] = ''
