@@ -143,6 +143,7 @@ class Py3status:
                 data = line.split()
                 if data[0] in devs:
                     # Make sure to count each block device only one time
+                    # some filesystems eg btrfs have multiple entries
                     continue
                 total += int(data[1]) / 1024 / 1024
                 used += int(data[2]) / 1024 / 1024
