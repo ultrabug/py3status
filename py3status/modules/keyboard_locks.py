@@ -2,23 +2,15 @@
 """
 Monitor CapsLock, NumLock, and ScrLock keys
 
-NumLock: Allows the user to type numbers by pressing the keys on the number pad,
-rather than having them act as up, down, left, right, page up, end, and so forth.
-
-CapsLock: When enabled, letters the user types will be in uppercase by default
-rather than lowercase.
-
-ScrLock: In some applications, such as spreadsheets, the lock mode is used to
-change the behavior of the cursor keys to scroll the document instead of the cursor.
-
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 1)
-    icon_capslock_off: show when Caps Lock is off (default 'CAP')
-    icon_capslock_on: show when Caps Lock is on (default 'CAP')
-    icon_numlock_off: show when Num Lock is off (default 'NUM')
-    icon_numlock_on: show when Num Lock is off (default 'NUM')
-    icon_scrlock_off: show when Scroll Lock is off (default 'SCR')
-    icon_scrlock_on: show when Scroll Lock is on (default 'SCR')
+    format: display format for this module (default '{caps} {num} {scr}')
+    icon_caps_off: show when Caps Lock is off (default 'CAPS')
+    icon_caps_on: show when Caps Lock is on (default 'CAPS')
+    icon_num_off: show when Num Lock is off (default 'NUM')
+    icon_num_on: show when Num Lock is off (default 'NUM')
+    icon_scr_off: show when Scroll Lock is off (default 'SCR')
+    icon_scr_on: show when Scroll Lock is on (default 'SCR')
 
 Color options:
     color_good: Lock on
@@ -33,57 +25,48 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 1
-    icon_capslock_off = "CAP"
-    icon_capslock_on = "CAP"
-    icon_numlock_off = "NUM"
-    icon_numlock_on = "NUM"
-    icon_scrlock_off = "SCR"
-    icon_scrlock_on = "SCR"
+    format = '{caps} {num} {scr}'
+    icon_caps_off = "CAPS"
+    icon_caps_on = "CAPS"
+    icon_num_off = "NUM"
+    icon_num_on = "NUM"
+    icon_scr_off = "SCR"
+    icon_scr_on = "SCR"
 
-    def keyboard_lock(self):
+    def keyboard_locks(self):
         out = self.py3.command_output('xset -q')
 
-        capslock_color = self.py3.COLOR_BAD
-        capslock_icon = self.icon_capslock_off
-        numlock_color = self.py3.COLOR_BAD
-        numlock_icon = self.icon_numlock_off
-        scrlock_color = self.py3.COLOR_BAD
-        scrlock_icon = self.icon_scrlock_off
-
         if 'on' in out.split("Caps Lock:")[1][0:6]:
-            capslock_color = self.py3.COLOR_GOOD
-            capslock_icon = self.icon_capslock_on
+            caps_color = self.py3.COLOR_GOOD
+            caps_icon = self.icon_caps_on
+        else:
+            caps_color = self.py3.COLOR_BAD
+            caps_icon = self.icon_caps_off
 
         if 'on' in out.split("Num Lock:")[1][0:6]:
-            numlock_color = self.py3.COLOR_GOOD
-            numlock_icon = self.icon_numlock_on
+            num_color = self.py3.COLOR_GOOD
+            num_icon = self.icon_num_on
+        else:
+            num_color = self.py3.COLOR_BAD
+            num_icon = self.icon_num_off
 
         if 'on' in out.split("Scroll Lock:")[1][0:6]:
-            scrlock_color = self.py3.COLOR_GOOD
-            scrlock_icon = self.icon_scrlock_on
+            scr_color = self.py3.COLOR_GOOD
+            scr_icon = self.icon_scr_on
+        else:
+            scr_color = self.py3.COLOR_BAD
+            scr_icon = self.icon_scr_off
+
+        caps = self.py3.composite_create({'full_text': caps_icon, 'color': caps_color})
+        num = self.py3.composite_create({'full_text': num_icon, 'color': num_color})
+        scr = self.py3.composite_create({'full_text': scr_icon, 'color': scr_color})
+
+        full_text = self.py3.safe_format(
+            self.format, {'caps': caps, 'num': num, 'scr': scr})
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'composite': [
-                {
-                    'color': capslock_color,
-                    'full_text': capslock_icon,
-                },
-                {
-                    'full_text': ' '
-                },
-                {
-                    'color': numlock_color,
-                    'full_text': numlock_icon,
-                },
-                {
-                    'full_text': ' '
-                },
-                {
-                    'color': scrlock_color,
-                    'full_text': scrlock_icon,
-                },
-            ]
+            'full_text': full_text
         }
 
 
