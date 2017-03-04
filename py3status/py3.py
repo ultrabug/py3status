@@ -26,6 +26,16 @@ except NameError:
     basestring = str
 
 
+class ModuleErrorException(Exception):
+    """
+    This exception is used to indicate that a module has returned an error
+    """
+
+    def __init__(self, msg, timeout):
+        self.msg = msg
+        self.timeout = timeout
+
+
 class NoneColor:
     """
     This class represents a color that has explicitly been set as None by the user.
@@ -206,6 +216,17 @@ class Py3:
             self._module._py3_wrapper.report_exception(
                 msg, notify_user=False, error_frame=error_frame
             )
+
+    def error(self, msg, timeout=None):
+        """
+        Raise an error for the module.
+
+        :param msg: message to be displayed explaining the error
+        :param timeout: how long before we should retry.  For permanent errors
+            `py3.CACHE_FOREVER` should be returned.  If not supplied then the
+            modules `cache_timeout` will be used.
+        """
+        raise ModuleErrorException(msg, timeout)
 
     def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
         """

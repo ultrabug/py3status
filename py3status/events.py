@@ -148,15 +148,10 @@ class Events(Thread):
             return
         module = module_info['module']
 
-        try:
-            errors = module.error_messages
-        except AttributeError:
-            errors = False
-
         # execute any configured i3-msg command
         # we do not do this for containers
         # modules that have failed do not execute their config on_click
-        if top_level and not errors:
+        if top_level and module.allow_config_clicks:
             click_module = event['name']
             if event['instance']:
                 click_module += ' ' + event['instance']
