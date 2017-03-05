@@ -4,6 +4,11 @@ Display network speed and bandwidth usage.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
+    format: display format for this module (default '{format_net_speed} {format_net_traffic}')
+    format_net_speed: display format for net speed
+        (default 'LAN(Kb): {down:5.1f}↓ {up:5.1f}↑')
+    format_net_traffic: display format for net traffic
+        (default 'T(Mb): {down:3.0f}↓ {up:3.0f}↑ {total:3.0f}↕')
     low_speed: threshold (default 30)
     low_traffic: threshold (default 400)
     med_speed: threshold (default 60)
@@ -11,24 +16,22 @@ Configuration parameters:
     nic: the network interface to monitor (default None)
 
 Color options:
-    color_bad: Rate is below low threshold
-    color_degraded: Rate is below med threshold
-    color_good: Rate is med threshold or higher
+    color_bad:      below low threshold
+    color_degraded: below medium threshold
+    color_good:     medium threshold or above
 
 @author Shahin Azad <ishahinism at Gmail>
 """
 
 
 class GetData:
-    """
-    Get system status.
+    """Get system status.
     """
     def __init__(self, nic):
         self.nic = nic
 
     def netBytes(self):
-        """
-        Get bytes directly from /proc.
+        """Get bytes directly from /proc.
         """
         with open('/proc/net/dev') as fh:
             net_data = fh.read().split()
@@ -45,6 +48,10 @@ class Py3status:
     cache_timeout = 2
     low_speed = 30
     low_traffic = 400
+    #format = '{format_net_speed} {format_net_traffic}'
+    format = '{format_net_traffic} {format_net_speed}'
+    format_net_speed = 'LAN(Kb): {down:5.1f}↓ {up:5.1f}↑'
+    format_net_traffic = 'T(Mb): {down:3.0f}↓ {up:3.0f}↑ {total:3.0f}↕'
     med_speed = 60
     med_traffic = 700
     nic = None
@@ -54,8 +61,7 @@ class Py3status:
         self.old_received = 0
 
     def post_config_hook(self):
-        """
-        Get network interface directly from /proc.
+        """Get network interface.
         """
         if self.nic is None:
             # Get default gateway directly from /proc.
@@ -73,25 +79,28 @@ class Py3status:
             self.py3.log('selected nic: %s' % self.nic)
 
     def net_speed(self):
-        """
-        Calculate network speed.
+        """Calculate network speed.
         """
         data = GetData(self.nic)
 
         received_bytes, transmitted_bytes = data.netBytes()
-        dl_speed = (received_bytes - self.old_received) / 1024.
+        down_speed = (received_bytes - self.old_received) / 1024.
         up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
-        if dl_speed < self.low_speed:
+        if down_speed < self.low_speed:
             color = self.py3.COLOR_BAD
-        elif dl_speed < self.med_speed:
+        elif down_speed < self.med_speed:
             color = self.py3.COLOR_DEGRADED
         else:
             color = self.py3.COLOR_GOOD
 
-        net_speed = "LAN(Kb): {:5.1f}↓ {:5.1f}↑".format(dl_speed, up_speed)
         self.old_received = received_bytes
         self.old_transmitted = transmitted_bytes
+
+        net_speed = self.py3.safe_format(
+            self.format_net_speed, {'down': down_speed, 'up': up_speed}
+        )
+        net_speed = self.py3.safe_format(self.format, {'format_net_speed': net_speed})
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
@@ -100,8 +109,7 @@ class Py3status:
         }
 
     def net_traffic(self):
-        """
-        Calculate networks used traffic.
+        """Calculate networks used traffic.
         """
         data = GetData(self.nic)
 
@@ -117,7 +125,10 @@ class Py3status:
         else:
             color = self.py3.COLOR_BAD
 
-        net_traffic = "T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕".format(download, upload, total)
+        net_traffic = self.py3.safe_format(
+            self.format_net_speed, {'down': download, 'up': upload, 'total': total}
+        )
+        net_traffic = self.py3.safe_format(self.format, {'format_net_traffic': net_traffic})
 
         return {
             'color': color,
