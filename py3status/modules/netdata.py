@@ -18,35 +18,23 @@ Color options:
 @author Shahin Azad <ishahinism at Gmail>
 """
 
-import subprocess
-
 
 class GetData:
-    """Get system status.
+    """
+    Get system status.
     """
     def __init__(self, nic):
         self.nic = nic
 
-    def execCMD(self, cmd, arg):
-        """Take a system command and its argument, then return the result.
-
-        Arguments:
-        - `cmd`: system command.
-        - `arg`: argument.
-        """
-        result = subprocess.check_output([cmd, arg])
-        return result
-
     def netBytes(self):
-        """Execute 'cat /proc/net/dev', find the interface line (Default
-        'eth0') and grab received/transmitted bytes.
-
         """
-        net_data = self.execCMD('cat', '/proc/net/dev').decode('utf-8').split()
+        Get bytes directly from /proc.
+        """
+        with open('/proc/net/dev') as fh:
+            net_data = fh.read().split()
         interface_index = net_data.index(self.nic + ':')
         received_bytes = int(net_data[interface_index + 1])
         transmitted_bytes = int(net_data[interface_index + 9])
-
         return received_bytes, transmitted_bytes
 
 
@@ -66,9 +54,12 @@ class Py3status:
         self.old_received = 0
 
     def post_config_hook(self):
+        """
+        Get network interface directly from /proc.
+        """
         if self.nic is None:
-            # Read default gateway directly from /proc.
-            with open("/proc/net/route") as fh:
+            # Get default gateway directly from /proc.
+            with open('/proc/net/route') as fh:
                 for line in fh:
                     fields = line.strip().split()
                     if fields[1] == '00000000' and int(fields[3], 16) & 2:
@@ -83,39 +74,36 @@ class Py3status:
 
     def net_speed(self):
         """
-        Calculate network speed ('eth0' interface) and return it.
-        You can change the interface using 'nic' configuration parameter.
+        Calculate network speed.
         """
         data = GetData(self.nic)
-        response = {'full_text': ''}
 
         received_bytes, transmitted_bytes = data.netBytes()
         dl_speed = (received_bytes - self.old_received) / 1024.
         up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
         if dl_speed < self.low_speed:
-            response['color'] = self.py3.COLOR_BAD
+            color = self.py3.COLOR_BAD
         elif dl_speed < self.med_speed:
-            response['color'] = self.py3.COLOR_DEGRADED
+            color = self.py3.COLOR_DEGRADED
         else:
-            response['color'] = self.py3.COLOR_GOOD
+            color = self.py3.COLOR_GOOD
 
-        response['full_text'] = "LAN(Kb): {:5.1f}↓ {:5.1f}↑"\
-            .format(dl_speed, up_speed)
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
-
+        net_speed = "LAN(Kb): {:5.1f}↓ {:5.1f}↑".format(dl_speed, up_speed)
         self.old_received = received_bytes
         self.old_transmitted = transmitted_bytes
 
-        return response
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': net_speed
+        }
 
     def net_traffic(self):
         """
         Calculate networks used traffic.
-        You can change the interface using 'nic' configuration parameter.
         """
         data = GetData(self.nic)
-        response = {'full_text': ''}
 
         received_bytes, transmitted_bytes = data.netBytes()
         download = received_bytes / 1024 / 1024.
@@ -123,19 +111,18 @@ class Py3status:
         total = download + upload
 
         if total < self.low_traffic:
-            response['color'] = self.py3.COLOR_GOOD
+            color = self.py3.COLOR_GOOD
         elif total < self.med_traffic:
-            response['color'] = self.py3.COLOR_DEGRADED
+            color = self.py3.COLOR_DEGRADED
         else:
-            response['color'] = self.py3.COLOR_BAD
+            color = self.py3.COLOR_BAD
 
-        response['full_text'] = "T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕".format(
-            download,
-            upload,
-            total
-        )
+        net_traffic = "T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕".format(download, upload, total)
 
-        return response
+        return {
+            'color': color,
+            'full_text': net_traffic
+        }
 
 
 if __name__ == "__main__":
