@@ -298,11 +298,14 @@ class Module(Thread):
         """
         composite = response['composite']
 
-        # if the composite is of Composite type then convert this into the
-        # underlying list, simplifying it first.
-        if isinstance(composite, Composite):
-            composite = composite.simplify().get_content()
-            response['composite'] = composite
+        # if the composite is of not Composite make it one so we can simplify
+        # it.
+        if not isinstance(composite, Composite):
+            composite = Composite(composite)
+
+        # simplify and get underlying list.
+        composite = composite.simplify().get_content()
+        response['composite'] = composite
 
         if not isinstance(composite, list):
             raise Exception('expecting "composite" key in response')
