@@ -232,7 +232,9 @@ class Module(Thread):
             if isinstance(data, list):
                 output.extend(data)
             else:
-                output.append(data)
+                # if the output is not 'valid' then don't add it.
+                if data.get('full_text') or 'separator' in data:
+                    output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
             # has the modules output become urgent?
