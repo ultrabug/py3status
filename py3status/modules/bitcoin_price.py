@@ -1,32 +1,33 @@
 # -*- coding: utf-8 -*-
 # FIXME color_index param
 """
-Display bitcoin prices using bitcoincharts.com.
+Display bitcoin using bitcoincharts.com.
 
 Configuration parameters:
+    bitcoin_separator: display separator if more than one (default ', ')
     cache_timeout: refresh interval for this module. A message from
-        the site: Don't query more often than once every 15 minutes!
+        the site: Don't query more often than once every 15 minutes
         (default 900)
     color_index: Index of the market responsible for coloration,
         -1 means no coloration, except when only one market is selected
         (default -1)
     field: Field that is displayed per market,
         see http://bitcoincharts.com/about/markets-api/ (default 'close')
-    format: display format for this module (default '{price}')
-    hide_on_error: Display empty response if True, else an error message
-         (default False)
-    markets: Comma-separated list of markets. Supported markets can
-        be found at http://bitcoincharts.com/markets/list/
-         (default 'btceUSD, btcdeEUR')
-    string_separator1: first separator (default ': ')
-    string_separator2: second separator (default ', ')
-    string_unavailable: no price (default 'N/A ')
-    string_unreachable: no connection (default 'Bitcoincharts unreachable')
-    symbols: Try to match currency abbreviations to symbols,
+    format: display format for this module (default '{format_bitcoin}')
+    format_bitcoin: display format for bitcoin (default '{market}: {price}{symbol}')
+    hide_on_error: show error message (default False)
+    markets: list of supported markets. see http://bitcoincharts.com/markets/list/
+        (default 'btceUSD, btcdeEUR')
+    symbols: if possible, convert currency abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
 
 Format placeholders:
-    {price} display bitcoin prices
+    {format_bitcoin} format for bitcoin
+
+format_bitcoin placeholders:
+    {market} market names
+    {price} current prices
+    {symbol} currency symbols
 
 Color options:
     color_bad:  Price has dropped or not available
@@ -45,22 +46,35 @@ except ImportError:
     from urllib2 import URLError
     from urllib2 import urlopen
 
+STRING_UNAVAILABLE = 'N/A'
+STRING_ERROR = 'bitcoin_price: site unreachable'
+
 
 class Py3status:
     """
     """
     # available configuration parameters
+    bitcoin_separator = ', '
     cache_timeout = 900
     color_index = -1
     field = 'close'
-    format = '{price}'
+    format = '{format_bitcoin}'
+    format_bitcoin = '{market}: {price}{symbol}'
     hide_on_error = False
     markets = 'btceUSD, btcdeEUR'
-    string_separator1 = ': '
-    string_separator2 = ', '
-    string_unavailable = 'N/A '
-    string_unreachable = 'Bitcoincharts unreachable'
     symbols = True
+
+    class Meta:
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'price': ':.2f',
+                    },
+                    'format_strings': ['format_bitcoin'],
+                }
+            ],
+        }
 
     def __init__(self):
         """
@@ -88,20 +102,18 @@ class Py3status:
                 return m[field]
 
     def get_rate(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
-        # get the data from the bitcoincharts website
+        # get the data from bitcoincharts api
         try:
             data = json.loads(urlopen(self.url).read().decode())
         except URLError:
-            if not self.hide_on_error:
-                response['color'] = self.py3.COLOR_BAD
-                response['full_text'] = self.string_unavailable
-            return response
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_BAD,
+                'full_text': '' if self.hide_on_error else STRING_ERROR
+            }
 
         # get the rate for each market given
-        rates, markets = [], self.markets.split(',')
-        color_rate = None
+        color_rate, rates, markets = None, [], self.markets.split(',')
         for i, market in enumerate(markets):
             market = market.strip()
             try:
@@ -111,17 +123,20 @@ class Py3status:
                     color_rate = rate
             except KeyError:
                 continue
-            # market name
-            out = market[:-3] if rate else market
-            out += self.string_separator1
-            # rate
-            out += self.string_unavailable if not rate else '{:.2f}'.format(rate)
-            currency_sym = self.currency_map.get(market[-3:], market[-3:])
-            out += currency_sym if self.symbols else market
-            rates.append(out)
 
-        # only colorize if an index is given or
-        # if only one market is selected
+            # market/price/symbol
+            _market = market[:-3] if rate else market
+            _price = rate if rate else STRING_UNAVAILABLE
+            _symbol = self.currency_map.get(market[-3:], market[-3:])
+            _symbol = _symbol if self.symbols else market
+
+            rates.append(self.py3.safe_format(
+                self.format_bitcoin, {'market': _market, 'price': _price, 'symbol': _symbol})
+            )
+
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+
+        # colorize if an index is given or only one market is selected
         if len(rates) == 1 or self.color_index > -1:
             if self.last_price == 0:
                 pass
@@ -131,9 +146,8 @@ class Py3status:
                 response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
-        price = self.string_separator2.join(rates)
-        price = self.py3.safe_format(self.format, {'price': price})
-        response['full_text'] = price
+        out = self.py3.composite_join(self.bitcoin_separator, rates)
+        response['full_text'] = self.py3.safe_format(self.format, {'format_bitcoin': out})
         return response
 
 
