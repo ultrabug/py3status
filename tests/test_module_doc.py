@@ -21,6 +21,17 @@ from py3status.docstrings import core_module_docstrings
 IGNORE_MODULE = [
 ]
 
+ILLEGAL_CONFIG_OPTIONS = [
+    'min_width',
+    'separator',
+    'separator_block_width',
+    'align',
+]
+
+IGNORE_ILLEGAL_CONFIG_OPTIONS = [
+    ('group', 'align'),
+]
+
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
 IGNORE_ITEM = [
@@ -230,6 +241,18 @@ def check_docstrings():
 
         # combine docstring parameters
         params.update(obsolete)
+
+        # bad config params - these have reserved usage
+        allowed_bad_config_params = [
+            x[1] for x in IGNORE_ILLEGAL_CONFIG_OPTIONS if x[0] == module_name
+        ]
+        bad_config_params = set(ILLEGAL_CONFIG_OPTIONS) & set(params)
+        bad_config_params -= set(allowed_bad_config_params)
+
+        if bad_config_params:
+            msg = 'The following config parameters are reserved and'
+            msg += 'should not be used by modules:\n    {}'
+            errors.append(msg.format(', '.join(bad_config_params)))
 
         # check attributes are in alphabetical order
         keys = list(mod_config.keys())
