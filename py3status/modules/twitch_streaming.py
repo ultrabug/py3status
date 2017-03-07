@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Display status on a given Twitch streamer.
 

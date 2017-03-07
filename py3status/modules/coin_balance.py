@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Display balances of diverse crypto-currencies.
 
