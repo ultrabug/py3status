@@ -4,16 +4,23 @@ Display network speed and bandwidth usage.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
-    format: display format for this module (default '{format_net_speed} {format_net_traffic}')
-    format_net_speed: display format for net speed
-        (default 'LAN(Kb): {down:5.1f}↓ {up:5.1f}↑')
-    format_net_traffic: display format for net traffic
-        (default 'T(Mb): {down:3.0f}↓ {up:3.0f}↑ {total:3.0f}↕')
+    format: display format for this module (default '{format_netdata}'
+    format_netdata: format for netdata
+        (default 'LAN(Kb): {down}↓ {up}↑ \| T(Mb): {download}↓ {upload}↑ {total}↕')
     low_speed: threshold (default 30)
     low_traffic: threshold (default 400)
     med_speed: threshold (default 60)
     med_traffic: threshold (default 700)
-    nic: the network interface to monitor (default None)
+
+Format placeholders:
+    {format_netdata} format for netdata
+
+Format_timer placeholders:
+    {down}     number of download speed traffic
+    {up}       number of up speed traffic
+    {download} number of download usage
+    {upload}   number of upload usage
+    {total}    number of total usage
 
 Color options:
     color_bad:      below low threshold
@@ -44,17 +51,55 @@ class GetData:
 class Py3status:
     """
     """
+    # 'LAN(Kb): {:5.1f}↓ {:5.1f}↑ === T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕'
+
     # available configuration parameters
     cache_timeout = 2
+    format = '{format_netdata}'
+    format_netdata = u'LAN(Kb): {down}↓ {up}↑ \| T(Mb): {download}↓ {upload}↑ {total}↕'
+    # format_netdata = u'[\?color={color_speed} LAN(Kb): {down}↓ {up}↑ ]
+    # [\?color={color_traffic} T(Mb): {download}↓ {upload}↑ {total}↕]'
     low_speed = 30
     low_traffic = 400
-    #format = '{format_net_speed} {format_net_traffic}'
-    format = '{format_net_traffic} {format_net_speed}'
-    format_net_speed = 'LAN(Kb): {down:5.1f}↓ {up:5.1f}↑'
-    format_net_traffic = 'T(Mb): {down:3.0f}↓ {up:3.0f}↑ {total:3.0f}↕'
     med_speed = 60
     med_traffic = 700
     nic = None
+
+    class Meta:
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'down': ':5.1f',
+                    },
+                    'format_strings': ['format_netdata'],
+                },
+                {
+                    'placeholder_formats': {
+                        'up': ':5.1f',
+                    },
+                    'format_strings': ['format_netdata'],
+                },
+                {
+                    'placeholder_formats': {
+                        'download': ':3.0f',
+                    },
+                    'format_strings': ['format_netdata'],
+                },
+                {
+                    'placeholder_formats': {
+                        'upload': ':3.0f',
+                    },
+                    'format_strings': ['format_netdata'],
+                },
+                {
+                    'placeholder_formats': {
+                        'total': ':3.0f',
+                    },
+                    'format_strings': ['format_netdata'],
+                }
+            ],
+        }
 
     def __init__(self):
         self.old_transmitted = 0
@@ -78,61 +123,68 @@ class Py3status:
                 )
             self.py3.log('selected nic: %s' % self.nic)
 
-    def net_speed(self):
-        """Calculate network speed.
+    def netdata(self):
+        """
+        Calculate network speed
+        Calculate networks used traffic.
         """
         data = GetData(self.nic)
-
         received_bytes, transmitted_bytes = data.netBytes()
-        down_speed = (received_bytes - self.old_received) / 1024.
-        up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
-        if down_speed < self.low_speed:
-            color = self.py3.COLOR_BAD
-        elif down_speed < self.med_speed:
-            color = self.py3.COLOR_DEGRADED
-        else:
-            color = self.py3.COLOR_GOOD
-
+        # net_speed (stats)
+        down = (received_bytes - self.old_received) / 1024.
+        up = (transmitted_bytes - self.old_transmitted) / 1024.
         self.old_received = received_bytes
         self.old_transmitted = transmitted_bytes
 
-        net_speed = self.py3.safe_format(
-            self.format_net_speed, {'down': down_speed, 'up': up_speed}
-        )
-        net_speed = self.py3.safe_format(self.format, {'format_net_speed': net_speed})
-
-        return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': net_speed
-        }
-
-    def net_traffic(self):
-        """Calculate networks used traffic.
-        """
-        data = GetData(self.nic)
-
-        received_bytes, transmitted_bytes = data.netBytes()
+        # net_traffic (stats)
         download = received_bytes / 1024 / 1024.
         upload = transmitted_bytes / 1024 / 1024.
         total = download + upload
 
-        if total < self.low_traffic:
-            color = self.py3.COLOR_GOOD
-        elif total < self.med_traffic:
-            color = self.py3.COLOR_DEGRADED
+        # net_speed (color)
+        if down < self.low_speed:
+            color_speed = self.py3.COLOR_BAD
+        elif down < self.med_speed:
+            color_speed = self.py3.COLOR_DEGRADED
         else:
-            color = self.py3.COLOR_BAD
+            color_speed = self.py3.COLOR_GOOD
 
-        net_traffic = self.py3.safe_format(
-            self.format_net_speed, {'down': download, 'up': upload, 'total': total}
-        )
-        net_traffic = self.py3.safe_format(self.format, {'format_net_traffic': net_traffic})
+        # net_traffic (color)
+        if total < self.low_traffic:
+            color_traffic = self.py3.COLOR_GOOD
+        elif total < self.med_traffic:
+            color_traffic = self.py3.COLOR_DEGRADED
+        else:
+            color_traffic = self.py3.COLOR_BAD
+
+        # convert float2string
+        down = str(down)
+        up = str(up)
+        download = str(download)
+        upload = str(upload)
+        total = str(total)
+
+        # net_speed (composite)
+        down = self.py3.composite_create({'full_text': down, 'color': color_speed})
+        up = self.py3.composite_create({'full_text': up, 'color': color_speed})
+
+        # net_traffic (composite)
+        download = self.py3.composite_create({'full_text': download, 'color': color_traffic})
+        upload = self.py3.composite_create({'full_text': upload, 'color': color_traffic})
+        total = self.py3.composite_create({'full_text': total, 'color': color_traffic})
+
+        netdata = self.py3.safe_format(self.format_netdata, {'down': down,
+                                                             'up': up,
+                                                             'download': download,
+                                                             'upload': upload,
+                                                             'total': total})
+
+        full_text = self.py3.safe_format(self.format, {'format_netdata': netdata})
 
         return {
-            'color': color,
-            'full_text': net_traffic
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': full_text
         }
 
 
