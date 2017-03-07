@@ -100,6 +100,11 @@ def catch_factory(attr):
                 # so allow this usage
                 valid = True
                 break
+            if mod.__name__ == 'py3status.py3' and frame[3] == 'request':
+                # Py3.request has special needs due so it is allowed to access
+                # private variables.
+                valid = True
+                break
             if mod.__name__.startswith('py3status'):
                 # We were somewhere else in py3status than the module, maybe we
                 # are doing some logging.  Prevent usage

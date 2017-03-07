@@ -44,9 +44,6 @@ Format placeholders:
     {repo} short name of the repository being checked. eg py3status
     {repo_full} full name of the repository being checked. eg ultrabug/py3status
 
-Requires:
-    python-requests: Python HTTP for Humans https://pypi.python.org/pypi/requests
-
 Examples:
 ```
 # set github access credentials
@@ -66,7 +63,6 @@ github {
 @author tobes
 """
 
-import requests
 GITHUB_API_URL = 'https://api.github.com'
 GITHUB_URL = 'https://github.com/'
 
@@ -112,10 +108,8 @@ class Py3status:
         else:
             auth = None
         try:
-            info = requests.get(url, 'GET', timeout=10, auth=auth)
-        except requests.ConnectionError:
-            return
-        except requests.ReadTimeout:
+            info = self.py3.request(url, timeout=10, auth=auth)
+        except (self.py3.RequestException):
             return
         if info and info.status_code == 200:
             return(int(info.json()['total_count']))
@@ -143,11 +137,9 @@ class Py3status:
             url = GITHUB_API_URL + '/repos/' + self.repo + '/notifications'
         url += '?per_page=100'
         try:
-            info = requests.get(url, timeout=10,
-                                auth=(self.username, self.auth_token))
-        except requests.ConnectionError:
-            return
-        except requests.ReadTimeout:
+            info = self.py3.request(url, timeout=10,
+                                    auth=(self.username, self.auth_token))
+        except (self.py3.RequestException):
             return
         if info.status_code == 200:
             return len(info.json())

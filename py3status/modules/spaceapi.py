@@ -22,12 +22,7 @@ Color options:
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
 """
 
-import codecs
 import datetime
-import json
-import urllib.request
-import shlex
-import subprocess
 
 
 class Py3status:
@@ -64,11 +59,7 @@ class Py3status:
         }
 
         try:
-            # grab json file
-            json_file = urllib.request.urlopen(self.url)
-            reader = codecs.getreader("utf-8")
-            data = json.load(reader(json_file))
-            json_file.close()
+            data = self.py3.request(self.url).json()
             self._url = data.get('url')
 
             if(data['state']['open'] is True):
@@ -106,7 +97,7 @@ class Py3status:
         button = event['button']
         if self._url and self.button_url == button:
             cmd = 'xdg-open {}'.format(self._url)
-            subprocess.call(shlex.split(cmd))
+            self.py3.command_run(cmd)
             self.py3.prevent_refresh()
 
 
