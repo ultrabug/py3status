@@ -73,6 +73,9 @@ class Py3status:
         if not self.xbacklight:
             return None
 
+        if not self.button_up and not self.button_down:
+            return None
+
         level = self._get_backlight_level()
         button = event['button']
         if self.button_up and button == self.button_up:
