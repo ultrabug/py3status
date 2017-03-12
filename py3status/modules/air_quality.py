@@ -38,7 +38,7 @@ Color options:
 Example:
 
 ```
-aqicn {
+air_quality {
     token = 'demo'
     city = 'shanghai'
 
@@ -157,7 +157,7 @@ class Py3status:
             self.py3, color_key
         )
 
-    def aqicn(self):
+    def air_quality(self):
         data = self._call_api()
 
         return {
