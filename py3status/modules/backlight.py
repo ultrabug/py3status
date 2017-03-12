@@ -4,7 +4,7 @@ Adjust screen backlight brightness.
 
 Configuration parameters:
     brightness_delta: Change the brightness by this step.
-        (default 5)
+        (default 8)
     brightness_initial: Set brightness to this value on start.
         (default None)
     brightness_minimal: Don't go below this brightness to avoid black screen
@@ -50,7 +50,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    brightness_delta = 5
+    brightness_delta = 8
     brightness_initial = None
     brightness_minimal = 1
     button_down = 5
@@ -75,20 +75,24 @@ class Py3status:
 
         level = self._get_backlight_level()
         button = event['button']
-        if self.button_up and button == self.button_up:
+        if button == self.button_up:
             level += self.brightness_delta
             if level > 100:
                 level = 100
-        elif self.button_down and button == self.button_down:
+            self._set_backlight_level(level)
+        elif button == self.button_down:
             level -= self.brightness_delta
             if level < self.brightness_minimal:
                 level = self.brightness_minimal
-        self._set_backlight_level(level)
+            self._set_backlight_level(level)
 
     def _set_backlight_level(self, level):
-        self.py3.command_run(['xbacklight', '-set', str(level)])
+        self.py3.command_run(['xbacklight', '-time', '0', '-set', str(level)])
 
     def _get_backlight_level(self):
+        if self.xbacklight:
+            level = self.py3.command_output(['xbacklight', '-get']).strip()
+            return int(float(level))
         for brightness_line in open("%s/brightness" % self.device_path, 'rb'):
             brightness = int(brightness_line)
         for brightness_max_line in open("%s/max_brightness" % self.device_path, 'rb'):
