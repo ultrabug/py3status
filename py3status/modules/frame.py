@@ -82,8 +82,13 @@ class Py3status:
         container = True
 
     def post_config_hook(self):
+        self.urgent = False
         if '{button}' not in self.format:
             self.open = True
+        self.py3.register_function('urgent_function', self._urgent_function)
+
+    def _urgent_function(self, module_list):
+        self.urgent = True
 
     def frame(self):
 
@@ -106,10 +111,13 @@ class Py3status:
                     if self.format_separator:
                         out += [{'full_text': self.format_separator}]
                 output += out
+            urgent = False
 
             # Remove last separator
             if self.format_separator:
                 output = output[:-1]
+        else:
+            urgent = self.urgent
 
         if self.py3.format_contains(self.format, 'button'):
             if self.open:
@@ -126,10 +134,15 @@ class Py3status:
             'button': button,
         }
         output = self.py3.build_composite(self.format, composites=composites)
-        return {
+        response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'composite': output,
         }
+
+        if urgent:
+            response['urgent'] = urgent
+
+        return response
 
     def on_click(self, event):
         """
@@ -138,6 +151,7 @@ class Py3status:
         if event['button'] == self.button_toggle:
             # we only toggle if button was used
             if event.get('index') == 'button' and self.py3.is_my_event(event):
+                self.urgent = False
                 self.open = not self.open
 
 

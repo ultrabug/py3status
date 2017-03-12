@@ -110,6 +110,7 @@ class Py3status:
 
         self.active = 0
         self.last_active = 0
+        self.urgent = False
         self._cycle_time = time() + self.cycle
 
         self.open = bool(self.open)
@@ -142,6 +143,7 @@ class Py3status:
         for module in module_list:
             if module in self.items:
                 self.active = self.items.index(module)
+                self.urgent = True
 
     def _get_output(self):
         if not self.fixed_width:
@@ -199,6 +201,7 @@ class Py3status:
             }
 
         if self.open:
+            urgent = False
             if self.cycle and time() >= self._cycle_time:
                 self._change_active(1)
                 self._cycle_time = time() + self.cycle
@@ -212,6 +215,7 @@ class Py3status:
                 if not current_output:
                     update_time = RETRY_TIMEOUT_NO_CONTENT
         else:
+            urgent = self.urgent
             current_output = []
             update_time = None
 
@@ -238,6 +242,9 @@ class Py3status:
             'cached_until': cached_until,
             'composite': output
         }
+
+        if urgent:
+            response['urgent'] = urgent
         return response
 
     def on_click(self, event):
@@ -263,6 +270,7 @@ class Py3status:
         if self.button_toggle and event['button'] == self.button_toggle:
             # we only toggle if button was used
             if event.get('index') == 'button':
+                self.urgent = False
                 self.open = not self.open
 
 

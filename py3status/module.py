@@ -352,6 +352,7 @@ class Module(Thread):
 
         # update all components
         color = response.get('color')
+        urgent = response.get('urgent')
         for index, item in enumerate(response['composite']):
             # validate the response
             if 'full_text' not in item:
@@ -381,6 +382,9 @@ class Module(Thread):
             # Remove any none color from our output
             if hasattr(item.get('color'), 'none_setting'):
                 del item['color']
+            # if urgent we want to set this to all parts
+            if urgent and 'urgent' not in item:
+                item['urgent'] = urgent
 
     def _params_type(self, method_name, instance):
         """
