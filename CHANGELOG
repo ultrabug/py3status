@@ -16,6 +16,7 @@ version 3.5 (milestone)
 * py3 helper: allow check_commands() to take a string, by @tobes
 * formatter unicode fixup for python2, by @tobes
 * new getjson module to display fields from a json url, by @vicyap
+* new systemd module to check the status of a systemd unit, by @adrianlzt
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
 * backlight module: fix mouse behavior thanks to @Tadly on #796, by @tobes
 * battery_level module: use helpers, by @lasers
