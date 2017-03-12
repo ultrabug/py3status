@@ -94,7 +94,7 @@ def get_in(coll, path, default=None):
 
 
 class Py3status:
-    cache_timeout = 900
+    cache_timeout = 3600
     city = 'shanghai'
 
     format = 'aqicn: {aqicn}'
@@ -129,6 +129,8 @@ class Py3status:
     def _key(self, data):
         if data.get('status') == 'ok':
             aqi = get_in(data, ['data', 'aqi'], -1)
+            if type(aqi) is not int:
+                return 'unknown'
 
             for start, end, key in AQI:
                 if aqi >= start and aqi <= end:
