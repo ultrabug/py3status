@@ -2,10 +2,14 @@ version 3.5 (milestone)
 * allow improved access to settings from py3status section, by @tobes
 * add a new py3status configuration section and the ability to set i3-nagbar font, by @randomguy
 * update sysdata documentation, by @valdur55
+* allow runtime errors to be handled in i3bar, by @tobes
 * fix color comparison bug, by @tobes
+* fix issue with empty full_text not showing separator, by @tobes
+* fix issue with blank module causing extra separator to show, by @tobes
 * cleanup i3status config access, by @tobes
 * nicer exceptions on cli-commands, by @tobes
 * py3 logging nicer formatting, by @tobes
+* py3 provide http request functionality, drop requests dependency, by @tobes
 * cleanup: remove transformed from module responses, by @tobes
 * py3 helper: command_output() signal fix, by @tobes
 * py3 helper: allow check_commands() to take a string, by @tobes
