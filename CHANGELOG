@@ -12,6 +12,7 @@ version 3.5 (milestone)
 * formatter unicode fixup for python2, by @tobes
 * new getjson module to display fields from a json url, by @vicyap
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
+* backlight module: fix mouse behavior thanks to @Tadly on #796, by @tobes
 * battery_level module: use helpers, by @lasers
 * bluetooth module: use helpers, by @lasers
 * check_tcp module: remove hardcoded strings, by @lasers
