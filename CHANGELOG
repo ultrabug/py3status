@@ -53,6 +53,7 @@ version 3.5 (milestone)
 * selinux module: fix exception, remove hardcoded strings, by @lasers
 * sysdata module: avoid dividing by 0, by @guiniol
 * taskwarrior module: use helpers, by @lasers
+* taskwarrior: fix potential exceptions, by @lasers
 * vnstat module: use helpers, add exception, cleanup, by @lasers
 * volume_status: bugfix for pactl on debian systems, by @DextersHub
 * wifi module: fix device autodetection magic, by @lasers
