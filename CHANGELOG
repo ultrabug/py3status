@@ -49,6 +49,7 @@ version 3.5 (milestone)
 * nvidia_temp module: fix exception. by @lasers
 * pomodoro module: use helpers, by @lasers
 * process_status module: add format, use helpers, by @lasers
+* rainbow module: add format, by @lasers
 * selinux module: fix exception, remove hardcoded strings, by @lasers
 * sysdata module: avoid dividing by 0, by @guiniol
 * taskwarrior module: use helpers, by @lasers
