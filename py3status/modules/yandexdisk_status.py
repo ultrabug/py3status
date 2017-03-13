@@ -22,6 +22,15 @@ Requires:
 
 @author Vladimir Potapev (github:vpotapev)
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#FFFF00', 'full_text': 'Yandex.Disk: Busy'}
+
+idle
+{'color': '#00FF00', 'full_text': 'Yandex.Disk: Idle'}
+
+off
+{'color': '#FF0000', 'full_text': 'Yandex.Disk: Not started'}
 """
 string_error = "Yandex.Disk: isn't configured"
 string_unavailable = "Yandex.Disk: isn't installed"

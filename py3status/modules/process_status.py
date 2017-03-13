@@ -19,6 +19,12 @@ Color options:
     color_good: Running
 
 @author obb, Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u25cf'}
+
+off
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 STRING_ERROR = 'process_status: N/A'
 

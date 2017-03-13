@@ -20,6 +20,9 @@ Color options:
 
 @author timmszigat
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': 'closed since 16:38'}
 """
 
 import datetime

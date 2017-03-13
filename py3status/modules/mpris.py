@@ -96,6 +96,17 @@ Tested players:
     vlc
 
 @author Moritz Lüdecke, tobes
+
+SAMPLE OUTPUT
+[
+    {'color': '#00FF00', 'index': 'previous', 'min_width': 20,
+     'align': 'center', 'full_text': u'\xab'},
+    {'color': '#00FF00', 'index': 'toggle', 'min_width': 20,
+     'align': 'center', 'full_text': u'\u25ae'},
+    {'color': '#00FF00', 'index': 'next', 'min_width': 20,
+     'align': 'center', 'full_text': u'\xbb '},
+    {'full_text': u'\u25b6 Happy Mondays - Fat Lady Wrestlers'}
+]
 """
 
 from datetime import timedelta

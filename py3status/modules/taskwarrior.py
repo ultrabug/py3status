@@ -14,6 +14,9 @@ Requires
 
 @author James Smith http://jazmit.github.io/
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': '1 Prepare first draft, 2 Buy milk'}
 """
 
 import json

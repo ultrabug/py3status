@@ -24,6 +24,15 @@ Format placeholders:
 
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': u'\u25b6'}
+
+stop
+{'full_text': u'\u25fc'}
+
+pause
+{'full_text': u'\u275a\u275a'}
 """
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.

@@ -16,6 +16,12 @@ Color options:
     color_good: Rate is med threshold or higher
 
 @author Shahin Azad <ishahinism at Gmail>
+
+SAMPLE OUTPUT
+[
+    {'color': '#FF0000', 'full_text': 'LAN(Kb):  16.9↓   5.2↑', 'separator': True},
+    {'color': '#FF0000', 'full_text': 'T(Mb): 2264↓ 143↑ 2407↕'}
+]
 """
 
 

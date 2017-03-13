@@ -16,6 +16,37 @@ Configuration parameters:
         (default None)
     time: how long in seconds for the timer
         (default 60)
+
+
+SAMPLE OUTPUT
+[
+    {'color': '#CCCCCC', 'full_text': 'Timer '},
+    {'color': None, 'full_text': '0'},
+    {'color': '#CCCCCC', 'full_text': ':'},
+    {'color': None, 'full_text': '01'},
+    {'color': '#CCCCCC', 'full_text': ':'},
+    {'color': None, 'full_text': '00'}
+]
+
+running
+[
+    {'color': '#CCCCCC', 'full_text': 'Timer '},
+    {'color': '#00FF00', 'full_text': '0'},
+    {'color': '#CCCCCC', 'full_text': ':'},
+    {'color': '#00FF00', 'full_text': '00'},
+    {'color': '#CCCCCC', 'full_text': ':'},
+    {'color': '#00FF00', 'full_text': '54'},
+]
+
+paused
+[
+    {'color': '#CCCCCC', 'full_text': 'Timer '},
+    {'color': '#FFFF00', 'full_text': '0'},
+    {'color': '#CCCCCC', 'full_text': ':'},
+    {'color': '#FFFF00', 'full_text': '00'},
+    {'color': '#CCCCCC', 'full_text': ':'},
+    {'color': '#FFFF00', 'full_text': '54'},
+]
 """
 
 from time import time
