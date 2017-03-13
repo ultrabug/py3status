@@ -5,18 +5,23 @@ Display status of a given hackerspace.
 Configuration parameters:
     button_url: mouse button to open URL sent in space's API (default 3)
     cache_timeout: refresh interval for this module (default 60)
-    format: display format for this module (default '{spaceapi}')
-    icon_closed: show when hackerspace is closed (default 'closed')
-    icon_open: show when hackerspace is open (default 'open')
-    icon_time: display format for time (default ' since %H:%M')
+    format: display format for this module (default '{state}[ {lastchanged}]')
+    format_lastchanged: display format for time (default 'since %H:%M')
+    state_closed: show when hackerspace is closed (default 'closed')
+    state_open: show when hackerspace is open (default 'open')
     url: specify JSON URL of a hackerspace to retrieve from
         (default 'http://status.chaospott.de/status.json')
 
-__Note: Strftime parameters in icon_* parameters will be translated.__
+Format placeholders:
+    {state} Hackerspace state
+    {lastchanged} Time
+
+format_lastchanged conversion:
+    '%' Strftime characters to be translated
 
 Color options:
-    color_bad: Space closed
-    color_good: Space open
+    color_closed: Space closed, defaults to color_bad
+    color_open: Space open, defaults to color_good
 
 @author timmszigat
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
@@ -32,10 +37,10 @@ class Py3status:
     # available configuration parameters
     button_url = 3
     cache_timeout = 60
-    format = '{spaceapi}'
-    icon_closed = 'closed'
-    icon_open = 'open'
-    icon_time = ' since %H:%M'
+    format = '{state}[ {lastchanged}]'
+    format_lastchanged = 'since %H:%M'
+    state_closed = 'closed'
+    state_open = 'open'
     url = 'http://status.chaospott.de/status.json'
 
     class Meta:
@@ -43,60 +48,53 @@ class Py3status:
             'rename': [
                 {
                     'param': 'open_color',
-                    'new': 'color_good',
-                    'msg': 'obsolete parameter use `color_good`',
+                    'new': 'color_open',
+                    'msg': 'obsolete parameter use `color_open`',
                 },
                 {
                     'param': 'closed_color',
-                    'new': 'color_bad',
-                    'msg': 'obsolete parameter use `color_bad`',
-                },
-                {
-                    'param': 'color_open',
-                    'new': 'color_good',
-                    'msg': 'obsolete parameter use `color_good`',
-                },
-                {
-                    'param': 'color_closed',
-                    'new': 'color_bad',
-                    'msg': 'obsolete parameter use `color_bad`',
+                    'new': 'color_closed',
+                    'msg': 'obsolete parameter use `color_closed`',
                 },
                 {
                     'param': 'closed_text',
-                    'new': 'icon_closed',
-                    'msg': 'obsolete parameter use `icon_closed`',
+                    'new': 'state_closed',
+                    'msg': 'obsolete parameter use `state_closed`',
                 },
                 {
                     'param': 'open_text',
-                    'new': 'icon_open',
-                    'msg': 'obsolete parameter use `icon_open`',
+                    'new': 'state_open',
+                    'msg': 'obsolete parameter use `state_open`',
                 },
                 {
                     'param': 'time_text',
-                    'new': 'icon_time',
-                    'msg': 'obsolete parameter use `icon_time`',
+                    'new': 'format_lastchanged',
+                    'msg': 'obsolete parameter use `format_lastchanged`',
                 },
             ],
         }
 
-    def spaceapi(self):
-        color = self.py3.COLOR_BAD
-        full_text = self.icon_closed
+    def post_config_hook(self):
+        self.color_open = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD
+        self.color_closed = self.py3.COLOR_CLOSED or self.py3.COLOR_BAD
 
+    def spaceapi(self):
+        color = self.color_closed
+        state = self.state_closed
         try:
             data = self.py3.request(self.url).json()
             self._url = data.get('url')
 
             if(data['state']['open']):
-                color = self.py3.COLOR_GOOD
-                full_text = self.icon_open
+                color = self.color_open
+                state = self.state_open
 
             if 'lastchange' in data['state'].keys():
-                full_text += self.icon_time
                 dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
-                full_text = dt.strftime(full_text)
+                lastchanged = dt.strftime(self.format_lastchanged)
 
-            full_text = self.py3.safe_format(self.format, {'spaceapi': full_text})
+            full_text = self.py3.safe_format(
+                self.format, {'state': state, 'lastchanged': lastchanged})
         except:
             full_text = STRING_UNAVAILABLE
         return {
