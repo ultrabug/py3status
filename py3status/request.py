@@ -87,7 +87,7 @@ class HttpResponse:
                 encoding = self._response.headers.get_content_charset('utf-8')
             else:
                 encoding = self._response.headers.getparam('charset')
-            self._text = self._response.read().decode(encoding)
+            self._text = self._response.read().decode(encoding or 'utf-8')
         return self._text
 
     def json(self):

@@ -7,7 +7,7 @@ from collections import OrderedDict
 from time import time
 
 from py3status.composite import Composite
-from py3status.py3 import Py3, PY3_CACHE_FOREVER
+from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
 
@@ -27,11 +27,13 @@ class Module(Thread):
         We need quite some stuff to occupy ourselves don't we ?
         """
         Thread.__init__(self)
+        self.allow_config_clicks = True
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
         self.disabled = False
         self.error_messages = None
+        self.error_hide = False
         self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
@@ -50,6 +52,13 @@ class Module(Thread):
         self.timer = None
         self.urgent = False
 
+        # create a nice name for the module that matches what the module is
+        # called in the user config
+        if self.module_inst.startswith('_anon_module_'):
+            self.module_nice_name = self.module_name
+        else:
+            self.module_nice_name = self.module_full_name
+
         # py3wrapper this is private and any modules accessing their instance
         # should only use it on the understanding that it is not supported.
         self._py3_wrapper = py3_wrapper
@@ -63,14 +72,9 @@ class Module(Thread):
             self.disabled = True
             self.methods['error'] = {}
             self.error_index = 0
-            if self.module_inst.startswith('_anon_module_'):
-                module_name = self.module_name
-            else:
-                module_name = self.module_full_name
-
             self.error_messages = [
-                self.module_name,
-                u'{}: Import Error, {}'.format(module_name, str(e)),
+                self.module_nice_name,
+                u'{}: Import Error, {}'.format(self.module_nice_name, str(e)),
             ]
             self.error_output(self.error_messages[0])
             # log the error
@@ -126,21 +130,35 @@ class Module(Thread):
                 # the module and show error in module output
                 self.terminated = True
                 self.error_index = 0
-                if self.module_inst.startswith('_anon_module_'):
-                    module_name = self.module_name
-                else:
-                    module_name = self.module_full_name
 
                 self.error_messages = [
-                    module_name,
-                    u'{}: {}'.format(module_name, str(e) or e.__class__.__name__),
+                    self.module_nice_name,
+                    u'{}: {}'.format(self.module_nice_name, str(e) or e.__class__.__name__),
                 ]
                 self.error_output(self.error_messages[0])
                 msg = 'Exception in `%s` post_config_hook()' % self.module_full_name
                 self._py3_wrapper.report_exception(msg, notify_user=False)
                 self._py3_wrapper.log('terminating module %s' % self.module_full_name)
 
-    def error_output(self, message):
+    def runtime_error(self, msg, method):
+        """
+        Show the error in the bar
+        """
+        if self.error_hide:
+            self.hide_errors()
+            return
+        errors = [
+            self.module_nice_name,
+            u'{}: {}'.format(self.module_nice_name, msg),
+        ]
+
+        # if we have shown this error then keep in the same state
+        if self.error_messages != errors:
+            self.error_messages = errors
+            self.error_index = 0
+        self.error_output(self.error_messages[self.error_index], method)
+
+    def error_output(self, message, method_affected=None):
         """
         Something is wrong with the module so we want to output the error to
         the i3bar
@@ -159,8 +177,12 @@ class Module(Thread):
             'name': self.module_name,
         }
         for method in self.methods.values():
+            if method_affected and method['method'] != method_affected:
+                continue
+
             method['last_output'] = [error]
 
+        self.allow_config_clicks = False
         self.set_updated()
 
     def start_module(self):
@@ -330,6 +352,7 @@ class Module(Thread):
 
         # update all components
         color = response.get('color')
+        urgent = response.get('urgent')
         for index, item in enumerate(response['composite']):
             # validate the response
             if 'full_text' not in item:
@@ -359,6 +382,9 @@ class Module(Thread):
             # Remove any none color from our output
             if hasattr(item.get('color'), 'none_setting'):
                 del item['color']
+            # if urgent we want to set this to all parts
+            if urgent and 'urgent' not in item:
+                item['urgent'] = urgent
 
     def _params_type(self, method_name, instance):
         """
@@ -615,8 +641,9 @@ class Module(Thread):
                     error = self.error_messages[self.error_index]
                     self.error_output(error)
                 if button == 3:
-                    self.disable_module()
-                self.prevent_refresh = True
+                    self.hide_errors()
+                if button != 2 or (self.terminated or self.disabled):
+                    self.prevent_refresh = True
 
             elif self.click_events:
                 click_method = getattr(self.module_class, 'on_click')
@@ -735,12 +762,29 @@ class Module(Thread):
                     if self.config['debug']:
                         self._py3_wrapper.log(
                             'method {} returned {} '.format(meth, result))
-                except Exception:
+                    self.allow_config_clicks = True
+                except ModuleErrorException as e:
+                    # module has indicated that it has an error
+                    self.runtime_error(e.msg, meth)
+                    if e.timeout:
+                        if e.timeout is PY3_CACHE_FOREVER:
+                            cache_time = PY3_CACHE_FOREVER
+                        else:
+                            cache_time = time() + e.timeout
+                    else:
+                        cache_time = time() + getattr(self.module_class,
+                                                      'cache_timeout',
+                                                      self.config['cache_timeout'])
+
+                except Exception as e:
                     msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
-                    notify = not self.nagged
-                    self._py3_wrapper.report_exception(msg, notify_user=notify)
-                    self.nagged = True
+                    self._py3_wrapper.report_exception(msg, notify_user=False)
+                    # added error
+                    self.runtime_error(str(e) or e.__class__.__name__, meth)
+                    cache_time = time() + getattr(self.module_class,
+                                                  'cache_timeout',
+                                                  self.config['cache_timeout'])
 
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
