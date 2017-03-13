@@ -130,13 +130,13 @@ class Py3status:
             button = None
 
         composites = {
-            'output': output,
-            'button': button,
+            'output': self.py3.composite_create(output),
+            'button': self.py3.composite_create(button),
         }
-        output = self.py3.build_composite(self.format, composites=composites)
+        output = self.py3.safe_format(self.format, composites)
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
-            'composite': output,
+            'full_text': output,
         }
 
         if urgent:
