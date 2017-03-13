@@ -17,6 +17,7 @@ Requires
 """
 
 import json
+STRING_NOT_INSTALLED = "isn't installed"
 
 
 class Py3status:
@@ -25,6 +26,10 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = '{task}'
+
+    def post_config_hook(self):
+        if not self.py3.check_commands('task'):
+            raise Exception(STRING_NOT_INSTALLED)
 
     def taskWarrior(self):
         def describeTask(taskObj):
