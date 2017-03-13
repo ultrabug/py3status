@@ -185,6 +185,16 @@ class Module(Thread):
         self.allow_config_clicks = False
         self.set_updated()
 
+    def hide_errors(self):
+        """
+        hide the module in the i3bar
+        """
+        for method in self.methods.values():
+            method['last_output'] = {}
+
+        self.allow_config_clicks = False
+        self.set_updated()
+
     def start_module(self):
         """
         Start the module running.
