@@ -1,120 +1,94 @@
 # -*- coding: utf-8 -*-
-
 """
 Display number of pending updates for Arch Linux.
 
-This will display a count of how many 'pacman' updates are waiting
-to be installed and optionally a count of how many 'aur' updates are
-also waiting.
-
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 600)
-    format: Display format to use
-        (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
-    hide_if_zero: Don't show on bar if True
-        (default False)
-    include_aur: Set to True to use 'cower' to check for AUR updates
-        (default False)
+    cache_timeout: refresh interval for this module (default 600)
+    check_aur: check aur for pending updates (default None)
+    check_pacman: check pacman for pending updates (default None)
+    format: display format for this module (default '{updates}')
+    format_aur: (default 'UPD: {aur}')
+    format_full: (default 'UPD: {pacman}/{aur}')
+    format_pacman: (default 'UPD: {pacman}')
 
 Format placeholders:
-    {aur} Number of pending aur updates
-    {pacman} Number of pending pacman updates
-    {total} Total updates pending
+    {aur} Number of pending AUR updates
+    {pacman} Number of pending Pacman updates
+    {total} Number of pending total updates
 
 Requires:
-    cower: Needed to display pending 'aur' updates
+    cower: A simple AUR agent with a pretentious name
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
 """
-
 import subprocess
-import sys
 
-FORMAT_PACMAN_ONLY = 'UPD: {pacman}'
-FORMAT_PACMAN_AND_AUR = 'UPD: {pacman}/{aur}'
-LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
+STRING_UNAVAILABLE = 'arch_updates: N/A'
 
 
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    format = ''
-    hide_if_zero = False
-    include_aur = False
+    check_aur = None
+    check_pacman = None
+    format = '{updates}'
+    format_aur = 'UPD: {aur}'
+    format_full = 'UPD: {pacman}/{aur}'
+    format_pacman = 'UPD: {pacman}'
 
     def post_config_hook(self):
-        if self.format == '':
-            if not self.include_aur:
-                self.format = FORMAT_PACMAN_ONLY
-            else:
-                self.format = FORMAT_PACMAN_AND_AUR
-        self.include_aur = self.py3.format_contains(self.format, 'aur')
-        self.include_pacman = self.py3.format_contains(self.format, 'pacman')
-        if self.py3.format_contains(self.format, 'total'):
-            self.include_aur = True
-            self.include_pacman = True
+        if self.check_pacman is None:
+            self.check_pacman = self.py3.check_commands('pacman')
+        if self.check_aur is None:
+            self.check_aur = self.py3.check_commands('cower')
 
-        # check cower installed
-        if self.include_aur and not self.py3.check_commands(['cower']):
-            self.py3.notify_user('cower is not installed cannot check aur')
-            self.include_aur = False
+        if not self.check_pacman and not self.check_aur:
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'full_text': STRING_UNAVAILABLE,
+                'color': self.py3.COLOR_BAD
+            }
 
-    def check_updates(self):
-        pacman_updates = self._check_pacman_updates()
-        aur_updates = self._check_aur_updates()
-        if aur_updates == '?':
-            total = pacman_updates
+    def arch_updates(self):
+        pacman = self._check_pacman()
+        aur = self._check_aur()
+        total = pacman + aur
+
+        if pacman > 0 and aur == 0 and self.check_pacman:
+            self.format = self.format_pacman
+        elif pacman == 0 and aur > 0 and self.check_aur:
+            self.format = self.format_aur
         else:
-            total = pacman_updates + aur_updates
+            self.format = self.format_full
 
-        if self.hide_if_zero and total == 0:
-            full_text = ''
-        else:
-            full_text = self.py3.safe_format(
-                self.format,
-                {
-                    'aur': aur_updates,
-                    'pacman': pacman_updates,
-                    'total': total,
-                }
-            )
+        arch_updates = self.py3.safe_format(
+            self.format, {'pacman': pacman, 'aur': aur, 'total': total}
+        )
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text,
+            'full_text': arch_updates
         }
 
-    def _check_pacman_updates(self):
-        """
-        This method will use the 'checkupdates' command line utility
-        to determine how many updates are waiting to be installed via
-        'pacman -Syu'.
-        """
-        if not self.include_pacman:
+    def _check_pacman(self):
+        if self.check_pacman:
+            return len(self.py3.command_output('checkupdates').splitlines())
+        else:
             return 0
-        pending_updates = str(subprocess.check_output(["checkupdates"]))
-        return pending_updates.count(LINE_SEPARATOR)
 
-    def _check_aur_updates(self):
-        """
-        This method will use the 'cower' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
-        """
+    def _check_aur(self):
         # For reasons best known to its author, 'cower' returns a non-zero
         # status code upon successful execution, if there is any output.
-        # See https://github.com/falconindy/cower/blob/master/cower.c#L2596
-        if not self.include_aur:
-            return '?'
-
-        pending_updates = b""
-        try:
-            pending_updates = str(subprocess.check_output(["cower", "-bu"]))
-        except subprocess.CalledProcessError as cp_error:
-            pending_updates = cp_error.output
-        except:
-            pending_updates = '?'
-        return str(pending_updates).count(LINE_SEPARATOR)
+        if self.check_aur:
+            try:
+                return len(subprocess.check_output(['cower', '-bu']).splitlines())
+            except subprocess.CalledProcessError as e:
+                return len(e.output.splitlines())
+            except:
+                return 0
+        else:
+            return 0
 
 
 if __name__ == "__main__":
