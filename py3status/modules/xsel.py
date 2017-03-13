@@ -18,6 +18,9 @@ Requires:
 
 @author Sublim3 umbsublime@gamil.com
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'rrrrr > wtf is a warlock doing in here'}
 """
 
 

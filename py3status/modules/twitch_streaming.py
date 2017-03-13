@@ -25,6 +25,12 @@ Color options:
 
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'exotic_bug is live!'}
+
+offline
+{'color': '#FF0000', 'full_text': 'exotic_bug is offline!'}
 """
 
 import requests

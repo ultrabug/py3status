@@ -50,6 +50,9 @@ Examples of `format`
 
 @author shadowprince, zopieux
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': '[play] Music For Programming - Idol Eyes'}
 """
 
 import ast

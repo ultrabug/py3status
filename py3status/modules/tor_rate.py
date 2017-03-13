@@ -47,6 +47,9 @@ order += "tor_rate"
 
 @author Felix Morgner <felix.morgner@gmail.com>
 @license 3-clause-BSD
+
+SAMPLE OUTPUT
+{'full_text': u'\u2191 652.3 B/s \u2193 938.1 B/s'}
 """
 
 from stem import ProtocolError, SocketError

@@ -25,6 +25,12 @@ Requires:
     pydbus: Which further requires PyGi. Check your distribution's repositories.
 
 @author Nathan Smith <nathan AT praisetopia.org>
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'VPN: yes'}
+
+off
+{'color': '#FF0000', 'full_text': u'VPN: no'}
 """
 
 from pydbus import SystemBus

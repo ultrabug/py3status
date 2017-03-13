@@ -51,6 +51,10 @@ Requires:
     ip: utility found in iproute2 package
 
 @author guiniol
+
+SAMPLE OUTPUT
+{'color': '#00FF00',
+ 'full_text': u'Network: wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
 """
 
 

@@ -96,6 +96,9 @@ coin_balance {
 
 @author Felix Morgner <felix.morgner@gmail.com>
 @license 3-clause-BSD
+
+SAMPLE OUTPUT
+{'full_text': 'LTC: 90.6428'}
 """
 
 from errno import ENOENT

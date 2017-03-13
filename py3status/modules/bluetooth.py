@@ -22,6 +22,12 @@ Color options:
 
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'BT: Microsoft Bluetooth Notebook Mouse 5000'}
+
+off
+{'color': '#FF0000', 'full_text': u'BT: OFF'}
 """
 
 import dbus

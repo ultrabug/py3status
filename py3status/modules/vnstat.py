@@ -36,6 +36,9 @@ Requires:
 
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': '826.4 mb'}
 """
 
 from __future__ import division  # python2 compatibility

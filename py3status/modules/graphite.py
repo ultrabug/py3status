@@ -59,6 +59,9 @@ Color options:
     color_degraded: threshold_degraded has been exceeded
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': '(fixme)'}
 """
 from requests import get
 from syslog import syslog, LOG_INFO
