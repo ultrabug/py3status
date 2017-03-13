@@ -41,6 +41,7 @@ IGNORE_ITEM = [
     ('group', 'format'),  # dynamic depending on click_mode
     ('github', 'format'),  # dynamic
     ('kdeconnector', '_dev'),  # move to __init__ etc
+    ('arch_updates', 'format'),  # line too long for docstring parsing
 ]
 
 # Obsolete parameters will not have alphabetical order checked
