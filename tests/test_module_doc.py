@@ -40,9 +40,6 @@ IGNORE_ITEM = [
     ('group', 'format'),  # dynamic depending on click_mode
     ('github', 'format'),  # dynamic
     ('kdeconnector', '_dev'),  # move to __init__ etc
-    ('arch_updates', '_format_pacman_and_aur'),  # need moving into __init__ etc
-    ('arch_updates', '_format_pacman_only'),  # need moving into __init__ etc
-    ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
 ]
 
