@@ -22,7 +22,7 @@ Configuration parameters:
     force: If True then the color will always be set.  If false the color will
         only be changed if it has not been set by a module.
         (default False)
-    format: display format for this module (default '{rainbow}')
+    format: display format for this module (default '{output}')
     gradient: The colors we will cycle through, This is a list of hex values
         *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
         '#0000FF', '#FF00FF', '#FF0000', ])*
@@ -66,6 +66,7 @@ from __future__ import division
 import re
 import math
 from time import time
+
 HEX_RE = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
 
 
@@ -75,7 +76,7 @@ class Py3status:
     # configuration parameters
     cycle_time = 1
     force = False
-    format = '{rainbow}'
+    format = '{output}'
     gradient = [
         '#FF0000',
         '#FFFF00',
@@ -91,13 +92,7 @@ class Py3status:
     class Meta:
         container = True
 
-    def __init__(self):
-        self.items = []
-        self.initialized = False
-
-    def _init(self):
-        self.initialized = True
-
+    def post_config_hook(self):
         def from_hex(color):
             """
             Convert hex color #xxx or #xxxxxx to [r, g, b].
@@ -178,9 +173,6 @@ class Py3status:
         """
         Make a rainbow!
         """
-        if not self.initialized:
-            self._init()
-
         if not self.items:
             return {
                 'full_text': '',
@@ -206,11 +198,12 @@ class Py3status:
                 obj['color'] = color
             output.append(obj)
 
-        rainbow = self.py3.build_composite(self.format, composites={'rainbow': output})
+        composites = {'output': self.py3.composite_create(output)}
+        rainbow = self.py3.safe_format(self.format, composites)
 
         return {
             'cached_until': self._cycle_time,
-            'composite': rainbow
+            'full_text': rainbow
         }
 
 
