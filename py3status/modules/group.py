@@ -228,10 +228,10 @@ class Py3status:
 
         button = {'full_text': format_control, 'index': 'button'}
         composites = {
-            'output': current_output,
-            'button': button,
+            'output': self.py3.composite_create(current_output),
+            'button': self.py3.composite_create(button),
         }
-        output = self.py3.build_composite(format, composites=composites)
+        output = self.py3.safe_format(format, composites)
 
         if update_time is not None:
             cached_until = self.py3.time_in(update_time)
@@ -240,7 +240,7 @@ class Py3status:
 
         response = {
             'cached_until': cached_until,
-            'composite': output
+            'full_text': output
         }
 
         if urgent:
