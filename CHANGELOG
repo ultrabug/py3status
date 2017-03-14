@@ -54,6 +54,7 @@ version 3.5 (milestone)
 * mpris module: use helpers, by @lasers
 * net_iplist module: use helpers, by @lasers
 * netdata module: cleanups and optimization, by @lasers
+* netdata module: add format, by @lasers
 * nvidia_temp module: use helpers, by @lasers
 * nvidia_temp module: fix exception. by @lasers
 * pingdom module: add format, by @lasers
