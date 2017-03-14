@@ -35,6 +35,7 @@ IGNORE_ILLEGAL_CONFIG_OPTIONS = [
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
 IGNORE_ITEM = [
+    ('netdata', 'format'),  # line too long for docstring parsing
     ('screenshot', 'save_path'),  # home dir issue
     ('rate_counter', 'config_file'),  # home dir issue
     ('group', 'format'),  # dynamic depending on click_mode

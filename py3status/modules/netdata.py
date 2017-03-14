@@ -3,17 +3,25 @@
 Display network speed and bandwidth usage.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 2)
-    low_speed: threshold (default 30)
-    low_traffic: threshold (default 400)
-    med_speed: threshold (default 60)
-    med_traffic: threshold (default 700)
-    nic: the network interface to monitor (default None)
+    cache_timeout: refresh interval for this module (default 2)
+    format: display format for this module
+        *(default '[\?color=down LAN(Kb): {down}↓ {up}↑]
+         [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
+    nic: network interface to use (default None)
+    thresholds: color thresholds to use
+        *(default {'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
+        'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]})*
 
-Color options:
-    color_bad: Rate is below low threshold
-    color_degraded: Rate is below med threshold
-    color_good: Rate is med threshold or higher
+Format placeholders:
+    {down}     number of download speed
+    {up}       number of upload speed
+    {download} number of download usage
+    {upload}   number of upload usage
+    {total}    number of total usage
+
+Color thresholds:
+    {down}     color threshold of download speed
+    {total}    color threshold of total usage
 
 @author Shahin Azad <ishahinism at Gmail>
 """
@@ -43,11 +51,69 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 2
-    low_speed = 30
-    low_traffic = 400
-    med_speed = 60
-    med_traffic = 700
+    format = u'[\?color=down LAN(Kb): {down}↓ {up}↑] ' + \
+        u'[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]'
     nic = None
+    thresholds = {
+        'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
+        'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]
+    }
+
+    class Meta:
+        def deprecate_function(config):
+            return {
+                'thresholds': {
+                    'down': [
+                        (0, 'bad'),
+                        (config.get('low_speed', 30), 'degraded'),
+                        (config.get('med_speed', 60), 'good')
+                    ],
+                    'total': [
+                        (0, 'good'),
+                        (config.get('low_traffic', 400), 'degraded'),
+                        (config.get('med_traffic', 700), 'bad')
+                    ]
+                }
+            }
+
+        deprecated = {
+            'function': [
+                {'function': deprecate_function},
+            ],
+            'remove': [
+                {
+                    'param': 'low_speed',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'med_speed',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'low_traffic',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'med_traffic',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+            ],
+        }
+
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'down': ':5.1f',
+                        'up': ':5.1f',
+                        'download': ':3.0f',
+                        'upload': ':3.0f',
+                        'total': ':3.0f',
+                    },
+                    'format_strings': ['format']
+                },
+            ],
+        }
 
     def __init__(self):
         self.old_transmitted = 0
@@ -55,7 +121,7 @@ class Py3status:
 
     def post_config_hook(self):
         """
-        Get network interface directly from /proc.
+        Get network interface.
         """
         if self.nic is None:
             # Get default gateway directly from /proc.
@@ -72,56 +138,36 @@ class Py3status:
                 )
             self.py3.log('selected nic: %s' % self.nic)
 
-    def net_speed(self):
+    def netdata(self):
         """
-        Calculate network speed.
+        Calculate network speed and network traffic.
         """
         data = GetData(self.nic)
-
         received_bytes, transmitted_bytes = data.netBytes()
-        dl_speed = (received_bytes - self.old_received) / 1024.
-        up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
-        if dl_speed < self.low_speed:
-            color = self.py3.COLOR_BAD
-        elif dl_speed < self.med_speed:
-            color = self.py3.COLOR_DEGRADED
-        else:
-            color = self.py3.COLOR_GOOD
-
-        net_speed = "LAN(Kb): {:5.1f}↓ {:5.1f}↑".format(dl_speed, up_speed)
+        # net_speed (statistic)
+        down = (received_bytes - self.old_received) / 1024.
+        up = (transmitted_bytes - self.old_transmitted) / 1024.
         self.old_received = received_bytes
         self.old_transmitted = transmitted_bytes
 
-        return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': net_speed
-        }
-
-    def net_traffic(self):
-        """
-        Calculate networks used traffic.
-        """
-        data = GetData(self.nic)
-
-        received_bytes, transmitted_bytes = data.netBytes()
+        # net_traffic (statistic)
         download = received_bytes / 1024 / 1024.
         upload = transmitted_bytes / 1024 / 1024.
         total = download + upload
 
-        if total < self.low_traffic:
-            color = self.py3.COLOR_GOOD
-        elif total < self.med_traffic:
-            color = self.py3.COLOR_DEGRADED
-        else:
-            color = self.py3.COLOR_BAD
+        # color threshold
+        self.py3.threshold_get_color(down, 'down')
+        self.py3.threshold_get_color(total, 'total')
 
-        net_traffic = "T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕".format(download, upload, total)
-
+        netdata = self.py3.safe_format(self.format, {'down': down,
+                                                     'up': up,
+                                                     'download': download,
+                                                     'upload': upload,
+                                                     'total': total})
         return {
-            'color': color,
-            'full_text': net_traffic
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': netdata
         }
 
 
