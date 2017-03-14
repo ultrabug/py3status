@@ -2,8 +2,13 @@ version 3.5 (milestone)
 * allow improved access to settings from py3status section, by @tobes
 * add a new py3status configuration section and the ability to set i3-nagbar font, by @randomguy
 * update sysdata documentation, by @valdur55
+* group/frame: use safe_format() not build_composite, by @tobes
 * skip empty modules in group, by @tobes
+* remove some un-needed ignored parameters, by @tobes
 * allow runtime errors to be handled in i3bar, by @tobes
+* documentation generation cleanup, by @tobes
+* show urgent on closed containers, by @tobes
+* improve docstring tests to prevent reserved config parameters, by @tobes
 * fix color comparison bug, by @tobes
 * fix issue with empty full_text not showing separator, by @tobes
 * fix issue with blank module causing extra separator to show, by @tobes
@@ -16,11 +21,13 @@ version 3.5 (milestone)
 * py3 helper: allow check_commands() to take a string, by @tobes
 * formatter unicode fixup for python2, by @tobes
 * new getjson module to display fields from a json url, by @vicyap
+* new keyboard_locks module to display keyboard locks states, by @lasers
 * new systemd module to check the status of a systemd unit, by @adrianlzt
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
 * backlight module: fix mouse behavior thanks to @Tadly on #796, by @tobes
 * battery_level module: use helpers, by @lasers
 * bluetooth module: use helpers, by @lasers
+* bluetooth module: hcitool is deprecated (bluez-5.44) so it is better to use the dbus library directly, by @jmdana
 * check_tcp module: remove hardcoded strings, by @lasers
 * clementine module: use helpers, fix exception, by @lasers
 * clock module: add %s, %T for time_delta calculation, by @ShareDVI
@@ -32,10 +39,12 @@ version 3.5 (milestone)
 * external_script module: fix exception, remove warning, by @lasers
 * external_script: use helpers, by @lasers
 * frame module: use helpers, by @lasers
+* getjson: use py3.request() + bugfix, by @tobes
 * github module: use helpers, by @lasers
 * gpmdp module: fix permission, by @lasers
 * gpmdp module: use helpers, by @lasers
 * hamster module: use helpers, by @lasers
+* hamster module: fix potential exceptions, by @lasers
 * imap module: add depreciation stuffs, by @lasers
 * imap: allow_urgent on unread messages, by @lasers
 * insync module: fix exception, by @lasers
@@ -47,10 +56,12 @@ version 3.5 (milestone)
 * netdata module: cleanups and optimization, by @lasers
 * nvidia_temp module: use helpers, by @lasers
 * nvidia_temp module: fix exception. by @lasers
+* pingdom module: add format, by @lasers
 * pomodoro module: use helpers, by @lasers
 * process_status module: add format, use helpers, by @lasers
 * rainbow module: add format, by @lasers
 * selinux module: fix exception, remove hardcoded strings, by @lasers
+* spaceapi module: add format by @lasers
 * sysdata module: avoid dividing by 0, by @guiniol
 * taskwarrior module: use helpers, by @lasers
 * taskwarrior: fix potential exceptions, by @lasers
