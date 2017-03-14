@@ -56,23 +56,31 @@ class NoneColor:
 
 class Py3:
     """
-    Helper object that gets injected as self.py3 into Py3status
+    Helper object that gets injected as ``self.py3`` into Py3status
     modules that have not got that attribute set already.
 
     This allows functionality like:
-        User notifications
-        Forcing module to update (even other modules)
-        Triggering events for modules
+
+    -   User notifications
+    -   Forcing module to update (even other modules)
+    -   Triggering events for modules
 
     Py3 is also used for testing in which case it does not get a module when
     being created.  All methods should work in this situation.
     """
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
+    """
+    Special constant that when returned for ``cache_until`` will cause the
+    module to not update unless externally triggered.
+    """
 
     LOG_ERROR = PY3_LOG_ERROR
+    """Show as Error"""
     LOG_INFO = PY3_LOG_INFO
+    """Show as Informational"""
     LOG_WARNING = PY3_LOG_WARNING
+    """Show as Warning"""
 
     # Shared by all Py3 Instances
     _formatter = Formatter()
@@ -240,9 +248,9 @@ class Py3:
         the units that we have been converted to.
 
         By supplying unit to the function we can force those units to be used
-        eg `unit=KiB` would force the output to be in Kibibytes.  By default we
+        eg ``unit=KiB`` would force the output to be in Kibibytes.  By default we
         use non-si units but if the unit is si eg kB then we will switch to si
-        units.  Units can also be things like `Mbit/sec`.
+        units.  Units can also be things like ``Mbit/sec``.
 
         If the auto parameter is False then we use the unit provided.  This
         only makes sense when the unit is singular eg 'Bytes' and we want the
@@ -439,26 +447,31 @@ class Py3:
 
         The following functions can be registered
 
-        > __content_function()__
-        >
-        > Called to discover what modules a container is displaying.  This is
-        > used to determine when updates need passing on to the container and
-        > also when modules can be put to sleep.
-        >
-        > the function must return a set of module names that are being
-        > displayed.
-        >
-        > Note: This function should only be used by containers.
-        >
-        > __urgent_function(module_names)__
-        >
-        > This function will be called when one of the contents of a container
-        > has changed from a non-urgent to an urgent state.  It is used by the
-        > group module to switch to displaying the urgent module.
-        >
-        > `module_names` is a list of modules that have become urgent
-        >
-        > Note: This function should only be used by containers.
+
+            ..  py:function:: content_function()
+
+            Called to discover what modules a container is displaying.  This is
+            used to determine when updates need passing on to the container and
+            also when modules can be put to sleep.
+
+            the function must return a set of module names that are being
+            displayed.
+
+            .. note::
+
+                This function should only be used by containers.
+
+            ..  py:function:: urgent_function(module_names)
+
+            This function will be called when one of the contents of a container
+            has changed from a non-urgent to an urgent state.  It is used by the
+            group module to switch to displaying the urgent module.
+
+            ``module_names`` is a list of modules that have become urgent
+
+            .. note::
+
+                This function should only be used by containers.
         """
         if self._module:
             my_info = self._get_module_info(self._module.module_full_name)
@@ -467,11 +480,13 @@ class Py3:
     def time_in(self, seconds=None, sync_to=None, offset=0):
         """
         Returns the time a given number of seconds into the future.  Helpful
-        for creating the `cached_until` value for the module output.
+        for creating the ``cached_until`` value for the module output.
 
-        Note: from version 3.1 modules no longer need to explicitly set a
-        `cached_until` in their response unless they wish to directly control
-        it.
+        .. note::
+
+            from version 3.1 modules no longer need to explicitly set a
+            ``cached_until`` in their response unless they wish to directly control
+            it.
 
         seconds specifies the number of seconds that should occure before the
         update is required.
@@ -515,10 +530,12 @@ class Py3:
 
     def format_contains(self, format_string, name):
         """
-        Determines if `format_string` contains placeholder `name`
+        Determines if ``format_string`` contains placeholder ``name``
 
-        `name` is tested against placeholders using fnmatch so the following
+        ``name`` is tested against placeholders using fnmatch so the following
         patterns can be used:
+
+        .. code-block:: none
 
             * 	    matches everything
             ? 	    matches any single character
@@ -526,9 +543,9 @@ class Py3:
             [!seq] 	matches any character not in seq
 
         This is useful because a simple test like
-        `'{placeholder}' in format_string`
+        ``'{placeholder}' in format_string``
         will fail if the format string contains placeholder formatting
-        eg `'{placeholder:.2f}'`
+        eg ``'{placeholder:.2f}'``
         """
 
         # We cache things to prevent parsing the format_string more than needed
@@ -555,10 +572,12 @@ class Py3:
 
     def get_placeholders_list(self, format_string, match=None):
         """
-        Returns a list of placeholders in `format_string`.
+        Returns a list of placeholders in ``format_string``.
 
-        If `match` is provided then it is used to filter the result using
+        If ``match`` is provided then it is used to filter the result using
         fnmatch so the following patterns can be used:
+
+        .. code-block:: none
 
             * 	    matches everything
             ? 	    matches any single character
@@ -567,7 +586,7 @@ class Py3:
 
         This is useful because we just get simple placeholder without any
         formatting that may be applied to them
-        eg `'{placeholder:.2f}'` will give `['{placeholder}']`
+        eg ``'{placeholder:.2f}'`` will give ``['{placeholder}']``
         """
         if format_string not in self._format_placeholders:
             placeholders = self._formatter.get_placeholders(format_string)
@@ -589,38 +608,40 @@ class Py3:
         """
         Parser for advanced formatting.
 
-        Unknown placeholders will be shown in the output eg `{foo}`.
+        Unknown placeholders will be shown in the output eg ``{foo}``.
 
-        Square brackets `[]` can be used. The content of them will be removed
+        Square brackets ``[]`` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
         They can also be nested.
 
-        A pipe (vertical bar) `|` can be used to divide sections the first
+        A pipe (vertical bar) ``|`` can be used to divide sections the first
         valid section only will be shown in the output.
 
-        A backslash `\` can be used to escape a character eg `\[` will show `[`
+        A backslash ``\`` can be used to escape a character eg ``\[`` will show ``[``
         in the output.
 
-        `\?` is special and is used to provide extra commands to the format
-        string,  example `\?color=#FF00FF`. Multiple commands can be given
-        using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
+        ``\?`` is special and is used to provide extra commands to the format
+        string,  example ``\?color=#FF00FF``. Multiple commands can be given
+        using an ampersand ``&`` as a separator, example ``\?color=#FF00FF&show``.
 
-        `{<placeholder>}` will be converted, or removed if it is None or empty.
+        ``{<placeholder>}`` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
-        `{number:03.2f}`.
+        ``{number:03.2f}``.
 
         example format_string:
 
-        `"[[{artist} - ]{title}]|{file}"`
-        This will show `artist - title` if artist is present,
-        `title` if title but no artist,
-        and `file` if file is present but not artist or title.
+        ``"[[{artist} - ]{title}]|{file}"``
+        This will show ``artist - title`` if artist is present,
+        ``title`` if title but no artist,
+        and ``file`` if file is present but not artist or title.
 
         param_dict is a dictionary of palceholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
 
-        __Since version 3.3__
+        .. note::
+
+            Added in version 3.3
 
         Composites can be included in the param_dict.
 
@@ -650,13 +671,14 @@ class Py3:
     def build_composite(self, format_string, param_dict=None, composites=None,
                         attr_getter=None):
         """
-        __deprecated in 3.3__ use safe_format().
+        .. note::
+            deprecated in 3.3 use safe_format().
 
         Build a composite output using a format string.
 
-        Takes a format_string and treats it the same way as `safe_format` but
+        Takes a format_string and treats it the same way as ``safe_format()`` but
         also takes a composites dict where each key/value is the name of the
-        placeholder and either an output eg `{'full_text': 'something'}` or a
+        placeholder and either an output eg ``{'full_text': 'something'}`` or a
         list of outputs.
         """
 
@@ -719,8 +741,9 @@ class Py3:
 
     def check_commands(self, cmd_list):
         """
-        Checks to see if commands in list are available using `which`.
-        Returns the first available command.
+        Checks to see if commands in list are available using ``which``.
+
+        returns the first available command.
 
         If a string is passed then that command will be checked for.
         """
