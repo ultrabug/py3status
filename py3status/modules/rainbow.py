@@ -22,6 +22,7 @@ Configuration parameters:
     force: If True then the color will always be set.  If false the color will
         only be changed if it has not been set by a module.
         (default False)
+    format: display format for this module (default '{output}')
     gradient: The colors we will cycle through, This is a list of hex values
         *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
         '#0000FF', '#FF00FF', '#FF0000', ])*
@@ -66,11 +67,16 @@ import re
 import math
 from time import time
 
+HEX_RE = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
+
 
 class Py3status:
-
+    """
+    """
+    # configuration parameters
     cycle_time = 1
     force = False
+    format = '{output}'
     gradient = [
         '#FF0000',
         '#FFFF00',
@@ -86,18 +92,12 @@ class Py3status:
     class Meta:
         container = True
 
-    def __init__(self):
-        self.items = []
-        self.initialized = False
-
-    def _init(self):
-        self.initialized = True
-
-        re_hex = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
-
+    def post_config_hook(self):
         def from_hex(color):
-            # convert hex color #xxx or #xxxxxx to [r, g, b]
-            if not re_hex.match(color):
+            """
+            Convert hex color #xxx or #xxxxxx to [r, g, b].
+            """
+            if not HEX_RE.match(color):
                 color = '#FFF'
             if len(color) == 7:
                 return (int(color[1:3], 16), int(color[3:5], 16),
@@ -106,12 +106,16 @@ class Py3status:
                     int(color[3], 16) * 17)
 
         def to_hex(color):
-            # convert [r, g, b] to hex
+            """
+            Convert [r, g, b] to hex.
+            """
             return '#{:02X}{:02X}{:02X}'.format(
                 int(color[0]), int(color[1]), int(color[2]))
 
         def make_color(c1, c2, t):
-            # generate a mid color between c1 and c2
+            """
+            Generate a mid color between c1 and c2.
+            """
             def fade(i):
                 a = c1[i]
                 b = c2[i]
@@ -136,7 +140,9 @@ class Py3status:
         self._set_cycle_time()
 
     def _set_cycle_time(self):
-        # set next cycle update time synced to nearest second or 0.1 of second
+        """
+        Set next cycle update time synced to nearest second or 0.1 of second.
+        """
         now = time()
         try:
             cycle_time = now - self._cycle_time
@@ -152,9 +158,9 @@ class Py3status:
         self._cycle_time = now + self.cycle_time
 
     def _get_current_output(self):
-        '''
-        get the child modules output.
-        '''
+        """
+        Get child modules output.
+        """
         output = []
         for item in self.items:
             out = self.py3.get_output(item)
@@ -164,12 +170,14 @@ class Py3status:
         return output
 
     def rainbow(self):
-
-        if not self.initialized:
-            self._init()
-
+        """
+        Make a rainbow!
+        """
         if not self.items:
-            return {'full_text': '', 'cached_until': self.py3.CACHE_FOREVER}
+            return {
+                'full_text': '',
+                'cached_until': self.py3.CACHE_FOREVER
+            }
 
         if time() >= self._cycle_time - (self.cycle_time / 10):
             self.active_color = (self.active_color + 1) % len(self.colors)
@@ -177,7 +185,6 @@ class Py3status:
 
         color = self.colors[self.active_color]
         content = self._get_current_output()
-
         output = []
 
         if content:
@@ -191,8 +198,13 @@ class Py3status:
                 obj['color'] = color
             output.append(obj)
 
-        response = {'cached_until': self._cycle_time, 'composite': output}
-        return response
+        composites = {'output': self.py3.composite_create(output)}
+        rainbow = self.py3.safe_format(self.format, composites)
+
+        return {
+            'cached_until': self._cycle_time,
+            'full_text': rainbow
+        }
 
 
 if __name__ == "__main__":

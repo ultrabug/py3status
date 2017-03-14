@@ -866,6 +866,16 @@ __update(module_name=None)__
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
 
+__error(msg, timeout=None)__
+
+Raise an error for the module.
+
+`msg` message to be displayed explaining the error
+
+`timeout` how long before we should retry.  For permanent errors
+`py3.CACHE_FOREVER` should be returned.  If not supplied then the
+modules `cache_timeout` will be used.
+
 __is_color(color)__
 
 Tests to see if a color is defined.

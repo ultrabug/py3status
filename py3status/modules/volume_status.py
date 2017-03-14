@@ -183,10 +183,10 @@ class PactlBackend(AudioBackend):
             change = '{}%'.format(self.max_volume)
         else:
             change = '+{}%'.format(delta)
-        self.run_cmd(['pactl', 'set-sink-volume', self.device, change])
+        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, change])
 
     def volume_down(self, delta):
-        self.run_cmd(['pactl', 'set-sink-volume', self.device, '-{}%'.format(delta)])
+        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, '-{}%'.format(delta)])
 
     def toggle_mute(self):
         self.run_cmd(['pactl', 'set-sink-mute', self.device, 'toggle'])

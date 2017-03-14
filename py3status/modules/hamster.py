@@ -16,6 +16,8 @@ Requires:
 @license BSD
 """
 
+STRING_NOT_INSTALLED = "isn't installed"
+
 
 class Py3status:
     """
@@ -24,16 +26,22 @@ class Py3status:
     cache_timeout = 10
     format = '{current}'
 
-    def hamster(self):
-        cur_task = self.py3.command_output('hamster current').strip()
-        if cur_task != 'No activity':
-            cur_task = cur_task.split()
-            time_elapsed = cur_task[-1]
-            cur_task = cur_task[2:-1]
-            cur_task = u"%s (%s)" % (" ".join(cur_task), time_elapsed)
+    def post_config_hook(self):
+        if not self.py3.check_commands('hamster'):
+            raise Exception(STRING_NOT_INSTALLED)
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'current': cur_task})}
+    def hamster(self):
+        activity = self.py3.command_output('hamster current').strip()
+        if activity != 'No activity':
+            activity = activity.split()
+            time_elapsed = activity[-1]
+            activity = activity[2:-1]
+            activity = u"%s (%s)" % (" ".join(activity), time_elapsed)
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'current': activity})
+        }
 
 
 if __name__ == "__main__":

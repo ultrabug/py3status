@@ -52,12 +52,6 @@ Format placeholders:
 """
 
 import collections
-import json
-try:
-    # python3
-    from urllib.request import urlopen
-except:
-    from urllib2 import urlopen
 
 
 class Py3status:
@@ -97,10 +91,10 @@ class Py3status:
         """
         """
         try:
-            resp = urlopen(self.url, timeout=self.timeout)
-            status = resp.getcode() == 200
-            resp = json.loads(resp.read())
-        except Exception:
+            resp = self.py3.request(self.url, timeout=self.timeout)
+            status = resp.status_code == 200
+            resp = resp.json()
+        except self.Py3.RequestException:
             resp = None
             status = False
         return resp, status

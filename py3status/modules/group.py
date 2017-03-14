@@ -82,6 +82,8 @@ group disks {
 
 from time import time
 
+RETRY_TIMEOUT_NO_CONTENT = 5
+
 
 class Py3status:
     # available configuration parameters
@@ -107,6 +109,8 @@ class Py3status:
             self.cycle = 0
 
         self.active = 0
+        self.last_active = 0
+        self.urgent = False
         self._cycle_time = time() + self.cycle
 
         self.open = bool(self.open)
@@ -139,6 +143,7 @@ class Py3status:
         for module in module_list:
             if module in self.items:
                 self.active = self.items.index(module)
+                self.urgent = True
 
     def _get_output(self):
         if not self.fixed_width:
@@ -174,11 +179,14 @@ class Py3status:
             return
         return self.items[self.active]
 
-    def _next(self):
-        self.active = (self.active + 1) % len(self.items)
-
-    def _prev(self):
-        self.active = (self.active - 1) % len(self.items)
+    def _change_active(self, delta):
+        # we want to ignore any empty outputs
+        # to prevent endless cycling we limit ourselves to only going through
+        # the outputs once.
+        self.active = (self.active + delta) % len(self.items)
+        if not self._get_output() and self.last_active != self.active:
+            self._change_active(delta)
+        self.last_active = self.active
 
     def group(self):
         """
@@ -193,12 +201,21 @@ class Py3status:
             }
 
         if self.open:
+            urgent = False
             if self.cycle and time() >= self._cycle_time:
-                self._next()
+                self._change_active(1)
                 self._cycle_time = time() + self.cycle
-            current_output = self._get_output()
             update_time = self.cycle or None
+            current_output = self._get_output()
+            # if the output is empty try and find some output
+            if not current_output:
+                self._change_active(1)
+                current_output = self._get_output()
+                # there is no output for any module retry later
+                if not current_output:
+                    update_time = RETRY_TIMEOUT_NO_CONTENT
         else:
+            urgent = self.urgent
             current_output = []
             update_time = None
 
@@ -211,10 +228,10 @@ class Py3status:
 
         button = {'full_text': format_control, 'index': 'button'}
         composites = {
-            'output': current_output,
-            'button': button,
+            'output': self.py3.composite_create(current_output),
+            'button': self.py3.composite_create(button),
         }
-        output = self.py3.build_composite(format, composites=composites)
+        output = self.py3.safe_format(format, composites)
 
         if update_time is not None:
             cached_until = self.py3.time_in(update_time)
@@ -223,8 +240,11 @@ class Py3status:
 
         response = {
             'cached_until': cached_until,
-            'composite': output
+            'full_text': output
         }
+
+        if urgent:
+            response['urgent'] = urgent
         return response
 
     def on_click(self, event):
@@ -244,12 +264,13 @@ class Py3status:
         # reset cycle time
         self._cycle_time = time() + self.cycle
         if self.button_next and event['button'] == self.button_next:
-            self._next()
+            self._change_active(1)
         if self.button_prev and event['button'] == self.button_prev:
-            self._prev()
+            self._change_active(-1)
         if self.button_toggle and event['button'] == self.button_toggle:
             # we only toggle if button was used
             if event.get('index') == 'button':
+                self.urgent = False
                 self.open = not self.open
 
 

@@ -49,6 +49,9 @@ class I3statusModule:
     def __init__(self, module_name, py3_wrapper):
         self.module_name = module_name
 
+        # i3status modules always allow user defined click events in the config
+        self.allow_config_clicks = True
+
         # i3status returns different name/instances than it is sent we want to
         # be able to restore the correct ones.
         try:
