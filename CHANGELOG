@@ -26,6 +26,7 @@ version 3.5 (milestone)
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
 * backlight module: fix mouse behavior thanks to @Tadly on #796, by @tobes
 * battery_level module: use helpers, by @lasers
+* bitcoin_price module: add format, by @lasers
 * bluetooth module: use helpers, by @lasers
 * bluetooth module: hcitool is deprecated (bluez-5.44) so it is better to use the dbus library directly, by @jmdana
 * check_tcp module: remove hardcoded strings, by @lasers
