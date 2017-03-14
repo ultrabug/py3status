@@ -3,26 +3,32 @@
 Display status of a given hackerspace.
 
 Configuration parameters:
-    button_url: Button that when clicked opens the URL sent in the space's API.
-        Setting to None disables. (default 3)
-    cache_timeout: Set timeout between calls in seconds (default 60)
-    closed_text: text if space is closed, strftime parameters
-        will be translated (default 'closed')
-    open_text: text if space is open, strftime parmeters will be translated
-        (default 'open')
-    time_text: format used for time display (default ' since %H:%M')
-    url: URL to SpaceAPI json file of your space
+    button_url: mouse button to open URL sent in space's API (default 3)
+    cache_timeout: refresh interval for this module (default 60)
+    format: display format for this module (default '{state}[ {lastchanged}]')
+    format_lastchanged: display format for time (default 'since %H:%M')
+    state_closed: show when hackerspace is closed (default 'closed')
+    state_open: show when hackerspace is open (default 'open')
+    url: specify JSON URL of a hackerspace to retrieve from
         (default 'http://status.chaospott.de/status.json')
 
+Format placeholders:
+    {state} Hackerspace state
+    {lastchanged} Time
+
+format_lastchanged conversion:
+    '%' Strftime characters to be translated
+
 Color options:
-    color_closed: Space is open, defaults to color_bad
-    color_open: Space is closed, defaults to color_good
+    color_closed: Space closed, defaults to color_bad
+    color_open: Space open, defaults to color_good
 
 @author timmszigat
 @license WTFPL <http://www.wtfpl.net/txt/copying/>
 """
 
 import datetime
+STRING_UNAVAILABLE = 'spaceapi: N/A'
 
 
 class Py3status:
@@ -31,9 +37,10 @@ class Py3status:
     # available configuration parameters
     button_url = 3
     cache_timeout = 60
-    closed_text = 'closed'
-    open_text = 'open'
-    time_text = ' since %H:%M'
+    format = '{state}[ {lastchanged}]'
+    format_lastchanged = 'since %H:%M'
+    state_closed = 'closed'
+    state_open = 'open'
     url = 'http://status.chaospott.de/status.json'
 
     class Meta:
@@ -49,55 +56,57 @@ class Py3status:
                     'new': 'color_closed',
                     'msg': 'obsolete parameter use `color_closed`',
                 },
+                {
+                    'param': 'closed_text',
+                    'new': 'state_closed',
+                    'msg': 'obsolete parameter use `state_closed`',
+                },
+                {
+                    'param': 'open_text',
+                    'new': 'state_open',
+                    'msg': 'obsolete parameter use `state_open`',
+                },
+                {
+                    'param': 'time_text',
+                    'new': 'format_lastchanged',
+                    'msg': 'obsolete parameter use `format_lastchanged`',
+                },
             ],
         }
 
-    def check(self):
+    def post_config_hook(self):
+        self.color_open = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD
+        self.color_closed = self.py3.COLOR_CLOSED or self.py3.COLOR_BAD
 
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-        }
-
+    def spaceapi(self):
+        color = self.color_closed
+        state = self.state_closed
         try:
             data = self.py3.request(self.url).json()
             self._url = data.get('url')
 
-            if(data['state']['open'] is True):
-                response['color'] = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD
-                if 'lastchange' in data['state'].keys():
-                    response['full_text'] = self.open_text + self.time_text
-                    response['short_text'] = '%H:%M'
-                else:
-                    response['full_text'] = self.open_text
-                    response['short_text'] = self.open_text
-
-            else:
-                response['color'] = self.py3.COLOR_CLOSED or self.py3.COLOR_BAD
-                if 'lastchange' in data['state'].keys():
-                    response['full_text'] = self.closed_text + self.time_text
-                    response['short_text'] = ''
-                else:
-                    response['full_text'] = self.closed_text
-                    response['short_text'] = self.closed_text
+            if(data['state']['open']):
+                color = self.color_open
+                state = self.state_open
 
             if 'lastchange' in data['state'].keys():
-                # apply strftime to full and short text
-                dt = datetime.datetime.fromtimestamp(
-                    data['state']['lastchange']
-                )
-                response['full_text'] = dt.strftime(response['full_text'])
-                response['short_text'] = dt.strftime(response['short_text'])
+                dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
+                lastchanged = dt.strftime(self.format_lastchanged)
 
+            full_text = self.py3.safe_format(
+                self.format, {'state': state, 'lastchanged': lastchanged})
         except:
-            response['full_text'] = ''
-
-        return response
+            full_text = STRING_UNAVAILABLE
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': full_text,
+            'color': color
+        }
 
     def on_click(self, event):
         button = event['button']
         if self._url and self.button_url == button:
-            cmd = 'xdg-open {}'.format(self._url)
-            self.py3.command_run(cmd)
+            self.py3.command_run('xdg-open {}'.format(self._url))
             self.py3.prevent_refresh()
 
 
