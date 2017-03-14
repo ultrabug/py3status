@@ -4,3 +4,6 @@ dist
 *.egg-info
 .tox/
 .cache/
+
+# sphinx build system
+doc/_build
