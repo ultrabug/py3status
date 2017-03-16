@@ -866,6 +866,16 @@ __update(module_name=None)__
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
 
+__error(msg, timeout=None)__
+
+Raise an error for the module.
+
+`msg` message to be displayed explaining the error
+
+`timeout` how long before we should retry.  For permanent errors
+`py3.CACHE_FOREVER` should be returned.  If not supplied then the
+modules `cache_timeout` will be used.
+
 __is_color(color)__
 
 Tests to see if a color is defined.
@@ -1004,6 +1014,22 @@ This is useful because a simple test like
 `'{placeholder}' in format_string`
 will fail if the format string contains placeholder formatting
 eg `'{placeholder:.2f}'`
+
+__get_placeholders_list(format_string, match=None)__
+
+Returns a list of placeholders in `format_string`.
+
+If `match` is provided then it is used to filter the result using
+fnmatch so the following patterns can be used:
+
+    * 	    matches everything
+    ? 	    matches any single character
+    [seq] 	matches any character in seq
+    [!seq] 	matches any character not in seq
+
+This is useful because we just get simple placeholder without any
+formatting that may be applied to them
+eg `'{placeholder:.2f}'` will give `['{placeholder}']`
 
 __safe_format(format_string, param_dict=None, force_composite=False,
 attr_getter=None)__

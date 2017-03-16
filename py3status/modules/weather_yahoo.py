@@ -58,8 +58,6 @@ weather_yahoo {
 @author ultrabug, rail
 """
 
-import requests
-
 
 class Py3status:
 
@@ -85,7 +83,7 @@ class Py3status:
         Ask Yahoo! Weather. for a forecast
         """
         try:
-            q = requests.get(
+            q = self.py3.request(
                 'https://query.yahooapis.com/v1/public/yql?q=' +
                 'select * from weather.forecast ' +
                 'where woeid="{woeid}" and u="{units}"&format=json'.format(
@@ -93,11 +91,11 @@ class Py3status:
                 '&env=store://datatables.org/alltableswithkeys',
                 timeout=self.request_timeout
             )
-        except requests.ConnectionError:
+        except (self.py3.RequestException):
             return None, None
-        except requests.ReadTimeout:
+        if q.status_code != 200:
+            self.py3.log('Non 200 http response returned code %s' % q.status_code)
             return None, None
-        q.raise_for_status()
         r = q.json()
         try:
             today = r['query']['results']['channel']['item']['condition']

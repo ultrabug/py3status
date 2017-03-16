@@ -38,7 +38,8 @@ def parse_readme():
     return modules_dict
 
 
-def core_module_docstrings(include_core=True, include_user=False, config=None):
+def core_module_docstrings(include_core=True, include_user=False, config=None,
+                           format='md'):
     '''
     Get docstrings for all core modules and user ones if requested
     returns a dict of {<module_name>: <docstring>}
@@ -69,9 +70,18 @@ def core_module_docstrings(include_core=True, include_user=False, config=None):
         with open(path) as f:
             module = ast.parse(f.read())
             docstring = ast.get_docstring(module)
-            docstring = [
-                d for d in _from_docstring(str(docstring).strip().split('\n'))
-            ]
+
+            if format == 'md':
+                docstring = [
+                    d for d in _from_docstring_md(str(docstring).strip().split('\n'))
+                ]
+            elif format == 'rst':
+                docstring = [
+                    d for d in _from_docstring_rst(str(docstring).strip().split('\n'))
+                ]
+            else:
+                raise Exception('`md` and `rst` format supported only')
+
             docstrings[name] = docstring + ['\n']
     return docstrings
 
@@ -108,10 +118,13 @@ re_to_defaults = re.compile('\*(\(default.*\))\*')
 # match in module docstring
 re_from_param = re.compile('^    ([a-z]\S+):($|[ \t])(.*)$')
 re_from_status = re.compile('^\s+({\S+})($|[ \t])(.*)$')
-re_from_item = re.compile('^\s+-')
+re_from_item = re.compile('^\s+-(?=\s)')
 re_from_data = re.compile('^@(author|license|source)($|[ \t])')
 re_from_tag = re.compile('((`[^`]*`)|[<>&])')
 re_from_defaults = re.compile('(\(default.*\))\s*$')
+
+# for rst
+re_lone_backtick = re.compile('(?<!`)`(?!`)')
 
 
 def _reformat_docstring(doc, format_fn, code_newline=''):
@@ -181,7 +194,7 @@ def _to_docstring(doc):
     return _reformat_docstring(doc, format_fn)
 
 
-def _from_docstring(doc):
+def _from_docstring_md(doc):
     '''
     format from docstring to Markdown
     '''
@@ -213,11 +226,11 @@ def _from_docstring(doc):
             # parameters
             if re_from_param.match(line):
                 m = re_from_param.match(line)
-                line = '  - `{}` {}'.format(m.group(1), fix_tags(m. group(3)))
+                line = '  - `{}` {}'.format(m.group(1), fix_tags(m.group(3)))
             # status items
             elif re_from_status.match(line):
                 m = re_from_status.match(line)
-                line = '  - `{}` {}'.format(m.group(1), fix_tags(m. group(3)))
+                line = '  - `{}` {}'.format(m.group(1), fix_tags(m.group(3)))
             # bullets
             elif re_from_item.match(line):
                 line = re_from_item.sub(r'  -', fix_tags(line))
@@ -227,6 +240,40 @@ def _from_docstring(doc):
                 line = ' ' * 4 + line.lstrip()
         else:
             line = fix_tags(line)
+        return line
+
+    return _reformat_docstring(doc, format_fn, code_newline='\n')
+
+
+def _from_docstring_rst(doc):
+    '''
+    format from docstring to ReStructured Text
+    '''
+    def format_fn(line, status):
+        ''' format function '''
+
+        if re_from_data.match(line):
+            line = re_from_data.sub(r'**\1** ', line)
+            status['add_line'] = True
+        line = re_from_defaults.sub(r'*\1*', line)
+        if status['listing']:
+            # parameters
+            if re_from_param.match(line):
+                m = re_from_param.match(line)
+                line = '  - ``{}`` {}'.format(m.group(1), m.group(3))
+            # status items
+            elif re_from_status.match(line):
+                m = re_from_status.match(line)
+                line = '  - ``{}`` {}'.format(m.group(1), m.group(3))
+            # bullets
+            elif re_from_item.match(line):
+                line = re_from_item.sub(r'  -', line)
+            # is continuation line
+            else:
+                line = ' ' * 4 + line.lstrip()
+        # in .rst format code samples use double backticks vs single ones for
+        # .md This converts them.
+        line = re_lone_backtick.sub('``', line)
         return line
 
     return _reformat_docstring(doc, format_fn, code_newline='\n')

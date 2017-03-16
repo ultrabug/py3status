@@ -27,8 +27,9 @@ Requires:
 
 import re
 TEMP_RE = re.compile(r"Current Temp\s+:\s+([0-9]+)")
-STRING_UNAVAILABLE = "nvidia-smi: isn't installed"
-STRING_ERROR = "nvidia_temp: N/A"
+STRING_NOT_INSTALLED = "nvidia-smi: isn't installed"
+STRING_UNAVAILABLE = "nvidia_temp: N/A"
+STRING_ERROR = "nvidia_temp: unknown error"
 
 
 class Py3status:
@@ -61,16 +62,24 @@ class Py3status:
             return {
                 'cached_until': self.py3.CACHE_FOREVER,
                 'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
+                'full_text': STRING_NOT_INSTALLED
             }
 
-        temps = self.py3.command_output('nvidia-smi -q -d TEMPERATURE')
+        try:
+            temps = self.py3.command_output('nvidia-smi -q -d TEMPERATURE')
+        except:
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+
         temps = set(TEMP_RE.findall(temps))
         if temps == []:
             return {
                 'cached_until': self.py3.CACHE_FOREVER,
                 'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
+                'full_text': STRING_UNAVAILABLE
             }
         data = []
         for temp in temps:
