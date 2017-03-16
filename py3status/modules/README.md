@@ -2986,14 +2986,12 @@ Format Placeholders:
 
 Example configuration:
 ```
-...
-
 weather_owm {
   api_key = '...'
 
   icons {
     i200 = "☔"
-    ii230_i232 = "🌧"
+    i230_i232 = "🌧"
 
     clouds = "☁"
   }
@@ -3001,15 +2999,15 @@ weather_owm {
   format = '{icon}: {temp}, {forecast}'
   forecast_num = 3
 }
-
-...
 ```
 Outputs: `🌫: ○: 59°, ⛅ ☼ 🌧`
+- Currently foggy, 59° F outside, with forecast of cloudy tomorrow, sunny the
+  next day, then rainy
 
 Requires:
   - `pyowm`: A python package for talking with the OpenWeatherMap service
 
-**author** aoneill
+**author** alexoneill
 
 **licence** MIT
 

@@ -164,6 +164,9 @@ Configuration parameters:
     (regardless of the 'forecast_today' flag)
 
     (default 0)
+
+author: alexoneill
+licence: MIT
 '''
 
 import pyowm
