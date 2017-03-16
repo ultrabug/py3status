@@ -2792,7 +2792,7 @@ Configuration parameters:
     ```
     icons = {
       i200 = "☔",
-      ii230_i232 = "🌧"
+      i230_i232 = "🌧"
 
       clouds = "☁"
     }
@@ -2867,7 +2867,9 @@ Configuration parameters:
     *(default '{icon}: {strftime}')*
 
   - `format_sunset_time`: Formatting string for sunset time
-    This follows the datetime.strftime() spec.
+    This follows the
+    [`datetime.strftime()`](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior)
+    spec.
 
   - `format_sunset`: Formatting for sunset time
     Available placeholders:
