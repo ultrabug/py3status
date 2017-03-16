@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 '''
-Ultimately customizable weather module based on IP-API Geolocation API
-and the OpenWeatherMap API.
+Ultimately customizable weather module based on the IP-API Geolocation API
+(http://ip-api.com) and the OpenWeatherMap API (https://openweathermap.org).
 
-Requires an API key for OpenWeatherMap, but the free tier allows you enough
-requests/sec to function properly.
+Requires an API key for OpenWeatherMap (OWM), but the free tier allows you
+enough requests/sec to get accurate weather even up to the second.
+
+Note that this module does require an additional python package,
+[pyowm](https://github.com/csparpa/pyowm), and this may be easily
+installed via `pip`.
 
 This module allows you to specify an icon for nearly every weather scenario
 imaginable. The default configuration options lump many of the icons into
@@ -12,12 +16,12 @@ a few groups, and due to the limitations of UTF-8, this is really as expressive
 as it gets.
 
 I would highly suggest you install an additional font, such as the incredible
-https://erikflowers.github.io/weather-icons font, which has most of the
-icon mappings.
+(and free!) Weather Icons font (https://erikflowers.github.io/weather-icons),
+which has icons for most weather scenarios.
 
-For more information, see https://openweathermap.org/weather-conditions
-on what weather conditions are supported. See the configuration options
-for how to specify each weather icon.
+For more information, see the documentation
+(ttps://openweathermap.org/weather-conditions) on what weather conditions are
+supported. See the configuration options for how to specify each weather icon.
 
 Configuration parameters:
   api_key: Your OpenWeatherMap API key.
@@ -54,6 +58,7 @@ Configuration parameters:
       - rain
       - wind
       - sunrise
+      - sunset
     These may be specified regardless.
 
     Example:
@@ -66,7 +71,10 @@ Configuration parameters:
 
     (default None)
 
-  format: How to display the weather. This also dictates the type of forecast
+  format: How to display the weather. This also dictates the type of
+    forecast. The placeholders here refer to the `format_[...]` variables
+    found below.
+
     Available placeholders:
       icon, clouds, snow, wind, humidity, pressure, temp, sunrise, sunset
       descript, descript_long, forecast
@@ -201,7 +209,7 @@ class Py3status:
   mph_from_fsec = 1.46667
 
   def __init__(self):
-    self.icons = self._get_icons()
+    self.icons_populated = False
 
   def _get_icons(self):
     if (self.icons is None):
@@ -250,19 +258,20 @@ class Py3status:
             # Populate each code
             (start, end) = tuple(map(int, key[1:].split('_i')))
             for code in range(start, end + 1):
-              data[code] = defaults[key]
+              data[code] = source[key]
 
           else:
-            data[int(key[1:])] = defaults[key]
+            data[int(key[1:])] = source[key]
         else:
-          data[key] = defaults[key]
+          data[key] = source[key]
 
     # Weather icons for formatting sections
     for key in others:
-      if (isinstance(others[key], int)):
-        data[key] = data[others[key]]
-      else:
-        data[key] = others[key]
+      if (key not in data):
+        if (isinstance(others[key], int)):
+          data[key] = data[others[key]]
+        else:
+          data[key] = others[key]
 
     return data
 
@@ -272,7 +281,11 @@ class Py3status:
       raise Exception("API Key for OpenWeatherMap cannot be empty!" + \
           " Go to http://openweathermap.org/appid to get an API Key.")
 
+    # Setup the structures we need
     self.owm = pyowm.OWM(self.api_key, language = self.lang)
+    if (not(self.icons_populated)):
+      self.icons = self._get_icons()
+      self.icons_populated = True
 
   def _get_coords(self):
     # Contact the IP API
@@ -307,7 +320,7 @@ class Py3status:
 
   def _get_icon(self, wthr):
     # Lookup the icon from the weather code
-    return self.icons[wthr.get_weather_code()]
+    return self.icons[int(wthr.get_weather_code())]
 
   def _format_clouds(self, wthr):
     # Format the cloud cover
@@ -514,4 +527,14 @@ if (__name__ == '__main__'):
   from py3status.module_test import module_test
   module_test(Py3status, config = {
       'api_key': 'YOUR_API_KEY',
+
+      'icons': {
+        'i200': "☔",
+        'i230_i232': "🌧",
+
+        'clouds': "☁",
+      },
+
+      'format': '{icon}: {temp}, {forecast}',
+      'forecast_num': 3,
     })
