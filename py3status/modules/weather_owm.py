@@ -293,10 +293,12 @@ class Py3status:
   def _get_coords(self):
     # Contact the IP API
     url = "http://ip-api.com/json"
-    req = self.py3.request(url, timeout = self.req_timeout)
     try:
+      req = self.py3.request(url, timeout = self.req_timeout)
       data = req.json()
     except (self.py3.RequestException):
+      return None
+    except (self.py3.RequestURLError):
       return None
 
     # Extract the data
@@ -307,7 +309,11 @@ class Py3status:
 
   def _get_weather(self, coords):
     # Get the weather
-    obs = self.owm.weather_at_coords(*coords)
+    try:
+      obs = self.owm.weather_at_coords(*coords)
+    except (pyowm.exceptions.unauthorized_error.UnauthorizedError):
+      raise Exception('OpenWeatherMap API Key incorrect!')
+
     return obs.get_weather()
 
   def _get_forecast(self, coords):
@@ -323,7 +329,7 @@ class Py3status:
 
   def _get_icon(self, wthr):
     # Lookup the icon from the weather code
-    return self.icons[int(wthr.get_weather_code())]
+    return self.icons[wthr.get_weather_code()]
 
   def _format_clouds(self, wthr):
     # Format the cloud cover
@@ -514,11 +520,15 @@ class Py3status:
 
     # Get weather information
     coords = self._get_coords()
-    wthr = self._get_weather(coords)
-    fcsts = self._get_forecast(coords)
+    text = ''
+    if (coords is not None):
+      wthr = self._get_weather(coords)
+      fcsts = self._get_forecast(coords)
+
+      text = self._format(wthr, fcsts)
 
     return {
-      'full_text': self._format(wthr, fcsts),
+      'full_text': text,
       'cached_until': self.py3.time_in(seconds = self.cache_duration)
     }
 
