@@ -259,7 +259,7 @@ class Py3status:
     format_sunrise_time = '%X'
     format_sunset = '{icon}: {strftime}'
     format_sunset_time = '%X'
-    format_temp = '{icon}: {f}°'
+    format_temp = u'{icon}: {f}°'
     format_wind = '{icon}: {mph_speed} mph'
     icons = None
     lang = 'en'
