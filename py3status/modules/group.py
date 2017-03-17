@@ -127,19 +127,19 @@ class Py3status:
         self.py3.register_function('urgent_function', self._urgent_function)
 
     def _content_function(self):
-        '''
+        """
         This returns a set containing the actively shown module.  This is so we
         only get update events triggered for these modules.
-        '''
+        """
         # ensure that active is valid
         self.active = self.active % len(self.items)
 
         return set([self.items[self.active]])
 
     def _urgent_function(self, module_list):
-        '''
+        """
         A contained module has become urgent.  We want to display it to the user
-        '''
+        """
         for module in module_list:
             if module in self.items:
                 self.active = self.items.index(module)
