@@ -86,7 +86,7 @@ class Py3status:
             for old, new in self.substitutions.items():
                 info[old] = resp.get(new)
             return info
-        except Exception:
+        except self.py3.RequestException:
             return None
 
     def whatismyip(self):
