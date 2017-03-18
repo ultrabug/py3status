@@ -45,6 +45,7 @@ def create_module_docs():
     out = []
     # details
     for module in sorted(data.keys()):
+        out.append('\n.. _module_%s:\n' % module)  # reference for linking
         out.append(
             '\n{name}\n{underline}\n\n{details}\n'.format(
                 name=module,
