@@ -4,7 +4,8 @@ Display public IP address and online status.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
-    format: any key in JSON fetched from `url_geo` is available as a placeholder
+    format: available placeholders are {ip} and {country},
+            as well as any other key in JSON fetched from `url_geo`
             (default '{ip}')
     format_offline: what to display when offline (default '■')
     format_online: what to display when online (default '●')
@@ -14,7 +15,12 @@ Configuration parameters:
     negative_cache_timeout: how often to check again when offline (default 2)
     timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
-        (default 'https://freegeoip.net/json/')
+        (default 'https://freegeoip.net/json')
+
+Format placeholders:
+    {country} display the country
+    {ip} display current ip address
+    any other key in JSON fetched from `url_geo`
 
 Color options:
     color_bad: Offline
@@ -30,6 +36,9 @@ try:
 except:
     from urllib2 import urlopen
 
+URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
+URL_GEO_NEW_DEFAULT = 'https://freegeoip.net/json'
+
 
 class Py3status:
     """
@@ -43,7 +52,7 @@ class Py3status:
     mode = 'ip'
     negative_cache_timeout = 2
     timeout = 5
-    url_geo = 'https://freegeoip.net/json/'
+    url_geo = URL_GEO_NEW_DEFAULT
 
     class Meta:
         deprecated = {
@@ -54,6 +63,13 @@ class Py3status:
                 },
             ],
         }
+
+    def post_config_hook(self):
+        # Backwards compatibility
+        if self.url_geo == URL_GEO_NEW_DEFAULT:
+            self.format = self.format.replace('{country}', '{country_name}')
+        elif self.url_geo == URL_GEO_OLD_DEFAULT:
+            self.format = self.format.replace('{ip}', '{query}')
 
     def on_click(self, event):
         """
