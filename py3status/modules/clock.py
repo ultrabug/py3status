@@ -84,7 +84,6 @@ clock {
 """
 
 import re
-import math
 from datetime import datetime
 from time import time
 
@@ -227,12 +226,19 @@ class Py3status:
                 format_time = self.format_time[self.active_time_format]
                 icon = None
                 if self.py3.format_contains(format_time, 'icon'):
-                    # calculate the decimal hour
-                    h = t.hour + t.minute / 60.
+                    # calculate the hour to use for icon
+                    h = t.hour
+                    m = t.minute / 60.
+                    if m < 0.25:
+                        m = 0
+                    elif m >= 0.25 and m < 0.75:
+                        m = 0.5
+                    else:
+                        h += 1
+                        m = 0
                     # make 12 hourly etc
                     h = h % self.block_hours
-                    idx = int(math.floor(h / self.block_hours * (len(
-                        self.blocks))))
+                    idx = int((h + m) / self.block_hours * len(self.blocks))
                     icon = self.blocks[idx]
 
                 timezone = zone.zone
