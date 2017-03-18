@@ -82,6 +82,7 @@ clock {
 @license BSD
 
 """
+from __future__ import division
 
 import re
 from datetime import datetime
