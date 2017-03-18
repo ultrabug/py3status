@@ -7,9 +7,9 @@ Configuration parameters:
     format: available placeholders are {ip} and {country},
             as well as any other key in JSON fetched from `url_geo`
             (default '{ip}')
-    format_offline: what to display when offline (default '■')
-    format_online: what to display when online (default '●')
     hide_when_offline: hide the module output when offline (default False)
+    icon_off: what to display when offline (default '■')
+    icon_on: what to display when online (default '●')
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
     negative_cache_timeout: how often to check again when offline (default 2)
@@ -48,9 +48,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = '{ip}'
-    format_offline = u'■'
-    format_online = u'●'
     hide_when_offline = False
+    icon_off = u'■'
+    icon_on = u'●'
     mode = 'ip'
     negative_cache_timeout = 2
     timeout = 5
@@ -62,6 +62,18 @@ class Py3status:
                 {
                     'param': 'url',
                     'msg': 'obsolete parameter, use `url_geo` instead',
+                },
+            ],
+            'rename': [
+                {
+                    'param': 'format_online',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter, use `icon_on` instead',
+                },
+                {
+                    'param': 'format_offline',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter, use `icon_off` instead',
                 },
             ],
         }
@@ -114,9 +126,9 @@ class Py3status:
             if self.mode == 'ip':
                 response['full_text'] = self.py3.safe_format(self.format, info)
             else:
-                response['full_text'] = self.format_online
+                response['full_text'] = self.icon_on
         else:
-            response['full_text'] = self.format_offline
+            response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
         return response
 
