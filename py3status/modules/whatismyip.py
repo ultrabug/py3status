@@ -101,11 +101,11 @@ class Py3status:
             response['full_text'] = ''
         elif info is not None:
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
+            response['color'] = self.py3.COLOR_GOOD
             if self.mode == 'ip':
                 response['full_text'] = self.py3.safe_format(self.format, info)
             else:
                 response['full_text'] = self.format_online
-            response['color'] = self.py3.COLOR_GOOD
         else:
             response['full_text'] = self.format_offline
             response['color'] = self.py3.COLOR_BAD
