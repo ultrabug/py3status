@@ -15,7 +15,7 @@ Configuration parameters:
     negative_cache_timeout: how often to check again when offline (default 2)
     timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
-        (default 'https://freegeoip.net/json')
+        (default 'https://freegeoip.net/json/')
 
 Format placeholders:
     {country} display the country
@@ -29,15 +29,8 @@ Color options:
 @author ultrabug
 """
 
-import json
-try:
-    # python3
-    from urllib.request import urlopen
-except:
-    from urllib2 import urlopen
-
 URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
-URL_GEO_NEW_DEFAULT = 'https://freegeoip.net/json'
+URL_GEO_NEW_DEFAULT = 'https://freegeoip.net/json/'
 
 
 class Py3status:
@@ -66,10 +59,11 @@ class Py3status:
 
     def post_config_hook(self):
         # Backwards compatibility
+        self.substitutions = {}
         if self.url_geo == URL_GEO_NEW_DEFAULT:
-            self.format = self.format.replace('{country}', '{country_name}')
+            self.substitutions['country'] = 'country_name'
         elif self.url_geo == URL_GEO_OLD_DEFAULT:
-            self.format = self.format.replace('{ip}', '{query}')
+            self.substitutions['ip'] = 'query'
 
     def on_click(self, event):
         """
@@ -84,12 +78,13 @@ class Py3status:
         """
         """
         try:
-            resp = urlopen(self.url_geo, timeout=self.timeout).read()
-            resp = json.loads(resp)
+            resp = self.py3.request(self.url_geo, timeout=self.timeout).json()
             info = {}
             for placeholder in self.py3.get_placeholders_list(self.format):
                 if placeholder in resp:
                     info[placeholder] = resp[placeholder]
+            for old, new in self.substitutions.items():
+                info[old] = resp.get(new)
             return info
         except Exception:
             return None
