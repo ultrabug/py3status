@@ -15,8 +15,8 @@ Configuration parameters:
         The default quota is max 1000 (one thousand) requests per minute (~16RPS)
         and with burst up to 60 requests. Read more: http://aqicn.org/api/
         (default 3600)
-    format: display format for this module (default 'AQI: {aqi} {category}')
-    location: location/uid to query. To search for nearby stations in Kraków,
+    format: display format for this module (default '{location}: {aqi} {category}')
+    location: location or uid to query. To search for nearby stations in Kraków,
         use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
         We recommend you to use uid instead of name in location, eg "@8691"
         (default 'Shanghai')
@@ -24,16 +24,14 @@ Configuration parameters:
 Format placeholders:
     {aqi} air quality index
     {category} health risk category
-    {location} location/uid
-    {something} output from "something" parameter in `iaqi` array.
+    {location} location or uid
 
-__Note: To explain more about {something} parameter, the station may have
-their own set of custom parameters such as {pm25}, {pm10}, etc. You can find
-out by using curl command above and look for them.__
+Note: Stations may use {pm25}, {pm10}, {o3}, {so2}, or other parameters.
+See http://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
 
 Category options:
     category_<name>: display name
-        eg category_very_unhealthy = 'Level 5: Wear your mask'
+        eg category_very_unhealthy = 'Level 5: Wear a mask'
 
 Color options:
     color_<category>: display color
@@ -47,31 +45,42 @@ air_quality {
     format = 'Shanghai: {aqi} {category}'
 }
 ```
-@author beetleman
+@author beetleman, lasers
 @license BSD
-"""
 
-try:
-    # python 3
-    from urllib.parse import urlencode
-except ImportError:
-    # python 2
-    from urllib import urlencode
+SAMPLE OUTPUT
+{'color':'#009966', 'full_text':'Shanghai: 49 Good'}
+
+aqi_moderate
+{'color':'#FFDE33', 'full_text':'Shanghai: 65 Moderate'}
+
+aqi_sensitively_unhealthy
+{'color':'#FF9933', 'full_text':'Shanghai: 103 Sensitively Unhealthy'}
+
+aqi_unhealthy
+{'color':'#CC0033', 'full_text':'Shanghai: 165 Unhealthy'}
+
+aqi_very_unhealthy
+{'color':'#660099', 'full_text':'Shanghai: 220 Very Unhealthy'}
+
+aqi_hazardous
+{'color':'#7E0023', 'full_text':'Shanghai: 301 Hazardous'}
+"""
 
 AQI = (
     (0, 50, 'good'),
     (51, 100, 'moderate'),
-    (101, 150, 'unhealthy_sensitive'),
+    (101, 150, 'sensitively_unhealthy'),
     (151, 200, 'unhealthy'),
     (201, 300, 'very_unhealthy'),
-    (301, int('inf'), 'hazardous')
+    (301, float('inf'), 'hazardous')
 )
 CATEGORY = {
     'good': 'Good',
     'hazardous': 'Hazardous',
     'moderate': 'Moderate',
+    'sensitively_unhealthy': 'Sensitively Unhealthy',
     'unhealthy': 'Unhealthy',
-    'unhealthy_sensitive': 'Unhealthy for Sensitive Groups',
     'unknown': 'Unknown',
     'very_unhealthy': 'Very Unhealthy',
 }
@@ -79,8 +88,8 @@ COLOR = {
     'good': '#009966',
     'hazardous': '#7E0023',
     'moderate': '#FFDE33',
+    'sensitively_unhealthy': '#FF9933',
     'unhealthy': '#CC0033',
-    'unhealthy_sensitive': '#FF9933',
     'unknown': '#ffffff',
     'very_unhealthy': '#660099',
 }
@@ -99,19 +108,20 @@ def _get_in(coll, path, default=None):
 class Py3status:
     auth_token = 'demo'
     cache_timeout = 3600
-    format = 'AQI: {aqi} {category}'
+    format = '{location}: {aqi} {category}'
     location = 'Shanghai'
 
-    def _update_aqi(self):
+    def post_config_hook(self):
         url_path = 'feed/{}'.format(self.location)
-        url_token = {'token': self.auth_token}
-        url_full = '{url_base}/{url_path}/?{url_query}'.format(
+        self.url_token = {'token': self.auth_token}
+        self.url_full = '{url_base}/{url_path}/'.format(
             url_base=URL,
-            url_path=url_path,
-            url_query=urlencode(url_token)
+            url_path=url_path
         )
+
+    def _update_data(self):
         try:
-            self._api_data = self.py3.request(url_full).json()
+            self._api_data = self.py3.request(self.url_full, params=self.url_token).json()
         except (self.py3.RequestException):
             self._api_data = None
 
@@ -130,29 +140,27 @@ class Py3status:
     def _get_full_text(self):
         aqi = _get_in(self._api_data, ['data', 'aqi'])
         iaqi = _get_in(self._api_data, ['data', 'iaqi'], {})
+        city = _get_in(self._api_data, ['data', 'city'], {})
         try:
             category = getattr(self, 'CATEGORY_{}'.format(self._key).lower())
         except:
             category = CATEGORY.get(self._key)
         if not category:
             category = STRING_UNKNOWN
-        return self.format.format(
-            location=self.location,
-            category=category,
-            aqi=aqi,
-            **{k: _v.get('v') for k, _v in iaqi.items()}
-        )
+        return self.py3.safe_format(self.format,
+                                    dict(location=city.get('name'),
+                                         category=category,
+                                         aqi=aqi,
+                                         **{k: v.get('v') for k, v in iaqi.items()}))
 
     def _get_color(self):
         color = getattr(self.py3, 'COLOR_{}'.format(self._key.upper()))
         if not color:
             color = COLOR.get(self._key)
-        if not color:
-            color = None
         return color
 
     def air_quality(self):
-        self._update_aqi()
+        self._update_data()
         self._update_key()
 
         return {
