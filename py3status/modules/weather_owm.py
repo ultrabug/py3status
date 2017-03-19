@@ -215,7 +215,7 @@ import datetime
 class Py3status:
 
     api_key = None
-    cache_duration = 600
+    cache_timeout = 600
     forecast_format = '{icon}'
     forecast_num = 0
     forecast_separator = ' '
@@ -558,12 +558,12 @@ class Py3status:
 
         return {
             'full_text': text,
-            'cached_until': self.py3.time_in(seconds=self.cache_duration)
+            'cached_until': self.py3.time_in(seconds=self.cache_timeout)
         }
 
     def on_click(self, event):
-      # Avoid hitting rate limits on APIs
-      self.py3.prevent_refresh()
+        # Avoid hitting rate limits on APIs
+        self.py3.prevent_refresh()
 
 
 if (__name__ == '__main__'):
