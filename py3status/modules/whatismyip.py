@@ -4,6 +4,9 @@ Display public IP address and online status.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
+    expected: if defined, use `color_degraded` if the output of this module
+              doesn't match the expected string (use for IP mismatch, etc.)
+              (default None)
     format: available placeholders are {ip} and {country},
             as well as any other key in JSON fetched from `url_geo`
             (default '{ip}')
@@ -24,6 +27,7 @@ Format placeholders:
 
 Color options:
     color_bad: Offline
+    color_degraded: Output is unexpected (IP/country mismatch, etc.)
     color_good: Online
 
 @author ultrabug
@@ -47,6 +51,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
+    expected = None
     format = '{ip}'
     format_offline = u'■'
     format_online = u'●'
@@ -113,6 +118,8 @@ class Py3status:
             response['color'] = self.py3.COLOR_GOOD
             if self.mode == 'ip':
                 response['full_text'] = self.py3.safe_format(self.format, info)
+                if self.expected is not None and self.expected != response['full_text']:
+                    response['color'] = self.py3.COLOR_DEGRADED
             else:
                 response['full_text'] = self.format_online
         else:
