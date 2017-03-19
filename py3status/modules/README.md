@@ -2857,21 +2857,23 @@ Configuration parameters:
 
     *(default '{icon}: {f}°')*
 
-  - `format_sunrise_time`: Formatting string for sunrise time
-    This follows the datetime.strftime() spec.
-
   - `format_sunrise`: Formatting for sunrise time
+    Note that this format accepts strftime/strptime placeholders to populate
+    the output with the time information.
+
+    See: [`datetime.strftime()`](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior)
+
     Available placeholders:
       `{icon}`, `{strftime}`
 
     *(default '{icon}: {strftime}')*
 
-  - `format_sunset_time`: Formatting string for sunset time
-    This follows the
-    [`datetime.strftime()`](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior)
-    spec.
-
   - `format_sunset`: Formatting for sunset time
+    Note that this format accepts strftime/strptime placeholders to populate
+    the output with the time information.
+
+    See: [`datetime.strftime()`](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior)
+
     Available placeholders:
       `{icon}`, `{strftime}`
 
@@ -2899,92 +2901,64 @@ Configuration parameters:
     *(default 0)*
 
 Format Placeholders:
- - `{c_max}`: The maximum Celsius temperature.
-   Available in: `format_temp`
- - `{c_min}`: The minimum Celsius temperature.
-   Available in: `format_temp`
- - `{clouds}`: Contains the formatted result of `format_clouds`.
-   Available in: `format`, `forcast_format`
- - `{cm}`: Measurement in centimeters.
-   Available in: `format_rain`, `format_snow`
- - `{coverage}`: Cloud coverage percentage.
-   Available in: `format_cloud`
- - `{c}`: Current Celsius temperature reading.
-   Available in: `format_temp`
- - `{deg}`: Current wind speed heading (in degrees)
-   Available in: `format_wind`
- - `{descript_long}`: Natural description of the current weather.
-   Available in: `format`, `forcast_format`
- - `{descript}`: Short description of the current weather.
-   Available in: `format`, `forcast_format`
- - `{f_max}`: The maximum Fahrenheit temperature.
-   Available in: `format_temp`
- - `{f_min}`: The minimum Fahrenheit temperature.
-   Available in: `format_temp`
- - `{forecast}`: Contains the formatted result of `format_forecast`.
-   Available in: `format`
- - `{fsec_gust}`: The speed in ft/sec of current wind gusts.
-   Available in: `format_wind`
- - `{fsec_speed}`: The speed in ft/sec of current wind speeds.
-   Available in: `format_wind`
- - `{ft}`: Measurement in feet.
-   Available in: `format_rain`, `format_snow`
- - `{f}`: Current Fahrenheit temperature reading.
-   Available in: `format_temp`
- - `{humidity}`: Contains the formatted result of `format_humidity`.
-   Available in: `format`, `forecast_format`
- - `{humid}`: The humidity percentage
-   Available in: `format_humidity`
- - `{icon}`: The icon associated with a formatting section
-   Available in: `format`, `forecast_format`, `format_clouds`, `format_rain`,
-     `format_snow`, `format_wind`, `format_humidity`, `format_pressure`,
-     `format_temp`, `format_sunrise`, `format_sunset`
- - `{in}`: Measurement in inches.
-   Available in: `format_rain`, `format_snow`
- - `{k_max}`: The maximum Kelvin temperature.
-   Available in: `format_temp`
- - `{k_min}`: The minimum Kelvin temperature.
-   Available in: `format_temp`
- - `{kmh_gust}`: The speed in km/hr of current wind gusts.
-   Available in: `format_wind`
- - `{kmh_speed}`: The speed in km/hr of current wind speeds.
-   Available in: `format_wind`
- - `{k}`: Current Kelvin temperature reading.
-   Available in: `format_temp`
- - `{mm}`: Measurement in millimeters.
-   Available in: `format_rain`, `format_snow`
- - `{mph_gust}`: The speed in mph of current wind gusts.
-   Available in: `format_wind`
- - `{mph_speed}`: The speed in mph of current wind speeds.
-   Available in: `format_wind`
- - `{msec_gust}`: The speed in m/sec of current wind gusts.
-   Available in: `format_wind`
- - `{msec_speed}`: The speed in m/sec of current wind speeds.
-   Available in: `format_wind`
- - `{m}`: Measurement in meters.
-   Available in: `format_rain`, `format_snow`
- - `{pressure}`: Contains the formatted result of `format_pressure`.
-   Available in: `format`, `forecast_format`
- - `{press}`: The measurement of current atmospheric pressure in Pascals
-   Available in: `format_pressure`
- - `{press}`: The measurement of current atmospheric pressure at sea-level in
-   Pascals.
-   Available in: `format_pressure`
- - `{snow}`: Contains the formatted result of `format_snow`.
-   Available in: `format`, `forecast_format`
- - `{strftime}`: Contains the formatted value of the time according to
-   a specific format string
-   Available in: `format_sunrise`, `format_sunset`
- - `{sunrise}`: Contains the formatted result of `format_sunrise`.
-   Available in: `format`, `forecast_format`
- - `{sunset}`: Contains the formatted result of `format_sunset`.
-   Available in: `format`, `forecast_format`
- - `{temp}`: Contains the formatted result of `format_temp`.
-   Available in: `format`, `forecast_format`
- - `{wind}`: Contains the formatted result of `format_wind`.
-   Available in: `format`, `forecast_format`
- - `{yrd}`: Measurement in yards.
-   Available in: `format_rain`, `format_snow`
+ - All:
+   - `{icon}`: The icon associated with a formatting section
+ - `format_cloud`:
+   - `{coverage}`: Cloud coverage percentage.
+ - `format_humidity`:
+   - `{humid}`: The humidity percentage
+ - `format_pressure`:
+   - `{press}`: The measurement of current atmospheric pressure in Pascals
+   - `{sea_level}`: The measurement of current atmospheric pressure at
+     sea-level in Pascals.
+ - `format_rain`:
+   - `{cm}`: Measurement in centimeters.
+   - `{ft}`: Measurement in feet.
+   - `{in}`: Measurement in inches.
+   - `{mm}`: Measurement in millimeters.
+   - `{m}`: Measurement in meters.
+   - `{yrd}`: Measurement in yards.
+ - `format_snow`:
+   - `{cm}`: Measurement in centimeters.
+   - `{ft}`: Measurement in feet.
+   - `{in}`: Measurement in inches.
+   - `{mm}`: Measurement in millimeters.
+   - `{m}`: Measurement in meters.
+   - `{yrd}`: Measurement in yards.
+ - `format_temp`:
+   - `{c_max}`: The maximum Celsius temperature.
+   - `{c_min}`: The minimum Celsius temperature.
+   - `{c}`: Current Celsius temperature reading.
+   - `{f_max}`: The maximum Fahrenheit temperature.
+   - `{f_min}`: The minimum Fahrenheit temperature.
+   - `{f}`: Current Fahrenheit temperature reading.
+   - `{k_max}`: The maximum Kelvin temperature.
+   - `{k_min}`: The minimum Kelvin temperature.
+   - `{k}`: Current Kelvin temperature reading.
+ - `format_wind`:
+   - `{deg}`: Current wind speed heading (in degrees)
+   - `{fsec_gust}`: The speed in ft/sec of current wind gusts.
+   - `{fsec_speed}`: The speed in ft/sec of current wind speeds.
+   - `{kmh_gust}`: The speed in km/hr of current wind gusts.
+   - `{kmh_speed}`: The speed in km/hr of current wind speeds.
+   - `{mph_gust}`: The speed in mph of current wind gusts.
+   - `{mph_speed}`: The speed in mph of current wind speeds.
+   - `{msec_gust}`: The speed in m/sec of current wind gusts.
+   - `{msec_speed}`: The speed in m/sec of current wind speeds.
+ - `format` only:
+   - `{forecast}`: Contains the formatted result of `format_forecast`.
+ - `format`, `format_forecast`:
+   - `{clouds}`: Contains the formatted result of `format_clouds`.
+   - `{desc_long}`: Natural description of the current weather.
+   - `{desc}`: Short description of the current weather.
+   - `{humidity}`: Contains the formatted result of `format_humidity`.
+   - `{pressure}`: Contains the formatted result of `format_pressure`.
+   - `{snow}`: Contains the formatted result of `format_snow`.
+   - `{sunrise}`: Contains the formatted result of `format_sunrise`.
+   - `{sunset}`: Contains the formatted result of `format_sunset`.
+   - `{temp}`: Contains the formatted result of `format_temp`.
+   - `{wind}`: Contains the formatted result of `format_wind`.
+
 
 Example configuration:
 ```
@@ -3005,6 +2979,7 @@ weather_owm {
 Outputs: `🌫: ○: 59°, ⛅ ☼ 🌧`
 - Currently foggy, 59° F outside, with forecast of cloudy tomorrow, sunny the
   next day, then rainy
+
 
 Requires:
   - `pyowm`: A python package for talking with the OpenWeatherMap service
