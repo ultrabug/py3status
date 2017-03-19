@@ -25,6 +25,8 @@ Color options:
 
 import dbus
 
+DEFAULT_FORMAT = 'BT[: {format_device}]'
+
 
 def get_connected_devices():
     bus = dbus.SystemBus()
@@ -52,20 +54,41 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     device_separator = '|'
-    format = 'BT[: {format_device}]'
+    format = DEFAULT_FORMAT
     format_device = '{name}'
 
-    class Meta:
-        def deprecate_function(config):
-            out = {}
-            if 'format_prefix' in config:
-                out['format'] = u'{}{{format_device}}'.format(config['format_prefix'])
-            return out
-        deprecated = {
-            'function': [
-                {'function': deprecate_function},
-            ],
-        }
+    def post_config_hook(self):
+        # Do deprecation stuff here.  Because of the complexity we can't use
+        # the usual deprecation methods
+        # THIS IS A SPECIAL CASE DO NOT USE AS EXAMPLE CODE.
+        format_prefix = getattr(self, 'format_prefix', None)
+        format_no_conn = getattr(self, 'format_no_conn', None)
+        format_no_conn_prefix = getattr(self, 'format_no_conn_prefix', None)
+
+        placeholders = set(self.py3.get_placeholders_list(self.format))
+        if set(['name', 'mac']) & placeholders:
+            # this is an old format so should be format_device
+            self.format_device = self.format
+            self.format = DEFAULT_FORMAT
+            msg = 'DEPRECATION WARNING: your format is using invalid '
+            msg += 'placeholders you should update your configuration.'
+            self.py3.log(msg)
+
+        if self.format != DEFAULT_FORMAT:
+            # The user has set a format using the new style format so we are
+            # done here.
+            return
+
+        if format_prefix or format_no_conn_prefix or format_no_conn:
+            # create a format that will give the expected output
+            self.format = u'[\?if=format_device {}{{format_device}}|{}{}]'.format(
+                format_prefix or 'BT: ',
+                format_no_conn_prefix or 'BT: ',
+                format_no_conn or 'OFF'
+            )
+            msg = 'DEPRECATION WARNING: you are using old style configuration '
+            msg += 'parameters you should update to use the new format.'
+            self.py3.log(msg)
 
     def bluetooth(self):
         devices = get_connected_devices()
