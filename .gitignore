@@ -6,4 +6,5 @@ dist
 .cache/
 
 # sphinx build system
+doc/screenshots
 doc/_build
