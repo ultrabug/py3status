@@ -17,6 +17,7 @@ from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
 import py3status.docstrings as docstrings
+from py3status.command import CommandServer
 from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
@@ -359,6 +360,13 @@ class Py3statusWrapper():
         if self.config['debug']:
             self.log('events thread started')
 
+        # initialise the command server
+        self.commands_thread = CommandServer(self)
+        self.commands_thread.daemon = True
+        self.commands_thread.start()
+        if self.config['debug']:
+            self.log('commands thread started')
+
         # suppress modules' ouput wrt issue #20
         if not self.config['debug']:
             sys.stdout = open('/dev/null', 'w')
@@ -438,6 +446,12 @@ class Py3statusWrapper():
         """
         Clear the Event lock, this will break all threads' loops.
         """
+        # stop the command server
+        try:
+            self.commands_thread.kill()
+        except:
+            pass
+
         try:
             self.lock.clear()
             if self.config['debug']:

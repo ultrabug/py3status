@@ -148,3 +148,8 @@ Note that this will also send a SIGUSR1 signal to i3status.
 .. code-block:: shell
 
     killall -USR1 py3status
+
+.. note::
+
+    Since version 3.6 py3status can be controlled via the
+    :ref:`py3status-command` which is **recommended**.
