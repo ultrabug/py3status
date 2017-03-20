@@ -6,6 +6,9 @@ Configuration parameters:
     format: text that should be printed (default '')
 
 @author frimdo ztracenastopa@centrum.cz
+
+SAMPLE OUTPUT
+{'full_text': 'Hello world!'}
 """
 
 

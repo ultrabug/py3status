@@ -33,6 +33,9 @@ Color options:
     color_stopped: Stopped, default color_bad
 
 @author Amaury Brisou <py3status AT puzzledge.org>
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': u'Time: 0 day 0:00 Cost: 0.13$'}
 """
 
 

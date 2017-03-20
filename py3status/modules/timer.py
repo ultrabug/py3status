@@ -20,6 +20,29 @@ Format placeholders:
     {timer} display hours:minutes:seconds
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'Timer 0:01:00'}
+
+running
+[
+    {'full_text': 'Timer '},
+    {'color': '#00FF00', 'full_text': '0'},
+    {'full_text': ':'},
+    {'color': '#00FF00', 'full_text': '00'},
+    {'full_text': ':'},
+    {'color': '#00FF00', 'full_text': '54'},
+]
+
+paused
+[
+    {'full_text': 'Timer '},
+    {'color': '#FFFF00', 'full_text': '0'},
+    {'full_text': ':'},
+    {'color': '#FFFF00', 'full_text': '00'},
+    {'full_text': ':'},
+    {'color': '#FFFF00', 'full_text': '54'},
+]
 """
 
 from time import time

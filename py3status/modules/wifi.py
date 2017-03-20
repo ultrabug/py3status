@@ -47,6 +47,9 @@ In this case you will need to use the `use_sudo` configuration parameter.__
 
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'W: 54.0 MBit/s 100% Chicken Remixed'}
 """
 import re
 import math

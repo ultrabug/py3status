@@ -21,6 +21,9 @@ Requires:
 
 @author Anon1234 https://github.com/Anon1234
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'mountain.png'}
 """
 
 from threading import Thread

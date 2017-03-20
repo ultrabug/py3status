@@ -18,6 +18,12 @@ Color options:
     color_up: Open, default to color_good
 
 @author obb, Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'localhost:22 UP'}
+
+down
+{'color': '#FF0000', 'full_text': u'localhost:22 DOWN'}
 """
 import socket
 

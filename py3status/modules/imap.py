@@ -23,6 +23,9 @@ Color options:
     color_new_mail: use color when new mail arrives, default to color_good
 
 @author obb
+
+SAMPLE OUTPUT
+{'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
 import imaplib
 from ssl import create_default_context
