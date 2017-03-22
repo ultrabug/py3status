@@ -208,7 +208,7 @@ class Module(Thread):
         """
         Forces an update of the module.
         """
-        if self.disabled:
+        if self.disabled or self.terminated:
             return
         # clear cached_until for each method to allow update
         for meth in self.methods:
