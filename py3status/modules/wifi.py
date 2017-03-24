@@ -161,7 +161,7 @@ class Py3status:
         icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1)))]
 
         if ssid is None:
-            full_text = self.format_down
+            full_text = self.py3.safe_format(self.format_down)
             color = getattr(self.py3, 'COLOR_{}'.format(self.down_color.upper()))
         else:
             color = self.py3.COLOR_GOOD
