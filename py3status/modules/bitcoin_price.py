@@ -76,7 +76,7 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
+    def post_config_hook(self):
         """
         Initialize last_price, set the currency mapping
         and the url containing the data.
