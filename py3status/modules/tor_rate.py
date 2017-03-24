@@ -70,7 +70,7 @@ class Py3status:
     rate_unit = 'B/s'
     si_units = False
 
-    def __init__(self):
+    def post_config_hook(self):
         self._auth_failure = False
         self._down = 0
         self._handler_active = False
