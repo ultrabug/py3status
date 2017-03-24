@@ -77,7 +77,7 @@ class Py3status:
     repo = 'ultrabug/py3status'
     username = None
 
-    def __init__(self):
+    def post_config_hook(self):
         self.first = True
         self.notification_warning = False
         self.repo_warning = False
