@@ -3,95 +3,101 @@
 Display song currently playing in deadbeef.
 
 Configuration parameters:
-    cache_timeout: how often we refresh usage in seconds (default 1)
-    delimiter: delimiter character for parsing (default '¥')
-    format: see placeholders below (default '{artist} - {title}')
+    cache_timeout: refresh interval for this module (default 1)
+    delimiter: delimiter between metadata fields (default '¥å¥å¥å')
+    format: display format for this module (default '{artist} - {title}')
 
 Format placeholders:
-    {artist} artist
-    {title} title
-    {elapsed} elapsed time
-    {length} total length
-    {year} year
-    {tracknum} track number
+    {artist}        artist
+    {length}        length
+    {playback_time} playback time
+    {title}         title
+    {tracknumber}   track number
+    {year}          year
 
 Color options:
-    color_bad: An error occurred
+    color_degraded: Paused
+    color_good: Playing
+    color_bad: Not Playing
 
 Requires:
-        deadbeef:
+    deadbeef: a GTK+ audio player for GNU/Linux
 
 @author mrt-prodz
 """
-from subprocess import check_output, CalledProcessError
+
+import subprocess
 
 
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
-    delimiter = u'¥'
+    delimiter = u'¥å¥å¥å'
     format = '{artist} - {title}'
 
-    # return error occurs
-    def _error_response(self, color):
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': 'deadbeef: error',
-            'color': color
+    class Meta:
+        deprecated = {
+            'rename_placeholder': [
+                {
+                    'placeholder': 'elapsed',
+                    'new': 'playback_time',
+                    'format_strings': ['format'],
+                },
+            ],
         }
-        return response
 
-    # return empty response
-    def _empty_response(self):
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': ''
-        }
-        return response
-
-    # return track currently playing in deadbeef
-    def get_status(self):
+    def _is_running(self):
         try:
-            # check if we have deadbeef running
-            check_output(['pidof', 'deadbeef'])
-        except CalledProcessError:
-            return self._empty_response()
-
-        try:
-            # get all properties using ¥ as delimiter
-            status = check_output(['deadbeef',
-                                   '--nowplaying',
-                                   self.delimiter.join(['%a',
-                                                        '%t',
-                                                        '%l',
-                                                        '%e',
-                                                        '%y',
-                                                        '%n'])])
-
-            if status == 'nothing':
-                return self._empty_response()
-
-            # split properties using special delimiter
-            parts = status.split(self.delimiter)
-            if len(parts) == 6:
-                artist, title, length, elapsed, year, tracknum = parts
-            else:
-                return self._error_response(self.py3.COLOR_BAD)
-
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format,
-                                                  dict(artist=artist,
-                                                       title=title,
-                                                       length=length,
-                                                       elapsed=elapsed,
-                                                       year=year,
-                                                       tracknum=tracknum)
-                                                  )
-            }
-            return response
+            self.py3.command_output(['pgrep', 'deadbeef'])
+            return True
         except:
-            return self._error_response(self.py3.COLOR_BAD)
+            return False
+
+    def deadbeef(self):
+        color = self.py3.COLOR_BAD
+        artist = isplaying = length = playback_time = title = \
+            tracknumber = year = ""
+
+        if not self._is_running():
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': color,
+                'full_text': '',
+            }
+
+        # mix metadata fields in with the delimiters
+        fmt = self.delimiter.join([
+            '%artist%', '%isplaying%', '%length%', '%playback_time%',
+            '%title%', '%tracknumber%', '%year%'
+        ])
+        # run command and get output
+        out = subprocess.check_output(['deadbeef', '--nowplaying-tf', fmt])
+        out = out.decode('utf-8')
+
+        # get metadata results out of the string using the delimiters
+        if out != 'nothing':
+            artist, isplaying, length, playback_time, title, tracknumber, \
+                year = out.split(self.delimiter)
+
+            if title:
+                if isplaying == "1":
+                    color = self.py3.COLOR_GOOD
+                else:
+                    color = self.py3.COLOR_DEGRADED
+
+        # response
+        deadbeef = self.py3.safe_format(self.format, dict(
+            artist=artist, isplaying=isplaying, length=length,
+            playback_time=playback_time, title=title,
+            tracknumber=tracknumber, year=year))
+
+        deadbeef = deadbeef.strip().strip('-').strip(':')
+
+        return {
+            'color': color,
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': deadbeef
+        }
 
 
 if __name__ == "__main__":
