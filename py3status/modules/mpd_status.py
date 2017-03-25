@@ -4,7 +4,7 @@ Display song currently playing in mpd.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
-    format: template string (see below)
+    format: template string (see placeholders below)
         (default '%state% [[[%artist%] - %title%]|[%file%]]')
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
@@ -12,9 +12,13 @@ Configuration parameters:
     max_width: maximum status length (default 120)
     password: mpd password (default None)
     port: mpd port (default '6600')
-    state_pause: label to display for "paused" state (default '[pause]')
-    state_play: label to display for "playing" state (default '[play]')
-    state_stop: label to display for "stopped" state (default '[stop]')
+    string_no_auth: display when auth failed
+        (default 'mpd_status: authentication failed')
+    string_no_connect: display when connection refused
+        (default 'mpd_status: connection refused')
+    string_pause: display when paused (default '[pause]')
+    string_play: display when playing (default '[play]')
+    string_stop: display when stopped (default '[stop]')
 
 Color options:
     color_pause: Paused, default color_degraded
@@ -155,17 +159,40 @@ class Py3status:
     max_width = 120
     password = None
     port = '6600'
-    state_pause = '[pause]'
-    state_play = '[play]'
-    state_stop = '[stop]'
+    string_no_auth = 'mpd_status: authentication failed'
+    string_no_connect = 'mpd_status: connection refused'
+    string_pause = '[pause]'
+    string_play = '[play]'
+    string_stop = '[stop]'
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'state_pause',
+                    'new': 'string_pause',
+                    'msg': 'obsolete parameter use `string_pause`',
+                },
+                {
+                    'param': 'state_play',
+                    'new': 'string_play',
+                    'msg': 'obsolete parameter use `string_play`',
+                },
+                {
+                    'param': 'state_stop',
+                    'new': 'string_stop',
+                    'msg': 'obsolete parameter use `string_stop`',
+                },
+            ],
+        }
 
     def _state_character(self, state):
         if state == 'play':
-            return self.state_play
+            return self.string_play
         elif state == 'pause':
-            return self.state_pause
+            return self.string_pause
         elif state == 'stop':
-            return self.state_stop
+            return self.string_stop
         return '?'
 
     def current_track(self):
@@ -207,10 +234,10 @@ class Py3status:
                 text, _ = parse_template(self.format, attr_getter)
 
         except socket.error:
-            text = "Failed to connect to mpd!"
+            text = self.string_no_connect
             state = None
         except CommandError:
-            text = "Failed to authenticate to mpd!"
+            text = self.string_no_auth
             state = None
             c.disconnect()
         else:
