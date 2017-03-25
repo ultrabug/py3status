@@ -94,7 +94,7 @@ class Py3status:
             resp = self.py3.request(self.url, timeout=self.timeout)
             status = resp.status_code == 200
             resp = resp.json()
-        except self.Py3.RequestException:
+        except self.py3.RequestException:
             resp = None
             status = False
         return resp, status
