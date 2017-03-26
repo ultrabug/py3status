@@ -5,14 +5,15 @@ Display network speed and bandwidth usage.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 2)
     format: display format for this module
-        *(default '[\?color=down LAN(Kb): {down}↓ {up}↑]
-         [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
+        *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑]
+        [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
     nic: network interface to use (default None)
     thresholds: color thresholds to use
         *(default {'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
         'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]})*
 
 Format placeholders:
+    {nic}      network interface
     {down}     number of download speed
     {up}       number of upload speed
     {download} number of download usage
@@ -51,7 +52,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 2
-    format = u'[\?color=down LAN(Kb): {down}↓ {up}↑] ' + \
+    format = u'{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] ' + \
         u'[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]'
     nic = None
     thresholds = {
@@ -133,9 +134,6 @@ class Py3status:
                         break
             if self.nic is None:
                 self.nic = 'lo'
-                self.py3.notify_user(
-                    'netdata: cannot find a nic to use. selected nic: lo instead.'
-                )
             self.py3.log('selected nic: %s' % self.nic)
 
     def netdata(self):
@@ -164,7 +162,8 @@ class Py3status:
                                                      'up': up,
                                                      'download': download,
                                                      'upload': upload,
-                                                     'total': total})
+                                                     'total': total,
+                                                     'nic': self.nic})
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': netdata
