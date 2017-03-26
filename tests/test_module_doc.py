@@ -35,6 +35,8 @@ IGNORE_ILLEGAL_CONFIG_OPTIONS = [
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
 IGNORE_ITEM = [
+    ('nvidia_smi', 'format_properties'),  # line too long for docstring parsing
+    ('nvidia_temp', 'format_properties'),  # line too long for docstring parsing
     ('moc', 'format'),  # line too long for docstring parsing
     ('cmus', 'format'),  # line too long for docstring parsing
     ('netdata', 'format'),  # line too long for docstring parsing
