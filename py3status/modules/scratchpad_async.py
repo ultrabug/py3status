@@ -4,7 +4,7 @@ Display number of windows and urgency hints asynchronously.
 
 Configuration parameters:
     always_show: always display the format (default False)
-    format: display format for scratchpad_async (default "{counter} ⌫")
+    format: display format for this module (default "{counter} ⌫")
 
 Format placeholders:
     {counter} number of scratchpad windows
@@ -17,6 +17,7 @@ Requires:
 """
 
 from threading import Thread
+
 import i3ipc
 
 
@@ -38,7 +39,7 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
+    def post_config_hook(self):
         self.count = 0
         self.urgent = False
 
