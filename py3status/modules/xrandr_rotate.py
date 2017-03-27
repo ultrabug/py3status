@@ -54,7 +54,7 @@ class Py3status:
     vertical_icon = 'V'
     vertical_rotation = 'left'
 
-    def __init__(self):
+    def post_config_hook(self):
         self.displayed = ''
 
     def _call(self, cmd):
