@@ -166,9 +166,9 @@ class Py3status:
             self._active = True
 
     def kill(self):
-        '''
+        """
         cancel any timer
-        '''
+        """
         if self._timer:
             self._timer.cancel()
 

@@ -285,9 +285,9 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        '''
+        """
         Volume up/down and toggle mute.
-        '''
+        """
         button = event['button']
         # volume up
         if self.button_up and button == self.button_up:

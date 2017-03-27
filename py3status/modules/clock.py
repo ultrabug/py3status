@@ -164,9 +164,9 @@ class Py3status:
         self.active = 0
 
     def _get_timezone(self, tz):
-        '''
+        """
         Find and return the time zone if possible
-        '''
+        """
         # special Local timezone
         if tz == 'Local':
             try:

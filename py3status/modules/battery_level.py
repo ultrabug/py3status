@@ -204,7 +204,7 @@ class Py3status:
             self.py3.notify_user(message, 'info')
 
     def _extract_battery_information_from_acpi(self):
-        '''
+        """
         Get the battery info from acpi
 
         # Example acpi -bi raw output (Discharging):
@@ -218,8 +218,7 @@ class Py3status:
         Battery 0: design capacity 5566 mAh, last full capacity 5156 mAh = 92%
         Battery 1: Unknown, 98%
         Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%
-        '''
-
+        """
         def _parse_battery_info(acpi_battery_lines):
             battery = {}
             battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",

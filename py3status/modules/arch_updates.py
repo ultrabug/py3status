@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Display number of pending updates for Arch Linux.
 
