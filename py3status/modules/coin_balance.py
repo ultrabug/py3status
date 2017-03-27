@@ -125,7 +125,7 @@ class Py3status:
     protocol = 'http'
     username = None
 
-    def __init__(self):
+    def post_config_hook(self):
         self._active_coins = []
         self._config = None
         self._credential_cache = {}
