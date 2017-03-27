@@ -42,7 +42,7 @@ class Py3status:
     format = "VPN: {name}"
     pidfile = '/sys/class/net/vpn0/dev_id'
 
-    def __init__(self):
+    def post_config_hook(self):
         self.thread_started = False
         self.active = []
 
