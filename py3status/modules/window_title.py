@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Display current window title.
+Display window title.
 
 Prints the name of focused window at frequent intervals.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 0.5)
-    format: display format for window_title (default '{title}')
+    cache_timeout: refresh interval for this module (default 0.5)
+    format: display format for this module (default '{title}')
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
 
@@ -38,9 +38,6 @@ class Py3status:
     cache_timeout = 0.5
     format = '{title}'
     max_width = 120
-
-    def __init__(self):
-        self.title = ''
 
     def window_title(self):
         tree = loads(self.py3.command_output('i3-msg -t get_tree'))
