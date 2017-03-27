@@ -33,14 +33,13 @@ import requests
 
 class Py3status:
     # available configuration parameters
-    # can be customized in i3status.conf
     cache_timeout = 10
     format = "{stream_name} is live!"
     format_invalid = "{stream_name} does not exist!"
     format_offline = "{stream_name} is offline."
     stream_name = None
 
-    def __init__(self):
+    def post_config_hook(self):
         self._display_name = None
 
     def _get_display_name(self):
