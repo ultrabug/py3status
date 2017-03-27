@@ -29,7 +29,6 @@ from threading import Thread, Event
 class Py3status:
     """
     """
-
     # available configuration parameters
     format = '{state}'
     notification_manager = 'dunst'
@@ -37,7 +36,7 @@ class Py3status:
     state_off = 'OFF'
     state_on = 'ON'
 
-    def __init__(self):
+    def post_config_hook(self):
         self.running = Event()
         self.killed = Event()
 
