@@ -26,22 +26,25 @@ version 3.5 (milestone)
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
 * backlight module: fix mouse behavior thanks to @Tadly on #796, by @tobes
 * battery_level module: use helpers, by @lasers
-* bitcoin_price module: add format, by @lasers
+* bitcoin_price module: add format, use post_config_hook, by @lasers
 * bluetooth module: use helpers, by @lasers
 * bluetooth module: hcitool is deprecated (bluez-5.44) so it is better to use the dbus library directly, by @jmdana
 * check_tcp module: remove hardcoded strings, by @lasers
+* coin_balance: use post_config_hook, by @lasers
 * clementine module: use helpers, fix exception, by @lasers
 * clock module: add %s, %T for time_delta calculation, by @ShareDVI
 * clock module: use helpers, by @lasers
 * diskdata module: use helpers, by @lasers
 * diskdata module: fix stats for fs mounted multiple times by @eturner
 * dpms module: add button_off, button_toggle, cache_timeout by @lasers
+* do_not_disturb: use post_config_hook, by @lasers
 * dropbox: use helpers and format fix, by @lasers
 * external_script module: fix exception, remove warning, by @lasers
 * external_script: use helpers, by @lasers
 * frame module: use helpers, by @lasers
 * getjson: use py3.request() + bugfix, by @tobes
-* github module: use helpers, by @lasers
+* getjson: bugfix, by @maximbaz
+* github module: use helpers and post_config_hook, by @lasers
 * gpmdp module: fix permission, by @lasers
 * gpmdp module: use helpers, by @lasers
 * hamster module: use helpers, by @lasers
@@ -53,7 +56,7 @@ version 3.5 (milestone)
 * keyboard_layout module: use helpers, by @lasers
 * mpris module: fix mouse clicks by @ritze
 * mpris module: use helpers, by @lasers
-* net_iplist module: use helpers, by @lasers
+* net_iplist module: use helpers and post_config_hook, by @lasers
 * netdata module: cleanups and optimization, by @lasers
 * netdata module: add format, by @lasers
 * nvidia_temp module: use helpers, by @lasers
@@ -62,18 +65,25 @@ version 3.5 (milestone)
 * pomodoro module: use helpers, by @lasers
 * process_status module: add format, use helpers, by @lasers
 * rainbow module: add format, by @lasers
+* scratchpad_async: use post_config_hook, by @lasers
 * selinux module: fix exception, remove hardcoded strings, by @lasers
 * spaceapi module: add format by @lasers
 * sysdata module: avoid dividing by 0, by @guiniol
 * taskwarrior module: use helpers, by @lasers
 * taskwarrior: fix potential exceptions, by @lasers
+* tor_rate: use post_config_hook, by @lasers
+* twitch_streaming: use post_config_hook, by @lasers
 * vnstat module: use helpers, add exception, cleanup, by @lasers
 * volume_status: bugfix for pactl on debian systems, by @DextersHub
+* vpn_status: use post_config_hook, by @lasers
 * wifi module: fix device autodetection magic, by @lasers
 * wifi module: remove command_checks(iw), by @lasers
 * wifi module: support unicode wifi SSID, by @blahgeek
 * wifi module: use helpers, fix exception, by @lasers
+* window_title: cleanup, by @lasers
 * window_title_async module: do not treat workspace name as window name, by @valdur55
+* window_title_async module: use post_config_hook, by @lasers
+* xrandr_rotate: use post_config_hook, by @lasers
 * xsel module: add format, by @lasers
 * yandexdisk_status module: use helpers, remove hardcoded strings, fix exception, by @lasers
 
