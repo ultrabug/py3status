@@ -3,16 +3,16 @@
 Determine if you have an Internet Connection.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format: display format for online_status (default '{icon}')
-    icon_off: what to display when offline (default '■')
-    icon_on: what to display when online (default '●')
-    timeout: how long before deciding we're offline (default 2)
-    url: connect to this url to check the connection status
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default '{icon}')
+    icon_off: show when connection is offline (default '■')
+    icon_on: show when connection is online (default '●')
+    timeout: how many seconds before we announce offline (default 2)
+    url: name of url to use when checking for a connection
          (default 'http://www.google.com')
 
 Format placeholders:
-    {icon} display current online status
+    {icon} status icon
 
 Color options:
     color_bad: Offline
@@ -21,12 +21,13 @@ Color options:
 @author obb
 """
 
-import os
-import subprocess
 try:
-    # python3
+    # python 3
+    from urllib.parse import urlsplit
     from urllib.request import urlopen
-except:
+except ImportError:
+    # python 2
+    from urlparse import urlsplit
     from urllib2 import urlopen
 
 
@@ -57,35 +58,68 @@ class Py3status:
             ],
         }
 
-    def _connection_present(self):
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+        self.use_ping = None
+
         if '://' in self.url:
-            try:
-                urlopen(self.url, timeout=self.timeout)
-            except:
-                return False
-            else:
-                return True
-        else:
-            fnull = open(os.devnull, 'w')
-            return subprocess.call(['ping', '-c', '1', self.url],
-                                   stdout=fnull, stderr=fnull) == 0
+            self.ping_url = urlsplit(self.url).netloc
+
+    def _ping(self):
+        try:
+            self.py3.command_output(['ping', '-c', '1', self.ping_url])
+            return True
+        except:
+            return False
+
+    def _urlopen(self):
+        try:
+            urlopen(self.url, timeout=self.timeout)
+            return True
+        except:
+            return False
 
     def online_status(self):
+        icon = self.icon_off
+        color = self.color_off
 
-        if self._connection_present():
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'icon': self.icon_on}),
-                'color': self.py3.COLOR_GOOD
-            }
-        else:
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'icon': self.icon_off}),
-                'color': self.py3.COLOR_BAD
-            }
+        if self.use_ping:
+            self.py3.log("if use_ping: was true.")
+            if self._ping():
+                self.py3.log("...if ping (in ping), ping was good.")
+                icon = self.icon_on
+                color = self.color_on
+                self.use_ping = True
+            else:
+                self.py3.log("... if ping (in ping) ping was bad.")
+                self.use_ping = False
+        elif self._urlopen():
+            self.py3.log("elif urlopen: was true.")
+            icon = self.icon_on
+            color = self.color_on
+            if self._ping():
+                self.py3.log("... if ping (in urlopen), ping was good.")
+                self.use_ping = True
+            else:
+                self.py3.log("... if ping (in urlopen), ping was bad.")
+                self.use_ping = False
 
-        return response
+        if self.use_ping is None:
+            self.py3.log("if use_ping: was None.")
+            if self._ping():
+                self.py3.log("...if ping (in use_ping), ping was good.")
+                self.use_ping = True
+                icon = self.icon_on
+                color = self.color_on
+            else:
+                self.py3.log("...if ping (in use_ping), ping was bad.")
+                self.use_ping = False
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
+            'color': color}
 
 
 if __name__ == "__main__":
