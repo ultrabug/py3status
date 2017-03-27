@@ -69,7 +69,7 @@ class Py3status:
     ip_sep = ','
     remove_empty = True
 
-    def __init__(self):
+    def post_config_hook(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
         self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)/')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)/')
