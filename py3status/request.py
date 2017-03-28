@@ -63,6 +63,8 @@ class HttpResponse:
             else:
                 # unknown exception, so just raise it
                 raise RequestURLError(reason)
+        except socket.timeout:
+            raise RequestTimeout('request timed out')
 
     @property
     def status_code(self):
