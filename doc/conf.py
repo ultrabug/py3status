@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import re
 
+from py3status.autodoc import create_auto_documentation
 from py3status.version import version as py3_version
 
 # py3status documentation build configuration file, created by
@@ -164,3 +165,10 @@ version_info = [s for s in re.split('([0-9]+)', py3_version) if s.isdigit()][:2]
 version = '.'.join(version_info)
 # The full version, including alpha/beta/rc tags.
 release = py3_version
+
+
+def setup(sphinx):
+    """
+    This will be called by sphinx.
+    """
+    create_auto_documentation()
