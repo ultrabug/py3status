@@ -60,7 +60,8 @@ version 3.5 (milestone)
 * netdata module: cleanups and optimization, by @lasers
 * netdata module: add format, by @lasers
 * nvidia_temp module: use helpers, by @lasers
-* nvidia_temp module: fix exception. by @lasers
+* nvidia_temp module: fix exception, by @lasers
+* online_status: use helpers, by @lasers
 * pingdom module: add format, by @lasers
 * pomodoro module: use helpers, by @lasers
 * process_status module: add format, use helpers, by @lasers
