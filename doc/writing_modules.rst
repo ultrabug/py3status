@@ -87,7 +87,7 @@ self.py3
 
 This is a special object that gets injected into py3status
 modules. It helps provide functionality for the module, such as the
-``CACHE_FOREVER`` constant. Read more here: ref:`py3`.
+``CACHE_FOREVER`` constant. Read more about the :ref:`py3`.
 
 
 Example 2: Configuration parameters
@@ -184,7 +184,8 @@ The ``__init__()`` method is called when our class is instantiated.
 .. note::
     __init__ is called before any config parameters have been set.
 
-We use the ``safe_format()`` method of ``py3`` for formatting. Read more here: :ref:`py3`.
+We use the ``safe_format()`` method of ``py3`` for formatting. Read more about
+the :ref:`py3`.
 
 Example 4: Status string placeholders
 -------------------------------------

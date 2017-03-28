@@ -121,7 +121,7 @@ class Py3status:
             else:
                 self.format = u'{output}'
         # if no button then force open
-        if '{button}' not in self.format:
+        if not self.py3.format_contains(self.format, 'button'):
                 self.open = True
         self.py3.register_function('content_function', self._content_function)
         self.py3.register_function('urgent_function', self._urgent_function)

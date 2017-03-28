@@ -1,8 +1,6 @@
 Introduction
 ============
 
-.. image:: screenshots/main.png
-
 Using py3status, you can take control of your i3bar easily by:
 
 * using one of the available :ref:`modules` shipped with py3status
@@ -111,9 +109,9 @@ To get more details about all available modules and their configuration, use:
 
     $ py3status modules details
 
-All modules shipped with py3status are present as the Python source files in the `py3status/modules <../py3status/modules>`_ directory.
+All modules shipped with py3status are present as the Python source files in
+the ``py3status/modules`` directory.
 
-Most of them are **configurable directly from your current i3status.conf**, check them out to see all the configurable variables.
 
 Options
 ^^^^^^^
