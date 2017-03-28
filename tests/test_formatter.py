@@ -7,6 +7,7 @@ import platform
 
 from py3status.composite import Composite
 from py3status.formatter import Formatter
+from py3status.py3 import NoneColor
 
 is_pypy = platform.python_implementation() == 'PyPy'
 f = Formatter()
@@ -40,6 +41,7 @@ param_dict = {
                            {'full_text': 'NY 12:34'}]),
     'simple': Composite({'full_text': 'NY 12:34'}),
     'empty_composite': Composite(),
+    'comp_bad_color': Composite({'full_text': 'BAD', 'color': NoneColor()}),
 }
 
 
@@ -1011,4 +1013,11 @@ def test_not_zero_11():
     run_formatter({
         'format': '[\?not_zero {zero_str} {zero}]',
         'expected': '',
+    })
+
+
+def test_bad_composite_color():
+    run_formatter({
+        'format': '{comp_bad_color}',
+        'expected': 'BAD',
     })
