@@ -9,3 +9,10 @@ Welcome to py3status's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   intro
+   modules
+   configuration
+   writing_modules
+   py3
+   contributing

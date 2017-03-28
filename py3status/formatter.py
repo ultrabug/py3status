@@ -419,7 +419,10 @@ class Formatter:
                 continue
             # colors
             color_this = item.get('color')
-            if color_this and color_this[0] != '#':
+            if color_this and hasattr(color_this, 'none_setting'):
+                # NoneColor so remove.
+                del item['color']
+            elif color_this and color_this[0] != '#':
                 color_name = 'color_%s' % color_this
                 threshold_color_name = 'color_threshold_%s' % color_this
                 # substitute color

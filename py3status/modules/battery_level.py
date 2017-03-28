@@ -69,6 +69,12 @@ Requires:
 
 @author shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'color': '#FCE94F', 'full_text': u'\u26a1'}
+
+discharging
+{'color': '#FF0000', 'full_text': u'\u2340'}
 """
 
 from __future__ import division  # python2 compatibility

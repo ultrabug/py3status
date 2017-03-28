@@ -6,4 +6,9 @@ dist
 .cache/
 
 # sphinx build system
+doc/screenshots
 doc/_build
+modules-info.inc
+py3-constants-info.inc
+py3-exceptions-info.inc
+py3-methods-info.inc
