@@ -2,8 +2,12 @@
 
 import ast
 import inspect
+import os.path
+import re
+
 
 from py3status.docstrings import core_module_docstrings
+from py3status.screenshots import create_screenshots, get_samples
 from py3status.py3 import Py3
 
 
@@ -36,19 +40,61 @@ def markdown_2_rst(lines):
     return out
 
 
+def file_sort(my_list):
+    """
+    Sort a list of files in a nice way.
+    eg item-10 will be after item-9
+    """
+    def alphanum_key(key):
+        """
+        Split the key into str/int parts
+        """
+        return [int(s) if s.isdigit() else s for s in re.split('([0-9]+)', key)]
+
+    my_list.sort(key=alphanum_key)
+    return my_list
+
+
+def screenshots(screenshots_data, module_name):
+    """
+    Create .rst output for any screenshots a module may have.
+    """
+    shots = screenshots_data.get(module_name)
+    if not shots:
+        return('')
+
+    out = []
+    for shot in file_sort(shots):
+        if not os.path.exists('../doc/screenshots/%s.png' % shot):
+            continue
+        out.append(
+            u'\n.. image:: screenshots/{}.png\n\n'.format(shot)
+        )
+    return u''.join(out)
+
+
 def create_module_docs():
     """
     Create documentation for modules.
     """
     data = core_module_docstrings(format='rst')
+    # get screenshot data
+    screenshots_data = {}
+    samples = get_samples()
+    for sample in samples.keys():
+        module = sample.split('-')[0]
+        if module not in screenshots_data:
+            screenshots_data[module] = []
+        screenshots_data[module].append(sample)
 
     out = []
     # details
     for module in sorted(data.keys()):
         out.append('\n.. _module_%s:\n' % module)  # reference for linking
         out.append(
-            '\n{name}\n{underline}\n\n{details}\n'.format(
+            '\n{name}\n{underline}\n\n{screenshots}{details}\n'.format(
                 name=module,
+                screenshots=screenshots(screenshots_data, module),
                 underline='-' * len(module),
                 details=''.join(markdown_2_rst(data[module])).strip()
             )
@@ -209,6 +255,8 @@ def create_auto_documentation():
     """
     Create any include files needed for sphinx documentation
     """
+    create_screenshots()
+
     create_module_docs()
     create_py3_docs()
 

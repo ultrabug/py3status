@@ -69,7 +69,15 @@ def core_module_docstrings(include_core=True, include_user=False, config=None,
         path, module_type = paths[name]
         with open(path) as f:
             module = ast.parse(f.read())
-            docstring = ast.get_docstring(module)
+            raw_docstring = ast.get_docstring(module)
+
+            # prevent issue when no docstring exists
+            if raw_docstring is None:
+                continue
+
+            # remove any sample outputs
+            parts = re.split('^SAMPLE OUTPUT$', raw_docstring, flags=re.M)
+            docstring = parts[0]
 
             if format == 'md':
                 docstring = [
