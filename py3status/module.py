@@ -772,7 +772,10 @@ class Module(Thread):
                     if self.config['debug']:
                         self._py3_wrapper.log(
                             'method {} returned {} '.format(meth, result))
+                    # module working correctly so ensure module works as
+                    # expected
                     self.allow_config_clicks = True
+                    self.error_messages = None
                 except ModuleErrorException as e:
                     # module has indicated that it has an error
                     self.runtime_error(e.msg, meth)
