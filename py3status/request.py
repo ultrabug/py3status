@@ -38,7 +38,8 @@ class HttpResponse:
             # Make sure the querystring params are correctly encoded
             url_params = parse_qsl(parts[3])
             if params:
-                url_params = url_params.update(params)
+                for key, value in params.items():
+                    url_params.append((key, value))
             parts[3] = urlencode(url_params)
             # rebuild the url
             url = urlunsplit(parts)
