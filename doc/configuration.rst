@@ -3,6 +3,7 @@
 Using modules
 =============
 
+py3status comes with a large range of :ref:`modules`.
 Modules in py3status are configured using your usual ``i3status.conf``.
 
 py3status tries to find the config in the following locations:
@@ -17,14 +18,6 @@ py3status tries to find the config in the following locations:
 
 You can also specify the config location using ``py3status -c <path to config
 file>`` in your i3 configuration file.
-
-Available modules
------------------
-
-py3status comes with a large range of modules.
-
-`List of available modules and their configuration details
-<https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md>`_
 
 
 Loading a py3status module and ordering modules output
@@ -226,8 +219,7 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
 Grouping Modules
 ----------------
 
-The `group
-<https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md#group>`_
+The :ref:`module_group`
 module allows you to group several modules together.  Only one of the
 modules are displayed at a time.  The displayed module can either be cycled
 through automatically or by user action (the default, on mouse scroll).
@@ -260,8 +252,7 @@ This module is very powerful and allows you to save a lot of space on your bar.
         }
     }
 
-The `frame
-<https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md#frame>`_
+The :ref:`module_frame`
 module also allows you to group several modules together, however in a frame
 all the modules are shown.  This allows you to have more than one module shown
 in a group.
@@ -389,7 +380,7 @@ below.
     }
 
     # run thunar when I left click on the / disk info module
-    disk / {
+    disk "/" {
         format = "/ %free"
         on_click 1 = "exec thunar /"
     }
