@@ -95,7 +95,7 @@ Tested players:
     mpDris2 (mpris extension for mpd)
     vlc
 
-@author Moritz Lüdecke, tobes
+@author Moritz Lüdecke, tobes, valdur55
 """
 
 from datetime import timedelta
