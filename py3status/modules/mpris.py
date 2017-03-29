@@ -375,29 +375,26 @@ class Py3status:
         """
         Add player to mpris_players
         """
-        try:
-            player = self._dbus.get(player_id, SERVICE_BUS_URL)
-            if player_id.startswith(SERVICE_BUS):
-                if player.Identity not in self._mpris_names:
-                    self._mpris_names[player.Identity] = player_id.split('.')[-1]
-                    for p in self._mpris_players.values():
-                        if not p['name'] and p['identity'] in self._mpris_names:
-                            p['name'] = self._mpris_names[p['identity']]
-                            p['full_name'] = u'{} {}'.format(p['name'], p['index'])
-                return False
-            status = player.PlaybackStatus
-            state_priority = WORKING_STATES.index(status)
-            identity = player.Identity
-            if identity not in self._mpris_name_index:
-                self._mpris_name_index[identity] = 0
-            index = self._mpris_name_index[identity]
-            self._mpris_name_index[identity] += 1
-            name = self._mpris_names.get(identity)
-            subscription = player.PropertiesChanged.connect(
-                self._player_monitor(player_id)
-            )
-        except:
+        if not player_id.startswith(SERVICE_BUS):
             return False
+
+        player = self._dbus.get(player_id, SERVICE_BUS_URL)
+
+        self._mpris_names[player.Identity] = player_id.split('.')[-1]
+        for p in self._mpris_players.values():
+            if not p['name'] and p['identity'] in self._mpris_names:
+                p['name'] = self._mpris_names[p['identity']]
+                p['full_name'] = u'{} {}'.format(p['name'], p['index'])
+
+        status = player.PlaybackStatus
+        state_priority = WORKING_STATES.index(status)
+        identity = player.Identity
+        if identity not in self._mpris_name_index:
+            self._mpris_name_index[identity] = 0
+        index = self._mpris_name_index[identity]
+        self._mpris_name_index[identity] += 1
+        name = self._mpris_names.get(identity)
+        subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
 
         self._mpris_players[player_id] = {
             '_dbus_player': player,
@@ -426,9 +423,8 @@ class Py3status:
     def _get_players(self):
         bus = self._dbus.get('org.freedesktop.DBus')
         for player in bus.ListNames():
-            if player.startswith(':') or player.startswith(SERVICE_BUS):
-                if not self._add_player(player):
-                    continue
+            self._add_player(player)
+
         self._set_player()
 
     def _start_listener(self):
