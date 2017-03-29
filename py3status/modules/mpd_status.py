@@ -10,6 +10,10 @@ Configuration parameters:
     hide_when_stopped: hide the status if state is stopped (default True)
     host: mpd host (default 'localhost')
     max_width: maximum status length (default 120)
+    mpd_no_auth: show this when mpd authentication failed
+        (default 'mpd: authentication failed')
+    mpd_no_conn: show this when mpd connection refused
+        (default 'mpd: connection refused')
     password: mpd password (default None)
     port: mpd port (default '6600')
     state_pause: label to display for "paused" state (default '[pause]')
@@ -104,6 +108,8 @@ class Py3status:
     hide_when_stopped = True
     host = 'localhost'
     max_width = 120
+    mpd_no_auth = 'mpd: authentication failed'
+    mpd_no_conn = 'mpd: connection refused'
     password = None
     port = '6600'
     state_pause = '[pause]'
@@ -170,10 +176,10 @@ class Py3status:
                 text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
         except socket.error:
-            text = "Failed to connect to mpd!"
+            text = self.py3.safe_format(self.mpd_no_conn)
             state = None
         except CommandError:
-            text = "Failed to authenticate to mpd!"
+            text = self.py3.safe_format(self.mpd_no_auth)
             state = None
             c.disconnect()
         else:
