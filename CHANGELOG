@@ -56,6 +56,7 @@ version 3.5 (milestone)
 * keyboard_layout module: use helpers, by @lasers
 * mpris module: fix mouse clicks by @ritze
 * mpris module: use helpers, by @lasers
+* mpris module: fixes to player registration, by valdur55
 * net_iplist module: use helpers and post_config_hook, by @lasers
 * netdata module: cleanups and optimization, by @lasers
 * netdata module: add format, by @lasers
