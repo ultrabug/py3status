@@ -188,20 +188,18 @@ class Py3status:
         if len(text) > self.max_width:
             text = u'{}...'.format(text[:self.max_width - 3])
 
-        response = {
+        if state == 'play':
+            color = self.color_play
+        elif state == 'pause':
+            color = self.color_pause
+        else:
+            color = self.color_stop
+
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': text,
+            'color': color
         }
-
-        if state:
-            if state == 'play':
-                response['color'] = self.color_play
-            elif state == 'pause':
-                response['color'] = self.color_pause
-            elif state == 'stop':
-                response['color'] = self.color_stop
-
-        return response
 
 
 if __name__ == "__main__":
