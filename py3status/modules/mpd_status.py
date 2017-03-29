@@ -8,6 +8,7 @@ Configuration parameters:
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
+    hide_when_playing: hide the status if state is playing (default False)
     host: mpd host (default 'localhost')
     max_width: maximum status length (default 120)
     mpd_no_auth: show this when mpd authentication failed
@@ -105,6 +106,7 @@ class Py3status:
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
     hide_when_paused = False
+    hide_when_playing = False
     hide_when_stopped = True
     host = 'localhost'
     max_width = 120
@@ -151,6 +153,7 @@ class Py3status:
             state = status.get('state')
 
             if ((state == 'pause' and self.hide_when_paused) or
+                    (state == 'play' and self.hide_when_playing) or
                     (state == 'stop' and self.hide_when_stopped)):
                 text = ''
 
