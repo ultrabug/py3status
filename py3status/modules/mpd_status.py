@@ -17,9 +17,9 @@ Configuration parameters:
     state_stop: label to display for "stopped" state (default '[stop]')
 
 Color options:
-    color_pause: Paused, default color_degraded
-    color_play: Playing, default color_good
-    color_stop: Stopped, default color_bad
+    color_pause: Paused, defaults to color_degraded
+    color_play: Playing, defaults to color_good
+    color_stop: Stopped, defaults to color_bad
 
 Format placeholders:
     {state} state (paused, playing. stopped) can be defined via `state_..`
@@ -117,6 +117,11 @@ class Py3status:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
 
+        # Assign colors
+        self.color_pause = self.py3.COLOR_PAUSE or self.py3.COLOR_DEGRADED
+        self.color_play = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
+        self.color_stop = self.py3.COLOR_STOP or self.py3.COLOR_BAD
+
     def _state_character(self, state):
         if state == 'play':
             return self.state_play
@@ -184,12 +189,11 @@ class Py3status:
 
         if state:
             if state == 'play':
-                response['color'] = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
+                response['color'] = self.color_play
             elif state == 'pause':
-                response['color'] = (self.py3.COLOR_PAUSE or
-                                     self.py3.COLOR_DEGRADED)
+                response['color'] = self.color_pause
             elif state == 'stop':
-                response['color'] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
+                response['color'] = self.color_stop
 
         return response
 
