@@ -16,9 +16,9 @@ Configuration parameters:
         (default 'mpd: connection refused')
     password: mpd password (default None)
     port: mpd port (default '6600')
-    state_pause: label to display for "paused" state (default '[pause]')
-    state_play: label to display for "playing" state (default '[play]')
-    state_stop: label to display for "stopped" state (default '[stop]')
+    state_pause: show this when mpd paused playback (default '[pause]')
+    state_play: show this when mpd started playback (default '[play]')
+    state_stop: show this when mpd stopped playback (default '[stop]')
 
 Color options:
     color_pause: Paused, defaults to color_degraded
@@ -128,7 +128,7 @@ class Py3status:
         self.color_play = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
         self.color_stop = self.py3.COLOR_STOP or self.py3.COLOR_BAD
 
-    def _state_character(self, state):
+    def _get_state(self, state):
         if state == 'play':
             return self.state_play
         elif state == 'pause':
@@ -139,6 +139,7 @@ class Py3status:
 
     def current_track(self):
         try:
+            state = None
             c = MPDClient()
             c.connect(host=self.host, port=self.port)
             if self.password:
@@ -147,7 +148,6 @@ class Py3status:
             status = c.status()
             song = int(status.get('song', 0))
             next_song = int(status.get('nextsong', 0))
-
             state = status.get('state')
 
             if ((state == 'pause' and self.hide_when_paused) or
@@ -165,8 +165,7 @@ class Py3status:
                 except IndexError:
                     next_song = {}
 
-                song['state'] = next_song['state'] \
-                              = self._state_character(state)
+                song['state'] = next_song['state'] = self._get_state(state)
 
                 def attr_getter(attr):
                     if attr.startswith('next_'):
@@ -177,10 +176,8 @@ class Py3status:
 
         except socket.error:
             text = self.py3.safe_format(self.mpd_no_conn)
-            state = None
         except CommandError:
             text = self.py3.safe_format(self.mpd_no_auth)
-            state = None
             c.disconnect()
         else:
             c.disconnect()
