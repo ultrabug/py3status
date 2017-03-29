@@ -380,17 +380,20 @@ class Py3status:
 
         player = self._dbus.get(player_id, SERVICE_BUS_URL)
 
-        self._mpris_names[player.Identity] = player_id.split('.')[-1]
-        for p in self._mpris_players.values():
-            if not p['name'] and p['identity'] in self._mpris_names:
-                p['name'] = self._mpris_names[p['identity']]
-                p['full_name'] = u'{} {}'.format(p['name'], p['index'])
+        if player.Identity not in self._mpris_names:
+            self._mpris_names[player.Identity] = player_id.split('.')[-1]
+            for p in self._mpris_players.values():
+                if not p['name'] and p['identity'] in self._mpris_names:
+                    p['name'] = self._mpris_names[p['identity']]
+                    p['full_name'] = u'{} {}'.format(p['name'], p['index'])
 
         status = player.PlaybackStatus
         state_priority = WORKING_STATES.index(status)
         identity = player.Identity
+
         if identity not in self._mpris_name_index:
             self._mpris_name_index[identity] = 0
+
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
         name = self._mpris_names.get(identity)
