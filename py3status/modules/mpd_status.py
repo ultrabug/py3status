@@ -6,9 +6,9 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 2)
     format: display format for this module
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
-    hide_when_paused: hide the status if state is paused (default False)
-    hide_when_stopped: hide the status if state is stopped (default True)
-    hide_when_playing: hide the status if state is playing (default False)
+    hide_when_pause: hide status when mpd paused playback (default False)
+    hide_when_play: hide status when mpd started playback (default False)
+    hide_when_stop: hide status when mpd stopped playback (default True)
     host: specifies a host for access to mpd (default 'localhost')
     max_width: specifies a maximum width length (default 120)
     mpd_no_auth: show this when mpd authentication failed
@@ -110,9 +110,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
-    hide_when_paused = False
-    hide_when_playing = False
-    hide_when_stopped = True
+    hide_when_pause = False
+    hide_when_play = False
+    hide_when_stop = True
     host = 'localhost'
     max_width = 120
     mpd_no_auth = 'mpd: authentication failed'
@@ -122,6 +122,22 @@ class Py3status:
     state_pause = '[pause]'
     state_play = '[play]'
     state_stop = '[stop]'
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'hide_when_when_paused',
+                    'new': 'hide_when_pause',
+                    'msg': 'obsolete parameter use `hide_when_pause`',
+                },
+                {
+                    'param': 'hide_when_when_stopped',
+                    'new': 'hide_when_stop',
+                    'msg': 'obsolete parameter use `hide_when_stop`',
+                },
+            ],
+        }
 
     def post_config_hook(self):
         # Convert from %placeholder% to {placeholder}
@@ -157,9 +173,9 @@ class Py3status:
             next_song = int(status.get('nextsong', 0))
             state = status.get('state')
 
-            if ((state == 'pause' and self.hide_when_paused) or
-                    (state == 'play' and self.hide_when_playing) or
-                    (state == 'stop' and self.hide_when_stopped)):
+            if ((state == 'pause' and self.hide_when_pause) or
+                    (state == 'play' and self.hide_when_play) or
+                    (state == 'stop' and self.hide_when_stop)):
                 text = ''
 
             else:
