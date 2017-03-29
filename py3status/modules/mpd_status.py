@@ -3,20 +3,20 @@
 Display song currently playing in mpd.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 2)
-    format: template string (see below)
+    cache_timeout: refresh interval for this module (default 2)
+    format: display format for this module
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
     hide_when_playing: hide the status if state is playing (default False)
-    host: mpd host (default 'localhost')
-    max_width: maximum status length (default 120)
+    host: specifies a host for access to mpd (default 'localhost')
+    max_width: specifies a maximum width length (default 120)
     mpd_no_auth: show this when mpd authentication failed
         (default 'mpd: authentication failed')
     mpd_no_conn: show this when mpd connection refused
         (default 'mpd: connection refused')
-    password: mpd password (default None)
-    port: mpd port (default '6600')
+    password: specifies a password for access to mpd (default None)
+    port: specifies a port for access to mpd (default '6600')
     state_pause: show this when mpd paused playback (default '[pause]')
     state_play: show this when mpd started playback (default '[play]')
     state_stop: show this when mpd stopped playback (default '[stop]')
@@ -37,7 +37,12 @@ Format placeholders:
     playing.
 
 Requires:
-    python-mpd2: (NOT python2-mpd2)
+    python-mpd2: a Python client library for MPD
+
+__Note: python2-mpd2, not to be confused with original python-mpd2 above, is
+a fork of original python-mpd2 with enhancement features (starting with 0.5)
+which are NOT backward compatibles with original python2-mpd above.
+
 ```
 # pip install python-mpd2
 ```
@@ -54,7 +59,7 @@ Examples of `format`
 {state} \[{time}\] [{title}|{file}] → [{next_title}|{next_file}]
 ```
 
-@author shadowprince, zopieux
+@author shadowprince, zopieux, tobes, lasers
 @license Eclipse Public License
 
 SAMPLE OUTPUT
@@ -139,7 +144,7 @@ class Py3status:
             return self.state_stop
         return '?'
 
-    def current_track(self):
+    def mpd_status(self):
         try:
             state = None
             c = MPDClient()
