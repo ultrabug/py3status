@@ -26,6 +26,7 @@ Color options:
 import dbus
 
 DEFAULT_FORMAT = 'BT[: {format_device}]'
+STRING_NOT_STARTED = "service isn't running"
 
 
 def get_connected_devices():
@@ -91,7 +92,10 @@ class Py3status:
             self.py3.log(msg)
 
     def bluetooth(self):
-        devices = get_connected_devices()
+        try:
+            devices = get_connected_devices()
+        except dbus.DBusException:
+            self.py3.error(STRING_NOT_STARTED)
 
         if devices:
             data = []
