@@ -4,9 +4,9 @@ Display bluetooth status.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    device_separator: show separator only if more than one (default '|')
     format: display format for this module (default 'BT[: {format_device}]')
     format_device: display format for bluetooth devices (default '{name}')
+    format_separator: show separator only if more than one (default '\|')
 
 Format placeholders:
     {format_device} format for bluetooth devices
@@ -60,14 +60,40 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    device_separator = '|'
     format = DEFAULT_FORMAT
     format_device = '{name}'
+    format_separator = '\|'
+
+    class Meta:
+        def deprecate_function(config):
+            if (not config.get('format_separator') and
+                    config.get('device_separator')):
+                sep = config.get('device_separator')
+                sep = sep.replace('\\', '\\\\')
+                sep = sep.replace('[', '\[')
+                sep = sep.replace(']', '\]')
+                sep = sep.replace('|', '\|')
+
+                return {'format_separator': sep}
+            else:
+                return {}
+
+        deprecated = {
+            'function': [
+                {
+                    'function': deprecate_function,
+                },
+            ],
+            'remove': [
+                {
+                    'param': 'device_separator',
+                    'msg': 'obsolete set using `format_separator`',
+                },
+            ],
+        }
 
     def post_config_hook(self):
-        # Do deprecation stuff here.  Because of the complexity we can't use
-        # the usual deprecation methods
-        # THIS IS A SPECIAL CASE DO NOT USE AS EXAMPLE CODE.
+        # DEPRECATION WARNING. SPECIAL CASE. DO NOT USE THIS AS EXAMPLE.
         format_prefix = getattr(self, 'format_prefix', None)
         format_no_conn = getattr(self, 'format_no_conn', None)
         format_no_conn_prefix = getattr(self, 'format_no_conn_prefix', None)
@@ -106,16 +132,20 @@ class Py3status:
         if devices:
             data = []
             for mac, name in devices:
-                data.append(self.py3.safe_format(self.format_device, {'name': name, 'mac': mac}))
-            full_text = self.py3.composite_join(self.device_separator, data)
+                data.append(self.py3.safe_format(
+                    self.format_device, {'name': name, 'mac': mac}))
+
+            format_separator = self.py3.safe_format(self.format_separator)
+            format_device = self.py3.composite_join(format_separator, data)
             color = self.py3.COLOR_GOOD
         else:
-            full_text = None
+            format_device = None
             color = self.py3.COLOR_BAD
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'format_device': full_text}),
+            'full_text': self.py3.safe_format(
+                self.format, {'format_device': format_device}),
             'color': color,
         }
 
