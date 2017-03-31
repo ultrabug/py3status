@@ -666,6 +666,9 @@ class Module(Thread):
                     click_method(self.i3status_thread.json_list,
                                  self.config['py3_config']['general'], event)
                 self.set_updated()
+            else:
+                # nothing has happened so no need for refresh
+                self.prevent_refresh = True
         except Exception:
             msg = 'on_click event in `{}` failed'.format(self.module_full_name)
             self._py3_wrapper.report_exception(msg)
