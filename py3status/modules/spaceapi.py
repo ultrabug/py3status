@@ -3,6 +3,7 @@
 Display status of a given hackerspace.
 
 Configuration parameters:
+    button_refresh: mouse button to refresh this module (default 2)
     button_url: mouse button to open URL sent in space's API (default 3)
     cache_timeout: refresh interval for this module (default 60)
     format: display format for this module (default '{state}[ {lastchanged}]')
@@ -41,6 +42,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_refresh = 2
     button_url = 3
     cache_timeout = 60
     format = '{state}[ {lastchanged}]'
@@ -113,6 +115,8 @@ class Py3status:
         button = event['button']
         if self._url and self.button_url == button:
             self.py3.command_run('xdg-open {}'.format(self._url))
+            self.py3.prevent_refresh()
+        elif button != self.button_refresh:
             self.py3.prevent_refresh()
 
 
