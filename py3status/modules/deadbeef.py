@@ -29,7 +29,7 @@ from subprocess import check_output, CalledProcessError
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
-    delimiter = u'¥'
+    delimiter = '¥'
     format = '{artist} - {title}'
 
     # return error occurs
@@ -60,34 +60,36 @@ class Py3status:
         try:
             # get all properties using ¥ as delimiter
             status = check_output(['deadbeef',
-                                   '--nowplaying',
-                                   self.delimiter.join(['%a',
-                                                        '%t',
-                                                        '%l',
-                                                        '%e',
-                                                        '%y',
-                                                        '%n'])])
+                                   '--nowplaying-tf',
+                                   self.delimiter.join(['%artist%',
+                                                        '%title%',
+                                                        '%length%',
+                                                        '%playback_time%',
+                                                        '%year%',
+                                                        '%tracknumber%',
+                                                        '%isplaying%'])])
 
             if status == 'nothing':
                 return self._empty_response()
 
             # split properties using special delimiter
             parts = status.split(self.delimiter)
-            if len(parts) == 6:
-                artist, title, length, elapsed, year, tracknum = parts
+            if len(parts) == 7:
+                artist, title, length, elapsed, year, tracknum, isplaying = parts
             else:
                 return self._error_response(self.py3.COLOR_BAD)
-
             response = {
                 'cached_until': self.py3.time_in(self.cache_timeout),
                 'full_text': self.py3.safe_format(self.format,
-                                                  dict(artist=artist,
-                                                       title=title,
-                                                       length=length,
-                                                       elapsed=elapsed,
-                                                       year=year,
-                                                       tracknum=tracknum)
-                                                  )
+                                                dict(artist=artist,
+                                                    title=title,
+                                                    length=length,
+                                                    elapsed=elapsed,
+                                                    year=year,
+                                                    tracknum=tracknum,
+                                                    isplaying=isplaying)
+                                                ),
+                'color': self.py3.COLOR_GOOD if isplaying == "1" else self.py3.COLOR_DEGRADED
             }
             return response
         except:
