@@ -6,6 +6,9 @@ import os.path
 import re
 
 
+from pygments.lexer import RegexLexer
+import pygments.token as pygments_token
+
 from py3status.docstrings import core_module_docstrings
 from py3status.screenshots import create_screenshots, get_samples
 from py3status.py3 import Py3
@@ -16,6 +19,30 @@ CONSTANT_PARAMS = [
     ('log', 'level'),
     ('notify_user', 'level'),
 ]
+
+
+class Py3statusLexer(RegexLexer):
+    """
+    A simple lexer for py3status configuration files.
+    This helps make the documentation more beautiful
+    """
+    name = 'Py3status'
+    aliases = ['py3status']
+    filenames = ['*.conf']
+
+    tokens = {
+        'root': [
+            (r'#.*?$', pygments_token.Comment),
+            (r'"(?:[^"\\]|\\.)*"', pygments_token.String.Double),
+            (r"'(?:[^'\\]|\\.)*'", pygments_token.String.Single),
+            (r'([0-9]+)|([0-9]*)\.([0-9]*)', pygments_token.Number),
+            (r'True|False|None', pygments_token.Literal),
+            (r'(\+=)|=', pygments_token.Operator),
+            (r'\s+', pygments_token.Text),
+            (r'[{}\[\](),:]', pygments_token.Text,),
+            (r'\S+', pygments_token.Keyword),
+        ],
+    }
 
 
 def markdown_2_rst(lines):
