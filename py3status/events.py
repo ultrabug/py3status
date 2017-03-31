@@ -174,7 +174,7 @@ class Events(Thread):
             # unless the on_click event called py3.prevent_refresh()
             if not module.prevent_refresh:
                 self.py3_wrapper.refresh_modules(module_name)
-            default_event = False
+                default_event = False
 
         if default_event:
             # default button 2 action is to clear this method's cache
