@@ -102,7 +102,7 @@ class ConfigParser:
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
         r"|('(?:[^'\\]|\\.)*')"  # single quoted string
-        '|([a-z_][a-z0-9_]*(:[a-z0-9_]+)?)'  # token
+        '|([a-z_][a-z0-9_\-]*(:[a-z0-9_]+)?)'  # token
         '|(-?\d+\.\d*)|(-?\.\d+)'  # float
         '|(-?\d+)'  # int
         ')'
