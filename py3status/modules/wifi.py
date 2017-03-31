@@ -11,9 +11,9 @@ Configuration parameters:
     device: Wireless device name (default "wlan0")
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
-    format_down: Output when disconnected (default "W: down")
-    format_up: See placeholders below
-        (default "W: {bitrate} {signal_percent} {ssid}")
+    format: Display format for this module (default 'W[: {status}]')
+    format_down: Output when disconnected (default 'down')
+    format_up: Output when connected (default '{bitrate} {signal_percent} {ssid}')
     round_bitrate: If true, bit rate is rounded to the nearest whole number
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
@@ -51,8 +51,10 @@ In this case you will need to use the `use_sudo` configuration parameter.__
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'W: 54.0 MBit/s 100% Chicken Remixed'}
 """
+
 import re
 import math
+
 STRING_ERROR = "iw: command failed"
 
 
@@ -66,8 +68,9 @@ class Py3status:
     cache_timeout = 10
     device = 'wlan0'
     down_color = 'bad'
-    format_down = 'W: down'
-    format_up = 'W: {bitrate} {signal_percent} {ssid}'
+    format = 'W[: {status}]'
+    format_down = 'down'
+    format_up = '{bitrate} {signal_percent} {ssid}'
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
@@ -163,9 +166,11 @@ class Py3status:
             quality = 0
         icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1)))]
 
+        # wifi down
         if ssid is None:
             full_text = self.py3.safe_format(self.format_down)
             color = getattr(self.py3, 'COLOR_{}'.format(self.down_color.upper()))
+        # wifi up
         else:
             color = self.py3.COLOR_GOOD
             if bitrate:
@@ -201,7 +206,8 @@ class Py3status:
 
         return {'cache_until': self.py3.time_in(self.cache_timeout),
                 'color': color,
-                'full_text': full_text}
+                'full_text': self.py3.safe_format(
+                    self.format, {'status': full_text})}
 
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)
