@@ -78,12 +78,10 @@ xrandr {
 
 @author ultrabug
 """
-import shlex
 
 from collections import deque
 from collections import OrderedDict
 from itertools import combinations
-from subprocess import call, Popen, PIPE
 from time import sleep
 
 
@@ -138,13 +136,8 @@ class Py3status:
             'disconnected': OrderedDict()
         })
 
-        current = Popen(['xrandr'], stdout=PIPE)
-        for line in current.stdout.readlines():
-            try:
-                # python3
-                line = line.decode()
-            except:
-                pass
+        current = self.py3.command_output('xrandr')
+        for line in current.splitlines():
             try:
                 s = line.split(' ')
                 if s[1] == 'connected':
@@ -293,7 +286,7 @@ class Py3status:
             else:
                 cmd += ' --off'
         #
-        code = call(shlex.split(cmd))
+        code = self.py3.command_output(cmd)
         if code == 0:
             self.active_comb = combination
             self.active_layout = self.displayed
@@ -321,10 +314,10 @@ class Py3status:
                         continue
                     # switch to workspace
                     cmd = 'i3-msg workspace "{}"'.format(workspace)
-                    call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
+                    self.py3.command_run(cmd)
                     # move it to output
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
-                    call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
+                    self.py3.command_run(cmd)
                     # log this
                     self.py3.log('moved workspace {} to output {}'.format(
                         workspace, output))
@@ -333,7 +326,7 @@ class Py3status:
         """
         Send a SIGUSR1 signal to py3status to force a bar refresh.
         """
-        call(shlex.split('killall -s USR1 py3status'))
+        self.py3.command_run('killall -s USR1 py3status')
 
     def _fallback_to_available_output(self):
         """
