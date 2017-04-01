@@ -38,8 +38,6 @@ Color options:
 @license BSD
 """
 
-from subprocess import Popen, PIPE
-
 
 class Py3status:
     """
@@ -57,24 +55,14 @@ class Py3status:
     def post_config_hook(self):
         self.displayed = ''
 
-    def _call(self, cmd):
-        process = Popen(cmd, stdout=PIPE, shell=True)
-        output = process.communicate()[0] or ""
-        try:
-            # python3
-            output = output.decode()
-        except:
-            pass
-        return output.strip()
-
     def _get_all_outputs(self):
         cmd = 'xrandr -q | grep " connected [^(]" | cut -d " " -f1'
-        return self._call(cmd).split()
+        return self.py3.command_output(cmd, shell=True).splitlines()
 
     def _get_current_rotation_icon(self, all_outputs):
         output = self.screen or all_outputs[0]
         cmd = 'xrandr -q | grep "^' + output + '" | cut -d " " -f4'
-        output = self._call(cmd)
+        output = self.py3.command_output(cmd, shell=True).strip()
         # xrandr may skip printing the 'normal', in which case the output would
         # start from '('
         is_horizontal = (output.startswith('(') or
@@ -88,8 +76,8 @@ class Py3status:
             rotation = self.vertical_rotation
         outputs = [self.screen] if self.screen else self._get_all_outputs()
         for output in outputs:
-            cmd = 'exec xrandr --output ' + output + ' --rotate ' + rotation
-            Popen(['i3-msg', cmd], stdout=PIPE)
+            cmd = 'xrandr --output ' + output + ' --rotate ' + rotation
+            self.py3.command_run(cmd)
 
     def _switch_selection(self):
         if self.displayed == self.horizontal_icon:
