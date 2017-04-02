@@ -1,8 +1,8 @@
-Contributing
-============
+Developing and Contributing
+===========================
 
-Contributions to py3status either to the core code or for new or
-existing modules are welcome.
+Contributions to py3status including documentation, the core code, or for
+new or existing modules are welcome.
 
 What you will need
 ------------------
@@ -14,6 +14,42 @@ What you will need
 - pytest pytest-flake8
     - https://pypi.python.org/pypi/pytest
     - https://pypi.python.org/pypi/pytest-flake8
+
+Setting up a developement environment
+-------------------------------------
+
+First clone the git repository
+
+.. code-block:: shell
+
+    # using https
+    git clone https://github.com/ultrabug/py3status.git
+
+    # using ssh (needs github account)
+    git clone git@github.com:ultrabug/py3status.git
+
+Run setup.py to install
+
+.. code-block:: shell
+
+    # cd to the directory containing setup.py
+    cd py3status
+
+    # install you may need to use sudo to have required permissions
+    python setup.py develop
+
+you can now run py3status and any changes to the code you make will active.
+
+
+.. note::
+    py3status will only be installed for the version of python that you used
+    to run ``setup.py``.  To run against a different version of python
+    You should repeat the above step eg ``python2.7 setup.py develop``.
+
+    If you wish to have multiple versions available. First run ``setup.py
+    develop`` using the required python versions. Next copy the
+    executable eg ``sudo cp /usr/bin/py3status /usr/bin/py3status2`` Then
+    edit the hashbang to point to your chosen python version.
 
 Python versions
 ---------------
@@ -73,3 +109,28 @@ functionnalities), remove it with:
 .. code-block:: shell
 
     setcap -r `which i3status`
+
+Building documentation
+----------------------
+
+Py3status documentation is build using ``sphinx``.  The requirements
+needed to build the documentation are in ``doc/doc-requirements.txt``
+make sure you have them installed.
+
+To build the documentation.
+
+.. code-block:: shell
+
+    # cd to the doc directory
+    cd doc
+
+    # build documentation
+    make html
+
+The created documentation will be found in ``_build/html``
+
+Contributions
+-------------
+
+To make a contribution please create a
+`pull request <https://github.com/ultrabug/py3status/pulls>`_.
