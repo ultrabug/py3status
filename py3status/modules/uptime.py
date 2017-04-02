@@ -16,7 +16,7 @@ Format placeholders:
     {seconds} seconds
 
 Note: If you don't use one of the placeholders, the value will be carried over
-to the next unit. For example, given an uptime of 1h 30min:
+    to the next unit. For example, given an uptime of 1h 30min:
     If you use {minutes} as your only placeholder, then its value will be 90.
     If you use {hours} and {minutes}, then its values will be 1 and 30, respectively.
 
