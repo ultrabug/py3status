@@ -4,18 +4,20 @@ Display song currently playing in deadbeef.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 1)
-    delimiter: delimiter between metadata fields (default 'ÐÉÅÐƁÊËF')
     format: display format for this module (default '[{artist} - ][{title}]')
 
 Format placeholders:
-    {artist} Name of the artist of the track.
-    {isplaying} "1" if file is currently playing, empty string otherwise.
-    {length} The length of the track formatted as hours, minutes,
-                and seconds, rounded to the nearest second.
-    {playback_time} The elapsed time formatted as [HH:]MM:SS.
-    {title} Title of the track.
-    {tracknumber} Two-digit index of specified track within the album.
-    {year} Year formatted as four digits from a time/date string.
+    {album} name of the album
+    {artist} name of the artist
+    {length} length time in [HH:]MM:SS
+    {playback_time} elapsed time in [HH:]MM:SS
+    {title} title of the track
+    {tracknumber} track number in two digits
+    {year} year in four digits
+
+    For more placeholders, see new title formatting in 'deadbeef --help'
+    or http://github.com/Alexey-Yakovenko/deadbeef/wiki/Title-formatting-2.0
+    Not all of Foobar2000 remapped metadata fields will work in deadbeef.
 
 Color options:
     color_paused: Paused, defaults to color_degraded
@@ -25,23 +27,32 @@ Color options:
 Requires:
     deadbeef: a GTK+ audio player for GNU/Linux
 
-@author mrt-prodz
-
 SAMPLE OUTPUT
 {'full_text': 'Music For Programming - Lackluster'}
+
+@author mrt-prodz, tobes, lasers
 """
 
-import subprocess
+from subprocess import check_output
+
+CONTROL_PARAMETERS = ['%title%', '%isplaying%']
+CONTROL_SEPARATOR = u''
+FORMAT_SEPARATOR = u''
 
 
 class Py3status:
     # available configuration parameters
     cache_timeout = 1
-    delimiter = u'ÐÉÅÐƁÊËF'
     format = '[{artist} - ][{title}]'
 
     class Meta:
         deprecated = {
+            'remove': [
+                {
+                    'param': 'delimiter',
+                    'msg': 'obsolete parameter',
+                },
+            ],
             'rename_placeholder': [
                 {
                     'placeholder': 'elapsed',
@@ -60,6 +71,7 @@ class Py3status:
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
+        self.placeholders = self.py3.get_placeholders_list(self.format)
 
     def _is_running(self):
         try:
@@ -70,56 +82,48 @@ class Py3status:
 
     def deadbeef(self):
         color = self.color_stopped
-        artist = isplaying = length = playback_time = title = \
-            tracknumber = year = ""
+        status = ''
 
         if not self._is_running():
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': color,
-                'full_text': ''
+                'full_text': self.py3.safe_format(self.format),
+                'color': color
             }
 
-        # mix metadata fields in with the delimiters
-        fmt = self.delimiter.join([
-            '%artist%', '%isplaying%', '%length%', '%playback_time%',
-            '%title%', '%tracknumber%', '%year%'
-        ])
+        # merge format placeholders with format separators
+        # merge hidden placeholders with control separators
+        # merge strings together to run deadbeef command only once
+        out = FORMAT_SEPARATOR.join(['%{}%'.format(x) for x in self.placeholders])
+        control = [CONTROL_SEPARATOR + s for s in (CONTROL_PARAMETERS)]
+        fmt = ''.join(out) + ''.join(control)
+
         # Starting deadbeef may generate lot of startup noises either with
         # or without error codes. Running deadbeef command below may sometimes
         # change how things behaves onscreen. We use subprocess to ignore error
         # codes and using pgrep to control how status output and color will
         # look... mainly to build consistency better between versions.
-
-        # run command and get output
-        out = subprocess.check_output(['deadbeef', '--nowplaying-tf', fmt])
+        out = check_output('deadbeef --nowplaying-tf "%s"' % fmt, shell=True)
         out = out.decode('utf-8')
 
-        # get metadata results out of the string using the delimiters
+        # 7.1 backward compatible
         if out != 'nothing':
-            artist, isplaying, length, playback_time, title, tracknumber, \
-                year = out.split(self.delimiter)
-            # color
+
+            # split control results
+            # split placeholders results
+            out, title, isplaying = out.split(CONTROL_SEPARATOR)
+            status = dict(zip(self.placeholders, out.split(FORMAT_SEPARATOR)))
+
+            # 7.0 backward compatible, I think
             if title:
                 if isplaying == "1":
                     color = self.color_playing
                 else:
                     color = self.color_paused
-        # response
-        deadbeef = self.py3.safe_format(self.format,
-                                        dict(
-                                            artist=artist,
-                                            isplaying=isplaying,
-                                            length=length,
-                                            playback_time=playback_time,
-                                            title=title,
-                                            tracknumber=tracknumber,
-                                            year=year
-                                        ))
         return {
             'color': color,
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': deadbeef
+            'full_text': self.py3.safe_format(self.format, status)
         }
 
 
