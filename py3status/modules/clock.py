@@ -38,6 +38,10 @@ Configuration parameters:
         a list.  The one used can be changed by button click.
         *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
         '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+    round_to_nearest_block: defines how a block icon is chosen. Examples:
+        when set to True,  '13:14' is '🕐', '13:16' is '🕜' and '13:31' is '🕜';
+        when set to False, '13:14' is '🕐', '13:16' is '🕐' and '13:31' is '🕜'.
+        (default True)
 
 Format placeholders:
     {icon} a character representing the time from `blocks`
@@ -111,6 +115,7 @@ class Py3status:
         '[{name_unclear} ]%a %H:%M',
         '[{name_unclear} ]{icon}',
     ]
+    round_to_nearest_block = True
 
     def post_config_hook(self):
         # Multiple clocks are possible that can be cycled through
@@ -230,13 +235,14 @@ class Py3status:
                     # calculate the hour to use for icon
                     h = t.hour
                     m = t.minute / 60.
-                    if m < 0.25:
-                        m = 0
-                    elif m >= 0.25 and m < 0.75:
-                        m = 0.5
-                    else:
-                        h += 1
-                        m = 0
+                    if self.round_to_nearest_block:
+                        if m < 0.25:
+                            m = 0
+                        elif m >= 0.25 and m < 0.75:
+                            m = 0.5
+                        else:
+                            h += 1
+                            m = 0
                     # make 12 hourly etc
                     h = h % self.block_hours
                     idx = int((h + m) / self.block_hours * len(self.blocks))
