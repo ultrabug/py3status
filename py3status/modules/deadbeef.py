@@ -15,9 +15,10 @@ Format placeholders:
     {tracknumber} track number in two digits
     {year} year in four digits
 
-    For more placeholders, see new title formatting in 'deadbeef --help'
+    For more placeholders, see title formatting 2.0 in 'deadbeef --help'
     or http://github.com/Alexey-Yakovenko/deadbeef/wiki/Title-formatting-2.0
-    Not all of Foobar2000 remapped metadata fields will work in deadbeef.
+    Not all of Foobar2000 remapped metadata fields will work with deadbeef and
+    a quick reminder about using {placeholders} here instead of %placeholder%.
 
 Color options:
     color_paused: Paused, defaults to color_degraded
@@ -27,17 +28,19 @@ Color options:
 Requires:
     deadbeef: a GTK+ audio player for GNU/Linux
 
-SAMPLE OUTPUT
-{'full_text': 'Music For Programming - Lackluster'}
-
 @author mrt-prodz, tobes, lasers
+
+SAMPLE OUTPUT
+{'color': '#00ff00', 'full_text': 'Music For Programming - Lackluster'}
+
+paused
+{'color': '#ffff00', 'full_text': 'Music For Programming - Lackluster'}
 """
 
 from subprocess import check_output
 
-CONTROL_PARAMETERS = ['%title%', '%isplaying%']
-CONTROL_SEPARATOR = u''
-FORMAT_SEPARATOR = u''
+FMT_PARAMETER = ['isplaying']
+FMT_SEPARATOR = u'\u001e'
 
 
 class Py3status:
@@ -71,7 +74,15 @@ class Py3status:
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
-        self.placeholders = self.py3.get_placeholders_list(self.format)
+
+        # mix format and necessary placeholders with separator...
+        # then we merge together to run deadbeef command only once
+        self.placeholders = list(
+            set(self.py3.get_placeholders_list(self.format)) |
+            set(FMT_PARAMETER))
+        self.empty_status = {x: '' for x in self.placeholders}
+        fmt = FMT_SEPARATOR.join(['%{}%'.format(x) for x in self.placeholders])
+        self.cmd = 'deadbeef --nowplaying-tf "%s"' % fmt
 
     def _is_running(self):
         try:
@@ -82,48 +93,33 @@ class Py3status:
 
     def deadbeef(self):
         color = self.color_stopped
-        status = ''
+        status = self.empty_status
 
-        if not self._is_running():
-            return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format),
-                'color': color
-            }
+        if self._is_running():
+            # Starting deadbeef may generate lot of startup noises either
+            # with or without error codes. Running command below may sometimes
+            # change how things behaves onscreen. We use subprocess to ignore
+            # error codes. We use pgrep and hidden placeholders to dictate
+            # how status output and color should look... mainly to stay
+            # consistency between versions.
+            out = check_output(self.cmd, shell=True).decode('utf-8')
 
-        # merge format placeholders with format separators
-        # merge hidden placeholders with control separators
-        # merge strings together to run deadbeef command only once
-        out = FORMAT_SEPARATOR.join(['%{}%'.format(x) for x in self.placeholders])
-        control = [CONTROL_SEPARATOR + s for s in (CONTROL_PARAMETERS)]
-        fmt = ''.join(out) + ''.join(control)
+            # We know 7.0 and 7.1 returns a literal 'nothing' string.
+            # Deadbeef stopped doing that in 7.2 so we adds a quick check
+            # here to skip status if it contains 'nothing' or FMT_SEPARATOR.
+            if out not in ['nothing', u'\x1e']:
 
-        # Starting deadbeef may generate lot of startup noises either with
-        # or without error codes. Running deadbeef command below may sometimes
-        # change how things behaves onscreen. We use subprocess to ignore error
-        # codes and using pgrep to control how status output and color will
-        # look... mainly to build consistency better between versions.
-        out = check_output('deadbeef --nowplaying-tf "%s"' % fmt, shell=True)
-        out = out.decode('utf-8')
+                # split placeholders results
+                status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
 
-        # 7.1 backward compatible
-        if out != 'nothing':
-
-            # split control results
-            # split placeholders results
-            out, title, isplaying = out.split(CONTROL_SEPARATOR)
-            status = dict(zip(self.placeholders, out.split(FORMAT_SEPARATOR)))
-
-            # 7.0 backward compatible, I think
-            if title:
-                if isplaying == "1":
+                if status['isplaying'] == '1':
                     color = self.color_playing
                 else:
                     color = self.color_paused
         return {
-            'color': color,
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, status)
+            'full_text': self.py3.safe_format(self.format, status),
+            'color': color,
         }
 
 
