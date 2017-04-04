@@ -3,8 +3,7 @@
 Display number of windows and urgency hints asynchronously.
 
 Configuration parameters:
-    always_show: always display the format (default False)
-    format: display format for this module (default "{counter} ⌫")
+    format: display format for this module (default '[\?not_zero {counter} ⌫]')
 
 Format placeholders:
     {counter} number of scratchpad windows
@@ -28,8 +27,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    always_show = False
-    format = u'{counter} ⌫'
+    format = u'[\?not_zero {counter} ⌫]'
 
     class Meta:
         deprecated = {
@@ -38,6 +36,17 @@ class Py3status:
                     'param': 'format',
                     'placeholder': 'counter',
                     'msg': '{} should not be used in format use `{counter}`',
+                },
+            ],
+            'substitute_by_value': [
+                {
+                    'param': 'always_show',
+                    'value': True,
+                    'substitute': {
+                        'param': 'format',
+                        'value': '{counter} ⌫',
+                    },
+                    'msg': 'obsolete parameter, use new format',
                 },
             ],
         }
@@ -51,16 +60,13 @@ class Py3status:
         t.start()
 
     def scratchpad_async(self):
-        response = {'cached_until': self.py3.CACHE_FOREVER}
-
+        response = {
+            'cached_until': self.py3.CACHE_FOREVER,
+            'full_text': self.py3.safe_format(
+                self.format, {'counter': self.count}),
+        }
         if self.urgent:
             response['urgent'] = True
-
-        if self.always_show or self.count > 0:
-            response['full_text'] = self.py3.safe_format(self.format, {'counter': self.count})
-        else:
-            response['full_text'] = ''
-
         return response
 
     def _listen(self):
@@ -85,7 +91,7 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     config = {
-        'always_show': True
+        'format': '{counter} ⌫'
     }
     from py3status.module_test import module_test
     module_test(Py3status, config=config)
