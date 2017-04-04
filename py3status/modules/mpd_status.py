@@ -6,25 +6,26 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 2)
     format: display format for this module
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
-    hide_when_pause: hide status when mpd paused playback (default False)
-    hide_when_play: hide status when mpd started playback (default False)
-    hide_when_stop: hide status when mpd stopped playback (default True)
+    hide_when_paused: hide status when mpd paused playback (default False)
+    hide_when_playing: hide status when mpd started playback (default False)
+    hide_when_stopped: hide status when mpd stopped playback (default True)
     host: specifies a host for access to mpd (default 'localhost')
     max_width: specifies a maximum width length (default 120)
-    mpd_no_auth: show this when mpd authentication failed
-        (default 'mpd: authentication failed')
-    mpd_no_conn: show this when mpd connection refused
-        (default 'mpd: connection refused')
     password: specifies a password for access to mpd (default None)
     port: specifies a port for access to mpd (default '6600')
-    state_pause: show this when mpd paused playback (default '[pause]')
-    state_play: show this when mpd started playback (default '[play]')
-    state_stop: show this when mpd stopped playback (default '[stop]')
+    state_not_authenticated: show this when mpd authentication failed
+        (default 'mpd: authentication failed')
+    state_not_connected: show this when mpd connection refused
+        (default 'mpd: connection refused')
+    state_paused: show this when mpd paused playback (default '[pause]')
+    state_playing: show this when mpd started playback (default '[play]')
+    state_stopped: show this when mpd stopped playback (default '[stop]')
+
 
 Color options:
-    color_pause: Paused, defaults to color_degraded
-    color_play: Playing, defaults to color_good
-    color_stop: Stopped, defaults to color_bad
+    color_paused: Paused, defaults to color_degraded
+    color_playing: Playing, defaults to color_good
+    color_stopped: Stopped, defaults to color_bad
 
 Format placeholders:
     {state} state (paused, playing. stopped) can be defined via `state_..`
@@ -38,11 +39,9 @@ Format placeholders:
 
 Requires:
     python-mpd2: a Python client library for MPD
-
-__Note: python2-mpd2, not to be confused with original python-mpd2 above, is
-a fork of original python-mpd2 with enhancement features (starting with 0.5)
-which are NOT backward compatibles with original python2-mpd above.
-
+        Note: python2-mpd2, not to be confused with original python-mpd2 above, is
+        a fork of original python-mpd2 with enhancement features (starting with 0.5)
+        which are not backward compatible with original python2-mpd above.
 ```
 # pip install python-mpd2
 ```
@@ -110,34 +109,18 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
-    hide_when_pause = False
-    hide_when_play = False
-    hide_when_stop = True
+    hide_when_paused = False
+    hide_when_playing = False
+    hide_when_stopped = True
     host = 'localhost'
     max_width = 120
-    mpd_no_auth = 'mpd: authentication failed'
-    mpd_no_conn = 'mpd: connection refused'
     password = None
     port = '6600'
-    state_pause = '[pause]'
-    state_play = '[play]'
-    state_stop = '[stop]'
-
-    class Meta:
-        deprecated = {
-            'rename': [
-                {
-                    'param': 'hide_when_when_paused',
-                    'new': 'hide_when_pause',
-                    'msg': 'obsolete parameter use `hide_when_pause`',
-                },
-                {
-                    'param': 'hide_when_when_stopped',
-                    'new': 'hide_when_stop',
-                    'msg': 'obsolete parameter use `hide_when_stop`',
-                },
-            ],
-        }
+    state_not_authenticated = 'mpd: authentication failed'
+    state_not_connected = 'mpd: connection refused'
+    state_paused = '[pause]'
+    state_playing = '[play]'
+    state_stopped = '[stop]'
 
     def post_config_hook(self):
         # Convert from %placeholder% to {placeholder}
@@ -147,17 +130,17 @@ class Py3status:
             self.py3.log('Old % style format DEPRECATED use { style format')
 
         # Assign colors
-        self.color_pause = self.py3.COLOR_PAUSE or self.py3.COLOR_DEGRADED
-        self.color_play = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
-        self.color_stop = self.py3.COLOR_STOP or self.py3.COLOR_BAD
+        self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
+        self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+        self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
 
     def _get_state(self, state):
         if state == 'play':
-            return self.state_play
+            return self.state_playing
         elif state == 'pause':
-            return self.state_pause
+            return self.state_paused
         elif state == 'stop':
-            return self.state_stop
+            return self.state_stopped
         return '?'
 
     def mpd_status(self):
@@ -173,9 +156,9 @@ class Py3status:
             next_song = int(status.get('nextsong', 0))
             state = status.get('state')
 
-            if ((state == 'pause' and self.hide_when_pause) or
-                    (state == 'play' and self.hide_when_play) or
-                    (state == 'stop' and self.hide_when_stop)):
+            if ((state == 'pause' and self.hide_when_paused) or
+                    (state == 'play' and self.hide_when_playing) or
+                    (state == 'stop' and self.hide_when_stopped)):
                 text = ''
 
             else:
@@ -199,9 +182,9 @@ class Py3status:
                 text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
         except socket.error:
-            text = self.py3.safe_format(self.mpd_no_conn)
+            text = self.py3.safe_format(self.state_not_connected)
         except CommandError:
-            text = self.py3.safe_format(self.mpd_no_auth)
+            text = self.py3.safe_format(self.state_not_authenticated)
             c.disconnect()
         else:
             c.disconnect()
@@ -210,11 +193,11 @@ class Py3status:
             text = u'{}...'.format(text[:self.max_width - 3])
 
         if state == 'play':
-            color = self.color_play
+            color = self.color_playing
         elif state == 'pause':
-            color = self.color_pause
+            color = self.color_paused
         else:
-            color = self.color_stop
+            color = self.color_stopped
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
