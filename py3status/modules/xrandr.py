@@ -28,9 +28,8 @@ Configuration parameters:
         when the module starts (saves you from having to configure xorg)
         (default None)
     format: display format for xrandr
-        (default '{output}')
-    hide_if_single_combination: hide if only one combination is available,
-        has effect only if 'format' uses square brackets, like: '[{output}]'
+        (default '[{output}]')
+    hide_if_single_combination: hide if only one combination is available
         (default False)
     icon_clone: icon used to display a 'clone' combination
         (default '=')
@@ -98,7 +97,7 @@ class Py3status:
     fallback = True
     fixed_width = True
     force_on_start = None
-    format = '{output}'
+    format = '[{output}]'
     hide_if_single_combination = False
     icon_clone = '='
     icon_extend = '+'
