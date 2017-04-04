@@ -3,35 +3,36 @@
 Display song currently playing in Google Play Music Desktop Player.
 
 Configuration parameters:
-    cache_timeout:  refresh interval for this module (default 5)
-    format:         display format for this module (default '♫[ {status}]')
-    state_paused:   show this when gpmdp paused playback
-        (default '[(Paused) {song_title} - {song_artist}]')
-    state_playing:  show this when gpmdp started playback
-        (default '{song_title} - {song_artist}')
+    cache_timeout: refresh and sleep interval for this module (default [5, 20])
+    format: display format for this module
+        (default '[\?if=is_playing {title} - {artist}]
+        [\?if=is_paused [(Paused) {title} - {artist}]]
+        [\?if=is_stopped Google Play Music]')
+
+Control placeholders:
+    is_paused: a boolean based on gpmdp status
+    is_playing: a boolean based on gpmdp status
+    is_started: a boolean based on gpmdp status
+    is_stopped: a boolean based on gpmdp status
+    ----------
+    playing: a boolean based on song status
+    rating_disliked: a boolean based on rating status
+    rating_liked: a boolean based on rating status
 
 Format placeholders:
-    {status}          Google Play Music Desktop Player status
-
-State placeholders:
-    {songLyrics}      Print song lyrics
-    {song_album}      Print song album
-    {song_artist}     Print song artist
-    {song_title}      Print song title
-    {time_current}    Print time (current) in milliseconds
-    {time_total}      Print time (total) in milliseconds
-
-    Placeholders are retrieved directly from keys/values in JSON playback file.
-    We found more placeholders from the file although these may not be useful for
-    some percent of users. We're keeping them here for everybody's convenience.
-
-    {playing}         Print boolean
-    {volume}          Print number
-    {shuffle}         Print value, eg NO_SHUFFLE
-    {repeat}          Print value, eg NO_REPEAT
-    {song_albumArt}   Print long URL to song album art
-    {rating_disliked} Print boolean
-    {rating_liked}    Print boolean
+    {time_current_hms} current time in [HH:]MM:SS
+    {time_total_hms} total time in [HH:]MM:SS
+    ----------
+    {album_art} URL to album art
+    {album} album name
+    {artist} artist name
+    {repeat} repeat eg LIST_REPEAT, SINGLE_REPEAT, or NO_REPEAT
+    {shuffle} shuffle eg ALL_SHUFFLE or NO_SHUFFLE
+    {songLyrics} lyrics (100~ lines)
+    {time_current} current time in milliseconds
+    {time_total} total time in milliseconds
+    {title}  title name
+    {volume} volume number
 
 Color options:
     color_paused: Paused, defaults to color_degraded
@@ -40,92 +41,144 @@ Color options:
 
 Requires:
     gpmdp: A beautiful cross platform Desktop Player for Google Play Music
-           See http://www.googleplaymusicdesktopplayer.com/
+
+Examples:
+```
+# same thing in slim version
+gpmdp {
+    format = '\?if=is_started [\?if=is_stopped Google Play Music|' +\
+             '[\?if=is_paused (Paused)] {title} - {artist}]'
+}
+```
 
 @author Aaron Fields https://twitter.com/spirotot, lasers
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': '♫ Now Playing: The Show Goes On by Lupe Fiasco'}
+{'color': '#00ff00', 'full_text': 'The Show Goes On by Lupe Fiasco'}
+
+paused
+{'color': '#ffff00', 'full_text': '(Paused) The Show Goes On by Lupe Fiasco'}
+
+stopped
+{'color': '#ff0000', 'full_text': 'Google Play Music'}
 """
 
+from __future__ import division
 import json
 import os
 
-GPMDP = "~/.config/Google Play Music Desktop Player/json_store/playback.json"
-
-
-def flatten_dict(d, delimiter='_'):
-    def expand(key, value):
-        if isinstance(value, dict):
-            return [
-                (delimiter.join([key, k]), v)
-                for k, v in flatten_dict(value, delimiter).items()
-            ]
-        else:
-            return [(key, value)]
-    return dict([item for k, v in d.items() for item in expand(k, v)])
+GPMDP = '~/.config/Google Play Music Desktop Player/json_store/playback.json'
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 5
-    format = u'♫[ {status}]'
-    state_paused = '[(Paused) {song_title} - {song_artist}]'
-    state_playing = '{song_title} - {song_artist}'
-
-    class Meta:
-        deprecated = {
-            'remove': [
-                {
-                    'param': 'current',
-                    'msg': 'obsolete set. use new parameters'
-                },
-                {
-                    'param': 'info',
-                    'msg': 'obsolete set. use new parameters'
-                },
-            ],
-        }
+    cache_timeout = [5, 20]
+    format = '\?if=is_started [\?if=is_stopped Google Play Music|' +\
+             '[\?if=is_paused (Paused)] {title} - {artist}]'
 
     def post_config_hook(self):
-        self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+        self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
+
         self.playback_json = os.path.expanduser(GPMDP)
+        if isinstance(self.cache_timeout, int):
+            self.cache_timeout = [self.cache_timeout, self.cache_timeout]
+
+        # DEPRECATION WARNING
+        current = self.py3.format_contains(self.format, 'current')
+        status = self.py3.format_contains(self.format, 'status')
+        info = self.py3.format_contains(self.format, 'info')
+        if current or status or info:
+            msg = 'DEPRECATION WARNING: you are using old style configuration'
+            msg += ' parameters you should update to use the new format.'
+            self.py3.log(msg)
 
     def _is_running(self):
         try:
             cmd = ['pgrep', '-f', 'Google Play Music Desktop Player']
-            self.py3.command_run(cmd)
+            self.py3.command_output(cmd)
             return True
         except:
             return False
 
-    def gpmdp(self):
-        if not self._is_running():
-            return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format),
-                'color': self.color_stopped
-            }
-        data = []
-        with open(self.playback_json, 'r') as f:
-            data = json.load(f, object_hook=flatten_dict)
+    def _ms_to_time(self, value):
+        s, ms = divmod(value, 1000)
+        m, s = divmod(s, 60)
+        h, m = divmod(m, 60)
+        time = '%d:%02d:%02d' % (h, m, s)
+        return time.lstrip('0').lstrip(':')
 
+    def _manipulate_data(self, data):
+        temporary = {}
+        for key, value in data.items():
+            # milliseconds to [hh:]mm:ss
+            if 'time_' in key:
+                new_key = '%s%s' % (key, '_hms')
+                temporary[new_key] = self._ms_to_time(value)
+                temporary[key] = value
+            # compatible w/ gpmdp-remote's placeholders
+            elif 'song_' in key:
+                if 'albumArt' in key:
+                    new_key = 'album_art'
+                else:
+                    new_key = key.replace('song_', '')
+                temporary[new_key] = value
+            else:
+                temporary[key] = value
+
+        # compatible w/ gpmdp-remote's status
         if data['playing']:
-            color = self.color_playing
-            status = self.py3.safe_format(self.state_playing, data)
+            status = temporary['status'] = 'Playing'
         else:
-            color = self.color_paused
-            status = self.py3.safe_format(self.state_paused, data)
+            status = temporary['status'] = 'Paused'
+
+        # compatible w/ gpmdp-remote's current and info
+        artist = data['song_artist']
+        title = data['song_title']
+        temporary['current'] = '%s - %s' % (artist, title)
+        temporary['info'] = 'Now %s: %s by %s' % (status, title, artist)
+
+        return temporary
+
+    def gpmdp(self):
+        data = {}
+        color = self.py3.COLOR_BAD
+        is_paused = is_playing = is_started = is_stopped = None
+        cached_until = self.cache_timeout[1]
+
+        if self._is_running():
+            cached_until = self.cache_timeout[0]
+            is_started = True
+
+            with open(self.playback_json, 'r') as f:
+                data = self.py3.flatten_dict(json.load(f), '_')
+                data = self._manipulate_data(data)
+
+            if data['time_total'] == 0:
+                color = self.color_stopped
+                is_stopped = True
+            elif data['playing']:
+                color = self.color_playing
+                is_playing = True
+            else:
+                color = self.color_paused
+                is_paused = True
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'status': status}),
+            'cached_until': self.py3.time_in(cached_until),
             'color': color,
+            'full_text': self.py3.safe_format(self.format,
+                                              dict(
+                                                  is_paused=is_paused,
+                                                  is_playing=is_playing,
+                                                  is_started=is_started,
+                                                  is_stopped=is_stopped,
+                                                  **data
+                                              ))
         }
 
 
