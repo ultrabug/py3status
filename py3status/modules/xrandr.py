@@ -29,7 +29,8 @@ Configuration parameters:
         (default None)
     format: display format for xrandr
         (default '{output}')
-    hide_if_single_combination: hide if only one combination is available.
+    hide_if_single_combination: hide if only one combination is available,
+        has effect only if 'format' uses square brackets, like: '[{output}]'
         (default False)
     icon_clone: icon used to display a 'clone' combination
         (default '=')
@@ -404,7 +405,7 @@ class Py3status:
 
         if (len(self.available_combinations) < 2 and
                 self.hide_if_single_combination):
-            full_text = ''
+            full_text = self.py3.safe_format(self.format)
         else:
             if self.fixed_width is True:
                 output = self._center(self.displayed)
