@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display JSON response from a URL.
+Display JSON data fetched from a URL.
 
 This module gets the given `url` configuration parameter and assumes the
 response is a JSON object. The keys of the JSON object are used as the format
@@ -65,28 +65,21 @@ class Py3status:
     def getjson(self):
         """
         """
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-        }
-
         try:
-            resp = self.py3.request(self.url, timeout=self.timeout)
-            status = resp.status_code == 200
-            resp = resp.json()
+            json_data = self.py3.request(self.url, timeout=self.timeout).json()
+            json_data = self.py3.flatten_dict(json_data, self.delimiter, True)
         except self.py3.RequestException:
-            resp = None
-            status = False
+            json_data = None
 
-        if status:
-            response['full_text'] = self.py3.safe_format(
-                self.format,
-                self.py3.flatten_dict(
-                    resp, delimiter=self.delimiter, intermediates=True
-                )
-            )
+        if json_data:
+            full_text = self.py3.safe_format(self.format, json_data)
         else:
-            response['full_text'] = ''
-        return response
+            full_text = ''
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': full_text
+        }
 
 
 if __name__ == "__main__":
