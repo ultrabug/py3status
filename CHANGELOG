@@ -34,7 +34,7 @@ version 3.5 (milestone)
 * clementine module: use helpers, fix exception, by @lasers
 * clock module: add %s, %T for time_delta calculation, by @ShareDVI
 * clock module: use helpers, by @lasers
-* deadbeef module: bug fix and improvements, by @lasers
+* deadbeef module: bug fix and improvements and extra placeholders, by @lasers
 * diskdata module: use helpers, by @lasers
 * diskdata module: fix stats for fs mounted multiple times by @eturner
 * dpms module: add button_off, button_toggle, cache_timeout by @lasers
