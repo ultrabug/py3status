@@ -14,11 +14,8 @@ Configuration parameters:
     button_up: Button to click to increase brightness. Setting to 0 disables.
         (default 4)
     cache_timeout: How often we refresh this module in seconds (default 10)
-    device: The backlight device
-        If not specified the plugin will detect it automatically
-        (default None)
-    device_path: path to backlight eg /sys/class/backlight/acpi_video0
-        if None then use first device found.
+    device: Device name or full path to use, eg, acpi_video0 or
+        /sys/class/backlight/acpi_video0, otherwise automatic
         (default None)
     format: Display brightness, see placeholders below
         (default '☼: {level}%')
@@ -40,8 +37,10 @@ from __future__ import division
 
 import os
 
+STRING_NOT_AVAILABLE = 'no available device'
 
-def get_device_path():
+
+def get_device():
     for (path, devices, files) in os.walk('/sys/class/backlight/'):
         for device in devices:
             if 'brightness' in os.listdir(path + device) and \
@@ -60,14 +59,27 @@ class Py3status:
     button_up = 4
     cache_timeout = 10
     device = None
-    device_path = None
     format = u'☼: {level}%'
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'device_path',
+                    'new': 'device',
+                    'msg': 'obsolete parameter use `device`',
+                },
+            ],
+        }
 
     def post_config_hook(self):
         if not self.device:
-            self.device_path = get_device_path()
-        else:
-            self.device_path = "/sys/class/backlight/%s" % self.device
+            self.device = get_device()
+        elif '/' not in self.device:
+            self.device = "/sys/class/backlight/%s" % self.device
+        if self.device is None:
+            raise Exception(STRING_NOT_AVAILABLE)
+
         self.xbacklight = self.py3.check_commands(['xbacklight'])
         if self.xbacklight and self.brightness_initial:
             self._set_backlight_level(self.brightness_initial)
@@ -96,15 +108,15 @@ class Py3status:
         if self.xbacklight:
             level = self.py3.command_output(['xbacklight', '-get']).strip()
             return int(float(level))
-        for brightness_line in open("%s/brightness" % self.device_path, 'rb'):
+        for brightness_line in open("%s/brightness" % self.device, 'rb'):
             brightness = int(brightness_line)
-        for brightness_max_line in open("%s/max_brightness" % self.device_path, 'rb'):
+        for brightness_max_line in open("%s/max_brightness" % self.device, 'rb'):
             brightness_max = int(brightness_max_line)
         return brightness * 100 // brightness_max
 
     def backlight(self):
         full_text = ""
-        if self.device_path is not None:
+        if self.device is not None:
             level = self._get_backlight_level()
             full_text = self.py3.safe_format(self.format, {'level': level})
 
