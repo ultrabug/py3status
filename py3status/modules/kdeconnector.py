@@ -48,6 +48,24 @@ Requires:
     kdeconnect
 
 @author Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2709 \u2B06 97%'}
+
+charging
+{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2B06 97%'}
+
+transition
+{'color': '#FFFF00', 'full_text': u'Samsung Galaxy S6 \u2B07 93%'}
+
+not-plugged
+{'color': '#FF0000', 'full_text': u'Samsung Galaxy S6 \u2B07 92%'}
+
+disconnected
+{'color': '#FF0000', 'full_text': u'device disconnected'}
+
+unknown
+{'color': '#FF0000', 'full_text': u'unknown device'}
 """
 
 from pydbus import SessionBus

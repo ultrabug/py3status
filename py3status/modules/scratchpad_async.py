@@ -14,6 +14,9 @@ Requires:
 
 @author cornerman
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': '1 ⌫'}
 """
 
 from threading import Thread

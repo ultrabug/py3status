@@ -26,6 +26,9 @@ Requires:
     deadbeef: a GTK+ audio player for GNU/Linux
 
 @author mrt-prodz
+
+SAMPLE OUTPUT
+{'full_text': 'Music For Programming - Lackluster'}
 """
 
 import subprocess

@@ -27,6 +27,15 @@ Color options:
     color_good: Online
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': '37.48.108.0'}
+
+geo
+{'full_text': '37.48.108.0 Russia'}
+
+mode
+{'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
 import json

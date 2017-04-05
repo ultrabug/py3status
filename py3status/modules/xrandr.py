@@ -77,6 +77,19 @@ xrandr {
 ```
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'LVDS1'}
+
+extend
+{'color': '#00FF00', 'full_text': 'LVDS1+DP1'}
+
+mirror
+{'color': '#00FF00', 'full_text': 'LVDS1=DP1'}
+
+single
+{'color': '#00FF00', 'full_text': 'DP1'}
+
 """
 import shlex
 

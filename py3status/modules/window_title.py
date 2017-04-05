@@ -12,6 +12,9 @@ Configuration parameters:
 
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': u'business_plan_final3a.doc'}
 """
 
 from json import loads

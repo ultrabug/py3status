@@ -26,6 +26,9 @@ Requires:
 
 @author Aaron Fields https://twitter.com/spirotot
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': '♫ Now Playing: The Show Goes On by Lupe Fiasco'}
 """
 
 

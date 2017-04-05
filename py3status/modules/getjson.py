@@ -49,6 +49,9 @@ Format placeholders:
         {parent-1} for 'that'
 
 @author vicyap
+
+SAMPLE OUTPUT
+{'full_text': 'Github: Everything operating normally'}
 """
 
 import collections

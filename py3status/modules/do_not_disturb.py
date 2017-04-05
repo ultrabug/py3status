@@ -19,6 +19,12 @@ Configuration parameters:
 Color options:
     color_bad: "Do Not Disturb" mode is enabled.
     color_good: "Do Not Disturb" mode is disabled.
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'OFF'}
+
+off
+{'color': '#FF0000', 'full_text': 'ON'}
 """
 
 from time import sleep

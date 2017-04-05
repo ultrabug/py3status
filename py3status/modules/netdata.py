@@ -25,6 +25,13 @@ Color thresholds:
     {total}    color threshold of total usage
 
 @author Shahin Azad <ishahinism at Gmail>
+
+SAMPLE OUTPUT
+[
+    {'full_text': 'eth0'},
+    {'color': '#FF0000', 'full_text': 'LAN(Kb):  16.9↓   5.2↑', 'separator': True},
+    {'color': '#FF0000', 'full_text': 'T(Mb): 2264↓ 143↑ 2407↕'}
+]
 """
 
 

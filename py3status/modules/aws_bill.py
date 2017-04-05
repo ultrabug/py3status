@@ -31,6 +31,9 @@ Requires:
     boto:
 
 @author nawadanp
+
+SAMPLE OUTPUT
+{'full_text': u'108.78$'}
 """
 
 import boto

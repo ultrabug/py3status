@@ -51,6 +51,15 @@ Examples of `format`
 
 @author shadowprince, zopieux
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'color': '#00ff00', 'full_text': '[play] Music For Programming - Idol Eyes'}
+
+paused
+{'color': '#ffff00', 'full_text': '[pause] Music For Programming - Idol Eyes'}
+
+stopped
+{'color': '#ff0000', 'full_text': '[stop] Music For Programming - Idol Eyes'}
 """
 
 import datetime

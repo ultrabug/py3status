@@ -78,6 +78,15 @@ group disks {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'module 1'}
+
+cycle
+{'full_text': 'module 2'}
+
+cycle_again
+{'full_text': 'module 3'}
 """
 
 from time import time
