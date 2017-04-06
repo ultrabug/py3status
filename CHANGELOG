@@ -80,6 +80,7 @@ version 3.5 (milestone)
 * vnstat module: use helpers, add exception, cleanup, by @lasers
 * volume_status: bugfix for pactl on debian systems, by @DextersHub
 * vpn_status: use post_config_hook, by @lasers
+* whatismyip module: support any format placeholder, always use `url_geo` with a better default, by @maximbaz
 * wifi module: fix device autodetection magic, by @lasers
 * wifi module: remove command_checks(iw), by @lasers
 * wifi module: support unicode wifi SSID, by @blahgeek
