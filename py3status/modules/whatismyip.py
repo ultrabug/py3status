@@ -6,7 +6,8 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
     expected: define expected values for format placeholders,
               and use `color_degraded` to show the output of this module
-              if any of them does not match the actual value
+              if any of them does not match the actual value.
+              This should be a dict eg {'country': 'France'}
               (default None)
     format: available placeholders are {ip} and {country},
             as well as any other key in JSON fetched from `url_geo`
