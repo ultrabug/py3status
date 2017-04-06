@@ -29,6 +29,8 @@ Configuration parameters:
         (default None)
     format: display format for xrandr
         (default '{output}')
+    hide_if_single_combination: hide if only one combination is available
+        (default False)
     icon_clone: icon used to display a 'clone' combination
         (default '=')
     icon_extend: icon used to display a 'extend' combination
@@ -77,6 +79,19 @@ xrandr {
 ```
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'LVDS1'}
+
+extend
+{'color': '#00FF00', 'full_text': 'LVDS1+DP1'}
+
+mirror
+{'color': '#00FF00', 'full_text': 'LVDS1=DP1'}
+
+single
+{'color': '#00FF00', 'full_text': 'DP1'}
+
 """
 import shlex
 
@@ -96,6 +111,7 @@ class Py3status:
     fixed_width = True
     force_on_start = None
     format = '{output}'
+    hide_if_single_combination = False
     icon_clone = '='
     icon_extend = '+'
     output_combinations = None
@@ -399,11 +415,15 @@ class Py3status:
         self._set_available_combinations()
         self._choose_what_to_display()
 
-        if self.fixed_width is True:
-            output = self._center(self.displayed)
+        if (len(self.available_combinations) < 2 and
+                self.hide_if_single_combination):
+            full_text = self.py3.safe_format(self.format, {'output': ''})
         else:
-            output = self.displayed
-        full_text = self.py3.safe_format(self.format, {'output': output})
+            if self.fixed_width is True:
+                output = self._center(self.displayed)
+            else:
+                output = self.displayed
+            full_text = self.py3.safe_format(self.format, {'output': output})
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

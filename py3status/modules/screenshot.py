@@ -25,6 +25,9 @@ Color options:
     color_good: Displayed color
 
 @author Amaury Brisou <py3status AT puzzledge.org>
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'SHOT'}
 """
 import os
 import random

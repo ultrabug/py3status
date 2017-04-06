@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Drop-in replacement for i3status run_watch VPN module.
 
@@ -25,6 +26,12 @@ Requires:
     pydbus: Which further requires PyGi. Check your distribution's repositories.
 
 @author Nathan Smith <nathan AT praisetopia.org>
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'VPN: yes'}
+
+off
+{'color': '#FF0000', 'full_text': u'VPN: no'}
 """
 
 from pydbus import SystemBus
@@ -41,7 +48,7 @@ class Py3status:
     format = "VPN: {name}"
     pidfile = '/sys/class/net/vpn0/dev_id'
 
-    def __init__(self):
+    def post_config_hook(self):
         self.thread_started = False
         self.active = []
 

@@ -80,6 +80,12 @@ NOTE:
 
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u266a: 95%'}
+
+mute
+{'color': '#FF0000', 'full_text': u'\u266a: muted'}
 """
 
 import re
@@ -285,9 +291,9 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        '''
+        """
         Volume up/down and toggle mute.
-        '''
+        """
         button = event['button']
         # volume up
         if self.button_up and button == self.button_up:

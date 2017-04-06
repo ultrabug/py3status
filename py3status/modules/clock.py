@@ -85,6 +85,11 @@ clock {
 @author tobes
 @license BSD
 
+SAMPLE OUTPUT
+{'full_text': 'Sun 15 Jan 2017 23:27:17 GMT'}
+
+london
+{'full_text': 'Thursday Feb 23 1:42 AM London'}
 """
 from __future__ import division
 
@@ -169,9 +174,9 @@ class Py3status:
         self.active = 0
 
     def _get_timezone(self, tz):
-        '''
+        """
         Find and return the time zone if possible
-        '''
+        """
         # special Local timezone
         if tz == 'Local':
             try:

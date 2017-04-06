@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Display number of pending updates for Arch Linux.
 
@@ -26,6 +25,12 @@ Requires:
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'UPD: 5'}
+
+arch_updates_aur
+{'full_text': 'UPD: 15/4'}
 """
 
 import subprocess

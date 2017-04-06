@@ -12,10 +12,37 @@ Button 1 starts/pauses the countdown.
 Button 2 resets timer.
 
 Configuration parameters:
-    sound: path to a sound file that will be played when the timer expires.
-        (default None)
-    time: how long in seconds for the timer
-        (default 60)
+    format: display format for this module (default 'Timer {timer}')
+    sound: play sound file path when the timer ends (default None)
+    time: number of seconds to start countdown with (default 60)
+
+Format placeholders:
+    {timer} display hours:minutes:seconds
+
+@author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'Timer 0:01:00'}
+
+running
+[
+    {'full_text': 'Timer '},
+    {'color': '#00FF00', 'full_text': '0'},
+    {'full_text': ':'},
+    {'color': '#00FF00', 'full_text': '00'},
+    {'full_text': ':'},
+    {'color': '#00FF00', 'full_text': '54'},
+]
+
+paused
+[
+    {'full_text': 'Timer '},
+    {'color': '#FFFF00', 'full_text': '0'},
+    {'full_text': ':'},
+    {'color': '#FFFF00', 'full_text': '00'},
+    {'full_text': ':'},
+    {'color': '#FFFF00', 'full_text': '54'},
+]
 """
 
 from time import time
@@ -26,10 +53,11 @@ class Py3status:
     """
     """
     # available configuration parameters
+    format = 'Timer {timer}'
     sound = None
     time = 60
 
-    def __init__(self):
+    def post_config_hook(self):
         self.running = False
         self.end_time = None
         self.time_left = None
@@ -81,39 +109,38 @@ class Py3status:
         else:
             cached_until = self.py3.CACHE_FOREVER
 
-        response = {
+        composites = [
+            {
+                'full_text': str(hours),
+                'color': self.color,
+                'index': 'hours',
+            },
+            {
+                'color': '#CCCCCC',
+                'full_text': ':',
+            },
+            {
+                'full_text': make_2_didget(mins),
+                'color': self.color,
+                'index': 'mins',
+            },
+            {
+                'color': '#CCCCCC',
+                'full_text': ':',
+            },
+            {
+                'full_text': make_2_didget(seconds),
+                'color': self.color,
+                'index': 'seconds',
+            },
+        ]
+
+        timer = self.py3.composite_create(composites)
+
+        return {
             'cached_until': cached_until,
-            'composite': [
-                {
-                    'color': '#CCCCCC',
-                    'full_text': 'Timer ',
-                },
-                {
-                    'color': self.color,
-                    'full_text': str(hours),
-                    'index': 'hours',
-                },
-                {
-                    'color': '#CCCCCC',
-                    'full_text': ':',
-                },
-                {
-                    'color': self.color,
-                    'full_text': make_2_didget(mins),
-                    'index': 'mins',
-                },
-                {
-                    'color': '#CCCCCC',
-                    'full_text': ':',
-                },
-                {
-                    'color': self.color,
-                    'full_text': make_2_didget(seconds),
-                    'index': 'seconds',
-                },
-            ]
+            'full_text': self.py3.safe_format(self.format, {'timer': timer})
         }
-        return response
 
     def on_click(self, event):
         deltas = {

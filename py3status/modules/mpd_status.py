@@ -1,11 +1,11 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 """
 Display song currently playing in mpd.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
-        (default '%state% [[[%artist%] - %title%]|[%file%]]')
+        (default '{state} [[[{artist}] - {title}]|[{file}]]')
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
     host: mpd host (default 'localhost')
@@ -21,100 +21,51 @@ Color options:
     color_play: Playing, default color_good
     color_stop: Stopped, default color_bad
 
+Format placeholders:
+    {state} state (paused, playing. stopped) can be defined via `state_..`
+        configuration parameters
+    Refer to the mpc(1) manual page for the list of available placeholders to
+    be used in the format.  Placeholders should use braces `{}` rather than
+    percent `%%` eg `{artist}`.
+    Every placeholder can also be prefixed with
+    `next_` to retrieve the data for the song following the one currently
+    playing.
+
 Requires:
     python-mpd2: (NOT python2-mpd2)
 ```
 # pip install python-mpd2
 ```
 
-Refer to the mpc(1) manual page for the list of available placeholders to be
-used in `format`.
-You can also use the %state% placeholder, that will be replaced with the state
-label (play, pause or stop).
-Every placeholder can also be prefixed with `next_` to retrieve the data for
-the song following the one currently playing.
-
-You can also use {} instead of %% for placeholders (backward compatibility).
+Note: previously formats using %field% where allowed for this module, but
+standard placeholders should be used.
 
 Examples of `format`
 ```
 # Show state and (artist -) title, if no title fallback to file:
-%state% [[[%artist% - ]%title%]|[%file%]]
-
-# Alternative legacy syntax:
 {state} [[[{artist} - ]{title}]|[{file}]]
 
 # Show state, [duration], title (or file) and next song title (or file):
-%state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
+{state} \[{time}\] [{title}|{file}] → [{next_title}|{next_file}]
 ```
 
 @author shadowprince, zopieux
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'color': '#00ff00', 'full_text': '[play] Music For Programming - Idol Eyes'}
+
+paused
+{'color': '#ffff00', 'full_text': '[pause] Music For Programming - Idol Eyes'}
+
+stopped
+{'color': '#ff0000', 'full_text': '[stop] Music For Programming - Idol Eyes'}
 """
 
-import ast
 import datetime
-import itertools
+import re
 import socket
 from mpd import MPDClient, CommandError
-
-
-def parse_template(instr, value_getter, found=True):
-    """
-    MPC-like parsing of `instr` using `value_getter` callable to retrieve the
-    text representation of placeholders.
-    """
-    instr = iter(instr)
-    ret = []
-    for char in instr:
-        if char in '%{':
-            endchar = '%' if char == '%' else '}'
-            key = ''.join(itertools.takewhile(lambda e: e != endchar, instr))
-            value = value_getter(key)
-            if value:
-                found = True
-                ret.append(value)
-            else:
-                found = False
-        elif char == '#':
-            ret.append(next(instr, '#'))
-        elif char == '\\':
-            ln = next(instr, '\\')
-            if ln in 'abtnvfr':
-                ret.append(ast.literal_eval('"\\{}"'.format(ln)))
-            else:
-                ret.append(ln)
-        elif char == '[':
-            subret, found = parse_template(instr, value_getter, found)
-            subret = ''.join(subret)
-            ret.append(subret)
-        elif char == ']':
-            if found:
-                ret = ''.join(ret)
-                return ret, True
-            else:
-                return '', False
-        elif char == '|':
-            subret, subfound = parse_template(instr, value_getter, found)
-            if found:
-                pass
-            elif subfound:
-                ret.append(''.join(subret))
-                found = True
-            else:
-                return '', False
-        elif char == '&':
-            subret, subfound = parse_template(instr, value_getter, found)
-            if found and subfound:
-                subret = ''.join(subret)
-                ret.append(subret)
-            else:
-                return '', False
-        else:
-            ret.append(char)
-
-    ret = ''.join(ret)
-    return ret, found
 
 
 def song_attr(song, attr):
@@ -148,7 +99,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 2
-    format = '%state% [[[%artist%] - %title%]|[%file%]]'
+    format = '{state} [[[{artist}] - {title}]|[{file}]]'
     hide_when_paused = False
     hide_when_stopped = True
     host = 'localhost'
@@ -158,6 +109,13 @@ class Py3status:
     state_pause = '[pause]'
     state_play = '[play]'
     state_stop = '[stop]'
+
+    def post_config_hook(self):
+        # Convert from %placeholder% to {placeholder}
+        # This is not perfect but should be good enough
+        if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
+            self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
+            self.py3.log('Old % style format DEPRECATED use { style format')
 
     def _state_character(self, state):
         if state == 'play':
@@ -204,7 +162,7 @@ class Py3status:
                         return song_attr(next_song, attr[5:])
                     return song_attr(song, attr)
 
-                text, _ = parse_template(self.format, attr_getter)
+                text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
         except socket.error:
             text = "Failed to connect to mpd!"

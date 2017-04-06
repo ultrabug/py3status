@@ -193,6 +193,7 @@ class Module(Thread):
             method['last_output'] = {}
 
         self.allow_config_clicks = False
+        self.error_hide = True
         self.set_updated()
 
     def start_module(self):
@@ -208,7 +209,7 @@ class Module(Thread):
         """
         Forces an update of the module.
         """
-        if self.disabled:
+        if self.disabled or self.terminated:
             return
         # clear cached_until for each method to allow update
         for meth in self.methods:
@@ -665,6 +666,9 @@ class Module(Thread):
                     click_method(self.i3status_thread.json_list,
                                  self.config['py3_config']['general'], event)
                 self.set_updated()
+            else:
+                # nothing has happened so no need for refresh
+                self.prevent_refresh = True
         except Exception:
             msg = 'on_click event in `{}` failed'.format(self.module_full_name)
             self._py3_wrapper.report_exception(msg)
@@ -772,7 +776,11 @@ class Module(Thread):
                     if self.config['debug']:
                         self._py3_wrapper.log(
                             'method {} returned {} '.format(meth, result))
+                    # module working correctly so ensure module works as
+                    # expected
                     self.allow_config_clicks = True
+                    self.error_messages = None
+                    self.error_hide = False
                 except ModuleErrorException as e:
                     # module has indicated that it has an error
                     self.runtime_error(e.msg, meth)

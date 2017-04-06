@@ -24,6 +24,9 @@ Color options:
 
 @author tobes
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#FFFF00', 'full_text': 'DNF: 14'}
 """
 
 import subprocess

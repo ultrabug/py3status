@@ -56,6 +56,9 @@ weather_yahoo {
 ```
 
 @author ultrabug, rail
+
+SAMPLE OUTPUT
+{'full_text': u'\u2602 \u2601 \u2601 \u2601'}
 """
 
 

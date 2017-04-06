@@ -19,6 +19,12 @@ Configuration parameters:
 Color options:
     color_bad: "Do Not Disturb" mode is enabled.
     color_good: "Do Not Disturb" mode is disabled.
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'OFF'}
+
+off
+{'color': '#FF0000', 'full_text': 'ON'}
 """
 
 from time import sleep
@@ -29,7 +35,6 @@ from threading import Thread, Event
 class Py3status:
     """
     """
-
     # available configuration parameters
     format = '{state}'
     notification_manager = 'dunst'
@@ -37,7 +42,7 @@ class Py3status:
     state_off = 'OFF'
     state_on = 'ON'
 
-    def __init__(self):
+    def post_config_hook(self):
         self.running = Event()
         self.killed = Event()
 

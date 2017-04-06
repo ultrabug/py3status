@@ -47,6 +47,9 @@ In this case you will need to use the `use_sudo` configuration parameter.__
 
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'W: 54.0 MBit/s 100% Chicken Remixed'}
 """
 import re
 import math
@@ -161,7 +164,7 @@ class Py3status:
         icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1)))]
 
         if ssid is None:
-            full_text = self.format_down
+            full_text = self.py3.safe_format(self.format_down)
             color = getattr(self.py3, 'COLOR_{}'.format(self.down_color.upper()))
         else:
             color = self.py3.COLOR_GOOD

@@ -42,6 +42,12 @@ pomodoro {
 ```
 
 @author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': u'Pomodoro (1500)'}
+
+running
+{'color': '#00FF00', 'full_text': u'Pomodoro [1483]'}
 """
 
 from math import ceil
@@ -166,9 +172,9 @@ class Py3status:
             self._active = True
 
     def kill(self):
-        '''
+        """
         cancel any timer
-        '''
+        """
         if self._timer:
             self._timer.cancel()
 

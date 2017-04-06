@@ -48,6 +48,9 @@ Color thresholds:
 
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': 'eno1:  852.2 KiB/s'}
 """
 
 from __future__ import division  # python2 compatibility

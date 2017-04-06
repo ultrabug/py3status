@@ -42,6 +42,13 @@ NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
 @author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol
+
+SAMPLE OUTPUT
+[
+    {'color': '#00FF00', 'full_text': 'CPU: 9.60%'},
+    {'full_text': ', '},
+    {'color': '#FFFF00', 'full_text': 'Mem: 1.91/3.76 GB (50.96%)'}
+]
 """
 
 from __future__ import division

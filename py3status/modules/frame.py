@@ -66,6 +66,18 @@ group {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+[
+    {'full_text': u'module 1', 'separator': True},
+    {'full_text': u'module 2', 'separator': True},
+    {'full_text': u'module 3', 'separator': True},
+    {'full_text': u'-', 'separator': True}
+]
+
+closed
+{'full_text': u'+'}
+
 """
 
 
@@ -83,7 +95,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.urgent = False
-        if '{button}' not in self.format:
+        if not self.py3.format_contains(self.format, 'button'):
             self.open = True
         self.py3.register_function('urgent_function', self._urgent_function)
 

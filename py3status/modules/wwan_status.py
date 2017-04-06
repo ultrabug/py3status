@@ -47,6 +47,12 @@ Requires:
 
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'WWAN: 4G 37.48.108.0'}
+
+off
+{'color': '#FF0000', 'full_text': u'WWAN: down'}
 """
 
 import netifaces as ni

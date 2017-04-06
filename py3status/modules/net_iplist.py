@@ -51,6 +51,10 @@ Requires:
     ip: utility found in iproute2 package
 
 @author guiniol
+
+SAMPLE OUTPUT
+{'color': '#00FF00',
+ 'full_text': u'Network: wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
 """
 
 
@@ -69,7 +73,7 @@ class Py3status:
     ip_sep = ','
     remove_empty = True
 
-    def __init__(self):
+    def post_config_hook(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
         self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)/')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)/')

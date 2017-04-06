@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Control screen rotation.
 
@@ -37,6 +36,12 @@ Color options:
 
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'V'}
+
+h
+{'color': '#00FF00', 'full_text': u'H'}
 """
 
 from subprocess import Popen, PIPE
@@ -55,7 +60,7 @@ class Py3status:
     vertical_icon = 'V'
     vertical_rotation = 'left'
 
-    def __init__(self):
+    def post_config_hook(self):
         self.displayed = ''
 
     def _call(self, cmd):
