@@ -2,6 +2,8 @@
 ========
 
 
+**[air_quality](#air_quality)** — Display air quality polluting in a given location.
+
 **[arch_updates](#arch_updates)** — Display number of pending updates for Arch Linux.
 
 **[aws_bill](#aws_bill)** — Display bill for Amazon Web Services.
@@ -128,6 +130,8 @@
 
 **[uname](#uname)** — Display system information from uname.
 
+**[uptime](#uptime)** — Display system uptime.
+
 **[vnstat](#vnstat)** — Display vnstat statistics.
 
 **[volume_status](#volume_status)** — Volume control.
@@ -157,6 +161,59 @@
 **[xsel](#xsel)** — Display X selection.
 
 **[yandexdisk_status](#yandexdisk_status)** — Display Yandex.Disk status.
+
+---
+
+### <a name="air_quality"></a>air_quality
+
+Display air quality polluting in a given location.
+
+An air quality index (AQI) is a number used by government agencies to communicate
+to the public how polluted the air currently is or how polluted it is forecast to
+become. As the AQI increases, an increasingly large percentage of the population
+is likely to experience increasingly severe adverse health effects. Different
+countries have their own air quality indices, corresponding to different national
+air quality standards.
+
+Configuration parameters:
+  - `auth_token` Required. Personal token. http://aqicn.org *(default 'demo')*
+  - `cache_timeout` refresh interval for this module. A message from the site:
+    The default quota is max 1000 (one thousand) requests per minute (~16RPS)
+    and with burst up to 60 requests. Read more: http://aqicn.org/api/
+    *(default 3600)*
+  - `format` display format for this module *(default '{location}: {aqi} {category}')*
+  - `location` location or uid to query. To search for nearby stations in Kraków,
+    use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
+    We recommend you to use uid instead of name in location, eg "@8691"
+    *(default 'Shanghai')*
+
+Format placeholders:
+  - `{aqi}` air quality index
+  - `{category}` health risk category
+  - `{location}` location or uid
+
+Note: Stations may use {pm25}, {pm10}, {o3}, {so2}, or other parameters.
+See http://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+
+Category options:
+  - `category_<name>` display name
+    eg category_very_unhealthy = 'Level 5: Wear a mask'
+
+Color options:
+  - `color_<category>` display color
+    eg color_hazardous = '#7E0023'
+
+Example:
+```
+air_quality {
+    auth_token = 'demo'
+    location = 'Shanghai'
+    format = 'Shanghai: {aqi} {category}'
+}
+```
+    **author** beetleman, lasers
+
+    **license** BSD
 
 ---
 
@@ -382,22 +439,21 @@ Color options:
 Display bluetooth status.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 10)*
-  - `device_separator` the separator char between devices (only if more than one
-    device) *(default '|')*
-  - `format` format when there is a connected device *(default '{name}')*
-  - `format_no_conn` format when there is no connected device *(default 'OFF')*
-  - `format_no_conn_prefix` prefix when there is no connected device
-    *(default 'BT: ')*
-  - `format_prefix` prefix when there is a connected device *(default 'BT: ')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `device_separator` show separator only if more than one *(default '|')*
+  - `format` display format for this module *(default 'BT[: {format_device}]')*
+  - `format_device` display format for bluetooth devices *(default '{name}')*
 
 Format placeholders:
-  - `{name}` device name
-  - `{mac}` device MAC address
+  - `{format_device}` format for bluetooth devices
+
+format_device placeholders:
+  - `{mac}` bluetooth device address
+  - `{name}` bluetooth device name
 
 Color options:
-  - `color_bad` Connection on
-  - `color_good` Connection off
+  - `color_bad` No connection
+  - `color_good` Active connection
 
 **author** jmdana &lt;https://github.com/jmdana&gt;
 
@@ -490,6 +546,10 @@ Configuration parameters:
     a list.  The one used can be changed by button click.
     *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
     '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+  - `round_to_nearest_block` defines how a block icon is chosen. Examples:
+    when set to True,  '13:14' is '🕐', '13:16' is '🕜' and '13:31' is '🕜';
+    when set to False, '13:14' is '🕐', '13:16' is '🕐' and '13:31' is '🕜'.
+    *(default True)*
 
 Format placeholders:
   - `{icon}` a character representing the time from `blocks`
@@ -642,25 +702,32 @@ coin_balance {
 Display song currently playing in deadbeef.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh usage in seconds *(default 1)*
-  - `delimiter` delimiter character for parsing *(default '¥')*
-  - `format` see placeholders below *(default '{artist} - {title}')*
+  - `cache_timeout` refresh interval for this module *(default 1)*
+  - `format` display format for this module *(default '[{artist} - ][{title}]')*
 
 Format placeholders:
-  - `{artist}` artist
-  - `{title}` title
-  - `{elapsed}` elapsed time
-  - `{length}` total length
-  - `{year}` year
-  - `{tracknum}` track number
+  - `{album}` name of the album
+  - `{artist}` name of the artist
+  - `{length}` length time in [HH:]MM:SS
+  - `{playback_time}` elapsed time in [HH:]MM:SS
+  - `{title}` title of the track
+  - `{tracknumber}` track number in two digits
+  - `{year}` year in four digits
+
+    For more placeholders, see title formatting 2.0 in 'deadbeef --help'
+    or http://github.com/Alexey-Yakovenko/deadbeef/wiki/Title-formatting-2.0
+    Not all of Foobar2000 remapped metadata fields will work with deadbeef and
+    a quick reminder about using {placeholders} here instead of %placeholder%.
 
 Color options:
-  - `color_bad` An error occurred
+  - `color_paused` Paused, defaults to color_degraded
+  - `color_playing` Playing, defaults to color_good
+  - `color_stopped` Stopped, defaults to color_bad
 
 Requires:
-    deadbeef:
+  - `deadbeef` a GTK+ audio player for GNU/Linux
 
-**author** mrt-prodz
+**author** mrt-prodz, tobes, lasers
 
 ---
 
@@ -1059,8 +1126,11 @@ Configuration parameters:
     *(default None)*
   - `button_action` Button that when clicked opens the Github notification page
     if notifications, else the project page for the repository if there is
-    one (otherwise the github home page). Setting to `0` disables.
+    one (otherwise the github home page). Setting to `None` disables.
     *(default 3)*
+  - `button_refresh` Button that when clicked refreshes module.
+    Setting to `None` disables.
+    *(default 2)*
   - `cache_timeout` How often we refresh this module in seconds
     *(default 60)*
   - `format` Format of output
@@ -1688,7 +1758,7 @@ Tested players:
     mpDris2 (mpris extension for mpd)
     vlc
 
-**author** Moritz Lüdecke, tobes
+**author** Moritz Lüdecke, tobes, valdur55
 
 ---
 
@@ -1809,7 +1879,7 @@ Display network speed and bandwidth usage.
 Configuration parameters:
   - `cache_timeout` refresh interval for this module *(default 2)*
   - `format` display format for this module
-    *(default '[\?color=down LAN(Kb): {down}↓ {up}↑]
+    *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑]
     [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
   - `nic` network interface to use *(default None)*
   - `thresholds` color thresholds to use
@@ -1817,6 +1887,7 @@ Configuration parameters:
     'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]})*
 
 Format placeholders:
+  - `{nic}`      network interface
   - `{down}`     number of download speed
   - `{up}`       number of upload speed
   - `{download}` number of download usage
@@ -1901,20 +1972,20 @@ Requires:
 Determine if you have an Internet Connection.
 
 Configuration parameters:
-  - `cache_timeout` how often to run the check *(default 10)*
-  - `format` display format for online_status *(default '{icon}')*
-  - `icon_off` what to display when offline *(default '■')*
-  - `icon_on` what to display when online *(default '●')*
-  - `timeout` how long before deciding we're offline *(default 2)*
-  - `url` connect to this url to check the connection status
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default '{icon}')*
+  - `icon_off` show when connection is offline *(default '■')*
+  - `icon_on` show when connection is online *(default '●')*
+  - `timeout` time to wait for a response, in seconds *(default 2)*
+  - `url` specify URL to connect when checking for a connection
     *(default 'http://www.google.com')*
 
 Format placeholders:
-  - `{icon}` display current online status
+  - `{icon}` connection status
 
 Color options:
-  - `color_bad` Offline
-  - `color_good` Online
+  - `color_off` Connection offline, defaults to color_bad
+  - `color_on` Connection online, defaults to color_good
 
 **author** obb
 
@@ -2552,10 +2623,14 @@ Button 1 starts/pauses the countdown.
 Button 2 resets timer.
 
 Configuration parameters:
-  - `sound` path to a sound file that will be played when the timer expires.
-    *(default None)*
-  - `time` how long in seconds for the timer
-    *(default 60)*
+  - `format` display format for this module *(default 'Timer {timer}')*
+  - `sound` play sound file path when the timer ends *(default None)*
+  - `time` number of seconds to start countdown with *(default 60)*
+
+Format placeholders:
+  - `{timer}` display hours:minutes:seconds
+
+**author** tobes
 
 ---
 
@@ -2660,6 +2735,60 @@ Format placeholders:
   - `{processor}` the (real) processor name, e.g. 'amdk6'
 
 **author** ultrabug (inspired by ndalliard)
+
+---
+
+### <a name="uptime"></a>uptime
+
+Display system uptime.
+
+Configuration parameters:
+  - `format` display format for this module
+    *(default 'up {days} days {hours} hours {minutes} minutes')*
+
+Format placeholders:
+  - `{decades}` decades
+  - `{years}`   years
+  - `{weeks}`   weeks
+  - `{days}`    days
+  - `{hours}`   hours
+  - `{minutes}` minutes
+  - `{seconds}` seconds
+
+Note: If you don't use one of the placeholders, the value will be carried over
+    to the next unit. For example, given an uptime of 1h 30min:
+    If you use {minutes} as your only placeholder, then its value will be 90.
+    If you use {hours} and {minutes}, then its values will be 1 and 30, respectively.
+
+Examples:
+```
+# show uptime without zeroes
+uptime {
+    format = 'up [\?if=weeks {weeks} weeks ][\?if=days {days} days ]
+        [\?if=hours {hours} hours ][\?if=minutes {minutes} minutes ]'
+}
+
+# show uptime in multiple formats using group module
+group uptime {
+    format = "up {output}"
+    uptime {
+        format = '[\?if=weeks {weeks} weeks ][\?if=days {days} days ]
+            [\?if=hours {hours} hours ][\?if=minutes {minutes} minutes]'
+    }
+    uptime {
+        format = '[\?if=weeks {weeks}w ][\?if=days {days}d ]
+            [\?if=hours {hours}h ][\?if=minutes {minutes}m]'
+    }
+    uptime {
+        format = '[\?if=days {days}, ][\?if=hours {hours}:]
+            [\?if=minutes {minutes:02d}]'
+    }
+}
+```
+
+**author** Alexis "Horgix" Chotard &lt;alexis.horgix.chotard@gmail.com&gt;, tobes, lasers
+
+**license** BSD
 
 ---
 
@@ -2889,26 +3018,33 @@ Display public IP address and online status.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 30)*
-  - `format` available placeholders are {ip} and {country}
+  - `expected` define expected values for format placeholders,
+    and use `color_degraded` to show the output of this module
+    if any of them does not match the actual value.
+    This should be a dict eg {'country': 'France'}
+    *(default None)*
+  - `format` available placeholders are {ip} and {country},
+    as well as any other key in JSON fetched from `url_geo`
     *(default '{ip}')*
-  - `format_offline` what to display when offline *(default '■')*
-  - `format_online` what to display when online *(default '●')*
   - `hide_when_offline` hide the module output when offline *(default False)*
+  - `icon_off` what to display when offline *(default '■')*
+  - `icon_on` what to display when online *(default '●')*
   - `mode` default mode to display is 'ip' or 'status' (click to toggle)
     *(default 'ip')*
   - `negative_cache_timeout` how often to check again when offline *(default 2)*
   - `timeout` how long before deciding we're offline *(default 5)*
-  - `url` change IP check url (must output a plain text IP address)
-    *(default 'http://ultrabug.fr/py3status/whatismyip')*
   - `url_geo` IP to check for geo location (must output json)
-    *(default 'http://ip-api.com/json')*
+    *(default 'https://freegeoip.net/json/')*
 
 Format placeholders:
+  - `{icon}` display the icon
   - `{country}` display the country
   - `{ip}` display current ip address
+    any other key in JSON fetched from `url_geo`
 
 Color options:
   - `color_bad` Offline
+  - `color_degraded` Output is unexpected (IP/country mismatch, etc.)
   - `color_good` Online
 
 **author** ultrabug
@@ -3114,6 +3250,8 @@ Configuration parameters:
     *(default None)*
   - `format` display format for xrandr
     *(default '{output}')*
+  - `hide_if_single_combination` hide if only one combination is available
+    *(default False)*
   - `icon_clone` icon used to display a 'clone' combination
     *(default '=')*
   - `icon_extend` icon used to display a 'extend' combination
