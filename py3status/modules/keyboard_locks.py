@@ -17,6 +17,20 @@ Color options:
     color_bad: Lock off
 
 @author lasers
+
+SAMPLE OUTPUT
+[
+    {'color': '#00FF00', 'full_text': 'CAPS '},
+    {'color': '#00FF00', 'full_text': 'NUMS '},
+    {'color': '#FF0000', 'full_text': 'SCR'},
+]
+
+no_locks
+[
+    {'color': '#FF0000', 'full_text': 'CAPS '},
+    {'color': '#FF0000', 'full_text': 'NUMS '},
+    {'color': '#FF0000', 'full_text': 'SCR'},
+]
 """
 
 
