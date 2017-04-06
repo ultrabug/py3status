@@ -7,7 +7,7 @@ Configuration parameters:
     expected: define expected values for format placeholders,
               and use `color_degraded` to show the output of this module
               if any of them does not match the actual value
-              (default {})
+              (default None)
     format: available placeholders are {ip} and {country},
             as well as any other key in JSON fetched from `url_geo`
             (default '{ip}')
@@ -52,7 +52,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    expected = {}
+    expected = None
     format = '{ip}'
     format_offline = u'■'
     format_online = u'●'
@@ -73,6 +73,9 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if self.expected is None:
+            self.expected = {}
+
         # Backwards compatibility
         self.substitutions = {}
         if self.url_geo == URL_GEO_NEW_DEFAULT:
