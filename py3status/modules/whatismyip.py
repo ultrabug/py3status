@@ -4,7 +4,7 @@ Display public IP address and online status.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
-    format: available placeholders are {ip} and {country}
+    format: available placeholders are {ip}, {country} and {countryCode}
             (default '{ip}')
     format_offline: what to display when offline (default '■')
     format_online: what to display when online (default '●')
@@ -20,6 +20,7 @@ Configuration parameters:
 
 Format placeholders:
     {country} display the country
+    {countryCode} display the country code
     {ip} display current ip address
 
 Color options:
@@ -73,25 +74,30 @@ class Py3status:
     def _get_my_ip_and_location(self):
         """
         """
+        def require(fmt):
+            return self.py3.format_contains(self.format, fmt)
         try:
-            if self.py3.format_contains(self.format, 'country'):
+            if require('country') or require('countryCode'):
                 resp = urlopen(self.url_geo, timeout=self.timeout).read()
                 resp = json.loads(resp)
                 country = resp['country']
+                countryCode = resp['countryCode']
                 ip = resp['query']
             else:
                 country = None
+                countryCode = None
                 ip = urlopen(self.url, timeout=self.timeout).read()
                 ip = ip.decode('utf-8')
         except Exception:
             country = None
+            countryCode = None
             ip = None
-        return country, ip
+        return country, countryCode, ip
 
     def whatismyip(self):
         """
         """
-        country, ip = self._get_my_ip_and_location()
+        country, countryCode, ip = self._get_my_ip_and_location()
         response = {
             'cached_until': self.py3.time_in(self.negative_cache_timeout)
         }
@@ -103,10 +109,11 @@ class Py3status:
             if self.mode == 'ip':
                 response['full_text'] = self.py3.safe_format(self.format, {
                     'country': country,
+                    'countryCode': countryCode,
                     'ip': ip})
             else:
                 response['full_text'] = self.format_online
-                response['color'] = self.py3.COLOR_GOOD
+            response['color'] = self.py3.COLOR_GOOD
         else:
             response['full_text'] = self.format_offline
             response['color'] = self.py3.COLOR_BAD
