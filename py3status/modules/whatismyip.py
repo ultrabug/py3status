@@ -12,9 +12,9 @@ Configuration parameters:
     format: available placeholders are {ip} and {country},
             as well as any other key in JSON fetched from `url_geo`
             (default '{ip}')
-    format_offline: what to display when offline (default '■')
-    format_online: what to display when online (default '●')
     hide_when_offline: hide the module output when offline (default False)
+    icon_off: what to display when offline (default '■')
+    icon_on: what to display when online (default '●')
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
     negative_cache_timeout: how often to check again when offline (default 2)
@@ -23,6 +23,7 @@ Configuration parameters:
         (default 'https://freegeoip.net/json/')
 
 Format placeholders:
+    {icon} display the icon
     {country} display the country
     {ip} display current ip address
     any other key in JSON fetched from `url_geo`
@@ -55,9 +56,9 @@ class Py3status:
     cache_timeout = 30
     expected = None
     format = '{ip}'
-    format_offline = u'■'
-    format_online = u'●'
     hide_when_offline = False
+    icon_off = u'■'
+    icon_on = u'●'
     mode = 'ip'
     negative_cache_timeout = 2
     timeout = 5
@@ -69,6 +70,18 @@ class Py3status:
                 {
                     'param': 'url',
                     'msg': 'obsolete parameter, use `url_geo` instead',
+                },
+            ],
+            'rename': [
+                {
+                    'param': 'format_online',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter, use `icon_on` instead',
+                },
+                {
+                    'param': 'format_offline',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter, use `icon_off` instead',
                 },
             ],
         }
@@ -115,6 +128,7 @@ class Py3status:
         if info is None and self.hide_when_offline:
             response['full_text'] = ''
         elif info is not None:
+            info['icon'] = self.icon_on
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
             response['color'] = self.py3.COLOR_GOOD
             if self.mode == 'ip':
@@ -124,9 +138,9 @@ class Py3status:
                         response['color'] = self.py3.COLOR_DEGRADED
                         break
             else:
-                response['full_text'] = self.format_online
+                response['full_text'] = self.icon_on
         else:
-            response['full_text'] = self.format_offline
+            response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
         return response
 
