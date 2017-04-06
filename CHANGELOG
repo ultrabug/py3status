@@ -35,6 +35,7 @@ version 3.5 (milestone)
 * clementine module: use helpers, fix exception, by @lasers
 * clock module: add %s, %T for time_delta calculation, by @ShareDVI
 * clock module: use helpers, by @lasers
+* clock module: allow better icon selection for given time, by @maximbaz
 * deadbeef module: bug fix and improvements and extra placeholders, by @lasers
 * diskdata module: use helpers, by @lasers
 * diskdata module: fix stats for fs mounted multiple times by @eturner
@@ -81,6 +82,7 @@ version 3.5 (milestone)
 * volume_status: bugfix for pactl on debian systems, by @DextersHub
 * vpn_status: use post_config_hook, by @lasers
 * whatismyip module: support any format placeholder, always use `url_geo` with a better default, by @maximbaz
+* whatismyip module: expected support and cleanups by @maximbaz
 * wifi module: fix device autodetection magic, by @lasers
 * wifi module: remove command_checks(iw), by @lasers
 * wifi module: support unicode wifi SSID, by @blahgeek
