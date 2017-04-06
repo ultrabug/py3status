@@ -38,6 +38,10 @@ Configuration parameters:
         a list.  The one used can be changed by button click.
         *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
         '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+    round_to_nearest_block: defines how a block icon is chosen. Examples:
+        when set to True,  '13:14' is '🕐', '13:16' is '🕜' and '13:31' is '🕜';
+        when set to False, '13:14' is '🕐', '13:16' is '🕐' and '13:31' is '🕜'.
+        (default True)
 
 Format placeholders:
     {icon} a character representing the time from `blocks`
@@ -87,9 +91,9 @@ SAMPLE OUTPUT
 london
 {'full_text': 'Thursday Feb 23 1:42 AM London'}
 """
+from __future__ import division
 
 import re
-import math
 from datetime import datetime
 from time import time
 
@@ -116,6 +120,7 @@ class Py3status:
         '[{name_unclear} ]%a %H:%M',
         '[{name_unclear} ]{icon}',
     ]
+    round_to_nearest_block = True
 
     def post_config_hook(self):
         # Multiple clocks are possible that can be cycled through
@@ -234,10 +239,11 @@ class Py3status:
                 if self.py3.format_contains(format_time, 'icon'):
                     # calculate the decimal hour
                     h = t.hour + t.minute / 60.
+                    if self.round_to_nearest_block:
+                        h += (self.block_hours / len(self.blocks)) / 2
                     # make 12 hourly etc
                     h = h % self.block_hours
-                    idx = int(math.floor(h / self.block_hours * (len(
-                        self.blocks))))
+                    idx = int(h / self.block_hours * len(self.blocks))
                     icon = self.blocks[idx]
 
                 timezone = zone.zone
