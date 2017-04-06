@@ -75,7 +75,7 @@ Live IRC Chat
 
 
 Visit `#py3status <https://webchat.freenode.net/?channels=%23py3status&uio=d4>`_
-at `frenode.net <https://freenode.net>`_
+at `freenode.net <https://freenode.net>`_
 
 
 Usage
