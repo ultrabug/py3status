@@ -18,6 +18,7 @@ Configuration parameters:
         (default 'https://freegeoip.net/json/')
 
 Format placeholders:
+    {icon} display the icon
     {country} display the country
     {ip} display current ip address
     any other key in JSON fetched from `url_geo`
@@ -121,6 +122,7 @@ class Py3status:
         if info is None and self.hide_when_offline:
             response['full_text'] = ''
         elif info is not None:
+            info['icon'] = self.icon_on
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
             response['color'] = self.py3.COLOR_GOOD
             if self.mode == 'ip':
