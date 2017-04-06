@@ -24,6 +24,7 @@ version 3.5 (milestone)
 * new keyboard_locks module to display keyboard locks states, by @lasers
 * new systemd module to check the status of a systemd unit, by @adrianlzt
 * new tor_rate module to display the incoming and outgoing data rates of a Tor daemon instance, by @fmorgner
+* new xscreensaver module, by @lasers and @neutronst4r
 * backlight module: fix mouse behavior thanks to @Tadly on #796, by @tobes
 * battery_level module: use helpers, by @lasers
 * bitcoin_price module: add format, use post_config_hook, by @lasers
@@ -86,7 +87,8 @@ version 3.5 (milestone)
 * window_title: cleanup, by @lasers
 * window_title_async module: do not treat workspace name as window name, by @valdur55
 * window_title_async module: use post_config_hook, by @lasers
-* xrandr_rotate: use post_config_hook, by @lasers
+* xrandr module: add option to hide output if only one combination is available, by @maximbaz
+* xrandr_rotate module: use post_config_hook, by @lasers
 * xsel module: add format, by @lasers
 * yandexdisk_status module: use helpers, remove hardcoded strings, fix exception, by @lasers
 
