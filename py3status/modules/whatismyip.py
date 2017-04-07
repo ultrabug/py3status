@@ -3,6 +3,8 @@
 Display public IP address and online status.
 
 Configuration parameters:
+    button_refresh: mouse button to refresh this module (default 2)
+    button_toggle: mouse button to toggle between states (default 1)
     cache_timeout: how often we refresh this module in seconds (default 30)
     expected: define expected values for format placeholders,
         and use `color_degraded` to show the output of this module
@@ -53,6 +55,8 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_refresh = 2
+    button_toggle = 1
     cache_timeout = 30
     expected = None
     format = '{ip}'
@@ -101,10 +105,15 @@ class Py3status:
         """
         Toggle between display modes 'ip' and 'status'
         """
-        if self.mode == 'ip':
-            self.mode = 'status'
-        else:
-            self.mode = 'ip'
+        button = event['button']
+        if button == self.button_toggle:
+            if self.mode == 'ip':
+                self.mode = 'status'
+            else:
+                self.mode = 'ip'
+        elif button != self.button_refresh:
+            # prevent refresh
+            self.py3.prevent_refresh()
 
     def _get_my_ip_info(self):
         """
