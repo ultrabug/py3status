@@ -1,4 +1,4 @@
-version 3.5 (milestone)
+version 3.5 (2017-04-07)
 * allow improved access to settings from py3status section, by @tobes
 * add a new py3status configuration section and the ability to set i3-nagbar font, by @randomguy
 * update sysdata documentation, by @valdur55
