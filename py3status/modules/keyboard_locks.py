@@ -21,14 +21,14 @@ Color options:
 SAMPLE OUTPUT
 [
     {'color': '#00FF00', 'full_text': 'CAPS '},
-    {'color': '#00FF00', 'full_text': 'NUMS '},
+    {'color': '#00FF00', 'full_text': 'NUM '},
     {'color': '#FF0000', 'full_text': 'SCR'},
 ]
 
 no_locks
 [
     {'color': '#FF0000', 'full_text': 'CAPS '},
-    {'color': '#FF0000', 'full_text': 'NUMS '},
+    {'color': '#FF0000', 'full_text': 'NUM '},
     {'color': '#FF0000', 'full_text': 'SCR'},
 ]
 """
