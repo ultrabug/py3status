@@ -3,10 +3,10 @@
 Control screen layout.
 
 This modules allows you to handle your screens outputs directly from your bar!
-  - Detect and propose every possible screen combinations
-  - Switch between combinations using click events and mouse scroll
-  - Activate the screen or screen combination on a single click
-  - It will detect any newly connected or removed screen automatically
+    - Detect and propose every possible screen combinations
+    - Switch between combinations using click events and mouse scroll
+    - Activate the screen or screen combination on a single click
+    - It will detect any newly connected or removed screen automatically
 
 For convenience, this module also proposes some added features:
     - Dynamic parameters for POSITION and WORKSPACES assignment (see below)

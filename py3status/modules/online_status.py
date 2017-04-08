@@ -9,7 +9,7 @@ Configuration parameters:
     icon_on: show when connection is online (default '●')
     timeout: time to wait for a response, in seconds (default 2)
     url: specify URL to connect when checking for a connection
-         (default 'http://www.google.com')
+        (default 'http://www.google.com')
 
 Format placeholders:
     {icon} connection status

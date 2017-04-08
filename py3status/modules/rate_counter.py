@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)
     config_file: file path to store the time already spent
         and restore it the next session
-         (default '~/.i3/py3status/counter-config.save')
+        (default '~/.i3/py3status/counter-config.save')
     format: output format string
         (default 'Time: {days} day {hours}:{mins:02d} Cost: {total}')
     format_money: output format string

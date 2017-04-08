@@ -6,7 +6,7 @@ Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
 Find your woeid using:
-        http://woeid.rosselliot.co.nz/
+    http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
     cache_timeout: how often to check for new forecasts (default 7200)

@@ -5,7 +5,7 @@ Display information about your smartphone with KDEConnector.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
     device: the device name, you need this if you have more than one device
-            connected to your PC (default None)
+        connected to your PC (default None)
     device_id: alternatively to the device name you can set your device id here
         (default None)
     format: see placeholders below

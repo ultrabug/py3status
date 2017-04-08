@@ -21,10 +21,12 @@ Coloring rules:
     specified values in the coloring section.
 
 Example:
+```
     coloring = {
         800: "#dddd00",     # over 800: yellow
         900: "#dd0000",     # over 900: red
     }
+```
 
 Format placeholders:
     {down} download

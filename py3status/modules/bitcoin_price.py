@@ -30,7 +30,7 @@ format_bitcoin placeholders:
     {symbol} currency symbols
 
 Color options:
-    color_bad:  Price has dropped or not available
+    color_bad: Price has dropped or not available
     color_good: Price has increased
 
 @author Andre Doser <doser.andre AT gmail.com>

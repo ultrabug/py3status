@@ -21,9 +21,9 @@ Configuration parameters:
     icon_previous: text for the previous button in the button control panel (default '«')
     icon_stop: text for the stop button in the button control panel (default '◾')
     player_priority: priority of the players.
-            Keep in mind that the state has a higher priority than
-            player_priority. So when player_priority is "[mpd, bomi]" and mpd is
-            paused and bomi is playing than bomi wins. (default [])
+        Keep in mind that the state has a higher priority than
+        player_priority. So when player_priority is "[mpd, bomi]" and mpd is
+        paused and bomi is playing than bomi wins. (default [])
     state_pause: text for placeholder {state} when song is paused (default '▮')
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')

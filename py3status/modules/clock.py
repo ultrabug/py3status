@@ -52,7 +52,6 @@ Format placeholders:
     {timezone_unclear} full timezone name eg `America/Argentina/Buenos_Aires`
         but is empty if only one timezone is provided
 
-
 Requires:
     pytz: python library
     tzlocal: python library

@@ -48,7 +48,6 @@ Configuration parameters:
     open: Is the group open and displaying its content. Has no effect if
         `{button}` not in format (default True)
 
-
 Format placeholders:
     {button} The button to open/close or change the displayed group
     {output} Output of current active module
