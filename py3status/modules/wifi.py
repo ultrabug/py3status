@@ -11,9 +11,8 @@ Configuration parameters:
     device: Wireless device name (default "wlan0")
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
-    format_down: Output when disconnected (default "W: down")
-    format_up: See placeholders below
-        (default "W: {bitrate} {signal_percent} {ssid}")
+    format: Display format for this module
+        (default 'W: {bitrate} {signal_percent} {ssid}|W: down')
     round_bitrate: If true, bit rate is rounded to the nearest whole number
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
@@ -51,9 +50,12 @@ In this case you will need to use the `use_sudo` configuration parameter.__
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'W: 54.0 MBit/s 100% Chicken Remixed'}
 """
+
 import re
 import math
+
 STRING_ERROR = "iw: command failed"
+DEFAULT_FORMAT = 'W: {bitrate} {signal_percent} {ssid}|W: down'
 
 
 class Py3status:
@@ -66,14 +68,29 @@ class Py3status:
     cache_timeout = 10
     device = 'wlan0'
     down_color = 'bad'
-    format_down = 'W: down'
-    format_up = 'W: {bitrate} {signal_percent} {ssid}'
+    format = DEFAULT_FORMAT
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
     use_sudo = False
 
     def post_config_hook(self):
+        # DEPRECATION WARNING
+        format_down = getattr(self, 'format_down', None)
+        format_up = getattr(self, 'format_up', None)
+
+        if self.format != DEFAULT_FORMAT:
+            return
+
+        if format_up or format_down:
+            self.format = u'{}|{}'.format(
+                format_up or 'W: {bitrate} {signal_percent} {ssid}',
+                format_down or 'W: down',
+            )
+            msg = 'DEPRECATION WARNING: you are using old style configuration '
+            msg += 'parameters you should update to use the new format.'
+            self.py3.log(msg)
+
         self._ssid = None
         self._max_bitrate = 0
         # Try and guess the wifi interface
@@ -138,7 +155,7 @@ class Py3status:
             ssid = None
 
         # check command
-        if self.py3.format_contains(self.format_up, 'ip'):
+        if self.py3.format_contains(self.format, 'ip'):
             cmd = ['ip', 'addr', 'list', self.device]
             if self.use_sudo:
                 cmd.insert(0, 'sudo')
@@ -163,9 +180,11 @@ class Py3status:
             quality = 0
         icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1)))]
 
+        # wifi down
         if ssid is None:
-            full_text = self.py3.safe_format(self.format_down)
             color = getattr(self.py3, 'COLOR_{}'.format(self.down_color.upper()))
+            full_text = self.py3.safe_format(self.format)
+        # wifi up
         else:
             color = self.py3.COLOR_GOOD
             if bitrate:
@@ -188,20 +207,22 @@ class Py3status:
                 signal_percent = '?%'
 
             full_text = self.py3.safe_format(
-                self.format_up,
+                self.format,
                 dict(
                     bitrate=bitrate,
-                    signal_dbm=signal_dbm,
-                    signal_percent=signal_percent,
-                    ip=ip,
                     device=self.device,
                     icon=icon,
+                    ip=ip,
+                    signal_dbm=signal_dbm,
+                    signal_percent=signal_percent,
                     ssid=ssid,
                 ))
 
-        return {'cache_until': self.py3.time_in(self.cache_timeout),
-                'color': color,
-                'full_text': full_text}
+        return {
+            'cache_until': self.py3.time_in(self.cache_timeout),
+            'full_text': full_text,
+            'color': color,
+        }
 
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)
