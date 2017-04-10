@@ -1,5 +1,7 @@
 version 3.6 (milestone)
 * backlight module: combine device/device_path params, by @lasers
+* sysdata module: Add load support, by @guiniol
+* wifi module: add format, merge formats, by @lasers
 
 version 3.5 (2017-04-07)
 * allow improved access to settings from py3status section, by @tobes
