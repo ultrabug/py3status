@@ -15,7 +15,7 @@ Configuration parameters:
     icon_off: show when Xscreensaver is not running (default 'XSCR')
     icon_on: show when Xscreensaver is running (default 'XSCR')
 
- Format placeholders:
+Format placeholders:
     {icon} Xscreensaver icon
 
 @author neutronst4r <c7420{at}posteo{dot}net>, lasers

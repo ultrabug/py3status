@@ -18,7 +18,7 @@ Configuration parameters:
         (default None)
 
 Format placeholders:
-    {stream_name}:  name of the streamer
+    {stream_name} name of the streamer
 
 Color options:
     color_bad: Stream offline or error

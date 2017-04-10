@@ -73,10 +73,10 @@ Requires:
     pamixer: pulseaudio backend
 
 NOTE:
-        If you are changing volume state by external scripts etc and
-        want to refresh the module quicker than the i3status interval,
-        send a USR1 signal to py3status in the keybinding.
-        Example: killall -s USR1 py3status
+    If you are changing volume state by external scripts etc and
+    want to refresh the module quicker than the i3status interval,
+    send a USR1 signal to py3status in the keybinding.
+    Example: killall -s USR1 py3status
 
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD

@@ -15,7 +15,7 @@ Configuration parameters:
     play_icon: (default '▶')
     stop_icon: (default '◼')
     supported_players: supported players (str) (comma separated list)
-         (default 'audacious,vlc')
+        (default 'audacious,vlc')
     volume_tick: percentage volume change on mouse wheel (int) (positive number
         or None to disable it) (default 1)
 

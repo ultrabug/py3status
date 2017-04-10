@@ -8,7 +8,7 @@ Button 3 resets timer.
 
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
-         (default False)
+        (default False)
     format: define custom display format. See placeholders below (default '{ss}')
     format_separator: separator between minutes:seconds (default ':')
     max_breaks: maximum number of breaks (default 4)
