@@ -89,6 +89,7 @@ class Py3:
     # Exceptions
     Py3Exception = exceptions.Py3Exception
     RequestException = exceptions.RequestException
+    RequestInvalidJSON = exceptions.RequestInvalidJSON
     RequestTimeout = exceptions.RequestTimeout
     RequestURLError = exceptions.RequestURLError
 

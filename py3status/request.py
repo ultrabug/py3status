@@ -19,7 +19,9 @@ except ImportError:
     from urlparse import urlsplit, urlunsplit, parse_qsl
     IS_PYTHON_3 = False
 
-from py3status.exceptions import RequestTimeout, RequestURLError
+from py3status.exceptions import (
+    RequestTimeout, RequestURLError, RequestInvalidJSON
+)
 
 
 class HttpResponse:
@@ -97,4 +99,7 @@ class HttpResponse:
         """
         Return an object representing the return json for the request
         """
-        return json.loads(self.text)
+        try:
+            return json.loads(self.text)
+        except:
+            raise RequestInvalidJSON('Invalid JSON recieved')
