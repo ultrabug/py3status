@@ -21,6 +21,9 @@ Configuration parameters:
 Format placeholders:
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
+    {load1} load average over the last minute
+    {load5} load average over the five minutes
+    {load15} load average over the fifteen minutes
     {mem_total} total memory
     {mem_unit} unit for memory
     {mem_used} used memory
@@ -34,6 +37,7 @@ Format placeholders:
 Color thresholds:
     cpu: change color based on the value of cpu_usage
     max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
+    load: change color based on the value of load1
     mem: change color based on the value of mem_used_percent
     swap: change color based on the value of swap_used_percent
     temp: change color based on the value of cpu_temp
@@ -94,6 +98,18 @@ class GetData:
 
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
+
+    def load(self):
+        """
+        Get the load average from /proc/loadavg :
+        """
+        with open('/proc/loadavg', 'r') as fd:
+            line = fd.readline()
+        load_data = line.split()
+        load1 = float(load_data[0])
+        load5 = float(load_data[1])
+        load15 = float(load_data[2])
+        return load1, load5, load15
 
     def calc_mem_info(self, unit='GiB', memi=dict, keys=list):
         """
@@ -222,6 +238,9 @@ class Py3status:
             return {
                 'cpu_usage': format_vals,
                 'cpu_temp': format_vals,
+                'load1': format_vals,
+                'load5': format_vals,
+                'load15': format_vals,
                 'mem_total': format_vals,
                 'mem_used': format_vals,
                 'mem_used_percent': format_vals,
@@ -266,6 +285,9 @@ class Py3status:
                     'placeholder_formats': {
                         'cpu_usage': ':.2f',
                         'cpu_temp': ':.2f',
+                        'load1': ':.2f',
+                        'load5': ':.2f',
+                        'load15': ':.2f',
                         'mem_total': ':.2f',
                         'mem_used': ':.2f',
                         'mem_used_percent': ':.2f',
@@ -334,6 +356,14 @@ class Py3status:
             self.values['swap_used_percent'] = swap_used_percent
             self.values['swap_unit'] = swap_unit
             self.py3.threshold_get_color(swap_used_percent, 'swap')
+
+        # get load average
+        if self.py3.format_contains(self.format, 'load*'):
+            load1, load5, load15 = self.data.load()
+            self.values['load1'] = load1
+            self.values['load5'] = load5
+            self.values['load15'] = load15
+            self.py3.threshold_get_color(load1, 'load')
 
         try:
             self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
