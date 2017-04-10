@@ -23,6 +23,7 @@ version 3.5 (2017-04-07)
 * py3 helper: command_output() signal fix, by @tobes
 * py3 helper: allow check_commands() to take a string, by @tobes
 * formatter unicode fixup for python2, by @tobes
+* new air_quality module, to display the air quality of your place, by @beetleman and @lasers
 * new getjson module to display fields from a json url, by @vicyap
 * new keyboard_locks module to display keyboard locks states, by @lasers
 * new systemd module to check the status of a systemd unit, by @adrianlzt
