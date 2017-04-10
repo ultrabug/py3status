@@ -1,5 +1,6 @@
 from __future__ import division
 
+import collections
 import os
 import sys
 import shlex
@@ -235,6 +236,73 @@ class Py3:
             modules `cache_timeout` will be used.
         """
         raise ModuleErrorException(msg, timeout)
+
+    def flatten_dict(self, d, delimiter='-', intermediates=False, parent_key=None):
+        """
+        Flatten a dictionary.
+
+        Values that are dictionaries are flattened using delimiter in between
+        (eg. parent-child)
+
+        Values that are lists are flattened using delimiter
+        followed by the index (eg. parent-0)
+
+        example:
+
+        .. code-block:: python
+
+            {
+                'fish_facts': {
+                    'sharks': 'Most will drown if they stop moving',
+                    'skates': 'More than 200 species',
+                },
+                'fruits': ['apple', 'peach', 'watermelon'],
+                'number': 52
+            }
+
+            # becomes
+
+            {
+                'fish_facts-sharks': 'Most will drown if they stop moving',
+                'fish_facts-skates': 'More than 200 species',
+                'fruits-0': 'apple',
+                'fruits-1': 'peach',
+                'fruits-2': 'watermelon',
+                'number': 52
+            }
+
+            # if intermediates is True then we also get unflattened elements
+            # as well as the flattened ones.
+
+            {
+                'fish_facts': {
+                    'sharks': 'Most will drown if they stop moving',
+                    'skates': 'More than 200 species',
+                },
+                'fish_facts-sharks': 'Most will drown if they stop moving',
+                'fish_facts-skates': 'More than 200 species',
+                'fruits': ['apple', 'peach', 'watermelon'],
+                'fruits-0': 'apple',
+                'fruits-1': 'peach',
+                'fruits-2': 'watermelon',
+                'number': 52
+            }
+        """
+        items = []
+        if isinstance(d, list):
+            d = dict(enumerate(d))
+        for k, v in d.items():
+            if parent_key:
+                k = u'{}{}{}'.format(parent_key, delimiter, k)
+            if intermediates:
+                items.append((k, v))
+            if isinstance(v, list):
+                v = dict(enumerate(v))
+            if isinstance(v, collections.Mapping):
+                items.extend(self.flatten_dict(v, delimiter, intermediates, str(k)).items())
+            else:
+                items.append((str(k), v))
+        return dict(items)
 
     def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
         """
