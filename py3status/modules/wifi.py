@@ -75,6 +75,22 @@ class Py3status:
     use_sudo = False
 
     def post_config_hook(self):
+        self._max_bitrate = 0
+        self._ssid = ''
+        # Try and guess the wifi interface
+        cmd = ['iw', 'dev']
+        if self.use_sudo:
+            cmd.insert(0, 'sudo')
+        try:
+            iw = self.py3.command_output(cmd)
+            devices = re.findall('Interface\s*([^\s]+)', iw)
+            if not devices or 'wlan0' in devices:
+                self.device = 'wlan0'
+            else:
+                self.device = devices[0]
+        except:
+            pass
+
         # DEPRECATION WARNING
         format_down = getattr(self, 'format_down', None)
         format_up = getattr(self, 'format_up', None)
@@ -90,22 +106,6 @@ class Py3status:
             msg = 'DEPRECATION WARNING: you are using old style configuration '
             msg += 'parameters you should update to use the new format.'
             self.py3.log(msg)
-
-        self._ssid = None
-        self._max_bitrate = 0
-        # Try and guess the wifi interface
-        cmd = ['iw', 'dev']
-        if self.use_sudo:
-            cmd.insert(0, 'sudo')
-        try:
-            iw = self.py3.command_output(cmd)
-            devices = re.findall('Interface\s*([^\s]+)', iw)
-            if not devices or 'wlan0' in devices:
-                self.device = 'wlan0'
-            else:
-                self.device = devices[0]
-        except:
-            pass
 
     def wifi(self):
         """
