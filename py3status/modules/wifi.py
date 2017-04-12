@@ -18,8 +18,8 @@ Configuration parameters:
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
     use_sudo: Use sudo to run iw, make sure iw requires some root rights
-        without a password by adding a sudoers entry.
-        Example: "<username> ALL=(ALL) NOPASSWD: /usr/bin/iw dev wl* link"
+        without a password by adding a sudoers entry, eg...
+        '<user> ALL=(ALL) NOPASSWD:/usr/bin/iw dev,/usr/bin/iw dev [a-z]* link'
         (default False)
 
 Format placeholders:
