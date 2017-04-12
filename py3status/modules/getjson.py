@@ -54,8 +54,6 @@ SAMPLE OUTPUT
 {'full_text': 'Github: Everything operating normally'}
 """
 
-import collections
-
 
 class Py3status:
     """
@@ -67,41 +65,6 @@ class Py3status:
     timeout = 5
     url = None
 
-    def _flatten(self, d, parent_key=None):
-        """Flatten a dictionary.
-
-        Values that are dictionaries are flattened using self.delimiter in between
-            (eg. parent-child)
-        Values that are lists are flattened using self.delimiter followed by the index
-            (eg. parent-0)
-        """
-        items = []
-        if isinstance(d, list):
-            d = dict(enumerate(d))
-        for k, v in d.items():
-            if parent_key:
-                k = u'{}{}{}'.format(parent_key, self.delimiter, k)
-            if isinstance(v, list):
-                v = dict(enumerate(v))
-            if isinstance(v, collections.Mapping):
-                items.append((k, v))
-                items.extend(self._flatten(v, str(k)).items())
-            else:
-                items.append((str(k), v))
-        return dict(items)
-
-    def _query_url(self):
-        """
-        """
-        try:
-            resp = self.py3.request(self.url, timeout=self.timeout)
-            status = resp.status_code == 200
-            resp = resp.json()
-        except self.py3.RequestException:
-            resp = None
-            status = False
-        return resp, status
-
     def getjson(self):
         """
         """
@@ -109,10 +72,21 @@ class Py3status:
             'cached_until': self.py3.time_in(self.cache_timeout),
         }
 
-        resp, status = self._query_url()
+        try:
+            resp = self.py3.request(self.url, timeout=self.timeout)
+            status = resp.status_code == 200
+            resp = resp.json()
+        except self.py3.RequestException:
+            resp = None
+            status = False
 
         if status:
-            response['full_text'] = self.py3.safe_format(self.format, self._flatten(resp))
+            response['full_text'] = self.py3.safe_format(
+                self.format,
+                self.py3.flatten_dict(
+                    resp, delimiter=self.delimiter, intermediates=True
+                )
+            )
         else:
             response['full_text'] = ''
         return response
