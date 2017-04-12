@@ -12,6 +12,12 @@ class RequestException(Py3Exception):
     """
 
 
+class RequestInvalidJSON(RequestException):
+    """
+    The request has not returned valid JSON
+    """
+
+
 class RequestTimeout(RequestException):
     """
     A timeout has occured during a request made via Py3.request().
