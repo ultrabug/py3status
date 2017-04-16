@@ -391,8 +391,9 @@ class Py3status:
         if self.charging:
             self.icon = self.charging_character
         else:
-            self.icon = self.blocks[int(math.ceil(self.percent_charged / 100 *
-                                                  (len(self.blocks) - 1)))]
+            self.icon = self.blocks[min(len(self.blocks) - 1,
+                                        int(math.ceil(self.percent_charged / 100 *
+                                                      (len(self.blocks) - 1))))]
 
     def _update_full_text(self):
         self.full_text = self.py3.safe_format(
