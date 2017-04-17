@@ -75,8 +75,8 @@ class Py3status:
 
     def post_config_hook(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
-        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)/')
-        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)/')
+        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
+        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
 
     def ip_list(self):
         response = {
