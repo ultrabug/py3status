@@ -108,12 +108,14 @@ class Py3status:
         if not connection:
             response['full_text'] = self.py3.safe_format(self.format_no_ip,
                                                          {'format_iface':
-                                                             self.iface_sep.join(iface_list)})
+                                                             self.py3.composite_join(
+                                                                 self.iface_sep, iface_list)})
             response['color'] = self.py3.COLOR_BAD
         else:
             response['full_text'] = self.py3.safe_format(self.format,
                                                          {'format_iface':
-                                                             self.iface_sep.join(iface_list)})
+                                                             self.py3.composite_join(
+                                                                 self.iface_sep, iface_list)})
             response['color'] = self.py3.COLOR_GOOD
 
         return response
