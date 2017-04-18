@@ -84,16 +84,19 @@ class Py3status:
                 'full_text': STRING_ERROR
             }
 
+        _format = ''
         if status == "Dropbox isn't running!":
             color = self.py3.COLOR_BAD
-            status = self.status_off
+            _format = self.status_off
         elif status == "Up to date":
             color = self.py3.COLOR_GOOD
-            status = self.status_on
+            _format = self.status_on
         else:
             color = self.py3.COLOR_DEGRADED
             if self.status_busy is not None:
-                status = self.status_busy
+                _format = self.status_busy
+
+        status = self.py3.safe_format(_format, {'status': status})
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
