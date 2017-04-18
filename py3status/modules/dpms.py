@@ -67,11 +67,13 @@ class Py3status:
         Display a colorful state of DPMS.
         """
         if 'DPMS is Enabled' in self.py3.command_output('xset -q'):
-            icon = self.icon_on
+            _format = self.icon_on
             color = self.color_on
         else:
-            icon = self.icon_off
+            _format = self.icon_off
             color = self.color_off
+
+        icon = self.py3.safe_format(_format)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
