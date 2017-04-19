@@ -1,6 +1,7 @@
 version 3.6 (milestone)
 * battery_level module: fix bug with over 100% full icon, by @docwalter
 * backlight module: combine device/device_path params, by @lasers
+* getjson module: cleanups, by @lasers
 * net_iplist module: fix for new formatter, by @guiniol
 * sysdata module: Add load support, by @guiniol
 * wifi module: add format, merge formats, by @lasers
