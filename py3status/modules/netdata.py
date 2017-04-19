@@ -28,9 +28,9 @@ Color thresholds:
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'eth0'},
-    {'color': '#FF0000', 'full_text': 'LAN(Kb):  16.9↓   5.2↑', 'separator': True},
-    {'color': '#FF0000', 'full_text': 'T(Mb): 2264↓ 143↑ 2407↕'}
+    {'full_text': 'eth0 '},
+    {'full_text': 'LAN(Kb):  77.8↓  26.9↑ ', 'color': '#00FF00'},
+    {'full_text': 'T(Mb): 394↓  45↑ 438↕', 'color': '#FFFF00'},
 ]
 """
 

@@ -63,7 +63,7 @@ rainbow blink_time{
 
 SAMPLE OUTPUT
 [
-    {'color': '#FF0000', 'full_text': 'module 1', 'separator': True},
+    {'color': '#FF0000', 'full_text': 'module 1'},
     {'color': '#CCFF00', 'full_text': 'module 2', 'separator': True},
     {'color': '#00FF66', 'full_text': 'module 3', 'separator': True},
     {'color': '#0066FF', 'full_text': 'module 4', 'separator': True},

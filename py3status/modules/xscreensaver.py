@@ -18,7 +18,17 @@ Configuration parameters:
 Format placeholders:
     {icon} Xscreensaver icon
 
+Color options:
+    color_on: Enabled, defaults to color_good
+    color_off: Disabled, defaults to color_bad
+
 @author neutronst4r <c7420{at}posteo{dot}net>, lasers
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'XSCR'}
+
+off
+{'color': '#FF0000', 'full_text': 'XSCR'}
 """
 
 from os import setpgrp
