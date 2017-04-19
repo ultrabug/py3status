@@ -264,7 +264,6 @@ class Py3status:
                         timezone=timezone,
                         timezone_unclear=timezone_unclear,
                     ))
-                self.py3.log(format_time)
                 if self.py3.is_composite(format_time):
                     for item in format_time:
                         item['full_text'] = t.strftime(item['full_text'])
