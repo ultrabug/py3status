@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Display a json response from a url.
+Display JSON data fetched from a URL.
 
-This module gets the given `url` configuration parameter and assumes the response is a
-json object. The keys of the json object are used as the format placeholders. The format
-placeholders are replaced by the value. Objects that are nested can be accessed by using
-the `delimiter` configuration parameter in between.
+This module gets the given `url` configuration parameter and assumes the
+response is a JSON object. The keys of the JSON object are used as the format
+placeholders. The format placeholders are replaced by the value. Objects that
+are nested can be accessed by using the `delimiter` configuration parameter
+in between.
 
 Examples:
 ```
@@ -18,7 +19,7 @@ url = 'http://api.icndb.com/jokes/random'
 format = '{value-joke}'
 
 # Access title from 0th element of articles list
-url = 'https://newsapi.org/v1/articles?source=bbc-news&sortBy=top&apiKey={API_KEY}'
+url = 'https://newsapi.org/v1/articles?source=bbc-news&sortBy=top&apiKey={KEY}'
 format = '{articles-0-title}'
 
 # Access if top-level object is a list
@@ -27,26 +28,22 @@ format = '{0-name}'
 ```
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds
-        (default 30)
-    delimiter: the delimiter between parent and child objects
-        (default '-')
-    format: placeholders will be replaced by the returned json key names
-        (default None)
-    timeout: how long before deciding we're offline
-        (default 5)
-    url: specify a url to fetch json from
-        (default None)
+    cache_timeout: refresh interval for this module (default 30)
+    delimiter: the delimiter between parent and child objects (default '-')
+    format: display format for this module (default None)
+    timeout: time to wait for a response, in seconds (default 5)
+    url: specify URL to fetch JSON from (default None)
 
 Format placeholders:
-    Placeholders will be replaced by the json keys
+    Placeholders will be replaced by the JSON keys.
 
-    Placeholders for objects with sub-objects are flattened using 'delimiter' in between
-        (eg. {'parent': {'child': 'value'}} will use placeholder {parent-child}
+    Placeholders for objects with sub-objects are flattened using 'delimiter'
+    in between (eg. {'parent': {'child': 'value'}} will use placeholder
+    {parent-child}).
 
     Placeholders for list elements have 'delimiter' followed by the index
-        (eg. {'parent': ['this', 'that']) will use placeholders {parent-0} for 'this' and
-        {parent-1} for 'that'
+    (eg. {'parent': ['this', 'that']) will use placeholders {parent-0}
+    for 'this' and {parent-1} for 'that'.
 
 @author vicyap
 
@@ -68,28 +65,21 @@ class Py3status:
     def getjson(self):
         """
         """
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-        }
-
         try:
-            resp = self.py3.request(self.url, timeout=self.timeout)
-            status = resp.status_code == 200
-            resp = resp.json()
+            json_data = self.py3.request(self.url, timeout=self.timeout).json()
+            json_data = self.py3.flatten_dict(json_data, self.delimiter, True)
         except self.py3.RequestException:
-            resp = None
-            status = False
+            json_data = None
 
-        if status:
-            response['full_text'] = self.py3.safe_format(
-                self.format,
-                self.py3.flatten_dict(
-                    resp, delimiter=self.delimiter, intermediates=True
-                )
-            )
+        if json_data:
+            full_text = self.py3.safe_format(self.format, json_data)
         else:
-            response['full_text'] = ''
-        return response
+            full_text = ''
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': full_text
+        }
 
 
 if __name__ == "__main__":
