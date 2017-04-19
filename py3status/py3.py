@@ -89,6 +89,7 @@ class Py3:
 
     # Exceptions
     Py3Exception = exceptions.Py3Exception
+    CommandError = exceptions.CommandError
     RequestException = exceptions.RequestException
     RequestInvalidJSON = exceptions.RequestInvalidJSON
     RequestTimeout = exceptions.RequestTimeout
@@ -844,10 +845,12 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            return Popen(command, stdout=PIPE, stderr=PIPE).wait()
+            return Popen(
+                command, stdout=PIPE, stderr=PIPE, close_fds=True
+            ).wait()
         except Exception as e:
-            msg = "Command '{cmd}' {error}"
-            raise Exception(msg.format(cmd=command[0], error=e))
+            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e.errno)
+            raise exceptions.CommandError(msg, error_code=e.errno)
 
     def command_output(self, command, shell=False):
         """
@@ -860,11 +863,11 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE,
+            process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
-            msg = "Command '{cmd}' {error}"
-            raise Exception(msg.format(cmd=command[0], error=e))
+            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e)
+            raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
         if self._is_python_2:
@@ -881,10 +884,17 @@ class Py3:
                 self.log(msg.format(cmd=command))
             else:
                 msg = "Command '{cmd}' returned non-zero exit status {error}"
-                raise Exception(msg.format(cmd=command[0], error=retcode))
+                msg = msg.format(cmd=command[0], error=retcode)
+                raise exceptions.CommandError(
+                    msg, error_code=retcode, error=error, output=output
+                )
         if error:
-            msg = "Command '{cmd}' had error {error}"
-            raise Exception(msg.format(cmd=command[0], error=error))
+            msg = "Command '{cmd}' had error {error}".format(
+                cmd=command[0], error=error
+            )
+            raise exceptions.CommandError(
+                msg, error_code=retcode, error=error, output=output
+            )
         return output
 
     def play_sound(self, sound_file):

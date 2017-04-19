@@ -37,7 +37,6 @@ example
 """
 
 STRING_UNAVAILABLE = "external_script: N/A"
-STRING_ERROR = "external_script: error"
 
 
 class Py3status:
@@ -58,13 +57,10 @@ class Py3status:
             }
         try:
             output = self.py3.command_output(self.script_path, shell=True)
-            output = output.splitlines()[0]
-        except:
-            return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
-            }
+        except self.py3.CommandError as e:
+            output = e.output or e.error
+
+        output = output.splitlines()[0]
 
         if self.strip_output:
             output = output.strip()
