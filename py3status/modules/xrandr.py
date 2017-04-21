@@ -302,7 +302,7 @@ class Py3status:
             else:
                 cmd += ' --off'
         #
-        code = self.py3.command_output(cmd)
+        code = self.py3.command_run(cmd)
         if code == 0:
             self.active_comb = combination
             self.active_layout = self.displayed
