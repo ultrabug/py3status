@@ -81,7 +81,14 @@ class Module(Thread):
             msg = 'Module `{}` could not be loaded'.format(
                 self.module_full_name
             )
-            self._py3_wrapper.report_exception(msg, notify_user=False)
+            if isinstance(e, SyntaxError):
+                # provide full traceback
+                self._py3_wrapper.report_exception(msg, notify_user=False)
+            else:
+                # module import error we can just report the module that cannot
+                # be imported
+                self._py3_wrapper.log(msg)
+                self._py3_wrapper.log(str(e))
 
     def __repr__(self):
         return '<Module {}>'.format(self.module_full_name)
