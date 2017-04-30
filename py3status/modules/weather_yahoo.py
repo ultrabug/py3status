@@ -172,11 +172,15 @@ class Py3status:
             self.format_today,
             dict(icon=self._get_icon(today), units=units, **today)
         )
-        forecast_text = self.forecast_text_separator.join(
-            self.py3.safe_format(
-                self.format_forecast,
-                dict(icon=self._get_icon(f), units=units, **f)
-            ) for f in forecasts)
+        forecast_text = self.py3.composite_join(
+            self.forecast_text_separator,
+            (
+                self.py3.safe_format(
+                    self.format_forecast,
+                    dict(icon=self._get_icon(f), units=units, **f)
+                ) for f in forecasts
+            )
+        )
 
         response['full_text'] = self.py3.safe_format(
             self.format, dict(today=today_text, forecasts=forecast_text)
