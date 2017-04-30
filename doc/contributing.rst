@@ -15,8 +15,10 @@ What you will need
     - https://pypi.python.org/pypi/pytest
     - https://pypi.python.org/pypi/pytest-flake8
 
-Setting up a developement environment
--------------------------------------
+.. _setup:
+
+Setting up a development environment
+------------------------------------
 
 First clone the git repository
 

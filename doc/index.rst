@@ -13,6 +13,7 @@ Welcome to py3status's documentation!
    intro
    modules
    configuration
+   py3-cmd
    writing_modules
    py3
    contributing
