@@ -131,18 +131,14 @@ class Py3status:
             info['icon'] = self.icon_on
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
             response['color'] = self.py3.COLOR_GOOD
+            for key, val in self.expected.items():
+                if val != info.get(key):
+                    response['color'] = self.py3.COLOR_DEGRADED
+                    break
             if self.mode == 'ip':
                 response['full_text'] = self.py3.safe_format(self.format, info)
-                for key, val in self.expected.items():
-                    if val != info.get(key):
-                        response['color'] = self.py3.COLOR_DEGRADED
-                        break
             else:
                 response['full_text'] = self.icon_on
-                for key, val in self.expected.items():
-                    if val != info.get(key):
-                        response['color'] = self.py3.COLOR_DEGRADED
-                        break
         else:
             response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
