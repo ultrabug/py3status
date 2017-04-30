@@ -139,6 +139,10 @@ class Py3status:
                         break
             else:
                 response['full_text'] = self.icon_on
+                for key, val in self.expected.items():
+                    if val != info.get(key):
+                        response['color'] = self.py3.COLOR_DEGRADED
+                        break
         else:
             response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
