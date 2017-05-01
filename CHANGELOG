@@ -1,9 +1,12 @@
 version 3.6 (milestone)
 * battery_level module: fix bug with over 100% full icon, by @docwalter
 * backlight module: combine device/device_path params, by @lasers
+* dpms module: add safeformat for all statuses, by @lasers
+* external_script: allow colored output, by @enguerrand
 * getjson module: cleanups, by @lasers
 * net_iplist module: fix for new formatter, by @guiniol
 * sysdata module: Add load support, by @guiniol
+* whatismyip module: color_degraded support in status mode, by @aethelz
 * wifi module: add format, merge formats, by @lasers
 
 version 3.5 (2017-04-07)
