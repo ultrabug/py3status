@@ -215,6 +215,26 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
         }
     }
 
+Urgent
+------
+
+Some modules use i3bar's urgent feature to indicate that something
+important has occurred. The ``allow_urgent`` configuration parameter can
+be used to allow/prevent a module from setting itself as urgent.
+
+
+.. code-block:: py3status
+    :caption: Example
+
+    # prevent modules showing as urgent, except github
+    py3status {
+        allow_urgent = false
+    }
+
+    github {
+        allow_urgent = true
+    }
+
 
 Grouping Modules
 ----------------
