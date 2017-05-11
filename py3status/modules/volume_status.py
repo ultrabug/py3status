@@ -174,6 +174,7 @@ class PactlBackend(AudioBackend):
         self.device_type_pl = self.device_type + 's'
         self.device_type_cap = self.device_type[0].upper() + self.device_type[1:]
 
+        self.use_device = self.device
         if self.device is None:
             self.device = self.get_default_device()
 
@@ -181,8 +182,12 @@ class PactlBackend(AudioBackend):
         self.english_env['LC_ALL'] = 'C'
 
         self.max_volume = parent.max_volume
-        self.re_volume = re.compile(r'{} \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'
-                                    .format(self.device_type_cap, self.device), re.M | re.DOTALL)
+        self.update_device()
+
+    def update_device(self):
+        smv = r'{} \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'
+        self.re_volume = re.compile(
+            smv.format(self.device_type_cap, self.device), re.M | re.DOTALL)
 
     def get_default_device(self):
         device_id = None
@@ -211,7 +216,14 @@ class PactlBackend(AudioBackend):
     def get_volume(self):
         output = check_output(
             ['pactl', 'list', self.device_type_pl], env=self.english_env).decode('utf-8').strip()
-        muted, perc = self.re_volume.search(output).groups()
+        try:
+            muted, perc = self.re_volume.search(output).groups()
+        except AttributeError:
+            muted, perc = False, 0
+            # if dev not set, get a new dev number and try again, otherwise print 0
+            if self.use_device is None:
+                self.device = output.splitlines()[0].split('%s #' % self.device_type_cap)[-1]
+                self.update_device()
 
         # muted should be 'on' or 'off'
         if muted in ['yes', 'no']:
