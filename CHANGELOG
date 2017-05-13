@@ -5,7 +5,9 @@ version 3.6 (milestone)
 * external_script: allow colored output, by @enguerrand
 * getjson module: cleanups, by @lasers
 * net_iplist module: fix for new formatter, by @guiniol
+* spaceapi module: prevent 'used before assignment' error, by @fmorgner
 * sysdata module: Add load support, by @guiniol
+* volume_status: Default device detection for pactl, by  @lasers
 * whatismyip module: color_degraded support in status mode, by @aethelz
 * wifi module: add format, merge formats, by @lasers
 
