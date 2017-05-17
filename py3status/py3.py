@@ -990,3 +990,53 @@ class Py3:
                             headers=headers,
                             timeout=timeout,
                             auth=auth)
+
+    def popup_open(self, data, type='info', callback=None):
+        """
+        Open a popup for the module.
+
+        `type` can be 'info' in which case the popup will contain just text, or
+        'menu' in which case the popup will respond to user actions and call
+        the callback function.
+
+        `data` can be a string using \n to separate each line, a list of
+        strings or a list of tuples (text, value) where text is the string to
+        be displayed and value can be True (item is selected), False (item is
+        not selected), None (item not selectable).
+
+        `callback` is a function that will receive the text of the line that
+        was clicked by the user and a dict containing all items as keys and a
+        value corresponding to if the item is selected or not.
+        """
+        if self._module:
+            module_name = self._module.module_full_name
+            self._module._py3_wrapper.popup_controller.popup(
+                module_name, data, type=type, callback=callback
+            )
+
+    def popup_close(self):
+        """
+        Close the modules popup.
+        """
+        if self._module:
+            self._module._py3_wrapper.popup_controller.close()
+
+    def popup_toggle(self, data, type='info', callback=None):
+        """
+        Close the menu if it is open else open it.
+        """
+        if self._module:
+            module_name = self._module.module_full_name
+            self._module._py3_wrapper.popup_controller.popup_toggle(
+                module_name, data, type=type, callback=callback
+            )
+
+    def popup_update(self, data):
+        """
+        Update the popup displaying the new data.
+        """
+        if self._module:
+            module_name = self._module.module_full_name
+            self._module._py3_wrapper.popup_controller.popup_update(
+                module_name, data
+            )

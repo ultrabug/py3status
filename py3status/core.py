@@ -22,6 +22,7 @@ from py3status.events import Events
 from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
+from py3status.popup import PopupController
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.version import version
@@ -353,6 +354,9 @@ class Py3statusWrapper():
         if self.config['debug']:
             self.log('i3status thread {} with config {}'.format(
                 i3s_mode, self.config['py3_config']))
+
+        # popup_controller
+        self.popup_controller = PopupController(self)
 
         # setup input events thread
         self.events_thread = Events(self)
