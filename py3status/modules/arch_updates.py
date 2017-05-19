@@ -2,26 +2,21 @@
 """
 Display number of pending updates for Arch Linux.
 
-This will display a count of how many 'pacman' updates are waiting
-to be installed and optionally a count of how many 'aur' updates are
-also waiting.
-
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 600)
-    format: Display format to use
-        (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
-    hide_if_zero: Don't show on bar if True
-        (default False)
-    include_aur: Set to True to use 'cower' to check for AUR updates
-        (default False)
+    cache_timeout: refresh interval for this module (default 600)
+    format: display format for this module
+        *(default '[\?if=pacman&if=!aur PAC: {pacman}][\?if=!pacman&if=aur AUR: {aur}]
+        [\?if=pacman&if=aur UPD: {pacman}/{aur}]')*
 
 Format placeholders:
-    {aur} Number of pending aur updates
-    {pacman} Number of pending pacman updates
-    {total} Total updates pending
+    {aur} Number of pending AUR updates
+    {pacman} Number of pending updates
+    {total} Total number of pending updates
 
 Requires:
-    cower: Needed to display pending 'aur' updates
+    checkupdates: safely print a list of pending updates
+        (usually found in 'pacman' package)
+    cower: a simple AUR downloader
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -33,57 +28,55 @@ arch_updates_aur
 {'full_text': 'UPD: 15/4'}
 """
 
-import subprocess
-import sys
-
-FORMAT_PACMAN_ONLY = 'UPD: {pacman}'
-FORMAT_PACMAN_AND_AUR = 'UPD: {pacman}/{aur}'
-LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
+STRING_UNAVAILABLE = 'disabled'
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 600
-    format = ''
-    hide_if_zero = False
-    include_aur = False
+    format = '[\?if=pacman&if=!aur PAC: {pacman}][\?if=!pacman&if=aur AUR: {aur}]' + \
+        '[\?if=pacman&if=aur UPD: {pacman}/{aur}]'
+
+    class Meta:
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'include_aur',
+                    'msg': 'obsolete, customize format',
+                },
+            ],
+        }
 
     def post_config_hook(self):
-        if self.format == '':
-            if not self.include_aur:
-                self.format = FORMAT_PACMAN_ONLY
-            else:
-                self.format = FORMAT_PACMAN_AND_AUR
-        self.include_aur = self.py3.format_contains(self.format, 'aur')
-        self.include_pacman = self.py3.format_contains(self.format, 'pacman')
-        if self.py3.format_contains(self.format, 'total'):
-            self.include_aur = True
-            self.include_pacman = True
-
-        # check cower installed
-        if self.include_aur and not self.py3.check_commands(['cower']):
-            self.py3.notify_user('cower is not installed cannot check aur')
-            self.include_aur = False
-
-    def check_updates(self):
-        pacman_updates = self._check_pacman_updates()
-        aur_updates = self._check_aur_updates()
-        if aur_updates == '?':
-            total = pacman_updates
+        if (self.py3.format_contains(self.format, 'pacman') and
+                self.py3.check_commands('checkupdates')):
+            self._pacman = True
         else:
-            total = pacman_updates + aur_updates
+            self._pacman = False
 
-        if self.hide_if_zero and total == 0:
-            full_text = ''
+        if (self.py3.format_contains(self.format, 'aur') and
+                self.py3.check_commands('cower') and self.include_aur):
+            self._aur = True
         else:
-            full_text = self.py3.safe_format(
-                self.format,
-                {
-                    'aur': aur_updates,
-                    'pacman': pacman_updates,
-                    'total': total,
-                }
-            )
+            self._aur = False
+
+        if not self._pacman and not self._aur:
+            raise Exception(STRING_UNAVAILABLE, self.py3.CACHE_FOREVER)
+
+    def arch_updates(self):
+        """
+        Display a count of pending updates and a count of pending AUR updates.
+        """
+        pacman = self._check_pacman_updates()
+        aur = self._check_aur_updates()
+        total = pacman + aur
+
+        full_text = self.py3.safe_format(
+            self.format, {'pacman': pacman, 'aur': aur, 'total': total}
+        )
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
@@ -91,35 +84,47 @@ class Py3status:
 
     def _check_pacman_updates(self):
         """
-        This method will use the 'checkupdates' command line utility
-        to determine how many updates are waiting to be installed via
-        'pacman -Syu'.
+        checkupdates -- Safely print a list of pending updates
+            (usually found in 'pacman' package)
         """
-        if not self.include_pacman:
+        if self._pacman:
+            return len(self.py3.command_output('checkupdates').splitlines())
+        else:
             return 0
-        pending_updates = str(subprocess.check_output(["checkupdates"]))
-        return pending_updates.count(LINE_SEPARATOR)
 
     def _check_aur_updates(self):
         """
-        This method will use the 'cower' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
-        """
-        # For reasons best known to its author, 'cower' returns a non-zero
-        # status code upon successful execution, if there is any output.
-        # See https://github.com/falconindy/cower/blob/master/cower.c#L2596
-        if not self.include_aur:
-            return '?'
+        cower -bu -- Safely print a list of pending AUR updates
 
-        pending_updates = b""
-        try:
-            pending_updates = str(subprocess.check_output(["cower", "-bu"]))
-        except subprocess.CalledProcessError as cp_error:
-            pending_updates = cp_error.output
-        except:
-            pending_updates = '?'
-        return str(pending_updates).count(LINE_SEPARATOR)
+        -b, --brief
+            Show output in a more script friendly format. Use this if you're wrapping cower
+            for some sort of automation.
+
+        -u, --update
+            Check foreign packages for updates in the AUR. Without any arguments,
+            all manually installed packages will be checked. cower will exit with a non-zero
+            status if and only if updates are available.
+        """
+        # if self.check_aur:
+        #     try:
+        #         return len(subprocess.check_output(['cower', '-bu']).splitlines())
+        #     except subprocess.CalledProcessError as e:
+        #         return len(e.output.splitlines())
+        #     except:
+        #         return 0
+        # else:
+        #     return 0
+
+        # GUESSWORK: NEW PY3 CODE W/ EXCEPTION TO TRY.
+        if self._aur:
+            try:
+                return len(self.py3.command_output(['cower', '-bu']).splitlines())
+            except self.py3.CommandError as e:
+                return len(e.splitlines())
+            except:
+                return 0
+        else:
+            return 0
 
 
 if __name__ == "__main__":
