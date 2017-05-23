@@ -3,10 +3,10 @@
 Control screen layout.
 
 This modules allows you to handle your screens outputs directly from your bar!
-  - Detect and propose every possible screen combinations
-  - Switch between combinations using click events and mouse scroll
-  - Activate the screen or screen combination on a single click
-  - It will detect any newly connected or removed screen automatically
+    - Detect and propose every possible screen combinations
+    - Switch between combinations using click events and mouse scroll
+    - Activate the screen or screen combination on a single click
+    - It will detect any newly connected or removed screen automatically
 
 For convenience, this module also proposes some added features:
     - Dynamic parameters for POSITION and WORKSPACES assignment (see below)
@@ -29,6 +29,8 @@ Configuration parameters:
         (default None)
     format: display format for xrandr
         (default '{output}')
+    hide_if_single_combination: hide if only one combination is available
+        (default False)
     icon_clone: icon used to display a 'clone' combination
         (default '=')
     icon_extend: icon used to display a 'extend' combination
@@ -77,13 +79,24 @@ xrandr {
 ```
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'LVDS1'}
+
+extend
+{'color': '#00FF00', 'full_text': 'LVDS1+DP1'}
+
+mirror
+{'color': '#00FF00', 'full_text': 'LVDS1=DP1'}
+
+single
+{'color': '#00FF00', 'full_text': 'DP1'}
+
 """
-import shlex
 
 from collections import deque
 from collections import OrderedDict
 from itertools import combinations
-from subprocess import call, Popen, PIPE
 from time import sleep
 
 
@@ -96,6 +109,7 @@ class Py3status:
     fixed_width = True
     force_on_start = None
     format = '{output}'
+    hide_if_single_combination = False
     icon_clone = '='
     icon_extend = '+'
     output_combinations = None
@@ -138,13 +152,8 @@ class Py3status:
             'disconnected': OrderedDict()
         })
 
-        current = Popen(['xrandr'], stdout=PIPE)
-        for line in current.stdout.readlines():
-            try:
-                # python3
-                line = line.decode()
-            except:
-                pass
+        current = self.py3.command_output('xrandr')
+        for line in current.splitlines():
             try:
                 s = line.split(' ')
                 if s[1] == 'connected':
@@ -293,7 +302,7 @@ class Py3status:
             else:
                 cmd += ' --off'
         #
-        code = call(shlex.split(cmd))
+        code = self.py3.command_run(cmd)
         if code == 0:
             self.active_comb = combination
             self.active_layout = self.displayed
@@ -321,10 +330,10 @@ class Py3status:
                         continue
                     # switch to workspace
                     cmd = 'i3-msg workspace "{}"'.format(workspace)
-                    call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
+                    self.py3.command_run(cmd)
                     # move it to output
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
-                    call(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
+                    self.py3.command_run(cmd)
                     # log this
                     self.py3.log('moved workspace {} to output {}'.format(
                         workspace, output))
@@ -333,7 +342,7 @@ class Py3status:
         """
         Send a SIGUSR1 signal to py3status to force a bar refresh.
         """
-        call(shlex.split('killall -s USR1 py3status'))
+        self.py3.command_run('killall -s USR1 py3status')
 
     def _fallback_to_available_output(self):
         """
@@ -399,11 +408,15 @@ class Py3status:
         self._set_available_combinations()
         self._choose_what_to_display()
 
-        if self.fixed_width is True:
-            output = self._center(self.displayed)
+        if (len(self.available_combinations) < 2 and
+                self.hide_if_single_combination):
+            full_text = self.py3.safe_format(self.format, {'output': ''})
         else:
-            output = self.displayed
-        full_text = self.py3.safe_format(self.format, {'output': output})
+            if self.fixed_width is True:
+                output = self._center(self.displayed)
+            else:
+                output = self.displayed
+            full_text = self.py3.safe_format(self.format, {'output': output})
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

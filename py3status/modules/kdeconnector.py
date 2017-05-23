@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 Display information about your smartphone with KDEConnector.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
     device: the device name, you need this if you have more than one device
-            connected to your PC (default None)
+        connected to your PC (default None)
     device_id: alternatively to the device name you can set your device id here
         (default None)
     format: see placeholders below
@@ -48,6 +48,24 @@ Requires:
     kdeconnect
 
 @author Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2709 \u2B06 97%'}
+
+charging
+{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2B06 97%'}
+
+transition
+{'color': '#FFFF00', 'full_text': u'Samsung Galaxy S6 \u2B07 93%'}
+
+not-plugged
+{'color': '#FF0000', 'full_text': u'Samsung Galaxy S6 \u2B07 92%'}
+
+disconnected
+{'color': '#FF0000', 'full_text': u'device disconnected'}
+
+unknown
+{'color': '#FF0000', 'full_text': u'unknown device'}
 """
 
 from pydbus import SessionBus

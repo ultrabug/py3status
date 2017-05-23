@@ -38,6 +38,7 @@ setup(
     entry_points={
         'console_scripts': [
             'py3status = py3status:main',
+            'py3-cmd = py3status.command:send_command',
         ]
     },
     classifiers=[
@@ -51,5 +52,6 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ], )

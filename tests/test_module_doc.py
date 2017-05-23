@@ -36,6 +36,7 @@ IGNORE_ILLEGAL_CONFIG_OPTIONS = [
 # alphabetical order purposes
 IGNORE_ITEM = [
     ('netdata', 'format'),  # line too long for docstring parsing
+    ('i3block', 'cache_timeout'),  # can be overriden by interval so undefined
     ('screenshot', 'save_path'),  # home dir issue
     ('rate_counter', 'config_file'),  # home dir issue
     ('group', 'format'),  # dynamic depending on click_mode

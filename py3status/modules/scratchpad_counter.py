@@ -12,6 +12,9 @@ Format placeholders:
 
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': '2 ⌫'}
 """
 
 from json import loads

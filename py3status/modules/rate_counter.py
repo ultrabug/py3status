@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)
     config_file: file path to store the time already spent
         and restore it the next session
-         (default '~/.i3/py3status/counter-config.save')
+        (default '~/.i3/py3status/counter-config.save')
     format: output format string
         (default 'Time: {days} day {hours}:{mins:02d} Cost: {total}')
     format_money: output format string
@@ -33,6 +33,9 @@ Color options:
     color_stopped: Stopped, default color_bad
 
 @author Amaury Brisou <py3status AT puzzledge.org>
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': u'Time: 0 day 0:00 Cost: 0.13$'}
 """
 
 

@@ -12,6 +12,9 @@ Inspired by i3 FAQ:
     https://faq.i3wm.org/question/1618/add-user-name-to-status-bar.1.html
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': u'ultrabug'}
 """
 
 from getpass import getuser

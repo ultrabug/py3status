@@ -21,10 +21,12 @@ Coloring rules:
     specified values in the coloring section.
 
 Example:
+```
     coloring = {
         800: "#dddd00",     # over 800: yellow
         900: "#dd0000",     # over 900: red
     }
+```
 
 Format placeholders:
     {down} download
@@ -36,6 +38,9 @@ Requires:
 
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': '826.4 mb'}
 """
 
 from __future__ import division  # python2 compatibility

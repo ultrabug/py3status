@@ -73,13 +73,19 @@ Requires:
     pamixer: pulseaudio backend
 
 NOTE:
-        If you are changing volume state by external scripts etc and
-        want to refresh the module quicker than the i3status interval,
-        send a USR1 signal to py3status in the keybinding.
-        Example: killall -s USR1 py3status
+    If you are changing volume state by external scripts etc and
+    want to refresh the module quicker than the i3status interval,
+    send a USR1 signal to py3status in the keybinding.
+    Example: killall -s USR1 py3status
 
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u266a: 95%'}
+
+mute
+{'color': '#FF0000', 'full_text': u'\u266a: muted'}
 """
 
 import re
@@ -157,8 +163,10 @@ class PamixerBackend(AudioBackend):
 
 class PactlBackend(AudioBackend):
     def setup(self, parent):
+        # get available device number if not specified
         if self.device is None:
-            self.device = "0"
+            self.device = check_output(
+                ['pactl', 'list', 'short', 'sinks']).decode('utf-8').split()[0]
         self.max_volume = parent.max_volume
         self.re_volume = re.compile(
             r'Sink \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(self.device),
@@ -285,9 +293,9 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        '''
+        """
         Volume up/down and toggle mute.
-        '''
+        """
         button = event['button']
         # volume up
         if self.button_up and button == self.button_up:

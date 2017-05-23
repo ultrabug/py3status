@@ -3,30 +3,36 @@
 Determine if you have an Internet Connection.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format: display format for online_status (default '{icon}')
-    icon_off: what to display when offline (default '■')
-    icon_on: what to display when online (default '●')
-    timeout: how long before deciding we're offline (default 2)
-    url: connect to this url to check the connection status
-         (default 'http://www.google.com')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module (default '{icon}')
+    icon_off: show when connection is offline (default '■')
+    icon_on: show when connection is online (default '●')
+    timeout: time to wait for a response, in seconds (default 2)
+    url: specify URL to connect when checking for a connection
+        (default 'http://www.google.com')
 
 Format placeholders:
-    {icon} display current online status
+    {icon} connection status
 
 Color options:
-    color_bad: Offline
-    color_good: Online
+    color_off: Connection offline, defaults to color_bad
+    color_on: Connection online, defaults to color_good
 
 @author obb
+
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u25cf'}
+
+off
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-import os
-import subprocess
 try:
     # python3
     from urllib.request import urlopen
 except:
+    # python2
     from urllib2 import urlopen
 
 
@@ -57,6 +63,10 @@ class Py3status:
             ],
         }
 
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+
     def _connection_present(self):
         if '://' in self.url:
             try:
@@ -66,26 +76,26 @@ class Py3status:
             else:
                 return True
         else:
-            fnull = open(os.devnull, 'w')
-            return subprocess.call(['ping', '-c', '1', self.url],
-                                   stdout=fnull, stderr=fnull) == 0
+            try:
+                self.py3.command_output(['ping', '-c', '1', self.url])
+            except:
+                return False
+            else:
+                return True
 
     def online_status(self):
-
         if self._connection_present():
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'icon': self.icon_on}),
-                'color': self.py3.COLOR_GOOD
-            }
+            icon = self.icon_on
+            color = self.color_on
         else:
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'icon': self.icon_off}),
-                'color': self.py3.COLOR_BAD
-            }
+            color = self.color_off
+            icon = self.icon_off
 
-        return response
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
+            'color': color
+        }
 
 
 if __name__ == "__main__":

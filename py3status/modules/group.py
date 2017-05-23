@@ -48,7 +48,6 @@ Configuration parameters:
     open: Is the group open and displaying its content. Has no effect if
         `{button}` not in format (default True)
 
-
 Format placeholders:
     {button} The button to open/close or change the displayed group
     {output} Output of current active module
@@ -78,6 +77,15 @@ group disks {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'module 1'}
+
+cycle
+{'full_text': 'module 2'}
+
+cycle_again
+{'full_text': 'module 3'}
 """
 
 from time import time
@@ -121,25 +129,25 @@ class Py3status:
             else:
                 self.format = u'{output}'
         # if no button then force open
-        if '{button}' not in self.format:
+        if not self.py3.format_contains(self.format, 'button'):
                 self.open = True
         self.py3.register_function('content_function', self._content_function)
         self.py3.register_function('urgent_function', self._urgent_function)
 
     def _content_function(self):
-        '''
+        """
         This returns a set containing the actively shown module.  This is so we
         only get update events triggered for these modules.
-        '''
+        """
         # ensure that active is valid
         self.active = self.active % len(self.items)
 
         return set([self.items[self.active]])
 
     def _urgent_function(self, module_list):
-        '''
+        """
         A contained module has become urgent.  We want to display it to the user
-        '''
+        """
         for module in module_list:
             if module in self.items:
                 self.active = self.items.index(module)

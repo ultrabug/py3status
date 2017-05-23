@@ -17,6 +17,12 @@ Format placeholders:
     {icon} icon for the current availability
 
 @author obb, Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u25cf'}
+
+missing
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
 from os.path import expanduser, exists

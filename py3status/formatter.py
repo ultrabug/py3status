@@ -10,198 +10,7 @@ except ImportError:
     from urlparse import parse_qsl
 
 
-class BlockConfig:
-    """
-    Block commands eg [\?color=bad ...] are stored in this object
-    """
-
-    REGEX_COLOR = re.compile('#[0-9A-F]{6}')
-
-    # defaults
-    _if = None
-    color = None
-    has_commands = False
-    max_length = None
-    min_length = 0
-    not_zero = False
-    show = False
-
-    def update_commands(self, commands_str):
-        """
-        update with commands from the block
-        """
-        commands = dict(parse_qsl(commands_str, keep_blank_values=True))
-
-        self._if = commands.get('if', self._if)
-        self.color = self._check_color(commands.get('color'))
-        self._set_int(commands, 'max_length')
-        self._set_int(commands, 'min_length')
-
-        self.not_zero = 'not_zero' in commands or self.not_zero
-        self.show = 'show' in commands or self.show
-
-        self.has_commands = True
-
-    def _set_int(self, commands, name):
-        """
-        set integer value from commands
-        """
-        if name in commands:
-            try:
-                value = int(commands[name])
-                setattr(self, name, value)
-            except ValueError:
-                pass
-
-    def _check_color(self, color):
-        if not color:
-            return self.color
-        # fix any hex colors so they are #RRGGBB
-        if color.startswith('#'):
-            color = color.upper()
-            if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2] +
-                         color[2] + color[3] + color[3])
-            # check color is valid
-            if not self.REGEX_COLOR.match(color):
-                return self.color
-        return color
-
-
-class Block:
-    """
-    Represents a block of our format.  Block being contained inside [..]
-
-    A block may contain options split by a pipe | and the first 'valid' block
-    is the one that will be used.  blocks can contain other blocks and also
-    know about their parent block (if they have one)
-    """
-
-    def __init__(self, param_dict, module, parent=None):
-        self.block_config = BlockConfig()
-        self.commands = {}
-        self.content = []
-        self.module = module
-        self.options = []
-        self.param_dict = param_dict
-        self.parent = parent
-        self.valid_blocks = set()
-
-    def __repr__(self):
-        return u'<Block {!r}>'.format(self.options)
-
-    def add(self, item):
-        """
-        Add item to the block
-        """
-        if not isinstance(item, Block):
-            item = Composite(item)
-        self.content.append(item)
-
-    def switch(self):
-        """
-        New option has been started
-        """
-        self.options.append(self.content)
-        self.content = []
-
-    def mark_valid(self, index=None):
-        """
-        Mark the current block as valid. Propogate this to any parent blocks
-        """
-        self.valid_blocks.add(index or len(self.options))
-        if self.parent:
-            self.parent.mark_valid()
-
-    def set_commands(self, commands):
-        """
-        Process any commands into a dict and store
-        commands are url query string encoded
-        """
-        self.block_config.update_commands(commands)
-
-    def is_valid_by_command(self, index=None):
-        """
-        Check if we have a command forcing the block to be valid or not
-        """
-        # If this is not the first option in a block we ignore it.
-        if index:
-            return None
-        if self.block_config._if:
-            _if = self.block_config._if
-            if _if and _if.startswith('!'):
-                if not self.param_dict.get(_if[1:]):
-                    return True
-                else:
-                    return False
-            else:
-                if self.param_dict.get(_if):
-                    return True
-                else:
-                    return False
-        if self.block_config.show:
-            return True
-        # explicitly return None to aid code readability
-        return None
-
-    def set_valid_state(self):
-        """
-        Mark block valid if a command requests
-        """
-        cmd_state = self.is_valid_by_command()
-        if cmd_state is True:
-            self.mark_valid()
-        elif cmd_state is False:
-            # This enables the second option in a block if \?if=.. is false.
-            self.mark_valid(index=1)
-
-    def process_composite_chunk_item(self, items):
-        block_config = self.block_config
-        if not block_config.has_commands:
-            return
-        for item in items:
-            if block_config.max_length is not None:
-                item['full_text'] = item['full_text'][:block_config.max_length]
-                block_config.max_length -= len(item['full_text'])
-            if block_config.min_length:
-                block_config.min_length -= len(item['full_text'])
-            if block_config.color and 'color' not in item:
-                item['color'] = block_config.color
-        if block_config.min_length > 0:
-            items[0]['full_text'] = u' ' * block_config.min_length + items[0]['full_text']
-            block_config.min_length = 0
-
-    def show(self):
-        """
-        This is where we go output the content of a block and any valid child
-        block that it contains.
-
-        """
-        # Start by finalising the block.
-        # Any active content is added to self.options
-        if self.content:
-            self.options.append(self.content)
-
-        output = Composite()
-
-        for index, option in enumerate(self.options):
-            if index in self.valid_blocks:
-                # A block may be valid but has a command that causes this to be
-                # disregarded.
-                if self.is_valid_by_command(index) is False:
-                    continue
-                # add the content of the block and any children
-                # to the output
-                for item in option:
-                    if isinstance(item, Block):
-                        output.append(item.show())
-                    else:
-                        output.append(item)
-                break
-
-        # Build up our output.
-        self.process_composite_chunk_item(output.get_content())
-        return output
+python2 = sys.version_info < (3, 0)
 
 
 class Formatter:
@@ -220,10 +29,13 @@ class Formatter:
         r'|(?P<lost_brace>(\}))'
     ]
 
-    python2 = sys.version_info < (3, 0)
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
 
+    block_cache = {}
     format_string_cache = {}
+
+    def __init__(self, py3_wrapper=None):
+        self.py3_wrapper = py3_wrapper
 
     def tokens(self, format_string):
         """
@@ -231,7 +43,7 @@ class Formatter:
         Tokenizing is resource intensive so we only do it once and cache it
         """
         if format_string not in self.format_string_cache:
-            if self.python2 and isinstance(format_string, str):
+            if python2 and isinstance(format_string, str):
                 format_string = format_string.decode('utf-8')
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
@@ -252,7 +64,6 @@ class Formatter:
         """
         Update a format string renaming placeholders.
         """
-
         # Tokenize the format string and process them
         output = []
         for token in self.tokens(format_string):
@@ -285,114 +96,40 @@ class Formatter:
             output.append(value)
         return u''.join(output)
 
-    def format(self, format_string, module=None, param_dict=None,
-               force_composite=False, attr_getter=None):
+    def build_block(self, format_string):
         """
-        Format a string, substituting place holders which can be found in
-        param_dict, attributes of the supplied module, or provided via calls to
-        the attr_getter function.
+        Parse the format string into blocks containing Literals, Placeholders
+        etc that we can cache and reuse.
         """
-
-        def set_param(param, value, key, block, format=''):
-            """
-            Converts a placeholder to a string value.
-            We fix python 2 unicode issues and use string.format()
-            to ensure that formatting is applied correctly
-            """
-            if self.python2 and isinstance(param, str):
-                param = param.decode('utf-8')
-            # '', None, and False are ignored
-            # numbers like 0 and 0.0 are not.
-            if not (param in ['', None] or param is False):
-                if format.startswith(':'):
-                    # if a parameter has been set to be formatted as a numeric
-                    # type then we see if we can coerce it to be.  This allows
-                    # the user to format types that normally would not be
-                    # allowed eg '123' it also allows {:d} to be used as a
-                    # shorthand for {:.0f}.  If the parameter cannot be
-                    # successfully converted then the format is removed.
-                    try:
-                        if 'f' in format:
-                            param = float(param)
-                        if 'd' in format:
-                            param = int(float(param))
-                    except ValueError:
-                        value = u'{%s}' % key
-                value = value.format(**{key: param})
-                block.add(value)
-                # If not_zero block command is used we do not want to mark this
-                # block as valid if the parameter is zero.
-                # we do of course want to et the parameter in case the block is
-                # valid via another route, eg second parameter
-                try:
-                    if block.block_config.not_zero and float(param) == 0:
-                        return
-                except ValueError:
-                    pass
-                block.mark_valid()
-
-        # fix python 2 unicode issues
-        if self.python2 and isinstance(format_string, str):
-            format_string = format_string.decode('utf-8')
-
-        if param_dict is None:
-            param_dict = {}
-
-        block = Block(param_dict, module)
+        first_block = Block(None, py3_wrapper=self.py3_wrapper)
+        block = first_block
 
         # Tokenize the format string and process them
         for token in self.tokens(format_string):
             value = token.group(0)
             if token.group('block_start'):
                 # Create new block
-                new_block = Block(param_dict, module, block)
-                block.add(new_block)
-                block = new_block
+                block = block.new_block()
             elif token.group('block_end'):
                 # Close block setting any valid state as needed
                 # and return to parent block to continue
-                block.set_valid_state()
                 if not block.parent:
                     raise Exception('Too many `]`')
                 block = block.parent
             elif token.group('switch'):
                 # a new option has been created
-                block.set_valid_state()
-                block.switch()
+                block = block.switch()
             elif token.group('placeholder'):
                 # Found a {placeholder}
                 key = token.group('key')
-                if key in param_dict:
-                    # was a supplied parameter
-                    param = param_dict.get(key)
-                    if isinstance(param, Composite):
-                        # supplied parameter is a composite
-                        if param.get_content():
-                            block.add(param.copy())
-                            block.mark_valid()
-                    else:
-                        format = token.group('format')
-                        set_param(param, value, key, block, format)
-                elif module and hasattr(module, key):
-                    # attribute of the module
-                    param = getattr(module, key)
-                    if not hasattr(param, '__call__'):
-                        set_param(param, value, key, block)
-                    else:
-                        block.add(value)
-                elif attr_getter:
-                    # get value from attr_getter function
-                    param = attr_getter(key)
-                    set_param(param, value, key, block)
-                else:
-                    # substitution not found so add as a literal
-                    block.add(value)
+                format = token.group('format')
+                block.add(Placeholder(key, format))
             elif token.group('literal'):
-                block.add(value)
+                block.add(Literal(value))
             elif token.group('lost_brace'):
                 # due to how parsing happens we can get a lonesome }
                 # eg in format_string '{{something}' this fixes that issue
-                block.add(value)
+                block.add(Literal('}'))
             elif token.group('command'):
                 # a block command has been found
                 block.set_commands(token.group('command'))
@@ -400,44 +137,406 @@ class Formatter:
                 # escaped characters add unescaped values
                 if value[0] in ['\\', '{', '}']:
                     value = value[1:]
-                block.add(value)
+                block.add(Literal(value))
 
         if block.parent:
             raise Exception('Block not closed')
+        # add to the cache
+        self.block_cache[format_string] = first_block
 
-        # This is the main block if none of the sections are valid use the last
-        # one for situations like '{placeholder}|Nothing'
-        if not block.valid_blocks:
-            block.mark_valid()
-        output = block.show()
+    def format(self, format_string, module=None, param_dict=None,
+               force_composite=False, attr_getter=None):
+        """
+        Format a string, substituting place holders which can be found in
+        param_dict, attributes of the supplied module, or provided via calls to
+        the attr_getter function.
+        """
+        # fix python 2 unicode issues
+        if python2 and isinstance(format_string, str):
+            format_string = format_string.decode('utf-8')
 
-        # post format
-        # swap color names to values
-        for item in output:
-            # ignore empty items
-            if not item.get('full_text') and not item.get('separator'):
-                continue
-            # colors
-            color_this = item.get('color')
-            if color_this and color_this[0] != '#':
-                color_name = 'color_%s' % color_this
-                threshold_color_name = 'color_threshold_%s' % color_this
-                # substitute color
-                color_this = (
-                    getattr(module, color_name, None) or
-                    getattr(module, threshold_color_name, None) or
-                    getattr(module.py3, color_name.upper(), None)
-                )
-                if color_this:
-                        item['color'] = color_this
+        if param_dict is None:
+            param_dict = {}
+
+        # if the processed format string is not in the cache then create it.
+        if format_string not in self.block_cache:
+            self.build_block(format_string)
+
+        first_block = self.block_cache[format_string]
+
+        def get_parameter(key):
+            """
+            function that finds and returns the value for a placeholder.
+            """
+            if key in param_dict:
+                # was a supplied parameter
+                param = param_dict.get(key)
+            elif module and hasattr(module, key):
+                param = getattr(module, key)
+                if hasattr(param, '__call__'):
+                    # we don't allow module methods
+                    raise Exception()
+            elif attr_getter:
+                # get value from attr_getter function
+                try:
+                    param = attr_getter(key)
+                except:
+                    raise Exception()
+            else:
+                raise Exception()
+            if isinstance(param, Composite):
+                if len(param):
+                    param = param.copy()
                 else:
-                    del item['color']
-        output = Composite(output).simplify()
-        # if only text then we can become a string
-        if not force_composite:
-            if len(output) == 0:
-                return ''
-            elif (len(output) == 1 and list(output[0].keys()) == ['full_text']):
-                output = output[0]['full_text']
+                    param = u''
+            elif python2 and isinstance(param, str):
+                param = param.decode('utf-8')
+            return param
+
+        # render our processed format
+        valid, output = first_block.render(get_parameter, module)
+
+        # clean things up a little
+        if isinstance(output, list):
+            output = Composite(output)
+        if not output:
+            if force_composite:
+                output = Composite()
+            else:
+                output = ''
 
         return output
+
+
+class Placeholder:
+    """
+    Class representing a {placeholder}
+    """
+
+    def __init__(self, key, format):
+        self.key = key
+        self.format = format
+
+    def get(self, get_params, block):
+        """
+        return the correct value for the placeholder
+        """
+        try:
+            value = get_params(self.key)
+            if block.commands.not_zero:
+                valid = value not in ['', None, False, '0', '0.0', 0, 0.0]
+            else:
+                # '', None, and False are ignored
+                # numbers like 0 and 0.0 are not.
+                valid = not (value in ['', None] or value is False)
+            if self.format.startswith(':'):
+                # if a parameter has been set to be formatted as a numeric
+                # type then we see if we can coerce it to be.  This allows
+                # the user to format types that normally would not be
+                # allowed eg '123' it also allows {:d} to be used as a
+                # shorthand for {:.0f}.  If the parameter cannot be
+                # successfully converted then the format is removed.
+                try:
+                    if 'f' in self.format:
+                        value = float(value)
+                    if 'd' in self.format:
+                        value = int(float(value))
+                    output = u'{%s%s}' % (self.key, self.format)
+                    value = output.format(**{self.key: value})
+                except ValueError:
+                    pass
+            elif self.format.startswith('!'):
+                output = u'{%s%s}' % (self.key, self.format)
+                value = output.format(**{self.key: value})
+            enough = False
+        except:
+            # Exception raised when we don't have the param
+            enough = True
+            valid = False
+            value = '{%s}' % self.key
+
+        return valid, value, enough
+
+    def __repr__(self):
+        return '<Placeholder {%s}>' % self.repr()
+
+    def repr(self):
+        if self.format:
+            value = '%s%s' % (self.key, self.format)
+        else:
+            value = self.key
+        return '{%s}' % value
+
+
+class Literal:
+    """
+    Class representing some text
+    """
+
+    def __init__(self, text):
+        self.text = text
+
+    def __repr__(self):
+        return '<Literal %s>' % self.text
+
+    def repr(self):
+        return self.text
+
+
+class BlockConfig:
+    """
+    Block commands eg [\?color=bad ...] are stored in this object
+    """
+
+    REGEX_COLOR = re.compile('#[0-9A-F]{6}')
+
+    # defaults
+    _if = None
+    color = None
+    max_length = None
+    min_length = 0
+    not_zero = False
+    show = False
+    soft = False
+
+    def update_commands(self, commands_str):
+        """
+        update with commands from the block
+        """
+        commands = dict(parse_qsl(commands_str, keep_blank_values=True))
+
+        self._if = commands.get('if', self._if)
+        self._set_int(commands, 'max_length')
+        self._set_int(commands, 'min_length')
+        self.color = self._check_color(commands.get('color'))
+
+        self.not_zero = 'not_zero' in commands or self.not_zero
+        self.show = 'show' in commands or self.show
+        self.soft = 'soft' in commands or self.soft
+
+    def _set_int(self, commands, name):
+        """
+        set integer value from commands
+        """
+        if name in commands:
+            try:
+                value = int(commands[name])
+                setattr(self, name, value)
+            except ValueError:
+                pass
+
+    def _check_color(self, color):
+        if not color:
+            return self.color
+        # fix any hex colors so they are #RRGGBB
+        if color.startswith('#'):
+            color = color.upper()
+            if len(color) == 4:
+                color = ('#' + color[1] + color[1] + color[2] +
+                         color[2] + color[3] + color[3])
+            # check color is valid
+            if not self.REGEX_COLOR.match(color):
+                return self.color
+        return color
+
+
+class Block:
+    """
+    class representing a [block] of a format string
+    """
+
+    def __init__(self, parent, base_block=None, py3_wrapper=None):
+
+        self.base_block = base_block
+        self.commands = BlockConfig()
+        self.content = []
+        self.next_block = None
+        self.parent = parent
+        self.py3_wrapper = py3_wrapper
+
+    def set_commands(self, command_str):
+        """
+        set any commands for this block
+        """
+        self.commands.update_commands(command_str)
+
+    def add(self, item):
+        self.content.append(item)
+
+    def new_block(self):
+        """
+        create a new sub block to the current block and return it.
+        the sub block is added to the current block.
+        """
+        child = Block(self, py3_wrapper=self.py3_wrapper)
+        self.add(child)
+        return child
+
+    def switch(self):
+        """
+        block has been split via | so we need to start a new block for that
+        option and return it to the user.
+        """
+        base_block = self.base_block or self
+        self.next_block = Block(self.parent,
+                                base_block=base_block,
+                                py3_wrapper=self.py3_wrapper)
+        return self.next_block
+
+    def __repr__(self):
+        return '<Block %s>' % self.repr()
+
+    def repr(self):
+        my_repr = [x.repr() for x in self.content]
+        if self.next_block:
+            my_repr.extend(['|'] + self.next_block.repr())
+        return my_repr
+
+    def check_valid(self, get_params):
+        """
+        see if the if condition for a block is valid
+        """
+        _if = self.commands._if
+        if _if and _if.startswith('!'):
+            try:
+                if not get_params(_if[1:]):
+                    return True
+            except:
+                return True
+            return False
+        else:
+            try:
+                if get_params(_if):
+                    return True
+            except:
+                pass
+            return False
+
+    def render(self, get_params, module, _if=None):
+        """
+        render the block and return the output.
+        """
+        enough = False
+        output = []
+        valid = None
+
+        if self.commands.show:
+            valid = True
+        if self.parent and self.commands.soft and _if is None:
+            return None, self
+        if _if:
+            valid = True
+        elif self.commands._if:
+            valid = self.check_valid(get_params)
+        if valid is not False:
+            for item in self.content:
+                if isinstance(item, Placeholder):
+                    sub_valid, sub_output, enough = item.get(get_params, self)
+                    output.append(sub_output)
+                elif isinstance(item, Literal):
+                    sub_valid = None
+                    enough = True
+                    output.append(item.text)
+                elif isinstance(item, Block):
+                    sub_valid, sub_output = item.render(get_params, module)
+                    if sub_valid is None:
+                        output.append(sub_output)
+                    else:
+                        output.extend(sub_output)
+                valid = valid or sub_valid
+        if not valid:
+            if self.next_block:
+                valid, output = self.next_block.render(get_params,
+                                                       module,
+                                                       _if=self.commands._if)
+            elif (self.parent is None and
+                    ((not self.next_block and enough)or self.base_block)):
+                valid = True
+            else:
+                output = []
+
+        # clean
+        color = self.commands.color
+        if color and color[0] != '#':
+            color_name = 'color_%s' % color
+            threshold_color_name = 'color_threshold_%s' % color
+            # substitute color
+            color = (
+                getattr(module, color_name, None) or
+                getattr(module, threshold_color_name, None) or
+                getattr(module.py3, color_name.upper(), None)
+            )
+
+        text = u''
+        out = []
+        if isinstance(output, str):
+            output = [output]
+
+        # merge as much output as we can.
+        # we need to convert values to unicode for concatination.
+        if python2:
+            conversion = unicode  # noqa
+            convertables = (str, bool, int, float, unicode)  # noqa
+        else:
+            conversion = str
+            convertables = (str, bool, int, float, bytes)
+
+        first = True
+        for index, item in enumerate(output):
+            if isinstance(item, convertables) or item is None:
+                text += conversion(item)
+                continue
+            elif text:
+                if (not first and
+                        (text.strip() == '' or out[-1].get('color') == color)):
+                    out[-1]['full_text'] += text
+                else:
+                    part = {'full_text': text}
+                    if color:
+                        part['color'] = color
+                    out.append(part)
+                text = u''
+            if isinstance(item, Composite):
+                if color:
+                    item.composite_update(item, {'color': color}, soft=True)
+                out.extend(item.get_content())
+            elif isinstance(item, Block):
+                # if this is a block then likely it is soft.
+                if not out:
+                    continue
+                for x in range(index + 1, len(output)):
+                    if output[x] and not isinstance(output[x], Block):
+                        valid, _output = item.render(get_params, module, _if=True)
+                        if _output:
+                            out.extend(_output)
+                        break
+            else:
+                if item:
+                    out.append(item)
+            first = False
+
+        # add any left over text
+        if text:
+            part = {'full_text': text}
+            if color:
+                part['color'] = color
+            out.append(part)
+
+        # process any min/max length commands
+        max_length = self.commands.max_length
+        min_length = self.commands.min_length
+
+        if max_length or min_length or color:
+            for item in out:
+                if max_length is not None:
+                    item['full_text'] = item['full_text'][:max_length]
+                    max_length -= len(item['full_text'])
+                if min_length:
+                    min_length -= len(item['full_text'])
+                if color and 'color' not in item:
+                    item['color'] = color
+            if min_length > 0:
+                out[0]['full_text'] = u' ' * min_length + out[0]['full_text']
+                min_length = 0
+
+        return valid, out

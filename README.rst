@@ -1,16 +1,17 @@
 *********
 py3status
 *********
-|travis|
+|travis| |readthedocs|
 
 .. |travis| image:: https://travis-ci.org/ultrabug/py3status.svg?branch=master
+.. |readthedocs| image:: https://readthedocs.org/projects/py3status/badge/?version=latest
 
 **py3status** is an extensible i3status wrapper written in python.
 
 Using py3status, you can take control of your i3bar easily by:
 
 - using one of the available
-  `modules <https://github.com/ultrabug/py3status/blob/master/py3status/modules/README.md>`_
+  `modules <https://py3status.readthedocs.io/en/latest/modules.html>`_
   shipped with py3status
 - grouping multiple modules and automatically or manually cycle their display
 - writing your own modules and have their output displayed on your bar
@@ -37,15 +38,15 @@ Philosophy
 
 Documentation
 =============
-Up-to-date `documentation <https://github.com/ultrabug/py3status/blob/master/doc/README.md>`_:
+Up-to-date `documentation <https://py3status.readthedocs.io>`_:
 
--  `Using modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#modules>`_
+-  `Using modules <https://py3status.readthedocs.io/en/latest/configuration.html>`_
 
--  `Custom click events <https://github.com/ultrabug/py3status/blob/master/doc/README.md#on_click>`_
+-  `Custom click events <https://py3status.readthedocs.io/en/latest/configuration.html#custom-click-events>`_
 
--  `Writing custom modules <https://github.com/ultrabug/py3status/blob/master/doc/README.md#writing_custom_modules>`_
+-  `Writing custom modules <https://py3status.readthedocs.io/en/latest/writing_modules.html>`_
 
--  `Contributing <https://github.com/ultrabug/py3status/blob/master/doc/README.md#contributing>`_
+-  `Contributing <https://py3status.readthedocs.io/en/latest/contributing.html>`_
 
 Get help or share your ideas on IRC:
 

@@ -30,10 +30,13 @@ format_bitcoin placeholders:
     {symbol} currency symbols
 
 Color options:
-    color_bad:  Price has dropped or not available
+    color_bad: Price has dropped or not available
     color_good: Price has increased
 
 @author Andre Doser <doser.andre AT gmail.com>
+
+SAMPLE OUTPUT
+{'full_text': u'btce: 809.40$, btcde: 785.00\u20ac'}
 """
 import json
 
@@ -76,7 +79,7 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
+    def post_config_hook(self):
         """
         Initialize last_price, set the currency mapping
         and the url containing the data.

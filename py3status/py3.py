@@ -1,5 +1,6 @@
 from __future__ import division
 
+import collections
 import os
 import sys
 import shlex
@@ -83,12 +84,14 @@ class Py3:
     """Show as Warning"""
 
     # Shared by all Py3 Instances
-    _formatter = Formatter()
+    _formatter = None
     _none_color = NoneColor()
 
     # Exceptions
     Py3Exception = exceptions.Py3Exception
+    CommandError = exceptions.CommandError
     RequestException = exceptions.RequestException
+    RequestInvalidJSON = exceptions.RequestInvalidJSON
     RequestTimeout = exceptions.RequestTimeout
     RequestURLError = exceptions.RequestURLError
 
@@ -114,6 +117,14 @@ class Py3:
                 i3s_config = self._module.config['py3_config']['general']
                 self._i3s_config = i3s_config
             self._py3status_module = module.module_class
+        # create formatter we only if need one but want to pass py3_wrapper so
+        # that we can do logging etc.
+        if not self._formatter:
+            if module:
+                py3_wrapper = module._py3_wrapper
+            else:
+                py3_wrapper = None
+            self.__class__._formatter = Formatter(py3_wrapper)
 
     def __getattr__(self, name):
         """
@@ -235,6 +246,73 @@ class Py3:
             modules `cache_timeout` will be used.
         """
         raise ModuleErrorException(msg, timeout)
+
+    def flatten_dict(self, d, delimiter='-', intermediates=False, parent_key=None):
+        """
+        Flatten a dictionary.
+
+        Values that are dictionaries are flattened using delimiter in between
+        (eg. parent-child)
+
+        Values that are lists are flattened using delimiter
+        followed by the index (eg. parent-0)
+
+        example:
+
+        .. code-block:: python
+
+            {
+                'fish_facts': {
+                    'sharks': 'Most will drown if they stop moving',
+                    'skates': 'More than 200 species',
+                },
+                'fruits': ['apple', 'peach', 'watermelon'],
+                'number': 52
+            }
+
+            # becomes
+
+            {
+                'fish_facts-sharks': 'Most will drown if they stop moving',
+                'fish_facts-skates': 'More than 200 species',
+                'fruits-0': 'apple',
+                'fruits-1': 'peach',
+                'fruits-2': 'watermelon',
+                'number': 52
+            }
+
+            # if intermediates is True then we also get unflattened elements
+            # as well as the flattened ones.
+
+            {
+                'fish_facts': {
+                    'sharks': 'Most will drown if they stop moving',
+                    'skates': 'More than 200 species',
+                },
+                'fish_facts-sharks': 'Most will drown if they stop moving',
+                'fish_facts-skates': 'More than 200 species',
+                'fruits': ['apple', 'peach', 'watermelon'],
+                'fruits-0': 'apple',
+                'fruits-1': 'peach',
+                'fruits-2': 'watermelon',
+                'number': 52
+            }
+        """
+        items = []
+        if isinstance(d, list):
+            d = dict(enumerate(d))
+        for k, v in d.items():
+            if parent_key:
+                k = u'{}{}{}'.format(parent_key, delimiter, k)
+            if intermediates:
+                items.append((k, v))
+            if isinstance(v, list):
+                v = dict(enumerate(v))
+            if isinstance(v, collections.Mapping):
+                items.extend(self.flatten_dict(v, delimiter, intermediates, str(k)).items())
+            else:
+                items.append((str(k), v))
+        return dict(items)
 
     def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
         """
@@ -767,10 +845,12 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            return Popen(command, stdout=PIPE, stderr=PIPE).wait()
+            return Popen(
+                command, stdout=PIPE, stderr=PIPE, close_fds=True
+            ).wait()
         except Exception as e:
-            msg = "Command '{cmd}' {error}"
-            raise Exception(msg.format(cmd=command[0], error=e))
+            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e.errno)
+            raise exceptions.CommandError(msg, error_code=e.errno)
 
     def command_output(self, command, shell=False):
         """
@@ -783,11 +863,11 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE,
+            process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
-            msg = "Command '{cmd}' {error}"
-            raise Exception(msg.format(cmd=command[0], error=e))
+            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e)
+            raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
         if self._is_python_2:
@@ -804,10 +884,17 @@ class Py3:
                 self.log(msg.format(cmd=command))
             else:
                 msg = "Command '{cmd}' returned non-zero exit status {error}"
-                raise Exception(msg.format(cmd=command[0], error=retcode))
+                msg = msg.format(cmd=command[0], error=retcode)
+                raise exceptions.CommandError(
+                    msg, error_code=retcode, error=error, output=output
+                )
         if error:
-            msg = "Command '{cmd}' had error {error}"
-            raise Exception(msg.format(cmd=command[0], error=error))
+            msg = "Command '{cmd}' had error {error}".format(
+                cmd=command[0], error=error
+            )
+            raise exceptions.CommandError(
+                msg, error_code=retcode, error=error, output=output
+            )
         return output
 
     def play_sound(self, sound_file):

@@ -1,4 +1,9 @@
+from pprint import pformat
+
 from py3status.py3 import Py3
+
+
+py3 = Py3()
 
 
 def test_format_units():
@@ -60,10 +65,170 @@ def test_format_units():
             (1177.3757, 'MiB')),
     ]
 
-    py3 = Py3()
-
     for test in tests:
         print(test)
         # we use repr in the assert to ensure 1 and 1.0 are not treated the
         # same
         assert repr(py3.format_units(**test[0])) == repr(test[1])
+
+
+def test_flatten_dict():
+    data = {
+        'fish_facts': {
+            'sharks': 'Most will drown if they stop moving',
+            'skates': 'More than 200 species',
+        },
+        'fruits': ['apple', 'peach', 'watermelon'],
+        'number': 52
+    }
+    expected = {
+        'fish_facts-sharks': 'Most will drown if they stop moving',
+        'fish_facts-skates': 'More than 200 species',
+        'fruits-0': 'apple',
+        'fruits-1': 'peach',
+        'fruits-2': 'watermelon',
+        'number': 52
+    }
+
+    returned = py3.flatten_dict(data, delimiter='-')
+    print('returned data')
+    print(pformat(returned))
+    assert returned == expected
+
+
+def test_flatten_dict_intermediates():
+    data = {
+        'fish_facts': {
+            'sharks': 'Most will drown if they stop moving',
+            'skates': 'More than 200 species',
+        },
+        'fruits': ['apple', 'peach', 'watermelon'],
+        'number': 52
+    }
+    expected = {
+        'fish_facts': {
+            'sharks': 'Most will drown if they stop moving',
+            'skates': 'More than 200 species',
+        },
+        'fish_facts-sharks': 'Most will drown if they stop moving',
+        'fish_facts-skates': 'More than 200 species',
+        'fruits': ['apple', 'peach', 'watermelon'],
+        'fruits-0': 'apple',
+        'fruits-1': 'peach',
+        'fruits-2': 'watermelon',
+        'number': 52
+    }
+
+    returned = py3.flatten_dict(data, delimiter='-', intermediates=True)
+    print('returned data')
+    print(pformat(returned))
+    assert returned == expected
+
+
+def test_flatten_dict_deep():
+    data = {
+        'hash': {
+            'dict': {
+                'array': [1, 2, [1, 2, {'#': 123}]],
+            },
+            'list': [1, 2, [1, 2, {'mapping': 123}]],
+        },
+        'list': [1, 2, [1, 2, {'mapping': 123}]],
+    }
+
+    expected = {
+        'hash-dict-array-0': 1,
+        'hash-dict-array-1': 2,
+        'hash-dict-array-2-0': 1,
+        'hash-dict-array-2-1': 2,
+        'hash-dict-array-2-2-#': 123,
+        'hash-list-0': 1,
+        'hash-list-1': 2,
+        'hash-list-2-0': 1,
+        'hash-list-2-1': 2,
+        'hash-list-2-2-mapping': 123,
+        'list-0': 1,
+        'list-1': 2,
+        'list-2-0': 1,
+        'list-2-1': 2,
+        'list-2-2-mapping': 123,
+    }
+
+    assert py3.flatten_dict(data, delimiter='-') == expected
+    returned = py3.flatten_dict(data, delimiter='-')
+    print('returned data')
+    print(pformat(returned))
+    assert returned == expected
+
+
+def test_flatten_dict_deep_intermediates():
+    data = {
+        'hash': {
+            'dict': {
+                'array': [1, 2, [1, 2, {'#': 123}]],
+            },
+            'list': [1, 2, [1, 2, {'mapping': 123}]],
+        },
+        'list': [1, 2, [1, 2, {'mapping': 123}]],
+    }
+
+    expected = {
+        'hash': {
+            'dict': {'array': [1, 2, [1, 2, {'#': 123}]]},
+            'list': [1, 2, [1, 2, {'mapping': 123}]]
+        },
+        'hash-dict': {'array': [1, 2, [1, 2, {'#': 123}]]},
+        'hash-dict-array': [1, 2, [1, 2, {'#': 123}]],
+        'hash-dict-array-0': 1,
+        'hash-dict-array-1': 2,
+        'hash-dict-array-2': [1, 2, {'#': 123}],
+        'hash-dict-array-2-0': 1,
+        'hash-dict-array-2-1': 2,
+        'hash-dict-array-2-2': {'#': 123},
+        'hash-dict-array-2-2-#': 123,
+        'hash-list': [1, 2, [1, 2, {'mapping': 123}]],
+        'hash-list-0': 1,
+        'hash-list-1': 2,
+        'hash-list-2': [1, 2, {'mapping': 123}],
+        'hash-list-2-0': 1,
+        'hash-list-2-1': 2,
+        'hash-list-2-2': {'mapping': 123},
+        'hash-list-2-2-mapping': 123,
+        'list': [1, 2, [1, 2, {'mapping': 123}]],
+        'list-0': 1,
+        'list-1': 2,
+        'list-2': [1, 2, {'mapping': 123}],
+        'list-2-0': 1,
+        'list-2-1': 2,
+        'list-2-2': {'mapping': 123},
+        'list-2-2-mapping': 123
+    }
+
+    returned = py3.flatten_dict(data, delimiter='-', intermediates=True)
+    print('returned data')
+    print(pformat(returned))
+    assert returned == expected
+
+
+def test_flatten_dict_parent_key():
+    data = {
+        'fish_facts': {
+            'sharks': 'Most will drown if they stop moving',
+            'skates': 'More than 200 species',
+        },
+        'fruits': ['apple', 'peach', 'watermelon'],
+        'number': 52
+    }
+    expected = {
+        'purple-fish_facts-sharks': 'Most will drown if they stop moving',
+        'purple-fish_facts-skates': 'More than 200 species',
+        'purple-fruits-0': 'apple',
+        'purple-fruits-1': 'peach',
+        'purple-fruits-2': 'watermelon',
+        'purple-number': 52
+    }
+
+    returned = py3.flatten_dict(data, delimiter='-', parent_key='purple')
+    print('returned data')
+    print(pformat(returned))
+    assert returned == expected

@@ -5,10 +5,10 @@ Monitor CapsLock, NumLock, and ScrLock keys
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 1)
     format: display format for this module (default '{caps} {num} {scr}')
-    icon_caps_off: show when Caps Lock is off (default 'CAPS')
-    icon_caps_on: show when Caps Lock is on (default 'CAPS')
-    icon_num_off: show when Num Lock is off (default 'NUM')
-    icon_num_on: show when Num Lock is off (default 'NUM')
+    icon_caps_off: show when Capitals Lock is off (default 'CAPS')
+    icon_caps_on: show when Capitals Lock is on (default 'CAPS')
+    icon_num_off: show when Numeric Lock is off (default 'NUM')
+    icon_num_on: show when Numeric Lock is on (default 'NUM')
     icon_scr_off: show when Scroll Lock is off (default 'SCR')
     icon_scr_on: show when Scroll Lock is on (default 'SCR')
 
@@ -17,6 +17,20 @@ Color options:
     color_bad: Lock off
 
 @author lasers
+
+SAMPLE OUTPUT
+[
+    {'color': '#00FF00', 'full_text': 'CAPS '},
+    {'color': '#00FF00', 'full_text': 'NUM '},
+    {'color': '#FF0000', 'full_text': 'SCR'},
+]
+
+no_locks
+[
+    {'color': '#FF0000', 'full_text': 'CAPS '},
+    {'color': '#FF0000', 'full_text': 'NUM '},
+    {'color': '#FF0000', 'full_text': 'SCR'},
+]
 """
 
 

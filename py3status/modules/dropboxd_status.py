@@ -32,6 +32,15 @@ Requires:
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'Dropbox: Up to date'}
+
+busy
+{'color': '#FFFF00', 'full_text': 'Dropbox: Syncing "Calorie_Counting.ods"'}
+
+off
+{'color': '#FF0000', 'full_text': "Dropbox: isn't running"}
 """
 
 STRING_UNAVAILABLE = "Dropbox: isn't installed"

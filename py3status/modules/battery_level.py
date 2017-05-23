@@ -69,6 +69,12 @@ Requires:
 
 @author shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'color': '#FCE94F', 'full_text': u'\u26a1'}
+
+discharging
+{'color': '#FF0000', 'full_text': u'\u2340'}
 """
 
 from __future__ import division  # python2 compatibility
@@ -204,7 +210,7 @@ class Py3status:
             self.py3.notify_user(message, 'info')
 
     def _extract_battery_information_from_acpi(self):
-        '''
+        """
         Get the battery info from acpi
 
         # Example acpi -bi raw output (Discharging):
@@ -218,8 +224,7 @@ class Py3status:
         Battery 0: design capacity 5566 mAh, last full capacity 5156 mAh = 92%
         Battery 1: Unknown, 98%
         Battery 1: design capacity 1879 mAh, last full capacity 1370 mAh = 72%
-        '''
-
+        """
         def _parse_battery_info(acpi_battery_lines):
             battery = {}
             battery["percent_charged"] = int(findall("(?<= )(\d+)(?=%)",
@@ -386,8 +391,9 @@ class Py3status:
         if self.charging:
             self.icon = self.charging_character
         else:
-            self.icon = self.blocks[int(math.ceil(self.percent_charged / 100 *
-                                                  (len(self.blocks) - 1)))]
+            self.icon = self.blocks[min(len(self.blocks) - 1,
+                                        int(math.ceil(self.percent_charged / 100 *
+                                                      (len(self.blocks) - 1))))]
 
     def _update_full_text(self):
         self.full_text = self.py3.safe_format(

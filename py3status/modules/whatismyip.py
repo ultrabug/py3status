@@ -4,37 +4,49 @@ Display public IP address and online status.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 30)
-    format: available placeholders are {ip} and {country}
-            (default '{ip}')
-    format_offline: what to display when offline (default '■')
-    format_online: what to display when online (default '●')
+    expected: define expected values for format placeholders,
+        and use `color_degraded` to show the output of this module
+        if any of them does not match the actual value.
+        This should be a dict eg {'country': 'France'}
+        (default None)
+    format: available placeholders are {ip} and {country},
+        as well as any other key in JSON fetched from `url_geo`
+        (default '{ip}')
     hide_when_offline: hide the module output when offline (default False)
+    icon_off: what to display when offline (default '■')
+    icon_on: what to display when online (default '●')
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
     negative_cache_timeout: how often to check again when offline (default 2)
     timeout: how long before deciding we're offline (default 5)
-    url: change IP check url (must output a plain text IP address)
-        (default 'http://ultrabug.fr/py3status/whatismyip')
     url_geo: IP to check for geo location (must output json)
-        (default 'http://ip-api.com/json')
+        (default 'https://freegeoip.net/json/')
 
 Format placeholders:
+    {icon} display the icon
     {country} display the country
     {ip} display current ip address
+    any other key in JSON fetched from `url_geo`
 
 Color options:
     color_bad: Offline
+    color_degraded: Output is unexpected (IP/country mismatch, etc.)
     color_good: Online
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': '37.48.108.0'}
+
+geo
+{'full_text': '37.48.108.0 Russia'}
+
+mode
+{'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
-import json
-try:
-    # python3
-    from urllib.request import urlopen
-except:
-    from urllib2 import urlopen
+URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
+URL_GEO_NEW_DEFAULT = 'https://freegeoip.net/json/'
 
 
 class Py3status:
@@ -42,15 +54,48 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
+    expected = None
     format = '{ip}'
-    format_offline = u'■'
-    format_online = u'●'
     hide_when_offline = False
+    icon_off = u'■'
+    icon_on = u'●'
     mode = 'ip'
     negative_cache_timeout = 2
     timeout = 5
-    url = 'http://ultrabug.fr/py3status/whatismyip'
-    url_geo = 'http://ip-api.com/json'
+    url_geo = URL_GEO_NEW_DEFAULT
+
+    class Meta:
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'url',
+                    'msg': 'obsolete parameter, use `url_geo` instead',
+                },
+            ],
+            'rename': [
+                {
+                    'param': 'format_online',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter, use `icon_on` instead',
+                },
+                {
+                    'param': 'format_offline',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter, use `icon_off` instead',
+                },
+            ],
+        }
+
+    def post_config_hook(self):
+        if self.expected is None:
+            self.expected = {}
+
+        # Backwards compatibility
+        self.substitutions = {}
+        if self.url_geo == URL_GEO_NEW_DEFAULT:
+            self.substitutions['country'] = 'country_name'
+        elif self.url_geo == URL_GEO_OLD_DEFAULT:
+            self.substitutions['ip'] = 'query'
 
     def on_click(self, event):
         """
@@ -61,45 +106,41 @@ class Py3status:
         else:
             self.mode = 'ip'
 
-    def _get_my_ip_and_location(self):
+    def _get_my_ip_info(self):
         """
         """
         try:
-            if self.py3.format_contains(self.format, 'country'):
-                resp = urlopen(self.url_geo, timeout=self.timeout).read()
-                resp = json.loads(resp)
-                country = resp['country']
-                ip = resp['query']
-            else:
-                country = None
-                ip = urlopen(self.url, timeout=self.timeout).read()
-                ip = ip.decode('utf-8')
-        except Exception:
-            country = None
-            ip = None
-        return country, ip
+            info = self.py3.request(self.url_geo, timeout=self.timeout).json()
+            for old, new in self.substitutions.items():
+                info[old] = info.get(new)
+            return info
+        except self.py3.RequestException:
+            return None
 
     def whatismyip(self):
         """
         """
-        country, ip = self._get_my_ip_and_location()
+        info = self._get_my_ip_info()
         response = {
             'cached_until': self.py3.time_in(self.negative_cache_timeout)
         }
 
-        if ip is None and self.hide_when_offline:
+        if info is None and self.hide_when_offline:
             response['full_text'] = ''
-        elif ip is not None:
+        elif info is not None:
+            info['icon'] = self.icon_on
             response['cached_until'] = self.py3.time_in(self.cache_timeout)
+            response['color'] = self.py3.COLOR_GOOD
+            for key, val in self.expected.items():
+                if val != info.get(key):
+                    response['color'] = self.py3.COLOR_DEGRADED
+                    break
             if self.mode == 'ip':
-                response['full_text'] = self.py3.safe_format(self.format, {
-                    'country': country,
-                    'ip': ip})
+                response['full_text'] = self.py3.safe_format(self.format, info)
             else:
-                response['full_text'] = self.format_online
-                response['color'] = self.py3.COLOR_GOOD
+                response['full_text'] = self.icon_on
         else:
-            response['full_text'] = self.format_offline
+            response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
         return response
 

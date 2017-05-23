@@ -16,8 +16,11 @@ Configuration parameters:
         (default None)
     button_action: Button that when clicked opens the Github notification page
         if notifications, else the project page for the repository if there is
-        one (otherwise the github home page). Setting to `0` disables.
+        one (otherwise the github home page). Setting to `None` disables.
         (default 3)
+    button_refresh: Button that when clicked refreshes module.
+        Setting to `None` disables.
+        (default 2)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
     format: Format of output
@@ -61,6 +64,12 @@ github {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'py3status 34/24'}
+
+notification
+{'full_text': 'py3status 34/24 N3', 'urgent': True}
 """
 
 GITHUB_API_URL = 'https://api.github.com'
@@ -70,6 +79,7 @@ GITHUB_URL = 'https://github.com/'
 class Py3status:
     auth_token = None
     button_action = 3
+    button_refresh = 2
     cache_timeout = 60
     format = None
     format_notifications = ' N{notifications_count}'
@@ -77,7 +87,7 @@ class Py3status:
     repo = 'ultrabug/py3status'
     username = None
 
-    def __init__(self):
+    def post_config_hook(self):
         self.first = True
         self.notification_warning = False
         self.repo_warning = False
@@ -95,9 +105,9 @@ class Py3status:
                 self.format = '{repo} {issues}/{pull_requests}'
 
     def _github_count(self, url):
-        '''
+        """
         Get counts for requests that return 'total_count' in the json response.
-        '''
+        """
         if self.first:
             return '?'
         url = GITHUB_API_URL + url + '&per_page=1'
@@ -120,9 +130,9 @@ class Py3status:
         return '?'
 
     def _notifications(self):
-        '''
+        """
         Get the number of unread notifications.
-        '''
+        """
         if not self.username or not self.auth_token:
             if not self.notification_warning:
                 self.py3.notify_user('Github module needs username and '
@@ -202,7 +212,8 @@ class Py3status:
 
     def on_click(self, event):
         button = event['button']
-        if self.button_action and self.button_action == button:
+        if button == self.button_action:
+            # open github in browser
             if self._notify and self._notify != '?':
                 # open github notifications page
                 url = GITHUB_URL + 'notifications'
@@ -215,6 +226,9 @@ class Py3status:
                     url = GITHUB_URL + self.repo
             # open url in default browser
             self.py3.command_run('xdg-open {}'.format(url))
+            self.py3.prevent_refresh()
+        elif button != self.button_refresh:
+            # only refresh the module if needed
             self.py3.prevent_refresh()
 
 

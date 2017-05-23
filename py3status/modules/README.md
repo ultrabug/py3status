@@ -2,6 +2,8 @@
 ========
 
 
+**[air_quality](#air_quality)** — Display air quality polluting in a given location.
+
 **[arch_updates](#arch_updates)** — Display number of pending updates for Arch Linux.
 
 **[aws_bill](#aws_bill)** — Display bill for Amazon Web Services.
@@ -10,7 +12,7 @@
 
 **[battery_level](#battery_level)** — Display battery information.
 
-**[bitcoin_price](#bitcoin_price)** — Display bitcoin prices using bitcoincharts.com.
+**[bitcoin_price](#bitcoin_price)** — Display bitcoin using bitcoincharts.com.
 
 **[bluetooth](#bluetooth)** — Display bluetooth status.
 
@@ -66,6 +68,8 @@
 
 **[keyboard_layout](#keyboard_layout)** — Display keyboard layout.
 
+**[keyboard_locks](#keyboard_locks)** — Monitor CapsLock, NumLock, and ScrLock keys
+
 **[mpd_status](#mpd_status)** — Display song currently playing in mpd.
 
 **[mpris](#mpris)** — Display song/video and control MPRIS compatible players.
@@ -114,6 +118,8 @@
 
 **[sysdata](#sysdata)** — Display system RAM, SWAP and CPU utilization.
 
+**[systemd](#systemd)** — Check systemd unit status.
+
 **[taskwarrior](#taskwarrior)** — Display tasks currently running in taskwarrior.
 
 **[timer](#timer)** — A simple countdown timer.
@@ -123,6 +129,8 @@
 **[twitch_streaming](#twitch_streaming)** — Display status on a given Twitch streamer.
 
 **[uname](#uname)** — Display system information from uname.
+
+**[uptime](#uptime)** — Display system uptime.
 
 **[vnstat](#vnstat)** — Display vnstat statistics.
 
@@ -140,9 +148,9 @@
 
 **[wifi](#wifi)** — Display WiFi bit rate, quality, signal and SSID using iw.
 
-**[window_title](#window_title)** — Display current window title.
+**[window_title](#window_title)** — Display window title.
 
-**[window_title_async](#window_title_async)** — Display current window title asynchronously.
+**[window_title_async](#window_title_async)** — Display window title asynchronously.
 
 **[wwan_status](#wwan_status)** — Display network and IP address for newer Huwei modems.
 
@@ -150,9 +158,64 @@
 
 **[xrandr_rotate](#xrandr_rotate)** — Control screen rotation.
 
+**[xscreensaver](#xscreensaver)** — Control Xscreensaver.
+
 **[xsel](#xsel)** — Display X selection.
 
 **[yandexdisk_status](#yandexdisk_status)** — Display Yandex.Disk status.
+
+---
+
+### <a name="air_quality"></a>air_quality
+
+Display air quality polluting in a given location.
+
+An air quality index (AQI) is a number used by government agencies to communicate
+to the public how polluted the air currently is or how polluted it is forecast to
+become. As the AQI increases, an increasingly large percentage of the population
+is likely to experience increasingly severe adverse health effects. Different
+countries have their own air quality indices, corresponding to different national
+air quality standards.
+
+Configuration parameters:
+  - `auth_token` Required. Personal token. http://aqicn.org *(default 'demo')*
+  - `cache_timeout` refresh interval for this module. A message from the site:
+    The default quota is max 1000 (one thousand) requests per minute (~16RPS)
+    and with burst up to 60 requests. Read more: http://aqicn.org/api/
+    *(default 3600)*
+  - `format` display format for this module *(default '{location}: {aqi} {category}')*
+  - `location` location or uid to query. To search for nearby stations in Kraków,
+    use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
+    We recommend you to use uid instead of name in location, eg "@8691"
+    *(default 'Shanghai')*
+
+Format placeholders:
+  - `{aqi}` air quality index
+  - `{category}` health risk category
+  - `{location}` location or uid
+
+Note: Stations may use {pm25}, {pm10}, {o3}, {so2}, or other parameters.
+See http://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+
+Category options:
+  - `category_<name>` display name
+    eg category_very_unhealthy = 'Level 5: Wear a mask'
+
+Color options:
+  - `color_<category>` display color
+    eg color_hazardous = '#7E0023'
+
+Example:
+```
+air_quality {
+    auth_token = 'demo'
+    location = 'Shanghai'
+    format = 'Shanghai: {aqi} {category}'
+}
+```
+    **author** beetleman, lasers
+
+    **license** BSD
 
 ---
 
@@ -229,7 +292,7 @@ Adjust screen backlight brightness.
 
 Configuration parameters:
   - `brightness_delta` Change the brightness by this step.
-    *(default 5)*
+    *(default 8)*
   - `brightness_initial` Set brightness to this value on start.
     *(default None)*
   - `brightness_minimal` Don't go below this brightness to avoid black screen
@@ -337,23 +400,33 @@ Requires:
 
 ### <a name="bitcoin_price"></a>bitcoin_price
 
-Display bitcoin prices using bitcoincharts.com.
+Display bitcoin using bitcoincharts.com.
 
 Configuration parameters:
-  - `cache_timeout` Should be at least 15 min according to bitcoincharts.
+  - `bitcoin_separator` display separator if more than one *(default ', ')*
+  - `cache_timeout` refresh interval for this module. A message from
+    the site: Don't query more often than once every 15 minutes
     *(default 900)*
   - `color_index` Index of the market responsible for coloration,
-  -1 means no coloration, except when only one market is selected
+    -1 means no coloration, except when only one market is selected
     *(default -1)*
   - `field` Field that is displayed per market,
     see http://bitcoincharts.com/about/markets-api/ *(default 'close')*
-  - `hide_on_error` Display empty response if True, else an error message
-    *(default False)*
-  - `markets` Comma-separated list of markets. Supported markets can
-    be found at http://bitcoincharts.com/markets/list/
+  - `format` display format for this module *(default '{format_bitcoin}')*
+  - `format_bitcoin` display format for bitcoin *(default '{market}: {price}{symbol}')*
+  - `hide_on_error` show error message *(default False)*
+  - `markets` list of supported markets. see http://bitcoincharts.com/markets/list/
     *(default 'btceUSD, btcdeEUR')*
-  - `symbols` Try to match currency abbreviations to symbols,
+  - `symbols` if possible, convert currency abbreviations to symbols
     e.g. USD -&gt; $, EUR -&gt; € and so on *(default True)*
+
+Format placeholders:
+  - `{format_bitcoin}` format for bitcoin
+
+format_bitcoin placeholders:
+  - `{market}` market names
+  - `{price}` current prices
+  - `{symbol}` currency symbols
 
 Color options:
   - `color_bad`  Price has dropped or not available
@@ -368,25 +441,21 @@ Color options:
 Display bluetooth status.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 10)*
-  - `device_separator` the separator char between devices (only if more than one
-    device) *(default '|')*
-  - `format` format when there is a connected device *(default '{name}')*
-  - `format_no_conn` format when there is no connected device *(default 'OFF')*
-  - `format_no_conn_prefix` prefix when there is no connected device
-    *(default 'BT: ')*
-  - `format_prefix` prefix when there is a connected device *(default 'BT: ')*
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `device_separator` show separator only if more than one *(default '|')*
+  - `format` display format for this module *(default 'BT[: {format_device}]')*
+  - `format_device` display format for bluetooth devices *(default '{name}')*
 
 Format placeholders:
-  - `{name}` device name
-  - `{mac}` device MAC address
+  - `{format_device}` format for bluetooth devices
+
+format_device placeholders:
+  - `{mac}` bluetooth device address
+  - `{name}` bluetooth device name
 
 Color options:
-  - `color_bad` Connection on
-  - `color_good` Connection off
-
-Requires:
-  - `hcitool`
+  - `color_bad` No connection
+  - `color_good` Active connection
 
 **author** jmdana &lt;https://github.com/jmdana&gt;
 
@@ -479,6 +548,10 @@ Configuration parameters:
     a list.  The one used can be changed by button click.
     *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
     '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+  - `round_to_nearest_block` defines how a block icon is chosen. Examples:
+    when set to True,  '13:14' is '🕐', '13:16' is '🕜' and '13:31' is '🕜';
+    when set to False, '13:14' is '🕐', '13:16' is '🕐' and '13:31' is '🕜'.
+    *(default True)*
 
 Format placeholders:
   - `{icon}` a character representing the time from `blocks`
@@ -631,25 +704,32 @@ coin_balance {
 Display song currently playing in deadbeef.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh usage in seconds *(default 1)*
-  - `delimiter` delimiter character for parsing *(default '¥')*
-  - `format` see placeholders below *(default '{artist} - {title}')*
+  - `cache_timeout` refresh interval for this module *(default 1)*
+  - `format` display format for this module *(default '[{artist} - ][{title}]')*
 
 Format placeholders:
-  - `{artist}` artist
-  - `{title}` title
-  - `{elapsed}` elapsed time
-  - `{length}` total length
-  - `{year}` year
-  - `{tracknum}` track number
+  - `{album}` name of the album
+  - `{artist}` name of the artist
+  - `{length}` length time in [HH:]MM:SS
+  - `{playback_time}` elapsed time in [HH:]MM:SS
+  - `{title}` title of the track
+  - `{tracknumber}` track number in two digits
+  - `{year}` year in four digits
+
+    For more placeholders, see title formatting 2.0 in 'deadbeef --help'
+    or http://github.com/Alexey-Yakovenko/deadbeef/wiki/Title-formatting-2.0
+    Not all of Foobar2000 remapped metadata fields will work with deadbeef and
+    a quick reminder about using {placeholders} here instead of %placeholder%.
 
 Color options:
-  - `color_bad` An error occurred
+  - `color_paused` Paused, defaults to color_degraded
+  - `color_playing` Playing, defaults to color_good
+  - `color_stopped` Stopped, defaults to color_bad
 
 Requires:
-    deadbeef:
+  - `deadbeef` a GTK+ audio player for GNU/Linux
 
-**author** mrt-prodz
+**author** mrt-prodz, tobes, lasers
 
 ---
 
@@ -813,9 +893,6 @@ Configuration parameters:
     configured. Add the currency code surrounded by curly braces and it
     will be replaced by the current exchange rate.
     *(default '${USD} £{GBP} ¥{JPY}')*
-
-Requires:
-  - `requests` python lib
 
 **author** tobes
 
@@ -1051,8 +1128,11 @@ Configuration parameters:
     *(default None)*
   - `button_action` Button that when clicked opens the Github notification page
     if notifications, else the project page for the repository if there is
-    one (otherwise the github home page). Setting to `0` disables.
+    one (otherwise the github home page). Setting to `None` disables.
     *(default 3)*
+  - `button_refresh` Button that when clicked refreshes module.
+    Setting to `None` disables.
+    *(default 2)*
   - `cache_timeout` How often we refresh this module in seconds
     *(default 60)*
   - `format` Format of output
@@ -1078,9 +1158,6 @@ Format placeholders:
   - `{pull_requests}` Number of open pull requests
   - `{repo}` short name of the repository being checked. eg py3status
   - `{repo_full}` full name of the repository being checked. eg ultrabug/py3status
-
-Requires:
-  - `python-requests` Python HTTP for Humans https://pypi.python.org/pypi/requests
 
 Examples:
 ```
@@ -1206,19 +1283,27 @@ Configuration parameters:
     *(default True)*
 
 Dynamic format placeholders:
-    The "format" parameter placeholders are dynamically based on the data points
-    names returned by the "targets" query to graphite.
+    The "format" parameter placeholders are dynamically based on the data
+    points names returned by the "targets" query to graphite.
 
-    For example if your target is "carbon.agents.localhost-a.memUsage", you'd get
-    a JSON result like this:
-        {"target": "carbon.agents.localhost-a.memUsage", "datapoints": [[19693568.0, 1463663040]]}
+    For example if your target is `"carbon.agents.localhost-a.memUsage"`,
+    you'd get a JSON result like this:
+
+        ```
+        {
+            "target": "carbon.agents.localhost-a.memUsage",
+            "datapoints": [[19693568.0, 1463663040]]
+        }
+        ```
 
     So the placeholder you could use on your "format" config is:
-        format = "{carbon.agents.localhost-a.memUsage}"
+        `format = "{carbon.agents.localhost-a.memUsage}"`
 
     TIP: use aliases !
+        ```
         targets = "alias(carbon.agents.localhost-a.memUsage, 'local_memuse')"
         format = "local carbon mem usage: {local_memuse} bytes"
+        ```
 
 Color options:
   - `color_bad` threshold_bad has been exceeded
@@ -1365,6 +1450,7 @@ Configuration parameters:
 Display number of unread messages from IMAP account.
 
 Configuration parameters:
+  - `allow_urgent` display urgency on unread messages *(default False)*
   - `cache_timeout` refresh interval for this module *(default 60)*
   - `criterion` status of emails to check for *(default 'UNSEEN')*
   - `format` display format for this module *(default 'Mail: {unseen}')*
@@ -1498,6 +1584,28 @@ Requires:
 
 ---
 
+### <a name="keyboard_locks"></a>keyboard_locks
+
+Monitor CapsLock, NumLock, and ScrLock keys
+
+Configuration parameters:
+  - `cache_timeout` refresh interval for this module *(default 1)*
+  - `format` display format for this module *(default '{caps} {num} {scr}')*
+  - `icon_caps_off` show when Capitals Lock is off *(default 'CAPS')*
+  - `icon_caps_on` show when Capitals Lock is on *(default 'CAPS')*
+  - `icon_num_off` show when Numeric Lock is off *(default 'NUM')*
+  - `icon_num_on` show when Numeric Lock is on *(default 'NUM')*
+  - `icon_scr_off` show when Scroll Lock is off *(default 'SCR')*
+  - `icon_scr_on` show when Scroll Lock is on *(default 'SCR')*
+
+Color options:
+  - `color_good` Lock on
+  - `color_bad` Lock off
+
+**author** lasers
+
+---
+
 ### <a name="mpd_status"></a>mpd_status
 
 Display song currently playing in mpd.
@@ -1505,7 +1613,7 @@ Display song currently playing in mpd.
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 2)*
   - `format` template string (see below)
-    *(default '%state% [[[%artist%] - %title%]|[%file%]]')*
+    *(default '{state} [[[{artist}] - {title}]|[{file}]]')*
   - `hide_when_paused` hide the status if state is paused *(default False)*
   - `hide_when_stopped` hide the status if state is stopped *(default True)*
   - `host` mpd host *(default 'localhost')*
@@ -1521,31 +1629,32 @@ Color options:
   - `color_play` Playing, default color_good
   - `color_stop` Stopped, default color_bad
 
+Format placeholders:
+  - `{state}` state (paused, playing. stopped) can be defined via `state_..`
+    configuration parameters
+    Refer to the mpc(1) manual page for the list of available placeholders to
+    be used in the format.  Placeholders should use braces `{}` rather than
+    percent `%%` eg `{artist}`.
+    Every placeholder can also be prefixed with
+    `next_` to retrieve the data for the song following the one currently
+    playing.
+
 Requires:
   - `python-mpd2` (NOT python2-mpd2)
 ```
 # pip install python-mpd2
 ```
 
-Refer to the mpc(1) manual page for the list of available placeholders to be
-used in `format`.
-You can also use the %state% placeholder, that will be replaced with the state
-label (play, pause or stop).
-Every placeholder can also be prefixed with `next_` to retrieve the data for
-the song following the one currently playing.
-
-You can also use {} instead of %% for placeholders (backward compatibility).
+Note: previously formats using %field% where allowed for this module, but
+standard placeholders should be used.
 
 Examples of `format`
 ```
 # Show state and (artist -) title, if no title fallback to file:
-%state% [[[%artist% - ]%title%]|[%file%]]
-
-# Alternative legacy syntax:
 {state} [[[{artist} - ]{title}]|[{file}]]
 
 # Show state, [duration], title (or file) and next song title (or file):
-%state% \[%time%\] [%title%|%file%] → [%next_title%|%next_file%]
+{state} \[{time}\] [{title}|{file}] → [{next_title}|{next_file}]
 ```
 
 **author** shadowprince, zopieux
@@ -1651,7 +1760,7 @@ Tested players:
     mpDris2 (mpris extension for mpd)
     vlc
 
-**author** Moritz Lüdecke, tobes
+**author** Moritz Lüdecke, tobes, valdur55
 
 ---
 
@@ -1770,17 +1879,26 @@ Color thresholds:
 Display network speed and bandwidth usage.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds *(default 2)*
-  - `low_speed` threshold *(default 30)*
-  - `low_traffic` threshold *(default 400)*
-  - `med_speed` threshold *(default 60)*
-  - `med_traffic` threshold *(default 700)*
-  - `nic` the network interface to monitor *(default None)*
+  - `cache_timeout` refresh interval for this module *(default 2)*
+  - `format` display format for this module
+    *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑]
+    [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
+  - `nic` network interface to use *(default None)*
+  - `thresholds` color thresholds to use
+    *(default {'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
+    'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]})*
 
-Color options:
-  - `color_bad` Rate is below low threshold
-  - `color_degraded` Rate is below med threshold
-  - `color_good` Rate is med threshold or higher
+Format placeholders:
+  - `{nic}`      network interface
+  - `{down}`     number of download speed
+  - `{up}`       number of upload speed
+  - `{download}` number of download usage
+  - `{upload}`   number of upload usage
+  - `{total}`    number of total usage
+
+Color thresholds:
+  - `{down}`     color threshold of download speed
+  - `{total}`    color threshold of total usage
 
 **author** Shahin Azad &lt;ishahinism at Gmail&gt;
 
@@ -1856,20 +1974,20 @@ Requires:
 Determine if you have an Internet Connection.
 
 Configuration parameters:
-  - `cache_timeout` how often to run the check *(default 10)*
-  - `format` display format for online_status *(default '{icon}')*
-  - `icon_off` what to display when offline *(default '■')*
-  - `icon_on` what to display when online *(default '●')*
-  - `timeout` how long before deciding we're offline *(default 2)*
-  - `url` connect to this url to check the connection status
+  - `cache_timeout` refresh interval for this module *(default 10)*
+  - `format` display format for this module *(default '{icon}')*
+  - `icon_off` show when connection is offline *(default '■')*
+  - `icon_on` show when connection is online *(default '●')*
+  - `timeout` time to wait for a response, in seconds *(default 2)*
+  - `url` specify URL to connect when checking for a connection
     *(default 'http://www.google.com')*
 
 Format placeholders:
-  - `{icon}` display current online status
+  - `{icon}` connection status
 
 Color options:
-  - `color_bad` Offline
-  - `color_good` Online
+  - `color_off` Connection offline, defaults to color_bad
+  - `color_on` Connection online, defaults to color_good
 
 **author** obb
 
@@ -1886,10 +2004,14 @@ Configuration parameters:
   - `app_key` create an APP KEY on pingdom first *(default '')*
   - `cache_timeout` how often to refresh the check from pingdom *(default 600)*
   - `checks` comma separated pindgom check names to display *(default '')*
+  - `format` display format for this module *(default '{pingdom}')*
   - `login` pingdom login *(default '')*
   - `max_latency` maximal latency before coloring the output *(default 500)*
   - `password` pingdom password *(default '')*
   - `request_timeout` pindgom API request timeout *(default 15)*
+
+Format placeholders:
+  - `{pingdom}` pingdom response times
 
 Color options:
   - `color_bad` Site is down
@@ -2026,6 +2148,7 @@ Configuration parameters:
   - `force` If True then the color will always be set.  If false the color will
     only be changed if it has not been set by a module.
     *(default False)*
+  - `format` display format for this module *(default '{output}')*
   - `gradient` The colors we will cycle through, This is a list of hex values
     *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
     '#0000FF', '#FF00FF', '#FF0000', ])*
@@ -2201,7 +2324,7 @@ Display number of windows and urgency hints asynchronously.
 
 Configuration parameters:
   - `always_show` always display the format *(default False)*
-  - `format` display format for scratchpad_async *(default "{counter} ⌫")*
+  - `format` display format for this module *(default "{counter} ⌫")*
 
 Format placeholders:
   - `{counter}` number of scratchpad windows
@@ -2302,20 +2425,25 @@ Requires:
 Display status of a given hackerspace.
 
 Configuration parameters:
-  - `button_url` Button that when clicked opens the URL sent in the space's API.
-    Setting to None disables. *(default 3)*
-  - `cache_timeout` Set timeout between calls in seconds *(default 60)*
-  - `closed_text` text if space is closed, strftime parameters
-    will be translated *(default 'closed')*
-  - `open_text` text if space is open, strftime parmeters will be translated
-    *(default 'open')*
-  - `time_text` format used for time display *(default ' since %H:%M')*
-  - `url` URL to SpaceAPI json file of your space
+  - `button_url` mouse button to open URL sent in space's API *(default 3)*
+  - `cache_timeout` refresh interval for this module *(default 60)*
+  - `format` display format for this module *(default '{state}[ {lastchanged}]')*
+  - `format_lastchanged` display format for time *(default 'since %H:%M')*
+  - `state_closed` show when hackerspace is closed *(default 'closed')*
+  - `state_open` show when hackerspace is open *(default 'open')*
+  - `url` specify JSON URL of a hackerspace to retrieve from
     *(default 'http://status.chaospott.de/status.json')*
 
+Format placeholders:
+  - `{state}` Hackerspace state
+  - `{lastchanged}` Time
+
+format_lastchanged conversion:
+    '%' Strftime characters to be translated
+
 Color options:
-  - `color_closed` Space is open, defaults to color_bad
-  - `color_open` Space is closed, defaults to color_good
+  - `color_closed` Space closed, defaults to color_bad
+  - `color_open` Space open, defaults to color_good
 
 **author** timmszigat
 
@@ -2420,6 +2548,49 @@ be available, provided by the `lm-sensors` or `lm_sensors` package.
 
 ---
 
+### <a name="systemd"></a>systemd
+
+Check systemd unit status.
+
+Check the status of a systemd unit.
+
+Configuration parameters:
+  - `cache_timeout` How often we refresh this module in seconds *(default 5)*
+  - `format` Format for module output *(default "{unit}: {status}")*
+  - `unit` Name of the unit *(default "dbus.service")*
+
+Format of status string placeholders:
+  - `{unit}` name of the unit
+  - `{status}` 'active', 'inactive' or 'not-found'
+
+Color options:
+  - `color_good` Unit active
+  - `color_bad` Unit inactive
+  - `color_degraded` Unit not found
+
+Example:
+
+```
+# Check status of vpn service
+# Start with left click
+# Stop with right click
+systemd vpn {
+    unit = 'vpn.service'
+    on_click 1 = "exec sudo systemctl start vpn"
+    on_click 3 = "exec sudo systemctl stop vpn"
+    format = '{unit} is {status}'
+}
+```
+
+Requires:
+  - `pydbus` python lib for dbus
+
+**author** Adrian Lopez &lt;adrianlzt@gmail.com&gt;
+
+**license** BSD
+
+---
+
 ### <a name="taskwarrior"></a>taskwarrior
 
 Display tasks currently running in taskwarrior.
@@ -2454,10 +2625,14 @@ Button 1 starts/pauses the countdown.
 Button 2 resets timer.
 
 Configuration parameters:
-  - `sound` path to a sound file that will be played when the timer expires.
-    *(default None)*
-  - `time` how long in seconds for the timer
-    *(default 60)*
+  - `format` display format for this module *(default 'Timer {timer}')*
+  - `sound` play sound file path when the timer ends *(default None)*
+  - `time` number of seconds to start countdown with *(default 60)*
+
+Format placeholders:
+  - `{timer}` display hours:minutes:seconds
+
+**author** tobes
 
 ---
 
@@ -2562,6 +2737,60 @@ Format placeholders:
   - `{processor}` the (real) processor name, e.g. 'amdk6'
 
 **author** ultrabug (inspired by ndalliard)
+
+---
+
+### <a name="uptime"></a>uptime
+
+Display system uptime.
+
+Configuration parameters:
+  - `format` display format for this module
+    *(default 'up {days} days {hours} hours {minutes} minutes')*
+
+Format placeholders:
+  - `{decades}` decades
+  - `{years}`   years
+  - `{weeks}`   weeks
+  - `{days}`    days
+  - `{hours}`   hours
+  - `{minutes}` minutes
+  - `{seconds}` seconds
+
+Note: If you don't use one of the placeholders, the value will be carried over
+    to the next unit. For example, given an uptime of 1h 30min:
+    If you use {minutes} as your only placeholder, then its value will be 90.
+    If you use {hours} and {minutes}, then its values will be 1 and 30, respectively.
+
+Examples:
+```
+# show uptime without zeroes
+uptime {
+    format = 'up [\?if=weeks {weeks} weeks ][\?if=days {days} days ]
+        [\?if=hours {hours} hours ][\?if=minutes {minutes} minutes ]'
+}
+
+# show uptime in multiple formats using group module
+group uptime {
+    format = "up {output}"
+    uptime {
+        format = '[\?if=weeks {weeks} weeks ][\?if=days {days} days ]
+            [\?if=hours {hours} hours ][\?if=minutes {minutes} minutes]'
+    }
+    uptime {
+        format = '[\?if=weeks {weeks}w ][\?if=days {days}d ]
+            [\?if=hours {hours}h ][\?if=minutes {minutes}m]'
+    }
+    uptime {
+        format = '[\?if=days {days}, ][\?if=hours {hours}:]
+            [\?if=minutes {minutes:02d}]'
+    }
+}
+```
+
+**author** Alexis "Horgix" Chotard &lt;alexis.horgix.chotard@gmail.com&gt;, tobes, lasers
+
+**license** BSD
 
 ---
 
@@ -3057,26 +3286,33 @@ Display public IP address and online status.
 
 Configuration parameters:
   - `cache_timeout` how often we refresh this module in seconds *(default 30)*
-  - `format` available placeholders are {ip} and {country}
+  - `expected` define expected values for format placeholders,
+    and use `color_degraded` to show the output of this module
+    if any of them does not match the actual value.
+    This should be a dict eg {'country': 'France'}
+    *(default None)*
+  - `format` available placeholders are {ip} and {country},
+    as well as any other key in JSON fetched from `url_geo`
     *(default '{ip}')*
-  - `format_offline` what to display when offline *(default '■')*
-  - `format_online` what to display when online *(default '●')*
   - `hide_when_offline` hide the module output when offline *(default False)*
+  - `icon_off` what to display when offline *(default '■')*
+  - `icon_on` what to display when online *(default '●')*
   - `mode` default mode to display is 'ip' or 'status' (click to toggle)
     *(default 'ip')*
   - `negative_cache_timeout` how often to check again when offline *(default 2)*
   - `timeout` how long before deciding we're offline *(default 5)*
-  - `url` change IP check url (must output a plain text IP address)
-    *(default 'http://ultrabug.fr/py3status/whatismyip')*
   - `url_geo` IP to check for geo location (must output json)
-    *(default 'http://ip-api.com/json')*
+    *(default 'https://freegeoip.net/json/')*
 
 Format placeholders:
+  - `{icon}` display the icon
   - `{country}` display the country
   - `{ip}` display current ip address
+    any other key in JSON fetched from `url_geo`
 
 Color options:
   - `color_bad` Offline
+  - `color_degraded` Output is unexpected (IP/country mismatch, etc.)
   - `color_good` Online
 
 **author** ultrabug
@@ -3155,13 +3391,13 @@ In this case you will need to use the `use_sudo` configuration parameter.__
 
 ### <a name="window_title"></a>window_title
 
-Display current window title.
+Display window title.
 
 Prints the name of focused window at frequent intervals.
 
 Configuration parameters:
-  - `cache_timeout` How often we refresh this module in seconds *(default 0.5)*
-  - `format` display format for window_title *(default '{title}')*
+  - `cache_timeout` refresh interval for this module *(default 0.5)*
+  - `format` display format for this module *(default '{title}')*
   - `max_width` If width of title is greater, shrink it and add '...'
     *(default 120)*
 
@@ -3173,7 +3409,7 @@ Configuration parameters:
 
 ### <a name="window_title_async"></a>window_title_async
 
-Display current window title asynchronously.
+Display window title asynchronously.
 
 Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.
@@ -3282,6 +3518,8 @@ Configuration parameters:
     *(default None)*
   - `format` display format for xrandr
     *(default '{output}')*
+  - `hide_if_single_combination` hide if only one combination is available
+    *(default False)*
   - `icon_clone` icon used to display a 'clone' combination
     *(default '=')*
   - `icon_extend` icon used to display a 'extend' combination
@@ -3375,20 +3613,47 @@ Color options:
 
 ---
 
+### <a name="xscreensaver"></a>xscreensaver
+
+Control Xscreensaver.
+
+This script is useful for people who let Xscreensaver manage DPMS settings.
+Xscreensaver has its own DPMS variables separate from xset. DPMS can be
+safely turned off in xset as long as Xscreensaver is running.
+Settings can be managed using "xscreensaver-demo".
+
+Configuration parameters:
+  - `button_activate` mouse button to activate Xscreensaver *(default 3)*
+  - `button_toggle` mouse button to toggle Xscreensaver *(default 1)*
+  - `cache_timeout` refresh interval for this module *(default 15)*
+  - `format` display format for this module *(default '{icon}')*
+  - `icon_off` show when Xscreensaver is not running *(default 'XSCR')*
+  - `icon_on` show when Xscreensaver is running *(default 'XSCR')*
+
+ Format placeholders:
+    {icon} Xscreensaver icon
+
+**author** neutronst4r &lt;c7420{at}posteo{dot}net&gt;, lasers
+
+---
+
 ### <a name="xsel"></a>xsel
 
 Display X selection.
 
 Configuration parameters:
-  - `cache_timeout` how often we refresh this module in seconds
-    *(default 0.5)*
-  - `command` the xsel command to run *(default 'xsel -o')*
-  - `max_size` stip the selection to this value *(default 15)*
-  - `symmetric` show the beginning and the end of the selection string
+  - `cache_timeout` refresh interval for this module *(default 0.5)*
+  - `command` the clipboard command to run *(default 'xsel -o')*
+  - `format` display format for this module *(default '{selection}')*
+  - `max_size` strip the selection to this value *(default 15)*
+  - `symmetric` show beginning and end of the selection string
     with respect to configured max_size. *(default True)*
 
+Format placeholders:
+  - `{selection}` output from clipboard command
+
 Requires:
-  - `xsel` command line tool
+  - `xsel` a command-line program to retrieve/set the X selection
 
 **author** Sublim3 umbsublime@gamil.com
 
