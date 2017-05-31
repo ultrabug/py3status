@@ -20,7 +20,7 @@ I would highly suggest you install an additional font, such as the incredible
 which has icons for most weather scenarios.
 
 For more information, see the documentation
-(ttps://openweathermap.org/weather-conditions) on what weather conditions are
+(https://openweathermap.org/weather-conditions) on what weather conditions are
 supported. See the configuration options for how to specify each weather icon.
 
 Configuration parameters:
@@ -33,8 +33,7 @@ Configuration parameters:
         (default 600)
     forecast_format: Formatting for future forecasts
         Available placeholders:
-            icon, clouds, snow, wind, humidity, pressure, temp,
-            desc, desc_long
+            See 'format'
         This is similar to the 'format' field, but contains information
         for future weather
         (default '{icon}')
@@ -50,7 +49,7 @@ Configuration parameters:
         found below.
         Available placeholders:
             icon, clouds, rain, snow, wind, humidity, pressure, temp, sunrise,
-            sunset desc, desc_long, forecast
+            sunset, desc, desc_long, forecast
         You may also use the icons in the icon dictionary with their identifiers
         (default '{icon}: {temp}')
     format_clouds: Formatting for cloud coverage (percentage).
@@ -80,8 +79,8 @@ Configuration parameters:
             icon
         (default '{icon}: %X')
     format_sunset: Formatting for sunset time.
-        Note that this format accepts strftime/strptime placeholders to populate
-        the output with the time information.
+        This format accepts strftime/strptime placeholders to populate the
+        output with the time information.
         Available placeholders:
             icon
         (default '{icon}: %X')
@@ -117,7 +116,7 @@ Configuration parameters:
         (default None)
     lang: An ISO 639-1 code for your language (two letters)
         (default 'en')
-    req_timeout: The timeout in seconds for contacting the IP API.
+    request_timeout: The timeout in seconds for contacting the IP API.
         (default 10)
 
 Format Placeholders:
@@ -232,7 +231,7 @@ class Py3status:
     format_wind = '{icon}: {mph_speed} mph'
     icons = None
     lang = 'en'
-    req_timeout = 10
+    request_timeout = 10
 
     def _get_icons(self):
         if (self.icons is None):
@@ -322,7 +321,7 @@ class Py3status:
         # Contact the IP API
         url = "http://ip-api.com/json"
         try:
-            req = self.py3.request(url, timeout=self.req_timeout)
+            req = self.py3.request(url, timeout=self.request_timeout)
             data = req.json()
         except (self.py3.RequestException):
             return None
