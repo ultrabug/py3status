@@ -27,18 +27,18 @@ Configuration parameters:
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's.
         (default 600)
-    forecast_format: Formatting for future forecasts
+    format_forecast: Formatting for future forecasts
         Available placeholders:
             See 'format'
         This is similar to the 'format' field, but contains information
         for future weather
         (default '{icon}')
-    forecast_num: Number of days to include in the forecast, including today
-        (regardless of the 'forecast_today' flag)
+    forecast_days: Number of days to include in the forecast, including today
+        (regardless of the 'forecast_include_today' flag)
         (default 0)
-    forecast_separator: Separator between entries in the forecast
+    forecast_text_separator: Separator between entries in the forecast
         (default ' ')
-    forecast_today: Include today in the forecast? (Boolean)
+    forecast_include_today: Include today in the forecast? (Boolean)
         (default False)
     format: How to display the weather. This also dictates the type of
         forecast. The placeholders here refer to the format_[...] variables
@@ -89,6 +89,28 @@ Configuration parameters:
             icon, deg, msec_speed, kmh_speed, fsec_speed, mph_speed,
             msec_gust, kmh_gust, fsec_gust, mph_gust
         (default '{icon}: {mph_speed} mph')
+    icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
+        (default '🌫')
+    icon_breeze: Icon for wind or breeze
+        (default '☴')
+    icon_cloud: Icon for clouds
+        (default '☁')
+    icon_extreme: Icon for extreme weather
+        (default '⚠')
+    icon_rain: Icon for rain
+        (default '🌧')
+    icon_snow: Icon for snow
+        (default '❄')
+    icon_sun: Icon for sunshine
+        (default '☼')
+    icon_humidity: Icon for humidity
+        (default '●')
+    icon_pressure: Icon for pressure
+        (default '◌')
+    icon_temp: Icon for temperature
+        (default '○')
+    icon_thunderstorm: Icon for thunderstorms
+        (default '⛈')
     icons: A dictionary relating weather code to icon.
         See https://openweathermap.org/weather-conditions for a complete list
         of supported icons. This will fall-back to the listed icon if there is
@@ -188,7 +210,7 @@ weather_owm {
   }
 
   format = '{icon}: {temp}, {forecast}'
-  forecast_num = 3
+  forecast_days = 3
 }
 ```
 Outputs: 🌫: ○: 59°, ⛅ ☼ 🌧`
@@ -210,12 +232,12 @@ class Py3status:
 
     api_key = None
     cache_timeout = 600
-    forecast_format = '{icon}'
-    forecast_num = 0
-    forecast_separator = ' '
-    forecast_today = False
+    forecast_days = 0
+    forecast_include_today = False
+    forecast_text_separator = ' '
     format = '{icon}: {temp}'
     format_clouds = '{icon}: {coverage}%'
+    format_forecast = '{icon}'
     format_humidity = '{icon}: {humid}%'
     format_pressure = '{icon}: {press} hPa'
     format_rain = '{icon}: {in} inches'
@@ -224,9 +246,21 @@ class Py3status:
     format_sunset = '{icon}: %X'
     format_temp = u'{icon}: {f}°'
     format_wind = '{icon}: {mph_speed} mph'
+    icon_atmosphere = '🌫'
+    icon_breeze = '☴'
+    icon_cloud = '☁'
+    icon_extreme = '⚠'
+    icon_rain = '🌧'
+    icon_snow = '❄'
+    icon_sun = '☼'
+    icon_humidity = '●'
+    icon_pressure = '◌'
+    icon_temp = '○'
+    icon_thunderstorm = '⛈'
     icons = None
     lang = 'en'
     request_timeout = 10
+
 
     # API information
     OWM_API = '2.5'
@@ -255,29 +289,29 @@ class Py3status:
 
         # Defaults for weather ranges
         defaults = {
-            'i200_i299': '⛈',
-            'i300_i399': '🌧',
-            'i500_i599': '🌧',
-            'i600_i699': '❄',
-            'i700_i799': '🌫',
-            'i800': '☼',
-            'i801_i809': '☁',
-            'i900_i909': '⚠',
-            'i950_i959': '☴',
-            'i960_i999': '⚠',
+            'i200_i299': self.icon_thunderstorm,
+            'i300_i399': self.icon_rain,
+            'i500_i599': self.icon_rain,
+            'i600_i699': self.icon_snow,
+            'i700_i799': self.icon_atmosphere,
+            'i800':      self.icon_sun,
+            'i801_i809': self.icon_cloud,
+            'i900_i909': self.icon_extreme,
+            'i950_i959': self.icon_breeze,
+            'i960_i999': self.icon_extreme,
         }
 
         # Default mappings for other icons
         others = {
-            'clouds': 802,
-            'rain': 501,
-            'snow': 601,
-            'wind': 954,
-            'humidity': '●',
-            'pressure': '◌',
-            'temp': '○',
-            'sunrise': 800,
-            'sunset': 801,
+            'clouds':   802,
+            'rain':     501,
+            'snow':     601,
+            'wind':     954,
+            'humidity': self.icon_humidity,
+            'pressure': self.icon_pressure,
+            'temp':     self.icon_temp,
+            'sunrise':  800,
+            'sunset':   801,
         }
 
         # Handling ranges from OpenWeatherMap
@@ -380,17 +414,17 @@ class Py3status:
 
     def _get_forecast(self, coords):
         # Get the next few days
-        if (self.forecast_num == 0):
+        if (self.forecast_days == 0):
             return []
 
         # Get raw data
         url = (self._get_req_url(self.OWM_FUTURE_ENDPOINT, coords)
-            % (self.forecast_num + 1))
+            % (self.forecast_days + 1))
         data = self._make_req(url)
 
         # Extract forecast
         weathers = data['list']
-        return weathers[:-1] if (self.forecast_today) else weathers[1:]
+        return weathers[:-1] if (self.forecast_include_today) else weathers[1:]
 
     def _get_icon(self, wthr):
         # Lookup the icon from the weather code (default sunny)
@@ -485,7 +519,7 @@ class Py3status:
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
-        pressure = self._dpath(wthr, self.OWM_PRESSURE, dict())
+        pressure = self._jpath(wthr, self.OWM_PRESSURE, dict())
         pressure['icon'] = self.icons['pressure']
 
         # Format the barometric pressure
@@ -493,7 +527,7 @@ class Py3status:
 
     def _format_temp(self, wthr):
         # Get Kelvin data (default absolute zero)
-        k_data = self._dpath(wthr, self.OWM_TEMP, 0)
+        k_data = self._jpath(wthr, self.OWM_TEMP, 0)
 
         def trans(key, value, fn):
           if(key.startswith('temp')):
@@ -540,7 +574,7 @@ class Py3status:
     def _format_sunrise(self, wthr):
         # Get the time for sunrise (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
-            self._dpath(wthr, self.OWM_SUNRISE, 0))
+            self._jpath(wthr, self.OWM_SUNRISE, 0))
 
         # Format the sunrise
         replaced = dt.strftime(self.format_sunrise)
@@ -551,7 +585,7 @@ class Py3status:
     def _format_sunset(self, wthr):
         # Get the time for sunset (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
-            self._dpath(wthr, self.OWM_SUNSET, 0))
+            self._jpath(wthr, self.OWM_SUNSET, 0))
 
         # Format the sunset
         replaced = dt.strftime(self.format_sunset)
@@ -574,8 +608,8 @@ class Py3status:
             'sunset': self._format_sunset(wthr),
 
             # Descriptions (defaults to empty)
-            'desc': self._dpath(wthr, self.OWM_DESC, ''),
-            'desc_long': self._dpath(wthr, self.OWM_DESC_LONG, '')
+            'desc': self._jpath(wthr, self.OWM_DESC, ''),
+            'desc_long': self._jpath(wthr, self.OWM_DESC_LONG, '')
         }
 
     def _format(self, wthr, fcsts):
@@ -586,11 +620,11 @@ class Py3status:
         forecasts = []
         for day in fcsts:
             future = self._format_dict(day)
-            forecasts.append(self.py3.safe_format(self.forecast_format, future))
+            forecasts.append(self.py3.safe_format(self.format_forecast, future))
 
         # Give the final format
-        today['forecast'] = self.py3.composite_join(self.forecast_separator,
-                                                    forecasts)
+        today['forecast'] = self.py3.composite_join(
+            self.forecast_text_separator, forecasts)
         return self.py3.safe_format(self.format, today)
 
     def weather(self):
@@ -633,5 +667,5 @@ if (__name__ == '__main__'):
         },
 
         'format': '{icon}: {temp}, {forecast}',
-        'forecast_num': 3,
+        'forecast_days': 3,
     })
