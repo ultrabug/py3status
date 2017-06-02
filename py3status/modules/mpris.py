@@ -518,6 +518,9 @@ class Py3status:
                                                  text,
                                                  buttons)
 
+        if self._kill:
+            raise KeyboardInterrupt
+
         if (self._data.get('error_occurred') or
                 current_player_id != self._player_details.get('id')):
             # Something went wrong or the player changed during our processing
