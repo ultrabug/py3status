@@ -273,8 +273,8 @@ IP_LAT = '//lat'
 IP_LNG = '//lon'
 OWM_WEATHER_ICON = '//weather:0/id'
 OWM_CLOUD_COVER = '//clouds/all'
-OWM_RAIN = '//rain'
-OWM_SNOW = '//snow'
+OWM_RAIN = '//rain/3h'
+OWM_SNOW = '//snow/3h'
 OWM_WIND = '//wind'
 OWM_HUMIDITY = '//main'
 OWM_PRESSURE = '//main'
@@ -331,6 +331,13 @@ class Py3status:
     lang = 'en'
     request_timeout = 10
     temperature_color = False
+
+    def post_config_hook(self):
+        # Verify the API key
+        if (self.api_key is None):
+            raise OWMException('API Key for OpenWeatherMap cannot be empty!'
+                               ' Go to http://openweathermap.org/appid to'
+                               ' get an API Key.')
 
     def _get_icons(self):
         if (self.icons is None):
@@ -406,13 +413,6 @@ class Py3status:
         self.kmh_from_msec = 0.277778
         self.mph_from_fsec = 1.46667
 
-    def _init(self):
-        # Verify the API key
-        if (self.api_key is None):
-            raise OWMException('API Key for OpenWeatherMap cannot be empty!'
-                               ' Go to http://openweathermap.org/appid to'
-                               ' get an API Key.')
-
     def _get_coords(self):
         # Contact the IP API
         try:
@@ -428,10 +428,12 @@ class Py3status:
         return (self._jpath(data, IP_LAT, 0), self._jpath(data, IP_LNG, 0))
 
     def _get_req_url(self, base, coords):
+        # Construct the url from the pattern
         params = [OWM_API, self.api_key] + list(coords) + [self.lang]
         return base % tuple(params)
 
     def _make_req(self, url):
+        # Make a request expecting a JSON response
         req = self.py3.request(url, timeout=self.request_timeout)
         if(req.status_code != 200):
             data = req.json()
@@ -440,21 +442,29 @@ class Py3status:
         return req.json()
 
     def _jpath(self, data, query, default=None):
+        # Take the query expression and drill down into the given dictionary
         parts = query.strip('/').split('/')
         for part in parts:
             try:
+                # This represents a key:index expression, representing first
+                # selecting a key, then an index
                 if(':' in part):
                     (part, index) = tuple(part.split(':'))
                     data = data[part]
                     data = data[int(index)]
+
+                # Select a portion of the dictionary by key in the path
                 else:
                     data = data[part]
+
+            # Failed, so return the default
             except (KeyError, IndexError, TypeError):
                 return default
 
         return data
 
     def _get_weather(self, coords):
+        # Get and process the current weather
         url = self._get_req_url(OWM_CURR_ENDPOINT, coords)
         return self._make_req(url)
 
@@ -473,24 +483,35 @@ class Py3status:
         return weathers[:-1] if (self.forecast_include_today) else weathers[1:]
 
     def _color_gradient(self, start, end):
+        # Convert a hexadecimal string to RGB tuple
         def hexToRGB(hexstr):
+            # Get strings
             hexstr = hexstr.lstrip('#')
             (r, g, b) = (hexstr[:2], hexstr[2:4], hexstr[4:6])
+
+            # Give numbers
             convert = lambda x: int(x, base = 16)
             return (convert(r), convert(g), convert(b))
 
         def rgbToHex(rgb):
+            # Convert a collection of RGB values into a hexadecimal string
             chars = map(lambda x: '%02x' % int(x), list(rgb))
             return ''.join(chars)
 
         def calc(val):
+            # Get the RGB of start and finish
             (r1, g1, b1) = hexToRGB(start)
             (r2, g2, b2) = hexToRGB(end)
 
+            # Blend from one to the next for each R, G, B
+            # Assume the input here is a number [0, 1.0] inclusive
             line = lambda a, b, x: a + x * float(b - a)
             new = (line(r1, r2, val), line(g1, g2, val), line(b1, b2, val))
+
+            # Convert back to what we got
             return rgbToHex(new)
 
+        # We return a function
         return calc
 
     def _get_icon(self, wthr):
@@ -506,20 +527,17 @@ class Py3status:
 
     def _format_rain(self, wthr):
         # Format rain fall
-        key = '3h'
-        rain = self._jpath(wthr, OWM_RAIN, dict())
-        if(key not in rain):
-            rain[key] = 0
+        rain = self._jpath(wthr, OWM_RAIN, 0)
 
         # Data comes as mm
-        inches = rain[key] * self.in_from_mm
+        inches = rain * self.in_from_mm
 
         # Format the rain fall
         return self.py3.safe_format(self.format_rain, {
             'icon': self.icons['rain'],
-            'mm': round(rain[key]),
-            'cm': round(rain[key] / 10),
-            'm': round(rain[key] / 100),
+            'mm': round(rain),
+            'cm': round(rain / 10),
+            'm': round(rain / 100),
             'in': round(inches),
             'ft': round(inches / 12),
             'yrd': round(inches / 36),
@@ -527,20 +545,17 @@ class Py3status:
 
     def _format_snow(self, wthr):
         # Format snow fall
-        key = '3h'
-        snow = self._jpath(wthr, OWM_SNOW)
-        if(key not in snow):
-            snow[key] = 0
+        snow = self._jpath(wthr, OWM_SNOW, 0)
 
         # Data comes as mm
-        inches = snow[key] * self.in_from_mm
+        inches = snow * self.in_from_mm
 
         # Format the snow fall
         return self.py3.safe_format(self.format_snow, {
             'icon': self.icons['snow'],
-            'mm': round(snow[key]),
-            'cm': round(snow[key] / 10),
-            'm': round(snow[key] / 100),
+            'mm': round(snow),
+            'cm': round(snow / 10),
+            'm': round(snow / 100),
             'in': round(inches),
             'ft': round(inches / 12),
             'yrd': round(inches / 36),
@@ -596,6 +611,7 @@ class Py3status:
         # Get Kelvin data (default absolute zero)
         k_data = self._jpath(wthr, OWM_TEMP, 0)
 
+        # Translate based on keyname (to only convert temperature values)
         def trans(key, value, fn):
             if(key.startswith('temp')):
                 return fn(value)
@@ -621,7 +637,9 @@ class Py3status:
             if ('temp_max' not in group):
                 group['temp_max'] = group['max']
 
-        # Determine color
+        # Determine color based on temperature
+        # Gradients below have a lower limit, upper limit, and
+        # a transition function
         options = [
             (None, -60, lambda _: self.color_neg_60),
             (-60, -20, self._color_gradient(self.color_neg_60,
@@ -645,21 +663,23 @@ class Py3status:
         color = None
         if(self.temperature_color):
             temp = f_data['temp']
+
+            # Go trough options
             for (lower, upper, fn) in options:
                 # Adjust boundaries
                 lower = temp - 1 if(lower is None) else lower
                 upper = temp + 1 if(upper is None) else upper
 
+                # This should happen at least once
                 if(lower < temp <= upper):
                     color = fn((temp - lower) / float(upper - lower))
                     break
 
+        # Optionally add the color
         format_str = self.format_temp
         if(self.temperature_color):
             color_str = '\?color=%s' % color
             format_str = color_str + ' ' + format_str
-
-        print (format_str)
 
         # Format the temperature
         return self.py3.safe_format(self.format_temp, {
@@ -735,8 +755,6 @@ class Py3status:
         return self.py3.safe_format(self.format, today)
 
     def weather(self):
-        self._init()
-
         # Get weather information
         coords = self._get_coords()
         text = ''
