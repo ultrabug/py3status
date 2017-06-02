@@ -64,12 +64,12 @@ Configuration parameters:
         (default '{icon}: {press} hPa')
     format_rain: Formatting for rain volume over the past 3 hours
         Available placeholders:
-            icon, mm, cm, m, in, ft, yrd
-        (default '{icon}: {in} inches')
+            icon, amt
+        (default '{icon}: {amt} inches')
     format_snow: Formatting for snow volume over the past 3 hours
         Available placeholders:
-            icon, mm, cm, m, in, ft, yrd
-        (default '{icon}: {in} inches')
+            icon, amt
+        (default '{icon}: {amt} inches')
     format_sunrise: Formatting for sunrise time.
         Note that this format accepts strftime/strptime placeholders to populate
         the output with the time information.
@@ -84,13 +84,12 @@ Configuration parameters:
         (default '{icon}: %X')
     format_temp: Formatting for temperature
         Available placeholders:
-            icon, c, c_min, c_max, f, f_min, f_max, k, k_min, k_max
-        (default '{icon}: {f}°')
+            cur, icon, max, min
+        (default '{icon}: {cur}°')
     format_wind: Formatting for wind degree and speed
         Available placeholders:
-            icon, deg, msec_speed, kmh_speed, fsec_speed, mph_speed,
-            msec_gust, kmh_gust, fsec_gust, mph_gust
-        (default '{icon}: {mph_speed} mph')
+            icon, deg, speed, gust
+        (default '{icon}: {speed} mph')
     icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
         (default '🌫')
     icon_breeze: Icon for wind or breeze
@@ -136,11 +135,27 @@ Configuration parameters:
         (default None)
     lang: An ISO 639-1 code for your language (two letters)
         (default 'en')
+    rain_unit: Unit for rain fall
+        Options:
+            cm, ft, in, mm, m, yrd
+        (default 'in')
     request_timeout: The timeout in seconds for contacting the IP API.
         (default 10)
-    temperature_color: Color the temperature output based on a color scale.
+    snow_unit: Unit for snow fall
+        Options:
+            cm, ft, in, mm, m, yrd
+        (default 'in')
+    temp_color: Color the temperature output based on a color scale.
         For reference, see https://goo.gl/NGbjIE
         (default False)
+    temp_unit: Unit for temperature
+        Options:
+            c, f, k
+        (default 'f')
+    wind_unit: Unit for wind speed
+        Options:
+            fsec, msec, mph, kmh
+        (default 'mph')
 
 Format Placeholders:
  - All:
@@ -154,39 +169,17 @@ Format Placeholders:
    - {sea_level}: The measurement of current atmospheric pressure at
      sea-level in Pascals.
  - format_rain:
-   - {cm}: Measurement in centimeters.
-   - {ft}: Measurement in feet.
-   - {in}: Measurement in inches.
-   - {mm}: Measurement in millimeters.
-   - {m}: Measurement in meters.
-   - {yrd}: Measurement in yards.
+   - {amt}: Measurement of the amount of rain in the configured unit
  - format_snow:
-   - {cm}: Measurement in centimeters.
-   - {ft}: Measurement in feet.
-   - {in}: Measurement in inches.
-   - {mm}: Measurement in millimeters.
-   - {m}: Measurement in meters.
-   - {yrd}: Measurement in yards.
+   - {amt}: Measurement of the amount of snow in the configured unit
  - format_temp:
-   - {c_max}: The maximum Celsius temperature.
-   - {c_min}: The minimum Celsius temperature.
-   - {c}: Current Celsius temperature reading.
-   - {f_max}: The maximum Fahrenheit temperature.
-   - {f_min}: The minimum Fahrenheit temperature.
-   - {f}: Current Fahrenheit temperature reading.
-   - {k_max}: The maximum Kelvin temperature.
-   - {k_min}: The minimum Kelvin temperature.
-   - {k}: Current Kelvin temperature reading.
+   - {max}: The maximum temperature in the configured unit.
+   - {min}: The minimum temperature in the configured unit.
+   - {cur}: Current temperature in the configured unit.
  - format_wind:
-   - {deg}: Current wind speed heading (in degrees)
-   - {fsec_gust}: The speed in ft/sec of current wind gusts.
-   - {fsec_speed}: The speed in ft/sec of current wind speeds.
-   - {kmh_gust}: The speed in km/hr of current wind gusts.
-   - {kmh_speed}: The speed in km/hr of current wind speeds.
-   - {mph_gust}: The speed in mph of current wind gusts.
-   - {mph_speed}: The speed in mph of current wind speeds.
-   - {msec_gust}: The speed in m/sec of current wind gusts.
-   - {msec_speed}: The speed in m/sec of current wind speeds.
+   - {deg}: Current wind speed heading (in degrees).
+   - {gust}: The speed of current wind gusts in the configured unit.
+   - {speed}: The speed of the wind in the configured unit.
  - format only:
    - {forecast}: Contains the formatted result of format_forecast.
  - format, format_forecast:
@@ -284,6 +277,12 @@ OWM_SUNSET = '//sys/sunset'
 OWM_DESC = '//weather:0/main'
 OWM_DESC_LONG = '//weather:0/description'
 
+# Units constants
+RAIN_UNITS = set(['cm', 'ft', 'in', 'mm', 'm', 'yrd'])
+SNOW_UNITS = RAIN_UNITS
+TEMP_UNITS = set(['c', 'f', 'k'])
+WIND_UNITS = set(['fsec', 'msec', 'mph', 'kmh'])
+
 
 class OWMException(Exception):
     pass
@@ -305,17 +304,17 @@ class Py3status:
     forecast_days = 0
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{icon}: {temp}'
+    format = '{icon}: {temp} {desc}'
     format_clouds = '{icon}: {coverage}%'
     format_forecast = '{icon}'
     format_humidity = '{icon}: {humid}%'
     format_pressure = '{icon}: {press} hPa'
-    format_rain = '{icon}: {in} inches'
-    format_snow = '{icon}: {in} inches'
+    format_rain = '{icon}: {amt} inches'
+    format_snow = '{icon}: {amt} inches'
     format_sunrise = '{icon}: %X'
     format_sunset = '{icon}: %X'
-    format_temp = u'{icon}: {f}°'
-    format_wind = '{icon}: {mph_speed} mph'
+    format_temp = u'{icon}: {cur}°'
+    format_wind = '{icon}: {speed} mph'
     icon_atmosphere = '🌫'
     icon_breeze = '☴'
     icon_cloud = '☁'
@@ -329,8 +328,12 @@ class Py3status:
     icon_thunderstorm = '⛈'
     icons = None
     lang = 'en'
+    rain_unit = 'in'
     request_timeout = 10
-    temperature_color = False
+    snow_unit = 'in'
+    temp_color = False
+    temp_unit = 'f'
+    wind_unit = 'mph'
 
     def _get_icons(self):
         if self.icons is None:
@@ -410,7 +413,20 @@ class Py3status:
         self.in_from_mm = 0.0393701
         self.ft_from_meter = 3.28084
         self.kmh_from_msec = 0.277778
-        self.mph_from_fsec = 1.46667
+        self.mph_from_msec = 2.23694
+
+        # Verify the units configuration
+        if self.rain_unit not in RAIN_UNITS:
+            raise Exception('rain_unit is not recognized')
+
+        if self.snow_unit not in SNOW_UNITS:
+            raise Exception('snow_unit is not recognized')
+
+        if self.temp_unit not in TEMP_UNITS:
+            raise Exception('temp_unit is not recognized')
+
+        if self.wind_unit not in WIND_UNITS:
+            raise Exception('wind_unit is not recognized')
 
     def _get_coords(self):
         # Contact the IP API
@@ -535,15 +551,18 @@ class Py3status:
         # Data comes as mm
         inches = rain * self.in_from_mm
 
-        # Format the rain fall
-        return self.py3.safe_format(self.format_rain, {
+        options = {
             'icon': self.icons['rain'],
             'mm': round(rain),
             'cm': round(rain / 10),
             'm': round(rain / 100),
             'in': round(inches),
             'ft': round(inches / 12),
-            'yrd': round(inches / 36),
+            'yrd': round(inches / 36)}
+
+        # Format the rain fall
+        return self.py3.safe_format(self.format_rain, {
+            'amt': options[self.rain_unit],
         })
 
     def _format_snow(self, wthr):
@@ -553,47 +572,48 @@ class Py3status:
         # Data comes as mm
         inches = snow * self.in_from_mm
 
-        # Format the snow fall
-        return self.py3.safe_format(self.format_snow, {
+        options = {
             'icon': self.icons['snow'],
             'mm': round(snow),
             'cm': round(snow / 10),
             'm': round(snow / 100),
             'in': round(inches),
             'ft': round(inches / 12),
-            'yrd': round(inches / 36),
+            'yrd': round(inches / 36)}
+
+        # Format the snow fall
+        return self.py3.safe_format(self.format_snow, {
+            'amt': options[self.snow_unit],
         })
 
     def _format_wind(self, wthr):
         wind = self._jpath(wthr, OWM_WIND, dict())
 
-        # Speed
+        # Speed and Gust
         msec_speed = wind['speed'] if ('speed' in wind) else 0
-        kmh_speed = msec_speed * self.kmh_from_msec
-        fsec_speed = msec_speed * self.ft_from_meter
-        mph_speed = fsec_speed * self.mph_from_fsec
-
-        # Gusts
         msec_gust = wind['gust'] if ('gust' in wind) else 0
-        kmh_gust = msec_gust * self.kmh_from_msec
-        fsec_gust = msec_gust * self.ft_from_meter
-        mph_gust = fsec_gust * self.mph_from_fsec
+
+        options = {
+            'fsec': {
+                'speed': msec_speed * self.ft_from_meter,
+                'gust': msec_gust * self.ft_from_meter},
+            'msec': {
+                'speed': msec_speed,
+                'gust': msec_gust},
+            'mph': {
+                'speed': msec_speed * self.mph_from_msec,
+                'gust': msec_gust * self.mph_from_msec},
+            'kmh': {
+                'speed': msec_speed * self.kmh_from_msec,
+                'gust': msec_gust * self.kmh_from_msec}}
+
+        # Get the choice and add more
+        choice = options[self.wind_unit]
+        choice['icon'] = self.icons['wind']
+        choice['deg'] = wind['deg'] if ('deg' in wind) else 0
 
         # Format the wind speed
-        return self.py3.safe_format(self.format_wind, {
-            'icon': self.icons['wind'],
-            'deg': wind['deg'] if ('deg' in wind) else 0,
-
-            'msec_speed': round(msec_speed),
-            'kmh_speed': round(kmh_speed),
-            'fsec_speed': round(fsec_speed),
-            'mph_speed': round(mph_speed),
-
-            'msec_gust': round(msec_gust),
-            'kmh_gust': round(kmh_gust),
-            'fsec_gust': round(fsec_gust),
-            'mph_gust': round(mph_gust),
-        })
+        return self.py3.safe_format(self.format_wind, choice)
 
     def _format_humidity(self, wthr):
         # Format the humidity (default zero humidity)
@@ -612,33 +632,14 @@ class Py3status:
 
     def _format_temp(self, wthr):
         # Get Kelvin data (default absolute zero)
-        k_data = self._jpath(wthr, OWM_TEMP, 0)
+        kelvin = self._jpath(wthr, OWM_TEMP, 0)
 
-        # Translate based on keyname (to only convert temperature values)
-        def trans(key, value, fn):
-            if key.startswith('temp'):
-                return fn(value)
+        # Temperature conversion methods
+        def kToC(val):
+            return val - 273.15
 
-            return value
-
-        # Convert each Kelvin data point to Celsius
-        c_data = {k: trans(k, v, lambda v: v - 273.15)
-                  for k, v in k_data.items()}
-
-        # Convert each Kelvin data point to Fahrenheit
-        f_data = {k: trans(k, v, lambda v: v * (9.0 / 5.0) - 459.67)
-                  for (k, v) in k_data.items()}
-
-        # Fix forecasts
-        for group in (c_data, f_data, k_data):
-            if 'temp' not in group:
-                group['temp'] = group['day']
-
-            if 'temp_min' not in group:
-                group['temp_min'] = group['min']
-
-            if 'temp_max' not in group:
-                group['temp_max'] = group['max']
+        def kToF(val):
+            return val * (9.0 / 5.0) - 459.67
 
         # Determine color based on temperature
         # Gradients below have a lower limit, upper limit, and
@@ -664,8 +665,8 @@ class Py3status:
             (120, None, lambda _: self.color_pos_120)]
 
         color = None
-        if self.temperature_color:
-            temp = f_data['temp']
+        if self.temp_color:
+            temp = kToF(kelvin['temp'])
 
             # Go trough options
             for (lower, upper, fn) in options:
@@ -680,26 +681,30 @@ class Py3status:
 
         # Optionally add the color
         format_str = self.format_temp
-        if self.temperature_color:
+        if self.temp_color:
             color_str = '\?color=%s' % color
             format_str = color_str + ' ' + format_str
 
+        options = {
+            'c': {
+                'cur': round(kToC(kelvin['temp'])),
+                'max': round(kToC(kelvin['temp_max'])),
+                'min': round(kToC(kelvin['temp_min']))},
+            'f': {
+                'cur': round(kToF(kelvin['temp'])),
+                'max': round(kToF(kelvin['temp_max'])),
+                'min': round(kToF(kelvin['temp_min']))},
+            'k': {
+                'cur': round(kelvin['temp']),
+                'max': round(kelvin['temp_max']),
+                'min': round(kelvin['temp_min'])}}
+
+        # Get the choice and add more
+        choice = options[self.temp_unit]
+        choice['icon'] = self.icons['temp']
+
         # Format the temperature
-        return self.py3.safe_format(self.format_temp, {
-            'icon': self.icons['temp'],
-
-            'c': round(c_data['temp']),
-            'c_min': round(c_data['temp_min']),
-            'c_max': round(c_data['temp_max']),
-
-            'f': round(f_data['temp']),
-            'f_min': round(f_data['temp_min']),
-            'f_max': round(f_data['temp_max']),
-
-            'k': round(k_data['temp']),
-            'k_min': round(k_data['temp_min']),
-            'k_max': round(k_data['temp_max']),
-        })
+        return self.py3.safe_format(self.format_temp, choice)
 
     def _format_sunrise(self, wthr):
         # Get the time for sunrise (default is the start of time)
@@ -738,7 +743,7 @@ class Py3status:
             'sunset': self._format_sunset(wthr),
 
             # Descriptions (defaults to empty)
-            'desc': self._jpath(wthr, OWM_DESC, ''),
+            'desc': self._jpath(wthr, OWM_DESC, '').lower(),
             'desc_long': self._jpath(wthr, OWM_DESC_LONG, '')
         }
 
@@ -794,7 +799,7 @@ if __name__ == '__main__':
             'clouds': "☁",
         },
 
-        'format': '{icon}: {temp}, {forecast}',
+        'format': '{icon}: {temp} {desc}, {forecast}',
         'forecast_days': 3,
-        'temperature_color': True,
+        'temp_color': True,
     })
