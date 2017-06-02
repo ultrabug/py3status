@@ -63,6 +63,7 @@ class HttpResponse:
             elif isinstance(e, HTTPError):
                 self._status_code = e.code
                 self._error_message = reason
+                self._response = e
             else:
                 # unknown exception, so just raise it
                 raise RequestURLError(reason)
