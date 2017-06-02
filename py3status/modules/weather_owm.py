@@ -332,13 +332,6 @@ class Py3status:
     request_timeout = 10
     temperature_color = False
 
-    def post_config_hook(self):
-        # Verify the API key
-        if self.api_key is None:
-            raise OWMException('API Key for OpenWeatherMap cannot be empty!'
-                               ' Go to http://openweathermap.org/appid to'
-                               ' get an API Key.')
-
     def _get_icons(self):
         if self.icons is None:
             self.icons = {}
@@ -404,6 +397,12 @@ class Py3status:
         return data
 
     def post_config_hook(self):
+        # Verify the API key
+        if self.api_key is None:
+            raise OWMException('API Key for OpenWeatherMap cannot be empty!'
+                               ' Go to http://openweathermap.org/appid to'
+                               ' get an API Key.')
+
         # Generate our icon array
         self.icons = self._get_icons()
 
@@ -490,7 +489,9 @@ class Py3status:
             (r, g, b) = (hexstr[:2], hexstr[2:4], hexstr[4:6])
 
             # Give numbers
-            convert = lambda x: int(x, base = 16)
+            def convert(x):
+                return int(x, base=16)
+
             return (convert(r), convert(g), convert(b))
 
         def rgbToHex(rgb):
@@ -505,7 +506,9 @@ class Py3status:
 
             # Blend from one to the next for each R, G, B
             # Assume the input here is a number [0, 1.0] inclusive
-            line = lambda a, b, x: a + x * float(b - a)
+            def line(a, b, x):
+                return a + x * float(b - a)
+
             new = (line(r1, r2, val), line(g1, g2, val), line(b1, b2, val))
 
             # Convert back to what we got
