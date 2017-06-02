@@ -27,19 +27,13 @@ Configuration parameters:
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's.
         (default 600)
-    format_forecast: Formatting for future forecasts
-        Available placeholders:
-            See 'format'
-        This is similar to the 'format' field, but contains information
-        for future weather
-        (default '{icon}')
     forecast_days: Number of days to include in the forecast, including today
         (regardless of the 'forecast_include_today' flag)
         (default 0)
-    forecast_text_separator: Separator between entries in the forecast
-        (default ' ')
     forecast_include_today: Include today in the forecast? (Boolean)
         (default False)
+    forecast_text_separator: Separator between entries in the forecast
+        (default ' ')
     format: How to display the weather. This also dictates the type of
         forecast. The placeholders here refer to the format_[...] variables
         found below.
@@ -52,6 +46,12 @@ Configuration parameters:
         Available placeholders:
             icon, coverage
         (default '{icon}: {coverage}%')
+    format_forecast: Formatting for future forecasts
+        Available placeholders:
+            See 'format'
+        This is similar to the 'format' field, but contains information
+        for future weather
+        (default '{icon}')
     format_humidity: Formatting for humidity (percentage)
         Available placeholders:
             icon, humid
@@ -97,16 +97,16 @@ Configuration parameters:
         (default '☁')
     icon_extreme: Icon for extreme weather
         (default '⚠')
+    icon_humidity: Icon for humidity
+        (default '●')
+    icon_pressure: Icon for pressure
+        (default '◌')
     icon_rain: Icon for rain
         (default '🌧')
     icon_snow: Icon for snow
         (default '❄')
     icon_sun: Icon for sunshine
         (default '☼')
-    icon_humidity: Icon for humidity
-        (default '●')
-    icon_pressure: Icon for pressure
-        (default '◌')
     icon_temp: Icon for temperature
         (default '○')
     icon_thunderstorm: Icon for thunderstorms
@@ -225,7 +225,33 @@ Outputs: 🌫: ○: 59°, ⛅ ☼ 🌧`
 import datetime
 
 
-class OWMException(Exception): pass
+# API information
+OWM_API = '2.5'
+OWM_CURR_ENDPOINT = 'http://api.openweathermap.org/data/%s/weather?' \
+    'APPID=%s&lat=%f&lon=%f&lang=%s'
+OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
+    'APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d'
+IP_ENDPOINT = 'http://ip-api.com/json'
+
+# Paths of information to extract from JSON
+IP_LAT = '//lat'
+IP_LNG = '//lon'
+OWM_WEATHER_ICON = '//weather:0/id'
+OWM_CLOUD_COVER = '//clouds/all'
+OWM_RAIN = '//rain'
+OWM_SNOW = '//snow'
+OWM_WIND = '//wind'
+OWM_HUMIDITY = '//main'
+OWM_PRESSURE = '//main'
+OWM_TEMP = '//main'
+OWM_SUNRISE = '//sys/sunrise'
+OWM_SUNSET = '//sys/sunset'
+OWM_DESC = '//weather:0/main'
+OWM_DESC_LONG = '//weather:0/description'
+
+
+class OWMException(Exception):
+    pass
 
 
 class Py3status:
@@ -250,38 +276,16 @@ class Py3status:
     icon_breeze = '☴'
     icon_cloud = '☁'
     icon_extreme = '⚠'
+    icon_humidity = '●'
+    icon_pressure = '◌'
     icon_rain = '🌧'
     icon_snow = '❄'
     icon_sun = '☼'
-    icon_humidity = '●'
-    icon_pressure = '◌'
     icon_temp = '○'
     icon_thunderstorm = '⛈'
     icons = None
     lang = 'en'
     request_timeout = 10
-
-
-    # API information
-    OWM_API = '2.5'
-    OWM_CURR_ENDPOINT = 'http://api.openweathermap.org/data/%s/weather?' \
-        'APPID=%s&lat=%f&lon=%f&lang=%s'
-    OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
-        'APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d'
-
-    # Paths of information to extract from JSON
-    OWM_WEATHER_ICON = '//weather:0/id'
-    OWM_CLOUD_COVER  = '//clouds/all'
-    OWM_RAIN         = '//rain'
-    OWM_SNOW         = '//snow'
-    OWM_WIND         = '//wind'
-    OWM_HUMIDITY     = '//main'
-    OWM_PRESSURE     = '//main'
-    OWM_TEMP         = '//main'
-    OWM_SUNRISE      = '//sys/sunrise'
-    OWM_SUNSET       = '//sys/sunset'
-    OWM_DESC         = '//weather:0/main'
-    OWM_DESC_LONG    = '//weather:0/description'
 
     def _get_icons(self):
         if (self.icons is None):
@@ -294,7 +298,7 @@ class Py3status:
             'i500_i599': self.icon_rain,
             'i600_i699': self.icon_snow,
             'i700_i799': self.icon_atmosphere,
-            'i800':      self.icon_sun,
+            'i800': self.icon_sun,
             'i801_i809': self.icon_cloud,
             'i900_i909': self.icon_extreme,
             'i950_i959': self.icon_breeze,
@@ -303,15 +307,15 @@ class Py3status:
 
         # Default mappings for other icons
         others = {
-            'clouds':   802,
-            'rain':     501,
-            'snow':     601,
-            'wind':     954,
+            'clouds': 802,
+            'rain': 501,
+            'snow': 601,
+            'wind': 954,
             'humidity': self.icon_humidity,
             'pressure': self.icon_pressure,
-            'temp':     self.icon_temp,
-            'sunrise':  800,
-            'sunset':   801,
+            'temp': self.icon_temp,
+            'sunrise': 800,
+            'sunset': 801,
         }
 
         # Handling ranges from OpenWeatherMap
@@ -361,14 +365,14 @@ class Py3status:
         # Verify the API key
         if (self.api_key is None):
             raise OWMException('API Key for OpenWeatherMap cannot be empty!'
-                            ' Go to http://openweathermap.org/appid to'
-                            ' get an API Key.')
+                               ' Go to http://openweathermap.org/appid to'
+                               ' get an API Key.')
 
     def _get_coords(self):
         # Contact the IP API
-        url = "http://ip-api.com/json"
         try:
-            req = self.py3.request(url, timeout=self.request_timeout)
+            req = self.py3.request(IP_ENDPOINT,
+                                   timeout=self.request_timeout)
             data = req.json()
         except (self.py3.RequestException):
             return None
@@ -376,41 +380,38 @@ class Py3status:
             return None
 
         # Extract the data
-        try:
-            return (data['lat'], data['lon'])
-        except (TypeError):
-            return None
+        return (self._jpath(data, IP_LAT, 0), self._jpath(data, IP_LNG, 0))
 
     def _get_req_url(self, base, coords):
-      params = [self.OWM_API, self.api_key] + list(coords) + [self.lang]
-      return base % tuple(params)
+        params = [OWM_API, self.api_key] + list(coords) + [self.lang]
+        return base % tuple(params)
 
     def _make_req(self, url):
-      req = self.py3.request(url)
-      if(req.status_code != 200):
-        data = req.json()
-        raise OWMException(data['message'])
+        req = self.py3.request(url, timeout=self.request_timeout)
+        if(req.status_code != 200):
+            data = req.json()
+            raise OWMException(data['message'])
 
-      return req.json()
+        return req.json()
 
-    def _jpath(self, data, query, default = None):
-      parts = query.strip('/').split('/')
-      for part in parts:
-        try:
-          if(':' in part):
-            (part, index) = tuple(part.split(':'))
-            data = data[part]
-            data = data[int(index)]
-          else:
-            data = data[part]
-        except (KeyError, IndexError, TypeError):
-          return default
+    def _jpath(self, data, query, default=None):
+        parts = query.strip('/').split('/')
+        for part in parts:
+            try:
+                if(':' in part):
+                    (part, index) = tuple(part.split(':'))
+                    data = data[part]
+                    data = data[int(index)]
+                else:
+                    data = data[part]
+            except (KeyError, IndexError, TypeError):
+                return default
 
-      return data
+        return data
 
     def _get_weather(self, coords):
-      url = self._get_req_url(self.OWM_CURR_ENDPOINT, coords)
-      return self._make_req(url)
+        url = self._get_req_url(OWM_CURR_ENDPOINT, coords)
+        return self._make_req(url)
 
     def _get_forecast(self, coords):
         # Get the next few days
@@ -418,8 +419,8 @@ class Py3status:
             return []
 
         # Get raw data
-        url = (self._get_req_url(self.OWM_FUTURE_ENDPOINT, coords)
-            % (self.forecast_days + 1))
+        url = (self._get_req_url(OWM_FUTURE_ENDPOINT, coords)
+               % (self.forecast_days + 1))
         data = self._make_req(url)
 
         # Extract forecast
@@ -428,19 +429,19 @@ class Py3status:
 
     def _get_icon(self, wthr):
         # Lookup the icon from the weather code (default sunny)
-        return self.icons[self._jpath(wthr, self.OWM_WEATHER_ICON, 800)]
+        return self.icons[self._jpath(wthr, OWM_WEATHER_ICON, 800)]
 
     def _format_clouds(self, wthr):
         # Format the cloud cover (default clear)
         return self.py3.safe_format(self.format_clouds, {
             'icon': self.icons['clouds'],
-            'coverage': self._jpath(wthr, self.OWM_CLOUD_COVER, 0),
+            'coverage': self._jpath(wthr, OWM_CLOUD_COVER, 0),
         })
 
     def _format_rain(self, wthr):
         # Format rain fall
         key = '3h'
-        rain = self._jpath(wthr, self.OWM_RAIN, dict())
+        rain = self._jpath(wthr, OWM_RAIN, dict())
         if(key not in rain):
             rain[key] = 0
 
@@ -461,7 +462,7 @@ class Py3status:
     def _format_snow(self, wthr):
         # Format snow fall
         key = '3h'
-        snow = self._jpath(wthr, self.OWM_SNOW)
+        snow = self._jpath(wthr, OWM_SNOW)
         if(key not in snow):
             snow[key] = 0
 
@@ -480,7 +481,7 @@ class Py3status:
         })
 
     def _format_wind(self, wthr):
-        wind = self._jpath(wthr, self.OWM_WIND, dict())
+        wind = self._jpath(wthr, OWM_WIND, dict())
 
         # Speed
         msec_speed = wind['speed'] if ('speed' in wind) else 0
@@ -514,12 +515,12 @@ class Py3status:
         # Format the humidity (default zero humidity)
         return self.py3.safe_format(self.format_humidity, {
             'icon': self.icons['humidity'],
-            'humid': self._jpath(wthr, self.OWM_HUMIDITY, 0),
+            'humid': self._jpath(wthr, OWM_HUMIDITY, 0),
         })
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
-        pressure = self._jpath(wthr, self.OWM_PRESSURE, dict())
+        pressure = self._jpath(wthr, OWM_PRESSURE, dict())
         pressure['icon'] = self.icons['pressure']
 
         # Format the barometric pressure
@@ -527,21 +528,21 @@ class Py3status:
 
     def _format_temp(self, wthr):
         # Get Kelvin data (default absolute zero)
-        k_data = self._jpath(wthr, self.OWM_TEMP, 0)
+        k_data = self._jpath(wthr, OWM_TEMP, 0)
 
         def trans(key, value, fn):
-          if(key.startswith('temp')):
-            return fn(value)
+            if(key.startswith('temp')):
+                return fn(value)
 
-          return value
+            return value
 
         # Convert each Kelvin data point to Celsius
         c_data = {k: trans(k, v, lambda v: v - 273.15)
-            for k, v in k_data.items()}
+                  for k, v in k_data.items()}
 
         # Convert each Kelvin data point to Fahrenheit
-        f_data = {k: trans(k, v, lambda v: v * (9.0/5.0) - 459.67)
-            for (k, v) in k_data.items()}
+        f_data = {k: trans(k, v, lambda v: v * (9.0 / 5.0) - 459.67)
+                  for (k, v) in k_data.items()}
 
         # Fix forecasts
         for group in (c_data, f_data, k_data):
@@ -574,7 +575,7 @@ class Py3status:
     def _format_sunrise(self, wthr):
         # Get the time for sunrise (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
-            self._jpath(wthr, self.OWM_SUNRISE, 0))
+            self._jpath(wthr, OWM_SUNRISE, 0))
 
         # Format the sunrise
         replaced = dt.strftime(self.format_sunrise)
@@ -585,7 +586,7 @@ class Py3status:
     def _format_sunset(self, wthr):
         # Get the time for sunset (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
-            self._jpath(wthr, self.OWM_SUNSET, 0))
+            self._jpath(wthr, OWM_SUNSET, 0))
 
         # Format the sunset
         replaced = dt.strftime(self.format_sunset)
@@ -608,8 +609,8 @@ class Py3status:
             'sunset': self._format_sunset(wthr),
 
             # Descriptions (defaults to empty)
-            'desc': self._jpath(wthr, self.OWM_DESC, ''),
-            'desc_long': self._jpath(wthr, self.OWM_DESC_LONG, '')
+            'desc': self._jpath(wthr, OWM_DESC, ''),
+            'desc_long': self._jpath(wthr, OWM_DESC_LONG, '')
         }
 
     def _format(self, wthr, fcsts):
