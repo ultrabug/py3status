@@ -13,7 +13,9 @@ as it gets.
 
 I would highly suggest you install an additional font, such as the incredible
 (and free!) Weather Icons font (https://erikflowers.github.io/weather-icons),
-which has icons for most weather scenarios.
+which has icons for most weather scenarios. But, this will still work with
+the i3bar default font, Deja Vu Sans Mono font, which has Unicode support.
+You can see the (limited) weather icon support within Unicode in the defaults.
 
 For more information, see the documentation
 (https://openweathermap.org/weather-conditions) on what weather conditions are
