@@ -334,13 +334,13 @@ class Py3status:
 
     def post_config_hook(self):
         # Verify the API key
-        if (self.api_key is None):
+        if self.api_key is None:
             raise OWMException('API Key for OpenWeatherMap cannot be empty!'
                                ' Go to http://openweathermap.org/appid to'
                                ' get an API Key.')
 
     def _get_icons(self):
-        if (self.icons is None):
+        if self.icons is None:
             self.icons = {}
 
         # Defaults for weather ranges
@@ -377,9 +377,9 @@ class Py3status:
                 if (key[0] != 'i' and key not in others):
                     raise Exception('Icon identifier is invalid! (%s)' % key)
 
-                if (key[0] == 'i'):
-                    if('_' in key):
-                        if (key.count('_i') != 1):
+                if key[0] == 'i':
+                    if '_' in key:
+                        if key.count('_i') != 1:
                             raise Exception('Icon range is not properly'
                                             'formatted! (%s)' % key)
 
@@ -395,8 +395,8 @@ class Py3status:
 
         # Weather icons for formatting sections
         for key in others:
-            if (key not in data):
-                if (isinstance(others[key], int)):
+            if key not in data:
+                if isinstance(others[key], int):
                     data[key] = data[others[key]]
                 else:
                     data[key] = others[key]
@@ -435,7 +435,7 @@ class Py3status:
     def _make_req(self, url):
         # Make a request expecting a JSON response
         req = self.py3.request(url, timeout=self.request_timeout)
-        if(req.status_code != 200):
+        if req.status_code != 200:
             data = req.json()
             raise OWMException(data['message'])
 
@@ -448,7 +448,7 @@ class Py3status:
             try:
                 # This represents a key:index expression, representing first
                 # selecting a key, then an index
-                if(':' in part):
+                if ':' in part:
                     (part, index) = tuple(part.split(':'))
                     data = data[part]
                     data = data[int(index)]
@@ -470,7 +470,7 @@ class Py3status:
 
     def _get_forecast(self, coords):
         # Get the next few days
-        if (self.forecast_days == 0):
+        if self.forecast_days == 0:
             return []
 
         # Get raw data
@@ -613,7 +613,7 @@ class Py3status:
 
         # Translate based on keyname (to only convert temperature values)
         def trans(key, value, fn):
-            if(key.startswith('temp')):
+            if key.startswith('temp'):
                 return fn(value)
 
             return value
@@ -628,13 +628,13 @@ class Py3status:
 
         # Fix forecasts
         for group in (c_data, f_data, k_data):
-            if ('temp' not in group):
+            if 'temp' not in group:
                 group['temp'] = group['day']
 
-            if ('temp_min' not in group):
+            if 'temp_min' not in group:
                 group['temp_min'] = group['min']
 
-            if ('temp_max' not in group):
+            if 'temp_max' not in group:
                 group['temp_max'] = group['max']
 
         # Determine color based on temperature
@@ -661,7 +661,7 @@ class Py3status:
             (120, None, lambda _: self.color_pos_120)]
 
         color = None
-        if(self.temperature_color):
+        if self.temperature_color:
             temp = f_data['temp']
 
             # Go trough options
@@ -671,13 +671,13 @@ class Py3status:
                 upper = temp + 1 if(upper is None) else upper
 
                 # This should happen at least once
-                if(lower < temp <= upper):
+                if lower < temp <= upper:
                     color = fn((temp - lower) / float(upper - lower))
                     break
 
         # Optionally add the color
         format_str = self.format_temp
-        if(self.temperature_color):
+        if self.temperature_color:
             color_str = '\?color=%s' % color
             format_str = color_str + ' ' + format_str
 
@@ -758,7 +758,7 @@ class Py3status:
         # Get weather information
         coords = self._get_coords()
         text = ''
-        if (coords is not None):
+        if coords is not None:
             wthr = self._get_weather(coords)
             fcsts = self._get_forecast(coords)
 
@@ -774,7 +774,7 @@ class Py3status:
         self.py3.prevent_refresh()
 
 
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     '''
     Run module in test mode.
     '''
