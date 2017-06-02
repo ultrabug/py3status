@@ -29,6 +29,33 @@ Configuration parameters:
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's.
         (default 600)
+    color_neg_20: Color for a Fahrenheit temperature of -20°.
+       Defaults to a magenta.
+       (default '#FF00FF')
+    color_neg_60: Color for a Fahrenheit temperature of -60°.
+       Defaults to a deep purple.
+       (default '#6B006B')
+    color_pos_120: Color for a Fahrenheit temperature of 120°.
+       Defaults to a white.
+       (default '#FFFFFF')
+    color_pos_30: Color for a Fahrenheit temperature of 30°.
+       Defaults to a cyan.
+       (default '#00FFFF')
+    color_pos_40: Color for a Fahrenheit temperature of 40°.
+       Defaults to a green.
+       (default '#7FFF00')
+    color_pos_50: Color for a Fahrenheit temperature of 50°.
+       Defaults to a yellow.
+       (default '#7FFF00')
+    color_pos_70: Color for a Fahrenheit temperature of 70°.
+       Defaults to a orange.
+       (default '#FF9900')
+    color_pos_90: Color for a Fahrenheit temperature of 90°.
+       Defaults to a red.
+       (default '#FF0000')
+    color_zero: Color for a Fahrenheit temperature of zero.
+        Defaults to a blue.
+        (default '#0000FF')
     forecast_days: Number of days to include in the forecast, including today
         (regardless of the 'forecast_include_today' flag)
         (default 0)
@@ -43,7 +70,7 @@ Configuration parameters:
             icon, clouds, rain, snow, wind, humidity, pressure, temp, sunrise,
             sunset, desc, desc_long, forecast
         You may also use the icons in the icon dictionary with their identifiers
-        (default '{icon}: {temp}')
+        (default '{icon}: {temp} {desc}')
     format_clouds: Formatting for cloud coverage (percentage).
         Available placeholders:
             icon, coverage
@@ -158,72 +185,41 @@ Configuration parameters:
         (default 'mph')
 
 Format Placeholders:
- - All:
-   - {icon}: The icon associated with a formatting section
- - format_cloud:
-   - {coverage}: Cloud coverage percentage.
- - format_humidity:
-   - {humid}: The humidity percentage
- - format_pressure:
-   - {press}: The measurement of current atmospheric pressure in Pascals
-   - {sea_level}: The measurement of current atmospheric pressure at
-     sea-level in Pascals.
- - format_rain:
-   - {amt}: Measurement of the amount of rain in the configured unit
- - format_snow:
-   - {amt}: Measurement of the amount of snow in the configured unit
- - format_temp:
-   - {max}: The maximum temperature in the configured unit.
-   - {min}: The minimum temperature in the configured unit.
-   - {cur}: Current temperature in the configured unit.
- - format_wind:
-   - {deg}: Current wind speed heading (in degrees).
-   - {gust}: The speed of current wind gusts in the configured unit.
-   - {speed}: The speed of the wind in the configured unit.
- - format only:
-   - {forecast}: Contains the formatted result of format_forecast.
- - format, format_forecast:
-   - {clouds}: Contains the formatted result of format_clouds.
-   - {desc_long}: Natural description of the current weather.
-   - {desc}: Short description of the current weather.
-   - {humidity}: Contains the formatted result of format_humidity.
-   - {pressure}: Contains the formatted result of format_pressure.
-   - {snow}: Contains the formatted result of format_snow.
-   - {sunrise}: Contains the formatted result of format_sunrise.
-   - {sunset}: Contains the formatted result of format_sunset.
-   - {temp}: Contains the formatted result of format_temp.
-   - {wind}: Contains the formatted result of format_wind.
-
-
-Color options:
-    color_neg_20: Color for a Fahrenheit temperature of -20°.
-        Defaults to a magenta.
-        (default '#FF00FF')
-    color_neg_60: Color for a Fahrenheit temperature of -60°.
-        Defaults to a deep purple.
-        (default '#6B006B')
-    color_pos_120: Color for a Fahrenheit temperature of 120°.
-        Defaults to a white.
-        (default '#FFFFFF')
-    color_pos_30: Color for a Fahrenheit temperature of 30°.
-        Defaults to a cyan.
-        (default '#00FFFF')
-    color_pos_40: Color for a Fahrenheit temperature of 40°.
-        Defaults to a green.
-        (default '#7FFF00')
-    color_pos_50: Color for a Fahrenheit temperature of 50°.
-        Defaults to a yellow.
-        (default '#7FFF00')
-    color_pos_70: Color for a Fahrenheit temperature of 70°.
-        Defaults to a orange.
-        (default '#FF9900')
-    color_pos_90: Color for a Fahrenheit temperature of 90°.
-        Defaults to a red.
-        (default '#FF0000')
-    color_zero: Color for a Fahrenheit temperature of zero.
-        Defaults to a blue.
-        (default '#0000FF')
-
+    - All:
+        - {icon}: The icon associated with a formatting section
+    - format_cloud:
+        - {coverage}: Cloud coverage percentage.
+    - format_humidity:
+        - {humid}: The humidity percentage
+    - format_pressure:
+        - {press}: The measurement of current atmospheric pressure in Pascals
+        - {sea_level}: The measurement of current atmospheric pressure at
+          sea-level in Pascals.
+    - format_rain:
+        - {amt}: Measurement of the amount of rain in the configured unit
+    - format_snow:
+        - {amt}: Measurement of the amount of snow in the configured unit
+    - format_temp:
+        - {max}: The maximum temperature in the configured unit.
+        - {min}: The minimum temperature in the configured unit.
+        - {cur}: Current temperature in the configured unit.
+    - format_wind:
+        - {deg}: Current wind speed heading (in degrees).
+        - {gust}: The speed of current wind gusts in the configured unit.
+        - {speed}: The speed of the wind in the configured unit.
+    - format only:
+        - {forecast}: Contains the formatted result of format_forecast.
+    - format, format_forecast:
+        - {clouds}: Contains the formatted result of format_clouds.
+        - {desc_long}: Natural description of the current weather.
+        - {desc}: Short description of the current weather.
+        - {humidity}: Contains the formatted result of format_humidity.
+        - {pressure}: Contains the formatted result of format_pressure.
+        - {snow}: Contains the formatted result of format_snow.
+        - {sunrise}: Contains the formatted result of format_sunrise.
+        - {sunset}: Contains the formatted result of format_sunset.
+        - {temp}: Contains the formatted result of format_temp.
+        - {wind}: Contains the formatted result of format_wind.
 
 Example configuration:
 ```
@@ -315,17 +311,17 @@ class Py3status:
     format_sunset = '{icon}: %X'
     format_temp = u'{icon}: {cur}°'
     format_wind = '{icon}: {speed} mph'
-    icon_atmosphere = '🌫'
-    icon_breeze = '☴'
-    icon_cloud = '☁'
-    icon_extreme = '⚠'
-    icon_humidity = '●'
-    icon_pressure = '◌'
-    icon_rain = '🌧'
-    icon_snow = '❄'
-    icon_sun = '☼'
-    icon_temp = '○'
-    icon_thunderstorm = '⛈'
+    icon_atmosphere = u'🌫'
+    icon_breeze = u'☴'
+    icon_cloud = u'☁'
+    icon_extreme = u'⚠'
+    icon_humidity = u'●'
+    icon_pressure = u'◌'
+    icon_rain = u'🌧'
+    icon_snow = u'❄'
+    icon_sun = u'☼'
+    icon_temp = u'○'
+    icon_thunderstorm = u'⛈'
     icons = None
     lang = 'en'
     rain_unit = 'in'
