@@ -77,13 +77,16 @@ class Py3status:
                 microtime = metadata.get('mpris:length')
                 rtime = str(timedelta(microseconds=microtime))[:-7]
                 title = metadata.get('xesam:title')
-                playback_status = self.player.Get(
-                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
-                )
-                if playback_status.strip() == 'Playing':
-                    color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
-                else:
-                    color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
+                # dbus interface of Spotiy (tested version 1.0.26.125-1) for playback
+                #  is not responding thus disabled and always use good color
+                color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+#                playback_status = self.player.Get(
+#                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
+#                )
+#                if playback_status.strip() == 'Playing':
+#                    color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+#                else:
+#                    color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
             except Exception:
                 return (
                     self.format_stopped,
