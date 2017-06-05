@@ -40,47 +40,58 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1
     format = '{caps} {num} {scr}'
-    icon_caps_off = "CAPS"
-    icon_caps_on = "CAPS"
-    icon_num_off = "NUM"
-    icon_num_on = "NUM"
-    icon_scr_off = "SCR"
-    icon_scr_on = "SCR"
+    icon_caps_off = 'CAPS'
+    icon_caps_on = 'CAPS'
+    icon_num_off = 'NUM'
+    icon_num_on = 'NUM'
+    icon_scr_off = 'SCR'
+    icon_scr_on = 'SCR'
+
+    def post_config_hook(self):
+        self.caps = self.py3.format_contains(self.format, 'caps')
+        self.num = self.py3.format_contains(self.format, 'num')
+        self.scr = self.py3.format_contains(self.format, 'scr')
 
     def keyboard_locks(self):
         out = self.py3.command_output('xset -q')
 
-        if 'on' in out.split("Caps Lock:")[1][0:6]:
-            caps_color = self.py3.COLOR_GOOD
-            caps_icon = self.icon_caps_on
-        else:
-            caps_color = self.py3.COLOR_BAD
-            caps_icon = self.icon_caps_off
+        if self.caps:
+            if 'on' in out.split('Caps Lock:')[1][0:6]:
+                caps_color = self.py3.COLOR_GOOD
+                caps = self.icon_caps_on
+            else:
+                caps_color = self.py3.COLOR_BAD
+                caps = self.icon_caps_off
+            if caps:
+                caps = self.py3.composite_create(
+                    {'full_text': caps, 'color': caps_color})
 
-        if 'on' in out.split("Num Lock:")[1][0:6]:
-            num_color = self.py3.COLOR_GOOD
-            num_icon = self.icon_num_on
-        else:
-            num_color = self.py3.COLOR_BAD
-            num_icon = self.icon_num_off
+        if self.num:
+            if 'on' in out.split('Num Lock:')[1][0:6]:
+                num_color = self.py3.COLOR_GOOD
+                num = self.icon_num_on
+            else:
+                num_color = self.py3.COLOR_BAD
+                num = self.icon_num_off
+            if num:
+                num = self.py3.composite_create(
+                    {'full_text': num, 'color': num_color})
 
-        if 'on' in out.split("Scroll Lock:")[1][0:6]:
-            scr_color = self.py3.COLOR_GOOD
-            scr_icon = self.icon_scr_on
-        else:
-            scr_color = self.py3.COLOR_BAD
-            scr_icon = self.icon_scr_off
-
-        caps = self.py3.composite_create({'full_text': caps_icon, 'color': caps_color})
-        num = self.py3.composite_create({'full_text': num_icon, 'color': num_color})
-        scr = self.py3.composite_create({'full_text': scr_icon, 'color': scr_color})
-
-        full_text = self.py3.safe_format(
-            self.format, {'caps': caps, 'num': num, 'scr': scr})
+        if self.scr:
+            if 'on' in out.split('Scroll Lock:')[1][0:6]:
+                scr_color = self.py3.COLOR_GOOD
+                scr = self.icon_scr_on
+            else:
+                scr_color = self.py3.COLOR_BAD
+                scr = self.icon_scr_off
+            if scr:
+                scr = self.py3.composite_create(
+                    {'full_text': scr, 'color': scr_color})
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text
+            'full_text': self.py3.safe_format(
+                self.format, {'caps': caps, 'num': num, 'scr': scr})
         }
 
 
