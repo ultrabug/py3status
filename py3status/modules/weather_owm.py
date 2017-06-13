@@ -233,11 +233,12 @@ weather_owm {
     clouds = "☁"
   }
 
-  format = '{icon}: {temp}, {forecast}'
+  format = '{icon}: {temp} {desc}, {forecast}'
   forecast_days = 3
+  temp_color = True
 }
 ```
-Outputs: 🌫: ○: 59°, ⛅ ☼ 🌧`
+Outputs: 🌫: ○: 59° foggy, ⛅ ☼ 🌧`
 - Currently foggy, 59° F outside, with forecast of cloudy tomorrow, sunny the
   next day, then rainy
 
