@@ -29,33 +29,6 @@ Configuration parameters:
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's.
         (default 600)
-    color_neg_20: Color for a Fahrenheit temperature of -20°.
-       Defaults to a magenta.
-       (default '#FF00FF')
-    color_neg_60: Color for a Fahrenheit temperature of -60°.
-       Defaults to a deep purple.
-       (default '#6B006B')
-    color_pos_120: Color for a Fahrenheit temperature of 120°.
-       Defaults to a white.
-       (default '#FFFFFF')
-    color_pos_30: Color for a Fahrenheit temperature of 30°.
-       Defaults to a cyan.
-       (default '#00FFFF')
-    color_pos_40: Color for a Fahrenheit temperature of 40°.
-       Defaults to a green.
-       (default '#7FFF00')
-    color_pos_50: Color for a Fahrenheit temperature of 50°.
-       Defaults to a yellow.
-       (default '#7FFF00')
-    color_pos_70: Color for a Fahrenheit temperature of 70°.
-       Defaults to a orange.
-       (default '#FF9900')
-    color_pos_90: Color for a Fahrenheit temperature of 90°.
-       Defaults to a red.
-       (default '#FF0000')
-    color_zero: Color for a Fahrenheit temperature of zero.
-        Defaults to a blue.
-        (default '#0000FF')
     forecast_days: Number of days to include in the forecast, including today
         (regardless of the 'forecast_include_today' flag)
         (default 0)
@@ -179,6 +152,11 @@ Configuration parameters:
         Options:
             c, f, k
         (default 'f')
+    thresholds: Configure temperature colors based on limits.
+        To have these take effect, enable the 'temp_color' flag.
+        The numbers specified inherit the unit of the temperature as configured.
+        The default below is intended for Fahrenheit.
+        (default [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')])
     wind_unit: Unit for wind speed
         Options:
             fsec, msec, mph, kmh
@@ -280,6 +258,14 @@ SNOW_UNITS = RAIN_UNITS
 TEMP_UNITS = set(['c', 'f', 'k'])
 WIND_UNITS = set(['fsec', 'msec', 'mph', 'kmh'])
 
+# Thresholds defaults
+THRESHOLDS = [
+    (-100, '#0FF'),
+    (0, '#00F'),
+    (50, '#0F0'),
+    (150, '#FF0')
+]
+
 
 class OWMException(Exception):
     pass
@@ -289,15 +275,6 @@ class Py3status:
 
     api_key = None
     cache_timeout = 600
-    color_neg_20 = '#FF00FF'
-    color_neg_60 = '#6B006B'
-    color_pos_120 = '#FFFFFF'
-    color_pos_30 = '#00FFFF'
-    color_pos_40 = '#7FFF00'
-    color_pos_50 = '#7FFF00'
-    color_pos_70 = '#FF9900'
-    color_pos_90 = '#FF0000'
-    color_zero = '#0000FF'
     forecast_days = 0
     forecast_include_today = False
     forecast_text_separator = ' '
@@ -330,6 +307,7 @@ class Py3status:
     snow_unit = 'in'
     temp_color = False
     temp_unit = 'f'
+    thresholds = THRESHOLDS
     wind_unit = 'mph'
 
     def _get_icons(self):
@@ -494,42 +472,6 @@ class Py3status:
         weathers = data['list']
         return weathers[:-1] if (self.forecast_include_today) else weathers[1:]
 
-    def _color_gradient(self, start, end):
-        # Convert a hexadecimal string to RGB tuple
-        def hexToRGB(hexstr):
-            # Get strings
-            hexstr = hexstr.lstrip('#')
-            (r, g, b) = (hexstr[:2], hexstr[2:4], hexstr[4:6])
-
-            # Give numbers
-            def convert(x):
-                return int(x, base=16)
-
-            return (convert(r), convert(g), convert(b))
-
-        def rgbToHex(rgb):
-            # Convert a collection of RGB values into a hexadecimal string
-            chars = map(lambda x: '%02x' % int(x), list(rgb))
-            return ''.join(chars)
-
-        def calc(val):
-            # Get the RGB of start and finish
-            (r1, g1, b1) = hexToRGB(start)
-            (r2, g2, b2) = hexToRGB(end)
-
-            # Blend from one to the next for each R, G, B
-            # Assume the input here is a number [0, 1.0] inclusive
-            def line(a, b, x):
-                return a + x * float(b - a)
-
-            new = (line(r1, r2, val), line(g1, g2, val), line(b1, b2, val))
-
-            # Convert back to what we got
-            return rgbToHex(new)
-
-        # We return a function
-        return calc
-
     def _get_icon(self, wthr):
         # Lookup the icon from the weather code (default sunny)
         return self.icons[self._jpath(wthr, OWM_WEATHER_ICON, 800)]
@@ -638,50 +580,6 @@ class Py3status:
         def kToF(val):
             return val * (9.0 / 5.0) - 459.67
 
-        # Determine color based on temperature
-        # Gradients below have a lower limit, upper limit, and
-        # a transition function
-        options = [
-            (None, -60, lambda _: self.color_neg_60),
-            (-60, -20, self._color_gradient(self.color_neg_60,
-                                            self.color_neg_20)),
-            (-20, 0, self._color_gradient(self.color_neg_20,
-                                          self.color_zero)),
-            (0, 30, self._color_gradient(self.color_zero,
-                                         self.color_pos_30)),
-            (30, 40, self._color_gradient(self.color_pos_30,
-                                          self.color_pos_40)),
-            (40, 50, self._color_gradient(self.color_pos_40,
-                                          self.color_pos_50)),
-            (50, 70, self._color_gradient(self.color_pos_50,
-                                          self.color_pos_70)),
-            (70, 90, self._color_gradient(self.color_pos_70,
-                                          self.color_pos_90)),
-            (90, 120, self._color_gradient(self.color_pos_90,
-                                           self.color_pos_120)),
-            (120, None, lambda _: self.color_pos_120)]
-
-        color = None
-        if self.temp_color:
-            temp = kToF(kelvin['temp'])
-
-            # Go trough options
-            for (lower, upper, fn) in options:
-                # Adjust boundaries
-                lower = temp - 1 if(lower is None) else lower
-                upper = temp + 1 if(upper is None) else upper
-
-                # This should happen at least once
-                if lower < temp <= upper:
-                    color = fn((temp - lower) / float(upper - lower))
-                    break
-
-        # Optionally add the color
-        format_str = self.format_temp
-        if self.temp_color:
-            color_str = '\?color=%s' % color
-            format_str = color_str + ' ' + format_str
-
         options = {
             'c': {
                 'cur': round(kToC(kelvin['temp'])),
@@ -699,9 +597,17 @@ class Py3status:
         # Get the choice and add more
         choice = options[self.temp_unit]
         choice['icon'] = self.icons['temp']
+        format_str = self.format_temp
+
+        # Optionally add the color
+        color = None
+        if self.temp_color:
+            color = self.py3.threshold_get_color(choice['cur'])
+            color_str = '\?color=%s' % color
+            format_str = color_str + ' ' + format_str
 
         # Format the temperature
-        return self.py3.safe_format(self.format_temp, choice)
+        return self.py3.safe_format(format_str, choice)
 
     def _format_sunrise(self, wthr):
         # Get the time for sunrise (default is the start of time)
