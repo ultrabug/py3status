@@ -107,7 +107,7 @@ class Py3status:
     def _get_backlight_level(self):
         if self.xbacklight:
             level = self.py3.command_output(['xbacklight', '-get']).strip()
-            return int(float(level))
+            return round(float(level))
         for brightness_line in open("%s/brightness" % self.device, 'rb'):
             brightness = int(brightness_line)
         for brightness_max_line in open("%s/max_brightness" % self.device, 'rb'):
