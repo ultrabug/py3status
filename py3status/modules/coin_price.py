@@ -1,4 +1,10 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
+
+""" Display CryptoCurrency using coinmarketcap.com
+
+Configuration parameters:
+
+"""
 
 import json
 
@@ -12,6 +18,7 @@ except ImportError:
 class Py3status:
     coin_symbols = "btc, eth, xrp"
     convert = 'usd'
+    separator = ', '
     cache_timeout = 300
     format = "{format_coin}"
     format_coin = "{id}: {price}{symbol} ({percentage})"
@@ -26,7 +33,7 @@ class Py3status:
             'eur': '€',
             'gbp': '£',
             'usd': '$',
-            'yen': '¥'
+            'jpy': '¥'
        } 
 
         self.convert = self.convert.lower()
@@ -47,24 +54,32 @@ class Py3status:
         for coin in self.coin_symbols.split(','):
             coin_info = self._get_coin_info(currencies, coin.strip())
 
-            _id = coin_info['id']
+            try:
+                _id = coin_info['id']
+            except TypeError:
+                continue
+ 
             _price = coin_info['price_{}'.format(self.convert)]
             _percentage = coin_info['percent_change_24h']
             _symbol = self.currency_map[self.convert]
 
+            _price = '{}'.format(round(float(_price), 2))
+            _percentage = float(_percentage)
+
+            if _percentage > 0: _percentage = '+{}%'.format(_percentage)
+            else: _percentage = '{}%'.format(_percentage)
+
             out_text.append(self.py3.safe_format(
                 self.format_coin, {'id': _id, 'price': _price, 'symbol': _symbol, 'percentage': _percentage})
             )
+
+        out_text = self.py3.composite_join(self.separator, out_text)
         
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         response['full_text'] = self.py3.safe_format(self.format, {'format_coin': out_text})
+
         return response
         
 if __name__ == "__main__":
     from py3status.module_test import module_test
-
-    config = {
-        'convert': 'KRW'
-    }
-
     module_test(Py3status, config=config)
