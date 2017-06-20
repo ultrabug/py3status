@@ -43,6 +43,7 @@ IGNORE_ITEM = [
     ('github', 'format'),  # dynamic
     ('kdeconnector', '_dev'),  # move to __init__ etc
     ('arch_updates', 'format'),  # dynamic
+    ('spotify', 'sanitize_words'),  # line too long for docstring parsing
     ('weather_owm', 'icons'),  # complicated
 ]
 
