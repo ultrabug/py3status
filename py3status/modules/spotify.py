@@ -79,6 +79,8 @@ class Py3status:
     ]
 
     def post_config_hook(self):
+        """
+        """
         # Match string after hyphen, comma, semicolon or slash containing any metadata word
         # examples:
         # - Remastered 2012
@@ -121,8 +123,8 @@ class Py3status:
                 rtime = str(timedelta(microseconds=microtime))[:-7]
                 title = metadata.get('xesam:title')
                 if self.sanitize_titles:
-                    title = self._sanitize_title(title)
                     album = self._sanitize_title(album)
+                    title = self._sanitize_title(title)
 
                 playback_status = self.player.Get(
                     'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
@@ -164,8 +166,8 @@ class Py3status:
         (text, color) = self._get_text()
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
-            'color': color
+            'color': color,
+            'full_text': text
         }
         return response
 
