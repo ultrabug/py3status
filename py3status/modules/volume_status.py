@@ -89,7 +89,7 @@ mute
 """
 
 import re
-from os import devnull
+from os import devnull, environ as os_environ
 from subprocess import check_output, call
 
 
@@ -167,6 +167,10 @@ class PactlBackend(AudioBackend):
         if self.device is None:
             self.device = check_output(
                 ['pactl', 'list', 'short', 'sinks']).decode('utf-8').split()[0]
+
+        self.english_env = dict(os_environ)
+        self.english_env['LC_ALL'] = 'C'
+
         self.max_volume = parent.max_volume
         self.re_volume = re.compile(
             r'Sink \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(self.device),
@@ -174,7 +178,8 @@ class PactlBackend(AudioBackend):
         )
 
     def get_volume(self):
-        output = check_output(['pactl', 'list', 'sinks']).decode('utf-8').strip()
+        output = check_output(
+            ['pactl', 'list', 'sinks'], env=self.english_env).decode('utf-8').strip()
         muted, perc = self.re_volume.search(output).groups()
 
         # muted should be 'on' or 'off'

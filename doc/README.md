@@ -482,7 +482,7 @@ class Py3status:
         }
 ```
 
-####Running the example
+#### Running the example
 
 
 Save the file as `hello_world.py` in a directory that
@@ -499,23 +499,23 @@ order += "hello_world"
 Then restart i3 by pressing `Mod` + `Shift` + `R`. Your new module should now
 show up in the status bar.
 
-####How does it work?
+#### How does it work?
 
 The `Py3status` class tells py3status that this is a module. The module gets
 loaded. py3status then calls any public methods that the class contains to get
 a response. In our example there is a single method `hello_world()`.
 Read more here: [module methods](#module_methods).
 
-####The response
+#### The response
 
 The response that a method returns must be a python `dict`.
 It should contain at least two key / values.
 
-######full_text
+###### full_text
 
 This is the text that will be displayed in the status bar.
 
-######cached_until
+###### cached_until
 
 This tells py3status how long it should consider your
 response valid before it should re-run the method to get a fresh response. In
@@ -525,7 +525,7 @@ response always valid.
 
 `cached_until` should be generated via the `self.py3.time_in()` method.
 
-####self.py3
+#### self.py3
 
 This is a special object that gets injected into py3status
 modules. It helps provide functionality for the module, such as the
