@@ -22,7 +22,7 @@ class Module(Thread):
     PARAMS_NEW = 'new'
     PARAMS_LEGACY = 'legacy'
 
-    def __init__(self, module, user_modules, py3_wrapper):
+    def __init__(self, module, user_modules, py3_wrapper, instance=None):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
@@ -42,7 +42,7 @@ class Module(Thread):
         self.last_output = []
         self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
-        self.module_class = None
+        self.module_class = instance
         self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
@@ -51,6 +51,7 @@ class Module(Thread):
         self.prevent_refresh = False
         self.sleeping = False
         self.terminated = False
+        self.testing = self.config.get('testing')
         self.timer = None
         self.urgent = False
 
@@ -153,9 +154,17 @@ class Module(Thread):
         """
         Show the error in the bar
         """
+        if self.testing:
+            self._py3_wrapper.report_exception(msg)
+            raise KeyboardInterrupt
+
         if self.error_hide:
             self.hide_errors()
             return
+
+        # only show first line of error
+        msg = msg.splitlines()[0]
+
         errors = [
             self.module_nice_name,
             u'{}: {}'.format(self.module_nice_name, msg),
@@ -272,10 +281,14 @@ class Module(Thread):
         for method in self.methods.values():
             data = method['last_output']
             if isinstance(data, list):
+                if self.testing:
+                    data[0]['cached_until'] = method.get('cached_until')
                 output.extend(data)
             else:
                 # if the output is not 'valid' then don't add it.
                 if data.get('full_text') or 'separator' in data:
+                    if self.testing:
+                        data['cached_until'] = method.get('cached_until')
                     output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
@@ -452,22 +465,24 @@ class Module(Thread):
             - 'on_click' methods as they'll be called upon a click_event
             - 'kill' methods as they'll be called upon this thread's exit
         """
-        # user provided modules take precedence over py3status provided modules
-        if self.module_name in user_modules:
-            include_path, f_name = user_modules[self.module_name]
-            self._py3_wrapper.log(
-                'loading module "{}" from {}{}'.format(module, include_path,
-                                                       f_name))
-            class_inst = self.load_from_file(include_path + f_name)
-        # load from py3status provided modules
-        else:
-            self._py3_wrapper.log(
-                'loading module "{}" from py3status.modules.{}'.format(
-                    module, self.module_name))
-            class_inst = self.load_from_namespace(self.module_name)
+        if not self.module_class:
+            # user provided modules take precedence over py3status provided modules
+            if self.module_name in user_modules:
+                include_path, f_name = user_modules[self.module_name]
+                self._py3_wrapper.log(
+                    'loading module "{}" from {}{}'.format(module, include_path,
+                                                           f_name))
+                self.module_class = self.load_from_file(include_path + f_name)
+            # load from py3status provided modules
+            else:
+                self._py3_wrapper.log(
+                    'loading module "{}" from py3status.modules.{}'.format(
+                        module, self.module_name))
+                self.module_class = self.load_from_namespace(self.module_name)
 
+        class_inst = self.module_class
         if class_inst:
-            self.module_class = class_inst
+
             try:
                 # containers have items attribute set to a list of contained
                 # module instance names.  If there are no contained items then
@@ -823,7 +838,8 @@ class Module(Thread):
                 except Exception as e:
                     msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
-                    self._py3_wrapper.report_exception(msg, notify_user=False)
+                    if not self.testing:
+                        self._py3_wrapper.report_exception(msg, notify_user=False)
                     # added error
                     self.runtime_error(str(e) or e.__class__.__name__, meth)
                     cache_time = time() + getattr(self.module_class,

@@ -90,8 +90,12 @@ class Py3status:
                 self.title = get_title(conn)
                 self.py3.update()
 
-        def clear_title(*args):
-            self.title = self.empty_title
+        def clear_title(conn, e):
+            f = conn.get_tree().find_focused()
+            if f.window_class:
+                self.title = f.name
+            else:
+                self.title = self.empty_title
             self.py3.update()
 
         conn = i3ipc.Connection()

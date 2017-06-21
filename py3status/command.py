@@ -2,7 +2,6 @@ import argparse
 import glob
 import json
 import os
-import platform
 import socket
 import sys
 import threading
@@ -14,8 +13,8 @@ MAX_SIZE = 1024
 
 BUTTONS = {
     'leftclick': 1,
-    'rightclick': 2,
-    'middleclick': 3,
+    'middleclick': 2,
+    'rightclick': 3,
     'scrollup': 4,
     'scrolldown': 5,
 }
@@ -283,6 +282,7 @@ def send_command():
         options.command = 'refresh_all'
 
     if options.version:
+        import platform
         print('py3status-command version {} (python {})'.format(
             version, platform.python_version()
         ))

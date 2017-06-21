@@ -1,15 +1,25 @@
 version 3.6 (milestone)
+* improve error reporting when running external commands, by @ultrabug
+* new apt_updates module for showing available updates on debian based systems by @Cypher1
 * battery_level module: fix bug with over 100% full icon, by @docwalter
+* battery_level module: fix divide by zero bug, by @tablet-mode
 * backlight module: combine device/device_path params, by @lasers
+* backlight module: improve rounding of brightness value, by @maximbaz
 * dpms module: add safeformat for all statuses, by @lasers
 * external_script: allow colored output, by @enguerrand
 * getjson module: cleanups, by @lasers
+* mpris module: fix keyboard interrupt in test mode @ritze
+* mpris module: improvements to player detection @ritze
 * net_iplist module: fix for new formatter, by @guiniol
+* selinux module: show permissive as degraded and cleanups, by @lasers
 * spaceapi module: prevent 'used before assignment' error, by @fmorgner
+* spaceapi module: Don't die if datetimes are unparseable, by @rixx
 * sysdata module: Add load support, by @guiniol
 * volume_status: Default device detection for pactl, by  @lasers
+* volume_status: support for input devices, by @markrileybot
 * whatismyip module: color_degraded support in status mode, by @aethelz
 * wifi module: add format, merge formats, by @lasers
+* wifi module: fix quality icon python 2 bug, by @markrileybot
 
 version 3.5 (2017-04-07)
 * allow improved access to settings from py3status section, by @tobes
