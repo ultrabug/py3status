@@ -3,7 +3,21 @@
 """ Display CryptoCurrency using coinmarketcap.com
 
 Configuration parameters:
+    coin_symbols: coin symbol that will display price (default btc, eth, xrp)
+    convert: currency unit want to display
+    separator: display separator if more than one (default ,)
+    cache_timeout: refresh interval for this module. A advise from the site: "Please limit requests to no more than 10 per minute." (default 600)
+    format: display format for this module (default '{format_coin}')
+    format_coin: display format for coins (default '{coin_id}: {price}{symbol} ({percentage})"
 
+    format_coin placeholders:
+        {format_coin} format for coins
+    
+    format_coin placeholders:
+        {id} coin's id (ex. bitcoin - btc, ethereum - eth)
+        {price} current prices
+        {symbol} currency symbols
+        {percentage} increment/decrement percentage during 24 hours
 """
 
 import json
@@ -19,7 +33,7 @@ class Py3status:
     coin_symbols = "btc, eth, xrp"
     convert = 'usd'
     separator = ', '
-    cache_timeout = 300
+    cache_timeout = 600
     format = "{format_coin}"
     format_coin = "{id}: {price}{symbol} ({percentage})"
 
