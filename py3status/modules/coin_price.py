@@ -96,4 +96,4 @@ class Py3status:
         
 if __name__ == "__main__":
     from py3status.module_test import module_test
-    module_test(Py3status, config=config)
+    module_test(Py3status)
