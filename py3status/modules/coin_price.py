@@ -30,10 +30,10 @@ except ImportError:
 
 
 class Py3status:
+    cache_timeout = 600
+    coin_separator = ', '
     coin_symbols = "btc,eth,xrp"
     convert = 'usd'
-    coin_separator = ', '
-    cache_timeout = 600
     format = "{format_coin}"
     format_coin = "{id}: {price}{symbol} ({percentage})"
 
