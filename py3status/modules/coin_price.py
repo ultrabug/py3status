@@ -3,13 +3,13 @@
 """ Display CryptoCurrency using coinmarketcap.com
 
 Configuration parameters:
-    coin_symbols: coin symbol that will display price (default btc, eth, xrp)
-    convert: currency unit want to display
-    separator: display separator if more than one (default ,)
     cache_timeout: refresh interval for this module. A advise from the site:
         "Please limit requests to no more than 10 per minute." (default 600)
+    coin_symbols: coin symbol that will display price (default 'btc,eth,xrp')
+    convert: currency unit want to display (default 'usd')
     format: display format for this module (default '{format_coin}')
-    format_coin: display format for coins (default '{coin_id}: {price}{symbol} ({percentage})"
+    format_coin: display format for coins (default '{coin_id}: {price}{symbol} ({percentage}')"
+    coin_separator: display separator if more than one (default ', ')
 
     format_coin placeholders:
         {format_coin} format for coins
@@ -32,7 +32,7 @@ except ImportError:
 class Py3status:
     coin_symbols = "btc,eth,xrp"
     convert = 'usd'
-    separator = ', '
+    coin_separator = ', '
     cache_timeout = 600
     format = "{format_coin}"
     format_coin = "{id}: {price}{symbol} ({percentage})"
@@ -93,7 +93,7 @@ class Py3status:
                     'percentage': _percentage})
             )
 
-        out_text = self.py3.composite_join(self.separator, out_text)
+        out_text = self.py3.composite_join(self.coin_separator, out_text)
 
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         response['full_text'] = self.py3.safe_format(self.format, {'format_coin': out_text})
