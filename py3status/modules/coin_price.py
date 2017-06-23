@@ -48,7 +48,7 @@ class Py3status:
             'gbp': '£',
             'usd': '$',
             'jpy': '¥'
-        } 
+        }
 
         self.convert = self.convert.lower()
 
@@ -60,7 +60,7 @@ class Py3status:
                     'price_{}'.format(self.convert): currency['price_{}'.format(self.convert)],
                     'percent_change_24h': currency['percent_change_24h']
                 }
-            
+
     def all_currency(self):
         currencies = json.loads(urlopen(self.ticker).read().decode())
         out_text = list()
@@ -80,16 +80,17 @@ class Py3status:
             _price = '{}'.format(round(float(_price), 2))
             _percentage = float(_percentage)
 
-            if _percentage > 0: 
+            if _percentage > 0:
                 _percentage = '+{}%'.format(_percentage)
             else:
                 _percentage = '{}%'.format(_percentage)
 
             out_text.append(self.py3.safe_format(
-                self.format_coin, {'id': _id,
-                                'price': _price,
-                                'symbol': _symbol,
-                                'percentage': _percentage})
+                self.format_coin, {
+                    'id': _id,
+                    'price': _price,
+                    'symbol': _symbol,
+                    'percentage': _percentage})
             )
 
         out_text = self.py3.composite_join(self.separator, out_text)
