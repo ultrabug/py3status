@@ -9,7 +9,7 @@ Configuration parameters:
     coin_symbols: coin symbol that will display price (default 'btc,eth,xrp')
     convert: currency unit want to display (default 'usd')
     format: display format for this module (default '{format_coin}')
-    format_coin: display format for coins (default '{id}: {price}{symbol} ({percentage})')"
+    format_coin: display format for coins (default '{id}: {price}{symbol} ({percentage})')
 
     format_coin placeholders:
         {format_coin} format for coins
