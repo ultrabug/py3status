@@ -5,11 +5,11 @@
 Configuration parameters:
     cache_timeout: refresh interval for this module. A advise from the site:
         "Please limit requests to no more than 10 per minute." (default 600)
+    coin_separator: display separator if more than one (default ', ')
     coin_symbols: coin symbol that will display price (default 'btc,eth,xrp')
     convert: currency unit want to display (default 'usd')
     format: display format for this module (default '{format_coin}')
     format_coin: display format for coins (default '{coin_id}: {price}{symbol} ({percentage}')"
-    coin_separator: display separator if more than one (default ', ')
 
     format_coin placeholders:
         {format_coin} format for coins
