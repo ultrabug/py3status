@@ -398,16 +398,18 @@ class Py3status:
                     p['name'] = self._mpris_names[p['identity']]
                     p['full_name'] = u'{} {}'.format(p['name'], p['index'])
 
-        status = player.PlaybackStatus
-        state_priority = WORKING_STATES.index(status)
         identity = player.Identity
+        name = self._mpris_names.get(identity)
+        if name not in self.player_priority and '*' not in self.player_priority:
+            return False
 
         if identity not in self._mpris_name_index:
             self._mpris_name_index[identity] = 0
 
+        status = player.PlaybackStatus
+        state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
-        name = self._mpris_names.get(identity)
         subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
 
         self._mpris_players[player_id] = {
