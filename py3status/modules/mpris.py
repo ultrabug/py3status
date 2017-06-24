@@ -112,6 +112,7 @@ SAMPLE OUTPUT
 from datetime import timedelta
 from time import time
 from gi.repository import GObject
+from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
@@ -375,17 +376,23 @@ class Py3status:
             """
             data = args[1]
             status = data.get('PlaybackStatus')
-            if status:
-                player = self._mpris_players[player_id]
- 
-                # Note: Workaround.
-                # Since all players get noted if playback status has been
-                # changed we have to check if we are the choosen one
-                if status != player['_dbus_player'].PlaybackStatus:
-                    return
+            if not status:
+                return
 
-                player['status'] = status
-                player['_state_priority'] = WORKING_STATES.index(status)
+            player = self._mpris_players[player_id]
+
+            # Note: Workaround. Since all players get noted if playback status
+            #       has been changed we have to check if we are the choosen one
+            try:
+                dbus_status = player['_dbus_player'].PlaybackStatus
+            except GError:
+                # Prevent errors when calling methods of deleted dbus objects
+                return
+            if status != dbus_status:
+                return
+
+            player['status'] = status
+            player['_state_priority'] = WORKING_STATES.index(status)
             self._set_player()
         return player_on_change
 
