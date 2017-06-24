@@ -377,6 +377,13 @@ class Py3status:
             status = data.get('PlaybackStatus')
             if status:
                 player = self._mpris_players[player_id]
+ 
+                # Note: Workaround.
+                # Since all players get noted if playback status has been
+                # changed we have to check if we are the choosen one
+                if status != player['_dbus_player'].PlaybackStatus:
+                    return
+
                 player['status'] = status
                 player['_state_priority'] = WORKING_STATES.index(status)
             self._set_player()
