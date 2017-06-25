@@ -376,23 +376,22 @@ class Py3status:
             """
             data = args[1]
             status = data.get('PlaybackStatus')
-            if not status:
-                return
+            if status:
+                player = self._mpris_players[player_id]
 
-            player = self._mpris_players[player_id]
+                # Note: Workaround. Since all players get noted if playback status
+                #       has been changed we have to check if we are the choosen one
+                try:
+                    dbus_status = player['_dbus_player'].PlaybackStatus
+                except GError:
+                    # Prevent errors when calling methods of deleted dbus objects
+                    return
+                if status != dbus_status:
+                    # FIXME: WE DON'T RECOGNIZE ANY TITLE CHANGE
+                    return
 
-            # Note: Workaround. Since all players get noted if playback status
-            #       has been changed we have to check if we are the choosen one
-            try:
-                dbus_status = player['_dbus_player'].PlaybackStatus
-            except GError:
-                # Prevent errors when calling methods of deleted dbus objects
-                return
-            if status != dbus_status:
-                return
-
-            player['status'] = status
-            player['_state_priority'] = WORKING_STATES.index(status)
+                player['status'] = status
+                player['_state_priority'] = WORKING_STATES.index(status)
             self._set_player()
         return player_on_change
 
