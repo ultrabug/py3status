@@ -22,7 +22,7 @@ For more information, see the documentation
 supported. See the configuration options for how to specify each weather icon.
 
 Configuration parameters:
-    api_key: Your OpenWeatherMap API key.
+    api_key: Your OpenWeatherMap API key
         See https://openweathermap.org/appid. Required!
         (default None)
     cache_timeout: The time between weather polling in seconds
@@ -36,15 +36,14 @@ Configuration parameters:
         (default False)
     forecast_text_separator: Separator between entries in the forecast
         (default ' ')
-    format: How to display the weather. This also dictates the type of
-        forecast. The placeholders here refer to the format_[...] variables
-        found below.
+    format: How to display the weather
+        This also dictates the type of forecast. The placeholders here refer to
+        the format_[...] variables found below.
         Available placeholders:
             icon, clouds, rain, snow, wind, humidity, pressure, temperature,
             sunrise, sunset, desc, desc_long, forecast
-        You may also use the icons in the icon dictionary with their identifiers
         (default '{icon}: {temperature} {desc}')
-    format_clouds: Formatting for cloud coverage (percentage).
+    format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
         (default '{icon}: {coverage}%')
@@ -52,7 +51,8 @@ Configuration parameters:
         Available placeholders:
             See 'format'
         This is similar to the 'format' field, but contains information
-        for future weather
+        for future weather. Notably, this does not include information about
+        sunrise or sunset times.
         (default '{icon}')
     format_humidity: Formatting for humidity (percentage)
         Available placeholders:
@@ -70,13 +70,13 @@ Configuration parameters:
         Available placeholders:
             icon, amount
         (default '{icon}: {amount} inches')
-    format_sunrise: Formatting for sunrise time.
+    format_sunrise: Formatting for sunrise time
         Note that this format accepts strftime/strptime placeholders to populate
         the output with the time information.
         Available placeholders:
             icon
         (default '{icon}: %X')
-    format_sunset: Formatting for sunset time.
+    format_sunset: Formatting for sunset time
         This format accepts strftime/strptime placeholders to populate the
         output with the time information.
         Available placeholders:
@@ -112,7 +112,7 @@ Configuration parameters:
         (default '○')
     icon_thunderstorm: Icon for thunderstorms
         (default '⛈')
-    icons: A dictionary relating weather code to icon.
+    icons: A dictionary relating weather code to icon
         See https://openweathermap.org/weather-conditions for a complete list
         of supported icons. This will fall-back to the listed icon if there is
         no specific icon present.
@@ -135,7 +135,7 @@ Configuration parameters:
         (default None)
     lang: An ISO 639-1 code for your language (two letters)
         (default 'en')
-    location: A tuple of floats describing the desired weather location.
+    location: A tuple of floats describing the desired weather location
         The tuple should follow the form (latitude, longitude), and if set,
         implicitly disables the IP-API Geolocation API.
         (default None)
@@ -156,7 +156,7 @@ Configuration parameters:
         Options:
             c, f, k
         (default 'f')
-    thresholds: Configure temperature colors based on limits.
+    thresholds: Configure temperature colors based on limits
         To have these take effect, enable the 'temp_color' flag.
         The numbers specified inherit the unit of the temperature as configured.
         The default below is intended for Fahrenheit.
@@ -168,40 +168,40 @@ Configuration parameters:
 
 Format placeholders:
     All:
-        {icon}: The icon associated with a formatting section
+        {icon} The icon associated with a formatting section
     format_cloud:
-        {coverage}: Cloud coverage percentage.
+        {coverage} Cloud coverage percentage.
     format_humidity:
-        {humidity}: The humidity percentage
+        {humidity} The humidity percentage
     format_pressure:
-        {pressure}: The measurement of current atmospheric pressure in Pascals
-        {sea_level}: The measurement of current atmospheric pressure at
+        {pressure} The measurement of current atmospheric pressure in Pascals
+        {sea_level} The measurement of current atmospheric pressure at
             sea-level in Pascals.
     format_rain:
-        {amount}: Measurement of the amount of rain in the configured unit
+        {amount} Measurement of the amount of rain in the configured unit
     format_snow:
-        {amount}: Measurement of the amount of snow in the configured unit
+        {amount} Measurement of the amount of snow in the configured unit
     format_temperature:
-       {max}: The maximum temperature in the configured unit.
-       {min}: The minimum temperature in the configured unit.
-       {current}: Current temperature in the configured unit.
+       {max} The maximum temperature in the configured unit.
+       {min} The minimum temperature in the configured unit.
+       {current} Current temperature in the configured unit.
     format_wind:
-       {degree}: Current wind speed heading (in degrees).
-       {gust}: The speed of current wind gusts in the configured unit.
-       {speed}: The speed of the wind in the configured unit.
+       {degree} Current wind speed heading (in degrees).
+       {gust} The speed of current wind gusts in the configured unit.
+       {speed} The speed of the wind in the configured unit.
     format only:
-        {forecast}: Contains the formatted result of format_forecast.
+        {forecast} Contains the formatted result of format_forecast.
     format, format_forecast:
-        {clouds}: Contains the formatted result of format_clouds.
-        {desc_long}: Natural description of the current weather.
-        {desc}: Short description of the current weather.
-        {humidity}: Contains the formatted result of format_humidity.
-        {pressure}: Contains the formatted result of format_pressure.
-        {snow}: Contains the formatted result of format_snow.
-        {sunrise}: Contains the formatted result of format_sunrise.
-        {sunset}: Contains the formatted result of format_sunset.
-        {temperature}: Contains the formatted result of format_temperature.
-        {wind}: Contains the formatted result of format_wind.
+        {clouds} Contains the formatted result of format_clouds.
+        {desc_long} Natural description of the current weather.
+        {desc} Short description of the current weather.
+        {humidity} Contains the formatted result of format_humidity.
+        {pressure} Contains the formatted result of format_pressure.
+        {snow} Contains the formatted result of format_snow.
+        {sunrise} Contains the formatted result of format_sunrise.
+        {sunset} Contains the formatted result of format_sunset.
+        {temperature} Contains the formatted result of format_temperature.
+        {wind} Contains the formatted result of format_wind.
 
 Example configuration:
 ```
@@ -669,6 +669,7 @@ class Py3status:
         # Give the final format
         today['forecast'] = self.py3.composite_join(
             self.forecast_text_separator, forecasts)
+
         return self.py3.safe_format(self.format, today)
 
     def weather_owm(self):
@@ -694,9 +695,25 @@ if __name__ == '__main__':
 
     import os
     from py3status.module_test import module_test
+
+    # All possible outputs
+    all_string = '/'.join([
+        '{clouds}',
+        '{desc_long}',
+        '{desc}',
+        '{humidity}',
+        '{pressure}',
+        '{snow}',
+        '{sunrise}',
+        '{sunset}',
+        '{temperature}',
+        '{wind}'
+    ])
+
     module_test(Py3status, config={
         'api_key': os.getenv('OWM_API_KEY'),
 
+        # Select icons
         'icons': {
             'i200': "☔",
             'i230_i232': "🌧",
@@ -704,7 +721,21 @@ if __name__ == '__main__':
             'clouds': "☁",
         },
 
-        'format': '{icon}: {temperature} {desc}, {forecast}',
-        'forecast_days': 3,
+        # Complete configuration
+        'format_cloud': '{icon}: {coverage}%',
+        'format_humidity': '{icon}: {humidity}%',
+        'format_pressure': '{icon}: {pressure} Pa, sea: {sea_level} Pa',
+        'format_rain': '{icon}: {amount} in',
+        'format_snow': '{icon}: {amount} in',
+        'format_temperature': ('{icon}: max: {max}°F, min: {min}°F, '
+                               'current: {current}°F'),
+        'format_wind': ('{icon}: {degree}°, gust: {gust} mph, '
+                        'speed: {speed} mph'),
+        'format': ('{icon}: ' + all_string + '//{forecast}'),
+        'format_forecast': ('{icon}: ' + all_string),
+
+        # Miscellaneous
+        'forecast_days': 1,
+        'forecast_text_separator': '//',
         'temp_color': True,
     })
