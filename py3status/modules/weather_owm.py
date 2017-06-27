@@ -31,7 +31,7 @@ Configuration parameters:
         (default 600)
     forecast_days: Number of days to include in the forecast, including today
         (regardless of the 'forecast_include_today' flag)
-        (default 0)
+        (default 3)
     forecast_include_today: Include today in the forecast? (Boolean)
         (default False)
     forecast_text_separator: Separator between entries in the forecast
@@ -42,7 +42,7 @@ Configuration parameters:
         Available placeholders:
             icon, clouds, rain, snow, wind, humidity, pressure, temperature,
             sunrise, sunset, desc, desc_long, forecast
-        (default '{icon}: {temperature} {desc}')
+        (default '{icon}: {temperature} {desc}, {forecast}')
     format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
@@ -215,8 +215,6 @@ weather_owm {
     clouds = "☁"
   }
 
-  format = '{icon}: {temperature} {desc}, {forecast}'
-  forecast_days = 3
   temp_color = True
 }
 ```
@@ -285,10 +283,10 @@ class Py3status:
 
     api_key = None
     cache_timeout = 600
-    forecast_days = 0
+    forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{icon}: {temperature} {desc}'
+    format = '{icon}: {temperature} {desc}, {forecast}'
     format_clouds = '{icon}: {coverage}%'
     format_forecast = '{icon}'
     format_humidity = '{icon}: {humidity}%'
