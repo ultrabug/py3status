@@ -728,12 +728,12 @@ if __name__ == '__main__':
         'format_clouds': '{icon}: {coverage}%',
         'format_humidity': '{icon}: {humidity}%',
         'format_pressure': '{icon}: {pressure} Pa, sea: {sea_level} Pa',
-        'format_rain': '{icon}: {amount} in',
-        'format_snow': '{icon}: {amount} in',
-        'format_temperature': ('{icon}: max: {max}°F, min: {min}°F, '
-                               'current: {current}°F'),
-        'format_wind': ('{icon}: {degree}°, gust: {gust} mph, '
-                        'speed: {speed} mph'),
+        'format_rain': '{icon}: {amount:.0f} in',
+        'format_snow': '{icon}: {amount:.0f} in',
+        'format_temperature': ('{icon}: max: {max:.0f}°F, min: {min:.0f}°F, '
+                               'current: {current:.0f}°F'),
+        'format_wind': ('{icon}: {degree}°, gust: {gust:.0f} mph, '
+                        'speed: {speed:.0f} mph'),
         'format': ('{icon}: ' + all_string + '//{forecast}'),
         'format_forecast': ('{icon}: ' + all_string),
 
