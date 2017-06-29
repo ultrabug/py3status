@@ -40,9 +40,9 @@ Configuration parameters:
         This also dictates the type of forecast. The placeholders here refer to
         the format_[...] variables found below.
         Available placeholders:
-            icon, clouds, rain, snow, wind, humidity, pressure, temperature,
-            sunrise, sunset, desc, desc_long, forecast
-        (default '{icon} {temperature} {desc} {forecast}')
+            icon, city, clouds, rain, snow, wind, humidity, pressure,
+            temperature, sunrise, sunset, desc, desc_long, forecast
+        (default '{city}: {icon} {temperature} {desc} {forecast}')
     format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
@@ -189,18 +189,19 @@ Format placeholders:
        {gust} Wind gusts speed in the specified unit
        {speed} Wind speed
     format only:
+        {city} The name of the city where the weather is
         {forecast} Output of format_forecast
     format, format_forecast:
-        {clouds} Output of format_clouds.
-        {desc_long} Natural description of the current weather.
-        {desc} Short description of the current weather.
-        {humidity} Output of format_humidity.
-        {pressure} Output of format_pressure.
-        {snow} Output of format_snow.
-        {sunrise} Output of format_sunrise.
-        {sunset} Output of format_sunset.
-        {temperature} Output of format_temperature.
-        {wind} Output of format_wind.
+        {clouds} Output of format_clouds
+        {desc_long} Natural description of the current weather
+        {desc} Short description of the current weather
+        {humidity} Output of format_humidity
+        {pressure} Output of format_pressure
+        {snow} Output of format_snow
+        {sunrise} Output of format_sunrise
+        {sunset} Output of format_sunset
+        {temperature} Output of format_temperature
+        {wind} Output of format_wind
 
 Example configuration:
 ```
@@ -285,7 +286,7 @@ class Py3status:
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{icon} {temperature} {desc} {forecast}'
+    format = '{city}: {icon} {temperature} {desc} {forecast}'
     format_clouds = '{icon} {coverage}%'
     format_forecast = '{icon}'
     format_humidity = '{icon} {humidity}%'
@@ -641,7 +642,7 @@ class Py3status:
         })
 
     def _format_dict(self, wthr):
-        return {
+        data = {
             # Standard options
             'icon': self._get_icon(wthr),
             'clouds': self._format_clouds(wthr),
@@ -658,6 +659,12 @@ class Py3status:
             'desc': self._jpath(wthr, OWM_DESC, '').lower(),
             'desc_long': self._jpath(wthr, OWM_DESC_LONG, '')
         }
+
+        # Get the city name. Only available in the current weather output
+        if 'name' in wthr:
+            data['city'] = wthr['name']
+
+        return data
 
     def _format(self, wthr, fcsts):
         # Format all sections
@@ -725,17 +732,17 @@ if __name__ == '__main__':
         },
 
         # Complete configuration
-        'format_clouds': '{icon}: {coverage}%',
-        'format_humidity': '{icon}: {humidity}%',
-        'format_pressure': '{icon}: {pressure} Pa, sea: {sea_level} Pa',
-        'format_rain': '{icon}: {amount:.0f} in',
-        'format_snow': '{icon}: {amount:.0f} in',
+        'format_clouds': '{icon} {coverage}%',
+        'format_humidity': '{icon} {humidity}%',
+        'format_pressure': '{icon} {pressure} Pa, sea: {sea_level} Pa',
+        'format_rain': '{icon} {amount:.0f} in',
+        'format_snow': '{icon} {amount:.0f} in',
         'format_temperature': ('{icon}: max: {max:.0f}°F, min: {min:.0f}°F, '
                                'current: {current:.0f}°F'),
-        'format_wind': ('{icon}: {degree}°, gust: {gust:.0f} mph, '
+        'format_wind': ('{icon} {degree}°, gust: {gust:.0f} mph, '
                         'speed: {speed:.0f} mph'),
-        'format': ('{icon}: ' + all_string + '//{forecast}'),
-        'format_forecast': ('{icon}: ' + all_string),
+        'format': ('{city}: {icon} ' + all_string + '//{forecast}'),
+        'format_forecast': ('{icon} ' + all_string),
 
         # Miscellaneous
         'forecast_days': 1,
