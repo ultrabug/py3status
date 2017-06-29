@@ -42,11 +42,11 @@ Configuration parameters:
         Available placeholders:
             icon, clouds, rain, snow, wind, humidity, pressure, temperature,
             sunrise, sunset, desc, desc_long, forecast
-        (default '{icon}: {temperature} {desc}, {forecast}')
+        (default '{icon} {temperature} {desc} {forecast}')
     format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
-        (default '{icon}: {coverage}%')
+        (default '{icon} {coverage}%')
     format_forecast: Formatting for future forecasts
         Available placeholders:
             See 'format'
@@ -57,39 +57,39 @@ Configuration parameters:
     format_humidity: Formatting for humidity (percentage)
         Available placeholders:
             icon, humidity
-        (default '{icon}: {humidity}%')
+        (default '{icon} {humidity}%')
     format_pressure: Formatting for atmospheric pressure
         Available placeholders:
             icon, pressure, sea_level
-        (default '{icon}: {pressure} hPa')
+        (default '{icon} {pressure}hPa')
     format_rain: Formatting for rain volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon}: {amount} inches')
+        (default '{icon} {amount:.0f}in')
     format_snow: Formatting for snow volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon}: {amount} inches')
+        (default '{icon} {amount:.0f}in')
     format_sunrise: Formatting for sunrise time
         Note that this format accepts strftime/strptime placeholders to populate
         the output with the time information.
         Available placeholders:
             icon
-        (default '{icon}: %X')
+        (default '{icon} %-I:%M %p')
     format_sunset: Formatting for sunset time
         This format accepts strftime/strptime placeholders to populate the
         output with the time information.
         Available placeholders:
             icon
-        (default '{icon}: %X')
+        (default '{icon} %-I:%M %p')
     format_temperature: Formatting for temperature
         Available placeholders:
             current, icon, max, min
-        (default '{icon}: {current}°')
+        (default '{icon} {current:.0f}°')
     format_wind: Formatting for wind degree and speed
         Available placeholders:
             icon, degree, speed, gust
-        (default '{icon}: {speed} mph')
+        (default '{icon} {speed:.0f}mph')
     icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
         (default '🌫')
     icon_breeze: Icon for wind or breeze
@@ -169,39 +169,38 @@ Configuration parameters:
 Format placeholders:
     All:
         {icon} The icon associated with a formatting section
-    format_cloud:
-        {coverage} Cloud coverage percentage.
+    format_clouds:
+        {coverage} Cloud coverage percentage
     format_humidity:
-        {humidity} The humidity percentage
+        {humidity} Humidity percentage
     format_pressure:
-        {pressure} The measurement of current atmospheric pressure in Pascals
-        {sea_level} The measurement of current atmospheric pressure at
-            sea-level in Pascals.
+        {pressure} Current atmospheric pressure in Pascals
+        {sea_level} Sea-level atmospheric pressure in Pascals.
     format_rain:
-        {amount} Measurement of the amount of rain in the configured unit
+        {amount} Rainfall in the specified unit
     format_snow:
-        {amount} Measurement of the amount of snow in the configured unit
+        {amount} Snowfall in the specified unit
     format_temperature:
-       {max} The maximum temperature in the configured unit.
-       {min} The minimum temperature in the configured unit.
-       {current} Current temperature in the configured unit.
+       {current} Current temperature
+       {max} Maximum temperature in the configured unit
+       {min} Minimum temperature
     format_wind:
-       {degree} Current wind speed heading (in degrees).
-       {gust} The speed of current wind gusts in the configured unit.
-       {speed} The speed of the wind in the configured unit.
+       {degree} Current wind heading
+       {gust} Wind gusts speed in the specified unit
+       {speed} Wind speed
     format only:
-        {forecast} Contains the formatted result of format_forecast.
+        {forecast} Output of format_forecast
     format, format_forecast:
-        {clouds} Contains the formatted result of format_clouds.
+        {clouds} Output of format_clouds.
         {desc_long} Natural description of the current weather.
         {desc} Short description of the current weather.
-        {humidity} Contains the formatted result of format_humidity.
-        {pressure} Contains the formatted result of format_pressure.
-        {snow} Contains the formatted result of format_snow.
-        {sunrise} Contains the formatted result of format_sunrise.
-        {sunset} Contains the formatted result of format_sunset.
-        {temperature} Contains the formatted result of format_temperature.
-        {wind} Contains the formatted result of format_wind.
+        {humidity} Output of format_humidity.
+        {pressure} Output of format_pressure.
+        {snow} Output of format_snow.
+        {sunrise} Output of format_sunrise.
+        {sunset} Output of format_sunset.
+        {temperature} Output of format_temperature.
+        {wind} Output of format_wind.
 
 Example configuration:
 ```
@@ -218,7 +217,7 @@ weather_owm {
   temp_color = True
 }
 ```
-Outputs: 🌫: ○: 59° foggy, ⛅ ☼ 🌧`
+Outputs: 🌫 ○ 59° foggy ⛅ ☼ 🌧`
 - Currently foggy, 59° F outside, with forecast of cloudy tomorrow, sunny the
   next day, then rainy
 
@@ -241,18 +240,18 @@ IP_ENDPOINT = 'http://ip-api.com/json'
 # Paths of information to extract from JSON
 IP_LAT = '//lat'
 IP_LNG = '//lon'
-OWM_WEATHER_ICON = '//weather:0/id'
 OWM_CLOUD_COVER = '//clouds/all'
-OWM_RAIN = '//rain/3h'
-OWM_SNOW = '//snow/3h'
-OWM_WIND = '//wind'
-OWM_HUMIDITY = '//main'
-OWM_PRESSURE = '//main'
-OWM_TEMP = '//main'
-OWM_SUNRISE = '//sys/sunrise'
-OWM_SUNSET = '//sys/sunset'
 OWM_DESC = '//weather:0/main'
 OWM_DESC_LONG = '//weather:0/description'
+OWM_HUMIDITY = '//main'
+OWM_PRESSURE = '//main'
+OWM_RAIN = '//rain/3h'
+OWM_SNOW = '//snow/3h'
+OWM_SUNRISE = '//sys/sunrise'
+OWM_SUNSET = '//sys/sunset'
+OWM_TEMP = '//main'
+OWM_WEATHER_ICON = '//weather:0/id'
+OWM_WIND = '//wind'
 
 # Units constants
 RAIN_UNITS = set(['cm', 'ft', 'in', 'mm', 'm', 'yrd'])
@@ -261,8 +260,8 @@ TEMP_UNITS = set(['c', 'f', 'k'])
 WIND_UNITS = set(['fsec', 'msec', 'mph', 'kmh'])
 
 # Conversion factors
-IN_FROM_MM = 0.0393701
 FT_FROM_METER = 3.28084
+IN_FROM_MM = 0.0393701
 KMH_FROM_MSEC = 0.277778
 MPH_FROM_MSEC = 2.23694
 
@@ -286,17 +285,17 @@ class Py3status:
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{icon}: {temperature} {desc}, {forecast}'
-    format_clouds = '{icon}: {coverage}%'
+    format = '{icon} {temperature} {desc} {forecast}'
+    format_clouds = '{icon} {coverage}%'
     format_forecast = '{icon}'
-    format_humidity = '{icon}: {humidity}%'
-    format_pressure = '{icon}: {pressure} hPa'
-    format_rain = '{icon}: {amount} inches'
-    format_snow = '{icon}: {amount} inches'
-    format_sunrise = '{icon}: %X'
-    format_sunset = '{icon}: %X'
-    format_temperature = u'{icon}: {current}°'
-    format_wind = '{icon}: {speed} mph'
+    format_humidity = '{icon} {humidity}%'
+    format_pressure = '{icon} {pressure}hPa'
+    format_rain = '{icon} {amount:.0f}in'
+    format_snow = '{icon} {amount:.0f}in'
+    format_sunrise = '{icon} %-I:%M %p'
+    format_sunset = '{icon} %-I:%M %p'
+    format_temperature = u'{icon} {current:.0f}°'
+    format_wind = '{icon} {speed:.0f}mph'
     icon_atmosphere = u'🌫'
     icon_breeze = u'☴'
     icon_cloud = u'☁'
@@ -495,16 +494,17 @@ class Py3status:
         inches = rain * IN_FROM_MM
 
         options = {
-            'icon': self.icons['rain'],
             'mm': round(rain),
             'cm': round(rain / 10),
             'm': round(rain / 100),
             'in': round(inches),
             'ft': round(inches / 12),
-            'yrd': round(inches / 36)}
+            'yrd': round(inches / 36)
+        }
 
         # Format the rain fall
         return self.py3.safe_format(self.format_rain, {
+            'icon': self.icons['rain'],
             'amount': options[self.rain_unit],
         })
 
@@ -516,16 +516,17 @@ class Py3status:
         inches = snow * IN_FROM_MM
 
         options = {
-            'icon': self.icons['snow'],
             'mm': round(snow),
             'cm': round(snow / 10),
             'm': round(snow / 100),
             'in': round(inches),
             'ft': round(inches / 12),
-            'yrd': round(inches / 36)}
+            'yrd': round(inches / 36)
+        }
 
         # Format the snow fall
         return self.py3.safe_format(self.format_snow, {
+            'icon': self.icons['snow'],
             'amount': options[self.snow_unit],
         })
 
@@ -560,9 +561,13 @@ class Py3status:
 
     def _format_humidity(self, wthr):
         # Format the humidity (default zero humidity)
+        humidity = self._jpath(wthr, OWM_HUMIDITY, 0)
+        if not humidity:
+            humidity = 0
+
         return self.py3.safe_format(self.format_humidity, {
             'icon': self.icons['humidity'],
-            'humidity': self._jpath(wthr, OWM_HUMIDITY, 0),
+            'humidity': humidity,
         })
 
     def _format_pressure(self, wthr):
@@ -720,7 +725,7 @@ if __name__ == '__main__':
         },
 
         # Complete configuration
-        'format_cloud': '{icon}: {coverage}%',
+        'format_clouds': '{icon}: {coverage}%',
         'format_humidity': '{icon}: {humidity}%',
         'format_pressure': '{icon}: {pressure} Pa, sea: {sea_level} Pa',
         'format_rain': '{icon}: {amount} in',
