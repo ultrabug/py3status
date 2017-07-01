@@ -424,8 +424,7 @@ class Py3status:
         state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
-        subscription = player.PropertiesChanged.connect(
-                self._player_monitor(player_id))
+        subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
 
         self._mpris_players[player_id] = {
             '_dbus_player': player,
