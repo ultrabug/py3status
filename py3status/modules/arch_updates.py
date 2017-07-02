@@ -114,7 +114,7 @@ class Py3status:
 
         pending_updates = b""
         try:
-            pending_updates = str(subprocess.check_output(["cower", "-bu"]))
+            pending_updates = str(subprocess.check_output(["cower", "-u"]))
         except subprocess.CalledProcessError as cp_error:
             pending_updates = cp_error.output
         except:
