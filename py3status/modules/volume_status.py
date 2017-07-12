@@ -94,11 +94,15 @@ from subprocess import check_output, call
 
 
 class AudioBackend():
-    def __init__(self, parent):
+    def __init__(self, parent, output=True):
         self.device = parent.device
         self.channel = parent.channel
         self.parent = parent
+        self.output_device = output
         self.setup(parent)
+
+    def setup(self, parent):
+        raise NotImplementedError
 
     def run_cmd(self, cmd):
         with open(devnull, 'wb') as dn:
@@ -164,22 +168,39 @@ class PamixerBackend(AudioBackend):
 class PactlBackend(AudioBackend):
     def setup(self, parent):
         # get available device number if not specified
+        self.device_type = 'sink' if self.output_device else 'source'
+        self.device_type_pl = self.device_type + 's'
+        self.device_type_cam = self.device_type[0].upper() + self.device_type[1:]
+
         if self.device is None:
-            self.device = check_output(
-                ['pactl', 'list', 'short', 'sinks']).decode('utf-8').split()[0]
+            self.device = self.get_default_device()
 
         self.english_env = dict(os_environ)
         self.english_env['LC_ALL'] = 'C'
 
         self.max_volume = parent.max_volume
         self.re_volume = re.compile(
-            r'Sink \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(self.device),
+            r'{} \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(
+                self.device_type[0].upper() + self.device_type[1:], self.device),
             re.M | re.DOTALL
         )
 
+    def get_default_device(self):
+        default_dev_pattern = re.compile(r'.*Default {}: (.*)\n.*:.*'.format(self.device_type_cam), re.M | re.DOTALL)
+        default_dev_match = default_dev_pattern.match(check_output(['pactl', 'info']).decode('utf-8'))
+        device_id = None
+        if default_dev_match:
+            device_id = default_dev_match.groups()[0]
+            for line in check_output(['pactl', 'list', 'short', self.device_type_pl]).decode('utf-8').split('\n'):
+                parts = line.split()
+                if parts[1] == device_id:
+                    return parts[0]
+        raise RuntimeError('Failed to find default {} device.  Looked for {}'.format(
+            'output' if self.output_device else 'input', device_id))
+
     def get_volume(self):
         output = check_output(
-            ['pactl', 'list', 'sinks'], env=self.english_env).decode('utf-8').strip()
+            ['pactl', 'list', self.device_type_pl], env=self.english_env).decode('utf-8').strip()
         muted, perc = self.re_volume.search(output).groups()
 
         # muted should be 'on' or 'off'
@@ -196,16 +217,16 @@ class PactlBackend(AudioBackend):
             change = '{}%'.format(self.max_volume)
         else:
             change = '+{}%'.format(delta)
-        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, change])
+        self.run_cmd(['pactl', '--', 'set-{}-volume'.format(self.device_type), self.device, change])
 
     def volume_down(self, delta):
-        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, '-{}%'.format(delta)])
+        self.run_cmd(['pactl', '--', 'set-{}-volume'.format(self.device_type), self.device, '-{}%'.format(delta)])
 
     def toggle_mute(self):
-        self.run_cmd(['pactl', 'set-sink-mute', self.device, 'toggle'])
+        self.run_cmd(['pactl', 'set-{}-mute'.format(self.device_type), self.device, 'toggle'])
 
 
-class Py3status:
+class Py3VolStatusBase:
     """
     """
     # available configuration parameters
@@ -312,6 +333,10 @@ class Py3status:
         elif self.button_mute and button == self.button_mute:
             self.backend.toggle_mute()
 
+
+class Py3status(Py3VolStatusBase):
+    def __init__(self):
+        pass
 
 # test if run directly
 if __name__ == "__main__":
