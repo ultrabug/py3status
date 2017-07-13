@@ -152,7 +152,32 @@ class Py3status:
         except (self.py3.RequestException):
             return
         if info.status_code == 200:
-            return len(info.json())
+            links = info._response.headers.get('Link', '').split(', ')
+            if not links:
+                return len(info.json())
+
+            last_page = 1
+            for link in links:
+                if 'rel="last"' in link:
+                    import sys
+                    if sys.version_info[0] == 2:
+                        import urlparse
+                    else:
+                        import urllib.parse as urlparse
+                    last_url = link[link.find('<') + 1:link.find('>')]
+                    parsed = urlparse.urlparse(last_url)
+                    last_page = int(urlparse.parse_qs(parsed.query)['page'][0])
+
+            if last_page == 1:
+                return len(info.json())
+            try:
+                last_page_info = self.py3.request(last_url, timeout=10,
+                                                  auth=(self.username, self.auth_token))
+            except self.py3.RequestException:
+                return
+
+            return len(info.json()) * (last_page - 1) + len(last_page_info.json())
+
         if info.status_code == 404:
             if not self.repo_warning:
                 self.py3.notify_user('Github repo cannot be found.')
