@@ -125,10 +125,7 @@ class Py3status:
                 name = vpn
                 color = self.py3.COLOR_GOOD
 
-        if name is None:
-            full_text = self.py3.safe_format(self.format)
-        else:
-            full_text = self.py3.safe_format(self.format, {'name': name})
+        full_text = self.py3.safe_format(self.format, {'name': name})
 
         response = {
             'full_text': full_text,
