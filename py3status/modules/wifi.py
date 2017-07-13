@@ -178,7 +178,7 @@ class Py3status:
             quality = int((bitrate / self._max_bitrate) * 100)
         else:
             quality = 0
-        icon = self.blocks[int(math.ceil(quality / 100 * (len(self.blocks) - 1)))]
+        icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
 
         # wifi down
         if ssid is None:
