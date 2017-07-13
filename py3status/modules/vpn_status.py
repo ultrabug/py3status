@@ -11,7 +11,7 @@ Configuration parameters:
     check_pid: If True, act just like the default i3status module.
         (default False)
     format: Format of the output.
-        (default 'VPN: {name}')
+        (default 'VPN: {name}|VPN: no')
     pidfile: Same as i3status.conf pidfile, checked when check_pid is True.
         (default '/sys/class/net/vpn0/dev_id')
 
@@ -45,7 +45,7 @@ class Py3status:
     # Available Configuration Parameters
     cache_timeout = 10
     check_pid = False
-    format = "VPN: {name}"
+    format = "VPN: {name}|VPN: no"
     pidfile = '/sys/class/net/vpn0/dev_id'
 
     def post_config_hook(self):
@@ -108,8 +108,8 @@ class Py3status:
         if not self.check_pid and not self.thread_started:
             self._start_handler_thread()
 
-        # Set 'no', color_bad as default output. Replaced if VPN active.
-        name = "no"
+        # Set color_bad as default output. Replaced if VPN active.
+        name = None
         color = self.py3.COLOR_BAD
 
         # If we are acting like the default i3status module
