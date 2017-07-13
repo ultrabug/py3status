@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Volume control.
+Microphone control.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
@@ -18,15 +18,15 @@ Configuration parameters:
         (default 10)
     channel: channel to track. Default value is backend dependent.
         (default None)
-    command: Choose between "amixer", "pamixer" or "pactl".
+    command: Choose between "pamixer" or "pactl".
         If None, try to guess based on available commands.
         (default None)
     device: Device to use. Defaults value is backend dependent
         (default None)
     format: Format of the output.
-        (default '♪: {percentage}%')
+        (default '😮: {percentage}%')
     format_muted: Format of the output when the volume is muted.
-        (default '♪: muted')
+        (default '😶: muted')
     max_volume: Allow the volume to be increased past 100% if available.
         pactl supports this (default 120)
     thresholds: Threshold for percent volume.
@@ -69,8 +69,7 @@ volume_status {
 ```
 
 Requires:
-    alsa-utils: alsa backend (tested with alsa-utils 1.0.29-1)
-    pamixer: pulseaudio backend
+    pamixer or pactl: pulseaudio backend
 
 NOTE:
     If you are changing volume state by external scripts etc and
@@ -82,10 +81,10 @@ NOTE:
 @license BSD
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'\u266a: 95%'}
+{'color': '#00FF00', 'full_text': u'\u1f62e: 95%'}
 
 mute
-{'color': '#FF0000', 'full_text': u'\u266a: muted'}
+{'color': '#FF0000', 'full_text': u'\u1f636: muted'}
 """
 
 
@@ -95,19 +94,17 @@ from py3status.modules.volume_status import Py3VolStatusBase, AmixerBackend, Pam
 class Py3status(Py3VolStatusBase):
 
     def __init__(self):
-        self.format = u'🐵: {percentage}%'
-        self.format_muted = u'🐭: muted'
+        self.format = u'😮: {percentage}%'
+        self.format_muted = u'😶: muted'
 
     def post_config_hook(self):
         # Guess command if not set
         if self.command is None:
             self.command = self.py3.check_commands(
-                ['amixer', 'pamixer', 'pactl']
+                ['pamixer', 'pactl']
             )
 
-        if self.command == 'amixer':
-            self.backend = AmixerBackend(self, False)
-        elif self.command == 'pamixer':
+        if self.command == 'pamixer':
             self.backend = PamixerBackend(self, False)
         elif self.command == 'pactl':
             self.backend = PactlBackend(self, False)

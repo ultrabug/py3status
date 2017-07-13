@@ -111,6 +111,8 @@ class AudioBackend():
 
 class AmixerBackend(AudioBackend):
     def setup(self, parent):
+        if not self.output_device:
+            raise RuntimeError('Amixer mic control not yet supported!')
         if self.device is None:
             self.device = 'default'
         if self.channel is None:
