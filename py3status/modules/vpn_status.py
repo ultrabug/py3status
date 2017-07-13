@@ -125,8 +125,8 @@ class Py3status:
                 name = vpn
                 color = self.py3.COLOR_GOOD
 
+        # Format and create the response dict
         full_text = self.py3.safe_format(self.format, {'name': name})
-
         response = {
             'full_text': full_text,
             'color': color,
