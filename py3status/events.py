@@ -62,10 +62,10 @@ class Events(Thread):
         Thread.__init__(self)
         self.config = py3_wrapper.config
         self.error = None
-        self.i3s_config = py3_wrapper.i3status_thread.config
+        self.py3_config = py3_wrapper.config['py3_config']
         self.lock = py3_wrapper.lock
         self.modules = py3_wrapper.modules
-        self.on_click = self.i3s_config['on_click']
+        self.on_click = self.py3_config['on_click']
         self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
@@ -141,9 +141,17 @@ class Events(Thread):
         """
         button = event.get('button', 0)
         default_event = False
+
+        # get the module that the event is for
+        module_info = self.output_modules.get(module_name)
+        if not module_info:
+            return
+        module = module_info['module']
+
         # execute any configured i3-msg command
         # we do not do this for containers
-        if top_level:
+        # modules that have failed do not execute their config on_click
+        if top_level and module.allow_config_clicks:
             click_module = event['name']
             if event['instance']:
                 click_module += ' ' + event['instance']
@@ -156,14 +164,8 @@ class Events(Thread):
             elif button == 2:
                 default_event = True
 
-        # get the module that the event is for
-        module_info = self.output_modules.get(module_name)
-        if not module_info:
-            return
-        module = module_info['module']
-        # if module is a py3status one and it has an on_click function then
-        # call it.
-        if module_info['type'] == 'py3status' and module.click_events:
+        # if module is a py3status one call it.
+        if module_info['type'] == 'py3status':
             module.click_event(event)
             if self.config['debug']:
                 self.py3_wrapper.log('dispatching event {}'.format(event))
@@ -172,7 +174,7 @@ class Events(Thread):
             # unless the on_click event called py3.prevent_refresh()
             if not module.prevent_refresh:
                 self.py3_wrapper.refresh_modules(module_name)
-            default_event = False
+                default_event = False
 
         if default_event:
             # default button 2 action is to clear this method's cache
@@ -182,7 +184,7 @@ class Events(Thread):
             self.py3_wrapper.refresh_modules(module_name)
 
         # find container that holds the module and call its onclick
-        module_groups = self.i3s_config['.module_groups']
+        module_groups = self.py3_config['.module_groups']
         containers = module_groups.get(module_name, [])
         for container in containers:
             self.process_event(container, event, top_level=False)

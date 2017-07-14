@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display time and date information.
+Display date and time.
 
 This module allows one or more datetimes to be displayed.
 All datetimes share the same format_time but can set their own timezones.
@@ -38,6 +38,10 @@ Configuration parameters:
         a list.  The one used can be changed by button click.
         *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
         '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+    round_to_nearest_block: defines how a block icon is chosen. Examples:
+        when set to True,  '13:14' is '🕐', '13:16' is '🕜' and '13:31' is '🕜';
+        when set to False, '13:14' is '🕐', '13:16' is '🕐' and '13:31' is '🕜'.
+        (default True)
 
 Format placeholders:
     {icon} a character representing the time from `blocks`
@@ -47,7 +51,6 @@ Format placeholders:
     {timezone} full timezone name eg `America/Argentina/Buenos_Aires`
     {timezone_unclear} full timezone name eg `America/Argentina/Buenos_Aires`
         but is empty if only one timezone is provided
-
 
 Requires:
     pytz: python library
@@ -81,10 +84,15 @@ clock {
 @author tobes
 @license BSD
 
+SAMPLE OUTPUT
+{'full_text': 'Sun 15 Jan 2017 23:27:17 GMT'}
+
+london
+{'full_text': 'Thursday Feb 23 1:42 AM London'}
 """
+from __future__ import division
 
 import re
-import math
 from datetime import datetime
 from time import time
 
@@ -111,6 +119,7 @@ class Py3status:
         '[{name_unclear} ]%a %H:%M',
         '[{name_unclear} ]{icon}',
     ]
+    round_to_nearest_block = True
 
     def post_config_hook(self):
         # Multiple clocks are possible that can be cycled through
@@ -142,6 +151,12 @@ class Py3status:
             elif '%S' in format_time:
                 # seconds
                 time_delta = 1
+            elif '%s' in format_time:
+                # seconds since unix epoch start
+                time_delta = 1
+            elif '%T' in format_time:
+                # seconds included in "%H:%M:%S"
+                time_delta = 1
             elif '%c' in format_time:
                 # Locale’s appropriate date and time representation
                 time_delta = 1
@@ -158,9 +173,9 @@ class Py3status:
         self.active = 0
 
     def _get_timezone(self, tz):
-        '''
+        """
         Find and return the time zone if possible
-        '''
+        """
         # special Local timezone
         if tz == 'Local':
             try:
@@ -220,13 +235,14 @@ class Py3status:
                 t = datetime.now(zone)
                 format_time = self.format_time[self.active_time_format]
                 icon = None
-                if '{icon}' in format_time:
+                if self.py3.format_contains(format_time, 'icon'):
                     # calculate the decimal hour
                     h = t.hour + t.minute / 60.
+                    if self.round_to_nearest_block:
+                        h += (self.block_hours / len(self.blocks)) / 2
                     # make 12 hourly etc
                     h = h % self.block_hours
-                    idx = int(math.floor(h / self.block_hours * (len(
-                        self.blocks))))
+                    idx = int(h / self.block_hours * len(self.blocks))
                     icon = self.blocks[idx]
 
                 timezone = zone.zone
@@ -248,10 +264,14 @@ class Py3status:
                         timezone=timezone,
                         timezone_unclear=timezone_unclear,
                     ))
-                if self.py3.is_python_2():
-                    format_time = t.strftime(format_time.encode('utf-8'))
+                if self.py3.is_composite(format_time):
+                    for item in format_time:
+                        item['full_text'] = t.strftime(item['full_text'])
                 else:
-                    format_time = t.strftime(format_time)
+                    if self.py3.is_python_2():
+                        format_time = t.strftime(format_time.encode('utf-8'))
+                    else:
+                        format_time = t.strftime(format_time)
                 times[name] = format_time
 
         # work out when we need to update

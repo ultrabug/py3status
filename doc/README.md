@@ -7,6 +7,7 @@ py3status documentation
 * [Available modules](#available_modules)
 * [Ordering modules](#ordering_modules)
 * [Configuring modules](#configuring_modules)
+* [Py3status configuration section](#py3status_section)
 * [Configuration obfuscation](#obfuscation)
 * [Configuring colors](#configuring_color)
 * [Configuring thresholds](#configuring_thresholds)
@@ -93,6 +94,23 @@ imap {
     on_click 1 = "exec thunderbird"
 }
 ```
+
+#### <a name="py3status_section"></a>py3status configuration section
+This special section holds py3status specific configuration. Settings here
+will affect all py3status modules.  Many settings e.g. colors can still be
+overridden by also defining in the individual module.
+
+Global options:
+
+- `nagbar_font`. It will be used as an argument to
+    `i3-nagbar -f`, thus setting its font.
+
+    Example usage:
+    ```
+    py3status {
+        nagbar_font = 'pango:Ubuntu Mono 12'
+    }
+    ```
 
 #### <a name="obfuscation"></a>Configuration obfuscation
 
@@ -464,7 +482,7 @@ class Py3status:
         }
 ```
 
-####Running the example
+#### Running the example
 
 
 Save the file as `hello_world.py` in a directory that
@@ -481,23 +499,23 @@ order += "hello_world"
 Then restart i3 by pressing `Mod` + `Shift` + `R`. Your new module should now
 show up in the status bar.
 
-####How does it work?
+#### How does it work?
 
 The `Py3status` class tells py3status that this is a module. The module gets
 loaded. py3status then calls any public methods that the class contains to get
 a response. In our example there is a single method `hello_world()`.
 Read more here: [module methods](#module_methods).
 
-####The response
+#### The response
 
 The response that a method returns must be a python `dict`.
 It should contain at least two key / values.
 
-######full_text
+###### full_text
 
 This is the text that will be displayed in the status bar.
 
-######cached_until
+###### cached_until
 
 This tells py3status how long it should consider your
 response valid before it should re-run the method to get a fresh response. In
@@ -507,7 +525,7 @@ response always valid.
 
 `cached_until` should be generated via the `self.py3.time_in()` method.
 
-####self.py3
+#### self.py3
 
 This is a special object that gets injected into py3status
 modules. It helps provide functionality for the module, such as the
@@ -848,6 +866,16 @@ __update(module_name=None)__
 Update a module. If `module_name` is supplied the module of that
 name is updated. Otherwise the module calling is updated.
 
+__error(msg, timeout=None)__
+
+Raise an error for the module.
+
+`msg` message to be displayed explaining the error
+
+`timeout` how long before we should retry.  For permanent errors
+`py3.CACHE_FOREVER` should be returned.  If not supplied then the
+modules `cache_timeout` will be used.
+
 __is_color(color)__
 
 Tests to see if a color is defined.
@@ -987,6 +1015,22 @@ This is useful because a simple test like
 will fail if the format string contains placeholder formatting
 eg `'{placeholder:.2f}'`
 
+__get_placeholders_list(format_string, match=None)__
+
+Returns a list of placeholders in `format_string`.
+
+If `match` is provided then it is used to filter the result using
+fnmatch so the following patterns can be used:
+
+    * 	    matches everything
+    ? 	    matches any single character
+    [seq] 	matches any character in seq
+    [!seq] 	matches any character not in seq
+
+This is useful because we just get simple placeholder without any
+formatting that may be applied to them
+eg `'{placeholder:.2f}'` will give `['{placeholder}']`
+
 __safe_format(format_string, param_dict=None, force_composite=False,
 attr_getter=None)__
 
@@ -1079,6 +1123,8 @@ __check_commands(cmd_list)__
 
 Checks to see if the shell commands in list are available using `which`.
 Returns the first available command.
+
+If a string is passed then that command will be checked for.
 
 __command_run(command)__
 

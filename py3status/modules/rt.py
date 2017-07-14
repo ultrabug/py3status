@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the number of ongoing tickets from selected RT queues.
+Display number of ongoing tickets from RT queues.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 300)
@@ -29,6 +29,9 @@ It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': 'general: 24'}
 """
 
 try:

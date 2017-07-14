@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Group a bunch of modules together and switch between them.
+Group modules and switch between them.
 
 In `i3status.conf` groups can be configured. The active one of these groups is
 shown in the i3bar.  The active group can be changed by a user click.  If the
@@ -48,7 +48,6 @@ Configuration parameters:
     open: Is the group open and displaying its content. Has no effect if
         `{button}` not in format (default True)
 
-
 Format placeholders:
     {button} The button to open/close or change the displayed group
     {output} Output of current active module
@@ -78,9 +77,20 @@ group disks {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+{'full_text': 'module 1'}
+
+cycle
+{'full_text': 'module 2'}
+
+cycle_again
+{'full_text': 'module 3'}
 """
 
 from time import time
+
+RETRY_TIMEOUT_NO_CONTENT = 5
 
 
 class Py3status:
@@ -107,6 +117,8 @@ class Py3status:
             self.cycle = 0
 
         self.active = 0
+        self.last_active = 0
+        self.urgent = False
         self._cycle_time = time() + self.cycle
 
         self.open = bool(self.open)
@@ -117,25 +129,29 @@ class Py3status:
             else:
                 self.format = u'{output}'
         # if no button then force open
-        if '{button}' not in self.format:
+        if not self.py3.format_contains(self.format, 'button'):
                 self.open = True
         self.py3.register_function('content_function', self._content_function)
         self.py3.register_function('urgent_function', self._urgent_function)
 
     def _content_function(self):
-        '''
+        """
         This returns a set containing the actively shown module.  This is so we
         only get update events triggered for these modules.
-        '''
+        """
+        # ensure that active is valid
+        self.active = self.active % len(self.items)
+
         return set([self.items[self.active]])
 
     def _urgent_function(self, module_list):
-        '''
+        """
         A contained module has become urgent.  We want to display it to the user
-        '''
+        """
         for module in module_list:
             if module in self.items:
                 self.active = self.items.index(module)
+                self.urgent = True
 
     def _get_output(self):
         if not self.fixed_width:
@@ -171,11 +187,14 @@ class Py3status:
             return
         return self.items[self.active]
 
-    def _next(self):
-        self.active = (self.active + 1) % len(self.items)
-
-    def _prev(self):
-        self.active = (self.active - 1) % len(self.items)
+    def _change_active(self, delta):
+        # we want to ignore any empty outputs
+        # to prevent endless cycling we limit ourselves to only going through
+        # the outputs once.
+        self.active = (self.active + delta) % len(self.items)
+        if not self._get_output() and self.last_active != self.active:
+            self._change_active(delta)
+        self.last_active = self.active
 
     def group(self):
         """
@@ -190,12 +209,21 @@ class Py3status:
             }
 
         if self.open:
+            urgent = False
             if self.cycle and time() >= self._cycle_time:
-                self._next()
+                self._change_active(1)
                 self._cycle_time = time() + self.cycle
-            current_output = self._get_output()
             update_time = self.cycle or None
+            current_output = self._get_output()
+            # if the output is empty try and find some output
+            if not current_output:
+                self._change_active(1)
+                current_output = self._get_output()
+                # there is no output for any module retry later
+                if not current_output:
+                    update_time = RETRY_TIMEOUT_NO_CONTENT
         else:
+            urgent = self.urgent
             current_output = []
             update_time = None
 
@@ -208,10 +236,10 @@ class Py3status:
 
         button = {'full_text': format_control, 'index': 'button'}
         composites = {
-            'output': current_output,
-            'button': button,
+            'output': self.py3.composite_create(current_output),
+            'button': self.py3.composite_create(button),
         }
-        output = self.py3.build_composite(format, composites=composites)
+        output = self.py3.safe_format(format, composites)
 
         if update_time is not None:
             cached_until = self.py3.time_in(update_time)
@@ -220,8 +248,11 @@ class Py3status:
 
         response = {
             'cached_until': cached_until,
-            'composite': output
+            'full_text': output
         }
+
+        if urgent:
+            response['urgent'] = urgent
         return response
 
     def on_click(self, event):
@@ -241,12 +272,13 @@ class Py3status:
         # reset cycle time
         self._cycle_time = time() + self.cycle
         if self.button_next and event['button'] == self.button_next:
-            self._next()
+            self._change_active(1)
         if self.button_prev and event['button'] == self.button_prev:
-            self._prev()
+            self._change_active(-1)
         if self.button_toggle and event['button'] == self.button_toggle:
             # we only toggle if button was used
             if event.get('index') == 'button':
+                self.urgent = False
                 self.open = not self.open
 
 

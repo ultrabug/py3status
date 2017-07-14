@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current AWS bill.
+Display bill for Amazon Web Services.
 
 **WARNING: This module generate some costs on the AWS bill.
 Take care about the cache_timeout to limit these fees!**
@@ -13,7 +13,7 @@ Configuration parameters:
     aws_secret_access_key: Your AWS secret key (default '')
     billing_file: Csv file location (default '/tmp/.aws_billing.csv')
     cache_timeout: How often we refresh this module in seconds (default 3600)
-    format:  string that formats the output. See placeholders below.
+    format: string that formats the output. See placeholders below.
         (default '{bill_amount}$')
     s3_bucket_name: The bucket where billing files are sent by AWS.
         Follow this article to activate this feature:
@@ -31,6 +31,9 @@ Requires:
     boto:
 
 @author nawadanp
+
+SAMPLE OUTPUT
+{'full_text': u'108.78$'}
 """
 
 import boto

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Display Yahoo! Weather forecast as icons.
+Display Yahoo! Weather forecast.
 
 Based on Yahoo! Weather. forecast, thanks guys !
 http://developer.yahoo.com/weather/
 
 Find your woeid using:
-        http://woeid.rosselliot.co.nz/
+    http://woeid.rosselliot.co.nz/
 
 Configuration parameters:
     cache_timeout: how often to check for new forecasts (default 7200)
@@ -56,9 +56,10 @@ weather_yahoo {
 ```
 
 @author ultrabug, rail
-"""
 
-import requests
+SAMPLE OUTPUT
+{'full_text': u'\u2602 \u2601 \u2601 \u2601'}
+"""
 
 
 class Py3status:
@@ -85,7 +86,7 @@ class Py3status:
         Ask Yahoo! Weather. for a forecast
         """
         try:
-            q = requests.get(
+            q = self.py3.request(
                 'https://query.yahooapis.com/v1/public/yql?q=' +
                 'select * from weather.forecast ' +
                 'where woeid="{woeid}" and u="{units}"&format=json'.format(
@@ -93,11 +94,11 @@ class Py3status:
                 '&env=store://datatables.org/alltableswithkeys',
                 timeout=self.request_timeout
             )
-        except requests.ConnectionError:
+        except (self.py3.RequestException):
             return None, None
-        except requests.ReadTimeout:
+        if q.status_code != 200:
+            self.py3.log('Non 200 http response returned code %s' % q.status_code)
             return None, None
-        q.raise_for_status()
         r = q.json()
         try:
             today = r['query']['results']['channel']['item']['condition']
@@ -171,11 +172,15 @@ class Py3status:
             self.format_today,
             dict(icon=self._get_icon(today), units=units, **today)
         )
-        forecast_text = self.forecast_text_separator.join(
-            self.py3.safe_format(
-                self.format_forecast,
-                dict(icon=self._get_icon(f), units=units, **f)
-            ) for f in forecasts)
+        forecast_text = self.py3.composite_join(
+            self.forecast_text_separator,
+            (
+                self.py3.safe_format(
+                    self.format_forecast,
+                    dict(icon=self._get_icon(f), units=units, **f)
+                ) for f in forecasts
+            )
+        )
 
         response['full_text'] = self.py3.safe_format(
             self.format, dict(today=today_text, forecasts=forecast_text)

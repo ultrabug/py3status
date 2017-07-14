@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Checks if a Twitch streamer is online.
+Display status on a given Twitch streamer.
 
 Checks if a streamer is online using the Twitch Kraken API to see
 if a channel is currently streaming or not.
@@ -17,7 +18,7 @@ Configuration parameters:
         (default None)
 
 Format placeholders:
-    {stream_name}:  name of the streamer
+    {stream_name} name of the streamer
 
 Color options:
     color_bad: Stream offline or error
@@ -25,6 +26,12 @@ Color options:
 
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'exotic_bug is live!'}
+
+offline
+{'color': '#FF0000', 'full_text': 'exotic_bug is offline!'}
 """
 
 import requests
@@ -32,14 +39,13 @@ import requests
 
 class Py3status:
     # available configuration parameters
-    # can be customized in i3status.conf
     cache_timeout = 10
     format = "{stream_name} is live!"
     format_invalid = "{stream_name} does not exist!"
     format_offline = "{stream_name} is offline."
     stream_name = None
 
-    def __init__(self):
+    def post_config_hook(self):
         self._display_name = None
 
     def _get_display_name(self):

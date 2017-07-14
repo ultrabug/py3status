@@ -1,29 +1,42 @@
 # -*- coding: utf-8 -*-
 # FIXME color_index param
 """
-Display bitcoin prices using bitcoincharts.com.
+Display bitcoin using bitcoincharts.com.
 
 Configuration parameters:
-    cache_timeout: Should be at least 15 min according to bitcoincharts.
+    cache_timeout: refresh interval for this module. A message from
+        the site: Don't query more often than once every 15 minutes
         (default 900)
     color_index: Index of the market responsible for coloration,
         -1 means no coloration, except when only one market is selected
         (default -1)
     field: Field that is displayed per market,
         see http://bitcoincharts.com/about/markets-api/ (default 'close')
-    hide_on_error: Display empty response if True, else an error message
-         (default False)
-    markets: Comma-separated list of markets. Supported markets can
-        be found at http://bitcoincharts.com/markets/list/
-         (default 'btceUSD, btcdeEUR')
-    symbols: Try to match currency abbreviations to symbols,
+    format: display format for this module (default '{format_bitcoin}')
+    format_bitcoin: display format for bitcoin (default '{market}: {price}{symbol}')
+    format_separator: show separator only if more than one (default ', ')
+    hide_on_error: show error message (default False)
+    markets: list of supported markets http://bitcoincharts.com/markets/list/
+        (default 'btceUSD, btcdeEUR')
+    symbols: if possible, convert currency abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
 
+Format placeholders:
+    {format_bitcoin} format for bitcoin
+
+format_bitcoin placeholders:
+    {market} market names
+    {price} current prices
+    {symbol} currency symbols
+
 Color options:
-    color_bad:  Price has dropped or not available
+    color_bad: Price has dropped or not available
     color_good: Price has increased
 
 @author Andre Doser <doser.andre AT gmail.com>
+
+SAMPLE OUTPUT
+{'full_text': u'btce: 809.40$, btcde: 785.00\u20ac'}
 """
 import json
 
@@ -36,6 +49,9 @@ except ImportError:
     from urllib2 import URLError
     from urllib2 import urlopen
 
+STRING_UNAVAILABLE = 'N/A'
+STRING_ERROR = 'bitcoin_price: site unreachable'
+
 
 class Py3status:
     """
@@ -44,11 +60,53 @@ class Py3status:
     cache_timeout = 900
     color_index = -1
     field = 'close'
+    format = '{format_bitcoin}'
+    format_bitcoin = '{market}: {price}{symbol}'
+    format_separator = ', '
     hide_on_error = False
     markets = 'btceUSD, btcdeEUR'
     symbols = True
 
-    def __init__(self):
+    class Meta:
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'price': ':.2f',
+                    },
+                    'format_strings': ['format_bitcoin'],
+                }
+            ],
+        }
+
+        def deprecate_function(config):
+            if (not config.get('format_separator') and
+                    config.get('bitcoin_separator')):
+                sep = config.get('bitcoin_separator')
+                sep = sep.replace('\\', '\\\\')
+                sep = sep.replace('[', '\[')
+                sep = sep.replace(']', '\]')
+                sep = sep.replace('|', '\|')
+
+                return {'format_separator': sep}
+            else:
+                return {}
+
+        deprecated = {
+            'function': [
+                {
+                    'function': deprecate_function,
+                },
+            ],
+            'remove': [
+                {
+                    'param': 'bitcoin_separator',
+                    'msg': 'obsolete set using `format_separator`',
+                },
+            ],
+        }
+
+    def post_config_hook(self):
         """
         Initialize last_price, set the currency mapping
         and the url containing the data.
@@ -74,23 +132,18 @@ class Py3status:
                 return m[field]
 
     def get_rate(self):
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': ''
-        }
-
-        # get the data from the bitcoincharts website
+        # get the data from bitcoincharts api
         try:
             data = json.loads(urlopen(self.url).read().decode())
         except URLError:
-            if not self.hide_on_error:
-                response['color'] = self.py3.COLOR_BAD
-                response['full_text'] = 'Bitcoincharts unreachable'
-            return response
+            return {
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_BAD,
+                'full_text': '' if self.hide_on_error else STRING_ERROR
+            }
 
         # get the rate for each market given
-        rates, markets = [], self.markets.split(',')
-        color_rate = None
+        color_rate, rates, markets = None, [], self.markets.split(',')
         for i, market in enumerate(markets):
             market = market.strip()
             try:
@@ -100,17 +153,20 @@ class Py3status:
                     color_rate = rate
             except KeyError:
                 continue
-            # market name
-            out = market[:-3] if rate else market
-            out += ': '
-            # rate
-            out += 'N/A' if not rate else '{:.2f}'.format(rate)
-            currency_sym = self.currency_map.get(market[-3:], market[-3:])
-            out += currency_sym if self.symbols else market
-            rates.append(out)
 
-        # only colorize if an index is given or
-        # if only one market is selected
+            # market/price/symbol
+            _market = market[:-3] if rate else market
+            _price = rate if rate else STRING_UNAVAILABLE
+            _symbol = self.currency_map.get(market[-3:], market[-3:])
+            _symbol = _symbol if self.symbols else market
+
+            rates.append(self.py3.safe_format(
+                self.format_bitcoin, {'market': _market, 'price': _price, 'symbol': _symbol})
+            )
+
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+
+        # colorize if an index is given or only one market is selected
         if len(rates) == 1 or self.color_index > -1:
             if self.last_price == 0:
                 pass
@@ -120,7 +176,10 @@ class Py3status:
                 response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
-        response['full_text'] = ', '.join(rates)
+        format_separator = self.py3.safe_format(self.format_separator)
+        format_bitcoin = self.py3.composite_join(format_separator, rates)
+        response['full_text'] = self.py3.safe_format(
+            self.format, {'format_bitcoin': format_bitcoin})
         return response
 
 

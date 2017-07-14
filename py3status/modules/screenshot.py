@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Take a screenshot and optionally upload it to your online server.
+Take screenshots and upload them to a given server.
 
 Display a 'SHOT' button in your i3bar allowing you to take a screenshot and
 directly send (if wanted) the file to your online server.
@@ -12,7 +12,7 @@ but this can be configured with the `screenshot_command` configuration parameter
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)
     file_length: generated file_name length (default 4)
-    push: True/False if yo want to push your screenshot to your server
+    push: True/False if you want to push your screenshot to your server
         (default True)
     save_path: Directory where to store your screenshots. (default '~/Pictures/')
     screenshot_command: the command used to generate the screenshot
@@ -25,6 +25,9 @@ Color options:
     color_good: Displayed color
 
 @author Amaury Brisou <py3status AT puzzledge.org>
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'SHOT'}
 """
 import os
 import random

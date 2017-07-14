@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display if a file or dir exists.
+Display if a file or directory exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
@@ -17,6 +17,12 @@ Format placeholders:
     {icon} icon for the current availability
 
 @author obb, Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u25cf'}
+
+missing
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
 from os.path import expanduser, exists

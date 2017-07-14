@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Display the current window title.
+Display window title.
+
+Prints the name of focused window at frequent intervals.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 0.5)
+    cache_timeout: refresh interval for this module (default 0.5)
+    format: display format for this module (default '{title}')
     max_width: If width of title is greater, shrink it and add '...'
         (default 120)
 
-Requires:
-    i3-py: (https://github.com/ziberna/i3-py)
-        `pip install i3-py`
-
-If payload from server contains wierd utf-8
-(for example one window have something bad in title) - the plugin will
-give empty output UNTIL this window is closed.
-I can't fix or workaround that in PLUGIN, problem is in i3-py library.
-
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': u'business_plan_final3a.doc'}
 """
 
-import i3
+from json import loads
 
 
 def find_focused(tree):
@@ -34,6 +31,7 @@ def find_focused(tree):
             return tree
         else:
             return find_focused(tree['nodes'] + tree['floating_nodes'])
+    return ''
 
 
 class Py3status:
@@ -41,27 +39,24 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 0.5
+    format = '{title}'
     max_width = 120
 
-    def __init__(self):
-        self.text = ''
-
     def window_title(self):
-        window = find_focused(i3.get_tree())
+        tree = loads(self.py3.command_output('i3-msg -t get_tree'))
+        window = find_focused(tree)
 
-        transformed = False
-        if window and 'name' in window and window['name'] != self.text:
-            self.text = (len(window['name']) > self.max_width and
-                         "..." + window['name'][-(self.max_width - 3):] or
-                         window['name'])
-            transformed = True
+        if not window or window.get('name') is None or window.get('type') == 'workspace':
+            title = ''
+        elif len(window['name']) > self.max_width:
+            title = u"...{}".format(window['name'][-(self.max_width - 3):])
+        else:
+            title = window['name']
 
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.text,
-            'transformed': transformed
+            'full_text': self.py3.safe_format(self.format, {'title': title}),
         }
-        return response
 
 
 if __name__ == "__main__":

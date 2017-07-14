@@ -1,16 +1,19 @@
 from __future__ import division
 
+import collections
 import os
 import sys
 import shlex
 
 from fnmatch import fnmatch
 from math import log10
-from time import time
+from pprint import pformat
 from subprocess import Popen, PIPE
+from time import time
 
+from py3status import exceptions
 from py3status.formatter import Formatter, Composite
-
+from py3status.request import HttpResponse
 
 PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = 'error'
@@ -24,10 +27,20 @@ except NameError:
     basestring = str
 
 
+class ModuleErrorException(Exception):
+    """
+    This exception is used to indicate that a module has returned an error
+    """
+
+    def __init__(self, msg, timeout):
+        self.msg = msg
+        self.timeout = timeout
+
+
 class NoneColor:
     """
-    This class represents a none color, that is a color that has been setto
-    None in the config.  We need this so that we can do things like
+    This class represents a color that has explicitly been set as None by the user.
+    We need this so that we can do things like
 
     color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
 
@@ -35,7 +48,7 @@ class NoneColor:
     False, whereas a simple if would show True
     """
     # this attribute is used to identify that this is a none color
-    none_color = True
+    none_setting = True
 
     def __repr__(self):
         # this is for output via module_test
@@ -44,31 +57,47 @@ class NoneColor:
 
 class Py3:
     """
-    Helper object that gets injected as self.py3 into Py3status
+    Helper object that gets injected as ``self.py3`` into Py3status
     modules that have not got that attribute set already.
 
     This allows functionality like:
-        User notifications
-        Forcing module to update (even other modules)
-        Triggering events for modules
+
+    -   User notifications
+    -   Forcing module to update (even other modules)
+    -   Triggering events for modules
 
     Py3 is also used for testing in which case it does not get a module when
     being created.  All methods should work in this situation.
     """
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
+    """
+    Special constant that when returned for ``cache_until`` will cause the
+    module to not update unless externally triggered.
+    """
 
     LOG_ERROR = PY3_LOG_ERROR
+    """Show as Error"""
     LOG_INFO = PY3_LOG_INFO
+    """Show as Informational"""
     LOG_WARNING = PY3_LOG_WARNING
+    """Show as Warning"""
 
     # Shared by all Py3 Instances
-    _formatter = Formatter()
+    _formatter = None
     _none_color = NoneColor()
+
+    # Exceptions
+    Py3Exception = exceptions.Py3Exception
+    CommandError = exceptions.CommandError
+    RequestException = exceptions.RequestException
+    RequestInvalidJSON = exceptions.RequestInvalidJSON
+    RequestTimeout = exceptions.RequestTimeout
+    RequestURLError = exceptions.RequestURLError
 
     def __init__(self, module=None, i3s_config=None, py3status=None):
         self._audio = None
-        self._colors = {}
+        self._config_setting = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._i3s_config = i3s_config or {}
@@ -85,9 +114,17 @@ class Py3:
         if module:
             self._output_modules = module._py3_wrapper.output_modules
             if not i3s_config:
-                config = self._module.i3status_thread.config['general']
-                self._i3s_config = config
+                i3s_config = self._module.config['py3_config']['general']
+                self._i3s_config = i3s_config
             self._py3status_module = module.module_class
+        # create formatter we only if need one but want to pass py3_wrapper so
+        # that we can do logging etc.
+        if not self._formatter:
+            if module:
+                py3_wrapper = module._py3_wrapper
+            else:
+                py3_wrapper = None
+            self.__class__._formatter = Formatter(py3_wrapper)
 
     def __getattr__(self, name):
         """
@@ -97,27 +134,32 @@ class Py3:
         if it exists
         """
         if not name.startswith('COLOR_'):
-            raise AttributeError
-        return self._get_color_by_name(name)
+            raise AttributeError('Attribute `%s` not in Py3' % name)
+        return self._get_config_setting(name.lower())
 
-    def _get_color_by_name(self, name):
-        name = name.lower()
-        if name not in self._colors:
+    def _get_config_setting(self, name, default=None):
+        try:
+            return self._config_setting[name]
+        except KeyError:
             if self._module:
-                color_fn = self._module._py3_wrapper.get_config_attribute
-                color = color_fn(self._module.module_full_name, name)
+                fn = self._module._py3_wrapper.get_config_attribute
+                param = fn(self._module.module_full_name, name)
             else:
                 # running in test mode so config is not available
-                color = self._i3s_config.get(name, False)
-            if color:
-                self._colors[name] = color
-            elif color is False:
-                # False indicates color is not defined
-                self._colors[name] = None
-            else:
-                # None indicates that no color is wanted
-                self._colors[name] = self._none_color
-        return self._colors[name]
+                param = self._i3s_config.get(name, None)
+            # colors are special we want to make sure that we treat a color
+            # that was explicitly set to None as a True value.  Ones that are
+            # not set should be treated as None
+            if name.startswith('color_'):
+                if hasattr(param, 'none_setting'):
+                    param = None
+                elif param is None:
+                    param = self._none_color
+            # if a non-color parameter and was not set then set to default
+            elif hasattr(param, 'none_setting'):
+                param = default
+            self._config_setting[name] = param
+        return self._config_setting[name]
 
     def _get_color(self, color):
         if not color:
@@ -131,7 +173,7 @@ class Py3:
             return color
 
         name = 'color_%s' % color
-        return self._get_color_by_name(name)
+        return self._get_config_setting(name)
 
     def _thresholds_init(self):
         """
@@ -194,6 +236,84 @@ class Py3:
                 msg, notify_user=False, error_frame=error_frame
             )
 
+    def error(self, msg, timeout=None):
+        """
+        Raise an error for the module.
+
+        :param msg: message to be displayed explaining the error
+        :param timeout: how long before we should retry.  For permanent errors
+            `py3.CACHE_FOREVER` should be returned.  If not supplied then the
+            modules `cache_timeout` will be used.
+        """
+        raise ModuleErrorException(msg, timeout)
+
+    def flatten_dict(self, d, delimiter='-', intermediates=False, parent_key=None):
+        """
+        Flatten a dictionary.
+
+        Values that are dictionaries are flattened using delimiter in between
+        (eg. parent-child)
+
+        Values that are lists are flattened using delimiter
+        followed by the index (eg. parent-0)
+
+        example:
+
+        .. code-block:: python
+
+            {
+                'fish_facts': {
+                    'sharks': 'Most will drown if they stop moving',
+                    'skates': 'More than 200 species',
+                },
+                'fruits': ['apple', 'peach', 'watermelon'],
+                'number': 52
+            }
+
+            # becomes
+
+            {
+                'fish_facts-sharks': 'Most will drown if they stop moving',
+                'fish_facts-skates': 'More than 200 species',
+                'fruits-0': 'apple',
+                'fruits-1': 'peach',
+                'fruits-2': 'watermelon',
+                'number': 52
+            }
+
+            # if intermediates is True then we also get unflattened elements
+            # as well as the flattened ones.
+
+            {
+                'fish_facts': {
+                    'sharks': 'Most will drown if they stop moving',
+                    'skates': 'More than 200 species',
+                },
+                'fish_facts-sharks': 'Most will drown if they stop moving',
+                'fish_facts-skates': 'More than 200 species',
+                'fruits': ['apple', 'peach', 'watermelon'],
+                'fruits-0': 'apple',
+                'fruits-1': 'peach',
+                'fruits-2': 'watermelon',
+                'number': 52
+            }
+        """
+        items = []
+        if isinstance(d, list):
+            d = dict(enumerate(d))
+        for k, v in d.items():
+            if parent_key:
+                k = u'{}{}{}'.format(parent_key, delimiter, k)
+            if intermediates:
+                items.append((k, v))
+            if isinstance(v, list):
+                v = dict(enumerate(v))
+            if isinstance(v, collections.Mapping):
+                items.extend(self.flatten_dict(v, delimiter, intermediates, str(k)).items())
+            else:
+                items.append((str(k), v))
+        return dict(items)
+
     def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
         """
         Takes a value and formats it for user output, we can choose the unit to
@@ -206,9 +326,9 @@ class Py3:
         the units that we have been converted to.
 
         By supplying unit to the function we can force those units to be used
-        eg `unit=KiB` would force the output to be in Kibibytes.  By default we
+        eg ``unit=KiB`` would force the output to be in Kibibytes.  By default we
         use non-si units but if the unit is si eg kB then we will switch to si
-        units.  Units can also be things like `Mbit/sec`.
+        units.  Units can also be things like ``Mbit/sec``.
 
         If the auto parameter is False then we use the unit provided.  This
         only makes sense when the unit is singular eg 'Bytes' and we want the
@@ -294,7 +414,7 @@ class Py3:
         has a value set in which case the color should count as False.  This
         function is a helper for this second case.
         """
-        return not (color is None or hasattr(color, 'none_color'))
+        return not (color is None or hasattr(color, 'none_setting'))
 
     def i3s_config(self):
         """
@@ -336,6 +456,11 @@ class Py3:
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
         if self._module:
+            # nicely format logs if we can using pretty print
+            message = pformat(message)
+            # start on new line if multi-line output
+            if '\n' in message:
+                message = '\n' + message
             message = 'Module `{}`: {}'.format(
                 self._module.module_full_name, message)
             self._module._py3_wrapper.log(message, level)
@@ -400,26 +525,31 @@ class Py3:
 
         The following functions can be registered
 
-        > __content_function()__
-        >
-        > Called to discover what modules a container is displaying.  This is
-        > used to determine when updates need passing on to the container and
-        > also when modules can be put to sleep.
-        >
-        > the function must return a set of module names that are being
-        > displayed.
-        >
-        > Note: This function should only be used by containers.
-        >
-        > __urgent_function(module_names)__
-        >
-        > This function will be called when one of the contents of a container
-        > has changed from a non-urgent to an urgent state.  It is used by the
-        > group module to switch to displaying the urgent module.
-        >
-        > `module_names` is a list of modules that have become urgent
-        >
-        > Note: This function should only be used by containers.
+
+            ..  py:function:: content_function()
+
+            Called to discover what modules a container is displaying.  This is
+            used to determine when updates need passing on to the container and
+            also when modules can be put to sleep.
+
+            the function must return a set of module names that are being
+            displayed.
+
+            .. note::
+
+                This function should only be used by containers.
+
+            ..  py:function:: urgent_function(module_names)
+
+            This function will be called when one of the contents of a container
+            has changed from a non-urgent to an urgent state.  It is used by the
+            group module to switch to displaying the urgent module.
+
+            ``module_names`` is a list of modules that have become urgent
+
+            .. note::
+
+                This function should only be used by containers.
         """
         if self._module:
             my_info = self._get_module_info(self._module.module_full_name)
@@ -428,11 +558,13 @@ class Py3:
     def time_in(self, seconds=None, sync_to=None, offset=0):
         """
         Returns the time a given number of seconds into the future.  Helpful
-        for creating the `cached_until` value for the module output.
+        for creating the ``cached_until`` value for the module output.
 
-        Note: from version 3.1 modules no longer need to explicitly set a
-        `cached_until` in their response unless they wish to directly control
-        it.
+        .. note::
+
+            from version 3.1 modules no longer need to explicitly set a
+            ``cached_until`` in their response unless they wish to directly control
+            it.
 
         seconds specifies the number of seconds that should occure before the
         update is required.
@@ -476,10 +608,12 @@ class Py3:
 
     def format_contains(self, format_string, name):
         """
-        Determines if `format_string` contains placeholder `name`
+        Determines if ``format_string`` contains placeholder ``name``
 
-        `name` is tested against placeholders using fnmatch so the following
+        ``name`` is tested against placeholders using fnmatch so the following
         patterns can be used:
+
+        .. code-block:: none
 
             * 	    matches everything
             ? 	    matches any single character
@@ -487,9 +621,9 @@ class Py3:
             [!seq] 	matches any character not in seq
 
         This is useful because a simple test like
-        `'{placeholder}' in format_string`
+        ``'{placeholder}' in format_string``
         will fail if the format string contains placeholder formatting
-        eg `'{placeholder:.2f}'`
+        eg ``'{placeholder:.2f}'``
         """
 
         # We cache things to prevent parsing the format_string more than needed
@@ -514,43 +648,78 @@ class Py3:
         self._format_placeholders_cache[format_string][name] = result
         return result
 
+    def get_placeholders_list(self, format_string, match=None):
+        """
+        Returns a list of placeholders in ``format_string``.
+
+        If ``match`` is provided then it is used to filter the result using
+        fnmatch so the following patterns can be used:
+
+        .. code-block:: none
+
+            * 	    matches everything
+            ? 	    matches any single character
+            [seq] 	matches any character in seq
+            [!seq] 	matches any character not in seq
+
+        This is useful because we just get simple placeholder without any
+        formatting that may be applied to them
+        eg ``'{placeholder:.2f}'`` will give ``['{placeholder}']``
+        """
+        if format_string not in self._format_placeholders:
+            placeholders = self._formatter.get_placeholders(format_string)
+            self._format_placeholders[format_string] = placeholders
+        else:
+            placeholders = self._format_placeholders[format_string]
+
+        if not match:
+            return list(placeholders)
+        # filter matches
+        found = []
+        for placeholder in placeholders:
+            if fnmatch(placeholder, match):
+                found.append(placeholder)
+        return found
+
     def safe_format(self, format_string, param_dict=None,
                     force_composite=False, attr_getter=None):
         """
         Parser for advanced formatting.
 
-        Unknown placeholders will be shown in the output eg `{foo}`.
+        Unknown placeholders will be shown in the output eg ``{foo}``.
 
-        Square brackets `[]` can be used. The content of them will be removed
+        Square brackets ``[]`` can be used. The content of them will be removed
         from the output if there is no valid placeholder contained within.
         They can also be nested.
 
-        A pipe (vertical bar) `|` can be used to divide sections the first
+        A pipe (vertical bar) ``|`` can be used to divide sections the first
         valid section only will be shown in the output.
 
-        A backslash `\` can be used to escape a character eg `\[` will show `[`
+        A backslash ``\`` can be used to escape a character eg ``\[`` will show ``[``
         in the output.
 
-        `\?` is special and is used to provide extra commands to the format
-        string,  example `\?color=#FF00FF`. Multiple commands can be given
-        using an ampersand `&` as a separator, example `\?color=#FF00FF&show`.
+        ``\?`` is special and is used to provide extra commands to the format
+        string,  example ``\?color=#FF00FF``. Multiple commands can be given
+        using an ampersand ``&`` as a separator, example ``\?color=#FF00FF&show``.
 
-        `{<placeholder>}` will be converted, or removed if it is None or empty.
+        ``{<placeholder>}`` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
-        `{number:03.2f}`.
+        ``{number:03.2f}``.
 
         example format_string:
 
-        `"[[{artist} - ]{title}]|{file}"`
-        This will show `artist - title` if artist is present,
-        `title` if title but no artist,
-        and `file` if file is present but not artist or title.
+        ``"[[{artist} - ]{title}]|{file}"``
+        This will show ``artist - title`` if artist is present,
+        ``title`` if title but no artist,
+        and ``file`` if file is present but not artist or title.
 
         param_dict is a dictionary of palceholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
 
-        __Since version 3.3__
+        .. note::
+
+            Added in version 3.3
 
         Composites can be included in the param_dict.
 
@@ -580,13 +749,14 @@ class Py3:
     def build_composite(self, format_string, param_dict=None, composites=None,
                         attr_getter=None):
         """
-        __deprecated in 3.3__ use safe_format().
+        .. note::
+            deprecated in 3.3 use safe_format().
 
         Build a composite output using a format string.
 
-        Takes a format_string and treats it the same way as `safe_format` but
+        Takes a format_string and treats it the same way as ``safe_format()`` but
         also takes a composites dict where each key/value is the name of the
-        placeholder and either an output eg `{'full_text': 'something'}` or a
+        placeholder and either an output eg ``{'full_text': 'something'}`` or a
         list of outputs.
         """
 
@@ -649,9 +819,17 @@ class Py3:
 
     def check_commands(self, cmd_list):
         """
-        Checks to see if commands in list are available using `which`.
-        Returns the first available command.
+        Checks to see if commands in list are available using ``which``.
+
+        returns the first available command.
+
+        If a string is passed then that command will be checked for.
         """
+        # if a string is passed then convert it to a list.  This prevents an
+        # easy mistake that could be made
+        if isinstance(cmd_list, basestring):
+            cmd_list = [cmd_list]
+
         for cmd in cmd_list:
             if self.command_run('which {}'.format(cmd)) == 0:
                 return cmd
@@ -667,12 +845,14 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            return Popen(command, stdout=PIPE, stderr=PIPE).wait()
+            return Popen(
+                command, stdout=PIPE, stderr=PIPE, close_fds=True
+            ).wait()
         except Exception as e:
-            msg = "Command '{cmd}' {error}"
-            raise Exception(msg.format(cmd=command[0], error=e))
+            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e.errno)
+            raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command):
+    def command_output(self, command, shell=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -683,11 +863,11 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE,
-                            universal_newlines=True)
+            process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
+                            universal_newlines=True, shell=shell)
         except Exception as e:
-            msg = "Command '{cmd}' {error}"
-            raise Exception(msg.format(cmd=command[0], error=e))
+            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e)
+            raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
         if self._is_python_2:
@@ -695,11 +875,26 @@ class Py3:
             error = error.decode('utf-8')
         retcode = process.poll()
         if retcode:
-            msg = "Command '{cmd}' returned non-zero exit status {error}"
-            raise Exception(msg.format(cmd=command[0], error=retcode))
+            # under certain conditions a successfully run command may get a
+            # return code of -15 even though correct output was returned see
+            # #664.  This issue seems to be related to arch linux but the
+            # reason is not entirely clear.
+            if retcode == -15:
+                msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
+                self.log(msg.format(cmd=command))
+            else:
+                msg = "Command '{cmd}' returned non-zero exit status {error}"
+                msg = msg.format(cmd=command[0], error=retcode)
+                raise exceptions.CommandError(
+                    msg, error_code=retcode, error=error, output=output
+                )
         if error:
-            msg = "Command '{cmd}' had error {error}"
-            raise Exception(msg.format(cmd=command[0], error=error))
+            msg = "Command '{cmd}' had error {error}".format(
+                cmd=command[0], error=error
+            )
+            raise exceptions.CommandError(
+                msg, error_code=retcode, error=error, output=output
+            )
         return output
 
     def play_sound(self, sound_file):
@@ -761,3 +956,37 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def request(self, url, params=None, data=None, headers=None,
+                timeout=None, auth=None):
+        """
+        Make a request to a url and retrieve the results.
+
+        :param url: url to request eg `http://example.com`
+        :param params: extra query string parameters as a dict
+        :param data: POST data as a dict.  If this is not supplied the GET method will be used
+        :param headers: http headers to be added to the request as a dict
+        :param timeout: timeout for the request in seconds
+        :param auth: authentication info as tuple `(username, password)`
+
+        :returns: HttpResponse
+        """
+
+        # The aim of this function is to be a limited lightweight replacement
+        # for the requests library but using only pythons standard libs.
+
+        # IMPORTANT NOTICE
+        # This function is excluded from private variable hiding as it is
+        # likely to need api keys etc which people may have obfuscated.
+        # Therefore it is important that no logging is done in this function
+        # that might reveal this information.
+
+        if headers is None:
+            headers = {}
+
+        return HttpResponse(url,
+                            params=params,
+                            data=data,
+                            headers=headers,
+                            timeout=timeout,
+                            auth=auth)

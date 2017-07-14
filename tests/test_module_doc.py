@@ -21,18 +21,29 @@ from py3status.docstrings import core_module_docstrings
 IGNORE_MODULE = [
 ]
 
+ILLEGAL_CONFIG_OPTIONS = [
+    'min_width',
+    'separator',
+    'separator_block_width',
+    'align',
+]
+
+IGNORE_ILLEGAL_CONFIG_OPTIONS = [
+    ('group', 'align'),
+]
+
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
 IGNORE_ITEM = [
+    ('netdata', 'format'),  # line too long for docstring parsing
+    ('i3block', 'cache_timeout'),  # can be overriden by interval so undefined
     ('screenshot', 'save_path'),  # home dir issue
     ('rate_counter', 'config_file'),  # home dir issue
     ('group', 'format'),  # dynamic depending on click_mode
     ('github', 'format'),  # dynamic
     ('kdeconnector', '_dev'),  # move to __init__ etc
-    ('arch_updates', '_format_pacman_and_aur'),  # need moving into __init__ etc
-    ('arch_updates', '_format_pacman_only'),  # need moving into __init__ etc
-    ('arch_updates', '_line_separator'),  # need moving into __init__ etc
     ('arch_updates', 'format'),  # dynamic
+    ('spotify', 'sanitize_words'),  # line too long for docstring parsing
 ]
 
 # Obsolete parameters will not have alphabetical order checked
@@ -230,6 +241,18 @@ def check_docstrings():
 
         # combine docstring parameters
         params.update(obsolete)
+
+        # bad config params - these have reserved usage
+        allowed_bad_config_params = [
+            x[1] for x in IGNORE_ILLEGAL_CONFIG_OPTIONS if x[0] == module_name
+        ]
+        bad_config_params = set(ILLEGAL_CONFIG_OPTIONS) & set(params)
+        bad_config_params -= set(allowed_bad_config_params)
+
+        if bad_config_params:
+            msg = 'The following config parameters are reserved and'
+            msg += 'should not be used by modules:\n    {}'
+            errors.append(msg.format(', '.join(bad_config_params)))
 
         # check attributes are in alphabetical order
         keys = list(mod_config.keys())

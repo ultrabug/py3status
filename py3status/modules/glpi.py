@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the total number of open tickets from GLPI.
+Display number of open tickets from GLPI.
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.

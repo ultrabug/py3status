@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Control music/video players.
+Control Audacious or VLC media player.
 
 Provides an icon to control simple functions of audio/video players:
     - start (left click)
@@ -10,16 +10,29 @@ Provides an icon to control simple functions of audio/video players:
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 10)
     debug: enable verbose logging (bool) (default False)
+    format: format of the output (default "{icon}")
     pause_icon: (default '❚❚')
     play_icon: (default '▶')
     stop_icon: (default '◼')
     supported_players: supported players (str) (comma separated list)
-         (default 'audacious,vlc')
+        (default 'audacious,vlc')
     volume_tick: percentage volume change on mouse wheel (int) (positive number
         or None to disable it) (default 1)
 
+Format placeholders:
+    {icon} an icon to control music/video players
+
 @author Federico Ceratto <federico.ceratto@gmail.com>, rixx
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': u'\u25b6'}
+
+stop
+{'full_text': u'\u25fc'}
+
+pause
+{'full_text': u'\u275a\u275a'}
 """
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.
@@ -40,6 +53,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     debug = False
+    format = '{icon}'
     pause_icon = u'❚❚'
     play_icon = u'▶'
     stop_icon = u'◼'
@@ -171,7 +185,7 @@ class Py3status:
 
     def player_control(self):
         return dict(
-            full_text=self.icon,
+            full_text=self.py3.safe_format(self.format, {'icon': self.icon}),
             cached_until=self.py3.time_in(self.cache_timeout),
         )
 

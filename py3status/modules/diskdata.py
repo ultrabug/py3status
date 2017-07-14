@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Display advanced disk usage information
+Display disk information.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds.
-        (default 10)
-    disk: disk or partition whose stat to check. Set to None to get global stats.
+    cache_timeout: refresh interval for this module. (default 10)
+    disk: show stats for disk or partition, i.e. `sda1`. None for all disks.
         (default None)
-    format: format of the output.
+    format: display format for this module.
         (default "{disk}: {used_percent}% ({total})")
-    format_rate: format for the rates value
+    format_rate: display format for rates value
         (default "[\?min_length=11 {value:.1f} {unit}]")
-    format_space: format for the disk space values
+    format_space: display format for disk space values
         (default "[\?min_length=5 {value:.1f}]")
     sector_size: size of the disk's sectors.
         (default 512)
@@ -49,11 +48,13 @@ Color thresholds:
 
 @author guiniol
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'all:  34.4% ( 82.0 KiB/s)'}
 """
 
 from __future__ import division  # python2 compatibility
 from time import time
-import subprocess
 
 
 class Py3status:
@@ -73,7 +74,7 @@ class Py3status:
     }
     unit = "B/s"
 
-    def __init__(self, *args, **kwargs):
+    def post_config_hook(self):
         """
         Format of total, up and down placeholders under self.format.
         As default, substitutes self.left_align and self.precision as %s and %s
@@ -86,10 +87,11 @@ class Py3status:
         self.last_time = time()
 
     def space_and_io(self):
-
         self.values = {'disk': self.disk if self.disk else 'all'}
 
-        if '{read}' in self.format or '{write}' in self.format or '{total}' in self.format:
+        if (self.py3.format_contains(self.format, 'read') or
+                self.py3.format_contains(self.format, 'write') or
+                self.py3.format_contains(self.format, 'total')):
             # time from previous check
             ios = self._get_io_stats(self.disk)
             timedelta = time() - self.last_time
@@ -113,7 +115,8 @@ class Py3status:
             self.py3.threshold_get_color(total, 'total')
             self.py3.threshold_get_color(write, 'write')
 
-        if '{free}' in self.format or '{used' in self.format:
+        if (self.py3.format_contains(self.format, 'free') or
+                self.py3.format_contains(self.format, 'used*')):
             free, used, used_percent = self._get_free_space(self.disk)
 
             self.values['free'] = self.py3.safe_format(self.format_space, {'value': free})
@@ -123,8 +126,10 @@ class Py3status:
             self.py3.threshold_get_color(free, 'free')
             self.py3.threshold_get_color(used, 'used')
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, self.values)}
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, self.values)
+        }
 
     def _get_free_space(self, disk):
         if disk and not disk.startswith('/dev/'):
@@ -133,14 +138,20 @@ class Py3status:
         total = 0
         used = 0
         free = 0
+        devs = []
 
-        df = subprocess.check_output(['df']).decode('utf-8')
+        df = self.py3.command_output('df')
         for line in df.splitlines():
             if (disk and line.startswith(disk)) or (disk is None and line.startswith('/dev/')):
                 data = line.split()
+                if data[0] in devs:
+                    # Make sure to count each block device only one time
+                    # some filesystems eg btrfs have multiple entries
+                    continue
                 total += int(data[1]) / 1024 / 1024
                 used += int(data[2]) / 1024 / 1024
                 free += int(data[3]) / 1024 / 1024
+                devs.append(data[0])
 
         if total == 0:
             return free, used, 'err'

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Display the list of network interfaces and their IPs.
+Display list of network interfaces and IP addresses.
 
 This module supports both IPv4 and IPv6. There is the possibility to blacklist
 interfaces and IPs, as well as to show interfaces with no IP address. It will
 show an alternate text if no IP are available.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds.
+    cache_timeout: refresh interval for this module in seconds.
         (default 30)
     format: format of the output.
         (default 'Network: {format_iface}')
@@ -49,11 +49,16 @@ net_iplist {
 
 Requires:
     ip: utility found in iproute2 package
+
+@author guiniol
+
+SAMPLE OUTPUT
+{'color': '#00FF00',
+ 'full_text': u'Network: wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
 """
 
 
 import re
-from subprocess import check_output
 from fnmatch import fnmatch
 
 
@@ -68,10 +73,10 @@ class Py3status:
     ip_sep = ','
     remove_empty = True
 
-    def __init__(self):
+    def post_config_hook(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
-        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)/')
-        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)/')
+        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
+        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
 
     def ip_list(self):
         response = {
@@ -103,18 +108,20 @@ class Py3status:
         if not connection:
             response['full_text'] = self.py3.safe_format(self.format_no_ip,
                                                          {'format_iface':
-                                                             self.iface_sep.join(iface_list)})
+                                                             self.py3.composite_join(
+                                                                 self.iface_sep, iface_list)})
             response['color'] = self.py3.COLOR_BAD
         else:
             response['full_text'] = self.py3.safe_format(self.format,
                                                          {'format_iface':
-                                                             self.iface_sep.join(iface_list)})
+                                                             self.py3.composite_join(
+                                                                 self.iface_sep, iface_list)})
             response['color'] = self.py3.COLOR_GOOD
 
         return response
 
     def _get_data(self):
-        txt = check_output(['ip', 'address', 'show']).decode('utf-8').splitlines()
+        txt = self.py3.command_output(['ip', 'address', 'show']).splitlines()
 
         data = {}
         for line in txt:

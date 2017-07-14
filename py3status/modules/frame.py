@@ -66,6 +66,18 @@ group {
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+[
+    {'full_text': u'module 1', 'separator': True},
+    {'full_text': u'module 2', 'separator': True},
+    {'full_text': u'module 3', 'separator': True},
+    {'full_text': u'-', 'separator': True}
+]
+
+closed
+{'full_text': u'+'}
+
 """
 
 
@@ -82,8 +94,13 @@ class Py3status:
         container = True
 
     def post_config_hook(self):
-        if '{button}' not in self.format:
+        self.urgent = False
+        if not self.py3.format_contains(self.format, 'button'):
             self.open = True
+        self.py3.register_function('urgent_function', self._urgent_function)
+
+    def _urgent_function(self, module_list):
+        self.urgent = True
 
     def frame(self):
 
@@ -99,17 +116,22 @@ class Py3status:
                     if out and 'separator' not in out[-1]:
                         # we copy the item as we do not want to change the
                         # original.
-                        out[-1] = out[-1].copy()['separator'] = True
+                        last_item = out[-1].copy()
+                        last_item['separator'] = True
+                        out[-1] = last_item
                 else:
                     if self.format_separator:
                         out += [{'full_text': self.format_separator}]
                 output += out
+            urgent = False
 
             # Remove last separator
             if self.format_separator:
                 output = output[:-1]
+        else:
+            urgent = self.urgent
 
-        if '{button}' in self.format:
+        if self.py3.format_contains(self.format, 'button'):
             if self.open:
                 format_control = self.format_button_open
             else:
@@ -120,14 +142,19 @@ class Py3status:
             button = None
 
         composites = {
-            'output': output,
-            'button': button,
+            'output': self.py3.composite_create(output),
+            'button': self.py3.composite_create(button),
         }
-        output = self.py3.build_composite(self.format, composites=composites)
-        return {
+        output = self.py3.safe_format(self.format, composites)
+        response = {
             'cached_until': self.py3.CACHE_FOREVER,
-            'composite': output,
+            'full_text': output,
         }
+
+        if urgent:
+            response['urgent'] = urgent
+
+        return response
 
     def on_click(self, event):
         """
@@ -136,6 +163,7 @@ class Py3status:
         if event['button'] == self.button_toggle:
             # we only toggle if button was used
             if event.get('index') == 'button' and self.py3.is_my_event(event):
+                self.urgent = False
                 self.open = not self.open
 
 

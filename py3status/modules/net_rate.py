@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current network transfer rate.
+Display network transfer rate.
 
 Configuration parameters:
     all_interfaces: ignore self.interfaces, but not self.interfaces_blacklist
@@ -48,6 +48,9 @@ Color thresholds:
 
 @author shadowprince
 @license Eclipse Public License
+
+SAMPLE OUTPUT
+{'full_text': 'eno1:  852.2 KiB/s'}
 """
 
 from __future__ import division  # python2 compatibility

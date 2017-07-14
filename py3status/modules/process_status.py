@@ -3,25 +3,30 @@
 Display if a process is running.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format_not_running: what to display when process is not running
-        (default '■')
-    format_running: what to display when process running (default '●')
-    full: if True, match against the full command line and not just the
-        process name (default False)
-    process: the process name to check if it is running (default None)
+    cache_timeout: refresh interval for this module (default 10)
+    format: default format for this module (default '{icon}')
+    full: if True, match against full command line (default False)
+    icon_off: show when process not running (default '■')
+    icon_on: show when process running (default '●')
+    process: process name to check for (default None)
+
+Format placeholders:
+    {icon} process icon
+    {process} process name
 
 Color options:
-    color_bad: Process not running or error
-    color_good: Process running
+    color_bad: Not running
+    color_good: Running
 
 @author obb, Moritz Lüdecke
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u25cf'}
+
+off
+{'color': '#FF0000', 'full_text': u'\u25a0'}
 """
-
-import os
-import subprocess
-
-ERR_NO_PROCESS = 'no process name given'
+STRING_ERROR = 'process_status: N/A'
 
 
 class Py3status:
@@ -29,42 +34,63 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format_not_running = u'■'
-    format_running = u'●'
+    format = '{icon}'
     full = False
+    icon_off = u'■'
+    icon_on = u'●'
     process = None
 
-    def _get_text(self):
-        fnull = open(os.devnull, 'w')
-        pgrep = ["pgrep", self.process]
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_running',
+                    'new': 'icon_on',
+                    'msg': 'obsolete parameter use `icon_on`',
+                },
+                {
+                    'param': 'format_not_running',
+                    'new': 'icon_off',
+                    'msg': 'obsolete parameter use `icon_off`',
+                },
+            ],
+        }
 
-        if self.full:
-            pgrep = ["pgrep", "-f", self.process]
+    def post_config_hook(self):
+        self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
+        self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
 
-        if subprocess.call(pgrep,
-                           stdout=fnull, stderr=fnull) == 0:
-            text = self.format_running
-            color = self.py3.COLOR_GOOD
-        else:
-            text = self.format_not_running
-            color = self.py3.COLOR_BAD
-
-        return (color, text)
+    def _is_running(self):
+        try:
+            pgrep = ["pgrep", self.process]
+            if self.full:
+                pgrep = ["pgrep", "-f", self.process]
+            self.py3.command_output(pgrep)
+            return True
+        except:
+            return False
 
     def process_status(self):
         if self.process is None:
-            color = self.py3.COLOR_BAD
-            text = ERR_NO_PROCESS
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_ERROR
+            }
+
+        if self._is_running():
+            icon = self.icon_on
+            color = self.color_on
         else:
-            (color, text) = self._get_text()
+            icon = self.icon_off
+            color = self.color_off
 
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
-            'color': color
+            'color': color,
+            'full_text': self.py3.safe_format(
+                self.format, {'icon': icon, 'process': self.process})
         }
-
-        return response
 
 
 if __name__ == "__main__":

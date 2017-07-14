@@ -16,16 +16,18 @@ gradient by default this is the colors of the rainbow.  This module will
 increase the amount of updates that py3status needs to do so should be used
 sparingly.
 
-
 Configuration parameters:
-    cycle_time: How often we cdo a color change in seconds
-    (default 1)
+    cycle_time: How often we change this color in seconds
+        (default 1)
     force: If True then the color will always be set.  If false the color will
         only be changed if it has not been set by a module.
         (default False)
+    format: display format for this module (default '{output}')
     gradient: The colors we will cycle through, This is a list of hex values
         *(default [ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF',
         '#0000FF', '#FF00FF', '#FF0000', ])*
+    multi_color: If True then each module the rainbow contains will be colored
+        differently (default True)
     steps: Number of steps between each color in the gradient
         (default 10)
 
@@ -58,6 +60,15 @@ rainbow blink_time{
 ```
 
 @author tobes
+
+SAMPLE OUTPUT
+[
+    {'color': '#FF0000', 'full_text': 'module 1'},
+    {'color': '#CCFF00', 'full_text': 'module 2', 'separator': True},
+    {'color': '#00FF66', 'full_text': 'module 3', 'separator': True},
+    {'color': '#0066FF', 'full_text': 'module 4', 'separator': True},
+    {'color': '#CC00FF', 'full_text': 'module 5', 'separator': True}
+]
 """
 
 from __future__ import division
@@ -65,11 +76,16 @@ import re
 import math
 from time import time
 
+HEX_RE = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
+
 
 class Py3status:
-
+    """
+    """
+    # configuration parameters
     cycle_time = 1
     force = False
+    format = '{output}'
     gradient = [
         '#FF0000',
         '#FFFF00',
@@ -79,23 +95,18 @@ class Py3status:
         '#FF00FF',
         '#FF0000',
     ]
+    multi_color = True
     steps = 10
 
     class Meta:
         container = True
 
-    def __init__(self):
-        self.items = []
-        self.initialized = False
-
-    def _init(self):
-        self.initialized = True
-
-        re_hex = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
-
+    def post_config_hook(self):
         def from_hex(color):
-            # convert hex color #xxx or #xxxxxx to [r, g, b]
-            if not re_hex.match(color):
+            """
+            Convert hex color #xxx or #xxxxxx to [r, g, b].
+            """
+            if not HEX_RE.match(color):
                 color = '#FFF'
             if len(color) == 7:
                 return (int(color[1:3], 16), int(color[3:5], 16),
@@ -104,12 +115,16 @@ class Py3status:
                     int(color[3], 16) * 17)
 
         def to_hex(color):
-            # convert [r, g, b] to hex
+            """
+            Convert [r, g, b] to hex.
+            """
             return '#{:02X}{:02X}{:02X}'.format(
                 int(color[0]), int(color[1]), int(color[2]))
 
         def make_color(c1, c2, t):
-            # generate a mid color between c1 and c2
+            """
+            Generate a mid color between c1 and c2.
+            """
             def fade(i):
                 a = c1[i]
                 b = c2[i]
@@ -134,7 +149,9 @@ class Py3status:
         self._set_cycle_time()
 
     def _set_cycle_time(self):
-        # set next cycle update time synced to nearest second or 0.1 of second
+        """
+        Set next cycle update time synced to nearest second or 0.1 of second.
+        """
         now = time()
         try:
             cycle_time = now - self._cycle_time
@@ -150,9 +167,9 @@ class Py3status:
         self._cycle_time = now + self.cycle_time
 
     def _get_current_output(self):
-        '''
-        get the child modules output.
-        '''
+        """
+        Get child modules output.
+        """
         output = []
         for item in self.items:
             out = self.py3.get_output(item)
@@ -162,12 +179,14 @@ class Py3status:
         return output
 
     def rainbow(self):
-
-        if not self.initialized:
-            self._init()
-
+        """
+        Make a rainbow!
+        """
         if not self.items:
-            return {'full_text': '', 'cached_until': self.py3.CACHE_FOREVER}
+            return {
+                'full_text': '',
+                'cached_until': self.py3.CACHE_FOREVER
+            }
 
         if time() >= self._cycle_time - (self.cycle_time / 10):
             self.active_color = (self.active_color + 1) % len(self.colors)
@@ -175,16 +194,26 @@ class Py3status:
 
         color = self.colors[self.active_color]
         content = self._get_current_output()
-
         output = []
-        for item in content:
+
+        if content:
+            step = len(self.colors) // len(content)
+        for index, item in enumerate(content):
+            if self.multi_color:
+                offset = (self.active_color + (index * step)) % len(self.colors)
+                color = self.colors[offset]
             obj = item.copy()
             if self.force or not obj.get('color'):
                 obj['color'] = color
             output.append(obj)
 
-        response = {'cached_until': self._cycle_time, 'composite': output}
-        return response
+        composites = {'output': self.py3.composite_create(output)}
+        rainbow = self.py3.safe_format(self.format, composites)
+
+        return {
+            'cached_until': self._cycle_time,
+            'full_text': rainbow
+        }
 
 
 if __name__ == "__main__":

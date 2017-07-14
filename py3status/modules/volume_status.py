@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display current sound volume.
+Volume control.
 
 Expands on the standard i3status volume module by adding color
 and percentage threshold settings.
@@ -73,17 +73,23 @@ Requires:
     pamixer: pulseaudio backend
 
 NOTE:
-        If you are changing volume state by external scripts etc and
-        want to refresh the module quicker than the i3status interval,
-        send a USR1 signal to py3status in the keybinding.
-        Example: killall -s USR1 py3status
+    If you are changing volume state by external scripts etc and
+    want to refresh the module quicker than the i3status interval,
+    send a USR1 signal to py3status in the keybinding.
+    Example: killall -s USR1 py3status
 
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'\u266a: 95%'}
+
+mute
+{'color': '#FF0000', 'full_text': u'\u266a: muted'}
 """
 
 import re
-from os import devnull
+from os import devnull, environ as os_environ
 from subprocess import check_output, call
 
 
@@ -157,8 +163,14 @@ class PamixerBackend(AudioBackend):
 
 class PactlBackend(AudioBackend):
     def setup(self, parent):
+        # get available device number if not specified
         if self.device is None:
-            self.device = "0"
+            self.device = check_output(
+                ['pactl', 'list', 'short', 'sinks']).decode('utf-8').split()[0]
+
+        self.english_env = dict(os_environ)
+        self.english_env['LC_ALL'] = 'C'
+
         self.max_volume = parent.max_volume
         self.re_volume = re.compile(
             r'Sink \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(self.device),
@@ -166,7 +178,8 @@ class PactlBackend(AudioBackend):
         )
 
     def get_volume(self):
-        output = check_output(['pactl', 'list', 'sinks']).decode('utf-8').strip()
+        output = check_output(
+            ['pactl', 'list', 'sinks'], env=self.english_env).decode('utf-8').strip()
         muted, perc = self.re_volume.search(output).groups()
 
         # muted should be 'on' or 'off'
@@ -183,10 +196,10 @@ class PactlBackend(AudioBackend):
             change = '{}%'.format(self.max_volume)
         else:
             change = '+{}%'.format(delta)
-        self.run_cmd(['pactl', 'set-sink-volume', self.device, change])
+        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, change])
 
     def volume_down(self, delta):
-        self.run_cmd(['pactl', 'set-sink-volume', self.device, '-{}%'.format(delta)])
+        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, '-{}%'.format(delta)])
 
     def toggle_mute(self):
         self.run_cmd(['pactl', 'set-sink-mute', self.device, 'toggle'])
@@ -285,9 +298,9 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        '''
+        """
         Volume up/down and toggle mute.
-        '''
+        """
         button = event['button']
         # volume up
         if self.button_up and button == self.button_up:

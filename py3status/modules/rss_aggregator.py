@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the unread feed items in your favorite RSS aggregator.
+Display unread feeds in your favorite RSS aggregator.
 
 For now, supported aggregators are:
     * OwnCloud/NextCloud with News application
@@ -52,6 +52,9 @@ Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests
 
 @author raspbeguy
+
+SAMPLE OUTPUT
+{'full_text': 'Feed: 488'}
 """
 
 import requests

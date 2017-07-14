@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
 """
-Display balances of diverse crypto-currencies
+Display balances of diverse crypto-currencies.
 
 This module grabs your current balance of different crypto-currents from a
 wallet server. The server must conform to the bitcoin RPC specification.
@@ -96,6 +95,9 @@ coin_balance {
 
 @author Felix Morgner <felix.morgner@gmail.com>
 @license 3-clause-BSD
+
+SAMPLE OUTPUT
+{'full_text': 'LTC: 90.6428'}
 """
 
 from errno import ENOENT
@@ -126,7 +128,7 @@ class Py3status:
     protocol = 'http'
     username = None
 
-    def __init__(self):
+    def post_config_hook(self):
         self._active_coins = []
         self._config = None
         self._credential_cache = {}

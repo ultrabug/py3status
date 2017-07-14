@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Display uname information.
+Display system information from uname.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 3600)
     format: see placeholders below (default '{system} {release} {machine}')
 
 Format placeholders:
@@ -15,6 +14,9 @@ Format placeholders:
     {processor} the (real) processor name, e.g. 'amdk6'
 
 @author ultrabug (inspired by ndalliard)
+
+SAMPLE OUTPUT
+{'full_text': 'Linux 4.8.15-300.fc25.x86_64 x86_64'}
 """
 
 from platform import uname
@@ -24,13 +26,22 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 3600
     format = '{system} {release} {machine}'
+
+    class Meta:
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'cache_timeout',
+                    'msg': 'obsolete parameter',
+                },
+            ],
+        }
 
     def show_uname(self):
         system, node, release, version, machine, processor = uname()
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(
                 self.format,
                 dict(system=system,

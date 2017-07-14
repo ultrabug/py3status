@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-The number of package updates pending for a Fedora Linux installation.
+Display number of pending updates for Fedora Linux.
 
 This will display a count of how many `dnf` updates are waiting
 to be installed.
@@ -24,6 +24,9 @@ Color options:
 
 @author tobes
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#FFFF00', 'full_text': 'DNF: 14'}
 """
 
 import subprocess

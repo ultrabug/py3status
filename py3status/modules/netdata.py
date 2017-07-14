@@ -3,50 +3,54 @@
 Display network speed and bandwidth usage.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 2)
-    low_speed: threshold (default 30)
-    low_traffic: threshold (default 400)
-    med_speed: threshold (default 60)
-    med_traffic: threshold (default 700)
-    nic: the network interface to monitor (default 'eth0')
+    cache_timeout: refresh interval for this module (default 2)
+    format: display format for this module
+        *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑]
+        [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
+    nic: network interface to use (default None)
+    thresholds: color thresholds to use
+        *(default {'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
+        'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]})*
 
-Color options:
-    color_bad: Rate is below low threshold
-    color_degraded: Rate is below med threshold
-    color_good: Rate is med threshold or higher
+Format placeholders:
+    {nic}      network interface
+    {down}     number of download speed
+    {up}       number of upload speed
+    {download} number of download usage
+    {upload}   number of upload usage
+    {total}    number of total usage
+
+Color thresholds:
+    {down}     color threshold of download speed
+    {total}    color threshold of total usage
 
 @author Shahin Azad <ishahinism at Gmail>
-"""
 
-import subprocess
+SAMPLE OUTPUT
+[
+    {'full_text': 'eth0 '},
+    {'full_text': 'LAN(Kb):  77.8↓  26.9↑ ', 'color': '#00FF00'},
+    {'full_text': 'T(Mb): 394↓  45↑ 438↕', 'color': '#FFFF00'},
+]
+"""
 
 
 class GetData:
-    """Get system status.
+    """
+    Get system status.
     """
     def __init__(self, nic):
         self.nic = nic
 
-    def execCMD(self, cmd, arg):
-        """Take a system command and its argument, then return the result.
-
-        Arguments:
-        - `cmd`: system command.
-        - `arg`: argument.
-        """
-        result = subprocess.check_output([cmd, arg])
-        return result
-
     def netBytes(self):
-        """Execute 'cat /proc/net/dev', find the interface line (Default
-        'eth0') and grab received/transmitted bytes.
-
         """
-        net_data = self.execCMD('cat', '/proc/net/dev').decode('utf-8').split()
+        Get bytes directly from /proc.
+        """
+        with open('/proc/net/dev') as fh:
+            net_data = fh.read().split()
         interface_index = net_data.index(self.nic + ':')
         received_bytes = int(net_data[interface_index + 1])
         transmitted_bytes = int(net_data[interface_index + 9])
-
         return received_bytes, transmitted_bytes
 
 
@@ -55,71 +59,122 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 2
-    low_speed = 30
-    low_traffic = 400
-    med_speed = 60
-    med_traffic = 700
-    nic = 'eth0'
+    format = u'{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] ' + \
+        u'[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]'
+    nic = None
+    thresholds = {
+        'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
+        'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]
+    }
+
+    class Meta:
+        def deprecate_function(config):
+            return {
+                'thresholds': {
+                    'down': [
+                        (0, 'bad'),
+                        (config.get('low_speed', 30), 'degraded'),
+                        (config.get('med_speed', 60), 'good')
+                    ],
+                    'total': [
+                        (0, 'good'),
+                        (config.get('low_traffic', 400), 'degraded'),
+                        (config.get('med_traffic', 700), 'bad')
+                    ]
+                }
+            }
+
+        deprecated = {
+            'function': [
+                {'function': deprecate_function},
+            ],
+            'remove': [
+                {
+                    'param': 'low_speed',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'med_speed',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'low_traffic',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+                {
+                    'param': 'med_traffic',
+                    'msg': 'obsolete, set using thresholds parameter',
+                },
+            ],
+        }
+
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'down': ':5.1f',
+                        'up': ':5.1f',
+                        'download': ':3.0f',
+                        'upload': ':3.0f',
+                        'total': ':3.0f',
+                    },
+                    'format_strings': ['format']
+                },
+            ],
+        }
 
     def __init__(self):
         self.old_transmitted = 0
         self.old_received = 0
 
-    def net_speed(self):
+    def post_config_hook(self):
         """
-        Calculate network speed ('eth0' interface) and return it.
-        You can change the interface using 'nic' configuration parameter.
+        Get network interface.
+        """
+        if self.nic is None:
+            # Get default gateway directly from /proc.
+            with open('/proc/net/route') as fh:
+                for line in fh:
+                    fields = line.strip().split()
+                    if fields[1] == '00000000' and int(fields[3], 16) & 2:
+                        self.nic = fields[0]
+                        break
+            if self.nic is None:
+                self.nic = 'lo'
+            self.py3.log('selected nic: %s' % self.nic)
+
+    def netdata(self):
+        """
+        Calculate network speed and network traffic.
         """
         data = GetData(self.nic)
-        response = {'full_text': ''}
-
         received_bytes, transmitted_bytes = data.netBytes()
-        dl_speed = (received_bytes - self.old_received) / 1024.
-        up_speed = (transmitted_bytes - self.old_transmitted) / 1024.
 
-        if dl_speed < self.low_speed:
-            response['color'] = self.py3.COLOR_BAD
-        elif dl_speed < self.med_speed:
-            response['color'] = self.py3.COLOR_DEGRADED
-        else:
-            response['color'] = self.py3.COLOR_GOOD
-
-        response['full_text'] = "LAN(Kb): {:5.1f}↓ {:5.1f}↑"\
-            .format(dl_speed, up_speed)
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
-
+        # net_speed (statistic)
+        down = (received_bytes - self.old_received) / 1024.
+        up = (transmitted_bytes - self.old_transmitted) / 1024.
         self.old_received = received_bytes
         self.old_transmitted = transmitted_bytes
 
-        return response
-
-    def net_traffic(self):
-        """
-        Calculate networks used traffic.
-        You can change the interface using 'nic' configuration parameter.
-        """
-        data = GetData(self.nic)
-        response = {'full_text': ''}
-
-        received_bytes, transmitted_bytes = data.netBytes()
+        # net_traffic (statistic)
         download = received_bytes / 1024 / 1024.
         upload = transmitted_bytes / 1024 / 1024.
         total = download + upload
 
-        if total < self.low_traffic:
-            response['color'] = self.py3.COLOR_GOOD
-        elif total < self.med_traffic:
-            response['color'] = self.py3.COLOR_DEGRADED
-        else:
-            response['color'] = self.py3.COLOR_BAD
+        # color threshold
+        self.py3.threshold_get_color(down, 'down')
+        self.py3.threshold_get_color(total, 'total')
 
-        response['full_text'] = "T(Mb): {:3.0f}↓ {:3.0f}↑ {:3.0f}↕".format(
-            download,
-            upload,
-            total
-        )
-
-        return response
+        netdata = self.py3.safe_format(self.format, {'down': down,
+                                                     'up': up,
+                                                     'download': download,
+                                                     'upload': upload,
+                                                     'total': total,
+                                                     'nic': self.nic})
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': netdata
+        }
 
 
 if __name__ == "__main__":

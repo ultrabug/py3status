@@ -16,15 +16,14 @@ Configuration parameters:
         will be replaced by the current exchange rate.
         (default '${USD} £{GBP} ¥{JPY}')
 
-Requires:
-    requests: python lib
-
 @author tobes
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': u'$1.0617 \xa30.8841 \xa5121.5380'}
 """
 
 import re
-import requests
 
 URL = 'http://query.yahooapis.com/v1/public/yql?'
 URL += 'q=select * from yahoo.finance.xchange where pair in ({currencies})'
@@ -43,22 +42,20 @@ class Py3status:
         # create url
         currencies = ['"%s%s"' % (self.base, cur) for cur in self.currencies]
         self.data_url = URL.format(currencies=','.join(currencies))
-        # cache for rates data as sometimes we do not recieve valid data
+        # cache for rates data as sometimes we do not receive valid data
         self.rates_data = {currency: '?' for currency in self.currencies}
 
     def rates(self):
         try:
-            result = requests.get(self.data_url, timeout=self.request_timeout)
-        except requests.ConnectionError:
-            result = None
-        except requests.ReadTimeout:
+            result = self.py3.request(self.data_url, timeout=self.request_timeout)
+        except (self.py3.RequestException):
             result = None
         rates = []
         if result:
             data = result.json()
             try:
                 rates = data['query']['results']['rate']
-            except KeyError:
+            except (KeyError, TypeError):
                 pass
 
         # Single currency is not passed as a 1 element list

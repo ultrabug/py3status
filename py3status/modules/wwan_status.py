@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display current network and ip address for newer Huwei modems.
+Display network and IP address for newer Huwei modems.
 
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
 Stick LTE III but may work on other devices, too.
@@ -47,6 +47,12 @@ Requires:
 
 @author Timo Kohorst timo@kohorst-online.com
 PGP: B383 6AE6 6B46 5C45 E594 96AB 89D2 209D DBF3 2BB5
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': u'WWAN: 4G 37.48.108.0'}
+
+off
+{'color': '#FF0000', 'full_text': u'WWAN: down'}
 """
 
 import netifaces as ni

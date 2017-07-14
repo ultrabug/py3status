@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display Icinga2 service status information.
+Display service status for Icinga2.
 
 Configuration parameters:
     base_url: the base url to the icinga-web2 services list (default '')

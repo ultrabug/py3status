@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Display currently active (started) taskwarrior tasks.
+Display tasks currently running in taskwarrior.
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in seconds (default 5)
+    cache_timeout: refresh interval for this module (default 5)
+    format: display format for this module (default '{task}')
+
+Format placeholders:
+    {task} active tasks
 
 Requires
     task: https://taskwarrior.org/download/
 
 @author James Smith http://jazmit.github.io/
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': '1 Prepare first draft, 2 Buy milk'}
 """
 
-# import your useful libs here
-from subprocess import check_output
 import json
-import shlex
+STRING_NOT_INSTALLED = "isn't installed"
 
 
 class Py3status:
@@ -23,21 +28,23 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
+    format = '{task}'
+
+    def post_config_hook(self):
+        if not self.py3.check_commands('task'):
+            raise Exception(STRING_NOT_INSTALLED)
 
     def taskWarrior(self):
-        command = 'task start.before:tomorrow status:pending export'
-        taskwarrior_output = check_output(shlex.split(command))
-        tasks_json = json.loads(taskwarrior_output.decode('utf-8'))
-
         def describeTask(taskObj):
             return str(taskObj['id']) + ' ' + taskObj['description']
 
-        result = ', '.join(map(describeTask, tasks_json))
-        response = {
+        task_command = 'task start.before:tomorrow status:pending export'
+        task_json = json.loads(self.py3.command_output(task_command))
+        task_result = ', '.join(map(describeTask, task_json))
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': result
+            'full_text': self.py3.safe_format(self.format, {'task': task_result})
         }
-        return response
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display and control a Pomodoro countdown.
+Use Pomodoro technique to get things done easily.
 
 Button 1 starts/pauses countdown.
 Button 2 switch Pomodoro/Break.
@@ -8,7 +8,7 @@ Button 3 resets timer.
 
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
-         (default False)
+        (default False)
     format: define custom display format. See placeholders below (default '{ss}')
     format_separator: separator between minutes:seconds (default ':')
     max_breaks: maximum number of breaks (default 4)
@@ -18,7 +18,7 @@ Configuration parameters:
     sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet
         or pygame) (default None)
     sound_pomodoro_start: pomodoro start sound (file path) (requires pyglet
-        od pygame) (default None)
+        or pygame) (default None)
     timer_break: normal break time (seconds) (default 300)
     timer_long_break: long break time (seconds) (default 900)
     timer_pomodoro: pomodoro time (seconds) (default 1500)
@@ -42,6 +42,12 @@ pomodoro {
 ```
 
 @author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
+
+SAMPLE OUTPUT
+{'color': '#FF0000', 'full_text': u'Pomodoro (1500)'}
+
+running
+{'color': '#00FF00', 'full_text': u'Pomodoro [1483]'}
 """
 
 from math import ceil
@@ -166,9 +172,9 @@ class Py3status:
             self._active = True
 
     def kill(self):
-        '''
+        """
         cancel any timer
-        '''
+        """
         if self._timer:
             self._timer.cancel()
 
@@ -244,7 +250,7 @@ class Py3status:
             'mm': int(ceil(time_left / 60)),
         }
 
-        if '{mmss}' in self.format:
+        if self.py3.format_contains(self.format, 'mmss'):
             hours, rest = divmod(time_left, 3600)
             mins, seconds = divmod(rest, 60)
 
@@ -259,7 +265,7 @@ class Py3status:
                                               self.format_separator,
                                               seconds)
 
-        if '{bar}' in self.format:
+        if self.py3.format_contains(self.format, 'bar'):
             vals['bar'] = self._setup_bar()
 
         if self._running:

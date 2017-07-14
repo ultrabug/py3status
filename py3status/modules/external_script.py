@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Display output of given script.
+Display output of a given script.
 
 Display output of any executable script set by `script_path`.
-Pay attention. The output must be one liner, or will break your i3status !
+Only the first two lines of output will be used. The first line is used
+as the displayed text. If the output has two or more lines, the second
+line is set as the text color (and should hence be a valid hex color
+code such as #FF0000 for red).
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
@@ -28,9 +31,17 @@ external_script {
 ```
 
 @author frimdo ztracenastopa@centrum.cz
+
+SAMPLE OUTPUT
+{'full_text': 'script output'}
+
+example
+{'full_text': 'It is now: Wed Feb 22 22:24:13'}
 """
 
-import subprocess
+import re
+
+STRING_UNAVAILABLE = "external_script: N/A"
 
 
 class Py3status:
@@ -43,36 +54,33 @@ class Py3status:
     strip_output = False
 
     def external_script(self):
-        if self.script_path:
-            return_value = subprocess.check_output(self.script_path,
-                                                   shell=True,
-                                                   universal_newlines=True)
-
-            # this is a convenience cleanup code to avoid breaking i3bar which
-            # does not support multi lines output
-            if len(return_value.split('\n')) > 2:
-                return_value = return_value.split('\n')[0]
-                self.py3.notify_user(
-                    'Script {} output contains new lines.'.format(
-                        self.script_path) +
-                    ' Only the first one is being displayed to avoid breaking your i3bar',
-                    rate_limit=3600)
-            elif return_value[-1] == '\n':
-                return_value = return_value.rstrip('\n')
-
-            if self.strip_output:
-                return_value = return_value.strip()
-
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format,
-                                                  {'output': return_value})
+        if not self.script_path:
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'color': self.py3.COLOR_BAD,
+                'full_text': STRING_UNAVAILABLE
             }
-        else:
-            response = {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': ''
-            }
+
+        response = {}
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        try:
+            output = self.py3.command_output(self.script_path, shell=True)
+            output_lines = output.splitlines()
+            if len(output_lines) > 1:
+                output_color = output_lines[1]
+                if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
+                    response['color'] = output_color
+        except self.py3.CommandError as e:
+            output = e.output or e.error
+            output_lines = output.splitlines()
+            response['color'] = self.py3.COLOR_BAD
+
+        output_text = output_lines[0]
+
+        if self.strip_output:
+            output_text = output_text.strip()
+
+        response['full_text'] = self.py3.safe_format(self.format, {'output': output_text})
         return response
 
 

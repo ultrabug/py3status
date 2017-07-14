@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current window title with async update.
+Display window title asynchronously.
 
 Uses asynchronous update via i3 IPC events.
 Provides instant title update only when it required.
@@ -21,6 +21,9 @@ Requires:
 
 @author Anon1234 https://github.com/Anon1234
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'mountain.png'}
 """
 
 from threading import Thread
@@ -37,7 +40,7 @@ class Py3status:
     format = "{title}"
     max_width = 120
 
-    def __init__(self):
+    def post_config_hook(self):
         self.title = self.empty_title
 
         # we are listening to i3 events in a separate thread
@@ -61,6 +64,8 @@ class Py3status:
 
             else:
                 title = w.name
+                if title is None or w.type == "workspace":
+                    title = ''
 
                 if len(title) > self.max_width:
                     title = title[:self.max_width - 1] + "…"
@@ -109,13 +114,11 @@ class Py3status:
 
         conn.main()  # run the event loop
 
-    def window_title(self):
-        resp = {
+    def window_title_async(self):
+        return {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.title,
         }
-
-        return resp
 
 
 if __name__ == "__main__":

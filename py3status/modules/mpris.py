@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display information about the current song and video playing on player with
-mpris support.
+Display song/video and control MPRIS compatible players.
 
 There are two ways to control the media player. Either by clicking with a mouse
 button in the text information or by using buttons. For former you have
@@ -22,9 +21,9 @@ Configuration parameters:
     icon_previous: text for the previous button in the button control panel (default '«')
     icon_stop: text for the stop button in the button control panel (default '◾')
     player_priority: priority of the players.
-            Keep in mind that the state has a higher priority than
-            player_priority. So when player_priority is "[mpd, bomi]" and mpd is
-            paused and bomi is playing than bomi wins. (default [])
+        Keep in mind that the state has a higher priority than
+        player_priority. So when player_priority is "[mpd, bomi]" and mpd is
+        paused and bomi is playing than bomi wins. (default [])
     state_pause: text for placeholder {state} when song is paused (default '▮')
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')
@@ -96,12 +95,24 @@ Tested players:
     mpDris2 (mpris extension for mpd)
     vlc
 
-@author Moritz Lüdecke, tobes
+@author Moritz Lüdecke, tobes, valdur55
+
+SAMPLE OUTPUT
+[
+    {'color': '#00FF00', 'index': 'previous', 'min_width': 20,
+     'align': 'center', 'full_text': u'\xab'},
+    {'color': '#00FF00', 'index': 'toggle', 'min_width': 20,
+     'align': 'center', 'full_text': u'\u25ae'},
+    {'color': '#00FF00', 'index': 'next', 'min_width': 20,
+     'align': 'center', 'full_text': u'\xbb '},
+    {'full_text': u'\u25b6 Happy Mondays - Fat Lady Wrestlers'}
+]
 """
 
 from datetime import timedelta
 from time import time
 from gi.repository import GObject
+from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
@@ -152,6 +163,7 @@ class Py3status:
     def __init__(self):
         self._dbus = None
         self._data = {}
+        self._control_states = {}
         self._kill = False
         self._mpris_players = {}
         self._mpris_names = {}
@@ -176,6 +188,7 @@ class Py3status:
         }
 
         if self._player is None:
+            self._control_states = {}
             return
 
         try:
@@ -235,7 +248,7 @@ class Py3status:
         except Exception:
             ptime = None
 
-        if '{time}' in self.format and self._data.get('state') == PLAYING:
+        if self.py3.format_contains(self.format, 'time') and self._data.get('state') == PLAYING:
             # Don't get trapped in aliasing errors!
             update = time() + 0.5
         else:
@@ -310,12 +323,13 @@ class Py3status:
             self._kill = True
 
     def _name_owner_changed(self, *args):
+        player_id = args[5][0]
         player_add = args[5][2]
         player_remove = args[5][1]
         if player_add:
-            self._add_player(player_add)
+            self._add_player(player_id)
         if player_remove:
-            self._remove_player(player_remove)
+            self._remove_player(player_id)
         self._set_player()
 
     def _set_player(self):
@@ -364,6 +378,18 @@ class Py3status:
             status = data.get('PlaybackStatus')
             if status:
                 player = self._mpris_players[player_id]
+
+                # Note: Workaround. Since all players get noted if playback status
+                #       has been changed we have to check if we are the choosen one
+                try:
+                    dbus_status = player['_dbus_player'].PlaybackStatus
+                except GError:
+                    # Prevent errors when calling methods of deleted dbus objects
+                    return
+                if status != dbus_status:
+                    # FIXME: WE DON'T RECOGNIZE ANY TITLE CHANGE
+                    return
+
                 player['status'] = status
                 player['_state_priority'] = WORKING_STATES.index(status)
             self._set_player()
@@ -373,29 +399,32 @@ class Py3status:
         """
         Add player to mpris_players
         """
-        try:
-            player = self._dbus.get(player_id, SERVICE_BUS_URL)
-            if player_id.startswith(SERVICE_BUS):
-                if player.Identity not in self._mpris_names:
-                    self._mpris_names[player.Identity] = player_id.split('.')[-1]
-                    for p in self._mpris_players.values():
-                        if not p['name'] and p['identity'] in self._mpris_names:
-                            p['name'] = self._mpris_names[p['identity']]
-                            p['full_name'] = u'{} {}'.format(p['name'], p['index'])
-                return
-            status = player.PlaybackStatus
-            state_priority = WORKING_STATES.index(status)
-            identity = player.Identity
-            if identity not in self._mpris_name_index:
-                self._mpris_name_index[identity] = 0
-            index = self._mpris_name_index[identity]
-            self._mpris_name_index[identity] += 1
-            name = self._mpris_names.get(identity)
-            subscription = player.PropertiesChanged.connect(
-                self._player_monitor(player_id)
-            )
-        except:
-            return
+        if not player_id.startswith(SERVICE_BUS):
+            return False
+
+        player = self._dbus.get(player_id, SERVICE_BUS_URL)
+
+        if player.Identity not in self._mpris_names:
+            self._mpris_names[player.Identity] = player_id.split('.')[-1]
+            for p in self._mpris_players.values():
+                if not p['name'] and p['identity'] in self._mpris_names:
+                    p['name'] = self._mpris_names[p['identity']]
+                    p['full_name'] = u'{} {}'.format(p['name'], p['index'])
+
+        identity = player.Identity
+        name = self._mpris_names.get(identity)
+        if self.player_priority != [] and name not in self.player_priority \
+                and '*' not in self.player_priority:
+            return False
+
+        if identity not in self._mpris_name_index:
+            self._mpris_name_index[identity] = 0
+
+        status = player.PlaybackStatus
+        state_priority = WORKING_STATES.index(status)
+        index = self._mpris_name_index[identity]
+        self._mpris_name_index[identity] += 1
+        subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
 
         self._mpris_players[player_id] = {
             '_dbus_player': player,
@@ -408,6 +437,7 @@ class Py3status:
             'status': status,
             'subscription': subscription,
         }
+
         return True
 
     def _remove_player(self, player_id):
@@ -423,9 +453,8 @@ class Py3status:
     def _get_players(self):
         bus = self._dbus.get('org.freedesktop.DBus')
         for player in bus.ListNames():
-            if player.startswith(':') or player.startswith(SERVICE_BUS):
-                if not self._add_player(player):
-                    continue
+            self._add_player(player)
+
         self._set_player()
 
     def _start_listener(self):
@@ -505,6 +534,9 @@ class Py3status:
                                                  text,
                                                  buttons)
 
+        if self._kill:
+            raise KeyboardInterrupt
+
         if (self._data.get('error_occurred') or
                 current_player_id != self._player_details.get('id')):
             # Something went wrong or the player changed during our processing
@@ -538,9 +570,6 @@ class Py3status:
         index = event['index']
         button = event['button']
 
-        if not index:
-            return
-
         if index not in self._control_states.keys():
             if button == self.button_toggle:
                 index = 'toggle'
@@ -555,7 +584,7 @@ class Py3status:
         elif button != 1:
             return
 
-        control_state = self._control_states[index]
+        control_state = self._control_states.get(index)
         if self._player and self._get_button_state(control_state):
             getattr(self._player, self._control_states[index]['action'])()
 
