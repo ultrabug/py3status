@@ -96,8 +96,6 @@ import re
 from os import devnull, environ as os_environ
 from subprocess import check_output, call
 
-from py3status.py3 import Py3
-
 
 class AudioBackend():
     def __init__(self, parent, output=True):
@@ -316,18 +314,14 @@ class Py3status(object):
                 ['amixer', 'pamixer', 'pactl']
             )
 
-        try:
-            if self.command == 'amixer':
-                self.backend = AmixerBackend(self, self.output_device)
-            elif self.command == 'pamixer':
-                self.backend = PamixerBackend(self, self.output_device)
-            elif self.command == 'pactl':
-                self.backend = PactlBackend(self, self.output_device)
-            else:
-                raise NameError("Unknown command")
-        except RuntimeError as e:
-            self.py3.log(e.message, level=Py3.LOG_WARNING)
-            self.py3.error(e.message)
+        if self.command == 'amixer':
+            self.backend = AmixerBackend(self, self.output_device)
+        elif self.command == 'pamixer':
+            self.backend = PamixerBackend(self, self.output_device)
+        elif self.command == 'pactl':
+            self.backend = PactlBackend(self, self.output_device)
+        else:
+            raise NameError("Unknown command")
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
