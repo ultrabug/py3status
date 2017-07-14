@@ -44,6 +44,8 @@ IGNORE_ITEM = [
     ('kdeconnector', '_dev'),  # move to __init__ etc
     ('arch_updates', 'format'),  # dynamic
     ('spotify', 'sanitize_words'),  # line too long for docstring parsing
+    ('volume_status', 'format'),  # dynamic
+    ('volume_status', 'format_muted'),  # dynamic
 ]
 
 # Obsolete parameters will not have alphabetical order checked

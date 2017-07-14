@@ -23,16 +23,14 @@ Configuration parameters:
         (default None)
     device: Device to use. Defaults value is backend dependent
         (default None)
+    device_type: Should this control the "speakers" or the "microphone"?
+        (default "speakers")
     format: Format of the output.
-        (input device default '😮: {percentage}%')
-        (default '♪: {percentage}%')
+        (default '♪: {percentage}%' or '😮: {percentage}%')
     format_muted: Format of the output when the volume is muted.
-        (input device default '😶: muted')
-        (default '♪: muted')
+        (default '♪: muted' or '😶: muted')
     max_volume: Allow the volume to be increased past 100% if available.
         pactl supports this (default 120)
-    output_device: Is this an output device (speakers) or an input device (mic)?
-        (default True)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -97,12 +95,16 @@ from os import devnull, environ as os_environ
 from subprocess import check_output, call
 
 
+DEV_TYPE_SPEAKERS = 'speakers'
+DEV_TYPE_MICROPHONE = 'microphone'
+
+
 class AudioBackend():
-    def __init__(self, parent, output=True):
+    def __init__(self, parent, device_type=DEV_TYPE_SPEAKERS):
         self.device = parent.device
         self.channel = parent.channel
         self.parent = parent
-        self.output_device = output
+        self.output_device = device_type == DEV_TYPE_SPEAKERS
         self.setup(parent)
 
     def setup(self, parent):
@@ -244,7 +246,7 @@ class PactlBackend(AudioBackend):
                       self.device, 'toggle'])
 
 
-class Py3status(object):
+class Py3status:
     """
     """
     # available configuration parameters
@@ -255,10 +257,10 @@ class Py3status(object):
     channel = None
     command = None
     device = None
-    format = u'♪: {percentage}%'
-    format_muted = u'♪: muted'
+    device_type = DEV_TYPE_SPEAKERS
+    format = ''
+    format_muted = ''
     max_volume = 120
-    output_device = True
     thresholds = [(0, 'bad'), (20, 'degraded'), (50, 'good')]
     volume_delta = 5
 
@@ -290,22 +292,17 @@ class Py3status(object):
             ]
         }
 
-    def __init__(self):
-        self._format_specified = False
-        self._format_muted_specified = False
-
-    def __setattr__(self, key, value):
-        if key == 'format':
-            self._format_specified = True
-        elif key == 'format_muted':
-            self._format_muted_specified = True
-        super(Py3status, self).__setattr__(key, value)
-
     def post_config_hook(self):
-        if not self.output_device:
-            if not self._format_specified:
+        if self.format == '':
+            if self.device_type == DEV_TYPE_SPEAKERS:
+                self.format = u'♪: {percentage}%'
+            else:
                 self.format = u'😮: {percentage}%'
-            if not self._format_muted_specified:
+
+        if self.format_muted == '':
+            if self.device_type == DEV_TYPE_SPEAKERS:
+                self.format_muted = u'♪: muted'
+            else:
                 self.format_muted = u'😶: muted'
 
         # Guess command if not set
@@ -315,11 +312,11 @@ class Py3status(object):
             )
 
         if self.command == 'amixer':
-            self.backend = AmixerBackend(self, self.output_device)
+            self.backend = AmixerBackend(self, self.device_type)
         elif self.command == 'pamixer':
-            self.backend = PamixerBackend(self, self.output_device)
+            self.backend = PamixerBackend(self, self.device_type)
         elif self.command == 'pactl':
-            self.backend = PactlBackend(self, self.output_device)
+            self.backend = PactlBackend(self, self.device_type)
         else:
             raise NameError("Unknown command")
 
