@@ -14,8 +14,8 @@ MAX_SIZE = 1024
 
 BUTTONS = {
     'leftclick': 1,
-    'rightclick': 2,
-    'middleclick': 3,
+    'middleclick': 2,
+    'rightclick': 3,
     'scrollup': 4,
     'scrolldown': 5,
 }
