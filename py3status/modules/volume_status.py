@@ -24,8 +24,11 @@ Configuration parameters:
     device: Device to use. Defaults value is backend dependent
         (default None)
     format: Format of the output.
-        (input device default '😮: {percentage}%|u😶: muted')
-        (default '♪: {percentage}%|♪: muted')
+        (input device default '😮: {percentage}%')
+        (default '♪: {percentage}%')
+    format_muted: Format of the output when the volume is muted.
+        (input device default '😶: muted')
+        (default '♪: muted')
     max_volume: Allow the volume to be increased past 100% if available.
         pactl supports this (default 120)
     output_device: Is this an output device (speakers) or an input device (mic)?
@@ -254,7 +257,8 @@ class Py3status(object):
     channel = None
     command = None
     device = None
-    format = u'♪: {percentage}%|♪: muted'
+    format = u'♪: {percentage}%'
+    format_muted = u'♪: muted'
     max_volume = 120
     output_device = True
     thresholds = [(0, 'bad'), (20, 'degraded'), (50, 'good')]
@@ -290,15 +294,21 @@ class Py3status(object):
 
     def __init__(self):
         self._format_specified = False
+        self._format_muted_specified = False
 
     def __setattr__(self, key, value):
         if key == 'format':
             self._format_specified = True
+        elif key == 'format_muted':
+            self._format_muted_specified = True
         super(Py3status, self).__setattr__(key, value)
 
     def post_config_hook(self):
-        if not self.output_device and not self._format_specified:
-            self.format = u'😮: {percentage}%|😶: muted'
+        if not self.output_device:
+            if not self._format_specified:
+                self.format = u'😮: {percentage}%'
+            if not self._format_muted_specified:
+                self.format_muted = u'😶: muted'
 
         # Guess command if not set
         if self.command is None:
@@ -315,9 +325,9 @@ class Py3status(object):
                 self.backend = PactlBackend(self, self.output_device)
             else:
                 raise NameError("Unknown command")
-        except RuntimeError as re:
-            self.py3.log(re.message, level=Py3.LOG_WARNING)
-            self.py3.error(re.message)
+        except RuntimeError as e:
+            self.py3.log(e.message, level=Py3.LOG_WARNING)
+            self.py3.error(e.message)
 
     def current_volume(self):
         # call backend
@@ -326,13 +336,13 @@ class Py3status(object):
         color = None
         if muted:
             color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-            perc = None
-        else:
+        if not self.py3.is_color(color):
             # determine the color based on the current volume level
             color = self.py3.threshold_get_color(perc)
 
         # format the output
-        text = self.py3.safe_format(self.format, {'percentage': perc})
+        text = self.py3.safe_format(self.format_muted if muted else self.format,
+                                    {'percentage': perc})
 
         # create response dict
         response = {
