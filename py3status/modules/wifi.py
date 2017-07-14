@@ -73,7 +73,7 @@ class Py3status:
         self._max_bitrate = 0
         # Try and guess the wifi interface
         try:
-            cmd = ['iw', 'dev']
+            cmd = ['/sbin/iw', 'dev']
             iw = subprocess.check_output(cmd).decode('utf-8')
 
             devices = re.findall('Interface\s*([^\s]+)', iw)
@@ -91,7 +91,7 @@ class Py3status:
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
 
-        cmd = ['iw', 'dev', self.device, 'link']
+        cmd = ['/sbin/iw', 'dev', self.device, 'link']
         if self.use_sudo:
             cmd.insert(0, 'sudo')
         iw = subprocess.check_output(cmd).decode('utf-8')
@@ -121,7 +121,7 @@ class Py3status:
             ssid = None
 
         if '{ip}' in self.format_up:
-            cmd = ['ip', 'addr', 'list', self.device]
+            cmd = ['/sbin/ip', 'addr', 'list', self.device]
             if self.use_sudo:
                 cmd.insert(0, 'sudo')
             ip_info = subprocess.check_output(cmd).decode('utf-8')
