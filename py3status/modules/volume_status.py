@@ -343,7 +343,6 @@ class Py3status(object):
         # format the output
         text = self.py3.safe_format(self.format_muted if muted else self.format,
                                     {'percentage': perc})
-
         # create response dict
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
