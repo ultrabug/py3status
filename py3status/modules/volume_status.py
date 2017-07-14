@@ -329,6 +329,15 @@ class Py3status(object):
             self.py3.log(e.message, level=Py3.LOG_WARNING)
             self.py3.error(e.message)
 
+    # compares current volume to the thresholds, returns a color code
+    def _perc_to_color(self, string):
+        return self.py3.threshold_get_color(string)
+
+    # return the format string formatted with available variables
+    def _format_output(self, format, percentage):
+        text = self.py3.safe_format(format, {'percentage': percentage})
+        return text
+
     def current_volume(self):
         # call backend
         perc, muted = self.backend.get_volume()
@@ -338,11 +347,11 @@ class Py3status(object):
             color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
         if not self.py3.is_color(color):
             # determine the color based on the current volume level
-            color = self.py3.threshold_get_color(perc)
+            color = self._perc_to_color(perc)
 
         # format the output
-        text = self.py3.safe_format(self.format_muted if muted else self.format,
-                                    {'percentage': perc})
+        text = self._format_output(self.format_muted
+                                   if muted else self.format, perc)
         # create response dict
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
