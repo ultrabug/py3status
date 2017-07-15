@@ -23,12 +23,12 @@ Configuration parameters:
         (default None)
     device: Device to use. Defaults value is backend dependent
         (default None)
-    device_is_speaker: Should this control the speakers (True) or the microphone (False)?
-        (default True)
     format: Format of the output.
-        (default '[\?if=device_is_speaker ♪|😮]: {percentage}%')
+        (default '[\?if=is_input 😮|♪]: {percentage}%')
     format_muted: Format of the output when the volume is muted.
-        (default '[\?if=device_is_speaker ♪|😶]: muted')
+        (default '[\?if=is_input 😶|♪]: muted')
+    is_input: Is this an input device or an output device?
+        (default False)
     max_volume: Allow the volume to be increased past 100% if available.
         pactl supports this (default 120)
     thresholds: Threshold for percent volume.
@@ -253,9 +253,9 @@ class Py3status:
     channel = None
     command = None
     device = None
-    device_is_speaker = True
-    format = u'[\?if=device_is_speaker ♪|😮]: {percentage}%'
-    format_muted = u'[\?if=device_is_speaker ♪|😶]: muted'
+    format = u'[\?if=is_input 😮|♪]: {percentage}%'
+    format_muted = u'[\?if=is_input 😶|♪]: muted'
+    is_input = False
     max_volume = 120
     thresholds = [(0, 'bad'), (20, 'degraded'), (50, 'good')]
     volume_delta = 5
@@ -295,12 +295,13 @@ class Py3status:
                 ['amixer', 'pamixer', 'pactl']
             )
 
+        output_device = not self.is_input
         if self.command == 'amixer':
-            self.backend = AmixerBackend(self, self.device_is_speaker)
+            self.backend = AmixerBackend(self, output_device)
         elif self.command == 'pamixer':
-            self.backend = PamixerBackend(self, self.device_is_speaker)
+            self.backend = PamixerBackend(self, output_device)
         elif self.command == 'pactl':
-            self.backend = PactlBackend(self, self.device_is_speaker)
+            self.backend = PactlBackend(self, output_device)
         else:
             raise NameError("Unknown command")
 
