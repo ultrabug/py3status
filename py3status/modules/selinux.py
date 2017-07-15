@@ -7,7 +7,7 @@ Enforcing (good), Permissive (degraded), or Disabled (bad).
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    format: display format for this module (default 'selinux: {state}')
+    format: display format for this module (default 'SELinux: {state}')
     state_disabled: show when no SELinux policy is loaded.
         (default 'disabled')
     state_enforcing: show when SELinux security policy is enforced.
@@ -30,14 +30,15 @@ Requires:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'selinux: enforcing', 'color': '#00FF00'}
+{'full_text': 'SELinux: enforcing', 'color': '#00FF00'}
 
 permissive
-{'full_text': 'selinux: permissive', 'color': '#FFFF00'}
+{'full_text': 'SELinux: permissive', 'color': '#FFFF00'}
 
 disabled
-{'full_text': 'selinux: disabled', 'color': '#FF0000'}
+{'full_text': 'SELinux: disabled', 'color': '#FF0000'}
 """
+
 from __future__ import absolute_import
 import selinux
 
@@ -47,7 +48,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = 'selinux: {state}'
+    format = 'SELinux: {state}'
     state_disabled = 'disabled'
     state_enforcing = 'enforcing'
     state_permissive = 'permissive'
@@ -64,9 +65,11 @@ class Py3status:
             state = self.state_disabled
             color = self.py3.COLOR_BAD
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'state': state}),
-                'color': color}
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'state': state}),
+            'color': color
+        }
 
 
 if __name__ == '__main__':
