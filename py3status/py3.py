@@ -972,7 +972,7 @@ class Py3:
         :returns: HttpResponse
         """
 
-        # The aim of this function is to be a lmited lightweight replacement
+        # The aim of this function is to be a limited lightweight replacement
         # for the requests library but using only pythons standard libs.
 
         # IMPORTANT NOTICE
