@@ -40,7 +40,6 @@ disabled
 """
 from __future__ import absolute_import
 import selinux
-STRING_UNAVAILABLE = "selinux: isn't installed"
 
 
 class Py3status:
@@ -54,10 +53,6 @@ class Py3status:
     state_permissive = 'permissive'
 
     def selinux(self):
-        if not self.py3.check_commands(['getenforce']):
-            return {'cache_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_BAD,
-                    'full_text': STRING_UNAVAILABLE}
         try:
             if selinux.security_getenforce():
                 state = self.state_enforcing
