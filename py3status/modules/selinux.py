@@ -3,7 +3,7 @@
 Display SELinux state.
 
 This module displays the state of SELinux on your machine:
-Enforcing (good), Permissive (bad), or Disabled (bad).
+Enforcing (good), Permissive (degraded), or Disabled (bad).
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
@@ -59,7 +59,7 @@ class Py3status:
                 color = self.py3.COLOR_GOOD
             else:
                 state = self.state_permissive
-                color = self.py3.COLOR_BAD
+                color = self.py3.COLOR_DEGRADED
         except:
             state = self.state_disabled
             color = self.py3.COLOR_BAD
