@@ -26,9 +26,9 @@ Configuration parameters:
     device_is_speaker: Should this control the speakers (True) or the microphone (False)?
         (default True)
     format: Format of the output.
-        (default '♪: {percentage}%')
+        (default '[\?if=device_is_speaker ♪|😮]: {percentage}%')
     format_muted: Format of the output when the volume is muted.
-        (default '♪: muted')
+        (default '[\?if=device_is_speaker ♪|😶]: muted')
     max_volume: Allow the volume to be increased past 100% if available.
         pactl supports this (default 120)
     thresholds: Threshold for percent volume.
@@ -254,8 +254,8 @@ class Py3status:
     command = None
     device = None
     device_is_speaker = True
-    format = u'♪: {percentage}%'
-    format_muted = u'♪: muted'
+    format = u'[\?if=device_is_speaker ♪|😮]: {percentage}%'
+    format_muted = u'[\?if=device_is_speaker ♪|😶]: muted'
     max_volume = 120
     thresholds = [(0, 'bad'), (20, 'degraded'), (50, 'good')]
     volume_delta = 5
