@@ -96,11 +96,11 @@ from subprocess import check_output, call
 
 
 class AudioBackend():
-    def __init__(self, parent, output_device=True):
+    def __init__(self, parent):
         self.device = parent.device
         self.channel = parent.channel
+        self.is_input = parent.is_input
         self.parent = parent
-        self.output_device = output_device
         self.setup(parent)
 
     def setup(self, parent):
@@ -116,7 +116,7 @@ class AmixerBackend(AudioBackend):
         if self.device is None:
             self.device = 'default'
         if self.channel is None:
-            self.channel = 'Master' if self.output_device else 'Capture'
+            self.channel = 'Capture' if self.is_input else 'Master'
         self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
 
     def get_volume(self):
@@ -150,7 +150,7 @@ class PamixerBackend(AudioBackend):
             self.device = "0"
         # Ignore channel
         self.channel = None
-        self.cmd = ["pamixer", "--sink" if self.output_device else "--source", self.device]
+        self.cmd = ["pamixer", "--source" if self.is_input else "--sink", self.device]
 
     def get_volume(self):
         perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
@@ -170,7 +170,7 @@ class PamixerBackend(AudioBackend):
 class PactlBackend(AudioBackend):
     def setup(self, parent):
         # get available device number if not specified
-        self.device_type = 'sink' if self.output_device else 'source'
+        self.device_type = 'source' if self.is_input else 'sink'
         self.device_type_pl = self.device_type + 's'
         self.device_type_cap = self.device_type[0].upper() + self.device_type[1:]
 
@@ -189,7 +189,7 @@ class PactlBackend(AudioBackend):
 
         # Find the default device for the the device type
         default_dev_pattern = re.compile(r'^Default {}: (.*)$'.format(self.device_type_cap))
-        for info_line in check_output(['pactl', 'info']).decode('utf-8').split('\n'):
+        for info_line in check_output(['pactl', 'info']).decode('utf-8').splitlines():
             default_dev_match = default_dev_pattern.match(info_line)
             if default_dev_match is not None:
                 device_id = default_dev_match.groups()[0]
@@ -198,7 +198,7 @@ class PactlBackend(AudioBackend):
         # with the long gross id, find the associated number
         if device_id is not None:
             for line in check_output(['pactl', 'list', 'short', self.device_type_pl]) \
-                    .decode('utf-8').split('\n'):
+                    .decode('utf-8').splitlines():
                 parts = line.split()
                 if len(parts) < 2:
                     continue
@@ -206,7 +206,7 @@ class PactlBackend(AudioBackend):
                     return parts[0]
 
         raise RuntimeError('Failed to find default {} device.  Looked for {}'.format(
-            'output' if self.output_device else 'input', device_id))
+            'input' if self.is_input else 'output', device_id))
 
     def get_volume(self):
         output = check_output(
@@ -295,13 +295,12 @@ class Py3status:
                 ['amixer', 'pamixer', 'pactl']
             )
 
-        output_device = not self.is_input
         if self.command == 'amixer':
-            self.backend = AmixerBackend(self, output_device)
+            self.backend = AmixerBackend(self)
         elif self.command == 'pamixer':
-            self.backend = PamixerBackend(self, output_device)
+            self.backend = PamixerBackend(self)
         elif self.command == 'pactl':
-            self.backend = PactlBackend(self, output_device)
+            self.backend = PactlBackend(self)
         else:
             raise NameError("Unknown command")
 
