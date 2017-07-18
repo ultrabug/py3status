@@ -49,6 +49,7 @@ class Py3status:
     status_paused = 'PAUSED'
     status_share = 'SHARE'
     status_syncing = 'SYNCING'
+    status_synced = 'SYNCED'
 
     def insync(self):
         if not self.py3.check_commands(["insync"]):
@@ -85,14 +86,17 @@ class Py3status:
             }
 
         color = self.py3.COLOR_DEGRADED
+        format = self.format
         if status == "Insync doesn't seem to be running. Start it first.":
             color = self.py3.COLOR_BAD
-            status = STRING_ERROR
+            format = STRING_ERROR
         elif status == "OFFLINE":
             color = self.py3.COLOR_BAD
             status = self.status_offline
-        elif status == "SHARE":
+        elif status == "SYNCED":
             color = self.py3.COLOR_GOOD
+            status = self.status_synced
+        elif status == "SHARE":
             status = self.status_share
         elif status == "PAUSED":
             status = self.status_paused
@@ -103,7 +107,7 @@ class Py3status:
             'color': color,
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
-                self.format, {'status': status, 'queued': queued})
+                format, {'status': status, 'queued': queued})
         }
 
 
