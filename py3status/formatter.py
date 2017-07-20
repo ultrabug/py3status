@@ -60,6 +60,20 @@ class Formatter:
                 placeholders.add(token.group('key'))
         return placeholders
 
+    def get_placeholder_formats_list(self, format_string):
+        """
+        Parses the format_string and returns a list of tuples
+        (placeholder, format).
+        """
+        placeholders = []
+        # Tokenize the format string and process them
+        for token in self.tokens(format_string):
+            if token.group('placeholder'):
+                placeholders.append(
+                    (token.group('key'), token.group('format'))
+                )
+        return placeholders
+
     def update_placeholders(self, format_string, placeholders):
         """
         Update a format string renaming placeholders.

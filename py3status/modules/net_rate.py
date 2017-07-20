@@ -109,6 +109,9 @@ class Py3status:
             self.interfaces = self.interfaces.split(',')
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(',')
+        placeholders = self.py3.get_placeholder_formats_list(self.format_value)
+        values = ['{%s}' % x[1] for x in placeholders if x[0] == 'value']
+        self._value_formats = values
 
     def currentSpeed(self):
         ns = self._get_stat()
@@ -141,7 +144,14 @@ class Py3status:
                 interface = max(deltas, key=lambda x: deltas[x]['total'])
 
             # if there is no rate - show last active interface, or hide
-            if deltas[interface]['total'] == 0:
+
+            # we need to check if it will be zero after it is formatted
+            # with the desired unit eg MB/s
+            total, _ = self.py3.format_units(
+                deltas[interface]['total'], unit=self.unit, si=self.si_units
+            )
+            values = [float(x.format(total)) for x in self._value_formats]
+            if max(values) == 0:
                 interface = self.last_interface
                 hide = self.hide_if_zero
             # if there is - update last_interface
