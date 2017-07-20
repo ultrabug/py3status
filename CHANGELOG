@@ -1,6 +1,7 @@
 version 3.6 (milestone)
-* Faster py3-cmd, by @tobes
+* faster py3-cmd, by @tobes
 * better report when i3status is missing, by @tobes thx to @Cypher1
+* formatter not zero fix for displayed values, by @tobes thx to @maximbaz
 * backlight module: combine device/device_path params, by @lasers
 * backlight module: improve rounding of brightness value, by @maximbaz
 * battery_level module: fix bug with over 100% full icon, by @docwalter
