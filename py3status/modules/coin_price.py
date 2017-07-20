@@ -6,16 +6,17 @@ Configuration parameters:
     cache_timeout: refresh interval for this module. A advise from the site:
         "Please limit requests to no more than 10 per minute." (default 600)
     coin_separator: display separator if more than one (default ', ')
-    coin_symbols: coin symbol that will display price (default 'btc,eth,xrp')
+    coin_symbols: coin symbol that will display price (default {'btc', 'eth', 'xrp'})
     convert: currency unit want to display (default 'usd')
     format: display format for this module (default '{format_coin}')
-    format_coin: display format for coins (default '{id}: {price}{symbol} ({percentage})')
+    format_coin: display format for coins (default '{name}: {price}{symbol} ({percentage})')
+    rounds: The value to round (default 2)
 
     format_coin placeholders:
         {format_coin} format for coins
 
     format_coin placeholders:
-        {id} coin's id (ex. bitcoin - btc, ethereum - eth)
+        {name} coin's name (ex. bitcoin - btc, ethereum - eth)
         {price} current prices
         {symbol} currency symbols
         {percentage} increment/decrement percentage during 24 hours
@@ -32,10 +33,11 @@ except ImportError:
 class Py3status:
     cache_timeout = 600
     coin_separator = ', '
-    coin_symbols = "btc,eth,xrp"
+    coin_symbols = {'btc', 'eth', 'xrp'}
     convert = 'usd'
     format = "{format_coin}"
-    format_coin = "{id}: {price}{symbol} ({percentage})"
+    format_coin = "{name}: {price}{symbol} ({percentage})"
+    rounds = 2
 
     def post_config_hook(self):
         self.ticker = "https://api.coinmarketcap.com/v1/ticker/?convert={}".format(self.convert)
@@ -56,7 +58,7 @@ class Py3status:
         for currency in currencies:
             if currency['symbol'] == coin_symbol or currency['symbol'].lower() == coin_symbol:
                 return {
-                    'id': currency['id'],
+                    'name': currency['name'],
                     'price_{}'.format(self.convert): currency['price_{}'.format(self.convert)],
                     'percent_change_24h': currency['percent_change_24h']
                 }
@@ -65,11 +67,11 @@ class Py3status:
         currencies = json.loads(urlopen(self.ticker).read().decode())
         out_text = list()
 
-        for coin in self.coin_symbols.split(','):
+        for coin in self.coin_symbols:
             coin_info = self._get_coin_info(currencies, coin.strip())
 
             try:
-                _id = coin_info['id']
+                _name = coin_info['name']
             except TypeError:
                 continue
 
@@ -77,7 +79,7 @@ class Py3status:
             _percentage = coin_info['percent_change_24h']
             _symbol = self.currency_map[self.convert]
 
-            _price = '{}'.format(round(float(_price), 2))
+            _price = '{}'.format(round(float(_price), self.rounds))
             _percentage = float(_percentage)
 
             if _percentage > 0:
@@ -87,7 +89,7 @@ class Py3status:
 
             out_text.append(self.py3.safe_format(
                 self.format_coin, {
-                    'id': _id,
+                    'name': _name,
                     'price': _price,
                     'symbol': _symbol,
                     'percentage': _percentage})
