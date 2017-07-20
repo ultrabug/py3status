@@ -1,4 +1,5 @@
 version 3.6 (milestone)
+* Faster py3-cmd, by @tobes
 * better report when i3status is missing, by @tobes thx to @Cypher1
 * battery_level module: fix bug with over 100% full icon, by @docwalter
 * battery_level module: fix divide by zero bug, by @tablet-mode
