@@ -291,6 +291,7 @@ class BlockConfig:
     """
 
     REGEX_COLOR = re.compile('#[0-9A-F]{6}')
+    INHERITABLE = ['color', 'not_zero', 'show']
 
     # defaults
     _if = None
@@ -300,6 +301,14 @@ class BlockConfig:
     not_zero = False
     show = False
     soft = False
+
+    def __init__(self, parent):
+        # inherit any commands from the parent block
+        # inheritable commands are in self.INHERITABLE
+        if parent:
+            parent_commands = parent.commands
+            for attr in self.INHERITABLE:
+                setattr(self, attr, getattr(parent_commands, attr))
 
     def update_commands(self, commands_str):
         """
@@ -350,7 +359,7 @@ class Block:
     def __init__(self, parent, base_block=None, py3_wrapper=None):
 
         self.base_block = base_block
-        self.commands = BlockConfig()
+        self.commands = BlockConfig(parent)
         self.content = []
         self.next_block = None
         self.parent = parent
@@ -528,15 +537,13 @@ class Block:
         max_length = self.commands.max_length
         min_length = self.commands.min_length
 
-        if max_length or min_length or color:
+        if max_length or min_length:
             for item in out:
                 if max_length is not None:
                     item['full_text'] = item['full_text'][:max_length]
                     max_length -= len(item['full_text'])
                 if min_length:
                     min_length -= len(item['full_text'])
-                if color and 'color' not in item:
-                    item['color'] = color
             if min_length > 0:
                 out[0]['full_text'] = u' ' * min_length + out[0]['full_text']
                 min_length = 0
