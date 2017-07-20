@@ -11,6 +11,7 @@ Configuration parameters:
     status_paused: show when Insync is paused (default 'PAUSED')
     status_share: show when Insync is sharing (default 'SHARE')
     status_syncing: show when Insync is syncing (default 'SYNCING')
+    status_synced: show when Insync has finished syncing (default 'SYNCED')
 
 Format placeholders:
     {status} Insync status
@@ -18,7 +19,7 @@ Format placeholders:
 
 Color options:
     color_bad: Offline
-    color_degraded: Default
+    color_degraded: Default (e.g. Paused/Syncing)
     color_good: Synced
 
 Requires:
