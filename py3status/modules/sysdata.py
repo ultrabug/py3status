@@ -7,6 +7,8 @@ Configuration parameters:
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+    hide_if_zero: hide output if all values are zero.
+        (default False)
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -212,6 +214,7 @@ class Py3status:
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    hide_if_zero = False
     mem_unit = 'GiB'
     swap_unit = 'GiB'
     temp_unit = u'°C'
@@ -364,6 +367,15 @@ class Py3status:
             self.values['load5'] = load5
             self.values['load15'] = load15
             self.py3.threshold_get_color(load1, 'load')
+
+        if self.hide_if_zero:
+            formats = self.py3.get_placeholder_formats_list(self.format)
+            values = [float(('{%s}' % fmt).format(self.values[key])) for key, fmt in formats]
+            if sum(values) == 0:
+                return {
+                    'cached_until': self.py3.time_in(self.cache_timeout),
+                    'full_text': ''
+                }
 
         try:
             self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
