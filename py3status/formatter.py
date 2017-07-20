@@ -222,13 +222,7 @@ class Placeholder:
         return the correct value for the placeholder
         """
         try:
-            value = get_params(self.key)
-            if block.commands.not_zero:
-                valid = value not in ['', None, False, '0', '0.0', 0, 0.0]
-            else:
-                # '', None, and False are ignored
-                # numbers like 0 and 0.0 are not.
-                valid = not (value in ['', None] or value is False)
+            value = value_ = get_params(self.key)
             if self.format.startswith(':'):
                 # if a parameter has been set to be formatted as a numeric
                 # type then we see if we can coerce it to be.  This allows
@@ -243,11 +237,19 @@ class Placeholder:
                         value = int(float(value))
                     output = u'{%s%s}' % (self.key, self.format)
                     value = output.format(**{self.key: value})
+                    value_ = float(value)
                 except ValueError:
                     pass
             elif self.format.startswith('!'):
                 output = u'{%s%s}' % (self.key, self.format)
-                value = output.format(**{self.key: value})
+                value = value_ = output.format(**{self.key: value})
+
+            if block.commands.not_zero:
+                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+            else:
+                # '', None, and False are ignored
+                # numbers like 0 and 0.0 are not.
+                valid = not (value_ in ['', None] or value_ is False)
             enough = False
         except:
             # Exception raised when we don't have the param
