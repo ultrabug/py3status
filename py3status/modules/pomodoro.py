@@ -2,11 +2,10 @@
 """
 Use Pomodoro technique to get things done easily.
 
-Button 1 starts/pauses countdown.
-Button 2 switch Pomodoro/Break.
-Button 3 resets timer.
-
 Configuration parameters:
+    button_next: mouse button to skip the countdown (default 3)
+    button_reset: mouse button to reset the timer (default 2)
+    button_toggle: mouse button to start/stop the countdown (default 1)
     display_bar: display time in bars when True, otherwise in seconds
         (default False)
     format: define custom display format. See placeholders below (default '{ss}')
@@ -110,6 +109,9 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_next = 3
+    button_reset = 2
+    button_toggle = 1
     display_bar = False
     format = u'{ss}'
     format_separator = u":"
@@ -180,13 +182,14 @@ class Py3status:
 
     def on_click(self, event):
         """
-        Handles click events:
-            - left click starts an inactive counter and pauses a running
-              Pomodoro
-            - middle click resets everything
-            - right click starts (and ends, if needed) a break
+        Control Pomodoro with mouse events.
+        - Button 1 starts/stops the countdown.
+        - Button 2 resets the the timer.
+        - Button 3 skips the countdown.
         """
-        if event['button'] == 1:
+        button = event['button']
+        # start
+        if button == self.button_toggle:
             if self._running:
                 self._running = False
                 self._time_left = self._end_time - time()
@@ -201,18 +204,19 @@ class Py3status:
                 self._timer.start()
                 if self._active:
                     self._play_sound(self.sound_pomodoro_start)
-
-        elif event['button'] == 2:
-            # reset
+        # reset
+        elif button == self.button_reset:
             self._init()
             if self._timer:
                 self._timer.cancel()
-
-        elif event['button'] == 3:
-            # advance
+        # advance
+        elif button == self.button_next:
             self._advance(user_action=True)
             if self._timer:
                 self._timer.cancel()
+        # prevent refresh
+        else:
+            self.py3.prevent_refresh()
 
     def _setup_bar(self):
         """
