@@ -3,40 +3,41 @@
 Display upcoming calendar events from Google Calendar.
 
 Configuration parameters:
-    agenda_days: show calendar events for number of days (default 1)
     button_refresh: mouse button to refresh this module (default 2)
-    cache_timeout: refresh interval for this module (default 21600)
+    cache_timeout: refresh interval for this module (default 3600)
+    command: modify command to dictate the calendar events
+        (default 'gcalcli agenda --nocolor')
+    days: show calendar events for number of days (default 1)
     format: display format for this module (default '{format_event}')
     format_event: display format for events
-        (default '[\?if=is_date&color=degraded %a %b %d ]
-        [\?if=is_time&color=good %-I:%M %p ][\?color=bad {event}]')
+        (default '[\?if=is_date %a %b %d ][\?if=is_time %-I:%M %p ]{event}')
     format_separator: show separator only if more than one (default ', ')
-    remove: list of strings to be removed from the output (default [])
+    remove: list of strings to remove from the output (default [])
 
 Format placeholders:
     {format_event} format for events
-    is_event: a boolean based on available events
 
 format_event placeholders:
-    {event} scheduled event eg Pizza night
-    %?  strftime characters to be translated. See `man strftime'.
-    is_time: a boolean based on event containing a time schedule
-    is_date: a boolean based on event containing a date schedule
+    {event} scheduled event eg Volleyball
+    %?  strftime characters to be translated. See `man strftime`.
+    is_time: a boolean based on calendar event data
+    is_date: a boolean based on calendar event data
 
 Requires:
-    gcalcli: Google Calendar Command Line Interface
+    gcalcli: Google Calendar CLI
 
 Examples:
 ```
-# change event colors
+# add colors and optionally customize timedate
 gcal {
-    color_bad = '#ad7fa8'
-    color_degraded = '#fce94f'
-    color_good = '#34e2e2'
+    format_event = '[\?if=is_date&color=#F3EA5F %a %b %d ]'
+    format_event += '[\?if=is_time&color=#2BD1FC %-I:%M %p ]'
+    format_event += '[\?color=#FF48C4 {event}]'
 }
-# show "No Events"
+
+# show '7 PM'
 gcal {
-    format = u'[\?if=is_event {format_event}|\?color=bad No Events]'
+    remove = [':00']
 }
 ```
 
@@ -44,116 +45,116 @@ gcal {
 
 SAMPLE OUTPUT
 [
-    {'color': '#FFFF00', 'full_text': u'Fri Jul 20 '},
-    {'color': '#FF0000', 'full_text': u'Tacos'},
-    {'full_text': u', '},
-    {'color': '#FF0000', 'full_text': u'Volleyball'},
-    {'full_text': u', '},
-    {'color': '#00FF00', 'full_text': u'6:00 AM '},
-    {'color': '#FF0000', 'full_text': u'Garbage Pickup'},
-    {'full_text': u', '}
-    {'color': '#FFFF00', 'full_text': u'Sat Jul 21 '},
-    {'color': '#00FF00', 'full_text': u'6:05 PM '},
-    {'color': '#FF0000', 'full_text': u'Flight to Poland'}
+    {'full_text': 'Thu Jul 20 Tacos, Volleyball'},
+    {'full_text': '6:00 AM Garbage Pickup
+    {'full_text': 'Sat Jul 22 6:05 PM Flight to Poland'},
 ]
 """
 
-from datetime import datetime as dt, timedelta
+from datetime import datetime, timedelta
 import re
 
-STRING_NOT_INSTALLED = "isn't installed"
-FMT_DATE = '%a %b %d'
-FMT_GCAL = '%Y%m%d'
-FMT_SS = '%s %s'
-FMT_TIME = '%I:%M%p'
+STRING_NOT_INSTALLED = "gcalcli isn't installed"
+GCAL_AGENDA = '%Y%m%d'
+GCAL_DATE = '%a %b %d'
+GCAL_TIME = '%I:%M%p'
+GCAL_YEAR = '%Y'
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    agenda_days = 1
     button_refresh = 2
-    cache_timeout = 21600
+    cache_timeout = 3600
+    command = 'gcalcli agenda --nocolor'
+    days = 1
     format = u'{format_event}'
-    format_event = '[\?if=is_date&color=degraded %a %b %d ]' +\
-                   '[\?if=is_time&color=good %-I:%M %p ]' +\
-                   '[\?color=bad {event}]'
+    format_event = '[\?if=is_date %a %b %d ][\?if=is_time %-I:%M %p ]{event}'
     format_separator = ', '
     remove = []
 
     def post_config_hook(self):
-        self.cmd = 'gcalcli agenda --nocolor %s %s'
-        if not self.py3.check_commands(self.cmd.split(' ', 1)[0]):
+        self.first_run = True
+        self.command = self.command + ' %s %s'
+        if not self.py3.check_commands(self.command.split(' ', 1)[0]):
             raise Exception(STRING_NOT_INSTALLED)
 
         remove = '|'.join(self.remove)
         self.re = re.compile(r'(' + remove + ')')
 
     def _get_gcal_data(self):
-        now = dt.now()
-        start = dt.strftime(now, FMT_GCAL)
-        end = dt.strftime(now + timedelta(days=self.agenda_days), FMT_GCAL)
-        return self.py3.command_output(self.cmd % (start, end))
+        now = datetime.now()
+        self.tempfix_year = now.year
+        start = datetime.strftime(now, GCAL_AGENDA)
+        end = datetime.strftime(now + timedelta(days=self.days), GCAL_AGENDA)
+        return self.py3.command_output(self.command % (start, end))
 
     def _organize_data(self, data):
-        new_data, is_event = [], True
-        for out in data.splitlines():
-            temporary = {}
-            if 'No Events Found' in out:
-                is_event = False
-                break
-            if out.rstrip():
-                temporary['date'] = out[:10].strip()
-                temporary['time'] = out[10:20].strip()
-                temporary['event'] = out[20:].strip()
-                temporary = {k: v for k, v in temporary.items() if v}
-                new_data.append(temporary)
+        new_data = []
+        for line in data.splitlines():
+            if line.rstrip():
+                if line == 'No Events Found...':
+                    break
+                temporary = {
+                    'date': line[:10].strip(),
+                    'time': line[10:20].strip(),
+                    'event': line[20:].strip(),
+                    'year': self.tempfix_year,
+                }
+                new_data.append({k: v for k, v in temporary.items() if v})
 
-        return is_event, new_data
+        return new_data
 
     def _manipulate_data(self, data):
         new_data = []
         for e in data:
-            obj, is_date, is_time = None, False, False
+            obj, is_date, is_time, _fmt = None, False, False, self.format_event
             if 'date' in e:
                 is_date = True
                 if 'time' in e:
                     is_time = True
-                    obj = dt.strptime(FMT_SS % (
-                        e['date'], e['time']), FMT_SS % (FMT_DATE, FMT_TIME))
+                    obj = datetime.strptime('%s %s %s' % (
+                        e['date'], e['time'], e['year']), '%s %s %s' % (
+                            GCAL_DATE, GCAL_TIME, GCAL_YEAR))
                 else:
-                    obj = dt.strptime(e['date'], FMT_DATE)
+                    obj = datetime.strptime('%s %s' % (
+                        e['date'], e['year']), '%s %s' % (
+                        GCAL_DATE, GCAL_YEAR))
             elif 'time' in e:
                 is_time = True
-                obj = dt.strptime(e['time'], FMT_TIME)
+                obj = datetime.strptime('%s %s' % (
+                    e['time'], e['year']), '%s %s' % (
+                    GCAL_TIME, GCAL_YEAR))
             if obj:
-                _fmt = self.re.sub('', dt.strftime(obj, self.format_event))
+                _fmt = self.re.sub('', datetime.strftime(obj, _fmt))
 
-            new_data.append(self.py3.safe_format(_fmt,
-                                                 dict(
-                                                     event=e.get('event'),
-                                                     is_date=is_date,
-                                                     is_time=is_time)))
+            new_data.append(self.py3.safe_format(_fmt, {'event': e.get(
+                'event'), 'is_date': is_date, 'is_time': is_time}))
+
         return new_data
 
     def gcal(self):
         """
         """
-        data = self._get_gcal_data()
-        is_event, data = self._organize_data(data)
-        data = self._manipulate_data(data)
+        cached_until = self.cache_timeout
+        format_event = None
 
-        format_separator = self.py3.safe_format(self.format_separator)
-        format_event = self.py3.composite_join(format_separator, data)
+        if self.first_run:
+            self.first_run = False
+            cached_until = 0
+        else:
+            data = self._get_gcal_data()
+            data = self._organize_data(data)
+            data = self._manipulate_data(data)
+
+            format_separator = self.py3.safe_format(self.format_separator)
+            format_event = self.py3.composite_join(format_separator, data)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format,
-                                              dict(
-                                                  format_event=format_event,
-                                                  is_event=is_event,
-                                              ))
+            'cached_until': self.py3.time_in(cached_until),
+            'full_text': self.py3.safe_format(
+                self.format, {'format_event': format_event})
         }
 
     def on_click(self, event):
@@ -166,5 +167,6 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
+    config = {'format': '{format_event}|No Events'}
     from py3status.module_test import module_test
-    module_test(Py3status)
+    module_test(Py3status, config=config)
