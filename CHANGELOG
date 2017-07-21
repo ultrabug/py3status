@@ -2,6 +2,7 @@ version 3.6 (milestone)
 * faster py3-cmd, by @tobes
 * better report when i3status is missing, by @tobes thx to @Cypher1
 * make hide_if_zero work for net_rate fixes #935, by @tobes thx to @maximbaz
+* formatter allow some commands to be inherited, by @tobes
 * formatter not zero fix for displayed values, by @tobes thx to @maximbaz
 * backlight module: combine device/device_path params, by @lasers
 * backlight module: improve rounding of brightness value, by @maximbaz
