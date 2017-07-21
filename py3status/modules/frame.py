@@ -14,6 +14,7 @@ Configuration parameters:
     format: Display format to use (default '{output}')
     format_button_closed: Format for the button when frame open (default '+')
     format_button_open: Format for the button when frame closed (default '-')
+    format_button_urgent: Format for the button when urgent (default 'URGENT +')
     format_separator: Specify separator between contents.
         If this is None then the default i3bar separator will be used
         (default None)
@@ -78,6 +79,8 @@ SAMPLE OUTPUT
 closed
 {'full_text': u'+'}
 
+urgent
+{'full_text': u'URGENT +', 'urgent': True}
 """
 
 
@@ -87,6 +90,7 @@ class Py3status:
     format = '{output}'
     format_button_closed = u'+'
     format_button_open = u'-'
+    format_button_urgent = 'URGENT +'
     format_separator = None
     open = True
 
@@ -134,6 +138,8 @@ class Py3status:
         if self.py3.format_contains(self.format, 'button'):
             if self.open:
                 format_control = self.format_button_open
+            elif urgent:
+                format_control = self.format_button_urgent
             else:
                 format_control = self.format_button_closed
 
