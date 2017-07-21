@@ -11,19 +11,17 @@ Configuration parameters:
     button_next: mouse button to skip next track (default None)
     button_pause: mouse button to pause/play the playback (default 1)
     button_previous: mouse button to skip previous track (default None)
-    button_repeat: mouse button to toggle repeat (default None)
-    button_seek_backward: mouse button to seek backward (default None)
-    button_seek_forward: mouse button to seek forward (default None)
-    button_shuffle: mouse button to toggle shuffle (default None)
     button_stop: mouse button to stop the playback (default 3)
-    button_volume_down: mouse button to decrease volume (default None)
-    button_volume_up: mouse button to increase volume (default None)
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module
         (default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]
         [\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]
         |\?show cmus: waiting for user input]]')
-    sleep_timeout: sleep interval for this module (default 20)
+    sleep_timeout: sleep interval for this module will be used when cmus is not
+        running. this allows aggressive timing in cache_timeout where one might
+        want to refresh cmus every 0 second along with time placeholders...
+        or to make cmus run once every minute as long as it's not being used.
+        (default 20)
 
 Control placeholders:
     is_paused: a boolean based on cmus status
@@ -32,7 +30,6 @@ Control placeholders:
     is_stopped: a boolean based on cmus status
     ----------
     continue: a boolean based on data status
-    follow: a boolean based on data status
     play_library: a boolean based on data status
     play_sorted: a boolean based on data status
     repeat: a boolean based on data status
@@ -75,17 +72,6 @@ Color options:
 Requires:
     cmus: a small feature-rich ncurses-based music player
 
-Examples:
-```
-# copy right side of cmus status line (for fun)
-cmus {
-    format += '[\?soft  ]' +\
-        '[\?is_started&color=#ccc [\?if=play_library {aaa_mode} from ' +\
-        '[\?if=play_sorted sorted ]library|playlist][\?soft  - ]' +\
-        '[\?if=continue C][\?if=follow F][\?if=repeat R][\?if=shuffle S]]'
-}
-```
-
 @author lasers
 
 SAMPLE OUTPUT
@@ -114,13 +100,7 @@ class Py3status:
     button_next = None
     button_pause = 1
     button_previous = None
-    button_repeat = None
-    button_seek_backward = None
-    button_seek_forward = None
-    button_shuffle = None
     button_stop = 3
-    button_volume_down = None
-    button_volume_up = None
     cache_timeout = 5
     format = '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]' +\
         '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]' +\
@@ -134,13 +114,6 @@ class Py3status:
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
-
-        # check placeholders (an example to get raw value not available in data)
-        self.use_follow = False
-        format_contains = ['if=follow', 'if=!follow', '{follow}']
-        for i in format_contains:
-            if i in self.format:
-                self.use_follow = True
 
     def _seconds_to_time(self, value):
         m, s = divmod(int(value), 60)
@@ -188,15 +161,6 @@ class Py3status:
         # stream to boolean
         if 'stream' in data:
             temporary['stream'] = True
-
-        # cmus: don't mix cooked stuffs with raw stuffs.
-        # (an example to get raw value not available in data)
-        if self.use_follow:
-            cmd = ['cmus-remote', '--raw', 'set follow']
-            if 'true' in self.py3.command_output(cmd):
-                temporary['follow'] = True
-            else:
-                temporary['follow'] = False
 
         return temporary
 
@@ -251,18 +215,6 @@ class Py3status:
             self.py3.command_run('cmus-remote --next')
         elif button == self.button_previous:
             self.py3.command_run('cmus-remote --prev')
-        elif button == self.button_repeat:
-            self.py3.command_run('cmus-remote --repeat')
-        elif button == self.button_shuffle:
-            self.py3.command_run('cmus-remote --shuffle')
-        elif button == self.button_seek_backward:
-            self.py3.command_run('cmus-remote --seek -5')
-        elif button == self.button_seek_forward:
-            self.py3.command_run('cmus-remote --seek +5')
-        elif button == self.button_volume_down:
-            self.py3.command_run('cmus-remote --vol -5%')
-        elif button == self.button_volume_up:
-            self.py3.command_run('cmus-remote --vol +5%')
         else:
             self.py3.prevent_refresh()
 
