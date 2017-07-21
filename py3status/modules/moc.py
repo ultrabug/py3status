@@ -7,23 +7,19 @@ powerful and easy to use. It consists of two parts, a server (moc) and a
 player/interface (mocp). It supports OGG, WAV, MP3 and other formats.
 
 Configuration parameters:
-    button_autonext: mouse button to toggle autonext (default None)
-    button_exit: mouse button to bring down the server (default None)
     button_next: mouse button to skip next track (default None)
     button_pause: mouse button to pause/play the playback (default 1)
     button_previous: mouse button to skip previous track (default None)
-    button_repeat: mouse button to toggle repeat (default None)
-    button_seek_backward: mouse button to seek backward (default None)
-    button_seek_forward: mouse button to seek forward (default None)
-    button_shuffle: mouse button to toggle shuffle (default None)
     button_stop: mouse button to stop the playback (default 3)
-    button_volume_down: mouse button to decrease volume (default None)
-    button_volume_up: mouse button to increase volume (default None)
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module
         (default '\?if=is_started [\?if=is_stopped \[\] moc|
         [\?if=is_paused \|\|][\?if=is_playing >] {title}]')
-    sleep_timeout: sleep interval for this module (default 20)
+    sleep_timeout: sleep interval for this module will be used when moc is not
+        running. this allows aggressive timing in cache_timeout where one might
+        want to refresh moc every 0 second along with time placeholders...
+        or to make moc run once every minute as long as it's not being used.
+        (default 20)
 
 Control placeholders:
     is_paused: a boolean based on moc status
@@ -83,18 +79,10 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_autonext = None
-    button_exit = None
     button_next = None
     button_pause = 1
     button_previous = None
-    button_repeat = None
-    button_seek_backward = None
-    button_seek_forward = None
-    button_shuffle = None
     button_stop = 3
-    button_volume_down = None
-    button_volume_up = None
     cache_timeout = 5
     format = '\?if=is_started [\?if=is_stopped \[\] moc|' +\
         '[\?if=is_paused \|\|][\?if=is_playing >] {title}]'
@@ -163,32 +151,17 @@ class Py3status:
         Control moc with mouse clicks.
         """
         button = event['button']
-        if button == self.button_pause and self.state == 'STOP':
-            self.py3.command_run('mocp --play')
-        elif button == self.button_pause:
-            self.py3.command_run('mocp --toggle-pause')
+        if button == self.button_pause:
+            if self.state == 'STOP':
+                self.py3.command_run('mocp --play')
+            else:
+                self.py3.command_run('mocp --toggle-pause')
         elif button == self.button_stop:
             self.py3.command_run('mocp --stop')
         elif button == self.button_next:
             self.py3.command_run('mocp --next')
         elif button == self.button_previous:
             self.py3.command_run('mocp --prev')
-        elif button == self.button_seek_backward:
-            self.py3.command_run('mocp --seek -5')
-        elif button == self.button_seek_forward:
-            self.py3.command_run('mocp --seek +5')
-        elif button == self.button_volume_down:
-            self.py3.command_run('mocp --volume -5%')
-        elif button == self.button_volume_up:
-            self.py3.command_run('mocp --volume +5%')
-        elif button == self.button_autonext:
-            self.py3.command_run('mocp --toggle autonext')
-        elif button == self.button_repeat:
-            self.py3.command_run('mocp --toggle repeat')
-        elif button == self.button_shuffle:
-            self.py3.command_run('mocp --toggle shuffle')
-        elif button == self.button_exit:
-            self.py3.command_run('mocp --exit')
         else:
             self.py3.prevent_refresh()
 
