@@ -14,8 +14,8 @@ Configuration parameters:
     format_not_supported: show this when properties are not supported
         (default '[\?color=bad&show NS]')
     format_properties: display format for NVIDIA GPU properties
-        (default '[\?color=#fff {gpu_name}][\?soft  ][Temp: {temperature.gpu}°C]
-        [\?soft  ][\?color=degraded Memory: {memory.used}/{memory.total} MB]')
+        (default '[\?color=good {temperature.gpu}°C][\?soft  ]
+        [\?color=degraded {memory.used} MB]')
     format_separator: show separator only if more than one (default ' ')
 
 Format placeholders:
@@ -39,19 +39,16 @@ Format_properties placeholders:
 
 Color options:
     color_bad: NVIDIA GPU Properties Unavailable
-    color_good: NVIDIA GPU Properties Available
 
 Requires:
     nvidia-smi: NVIDIA System Management Interface program
 
-@author jmdana <https://github.com/jmdana>
-@license BSD
+@author lasers
 
 SAMPLE OUTPUT
 [
-{'color': '#FFFFFF', 'full_text': 'Quadro NVS 295 '}
-{'color': '#00FF00', 'full_text': 'Temp: 64°C '}
-{'color': '#FFFF00', 'full_text': 'Memory: 98/255 MB'}
+    {'color': '#00FF00', 'full_text': '64°C '}
+    {'color': '#FFFF00', 'full_text': '98 MB'}
 ]
 """
 
@@ -67,57 +64,9 @@ class Py3status:
     cache_timeout = 10
     format = '{format_properties}'
     format_not_supported = '[\?color=bad&show NS]'
-    format_properties = u'[\?color=#fff {gpu_name}][\?soft  ]' +\
-        u'[Temp: {temperature.gpu}°C][\?soft  ]' +\
-        u'[\?color=degraded Memory: {memory.used}/{memory.total} MB]'
+    format_properties = u'[\?color=good {temperature.gpu}°C][\?soft  ]' +\
+        u'[\?color=degraded {memory.used} MB]'
     format_separator = ' '
-
-    class Meta:
-        def deprecate_function(config):
-            if (not config.get('format_separator') and
-                    config.get('temp_separator')):
-                sep = config.get('temp_separator')
-                sep = sep.replace('\\', '\\\\')
-                sep = sep.replace('[', '\[')
-                sep = sep.replace(']', '\]')
-                sep = sep.replace('|', '\|')
-
-                return {'format_separator': sep}
-            else:
-                return {}
-
-        deprecated = {
-            'function': [
-                {
-                    'function': deprecate_function,
-                },
-            ],
-            'remove': [
-                {
-                    'param': 'temp_separator',
-                    'msg': 'obsolete parameter, use `format_separator`',
-                },
-            ],
-            'rename_placeholder': [
-                {
-                    'placeholder': 'format_temp',
-                    'new': 'format_properties',
-                    'format_strings': ['format'],
-                },
-                {
-                    'placeholder': 'temp',
-                    'new': 'temperature.gpu',
-                    'format_strings': ['format_temp'],
-                },
-            ],
-            'rename': [
-                {
-                    'param': 'format_temp',
-                    'new': 'format_properties',
-                    'msg': 'obsolete parameter, use `format_properties`',
-                },
-            ],
-        }
 
     def post_config_hook(self):
         if not self.py3.check_commands('nvidia-smi'):
@@ -134,19 +83,16 @@ class Py3status:
 
     def nvidia_gpu(self):
         out = self._get_nvidia_properties()
-        color = self.py3.COLOR_BAD
-
         nv = []
-        for line in out.splitlines():
-            color = self.py3.COLOR_GOOD
 
+        for line in out.splitlines():
             # split placeholders results
             line = [x.strip() for x in line.split(',')]
             gpu = dict(zip(self.properties, line))
 
             # overwrite [Not Supported] with formatted string
             for properties, value in gpu.items():
-                if '[Not Supported]' in value:
+                if 'Not Supported' in value:
                     gpu[properties] = self.py3.safe_format(
                         self.format_not_supported)
 
@@ -154,13 +100,11 @@ class Py3status:
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_properties = self.py3.composite_join(format_separator, nv)
-        nvidia_smi = self.py3.safe_format(
-            self.format, {'format_properties': format_properties})
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': nvidia_smi,
-            'color': color
+            'full_text': self.py3.safe_format(
+                self.format, {'format_properties': format_properties})
         }
 
 
