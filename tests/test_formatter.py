@@ -1142,6 +1142,48 @@ def test_zero_format_4():
     })
 
 
+def test_inherit_not_zero_1():
+    run_formatter({
+        'format': '\?not_zero [{zero}]',
+        'expected': ''
+    })
+
+
+def test_inherit_not_zero_2():
+    run_formatter({
+        'format': '[\?not_zero [{zero}]]',
+        'expected': ''
+    })
+
+
+def test_inherit_not_zero_3():
+    run_formatter({
+        'format': '[\?not_zero [[[{zero}]]]]',
+        'expected': ''
+    })
+
+
+def test_inherit_show_1():
+    run_formatter({
+        'format': '\?show [[[hello]]]',
+        'expected': 'hello'
+    })
+
+
+def test_inherit_color_1():
+    run_formatter({
+        'format': '\?color=#F0F [[[{number}]]]',
+        'expected': [{'color': u'#FF00FF', 'full_text': u'42'}]
+    })
+
+
+def test_inherit_color_2():
+    run_formatter({
+        'format': '\?color=#F0F [[\?color=good [{number}]]]',
+        'expected': [{'color': u'#00FF00', 'full_text': u'42'}]
+    })
+
+
 if __name__ == '__main__':
     # run tests
     import sys
