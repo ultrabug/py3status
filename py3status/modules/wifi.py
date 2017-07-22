@@ -77,8 +77,9 @@ class Py3status:
     def post_config_hook(self):
         self._max_bitrate = 0
         self._ssid = ''
+        self.iw_cmd = self.py3.check_commands(['iw', '/sbin/iw'])
         # Try and guess the wifi interface
-        cmd = ['iw', 'dev']
+        cmd = [self.iw_cmd, 'dev']
         if self.use_sudo:
             cmd.insert(0, 'sudo')
         try:
@@ -113,7 +114,7 @@ class Py3status:
         """
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
-        cmd = ['iw', 'dev', self.device, 'link']
+        cmd = [self.iw_cmd, 'dev', self.device, 'link']
         if self.use_sudo:
             cmd.insert(0, 'sudo')
         try:
