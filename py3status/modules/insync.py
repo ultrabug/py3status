@@ -10,8 +10,8 @@ Configuration parameters:
     status_offline: show when Insync is offline (default 'OFFLINE')
     status_paused: show when Insync is paused (default 'PAUSED')
     status_share: show when Insync is sharing (default 'SHARE')
-    status_syncing: show when Insync is syncing (default 'SYNCING')
     status_synced: show when Insync has finished syncing (default 'SYNCED')
+    status_syncing: show when Insync is syncing (default 'SYNCING')
 
 Format placeholders:
     {status} Insync status
@@ -49,8 +49,8 @@ class Py3status:
     status_offline = 'OFFLINE'
     status_paused = 'PAUSED'
     status_share = 'SHARE'
-    status_syncing = 'SYNCING'
     status_synced = 'SYNCED'
+    status_syncing = 'SYNCING'
 
     def insync(self):
         if not self.py3.check_commands(["insync"]):
