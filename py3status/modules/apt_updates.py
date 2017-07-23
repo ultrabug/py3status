@@ -21,7 +21,7 @@ Requires:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'UPD: 5'}
+{'color': '#FFFF00', 'full_text': 'UPD: 5'}
 """
 
 import subprocess
