@@ -197,7 +197,11 @@ def parse_sample_data(sample_data, module_name):
                     output = ast.literal_eval(data)
                     samples[name] = output
                 except:
-                    samples[name] = 'SAMPLE DATA ERROR'
+                    samples[name] = {
+                        'color': '#990000',
+                        'background': '#FFFF00',
+                        'full_text': ' SAMPLE DATA ERROR ',
+                    }
                 name = None
                 data = ''
                 count += 1
