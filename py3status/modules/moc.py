@@ -30,7 +30,6 @@ Control placeholders:
 Format placeholders:
     {totaltime} total time in seconds, eg 72:02
     {currenttime} elapsed time in [HH:]MM:SS, eg 00:32
-    ----------
     {album} album name
     {artist} artist name
     {avgbitrate} audio average bitrate, eg 230kbps
@@ -63,10 +62,10 @@ SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': '> Music For Programming - Mindaugaszq'}
 
 paused
-{'color: '#FFFF00', 'full_text': '|| Music For Programming - Mindaugaszq'}
+{'color': '#FFFF00', 'full_text': '|| Music For Programming - Mindaugaszq'}
 
 stopped
-{'color: '#FF0000', 'full_text': '[] moc'}
+{'color': '#FF0000', 'full_text': '[] moc'}
 """
 
 from __future__ import division
