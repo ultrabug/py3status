@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 import re
 
-from py3status.autodoc import create_auto_documentation, Py3statusLexer
+from py3status.autodoc import (
+    create_auto_documentation,
+    Py3statusLexer,
+    ScreenshotDirective
+)
 from py3status.version import version as py3_version
 
 # py3status documentation build configuration file, created by
@@ -176,3 +180,6 @@ def setup(sphinx):
     # add the py3status lexer (for code blocks)
     from sphinx.highlighting import lexers
     lexers['py3status'] = Py3statusLexer()
+
+    # enable screenshot directive for dynamic screenshots
+    sphinx.add_directive('screenshot', ScreenshotDirective)

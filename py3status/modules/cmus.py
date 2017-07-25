@@ -14,9 +14,9 @@ Configuration parameters:
     button_stop: mouse button to stop the playback (default 3)
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module
-        (default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]
+        *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]
         [\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]
-        |\?show cmus: waiting for user input]]')
+        |\?show cmus: waiting for user input]]')*
     sleep_timeout: sleep interval for this module will be used when cmus is not
         running. this allows aggressive timing in cache_timeout where one might
         want to refresh cmus every 0 second along with time placeholders...
@@ -28,7 +28,6 @@ Control placeholders:
     is_playing: a boolean based on cmus status
     is_started: a boolean based on cmus status
     is_stopped: a boolean based on cmus status
-    ----------
     continue: a boolean based on data status
     play_library: a boolean based on data status
     play_sorted: a boolean based on data status
@@ -43,7 +42,6 @@ Control placeholders:
 Format placeholders:
     {durationtime} length time in [HH:]MM:SS, eg 02:51
     {positiontime} elapsed time in [HH:]MM:SS, eg 00:17
-    ----------
     {aaa_mode} shuffle songs between artist, album, or all. eg album
     {albumartist} album artist
     {album} album name
@@ -78,13 +76,13 @@ SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': '> Music For Programming - Big War'}
 
 paused
-{'color: '#FFFF00', 'full_text': '|| Music For Programming - Big War'}
+{'color': '#FFFF00', 'full_text': '|| Music For Programming - Big War'}
 
 stopped
-{'color: '#FF0000', 'full_text': '.. Music For Programming - Big War'}
+{'color': '#FF0000', 'full_text': '.. Music For Programming - Big War'}
 
 waiting
-{'color: '#FF0000', 'full_text': '.. cmus: waiting for user input'}
+{'color': '#FF0000', 'full_text': '.. cmus: waiting for user input'}
 """
 
 from __future__ import division
