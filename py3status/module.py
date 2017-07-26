@@ -156,6 +156,10 @@ class Module(Thread):
         if self.error_hide:
             self.hide_errors()
             return
+
+        # only show first line of error
+        msg = msg.splitlines()[0]
+
         errors = [
             self.module_nice_name,
             u'{}: {}'.format(self.module_nice_name, msg),
