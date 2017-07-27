@@ -41,8 +41,8 @@ Configuration parameters:
         the format_[...] variables found below.
         Available placeholders:
             icon, city, clouds, rain, snow, wind, humidity, pressure,
-            temperature, sunrise, sunset, desc, desc_long, forecast
-        (default '{city}: {icon} {temperature} {desc} {forecast}')
+            temperature, sunrise, sunset, main, description, forecast
+        (default '{city}: {icon} {temperature} {main} {forecast}')
     format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
@@ -61,15 +61,15 @@ Configuration parameters:
     format_pressure: Formatting for atmospheric pressure
         Available placeholders:
             icon, pressure, sea_level
-        (default '{icon} {pressure}hPa')
+        (default '{icon} {pressure} hPa')
     format_rain: Formatting for rain volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon} {amount:.0f}in')
+        (default '{icon} {amount:.0f} inch')
     format_snow: Formatting for snow volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon} {amount:.0f}in')
+        (default '{icon} {amount:.0f} inch')
     format_sunrise: Formatting for sunrise time
         Note that this format accepts strftime/strptime placeholders to populate
         the output with the time information.
@@ -89,7 +89,7 @@ Configuration parameters:
     format_wind: Formatting for wind degree and speed
         Available placeholders:
             icon, degree, speed, gust
-        (default '{icon} {speed:.0f}mph')
+        (default '{icon} {speed:.0f} mph')
     icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
         (default '🌫')
     icon_breeze: Icon for wind or breeze
@@ -190,8 +190,8 @@ Format placeholders:
         {forecast} Output of format_forecast
     format, format_forecast:
         {clouds} Output of format_clouds
-        {desc_long} Natural description of the current weather
-        {desc} Short description of the current weather
+        {description} Natural description of the current weather
+        {main} Short description of the current weather
         {humidity} Output of format_humidity
         {pressure} Output of format_pressure
         {snow} Output of format_snow
@@ -281,17 +281,17 @@ class Py3status:
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{city}: {icon} {temperature} {desc} {forecast}'
+    format = '{city}: {icon} {temperature} {main} {forecast}'
     format_clouds = '{icon} {coverage}%'
     format_forecast = '{icon}'
     format_humidity = '{icon} {humidity}%'
-    format_pressure = '{icon} {pressure}hPa'
-    format_rain = '{icon} {amount:.0f}in'
-    format_snow = '{icon} {amount:.0f}in'
+    format_pressure = '{icon} {pressure} hPa'
+    format_rain = '{icon} {amount:.0f} inch'
+    format_snow = '{icon} {amount:.0f} inch'
     format_sunrise = '{icon} %-I:%M %p'
     format_sunset = '{icon} %-I:%M %p'
     format_temperature = u'{icon} {current:.0f}°'
-    format_wind = '{icon} {speed:.0f}mph'
+    format_wind = '{icon} {speed:.0f} mph'
     icon_atmosphere = u'🌫'
     icon_breeze = u'☴'
     icon_cloud = u'☁'
@@ -650,8 +650,8 @@ class Py3status:
             'sunset': self._format_sunset(wthr),
 
             # Descriptions (defaults to empty)
-            'desc': self._jpath(wthr, OWM_DESC, '').lower(),
-            'desc_long': self._jpath(wthr, OWM_DESC_LONG, '')
+            'main': self._jpath(wthr, OWM_DESC, '').lower(),
+            'description': self._jpath(wthr, OWM_DESC_LONG, '').lower(),
         }
 
         # Get the city name. Only available in the current weather output
@@ -703,8 +703,8 @@ if __name__ == '__main__':
     # All possible outputs
     all_string = '/'.join([
         '{clouds}',
-        '{desc_long}',
-        '{desc}',
+        '{description}',
+        '{main}',
         '{humidity}',
         '{pressure}',
         '{snow}',
