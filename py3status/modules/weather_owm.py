@@ -65,11 +65,11 @@ Configuration parameters:
     format_rain: Formatting for rain volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon} {amount:.0f} inch')
+        (default '{icon} {amount:.0f} {unit}')
     format_snow: Formatting for snow volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon} {amount:.0f} inch')
+        (default '{icon} {amount:.0f} {unit}')
     format_sunrise: Formatting for sunrise time
         Note that this format accepts strftime/strptime placeholders to populate
         the output with the time information.
@@ -85,15 +85,13 @@ Configuration parameters:
     format_temperature: Formatting for temperature
         Available placeholders:
             current, icon, max, min
-        (default '{icon} {current:.0f}°')
+        (default '{icon} {current:.0f}°{unit}')
     format_wind: Formatting for wind degree and speed
         Available placeholders:
             icon, degree, speed, gust
-        (default '{icon} {speed:.0f} mph')
+        (default '{icon} {speed:.0f} {unit}')
     icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
         (default '🌫')
-    icon_breeze: Icon for wind or breeze
-        (default '☴')
     icon_cloud: Icon for clouds
         (default '☁')
     icon_extreme: Icon for extreme weather
@@ -112,6 +110,8 @@ Configuration parameters:
         (default '○')
     icon_thunderstorm: Icon for thunderstorms
         (default '⛈')
+    icon_wind: Icon for wind or breeze
+        (default '☴')
     icons: A dictionary relating weather code to icon
         See https://openweathermap.org/weather-conditions for a complete list
         of supported icons. This will fall-back to the listed icon if there is
@@ -141,13 +141,13 @@ Configuration parameters:
         (default None)
     rain_unit: Unit for rain fall
         Options:
-            cm, ft, in, mm, m, yrd
+            cm, ft, in, mm, m, yd
         (default 'in')
     request_timeout: The timeout in seconds for contacting the IP-API.
         (default 10)
     snow_unit: Unit for snow fall
         Options:
-            cm, ft, in, mm, m, yrd
+            cm, ft, in, mm, m, yd
         (default 'in')
     temp_unit: Unit for temperature
         Options:
@@ -175,24 +175,28 @@ Format placeholders:
         {sea_level} Sea-level atmospheric pressure in Pascals.
     format_rain:
         {amount} Rainfall in the specified unit
+        {unit} The unit specified
     format_snow:
         {amount} Snowfall in the specified unit
+        {unit} The unit specified
     format_temperature:
-       {current} Current temperature
-       {max} Maximum temperature in the configured unit
-       {min} Minimum temperature
+        {current} Current temperature
+        {max} Maximum temperature in the configured unit
+        {min} Minimum temperature
+        {unit} The unit specified
     format_wind:
-       {degree} Current wind heading
-       {gust} Wind gusts speed in the specified unit
-       {speed} Wind speed
+        {degree} Current wind heading
+        {gust} Wind gusts speed in the specified unit
+        {speed} Wind speed
+        {unit} The unit specified
     format only:
         {city} The name of the city where the weather is
         {forecast} Output of format_forecast
     format, format_forecast:
         {clouds} Output of format_clouds
         {description} Natural description of the current weather
-        {main} Short description of the current weather
         {humidity} Output of format_humidity
+        {main} Short description of the current weather
         {pressure} Output of format_pressure
         {snow} Output of format_snow
         {sunrise} Output of format_sunrise
@@ -250,7 +254,7 @@ OWM_WEATHER_ICON = '//weather:0/id'
 OWM_WIND = '//wind'
 
 # Units constants
-RAIN_UNITS = set(['cm', 'ft', 'in', 'mm', 'm', 'yrd'])
+RAIN_UNITS = set(['cm', 'ft', 'in', 'mm', 'm', 'yd'])
 SNOW_UNITS = RAIN_UNITS
 TEMP_UNITS = set(['c', 'f', 'k'])
 WIND_UNITS = set(['fsec', 'msec', 'mph', 'kmh'])
@@ -293,7 +297,6 @@ class Py3status:
     format_temperature = u'{icon} {current:.0f}°'
     format_wind = '{icon} {speed:.0f} mph'
     icon_atmosphere = u'🌫'
-    icon_breeze = u'☴'
     icon_cloud = u'☁'
     icon_extreme = u'⚠'
     icon_humidity = u'●'
@@ -303,6 +306,7 @@ class Py3status:
     icon_sun = u'☼'
     icon_temperature = u'○'
     icon_thunderstorm = u'⛈'
+    icon_wind = u'☴'
     icons = None
     lang = 'en'
     location = None
@@ -327,7 +331,7 @@ class Py3status:
             'i800': self.icon_sun,
             'i801_i809': self.icon_cloud,
             'i900_i909': self.icon_extreme,
-            'i950_i959': self.icon_breeze,
+            'i950_i959': self.icon_wind,
             'i960_i999': self.icon_extreme,
         }
 
@@ -494,13 +498,14 @@ class Py3status:
             'm': round(rain / 100),
             'in': round(inches),
             'ft': round(inches / 12),
-            'yrd': round(inches / 36)
+            'yd': round(inches / 36)
         }
 
         # Format the rain fall
         return self.py3.safe_format(self.format_rain, {
             'icon': self.icons['rain'],
             'amount': options[self.rain_unit],
+            'unit': self.rain_unit,
         })
 
     def _format_snow(self, wthr):
@@ -516,13 +521,14 @@ class Py3status:
             'm': round(snow / 100),
             'in': round(inches),
             'ft': round(inches / 12),
-            'yrd': round(inches / 36)
+            'yd': round(inches / 36)
         }
 
         # Format the snow fall
         return self.py3.safe_format(self.format_snow, {
             'icon': self.icons['snow'],
             'amount': options[self.snow_unit],
+            'unit': self.snow_unit,
         })
 
     def _format_wind(self, wthr):
@@ -550,6 +556,7 @@ class Py3status:
         choice = options[self.wind_unit]
         choice['icon'] = self.icons['wind']
         choice['degree'] = wind['deg'] if ('deg' in wind) else 0
+        choice['unit'] = self.wind_unit
 
         # Format the wind speed
         return self.py3.safe_format(self.format_wind, choice)
@@ -571,7 +578,7 @@ class Py3status:
         pressure['icon'] = self.icons['pressure']
 
         # Format the barometric pressure
-        return self.py3.safe_format(self.format_humidity, pressure)
+        return self.py3.safe_format(self.format_pressure, pressure)
 
     def _format_temp(self, wthr):
         # Get Kelvin data (default absolute zero)
@@ -601,10 +608,11 @@ class Py3status:
         # Get the choice and add more
         choice = options[self.temp_unit]
         choice['icon'] = self.icons['temperature']
-        format_str = self.format_temperature
+        choice['unit'] = self.temp_unit
 
         # Optionally add the color
         color = None
+        format_str = self.format_temperature
         if self.thresholds:
             color = self.py3.threshold_get_color(choice['current'])
             color_str = '\?color=%s' % color
