@@ -149,17 +149,14 @@ Configuration parameters:
         Options:
             cm, ft, in, mm, m, yrd
         (default 'in')
-    temp_color: Color the temperature output based on a color scale.
-        For reference, see https://goo.gl/NGbjIE
-        (default False)
     temp_unit: Unit for temperature
         Options:
             c, f, k
         (default 'f')
     thresholds: Configure temperature colors based on limits
-        To have these take effect, enable the 'temp_color' flag.
         The numbers specified inherit the unit of the temperature as configured.
-        The default below is intended for Fahrenheit.
+        The default below is intended for Fahrenheit. If the set value is empty
+        or None, the feature is disabled.
         (default [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')])
     wind_unit: Unit for wind speed
         Options:
@@ -214,8 +211,6 @@ weather_owm {
 
     clouds = "☁"
   }
-
-  temp_color = True
 }
 ```
 Outputs: 🌫 ○ 59° foggy ⛅ ☼ 🌧`
@@ -314,7 +309,6 @@ class Py3status:
     rain_unit = 'in'
     request_timeout = 10
     snow_unit = 'in'
-    temp_color = False
     temp_unit = 'f'
     thresholds = THRESHOLDS
     wind_unit = 'mph'
@@ -611,7 +605,7 @@ class Py3status:
 
         # Optionally add the color
         color = None
-        if self.temp_color:
+        if self.thresholds:
             color = self.py3.threshold_get_color(choice['current'])
             color_str = '\?color=%s' % color
             format_str = color_str + ' ' + format_str
@@ -747,5 +741,4 @@ if __name__ == '__main__':
         # Miscellaneous
         'forecast_days': 1,
         'forecast_text_separator': '//',
-        'temp_color': True,
     })
