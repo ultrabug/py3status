@@ -39,6 +39,7 @@ version 3.6 (milestone)
 * whatismyip module: prevent mouse updates, by @lasers
 * wifi module: add format, merge formats, by @lasers
 * wifi module: fix quality icon python 2 bug, by @markrileybot
+* window_title_async: fix workspace glitch, by @lasers
 
 version 3.5 (2017-04-07)
 * allow improved access to settings from py3status section, by @tobes
