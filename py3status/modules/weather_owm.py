@@ -243,7 +243,7 @@ IP_LNG = '//lon'
 OWM_CLOUD_COVER = '//clouds/all'
 OWM_DESC = '//weather:0/main'
 OWM_DESC_LONG = '//weather:0/description'
-OWM_HUMIDITY = '//main'
+OWM_HUMIDITY = '//main/humidity'
 OWM_PRESSURE = '//main'
 OWM_RAIN = '//rain/3h'
 OWM_SNOW = '//snow/3h'
@@ -564,8 +564,6 @@ class Py3status:
     def _format_humidity(self, wthr):
         # Format the humidity (default zero humidity)
         humidity = self._jpath(wthr, OWM_HUMIDITY, 0)
-        if not humidity:
-            humidity = 0
 
         return self.py3.safe_format(self.format_humidity, {
             'icon': self.icons['humidity'],
