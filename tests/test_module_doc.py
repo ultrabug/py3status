@@ -220,17 +220,39 @@ def get_module_attributes(path):
 
 
 def _gen_diff(source, target):
+    # Create a unique object for determining if the list is missing an entry
+    blank = object()
+
+    # Make both lists the same length
     max_len = max(len(source), len(target))
     for lst in (source, target):
-        lst.extend(['' for i in range(max_len - len(lst))])
+        lst.extend([blank for i in range(max_len - len(lst))])
 
-    max_elem_len = max([len(elem) for elem in source])
+    # Determine the length of the longest item in the list
+    max_elem_len = max([len(str(elem)) for elem in source])
     format_str = '    %%%ds %%s %%s' % max_elem_len
 
     out = []
     for (have, want) in zip(source, target):
-        middle = '!!' if (have != want) else '  '
-        out.append(format_str % (have, middle, want))
+        # Determine the mark
+        middle = '  '
+
+        # The current version is missing this line
+        if have == blank:
+            middle = '<<'
+            have = ''
+
+        # The target version is missing this line
+        elif want == blank:
+            middle = '>>'
+            want = ''
+
+        # Both lines exist, but are different
+        elif have != want:
+            middle = '!!'
+
+        # Place the diff into the output
+        out.append(format_str % (str(have), middle, str(want)))
 
     return '\n'.join(out) + '\n'
 
