@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 '''
-Ultimately customizable weather module based on the IP-API Geolocation API
-(http://ip-api.com) and the OpenWeatherMap API (https://openweathermap.org).
+Ultimately customizable weather module based on the Timezone API
+(https://timezoneapi.io) and the OpenWeatherMap API
+(https://openweathermap.org).
 
 Requires an API key for OpenWeatherMap (OWM), but the free tier allows you
-enough requests/sec to get accurate weather even up to the second.
+enough requests/sec to get accurate weather even up to the minute.
 
 This module allows you to specify an icon for nearly every weather scenario
 imaginable. The default configuration options lump many of the icons into
@@ -137,13 +138,19 @@ Configuration parameters:
         (default 'en')
     location: A tuple of floats describing the desired weather location
         The tuple should follow the form (latitude, longitude), and if set,
-        implicitly disables the IP-API Geolocation API.
+        implicitly disables the Timezone API for determining location.
+        (default None)
+    offset_gmt: A string describing the offset from GMT (UTC)
+        The string should follow the format '+12:34', where the first
+        character is either '+' or '-', followed by the offset in hours,
+        then the offset in minutes. If this is set, it disables the
+        automatic timezone detection from the Timezone API.
         (default None)
     rain_unit: Unit for rain fall
         Options:
             cm, ft, in, mm, m, yd
         (default 'in')
-    request_timeout: The timeout in seconds for contacting the IP-API.
+    request_timeout: The timeout in seconds for contacting the API's.
         (default 10)
     snow_unit: Unit for snow fall
         Options:
@@ -217,7 +224,7 @@ weather_owm {
   }
 }
 ```
-Outputs: 🌫 ○ 59° foggy ⛅ ☼ 🌧`
+Outputs: 🌫 ○ 59°F foggy ⛅ ☼ 🌧`
 - Currently foggy, 59° F outside, with forecast of cloudy tomorrow, sunny the
   next day, then rainy
 
@@ -235,11 +242,11 @@ OWM_CURR_ENDPOINT = 'http://api.openweathermap.org/data/%s/weather?' \
     'APPID=%s&lat=%f&lon=%f&lang=%s'
 OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
     'APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d'
-IP_ENDPOINT = 'http://ip-api.com/json'
+IP_ENDPOINT = 'https://timezoneapi.io/api/ip'
 
 # Paths of information to extract from JSON
-IP_LAT = '//lat'
-IP_LNG = '//lon'
+IP_LOC = '//data/location'
+IP_GMT_OFF = '//data/datetime/offset_gmt'
 OWM_CLOUD_COVER = '//clouds/all'
 OWM_DESC = '//weather:0/main'
 OWM_DESC_LONG = '//weather:0/description'
@@ -310,6 +317,7 @@ class Py3status:
     icons = None
     lang = 'en'
     location = None
+    offset_gmt = None
     rain_unit = 'in'
     request_timeout = 10
     snow_unit = 'in'
@@ -401,24 +409,6 @@ class Py3status:
         if self.wind_unit not in WIND_UNITS:
             raise Exception('wind_unit is not recognized')
 
-    def _get_coords(self):
-        # Preference a user-set location
-        if self.location is not None:
-            return self.location
-
-        # Contact the IP-API
-        try:
-            req = self.py3.request(IP_ENDPOINT,
-                                   timeout=self.request_timeout)
-            data = req.json()
-        except (self.py3.RequestException):
-            return None
-        except (self.py3.RequestURLError):
-            return None
-
-        # Extract the data
-        return (self._jpath(data, IP_LAT, 0), self._jpath(data, IP_LNG, 0))
-
     def _get_req_url(self, base, coords):
         # Construct the url from the pattern
         params = [OWM_API, self.api_key] + list(coords) + [self.lang]
@@ -429,9 +419,49 @@ class Py3status:
         req = self.py3.request(url, timeout=self.request_timeout)
         if req.status_code != 200:
             data = req.json()
-            raise OWMException(data['message'])
+            raise OWMException(data['message'] if ('message' in data)
+                               else 'API Error')
 
         return req.json()
+
+    def _get_coords_tz(self):
+        # Helper to parse a GMT offset
+        def _parse_offset(offset):
+            # Parse string
+            (plus, rest) = ((offset[0] == '+'), offset[1:])
+            (hours, mins) = map(int, rest.split(':'))
+
+            # Generate timedelta
+            tz_offset = datetime.timedelta(hours=hours, minutes=mins)
+            return (tz_offset if plus else -tz_offset)
+
+        # Preference a user-set location
+        if (self.location is not None) and (self.offset_gmt is not None):
+            return (self.location, _parse_offset(self.offset_gmt))
+
+        # Contact the Timezone API
+        try:
+            data = self._make_req(IP_ENDPOINT)
+        except (self.py3.RequestException):
+            return None
+        except (self.py3.RequestURLError):
+            return None
+
+        # Extract location data
+        lat_lng = self.location
+        if self.location is None:
+            location = self._jpath(data, IP_LOC, '0,0')
+            lat_lng = tuple(map(float, location.split(',')))
+
+        # Extract timezone offset
+        tz_offset = (_parse_offset(self.offset_gmt)
+                     if (self.offset_gmt is not None)
+                     else None)
+        if self.offset_gmt is None:
+            offset = self._jpath(data, IP_GMT_OFF, '+0:00')
+            tz_offset = _parse_offset(offset)
+
+        return (lat_lng, tz_offset)
 
     def _jpath(self, data, query, default=None):
         # Take the query expression and drill down into the given dictionary
@@ -619,10 +649,11 @@ class Py3status:
         # Format the temperature
         return self.py3.safe_format(format_str, choice)
 
-    def _format_sunrise(self, wthr):
+    def _format_sunrise(self, wthr, tz_offset):
         # Get the time for sunrise (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
             self._jpath(wthr, OWM_SUNRISE, 0))
+        dt += tz_offset
 
         # Format the sunrise
         replaced = dt.strftime(self.format_sunrise)
@@ -630,10 +661,11 @@ class Py3status:
             'icon': self.icons['sunrise'],
         })
 
-    def _format_sunset(self, wthr):
+    def _format_sunset(self, wthr, tz_offset):
         # Get the time for sunset (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
             self._jpath(wthr, OWM_SUNSET, 0))
+        dt += tz_offset
 
         # Format the sunset
         replaced = dt.strftime(self.format_sunset)
@@ -641,7 +673,7 @@ class Py3status:
             'icon': self.icons['sunset'],
         })
 
-    def _format_dict(self, wthr):
+    def _format_dict(self, wthr, tz_offset):
         data = {
             # Standard options
             'icon': self._get_icon(wthr),
@@ -652,8 +684,8 @@ class Py3status:
             'humidity': self._format_humidity(wthr),
             'pressure': self._format_pressure(wthr),
             'temperature': self._format_temp(wthr),
-            'sunrise': self._format_sunrise(wthr),
-            'sunset': self._format_sunset(wthr),
+            'sunrise': self._format_sunrise(wthr, tz_offset),
+            'sunset': self._format_sunset(wthr, tz_offset),
 
             # Descriptions (defaults to empty)
             'main': self._jpath(wthr, OWM_DESC, '').lower(),
@@ -666,14 +698,14 @@ class Py3status:
 
         return data
 
-    def _format(self, wthr, fcsts):
+    def _format(self, wthr, fcsts, tz_offset):
         # Format all sections
-        today = self._format_dict(wthr)
+        today = self._format_dict(wthr, tz_offset)
 
         # Insert forecasts
         forecasts = []
         for day in fcsts:
-            future = self._format_dict(day)
+            future = self._format_dict(day, tz_offset)
             forecasts.append(self.py3.safe_format(self.format_forecast, future))
 
         # Give the final format
@@ -684,13 +716,15 @@ class Py3status:
 
     def weather_owm(self):
         # Get weather information
-        coords = self._get_coords()
+        coords_tz = self._get_coords_tz()
         text = ''
-        if coords is not None:
+        if coords_tz is not None:
+            (coords, tz_offset) = coords_tz
+
             wthr = self._get_weather(coords)
             fcsts = self._get_forecast(coords)
 
-            text = self._format(wthr, fcsts)
+            text = self._format(wthr, fcsts, tz_offset)
 
         return {
             'full_text': text,
