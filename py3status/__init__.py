@@ -1,8 +1,6 @@
 import locale
 import sys
 
-from py3status.core import Py3statusWrapper
-
 try:
     from setproctitle import setproctitle
     setproctitle('py3status')
@@ -18,6 +16,7 @@ except NameError:
 
 
 def main():
+    from py3status.core import Py3statusWrapper
     try:
         locale.setlocale(locale.LC_ALL, '')
     except locale.Error:

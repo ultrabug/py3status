@@ -33,6 +33,7 @@ param_dict = {
     'zero': 0,
     'zero_str': '0',
     'zero_float': 0.0,
+    'zero_almost': 0.0001,
     'str_int': '123',
     'str_float': '123.456',
     'str_nan': "I'm not a number",
@@ -1120,6 +1121,67 @@ def test_module_true_value():
 
 def test_module_false_value():
     run_formatter({'format': '{module_false}', 'expected': ''})
+
+
+def test_zero_format_1():
+    run_formatter({'format': '[\?not_zero {zero_almost}]', 'expected': '0.0001'})
+
+
+def test_zero_format_2():
+    run_formatter({'format': '[\?not_zero {zero_almost:d}]', 'expected': ''})
+
+
+def test_zero_format_3():
+    run_formatter({'format': '[\?not_zero {zero_almost:.3f}]', 'expected': ''})
+
+
+def test_zero_format_4():
+    run_formatter({
+        'format': '[\?not_zero {zero_almost:.4f}]',
+        'expected': '0.0001'
+    })
+
+
+def test_inherit_not_zero_1():
+    run_formatter({
+        'format': '\?not_zero [{zero}]',
+        'expected': ''
+    })
+
+
+def test_inherit_not_zero_2():
+    run_formatter({
+        'format': '[\?not_zero [{zero}]]',
+        'expected': ''
+    })
+
+
+def test_inherit_not_zero_3():
+    run_formatter({
+        'format': '[\?not_zero [[[{zero}]]]]',
+        'expected': ''
+    })
+
+
+def test_inherit_show_1():
+    run_formatter({
+        'format': '\?show [[[hello]]]',
+        'expected': 'hello'
+    })
+
+
+def test_inherit_color_1():
+    run_formatter({
+        'format': '\?color=#F0F [[[{number}]]]',
+        'expected': [{'color': u'#FF00FF', 'full_text': u'42'}]
+    })
+
+
+def test_inherit_color_2():
+    run_formatter({
+        'format': '\?color=#F0F [[\?color=good [{number}]]]',
+        'expected': [{'color': u'#00FF00', 'full_text': u'42'}]
+    })
 
 
 if __name__ == '__main__':

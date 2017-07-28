@@ -4,7 +4,6 @@
 Display bitcoin using bitcoincharts.com.
 
 Configuration parameters:
-    bitcoin_separator: display separator if more than one (default ', ')
     cache_timeout: refresh interval for this module. A message from
         the site: Don't query more often than once every 15 minutes
         (default 900)
@@ -15,8 +14,9 @@ Configuration parameters:
         see http://bitcoincharts.com/about/markets-api/ (default 'close')
     format: display format for this module (default '{format_bitcoin}')
     format_bitcoin: display format for bitcoin (default '{market}: {price}{symbol}')
+    format_separator: show separator only if more than one (default ', ')
     hide_on_error: show error message (default False)
-    markets: list of supported markets. see http://bitcoincharts.com/markets/list/
+    markets: list of supported markets http://bitcoincharts.com/markets/list/
         (default 'btceUSD, btcdeEUR')
     symbols: if possible, convert currency abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
@@ -57,12 +57,12 @@ class Py3status:
     """
     """
     # available configuration parameters
-    bitcoin_separator = ', '
     cache_timeout = 900
     color_index = -1
     field = 'close'
     format = '{format_bitcoin}'
     format_bitcoin = '{market}: {price}{symbol}'
+    format_separator = ', '
     hide_on_error = False
     markets = 'btceUSD, btcdeEUR'
     symbols = True
@@ -76,6 +76,33 @@ class Py3status:
                     },
                     'format_strings': ['format_bitcoin'],
                 }
+            ],
+        }
+
+        def deprecate_function(config):
+            if (not config.get('format_separator') and
+                    config.get('bitcoin_separator')):
+                sep = config.get('bitcoin_separator')
+                sep = sep.replace('\\', '\\\\')
+                sep = sep.replace('[', '\[')
+                sep = sep.replace(']', '\]')
+                sep = sep.replace('|', '\|')
+
+                return {'format_separator': sep}
+            else:
+                return {}
+
+        deprecated = {
+            'function': [
+                {
+                    'function': deprecate_function,
+                },
+            ],
+            'remove': [
+                {
+                    'param': 'bitcoin_separator',
+                    'msg': 'obsolete set using `format_separator`',
+                },
             ],
         }
 
@@ -149,8 +176,10 @@ class Py3status:
                 response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
-        out = self.py3.composite_join(self.bitcoin_separator, rates)
-        response['full_text'] = self.py3.safe_format(self.format, {'format_bitcoin': out})
+        format_separator = self.py3.safe_format(self.format_separator)
+        format_bitcoin = self.py3.composite_join(format_separator, rates)
+        response['full_text'] = self.py3.safe_format(
+            self.format, {'format_bitcoin': format_bitcoin})
         return response
 
 

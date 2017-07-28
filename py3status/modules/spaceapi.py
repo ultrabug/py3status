@@ -96,8 +96,11 @@ class Py3status:
                 state = self.state_open
 
             if 'lastchange' in data['state'].keys():
-                dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
-                lastchanged = dt.strftime(self.format_lastchanged)
+                try:
+                    dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
+                    lastchanged = dt.strftime(self.format_lastchanged)
+                except:
+                    lastchanged = 'unknown'
             else:
                 lastchanged = 'unknown'
 

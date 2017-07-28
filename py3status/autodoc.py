@@ -5,12 +5,13 @@ import inspect
 import os.path
 import re
 
-
+from docutils import nodes
+from docutils.parsers.rst import Directive
 from pygments.lexer import RegexLexer
 import pygments.token as pygments_token
 
 from py3status.docstrings import core_module_docstrings
-from py3status.screenshots import create_screenshots, get_samples
+from py3status.screenshots import create_screenshots, get_samples, process
 from py3status.py3 import Py3
 
 
@@ -286,6 +287,40 @@ def create_auto_documentation():
 
     create_module_docs()
     create_py3_docs()
+
+
+class ScreenshotDirective(Directive):
+    """
+    Adds the ability to add screenshots dynamically in sphinx documentation
+
+    .. screenshot::
+
+        {'color': '#00FF00', 'full_text': 'Example output'}
+
+    """
+
+    has_content = True
+
+    def run(self):
+        env = self.state.document.settings.env
+
+        targetid = "screenshot-%d" % env.new_serialno('screenshot')
+        targetnode = nodes.target('', '', ids=[targetid])
+
+        image_name = '_%s' % targetid
+        try:
+            content = ast.literal_eval('\n'.join(self.content))
+        except:
+            content = {
+                'color': '#990000',
+                'background': '#FFFF00',
+                'full_text': ' IMAGE DATA ERROR ',
+            }
+
+        process(image_name, content, False)
+        image_path = os.path.join('screenshots', image_name + '.png')
+        screenshot_node = nodes.image(uri=image_path)
+        return [targetnode, screenshot_node]
 
 
 if __name__ == '__main__':

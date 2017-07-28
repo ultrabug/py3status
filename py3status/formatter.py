@@ -60,6 +60,20 @@ class Formatter:
                 placeholders.add(token.group('key'))
         return placeholders
 
+    def get_placeholder_formats_list(self, format_string):
+        """
+        Parses the format_string and returns a list of tuples
+        (placeholder, format).
+        """
+        placeholders = []
+        # Tokenize the format string and process them
+        for token in self.tokens(format_string):
+            if token.group('placeholder'):
+                placeholders.append(
+                    (token.group('key'), token.group('format'))
+                )
+        return placeholders
+
     def update_placeholders(self, format_string, placeholders):
         """
         Update a format string renaming placeholders.
@@ -222,13 +236,7 @@ class Placeholder:
         return the correct value for the placeholder
         """
         try:
-            value = get_params(self.key)
-            if block.commands.not_zero:
-                valid = value not in ['', None, False, '0', '0.0', 0, 0.0]
-            else:
-                # '', None, and False are ignored
-                # numbers like 0 and 0.0 are not.
-                valid = not (value in ['', None] or value is False)
+            value = value_ = get_params(self.key)
             if self.format.startswith(':'):
                 # if a parameter has been set to be formatted as a numeric
                 # type then we see if we can coerce it to be.  This allows
@@ -243,11 +251,19 @@ class Placeholder:
                         value = int(float(value))
                     output = u'{%s%s}' % (self.key, self.format)
                     value = output.format(**{self.key: value})
+                    value_ = float(value)
                 except ValueError:
                     pass
             elif self.format.startswith('!'):
                 output = u'{%s%s}' % (self.key, self.format)
-                value = output.format(**{self.key: value})
+                value = value_ = output.format(**{self.key: value})
+
+            if block.commands.not_zero:
+                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+            else:
+                # '', None, and False are ignored
+                # numbers like 0 and 0.0 are not.
+                valid = not (value_ in ['', None] or value_ is False)
             enough = False
         except:
             # Exception raised when we don't have the param
@@ -289,6 +305,7 @@ class BlockConfig:
     """
 
     REGEX_COLOR = re.compile('#[0-9A-F]{6}')
+    INHERITABLE = ['color', 'not_zero', 'show']
 
     # defaults
     _if = None
@@ -298,6 +315,14 @@ class BlockConfig:
     not_zero = False
     show = False
     soft = False
+
+    def __init__(self, parent):
+        # inherit any commands from the parent block
+        # inheritable commands are in self.INHERITABLE
+        if parent:
+            parent_commands = parent.commands
+            for attr in self.INHERITABLE:
+                setattr(self, attr, getattr(parent_commands, attr))
 
     def update_commands(self, commands_str):
         """
@@ -348,7 +373,7 @@ class Block:
     def __init__(self, parent, base_block=None, py3_wrapper=None):
 
         self.base_block = base_block
-        self.commands = BlockConfig()
+        self.commands = BlockConfig(parent)
         self.content = []
         self.next_block = None
         self.parent = parent
@@ -526,15 +551,13 @@ class Block:
         max_length = self.commands.max_length
         min_length = self.commands.min_length
 
-        if max_length or min_length or color:
+        if max_length or min_length:
             for item in out:
                 if max_length is not None:
                     item['full_text'] = item['full_text'][:max_length]
                     max_length -= len(item['full_text'])
                 if min_length:
                     min_length -= len(item['full_text'])
-                if color and 'color' not in item:
-                    item['color'] = color
             if min_length > 0:
                 out[0]['full_text'] = u' ' * min_length + out[0]['full_text']
                 min_length = 0

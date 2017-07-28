@@ -51,6 +51,10 @@ COLOR_URGENT_BG = '#900000'
 FONT_SIZE = BAR_HEIGHT - (PADDING * 2)
 HEIGHT = TOP_BAR_HEIGHT + BAR_HEIGHT
 
+# font, glyph_data want caching for performance
+font = None
+glyph_data = None
+
 
 def get_color_for_name(module_name):
     """
@@ -105,7 +109,7 @@ def contains_bad_glyph(glyph_data, data):
     return False
 
 
-def create_screenshot(name, data, path, font, module=True):
+def create_screenshot(name, data, path, font, module):
     """
     Create screenshot of py3status output and save to path
     """
@@ -197,7 +201,11 @@ def parse_sample_data(sample_data, module_name):
                     output = ast.literal_eval(data)
                     samples[name] = output
                 except:
-                    samples[name] = 'SAMPLE DATA ERROR'
+                    samples[name] = {
+                        'color': '#990000',
+                        'background': '#FFFF00',
+                        'full_text': ' SAMPLE DATA ERROR ',
+                    }
                 name = None
                 data = ''
                 count += 1
@@ -234,11 +242,11 @@ def get_samples():
     return samples
 
 
-def create_screenshots(quiet=False):
+def process(name, data, module=True):
     """
-    create screenshots for all core modules.
-    The screenshots directory will have all .png files deleted before new shots
-    are created.
+    Process data to create a screenshot which will be saved in
+    docs/screenshots/<name>.png
+    If module is True the screenshot will include the name and py3status.
     """
 
     path = '../doc/screenshots'
@@ -248,19 +256,33 @@ def create_screenshots(quiet=False):
     except OSError:
         pass
 
+    global font, glyph_data
+    if font is None:
+        font = ImageFont.truetype(FONT, FONT_SIZE * SCALE)
+    if glyph_data is None:
+        glyph_data = TTFont(font.path)
+
+    # make sure that the data is in list form
+    if not isinstance(data, list):
+        data = [data]
+
+    if contains_bad_glyph(glyph_data, data):
+        print('** %s has characters not in %s **' % (name, font.getname()[0]))
+    else:
+        create_screenshot(name, data, path, font=font, module=module)
+
+
+def create_screenshots(quiet=False):
+    """
+    create screenshots for all core modules.
+    The screenshots directory will have all .png files deleted before new shots
+    are created.
+    """
+
     print('Creating screenshots...')
     samples = get_samples()
-    font = ImageFont.truetype(FONT, FONT_SIZE * SCALE)
-    glyph_data = TTFont(font.path)
     for name, data in sorted(samples.items()):
-        # make sure that the data is in list form
-        if not isinstance(data, list):
-            data = [data]
-
-        if contains_bad_glyph(glyph_data, data):
-            print('** %s has characters not in %s **' % (name, font.getname()[0]))
-        else:
-            create_screenshot(name, data, path, font=font)
+        process(name, data)
 
 
 if __name__ == '__main__':
