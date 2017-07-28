@@ -24,9 +24,11 @@ Configuration parameters:
     device: Device to use. Defaults value is backend dependent
         (default None)
     format: Format of the output.
-        (default '♪: {percentage}%')
+        (default '[\?if=is_input 😮|♪]: {percentage}%')
     format_muted: Format of the output when the volume is muted.
-        (default '♪: muted')
+        (default '[\?if=is_input 😶|♪]: muted')
+    is_input: Is this an input device or an output device?
+        (default False)
     max_volume: Allow the volume to be increased past 100% if available.
         pactl supports this (default 120)
     thresholds: Threshold for percent volume.
@@ -89,7 +91,7 @@ mute
 """
 
 import re
-from os import devnull
+from os import devnull, environ as os_environ
 from subprocess import check_output, call
 
 
@@ -97,8 +99,12 @@ class AudioBackend():
     def __init__(self, parent):
         self.device = parent.device
         self.channel = parent.channel
+        self.is_input = parent.is_input
         self.parent = parent
         self.setup(parent)
+
+    def setup(self, parent):
+        raise NotImplementedError
 
     def run_cmd(self, cmd):
         with open(devnull, 'wb') as dn:
@@ -110,7 +116,7 @@ class AmixerBackend(AudioBackend):
         if self.device is None:
             self.device = 'default'
         if self.channel is None:
-            self.channel = 'Master'
+            self.channel = 'Capture' if self.is_input else 'Master'
         self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
 
     def get_volume(self):
@@ -144,7 +150,7 @@ class PamixerBackend(AudioBackend):
             self.device = "0"
         # Ignore channel
         self.channel = None
-        self.cmd = ["pamixer", "--sink", self.device]
+        self.cmd = ["pamixer", "--source" if self.is_input else "--sink", self.device]
 
     def get_volume(self):
         perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
@@ -164,17 +170,47 @@ class PamixerBackend(AudioBackend):
 class PactlBackend(AudioBackend):
     def setup(self, parent):
         # get available device number if not specified
+        self.device_type = 'source' if self.is_input else 'sink'
+        self.device_type_pl = self.device_type + 's'
+        self.device_type_cap = self.device_type[0].upper() + self.device_type[1:]
+
         if self.device is None:
-            self.device = check_output(
-                ['pactl', 'list', 'short', 'sinks']).decode('utf-8').split()[0]
+            self.device = self.get_default_device()
+
+        self.english_env = dict(os_environ)
+        self.english_env['LC_ALL'] = 'C'
+
         self.max_volume = parent.max_volume
-        self.re_volume = re.compile(
-            r'Sink \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(self.device),
-            re.M | re.DOTALL
-        )
+        self.re_volume = re.compile(r'{} \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'
+                                    .format(self.device_type_cap, self.device), re.M | re.DOTALL)
+
+    def get_default_device(self):
+        device_id = None
+
+        # Find the default device for the the device type
+        default_dev_pattern = re.compile(r'^Default {}: (.*)$'.format(self.device_type_cap))
+        for info_line in check_output(['pactl', 'info']).decode('utf-8').splitlines():
+            default_dev_match = default_dev_pattern.match(info_line)
+            if default_dev_match is not None:
+                device_id = default_dev_match.groups()[0]
+                break
+
+        # with the long gross id, find the associated number
+        if device_id is not None:
+            for line in check_output(['pactl', 'list', 'short', self.device_type_pl]) \
+                    .decode('utf-8').splitlines():
+                parts = line.split()
+                if len(parts) < 2:
+                    continue
+                if parts[1] == device_id:
+                    return parts[0]
+
+        raise RuntimeError('Failed to find default {} device.  Looked for {}'.format(
+            'input' if self.is_input else 'output', device_id))
 
     def get_volume(self):
-        output = check_output(['pactl', 'list', 'sinks']).decode('utf-8').strip()
+        output = check_output(
+            ['pactl', 'list', self.device_type_pl], env=self.english_env).decode('utf-8').strip()
         muted, perc = self.re_volume.search(output).groups()
 
         # muted should be 'on' or 'off'
@@ -191,13 +227,19 @@ class PactlBackend(AudioBackend):
             change = '{}%'.format(self.max_volume)
         else:
             change = '+{}%'.format(delta)
-        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, change])
+        self.run_cmd(['pactl', '--',
+                      'set-{}-volume'.format(self.device_type),
+                      self.device, change])
 
     def volume_down(self, delta):
-        self.run_cmd(['pactl', '--', 'set-sink-volume', self.device, '-{}%'.format(delta)])
+        self.run_cmd(['pactl', '--',
+                      'set-{}-volume'.format(self.device_type),
+                      self.device, '-{}%'.format(delta)])
 
     def toggle_mute(self):
-        self.run_cmd(['pactl', 'set-sink-mute', self.device, 'toggle'])
+        self.run_cmd(['pactl',
+                      'set-{}-mute'.format(self.device_type),
+                      self.device, 'toggle'])
 
 
 class Py3status:
@@ -211,8 +253,9 @@ class Py3status:
     channel = None
     command = None
     device = None
-    format = u'♪: {percentage}%'
-    format_muted = u'♪: muted'
+    format = u'[\?if=is_input 😮|♪]: {percentage}%'
+    format_muted = u'[\?if=is_input 😶|♪]: muted'
+    is_input = False
     max_volume = 120
     thresholds = [(0, 'bad'), (20, 'degraded'), (50, 'good')]
     volume_delta = 5

@@ -72,6 +72,12 @@ notification
 {'full_text': 'py3status 34/24 N3', 'urgent': True}
 """
 
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
+
+
 GITHUB_API_URL = 'https://api.github.com'
 GITHUB_URL = 'https://github.com/'
 
@@ -152,7 +158,28 @@ class Py3status:
         except (self.py3.RequestException):
             return
         if info.status_code == 200:
-            return len(info.json())
+            links = info.headers.get('Link')
+
+            if not links:
+                return len(info.json())
+
+            last_page = 1
+            for link in links.split(','):
+                if 'rel="last"' in link:
+                    last_url = link[link.find('<') + 1:link.find('>')]
+                    parsed = urlparse.urlparse(last_url)
+                    last_page = int(urlparse.parse_qs(parsed.query)['page'][0])
+
+            if last_page == 1:
+                return len(info.json())
+            try:
+                last_page_info = self.py3.request(last_url, timeout=10,
+                                                  auth=(self.username, self.auth_token))
+            except self.py3.RequestException:
+                return
+
+            return len(info.json()) * (last_page - 1) + len(last_page_info.json())
+
         if info.status_code == 404:
             if not self.repo_warning:
                 self.py3.notify_user('Github repo cannot be found.')

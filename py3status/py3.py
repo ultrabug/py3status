@@ -681,6 +681,15 @@ class Py3:
                 found.append(placeholder)
         return found
 
+    def get_placeholder_formats_list(self, format_string):
+        """
+        Parses the format_string and returns a list of tuples
+        [(placeholder, format), ...].
+
+        eg ``'{placeholder:.2f}'`` will give ``[('placeholder', ':.2f')]``
+        """
+        return self._formatter.get_placeholder_formats_list(format_string)
+
     def safe_format(self, format_string, param_dict=None,
                     force_composite=False, attr_getter=None):
         """
@@ -972,7 +981,7 @@ class Py3:
         :returns: HttpResponse
         """
 
-        # The aim of this function is to be a lmited lightweight replacement
+        # The aim of this function is to be a limited lightweight replacement
         # for the requests library but using only pythons standard libs.
 
         # IMPORTANT NOTICE

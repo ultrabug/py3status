@@ -103,3 +103,10 @@ class HttpResponse:
             return json.loads(self.text)
         except:
             raise RequestInvalidJSON('Invalid JSON recieved')
+
+    @property
+    def headers(self):
+        """
+        Get the headers from the response.
+        """
+        return self._response.headers

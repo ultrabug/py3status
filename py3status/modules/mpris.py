@@ -112,6 +112,7 @@ SAMPLE OUTPUT
 from datetime import timedelta
 from time import time
 from gi.repository import GObject
+from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
@@ -377,6 +378,18 @@ class Py3status:
             status = data.get('PlaybackStatus')
             if status:
                 player = self._mpris_players[player_id]
+
+                # Note: Workaround. Since all players get noted if playback status
+                #       has been changed we have to check if we are the choosen one
+                try:
+                    dbus_status = player['_dbus_player'].PlaybackStatus
+                except GError:
+                    # Prevent errors when calling methods of deleted dbus objects
+                    return
+                if status != dbus_status:
+                    # FIXME: WE DON'T RECOGNIZE ANY TITLE CHANGE
+                    return
+
                 player['status'] = status
                 player['_state_priority'] = WORKING_STATES.index(status)
             self._set_player()
@@ -398,16 +411,19 @@ class Py3status:
                     p['name'] = self._mpris_names[p['identity']]
                     p['full_name'] = u'{} {}'.format(p['name'], p['index'])
 
-        status = player.PlaybackStatus
-        state_priority = WORKING_STATES.index(status)
         identity = player.Identity
+        name = self._mpris_names.get(identity)
+        if self.player_priority != [] and name not in self.player_priority \
+                and '*' not in self.player_priority:
+            return False
 
         if identity not in self._mpris_name_index:
             self._mpris_name_index[identity] = 0
 
+        status = player.PlaybackStatus
+        state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
-        name = self._mpris_names.get(identity)
         subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
 
         self._mpris_players[player_id] = {
@@ -517,6 +533,9 @@ class Py3status:
             composite = self.py3.build_composite(self.format,
                                                  text,
                                                  buttons)
+
+        if self._kill:
+            raise KeyboardInterrupt
 
         if (self._data.get('error_occurred') or
                 current_player_id != self._player_details.get('id')):

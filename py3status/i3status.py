@@ -329,9 +329,6 @@ class I3status(Thread):
         try:
             with NamedTemporaryFile(prefix='py3status_') as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
-                self.py3_wrapper.log(
-                    'i3status spawned using config file {}'.format(
-                        tmpfile.name))
 
                 i3status_pipe = Popen(
                     ['i3status', '-c', tmpfile.name],
@@ -340,6 +337,11 @@ class I3status(Thread):
                     # Ignore the SIGTSTP signal for this subprocess
                     preexec_fn=lambda: signal(SIGTSTP, SIG_IGN)
                 )
+
+                self.py3_wrapper.log(
+                    'i3status spawned using config file {}'.format(
+                        tmpfile.name))
+
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
                 self.tmpfile_path = tmpfile.name
@@ -374,6 +376,8 @@ class I3status(Thread):
                     err = sys.exc_info()[1]
                     self.error = err
                     self.py3_wrapper.log(err, 'error')
+        except OSError:
+            self.error = 'Problem starting i3status maybe it is not installed'
         except Exception:
             self.py3_wrapper.report_exception('', notify_user=True)
         self.i3status_pipe = None
@@ -384,7 +388,3 @@ class I3status(Thread):
         """
         # mock thread is_alive() method
         self.is_alive = lambda: True
-
-        # mock i3status output parsing
-        self.last_output = []
-        self.update_json_list()
