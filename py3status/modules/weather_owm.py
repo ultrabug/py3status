@@ -400,13 +400,13 @@ class Py3status:
         self.icons = self._get_icons()
 
         # Verify the units configuration
-        if self.rain_unit not in RAIN_UNITS:
+        if self.rain_unit.lower() not in RAIN_UNITS:
             raise Exception('rain_unit is not recognized')
-        if self.snow_unit not in SNOW_UNITS:
+        if self.snow_unit.lower() not in SNOW_UNITS:
             raise Exception('snow_unit is not recognized')
-        if self.temp_unit not in TEMP_UNITS:
+        if self.temp_unit.lower() not in TEMP_UNITS:
             raise Exception('temp_unit is not recognized')
-        if self.wind_unit not in WIND_UNITS:
+        if self.wind_unit.lower() not in WIND_UNITS:
             raise Exception('wind_unit is not recognized')
 
     def _get_req_url(self, base, coords):
@@ -534,7 +534,7 @@ class Py3status:
         # Format the rain fall
         return self.py3.safe_format(self.format_rain, {
             'icon': self.icons['rain'],
-            'amount': options[self.rain_unit],
+            'amount': options[self.rain_unit.lower()],
             'unit': self.rain_unit,
         })
 
@@ -557,7 +557,7 @@ class Py3status:
         # Format the snow fall
         return self.py3.safe_format(self.format_snow, {
             'icon': self.icons['snow'],
-            'amount': options[self.snow_unit],
+            'amount': options[self.snow_unit.lower()],
             'unit': self.snow_unit,
         })
 
@@ -583,7 +583,7 @@ class Py3status:
                 'gust': msec_gust * KMH_FROM_MSEC}}
 
         # Get the choice and add more
-        choice = options[self.wind_unit]
+        choice = options[self.wind_unit.lower()]
         choice['icon'] = self.icons['wind']
         choice['degree'] = wind['deg'] if ('deg' in wind) else 0
         choice['unit'] = self.wind_unit
@@ -634,7 +634,7 @@ class Py3status:
                 'min': round(kelvin['temp_min'])}}
 
         # Get the choice and add more
-        choice = options[self.temp_unit]
+        choice = options[self.temp_unit.lower()]
         choice['icon'] = self.icons['temperature']
         choice['unit'] = self.temp_unit
 
