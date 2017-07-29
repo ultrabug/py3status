@@ -579,10 +579,13 @@ def process_config(config_path, py3_wrapper=None):
 
     def get_module_type(name):
         '''
-        i3status or py3status?
+        i3status, py3status or env?
         '''
-        if name.split()[0] in I3S_MODULE_NAMES:
+        sanitized = name.split()[0]
+        if sanitized in I3S_MODULE_NAMES:
             return 'i3status'
+        if sanitized == 'env':
+            return sanitized
         return 'py3status'
 
     def process_module(name, module, parent):
@@ -627,36 +630,44 @@ def process_config(config_path, py3_wrapper=None):
                 fixed[k] = v
         return fixed
 
+    def append_modules(item):
+        module_type = get_module_type(item)
+        if module_type == 'i3status':
+            if item not in i3s_modules:
+                i3s_modules.append(item)
+        elif module_type == 'py3status':
+            if item not in py3_modules:
+                py3_modules.append(item)
+
     def add_container_items(module_name):
         module = modules.get(module_name, {})
         items = module.get('items', [])
         for item in items:
             if item in config:
                 continue
-            module_type = get_module_type(item)
-            if module_type == 'i3status':
-                if item not in i3s_modules:
-                    i3s_modules.append(item)
-            else:
-                if item not in py3_modules:
-                    py3_modules.append(item)
+
+            append_modules(item)
+            get_env_items(item)
+
             module = modules.get(item, {})
             config[item] = remove_any_contained_modules(module)
             # add any children
             add_container_items(item)
 
+    def get_env_items(module_name):
+        module = modules.get(module_name, {})
+        items = module.get('env', {})
+        for k, v in items.iteritems():
+            module[k] = os.getenv(v)
+
     # create config for modules in order
     for name in config_info.get('order', []):
         module = modules.get(name, {})
-        module_type = get_module_type(name)
         config['order'].append(name)
         add_container_items(name)
-        if module_type == 'i3status':
-            if name not in i3s_modules:
-                i3s_modules.append(name)
-        else:
-            if name not in py3_modules:
-                py3_modules.append(name)
+        append_modules(name)
+        get_env_items(name)
+
         config[name] = remove_any_contained_modules(module)
 
     config['on_click'] = on_click

@@ -1,4 +1,5 @@
 import inspect
+import os
 from time import sleep
 from py3status.py3 import Py3
 
@@ -12,6 +13,12 @@ def module_test(module_class, config=None):
     module = module_class()
     setattr(module, 'py3', Py3(i3s_config=i3s_config, py3status=module))
     if config:
+        if 'env' in config:
+            for k, v in config['env'].items():
+                config[k] = os.getenv(v)
+
+            del config['env']
+
         i3s_config.update(config)
         for key, value in config.items():
             setattr(module, key, value)
