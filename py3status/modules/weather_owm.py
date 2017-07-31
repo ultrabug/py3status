@@ -43,7 +43,7 @@ Configuration parameters:
         Available placeholders:
             icon, city, clouds, rain, snow, wind, humidity, pressure,
             temperature, sunrise, sunset, main, description, forecast
-        (default '{city}: {icon} {temperature} {description} {forecast}')
+        (default '{city} {icon} {temperature}{rain}, {description} {forecast}')
     format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
@@ -66,11 +66,11 @@ Configuration parameters:
     format_rain: Formatting for rain volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon} {amount:.0f} {unit}')
+        (default '[\?if=amount  {icon} {amount:.0f} {unit}]')
     format_snow: Formatting for snow volume over the past 3 hours
         Available placeholders:
             icon, amount
-        (default '{icon} {amount:.0f} {unit}')
+        (default '[\?if=amount  {icon} {amount:.0f} {unit}]')
     format_sunrise: Formatting for sunrise time
         Note that this format accepts strftime/strptime placeholders to populate
         the output with the time information.
@@ -90,7 +90,7 @@ Configuration parameters:
     format_wind: Formatting for wind degree and speed
         Available placeholders:
             icon, degree, speed, gust
-        (default '{icon} {speed:.0f} {unit}')
+        (default '[\?if=speed  {icon} {speed:.0f} {unit}]')
     icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
         (default '🌫')
     icon_cloud: Icon for clouds
@@ -287,17 +287,17 @@ class Py3status:
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{city}: {icon} {temperature} {description} {forecast}'
+    format = ('{city} {icon} {temperature}{rain}, {description} {forecast}')
     format_clouds = '{icon} {coverage}%'
     format_forecast = '{icon}'
     format_humidity = '{icon} {humidity}%'
     format_pressure = '{icon} {pressure} hPa'
-    format_rain = '{icon} {amount:.0f} {unit}'
-    format_snow = '{icon} {amount:.0f} {unit}'
+    format_rain = '[\?if=amount  {icon} {amount:.0f} {unit}]'
+    format_snow = '[\?if=amount  {icon} {amount:.0f} {unit}]'
     format_sunrise = '{icon} %-I:%M %p'
     format_sunset = '{icon} %-I:%M %p'
     format_temperature = u'{icon} {current:.0f}°{unit}'
-    format_wind = '{icon} {speed:.0f} {unit}'
+    format_wind = '[\?if=speed  {icon} {speed:.0f} {unit}]'
     icon_atmosphere = u'🌫'
     icon_cloud = u'☁'
     icon_extreme = u'⚠'
