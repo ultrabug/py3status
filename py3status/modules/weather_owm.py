@@ -141,6 +141,9 @@ Configuration parameters:
         automatic timezone detection from the Timezone API.
         (default None)
     rain_unit: Unit for rain fall
+        When specified, a unit may be any combination of upper and lower
+        case, such as 'Ft', and still be considered valid as long as it is in
+        the below options.
         Options:
             cm, ft, in, mm, m, yd
         (default 'in')
@@ -284,7 +287,7 @@ class Py3status:
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
-    format = '{city}: {icon} {temperature} {main} {forecast}'
+    format = '{city}: {icon} {temperature} {description} {forecast}'
     format_clouds = '{icon} {coverage}%'
     format_forecast = '{icon}'
     format_humidity = '{icon} {humidity}%'
