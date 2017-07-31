@@ -122,9 +122,9 @@ Configuration parameters:
         of supported icons. This will fall-back to the listed icon if there is
         no specific icon present.
         There are multiple ways to specify individual icons based on the id:
-            - Use the key 'i601' to reference the condition with id = 601
+            - Use the key '601' to reference the condition with id = 601
               (snow)
-            - Use the key 'i230_i232' to reference a span of conditions
+            - Use the key '230_232' to reference a span of conditions
               inclusive, in this case conditions (230, 231, 232) (thunderstorm
               with drizzle)
         (default None)
@@ -229,6 +229,7 @@ Outputs: 🌫 ○ 59°F foggy ⛅ ☼ 🌧`
 '''
 
 import datetime
+import re
 
 
 # API information
@@ -328,40 +329,36 @@ class Py3status:
 
         # Defaults for weather ranges
         defaults = {
-            'i200_i299': self.icon_thunderstorm,
-            'i300_i399': self.icon_rain,
-            'i500_i599': self.icon_rain,
-            'i600_i699': self.icon_snow,
-            'i700_i799': self.icon_atmosphere,
-            'i800': self.icon_sun,
-            'i801_i809': self.icon_cloud,
-            'i900_i909': self.icon_extreme,
-            'i950_i959': self.icon_wind,
-            'i960_i999': self.icon_extreme,
+            '200_299': self.icon_thunderstorm,
+            '300_399': self.icon_rain,
+            '500_599': self.icon_rain,
+            '600_699': self.icon_snow,
+            '700_799': self.icon_atmosphere,
+            '800': self.icon_sun,
+            '801_809': self.icon_cloud,
+            '900_909': self.icon_extreme,
+            '950_959': self.icon_wind,
+            '960_999': self.icon_extreme,
         }
 
         # Handling ranges from OpenWeatherMap
         data = {}
         for source in (defaults, self.icons):
             for key in source:
-                if key[0] != 'i':
-                    raise Exception('Icon identifier is invalid! (%s)' % key)
+                if not re.match(r'[0-9]+', key):
+                    raise Exception('Invalid icon id: (%s)' % key)
 
-                if key[0] == 'i':
-                    if '_' in key:
-                        if key.count('_i') != 1:
-                            raise Exception('Icon range is not properly'
-                                            'formatted! (%s)' % key)
+                if '_' in key:
+                    if key.count('_') != 1:
+                        raise Exception('Invalid icon range: %s' % key)
 
-                        # Populate each code
-                        (start, end) = tuple(map(int, key[1:].split('_i')))
-                        for code in range(start, end + 1):
-                            data[code] = source[key]
+                    # Populate each code
+                    (start, end) = tuple(map(int, key.split('_')))
+                    for code in range(start, end + 1):
+                        data[code] = source[key]
 
-                    else:
-                        data[int(key[1:])] = source[key]
                 else:
-                    data[key] = source[key]
+                    data[int(key)] = source[key]
 
         return data
 
@@ -735,8 +732,8 @@ if __name__ == '__main__':
 
         # Select icons
         'icons': {
-            'i200': "☔",
-            'i230_i232': "🌧",
+            '200': "☔",
+            '230_232': "🌧",
         },
 
         # Complete configuration
