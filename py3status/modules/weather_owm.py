@@ -43,7 +43,7 @@ Configuration parameters:
         Available placeholders:
             icon, city, clouds, rain, snow, wind, humidity, pressure,
             temperature, sunrise, sunset, main, description, forecast
-        (default '{city}: {icon} {temperature} {main} {forecast}')
+        (default '{city}: {icon} {temperature} {description} {forecast}')
     format_clouds: Formatting for cloud coverage (percentage)
         Available placeholders:
             icon, coverage
