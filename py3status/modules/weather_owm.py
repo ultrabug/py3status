@@ -107,6 +107,10 @@ Configuration parameters:
         (default '❄')
     icon_sun: Icon for sunshine
         (default '☼')
+    icon_sunrise: Icon for sunrise
+        (default '⇑')
+    icon_sunset: Icon for sunset
+        (default '⇓')
     icon_temperature: Icon for temperature
         (default '○')
     icon_thunderstorm: Icon for thunderstorms
@@ -123,16 +127,6 @@ Configuration parameters:
             - Use the key 'i230_i232' to reference a span of conditions
               inclusive, in this case conditions (230, 231, 232) (thunderstorm
               with drizzle)
-        Also, you can specify the icons for the various formatting sections
-        below. For example, to specify the icon for 'format_pressure', use
-        'pressure'. A few formatting sections will take from the defaults or be
-        dynamic, including
-            - clouds
-            - rain
-            - wind
-            - sunrise
-            - sunset
-        These may be specified regardless.
         (default None)
     lang: An ISO 639-1 code for your language (two letters)
         (default 'en')
@@ -217,10 +211,8 @@ weather_owm {
   api_key = '...'
 
   icons {
-    i200 = "☔"
-    i230_i232 = "🌧"
-
-    clouds = "☁"
+    i200: "☔"
+    i230_i232: "🌧"
   }
 }
 ```
@@ -311,6 +303,8 @@ class Py3status:
     icon_rain = u'🌧'
     icon_snow = u'❄'
     icon_sun = u'☼'
+    icon_sunrise = u'⇑'
+    icon_sunset = u'⇓'
     icon_temperature = u'○'
     icon_thunderstorm = u'⛈'
     icon_wind = u'☴'
@@ -343,24 +337,11 @@ class Py3status:
             'i960_i999': self.icon_extreme,
         }
 
-        # Default mappings for other icons
-        others = {
-            'clouds': 802,
-            'rain': 501,
-            'snow': 601,
-            'wind': 954,
-            'humidity': self.icon_humidity,
-            'pressure': self.icon_pressure,
-            'temperature': self.icon_temperature,
-            'sunrise': 800,
-            'sunset': 801,
-        }
-
         # Handling ranges from OpenWeatherMap
         data = {}
         for source in (defaults, self.icons):
             for key in source:
-                if (key[0] != 'i' and key not in others):
+                if key[0] != 'i':
                     raise Exception('Icon identifier is invalid! (%s)' % key)
 
                 if key[0] == 'i':
@@ -378,14 +359,6 @@ class Py3status:
                         data[int(key[1:])] = source[key]
                 else:
                     data[key] = source[key]
-
-        # Weather icons for formatting sections
-        for key in others:
-            if key not in data:
-                if isinstance(others[key], int):
-                    data[key] = data[others[key]]
-                else:
-                    data[key] = others[key]
 
         return data
 
@@ -511,7 +484,7 @@ class Py3status:
     def _format_clouds(self, wthr):
         # Format the cloud cover (default clear)
         return self.py3.safe_format(self.format_clouds, {
-            'icon': self.icons['clouds'],
+            'icon': self.icon_cloud,
             'coverage': self._jpath(wthr, OWM_CLOUD_COVER, 0),
         })
 
@@ -533,7 +506,7 @@ class Py3status:
 
         # Format the rain fall
         return self.py3.safe_format(self.format_rain, {
-            'icon': self.icons['rain'],
+            'icon': self.icon_rain,
             'amount': options[self.rain_unit.lower()],
             'unit': self.rain_unit,
         })
@@ -556,7 +529,7 @@ class Py3status:
 
         # Format the snow fall
         return self.py3.safe_format(self.format_snow, {
-            'icon': self.icons['snow'],
+            'icon': self.icon_snow,
             'amount': options[self.snow_unit.lower()],
             'unit': self.snow_unit,
         })
@@ -584,7 +557,7 @@ class Py3status:
 
         # Get the choice and add more
         choice = options[self.wind_unit.lower()]
-        choice['icon'] = self.icons['wind']
+        choice['icon'] = self.icon_wind
         choice['degree'] = wind['deg'] if ('deg' in wind) else 0
         choice['unit'] = self.wind_unit
 
@@ -596,14 +569,14 @@ class Py3status:
         humidity = self._jpath(wthr, OWM_HUMIDITY, 0)
 
         return self.py3.safe_format(self.format_humidity, {
-            'icon': self.icons['humidity'],
+            'icon': self.icon_humidity,
             'humidity': humidity,
         })
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
         pressure = self._jpath(wthr, OWM_PRESSURE, dict())
-        pressure['icon'] = self.icons['pressure']
+        pressure['icon'] = self.icon_pressure
 
         # Format the barometric pressure
         return self.py3.safe_format(self.format_pressure, pressure)
@@ -635,7 +608,7 @@ class Py3status:
 
         # Get the choice and add more
         choice = options[self.temp_unit.lower()]
-        choice['icon'] = self.icons['temperature']
+        choice['icon'] = self.icon_temperature
         choice['unit'] = self.temp_unit
 
         # Optionally add the color
@@ -658,7 +631,7 @@ class Py3status:
         # Format the sunrise
         replaced = dt.strftime(self.format_sunrise)
         return self.py3.safe_format(replaced, {
-            'icon': self.icons['sunrise'],
+            'icon': self.icon_sunrise,
         })
 
     def _format_sunset(self, wthr, tz_offset):
@@ -670,7 +643,7 @@ class Py3status:
         # Format the sunset
         replaced = dt.strftime(self.format_sunset)
         return self.py3.safe_format(replaced, {
-            'icon': self.icons['sunset'],
+            'icon': self.icon_sunset,
         })
 
     def _format_dict(self, wthr, tz_offset):
@@ -761,8 +734,6 @@ if __name__ == '__main__':
         'icons': {
             'i200': "☔",
             'i230_i232': "🌧",
-
-            'clouds': "☁",
         },
 
         # Complete configuration
