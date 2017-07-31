@@ -153,10 +153,10 @@ Configuration parameters:
         Options:
             cm, ft, in, mm, m, yd
         (default 'in')
-    temp_unit: Unit for temperature
+    temperature_unit: Unit for temperature
         Options:
             c, f, k
-        (default 'f')
+        (default 'F')
     thresholds: Configure temperature colors based on limits
         The numbers specified inherit the unit of the temperature as configured.
         The default below is intended for Fahrenheit. If the set value is empty
@@ -318,7 +318,7 @@ class Py3status:
     rain_unit = 'in'
     request_timeout = 10
     snow_unit = 'in'
-    temp_unit = 'f'
+    temperature_unit = 'F'
     thresholds = THRESHOLDS
     wind_unit = 'mph'
 
@@ -380,8 +380,8 @@ class Py3status:
             raise Exception('rain_unit is not recognized')
         if self.snow_unit.lower() not in SNOW_UNITS:
             raise Exception('snow_unit is not recognized')
-        if self.temp_unit.lower() not in TEMP_UNITS:
-            raise Exception('temp_unit is not recognized')
+        if self.temperature_unit.lower() not in TEMP_UNITS:
+            raise Exception('temperature_unit is not recognized')
         if self.wind_unit.lower() not in WIND_UNITS:
             raise Exception('wind_unit is not recognized')
 
@@ -610,9 +610,9 @@ class Py3status:
                 'min': round(kelvin['temp_min'])}}
 
         # Get the choice and add more
-        choice = options[self.temp_unit.lower()]
+        choice = options[self.temperature_unit.lower()]
         choice['icon'] = self.icon_temperature
-        choice['unit'] = self.temp_unit
+        choice['unit'] = self.temperature_unit
 
         # Optionally add the color
         color = None
