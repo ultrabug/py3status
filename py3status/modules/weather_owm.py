@@ -140,29 +140,29 @@ Configuration parameters:
         then the offset in minutes. If this is set, it disables the
         automatic timezone detection from the Timezone API.
         (default None)
-    rain_unit: Unit for rain fall
+    request_timeout: The timeout in seconds for contacting the API's.
+        (default 10)
+    thresholds: Configure temperature colors based on limits
+        The numbers specified inherit the unit of the temperature as configured.
+        The default below is intended for Fahrenheit. If the set value is empty
+        or None, the feature is disabled.
+        (default [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')])
+    unit_rain: Unit for rain fall
         When specified, a unit may be any combination of upper and lower
         case, such as 'Ft', and still be considered valid as long as it is in
         the below options.
         Options:
             cm, ft, in, mm, m, yd
         (default 'in')
-    request_timeout: The timeout in seconds for contacting the API's.
-        (default 10)
-    snow_unit: Unit for snow fall
+    unit_snow: Unit for snow fall
         Options:
             cm, ft, in, mm, m, yd
         (default 'in')
-    temperature_unit: Unit for temperature
+    unit_temperature: Unit for temperature
         Options:
             c, f, k
         (default 'F')
-    thresholds: Configure temperature colors based on limits
-        The numbers specified inherit the unit of the temperature as configured.
-        The default below is intended for Fahrenheit. If the set value is empty
-        or None, the feature is disabled.
-        (default [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')])
-    wind_unit: Unit for wind speed
+    unit_wind: Unit for wind speed
         Options:
             fsec, msec, mph, kmh
         (default 'mph')
@@ -315,12 +315,12 @@ class Py3status:
     lang = 'en'
     location = None
     offset_gmt = None
-    rain_unit = 'in'
     request_timeout = 10
-    snow_unit = 'in'
-    temperature_unit = 'F'
     thresholds = THRESHOLDS
-    wind_unit = 'mph'
+    unit_rain = 'in'
+    unit_snow = 'in'
+    unit_temperature = 'F'
+    unit_wind = 'mph'
 
     def _get_icons(self):
         if self.icons is None:
@@ -376,14 +376,14 @@ class Py3status:
         self.icons = self._get_icons()
 
         # Verify the units configuration
-        if self.rain_unit.lower() not in RAIN_UNITS:
-            raise Exception('rain_unit is not recognized')
-        if self.snow_unit.lower() not in SNOW_UNITS:
-            raise Exception('snow_unit is not recognized')
-        if self.temperature_unit.lower() not in TEMP_UNITS:
-            raise Exception('temperature_unit is not recognized')
-        if self.wind_unit.lower() not in WIND_UNITS:
-            raise Exception('wind_unit is not recognized')
+        if self.unit_rain.lower() not in RAIN_UNITS:
+            raise Exception('unit_rain is not recognized')
+        if self.unit_snow.lower() not in SNOW_UNITS:
+            raise Exception('unit_snow is not recognized')
+        if self.unit_temperature.lower() not in TEMP_UNITS:
+            raise Exception('unit_temperature is not recognized')
+        if self.unit_wind.lower() not in WIND_UNITS:
+            raise Exception('unit_wind is not recognized')
 
     def _get_req_url(self, base, coords):
         # Construct the url from the pattern
@@ -510,8 +510,8 @@ class Py3status:
         # Format the rain fall
         return self.py3.safe_format(self.format_rain, {
             'icon': self.icon_rain,
-            'amount': options[self.rain_unit.lower()],
-            'unit': self.rain_unit,
+            'amount': options[self.unit_rain.lower()],
+            'unit': self.unit_rain,
         })
 
     def _format_snow(self, wthr):
@@ -533,8 +533,8 @@ class Py3status:
         # Format the snow fall
         return self.py3.safe_format(self.format_snow, {
             'icon': self.icon_snow,
-            'amount': options[self.snow_unit.lower()],
-            'unit': self.snow_unit,
+            'amount': options[self.unit_snow.lower()],
+            'unit': self.unit_snow,
         })
 
     def _format_wind(self, wthr):
@@ -559,10 +559,10 @@ class Py3status:
                 'gust': msec_gust * KMH_FROM_MSEC}}
 
         # Get the choice and add more
-        choice = options[self.wind_unit.lower()]
+        choice = options[self.unit_wind.lower()]
         choice['icon'] = self.icon_wind
         choice['degree'] = wind['deg'] if ('deg' in wind) else 0
-        choice['unit'] = self.wind_unit
+        choice['unit'] = self.unit_wind
 
         # Format the wind speed
         return self.py3.safe_format(self.format_wind, choice)
@@ -610,9 +610,9 @@ class Py3status:
                 'min': round(kelvin['temp_min'])}}
 
         # Get the choice and add more
-        choice = options[self.temperature_unit.lower()]
+        choice = options[self.unit_temperature.lower()]
         choice['icon'] = self.icon_temperature
-        choice['unit'] = self.temperature_unit
+        choice['unit'] = self.unit_temperature
 
         # Optionally add the color
         color = None
