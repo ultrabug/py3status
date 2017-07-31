@@ -219,7 +219,7 @@ def get_module_attributes(path):
     return attributes
 
 
-def _gen_diff(source, target):
+def _gen_diff(source, target, source_label='Source', target_label='Target'):
     # Create a unique object for determining if the list is missing an entry
     blank = object()
 
@@ -230,12 +230,22 @@ def _gen_diff(source, target):
 
     # Determine the length of the longest item in the list
     max_elem_len = max([len(str(elem)) for elem in source])
-    format_str = '    %%%ds %%s %%s' % max_elem_len
+    padding = '    '
+    format_str = padding + ('%%%ds %%s %%s' % max_elem_len)
 
-    out = []
+    # Set up initial output contents
+    middle_orig = '  '
+    out = [
+        format_str % (source_label, middle_orig, target_label),
+
+        # Length of dashes is enough for the longest element on both sides,
+        # plus the size of the middle symbol(s), plus two spaces for separation
+        padding + ('-' * (2 * max_elem_len + len(middle_orig) + 2))
+    ]
+
     for (have, want) in zip(source, target):
         # Determine the mark
-        middle = '  '
+        middle = middle_orig
 
         # The current version is missing this line
         if have == blank:
