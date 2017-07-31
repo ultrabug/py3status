@@ -26,7 +26,7 @@ Configuration parameters:
     api_key: Your OpenWeatherMap API key
         See https://openweathermap.org/appid. Required!
         (default None)
-    cache_timeout: The time between weather polling in seconds
+    cache_timeout: The time between API polling in seconds
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's.
         (default 600)
@@ -88,6 +88,7 @@ Configuration parameters:
             current, icon, max, min
         (default '{icon} {current:.0f}°{unit}')
     format_wind: Formatting for wind degree and speed
+        The 'gust' option represents the speed of wind gusts in the wind unit.
         Available placeholders:
             icon, degree, speed, gust
         (default '[\?if=speed {icon} {speed:.0f} {unit}]')
@@ -120,7 +121,8 @@ Configuration parameters:
     icons: A dictionary relating weather code to icon
         See https://openweathermap.org/weather-conditions for a complete list
         of supported icons. This will fall-back to the listed icon if there is
-        no specific icon present.
+        no specific icon present. However, options included here take precedent
+        over the above 'icon_{...}' options.
         There are multiple ways to specify individual icons based on the id:
             - Use the key '601' to reference the condition with id = 601
               (snow)
@@ -219,8 +221,8 @@ weather_owm {
   }
 }
 ```
-Outputs: 🌫 ○ 59°F foggy ⛅ ☼ 🌧`
-- Currently foggy, 59° F outside, with forecast of cloudy tomorrow, sunny the
+Outputs: 🌫 ○ 59°F, foggy ⛅ ☼ 🌧`
+- Currently foggy, 59°F outside, with forecast of cloudy tomorrow, sunny the
   next day, then rainy
 
 
@@ -595,15 +597,19 @@ class Py3status:
             'c': {
                 'current': round(kToC(kelvin['temp'])),
                 'max': round(kToC(kelvin['temp_max'])),
-                'min': round(kToC(kelvin['temp_min']))},
+                'min': round(kToC(kelvin['temp_min']))
+            },
             'f': {
                 'current': round(kToF(kelvin['temp'])),
                 'max': round(kToF(kelvin['temp_max'])),
-                'min': round(kToF(kelvin['temp_min']))},
+                'min': round(kToF(kelvin['temp_min']))
+            },
             'k': {
                 'current': round(kelvin['temp']),
                 'max': round(kelvin['temp_max']),
-                'min': round(kelvin['temp_min'])}}
+                'min': round(kelvin['temp_min'])
+            }
+        }
 
         # Get the choice and add more
         choice = options[self.unit_temperature.lower()]
