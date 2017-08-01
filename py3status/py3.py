@@ -858,7 +858,7 @@ class Py3:
                 command, stdout=PIPE, stderr=PIPE, close_fds=True
             ).wait()
         except Exception as e:
-            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e.errno)
+            msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
     def command_output(self, command, shell=False):
@@ -875,7 +875,7 @@ class Py3:
             process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
-            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e)
+            msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
@@ -892,8 +892,11 @@ class Py3:
                 msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
                 self.log(msg.format(cmd=command))
             else:
-                msg = "Command '{cmd}' returned non-zero exit status {error}"
-                msg = msg.format(cmd=command[0], error=retcode)
+                msg = 'Command `{cmd}` returned non-zero exit status {error}'
+                output_oneline = output.replace('\n', ' ')
+                if output_oneline:
+                    msg += ' ({output})'
+                msg = msg.format(cmd=command[0], error=retcode, output=output_oneline)
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
