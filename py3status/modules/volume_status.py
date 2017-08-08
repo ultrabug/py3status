@@ -295,6 +295,11 @@ class Py3status:
                 ['amixer', 'pamixer', 'pactl']
             )
 
+        # device sometimes is an integer but should be passed to commands as a
+        # str.  So fix it here.
+        if self.device is not None:
+            self.device = '%s' % self.device
+
         if self.command == 'amixer':
             self.backend = AmixerBackend(self)
         elif self.command == 'pamixer':
