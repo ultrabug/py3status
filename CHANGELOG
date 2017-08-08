@@ -1,4 +1,6 @@
 version 3.6 (milestone)
+* improve error reporting when running external commands, by @ultrabug
+* new apt_updates module for showing available updates on debian based systems by @Cypher1
 * battery_level module: fix bug with over 100% full icon, by @docwalter
 * battery_level module: fix divide by zero bug, by @tablet-mode
 * backlight module: combine device/device_path params, by @lasers
