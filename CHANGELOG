@@ -34,6 +34,7 @@ version 3.6 (milestone)
 * volume_status module: fix PactlBackend on non english system, by @vvoland
 * volume_status: Default device detection for pactl, by  @lasers
 * volume_status: support for input devices, by @markrileybot
+* volume_status module: allow device as a int, by @tobes thx to @yabbes
 * vpn_status module: change default format on no VPN, by @markrileybot
 * whatismyip module: color_degraded support in status mode, by @aethelz
 * whatismyip module: prevent mouse updates, by @lasers
