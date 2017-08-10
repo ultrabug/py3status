@@ -1,5 +1,6 @@
 version 3.6 (milestone)
 * faster py3-cmd, by @tobes
+* universal gradients functionality, by @tobes
 * share code so module_test improved, by @tobes
 * better report when i3status is missing, by @tobes thx to @Cypher1
 * allow report exception to be available early, by @tobes
