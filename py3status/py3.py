@@ -95,36 +95,26 @@ class Py3:
     RequestTimeout = exceptions.RequestTimeout
     RequestURLError = exceptions.RequestURLError
 
-    def __init__(self, module=None, i3s_config=None, py3status=None):
+    def __init__(self, module=None):
         self._audio = None
         self._config_setting = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
-        self._i3s_config = i3s_config or {}
         self._module = module
         self._is_python_2 = sys.version_info < (3, 0)
         self._report_exception_cache = set()
         self._thresholds = None
 
-        if py3status:
-            self._py3status_module = py3status
-
-        # we are running through the whole stack.
-        # If testing then module is None.
         if module:
+            self._i3s_config = module._py3_wrapper.config['py3_config']['general']
+            self._module_full_name = module.module_full_name
             self._output_modules = module._py3_wrapper.output_modules
-            if not i3s_config:
-                i3s_config = self._module.config['py3_config']['general']
-                self._i3s_config = i3s_config
             self._py3status_module = module.module_class
-        # create formatter we only if need one but want to pass py3_wrapper so
-        # that we can do logging etc.
-        if not self._formatter:
-            if module:
-                py3_wrapper = module._py3_wrapper
-            else:
-                py3_wrapper = None
-            self.__class__._formatter = Formatter(py3_wrapper)
+            self._py3_wrapper = module._py3_wrapper
+            # create formatter we only if need one but want to pass py3_wrapper so
+            # that we can do logging etc.
+            if not self._formatter:
+                self.__class__._formatter = Formatter(module._py3_wrapper)
 
     def __getattr__(self, name):
         """
@@ -141,12 +131,9 @@ class Py3:
         try:
             return self._config_setting[name]
         except KeyError:
-            if self._module:
-                fn = self._module._py3_wrapper.get_config_attribute
-                param = fn(self._module.module_full_name, name)
-            else:
-                # running in test mode so config is not available
-                param = self._i3s_config.get(name, None)
+            fn = self._py3_wrapper.get_config_attribute
+            param = fn(self._module_full_name, name)
+
             # colors are special we want to make sure that we treat a color
             # that was explicitly set to None as a True value.  Ones that are
             # not set should be treated as None
@@ -202,8 +189,7 @@ class Py3:
         'position': list of places in i3bar, usually only one item
         'type': module type py3status/i3status
         """
-        if self._module:
-            return self._output_modules.get(module_name)
+        return self._output_modules.get(module_name)
 
     def _report_exception(self, msg, frame_skip=2):
         """
@@ -222,19 +208,18 @@ class Py3:
             return
         self._report_exception_cache.add(msg_hash)
 
-        if self._module:
-            # If we just report the error the traceback will end in the try
-            # except block that we are calling from.
-            # We want to show the traceback originating from the module that
-            # called the Py3 method so get the correct error frame and pass this
-            # along.
-            error_frame = sys._getframe(0)
-            while frame_skip:
-                error_frame = error_frame.f_back
-                frame_skip -= 1
-            self._module._py3_wrapper.report_exception(
-                msg, notify_user=False, error_frame=error_frame
-            )
+        # If we just report the error the traceback will end in the try
+        # except block that we are calling from.
+        # We want to show the traceback originating from the module that
+        # called the Py3 method so get the correct error frame and pass this
+        # along.
+        error_frame = sys._getframe(0)
+        while frame_skip:
+            error_frame = error_frame.f_back
+            frame_skip -= 1
+        self._py3_wrapper.report_exception(
+            msg, notify_user=False, error_frame=error_frame
+        )
 
     def error(self, msg, timeout=None):
         """
@@ -438,8 +423,6 @@ class Py3:
         Returns True if the event name and instance match that of the module
         checking.
         """
-        if not self._module:
-            return False
 
         return (
             event.get('name') == self._module.module_name and
@@ -455,22 +438,21 @@ class Py3:
             self.LOG_ERROR, self.LOG_INFO, self.LOG_WARNING
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
-        if self._module:
-            # nicely format logs if we can using pretty print
-            message = pformat(message)
-            # start on new line if multi-line output
-            if '\n' in message:
-                message = '\n' + message
-            message = 'Module `{}`: {}'.format(
-                self._module.module_full_name, message)
-            self._module._py3_wrapper.log(message, level)
+        # nicely format logs if we can using pretty print
+        message = pformat(message)
+        # start on new line if multi-line output
+        if '\n' in message:
+            message = '\n' + message
+        message = 'Module `{}`: {}'.format(
+            self._module.module_full_name, message)
+        self._py3_wrapper.log(message, level)
 
     def update(self, module_name=None):
         """
         Update a module.  If module_name is supplied the module of that
         name is updated.  Otherwise the module calling is updated.
         """
-        if not module_name and self._module:
+        if not module_name:
             return self._module.force_update()
         else:
             module_info = self._get_module_info(module_name)
@@ -491,8 +473,8 @@ class Py3:
         """
         Trigger an event on a named module.
         """
-        if module_name and self._module:
-            self._module._py3_wrapper.events_thread.process_event(
+        if module_name:
+            self._py3_wrapper.events_thread.process_event(
                 module_name, event)
 
     def prevent_refresh(self):
@@ -501,8 +483,7 @@ class Py3:
         request that the module is not refreshed after the event. By default
         the module is updated after the on_click event has been processed.
         """
-        if self._module:
-            self._module.prevent_refresh = True
+        self._module.prevent_refresh = True
 
     def notify_user(self, msg, level='info', rate_limit=5):
         """
@@ -511,13 +492,12 @@ class Py3:
         rate_limit is the time period in seconds during which this message
         should not be repeated.
         """
-        if self._module:
-            # force unicode for python2 str
-            if self._is_python_2 and isinstance(msg, str):
-                msg = msg.decode('utf-8')
-            module_name = self._module.module_full_name
-            self._module._py3_wrapper.notify_user(
-                msg, level=level, rate_limit=rate_limit, module_name=module_name)
+        # force unicode for python2 str
+        if self._is_python_2 and isinstance(msg, str):
+            msg = msg.decode('utf-8')
+        module_name = self._module.module_full_name
+        self._py3_wrapper.notify_user(
+            msg, level=level, rate_limit=rate_limit, module_name=module_name)
 
     def register_function(self, function_name, function):
         """
@@ -551,9 +531,8 @@ class Py3:
 
                 This function should only be used by containers.
         """
-        if self._module:
-            my_info = self._get_module_info(self._module.module_full_name)
-            my_info[function_name] = function
+        my_info = self._get_module_info(self._module.module_full_name)
+        my_info[function_name] = function
 
     def time_in(self, seconds=None, sync_to=None, offset=0):
         """
@@ -858,7 +837,7 @@ class Py3:
                 command, stdout=PIPE, stderr=PIPE, close_fds=True
             ).wait()
         except Exception as e:
-            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e.errno)
+            msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
     def command_output(self, command, shell=False):
@@ -875,7 +854,7 @@ class Py3:
             process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
-            msg = "Command '{cmd}' {error}".format(cmd=command[0], error=e)
+            msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
@@ -892,8 +871,11 @@ class Py3:
                 msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
                 self.log(msg.format(cmd=command))
             else:
-                msg = "Command '{cmd}' returned non-zero exit status {error}"
-                msg = msg.format(cmd=command[0], error=retcode)
+                msg = 'Command `{cmd}` returned non-zero exit status {error}'
+                output_oneline = output.replace('\n', ' ')
+                if output_oneline:
+                    msg += ' ({output})'
+                msg = msg.format(cmd=command[0], error=retcode, output=output_oneline)
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
