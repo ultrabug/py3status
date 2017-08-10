@@ -491,9 +491,12 @@ class ConfigParser:
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == '=':
-                    name, value = self.process_value(
-                        name, value, self.current_module[-1]
-                    )
+                    try:
+                        name, value = self.process_value(
+                            name, value, self.current_module[-1]
+                        )
+                    except IndexError:
+                        self.error('Missing {', previous=True)
                     dictionary[name] = value
                 # appending to existing values
                 elif t_value == '+=':
@@ -539,8 +542,10 @@ def process_config(config_path, py3_wrapper=None):
             # There was a problem use our special error config
             error = e.one_line()
             notify_user(error)
-            error_config = Template(ERROR_CONFIG).substitute(
-                error=error.replace('"', '\\"'))
+            # to display correctly in i3bar we need to do some substitutions
+            for char in ['"', '{', '|']:
+                error = error.replace(char, '\\' + char)
+            error_config = Template(ERROR_CONFIG).substitute(error=error)
             config_info = parse_config(error_config)
 
     # update general section with defaults
