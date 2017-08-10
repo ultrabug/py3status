@@ -16,6 +16,7 @@ version 3.6 (milestone)
 * battery_level module: fix divide by zero bug, by @tablet-mode
 * bitcoin_prices module: add safeformat for the separator, by @lasers
 * bluetooth module: add safeformat for the separator, by @lasers
+* clock module: fix unicode time formatting, by @tobes
 * dpms module: add safeformat for all statuses, by @lasers
 * external_script: allow colored output, by @enguerrand
 * fixed some of the documentation headings, by @armandg
