@@ -11,6 +11,7 @@ version 3.6 (milestone)
 * formatter allow some commands to be inherited, by @tobes
 * formatter not zero fix for displayed values, by @tobes thx to @maximbaz
 * new cmus module: to control your cmus music player, by @lasers
+* new coin_market module: to display custom cryptocurrency data, by @lasers
 * new moc module: to control your moc music player, by @lasers
 * backlight module: combine device/device_path params, by @lasers
 * backlight module: improve rounding of brightness value, by @maximbaz
