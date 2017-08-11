@@ -6,6 +6,7 @@ version 3.6 (milestone)
 * allow report exception to be available early, by @tobes
 * make hide_if_zero work for net_rate fixes #935, by @tobes thx to @maximbaz
 * fix py3-cmd link in docs, by @tobes
+* fix group width issue when no output, by @tobes
 * docs: add new screenshot directive, by @tobes
 * only show first line of error in i3bar, by @tobes
 * formatter allow some commands to be inherited, by @tobes
