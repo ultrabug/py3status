@@ -82,7 +82,9 @@ closed
 
 
 class Py3status:
-
+    """
+    """
+    # available configuration parameters
     button_toggle = 1
     format = '{output}'
     format_button_closed = u'+'

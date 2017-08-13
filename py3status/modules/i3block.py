@@ -99,7 +99,9 @@ RESPONSE_FIELDS = [
 
 
 class Py3status:
-
+    """
+    """
+    # available configuration parameters
     cache_timeout = None
     command = None
     format = '{output}'

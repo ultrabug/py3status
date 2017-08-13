@@ -81,6 +81,9 @@ losers
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     cache_timeout = 600
     format = '{format_coin}'
     format_coin = '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]'

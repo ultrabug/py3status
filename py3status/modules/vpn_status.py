@@ -42,7 +42,9 @@ from time import sleep
 
 
 class Py3status:
-    # Available Configuration Parameters
+    """
+    """
+    # available configuration parameters
     cache_timeout = 10
     check_pid = False
     format = "VPN: {name}|VPN: no"

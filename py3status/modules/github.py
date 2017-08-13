@@ -83,6 +83,9 @@ except ImportError:
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     auth_token = None
     button_action = 3
     button_refresh = 2

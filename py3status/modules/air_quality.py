@@ -106,6 +106,9 @@ def _get_in(coll, path, default=None):
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     auth_token = 'demo'
     cache_timeout = 3600
     format = '{location}: {aqi} {category}'

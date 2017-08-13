@@ -88,6 +88,7 @@ def format_value(num, value_round=True):
 class Py3status:
     """
     """
+    # available configuration parameters
     cache_timeout = 120
     datapoint_selection = 'max'
     format = ''
