@@ -39,7 +39,7 @@ LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
 class Py3status:
     # available configuration parameters
     cache_timeout = 600
-    format = 'UPD[\?not_zero : {apt}]'
+    format = 'UPD: {apt}'
     format_one = ''
     format_none = ''
 
