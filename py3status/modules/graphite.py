@@ -14,7 +14,6 @@ Configuration parameters:
     http_timeout: HTTP query timeout to graphite.
         (default 10)
     proxy: You can configure the proxy with HTTP or HTTPS.
-        (default: None)
         examples:
             proxy = 'https://myproxy.example.com:1234/'
             proxy = 'http://user:passwd@myproxy.example.com/'
