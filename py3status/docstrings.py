@@ -124,7 +124,7 @@ re_to_tag = re.compile('&lt;([^.]*)&gt;')
 re_to_defaults = re.compile('\*(\(default.*\))\*')
 
 # match in module docstring
-re_from_param = re.compile('^    ([a-z]\S+):($|[ \t])(.*)$')
+re_from_param = re.compile('^    ([a-z<]\S+):($|[ \t])(.*)$')
 re_from_status = re.compile('^\s+({\S+})($|[ \t])(.*)$')
 re_from_item = re.compile('^\s+-(?=\s)')
 re_from_data = re.compile('^@(author|license|source)($|[ \t])')

@@ -42,25 +42,28 @@ Configuration parameters:
         The combinations will be rotated in the exact order as you listed them.
         When an output layout is not available any more, the configurations
         are automatically filtered out.
-        Example:
-        Assuming the default values for `icon_clone` and `icon_extend`
-        are used, and assuming you have two screens 'eDP1' and 'DP1', the
-        following setup will reduce the number of output combinations
-        from four (every possible one) down to two:
-        output_combinations = "eDP1|eDP1+DP1"
         (default None)
 
+        Example:
+            Assuming the default values for `icon_clone` and `icon_extend`
+            are used, and assuming you have two screens 'eDP1' and 'DP1', the
+            following setup will reduce the number of output combinations
+            from four (every possible one) down to two.
+            ```
+            output_combinations = "eDP1|eDP1+DP1"
+            ```
+
 Dynamic configuration parameters:
-    - <OUTPUT>_pos: apply the given position to the OUTPUT
+    <OUTPUT>_pos: apply the given position to the OUTPUT
         Example: DP1_pos = "-2560x0"
         Example: DP1_pos = "above eDP1"
         Example: DP1_pos = "below eDP1"
         Example: DP1_pos = "left-of LVDS1"
         Example: DP1_pos = "right-of eDP1"
-    - <OUTPUT>_workspaces: comma separated list of workspaces to move to
+    <OUTPUT>_workspaces: comma separated list of workspaces to move to
         the given OUTPUT when it is activated
         Example: DP1_workspaces = "1,2,3"
-    - <OUTPUT>_rotate: rotate the output as told
+    <OUTPUT>_rotate: rotate the output as told
         Example: DP1_rotate = "left"
 
 Color options:
