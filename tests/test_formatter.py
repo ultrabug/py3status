@@ -1184,6 +1184,153 @@ def test_inherit_color_2():
     })
 
 
+def test_conditions_1():
+    run_formatter({
+        'format': '\?if=number=42 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_2():
+    run_formatter({
+        'format': '\?if=number=4 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_3():
+    run_formatter({
+        'format': '\?if=!number=42 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_4():
+    run_formatter({
+        'format': '\?if=!number=4 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_5():
+    run_formatter({
+        'format': '\?if=missing=4 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_6():
+    run_formatter({
+        'format': '\?if=name=Björk cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_7():
+    run_formatter({
+        'format': '\?if=name=Jimmy cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_8():
+    run_formatter({
+        'format': '\?if=name= cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_9():
+    run_formatter({
+        'format': '\?if=number= cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_10():
+    run_formatter({
+        'format': '\?if=pi=3.14159265359 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_11():
+    run_formatter({
+        'format': '\?if=pi=3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_12():
+    run_formatter({
+        'format': '\?if=yes=3 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_13():
+    run_formatter({
+        'format': '\?if=no=3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_14():
+    run_formatter({
+        'format': '\?if=number>3 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_15():
+    run_formatter({
+        'format': '\?if=number<50 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_16():
+    run_formatter({
+        'format': '\?if=number>50 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_17():
+    run_formatter({
+        'format': '\?if=number<3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_18():
+    run_formatter({
+        'format': '\?if=name<Andrew cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_19():
+    run_formatter({
+        'format': '\?if=name>Andrew cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_20():
+    run_formatter({
+        'format': '\?if=name<John cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_21():
+    run_formatter({
+        'format': '\?if=name>John cool beans',
+        'expected': ''
+    })
+
+
 if __name__ == '__main__':
     # run tests
     import sys
