@@ -8,6 +8,8 @@ import sys
 
 from pprint import pformat
 
+import pytest
+
 from py3status.composite import Composite
 from py3status.formatter import Formatter
 from py3status.py3 import NoneColor
@@ -77,6 +79,8 @@ def attr_getter_fn(attr):
 
 
 def run_formatter(test_dict):
+    __tracebackhide__ = True
+
     if test_dict.get('py3only') and python2:
         return
     if not test_dict.get('pypy', True) and is_pypy:
@@ -92,6 +96,7 @@ def run_formatter(test_dict):
     except Exception as e:
         if test_dict.get('exception') == str(e):
             return
+        print('Format\n{}\n'.format(test_dict['format']))
         raise e
 
     # simplify the composite and convert to text if possible
@@ -108,9 +113,11 @@ def run_formatter(test_dict):
     if python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
     if result != expected:
+        print('Format\n{}\n'.format(test_dict['format']))
         print('Expected\n{}'.format(pformat(expected)))
         print('Got\n{}'.format(pformat(result)))
-    assert (result == expected)
+    if result != expected:
+        pytest.fail('Results not as expected')
 
 
 def test_1():
