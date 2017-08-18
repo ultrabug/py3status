@@ -3,14 +3,17 @@
 Display upcoming calendar events from Google Calendar.
 
 Configuration parameters:
+    agenda_days: show calendar events for number of days (default 1)
     button_refresh: mouse button to refresh this module (default 2)
     cache_timeout: refresh interval for this module (default 3600)
     command: modify command to dictate the calendar events
-        (default 'gcalcli agenda --nocolor')
-    days: show calendar events for number of days (default 1)
-    format: display format for this module (default '{format_event}')
+        (default 'gcalcli agenda --tsv')
+    format: display format for this module
+        (default '{format_event}|\?color=event \u2687')
     format_event: display format for events
-        (default '[\?if=is_date %a %b %d ][\?if=is_time %-I:%M %p ]{event}')
+        (default '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]
+        [\?if=is_time&color=time %-I:%M %p ][\?color=event {event}
+        [\?if=is_multiple&color=multiple *]]')
     format_separator: show separator only if more than one (default ', ')
     remove: list of strings to remove from the output (default [])
 
@@ -18,24 +21,33 @@ Format placeholders:
     {format_event} format for events
 
 format_event placeholders:
-    {event} scheduled event eg Volleyball
-    %?  strftime characters to be translated. See `man strftime`.
-    is_time: a boolean based on calendar event data
+    {event}: scheduled event, eg Volleyball
+    %?: a strftime character to be translated. See `man strftime`.
     is_date: a boolean based on calendar event data
+    is_time: a boolean based on calendar event data
+    is_first: a boolean based on calendar event data
+    is_multiple: a boolean based on calendar event data
+
+Color options:
+    color_date: a date
+    color_time: a time
+    color_event: an event
+    color_multiple: an indicator for multiple days
 
 Requires:
-    gcalcli: Google Calendar CLI
+    gcalcli: command line interface for google calendar
 
 Examples:
 ```
-# add colors and optionally customize timedate
+# add colors
 gcal {
-    format_event = '[\?if=is_date&color=#F3EA5F %a %b %d ]'
-    format_event += '[\?if=is_time&color=#2BD1FC %-I:%M %p ]'
-    format_event += '[\?color=#FF48C4 {event}]'
+    color_date = '#F3EA5F'
+    color_time = '#2BD1FC'
+    color_event = '#FF48C4'
+    color_multiple= '#2BD1FC'
 }
 
-# show '7 PM'
+# show '7 PM' instead of '7:00 PM'
 gcal {
     remove = [':00']
 }
@@ -54,89 +66,96 @@ SAMPLE OUTPUT
 from datetime import datetime, timedelta
 import re
 
+
 STRING_NOT_INSTALLED = "gcalcli isn't installed"
-GCAL_AGENDA = '%Y%m%d'
-GCAL_DATE = '%a %b %d'
-GCAL_TIME = '%I:%M%p'
-GCAL_YEAR = '%Y'
+DATE = '%Y-%m-%d'
+TIME = '%H:%M'
 
 
 class Py3status:
     """
     """
     # available configuration parameters
+    agenda_days = 1
     button_refresh = 2
     cache_timeout = 3600
-    command = 'gcalcli agenda --nocolor'
-    days = 1
-    format = u'{format_event}'
-    format_event = '[\?if=is_date %a %b %d ][\?if=is_time %-I:%M %p ]{event}'
+    command = 'gcalcli agenda --tsv'
+    format = u'{format_event}|\?color=event \u2687'
+    format_event = '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]' +\
+        '[\?if=is_time&color=time %-I:%M %p ][\?color=event {event}' +\
+        '[\?if=is_multiple&color=multiple *]]'
     format_separator = ', '
     remove = []
 
     def post_config_hook(self):
-        self.first_run = True
-        self.command = self.command + ' %s %s'
         if not self.py3.check_commands(self.command.split(' ', 1)[0]):
             raise Exception(STRING_NOT_INSTALLED)
 
-        remove = '|'.join(self.remove)
-        self.re = re.compile(r'(' + remove + ')')
+        self.command += ' %s %s'
+        self.first_run = True
+        self.re = re.compile(r'(%s)' % '|'.join(self.remove))
+
+    def _datetime(self, e, start=False, end=False):
+        if start:
+            return datetime.strptime(e['startdate'], DATE).date()
+        elif end:
+            return datetime.strptime(e['enddate'], DATE).date() - timedelta(days=1)
+        else:
+            return datetime.strptime(
+                '%s %s' % (e['startdate'], e['starttime']), '%s %s' % (DATE, TIME))
 
     def _get_gcal_data(self):
         now = datetime.now()
-        self.tempfix_year = now.year
-        start = datetime.strftime(now, GCAL_AGENDA)
-        end = datetime.strftime(now + timedelta(days=self.days), GCAL_AGENDA)
+        start = datetime.strftime(now, DATE)
+        end = datetime.strftime(now + timedelta(days=self.agenda_days), DATE)
         return self.py3.command_output(self.command % (start, end))
 
     def _organize_data(self, data):
         new_data = []
         for line in data.splitlines():
-            if line.rstrip():
-                if line == 'No Events Found...':
-                    break
-                temporary = {
-                    'date': line[:10].strip(),
-                    'time': line[10:20].strip(),
-                    'event': line[20:].strip(),
-                    'year': self.tempfix_year,
-                }
-                new_data.append({k: v for k, v in temporary.items() if v})
+            names = ['startdate', 'starttime', 'enddate', 'endtime', 'event']
+            new_data.append(dict(zip(names, line.split('\t'))))
 
         return new_data
 
     def _manipulate_data(self, data):
+        first_loop = True
+        last_date = None
         new_data = []
-        for e in data:
-            obj, is_date, is_time, _fmt = None, False, False, self.format_event
-            if 'date' in e:
-                is_date = True
-                if 'time' in e:
-                    is_time = True
-                    obj = datetime.strptime('%s %s %s' % (
-                        e['date'], e['time'], e['year']), '%s %s %s' % (
-                            GCAL_DATE, GCAL_TIME, GCAL_YEAR))
-                else:
-                    obj = datetime.strptime('%s %s' % (
-                        e['date'], e['year']), '%s %s' % (
-                        GCAL_DATE, GCAL_YEAR))
-            elif 'time' in e:
-                is_time = True
-                obj = datetime.strptime('%s %s' % (
-                    e['time'], e['year']), '%s %s' % (
-                    GCAL_TIME, GCAL_YEAR))
-            if obj:
-                _fmt = self.re.sub('', datetime.strftime(obj, _fmt))
 
-            new_data.append(self.py3.safe_format(_fmt, {'event': e.get(
-                'event'), 'is_date': is_date, 'is_time': is_time}))
+        for e in data:
+            e['is_date'] = True
+            e['is_time'] = True
+            e['is_first'] = False
+            e['is_multiple'] = False
+
+            if self._datetime(e, start=True) < self._datetime(e, end=True):
+                e['is_multiple'] = True
+            if first_loop:
+                first_loop = False
+                e['is_first'] = True
+                last_date = e['startdate']
+            elif last_date == e['startdate']:
+                e['is_first'] = False
+            else:
+                e['is_first'] = True
+                last_date = e['startdate']
+            if e['starttime'] == e['endtime']:
+                e['is_time'] = False
+
+            obj = self._datetime(e)
+            fmt = self.re.sub('', datetime.strftime(obj, self.format_event))
+            new_data.append(self.py3.safe_format(fmt, {
+                'event': e['event'],
+                'is_date': e['is_date'],
+                'is_time': e['is_time'],
+                'is_first': e['is_first'],
+                'is_multiple': e['is_multiple'],
+            }))
 
         return new_data
 
     def gcal(self):
-        """
-        """
         cached_until = self.cache_timeout
         format_event = None
 
@@ -167,6 +186,5 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {'format': '{format_event}|No Events'}
     from py3status.module_test import module_test
-    module_test(Py3status, config=config)
+    module_test(Py3status)
