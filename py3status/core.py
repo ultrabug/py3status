@@ -23,7 +23,7 @@ from py3status.helpers import print_line, print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
-from py3status.profiling import profile
+from py3status.profiling import profile, Profiler
 from py3status.version import version
 
 LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
@@ -185,6 +185,7 @@ class Py3statusWrapper():
         self.modules = {}
         self.notified_messages = set()
         self.output_modules = {}
+        self.profiler = None
         self.py3_modules = []
         self.py3_modules_initialized = False
         self.queue = deque()
@@ -282,6 +283,10 @@ class Py3statusWrapper():
                             type=float,
                             default=config['interval'],
                             help="update interval in seconds (default 1 sec)")
+        parser.add_argument('-p',
+                            '--profile',
+                            action="store_true",
+                            help="enable profiling mode")
         parser.add_argument('-s',
                             '--standalone',
                             action="store_true",
@@ -321,6 +326,7 @@ class Py3statusWrapper():
         config['log_file'] = options.log_file
         config['standalone'] = options.standalone
         config['i3status_config_path'] = options.i3status_conf
+        config['profile'] = options.profile
 
         # all done
         return config
@@ -408,6 +414,9 @@ class Py3statusWrapper():
 
         # update configuration
         self.config.update(self.get_config())
+
+        if self.config['profile']:
+            self.profiler = Profiler(self)
 
         if self.config.get('cli_command'):
             self.handle_cli_command(self.config)
@@ -580,6 +589,10 @@ class Py3statusWrapper():
                 module.kill()
         except:
             pass
+        try:
+            self.profiler.exit()
+        except:
+            self.report_exception('profiler')
 
     def refresh_modules(self, module_string=None, exact=True):
         """
@@ -773,12 +786,18 @@ class Py3statusWrapper():
         return ','.join([dumps(x) for x in outputs])
 
     def i3bar_stop(self, signum, frame):
+        # when we are running with the profiler don't sleep
+        if self.profiler:
+            return
         self.i3bar_running = False
         # i3status should be stopped
         self.i3status_thread.suspend_i3status()
         self.sleep_modules()
 
     def i3bar_start(self, signum, frame):
+        # when we are running with the profiler don't sleep
+        if self.profiler:
+            return
         self.i3bar_running = True
         self.wake_modules()
 
@@ -845,6 +864,9 @@ class Py3statusWrapper():
         print_line(dumps(header))
         print_line('[[]')
 
+        # make local to reduce overhead
+        profiler = self.profiler
+
         # main loop
         while True:
             # sleep a bit to avoid killing the CPU
@@ -854,6 +876,10 @@ class Py3statusWrapper():
 
             while not self.i3bar_running:
                 time.sleep(0.1)
+
+            # start of interesting code
+            if profiler:
+                profiler.enable('core')
 
             sec = int(time.time())
 
@@ -894,6 +920,10 @@ class Py3statusWrapper():
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
                 print_line(',[{}]'.format(out))
+
+            # end of interesting code
+            if profiler:
+                profiler.disable('core')
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.

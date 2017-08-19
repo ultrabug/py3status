@@ -25,6 +25,7 @@ class MockPy3statusWrapper:
         self.output_modules = {}
         self.events_thread = self.EventThread()
         self.lock.set()
+        self.profiler = None
 
         # shared code
         common = Common(self)

@@ -190,6 +190,7 @@ class I3status(Thread):
         self.lock = py3_wrapper.lock
         self.new_update = False
         self.py3_wrapper = py3_wrapper
+        self.profiler = py3_wrapper.profiler
         self.ready = False
         self.standalone = py3_wrapper.config['standalone']
         self.i3status_pipe = None
@@ -326,6 +327,13 @@ class I3status(Thread):
         """
         Spawn i3status using a self generated config file and poll its output.
         """
+        # make local to reduce overhead
+        profiler = self.profiler
+
+        # start of interesting code
+        if profiler:
+            profiler.enable('i3status')
+
         try:
             with NamedTemporaryFile(prefix='py3status_') as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
@@ -352,7 +360,17 @@ class I3status(Thread):
                 try:
                     # loop on i3status output
                     while self.lock.is_set():
+
+                        # disable profiling whilst polling
+                        if profiler:
+                            profiler.disable('i3status')
+
                         line = self.poller_inp.readline()
+
+                        # re-enable
+                        if profiler:
+                            profiler.enable('i3status')
+
                         if line:
                             # remove leading comma if present
                             if line[0] == ',':
@@ -363,8 +381,17 @@ class I3status(Thread):
                                 self.set_responses(json_list)
                                 self.ready = True
                         else:
+                            # disable profiling whilst polling
+                            if profiler:
+                                profiler.disable('i3status')
+
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
+
+                            # re-enable
+                            if profiler:
+                                profiler.enable('i3status')
+
                             if code is not None:
                                 msg = 'i3status died'
                                 if err:
@@ -381,6 +408,10 @@ class I3status(Thread):
         except Exception:
             self.py3_wrapper.report_exception('', notify_user=True)
         self.i3status_pipe = None
+
+        # end of interesting code
+        if profiler:
+            profiler.disable('i3status')
 
     def mock(self):
         """

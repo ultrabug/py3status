@@ -49,6 +49,8 @@ class Module(Thread):
         self.new_update = False
         self.nagged = False
         self.prevent_refresh = False
+        self.profiler = py3_wrapper.profiler
+        self.profile_name = 'module %s' % module
         self.sleeping = False
         self.terminated = False
         self.testing = self.config.get('testing')
@@ -719,6 +721,13 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
+        # make local to reduce overhead
+        profiler = self.profiler
+
+        # start of interesting code
+        if profiler:
+            profiler.enable(self.profile_name)
+
         # cancel any existing timer
         if self.timer:
             self.timer.cancel()
@@ -851,6 +860,10 @@ class Module(Thread):
                 cache_time = time() + self.config['cache_timeout']
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
+            # end of interesting code
+            if profiler:
+                profiler.disable(self.profile_name)
+
             if cache_time == PY3_CACHE_FOREVER:
                 return
             # don't be hasty mate
