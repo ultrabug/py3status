@@ -589,11 +589,12 @@ class Py3:
 
         return requested + offset
 
-    def format_contains(self, format_string, name):
+    def format_contains(self, format_string, names):
         """
-        Determines if ``format_string`` contains placeholder ``name``
+        Determines if ``format_string`` contains a placeholder string ``names``
+        or a list of placeholders ``names``.
 
-        ``name`` is tested against placeholders using fnmatch so the following
+        ``names`` is tested against placeholders using fnmatch so the following
         patterns can be used:
 
         .. code-block:: none
@@ -608,10 +609,14 @@ class Py3:
         will fail if the format string contains placeholder formatting
         eg ``'{placeholder:.2f}'``
         """
-
         # We cache things to prevent parsing the format_string more than needed
+        if isinstance(names, list):
+            key = str(names)
+        else:
+            key = names
+            names = [names]
         try:
-            return self._format_placeholders_cache[format_string][name]
+            return self._format_placeholders_cache[format_string][key]
         except KeyError:
             pass
 
@@ -621,15 +626,16 @@ class Py3:
         else:
             placeholders = self._format_placeholders[format_string]
 
-        result = False
-        for placeholder in placeholders:
-            if fnmatch(placeholder, name):
-                result = True
-                break
         if format_string not in self._format_placeholders_cache:
             self._format_placeholders_cache[format_string] = {}
-        self._format_placeholders_cache[format_string][name] = result
-        return result
+
+        for name in names:
+            for placeholder in placeholders:
+                if fnmatch(placeholder, name):
+                    self._format_placeholders_cache[format_string][key] = True
+                    return True
+        self._format_placeholders_cache[format_string][key] = False
+        return False
 
     def get_placeholders_list(self, format_string, match=None):
         """

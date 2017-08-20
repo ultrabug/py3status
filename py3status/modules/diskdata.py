@@ -89,9 +89,7 @@ class Py3status:
     def space_and_io(self):
         self.values = {'disk': self.disk if self.disk else 'all'}
 
-        if (self.py3.format_contains(self.format, 'read') or
-                self.py3.format_contains(self.format, 'write') or
-                self.py3.format_contains(self.format, 'total')):
+        if self.py3.format_contains(self.format, ['read', 'write', 'total']):
             # time from previous check
             ios = self._get_io_stats(self.disk)
             timedelta = time() - self.last_time
@@ -115,8 +113,7 @@ class Py3status:
             self.py3.threshold_get_color(total, 'total')
             self.py3.threshold_get_color(write, 'write')
 
-        if (self.py3.format_contains(self.format, 'free') or
-                self.py3.format_contains(self.format, 'used*')):
+        if self.py3.format_contains(self.format, ['free', 'used*']):
             free, used, used_percent = self._get_free_space(self.disk)
 
             self.values['free'] = self.py3.safe_format(self.format_space, {'value': free})
