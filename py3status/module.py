@@ -34,10 +34,11 @@ class Module(Thread):
         self.click_events = False
         self.config = py3_wrapper.config
         self.disabled = False
-        self.error_messages = None
         self.error_hide = False
-        self.has_post_config_hook = False
+        self.error_messages = None
+        self.format_urgent = None
         self.has_kill = False
+        self.has_post_config_hook = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
         self.lock = py3_wrapper.lock
@@ -46,8 +47,8 @@ class Module(Thread):
         self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
-        self.new_update = False
         self.nagged = False
+        self.new_update = False
         self.prevent_refresh = False
         self.sleeping = False
         self.terminated = False
@@ -423,6 +424,12 @@ class Module(Thread):
             # if urgent we want to set this to all parts
             elif urgent and 'urgent' not in item:
                 item['urgent'] = urgent
+            # use format_urgent if supplied
+            if '{format}' in self.format_urgent:
+                item['full_text'] = self.format_urgent.replace(
+                    '{format}', item['full_text'])
+            else:
+                item['full_text'] = self.format_urgent
 
     def _params_type(self, method_name, instance):
         """
@@ -634,6 +641,13 @@ class Module(Thread):
             if hasattr(param, 'none_setting'):
                 param = True
             self.allow_urgent = param
+
+            # format_urgent: get the param from the config if supplied.
+            fn = self._py3_wrapper.get_config_attribute
+            param = fn(self.module_full_name, 'format_urgent')
+            if hasattr(param, 'none_setting'):
+                param = '{format}'
+            self.format_urgent = param
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):

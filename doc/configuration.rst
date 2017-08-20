@@ -236,6 +236,27 @@ be used to allow/prevent a module from setting itself as urgent.
     }
 
 
+Urgent Formatting
+------
+New in version 3.6. You can override the format when an urgent occurs by adding
+``format_urgent`` configuration parameter in the py3status configuration section
+or in the individual modules configuration section.
+
+
+.. code-block:: py3status
+    :caption: Example
+
+    # add a nice padding
+    py3status {
+        format_urgent = ' {format} '
+    }
+
+    # add a URGENT string
+    window_manipulation {
+        format_urgent = 'URGENT {format}'
+    }
+
+
 Grouping Modules
 ----------------
 
