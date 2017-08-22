@@ -395,8 +395,6 @@ class Py3statusWrapper():
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
-        # set the Event lock
-        self.lock.set()
 
         # SIGTSTP will be received from i3bar indicating that all output should
         # stop and we should consider py3status suspended.  It is however
@@ -475,6 +473,7 @@ class Py3statusWrapper():
 
         # setup input events thread
         self.events_thread = Events(self)
+        self.events_thread.daemon = True
         self.events_thread.start()
         if self.config['debug']:
             self.log('events thread started')
@@ -563,7 +562,7 @@ class Py3statusWrapper():
 
     def stop(self):
         """
-        Clear the Event lock, this will break all threads' loops.
+        Set the Event lock, this will break all threads' loops.
         """
         # stop the command server
         try:
@@ -572,9 +571,9 @@ class Py3statusWrapper():
             pass
 
         try:
-            self.lock.clear()
+            self.lock.set()
             if self.config['debug']:
-                self.log('lock cleared, exiting')
+                self.log('lock set, exiting')
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()

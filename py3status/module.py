@@ -723,14 +723,14 @@ class Module(Thread):
         if self.timer:
             self.timer.cancel()
 
-        if self.lock.is_set():
+        if not self.lock.is_set():
             cache_time = None
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
 
                 # always check the lock
-                if not self.lock.is_set():
+                if self.lock.is_set():
                     break
 
                 # respect the cache set for this method
