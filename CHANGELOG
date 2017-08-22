@@ -3,6 +3,7 @@ version 3.6 (milestone)
 * universal gradients functionality, by @tobes
 * share code so module_test improved, by @tobes
 * better report when i3status is missing, by @tobes thx to @Cypher1
+* better module doctest failures, by @alexoneill
 * allow report exception to be available early, by @tobes
 * better error catching for missing {, by @tobes thx to @lasers
 * make hide_if_zero work for net_rate fixes #935, by @tobes thx to @maximbaz
