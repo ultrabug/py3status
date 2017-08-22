@@ -236,7 +236,7 @@ class Events(Thread):
         Example event:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
-        while self.lock.is_set():
+        while not self.lock.is_set():
             event_str = self.poller_inp.readline()
             if not event_str:
                 continue

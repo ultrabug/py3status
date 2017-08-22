@@ -8,7 +8,7 @@ from subprocess import PIPE
 from signal import SIGTSTP, SIGSTOP, SIGUSR1, SIG_IGN, signal
 from tempfile import NamedTemporaryFile
 from threading import Thread
-from time import time, sleep
+from time import time
 
 from py3status.profiling import profile
 from py3status.events import IOPoller
@@ -175,24 +175,24 @@ class I3status(Thread):
         Our output will be read asynchronously from 'last_output'.
         """
         Thread.__init__(self)
-        self.py3_config = py3_wrapper.config['py3_config']
         self.error = None
+        self.i3modules = {}
         self.i3status_module_names = [
             'battery', 'cpu_temperature', 'cpu_usage', 'ddate', 'disk',
             'ethernet', 'ipv6', 'load', 'path_exists', 'run_watch', 'time',
             'tztime', 'volume', 'wireless'
         ]
-        self.i3modules = {}
+        self.i3status_pipe = None
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
         self.last_refresh_ts = time()
         self.lock = py3_wrapper.lock
         self.new_update = False
+        self.py3_config = py3_wrapper.config['py3_config']
         self.py3_wrapper = py3_wrapper
         self.ready = False
         self.standalone = py3_wrapper.config['standalone']
-        self.i3status_pipe = None
         self.time_modules = []
         self.tmpfile_path = None
         self.update_due = 0
@@ -324,14 +324,14 @@ class I3status(Thread):
         # if the i3status process dies we want to restart it.
         # We give up restarting if we have died too often
         for x in range(10):
-            if not self.lock.is_set():
+            if self.lock.is_set():
                 break
             self.spawn_i3status()
             # check if we never worked properly and if so quit now
             if not self.ready:
                 break
             # limit restart rate
-            sleep(5)
+            self.lock.wait(5)
 
     def spawn_i3status(self):
         """
@@ -362,7 +362,7 @@ class I3status(Thread):
 
                 try:
                     # loop on i3status output
-                    while self.lock.is_set():
+                    while not self.lock.is_set():
                         line = self.poller_inp.readline()
                         if line:
                             # remove leading comma if present

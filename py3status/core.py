@@ -111,7 +111,7 @@ class Common:
         """
         # Get list of paths that our stack trace should be found in.
         py3_paths = [os.path.dirname(__file__)]
-        user_paths = self.config['include_paths']
+        user_paths = self.config.get('include_paths', [])
         py3_paths += [os.path.abspath(path) + '/' for path in user_paths]
         traceback = None
 
@@ -157,8 +157,14 @@ class Common:
             del tb
         # log the exception and notify user
         self.py3_wrapper.log(msg, 'warning')
-        if traceback and self.config['log_file']:
-            self.py3_wrapper.log(''.join(['Traceback\n'] + traceback))
+        if traceback:
+            # if debug is not in the config  then we are at an early stage of
+            # running py3status and logging is not yet available so output the
+            # error to STDERR so it can be seen
+            if 'debug' not in self.config:
+                print_stderr('\n'.join(traceback))
+            elif self.config.get('log_file'):
+                self.py3_wrapper.log(''.join(['Traceback\n'] + traceback))
         if notify_user:
             self.py3_wrapper.notify_user(msg, level=level)
 
@@ -183,6 +189,11 @@ class Py3statusWrapper:
         self.py3_modules_initialized = False
         self.queue = deque()
         self.update_request = Event()
+
+        # shared code
+        common = Common(self)
+        self.get_config_attribute = common.get_config_attribute
+        self.report_exception = common.report_exception
 
     def get_config(self):
         """
@@ -385,8 +396,6 @@ class Py3statusWrapper:
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
-        # set the Event lock
-        self.lock.set()
 
         # SIGTSTP will be received from i3bar indicating that all output should
         # stop and we should consider py3status suspended.  It is however
@@ -396,8 +405,8 @@ class Py3statusWrapper:
         # SIGCONT indicates output should be resumed.
         signal(SIGCONT, self.i3bar_start)
 
-        # setup configuration
-        self.config = self.get_config()
+        # update configuration
+        self.config.update(self.get_config())
 
         if self.config.get('cli_command'):
             self.handle_cli_command(self.config)
@@ -437,11 +446,6 @@ class Py3statusWrapper:
         config_path = self.config['i3status_config_path']
         self.config['py3_config'] = process_config(config_path, self)
 
-        # shared code
-        common = Common(self)
-        self.get_config_attribute = common.get_config_attribute
-        self.report_exception = common.report_exception
-
         # setup i3status thread
         self.i3status_thread = I3status(self)
 
@@ -470,6 +474,7 @@ class Py3statusWrapper:
 
         # setup input events thread
         self.events_thread = Events(self)
+        self.events_thread.daemon = True
         self.events_thread.start()
         if self.config['debug']:
             self.log('events thread started')
@@ -558,7 +563,7 @@ class Py3statusWrapper:
 
     def stop(self):
         """
-        Clear the Event lock, this will break all threads' loops.
+        Set the Event lock, this will break all threads' loops.
         """
         # stop the command server
         try:
@@ -567,9 +572,9 @@ class Py3statusWrapper:
             pass
 
         try:
-            self.lock.clear()
+            self.lock.set()
             if self.config['debug']:
-                self.log('lock cleared, exiting')
+                self.log('lock set, exiting')
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
@@ -682,7 +687,7 @@ class Py3statusWrapper:
         """
         log this information to syslog or user provided logfile.
         """
-        if not self.config['log_file']:
+        if not self.config.get('log_file'):
             # If level was given as a str then convert to actual level
             level = LOG_LEVELS.get(level, level)
             syslog(level, u'{}'.format(msg))

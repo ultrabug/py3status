@@ -723,14 +723,14 @@ class Module(Thread):
         if self.timer:
             self.timer.cancel()
 
-        if self.lock.is_set():
+        if not self.lock.is_set():
             cache_time = None
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
 
                 # always check the lock
-                if not self.lock.is_set():
+                if self.lock.is_set():
                     break
 
                 # respect the cache set for this method
@@ -810,9 +810,6 @@ class Module(Thread):
                     else:
                         my_method['last_output'] = result
 
-                    # mark module as updated
-                    self.set_updated()
-
                     # debug info
                     if self.config['debug']:
                         self._py3_wrapper.log(
@@ -822,6 +819,10 @@ class Module(Thread):
                     self.allow_config_clicks = True
                     self.error_messages = None
                     self.error_hide = False
+
+                    # mark module as updated
+                    self.set_updated()
+
                 except ModuleErrorException as e:
                     # module has indicated that it has an error
                     self.runtime_error(e.msg, meth)
