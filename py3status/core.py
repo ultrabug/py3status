@@ -169,7 +169,7 @@ class Common:
             self.py3_wrapper.notify_user(msg, level=level)
 
 
-class Py3statusWrapper():
+class Py3statusWrapper:
     """
     This is the py3status wrapper.
     """
@@ -188,6 +188,7 @@ class Py3statusWrapper():
         self.py3_modules = []
         self.py3_modules_initialized = False
         self.queue = deque()
+        self.update_request = Event()
 
         # shared code
         common = Common(self)
@@ -678,6 +679,10 @@ class Py3statusWrapper():
                     # we don't know so just update.
                     container_module['module'].force_update()
 
+        # we need to update the output
+        if self.queue:
+            self.update_request.set()
+
     def log(self, msg, level='info'):
         """
         log this information to syslog or user provided logfile.
@@ -844,12 +849,12 @@ class Py3statusWrapper():
         print_line(dumps(header))
         print_line('[[]')
 
+        update_due = None
         # main loop
         while True:
-            # sleep a bit to avoid killing the CPU
-            # by doing this at the begining rather than the end
-            # of the loop we ensure a smoother first render of the i3bar
-            time.sleep(0.1)
+            # wait untill an update is requested
+            self.update_request.wait(timeout=update_due)
+            update_due = None
 
             while not self.i3bar_running:
                 time.sleep(0.1)
@@ -877,7 +882,7 @@ class Py3statusWrapper():
 
                 # update i3status time/tztime items
                 if interval == 0 or sec % interval == 0:
-                    i3status_thread.update_times()
+                    update_due = i3status_thread.update_times()
 
             # check if an update is needed
             if self.queue:
@@ -893,6 +898,12 @@ class Py3statusWrapper():
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
                 print_line(',[{}]'.format(out))
+
+            # we've done our work here so we can clear the request
+            self.update_request.clear()
+            # just in case check if we have an update and request if needed
+            if self.queue:
+                self.update_request.set()
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.

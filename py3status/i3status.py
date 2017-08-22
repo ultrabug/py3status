@@ -195,19 +195,29 @@ class I3status(Thread):
         self.standalone = py3_wrapper.config['standalone']
         self.time_modules = []
         self.tmpfile_path = None
+        self.update_due = 0
 
     def update_times(self):
         """
         Update time for any i3status time/tztime items.
+        Returns the time till next update needed.
         """
-        updated = []
-        for module in self.i3modules.values():
-            if module.is_time_module:
-                if module.update_time_value():
-                    updated.append(module.module_name)
-        if updated:
-            # trigger the update so new time is shown
-            self.py3_wrapper.notify_update(updated)
+        now = time()
+        if now > self.update_due:
+            updated = []
+            for module in self.i3modules.values():
+                if module.is_time_module:
+                    if module.update_time_value():
+                        updated.append(module.module_name)
+            if updated:
+                # trigger the update so new time is shown
+                self.py3_wrapper.notify_update(updated)
+                # time we next need to do an update
+            self.update_due = int(now) + 1
+
+        # return time till next update wanted
+        # currently once a second
+        return 1 - (now % 1)
 
     def valid_config_param(self, param_name, cleanup=False):
         """
@@ -238,7 +248,8 @@ class I3status(Thread):
                                                            self.py3_wrapper)
             if self.i3modules[conf_name].update_from_item(item):
                 updates.append(conf_name)
-        self.py3_wrapper.notify_update(updates)
+        if updates:
+            self.py3_wrapper.notify_update(updates)
 
     def update_json_list(self):
         """
