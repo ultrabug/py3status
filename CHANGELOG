@@ -1,3 +1,5 @@
+version 3.7 (milestone)
+
 version 3.6 (2017-08-22)
 * faster py3-cmd, by @tobes
 * universal gradients functionality, by @tobes
