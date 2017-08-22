@@ -179,7 +179,8 @@ def get_py3_info():
     along with their docstrings.
     """
     # get all documented constants and their values
-    constants, values = get_variable_docstrings('../py3status/py3.py')
+    py3path = os.path.join(os.path.dirname(__file__), 'py3.py')
+    constants, values = get_variable_docstrings(py3path)
     # we only care about ones defined in Py3
     constants = constants['Py3']
     # sort them alphabetically
