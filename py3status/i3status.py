@@ -324,7 +324,7 @@ class I3status(Thread):
         # if the i3status process dies we want to restart it.
         # We give up restarting if we have died too often
         for x in range(10):
-            if self.lock.is_set():
+            if not self.py3_wrapper.running:
                 break
             self.spawn_i3status()
             # check if we never worked properly and if so quit now
@@ -362,7 +362,7 @@ class I3status(Thread):
 
                 try:
                     # loop on i3status output
-                    while not self.lock.is_set():
+                    while self.py3_wrapper.running:
                         line = self.poller_inp.readline()
                         if line:
                             # remove leading comma if present
