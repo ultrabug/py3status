@@ -1035,7 +1035,7 @@ class Py3:
 
     def concurrent_bar_graphs(self, values, min_val=0, max_val=100):
         """
-        Transforms a list of value into a list of bar Composites
+        Transforms a list of value into a list of bar Composites.
 
         :param values: list of values to transform into a bar graph
         :param min_val: minimum value possible
@@ -1051,3 +1051,30 @@ class Py3:
                                              max_val=max_val))
 
         return self.composite_create(val_bars)
+
+    def history_bar_graph(self, history, value, length=5, default_value=0, min_val=0, max_val=100):
+        """
+        Transform a value into a bar graph with history.
+
+        :param history: history of the variable
+        :param value: value to add to the history
+        :param length: length of the history
+        :param default_value: default value to pad with
+        :param min_val: minimum value possible
+        :param max_val: maximum value possible
+        """
+
+        if default_value is not None and length is not None:
+            while len(history) < length:
+                history.append(self._val_to_bar(default_value,
+                                                min_val=min_val,
+                                                max_val=max_val))
+
+        history.append(self._val_to_bar(value,
+                                        min_val=min_val,
+                                        max_val=max_val))
+        if length is not None:
+            while len(history) > length:
+                history = history[1:]
+
+        return self.composite_create(history)
