@@ -1008,3 +1008,46 @@ class Py3:
                             headers=headers,
                             timeout=timeout,
                             auth=auth)
+
+    def _val_to_bar(self, value, min_val=0, max_val=100):
+        """
+        Create a bar of the appropriate height for each value and adjusts the
+        colors depending on the thresholds.
+        There are 8 possible levels.
+        By default, this assumes values are percentages, but the min/max can be
+        adjusted.
+
+        :param value: value to transform to a bar
+        :param min_val: minimum value possible
+        :param max_val: maximum value possible
+
+        :returns: Composite
+        """
+
+        bars = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
+
+        idx = int((value - min_val) / (max_val - min_val) * len(bars))
+        if idx == len(bars):
+            idx -= 1
+        full_text = bars[idx]
+        color = self.threshold_get_color(value)
+        return {'full_text': full_text, 'color': color}
+
+    def concurrent_bar_graphs(self, values, min_val=0, max_val=100):
+        """
+        Transforms a list of value into a list of bar Composites
+
+        :param values: list of values to transform into a bar graph
+        :param min_val: minimum value possible
+        :param max_val: maximum value possible
+
+        :returns: Composite list
+        """
+
+        val_bars = []
+        for val in values:
+            val_bars.append(self._val_to_bar(val,
+                                             min_val=min_val,
+                                             max_val=max_val))
+
+        return self.composite_create(val_bars)
