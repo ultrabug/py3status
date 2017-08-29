@@ -108,6 +108,7 @@ class Py3:
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
+        self._default_bars = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
 
         if module:
             self._i3s_config = module._py3_wrapper.config['py3_config']['general']
@@ -1009,7 +1010,7 @@ class Py3:
                             timeout=timeout,
                             auth=auth)
 
-    def _val_to_bar(self, value, min_val=0, max_val=100):
+    def _value_to_bar(self, value, minimum=0, maximum=100, bars=None):
         """
         Create a bar of the appropriate height for each value and adjusts the
         colors depending on the thresholds.
@@ -1018,41 +1019,49 @@ class Py3:
         adjusted.
 
         :param value: value to transform to a bar
-        :param min_val: minimum value possible
-        :param max_val: maximum value possible
+        :param minimum: minimum value possible
+        :param maximum: maximum value possible
+        :param bars: characters to use for the different levels of the bar
 
         :returns: Composite
         """
 
-        bars = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
+        if bars is None:
+            bars = self._default_bars
 
-        idx = int((value - min_val) / (max_val - min_val) * len(bars))
+        idx = int((value - minimum) / (maximum - minimum) * len(bars))
         if idx == len(bars):
             idx -= 1
         full_text = bars[idx]
         color = self.threshold_get_color(value)
         return {'full_text': full_text, 'color': color}
 
-    def concurrent_bar_graphs(self, values, min_val=0, max_val=100):
+    def concurrent_bar_graphs(self, values, minimum=0, maximum=100, bars=None):
         """
         Transforms a list of value into a list of bar Composites.
 
         :param values: list of values to transform into a bar graph
-        :param min_val: minimum value possible
-        :param max_val: maximum value possible
+        :param minimum: minimum value possible
+        :param maximum: maximum value possible
+        :param bars: characters to use for the different levels of the bar
 
         :returns: Composite list
         """
 
-        val_bars = []
+        if bars is None:
+            bars = self._default_bars
+
+        value_bars = []
         for val in values:
-            val_bars.append(self._val_to_bar(val,
-                                             min_val=min_val,
-                                             max_val=max_val))
+            value_bars.append(self._value_to_bar(val,
+                                                 minimum=minimum,
+                                                 maximum=maximum,
+                                                 bars=bars))
 
-        return self.composite_create(val_bars)
+        return self.composite_create(value_bars)
 
-    def history_bar_graph(self, history, value, length=5, default_value=0, min_val=0, max_val=100):
+    def history_bar_graph(self, history, value, length=1, default=0,
+                          minimum=0, maximum=100, bars=None):
         """
         Transform a value into a bar graph with history.
 
@@ -1060,21 +1069,26 @@ class Py3:
         :param value: value to add to the history
         :param length: length of the history
         :param default_value: default value to pad with
-        :param min_val: minimum value possible
-        :param max_val: maximum value possible
+        :param minimum: minimum value possible
+        :param maximum: maximum value possible
+        :param bars: characters to use for the different levels of the bar
+
+        :returns: Composite list
         """
 
-        if default_value is not None and length is not None:
-            while len(history) < length:
-                history.append(self._val_to_bar(default_value,
-                                                min_val=min_val,
-                                                max_val=max_val))
+        if bars is None:
+            bars = self._default_bars
 
-        history.append(self._val_to_bar(value,
-                                        min_val=min_val,
-                                        max_val=max_val))
-        if length is not None:
-            while len(history) > length:
-                history = history[1:]
+        while len(history) < length:
+            history.append(default)
 
-        return self.composite_create(history)
+        history.append(value)
+
+        while len(history) > length:
+            history = history[1:]
+
+        return self.composite_create([self._value_to_bar(x,
+                                                         minimum=minimum,
+                                                         maximum=maximum,
+                                                         bars=bars)
+                                      for x in history])
