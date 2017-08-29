@@ -4,6 +4,7 @@ Display system RAM, SWAP and CPU utilization.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
+    cpu_history_length: length of the history graph bar (default 8)
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
@@ -19,6 +20,8 @@ Configuration parameters:
         (default None)
 
 Format placeholders:
+    {cpu_concurrent_bar} cpu usage in bar form, with one bar per core
+    {cpu_history_bar} cpu usage in history graph form
     {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {load1} load average over the last minute
@@ -72,7 +75,7 @@ class GetData:
     def __init__(self, parent):
         self.py3 = parent.py3
 
-    def cpu(self):
+    def _parse_proc_cpu(self, line):
         """
         Get the cpu usage data from /proc/stat :
           cpu  2255 34 2290 22625563 6290 127 456 0 0
@@ -90,14 +93,30 @@ class GetData:
         different kinds of work.  Time units are in USER_HZ
         (typically hundredths of a second)
         """
-        with open('/proc/stat', 'r') as fd:
-            line = fd.readline()
         cpu_data = line.split()
         total_cpu_time = sum(map(int, cpu_data[1:]))
         cpu_idle_time = int(cpu_data[4])
 
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
+
+    def cpu(self):
+        with open('/proc/stat', 'r') as fd:
+            line = fd.readline()
+        return self._parse_proc_cpu(line)
+
+    def cpu_cores(self):
+        total_times = []
+        idle_times = []
+        with open('/proc/stat', 'r') as fd:
+            line = fd.readline()
+            line = fd.readline()
+            while line.startswith('cpu'):
+                total, idle = self._parse_proc_cpu(line)
+                total_times.append(total)
+                idle_times.append(idle)
+                line = fd.readline()
+        return total_times, idle_times
 
     def load(self):
         """
@@ -210,6 +229,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    cpu_history_length = 8
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
@@ -302,8 +322,12 @@ class Py3status:
 
     def post_config_hook(self):
         self.data = GetData(self)
+        self.cpu_history = []
         self.cpu_total = 0
         self.cpu_idle = 0
+        self.cpus_total = []
+        self.cpus_idle = []
+        self.n_cores = 0
         temp_unit = self.temp_unit.upper()
         if temp_unit in ['C', u'°C']:
             temp_unit = u'°C'
@@ -318,7 +342,8 @@ class Py3status:
 
     def sysData(self):
         # get CPU usage info
-        if self.py3.format_contains(self.format, 'cpu_usage'):
+        if self.py3.format_contains(self.format, 'cpu_usage') or \
+           self.py3.format_contains(self.format, 'cpu_history_bar'):
             cpu_total, cpu_idle = self.data.cpu()
             cpu_usage = 0
             if cpu_total != self.cpu_total:
@@ -329,6 +354,31 @@ class Py3status:
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
             self.py3.threshold_get_color(cpu_usage, 'cpu')
+            self.values['cpu_history_bar'] = \
+                self.py3.history_bar_graph(self.cpu_history, cpu_usage,
+                                           length=self.cpu_history_length)
+
+        if self.py3.format_contains(self.format, 'cpu_concurrent_bar'):
+            cpus_total, cpus_idle = self.data.cpu_cores()
+            cpus_usage = []
+            if self.n_cores == 0:
+                self.n_cores = len(cpus_total)
+                self.cpus_total = [0] * self.n_cores
+                self.cpus_idle = [0] * self.n_cores
+            for old_total, old_idle, total, idle in zip(self.cpus_total,
+                                                        self.cpus_idle,
+                                                        cpus_total,
+                                                        cpus_idle):
+                if old_total != total:
+                    cpus_usage.append((1 - (
+                        float(idle - old_idle) / float(total - old_total)
+                    )) * 100)
+                else:
+                    cpus_usage.append(0)
+            self.cpus_total = cpus_total
+            self.cpus_idle = cpus_idle
+            self.values['cpu_concurrent_bar'] = \
+                self.py3.concurrent_bar_graphs(cpus_usage)
 
         # if specified as a formatting option, also get the CPU temperature
         if self.py3.format_contains(self.format, 'cpu_temp'):
