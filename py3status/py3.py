@@ -1010,7 +1010,36 @@ class Py3:
                             timeout=timeout,
                             auth=auth)
 
-    def _value_to_bar(self, value, minimum=0, maximum=100, bars=None):
+    def _value_to_index(self, value, length, minimum, maximum):
+        """
+        Find the index of the segment the value falls into
+
+        :param value: value to transform to an index
+        :param length: number of segments
+        :param minimum: minimum value possible
+        :param maximum: maximum value possible
+        """
+
+        idx = int((value - minimum) / (maximum - minimum) * length)
+        if idx == length:
+            idx -= 1
+
+        return idx
+
+    def _index_to_value(self, index, length, minimum, maximum):
+        """
+        Find the average value of the segment at index
+
+        :param index: index of segment to find the average of
+        :param length: number of segments
+        :param minimum: minimum value possible
+        :param maximum: maximum value possible
+        """
+
+        segment = (maximum - minimum) / length
+        return segment * (index + 0.5)
+
+    def _value_to_bar(self, value, minimum, maximum, bars):
         """
         Create a bar of the appropriate height for each value and adjusts the
         colors depending on the thresholds.
@@ -1026,12 +1055,7 @@ class Py3:
         :returns: Composite
         """
 
-        if bars is None:
-            bars = self._default_bars
-
-        idx = int((value - minimum) / (maximum - minimum) * len(bars))
-        if idx == len(bars):
-            idx -= 1
+        idx = self._value_to_index(value, len(bars), minimum, maximum)
         full_text = bars[idx]
         color = self.threshold_get_color(value)
         return {'full_text': full_text, 'color': color}
@@ -1055,10 +1079,7 @@ class Py3:
 
         value_bars = []
         for val in values:
-            value_bars.append(self._value_to_bar(val,
-                                                 minimum=minimum,
-                                                 maximum=maximum,
-                                                 bars=bars))
+            value_bars.append(self._value_to_bar(val, minimum, maximum, bars))
 
         return self.composite_join(separator, value_bars)
 
@@ -1092,7 +1113,61 @@ class Py3:
 
         return self.composite_join(separator,
                                    [self._value_to_bar(x,
-                                                       minimum=minimum,
-                                                       maximum=maximum,
-                                                       bars=bars)
+                                                       minimum,
+                                                       maximum,
+                                                       bars)
                                     for x in history])
+
+    def progress_bar(self, value, length=8, middle_char='|', left_char='─',
+                     right_char='─', middle_color=None, left_color=None,
+                     right_color=None, minimum=0, maximum=100, separator=''):
+        """
+        Transform a value into a progress bar
+
+        :param value: value to convert to a progress bar
+        :param length: length of the progress bar
+        :param middle_char: character to use for the middle marker
+        :param left_char: character to use for the characters on the left of
+                          the marker
+        :param right_char: character to use for the characters on the right of
+                           the marker
+        :param middle_color: color to use for the middle marker, if set to
+                             None, will use thresholds instead
+        :param left_color: color to use for the characters on the left of the
+                           marker, if set to None, will use thresholds instead
+        :param right_color: color to use for the character on the right of the
+                            marker, if set to None, will use thresholds instead
+        :param minimum: minimum value possible
+        :param maximum: maximum value possible
+        :param separator: character to insert between the bars
+
+        :returns: Composite list
+        """
+
+        progress = []
+
+        idx = self._value_to_index(value, length, minimum, maximum)
+
+        for i in range(idx - 1):
+            i_val = self._index_to_value(i, length, minimum, maximum)
+            if left_color is None:
+                color = self.threshold_get_color(i_val)
+            else:
+                color = left_color
+            progress.append({'full_text': left_char, 'color': color})
+
+        if middle_color is None:
+            color = self.threshold_get_color(value)
+        else:
+            color = middle_color
+        progress.append({'full_text': middle_char, 'color': color})
+
+        for i in range(idx + 1, length):
+            i_val = self._index_to_value(i, length, minimum, maximum)
+            if right_color is None:
+                color = self.threshold_get_color(i_val)
+            else:
+                color = right_color
+            progress.append({'full_text': right_char, 'color': color})
+
+        return self.composite_join(separator, progress)
