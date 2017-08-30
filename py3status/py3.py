@@ -1036,7 +1036,8 @@ class Py3:
         color = self.threshold_get_color(value)
         return {'full_text': full_text, 'color': color}
 
-    def concurrent_bar_graphs(self, values, minimum=0, maximum=100, bars=None):
+    def concurrent_bar_graphs(self, values, minimum=0, maximum=100, bars=None,
+                              separator=''):
         """
         Transforms a list of value into a list of bar Composites.
 
@@ -1044,6 +1045,7 @@ class Py3:
         :param minimum: minimum value possible
         :param maximum: maximum value possible
         :param bars: characters to use for the different levels of the bar
+        :param separator: character to insert between the bars
 
         :returns: Composite list
         """
@@ -1058,10 +1060,10 @@ class Py3:
                                                  maximum=maximum,
                                                  bars=bars))
 
-        return self.composite_create(value_bars)
+        return self.composite_join(separator, value_bars)
 
     def history_bar_graph(self, history, value, length=1, default=0,
-                          minimum=0, maximum=100, bars=None):
+                          minimum=0, maximum=100, bars=None, separator=''):
         """
         Transform a value into a bar graph with history.
 
@@ -1072,6 +1074,7 @@ class Py3:
         :param minimum: minimum value possible
         :param maximum: maximum value possible
         :param bars: characters to use for the different levels of the bar
+        :param separator: character to insert between the bars
 
         :returns: Composite list
         """
@@ -1087,8 +1090,9 @@ class Py3:
         while len(history) > length:
             history = history[1:]
 
-        return self.composite_create([self._value_to_bar(x,
-                                                         minimum=minimum,
-                                                         maximum=maximum,
-                                                         bars=bars)
-                                      for x in history])
+        return self.composite_join(separator,
+                                   [self._value_to_bar(x,
+                                                       minimum=minimum,
+                                                       maximum=maximum,
+                                                       bars=bars)
+                                    for x in history])
