@@ -7,10 +7,9 @@ Configuration parameters:
     config_file: file path to store the time already spent
         and restore it the next session
         (default '~/.i3/py3status/counter-config.save')
-    format: output format string
-        (default 'Time: {days} day {hours}:{minutes:02d} Cost: {total}')
-    format_money: output format string
-        (default '{price}$')
+    format: display format for this module
+        (default '[\?not_zero {days} days ][\?not_zero {hours}:]
+        {minutes:02d}:{seconds:02d} / ${total:.2f}')
     rate: your price per hour (default 30)
     tax: tax value (1.02 = 2%) (default 1.02)
 
@@ -55,13 +54,19 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     config_file = '~/.i3/py3status/counter-config.save'
-    format = 'Time: {days} day {hours}:{minutes:02d} Cost: {total}'
-    format_money = '{price}$'
+    format = '[\?not_zero {days} days ][\?not_zero {hours}:]' +\
+        '{minutes:02d}:{seconds:02d} / ${total:.2f}'
     rate = 30
     tax = 1.02
 
     class Meta:
         deprecated = {
+            'remove': [
+                {
+                    'param': 'format_money',
+                    'msg': 'obsolete parameter',
+                },
+            ],
             'rename': [
                 {
                     'param': 'hour_price',
@@ -168,12 +173,7 @@ class Py3status:
         days, hours, minutes, seconds = self.seconds_to_dhms(running_time)
         subtotal = float(self.rate) * (running_time / SECONDS_IN_HOUR)
         total = subtotal * float(self.tax)
-        subtotal_cost = self.py3.safe_format(self.format_money,
-                                             {'price': '%.2f' % subtotal})
-        total_cost = self.py3.safe_format(self.format_money,
-                                          {'price': '%.2f' % total})
-        tax_cost = self.py3.safe_format(self.format_money,
-                                        {'price': '%.2f' % (total - subtotal)})
+
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
