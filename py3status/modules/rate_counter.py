@@ -102,6 +102,8 @@ class Py3status:
         self.running = False
         self.saved_time = 0
         self.start_time = self.current_time
+        self.color_running = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD
+        self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         try:
             # Use file to refer to the file object
             with open(self.config_file) as file:
@@ -160,20 +162,21 @@ class Py3status:
                 f.write('0')
 
     def counter(self):
-        running_time = 0.0
+        cached_until = self.py3.CACHE_FOREVER
+        color = self.color_stopped
+        running_time = self.saved_time
+
         if self.running:
-            color = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD
+            cached_until = self.py3.time_in(self.cache_timeout)
+            color = self.color_running
             running_time = self.current_time - self.start_time
-        else:
-            color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
-            running_time = self.saved_time
 
         days, hours, minutes, seconds = self.seconds_to_dhms(running_time)
         subtotal = float(self.rate) * (running_time / SECONDS_IN_HOUR)
         total = subtotal * float(self.tax)
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': cached_until,
             'color': color,
             'full_text': self.py3.safe_format(
                 self.format,
