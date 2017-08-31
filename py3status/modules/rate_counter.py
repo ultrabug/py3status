@@ -8,22 +8,22 @@ Configuration parameters:
         and restore it the next session
         (default '~/.i3/py3status/counter-config.save')
     format: output format string
-        (default 'Time: {days} day {hours}:{mins:02d} Cost: {total}')
+        (default 'Time: {days} day {hours}:{minutes:02d} Cost: {total}')
     format_money: output format string
         (default '{price}$')
-    hour_price: your price per hour (default 30)
+    rate: your price per hour (default 30)
     tax: tax value (1.02 = 2%) (default 1.02)
 
 Format placeholders:
     {days} The number of whole days in running timer
     {hours} The remaining number of whole hours in running timer
-    {mins} The remaining number of whole minutes in running timer
-    {secs} The remaining number of seconds in running timer
+    {minutes} The remaining number of whole minutes in running timer
+    {seconds} The remaining number of seconds in running timer
     {subtotal} The subtotal cost (time * rate)
     {tax} The tax cost, based on the subtotal cost
     {total} The total cost (subtotal + tax)
     {total_hours} The total number of whole hours in running timer
-    {total_mins} The total number of whole minutes in running timer
+    {total_minutes} The total number of whole minutes in running timer
 
 Money placeholders:
     {price} numeric value of money
@@ -44,9 +44,9 @@ import time
 
 
 # No "magic numbers"
-SECS_IN_MIN = 60.0
-SECS_IN_HOUR = 60 * SECS_IN_MIN  # 3600
-SECS_IN_DAY = 24 * SECS_IN_HOUR  # 86400
+SECONDS_IN_MIN = 60.0
+SECONDS_IN_HOUR = 60 * SECONDS_IN_MIN  # 3600
+SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR  # 86400
 
 
 class Py3status:
@@ -55,10 +55,38 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     config_file = '~/.i3/py3status/counter-config.save'
-    format = 'Time: {days} day {hours}:{mins:02d} Cost: {total}'
+    format = 'Time: {days} day {hours}:{minutes:02d} Cost: {total}'
     format_money = '{price}$'
-    hour_price = 30
+    rate = 30
     tax = 1.02
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'hour_price',
+                    'new': 'rate',
+                    'msg': 'obsolete parameter. use `rate`'
+                },
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'mins',
+                    'new': 'minutes',
+                    'format_strings': ['format'],
+                },
+                {
+                    'placeholder': 'secs',
+                    'new': 'seconds',
+                    'format_strings': ['format'],
+                },
+                {
+                    'placeholder': 'total_mins',
+                    'new': 'total_minutes',
+                    'format_strings': ['format'],
+                },
+            ],
+        }
 
     def post_config_hook(self):
         self.config_file = os.path.expanduser(self.config_file)
@@ -81,19 +109,19 @@ class Py3status:
         return time.time()
 
     @staticmethod
-    def secs_to_dhms(time_in_secs):
+    def seconds_to_dhms(time_in_seconds):
         """Convert seconds to days, hours, minutes, seconds.
 
         Using days as the largest unit of time.  Blindly using the days in
         `time.gmtime()` will fail if it's more than one month (days > 31).
         """
-        days = int(time_in_secs / SECS_IN_DAY)
-        remaining_secs = time_in_secs % SECS_IN_DAY
-        hours = int(remaining_secs / SECS_IN_HOUR)
-        remaining_secs = remaining_secs % SECS_IN_HOUR
-        mins = int(remaining_secs / SECS_IN_MIN)
-        secs = int(remaining_secs % SECS_IN_MIN)
-        return days, hours, mins, secs
+        days = int(time_in_seconds / SECONDS_IN_DAY)
+        remaining_seconds = time_in_seconds % SECONDS_IN_DAY
+        hours = int(remaining_seconds / SECONDS_IN_HOUR)
+        remaining_seconds = remaining_seconds % SECONDS_IN_HOUR
+        minutes = int(remaining_seconds / SECONDS_IN_MIN)
+        seconds = int(remaining_seconds % SECONDS_IN_MIN)
+        return days, hours, minutes, seconds
 
     def _start_timer(self):
         if not self.running:
@@ -137,8 +165,8 @@ class Py3status:
             color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
             running_time = self.saved_time
 
-        days, hours, mins, secs = self.secs_to_dhms(running_time)
-        subtotal = float(self.hour_price) * (running_time / SECS_IN_HOUR)
+        days, hours, minutes, seconds = self.seconds_to_dhms(running_time)
+        subtotal = float(self.rate) * (running_time / SECONDS_IN_HOUR)
         total = subtotal * float(self.tax)
         subtotal_cost = self.py3.safe_format(self.format_money,
                                              {'price': '%.2f' % subtotal})
@@ -153,10 +181,10 @@ class Py3status:
                 self.format,
                 dict(days=days,
                      hours=hours,
-                     mins=mins,
-                     secs=secs,
-                     total_hours=running_time // SECS_IN_HOUR,
-                     total_mins=running_time // SECS_IN_MIN,
+                     minutes=minutes,
+                     seconds=seconds,
+                     total_hours=running_time // SECONDS_IN_HOUR,
+                     total_minutes=running_time // SECONDS_IN_MIN,
                      subtotal=subtotal_cost,
                      total=total_cost,
                      tax=tax_cost,)
