@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Display time spent and calculate the price of your service.
+Display calculated time spent and costs.
 
 Configuration parameters:
     button_reset: mouse button to reset the timer (default 3)
     button_toggle: mouse button to toggle the timer (default 1)
-    cache_timeout: how often to update in seconds (default 5)
-    config_file: file path to store the time already spent
-        and restore it the next session
+    cache_timeout: refresh interval for this module (default 5)
+    config_file: specify a file to save time between sessions
         (default '~/.i3/py3status/counter-config.save')
     format: display format for this module
         (default '[\?not_zero {days} days ][\?not_zero {hours}:]
         {minutes:02d}:{seconds:02d} / ${total:.2f}')
-    rate: your price per hour (default 30)
-    tax: tax value (1.02 = 2%) (default 1.02)
+    rate: specify the hourly pay rate to use (default 30)
+    tax: specify the tax value to use, 1.02 is 2% (default 1.02)
 
 Format placeholders:
     {days} The number of whole days in running timer
@@ -26,26 +25,23 @@ Format placeholders:
     {total_hours} The total number of whole hours in running timer
     {total_minutes} The total number of whole minutes in running timer
 
-Money placeholders:
-    {price} numeric value of money
-
 Color options:
-    color_running: Running, default color_good
-    color_stopped: Stopped, default color_bad
+    color_running: Running, defaults to color_good
+    color_stopped: Stopped, defaults to color_bad
 
-@author Amaury Brisou <py3status AT puzzledge.org>
+@author Amaury Brisou <py3status AT puzzledge.org>, lasers
 
 SAMPLE OUTPUT
-{'color': '#FF0000', 'full_text': u'Time: 0 day 0:00 Cost: 0.13$'}
-"""
+{'color': '#00FF00', 'full_text': u'0:00 / $0.00'}
 
+running
+{'color': '#FF0000', 'full_text': u'4:48 / $2.45'}
+"""
 
 import os
 import time
 
-
-# No "magic numbers"
-SECONDS_IN_MIN = 60.0
+SECONDS_IN_MIN = 60.0  # 60
 SECONDS_IN_HOUR = 60 * SECONDS_IN_MIN  # 3600
 SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR  # 86400
 
@@ -101,30 +97,23 @@ class Py3status:
         self.config_file = os.path.expanduser(self.config_file)
         self.running = False
         self.saved_time = 0
-        self.start_time = self.current_time
+        self.start_time = self._current_time
         self.color_running = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         try:
-            # Use file to refer to the file object
-            with open(self.config_file) as file:
-                self.saved_time = float(file.read())
+            with open(self.config_file) as f:
+                self.saved_time = float(f.read())
         except: # noqa e722 // (IOError, FileNotFoundError):  # py2/py3
             pass
 
     @property
-    def current_time(self):
-        """Get the current time.
-
-        Using a helper property to make it easy to keep consitency.
-        """
+    def _current_time(self):
         return time.time()
 
-    @staticmethod
-    def seconds_to_dhms(time_in_seconds):
-        """Convert seconds to days, hours, minutes, seconds.
-
-        Using days as the largest unit of time.  Blindly using the days in
-        `time.gmtime()` will fail if it's more than one month (days > 31).
+    def _seconds_to_time(self, time_in_seconds):
+        """
+        Blindly using the days in `time.gmtime()` will fail if it is more than
+        one month (days > 31). We're using days as the largest unit of time.
         """
         days = int(time_in_seconds / SECONDS_IN_DAY)
         remaining_seconds = time_in_seconds % SECONDS_IN_DAY
@@ -134,14 +123,20 @@ class Py3status:
         seconds = int(remaining_seconds % SECONDS_IN_MIN)
         return days, hours, minutes, seconds
 
+    def _reset_timer(self):
+        if not self.running:
+            self.saved_time = 0.0
+            with open(self.config_file, 'w') as f:
+                f.write('0')
+
     def _start_timer(self):
         if not self.running:
-            self.start_time = self.current_time - self.saved_time
+            self.start_time = self._current_time - self.saved_time
             self.running = True
 
     def _stop_timer(self):
         if self.running:
-            self.saved_time = self.current_time - self.start_time
+            self.saved_time = self._current_time - self.start_time
             self.running = False
 
     def _toggle_timer(self):
@@ -155,13 +150,7 @@ class Py3status:
         with open(self.config_file, 'w') as f:
             f.write(str(self.saved_time))
 
-    def _reset(self):
-        if not self.running:
-            self.saved_time = 0.0
-            with open(self.config_file, 'w') as f:
-                f.write('0')
-
-    def counter(self):
+    def rate_counter(self):
         cached_until = self.py3.CACHE_FOREVER
         color = self.color_stopped
         running_time = self.saved_time
@@ -169,35 +158,36 @@ class Py3status:
         if self.running:
             cached_until = self.py3.time_in(self.cache_timeout)
             color = self.color_running
-            running_time = self.current_time - self.start_time
+            running_time = self._current_time - self.start_time
 
-        days, hours, minutes, seconds = self.seconds_to_dhms(running_time)
+        days, hours, minutes, seconds = self._seconds_to_time(running_time)
         subtotal = float(self.rate) * (running_time / SECONDS_IN_HOUR)
         total = subtotal * float(self.tax)
 
-        response = {
+        return {
             'cached_until': cached_until,
             'color': color,
             'full_text': self.py3.safe_format(
-                self.format,
-                dict(days=days,
-                     hours=hours,
-                     minutes=minutes,
-                     seconds=seconds,
-                     total_hours=running_time // SECONDS_IN_HOUR,
-                     total_minutes=running_time // SECONDS_IN_MIN,
-                     subtotal=subtotal_cost,
-                     total=total_cost,
-                     tax=tax_cost,)
+                self.format, {
+                    'days': days,
+                    'hours': hours,
+                    'minutes': minutes,
+                    'seconds': seconds,
+                    'subtotal': subtotal,
+                    'tax': total - subtotal,
+                    'total': total,
+                    'total_hours': running_time // SECONDS_IN_HOUR,
+                    'total_minutes': running_time // SECONDS_IN_MIN,
+                }
             )
         }
-        return response
 
     def on_click(self, event):
-        if event['button'] == self.button_toggle:
+        button = event['button']
+        if button == self.button_toggle:
             self._toggle_timer()
-        elif event['button'] == self.button_reset:
-            self._reset()
+        elif button == self.button_reset:
+            self._reset_timer()
 
 
 if __name__ == "__main__":
