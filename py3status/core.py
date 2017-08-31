@@ -215,10 +215,10 @@ class Py3statusWrapper:
         # these are used to schedule module updates
         self.timeout_update_due = deque()
         self.timeout_queue = {}
+        self.timeout_queue_lookup = {}
         self.timeout_keys = []
-        self.timeout_queue_members = set()
 
-    def timeout_queue_add_module(self, module_name, cache_time=0):
+    def timeout_queue_add_module(self, module, cache_time=0):
         """
         Add a module to the timeout_queue if it is scheduled in the future or
         if it is due for an update imediately just trigger that.
@@ -229,37 +229,40 @@ class Py3statusWrapper:
         updates are due.  A list is also kept of which modules are in the
         update_queue to save having to search for modules in it unless needed.
         """
-        if module_name in self.timeout_queue_members:
-            # we want to remove the module from the timeout_queue
-            # a module should only ever at most once in the queue
-            found = False
-            for key, value in self.timeout_queue.items():
-                if module_name in value:
-                    found = True
-                    break
-            if found:
-                value.remove(module_name)
-                if not value:
+        # If already set to update do nothing
+        if module in self.timeout_update_due:
+            return
+
+        # remove if already in the queue
+        key = self.timeout_queue_lookup.get(module)
+        if key:
+            try:
+                queue_item = self.timeout_queue[key]
+                try:
+                    queue_item.remove(module)
+                except KeyError:
+                    pass
+                if not queue_item:
                     del self.timeout_queue[key]
                     self.timeout_keys.remove(key)
-                self.timeout_queue_members.remove(module_name)
+            except KeyError:
+                pass
+
         if cache_time == 0:
             # if cache_time is 0 we can just trigger the module update
-            self.timeout_update_due.append(
-                (self.modules[module_name], cache_time)
-            )
+            self.timeout_update_due.append(module)
             self.update_request.set()
         else:
             # add the module to the timeout queue
             if cache_time not in self.timeout_keys:
-                self.timeout_queue[cache_time] = set([module_name])
+                self.timeout_queue[cache_time] = set([module])
                 self.timeout_keys.append(cache_time)
                 # sort keys so earliest is first
                 self.timeout_keys.sort()
             else:
-                self.timeout_queue[cache_time].add(module_name)
+                self.timeout_queue[cache_time].add(module)
             # note that the module is in the timeout_queue
-            self.timeout_queue_members.add(module_name)
+            self.timeout_queue_lookup[module] = cache_time
 
     def timeout_queue_process(self):
         """
@@ -282,15 +285,20 @@ class Py3statusWrapper:
 
             for module in modules:
                 # module no longer in queue
-                self.timeout_queue_members.remove(module)
+                del self.timeout_queue_lookup[module]
                 # tell module to update
-                self.timeout_update_due.append((self.modules[module], timeout))
+                self.timeout_update_due.append(module)
 
         # run any modules that are due
         while self.timeout_update_due:
-            module, timeout = self.timeout_update_due.popleft()
-            r = Runner(module, self)
-            r.start()
+            module = self.timeout_update_due.popleft()
+
+            if isinstance(module, Module):
+                r = Runner(module, self)
+                r.start()
+            else:
+                # i3status module
+                module.update()
 
         # we return how long till we next need to process the timeout_queue
         try:

@@ -216,7 +216,7 @@ class Module:
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
             self._py3_wrapper.log('starting module %s' % self.module_full_name)
-            self._py3_wrapper.timeout_queue_add_module(self.module_full_name)
+            self._py3_wrapper.timeout_queue_add_module(self)
 
     def force_update(self):
         """
@@ -230,9 +230,7 @@ class Module:
             if self.config['debug']:
                 self._py3_wrapper.log('clearing cache for method {}'.format(meth))
         # set module to update
-        self._py3_wrapper.timeout_queue_add_module(
-            self.module_full_name, 0
-        )
+        self._py3_wrapper.timeout_queue_add_module(self)
 
     def sleep(self):
         self.sleeping = True
@@ -256,9 +254,7 @@ class Module:
         if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        self._py3_wrapper.timeout_queue_add_module(
-            self.module_full_name, self.cache_time
-        )
+        self._py3_wrapper.timeout_queue_add_module(self, self.cache_time)
 
     def set_updated(self):
         """
@@ -844,9 +840,7 @@ class Module:
             if not cache_time:
                 cache_time = time() + self.config['minimum_interval']
 
-            self._py3_wrapper.timeout_queue_add_module(
-                self.module_full_name, cache_time
-            )
+            self._py3_wrapper.timeout_queue_add_module(self, cache_time)
 
     def kill(self):
         # check and execute the 'kill' method if present
