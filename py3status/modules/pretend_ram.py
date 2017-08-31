@@ -12,9 +12,9 @@ class Py3status:
     cache_timeout = 1
     middle_char = '|'
     middle_color = None
-    left_char = '|'
+    left_char = '─'
     left_color = None
-    right_char = '|'
+    right_char = '─'
     right_color = None
     length = 10
 
@@ -36,10 +36,12 @@ class Py3status:
                 self.increasing = True
 
         composites = self.py3.progress_bar(self.value, length=self.length,
-                middle_char=self.middle_char, middle_color=self.middle_color,
-                left_char=self.left_char, left_color=self.left_color,
-                right_char=self.right_char, right_color=self.right_color
-                )
+                                           middle_char=self.middle_char,
+                                           middle_color=self.middle_color,
+                                           left_char=self.left_char,
+                                           left_color=self.left_color,
+                                           right_char=self.right_char,
+                                           right_color=self.right_color)
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

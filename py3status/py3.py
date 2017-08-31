@@ -1103,20 +1103,15 @@ class Py3:
         if bars is None:
             bars = self._default_bars
 
-        while len(history) < length:
-            history.append(default)
+        history += [default] * (length - len(history)) + history
 
         history.append(value)
 
-        while len(history) > length:
-            history = history[1:]
+        del history[:len(history) - length]
 
-        return self.composite_join(separator,
-                                   [self._value_to_bar(x,
-                                                       minimum,
-                                                       maximum,
-                                                       bars)
-                                    for x in history])
+        return self.composite_join(separator, [self._value_to_bar(
+                                   x, minimum, maximum, bars
+                                   ) for x in history])
 
     def progress_bar(self, value, length=8, middle_char='|', left_char='─',
                      right_char='─', middle_color=None, left_color=None,
@@ -1148,13 +1143,13 @@ class Py3:
 
         idx = self._value_to_index(value, length, minimum, maximum)
 
-        for i in range(idx - 1):
-            i_val = self._index_to_value(i, length, minimum, maximum)
-            if left_color is None:
+        if left_color is None:
+            for i in range(idx):
+                i_val = self._index_to_value(i, length, minimum, maximum)
                 color = self.threshold_get_color(i_val)
-            else:
-                color = left_color
-            progress.append({'full_text': left_char, 'color': color})
+                progress.append({'full_text': left_char, 'color': color})
+        else:
+            progress += [{'full_text': left_char, 'color': left_color}] * idx
 
         if middle_color is None:
             color = self.threshold_get_color(value)
@@ -1162,12 +1157,13 @@ class Py3:
             color = middle_color
         progress.append({'full_text': middle_char, 'color': color})
 
-        for i in range(idx + 1, length):
-            i_val = self._index_to_value(i, length, minimum, maximum)
-            if right_color is None:
+        if right_color is None:
+            for i in range(idx + 1, length):
+                i_val = self._index_to_value(i, length, minimum, maximum)
                 color = self.threshold_get_color(i_val)
-            else:
-                color = right_color
-            progress.append({'full_text': right_char, 'color': color})
+                progress.append({'full_text': right_char, 'color': color})
+        else:
+            progress += [{'full_text': right_char, 'color': right_color}] \
+                * (length - idx - 1)
 
         return self.composite_join(separator, progress)
