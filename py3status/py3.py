@@ -1039,7 +1039,7 @@ class Py3:
         segment = (maximum - minimum) / length
         return segment * (index + 0.5)
 
-    def _value_to_bar(self, value, minimum, maximum, bars):
+    def _value_to_bar(self, value, minimum, maximum, bars, name):
         """
         Create a bar of the appropriate height for each value and adjusts the
         colors depending on the thresholds.
@@ -1057,11 +1057,11 @@ class Py3:
 
         idx = self._value_to_index(value, len(bars), minimum, maximum)
         full_text = bars[idx]
-        color = self.threshold_get_color(value)
+        color = self.threshold_get_color(value, name=name)
         return {'full_text': full_text, 'color': color}
 
     def concurrent_bar_graphs(self, values, minimum=0, maximum=100, bars=None,
-                              separator=''):
+                              separator='', threshold=None):
         """
         Transforms a list of value into a list of bar Composites.
 
@@ -1070,6 +1070,7 @@ class Py3:
         :param maximum: maximum value possible
         :param bars: characters to use for the different levels of the bar
         :param separator: character to insert between the bars
+        :param threshold: threshold to use when choosing a color
 
         :returns: Composite list
         """
@@ -1079,12 +1080,14 @@ class Py3:
 
         value_bars = []
         for val in values:
-            value_bars.append(self._value_to_bar(val, minimum, maximum, bars))
+            value_bars.append(self._value_to_bar(val, minimum, maximum, bars,
+                                                 threshold))
 
         return self.composite_join(separator, value_bars)
 
     def history_bar_graph(self, history, value, length=1, default=0,
-                          minimum=0, maximum=100, bars=None, separator=''):
+                          minimum=0, maximum=100, bars=None, separator='',
+                          threshold=None):
         """
         Transform a value into a bar graph with history.
 
@@ -1096,6 +1099,7 @@ class Py3:
         :param maximum: maximum value possible
         :param bars: characters to use for the different levels of the bar
         :param separator: character to insert between the bars
+        :param threshold: threshold to use when choosing a color
 
         :returns: Composite list
         """
@@ -1110,12 +1114,14 @@ class Py3:
         del history[:len(history) - length]
 
         return self.composite_join(separator, [self._value_to_bar(
-                                   x, minimum, maximum, bars
+                                   x, minimum, maximum, bars, threshold
                                    ) for x in history])
 
     def progress_bar(self, value, length=8, middle_char='|', left_char='─',
                      right_char='─', middle_color=None, left_color=None,
-                     right_color=None, minimum=0, maximum=100, separator=''):
+                     right_color=None, middle_threshold=None,
+                     left_threshold=None, right_threshold=None, minimum=0,
+                     maximum=100, separator=''):
         """
         Transform a value into a progress bar
 
@@ -1132,6 +1138,12 @@ class Py3:
                            marker, if set to None, will use thresholds instead
         :param right_color: color to use for the character on the right of the
                             marker, if set to None, will use thresholds instead
+        :param middle_threshold: threshold name to use when choosing a color
+                                 for the middle character
+        :param left_threshold: threshold name to use when choosing a color for
+                               the left character
+        :param right_threshold: threshold name to use when choosing a color for
+                                the right character
         :param minimum: minimum value possible
         :param maximum: maximum value possible
         :param separator: character to insert between the bars
