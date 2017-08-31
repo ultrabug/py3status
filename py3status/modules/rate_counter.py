@@ -3,6 +3,8 @@
 Display time spent and calculate the price of your service.
 
 Configuration parameters:
+    button_reset: mouse button to reset the timer (default 3)
+    button_toggle: mouse button to toggle the timer (default 1)
     cache_timeout: how often to update in seconds (default 5)
     config_file: file path to store the time already spent
         and restore it the next session
@@ -52,6 +54,8 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_reset = 3
+    button_toggle = 1
     cache_timeout = 5
     config_file = '~/.i3/py3status/counter-config.save'
     format = '[\?not_zero {days} days ][\?not_zero {hours}:]' +\
@@ -149,12 +153,6 @@ class Py3status:
         with open(self.config_file, 'w') as f:
             f.write(str(self.saved_time))
 
-    def on_click(self, event):
-        if event['button'] == 1:
-            self._toggle_timer()
-        elif event['button'] == 3:
-            self._reset()
-
     def _reset(self):
         if not self.running:
             self.saved_time = 0.0
@@ -191,6 +189,12 @@ class Py3status:
             )
         }
         return response
+
+    def on_click(self, event):
+        if event['button'] == self.button_toggle:
+            self._toggle_timer()
+        elif event['button'] == self.button_reset:
+            self._reset()
 
 
 if __name__ == "__main__":
