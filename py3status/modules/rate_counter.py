@@ -18,6 +18,7 @@ Format placeholders:
     {days} The number of whole days in running timer
     {hours} The remaining number of whole hours in running timer
     {minutes} The remaining number of whole minutes in running timer
+    {rate} The user inputted hourly rate
     {seconds} The remaining number of seconds in running timer
     {subtotal} The subtotal cost (time * rate)
     {tax} The tax cost, based on the subtotal cost
@@ -172,6 +173,7 @@ class Py3status:
                     'days': days,
                     'hours': hours,
                     'minutes': minutes,
+                    'rate': self.rate,
                     'seconds': seconds,
                     'subtotal': subtotal,
                     'tax': total - subtotal,
