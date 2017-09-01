@@ -133,8 +133,9 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
+    def post_config_hook(self):
         """
+        Initialization
         """
         self.active_comb = None
         self.active_layout = None
