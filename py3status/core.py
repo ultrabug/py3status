@@ -12,7 +12,7 @@ from platform import python_version
 from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
-from threading import Event, Thread
+from threading import Event, Thread, Lock
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
@@ -217,6 +217,7 @@ class Py3statusWrapper:
         self.timeout_queue = {}
         self.timeout_queue_lookup = {}
         self.timeout_keys = []
+        self.timeout_lock = Lock()
 
     def timeout_queue_add_module(self, module, cache_time=0):
         """
@@ -236,6 +237,8 @@ class Py3statusWrapper:
         # remove if already in the queue
         key = self.timeout_queue_lookup.get(module)
         if key:
+            # be thread safe here
+            self.timeout_lock.acquire()
             try:
                 queue_item = self.timeout_queue[key]
                 try:
@@ -247,6 +250,7 @@ class Py3statusWrapper:
                     self.timeout_keys.remove(key)
             except KeyError:
                 pass
+            self.timeout_lock.release()
 
         if cache_time == 0:
             # if cache_time is 0 we can just trigger the module update
@@ -277,17 +281,21 @@ class Py3statusWrapper:
             due_timeouts.append(timeout)
 
         # process them
-        for timeout in due_timeouts:
-            modules = self.timeout_queue[timeout]
-            # remove from the queue
-            del self.timeout_queue[timeout]
-            self.timeout_keys.remove(timeout)
+        if due_timeouts:
+            # be thread safe here
+            self.timeout_lock.acquire()
+            for timeout in due_timeouts:
+                modules = self.timeout_queue[timeout]
+                # remove from the queue
+                del self.timeout_queue[timeout]
+                self.timeout_keys.remove(timeout)
 
-            for module in modules:
-                # module no longer in queue
-                del self.timeout_queue_lookup[module]
-                # tell module to update
-                self.timeout_update_due.append(module)
+                for module in modules:
+                    # module no longer in queue
+                    del self.timeout_queue_lookup[module]
+                    # tell module to update
+                    self.timeout_update_due.append(module)
+            self.timeout_lock.release()
 
         # run any modules that are due
         while self.timeout_update_due:
