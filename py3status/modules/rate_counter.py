@@ -127,8 +127,11 @@ class Py3status:
     def _reset_timer(self):
         if not self.running:
             self.saved_time = 0.0
-            with open(self.config_file, 'w') as f:
-                f.write('0')
+            try:
+                with open(self.config_file, 'w') as f:
+                    f.write('0')
+            except:
+                pass
 
     def _start_timer(self):
         if not self.running:
@@ -148,8 +151,11 @@ class Py3status:
 
     def kill(self):
         self._stop_timer()
-        with open(self.config_file, 'w') as f:
-            f.write(str(self.saved_time))
+        try:
+            with open(self.config_file, 'w') as f:
+                f.write(str(self.saved_time))
+        except:
+            pass
 
     def rate_counter(self):
         cached_until = self.py3.CACHE_FOREVER
