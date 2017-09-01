@@ -341,12 +341,6 @@ class Py3status:
                     self.py3.log('moved workspace {} to output {}'.format(
                         workspace, output))
 
-    def _refresh_py3status(self):
-        """
-        Send a SIGUSR1 signal to py3status to force a bar refresh.
-        """
-        self.py3.command_run('killall -s USR1 py3status')
-
     def _fallback_to_available_output(self):
         """
         Fallback to the first available output when the active layout
@@ -359,7 +353,7 @@ class Py3status:
         if len(self.active_comb) == 1:
             self._choose_what_to_display(force_refresh=True)
             self._apply()
-            self._refresh_py3status()
+            self.py3.update()
 
     def _force_force_on_start(self):
         """
@@ -370,7 +364,7 @@ class Py3status:
             self.force_on_start = None
             self._choose_what_to_display(force_refresh=True)
             self._apply(force=True)
-            self._refresh_py3status()
+            self.py3.update()
 
     def _separator(self, mode):
         """
