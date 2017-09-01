@@ -844,6 +844,7 @@ class Py3statusWrapper:
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = self.modules[name]
                 output_modules[name]['type'] = 'py3status'
+                output_modules[name]['color'] = self.mappings_color.get(name)
         # i3status modules
         for name in i3modules:
             if name not in output_modules:
@@ -851,6 +852,7 @@ class Py3statusWrapper:
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = i3modules[name]
                 output_modules[name]['type'] = 'i3status'
+                output_modules[name]['color'] = self.mappings_color.get(name)
 
         self.output_modules = output_modules
 
@@ -870,20 +872,17 @@ class Py3statusWrapper:
         # Store mappings for later use.
         self.mappings_color = mappings
 
-    def process_module_output(self, outputs):
+    def process_module_output(self, module):
         """
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
         """
-        for output in outputs:
-            # Color: substitute the config defined color
-            if 'color' not in output:
-                # Get the module name from the output.
-                module_name = '{} {}'.format(
-                    output['name'], output.get('instance', '').split(' ')[0]
-                ).strip()
-                color = self.mappings_color.get(module_name)
-                if color:
+        outputs = module['module'].get_latest()
+        color = module['color']
+        if color:
+            for output in outputs:
+                # Color: substitute the config defined color
+                if 'color' not in output:
                     output['color'] = color
         # Create the json string output.
         return ','.join([dumps(x) for x in outputs])
@@ -1005,10 +1004,11 @@ class Py3statusWrapper:
                 while (len(self.update_queue)):
                     module_name = self.update_queue.popleft()
                     module = self.output_modules[module_name]
+                    out = self.process_module_output(module)
+
                     for index in module['position']:
                         # store the output as json
-                        out = module['module'].get_latest()
-                        output[index] = self.process_module_output(out)
+                        output[index] = out
 
                 # build output string
                 out = ','.join([x for x in output if x])
