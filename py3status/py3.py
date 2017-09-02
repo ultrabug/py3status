@@ -443,7 +443,8 @@ class Py3:
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
         # nicely format logs if we can using pretty print
-        message = pformat(message)
+        if isinstance(message, (dict, list, set, tuple)):
+            message = pformat(message)
         # start on new line if multi-line output
         if '\n' in message:
             message = '\n' + message
