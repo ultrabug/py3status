@@ -45,7 +45,6 @@ class Py3status:
 
     def get_status(self):
         response = {
-            'color': self.color,
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
                 self.format,
