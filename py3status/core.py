@@ -19,7 +19,7 @@ from traceback import extract_tb, format_tb, format_stack
 import py3status.docstrings as docstrings
 from py3status.command import CommandServer
 from py3status.events import Events
-from py3status.helpers import print_line, print_stderr
+from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
@@ -952,14 +952,17 @@ class Py3statusWrapper:
         interval = self.config['interval']
         last_sec = 0
 
+        write = sys.__stdout__.write
+        flush = sys.__stdout__.flush
+
         # start our output
         header = {
             'version': 1,
             'click_events': True,
             'stop_signal': SIGTSTP
         }
-        print_line(dumps(header))
-        print_line('[[]')
+        write(dumps(header))
+        write('\n[[]\n')
 
         update_due = None
         # main loop
@@ -1013,7 +1016,8 @@ class Py3statusWrapper:
                 # build output string
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
-                print_line(',[{}]'.format(out))
+                write(',[{}]\n'.format(out))
+                flush()
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.
