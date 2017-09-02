@@ -1107,10 +1107,8 @@ class Py3:
         if bars is None:
             bars = self._default_bars
 
-        history += [default] * (length - len(history)) + history
-
         history.append(value)
-
+        history[:0] = [default] * (length - len(history))
         del history[:len(history) - length]
 
         return self.composite_join(separator, [self._value_to_bar(
