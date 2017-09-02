@@ -32,8 +32,9 @@ idle
 off
 {'color': '#FF0000', 'full_text': 'Yandex.Disk: Not started'}
 """
-string_error = "Yandex.Disk: isn't configured"
-string_unavailable = "Yandex.Disk: isn't installed"
+
+STRING_ERROR = "Yandex.Disk: isn't configured"
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -46,17 +47,17 @@ class Py3status:
     status_off = 'Not started'
     status_on = 'Idle'
 
+    def post_config_hook(self):
+        if not self.py3.check_commands('yandex-disk'):
+            raise Exception(STRING_NOT_INSTALLED)
+
     def yandexdisk(self):
-        if not self.py3.check_commands(["yandex-disk"]):
-            return {'cached_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_BAD,
-                    'full_text': string_unavailable}
         try:
             status = self.py3.command_output('yandex-disk status').splitlines()[0]
         except:
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                    'full_text': string_error}
+                    'full_text': STRING_ERROR}
 
         if status == "Error: daemon not started":
             color = self.py3.COLOR_BAD
