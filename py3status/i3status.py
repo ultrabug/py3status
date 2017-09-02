@@ -401,6 +401,11 @@ class I3status(Thread):
                 break
             # limit restart rate
             self.lock.wait(5)
+        if not self.py3_wrapper.lock.is_set():
+            err = self.error
+            if not err:
+                err = 'I3status died horribly.'
+            self.py3_wrapper.notify_user(err)
 
     def spawn_i3status(self):
         """
