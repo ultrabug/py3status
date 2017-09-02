@@ -27,6 +27,7 @@ Configuration parameters:
 import requests
 
 STATUS_NAMES = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
+STRING_NOT_CONFIGURED = 'not configured'
 
 
 class Py3status:
@@ -42,6 +43,10 @@ class Py3status:
     status = 0
     url_parameters = "?service_state={service_state}&format=json"
     user = ''
+
+    def post_config_hook(self):
+        if not self.base_url:
+            raise Exception(STRING_NOT_CONFIGURED)
 
     def get_status(self):
         response = {
