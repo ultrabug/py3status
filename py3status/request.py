@@ -102,7 +102,7 @@ class HttpResponse:
         try:
             return json.loads(self.text)
         except:
-            raise RequestInvalidJSON('Invalid JSON recieved')
+            raise RequestInvalidJSON('Invalid JSON received')
 
     @property
     def headers(self):
