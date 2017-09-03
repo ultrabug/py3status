@@ -820,7 +820,7 @@ Called just before a module is destroyed.
 
 __on_click(event)__
 
-Called when an event is recieved by a module.
+Called when an event is received by a module.
 
 __post_config_hook()__
 
