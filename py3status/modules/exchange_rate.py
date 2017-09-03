@@ -52,7 +52,10 @@ class Py3status:
             result = None
         rates = []
         if result:
-            data = result.json()
+            try:
+                data = result.json()
+            except self.py3.RequestInvalidJSON:
+                data = {}
             try:
                 rates = data['query']['results']['rate']
             except (KeyError, TypeError):
