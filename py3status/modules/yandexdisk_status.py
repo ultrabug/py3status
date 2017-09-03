@@ -33,7 +33,7 @@ off
 {'color': '#FF0000', 'full_text': 'Yandex.Disk: Not started'}
 """
 
-STRING_ERROR = "Yandex.Disk: isn't configured"
+STRING_ERROR = 'not configured'
 STRING_NOT_INSTALLED = 'not installed'
 
 
@@ -55,9 +55,7 @@ class Py3status:
         try:
             status = self.py3.command_output('yandex-disk status').splitlines()[0]
         except:
-            return {'cache_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                    'full_text': STRING_ERROR}
+            self.py3.error(STRING_ERROR)
 
         if status == "Error: daemon not started":
             color = self.py3.COLOR_BAD
@@ -70,9 +68,11 @@ class Py3status:
             if self.status_busy is not None:
                 status = self.status_busy
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': color,
-                'full_text': self.py3.safe_format(self.format, {'status': status})}
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': self.py3.safe_format(self.format, {'status': status})
+        }
 
 
 if __name__ == "__main__":
