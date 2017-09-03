@@ -60,7 +60,7 @@ class Py3status:
     supported_players = 'audacious,vlc'
     volume_tick = 1
 
-    def __init__(self):
+    def post_config_hook(self):
         self.status = 'stop'
         self.icon = self.play_icon
 
