@@ -26,7 +26,8 @@ SAMPLE OUTPUT
 off
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
-STRING_ERROR = 'process_status: N/A'
+
+STRING_ERROR = 'not configured'
 
 
 class Py3status:
@@ -57,6 +58,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if not self.process:
+            raise Exception(STRING_ERROR)
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
 
@@ -71,13 +74,6 @@ class Py3status:
             return False
 
     def process_status(self):
-        if self.process is None:
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
-            }
-
         if self._is_running():
             icon = self.icon_on
             color = self.color_on
