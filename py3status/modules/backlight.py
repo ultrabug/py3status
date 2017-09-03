@@ -80,7 +80,14 @@ class Py3status:
         if self.device is None:
             raise Exception(STRING_NOT_AVAILABLE)
 
-        self.xbacklight = self.py3.check_commands(['xbacklight'])
+        # check for an error code and an output
+        self.xbacklight = False
+        try:
+            if self.py3.command_output(['xbacklight', '-get']):
+                self.xbacklight = True
+        except:
+            pass
+
         if self.xbacklight and self.brightness_initial:
             self._set_backlight_level(self.brightness_initial)
 
