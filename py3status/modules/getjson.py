@@ -51,6 +51,8 @@ SAMPLE OUTPUT
 {'full_text': 'Github: Everything operating normally'}
 """
 
+STRING_ERROR = 'missing url'
+
 
 class Py3status:
     """
@@ -61,6 +63,10 @@ class Py3status:
     format = None
     timeout = 5
     url = None
+
+    def post_config_hook(self):
+        if not self.url:
+            raise Exception(STRING_ERROR)
 
     def getjson(self):
         """
