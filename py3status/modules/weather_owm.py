@@ -124,9 +124,9 @@ Configuration parameters:
         no specific icon present. However, options included here take precedent
         over the above 'icon_{...}' options.
         There are multiple ways to specify individual icons based on the id:
-            - Use the key '601' to reference the condition with id = 601
+            * Use the key '601' to reference the condition with id = 601
               (snow)
-            - Use the key '230_232' to reference a span of conditions
+            * Use the key '230_232' to reference a span of conditions
               inclusive, in this case conditions (230, 231, 232) (thunderstorm
               with drizzle)
         (default None)
