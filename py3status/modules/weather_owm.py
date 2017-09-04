@@ -86,7 +86,7 @@ Configuration parameters:
     format_temperature: Formatting for temperature
         Available placeholders:
             current, icon, max, min
-        (default '{icon} {current:.0f}°{unit}')
+        (default '{icon} [\?color=all {current:.0f}°{unit}]')
     format_wind: Formatting for wind degree and speed
         The 'gust' option represents the speed of wind gusts in the wind unit.
         Available placeholders:
@@ -147,8 +147,23 @@ Configuration parameters:
     thresholds: Configure temperature colors based on limits
         The numbers specified inherit the unit of the temperature as configured.
         The default below is intended for Fahrenheit. If the set value is empty
-        or None, the feature is disabled.
-        (default [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')])
+        or None, the feature is disabled. You can specify this parameter using a
+        dictionary:
+            * Keys are names. You have the option of 'current', 'min', 'max',
+              or 'all' to specify a threshold. The first three are tied to the
+              various temperature values, the last sets the same threshold for
+              all outputs. If both 'all' and one of the first three are set
+              (lets say 'min' for this example), the threshold will default to
+              be the value in 'min', not 'all'. This goes for any configuration
+            * The values are lists of pairs, with temperature (in the
+              configured unit) as the first and the color as the second
+            * To use the thresholds color, place '\?color=all' in the
+              formatting string for temperature, replacing 'all' with any of
+              the valid threshold names for different coloring effects
+            * To have smooth transitions between colors, consider setting the
+              'gradients' configuration parameter to 'True', either in the
+              global configuration, or in the module configuration!
+        (default {'all': [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')]})
     unit_rain: Unit for rain fall
         When specified, a unit may be any combination of upper and lower
         case, such as 'Ft', and still be considered valid as long as it is in
@@ -269,13 +284,17 @@ IN_FROM_MM = 0.0393701
 KMH_FROM_MSEC = 0.277778
 MPH_FROM_MSEC = 2.23694
 
+# Thresholds options
+THRESHOLDS_ALL = 'all'
+THRESHOLDS_NAMES = set([THRESHOLDS_ALL, 'current', 'min', 'max'])
+
 # Thresholds defaults
-THRESHOLDS = [
+THRESHOLDS = dict([(THRESHOLDS_ALL, [
     (-100, '#0FF'),
     (0, '#00F'),
     (50, '#0F0'),
     (150, '#FF0')
-]
+])])
 
 
 class OWMException(Exception):
@@ -298,7 +317,7 @@ class Py3status:
     format_snow = '[\?if=amount {icon} {amount:.0f} {unit}]'
     format_sunrise = '{icon} %-I:%M %p'
     format_sunset = '{icon} %-I:%M %p'
-    format_temperature = u'{icon} {current:.0f}°{unit}'
+    format_temperature = u'{icon} [\?color=all {current:.0f}°{unit}]'
     format_wind = '[\?if=speed {icon} {speed:.0f} {unit}]'
     icon_atmosphere = u'🌫'
     icon_cloud = u'☁'
@@ -382,6 +401,16 @@ class Py3status:
             raise Exception('unit_temperature is not recognized')
         if self.unit_wind.lower() not in WIND_UNITS:
             raise Exception('unit_wind is not recognized')
+
+        # Check thresholds for validity
+        if set(self.thresholds.keys()) > THRESHOLDS_NAMES:
+            raise Exception('threshold name(s) are not recognized')
+
+        # Copy thresholds if available
+        if THRESHOLDS_ALL in self.thresholds:
+            for name in (THRESHOLDS_NAMES - set([THRESHOLDS_ALL])):
+                if name not in self.thresholds:
+                    self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
     def _get_req_url(self, base, coords):
         # Construct the url from the pattern
@@ -616,16 +645,14 @@ class Py3status:
         choice['icon'] = self.icon_temperature
         choice['unit'] = self.unit_temperature
 
-        # Optionally add the color
-        color = None
-        format_str = self.format_temperature
-        if self.thresholds:
-            color = self.py3.threshold_get_color(choice['current'])
-            color_str = '\?color=%s' % color
-            format_str = color_str + ' ' + format_str
+        # Calculate thresholds
+        for name in (THRESHOLDS_NAMES - set([THRESHOLDS_ALL])):
+            # Try to apply the specific threshold
+            if name in self.thresholds:
+                self.py3.threshold_get_color(choice[name], name)
 
         # Format the temperature
-        return self.py3.safe_format(format_str, choice)
+        return self.py3.safe_format(self.format_temperature, choice)
 
     def _format_sunrise(self, wthr, tz_offset):
         # Get the time for sunrise (default is the start of time)
@@ -747,8 +774,9 @@ if __name__ == '__main__':
         'format_pressure': '{icon} {pressure} Pa, sea: {sea_level} Pa',
         'format_rain': '{icon} {amount:.0f} in',
         'format_snow': '{icon} {amount:.0f} in',
-        'format_temperature': ('{icon}: max: {max:.0f}°F, min: {min:.0f}°F, '
-                               'current: {current:.0f}°F'),
+        'format_temperature': ('{icon}: max: [\?color=max {max:.0f}°F], '
+                               'min: [\?color=min {min:.0f}°F], '
+                               'current: [\?color=current {current:.0f}°F]'),
         'format_wind': ('{icon} {degree}°, gust: {gust:.0f} mph, '
                         'speed: {speed:.0f} mph'),
         'format': ('{city}: {icon} ' + all_string + '//{forecast}'),
