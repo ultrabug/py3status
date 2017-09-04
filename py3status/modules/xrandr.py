@@ -42,25 +42,28 @@ Configuration parameters:
         The combinations will be rotated in the exact order as you listed them.
         When an output layout is not available any more, the configurations
         are automatically filtered out.
-        Example:
-        Assuming the default values for `icon_clone` and `icon_extend`
-        are used, and assuming you have two screens 'eDP1' and 'DP1', the
-        following setup will reduce the number of output combinations
-        from four (every possible one) down to two:
-        output_combinations = "eDP1|eDP1+DP1"
         (default None)
 
+        Example:
+            Assuming the default values for `icon_clone` and `icon_extend`
+            are used, and assuming you have two screens 'eDP1' and 'DP1', the
+            following setup will reduce the number of output combinations
+            from four (every possible one) down to two.
+            ```
+            output_combinations = "eDP1|eDP1+DP1"
+            ```
+
 Dynamic configuration parameters:
-    - <OUTPUT>_pos: apply the given position to the OUTPUT
+    <OUTPUT>_pos: apply the given position to the OUTPUT
         Example: DP1_pos = "-2560x0"
         Example: DP1_pos = "above eDP1"
         Example: DP1_pos = "below eDP1"
         Example: DP1_pos = "left-of LVDS1"
         Example: DP1_pos = "right-of eDP1"
-    - <OUTPUT>_workspaces: comma separated list of workspaces to move to
+    <OUTPUT>_workspaces: comma separated list of workspaces to move to
         the given OUTPUT when it is activated
         Example: DP1_workspaces = "1,2,3"
-    - <OUTPUT>_rotate: rotate the output as told
+    <OUTPUT>_rotate: rotate the output as told
         Example: DP1_rotate = "left"
 
 Color options:
@@ -130,8 +133,9 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
+    def post_config_hook(self):
         """
+        Initialization
         """
         self.active_comb = None
         self.active_layout = None
@@ -338,12 +342,6 @@ class Py3status:
                     self.py3.log('moved workspace {} to output {}'.format(
                         workspace, output))
 
-    def _refresh_py3status(self):
-        """
-        Send a SIGUSR1 signal to py3status to force a bar refresh.
-        """
-        self.py3.command_run('killall -s USR1 py3status')
-
     def _fallback_to_available_output(self):
         """
         Fallback to the first available output when the active layout
@@ -356,7 +354,7 @@ class Py3status:
         if len(self.active_comb) == 1:
             self._choose_what_to_display(force_refresh=True)
             self._apply()
-            self._refresh_py3status()
+            self.py3.update()
 
     def _force_force_on_start(self):
         """
@@ -367,7 +365,7 @@ class Py3status:
             self.force_on_start = None
             self._choose_what_to_display(force_refresh=True)
             self._apply(force=True)
-            self._refresh_py3status()
+            self.py3.update()
 
     def _separator(self, mode):
         """

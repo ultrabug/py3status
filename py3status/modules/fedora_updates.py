@@ -39,7 +39,7 @@ class Py3status:
     check_security = True
     format = 'DNF: {updates}'
 
-    def __init__(self):
+    def post_config_hook(self):
         self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
         self._reg_ex_pkg = re.compile(b'^\S+\.', re.M)
         self._first = True

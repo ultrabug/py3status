@@ -220,6 +220,54 @@ def get_module_attributes(path):
     return attributes
 
 
+def _gen_diff(source, target, source_label='Source', target_label='Target'):
+    # Create a unique object for determining if the list is missing an entry
+    blank = object()
+
+    # Make both lists the same length
+    max_len = max(len(source), len(target))
+    for lst in (source, target):
+        lst.extend([blank for i in range(max_len - len(lst))])
+
+    # Determine the length of the longest item in the list
+    max_elem_len = max([len(str(elem)) for elem in source])
+    padding = '    '
+    format_str = padding + ('%%%ds %%s %%s' % max_elem_len)
+
+    # Set up initial output contents
+    middle_orig = '  '
+    out = [
+        format_str % (source_label, middle_orig, target_label),
+
+        # Length of dashes is enough for the longest element on both sides,
+        # plus the size of the middle symbol(s), plus two spaces for separation
+        padding + ('-' * (2 * max_elem_len + len(middle_orig) + 2))
+    ]
+
+    for (have, want) in zip(source, target):
+        # Determine the mark
+        middle = middle_orig
+
+        # The current version is missing this line
+        if have == blank:
+            middle = '<<'
+            have = ''
+
+        # The target version is missing this line
+        elif want == blank:
+            middle = '>>'
+            want = ''
+
+        # Both lines exist, but are different
+        elif have != want:
+            middle = '!!'
+
+        # Place the diff into the output
+        out.append(format_str % (str(have), middle, str(want)))
+
+    return '\n'.join(out) + '\n'
+
+
 def check_docstrings():
     all_errors = []
     docstrings = core_module_docstrings()
@@ -234,13 +282,13 @@ def check_docstrings():
         params, obsolete = docstring_params(docstrings[module_name])
 
         if list(params.keys()) != list(sorted(params.keys())):
-            keys = list(sorted(params.keys()))
+            keys = list(params.keys())
             msg = 'config params not in alphabetical order should be\n{keys}'
-            errors.append(msg.format(keys=keys))
+            errors.append(msg.format(keys=_gen_diff(keys, sorted(keys))))
         if list(obsolete.keys()) != list(sorted(obsolete.keys())):
-            keys = list(sorted(obsolete.keys()))
+            keys = list(obsolete.keys())
             msg = 'obsolete params not in alphabetical order should be\n{keys}'
-            errors.append(msg.format(keys=keys))
+            errors.append(msg.format(keys=_gen_diff(keys, sorted(keys))))
 
         # combine docstring parameters
         params.update(obsolete)
@@ -267,7 +315,7 @@ def check_docstrings():
                 keys.remove(item[1])
         if keys != sorted(keys):
             errors.append('Attributes not in alphabetical order, should be')
-            errors.append(sorted(mod_config.keys()))
+            errors.append(_gen_diff(keys, sorted(keys)))
 
         for param in sorted(mod_config.keys()):
             if (module_name, param) in IGNORE_ITEM:

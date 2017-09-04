@@ -20,8 +20,9 @@ Requires:
 SAMPLE OUTPUT
 {'full_text': '♫ Music For Programming - Hivemind'}
 """
+
 CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
-STRING_UNAVAILABLE = "clementine: isn't installed"
+STRING_NOT_INSTALLED = 'not installed'
 STRING_ERROR = "clementine: isn't running"
 INTERNET_RADIO = 'Internet Radio'
 
@@ -33,17 +34,11 @@ class Py3status:
     cache_timeout = 5
     format = u'♫ {current}'
 
-    def clementine(self):
-        """
-        Get current song metadata: "artist - title"
-        """
-        if not self.py3.check_commands(['clementine']):
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
+    def post_config_hook(self):
+        if not self.py3.check_commands('clementine'):
+            raise Exception(STRING_NOT_INSTALLED)
 
+    def clementine(self):
         artist = lines = now_playing = title = ''
         internet_radio = False
 

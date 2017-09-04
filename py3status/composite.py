@@ -112,11 +112,13 @@ class Composite:
         This is used in joining strings, responses and Composites.
         The output will be a Composite.
         """
-
         output = Composite()
         first_item = True
         for item in items:
-            # add separator but not before the first item
+            # skip empty items
+            if not item:
+                continue
+            # skip separator on first item
             if first_item:
                 first_item = False
             else:

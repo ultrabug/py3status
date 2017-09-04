@@ -201,8 +201,7 @@ class Py3status:
             self._pulls = self._github_count(url) or self._pulls
         status['pull_requests'] = self._pulls
         # notifications
-        if (self.py3.format_contains(self.format, 'notifications') or
-                self.py3.format_contains(self.format, 'notifications_count')):
+        if self.py3.format_contains(self.format, 'notifications*'):
             count = self._notifications()
             # if we don't have a notification count, then use the last value
             # that we did have.
