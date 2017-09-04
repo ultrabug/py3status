@@ -160,7 +160,7 @@ class Py3status:
     state_play = u'▶'
     state_stop = u'◾'
 
-    def __init__(self):
+    def post_config_hook(self):
         self._dbus = None
         self._data = {}
         self._control_states = {}
@@ -171,8 +171,7 @@ class Py3status:
         self._player = None
         self._player_details = {}
         self._tries = 0
-
-    def post_config_hook(self):
+        # start last
         self._dbus = SessionBus()
         self._start_listener()
 
