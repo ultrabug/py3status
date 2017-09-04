@@ -123,14 +123,12 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
-        self.old_transmitted = 0
-        self.old_received = 0
-
     def post_config_hook(self):
         """
         Get network interface.
         """
+        self.old_transmitted = 0
+        self.old_received = 0
         if self.nic is None:
             # Get default gateway directly from /proc.
             with open('/proc/net/route') as fh:
