@@ -1,127 +1,300 @@
 # -*- coding: utf-8 -*-
 """
-Display number of pending updates for Arch Linux.
-
-This will display a count of how many 'pacman' updates are waiting
-to be installed and optionally a count of how many 'aur' updates are
-also waiting.
+Display numbers of updates and more for Arch Linux.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 600)
-    format: Display format to use
-        (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
-    hide_if_zero: Don't show on bar if True
-        (default False)
-    include_aur: Set to True to use 'cower' to check for AUR updates
-        (default False)
+    cache_timeout: refresh interval for this module (default 3600)
+    format: display format for this module (default 'UPD {update}')
+    format_foreign: display format for foreign updates (default None)
+    format_foreign_separator: show separator if more than one (default None)
+    format_pacman: display format for pacman updates (default None)
+    format_pacman_separator: show separator if more than one (default None)
+    thresholds: specify color thresholds to use (default [])
 
 Format placeholders:
-    {aur} Number of pending aur updates
-    {pacman} Number of pending pacman updates
-    {total} Total updates pending
+    {update} number of updates
+    {pacman} number of pacman updates
+    {foreign} number of foreign updates
+    {format_pacman} format for pacman updates
+    {format_foreign} format for foreign updates
+
+format_pacman placeholders:
+    {name} package name, eg py3status
+    {old_version} package old version, eg 3.7-1
+    {new_version} package new version, eg 3.8-1
+
+format_foreign placeholders:
+    {name} package name, eg py3status
+    {old_version} package old version, eg 3.8-1
+    {new_version} package new version, eg 3.9-1
+
+Color thresholds:
+    update: print color based on number of updates
+    pacman: print color based on number of pacman updates
+    foreign: print color based on number of foreign updates
 
 Requires:
-    cower: Needed to display pending 'aur' updates
+    checkupdates (owned by pacman): safely print a list of pacman updates
+    cower: a simple AUR downloader used to print a list of foreign updates
 
-@author Iain Tatch <iain.tatch@gmail.com>
-@license BSD
+Note 1:
+    We can refresh a module using `py3-cmd` command.
+    An excellent example of using this command in a function.
+
+    | ~/.{bash,zsh}{rc,_profile}
+    | ---------------------------
+    | function pacaur() {
+    |     command pacaur "$@" && py3-cmd refresh arch_updates
+    | }
+
+Note 2:
+    We can refresh a module using `py3-cmd` command.
+    An excellent example of using this command in a pacman hook.
+
+    | /usr/share/libalpm/hooks/py3status-arch-updates.hook
+    | -----------------------------------------------------
+    | [Trigger]
+    | Operation = Install
+    | Operation = Upgrade
+    | Operation = Remove
+    | Type = Package
+    | Target = *
+    |
+    | [Action]
+    | Description = Signaling arch_updates module...
+    | When = PostTransaction
+    | Exec = /usr/bin/py3-cmd refresh arch_updates
+
+@author lasers
+
+Examples:
+```
+# show update shield with count
+arch_updates {
+    format = '\?not_zero \u26ca {update}'
+}
+
+# show separate numbers of updates
+arch_updates {
+    format = '[\?if=update UPD [\?not_zero {pacman}]'
+    format += '[\?soft , ][\?not_zero {foreign}]]'
+}
+
+# show PAC, FOR, or UPD with count
+arch_updates {
+    format = '[\?if=pacman [\?if=foreign UPD|PAC]'
+    format += '|[\?if=foreign FOR]][\?not_zero  {update}]'
+}
+
+# show UPD with separate numbers of updates or show PAC or FOR with count
+arch_updates {
+    format = '[\?if=pacman [\?if=foreign UPD {pacman}, {foreign}'
+    format += '|[\?not_zero PAC {update}]]|[\?not_zero FOR {update}]]'
+}
+
+# add colors
+arch_updates {
+    color_foreign = '#ffaa00'
+    color_pacman = '#00aaff'
+    color_update = '#80aa80'
+}
+
+# show UPD in a color and count
+arch_updates {
+    format = '[\?not_zero&color=pacman UPD {update}]'
+}
+
+# show UPD in colors and count
+arch_updates {
+    format = '[\?if=pacman [\?if=foreign&color=update UPD'
+    format += '|\?color=pacman UPD]|[\?if=foreign&color=foreign '
+    format += 'UPD]][\?not_zero  {update}]'
+}
+
+# show UPD in mixed colors and count
+arch_updates {
+    format = '[\?if=pacman [\?if=foreign [\?color=pacman&show U]'
+    format += '[\?color=update&show P][\?color=foreign&show D]|\?color=pacman UPD]|'
+    format += '[\?if=foreign&color=foreign UPD]][\?not_zero  {update}]'
+}
+
+# show separate numbers of updates in seperate colors
+arch_updates {
+    format = '[\?if=update UPD '
+    format += '[\?not_zero&color=pacman {pacman}][\?soft , ]'
+    format += '[\?not_zero&color=foreign {foreign}]]'
+}
+
+# show PAC, FOR, or UPD in colors and count
+arch_updates {
+    format = '[\?if=pacman [\?if=foreign&color=update UPD|\?color=pacman PAC]'
+    format += '|[\?if=foreign&color=foreign FOR]][\?not_zero  {update}]'
+}
+
+# show count and name of updates in seperate colors
+arch_updates {
+    format = '[\?not_zero UPD {update}: '
+    format += '[\?max_length=999 {format_pacman}][\?soft  ]'
+    format += '[\?max_length=999 {format_foreign}]]'
+    format_pacman = '\?color=pacman {name}'
+    format_foreign = '\?color=foreign {name}'
+    format_pacman_separator = ' '
+    format_foreign_separator = ' '
+}
+
+# show update bars, ie \|, or blocks, ie \u25b0
+arch_updates {
+    format = '[{format_pacman}][{format_foreign}]'
+    format_pacman = '\?color=pacman \u25b0'
+    format_foreign = '\?color=foreign \u25b0'
+}
+
+# show count thresholds
+arch_updates {
+    format = '[\?not_zero [\?color=update&show UPD] {update}]'
+    thresholds = [(0, 'good'), (20, 'degraded'), (30, 'bad')]
+}
+
+# reminder: you can replace UPD with an icon
+arch_updates {
+    format = '\u26ca'  # shogi piece, turned black
+}
+
+# reminder: you can mix some things together, eg update shield
+# and color threshold, to make a nice indicator - my favorite.
+arch_updates {
+    format = '[\?not_zero [\?color=update&show \u26ca] {update}]'
+    thresholds = [(0, 'good'), (20, 'degraded'), (30, 'bad')]
+}
+
+# add your snippets here
+arch_updates {
+    format = '...'
+}
+```
 
 SAMPLE OUTPUT
-{'full_text': 'UPD: 5'}
-
-arch_updates_aur
-{'full_text': 'UPD: 15/4'}
+{'full_text': 'UPD 15'}
 """
 
-import subprocess
-import sys
-
-FORMAT_PACMAN_ONLY = 'UPD: {pacman}'
-FORMAT_PACMAN_AND_AUR = 'UPD: {pacman}/{aur}'
-LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
+STRING_ERROR = 'not configured'
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 600
-    format = ''
-    hide_if_zero = False
-    include_aur = False
+    cache_timeout = 3600
+    format = 'UPD {update}'
+    format_foreign = None
+    format_foreign_separator = None
+    format_pacman = None
+    format_pacman_separator = None
+    thresholds = []
 
-    def post_config_hook(self):
-        if self.format == '':
-            if not self.include_aur:
-                self.format = FORMAT_PACMAN_ONLY
-            else:
-                self.format = FORMAT_PACMAN_AND_AUR
-        self.include_aur = self.py3.format_contains(self.format, 'aur')
-        self.include_pacman = self.py3.format_contains(self.format, 'pacman')
-        if self.py3.format_contains(self.format, 'total'):
-            self.include_aur = True
-            self.include_pacman = True
-
-        # check cower installed
-        if self.include_aur and not self.py3.check_commands(['cower']):
-            self.py3.notify_user('cower is not installed cannot check aur')
-            self.include_aur = False
-
-    def check_updates(self):
-        pacman_updates = self._check_pacman_updates()
-        aur_updates = self._check_aur_updates()
-        if aur_updates == '?':
-            total = pacman_updates
-        else:
-            total = pacman_updates + aur_updates
-
-        if self.hide_if_zero and total == 0:
-            full_text = ''
-        else:
-            full_text = self.py3.safe_format(
-                self.format,
+    class Meta:
+        deprecated = {
+            'rename_placeholder': [
                 {
-                    'aur': aur_updates,
-                    'pacman': pacman_updates,
-                    'total': total,
-                }
-            )
-        return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text,
+                    'placeholder': 'aur',
+                    'new': 'foreign',
+                    'format_strings': ['format'],
+                },
+                {
+                    'placeholder': 'total',
+                    'new': 'update',
+                    'format_strings': ['format'],
+                },
+            ],
         }
 
-    def _check_pacman_updates(self):
-        """
-        This method will use the 'checkupdates' command line utility
-        to determine how many updates are waiting to be installed via
-        'pacman -Syu'.
-        """
-        if not self.include_pacman:
-            return 0
-        pending_updates = str(subprocess.check_output(["checkupdates"]))
-        return pending_updates.count(LINE_SEPARATOR)
+    def post_config_hook(self):
+        if not self.py3.check_commands(['checkupdates']):
+            raise Exception(STRING_NOT_INSTALLED)
 
-    def _check_aur_updates(self):
-        """
-        This method will use the 'cower' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
-        """
-        # For reasons best known to its author, 'cower' returns a non-zero
-        # status code upon successful execution, if there is any output.
-        # See https://github.com/falconindy/cower/blob/master/cower.c#L2596
-        if not self.include_aur:
-            return '?'
+        self.pacman = self.py3.format_contains(self.format, ['*pacman', 'update'])
+        self.foreign = self.py3.check_commands(['cower']) and \
+            self.py3.format_contains(self.format, ['*foreign', 'update'])
 
-        pending_updates = b""
+        if not self.pacman and not self.foreign:
+            raise Exception(STRING_ERROR)
+
+        if not self.format_pacman_separator:
+            self.format_pacman_separator = ''
+        if not self.format_foreign_separator:
+            self.format_foreign_separator = ''
+
+    def _get_pacman_updates(self):
         try:
-            pending_updates = str(subprocess.check_output(["cower", "-u"]))
-        except subprocess.CalledProcessError as cp_error:
-            pending_updates = cp_error.output
-        except:
-            pending_updates = '?'
-        return str(pending_updates).count(LINE_SEPARATOR)
+            return self.py3.command_output(['checkupdates'])
+        except self.py3.CommandError as ce:
+            return ce.output
+
+    def _get_foreign_updates(self):
+        try:
+            return self.py3.command_output(['cower', '-u'])
+        except self.py3.CommandError as ce:
+            return ce.output
+
+    def arch_updates(self):
+        new_foreign = []
+        new_pacman = []
+        format_foreign = None
+        format_pacman = None
+        foreign_data = []
+        pacman_data = []
+
+        if self.pacman:
+            pacman_data = self._get_pacman_updates().splitlines()
+        if self.foreign:
+            foreign_data = self._get_foreign_updates().splitlines()
+
+        count_pacman = len(pacman_data)
+        count_foreign = len(foreign_data)
+        count_update = count_pacman + count_foreign
+
+        if self.format_pacman and pacman_data:
+            for line in pacman_data:
+                package = line.split()
+                new_pacman.append(self.py3.safe_format(
+                    self.format_pacman, {
+                        'name': package[0],
+                        'old_version': package[1],
+                        'new_version': package[3],
+                    }))
+
+            format_pacman = self.py3.composite_join(self.py3.safe_format(
+                self.format_pacman_separator), new_pacman)
+
+        if self.format_foreign and foreign_data:
+            for line in foreign_data:
+                package = line.split()
+                new_foreign.append(self.py3.safe_format(
+                    self.format_foreign, {
+                        'name': package[1],
+                        'old_version': package[2],
+                        'new_version': package[4],
+                    }))
+
+            format_foreign = self.py3.composite_join(self.py3.safe_format(
+                self.format_foreign_separator), new_foreign)
+
+        if self.thresholds:
+            self.py3.threshold_get_color(count_update, 'update')
+            self.py3.threshold_get_color(count_pacman, 'pacman')
+            self.py3.threshold_get_color(count_foreign, 'foreign')
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {
+                    'update': count_update,
+                    'pacman': count_pacman,
+                    'foreign': count_foreign,
+                    'format_pacman': format_pacman,
+                    'format_foreign': format_foreign,
+                })}
 
 
 if __name__ == "__main__":
