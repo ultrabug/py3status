@@ -48,6 +48,7 @@ class Runner(Thread):
     """
     def __init__(self, module, py3_wrapper):
         Thread.__init__(self)
+        self.daemon = True
         self.module = module
         self.py3_wrapper = py3_wrapper
 
