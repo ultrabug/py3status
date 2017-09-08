@@ -763,7 +763,7 @@ This is simply done by adding the following code to the bottom of your module.
         from py3status.module_test import module_test
         module_test(Py3status)
 
-If a specific config should should be provided for the module test, this
+If a specific config should be provided for the module test, this
 can be done as follows.
 
 .. code-block:: python
