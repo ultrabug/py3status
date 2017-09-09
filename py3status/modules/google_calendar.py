@@ -242,7 +242,7 @@ class Py3status:
             http = self.credentials.authorize(httplib2.Http())
             self.service = discovery.build('calendar', 'v3', http=http)
             return True
-        except ServerNotFoundError as err:
+        except ServerNotFoundError:
             return False
 
     def _get_events(self):
