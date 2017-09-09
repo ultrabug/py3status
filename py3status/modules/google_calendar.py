@@ -10,12 +10,12 @@ Configuration parameters:
     auth_token_path: The path to where the access/refresh token will be saved
         after successful credential authorization.
         (default '~/.credentials')
-    button_toggle_format: The button used to toggle between output formats
-        format_event_full and format_event_compact.
-        (default 1)
     button_open_url: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
+    button_toggle_format: The button used to toggle between output formats
+        format_event_full and format_event_compact.
+        (default 1)
     cache_timeout: How often the module is refreshed in seconds
         (default 60)
     client_secret_path: the path to your client_secret.json file which
@@ -32,6 +32,8 @@ Configuration parameters:
         over; e.g. if an event is 10 mins past its start time and there are 50 minutes
         left until it is over, '{time_until} event_in_progress_suffix' will be displayed.
         (default 'Remaining')
+    event_separator: The string used to separate individual events.
+        (default '|')
     format: The format for module output.
         (default '{events}')
     format_date: The format for date related format placeholders. May be any Python
@@ -44,7 +46,7 @@ Configuration parameters:
         (default '{summary} {time_until}')
     format_event_full: The format for individual event output, intended to
         be used for extended event information with more data displayed.
-        (default '{summary} ({start_time} - {end_time}), {start_date})')
+        (default '{summary} ({start_time} - {end_time}, {start_date})')
     format_time: The format for time related format placeholders (except {time_until}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
@@ -52,8 +54,6 @@ Configuration parameters:
         (default '({days}d {hours}h {mins}m)')
     num_events: The maximum number of events to display.
         (default 3)
-    separator: The string used to separate individual events.
-        (default '|')
     time_until_threshold: Threshold (in minutes) for when to display the {time_until}
         string; e.g. if time_until_threshold = 60, {time_until} will only be displayed
         for events starting in 60 minutes or less.
@@ -163,12 +163,13 @@ def delta_time(date_time):
 
 class Py3status:
     auth_token_path = '~/.credentials'
-    button_toggle_format = 1
     button_open_url = 3
+    button_toggle_format = 1
     cache_timeout = 60
     client_secret_path = ''
     colors = []
     event_in_progress_suffix = 'Remaining'
+    event_separator = '|'
     format = '{events}'
     format_date = '%a %d-%m'
     format_error = ''
@@ -177,7 +178,6 @@ class Py3status:
     format_time = '%I:%M %p'
     format_time_until = '({days}d {hours}h {mins}m)'
     num_events = 3
-    separator = '|'
     time_until_threshold = 180
     warn_threshold = 0
     warn_timeout = 300
@@ -378,7 +378,8 @@ class Py3status:
                 'color': self.colors[index], 'index': index})
 
             if index < self.num_events - 1:
-                responses.append({'full_text': ' {} '.format(self.separator), 'index': 'sep'})
+                responses.append({'full_text':
+                                  ' {} '.format(self.event_separator), 'index': 'sep'})
 
             index += 1
 
