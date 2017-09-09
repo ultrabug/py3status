@@ -7,7 +7,7 @@ either compact or full format which can be toggled with a button press. The
 events URL may also be opened in a web browser with a button press.
 
 Configuration parameters:
-    auth_token_path = The path to where the access/refresh token will be saved
+    auth_token_path: The path to where the access/refresh token will be saved
         after successful credential authorization.
         (default '~/.credentials')
     button_toggle_format: The button used to toggle between output formats
