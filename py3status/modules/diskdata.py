@@ -154,7 +154,7 @@ class Py3status:
                 devs.append(data[0])
 
         if total == 0:
-            return free, used, 'err'
+            return free, used, 'err', total
 
         return free, used, 100 * used / total, total
 
