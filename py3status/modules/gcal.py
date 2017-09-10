@@ -4,29 +4,55 @@ Display upcoming calendar events from Google Calendar.
 
 Configuration parameters:
     agenda_days: show calendar events for number of days (default 1)
-    button_refresh: mouse button to refresh this module (default 2)
+    arguments: additional arguments for the gcalcli command (default [])
+    button_next: mouse button to focus next event (default None)
+    button_open: mouse button to open an event url (default None)
+    button_previous: mouse button to focus previous event (default None)
+    button_refresh: mouse button to refresh this module (default None)
+    button_reset: mouse button to reset the scrolling (default None)
     cache_timeout: refresh interval for this module (default 3600)
-    command: modify command to dictate the calendar events
-        (default 'gcalcli agenda --tsv')
     format: display format for this module
         (default '{format_event}|\?color=event \u2687')
     format_event: display format for events
+        (default '[\?if=is_focused&color=bad X ]{format_event_start}
+        [{format_event_end}] [\?color=event {event}]
+        [\?if=is_multiple&color=multiple *]')
+    format_event_end: display format for end date/time (default None)
+    format_event_start: display format for start date/time
         (default '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]
-        [\?if=is_time&color=time %-I:%M %p ][\?color=event {event}
-        [\?if=is_multiple&color=multiple *]]')
-    format_separator: show separator only if more than one (default ', ')
-    remove: list of strings to remove from the output (default [])
+        [\?soft ][\?if=is_time&color=time %-I:%M %p]')
+    format_separator: show separator if more than one (default ', ')
+    remove: list of strings to remove from format_event (default [])
 
 Format placeholders:
     {format_event} format for events
 
-format_event placeholders:
-    {event}: scheduled event, eg Volleyball
-    %?: a strftime character to be translated. See `man strftime`.
-    is_date: a boolean based on calendar event data
-    is_time: a boolean based on calendar event data
-    is_first: a boolean based on calendar event data
-    is_multiple: a boolean based on calendar event data
+Format_event placeholders:
+format_event_start placeholders:
+format_event_end placeholders:
+    is_date        a boolean based on calendar event data
+    is_time        a boolean based on calendar event data
+    is_first       a boolean based on calendar event data
+    is_multiple    a boolean based on calendar event data
+    is_focused     a boolean based on mouse scrolling data
+
+format_event_start strftime characters:
+format_event_end strftime characters:
+    %?             a character. See `man strftime`.
+
+Format_event placeholders:
+    {index}        event index
+    {calendar}     which calendars, eg Default
+    {description}  event description, eg Some silly description
+    {email}        creator email, eg lasers@py3status.org
+    {enddate}      end date, eg 2017-09-10
+    {endtime}      end time, eg 07:50
+    {event}        event name, eg Breakfast at Tiffany
+    {hangout}      hangout link, eg (new hangout link here)
+    {link}         event link, eg (new link here)
+    {location}     event location, eg Tiffany's House
+    {startdate}    start date, eg 2017-09-10
+    {starttime}    start time, eg 07:00
 
 Color options:
     color_date: a date
@@ -35,21 +61,75 @@ Color options:
     color_multiple: an indicator for multiple days
 
 Requires:
-    gcalcli: command line interface for google calendar
+    gcalcli: command line interface for Google Calendar
 
 Examples:
 ```
-# add colors
+# add arguments
 gcal {
-    color_date = '#F3EA5F'
-    color_time = '#2BD1FC'
-    color_event = '#FF48C4'
-    color_multiple= '#2BD1FC'
+    # We use 'gcalcli agenda --tsv --details=all'
+    # See `gcalcli --help' for more information.
+    # Not all of the arguments will work here.
+
+    # Don't show events that have started
+    # Don't show events that have been declined
+    arguments = ['nostarted', 'nodeclined']
 }
 
-# show '7 PM' instead of '7:00 PM'
+# add button - open first event - simple
 gcal {
+    button_open = 1
+}
+
+# add buttons - open any event, scrolling, view more, reset, etc
+gcal {
+    button_open = 1
+    button_next = 5
+    button_open = 1
+    button_previous = 4
+    button_refresh = 2
+    button_reset = 3
+}
+
+# add colors
+gcal {
+    color_date = '#f3ea5f'
+    color_time = '#2bd1fc'
+    color_event = '#ff48c4'
+    color_multiple = '#2bd1fc'
+}
+
+# add end times
+gcal {
+    format_event_end = '[\?if=is_time&color=time  – %-I:%M %p]'
+}
+
+# remove things
+gcal {
+    # show '7 PM' instead of '7:00 PM'
     remove = [':00']
+
+    # reminder to add end times first
+    # show '10 – 10:50 AM' instead of '10:00 AM – 10:50 AM'
+    # show '10 – 11' instead of '10:00 AM – 11:00 AM'
+    remove = [':00 AM', ':00 PM']
+}
+# fun stuffs - show description and location - you might like them
+gcal {
+    # partial code - add before the multiple
+    '[\?if=description&color=description [\?if=is_focused  ? {description}|?]]' +\
+    '[\?if=location&color=location [\?if=is_focused  @ {location}|@]]' +\
+    color_description = '#ffaaff'
+    color_location = '#aaaaff'
+}
+
+# fun stuffs - show calendar and email - you might not like them
+gcal {
+    # partial code - add before the code above or the multiple
+    '[\?if=calendar&color=calendar [\?if=is_focused  C {calendar}|C]]' +\
+    '[\?if=email&color=email [\?if=is_focused  E {email}|E]]' +\
+    color_calendar = '#aaffaa'
+    color_email = '#ffffaa'
 }
 ```
 
@@ -67,7 +147,8 @@ from datetime import datetime, timedelta
 import re
 
 
-STRING_NOT_INSTALLED = "gcalcli isn't installed"
+STRING_NOT_INSTALLED = 'not installed'
+STRING_ERROR = 'bad arguments'
 DATE = '%Y-%m-%d'
 TIME = '%H:%M'
 
@@ -77,59 +158,125 @@ class Py3status:
     """
     # available configuration parameters
     agenda_days = 1
-    button_refresh = 2
+    arguments = []
+    button_next = None
+    button_open = None
+    button_previous = None
+    button_refresh = None
+    button_reset = None
     cache_timeout = 3600
-    command = 'gcalcli agenda --tsv'
     format = u'{format_event}|\?color=event \u2687'
-    format_event = '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]' +\
-        '[\?if=is_time&color=time %-I:%M %p ][\?color=event {event}' +\
-        '[\?if=is_multiple&color=multiple *]]'
+    format_event = '[\?if=is_focused&color=bad X ]{format_event_start}' +\
+        '[{format_event_end}] [\?color=event {event}]' +\
+        '[\?if=is_multiple&color=multiple *]'
+    format_event_end = None
+    format_event_start = '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]' +\
+        '[\?soft ][\?if=is_time&color=time %-I:%M %p]'
     format_separator = ', '
     remove = []
 
     def post_config_hook(self):
-        if not self.py3.check_commands(self.command.split(' ', 1)[0]):
+        self.command = 'gcalcli agenda --tsv --details=all'
+        if not self.py3.check_commands(self.command.split()[0]):
             raise Exception(STRING_NOT_INSTALLED)
 
-        self.command += ' %s %s'
-        self.first_run = True
-        self.re = re.compile(r'(%s)' % '|'.join(self.remove))
+        if self.arguments:
+            self.arguments = ' '.join(['--' + x for x in self.arguments])
+            self.command = '%s %s' % (self.command, self.arguments)
 
-    def _datetime(self, e, start=False, end=False):
-        if start:
+        if self.format_event_end is None:
+            self.format_event_end = ''
+
+        self.url = None
+        self.first_run = True
+        self.first_loop = True
+        self.command += ' %s %s'
+        self.re = re.compile(r'(%s)' % '|'.join(self.remove))
+        self.is_scrolling = False
+        try:
+            self.data = self._get_gcal_data()
+        except:
+            raise Exception(STRING_ERROR)
+
+    def _datetime(self, e, starttime=False, endtime=False, startdate=False, enddate=False):
+        if startdate:
             return datetime.strptime(e['startdate'], DATE).date()
-        elif end:
+        elif enddate:
             return datetime.strptime(e['enddate'], DATE).date() - timedelta(days=1)
-        else:
+        elif starttime:
             return datetime.strptime(
                 '%s %s' % (e['startdate'], e['starttime']), '%s %s' % (DATE, TIME))
+        elif endtime:
+            return datetime.strptime(
+                '%s %s' % (e['enddate'], e['endtime']), '%s %s' % (DATE, TIME))
+
+    def _scroll(self, direction=1):
+        self.is_scrolling = True
+        data = self.shared
+        if direction == 0:
+            for d in data:
+                d['is_focused'] = False
+        else:
+            if data and not any(d for d in data if d['is_focused']):
+                data[0]['is_focused'] = True
+
+            length = len(data)
+            for index, d in enumerate(data):
+                if d.get('is_focused'):
+                    data[index]['is_focused'] = False
+                    if direction < 0:  # switch previous
+                        if index > 0:
+                            data[index - 1]['is_focused'] = True
+                        else:
+                            data[index]['is_focused'] = True
+                    elif direction > 0:  # switch next
+                        if index < (length - 1):
+                            data[index + 1]['is_focused'] = True
+                        else:
+                            data[length - 1]['is_focused'] = True
+                    break
+
+            for d in data:
+                if d['is_focused']:
+                    self.url = d['link']
+                    break
+
+        self._manipulate(data)
 
     def _get_gcal_data(self):
-        now = datetime.now()
-        start = datetime.strftime(now, DATE)
-        end = datetime.strftime(now + timedelta(days=self.agenda_days), DATE)
+        self.now = datetime.now()
+        start = datetime.strftime(self.now, DATE)
+        end = datetime.strftime(self.now + timedelta(days=self.agenda_days), DATE)
         return self.py3.command_output(self.command % (start, end))
 
-    def _organize_data(self, data):
+    def _organize(self, data):
         new_data = []
         for line in data.splitlines():
-            names = ['startdate', 'starttime', 'enddate', 'endtime', 'event']
+            names = [
+                'startdate', 'starttime', 'enddate', 'endtime', 'link', 'hangout',
+                'event', 'location', 'description', 'calendar', 'email']
             new_data.append(dict(zip(names, line.split('\t'))))
 
         return new_data
 
-    def _manipulate_data(self, data):
+    def _manipulate(self, data):
+        self.shared = data
         first_loop = True
         last_date = None
         new_data = []
 
-        for e in data:
+        for index, e in enumerate(data, 1):
+            e['index'] = index
             e['is_date'] = True
             e['is_time'] = True
             e['is_first'] = False
             e['is_multiple'] = False
+            if not self.is_scrolling:
+                e['is_focused'] = False
+            if e['index'] == 1:
+                self.url = e['link']
 
-            if self._datetime(e, start=True) < self._datetime(e, end=True):
+            if self._datetime(e, startdate=True) < self._datetime(e, enddate=True):
                 e['is_multiple'] = True
             if first_loop:
                 first_loop = False
@@ -143,33 +290,39 @@ class Py3status:
             if e['starttime'] == e['endtime']:
                 e['is_time'] = False
 
-            obj = self._datetime(e)
-            fmt = self.re.sub('', datetime.strftime(obj, self.format_event))
-            new_data.append(self.py3.safe_format(fmt, {
-                'event': e['event'],
-                'is_date': e['is_date'],
-                'is_time': e['is_time'],
-                'is_first': e['is_first'],
-                'is_multiple': e['is_multiple'],
-            }))
+            start = self._datetime(e, starttime=True)
+            end = self._datetime(e, endtime=True)
+
+            start = self.re.sub('', datetime.strftime(start, self.format_event_start))
+            end = self.re.sub('', datetime.strftime(end, self.format_event_end))
+            new_data.append(self.py3.safe_format(
+                self.format_event, dict(
+                    format_event_end=self.py3.safe_format(end, dict(**e)),
+                    format_event_start=self.py3.safe_format(start, dict(**e)),
+                    **e)))
 
         return new_data
 
     def gcal(self):
         cached_until = self.cache_timeout
         format_event = None
+        data = self.data
 
         if self.first_run:
             self.first_run = False
             cached_until = 0
         else:
-            data = self._get_gcal_data()
-            data = self._organize_data(data)
-            data = self._manipulate_data(data)
+            if self.first_loop:
+                self.first_loop = False
+                data = self.data = self._organize(data)
+            elif not self.is_scrolling:
+                data = self.data = self._organize(self._get_gcal_data())
+            data = self._manipulate(data)
 
             format_separator = self.py3.safe_format(self.format_separator)
             format_event = self.py3.composite_join(format_separator, data)
 
+        self.is_scrolling = False
         return {
             'cached_until': self.py3.time_in(cached_until),
             'full_text': self.py3.safe_format(
@@ -178,7 +331,16 @@ class Py3status:
 
     def on_click(self, event):
         button = event['button']
-        if button != self.button_refresh:
+        if button == self.button_next and self.data:
+            self._scroll(+1)
+        elif button == self.button_previous and self.data:
+            self._scroll(-1)
+        elif button == self.button_reset and self.data:
+            self._scroll(0)
+        elif button == self.button_open and self.url:
+            self._scroll(0)
+            self.py3.command_output('xdg-open %s' % self.url)
+        elif button != self.button_refresh:
             self.py3.prevent_refresh()
 
 

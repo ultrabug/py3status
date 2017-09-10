@@ -36,6 +36,7 @@ IGNORE_ILLEGAL_CONFIG_OPTIONS = [
 # alphabetical order purposes
 IGNORE_ITEM = [
     ('gcal', 'format_event'),  # line too long for docstring parsing
+    ('gcal', 'format_event_start'),  # line too long for docstring parsing
     ('moc', 'format'),  # line too long for docstring parsing
     ('cmus', 'format'),  # line too long for docstring parsing
     ('netdata', 'format'),  # line too long for docstring parsing
