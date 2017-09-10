@@ -30,6 +30,12 @@ Configuration parameters:
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's.
         (default 600)
+    city: The city to display for location information. If set,
+        implicitly disables the Timezone API for determining city name.
+        (default None)
+    country: The country to display for location information. If set,
+        implicitly disables the Timezone API for determining country name.
+        (default None)
     forecast_days: Number of days to include in the forecast, including today
         (regardless of the 'forecast_include_today' flag)
         (default 3)
@@ -212,6 +218,7 @@ Format placeholders:
         {unit} The unit specified
     format only:
         {city} The name of the city where the weather is
+        {country} The name of the country where the weather is
         {forecast} Output of format_forecast
     format, format_forecast:
         {clouds} Output of format_clouds
@@ -257,8 +264,10 @@ OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
 IP_ENDPOINT = 'https://timezoneapi.io/api/ip'
 
 # Paths of information to extract from JSON
-IP_LOC = '//data/location'
+IP_CITY = '//data/city'
+IP_COUNTRY = '//data/country'
 IP_GMT_OFF = '//data/datetime/offset_gmt'
+IP_LOC = '//data/location'
 OWM_CLOUD_COVER = '//clouds/all'
 OWM_DESC = '//weather:0/main'
 OWM_DESC_LONG = '//weather:0/description'
@@ -305,6 +314,8 @@ class Py3status:
 
     api_key = None
     cache_timeout = 600
+    city = None
+    country = None
     forecast_days = 3
     forecast_include_today = False
     forecast_text_separator = ' '
@@ -427,45 +438,6 @@ class Py3status:
 
         return req.json()
 
-    def _get_coords_tz(self):
-        # Helper to parse a GMT offset
-        def _parse_offset(offset):
-            # Parse string
-            (plus, rest) = ((offset[0] == '+'), offset[1:])
-            (hours, mins) = map(int, rest.split(':'))
-
-            # Generate timedelta
-            tz_offset = datetime.timedelta(hours=hours, minutes=mins)
-            return (tz_offset if plus else -tz_offset)
-
-        # Preference a user-set location
-        if (self.location is not None) and (self.offset_gmt is not None):
-            return (self.location, _parse_offset(self.offset_gmt))
-
-        # Contact the Timezone API
-        try:
-            data = self._make_req(IP_ENDPOINT)
-        except (self.py3.RequestException):
-            return None
-        except (self.py3.RequestURLError):
-            return None
-
-        # Extract location data
-        lat_lng = self.location
-        if self.location is None:
-            location = self._jpath(data, IP_LOC, '0,0')
-            lat_lng = tuple(map(float, location.split(',')))
-
-        # Extract timezone offset
-        tz_offset = (_parse_offset(self.offset_gmt)
-                     if (self.offset_gmt is not None)
-                     else None)
-        if self.offset_gmt is None:
-            offset = self._jpath(data, IP_GMT_OFF, '+0:00')
-            tz_offset = _parse_offset(offset)
-
-        return (lat_lng, tz_offset)
-
     def _jpath(self, data, query, default=None):
         # Take the query expression and drill down into the given dictionary
         parts = query.strip('/').split('/')
@@ -487,6 +459,57 @@ class Py3status:
                 return default
 
         return data
+
+    def _get_loc_tz_info(self):
+        # Helper to parse a GMT offset
+        def _parse_offset(offset):
+            # Parse string
+            (plus, rest) = ((offset[0] == '+'), offset[1:])
+            (hours, mins) = map(int, rest.split(':'))
+
+            # Generate timedelta
+            tz_offset = datetime.timedelta(hours=hours, minutes=mins)
+            return (tz_offset if plus else -tz_offset)
+
+        # Preference a user-set location
+        if all(map(lambda x: x is not None,
+               (self.location, self.city, self.country, self.offset_gmt))):
+            return (self.location, self.city, self.country,
+                    _parse_offset(self.offset_gmt))
+
+        # Contact the Timezone API
+        try:
+            data = self._make_req(IP_ENDPOINT)
+        except (self.py3.RequestException):
+            return None
+        except (self.py3.RequestURLError):
+            return None
+
+        # Extract location data
+        lat_lng = self.location
+        if self.location is None:
+            location = self._jpath(data, IP_LOC, '0,0')
+            lat_lng = tuple(map(float, location.split(',')))
+
+        # Extract city
+        city = self.city
+        if self.city is None:
+            city = self._jpath(data, IP_CITY, '')
+
+        # Extract country
+        country = self.country
+        if self.country is None:
+            country = self._jpath(data, IP_COUNTRY, '')
+
+        # Extract timezone offset
+        tz_offset = (_parse_offset(self.offset_gmt)
+                     if (self.offset_gmt is not None)
+                     else None)
+        if self.offset_gmt is None:
+            offset = self._jpath(data, IP_GMT_OFF, '+0:00')
+            tz_offset = _parse_offset(offset)
+
+        return (lat_lng, city, country, tz_offset)
 
     def _get_weather(self, coords):
         # Get and process the current weather
@@ -678,7 +701,7 @@ class Py3status:
             'icon': self.icon_sunset,
         })
 
-    def _format_dict(self, wthr, tz_offset):
+    def _format_dict(self, wthr, city, country, tz_offset):
         data = {
             # Standard options
             'icon': self._get_icon(wthr),
@@ -695,22 +718,22 @@ class Py3status:
             # Descriptions (defaults to empty)
             'main': self._jpath(wthr, OWM_DESC, '').lower(),
             'description': self._jpath(wthr, OWM_DESC_LONG, '').lower(),
-        }
 
-        # Get the city name. Only available in the current weather output
-        if 'name' in wthr:
-            data['city'] = wthr['name']
+            # Location information
+            'city': city,
+            'country': country,
+        }
 
         return data
 
-    def _format(self, wthr, fcsts, tz_offset):
+    def _format(self, wthr, fcsts, city, country, tz_offset):
         # Format all sections
-        today = self._format_dict(wthr, tz_offset)
+        today = self._format_dict(wthr, city, country, tz_offset)
 
         # Insert forecasts
         forecasts = []
         for day in fcsts:
-            future = self._format_dict(day, tz_offset)
+            future = self._format_dict(day, city, country, tz_offset)
             forecasts.append(self.py3.safe_format(self.format_forecast, future))
 
         # Give the final format
@@ -721,15 +744,15 @@ class Py3status:
 
     def weather_owm(self):
         # Get weather information
-        coords_tz = self._get_coords_tz()
+        loc_tz_info = self._get_loc_tz_info()
         text = ''
-        if coords_tz is not None:
-            (coords, tz_offset) = coords_tz
+        if loc_tz_info is not None:
+            (coords, city, country, tz_offset) = loc_tz_info
 
             wthr = self._get_weather(coords)
             fcsts = self._get_forecast(coords)
 
-            text = self._format(wthr, fcsts, tz_offset)
+            text = self._format(wthr, fcsts, city, country, tz_offset)
 
         return {
             'full_text': text,
@@ -779,7 +802,7 @@ if __name__ == '__main__':
                                'current: [\?color=current {current:.0f}°F]'),
         'format_wind': ('{icon} {degree}°, gust: {gust:.0f} mph, '
                         'speed: {speed:.0f} mph'),
-        'format': ('{city}: {icon} ' + all_string + '//{forecast}'),
+        'format': ('{city}, {country}: {icon} ' + all_string + '//{forecast}'),
         'format_forecast': ('{icon} ' + all_string),
 
         # Miscellaneous
