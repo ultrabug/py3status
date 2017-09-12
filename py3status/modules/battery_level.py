@@ -119,9 +119,6 @@ class Py3status:
     threshold_degraded = 30
     threshold_full = 100
 
-    def __init__(self):
-        self.last_known_status = ''
-
     class Meta:
         deprecated = {
             'format_fix_unnamed_param': [
@@ -163,6 +160,7 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.last_known_status = ''
         # Guess mode if not set
         if self.measurement_mode is None:
             if self.py3.check_commands(["acpi"]):
