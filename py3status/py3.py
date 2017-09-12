@@ -5,6 +5,7 @@ import os
 import sys
 import shlex
 
+from copy import deepcopy
 from fnmatch import fnmatch
 from math import log10
 from pprint import pformat
@@ -471,7 +472,9 @@ class Py3:
         module_info = self._get_module_info(module_name)
         if module_info:
             output = module_info['module'].get_latest()
-        return output
+        # we do a deep copy so that any user does not change the actual output
+        # of the module.
+        return deepcopy(output)
 
     def trigger_event(self, module_name, event):
         """
