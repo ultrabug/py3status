@@ -18,13 +18,13 @@ Configuration parameters:
         /sys/class/backlight/acpi_video0, otherwise automatic
         (default None)
     format: Display brightness, see placeholders below
-        (default '☼: {level}%')
+        (default '☼ {brightness:.0f}%')
     low_tune_threshold: If current brightness value is below this threshold,
         the value is changed by a minimal value instead of the brightness_delta.
         (default 0)
 
 Format status string parameters:
-    {level} brightness
+    {brightness} brightness percent
 
 Requires:
     xbacklight: need for changing brightness, not detection
@@ -37,9 +37,7 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division
-
 import os
-
 STRING_NOT_AVAILABLE = 'no available device'
 
 
@@ -62,7 +60,7 @@ class Py3status:
     button_up = 4
     cache_timeout = 10
     device = None
-    format = u'☼: {level}%'
+    format = u'☼ {brightness:.0f}%'
     low_tune_threshold = 0
 
     class Meta:
@@ -119,19 +117,23 @@ class Py3status:
 
     def _get_backlight_level(self):
         if self.xbacklight:
-            level = self.py3.command_output(['xbacklight', '-get']).strip()
-            return round(float(level))
+            return float(self.py3.command_output(['xbacklight', '-get']))
         for brightness_line in open("%s/brightness" % self.device, 'rb'):
             brightness = int(brightness_line)
         for brightness_max_line in open("%s/max_brightness" % self.device, 'rb'):
             brightness_max = int(brightness_max_line)
-        return brightness * 100 // brightness_max
+        return brightness * 100 / brightness_max
 
     def backlight(self):
         full_text = ""
         if self.device is not None:
-            level = self._get_backlight_level()
-            full_text = self.py3.safe_format(self.format, {'level': level})
+            brightness_percent = self._get_backlight_level()
+            full_text = self.py3.safe_format(
+                self.format, {
+                    'level': round(brightness_percent),  # deprecation
+                    'brightness': brightness_percent,
+                }
+            )
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
