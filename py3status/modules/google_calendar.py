@@ -29,7 +29,7 @@ Configuration parameters:
         (default [])
     event_in_progress_suffix:  The suffix used to indicate that the {time_until}
         format placeholder is referring to the time until an event in progress is
-        over; e.g. if an event is 10 mins past its start time and there are 50 minutes
+        over; e.g. if an event is 10 minutes past its start time and there are 50 minutes
         left until it is over, '{time_until} event_in_progress_suffix' will be displayed.
         (default 'Remaining')
     event_separator: The string used to separate individual events.
@@ -51,7 +51,7 @@ Configuration parameters:
         May use any Python strftime directives for times.
         (default '%I:%M %p')
     format_time_until: The format used for the {time_until} placeholder.
-        (default '({days}d {hours}h {mins}m)')
+        (default '({days}d {hours}h {minutes}m)')
     num_events: The maximum number of events to display.
         (default 3)
     time_until_threshold: Threshold (in minutes) for when to display the {time_until}
@@ -60,7 +60,7 @@ Configuration parameters:
         (default 180)
     warn_threshold: The number of minutes until an event starts before a warning is
         displayed to notify the user; e.g. if warn_threshold = 30 and an event is
-        starting in 30 mins or less, a notification will be displayed. disabled (= 0)
+        starting in 30 minutes or less, a notification will be displayed. disabled (= 0)
         by default.
         (default 0)
     warn_timeout: The number of seconds before a warning should be displayed again.
@@ -85,7 +85,7 @@ format_event_full & format_event_compact placeholders:
 format_time_until placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
-    {mins} The number of minutes until the event.
+    {minutes} The number of minutes until the event.
 
 Requires:
     1. Python library google-api-python-client (can be obtained with pip).
@@ -118,7 +118,6 @@ google_calendar {
 import httplib2
 import os
 import datetime
-import webbrowser
 
 from apiclient import discovery
 from oauth2client import client
@@ -162,7 +161,7 @@ def delta_time(date_time):
 
 
 class Py3status:
-    auth_token_path = '~/.credentials'
+    auth_token_path = '~/.config/py3status'
     button_open_url = 3
     button_toggle_format = 1
     cache_timeout = 60
@@ -176,7 +175,7 @@ class Py3status:
     format_event_compact = '{summary} {time_until}'
     format_event_full = '{summary} ({start_time} - {end_time}, {start_date})'
     format_time = '%I:%M %p'
-    format_time_until = '({days}d {hours}h {mins}m)'
+    format_time_until = '({days}d {hours}h {minutes}m)'
     num_events = 3
     time_until_threshold = 180
     warn_threshold = 0
@@ -208,7 +207,7 @@ class Py3status:
             os.makedirs(os.path.expanduser(self.auth_token_path))
 
         self.auth_token_path = os.path.join(os.path.expanduser(self.auth_token_path),
-                                            'py3status-gcal.json')
+                                            'gcal_auth_token.json')
 
         flags = tools.argparser.parse_args(args=[])
         store = Storage(self.auth_token_path)
@@ -280,7 +279,7 @@ class Py3status:
                 self.format_time_until,
                 {'days': time_until['days'],
                  'hours': time_until['hours'],
-                 'mins': time_until['minutes']})
+                 'minutes': time_until['minutes']})
 
         return time_until_formatted
 
@@ -288,21 +287,9 @@ class Py3status:
         """
         Checks if the button associated with opening an event's URL in a browser has
         been pressed. If so, that URL is opened in the default web browser.
-
-        Note: stdout is temporarily redirected to /dev/null before the link is opened
-              to prevent messing up py3status output since opening the browser normally
-              prints a string to stdout indicating the browser has been opened.
         """
         if self.button == self.button_open_url and self.button_index == index:
-            # We have to temporarily redirect stdout to prevent messing up output
-            save_out = os.dup(1)
-            os.close(1)
-
-            os.open(os.devnull, os.O_RDWR)
-            try:
-                webbrowser.open(url)
-            finally:
-                os.dup2(save_out, 1)
+            self.py3.command_run('xdg-open ' + url)
 
             self.no_update = False
             self.button = None
