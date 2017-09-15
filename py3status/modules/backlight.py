@@ -68,6 +68,7 @@ class Py3status:
     """
     """
     # available configuration parameters
+    backlight_command = 'xbacklight'
     brightness_delta = 8
     brightness_initial = None
     brightness_minimal = 1
@@ -75,7 +76,6 @@ class Py3status:
     button_up = 4
     cache_timeout = 10
     device = None
-    backlight_command = 'xbacklight'
     format = u'☼: {level}%'
 
     class Meta:
