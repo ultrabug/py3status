@@ -83,7 +83,7 @@ class Py3status:
         # check for an error code and an output
         self.xbacklight = False
         try:
-            if self.py3.command_output(['xbacklight', '-get']):
+            if self.py3.command_output(['light', '-G']):
                 self.xbacklight = True
         except:
             pass
@@ -109,11 +109,11 @@ class Py3status:
             self._set_backlight_level(level)
 
     def _set_backlight_level(self, level):
-        self.py3.command_run(['xbacklight', '-time', '0', '-set', str(level)])
+        self.py3.command_run(['light', '-S', str(level)])
 
     def _get_backlight_level(self):
         if self.xbacklight:
-            level = self.py3.command_output(['xbacklight', '-get']).strip()
+            level = self.py3.command_output(['light', '-G']).strip()
             return round(float(level))
         for brightness_line in open("%s/brightness" % self.device, 'rb'):
             brightness = int(brightness_line)
