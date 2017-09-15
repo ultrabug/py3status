@@ -3,22 +3,22 @@
 Display upcoming Google Calendar events.
 
 This module will display information about upcoming Google Calendar events in
-either compact or full format which can be toggled with a button press. The
+one of two formats which can be toggled with a button press. The
 events URL may also be opened in a web browser with a button press.
 
 Configuration parameters:
-    auth_token_path: The path to where the access/refresh token will be saved
+    auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
-        (default '~/.credentials')
-    button_open_url: Opens the URL for the clicked on event in the default
+        (default '~/.config/py3status')
+    button_open: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
-    button_toggle_format: The button used to toggle between output formats
-        format_event_full and format_event_compact.
+    button_toggle: The button used to toggle between output formats
+        format_event_1 and format_event_2.
         (default 1)
     cache_timeout: How often the module is refreshed in seconds
         (default 60)
-    client_secret_path: the path to your client_secret.json file which
+    client_secret: the path to your client_secret.json file which
         contains your OAuth 2.0 credentials.
         (default '')
     colors: A list of color strings specifying what color to display events
@@ -27,13 +27,11 @@ Configuration parameters:
         the number of colors is less than the number of events displayed,
         the rest of the list will be padded with '#FFFFFF' (white).
         (default [])
-    event_in_progress_suffix:  The suffix used to indicate that the {time_until}
+    event_time_suffix:  The suffix used to indicate that the {time_to}
         format placeholder is referring to the time until an event in progress is
         over; e.g. if an event is 10 minutes past its start time and there are 50 minutes
-        left until it is over, '{time_until} event_in_progress_suffix' will be displayed.
+        left until it is over, '{time_to} event_in_progress_suffix' will be displayed.
         (default 'Remaining')
-    event_separator: The string used to separate individual events.
-        (default '|')
     format: The format for module output.
         (default '{events}')
     format_date: The format for date related format placeholders. May be any Python
@@ -41,21 +39,21 @@ Configuration parameters:
         (default '%a %d-%m')
     format_error: The format used for error related output.
         (default '')
-    format_event_compact: The format for individual event output, intended
-        to be used for more compact output with less data displayed.
-        (default '{summary} {time_until}')
-    format_event_full: The format for individual event output, intended to
-        be used for extended event information with more data displayed.
+    format_event_1: The format for the first toggleable event output.
+        (default '{summary} {time_to}')
+    format_event_2: The format for the second toggleable event output.
         (default '{summary} ({start_time} - {end_time}, {start_date})')
-    format_time: The format for time related format placeholders (except {time_until}).
+    format_separator: The string used to separate individual events.
+        (default '|')
+    format_time: The format for time related format placeholders (except {time_to}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
-    format_time_until: The format used for the {time_until} placeholder.
+    format_time_to: The format used for the {time_to} placeholder.
         (default '({days}d {hours}h {minutes}m)')
     num_events: The maximum number of events to display.
         (default 3)
-    time_until_threshold: Threshold (in minutes) for when to display the {time_until}
-        string; e.g. if time_until_threshold = 60, {time_until} will only be displayed
+    time_to_max: Threshold (in minutes) for when to display the {time_to}
+        string; e.g. if time_to_max = 60, {time_to} will only be displayed
         for events starting in 60 minutes or less.
         (default 180)
     warn_threshold: The number of minutes until an event starts before a warning is
@@ -72,7 +70,7 @@ format placeholders:
 format_error placeholders:
     {error} Error to display.
 
-format_event_full & format_event_compact placeholders:
+format_event_1 & format_event_2 placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.
@@ -80,9 +78,9 @@ format_event_full & format_event_compact placeholders:
     {start_date} The start date for the event.
     {start_time} The start time for the event.
     {summary} The summary (i.e. title) for the event.
-    {time_until} The time until the event starts.
+    {time_to} The time until the event starts.
 
-format_time_until placeholders:
+format_time_to placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
     {minutes} The number of minutes until the event.
@@ -161,23 +159,23 @@ def delta_time(date_time):
 
 
 class Py3status:
-    auth_token_path = '~/.config/py3status'
-    button_open_url = 3
-    button_toggle_format = 1
+    auth_token = '~/.config/py3status'
+    button_open = 3
+    button_toggle = 1
     cache_timeout = 60
-    client_secret_path = ''
+    client_secret = ''
     colors = []
-    event_in_progress_suffix = 'Remaining'
-    event_separator = '|'
+    event_time_suffix = 'Remaining'
     format = '{events}'
     format_date = '%a %d-%m'
     format_error = ''
-    format_event_compact = '{summary} {time_until}'
-    format_event_full = '{summary} ({start_time} - {end_time}, {start_date})'
+    format_event_1 = '{summary} {time_to}'
+    format_event_2 = '{summary} ({start_time} - {end_time}, {start_date})'
+    format_separator = '|'
     format_time = '%I:%M %p'
-    format_time_until = '({days}d {hours}h {minutes}m)'
+    format_time_to = '({days}d {hours}h {minutes}m)'
     num_events = 3
-    time_until_threshold = 180
+    time_to_max = 180
     warn_threshold = 0
     warn_timeout = 300
 
@@ -256,54 +254,54 @@ class Py3status:
             orderBy='startTime').execute()
         return eventsResult.get('items', [])
 
-    def _check_warn_threshold(self, time_until, summary):
+    def _check_warn_threshold(self, time_to, summary):
         """
         Checks if the time until an event starts is less than or equal to the warn_threshold.
         If it is, it presents a warning with self.py3.notify_user.
         """
-        if time_until['total_minutes'] <= self.warn_threshold:
+        if time_to['total_minutes'] <= self.warn_threshold:
             self.py3.notify_user("Warning: Appointment " + str(summary) +
                                  " coming up!", 'warning', self.warn_timeout)
 
-    def _format_timedelta(self, index, time_until):
+    def _format_timedelta(self, index, time_to):
         """
-        Formats the dict time_until containg days/hours/minutes until an event starts
-        into a string according to time_until_formatted.
+        Formats the dict time_to containg days/hours/minutes until an event starts
+        into a string according to time_to_formatted.
 
         Returns: The formatted string.
         """
-        time_until_formatted = ''
+        time_to_formatted = ''
 
-        if time_until['total_minutes'] <= self.time_until_threshold:
-            time_until_formatted = self.py3.safe_format(
-                self.format_time_until,
-                {'days': time_until['days'],
-                 'hours': time_until['hours'],
-                 'minutes': time_until['minutes']})
+        if time_to['total_minutes'] <= self.time_to_max:
+            time_to_formatted = self.py3.safe_format(
+                self.format_time_to,
+                {'days': time_to['days'],
+                 'hours': time_to['hours'],
+                 'minutes': time_to['minutes']})
 
-        return time_until_formatted
+        return time_to_formatted
 
-    def _check_button_open_url(self, index, url):
+    def _check_button_open(self, index, url):
         """
         Checks if the button associated with opening an event's URL in a browser has
         been pressed. If so, that URL is opened in the default web browser.
         """
-        if self.button == self.button_open_url and self.button_index == index:
+        if self.button == self.button_open and self.button_index == index:
             self.py3.command_run('xdg-open ' + url)
 
             self.no_update = False
             self.button = None
 
-    def _check_button_toggle_format(self, index):
+    def _check_button_toggle(self, index):
         """
         Checks if the button associated with toggling event format between
-        format_event_full and format_event_compact has been pressed. If so,
+        format_event_1 and format_event_2 has been pressed. If so,
         we toggle the format.
         """
-        if self.button == self.button_toggle_format and self.button_states[index]:
-            curr_event_format = self.format_event_full
+        if self.button == self.button_toggle and self.button_states[index]:
+            curr_event_format = self.format_event_2
         else:
-            curr_event_format = self.format_event_compact
+            curr_event_format = self.format_event_1
 
         self.no_update = False
 
@@ -334,20 +332,20 @@ class Py3status:
             start_date_str = datetime_to_str(start_dt, self.format_date)
             end_date_str = datetime_to_str(end_dt, self.format_date)
 
-            time_until = delta_time(start_dt)
+            time_to = delta_time(start_dt)
 
-            self._check_warn_threshold(time_until, summary)
+            self._check_warn_threshold(time_to, summary)
 
-            if time_until['days'] < 0:
-                time_until = delta_time(end_dt)
-                time_until_formatted = '{} {}'.format(self._format_timedelta(index, time_until),
-                                                      self.event_in_progress_suffix)
+            if time_to['days'] < 0:
+                time_to = delta_time(end_dt)
+                time_to_formatted = '{} {}'.format(self._format_timedelta(index, time_to),
+                                                   self.event_in_progress_suffix)
             else:
-                time_until_formatted = self._format_timedelta(index, time_until)
+                time_to_formatted = self._format_timedelta(index, time_to)
 
-            self._check_button_open_url(index, url)
+            self._check_button_open(index, url)
 
-            curr_event_format = self._check_button_toggle_format(index)
+            curr_event_format = self._check_button_toggle(index)
 
             event_formatted = self.py3.safe_format(
                 curr_event_format,
@@ -358,7 +356,7 @@ class Py3status:
                  'end_time': end_time_str,
                  'start_date': start_date_str,
                  'end_date': end_date_str,
-                 'time_until': time_until_formatted})
+                 'time_to': time_to_formatted})
 
             responses.append({
                 'full_text': event_formatted,
@@ -366,7 +364,7 @@ class Py3status:
 
             if index < self.num_events - 1:
                 responses.append({'full_text':
-                                  ' {} '.format(self.event_separator), 'index': 'sep'})
+                                  ' {} '.format(self.format_separator), 'index': 'sep'})
 
             index += 1
 
@@ -413,7 +411,7 @@ class Py3status:
 
             self.button = event['button']
             self.button_index = event['index']
-            if self.button == self.button_toggle_format and self.button_index != 'sep':
+            if self.button == self.button_toggle and self.button_index != 'sep':
                 self.button_states[self.button_index] = not self.button_states[self.button_index]
 
 
