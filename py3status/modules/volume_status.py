@@ -8,12 +8,9 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
-    button_down: Button to click to decrease volume. Setting to 0 disables.
-        (default 0)
-    button_mute: Button to click to toggle mute. Setting to 0 disables.
-        (default 0)
-    button_up: Button to click to increase volume. Setting to 0 disables.
-        (default 0)
+    button_down: button to decrease volume (default None)
+    button_mute: button to toggle mute (default None)
+    button_up: button to increase volume (default None)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
     channel: channel to track. Default value is backend dependent.
@@ -246,9 +243,9 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_down = 0
-    button_mute = 0
-    button_up = 0
+    button_down = None
+    button_mute = None
+    button_up = None
     cache_timeout = 10
     channel = None
     command = None
@@ -346,17 +343,16 @@ class Py3status:
         """
         button = event['button']
         # volume up
-        if self.button_up and button == self.button_up:
+        if button == self.button_up:
             self.backend.volume_up(self.volume_delta)
         # volume down
-        elif self.button_down and button == self.button_down:
+        elif button == self.button_down:
             self.backend.volume_down(self.volume_delta)
         # toggle mute
-        elif self.button_mute and button == self.button_mute:
+        elif button == self.button_mute:
             self.backend.toggle_mute()
 
 
-# test if run directly
 if __name__ == "__main__":
     """
     Run module in test mode.

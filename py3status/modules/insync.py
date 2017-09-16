@@ -37,8 +37,9 @@ busy
 offline
 {'color': '#FF0000', 'full_text': u'OFFLINE 3'}
 """
-STRING_UNAVAILABLE = "Insync: isn't installed"
+
 STRING_ERROR = "Insync: isn't running"
+STRING_NOT_INSTALLED = 'not installed'
 STRING_UNEXPECTED = "Insync: N/A"
 
 
@@ -52,14 +53,11 @@ class Py3status:
     status_synced = 'SYNCED'
     status_syncing = 'SYNCING'
 
-    def insync(self):
-        if not self.py3.check_commands(["insync"]):
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
+    def post_config_hook(self):
+        if not self.py3.check_commands('insync'):
+            raise Exception(STRING_NOT_INSTALLED)
 
+    def insync(self):
         # sync progress
         try:
             queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()

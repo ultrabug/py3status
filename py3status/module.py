@@ -2,7 +2,6 @@ import os
 import imp
 import inspect
 
-from threading import Thread, Timer
 from collections import OrderedDict
 from time import time
 
@@ -12,7 +11,7 @@ from py3status.profiling import profile
 from py3status.formatter import Formatter
 
 
-class Module(Thread):
+class Module:
     """
     This class represents a user module (imported file).
     It is responsible for executing it every given interval and
@@ -26,8 +25,6 @@ class Module(Thread):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
-        Thread.__init__(self)
-
         self.allow_config_clicks = True
         self.allow_urgent = None
         self.cache_time = None
@@ -40,7 +37,6 @@ class Module(Thread):
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
         self.module_class = instance
         self.module_full_name = module
@@ -52,7 +48,6 @@ class Module(Thread):
         self.sleeping = False
         self.terminated = False
         self.testing = self.config.get('testing')
-        self.timer = None
         self.urgent = False
 
         # create a nice name for the module that matches what the module is
@@ -221,7 +216,7 @@ class Module(Thread):
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
             self._py3_wrapper.log('starting module %s' % self.module_full_name)
-            self.start()
+            self._py3_wrapper.timeout_queue_add_module(self)
 
     def force_update(self):
         """
@@ -234,18 +229,11 @@ class Module(Thread):
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
                 self._py3_wrapper.log('clearing cache for method {}'.format(meth))
-        # cancel any existing timer
-        if self.timer:
-            self.timer.cancel()
-        # get the thread to update itself
-        self.timer = Timer(0, self.run)
-        self.timer.start()
+        # set module to update
+        self._py3_wrapper.timeout_queue_add_module(self)
 
     def sleep(self):
         self.sleeping = True
-        # cancel any existing timer
-        if self.timer:
-            self.timer.cancel()
 
     def disable_module(self):
         # hide message
@@ -266,9 +254,7 @@ class Module(Thread):
         if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        delay = max(self.cache_time - time(), 0)
-        self.timer = Timer(delay, self.run)
-        self.timer.start()
+        self._py3_wrapper.timeout_queue_add_module(self, self.cache_time)
 
     def set_updated(self):
         """
@@ -719,18 +705,14 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
-        # cancel any existing timer
-        if self.timer:
-            self.timer.cancel()
-
-        if self.lock.is_set():
+        if self._py3_wrapper.running:
             cache_time = None
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
 
-                # always check the lock
-                if not self.lock.is_set():
+                # always check py3status is running
+                if not self._py3_wrapper.running:
                     break
 
                 # respect the cache set for this method
@@ -854,17 +836,13 @@ class Module(Thread):
             if cache_time == PY3_CACHE_FOREVER:
                 return
             # don't be hasty mate
-            # set timer to do update next time one is needed
-            if not self.sleeping:
-                delay = max(cache_time - time(),
-                            self.config['minimum_interval'])
-                self.timer = Timer(delay, self.run)
-                self.timer.start()
+            # set timeout to do update next time one is needed
+            if not cache_time:
+                cache_time = time() + self.config['minimum_interval']
+
+            self._py3_wrapper.timeout_queue_add_module(self, cache_time)
 
     def kill(self):
-        # stop timer if exists
-        if self.timer:
-            self.timer.cancel()
         # check and execute the 'kill' method if present
         if self.has_kill:
             try:

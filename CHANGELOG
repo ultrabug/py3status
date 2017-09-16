@@ -1,25 +1,66 @@
-version 3.6 (milestone)
-* improve error reporting when running external commands, by @ultrabug
-* new apt_updates module for showing available updates on debian based systems by @Cypher1
-* battery_level module: fix bug with over 100% full icon, by @docwalter
-* battery_level module: fix divide by zero bug, by @tablet-mode
+version 3.7 (milestone)
+* conversion of many modules to use post_config_hook, by @lasers
+* improve spelling in documentation, by @lasers
+* let Py3.contains_format() accept a list of placeholder names
+* apt_updates module: improved error if apt not installed, by @lasers
+* backlight module: detect and bypass xbacklight limitations, by @lasers
+* diskdata module: new {total_space} placeholder, by @pcewing
+* icinga2 module: fix missing color parameter, by @lasers
+* pingdom module: fix when no useful data returned, by @lasers
+* yandexdisk_status module: improved error reporting to users, by @lasers
+
+
+version 3.6 (2017-08-22)
+* faster py3-cmd, by @tobes
+* universal gradients functionality, by @tobes
+* share code so module_test improved, by @tobes
+* better report when i3status is missing, by @tobes thx to @Cypher1
+* better module doctest failures, by @alexoneill
+* allow report exception to be available early, by @tobes
+* better error catching for missing {, by @tobes thx to @lasers
+* make hide_if_zero work for net_rate fixes #935, by @tobes thx to @maximbaz
+* fix py3-cmd link in docs, by @tobes
+* fix group width issue when no output, by @tobes
+* docs: add new screenshot directive, by @tobes
+* only show first line of error in i3bar, by @tobes
+* formatter allow some commands to be inherited, by @tobes
+* formatter not zero fix for displayed values, by @tobes thx to @maximbaz
+* new cmus module: to control your cmus music player, by @lasers
+* new coin_market module: to display custom cryptocurrency data, by @lasers
+* new moc module: to control your moc music player, by @lasers
 * backlight module: combine device/device_path params, by @lasers
 * backlight module: improve rounding of brightness value, by @maximbaz
+* battery_level module: fix bug with over 100% full icon, by @docwalter
+* battery_level module: fix divide by zero bug, by @tablet-mode
+* bitcoin_prices module: add safeformat for the separator, by @lasers
+* bluetooth module: add safeformat for the separator, by @lasers
+* clock module: fix unicode time formatting, by @tobes
 * dpms module: add safeformat for all statuses, by @lasers
 * external_script: allow colored output, by @enguerrand
+* fixed some of the documentation headings, by @armandg
 * getjson module: cleanups, by @lasers
+* github module: parse and use GitHub pagination headers (closes #945), by @rixx
+* iw module: use absolute path for iw, by @paradoxisme
+* make headers available via py3.request() and update github module, by @tobes
 * mpris module: fix keyboard interrupt in test mode @ritze
 * mpris module: improvements to player detection @ritze
 * net_iplist module: fix for new formatter, by @guiniol
+* pomorodo module: fix typo on docstring, by @valdur55
 * selinux module: show permissive as degraded and cleanups, by @lasers
-* spaceapi module: prevent 'used before assignment' error, by @fmorgner
 * spaceapi module: Don't die if datetimes are unparseable, by @rixx
+* spaceapi module: prevent 'used before assignment' error, by @fmorgner
+* spotify module: sanitize album/track title by default, by @vvoland
 * sysdata module: Add load support, by @guiniol
+* volume_status module: fix PactlBackend on non english system, by @vvoland
 * volume_status: Default device detection for pactl, by  @lasers
 * volume_status: support for input devices, by @markrileybot
+* volume_status module: allow device as a int, by @tobes thx to @yabbes
+* vpn_status module: change default format on no VPN, by @markrileybot
 * whatismyip module: color_degraded support in status mode, by @aethelz
+* whatismyip module: prevent mouse updates, by @lasers
 * wifi module: add format, merge formats, by @lasers
 * wifi module: fix quality icon python 2 bug, by @markrileybot
+* window_title_async: fix workspace glitch, by @lasers
 
 version 3.5 (2017-04-07)
 * allow improved access to settings from py3status section, by @tobes
