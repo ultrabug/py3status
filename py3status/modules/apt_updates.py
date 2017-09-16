@@ -30,7 +30,6 @@ import sys
 LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
 STRING_NOT_INSTALLED = 'not installed'
 
-
 class Py3status:
     # available configuration parameters
     cache_timeout = 600

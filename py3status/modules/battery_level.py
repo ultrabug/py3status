@@ -198,11 +198,10 @@ class Py3status:
         else:
             format = self.format_notify_discharging
 
-        message = self.py3.safe_format(format,
-                                       dict(ascii_bar=self.ascii_bar,
-                                            icon=self.icon,
-                                            percent=self.percent_charged,
-                                            time_remaining=self.time_remaining))
+        message = format.format(ascii_bar=self.ascii_bar,
+                                icon=self.icon,
+                                percent=self.percent_charged,
+                                time_remaining=self.time_remaining)
 
         if message:
             self.py3.notify_user(message, 'info')
