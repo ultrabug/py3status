@@ -9,7 +9,7 @@ events URL may also be opened in a web browser with a button press.
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
-        (default '~/.config/py3status/gcal_auth_token.json')
+        (default '~/.config/py3status/google_calendar.json')
     button_open: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
@@ -159,7 +159,7 @@ def delta_time(date_time):
 
 
 class Py3status:
-    auth_token = '~/.config/py3status/gcal_auth_token.json'
+    auth_token = '~/.config/py3status/google_calendar.json'
     button_open = 3
     button_toggle = 1
     cache_timeout = 60
