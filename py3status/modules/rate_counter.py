@@ -7,7 +7,7 @@ Configuration parameters:
     button_toggle: mouse button to toggle the timer (default 1)
     cache_timeout: refresh interval for this module (default 5)
     config_file: specify a file to save time between sessions
-        (default '~/.i3/py3status/counter-config.save')
+        (default '~/.config/py3status/rate_counter.save')
     format: display format for this module
         (default '[\?not_zero {days} days ][\?not_zero {hours}:]
         {minutes:02d}:{seconds:02d} / ${total:.2f}')
@@ -54,7 +54,7 @@ class Py3status:
     button_reset = 3
     button_toggle = 1
     cache_timeout = 5
-    config_file = '~/.i3/py3status/counter-config.save'
+    config_file = '~/.config/py3status/rate_counter.save'
     format = '[\?not_zero {days} days ][\?not_zero {hours}:]' +\
         '{minutes:02d}:{seconds:02d} / ${total:.2f}'
     rate = 30
