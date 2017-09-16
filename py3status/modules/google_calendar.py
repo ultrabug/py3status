@@ -9,7 +9,7 @@ events URL may also be opened in a web browser with a button press.
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
-        (default '~/.config/py3status')
+        (default '~/.config/py3status/gcal_auth_token.json')
     button_open: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
@@ -94,19 +94,19 @@ Requires:
 
     Download the client_secret.json file which contains your client ID and
     client secret. In your i3status config file, set configuration parameter
-    client_secret_path to the path to your client_secret.json file.
+    client_secret to the path to your client_secret.json file.
 
     The first time you run the module, a browser window will open asking you
     to authorize access to your calendar. After authorization is complete,
     an access/refresh token will be saved to the path configured in
-    auth_token_path, and i3status will be restarted. This restart will
+    auth_token, and i3status will be restarted. This restart will
     occur only once after the first time you successfully authorize.
 
 Example:
 ```
 google_calendar {
-    client_secret_path = '/path/to/client_secret/'
-    auth_token_path = '/path/to/auth_token/'
+    client_secret = '/path/to/client_secret/'
+    auth_token = '/path/to/auth_token/'
 }
 ```
 @author Igor Grebenkov
@@ -159,7 +159,7 @@ def delta_time(date_time):
 
 
 class Py3status:
-    auth_token = '~/.config/py3status'
+    auth_token = '~/.config/py3status/gcal_auth_token.json'
     button_open = 3
     button_toggle = 1
     cache_timeout = 60
@@ -198,17 +198,18 @@ class Py3status:
 
         Returns: Credentials, the obtained credential.
         """
-        CLIENT_SECRET_FILE = os.path.join(os.path.expanduser(self.client_secret_path),
+        CLIENT_SECRET_FILE = os.path.join(os.path.expanduser(self.client_secret),
                                           'client_secret.json')
 
-        if not os.path.exists(os.path.expanduser(self.auth_token_path)):
-            os.makedirs(os.path.expanduser(self.auth_token_path))
+        auth_token_path = os.path.dirname(os.path.expanduser(self.auth_token))
+        print(auth_token_path)
+        if not os.path.exists(auth_token_path):
+            os.makedirs(auth_token_path)
 
-        self.auth_token_path = os.path.join(os.path.expanduser(self.auth_token_path),
-                                            'gcal_auth_token.json')
+        self.auth_token = os.path.expanduser(self.auth_token)
 
         flags = tools.argparser.parse_args(args=[])
-        store = Storage(self.auth_token_path)
+        store = Storage(self.auth_token)
         credentials = store.get()
 
         if not credentials or credentials.invalid:
