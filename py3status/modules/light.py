@@ -11,6 +11,8 @@ Configuration parameters:
     button_up: mouse button to increase brightness (default 4)
     cache_timeout: refresh interval for this module (default 60)
     controller: controller to use, otherwise automatic (default None)
+    delta: specify raw or percent value to use, eg 5, '5 raw', '5r', '5p',
+        '5 perc', '5 percent', et cetera. otherwise 1, in raw (default None)
     format: display format for this module (default '\u263c {percent:.0f}%')
 
 Format placeholder:
@@ -26,6 +28,11 @@ Example:
 # show raw values
 light {
     format = '\u263c {raw}/{raw_maximum}'
+}
+
+# adjust delta by percent
+light {
+    delta = '5 percent'
 }
 ```
 
@@ -50,18 +57,33 @@ class Py3status:
     button_up = 4
     cache_timeout = 60
     controller = None
-    format = u'\u263c {percent:.0f}%'
+    delta = None
+    format = '\u263c {percent:.0f}%'
 
     def post_config_hook(self):
-        self.cmd = 'light %s'
-        if not self.py3.check_commands(self.cmd.split()[0]):
+        if not self.py3.check_commands('light'):
             raise Exception(STRING_NOT_INSTALLED)
-        if self.controller:
-            self.cmd = 'light -s {} %s'.format(self.controller)
         try:
-            self.py3.command_output(self.cmd % '-I')
+            self.py3.command_output('light')
         except:
             raise Exception(STRING_ERROR)
+        self.cmd = cmd_set = 'light -s {} %s'.format(
+            self.controller) if self.controller else 'light %s'
+
+        if self.delta is None:
+            cmd_set %= '-r %s'
+            self.delta = 1
+        elif not isinstance(self.delta, int):
+            percent = any([x for x in self.delta if x.lower() == 'p'])
+            try:
+                self.delta = int(''.join(x for x in self.delta if x.isdigit()))
+            except:
+                self.delta = 1
+            self.delta = 1 if self.delta == 0 else self.delta
+            cmd_set %= '-p %s' if percent else '-r %s'
+        self.up = cmd_set % '-A %s' % self.delta
+        self.down = cmd_set % '-U %s' % self.delta
+
         self.percent = self.py3.format_contains(self.format, 'percent*')
         self.raw = self.py3.format_contains(self.format, 'raw')
         self.raw_maximum = self.py3.command_output(
@@ -69,7 +91,6 @@ class Py3status:
                 self.format, 'raw_maximum') else None
 
     def lighthouse(self):
-        self.py3.command_run(self.cmd % '-O')
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
@@ -84,9 +105,9 @@ class Py3status:
     def on_click(self, event):
         button = event['button']
         if button == self.button_up:
-            self.py3.command_run(self.cmd % '-Ar 1')
+            self.py3.command_run(self.up)
         elif button == self.button_down:
-            self.py3.command_run(self.cmd % '-Ur 1')
+            self.py3.command_run(self.down)
 
 
 if __name__ == "__main__":
