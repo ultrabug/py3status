@@ -78,7 +78,6 @@ discharging
 """
 
 from __future__ import division  # python2 compatibility
-from time import time
 from re import findall
 from glob import iglob
 
@@ -449,7 +448,7 @@ class Py3status:
         self.last_known_status = battery_status
 
     def _set_cache_timeout(self):
-        self.response['cached_until'] = time() + self.cache_timeout
+        self.response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
 
 if __name__ == "__main__":
