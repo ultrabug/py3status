@@ -14,37 +14,31 @@ Configuration parameters:
         web browser.
         (default 3)
     button_toggle: The button used to toggle between output formats
-        format_event_1 and format_event_2.
+        format_event and format_event_full.
         (default 1)
     cache_timeout: How often the module is refreshed in seconds
         (default 60)
-    client_secret: the path to your client_secret.json file which
+    client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
-    colors: A list of color strings specifying what color to display events
-        the first color in the list will be used for the next upcoming
-        event, the second color for the event after that, and so on; if
-        the number of colors is less than the number of events displayed,
-        the rest of the list will be padded with '#FFFFFF' (white).
-        (default [])
     event_time_suffix:  The suffix used to indicate that the {time_to}
         format placeholder is referring to the time until an event in progress is
         over; e.g. if an event is 10 minutes past its start time and there are 50 minutes
         left until it is over, '{time_to} event_in_progress_suffix' will be displayed.
         (default 'Remaining')
     format: The format for module output.
-        (default '{events}')
+        (default '{events} | No Events')
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
     format_error: The format used for error related output.
         (default '')
-    format_event_1: The format for the first toggleable event output.
-        (default '{summary} {time_to}')
-    format_event_2: The format for the second toggleable event output.
-        (default '{summary} ({start_time} - {end_time}, {start_date})')
+    format_event: The format for the first toggleable event output.
+        (default '\?color=threshold {summary} {time_to}')
+    format_event_full: The format for the second toggleable event output.
+        (default '\?color=threshold {summary} ({start_time} - {end_time}, {start_date})')
     format_separator: The string used to separate individual events.
-        (default '|')
+        (default '\|')
     format_time: The format for time related format placeholders (except {time_to}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
@@ -52,6 +46,9 @@ Configuration parameters:
         (default '({days}d {hours}h {minutes}m)')
     num_events: The maximum number of events to display.
         (default 3)
+    thresholds: Thresholds for event colors. The first entry is the color for event 1,
+        the second for event 2, and so on.
+        (default [(1, '#0FF'), (2, '#00F'), (3, '#0F0'), (4, '#FF0'), (5, '#FFF')])
     time_to_max: Threshold (in minutes) for when to display the {time_to}
         string; e.g. if time_to_max = 60, {time_to} will only be displayed
         for events starting in 60 minutes or less.
@@ -70,7 +67,7 @@ format placeholders:
 format_error placeholders:
     {error} Error to display.
 
-format_event_1 & format_event_2 placeholders:
+format_event & format_event_full placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.
@@ -164,17 +161,17 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
-    colors = []
     event_time_suffix = 'Remaining'
-    format = '{events}'
+    format = '{events} | No Events'
     format_date = '%a %d-%m'
     format_error = ''
-    format_event_1 = '{summary} {time_to}'
-    format_event_2 = '{summary} ({start_time} - {end_time}, {start_date})'
-    format_separator = '|'
+    format_event = '\?color=threshold {summary} {time_to}'
+    format_event_full = '\?color=threshold {summary} ({start_time} - {end_time}, {start_date})'
+    format_separator = '\|'
     format_time = '%I:%M %p'
     format_time_to = '({days}d {hours}h {minutes}m)'
     num_events = 3
+    thresholds = [(1, '#0FF'), (2, '#00F'), (3, '#0F0'), (4, '#FF0'), (5, '#FFF')]
     time_to_max = 180
     warn_threshold = 0
     warn_timeout = 300
@@ -184,7 +181,6 @@ class Py3status:
         self.button_states = [False] * self.num_events
         self.events = None
         self.no_update = False
-        self.colors.extend(['#FFFFFF'] * (self.num_events - len(self.colors)))
 
         self.credentials = self._get_credentials()
         self.is_authorized = self._authorize_credentials()
@@ -298,13 +294,13 @@ class Py3status:
     def _check_button_toggle(self, index):
         """
         Checks if the button associated with toggling event format between
-        format_event_1 and format_event_2 has been pressed. If so,
+        format_event and format_event_full has been pressed. If so,
         we toggle the format.
         """
         if self.button == self.button_toggle and self.button_states[index]:
-            curr_event_format = self.format_event_2
+            curr_event_format = self.format_event_full
         else:
-            curr_event_format = self.format_event_1
+            curr_event_format = self.format_event
 
         self.no_update = False
 
@@ -342,11 +338,13 @@ class Py3status:
             if time_to['days'] < 0:
                 time_to = delta_time(end_dt)
                 time_to_formatted = '{} {}'.format(self._format_timedelta(index, time_to),
-                                                   self.event_in_progress_suffix)
+                                                   self.event_time_suffix)
             else:
                 time_to_formatted = self._format_timedelta(index, time_to)
 
             self._check_button_open(index, url)
+
+            self.py3.threshold_get_color(index+1)
 
             curr_event_format = self._check_button_toggle(index)
 
@@ -361,17 +359,15 @@ class Py3status:
                  'end_date': end_date_str,
                  'time_to': time_to_formatted})
 
-            responses.append({
-                'full_text': event_formatted,
-                'color': self.colors[index], 'index': index})
-
-            if index < self.num_events - 1:
-                responses.append({'full_text':
-                                  ' {} '.format(self.format_separator), 'index': 'sep'})
+            self.py3.composite_update(event_formatted, {'index': index})
+            responses.append(event_formatted)
 
             index += 1
 
-        return {'events': self.py3.composite_create(responses)}
+        format_separator = self.py3.safe_format(self.format_separator)
+        responses = self.py3.composite_join(format_separator, responses)
+
+        return {'events': responses}
 
     def google_calendar(self):
         """
@@ -410,12 +406,17 @@ class Py3status:
             method is called during an event update (using _get_events()), which
             can cause a crash in the module and/or py3status.
             """
-            self.no_update = True
+            try:
+                self.no_update = True
 
-            self.button = event['button']
-            self.button_index = event['index']
-            if self.button == self.button_toggle and self.button_index != 'sep':
-                self.button_states[self.button_index] = not self.button_states[self.button_index]
+                self.button = event['button']
+
+                self.button_index = event['index']
+                if self.button == self.button_toggle:
+                    self.button_states[self.button_index] = \
+                        not self.button_states[self.button_index]
+            except IndexError:
+                return
 
 
 if __name__ == "__main__":
