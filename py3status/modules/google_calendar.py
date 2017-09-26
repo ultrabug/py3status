@@ -9,7 +9,7 @@ events URL may also be opened in a web browser with a button press.
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
-        (default '~/.config/py3status/google_calendar.json')
+        (default '~/.config/py3status/google_calendar.auth_token')
     button_open: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
@@ -20,7 +20,7 @@ Configuration parameters:
         (default 60)
     client_secret: the path to your client_secret.json file which
         contains your OAuth 2.0 credentials.
-        (default '')
+        (default '~/.config/py3status/google_calendar.client_secret')
     colors: A list of color strings specifying what color to display events
         the first color in the list will be used for the next upcoming
         event, the second color for the event after that, and so on; if
@@ -159,11 +159,11 @@ def delta_time(date_time):
 
 
 class Py3status:
-    auth_token = '~/.config/py3status/google_calendar.json'
+    auth_token = '~/.config/py3status/google_calendar.auth_token'
     button_open = 3
     button_toggle = 1
     cache_timeout = 60
-    client_secret = ''
+    client_secret = '~/.config/py3status/google_calendar.client_secret'
     colors = []
     event_time_suffix = 'Remaining'
     format = '{events}'
@@ -198,22 +198,24 @@ class Py3status:
 
         Returns: Credentials, the obtained credential.
         """
-        CLIENT_SECRET_FILE = os.path.join(os.path.expanduser(self.client_secret),
-                                          'client_secret.json')
-
+        client_secret_path = os.path.dirname(os.path.expanduser(self.client_secret))
         auth_token_path = os.path.dirname(os.path.expanduser(self.auth_token))
-        print(auth_token_path)
+
         if not os.path.exists(auth_token_path):
             os.makedirs(auth_token_path)
 
+        if not os.path.exists(client_secret_path):
+            os.makedirs(client_secret_path)
+
         self.auth_token = os.path.expanduser(self.auth_token)
+        self.client_secret = os.path.expanduser(self.client_secret)
 
         flags = tools.argparser.parse_args(args=[])
         store = Storage(self.auth_token)
         credentials = store.get()
 
         if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
+            flow = client.flow_from_clientsecrets(self.client_secret, SCOPES)
             flow.user_agent = APPLICATION_NAME
             if flags:
                 credentials = tools.run_flow(flow, store, flags)
