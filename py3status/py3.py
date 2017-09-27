@@ -857,8 +857,8 @@ class Py3:
 
         An Exception is raised if an error occurs
         """
-        # convert the command to sequence if a string
-        if isinstance(command, basestring):
+        # convert the non-shell command to sequence if it is a string
+        if not shell and isinstance(command, basestring):
             command = shlex.split(command)
         try:
             process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
