@@ -174,6 +174,33 @@ class Py3status:
         # start last
         self._dbus = SessionBus()
         self._start_listener()
+        self._states = {
+            'pause': {
+                'action': 'Pause',
+                'clickable': 'CanPause',
+                'icon': self.icon_pause
+            },
+            'play': {
+                'action': 'Play',
+                'clickable': 'CanPlay',
+                'icon': self.icon_play
+            },
+            'stop': {
+                'action': 'Stop',
+                'clickable': 'True',  # The MPRIS API lacks 'CanStop' function.
+                'icon': self.icon_stop
+            },
+            'next': {
+                'action': 'Next',
+                'clickable': 'CanGoNext',
+                'icon': self.icon_next
+            },
+            'previous': {
+                'action': 'Previous',
+                'clickable': 'CanGoPrevious',
+                'icon': self.icon_previous
+            }
+        }
 
     def _init_data(self):
         self._data = {
@@ -267,29 +294,9 @@ class Py3status:
         return (placeholders, color, update)
 
     def _get_control_states(self):
-        control_states = {
-            'pause': {'action': 'Pause',
-                      'clickable': 'CanPause',
-                      'icon': self.icon_pause},
-            'play': {'action': 'Play',
-                     'clickable': 'CanPlay',
-                     'icon': self.icon_play},
-            'stop': {'action': 'Stop',
-                     # Workaround: The MPRIS API has no CanStop function.
-                     'clickable': 'True',
-                     'icon': self.icon_stop},
-            'next': {'action': 'Next',
-                     'clickable': 'CanGoNext',
-                     'icon': self.icon_next},
-            'previous': {'action': 'Previous',
-                         'clickable': 'CanGoPrevious',
-                         'icon': self.icon_previous}
-        }
-
         state = 'pause' if self._data.get('state') == PLAYING else 'play'
-        control_states['toggle'] = control_states[state]
-
-        return control_states
+        self._states['toggle'] = self._states[state]
+        return self._states
 
     def _get_response_buttons(self):
         response = {}
