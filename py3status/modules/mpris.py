@@ -520,6 +520,8 @@ class Py3status:
         """
         Get the current output format and return it.
         """
+        if self._kill:
+            raise KeyboardInterrupt
         current_player_id = self._player_details.get('id')
         cached_until = self.py3.CACHE_FOREVER
 
@@ -537,9 +539,6 @@ class Py3status:
             self._control_states = self._get_control_states()
             buttons = self._get_response_buttons()
             composite = self.py3.safe_format(self.format, dict(text, **buttons))
-
-        if self._kill:
-            raise KeyboardInterrupt
 
         if (self._data.get('error_occurred') or
                 current_player_id != self._player_details.get('id')):
