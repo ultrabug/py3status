@@ -8,25 +8,6 @@ placeholders. The format placeholders are replaced by the value. Objects that
 are nested can be accessed by using the `delimiter` configuration parameter
 in between.
 
-Examples:
-```
-# Straightforward key replacement
-url = 'http://ip-api.com/json'
-format = '{lat}, {lon}'
-
-# Access child objects
-url = 'http://api.icndb.com/jokes/random'
-format = '{value-joke}'
-
-# Access title from 0th element of articles list
-url = 'https://newsapi.org/v1/articles?source=bbc-news&sortBy=top&apiKey={KEY}'
-format = '{articles-0-title}'
-
-# Access if top-level object is a list
-url = 'https://jsonplaceholder.typicode.com/posts/1/comments'
-format = '{0-name}'
-```
-
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 30)
     delimiter: the delimiter between parent and child objects (default '-')
@@ -44,6 +25,25 @@ Format placeholders:
     Placeholders for list elements have 'delimiter' followed by the index
     (eg. {'parent': ['this', 'that']) will use placeholders {parent-0}
     for 'this' and {parent-1} for 'that'.
+
+Examples:
+```
+# straightforward key replacement
+url = 'http://ip-api.com/json'
+format = '{lat}, {lon}'
+
+# access child objects
+url = 'http://api.icndb.com/jokes/random'
+format = '{value-joke}'
+
+# access title from 0th element of articles list
+url = 'https://newsapi.org/v1/articles?source=bbc-news&sortBy=top&apiKey={KEY}'
+format = '{articles-0-title}'
+
+# access if top-level object is a list
+url = 'https://jsonplaceholder.typicode.com/posts/1/comments'
+format = '{0-name}'
+```
 
 @author vicyap
 
