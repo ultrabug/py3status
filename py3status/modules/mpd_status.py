@@ -65,7 +65,7 @@ stopped
 import datetime
 import re
 import socket
-from mpd import MPDClient, CommandError
+from mpd import MPDClient, CommandError, ConnectionError
 
 
 def song_attr(song, attr):
@@ -123,9 +123,15 @@ class Py3status:
         except socket.error:
             self.c = None
             raise socket.error
+        except ConnectionError:
+            self.c = None
+            raise ConnectionError;
         except CommandError:
             self.c = None
             raise CommandError
+        except Exception:
+            self.c = None
+            raise socket.error
 
     def _mpd_disconnect(self):
         self._mpdc().disconnect()
@@ -183,6 +189,10 @@ class Py3status:
         except socket.error:
             text = "Failed to connect to mpd!"
             state = None
+        except ConnectionError:
+            text = "Error while connecting to mpd!"
+            state = None
+            self._mpd_disconnect()
         except CommandError:
             text = "Failed to authenticate to mpd!"
             state = None
@@ -206,6 +216,9 @@ class Py3status:
                 response['color'] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
 
         return response
+
+    def kill(self):
+        self._mpd_disconnect()
 
 
 if __name__ == "__main__":
