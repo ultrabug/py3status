@@ -29,18 +29,16 @@ Configuration parameters:
         '{repo} {issues}/{pull_requests}')*
     format_notifications: Format of `{notification}` status placeholder.
         (default ' N{notifications_count}')
-    github_api_url: Change only if using Enterprise Github to something like
-        https://github.company.com/api/v3.
-        (default 'https://api.github.com')
-    github_url: Change only if using Enterprise Github to somethig like
-        https://github.company.com.
-        (default 'https://github.com/')
     notifications: Type of notifications can be `all` for all notifications or
         `repo` to only get notifications for the repo specified.  If repo is
         not provided then all notifications will be checked.
         (default 'all')
     repo: Github repo to check
         (default 'ultrabug/py3status')
+    url_api: Change only if using Enterprise Github, example https://github.domain.com/api/v3.
+        (default 'https://api.github.com')
+    url_base: Change only if using Enterprise Github, example https://github.domain.com.
+        (default 'https://github.com')
     username: Github username, needed to check notifications.
         (default None)
 
@@ -91,10 +89,10 @@ class Py3status:
     cache_timeout = 60
     format = None
     format_notifications = ' N{notifications_count}'
-    github_api_url = 'https://api.github.com'
-    github_url = 'https://github.com/'
     notifications = 'all'
     repo = 'ultrabug/py3status'
+    url_api = 'https://api.github.com'
+    url_base = 'https://github.com'
     username = None
 
     def post_config_hook(self):
