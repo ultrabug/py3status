@@ -110,27 +110,21 @@ class Py3status:
     state_play = '[play]'
     state_stop = '[stop]'
 
-    def _mpdc(self):
+    def _connection(self):
         try:
-            if self.c is None:
-                self.c = MPDClient()
-                self.c.connect(host=self.host, port=self.port)
+            if self.connection is None:
+                self.connection = MPDClient()
+                self.connection.connect(host=self.host, port=self.port)
                 if self.password:
-                    self.c.password(self.password)
-            return self.c
-        except socket.error:
-            self.c = None
-            raise socket.error
-        except ConnectionError:
-            self.c = None
-            raise ConnectionError
-        except CommandError:
-            self.c = None
-            raise CommandError
+                    self.connection.password(self.password)
+            return self.connection
+        except (socket.error, ConnectionError, CommandError) as e:
+            self.connection = None
+            raise e
 
     def _mpd_disconnect(self):
-        self._mpdc().disconnect()
-        self.c = None
+        self._connection().disconnect()
+        self.connection = None
 
     def post_config_hook(self):
         # Convert from %placeholder% to {placeholder}
@@ -139,7 +133,7 @@ class Py3status:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
         # class variables:
-        self.c = None
+        self.connection = None
 
     def _state_character(self, state):
         if state == 'play':
@@ -152,7 +146,7 @@ class Py3status:
 
     def current_track(self):
         try:
-            status = self._mpdc().status()
+            status = self._connection().status()
             song = int(status.get('song', 0))
             next_song = int(status.get('nextsong', 0))
 
@@ -163,7 +157,7 @@ class Py3status:
                 text = ''
 
             else:
-                playlist_info = self._mpdc().playlistinfo()
+                playlist_info = self._connection().playlistinfo()
                 try:
                     song = playlist_info[song]
                 except IndexError:
