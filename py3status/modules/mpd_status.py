@@ -129,9 +129,6 @@ class Py3status:
         except CommandError:
             self.c = None
             raise CommandError
-        except Exception:
-            self.c = None
-            raise socket.error
 
     def _mpd_disconnect(self):
         self._mpdc().disconnect()
