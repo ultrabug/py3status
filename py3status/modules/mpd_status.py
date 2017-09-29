@@ -110,6 +110,27 @@ class Py3status:
     state_play = '[play]'
     state_stop = '[stop]'
 
+    c = None
+
+    def _mpdc(self):
+        try:
+            if self.c is None:
+                self.c = MPDClient()
+                self.c.connect(host=self.host, port=self.port)
+                if self.password:
+                    self.c.password(self.password)
+            return self.c
+        except socket.error:
+            self.c = None
+            raise socket.error
+        except CommandError:
+            self.c = None
+            raise CommandError
+
+    def _mpd_disconnect(self):
+        self._mpdc().disconnect()
+        self.c = None
+
     def post_config_hook(self):
         # Convert from %placeholder% to {placeholder}
         # This is not perfect but should be good enough
@@ -128,12 +149,7 @@ class Py3status:
 
     def current_track(self):
         try:
-            c = MPDClient()
-            c.connect(host=self.host, port=self.port)
-            if self.password:
-                c.password(self.password)
-
-            status = c.status()
+            status = self._mpdc().status()
             song = int(status.get('song', 0))
             next_song = int(status.get('nextsong', 0))
 
@@ -144,7 +160,7 @@ class Py3status:
                 text = ''
 
             else:
-                playlist_info = c.playlistinfo()
+                playlist_info = self._mpdc().playlistinfo()
                 try:
                     song = playlist_info[song]
                 except IndexError:
@@ -170,9 +186,7 @@ class Py3status:
         except CommandError:
             text = "Failed to authenticate to mpd!"
             state = None
-            c.disconnect()
-        else:
-            c.disconnect()
+            self._mpd_disconnect()
 
         if len(text) > self.max_width:
             text = u'{}...'.format(text[:self.max_width - 3])
