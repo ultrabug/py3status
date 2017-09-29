@@ -97,7 +97,6 @@ def song_attr(song, attr):
 class Py3status:
     """
     """
-    c = None
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
@@ -139,6 +138,8 @@ class Py3status:
         if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
+        # class variables:
+        self.c = None
 
     def _state_character(self, state):
         if state == 'play':
