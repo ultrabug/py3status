@@ -125,7 +125,7 @@ class Py3status:
             raise socket.error
         except ConnectionError:
             self.c = None
-            raise ConnectionError;
+            raise ConnectionError
         except CommandError:
             self.c = None
             raise CommandError
