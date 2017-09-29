@@ -97,6 +97,7 @@ def song_attr(song, attr):
 class Py3status:
     """
     """
+    c = None
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
@@ -109,8 +110,6 @@ class Py3status:
     state_pause = '[pause]'
     state_play = '[play]'
     state_stop = '[stop]'
-
-    c = None
 
     def _mpdc(self):
         try:
