@@ -43,8 +43,11 @@ class Py3status:
             if self.symmetric is True:
                 split = int(self.max_size / 2) - 1
                 selection = selection[:split] + '..' + selection[-split:]
+                selection = selection\
+                    .replace('\n','').replace('\r','').replace('  ','')
             else:
-                selection = selection[:self.max_size]
+                selection = selection[:self.max_size]\
+                    .replace('\n','').replace('\r','').replace('  ','')
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, {'selection': selection})
