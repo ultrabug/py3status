@@ -39,8 +39,8 @@ Color thresholds:
     count: print color based on number of IPs
 
 Example:
-
 ```
+# ask @guiniol for a description
 net_iplist {
     iface_blacklist = []
     ip_blacklist = ['127.*', '::1']
@@ -48,7 +48,7 @@ net_iplist {
 ```
 
 Requires:
-    ip: utility found in iproute2 package
+    ip: show/manipulate routing, devices, policy routing and tunnels
 
 @author guiniol, lasers
 
@@ -78,81 +78,77 @@ class Py3status:
 
     def post_config_hook(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
-        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
+        self.ip4_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
 
     def ip_list(self):
-        response = {
-            'cached_until': self.py3.time_in(seconds=self.cache_timeout),
-            'full_text': ''
-        }
-
         count = 0
-        data = self._get_data()
         iface_list = []
+        ip_data = self._get_ip_data()
 
-        for iface, ips in data.items():
-            if not self._check_blacklist(iface, self.iface_blacklist):
+        for iface, ips in ip_data.items():
+            if self._blacklist(iface, self.iface_blacklist):
                 continue
 
-            is_connected = False
-
             ip4_list = []
-            ip6_list = []
             for ip4 in ips.get('ip4', []):
-                if self._check_blacklist(ip4, self.ip_blacklist):
-                    is_connected = True
+                if not self._blacklist(ip4, self.ip_blacklist):
                     ip4_list.append(ip4)
+                    count += 1
+
+            ip6_list = []
             for ip6 in ips.get('ip6', []):
-                if self._check_blacklist(ip6, self.ip_blacklist):
-                    is_connected = True
+                if not self._blacklist(ip6, self.ip_blacklist):
                     ip6_list.append(ip6)
+                    count += 1
 
-            if is_connected:
-                count += 1
-
-            iface_list.append(self.py3.safe_format(self.format_iface,
-                                                   {'iface': iface,
-                                                    'ip4': self.ip_sep.join(ip4_list),
-                                                    'ip6': self.ip_sep.join(ip6_list)}))
+            iface_list.append(self.py3.safe_format(
+                self.format_iface, {
+                    'iface': iface,
+                    'ip4': self.ip_sep.join(ip4_list),
+                    'ip6': self.ip_sep.join(ip6_list)
+                }))
 
         self.py3.threshold_get_color(count, 'count')
         format_iface = self.py3.composite_join(self.iface_sep, iface_list)
 
-        response['full_text'] = self.py3.safe_format(
-            self.format, {'format_iface': format_iface, 'count': count})
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {'format_iface': format_iface, 'count': count})
+        }
 
-        return response
+    def _get_ip_data(self):
+        ip_data = self.py3.command_output(['ip', 'address', 'show'])
 
-    def _get_data(self):
-        txt = self.py3.command_output(['ip', 'address', 'show']).splitlines()
-
-        data = {}
-        for line in txt:
+        new_data = {}
+        for line in ip_data.splitlines():
             iface = self.iface_re.match(line)
             if iface:
                 cur_iface = iface.group('iface')
                 if not self.remove_empty:
-                    data[cur_iface] = {}
+                    new_data[cur_iface] = {}
                 continue
 
-            ip4 = self.ip_re.match(line)
+            ip4 = self.ip4_re.match(line)
             if ip4:
-                data.setdefault(cur_iface, {}).setdefault('ip4', []).append(ip4.group('ip4'))
+                new_data.setdefault(cur_iface, {}).setdefault(
+                    'ip4', []).append(ip4.group('ip4'))
                 continue
 
             ip6 = self.ip6_re.match(line)
             if ip6:
-                data.setdefault(cur_iface, {}).setdefault('ip6', []).append(ip6.group('ip6'))
+                new_data.setdefault(cur_iface, {}).setdefault(
+                    'ip6', []).append(ip6.group('ip6'))
                 continue
 
-        return data
+        return new_data
 
-    def _check_blacklist(self, string, blacklist):
+    def _blacklist(self, string, blacklist):
         for ignore in blacklist:
             if fnmatch(string, ignore):
-                return False
-        return True
+                return True
+        return False
 
 
 if __name__ == "__main__":
