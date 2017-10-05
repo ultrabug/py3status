@@ -13,14 +13,14 @@ Configuration parameters:
         (default '\?color=count [Network: {format_iface}|\?show no connection]')
     format_iface: format string for the list of IPs of each interface.
         (default '{iface}:[ {ip4}][ {ip6}]')
+    format_iface_separator: show separator if more than one.
+        (default ' ')
+    format_ip_separator: show separator if more than one.
+        (default ', ')
     iface_blacklist: list of interfaces to ignore. Accepts shell-style wildcards.
         (default ['lo'])
-    iface_sep: string to write between interfaces.
-        (default ' ')
     ip_blacklist: list of IPs to ignore. Accepts shell-style wildcards.
         (default [])
-    ip_sep: string to write between IP addresses.
-        (default ',')
     remove_empty: do not show interfaces with no IP.
         (default True)
     thresholds: specify color thresholds to use.
@@ -69,10 +69,10 @@ class Py3status:
     cache_timeout = 30
     format = '\?color=count [Network: {format_iface}|\?show no connection]'
     format_iface = '{iface}:[ {ip4}][ {ip6}]'
+    format_iface_separator = ' '
+    format_ip_separator = ', '
     iface_blacklist = ['lo']
-    iface_sep = ' '
     ip_blacklist = []
-    ip_sep = ','
     remove_empty = True
     thresholds = [(0, 'bad'), (1, 'good')]
 
@@ -80,37 +80,46 @@ class Py3status:
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
         self.ip4_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
+        self.ip4_init = self.py3.format_contains(self.format_iface, 'ip4')
+        self.ip6_init = self.py3.format_contains(self.format_iface, 'ip6')
 
     def ip_list(self):
         count = 0
         iface_list = []
         ip_data = self._get_ip_data()
 
+        ip_separator = self.py3.safe_format(self.format_ip_separator)
+
         for iface, ips in ip_data.items():
             if self._blacklist(iface, self.iface_blacklist):
                 continue
 
-            ip4_list = []
-            for ip4 in ips.get('ip4', []):
-                if not self._blacklist(ip4, self.ip_blacklist):
-                    ip4_list.append(ip4)
-                    count += 1
+            ip4 = None
+            if self.ip4_init:
+                ip4_list = []
+                for ip4 in ips.get('ip4', []):
+                    if not self._blacklist(ip4, self.ip_blacklist):
+                        ip4_list.append(self.py3.safe_format(ip4))
+                        count += 1
 
-            ip6_list = []
-            for ip6 in ips.get('ip6', []):
-                if not self._blacklist(ip6, self.ip_blacklist):
-                    ip6_list.append(ip6)
-                    count += 1
+                ip4 = self.py3.composite_join(ip_separator, ip4_list)
+
+            ip6 = None
+            if self.ip6_init:
+                ip6_list = []
+                for ip6 in ips.get('ip6', []):
+                    if not self._blacklist(ip6, self.ip_blacklist):
+                        ip6_list.append(self.py3.safe_format(ip6))
+                        count += 1
+
+                ip6 = self.py3.composite_join(ip_separator, ip6_list)
 
             iface_list.append(self.py3.safe_format(
-                self.format_iface, {
-                    'iface': iface,
-                    'ip4': self.ip_sep.join(ip4_list),
-                    'ip6': self.ip_sep.join(ip6_list)
-                }))
+                self.format_iface, {'iface': iface, 'ip4': ip4, 'ip6': ip6}))
 
         self.py3.threshold_get_color(count, 'count')
-        format_iface = self.py3.composite_join(self.iface_sep, iface_list)
+        iface_separator = self.py3.safe_format(self.format_iface_separator)
+        format_iface = self.py3.composite_join(iface_separator, iface_list)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
