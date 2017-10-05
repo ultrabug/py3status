@@ -10,11 +10,9 @@ Configuration parameters:
     cache_timeout: refresh interval for this module in seconds.
         (default 30)
     format: format of the output.
-        (default 'Network: {format_iface}')
+        (default '\?color=count [Network: {format_iface}|\?show no connection]')
     format_iface: format string for the list of IPs of each interface.
         (default '{iface}:[ {ip4}][ {ip6}]')
-    format_no_ip: string to show if there are no IPs to display.
-        (default 'no connection')
     iface_blacklist: list of interfaces to ignore. Accepts shell-style wildcards.
         (default ['lo'])
     iface_sep: string to write between interfaces.
@@ -25,8 +23,11 @@ Configuration parameters:
         (default ',')
     remove_empty: do not show interfaces with no IP.
         (default True)
+    thresholds: specify color thresholds to use.
+        (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
+    {count} number of IPs.
     {format_iface} the format_iface string.
 
 Format placeholders for format_iface:
@@ -34,9 +35,8 @@ Format placeholders for format_iface:
     {ip4} list of IPv4 of the interface.
     {ip6} list of IPv6 of the interface.
 
-Color options:
-    color_bad: no IPs to show
-    color_good: IPs to show
+Color thresholds:
+    count: print color based on number of IPs
 
 Example:
 
@@ -50,7 +50,7 @@ net_iplist {
 Requires:
     ip: utility found in iproute2 package
 
-@author guiniol
+@author guiniol, lasers
 
 SAMPLE OUTPUT
 {'color': '#00FF00',
@@ -67,14 +67,14 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    format = 'Network: {format_iface}'
+    format = '\?color=count [Network: {format_iface}|\?show no connection]'
     format_iface = '{iface}:[ {ip4}][ {ip6}]'
-    format_no_ip = 'no connection'
     iface_blacklist = ['lo']
     iface_sep = ' '
     ip_blacklist = []
     ip_sep = ','
     remove_empty = True
+    thresholds = [(0, 'bad'), (1, 'good')]
 
     def post_config_hook(self):
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
@@ -87,39 +87,40 @@ class Py3status:
             'full_text': ''
         }
 
-        connection = False
+        count = 0
         data = self._get_data()
         iface_list = []
+
         for iface, ips in data.items():
             if not self._check_blacklist(iface, self.iface_blacklist):
                 continue
+
+            is_connected = False
 
             ip4_list = []
             ip6_list = []
             for ip4 in ips.get('ip4', []):
                 if self._check_blacklist(ip4, self.ip_blacklist):
-                    connection = True
+                    is_connected = True
                     ip4_list.append(ip4)
             for ip6 in ips.get('ip6', []):
                 if self._check_blacklist(ip6, self.ip_blacklist):
-                    connection = True
+                    is_connected = True
                     ip6_list.append(ip6)
+
+            if is_connected:
+                count += 1
+
             iface_list.append(self.py3.safe_format(self.format_iface,
                                                    {'iface': iface,
                                                     'ip4': self.ip_sep.join(ip4_list),
                                                     'ip6': self.ip_sep.join(ip6_list)}))
-        if not connection:
-            response['full_text'] = self.py3.safe_format(self.format_no_ip,
-                                                         {'format_iface':
-                                                             self.py3.composite_join(
-                                                                 self.iface_sep, iface_list)})
-            response['color'] = self.py3.COLOR_BAD
-        else:
-            response['full_text'] = self.py3.safe_format(self.format,
-                                                         {'format_iface':
-                                                             self.py3.composite_join(
-                                                                 self.iface_sep, iface_list)})
-            response['color'] = self.py3.COLOR_GOOD
+
+        self.py3.threshold_get_color(count, 'count')
+        format_iface = self.py3.composite_join(self.iface_sep, iface_list)
+
+        response['full_text'] = self.py3.safe_format(
+            self.format, {'format_iface': format_iface, 'count': count})
 
         return response
 
