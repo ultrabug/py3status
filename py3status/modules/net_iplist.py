@@ -81,7 +81,38 @@ class Py3status:
         self.ip4_init = self.py3.format_contains(self.format_iface, 'ip4')
         self.ip6_init = self.py3.format_contains(self.format_iface, 'ip6')
 
-    def ip_list(self):
+    def _blacklist(self, string, blacklist):
+        for ignore in blacklist:
+            if fnmatch(string, ignore):
+                return True
+        return False
+
+    def _get_ip_data(self):
+        ip_data = self.py3.command_output(['ip', 'address', 'show'])
+
+        new_data = {}
+        for line in ip_data.splitlines():
+            iface = self.iface_re.match(line)
+            if iface:
+                cur_iface = iface.group('iface')
+                new_data[cur_iface] = {}
+                continue
+
+            ip4 = self.ip4_re.match(line)
+            if ip4:
+                new_data.setdefault(cur_iface, {}).setdefault(
+                    'ip4', []).append(ip4.group('ip4'))
+                continue
+
+            ip6 = self.ip6_re.match(line)
+            if ip6:
+                new_data.setdefault(cur_iface, {}).setdefault(
+                    'ip6', []).append(ip6.group('ip6'))
+                continue
+
+        return new_data
+
+    def net_iplist(self):
         count = 0
         iface_list = []
         ip_data = self._get_ip_data()
@@ -134,37 +165,6 @@ class Py3status:
             'full_text': self.py3.safe_format(
                 self.format, {'format_iface': format_iface, 'count': count})
         }
-
-    def _get_ip_data(self):
-        ip_data = self.py3.command_output(['ip', 'address', 'show'])
-
-        new_data = {}
-        for line in ip_data.splitlines():
-            iface = self.iface_re.match(line)
-            if iface:
-                cur_iface = iface.group('iface')
-                new_data[cur_iface] = {}
-                continue
-
-            ip4 = self.ip4_re.match(line)
-            if ip4:
-                new_data.setdefault(cur_iface, {}).setdefault(
-                    'ip4', []).append(ip4.group('ip4'))
-                continue
-
-            ip6 = self.ip6_re.match(line)
-            if ip6:
-                new_data.setdefault(cur_iface, {}).setdefault(
-                    'ip6', []).append(ip6.group('ip6'))
-                continue
-
-        return new_data
-
-    def _blacklist(self, string, blacklist):
-        for ignore in blacklist:
-            if fnmatch(string, ignore):
-                return True
-        return False
 
 
 if __name__ == "__main__":
