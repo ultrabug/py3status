@@ -2,42 +2,40 @@
 """
 Display list of network interfaces and IP addresses.
 
-This module supports both IPv4 and IPv6. There is the possibility to blacklist
-interfaces and IPs, as well as to show interfaces with no IP address. It will
-show an alternate text if no IP are available.
-
 Configuration parameters:
-    cache_timeout: refresh interval for this module in seconds.
-        (default 30)
-    format: format of the output.
-        (default '\?color=count [Network: {format_iface}|\?show no connection]')
-    format_iface: format string for the list of IPs of each interface.
+    cache_timeout: refresh interval for this module (default 30)
+    format: display format for this module
+        (default '\?color=count [{format_iface}|\?show no connection]')
+    format_iface: display format for network interfaces
         (default '\?if=is_connected {iface}:[ {ip4}][ {ip6}]')
-    format_iface_separator: show separator if more than one.
-        (default ' ')
-    format_ip_separator: show separator if more than one.
-        (default ', ')
-    iface_blacklist: list of interfaces to ignore. Accepts shell-style wildcards.
+    format_iface_separator: show separator if more than one (default ' ')
+    format_ip_separator: show separator if more than one (default ', ')
+    iface_blacklist: specify a list of interfaces to ignore.
+        accepts shell-style wildcards.
         (default ['lo'])
-    ip_blacklist: list of IPs to ignore. Accepts shell-style wildcards.
+    ip_blacklist: specify a list of IPs to ignore.
+        accepts shell-style wildcards.
         (default [])
     thresholds: specify color thresholds to use.
         (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
-    {count} number of IPs.
-    {format_iface} the format_iface string.
+    {count} number of connections
+    {format_iface} format for network interfaces
 
-Format placeholders for format_iface:
-    {iface} name of the interface.
-    {ip4} list of IPv4 of the interface.
-    {ip6} list of IPv6 of the interface.
-    {is_connected} a boolean based on interface data.
+format_iface placeholders:
+    {iface} interface name, eg eno1
+    {ip4} interface IPv4 addresses, eg 192.168.1.103
+    {ip6} interface IPv6 addresses, eg fe80::d625:7ea8:e729:716c/64
+    {is_connected} a boolean based on interface data
 
 Color thresholds:
-    count: print color based on number of IPs
+    count: print color based on number of connections
 
-Example:
+Requires:
+    iproute2: show/manipulate routing, devices, policy routing and tunnels
+
+Examples:
 ```
 # ask @guiniol for a description
 net_iplist {
@@ -46,14 +44,11 @@ net_iplist {
 }
 ```
 
-Requires:
-    ip: show/manipulate routing, devices, policy routing and tunnels
-
 @author guiniol, lasers
 
 SAMPLE OUTPUT
 {'color': '#00FF00',
- 'full_text': u'Network: wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
+ 'full_text': u'wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
 """
 
 
@@ -66,7 +61,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    format = '\?color=count [Network: {format_iface}|\?show no connection]'
+    format = '\?color=count [{format_iface}|\?show no connection]'
     format_iface = '\?if=is_connected {iface}:[ {ip4}][ {ip6}]'
     format_iface_separator = ' '
     format_ip_separator = ', '
@@ -116,7 +111,6 @@ class Py3status:
         count = 0
         iface_list = []
         ip_data = self._get_ip_data()
-
         ip_separator = self.py3.safe_format(self.format_ip_separator)
 
         for iface, ips in ip_data.items():
@@ -169,7 +163,7 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
     from py3status.module_test import module_test
     module_test(Py3status)
