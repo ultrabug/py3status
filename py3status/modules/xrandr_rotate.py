@@ -82,9 +82,10 @@ class Py3status:
         else:
             rotation = self.vertical_rotation
         outputs = [self.screen] if self.screen else self._get_all_outputs()
+        cmd = 'xrandr'
         for output in outputs:
-            cmd = 'xrandr --output ' + output + ' --rotate ' + rotation
-            self.py3.command_run(cmd)
+            cmd += ' --output %s --rotate %s' % (output, rotation)
+        self.py3.command_run(cmd)
 
     def _switch_selection(self):
         if self.displayed == self.horizontal_icon:
