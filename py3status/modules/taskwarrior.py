@@ -41,7 +41,7 @@ class Py3status:
         def describeTask(taskObj):
             return str(taskObj['id']) + ' ' + taskObj['description']
 
-        task_command = 'task ' + self.filter + ' export'
+        task_command = 'task %s export' % self.filter
         task_json = json.loads(self.py3.command_output(task_command))
         task_result = ', '.join(map(describeTask, task_json))
         return {
