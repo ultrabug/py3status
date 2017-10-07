@@ -4,9 +4,9 @@ Display tasks currently running in taskwarrior.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
-    format: display format for this module (default '{task}')
     filter: arguments passed to the command
         (default 'start.before:today status:pending')
+    format: display format for this module (default '{task}')
 
 Format placeholders:
     {task} active tasks
@@ -30,8 +30,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = '{task}'
     filter = 'start.before:today status:pending'
+    format = '{task}'
 
     def post_config_hook(self):
         if not self.py3.check_commands('task'):
