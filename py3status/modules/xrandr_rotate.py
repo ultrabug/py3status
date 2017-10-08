@@ -66,14 +66,15 @@ class Py3status:
         return [x.split()[0] for x in outputs if ' connected' in x]
 
     def _get_current_rotation_icon(self, all_outputs):
-        output = self.screen or all_outputs[0]
         data = self.py3.command_output(['xrandr']).splitlines()
-        orientation = ''.join(
-            [x.split()[3] for x in data if x.startswith(output)])
-        # xrandr may skip 'normal' so we check if it starts with '(' too
-        is_horizontal = (orientation.startswith('(') or
-                         orientation in ['normal', 'inverted'])
-        return self.horizontal_icon if is_horizontal else self.vertical_icon
+        output = self.screen or all_outputs[0]
+        output_line = ''.join([x for x in data if x.startswith(output)])
+
+        for x in output_line.split():
+            if 'normal' in x or 'inverted' in x:
+                return self.horizontal_icon
+            elif 'left' in x or 'right' in x:
+                return self.vertical_icon
 
     def _apply(self):
         if self.displayed == self.horizontal_icon:
