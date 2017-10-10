@@ -124,36 +124,6 @@ SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 APPLICATION_NAME = 'py3status google_calendar module'
 
 
-def gstr_to_datetime(date_time_str):
-    """ Returns a datetime object from a google calendar date/time string."""
-    tmp = '-'.join(date_time_str.split('-')[:-1])
-    return datetime.datetime.strptime(tmp, '%Y-%m-%dT%H:%M:%S')
-
-
-def datetime_to_str(date_time, dt_format):
-    """ Returns a strftime formatted string from a datetime object."""
-    return date_time.strftime(dt_format)
-
-
-def delta_time(date_time):
-    """
-    Returns in a dict the number of days/hours/minutes and total minutes
-    until date_time.
-    """
-    now = datetime.datetime.now()
-    diff = date_time - now
-
-    days = int(diff.days)
-    hours = int(diff.seconds / 3600)
-    minutes = int((diff.seconds / 60) - (hours * 60)) + 1
-    total_minutes = int((diff.seconds / 60) + (days * 24 * 60)) + 1
-
-    return {'days': days,
-            'hours': hours,
-            'minutes': minutes,
-            'total_minutes': total_minutes}
-
-
 class Py3status:
     auth_token = '~/.config/py3status/google_calendar.auth_token'
     button_open = 3
@@ -261,6 +231,33 @@ class Py3status:
             self.py3.notify_user("Warning: Appointment " + str(summary) +
                                  " coming up!", 'warning', self.warn_timeout)
 
+    def _gstr_to_datetime(self, date_time_str):
+        """ Returns a datetime object from a google calendar date/time string."""
+        tmp = '-'.join(date_time_str.split('-')[:-1])
+        return datetime.datetime.strptime(tmp, '%Y-%m-%dT%H:%M:%S')
+
+    def _datetime_to_str(self, date_time, dt_format):
+        """ Returns a strftime formatted string from a datetime object."""
+        return date_time.strftime(dt_format)
+
+    def _delta_time(self, date_time):
+        """
+        Returns in a dict the number of days/hours/minutes and total minutes
+        until date_time.
+        """
+        now = datetime.datetime.now()
+        diff = date_time - now
+
+        days = int(diff.days)
+        hours = int(diff.seconds / 3600)
+        minutes = int((diff.seconds / 60) - (hours * 60)) + 1
+        total_minutes = int((diff.seconds / 60) + (days * 24 * 60)) + 1
+
+        return {'days': days,
+                'hours': hours,
+                'minutes': minutes,
+                'total_minutes': total_minutes}
+
     def _format_timedelta(self, index, time_delta, format):
         """
         Formats the dict time_to containg days/hours/minutes until an event starts
@@ -321,26 +318,26 @@ class Py3status:
             description = event.get('description')
             url = event['htmlLink']
 
-            start_dt = gstr_to_datetime(event['start'].get('dateTime'))
-            end_dt = gstr_to_datetime(event['end'].get('dateTime'))
+            start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
+            end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
-            start_time_str = datetime_to_str(start_dt, self.format_time)
-            end_time_str = datetime_to_str(end_dt, self.format_time)
+            start_time_str = self._datetime_to_str(start_dt, self.format_time)
+            end_time_str = self._datetime_to_str(end_dt, self.format_time)
 
-            start_date_str = datetime_to_str(start_dt, self.format_date)
-            end_date_str = datetime_to_str(end_dt, self.format_date)
+            start_date_str = self._datetime_to_str(start_dt, self.format_date)
+            end_date_str = self._datetime_to_str(end_dt, self.format_date)
 
-            time_delta = delta_time(start_dt)
-
-            self._check_warn_threshold(time_delta, summary)
+            time_delta = self._delta_time(start_dt)
 
             if time_delta['days'] < 0:
-                time_delta = delta_time(end_dt)
+                time_delta = self._delta_time(end_dt)
                 time_delta_formatted = self._format_timedelta(index, time_delta,
                                                               self.format_time_left)
             else:
                 time_delta_formatted = self._format_timedelta(index, time_delta,
                                                               self.format_time_to)
+
+            self._check_warn_threshold(time_delta, summary)
 
             self._check_button_open(index, url)
 
