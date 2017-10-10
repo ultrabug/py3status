@@ -21,13 +21,8 @@ Configuration parameters:
     client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
-    event_time_suffix:  The suffix used to indicate that the {time_to}
-        format placeholder is referring to the time until an event in progress is
-        over; e.g. if an event is 10 minutes past its start time and there are 50 minutes
-        left until it is over, '{time_to} event_in_progress_suffix' will be displayed.
-        (default 'Remaining')
     format: The format for module output.
-        (default '{events} | No Events')
+        (default '{events}|No Events')
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
@@ -42,13 +37,16 @@ Configuration parameters:
     format_time: The format for time related format placeholders (except {time_to}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
+    format_time_left: The format for used for the {time_to} placeholder when when the time
+        displayed is the time left until an event in progress is over.
+        (default '({days}d {hours}h {minutes}m) left')
     format_time_to: The format used for the {time_to} placeholder.
         (default '({days}d {hours}h {minutes}m)')
     num_events: The maximum number of events to display.
         (default 3)
     thresholds: Thresholds for event colors. The first entry is the color for event 1,
         the second for event 2, and so on.
-        (default [(1, '#0FF'), (2, '#00F'), (3, '#0F0'), (4, '#FF0'), (5, '#FFF')])
+        (default [])
     time_to_max: Threshold (in minutes) for when to display the {time_to}
         string; e.g. if time_to_max = 60, {time_to} will only be displayed
         for events starting in 60 minutes or less.
@@ -75,7 +73,8 @@ format_event & format_event_full placeholders:
     {start_date} The start date for the event.
     {start_time} The start time for the event.
     {summary} The summary (i.e. title) for the event.
-    {time_to} The time until the event starts.
+    {time_to} The time until the event starts (or until it is over
+        if already in progress).
 
 format_time_to placeholders:
     {days} The number of days until the event.
@@ -161,17 +160,17 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
-    event_time_suffix = 'Remaining'
-    format = '{events} | No Events'
+    format = '{events}|No Events'
     format_date = '%a %d-%m'
     format_error = ''
     format_event = '\?color=threshold {summary} {time_to}'
     format_event_full = '\?color=threshold {summary} ({start_time} - {end_time}, {start_date})'
     format_separator = '\|'
     format_time = '%I:%M %p'
+    format_time_left = '({days}d {hours}h {minutes}m) left'
     format_time_to = '({days}d {hours}h {minutes}m)'
     num_events = 3
-    thresholds = [(1, '#0FF'), (2, '#00F'), (3, '#0F0'), (4, '#FF0'), (5, '#FFF')]
+    thresholds = []
     time_to_max = 180
     warn_threshold = 0
     warn_timeout = 300
@@ -262,23 +261,23 @@ class Py3status:
             self.py3.notify_user("Warning: Appointment " + str(summary) +
                                  " coming up!", 'warning', self.warn_timeout)
 
-    def _format_timedelta(self, index, time_to):
+    def _format_timedelta(self, index, time_delta, format):
         """
         Formats the dict time_to containg days/hours/minutes until an event starts
         into a string according to time_to_formatted.
 
         Returns: The formatted string.
         """
-        time_to_formatted = ''
+        time_delta_formatted = ''
 
-        if time_to['total_minutes'] <= self.time_to_max:
-            time_to_formatted = self.py3.safe_format(
-                self.format_time_to,
-                {'days': time_to['days'],
-                 'hours': time_to['hours'],
-                 'minutes': time_to['minutes']})
+        if time_delta['total_minutes'] <= self.time_to_max:
+            time_delta_formatted = self.py3.safe_format(
+                format,
+                {'days': time_delta['days'],
+                 'hours': time_delta['hours'],
+                 'minutes': time_delta['minutes']})
 
-        return time_to_formatted
+        return time_delta_formatted
 
     def _check_button_open(self, index, url):
         """
@@ -331,20 +330,21 @@ class Py3status:
             start_date_str = datetime_to_str(start_dt, self.format_date)
             end_date_str = datetime_to_str(end_dt, self.format_date)
 
-            time_to = delta_time(start_dt)
+            time_delta = delta_time(start_dt)
 
-            self._check_warn_threshold(time_to, summary)
+            self._check_warn_threshold(time_delta, summary)
 
-            if time_to['days'] < 0:
-                time_to = delta_time(end_dt)
-                time_to_formatted = '{} {}'.format(self._format_timedelta(index, time_to),
-                                                   self.event_time_suffix)
+            if time_delta['days'] < 0:
+                time_delta = delta_time(end_dt)
+                time_delta_formatted = self._format_timedelta(index, time_delta,
+                                                              self.format_time_left)
             else:
-                time_to_formatted = self._format_timedelta(index, time_to)
+                time_delta_formatted = self._format_timedelta(index, time_delta,
+                                                              self.format_time_to)
 
             self._check_button_open(index, url)
 
-            self.py3.threshold_get_color(index+1)
+            self.py3.threshold_get_color(index + 1)
 
             curr_event_format = self._check_button_toggle(index)
 
@@ -357,7 +357,7 @@ class Py3status:
                  'end_time': end_time_str,
                  'start_date': start_date_str,
                  'end_date': end_date_str,
-                 'time_to': time_to_formatted})
+                 'time_to': time_delta_formatted})
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
