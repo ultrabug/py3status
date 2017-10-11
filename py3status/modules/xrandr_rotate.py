@@ -60,6 +60,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.displayed = ''
+        self.scrolling = None
 
     def _get_all_outputs(self):
         cmd = 'xrandr -q | grep " connected [^(]" | cut -d " " -f1'
@@ -100,7 +101,7 @@ class Py3status:
             self.displayed = ''
             full_text = ''
         else:
-            if not self.displayed:
+            if not self.scrolling:
                 self.displayed = self._get_current_rotation_icon(all_outputs)
 
             if len(all_outputs) == 1:
@@ -122,6 +123,7 @@ class Py3status:
         elif self.displayed == self._get_current_rotation_icon(all_outputs):
             response['color'] = self.py3.COLOR_GOOD
 
+        self.scrolling = False
         return response
 
     def on_click(self, event):
@@ -132,6 +134,7 @@ class Py3status:
         """
         button = event['button']
         if button in [1, 4, 5]:
+            self.scrolling = True
             self._switch_selection()
         elif button == 3:
             self._apply()
