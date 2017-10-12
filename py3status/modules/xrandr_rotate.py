@@ -34,7 +34,7 @@ Color options:
     color_degraded: Screen is disconnected
     color_good: Displayed rotation is active
 
-@author Maxim Baz (https://github.com/maximbaz) @contributor lasers
+@author Maxim Baz (https://github.com/maximbaz), @lasers
 @license BSD
 
 SAMPLE OUTPUT
