@@ -117,22 +117,22 @@ class Py3status:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
         # class variables:
-        self.connection = None
+        self.client = None
 
-    def _get_connection(self, disconnect=False):
+    def _get_mpd(self, disconnect=False):
         if disconnect:
-            self._get_connection().disconnect()
-            self.connection = None
+            self._get_mpd().disconnect()
+            self.client = None
             return
         try:
-            if self.connection is None:
-                self.connection = MPDClient()
-                self.connection.connect(host=self.host, port=self.port)
+            if self.client is None:
+                self.client = MPDClient()
+                self.client.connect(host=self.host, port=self.port)
                 if self.password:
-                    self.connection.password(self.password)
-            return self.connection
+                    self.client.password(self.password)
+            return self.client
         except (socket.error, ConnectionError, CommandError) as e:
-            self.connection = None
+            self.client = None
             raise e
 
     def _state_character(self, state):
@@ -146,7 +146,7 @@ class Py3status:
 
     def current_track(self):
         try:
-            status = self._get_connection().status()
+            status = self._get_mpd().status()
             song = int(status.get('song', 0))
             next_song = int(status.get('nextsong', 0))
 
@@ -157,7 +157,7 @@ class Py3status:
                 text = ''
 
             else:
-                playlist_info = self._get_connection().playlistinfo()
+                playlist_info = self._get_mpd().playlistinfo()
                 try:
                     song = playlist_info[song]
                 except IndexError:
@@ -183,11 +183,11 @@ class Py3status:
         except ConnectionError:
             text = "Error while connecting to mpd!"
             state = None
-            self._get_connection(disconnect=True)
+            self._get_mpd(disconnect=True)
         except CommandError:
             text = "Failed to authenticate to mpd!"
             state = None
-            self._get_connection(disconnect=True)
+            self._get_mpd(disconnect=True)
 
         if len(text) > self.max_width:
             text = u'{}...'.format(text[:self.max_width - 3])
@@ -209,7 +209,7 @@ class Py3status:
         return response
 
     def kill(self):
-        self._get_connection(disconnect=True)
+        self._get_mpd(disconnect=True)
 
 
 if __name__ == "__main__":
