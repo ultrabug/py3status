@@ -6,12 +6,15 @@ Configuration parameters:
     cache_timeout: How often to detect a pending touch request.
         (default 1)
     format: Display format for the module.
-        (default '\?if=is_waiting Touch YubiKey')
+        (default '\?if=is_waiting YubiKey')
     u2f_keys_path: Full path to u2f_keys if you want to monitor sudo access.
         (default '~/.config/Yubico/u2f_keys')
 
+Control placeholders:
+    {is_waiting} a boolean indicating whether YubiKey is waiting for a touch.
+
 SAMPLE OUTPUT
-{'color': '#FF0000', 'full_text': 'Y'}
+{'color': '#00FF00', 'full_text': 'YubiKey'}
 
 Dependencies:
     gpg: to check for pending gpg access request
@@ -40,7 +43,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 1
-    format = '\?if=is_waiting Touch YubiKey'
+    format = '\?if=is_waiting YubiKey'
     u2f_keys_path = '~/.config/Yubico/u2f_keys'
 
     def post_config_hook(self):
@@ -102,8 +105,9 @@ class Py3status:
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, format_params),
-            'urgent': is_waiting
         }
+        if is_waiting:
+            response['urgent'] = True
         return response
 
     def kill(self):
