@@ -56,21 +56,29 @@ class Py3status:
         self.sudo_reset_timer = None
 
         class GpgThread(threading.Thread):
+            def _check_card_status(this):
+                return subprocess.Popen(
+                    'gpg --no-tty --card-status',
+                    shell=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    preexec_fn=os.setsid)
+
             def run(this):
                 while not self.killed.is_set():
-                    with subprocess.Popen(
-                            'gpg --no-tty --card-status',
-                            shell=True,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                            preexec_fn=os.setsid) as process:
+                    with this._check_card_status() as check_process:
                         try:
-                            process.communicate(timeout=0.1)
+                            # if this doesn't return very quickly, touch is pending
+                            check_process.communicate(timeout=0.1)
                             self.pending_gpg = False
                         except subprocess.TimeoutExpired:
                             self.pending_gpg = True
-                            os.killpg(process.pid, signal.SIGINT)
-                            process.communicate()
+                            os.killpg(check_process.pid, signal.SIGINT)
+                            check_process.communicate()
+                            with this._check_card_status() as wait_process:
+                                # wait until device is touched
+                                wait_process.communicate()
+                                self.pending_gpg = False
                     time.sleep(self.cache_timeout)
 
         class SudoThread(threading.Thread):
