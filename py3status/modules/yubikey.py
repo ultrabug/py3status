@@ -6,20 +6,11 @@ Configuration parameters:
     cache_timeout: How often to detect a pending touch request.
         (default 1)
     format: Display format for the module.
-        (default '{state}')
-    state_off: Message when the touch is not needed.
-        (default '')
-    state_on: Message when the YubiKey is waiting for a touch.
-        (default 'Y')
+        (default '\?if=is_waiting&color=bad Y')
     u2f_keys_path: Full path to u2f_keys if you want to monitor sudo access.
-        (default '')
-
-Color options:
-    color_bad: Touch is needed.
-    color_good: Touch is not needed.
+        (default '~/.config/Yubico/u2f_keys')
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': ''}
 {'color': '#FF0000', 'full_text': 'Y'}
 
 Dependencies:
@@ -49,12 +40,12 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 1
-    format = '{state}'
-    state_off = ''
-    state_on = 'Y'
-    u2f_keys_path = ''
+    format = '\?if=is_waiting&color=bad Y'
+    u2f_keys_path = '~/.config/Yubico/u2f_keys'
 
     def post_config_hook(self):
+        self.u2f_keys_path = os.path.expanduser(self.u2f_keys_path)
+
         self.killed = threading.Event()
 
         self.pending_gpg = False
@@ -92,7 +83,7 @@ class Py3status:
 
         GpgThread().start()
 
-        if self.u2f_keys_path != '':
+        if os.path.isfile(self.u2f_keys_path):
             SudoThread().start()
 
     def _restart_sudo_reset_timer(self):
@@ -106,13 +97,12 @@ class Py3status:
         self.sudo_reset_timer.start()
 
     def yubikey(self):
-        pending_touch = self.pending_gpg or self.pending_sudo
-        state = self.state_on if pending_touch else self.state_off
+        is_waiting = self.pending_gpg or self.pending_sudo
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'state': state}),
-            'color': self.py3.COLOR_BAD
-            if pending_touch else self.py3.COLOR_GOOD
+            'cached_until':
+            self.py3.time_in(self.cache_timeout),
+            'full_text':
+            self.py3.safe_format(self.format, {'is_waiting': is_waiting})
         }
         return response
 
