@@ -34,7 +34,7 @@ Color options:
     color_degraded: Screen is disconnected
     color_good: Displayed rotation is active
 
-@author Maxim Baz (https://github.com/maximbaz)
+@author Maxim Baz (https://github.com/maximbaz), @lasers
 @license BSD
 
 SAMPLE OUTPUT
@@ -62,18 +62,19 @@ class Py3status:
         self.displayed = ''
 
     def _get_all_outputs(self):
-        cmd = 'xrandr -q | grep " connected [^(]" | cut -d " " -f1'
-        return self.py3.command_output(cmd, shell=True).splitlines()
+        outputs = self.py3.command_output(['xrandr']).splitlines()
+        return [x.split()[0] for x in outputs if ' connected' in x]
 
     def _get_current_rotation_icon(self, all_outputs):
+        data = self.py3.command_output(['xrandr']).splitlines()
         output = self.screen or all_outputs[0]
-        cmd = 'xrandr -q | grep "^' + output + '" | cut -d " " -f4'
-        output = self.py3.command_output(cmd, shell=True).strip()
-        # xrandr may skip printing the 'normal', in which case the output would
-        # start from '('
-        is_horizontal = (output.startswith('(') or
-                         output in ['normal', 'inverted'])
-        return self.horizontal_icon if is_horizontal else self.vertical_icon
+        output_line = ''.join([x for x in data if x.startswith(output)])
+
+        for x in output_line.split():
+            if 'normal' in x or 'inverted' in x:
+                return self.horizontal_icon
+            elif 'left' in x or 'right' in x:
+                return self.vertical_icon
 
     def _apply(self):
         if self.displayed == self.horizontal_icon:
