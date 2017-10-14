@@ -110,7 +110,20 @@ class Py3status:
     state_play = '[play]'
     state_stop = '[stop]'
 
-    def _connection(self):
+    def post_config_hook(self):
+        # Convert from %placeholder% to {placeholder}
+        # This is not perfect but should be good enough
+        if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
+            self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
+            self.py3.log('Old % style format DEPRECATED use { style format')
+        # class variables:
+        self.connection = None
+
+    def _get_connection(self, disconnect=False):
+        if disconnect:
+            self._get_connection().disconnect()
+            self.connection = None
+            return
         try:
             if self.connection is None:
                 self.connection = MPDClient()
@@ -121,19 +134,6 @@ class Py3status:
         except (socket.error, ConnectionError, CommandError) as e:
             self.connection = None
             raise e
-
-    def _mpd_disconnect(self):
-        self._connection().disconnect()
-        self.connection = None
-
-    def post_config_hook(self):
-        # Convert from %placeholder% to {placeholder}
-        # This is not perfect but should be good enough
-        if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
-            self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
-            self.py3.log('Old % style format DEPRECATED use { style format')
-        # class variables:
-        self.connection = None
 
     def _state_character(self, state):
         if state == 'play':
@@ -146,7 +146,7 @@ class Py3status:
 
     def current_track(self):
         try:
-            status = self._connection().status()
+            status = self._get_connection().status()
             song = int(status.get('song', 0))
             next_song = int(status.get('nextsong', 0))
 
@@ -157,7 +157,7 @@ class Py3status:
                 text = ''
 
             else:
-                playlist_info = self._connection().playlistinfo()
+                playlist_info = self._get_connection().playlistinfo()
                 try:
                     song = playlist_info[song]
                 except IndexError:
@@ -183,11 +183,11 @@ class Py3status:
         except ConnectionError:
             text = "Error while connecting to mpd!"
             state = None
-            self._mpd_disconnect()
+            self._get_connection(disconnect=True)
         except CommandError:
             text = "Failed to authenticate to mpd!"
             state = None
-            self._mpd_disconnect()
+            self._get_connection(disconnect=True)
 
         if len(text) > self.max_width:
             text = u'{}...'.format(text[:self.max_width - 3])
@@ -209,7 +209,7 @@ class Py3status:
         return response
 
     def kill(self):
-        self._mpd_disconnect()
+        self._get_connection(disconnect=True)
 
 
 if __name__ == "__main__":
