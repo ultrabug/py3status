@@ -3,8 +3,6 @@
 Show an indicator when YubiKey is waiting for a touch.
 
 Configuration parameters:
-    cache_timeout: How often to detect a pending touch request.
-        (default 1)
     format: Display format for the module.
         (default '\?if=is_waiting YubiKey')
     gpg_check_timeout: Time to wait for gpg check response.
@@ -47,7 +45,6 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 1
     format = '\?if=is_waiting YubiKey'
     gpg_check_timeout = 0.1
     gpg_check_watch_paths = ['~/.gnupg/pubring.kbx', '~/.ssh/known_hosts']
@@ -75,6 +72,11 @@ class Py3status:
                     stderr=subprocess.DEVNULL,
                     preexec_fn=os.setsid)
 
+            def _set_pending(this, new_value):
+                self.pending_gpg = new_value
+                if not self.pending_sudo:
+                    self.py3.update()
+
             def run(this):
                 inotify = inotify_simple.INotify()
                 watches = []
@@ -95,13 +97,13 @@ class Py3status:
                                         timeout=self.gpg_check_timeout)
                                     time.sleep(0.25)
                                 except subprocess.TimeoutExpired:
-                                    self.pending_gpg = True
+                                    this._set_pending(True)
                                     os.killpg(check.pid, signal.SIGINT)
                                     check.communicate()
                                     # wait until device is touched
                                     with this._check_card_status() as wait:
                                         wait.communicate()
-                                        self.pending_gpg = False
+                                        this._set_pending(False)
                                         break
 
                         # ignore all events caused by operations above
@@ -113,14 +115,17 @@ class Py3status:
 
         class SudoThread(threading.Thread):
             def _restart_sudo_reset_timer(this):
-                def reset_pending_sudo():
-                    self.pending_sudo = False
-
                 if this.sudo_reset_timer is not None:
                     this.sudo_reset_timer.cancel()
 
-                this.sudo_reset_timer = threading.Timer(5, reset_pending_sudo)
+                this.sudo_reset_timer = threading.Timer(
+                    5, lambda: this._set_pending(False))
                 this.sudo_reset_timer.start()
+
+            def _set_pending(this, new_value):
+                self.pending_sudo = new_value
+                if not self.pending_gpg:
+                    self.py3.update()
 
             def run(this):
                 this.sudo_reset_timer = None
@@ -136,7 +141,7 @@ class Py3status:
                 while not self.killed.is_set():
                     for event in inotify.read():
                         this._restart_sudo_reset_timer()
-                        self.pending_sudo = True
+                        this._set_pending(True)
 
                 for watch in watches:
                     inotify.rm_watch(watch)
@@ -151,7 +156,7 @@ class Py3status:
         is_waiting = self.pending_gpg or self.pending_sudo
         format_params = {'is_waiting': is_waiting}
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, format_params),
         }
         if is_waiting:
