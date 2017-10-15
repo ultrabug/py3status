@@ -53,7 +53,6 @@ class Py3status:
 
         self.pending_gpg = False
         self.pending_sudo = False
-        self.sudo_reset_timer = None
 
         class GpgThread(threading.Thread):
             def _check_card_status(this):
@@ -65,47 +64,69 @@ class Py3status:
                     preexec_fn=os.setsid)
 
             def run(this):
+                inotify = inotify_simple.INotify()
+                gpg_watch = inotify.add_watch(
+                    os.path.expanduser('~/.gnupg/pubring.kbx'),
+                    inotify_simple.flags.OPEN)
+                ssh_watch = inotify.add_watch(
+                    os.path.expanduser('~/.ssh/known_hosts'),
+                    inotify_simple.flags.OPEN)
+
                 while not self.killed.is_set():
-                    with this._check_card_status() as check_process:
-                        try:
-                            # if this doesn't return very quickly, touch is pending
-                            check_process.communicate(timeout=0.1)
-                            self.pending_gpg = False
-                        except subprocess.TimeoutExpired:
-                            self.pending_gpg = True
-                            os.killpg(check_process.pid, signal.SIGINT)
-                            check_process.communicate()
-                            with this._check_card_status() as wait_process:
-                                # wait until device is touched
-                                wait_process.communicate()
-                                self.pending_gpg = False
-                    time.sleep(self.cache_timeout)
+                    for event in inotify.read():
+                        # e.g. ssh doesn't start immediately, try several seconds to be sure
+                        for i in range(20):
+                            with this._check_card_status() as check:
+                                try:
+                                    # if this doesn't return very quickly, touch is pending
+                                    check.communicate(timeout=0.1)
+                                    time.sleep(0.25)
+                                except subprocess.TimeoutExpired:
+                                    self.pending_gpg = True
+                                    os.killpg(check.pid, signal.SIGINT)
+                                    check.communicate()
+                                    # wait until device is touched
+                                    with this._check_card_status() as wait:
+                                        wait.communicate()
+                                        self.pending_gpg = False
+                                        break
+
+                        # ignore all events caused by operations above
+                        for _ in inotify.read():
+                            pass
+
+                inotify.rm_watch(gpg_watch)
+                inotify.rm_watch(ssh_watch)
 
         class SudoThread(threading.Thread):
+            def _restart_sudo_reset_timer(this):
+                def reset_pending_sudo():
+                    self.pending_sudo = False
+
+                if this.sudo_reset_timer is not None:
+                    this.sudo_reset_timer.cancel()
+
+                this.sudo_reset_timer = threading.Timer(5, reset_pending_sudo)
+                this.sudo_reset_timer.start()
+
             def run(this):
+                this.sudo_reset_timer = None
+
                 inotify = inotify_simple.INotify()
                 watch = inotify.add_watch(self.u2f_keys_path,
                                           inotify_simple.flags.ACCESS)
+
                 while not self.killed.is_set():
                     for event in inotify.read():
-                        self._restart_sudo_reset_timer()
+                        this._restart_sudo_reset_timer()
                         self.pending_sudo = True
+
                 inotify.rm_watch(watch)
 
         GpgThread().start()
 
         if os.path.isfile(self.u2f_keys_path):
             SudoThread().start()
-
-    def _restart_sudo_reset_timer(self):
-        def reset_pending_sudo():
-            self.pending_sudo = False
-
-        if self.sudo_reset_timer is not None:
-            self.sudo_reset_timer.cancel()
-
-        self.sudo_reset_timer = threading.Timer(5, reset_pending_sudo)
-        self.sudo_reset_timer.start()
 
     def yubikey(self):
         is_waiting = self.pending_gpg or self.pending_sudo
