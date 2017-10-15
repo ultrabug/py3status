@@ -7,8 +7,13 @@ Configuration parameters:
         (default 1)
     format: Display format for the module.
         (default '\?if=is_waiting YubiKey')
-    u2f_keys_path: Full path to u2f_keys if you want to monitor sudo access.
-        (default '~/.config/Yubico/u2f_keys')
+    gpg_check_timeout: Time to wait for gpg check response.
+        Use value as small as possible that doesn't introduce false positives.
+        (default 0.1)
+    gpg_check_watch_paths: A list of files to watch, start gpg check if any one was opened.
+        (default ['~/.gnupg/pubring.kbx', '~/.ssh/known_hosts'])
+    sudo_check_watch_paths: A list of files to watch, start sudo check if any one was opened.
+        (default ['~/.config/Yubico/u2f_keys'])
 
 Control placeholders:
     {is_waiting} a boolean indicating whether YubiKey is waiting for a touch.
@@ -18,7 +23,7 @@ SAMPLE OUTPUT
 
 Dependencies:
     gpg: to check for pending gpg access request
-    inotify-simple: to check for pending sudo request
+    inotify-simple: to check for pending gpg and sudo requests
     subprocess32: if after all these years you are still using python2
 
 @author Maxim Baz (https://github.com/maximbaz)
@@ -44,10 +49,17 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1
     format = '\?if=is_waiting YubiKey'
-    u2f_keys_path = '~/.config/Yubico/u2f_keys'
+    gpg_check_timeout = 0.1
+    gpg_check_watch_paths = ['~/.gnupg/pubring.kbx', '~/.ssh/known_hosts']
+    sudo_check_watch_paths = ['~/.config/Yubico/u2f_keys']
 
     def post_config_hook(self):
-        self.u2f_keys_path = os.path.expanduser(self.u2f_keys_path)
+        self.gpg_check_watch_paths = [
+            os.path.expanduser(p) for p in self.gpg_check_watch_paths
+        ]
+        self.sudo_check_watch_paths = [
+            os.path.expanduser(p) for p in self.sudo_check_watch_paths
+        ]
 
         self.killed = threading.Event()
 
@@ -65,12 +77,12 @@ class Py3status:
 
             def run(this):
                 inotify = inotify_simple.INotify()
-                gpg_watch = inotify.add_watch(
-                    os.path.expanduser('~/.gnupg/pubring.kbx'),
-                    inotify_simple.flags.OPEN)
-                ssh_watch = inotify.add_watch(
-                    os.path.expanduser('~/.ssh/known_hosts'),
-                    inotify_simple.flags.OPEN)
+                watches = []
+                for path in self.gpg_check_watch_paths:
+                    if os.path.isfile(path):
+                        watch = inotify.add_watch(path,
+                                                  inotify_simple.flags.OPEN)
+                        watches.append(watch)
 
                 while not self.killed.is_set():
                     for event in inotify.read():
@@ -79,7 +91,8 @@ class Py3status:
                             with this._check_card_status() as check:
                                 try:
                                     # if this doesn't return very quickly, touch is pending
-                                    check.communicate(timeout=0.1)
+                                    check.communicate(
+                                        timeout=self.gpg_check_timeout)
                                     time.sleep(0.25)
                                 except subprocess.TimeoutExpired:
                                     self.pending_gpg = True
@@ -95,8 +108,8 @@ class Py3status:
                         for _ in inotify.read():
                             pass
 
-                inotify.rm_watch(gpg_watch)
-                inotify.rm_watch(ssh_watch)
+                for watch in watches:
+                    inotify.rm_watch(watch)
 
         class SudoThread(threading.Thread):
             def _restart_sudo_reset_timer(this):
@@ -113,19 +126,25 @@ class Py3status:
                 this.sudo_reset_timer = None
 
                 inotify = inotify_simple.INotify()
-                watch = inotify.add_watch(self.u2f_keys_path,
-                                          inotify_simple.flags.ACCESS)
+                watches = []
+                for path in self.sudo_check_watch_paths:
+                    if os.path.isfile(path):
+                        watch = inotify.add_watch(path,
+                                                  inotify_simple.flags.OPEN)
+                        watches.append(watch)
 
                 while not self.killed.is_set():
                     for event in inotify.read():
                         this._restart_sudo_reset_timer()
                         self.pending_sudo = True
 
-                inotify.rm_watch(watch)
+                for watch in watches:
+                    inotify.rm_watch(watch)
 
-        GpgThread().start()
+        if len(self.gpg_check_watch_paths) > 0:
+            GpgThread().start()
 
-        if os.path.isfile(self.u2f_keys_path):
+        if len(self.sudo_check_watch_paths) > 0:
             SudoThread().start()
 
     def yubikey(self):
