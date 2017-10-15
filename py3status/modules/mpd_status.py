@@ -121,9 +121,12 @@ class Py3status:
 
     def _get_mpd(self, disconnect=False):
         if disconnect:
-            self._get_mpd().disconnect()
-            self.client = None
+            try:
+                self.client.disconnect()
+            finally:
+                self.client = None
             return
+
         try:
             if self.client is None:
                 self.client = MPDClient()
