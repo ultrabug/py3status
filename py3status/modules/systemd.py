@@ -1,39 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-Check systemd unit status.
-
-Check the status of a systemd unit.
+Display the status of a service on your system.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 5)
-    format: Format for module output (default "{unit}: {status}")
-    unit: Name of the unit (default "dbus.service")
+    cache_timeout: refresh interval for this module (default 5)
+    format: display format for this module (default '{unit}: {status}')
+    unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
-    {unit} name of the unit
-    {status} 'active', 'inactive' or 'not-found'
+    {unit} unit name, eg sshd
+    {status} unit status, eg active, inactive, not-found
 
 Color options:
-    color_good: Unit active
-    color_bad: Unit inactive
-    color_degraded: Unit not found
+    color_good: unit active
+    color_bad: unit inactive
+    color_degraded: unit not-found
 
-Example:
-
+Examples:
 ```
-# Check status of vpn service
-# Start with left click
-# Stop with right click
+# show the status of vpn service
+# left click to start, right click to stop
 systemd vpn {
     unit = 'vpn.service'
-    on_click 1 = "exec sudo systemctl start vpn"
-    on_click 3 = "exec sudo systemctl stop vpn"
-    format = '{unit} is {status}'
+    on_click 1 = 'exec sudo systemctl start vpn'
+    on_click 3 = 'exec sudo systemctl stop vpn'
 }
 ```
 
 Requires:
-    pydbus: python lib for dbus
+    pydbus: pythonic dbus library
 
 @author Adrian Lopez <adrianlzt@gmail.com>
 @license BSD
