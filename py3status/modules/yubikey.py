@@ -10,7 +10,7 @@ Configuration parameters:
         (default 0.1)
     gpg_check_watch_paths: A list of files to watch, start gpg check if any one was opened.
         (default ['~/.gnupg/pubring.kbx', '~/.ssh/known_hosts'])
-    sudo_check_watch_paths: A list of files to watch, start sudo check if any one was opened.
+    sudo_check_watch_paths: A list of files to watch, toggle sudo check if any one was opened.
         (default ['~/.config/Yubico/u2f_keys'])
 
 Control placeholders:
@@ -22,6 +22,7 @@ SAMPLE OUTPUT
 Dependencies:
     gpg: to check for pending gpg access request
     inotify-simple: to check for pending gpg and sudo requests
+    github.com/maximbaz/pam-u2f: a fork that adds watch capability to pam-u2f module
     subprocess32: if after all these years you are still using python2
 
 @author Maxim Baz (https://github.com/maximbaz)
@@ -114,22 +115,12 @@ class Py3status:
                     inotify.rm_watch(watch)
 
         class SudoThread(threading.Thread):
-            def _restart_sudo_reset_timer(this):
-                if this.sudo_reset_timer is not None:
-                    this.sudo_reset_timer.cancel()
-
-                this.sudo_reset_timer = threading.Timer(
-                    5, lambda: this._set_pending(False))
-                this.sudo_reset_timer.start()
-
             def _set_pending(this, new_value):
                 self.pending_sudo = new_value
                 if not self.pending_gpg:
                     self.py3.update()
 
             def run(this):
-                this.sudo_reset_timer = None
-
                 inotify = inotify_simple.INotify()
                 watches = []
                 for path in self.sudo_check_watch_paths:
@@ -140,8 +131,9 @@ class Py3status:
 
                 while not self.killed.is_set():
                     for event in inotify.read():
-                        this._restart_sudo_reset_timer()
                         this._set_pending(True)
+                        for event in inotify.read():
+                            this._set_pending(False)
 
                 for watch in watches:
                     inotify.rm_watch(watch)
