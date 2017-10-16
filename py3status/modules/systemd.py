@@ -50,7 +50,7 @@ class Py3status:
         systemd = bus.get('org.freedesktop.systemd1')
         self.systemd_unit = bus.get('.systemd1', systemd.LoadUnit(self.unit))
 
-    def check_status(self, i3s_output_list, i3s_config):
+    def systemd(self):
         status = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')
         exists = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'LoadState')
 
