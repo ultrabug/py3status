@@ -38,6 +38,8 @@ from pydbus import SystemBus
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 5
     format = '{unit}: {status}'
@@ -46,13 +48,9 @@ class Py3status:
     def post_config_hook(self):
         bus = SystemBus()
         systemd = bus.get('org.freedesktop.systemd1')
-        s_unit = systemd.LoadUnit(self.unit)
-        self.systemd_unit = bus.get('.systemd1', s_unit)
+        self.systemd_unit = bus.get('.systemd1', systemd.LoadUnit(self.unit))
 
     def check_status(self, i3s_output_list, i3s_config):
-        """
-        Ask dbus to get Status and loaded status for the unit
-        """
         status = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')
         exists = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'LoadState')
 
@@ -66,13 +64,12 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
-        full_text = self.py3.safe_format(self.format, {'unit': self.unit, 'status': status})
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text,
-            'color': color
+            'color': color,
+            'full_text': self.py3.safe_format(
+                self.format, {'unit': self.unit, 'status': status})
         }
-        return response
 
 
 if __name__ == "__main__":
