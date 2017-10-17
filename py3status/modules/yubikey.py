@@ -19,11 +19,10 @@ Control placeholders:
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'YubiKey'}
 
-Dependencies:
-    gpg: to check for pending gpg access request
-    inotify-simple: to check for pending gpg and u2f requests
-    github.com/maximbaz/pam-u2f: a fork that adds watch capability to pam-u2f module
-    subprocess32: if after all these years you are still using python2
+Requires:
+    inotify-simple: (for gpg and u2f) to check for requests
+    github.com/maximbaz/pam-u2f: (for u2f) a fork that adds watch capability to pam-u2f module
+    subprocess32: (for gpg) needed only if after all these years you are still using python2
 
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
