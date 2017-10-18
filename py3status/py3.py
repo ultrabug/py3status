@@ -8,7 +8,7 @@ import shlex
 from fnmatch import fnmatch
 from math import log10
 from pprint import pformat
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from time import time
 
 from py3status import exceptions
@@ -850,18 +850,25 @@ class Py3:
             msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command, shell=False):
+    def command_output(self, command, shell=False, capture_stderr=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
 
-        An Exception is raised if an error occurs
+        :param command: command to run can be a str or list
+        :param shell: if `True` then command is run through the shell
+        :param capture_stderr: if `True` then STDERR is piped to STDOUT
+
+        A CommandError is raised if an error occurs
         """
         # convert the non-shell command to sequence if it is a string
         if not shell and isinstance(command, basestring):
             command = shlex.split(command)
+
+        stderr = STDOUT if capture_stderr else PIPE
+
         try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
+            process = Popen(command, stdout=PIPE, stderr=stderr, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
             msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e)
