@@ -503,6 +503,8 @@ class Py3:
         rate_limit is the time period in seconds during which this message
         should not be repeated.
         """
+        if isinstance(msg, Composite):
+            msg = msg.text()
         # force unicode for python2 str
         if self._is_python_2 and isinstance(msg, str):
             msg = msg.decode('utf-8')
