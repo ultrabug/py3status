@@ -15,33 +15,30 @@ Configuration parameters:
     format: display format for this module
         (default '\?if=is_started [\?if=is_stopped \[\] moc|
         [\?if=is_paused \|\|][\?if=is_playing >] {title}]')
-    sleep_timeout: sleep interval for this module will be used when moc is not
-        running. this allows aggressive timing in cache_timeout where one might
-        want to refresh moc every 0 second along with time placeholders...
-        or to make moc run once every minute as long as it's not being used.
-        (default 20)
+    sleep_timeout: sleep interval for this module. when moc is not running,
+        this interval will be used. this allows some flexible timing where one
+        might want to refresh constantly with some placeholders... or to refresh
+        only once every minute rather than every few seconds. (default 20)
 
 Control placeholders:
-    is_paused: a boolean based on moc status
-    is_playing: a boolean based on moc status
-    is_started: a boolean based on moc status
-    is_stopped: a boolean based on moc status
+    {is_paused} a boolean based on moc status
+    {is_playing} a boolean based on moc status
+    {is_started} a boolean based on moc status
+    {is_stopped} a boolean based on moc status
 
 Format placeholders:
-    {totaltime} total time in seconds, eg 72:02
-    {currenttime} elapsed time in [HH:]MM:SS, eg 00:32
-    {album} album name
-    {artist} artist name
+    {album} album name, eg (new output here)
+    {artist} artist name, eg (new output here)
     {avgbitrate} audio average bitrate, eg 230kbps
     {bitrate} audio bitrate, eg 230kbps
     {currentsec} elapsed time in seconds, eg 32
     {currenttime} elapsed time in [HH:]MM:SS, eg 00:32
     {file} file location, eg /home/user/Music...
     {rate} audio rate, eg 44kHz
-    {songtitle} song title
-    {state} playback state, eg PLAY, PAUSE, or STOP
+    {songtitle} song title, eg (new output here)
+    {state} playback state, eg PLAY, PAUSE, STOP
     {timeleft} time left in [HH:]MM:SS, eg 71:30
-    {title} track title (contains artist + songtitle)
+    {title} track title, eg (new output here)
     {totalsec} total time in seconds, eg 4322
     {totaltime} total time in seconds, eg 72:02
 
@@ -71,7 +68,7 @@ stopped
 from __future__ import division
 
 
-STRING_NOT_INSTALLED = "isn't installed"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:

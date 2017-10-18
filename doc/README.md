@@ -820,7 +820,7 @@ Called just before a module is destroyed.
 
 __on_click(event)__
 
-Called when an event is recieved by a module.
+Called when an event is received by a module.
 
 __post_config_hook()__
 
@@ -1515,7 +1515,7 @@ if __name__ == "__main__":
     module_test(Py3status)
 ```
 
-If a specific config should should be provided for the module test, this
+If a specific config should be provided for the module test, this
 can be done as follows.
 
 ```
