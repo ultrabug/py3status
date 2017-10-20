@@ -9,9 +9,10 @@ Configuration parameters:
     format_iface: display format for network interfaces
         (default '\?if=is_connected {iface}:[ {format_ip4}][ {format_ip6}]')
     format_iface_separator: show separator if more than one (default ' ')
-    format_ip_separator: show separator if more than one (default ', ')
     format_ip4: display format for IPv4 addresses (default '{ip4}')
+    format_ip4_separator: show separator if more than one (default ', ')
     format_ip6: display format for IPv6 addresses (default '{ip6}')
+    format_ip6_separator: show separator if more than one (default ', ')
     iface_blacklist: specify a list of interfaces to ignore.
         accepts shell-style wildcards.
         (default ['lo'])
@@ -80,8 +81,9 @@ class Py3status:
     format_iface = '\?if=is_connected {iface}:[ {format_ip4}][ {format_ip6}]'
     format_iface_separator = ' '
     format_ip4 = '{ip4}'
+    format_ip4_separator = ', '
     format_ip6 = '{ip6}'
-    format_ip_separator = ', '
+    format_ip6_separator = ', '
     iface_blacklist = ['lo']
     ip_blacklist = []
     thresholds = [(0, 'bad'), (1, 'good')]
@@ -128,13 +130,11 @@ class Py3status:
         count = 0
         iface_list = []
         ip_data = self._get_ip_data()
-        ip_separator = self.py3.safe_format(self.format_ip_separator)
 
         for iface, ips in ip_data.items():
             count_iface = 0
             if self._blacklist(iface, self.iface_blacklist):
                 continue
-
             is_connected = False
 
             format_ip4 = None
@@ -147,7 +147,8 @@ class Py3status:
                         is_connected = True
                         count_iface += 1
 
-                format_ip4 = self.py3.composite_join(ip_separator, ip4_list)
+                ip4_separator = self.py3.safe_format(self.format_ip4_separator)
+                format_ip4 = self.py3.composite_join(ip4_separator, ip4_list)
 
             format_ip6 = None
             if self.ip6_init:
@@ -159,7 +160,8 @@ class Py3status:
                         is_connected = True
                         count_iface += 1
 
-                format_ip6 = self.py3.composite_join(ip_separator, ip6_list)
+                ip6_separator = self.py3.safe_format(self.format_ip6_separator)
+                format_ip6 = self.py3.composite_join(ip6_separator, ip6_list)
 
             if is_connected:
                 count += 1
