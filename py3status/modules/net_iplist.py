@@ -7,9 +7,11 @@ Configuration parameters:
     format: display format for this module
         (default '\?color=count [{format_iface}|\?show no connection]')
     format_iface: display format for network interfaces
-        (default '\?if=is_connected {iface}:[ {ip4}][ {ip6}]')
+        (default '\?if=is_connected {iface}:[ {format_ip4}][ {format_ip6}]')
     format_iface_separator: show separator if more than one (default ' ')
     format_ip_separator: show separator if more than one (default ', ')
+    format_ip4: display format for IPv4 addresses (default '{ip4}')
+    format_ip6: display format for IPv6 addresses (default '{ip6}')
     iface_blacklist: specify a list of interfaces to ignore.
         accepts shell-style wildcards.
         (default ['lo'])
@@ -25,9 +27,15 @@ Format placeholders:
 
 format_iface placeholders:
     {iface} interface name, eg eno1
-    {ip4} interface IPv4 addresses, eg 192.168.1.103
-    {ip6} interface IPv6 addresses, eg fe80::d625:7ea8:e729:716c/64
+    {format_ip4} format for IPv4 addresses
+    {format_ip6} format for IPv6 addresses
     {is_connected} a boolean based on interface data
+
+format_ip4 placeholders:
+    {ip4} IPv4 address, eg 192.168.1.103
+
+format_ip6 placeholders:
+    {ip6} IPv6 address, eg fe80::d625:7ea8:e729:716c/64
 
 Color thresholds:
     count: print color based on number of connections
@@ -69,8 +77,10 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = '\?color=count [{format_iface}|\?show no connection]'
-    format_iface = '\?if=is_connected {iface}:[ {ip4}][ {ip6}]'
+    format_iface = '\?if=is_connected {iface}:[ {format_ip4}][ {format_ip6}]'
     format_iface_separator = ' '
+    format_ip4 = '{ip4}'
+    format_ip6 = '{ip6}'
     format_ip_separator = ', '
     iface_blacklist = ['lo']
     ip_blacklist = []
@@ -80,8 +90,8 @@ class Py3status:
         self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
         self.ip4_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
-        self.ip4_init = self.py3.format_contains(self.format_iface, 'ip4')
-        self.ip6_init = self.py3.format_contains(self.format_iface, 'ip6')
+        self.ip4_init = self.py3.format_contains(self.format_iface, 'format_ip4')
+        self.ip6_init = self.py3.format_contains(self.format_iface, 'format_ip6')
 
     def _blacklist(self, string, blacklist):
         for ignore in blacklist:
@@ -127,27 +137,29 @@ class Py3status:
 
             is_connected = False
 
-            ip4 = None
+            format_ip4 = None
             if self.ip4_init:
                 ip4_list = []
                 for ip4 in ips.get('ip4', []):
                     if not self._blacklist(ip4, self.ip_blacklist):
-                        ip4_list.append(self.py3.safe_format(ip4))
+                        ip4_list.append(self.py3.safe_format(
+                            self.format_ip4, {'ip4': ip4}))
                         is_connected = True
                         count_iface += 1
 
-                ip4 = self.py3.composite_join(ip_separator, ip4_list)
+                format_ip4 = self.py3.composite_join(ip_separator, ip4_list)
 
-            ip6 = None
+            format_ip6 = None
             if self.ip6_init:
                 ip6_list = []
                 for ip6 in ips.get('ip6', []):
                     if not self._blacklist(ip6, self.ip_blacklist):
-                        ip6_list.append(self.py3.safe_format(ip6))
+                        ip6_list.append(self.py3.safe_format(
+                            self.format_ip6, {'ip6': ip6}))
                         is_connected = True
                         count_iface += 1
 
-                ip6 = self.py3.composite_join(ip_separator, ip6_list)
+                format_ip6 = self.py3.composite_join(ip_separator, ip6_list)
 
             if is_connected:
                 count += 1
@@ -158,8 +170,8 @@ class Py3status:
             iface_list.append(self.py3.safe_format(
                 self.format_iface, {
                     'iface': iface,
-                    'ip4': ip4,
-                    'ip6': ip6,
+                    'format_ip4': format_ip4,
+                    'format_ip6': format_ip6,
                     'is_connected': is_connected,
                 }))
 
