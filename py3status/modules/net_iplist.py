@@ -31,6 +31,7 @@ format_iface placeholders:
 
 Color thresholds:
     count: print color based on number of connections
+    count_iface: print color based on number of connections
 
 Requires:
     iproute2: show/manipulate routing, devices, policy routing and tunnels
@@ -41,6 +42,12 @@ Examples:
 net_iplist {
     iface_blacklist = []
     ip_blacklist = ['127.*', '::1']
+}
+
+# show colorized ipv4 interfaces
+net_iplist {
+    format = '{format_iface}'
+    format_iface = '[\?color=count_iface {iface}][ {ip4}]'
 }
 ```
 
@@ -114,6 +121,7 @@ class Py3status:
         ip_separator = self.py3.safe_format(self.format_ip_separator)
 
         for iface, ips in ip_data.items():
+            count_iface = 0
             if self._blacklist(iface, self.iface_blacklist):
                 continue
 
@@ -126,6 +134,7 @@ class Py3status:
                     if not self._blacklist(ip4, self.ip_blacklist):
                         ip4_list.append(self.py3.safe_format(ip4))
                         is_connected = True
+                        count_iface += 1
 
                 ip4 = self.py3.composite_join(ip_separator, ip4_list)
 
@@ -136,11 +145,15 @@ class Py3status:
                     if not self._blacklist(ip6, self.ip_blacklist):
                         ip6_list.append(self.py3.safe_format(ip6))
                         is_connected = True
+                        count_iface += 1
 
                 ip6 = self.py3.composite_join(ip_separator, ip6_list)
 
             if is_connected:
                 count += 1
+
+            if self.thresholds:
+                self.py3.threshold_get_color(count_iface, 'count_iface')
 
             iface_list.append(self.py3.safe_format(
                 self.format_iface, {
@@ -150,7 +163,8 @@ class Py3status:
                     'is_connected': is_connected,
                 }))
 
-        self.py3.threshold_get_color(count, 'count')
+        if self.thresholds:
+            self.py3.threshold_get_color(count, 'count')
         iface_separator = self.py3.safe_format(self.format_iface_separator)
         format_iface = self.py3.composite_join(iface_separator, iface_list)
 
