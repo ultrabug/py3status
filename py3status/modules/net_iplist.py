@@ -5,15 +5,15 @@ Display list of network interfaces and IP addresses.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 30)
     format: display format for this module
-        (default '\?color=count [{format_iface}|\?show no connection]')
-    format_iface: display format for network interfaces
-        (default '\?if=is_connected {iface}:[ {format_ip4}][ {format_ip6}]')
-    format_iface_separator: show separator if more than one (default ' ')
+        (default '\?color=count [{format_interface}|\?show no connection]')
+    format_interface: display format for network interfaces
+        (default '\?if=is_connected {interface}:[ {format_ip4}][ {format_ip6}]')
+    format_interface_separator: show separator if more than one (default ' ')
     format_ip4: display format for IPv4 addresses (default '{ip4}')
     format_ip4_separator: show separator if more than one (default ', ')
     format_ip6: display format for IPv6 addresses (default '{ip6}')
     format_ip6_separator: show separator if more than one (default ', ')
-    iface_blacklist: specify a list of interfaces to ignore.
+    interface_blacklist: specify a list of interfaces to ignore.
         accepts shell-style wildcards.
         (default ['lo'])
     ip_blacklist: specify a list of IPs to ignore.
@@ -24,10 +24,10 @@ Configuration parameters:
 
 Format placeholders:
     {count} number of connections
-    {format_iface} format for network interfaces
+    {format_interface} format for network interfaces
 
-format_iface placeholders:
-    {iface} interface name, eg eno1
+format_interface placeholders:
+    {interface} interface name, eg eno1
     {format_ip4} format for IPv4 addresses
     {format_ip6} format for IPv6 addresses
     {is_connected} a boolean based on interface data
@@ -40,7 +40,7 @@ format_ip6 placeholders:
 
 Color thresholds:
     count: print color based on number of connections
-    count_iface: print color based on number of connections
+    count_interface: print color based on number of connections
 
 Requires:
     iproute2: show/manipulate routing, devices, policy routing and tunnels
@@ -49,14 +49,14 @@ Examples:
 ```
 # ask @guiniol for a description
 net_iplist {
-    iface_blacklist = []
+    interface_blacklist = []
     ip_blacklist = ['127.*', '::1']
 }
 
 # show colorized ipv4 interfaces
 net_iplist {
-    format = '{format_iface}'
-    format_iface = '[\?color=count_iface {iface}][ {ip4}]'
+    format = '{format_interface}'
+    format_interface = '[\?color=count_interface {interface}][ {ip4}]'
 }
 ```
 
@@ -77,23 +77,23 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    format = '\?color=count [{format_iface}|\?show no connection]'
-    format_iface = '\?if=is_connected {iface}:[ {format_ip4}][ {format_ip6}]'
-    format_iface_separator = ' '
+    format = '\?color=count [{format_interface}|\?show no connection]'
+    format_interface = '\?if=is_connected {interface}:[ {format_ip4}][ {format_ip6}]'
+    format_interface_separator = ' '
     format_ip4 = '{ip4}'
     format_ip4_separator = ', '
     format_ip6 = '{ip6}'
     format_ip6_separator = ', '
-    iface_blacklist = ['lo']
+    interface_blacklist = ['lo']
     ip_blacklist = []
     thresholds = [(0, 'bad'), (1, 'good')]
 
     def post_config_hook(self):
-        self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
+        self.interface_re = re.compile(r'\d+: (?P<interface>\w+):')
         self.ip4_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
         self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
-        self.ip4_init = self.py3.format_contains(self.format_iface, 'format_ip4')
-        self.ip6_init = self.py3.format_contains(self.format_iface, 'format_ip6')
+        self.ip4_init = self.py3.format_contains(self.format_interface, 'format_ip4')
+        self.ip6_init = self.py3.format_contains(self.format_interface, 'format_ip6')
 
     def _blacklist(self, string, blacklist):
         for ignore in blacklist:
@@ -106,21 +106,21 @@ class Py3status:
 
         new_data = {}
         for line in ip_data.splitlines():
-            iface = self.iface_re.match(line)
-            if iface:
-                cur_iface = iface.group('iface')
-                new_data[cur_iface] = {}
+            interface = self.interface_re.match(line)
+            if interface:
+                cur_interface = interface.group('interface')
+                new_data[cur_interface] = {}
                 continue
 
             ip4 = self.ip4_re.match(line)
             if ip4:
-                new_data.setdefault(cur_iface, {}).setdefault(
+                new_data.setdefault(cur_interface, {}).setdefault(
                     'ip4', []).append(ip4.group('ip4'))
                 continue
 
             ip6 = self.ip6_re.match(line)
             if ip6:
-                new_data.setdefault(cur_iface, {}).setdefault(
+                new_data.setdefault(cur_interface, {}).setdefault(
                     'ip6', []).append(ip6.group('ip6'))
                 continue
 
@@ -128,12 +128,12 @@ class Py3status:
 
     def net_iplist(self):
         count = 0
-        iface_list = []
+        interface_list = []
         ip_data = self._get_ip_data()
 
-        for iface, ips in ip_data.items():
-            count_iface = 0
-            if self._blacklist(iface, self.iface_blacklist):
+        for interface, ips in ip_data.items():
+            count_interface = 0
+            if self._blacklist(interface, self.interface_blacklist):
                 continue
             is_connected = False
 
@@ -145,7 +145,7 @@ class Py3status:
                         ip4_list.append(self.py3.safe_format(
                             self.format_ip4, {'ip4': ip4}))
                         is_connected = True
-                        count_iface += 1
+                        count_interface += 1
 
                 ip4_separator = self.py3.safe_format(self.format_ip4_separator)
                 format_ip4 = self.py3.composite_join(ip4_separator, ip4_list)
@@ -158,7 +158,7 @@ class Py3status:
                         ip6_list.append(self.py3.safe_format(
                             self.format_ip6, {'ip6': ip6}))
                         is_connected = True
-                        count_iface += 1
+                        count_interface += 1
 
                 ip6_separator = self.py3.safe_format(self.format_ip6_separator)
                 format_ip6 = self.py3.composite_join(ip6_separator, ip6_list)
@@ -167,11 +167,11 @@ class Py3status:
                 count += 1
 
             if self.thresholds:
-                self.py3.threshold_get_color(count_iface, 'count_iface')
+                self.py3.threshold_get_color(count_interface, 'count_interface')
 
-            iface_list.append(self.py3.safe_format(
-                self.format_iface, {
-                    'iface': iface,
+            interface_list.append(self.py3.safe_format(
+                self.format_interface, {
+                    'interface': interface,
                     'format_ip4': format_ip4,
                     'format_ip6': format_ip6,
                     'is_connected': is_connected,
@@ -179,13 +179,13 @@ class Py3status:
 
         if self.thresholds:
             self.py3.threshold_get_color(count, 'count')
-        iface_separator = self.py3.safe_format(self.format_iface_separator)
-        format_iface = self.py3.composite_join(iface_separator, iface_list)
+        interface_separator = self.py3.safe_format(self.format_interface_separator)
+        format_interface = self.py3.composite_join(interface_separator, interface_list)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
-                self.format, {'format_iface': format_iface, 'count': count})
+                self.format, {'format_interface': format_interface, 'count': count})
         }
 
 
