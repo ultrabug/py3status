@@ -6,7 +6,7 @@ Display X selection.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 0.5)
-    command: the clipboard command to run (default 'xsel -output')
+    command: the clipboard command to run (default 'xsel --output')
     click_command: the clipboard command to run on click
         (default 'xsel --clear --clipboard')
     format: display format for this module (default '{selection}')
@@ -38,7 +38,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 0.5
-    command = 'xsel -output'
+    command = 'xsel --output'
     click_command = 'xsel --clear --clipboard'
     format = '{selection}'
     max_size = 15
