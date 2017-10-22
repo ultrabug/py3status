@@ -14,7 +14,7 @@ Configuration parameters:
         see http://bitcoincharts.com/about/markets-api/ (default 'close')
     format: display format for this module (default '{format_bitcoin}')
     format_bitcoin: display format for bitcoin (default '{market}: {price}{symbol}')
-    format_separator: show separator only if more than one (default ', ')
+    format_separator: show separator if more than one (default ', ')
     hide_on_error: show error message (default False)
     markets: list of supported markets http://bitcoincharts.com/markets/list/
         (default 'btceUSD, btcdeEUR')

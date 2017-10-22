@@ -63,7 +63,8 @@ SAMPLE OUTPUT
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 7200
     forecast_days = 3

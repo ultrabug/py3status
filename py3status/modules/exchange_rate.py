@@ -29,6 +29,9 @@ URL += '&env=store://datatables.org/alltableswithkeys&format=json'
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     base = 'EUR'
     cache_timeout = 600
     format = u'${USD} £{GBP} ¥{JPY}'

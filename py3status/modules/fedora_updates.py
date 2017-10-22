@@ -34,6 +34,8 @@ import re
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 600
     check_security = True

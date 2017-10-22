@@ -440,7 +440,7 @@ Display bluetooth status.
 
 Configuration parameters:
   - `cache_timeout` refresh interval for this module *(default 10)*
-  - `device_separator` show separator only if more than one *(default '|')*
+  - `device_separator` show separator if more than one *(default '|')*
   - `format` display format for this module *(default 'BT[: {format_device}]')*
   - `format_device` display format for bluetooth devices *(default '{name}')*
 
