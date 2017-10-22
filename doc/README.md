@@ -1515,7 +1515,7 @@ if __name__ == "__main__":
     module_test(Py3status)
 ```
 
-If a specific config should should be provided for the module test, this
+If a specific config should be provided for the module test, this
 can be done as follows.
 
 ```

@@ -87,7 +87,7 @@ waiting
 from __future__ import division
 
 
-STRING_NOT_INSTALLED = "isn't installed"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
