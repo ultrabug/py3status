@@ -124,7 +124,7 @@ class I3statusModule:
     def get_latest(self):
         return [self.item.copy()]
 
-    def update(self):
+    def run(self):
         """
         updates the modules output.
         Currently only time and tztime need to do this
@@ -133,7 +133,7 @@ class I3statusModule:
             self.i3status.py3_wrapper.notify_update(self.module_name)
         due_time = self.py3.time_in(sync_to=self.time_delta)
 
-        self.i3status.py3_wrapper.timeout_queue_add_module(self, due_time)
+        self.i3status.py3_wrapper.timeout_queue_add(self, due_time)
 
     def update_from_item(self, item):
         """
@@ -171,7 +171,7 @@ class I3statusModule:
                     self.time_zone_check_due = ((int(t) // 1800) * 1800) + 1800
                 if not self.time_started:
                     self.time_started = True
-                    self.i3status.py3_wrapper.timeout_queue_add_module(self)
+                    self.i3status.py3_wrapper.timeout_queue_add(self)
             is_updated = False
             # update time to be shown
         return is_updated
@@ -392,11 +392,6 @@ class I3status(Thread):
                 break
             # limit restart rate
             self.lock.wait(5)
-        if not self.py3_wrapper.lock.is_set():
-            err = self.error
-            if not err:
-                err = 'I3status died horribly.'
-            self.py3_wrapper.notify_user(err)
 
     def spawn_i3status(self):
         """
