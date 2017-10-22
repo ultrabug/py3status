@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import os
 """
 Display X selection.
 
@@ -44,7 +45,9 @@ class Py3status:
     symmetric = True
     log_file = None
 
-    selection_cache = None
+    def post_config_hook(self):
+        self.selection_cache = None
+        self.log_file = os.path.expanduser(self.log_file)
 
     def xsel(self):
         selection = self.py3.command_output(self.command).strip()
