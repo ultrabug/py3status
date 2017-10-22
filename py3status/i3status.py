@@ -160,7 +160,7 @@ class I3statusModule:
                 self.set_time_zone(item)
                 # Check again in 30 mins.  We do this in case the timezone used
                 # has switched to/from summer time
-                self.time_zone_check_due = (int(t) // 1800) + 1800
+                self.time_zone_check_due = ((int(t) // 1800) * 1800) + 1800
                 if not self.time_started:
                     self.time_started = True
                     self.i3status.py3_wrapper.timeout_queue_add_module(self)
@@ -401,6 +401,11 @@ class I3status(Thread):
                 break
             # limit restart rate
             self.lock.wait(5)
+        if not self.py3_wrapper.lock.is_set():
+            err = self.error
+            if not err:
+                err = 'I3status died horribly.'
+            self.py3_wrapper.notify_user(err)
 
     def spawn_i3status(self):
         """

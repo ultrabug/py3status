@@ -235,15 +235,20 @@ class Events(Thread):
         Example event:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
-        while self.py3_wrapper.running:
-            event_str = self.poller_inp.readline()
-            if not event_str:
-                continue
-            try:
-                # remove leading comma if present
-                if event_str[0] == ',':
-                    event_str = event_str[1:]
-                event = loads(event_str)
-                self.dispatch_event(event)
-            except Exception:
-                self.py3_wrapper.report_exception('Event failed')
+        try:
+            while self.py3_wrapper.running:
+                event_str = self.poller_inp.readline()
+                if not event_str:
+                    continue
+                try:
+                    # remove leading comma if present
+                    if event_str[0] == ',':
+                        event_str = event_str[1:]
+                    event = loads(event_str)
+                    self.dispatch_event(event)
+                except Exception:
+                    self.py3_wrapper.report_exception('Event failed')
+        except:
+            err = 'Events thread died, click events are disabled.'
+            self.py3_wrapper.report_exception(err, notify_user=False)
+            self.py3_wrapper.notify_user(err, level='warning')

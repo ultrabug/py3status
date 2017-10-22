@@ -530,9 +530,7 @@ class Py3status:
             (text, color, cached_until) = self._get_text()
             self._control_states = self._get_control_states()
             buttons = self._get_response_buttons()
-            composite = self.py3.build_composite(self.format,
-                                                 text,
-                                                 buttons)
+            composite = self.py3.safe_format(self.format, dict(text, **buttons))
 
         if self._kill:
             raise KeyboardInterrupt
