@@ -13,8 +13,7 @@ Configuration parameters:
     max_size: strip the selection to this value (default 15)
     symmetric: show beginning and end of the selection string
         with respect to configured max_size. (default True)
-    log_file: where to log the clipboard, default doesn't log at all
-        (default None)
+    log_file: specify the clipboard log to use (default None)
 
 Format placeholders:
     {selection} output from clipboard command
