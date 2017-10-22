@@ -35,6 +35,10 @@ Configuration parameters:
         (default 'all')
     repo: Github repo to check
         (default 'ultrabug/py3status')
+    url_api: Change only if using Enterprise Github, example https://github.domain.com/api/v3.
+        (default 'https://api.github.com')
+    url_base: Change only if using Enterprise Github, example https://github.domain.com.
+        (default 'https://github.com')
     username: Github username, needed to check notifications.
         (default None)
 
@@ -78,10 +82,6 @@ except ImportError:
     import urllib.parse as urlparse
 
 
-GITHUB_API_URL = 'https://api.github.com'
-GITHUB_URL = 'https://github.com/'
-
-
 class Py3status:
     auth_token = None
     button_action = 3
@@ -91,6 +91,8 @@ class Py3status:
     format_notifications = ' N{notifications_count}'
     notifications = 'all'
     repo = 'ultrabug/py3status'
+    url_api = 'https://api.github.com'
+    url_base = 'https://github.com'
     username = None
 
     def post_config_hook(self):
@@ -116,7 +118,7 @@ class Py3status:
         """
         if self.first:
             return '?'
-        url = GITHUB_API_URL + url + '&per_page=1'
+        url = self.github_api_url + url + '&per_page=1'
         # if we have authentication details use them as we get better
         # rate-limiting.
         if self.username and self.auth_token:
@@ -148,9 +150,9 @@ class Py3status:
         if self.first:
             return '?'
         if self.notifications == 'all' or not self.repo:
-            url = GITHUB_API_URL + '/notifications'
+            url = self.github_api_url + '/notifications'
         else:
-            url = GITHUB_API_URL + '/repos/' + self.repo + '/notifications'
+            url = self.github_api_url + '/repos/' + self.repo + '/notifications'
         url += '?per_page=100'
         try:
             info = self.py3.request(url, timeout=10,
@@ -242,14 +244,14 @@ class Py3status:
             # open github in browser
             if self._notify and self._notify != '?':
                 # open github notifications page
-                url = GITHUB_URL + 'notifications'
+                url = self.github_url + 'notifications'
             else:
                 if self.notifications == 'all' and not self.repo:
                     # open github.com if there are no unread notifications and no repo
-                    url = GITHUB_URL
+                    url = self.github_url
                 else:
                     # open repo page if there are no unread notifications
-                    url = GITHUB_URL + self.repo
+                    url = self.github_url + self.repo
             # open url in default browser
             self.py3.command_run('xdg-open {}'.format(url))
             self.py3.prevent_refresh()
