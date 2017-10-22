@@ -6,8 +6,6 @@ Display X selection.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 0.5)
     command: the clipboard command to run (default 'xsel --output')
-    click_command: the clipboard command to run on click
-        (default 'xsel --clear --clipboard')
     format: display format for this module (default '{selection}')
     max_size: strip the selection to this value (default 15)
     symmetric: show beginning and end of the selection string
@@ -26,8 +24,12 @@ Requires:
 SAMPLE OUTPUT
 {'full_text': 'selected text'}
 
-example
-{'full_text': 'rrrrr > wtf is a warlock doing in here'}
+Example:
+xsel {
+  max_size = 50
+  command = "xsel --clipboard --output"
+  on_click 1 = "exec xsel --clear --clipboard"
+}
 """
 
 
@@ -37,7 +39,6 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 0.5
     command = 'xsel --output'
-    click_command = 'xsel --clear --clipboard'
     format = '{selection}'
     max_size = 15
     symmetric = True
@@ -65,9 +66,6 @@ class Py3status:
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, {'selection': selection})
         }
-
-    def on_click(self, event):
-        self.py3.command_output(self.click_command)
 
 
 if __name__ == "__main__":
