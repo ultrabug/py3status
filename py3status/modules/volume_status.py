@@ -162,10 +162,10 @@ class PamixerBackend(AudioBackend):
         return perc, muted
 
     def volume_up(self, delta):
-        self.run_cmd(self.cmd + ["-i", delta])
+        self.run_cmd(self.cmd + ["-i", str(delta)])
 
     def volume_down(self, delta):
-        self.run_cmd(self.cmd + ["-d", delta])
+        self.run_cmd(self.cmd + ["-d", str(delta)])
 
     def toggle_mute(self):
         self.run_cmd(self.cmd + ["-t"])
@@ -302,7 +302,7 @@ class Py3status:
             self.card = '%s' % self.card
         if self.device is not None:
             self.device = '%s' % self.device
-        self.volume_delta = '%s' % self.volume_delta
+        self.volume_delta = int(self.volume_delta)
 
         if self.command == 'amixer':
             self.backend = AmixerBackend(self)
