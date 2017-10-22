@@ -569,13 +569,13 @@ def process_config(config_path, py3_wrapper=None):
         button = ''
         try:
             button = key.split()[1]
-            if int(button) not in range(1, 6):
+            if int(button) not in range(1, 20):
                 button_error = True
         except (ValueError, IndexError):
-                button_error = True
+            button_error = True
 
         if button_error:
-            err = 'Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 saw `{}`'
+            err = 'Invalid on_click for `{}`. Number not in range 1-20: `{}`.'
             notify_user(err.format(group_name, button))
             return False
         clicks = on_click.setdefault(group_name, {})
