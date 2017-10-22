@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
 import time
 """
 Display X selection.
@@ -55,7 +54,7 @@ class Py3status:
                 f.write("{}\n{}\n".format(datetime, selection))
         self.selection_cache = selection
 
-        selection = re.sub(r"\s+", " ", selection)  # merge whitespace into one
+        selection = ' '.join(selection.split())
         if len(selection) >= self.max_size:
             if self.symmetric is True:
                 split = int(self.max_size / 2) - 1
