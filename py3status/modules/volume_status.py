@@ -92,6 +92,9 @@ import re
 from os import devnull, environ as os_environ
 from subprocess import check_output, call, CalledProcessError
 
+STRING_NOT_INSTALLED = 'not installed'
+STRING_ERROR = 'invalid command'
+
 
 class AudioBackend():
     def __init__(self, parent):
@@ -306,9 +309,15 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        if self.command is None:
+        if not self.command:
             self.command = self.py3.check_commands(
                 ['amixer', 'pamixer', 'pactl'])
+        elif self.command not in ['amixer', 'pamixer', 'pactl']:
+            raise Exception(STRING_ERROR)
+        elif not self.py3.check_commands(self.command):
+            raise Exception('%s %s' % (self.command, STRING_NOT_INSTALLED))
+        if not self.command:
+            raise Exception(STRING_NOT_INSTALLED)
 
         # turn integers to strings
         if self.card is not None:
@@ -323,8 +332,6 @@ class Py3status:
             self.backend = PamixerBackend(self)
         elif self.command == 'pactl':
             self.backend = PactlBackend(self)
-        else:
-            raise NameError("Unknown command")
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
