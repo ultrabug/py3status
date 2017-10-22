@@ -5,10 +5,11 @@ import os
 import sys
 import shlex
 
+from copy import deepcopy
 from fnmatch import fnmatch
 from math import log10
 from pprint import pformat
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from time import time
 
 from py3status import exceptions
@@ -443,10 +444,14 @@ class Py3:
         ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
 
         # nicely format logs if we can using pretty print
-        message = pformat(message)
+        if isinstance(message, (dict, list, set, tuple)):
+            message = pformat(message)
         # start on new line if multi-line output
-        if '\n' in message:
-            message = '\n' + message
+        try:
+            if '\n' in message:
+                message = '\n' + message
+        except:
+            pass
         message = 'Module `{}`: {}'.format(
             self._module.module_full_name, message)
         self._py3_wrapper.log(message, level)
@@ -471,7 +476,9 @@ class Py3:
         module_info = self._get_module_info(module_name)
         if module_info:
             output = module_info['module'].get_latest()
-        return output
+        # we do a deep copy so that any user does not change the actual output
+        # of the module.
+        return deepcopy(output)
 
     def trigger_event(self, module_name, event):
         """
@@ -496,6 +503,8 @@ class Py3:
         rate_limit is the time period in seconds during which this message
         should not be repeated.
         """
+        if isinstance(msg, Composite):
+            msg = msg.text()
         # force unicode for python2 str
         if self._is_python_2 and isinstance(msg, str):
             msg = msg.decode('utf-8')
@@ -850,18 +859,25 @@ class Py3:
             msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command, shell=False):
+    def command_output(self, command, shell=False, capture_stderr=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
 
-        An Exception is raised if an error occurs
+        :param command: command to run can be a str or list
+        :param shell: if `True` then command is run through the shell
+        :param capture_stderr: if `True` then STDERR is piped to STDOUT
+
+        A CommandError is raised if an error occurs
         """
         # convert the non-shell command to sequence if it is a string
         if not shell and isinstance(command, basestring):
             command = shlex.split(command)
+
+        stderr = STDOUT if capture_stderr else PIPE
+
         try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True,
+            process = Popen(command, stdout=PIPE, stderr=stderr, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
             msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e)
