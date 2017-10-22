@@ -944,7 +944,6 @@ class Py3statusWrapper:
         signal(SIGTERM, self.terminate)
 
         # initialize usage variables
-        i3status_thread = self.i3status_thread
         py3_config = self.config['py3_config']
 
         # prepare the color mappings
@@ -971,9 +970,6 @@ class Py3statusWrapper:
         # items in the bar
         output = [None] * len(py3_config['order'])
 
-        interval = self.config['interval']
-        last_sec = 0
-
         write = sys.__stdout__.write
         flush = sys.__stdout__.flush
 
@@ -999,31 +995,6 @@ class Py3statusWrapper:
 
             while not self.i3bar_running:
                 time.sleep(0.1)
-
-            sec = int(time.time())
-
-            # only check everything is good each second
-            if sec > last_sec:
-                last_sec = sec
-
-                # check i3status thread
-                if not i3status_thread.is_alive():
-                    err = i3status_thread.error
-                    if not err:
-                        err = 'I3status died horribly.'
-                    self.notify_user(err)
-
-                # check events thread
-                if not self.events_thread.is_alive():
-                    # don't spam the user with i3-nagbar warnings
-                    if not hasattr(self.events_thread, 'nagged'):
-                        self.events_thread.nagged = True
-                        err = 'Events thread died, click events are disabled.'
-                        self.notify_user(err, level='warning')
-
-                # update i3status time/tztime items
-                if interval == 0 or sec % interval == 0:
-                    update_due = i3status_thread.update_times()
 
             # check if an update is needed
             if self.update_queue:
