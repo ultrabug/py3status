@@ -2,6 +2,8 @@
 import re
 import sys
 
+from numbers import Number
+
 from py3status.composite import Composite
 
 try:
@@ -299,6 +301,83 @@ class Literal:
         return self.text
 
 
+class Condition:
+    """
+    This class represents the if condition of a block It allows us to compare
+    the value of a parameter to a chosen value or just to see if it equates to
+    True
+    """
+
+    condition = None
+    value = True
+    variable = None
+
+    def __init__(self, info):
+        # are we negated?
+        self.default = info[0] != '!'
+        if not self.default:
+            info = info[1:]
+
+        if '=' in info:
+            self.variable, self.value = info.split('=')
+            self.condition = '='
+            self.check_valid = self._check_valid_condition
+        elif '>' in info:
+            self.variable, self.value = info.split('>')
+            self.condition = '>'
+            self.check_valid = self._check_valid_condition
+        elif '<' in info:
+            self.variable, self.value = info.split('<')
+            self.condition = '<'
+            self.check_valid = self._check_valid_condition
+        else:
+            self.variable = info
+            self.check_valid = self._check_valid_basic
+
+    def _check_valid_condition(self, get_params):
+        """
+        Check if the condition has been met.
+        We need to make sure that we are of the correct type.
+        """
+        try:
+            variable = get_params(self.variable)
+        except:
+            variable = None
+        value = self.value
+
+        # convert the value to a correct type
+        if isinstance(variable, bool):
+            value = bool(self.value)
+        elif isinstance(variable, Number):
+            try:
+                value = int(self.value)
+            except:
+                try:
+                    value = float(self.value)
+                except:
+                    # could not parse
+                    return not self.default
+
+        # compare and return the result
+        if self.condition == '=':
+            return (variable == value) == self.default
+        elif self.condition == '>':
+            return (variable > value) == self.default
+        elif self.condition == '<':
+            return (variable < value) == self.default
+
+    def _check_valid_basic(self, get_params):
+        """
+        Simple check that the variable is set
+        """
+        try:
+            if get_params(self.variable):
+                return self.default
+        except:
+            pass
+        return not self.default
+
+
 class BlockConfig:
     """
     Block commands eg [\?color=bad ...] are stored in this object
@@ -329,8 +408,9 @@ class BlockConfig:
         update with commands from the block
         """
         commands = dict(parse_qsl(commands_str, keep_blank_values=True))
-
-        self._if = commands.get('if', self._if)
+        _if = commands.get('if', self._if)
+        if _if:
+            self._if = Condition(_if)
         self._set_int(commands, 'max_length')
         self._set_int(commands, 'min_length')
         self.color = self._check_color(commands.get('color'))
@@ -421,21 +501,8 @@ class Block:
         """
         see if the if condition for a block is valid
         """
-        _if = self.commands._if
-        if _if and _if.startswith('!'):
-            try:
-                if not get_params(_if[1:]):
-                    return True
-            except:
-                return True
-            return False
-        else:
-            try:
-                if get_params(_if):
-                    return True
-            except:
-                pass
-            return False
+        if self.commands._if:
+            return self.commands._if.check_valid(get_params)
 
     def render(self, get_params, module, _if=None):
         """

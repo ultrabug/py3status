@@ -93,9 +93,6 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
-    """
-    """
     Run module in test mode.
     """
     from py3status.module_test import module_test
