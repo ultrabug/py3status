@@ -29,22 +29,23 @@ Configuration parameters:
     format_error: The format used for error related output.
         (default '')
     format_event: The format for the first toggleable event output.
-        (default '\?color=threshold {summary} {time_to}')
+        (default '\?color=event {summary} {time_to}')
     format_event_full: The format for the second toggleable event output.
-        (default '\?color=threshold {summary} ({start_time} - {end_time}, {start_date})')
+        (default '[\?color=event {summary}]
+        [\?color=time ({start_time} - {end_time}, {start_date})]')
     format_separator: The string used to separate individual events.
-        (default '\|')
+        (default '\?color=separator  \| ')
     format_time: The format for time related format placeholders (except {time_to}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
     format_time_left: The format for used for the {time_to} placeholder when when the time
         displayed is the time left until an event in progress is over.
-        (default '({days}d {hours}h {minutes}m) left')
+        (default '\?color=time ({days}d {hours}h {minutes}m) left')
     format_time_to: The format used for the {time_to} placeholder.
-        (default '({days}d {hours}h {minutes}m)')
+        (default '\?color=time ({days}d {hours}h {minutes}m)')
     num_events: The maximum number of events to display.
         (default 3)
-    thresholds: Thresholds for event colors. The first entry is the color for event 1,
+    thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
     time_to_max: Threshold (in minutes) for when to display the {time_to}
@@ -59,13 +60,13 @@ Configuration parameters:
     warn_timeout: The number of seconds before a warning should be displayed again.
         (default 300)
 
-format placeholders:
+Format placeholders:
     {events} All the events to display.
 
-format_error placeholders:
+Format_error placeholders:
     {error} Error to display.
 
-format_event & format_event_full placeholders:
+Format_event & format_event_full placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.
@@ -76,10 +77,15 @@ format_event & format_event_full placeholders:
     {time_to} The time until the event starts (or until it is over
         if already in progress).
 
-format_time_to placeholders:
+Format_time_to and format_time_left placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
     {minutes} The number of minutes until the event.
+
+Color options:
+    color_separator: Color for separator.
+    color_event: Color for a single event.
+    color_time: Color for the time associated with each event.
 
 Requires:
     1. Python library google-api-python-client (can be obtained with pip).
@@ -98,12 +104,27 @@ Requires:
     auth_token, and i3status will be restarted. This restart will
     occur only once after the first time you successfully authorize.
 
-Example:
+Examples:
+
+
+
 ```
+# bare minimum configuration
 google_calendar {
     client_secret = '/path/to/client_secret/google_calendar.client_secret'
     auth_token = '/path/to/auth_token/google_calendar.auth_token'
 }
+
+# add color gradients for events and dates/times
+google_calendar {
+    thresholds = {
+        'event': [(1, '#d0e6ff'), (2, '#bbdaff'), (3, '#99c7ff'), (4, '#86bcff'),
+            (5, '#62a9ff'), (6, '#8c8cff'), (7, '#7979ff')],
+        'time': [(1, '#ffcece'), (2, '#ffbfbf'), (3, '#ff9f9f'), (4, '#ff7f7f'),
+            (5, '#ff5f5f'), (6, '#ff3f3f'), (7, '#ff1f1f')]
+    }
+}
+
 ```
 @author Igor Grebenkov
 @license BSD
@@ -133,12 +154,13 @@ class Py3status:
     format = '{events}|No Events'
     format_date = '%a %d-%m'
     format_error = ''
-    format_event = '\?color=threshold {summary} {time_to}'
-    format_event_full = '\?color=threshold {summary} ({start_time} - {end_time}, {start_date})'
-    format_separator = '\|'
+    format_event = '\?color=event {summary} {time_to}'
+    format_event_full = '[\?color=event {summary}] ' +\
+        '[\?color=time ({start_time} - {end_time}, {start_date})]'
+    format_separator = '\?color=separator  \| '
     format_time = '%I:%M %p'
-    format_time_left = '({days}d {hours}h {minutes}m) left'
-    format_time_to = '({days}d {hours}h {minutes}m)'
+    format_time_left = '\?color=time ({days}d {hours}h {minutes}m) left'
+    format_time_to = '\?color=time ({days}d {hours}h {minutes}m)'
     num_events = 3
     thresholds = []
     time_to_max = 180
@@ -151,17 +173,8 @@ class Py3status:
         self.events = None
         self.no_update = False
 
-        client_secret_path = os.path.dirname(os.path.expanduser(self.client_secret))
-        auth_token_path = os.path.dirname(os.path.expanduser(self.auth_token))
-
-        if not os.path.exists(auth_token_path):
-            os.makedirs(auth_token_path)
-
-        if not os.path.exists(client_secret_path):
-            os.makedirs(client_secret_path)
-
-        self.auth_token = os.path.expanduser(self.auth_token)
         self.client_secret = os.path.expanduser(self.client_secret)
+        self.auth_token = os.path.expanduser(self.auth_token)
 
         self.credentials = self._get_credentials()
         self.is_authorized = self._authorize_credentials()
@@ -175,6 +188,15 @@ class Py3status:
 
         Returns: Credentials, the obtained credential.
         """
+        client_secret_path = os.path.dirname(self.client_secret)
+        auth_token_path = os.path.dirname(self.auth_token)
+
+        if not os.path.exists(auth_token_path):
+            os.makedirs(auth_token_path)
+
+        if not os.path.exists(client_secret_path):
+            os.makedirs(client_secret_path)
+
         flags = tools.argparser.parse_args(args=[])
         store = Storage(self.auth_token)
         credentials = store.get()
@@ -317,6 +339,9 @@ class Py3status:
         index = 0
 
         for event in self.events:
+            self.py3.threshold_get_color(index + 1, 'event')
+            self.py3.threshold_get_color(index + 1, 'time')
+
             summary = event.get('summary')
             location = event.get('location')
             description = event.get('description')
@@ -344,12 +369,8 @@ class Py3status:
             else:
                 time_delta_formatted = self._format_timedelta(index, time_delta,
                                                               self.format_time_to)
-
             self._check_warn_threshold(time_delta, summary)
-
             self._check_button_open(index, url)
-
-            self.py3.threshold_get_color(index + 1)
 
             curr_event_format = self._check_button_toggle(index)
 
