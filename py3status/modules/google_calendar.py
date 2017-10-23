@@ -22,12 +22,10 @@ Configuration parameters:
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
     format: The format for module output.
-        (default '{events}|No Events')
+        (default '{events}|')
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
-    format_error: The format used for error related output.
-        (default '')
     format_event: The format for the first toggleable event output.
         (default '\?color=event {summary} {time_to}')
     format_event_full: The format for the second toggleable event output.
@@ -143,9 +141,8 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
-    format = '{events}|No Events'
+    format = '{events}|'
     format_date = '%a %d-%m'
-    format_error = ''
     format_event = '\?color=event {summary} {time_to}'
     format_event_full = '[\?color=event {summary}] ' +\
         '[\?color=time ({start_time} - {end_time}, {start_date})]'
@@ -402,14 +399,8 @@ class Py3status:
         if not self.is_authorized:
             self.is_authorized = self._authorize_credentials()
 
-            error_msg = self.py3.safe_format(
-                self.format_error,
-                {'error':
-                 'ServerNotFoundError: Check your internet connection!'})
-
-            return {'cached_until': self.py3.time_in(5),
-                    'full_text': error_msg,
-                    'color': '#FF0000'}
+            return {'cached_until': self.py3.time_in(self.cache_timeout),
+                    'full_text': self.py3.safe_format(self.format)}
         else:
             if not self.no_update:
                 self.events = self._get_events()
