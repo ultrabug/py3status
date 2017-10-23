@@ -151,18 +151,6 @@ class Py3status:
         self.events = None
         self.no_update = False
 
-        self.credentials = self._get_credentials()
-        self.is_authorized = self._authorize_credentials()
-
-    def _get_credentials(self):
-        """
-        Gets valid user credentials from storage.
-
-        If nothing has been stored, or if the stored credentials are invalid,
-        the OAuth2 flow is completed to obtain the new credentials.
-
-        Returns: Credentials, the obtained credential.
-        """
         client_secret_path = os.path.dirname(os.path.expanduser(self.client_secret))
         auth_token_path = os.path.dirname(os.path.expanduser(self.auth_token))
 
@@ -175,6 +163,18 @@ class Py3status:
         self.auth_token = os.path.expanduser(self.auth_token)
         self.client_secret = os.path.expanduser(self.client_secret)
 
+        self.credentials = self._get_credentials()
+        self.is_authorized = self._authorize_credentials()
+
+    def _get_credentials(self):
+        """
+        Gets valid user credentials from storage.
+
+        If nothing has been stored, or if the stored credentials are invalid,
+        the OAuth2 flow is completed to obtain the new credentials.
+
+        Returns: Credentials, the obtained credential.
+        """
         flags = tools.argparser.parse_args(args=[])
         store = Storage(self.auth_token)
         credentials = store.get()
