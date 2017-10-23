@@ -25,6 +25,9 @@ SAMPLE OUTPUT
 
 off
 {'color': '#FF0000', 'full_text': 'ON'}
+
+@author Maxim Baz (https://github.com/maximbaz)
+@license BSD
 """
 
 from time import sleep
@@ -43,6 +46,15 @@ class Py3status:
     state_on = 'ON'
 
     def post_config_hook(self):
+        self.is_on = False
+
+        if not self._is_dunst():
+            self._init_periodic_notifications_killer()
+
+    def _is_dunst(self):
+        return self.notification_manager == 'dunst'
+
+    def _init_periodic_notifications_killer(self):
         self.running = Event()
         self.killed = Event()
 
@@ -56,24 +68,30 @@ class Py3status:
         MyThread().start()
 
     def do_not_disturb(self):
-        state = self.state_on if self.running.is_set() else self.state_off
+        state = self.state_on if self.is_on else self.state_off
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, {'state': state}),
-            'color': self.py3.COLOR_BAD if self.running.is_set() else self.py3.COLOR_GOOD
+            'color': self.py3.COLOR_BAD if self.is_on else self.py3.COLOR_GOOD
         }
         return response
 
     def on_click(self, event):
         if event['button'] == 1:
-            if self.running.is_set():
-                self.running.clear()
+            self.is_on = not self.is_on
+            if self._is_dunst():
+                new_flag = '-SIGUSR1' if self.is_on else '-SIGTERM'
+                system("killall {} dunst".format(new_flag))
             else:
-                self.running.set()
+                if self.is_on:
+                    self.running.set()
+                else:
+                    self.running.clear()
 
     def kill(self):
-        self.killed.set()
-        self.running.set()  # ensure the thread won't hang
+        if not self._is_dunst():
+            self.killed.set()
+            self.running.set()  # ensure the thread won't hang
 
 
 if __name__ == "__main__":

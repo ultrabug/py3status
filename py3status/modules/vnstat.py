@@ -91,7 +91,7 @@ class Py3status:
     def vntstat(self):
         def filter_stat():
             # Get statistics in list of lists of words
-            out = self.py3.command_output(["vnstat", "--dumpdb"]).splitlines()
+            out = self.py3.command_output(["vnstat", "--exportdb"]).splitlines()
             for x in out:
                 if x.startswith("{};0;".format(self.statistics_type)):
                     return x

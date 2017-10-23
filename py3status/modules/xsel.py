@@ -38,7 +38,7 @@ class Py3status:
     symmetric = True
 
     def xsel(self):
-        selection = self.py3.command_output(self.command)
+        selection = ' '.join(self.py3.command_output(self.command).split())
         if len(selection) >= self.max_size:
             if self.symmetric is True:
                 split = int(self.max_size / 2) - 1

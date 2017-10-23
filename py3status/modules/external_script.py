@@ -71,9 +71,9 @@ class Py3status:
                 if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
                     response['color'] = output_color
         except self.py3.CommandError as e:
+            # something went wrong show error to user
             output = e.output or e.error
-            output_lines = output.splitlines()
-            response['color'] = self.py3.COLOR_BAD
+            self.py3.error(output)
 
         output_text = output_lines[0]
 

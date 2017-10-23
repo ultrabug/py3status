@@ -223,7 +223,7 @@ class Py3status:
     def _change_active(self, diff):
         self.active = (self.active + diff) % len(self.format)
 
-    def on_click(self, i3s_output_list, i3s_config, event):
+    def on_click(self, event):
         """
         Switch the displayed module or pass the event on to the active module
         """
@@ -239,7 +239,7 @@ class Py3status:
         elif event['button'] == self.button_change_format:
             self._change_active(1)
 
-    def clock(self, i3s_output_list, i3s_config):
+    def clock(self):
 
         # cycling
         if self.cycle and time() >= self._cycle_time:

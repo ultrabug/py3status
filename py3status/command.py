@@ -290,6 +290,8 @@ def send_command():
 
     if options.command:
         msg = json.dumps(vars(options))
+    else:
+        sys.exit(1)
 
     msg = msg.encode('utf-8')
     if len(msg) > MAX_SIZE:

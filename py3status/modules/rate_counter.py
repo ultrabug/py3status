@@ -54,14 +54,14 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    config_file = '%s%s' % (os.environ['HOME'],
-                            '/.i3/py3status/counter-config.save')
+    config_file = '~/.i3/py3status/counter-config.save'
     format = 'Time: {days} day {hours}:{mins:02d} Cost: {total}'
     format_money = '{price}$'
     hour_price = 30
     tax = 1.02
 
-    def __init__(self):
+    def post_config_hook(self):
+        self.config_file = os.path.expanduser(self.config_file)
         self.running = False
         self.saved_time = 0
         self.start_time = self.current_time
