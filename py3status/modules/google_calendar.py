@@ -101,8 +101,8 @@ Requires:
 Example:
 ```
 google_calendar {
-    client_secret = '/path/to/client_secret/'
-    auth_token = '/path/to/auth_token/'
+    client_secret = '/path/to/client_secret/google_calendar.client_secret'
+    auth_token = '/path/to/auth_token/google_calendar.auth_token'
 }
 ```
 @author Igor Grebenkov
@@ -231,6 +231,10 @@ class Py3status:
             self.py3.notify_user("Warning: Appointment " + str(summary) +
                                  " coming up!", 'warning', self.warn_timeout)
 
+    def _gstr_to_date(self, date_str):
+        """ Returns a dateime object from a google calendar date string."""
+        return datetime.datetime.strptime(date_str, '%Y-%m-%d')
+
     def _gstr_to_datetime(self, date_time_str):
         """ Returns a datetime object from a google calendar date/time string."""
         tmp = '-'.join(date_time_str.split('-')[:-1])
@@ -318,8 +322,12 @@ class Py3status:
             description = event.get('description')
             url = event['htmlLink']
 
-            start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
-            end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
+            if event['start'].get('date') is not None:
+                start_dt = self._gstr_to_date(event['start'].get('date'))
+                end_dt = self._gstr_to_date(event['end'].get('date'))
+            else:
+                start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
+                end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
             start_time_str = self._datetime_to_str(start_dt, self.format_time)
             end_time_str = self._datetime_to_str(end_dt, self.format_time)
