@@ -4,7 +4,7 @@ Display upcoming Google Calendar events.
 
 This module will display information about upcoming Google Calendar events in
 one of two formats which can be toggled with a button press. The
-events URL may also be opened in a web browser with a button press.
+event's URL may also be opened in a web browser with a button press.
 
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
@@ -34,7 +34,7 @@ Configuration parameters:
         (default '[\?color=event {summary}]
         [\?color=time ({start_time} - {end_time}, {start_date})]')
     format_separator: The string used to separate individual events.
-        (default '\?color=separator  \| ')
+        (default '\?color=separator \| ')
     format_time: The format for time related format placeholders (except {time_to}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
@@ -105,16 +105,7 @@ Requires:
     occur only once after the first time you successfully authorize.
 
 Examples:
-
-
-
 ```
-# bare minimum configuration
-google_calendar {
-    client_secret = '/path/to/client_secret/google_calendar.client_secret'
-    auth_token = '/path/to/auth_token/google_calendar.auth_token'
-}
-
 # add color gradients for events and dates/times
 google_calendar {
     thresholds = {
@@ -124,8 +115,8 @@ google_calendar {
             (5, '#ff5f5f'), (6, '#ff3f3f'), (7, '#ff1f1f')]
     }
 }
-
 ```
+
 @author Igor Grebenkov
 @license BSD
 """
@@ -136,6 +127,7 @@ import datetime
 
 from apiclient import discovery
 from oauth2client import client
+from oauth2client import clientsecrets
 from oauth2client import tools
 from oauth2client.file import Storage
 from httplib2 import ServerNotFoundError
@@ -157,7 +149,7 @@ class Py3status:
     format_event = '\?color=event {summary} {time_to}'
     format_event_full = '[\?color=event {summary}] ' +\
         '[\?color=time ({start_time} - {end_time}, {start_date})]'
-    format_separator = '\?color=separator  \| '
+    format_separator = '\?color=separator \| '
     format_time = '%I:%M %p'
     format_time_left = '\?color=time ({days}d {hours}h {minutes}m) left'
     format_time_to = '\?color=time ({days}d {hours}h {minutes}m)'
@@ -202,12 +194,15 @@ class Py3status:
         credentials = store.get()
 
         if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(self.client_secret, SCOPES)
-            flow.user_agent = APPLICATION_NAME
-            if flags:
-                credentials = tools.run_flow(flow, store, flags)
-            else:  # Needed only for compatibility with Python 2.6
-                credentials = tools.run(flow, store)
+            try:
+                flow = client.flow_from_clientsecrets(self.client_secret, SCOPES)
+                flow.user_agent = APPLICATION_NAME
+                if flags:
+                    credentials = tools.run_flow(flow, store, flags)
+                else:  # Needed only for compatibility with Python 2.6
+                    credentials = tools.run(flow, store)
+            except clientsecrets.InvalidClientSecretsError:
+                raise Exception('missing client_secret')
 
             """
             Have to restart i3 after getting credentials to prevent bad output.
