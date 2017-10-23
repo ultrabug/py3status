@@ -22,8 +22,8 @@ Configuration parameters:
         (default '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]
         [\?soft ][\?if=is_time&color=time %-I:%M %p]')
     format_separator: show separator if more than one (default ', ')
-    remove: list of strings to remove from format_event_{start, end}
-        (default [])
+    ignore: specify keys and values to ignore (default {})
+    remove: specify a list of strings to remove (default [])
 
 Format placeholders:
     {format_event} format for calendar events
@@ -136,6 +136,15 @@ gcal {
     color_calendar = '#aaffaa'
     color_email = '#ffffaa'
 }
+
+# ignore - sometimes we want to ignore certain events on our calendars
+gcal {
+    # fnmatch: *       matches everything
+    # fnmatch: ?       matches any single character
+    # fnmatch: [seq]   matches any character in seq
+    # fnmatch: [!seq]  matches any character not in seq
+    ignore = {'email': '*weather*'}
+}
 ```
 
 @author lasers
@@ -149,6 +158,7 @@ SAMPLE OUTPUT
 """
 
 from datetime import datetime, timedelta
+from fnmatch import fnmatch
 import re
 
 
@@ -178,6 +188,7 @@ class Py3status:
     format_event_start = '[\?if=is_first [\?if=is_date&color=date %a %b %-d ]]' +\
         '[\?soft ][\?if=is_time&color=time %-I:%M %p]'
     format_separator = ', '
+    ignore = {}
     remove = []
 
     def post_config_hook(self):
@@ -253,11 +264,25 @@ class Py3status:
 
     def _organize(self, data):
         self.url = URL
+
         new_data = []
         for line in data.splitlines():
             new_event = dict(zip(self.names, line.split('\t')))
-            if '#weather' not in new_event['email']:
+
+            if not self.ignore:
                 new_data.append(new_event)
+                continue
+
+            append_event = True
+            for placeholder, data in new_event.items():
+                for key, value in self.ignore.items():
+                    if placeholder == key and fnmatch(data, value):
+                        append_event = False
+                        break
+
+            if append_event:
+                new_data.append(new_event)
+
         return new_data
 
     def _manipulate(self, data):
