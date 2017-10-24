@@ -94,9 +94,11 @@ class Py3status:
     thresholds = [(0, 'bad'), (1, 'good')]
 
     def post_config_hook(self):
-        self.interface_re = re.compile(r'\d+: (?P<interface>\w+):')
-        self.ip4_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
-        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
+        self.re_interface = re.compile(r'\d+: (?P<interface>\w+):')
+        self.re_ip4 = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
+        self.re_ip6 = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
+        self.count_ip4 = self.py3.format_contains(self.format_interface, 'ip4')
+        self.count_ip6 = self.py3.format_contains(self.format_interface, 'ip6')
         self.init_ip4 = self.py3.format_contains(self.format_ip4, 'ip') and (
             self.py3.format_contains(self.format_interface, 'format_ip4'))
         self.init_ip6 = self.py3.format_contains(self.format_ip6, 'ip') and (
@@ -113,19 +115,19 @@ class Py3status:
 
         new_data = {}
         for line in ip_data.splitlines():
-            interface = self.interface_re.match(line)
+            interface = self.re_interface.match(line)
             if interface:
                 current_interface = interface.group('interface')
                 new_data[current_interface] = {}
                 continue
 
-            ip4 = self.ip4_re.match(line)
+            ip4 = self.re_ip4.match(line)
             if ip4:
                 new_data.setdefault(current_interface, {}).setdefault(
                     'ip4', []).append(ip4.group('ip4'))
                 continue
 
-            ip6 = self.ip6_re.match(line)
+            ip6 = self.re_ip6.match(line)
             if ip6:
                 new_data.setdefault(current_interface, {}).setdefault(
                     'ip6', []).append(ip6.group('ip6'))
@@ -148,7 +150,7 @@ class Py3status:
             format_ip4 = None
             new_ip4 = []
             count_ip4 = 0
-            if self.init_ip4:
+            if self.init_ip4 or self.count_ip4:
                 for ip4 in ips.get('ip4', []):
                     if not self._blacklist(ip4, self.ip_blacklist):
                         is_connected = True
@@ -164,7 +166,7 @@ class Py3status:
             format_ip6 = None
             new_ip6 = []
             count_ip6 = 0
-            if self.init_ip6:
+            if self.init_ip6 or self.count_ip6:
                 for ip6 in ips.get('ip6', []):
                     if not self._blacklist(ip6, self.ip_blacklist):
                         is_connected = True
