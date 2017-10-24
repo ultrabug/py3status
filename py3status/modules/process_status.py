@@ -62,13 +62,13 @@ class Py3status:
             raise Exception(STRING_ERROR)
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+        self.pgrep_command = ['pgrep', self.process]
+        if self.full:
+            self.pgrep_command.insert(1, '-f')
 
     def _is_running(self):
         try:
-            pgrep = ["pgrep", self.process]
-            if self.full:
-                pgrep = ["pgrep", "-f", self.process]
-            self.py3.command_output(pgrep)
+            self.py3.command_output(self.pgrep_command)
             return True
         except:
             return False
