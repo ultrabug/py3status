@@ -388,6 +388,7 @@ class Py3status:
             index += 1
 
         format_separator = self.py3.safe_format(self.format_separator)
+        self.py3.composite_update(format_separator, {'index': 'sep'})
         responses = self.py3.composite_join(format_separator, responses)
 
         return {'events': responses}
@@ -433,8 +434,9 @@ class Py3status:
                 self.button_index = event['index']
 
                 if self.button == self.button_toggle:
-                    self.button_states[self.button_index] = \
-                        not self.button_states[self.button_index]
+                    if self.button_index != 'sep':
+                        self.button_states[self.button_index] = \
+                            not self.button_states[self.button_index]
                 elif self.button == self.button_refresh:
                     now = datetime.datetime.now()
                     diff = (now - self.last_update).seconds
