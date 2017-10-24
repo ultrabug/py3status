@@ -17,6 +17,10 @@ Configuration parameters:
     ip_blacklist: specify a list of IP addresses to ignore. (default [])
     thresholds: specify color thresholds to use.
         (default [(0, 'bad'), (1, 'good')])
+    use_sudo: use sudo to run ip, make sure to allow ip some root rights
+        without a password by adding a sudoers entry, eg...
+        '<user> ALL=(ALL) NOPASSWD:/sbin/ip address show'
+        (default False)
 
 Note:
     `interface_blacklist` and `ip_blacklist` accepts shell-style wildcards.
@@ -83,7 +87,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 30
-    format = '\?color=interface [{format_interface}|\?show no connection]'
+    format = '\?color=interface [{format_interface}|\?show no interfaces]'
     format_interface = '\?if=is_connected {name}:[ {format_ip4}][ {format_ip6}]'
     format_interface_separator = ' '
     format_ip4 = '{ip}'
@@ -93,6 +97,7 @@ class Py3status:
     interface_blacklist = ['lo']
     ip_blacklist = []
     thresholds = [(0, 'bad'), (1, 'good')]
+    use_sudo = False
 
     def post_config_hook(self):
         self.re_interface = re.compile(r'\d+: (?P<interface>\w+):')
@@ -104,6 +109,9 @@ class Py3status:
             self.py3.format_contains(self.format_interface, 'format_ip4'))
         self.init_ip6 = self.py3.format_contains(self.format_ip6, 'ip') and (
             self.py3.format_contains(self.format_interface, 'format_ip6'))
+        self.ip_command = ['ip', 'address', 'show']
+        if self.use_sudo:
+            self.ip_command[0:0] = ['sudo', '-n']
 
     def _blacklist(self, string, blacklist):
         for ignore in blacklist:
@@ -112,7 +120,7 @@ class Py3status:
         return False
 
     def _get_ip_data(self):
-        ip_data = self.py3.command_output(['ip', 'address', 'show'])
+        ip_data = self.py3.command_output(self.ip_command)
 
         new_data = {}
         for line in ip_data.splitlines():
