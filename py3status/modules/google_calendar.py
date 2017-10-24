@@ -13,6 +13,8 @@ Configuration parameters:
     button_open: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
+    button_refresh: Refreshes the module and updates the list of events.
+        (default 2)
     button_toggle: The button used to toggle between output formats
         format_event and format_event_full.
         (default 1)
@@ -138,6 +140,7 @@ APPLICATION_NAME = 'py3status google_calendar module'
 class Py3status:
     auth_token = '~/.config/py3status/google_calendar.auth_token'
     button_open = 3
+    button_refresh = 2
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
@@ -330,6 +333,8 @@ class Py3status:
         responses = []
         index = 0
 
+        self.last_update = datetime.datetime.now()
+
         for event in self.events:
             self.py3.threshold_get_color(index + 1, 'event')
             self.py3.threshold_get_color(index + 1, 'time')
@@ -413,20 +418,29 @@ class Py3status:
     def on_click(self, event):
         if self.is_authorized and self.events is not None:
             """
-            If a button is clicked, we stop updating self.events until the
-            button event is handled. This prevents errors when the on_click()
-            method is called during an event update (using _get_events()), which
-            can cause a crash in the module and/or py3status.
+            If button_refresh is clicked, we allow the events to be updated if the
+            last event update occured at least 1 second ago. This prevents a bug that
+            can crash py3status since refreshing the module too fast results in
+            incomplete event information being fetched as _get_events() is called
+            repeatedly.
+
+            Otherwise, we disable event updates.
             """
             try:
                 self.no_update = True
 
                 self.button = event['button']
-
                 self.button_index = event['index']
+
                 if self.button == self.button_toggle:
                     self.button_states[self.button_index] = \
                         not self.button_states[self.button_index]
+                elif self.button == self.button_refresh:
+                    now = datetime.datetime.now()
+                    diff = (now - self.last_update).seconds
+                    if diff > 1:
+                        self.no_update = False
+
             except IndexError:
                 return
 
