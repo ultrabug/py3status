@@ -28,8 +28,10 @@ format_interface placeholders:
     {name} interface name, eg eno1
     {format_ip4} format for IPv4 addresses
     {format_ip6} format for IPv6 addresses
+    {ip4} number of IPv4 addresses
+    {ip6} number of IPv6 addresses
+    {ip} number of IP addresses
     {is_connected} a boolean based on interface data
-    {ip} number of connections
 
 format_ip4 placeholders:
     {ip} IPv4 address, eg 192.168.1.103
@@ -42,6 +44,8 @@ Color thresholds:
         interface: print color based on number of network interfaces
     format_interface:
         ip: print color based on number of IP addresses
+        ip4: print color based on number of IPv4 addresses
+        ip6: print color based on number of IPv6 addresses
 
 Requires:
     iproute2: show/manipulate routing, devices, policy routing and tunnels
@@ -130,64 +134,72 @@ class Py3status:
         return new_data
 
     def net_iplist(self):
+        new_interface = []
         count_interface = 0
-        interface_list = []
+
         ip_data = self._get_ip_data()
 
         for interface, ips in ip_data.items():
             if self._blacklist(interface, self.interface_blacklist):
                 continue
 
-            count_ip = 0
             is_connected = False
 
             format_ip4 = None
-            ip4_list = []
+            new_ip4 = []
+            count_ip4 = 0
             for ip4 in ips.get('ip4', []):
                 if not self._blacklist(ip4, self.ip_blacklist):
                     is_connected = True
-                    count_ip += 1
+                    count_ip4 += 1
                     if self.init_ip4:
-                        ip4_list.append(self.py3.safe_format(
+                        new_ip4.append(self.py3.safe_format(
                             self.format_ip4, {'ip': ip4}))
 
             if self.init_ip4:
                 format_ip4 = self.py3.composite_join(self.py3.safe_format(
-                    self.format_ip4_separator), ip4_list)
+                    self.format_ip4_separator), new_ip4)
 
             format_ip6 = None
-            ip6_list = []
+            new_ip6 = []
+            count_ip6 = 0
             for ip6 in ips.get('ip6', []):
                 if not self._blacklist(ip6, self.ip_blacklist):
                     is_connected = True
-                    count_ip += 1
+                    count_ip6 += 1
                     if self.init_ip6:
-                        ip6_list.append(self.py3.safe_format(
+                        new_ip6.append(self.py3.safe_format(
                             self.format_ip6, {'ip': ip6}))
 
             if self.init_ip6:
                 format_ip6 = self.py3.composite_join(self.py3.safe_format(
-                    self.format_ip6_separator), ip6_list)
+                    self.format_ip6_separator), new_ip6)
 
             if is_connected:
                 count_interface += 1
 
+            count_ip = count_ip4 + count_ip6
+
             if self.thresholds:
                 self.py3.threshold_get_color(count_ip, 'ip')
+                self.py3.threshold_get_color(count_ip4, 'ip4')
+                self.py3.threshold_get_color(count_ip6, 'ip6')
 
-            interface_list.append(self.py3.safe_format(
+            new_interface.append(self.py3.safe_format(
                 self.format_interface, {
                     'name': interface,
                     'format_ip4': format_ip4,
                     'format_ip6': format_ip6,
                     'is_connected': is_connected,
-                    'ip': count_ip
+                    'ip': count_ip,
+                    'ip4': count_ip4,
+                    'ip6': count_ip6,
                 }))
 
         if self.thresholds:
             self.py3.threshold_get_color(count_interface, 'interface')
         format_interface = self.py3.composite_join(self.py3.safe_format(
-            self.format_interface_separator), interface_list)
+            self.format_interface_separator), new_interface)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
