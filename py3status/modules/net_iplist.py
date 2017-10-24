@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Display list of network interfaces and IP addresses.
+Display network interfaces and IP addresses.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 30)
     format: display format for this module
-        (default '\?color=interface [{format_interface}|\?show no connection]')
+        (default '\?color=interface [{format_interface}|\?show no interfaces]')
     format_interface: display format for network interfaces
         (default '\?if=is_connected {name}:[ {format_ip4}][ {format_ip6}]')
     format_interface_separator: show separator if more than one (default ' ')
@@ -18,11 +18,12 @@ Configuration parameters:
     thresholds: specify color thresholds to use.
         (default [(0, 'bad'), (1, 'good')])
 
+Note:
     `interface_blacklist` and `ip_blacklist` accepts shell-style wildcards.
 
 Format placeholders:
     {format_interface} format for network interfaces
-    {interface} number of connections
+    {interface} number of network interfaces
 
 format_interface placeholders:
     {name} interface name, eg eno1
