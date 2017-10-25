@@ -124,6 +124,7 @@ google_calendar {
 import httplib2
 import os
 import datetime
+import pytz
 
 from apiclient import discovery
 from oauth2client import client
@@ -246,14 +247,14 @@ class Py3status:
 
         return eventsResult.get('items', [])
 
-    def _check_warn_threshold(self, time_to, summary):
+    def _check_warn_threshold(self, time_to, start, end, summary):
         """
         Checks if the time until an event starts is less than or equal to the warn_threshold.
         If it is, it presents a warning with self.py3.notify_user.
         """
         if time_to['total_minutes'] <= self.warn_threshold:
-            self.py3.notify_user("Warning: Appointment " + str(summary) +
-                                 " coming up!", 'warning', self.warn_timeout)
+            warn_message = str(summary) + " " + str(start) + " - " + str(end)
+            self.py3.notify_user(warn_message, 'warning', self.warn_timeout)
 
     def _gstr_to_date(self, date_str):
         """ Returns a dateime object from a google calendar date string."""
@@ -261,8 +262,8 @@ class Py3status:
 
     def _gstr_to_datetime(self, date_time_str):
         """ Returns a datetime object from a google calendar date/time string."""
-        tmp = '-'.join(date_time_str.split('-')[:-1])
-        return datetime.datetime.strptime(tmp, '%Y-%m-%dT%H:%M:%S')
+        tmp = ''.join(date_time_str.rsplit(':', 1))
+        return datetime.datetime.strptime(tmp, '%Y-%m-%dT%H:%M:%S%z')
 
     def _datetime_to_str(self, date_time, dt_format):
         """ Returns a strftime formatted string from a datetime object."""
@@ -273,7 +274,8 @@ class Py3status:
         Returns in a dict the number of days/hours/minutes and total minutes
         until date_time.
         """
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+
         diff = date_time - now
 
         days = int(diff.days)
@@ -371,7 +373,7 @@ class Py3status:
             else:
                 time_delta_formatted = self._format_timedelta(index, time_delta,
                                                               self.format_time_to)
-            self._check_warn_threshold(time_delta, summary)
+            self._check_warn_threshold(time_delta, start_time_str, end_time_str, summary)
             self._check_button_open(index, url)
 
             curr_event_format = self._check_button_toggle(index)
