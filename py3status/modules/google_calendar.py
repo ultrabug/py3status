@@ -23,13 +23,16 @@ Configuration parameters:
     client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
+    force_lower_case: Sets whether to force all event output to lower case.
+        (default False)
     format: The format for module output.
         (default '{events}|')
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
     format_event: The format for the first toggleable event output.
-        (default '\?color=event {summary} {time_to}')
+        (default '\?color=event {summary}[\?if=location
+        ({location})][\?if=time_to  {time_to}]')
     format_event_full: The format for the second toggleable event output.
         (default '[\?color=event {summary}]
         [\?color=time ({start_time} - {end_time}, {start_date})]')
@@ -40,10 +43,12 @@ Configuration parameters:
         (default '%I:%M %p')
     format_time_left: The format for used for the {time_to} placeholder when when the time
         displayed is the time left until an event in progress is over.
-        (default '\?color=time ({days}d {hours}h {minutes}m) left')
+        (default '\?color=time ([\?if=days {days}d ]
+        [\?if=hours {hours}h ][\?if=minutes {minutes}m]) left')
     format_time_to: The format used for the {time_to} placeholder.
-        (default '\?color=time ({days}d {hours}h {minutes}m)')
-    ignore_all_day_events: Whether to display all day events or not (True/False).
+        (default '\?color=time ([\?if=days {days}d ]
+        [\?if=hours {hours}h ][\?if=minutes {minutes}m])')
+    ignore_all_day_events: Sets whether to display all day events or not (True/False).
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
@@ -147,15 +152,18 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
+    force_lower_case = False
     format = '{events}|'
     format_date = '%a %d-%m'
-    format_event = '\?color=event {summary} {time_to}'
+    format_event = '\?color=event {summary}[\?if=location  ({location})][\?if=time_to  {time_to}]'
     format_event_full = '[\?color=event {summary}] ' +\
         '[\?color=time ({start_time} - {end_time}, {start_date})]'
     format_separator = '\?color=separator \| '
     format_time = '%I:%M %p'
-    format_time_left = '\?color=time ({days}d {hours}h {minutes}m) left'
-    format_time_to = '\?color=time ({days}d {hours}h {minutes}m)'
+    format_time_left = '\?color=time ([\?if=days {days}d ]' +\
+        '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) left'
+    format_time_to = '\?color=time ([\?if=days {days}d ]' +\
+        '[\?if=hours {hours}h ][\?if=minutes {minutes}m])'
     ignore_all_day_events = False
     num_events = 3
     thresholds = []
@@ -300,7 +308,7 @@ class Py3status:
         Formats the dict time_to containg days/hours/minutes until an event starts
         into a string according to time_to_formatted.
 
-        Returns: The formatted string.
+        Returns: A formatted composite.
         """
         time_delta_formatted = ''
 
@@ -353,9 +361,11 @@ class Py3status:
             self.py3.threshold_get_color(index + 1, 'event')
             self.py3.threshold_get_color(index + 1, 'time')
 
-            summary = event.get('summary')
-            location = event.get('location')
-            description = event.get('description')
+            event_str = {}
+
+            event_str['summary'] = event.get('summary')
+            event_str['location'] = event.get('location')
+            event_str['description'] = event.get('description')
             url = event['htmlLink']
 
             if event['start'].get('date') is not None:
@@ -368,36 +378,43 @@ class Py3status:
                 start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
                 end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
-            start_time_str = self._datetime_to_str(start_dt, self.format_time)
-            end_time_str = self._datetime_to_str(end_dt, self.format_time)
+            event_str['start_time'] = self._datetime_to_str(start_dt, self.format_time)
+            event_str['end_time'] = self._datetime_to_str(end_dt, self.format_time)
 
-            start_date_str = self._datetime_to_str(start_dt, self.format_date)
-            end_date_str = self._datetime_to_str(end_dt, self.format_date)
+            event_str['start_date'] = self._datetime_to_str(start_dt, self.format_date)
+            event_str['end_date'] = self._datetime_to_str(end_dt, self.format_date)
 
             time_delta = self._delta_time(start_dt)
 
             if time_delta['days'] < 0:
                 time_delta = self._delta_time(end_dt)
-                time_delta_formatted = self._format_timedelta(index, time_delta,
-                                                              self.format_time_left)
+                time_to_composite = self._format_timedelta(index, time_delta,
+                                                           self.format_time_left)
             else:
-                time_delta_formatted = self._format_timedelta(index, time_delta,
-                                                              self.format_time_to)
-            self._check_warn_threshold(time_delta, start_time_str, end_time_str, summary)
+                time_to_composite = self._format_timedelta(index, time_delta,
+                                                           self.format_time_to)
+
+            self._check_warn_threshold(time_delta, event_str['start_time'],
+                                       event_str['end_time'], event_str['summary'])
             self._check_button_open(index, url)
 
             curr_event_format = self._check_button_toggle(index)
 
+            if self.force_lower_case:
+                event_str = dict((k, v.lower())
+                                 if v is not None else (k, v)
+                                 for k, v in event_str.items())
+
             event_formatted = self.py3.safe_format(
                 curr_event_format,
-                {'summary': summary,
-                 'location': location,
-                 'description': description,
-                 'start_time': start_time_str,
-                 'end_time': end_time_str,
-                 'start_date': start_date_str,
-                 'end_date': end_date_str,
-                 'time_to': time_delta_formatted})
+                {'summary': event_str['summary'],
+                 'location': event_str['location'],
+                 'description': event_str['description'],
+                 'start_time': event_str['start_time'],
+                 'end_time': event_str['end_time'],
+                 'start_date': event_str['start_date'],
+                 'end_date': event_str['end_date'],
+                 'time_to': time_to_composite})
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
