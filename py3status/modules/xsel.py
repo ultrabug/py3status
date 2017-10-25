@@ -22,9 +22,6 @@ Requires:
 @author Sublim3 umbsublime@gamil.com
 @license BSD
 
-SAMPLE OUTPUT
-{'full_text': 'selected text'}
-
 Example:
 xsel {
   max_size = 50
@@ -32,6 +29,9 @@ xsel {
   on_click 1 = "exec xsel --clear --clipboard"
   log_file = "~/.local/share/xsel/clipboard_log"
 }
+
+SAMPLE OUTPUT
+{'full_text': 'selected text'}
 """
 
 
