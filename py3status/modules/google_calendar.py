@@ -43,6 +43,8 @@ Configuration parameters:
         (default '\?color=time ({days}d {hours}h {minutes}m) left')
     format_time_to: The format used for the {time_to} placeholder.
         (default '\?color=time ({days}d {hours}h {minutes}m)')
+    ignore_all_day_events: Whether to display all day events or not (True/False).
+        (default False)
     num_events: The maximum number of events to display.
         (default 3)
     thresholds: Thresholds for events. The first entry is the color for event 1,
@@ -154,6 +156,7 @@ class Py3status:
     format_time = '%I:%M %p'
     format_time_left = '\?color=time ({days}d {hours}h {minutes}m) left'
     format_time_to = '\?color=time ({days}d {hours}h {minutes}m)'
+    ignore_all_day_events = False
     num_events = 3
     thresholds = []
     time_to_max = 180
@@ -274,7 +277,11 @@ class Py3status:
         Returns in a dict the number of days/hours/minutes and total minutes
         until date_time.
         """
-        now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+        now = datetime.datetime.utcnow()
+
+        if date_time.tzinfo is not None \
+                and date_time.tzinfo.utcoffset(date_time) is not None:
+            now = now.replace(tzinfo=pytz.UTC)
 
         diff = date_time - now
 
@@ -352,8 +359,11 @@ class Py3status:
             url = event['htmlLink']
 
             if event['start'].get('date') is not None:
-                start_dt = self._gstr_to_date(event['start'].get('date'))
-                end_dt = self._gstr_to_date(event['end'].get('date'))
+                if self.ignore_all_day_events:
+                    continue
+                else:
+                    start_dt = self._gstr_to_date(event['start'].get('date'))
+                    end_dt = self._gstr_to_date(event['end'].get('date'))
             else:
                 start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
                 end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
