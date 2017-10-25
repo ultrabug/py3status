@@ -232,11 +232,18 @@ class Py3status:
 
         Returns: The list of events.
         """
+        self.last_update = datetime.datetime.now()
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
 
-        eventsResult = self.service.events().list(
-            calendarId='primary', timeMin=now, maxResults=self.num_events, singleEvents=True,
-            orderBy='startTime').execute()
+        event_cache = self.events
+
+        try:
+            eventsResult = self.service.events().list(
+                calendarId='primary', timeMin=now, maxResults=self.num_events, singleEvents=True,
+                orderBy='startTime').execute(num_retries=5)
+        except:
+            return event_cache
+
         return eventsResult.get('items', [])
 
     def _check_warn_threshold(self, time_to, summary):
@@ -332,8 +339,6 @@ class Py3status:
         """
         responses = []
         index = 0
-
-        self.last_update = datetime.datetime.now()
 
         for event in self.events:
             self.py3.threshold_get_color(index + 1, 'event')
