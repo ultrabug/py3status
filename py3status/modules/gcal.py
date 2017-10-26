@@ -24,6 +24,7 @@ Configuration parameters:
     format_separator: show separator if more than one (default ', ')
     ignore: specify keys and values to ignore (default {})
     remove: specify a list of strings to remove (default [])
+    url: specify url to use if no event or events (default None)
 
 Format placeholders:
     {format_event} format for calendar events
@@ -106,6 +107,11 @@ gcal {
     format_event_end = '[\?if=is_time&color=time  – %-I:%M %p]'
 }
 
+# add url - Gcal will forgive you for your mistakes
+gcal {
+    url = 'https://calendar.google.com'
+}
+
 # show '7 PM' ...... instead of '7:00 PM'
 # show '7 PM – 8 PM' instead of '7:00 PM – 8:00 PM'
 gcal {
@@ -165,7 +171,6 @@ import re
 STRING_NOT_INSTALLED = 'not installed'
 DATE = '%Y-%m-%d'
 TIME = '%H:%M'
-URL = 'https://calendar.google.com'
 
 
 class Py3status:
@@ -190,6 +195,7 @@ class Py3status:
     format_separator = ', '
     ignore = {}
     remove = []
+    url = None
 
     def post_config_hook(self):
         self.command = 'gcalcli agenda --tsv --details=all'
@@ -205,7 +211,7 @@ class Py3status:
         self.re = re.compile(r'(%s)' % '|'.join(self.remove))
         self.is_scrolling = False
         self.gcal_data = None
-        self.url = URL
+        self.reset_url = self.url
         self.names = [
             'startdate', 'starttime', 'enddate', 'endtime', 'link', 'hangout',
             'event', 'location', 'description', 'calendar', 'email']
@@ -226,7 +232,7 @@ class Py3status:
         self.is_scrolling = True
         data = self.shared
         if direction == 0:
-            self.url = URL
+            self.url = self.reset_url
             for d in data:
                 d['is_focused'] = False
         else:
@@ -263,7 +269,7 @@ class Py3status:
         return self.py3.command_output(self.command % (start, end))
 
     def _organize(self, data):
-        self.url = URL
+        self.url = self.reset_url
 
         new_data = []
         for line in data.splitlines():
@@ -356,7 +362,7 @@ class Py3status:
             self._scroll(-1)
         elif button == self.button_reset and self.gcal_data:
             self._scroll(0)
-        elif button == self.button_open:
+        elif button == self.button_open and self.url:
             self.py3.command_run('xdg-open %s' % self.url)
             if self.gcal_data:
                 self._scroll(0)
