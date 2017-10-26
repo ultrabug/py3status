@@ -23,10 +23,10 @@ Configuration parameters:
     client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
-    force_lower_case: Sets whether to force all event output to lower case.
+    force_lowercase: Sets whether to force all event output to lower case.
         (default False)
     format: The format for module output.
-        (default '{events}|')
+        (default '{events}| \?color=event \u2687')
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
@@ -37,7 +37,7 @@ Configuration parameters:
         (default '[\?color=event {summary}]
         [\?color=time ({start_time} - {end_time}, {start_date})]')
     format_separator: The string used to separate individual events.
-        (default '\?color=separator \| ')
+        (default '\?color=separator \|')
     format_time: The format for time related format placeholders (except {time_to}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
@@ -48,7 +48,7 @@ Configuration parameters:
     format_time_to: The format used for the {time_to} placeholder.
         (default '\?color=time ([\?if=days {days}d ]
         [\?if=hours {hours}h ][\?if=minutes {minutes}m])')
-    ignore_all_day_events: Sets whether to display all day events or not (True/False).
+    ignore_all_day_events: Sets whether to display all day events or not.
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
@@ -69,9 +69,6 @@ Configuration parameters:
 
 Format placeholders:
     {events} All the events to display.
-
-Format_error placeholders:
-    {error} Error to display.
 
 Format_event & format_event_full placeholders:
     {description} The description for the calendar event.
@@ -126,6 +123,39 @@ google_calendar {
 
 @author Igor Grebenkov
 @license BSD
+
+SAMPLE OUTPUT
+[
+    {
+      'full_text':'Homer's Birthday (742 Evergreen Terrace) (1h 23m)',
+      'index':0,
+      'separator':False,
+      'separator_block_width':0,
+      'cached_until':1509008337.0
+   },
+   {
+      'full_text':'|',
+      'index':'sep',
+      'separator':False,
+      'separator_block_width':0
+   },
+   {
+      'full_text':'Doctor's Appointment',
+      'index':1,
+      'separator':False,
+      'separator_block_width':0
+   },
+   {
+      'full_text':'|',
+      'index':'sep',
+      'separator':False,
+      'separator_block_width':0
+   },
+   {
+      'full_text':'Lunch with John',
+      'index':2
+   }
+]
 """
 
 import httplib2
@@ -152,13 +182,13 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
-    force_lower_case = False
-    format = '{events}|'
+    force_lowercase = False
+    format = '{events}| \?color=event \u2687'
     format_date = '%a %d-%m'
     format_event = '\?color=event {summary}[\?if=location  ({location})][\?if=time_to  {time_to}]'
     format_event_full = '[\?color=event {summary}] ' +\
         '[\?color=time ({start_time} - {end_time}, {start_date})]'
-    format_separator = '\?color=separator \| '
+    format_separator = '\?color=separator \|'
     format_time = '%I:%M %p'
     format_time_left = '\?color=time ([\?if=days {days}d ]' +\
         '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) left'
@@ -321,17 +351,6 @@ class Py3status:
 
         return time_delta_formatted
 
-    def _check_button_open(self, index, url):
-        """
-        Checks if the button associated with opening an event's URL in a browser has
-        been pressed. If so, that URL is opened in the default web browser.
-        """
-        if self.button == self.button_open and self.button_index == index:
-            self.py3.command_run('xdg-open ' + url)
-
-            self.no_update = False
-            self.button = None
-
     def _check_button_toggle(self, index):
         """
         Checks if the button associated with toggling event format between
@@ -355,6 +374,7 @@ class Py3status:
         Returns: A composite containing the individual response for each event.
         """
         responses = []
+        self.event_urls = []
         index = 0
 
         for event in self.events:
@@ -366,7 +386,7 @@ class Py3status:
             event_str['summary'] = event.get('summary')
             event_str['location'] = event.get('location')
             event_str['description'] = event.get('description')
-            url = event['htmlLink']
+            self.event_urls.append(event['htmlLink'])
 
             if event['start'].get('date') is not None:
                 if self.ignore_all_day_events:
@@ -396,13 +416,11 @@ class Py3status:
 
             self._check_warn_threshold(time_delta, event_str['start_time'],
                                        event_str['end_time'], event_str['summary'])
-            self._check_button_open(index, url)
 
             curr_event_format = self._check_button_toggle(index)
 
-            if self.force_lower_case:
-                event_str = dict((k, v.lower())
-                                 if v is not None else (k, v)
+            if self.force_lowercase:
+                event_str = dict((k, v.lower()) if v is not None else (k, v)
                                  for k, v in event_str.items())
 
             event_formatted = self.py3.safe_format(
@@ -442,6 +460,7 @@ class Py3status:
             return {'cached_until': self.py3.time_in(self.cache_timeout),
                     'full_text': self.py3.safe_format(self.format)}
         else:
+            self.py3.log('gcal: ' + str(self.no_update))
             if not self.no_update:
                 self.events = self._get_events()
 
@@ -463,19 +482,23 @@ class Py3status:
             """
             try:
                 self.no_update = True
-
+                self.py3.log('on_click: ' + str(self.no_update))
                 self.button = event['button']
                 self.button_index = event['index']
 
-                if self.button == self.button_toggle:
-                    if self.button_index != 'sep':
-                        self.button_states[self.button_index] = \
-                            not self.button_states[self.button_index]
-                elif self.button == self.button_refresh:
+                if self.button == self.button_refresh:
                     now = datetime.datetime.now()
                     diff = (now - self.last_update).seconds
                     if diff > 1:
                         self.no_update = False
+                elif self.button_index != 'sep':
+                    if self.button == self.button_toggle:
+                        self.button_states[self.button_index] = \
+                            not self.button_states[self.button_index]
+                    elif self.button == self.button_open:
+                        self.py3.command_run('xdg-open ' + self.event_urls[self.button_index])
+                else:
+                    self.py3.prevent_refresh()
 
             except IndexError:
                 return
