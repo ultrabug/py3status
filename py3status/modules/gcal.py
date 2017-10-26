@@ -126,19 +126,17 @@ gcal {
 }
 
 # show description and location - you might like them
+# show calendar and email too - you might not like them
 gcal {
-    # partial code - add before the multiple
-    '[\?if=description&color=description [\?if=is_focused  ? {description}|?]]' +\
-    '[\?if=location&color=location [\?if=is_focused  @ {location}|@]]' +\
+    format_event = '[\?if=is_focused&color=bad X ]{format_event_start}'
+    format_event += '[{format_event_end}] [\?color=event {event}]'
+    format_event += '[\?if=is_multiple&color=multiple *]'
+    format_event += '[\?if=description&color=description [\?if=is_focused  ? {description}|?]]'
+    format_event += '[\?if=location&color=location [\?if=is_focused  @ {location}|@]]'
+    format_event += '[\?if=calendar&color=calendar [\?if=is_focused  C {calendar}|C]]'
+    format_event += '[\?if=email&color=email [\?if=is_focused  E {email}|E]]'
     color_description = '#ffaaff'
     color_location = '#aaaaff'
-}
-
-# show calendar and email - you might not like them
-gcal {
-    # partial code - add before the description above or before the multiple
-    '[\?if=calendar&color=calendar [\?if=is_focused  C {calendar}|C]]' +\
-    '[\?if=email&color=email [\?if=is_focused  E {email}|E]]' +\
     color_calendar = '#aaffaa'
     color_email = '#ffffaa'
 }
@@ -320,14 +318,14 @@ class Py3status:
                 e['is_time'] = False
 
             start = self._datetime(e, starttime=True)
-            end = self._datetime(e, endtime=True)
             start = self.re.sub('', datetime.strftime(start, self.format_event_start))
+            end = self._datetime(e, endtime=True)
             end = self.re.sub('', datetime.strftime(end, self.format_event_end))
 
             new_data.append(self.py3.safe_format(
                 self.format_event, dict(
-                    format_event_end=self.py3.safe_format(end, dict(**e)),
                     format_event_start=self.py3.safe_format(start, dict(**e)),
+                    format_event_end=self.py3.safe_format(end, dict(**e)),
                     **e)))
 
         return new_data
