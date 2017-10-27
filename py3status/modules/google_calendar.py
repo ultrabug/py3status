@@ -29,13 +29,12 @@ Configuration parameters:
     force_lowercase: Sets whether to force all event output to lower case.
         (default False)
     format: The format for module output.
-        (default '{events}| \?color=event \u2687')
+        (default '{events}|\?color=event \u2687')
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
     format_event: The format for the first toggleable event output.
-        (default '[\?color=event {summary}][\?if=location  ({location})]
-        [\?if=time_to  {time_to}]')
+        (default '[\?color=event {summary}][ ({location})][ {time_to}]')
     format_event_full: The format for the second toggleable event output.
         (default '[\?color=event {summary}]
         [\?color=time  ({start_time} - {end_time}, {start_date})]')
@@ -191,10 +190,9 @@ class Py3status:
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
     force_lowercase = False
-    format = '{events}| \?color=event \u2687'
+    format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
-    format_event = '[\?color=event {summary}]' +\
-        '[\?if=location  ({location})][\?if=time_to  {time_to}]'
+    format_event = '[\?color=event {summary}][ ({location})][ {time_to}]'
     format_event_full = '[\?color=event {summary}]' +\
         '[\?color=time  ({start_time} - {end_time}, {start_date})]'
     format_separator = '\?color=separator \|'
@@ -451,7 +449,7 @@ class Py3status:
             index += 1
 
         format_separator = self.py3.safe_format(self.format_separator)
-        self.py3.composite_update(format_separator, {'index': 'sep'})
+        # self.py3.composite_update(format_separator, {'index': 'sep'})
         responses = self.py3.composite_join(format_separator, responses)
 
         return {'events': responses}
@@ -494,6 +492,7 @@ class Py3status:
                 self.no_update = True
                 self.button = event['button']
                 button_index = event['index']
+                self.py3.log(event['index'])
 
                 if self.button == self.button_refresh:
                     now = datetime.datetime.now()
