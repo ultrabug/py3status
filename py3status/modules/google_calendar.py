@@ -219,6 +219,7 @@ class Py3status:
 
         self.credentials = self._get_credentials()
         self.is_authorized = False
+        self.first_run = True
 
     def _get_credentials(self):
         """
@@ -449,7 +450,7 @@ class Py3status:
             index += 1
 
         format_separator = self.py3.safe_format(self.format_separator)
-        # self.py3.composite_update(format_separator, {'index': 'sep'})
+        self.py3.composite_update(format_separator, {'index': 'sep'})
         responses = self.py3.composite_join(format_separator, responses)
 
         return {'events': responses}
@@ -464,16 +465,19 @@ class Py3status:
         Otherwise, we fetch the events, build the response, and output the resulting composite.
         """
         if not self.is_authorized:
+            cached_until = 0
             self.is_authorized = self._authorize_credentials()
 
-            return {'cached_until': self.py3.time_in(self.cache_timeout),
+            return {'cached_until': self.py3.time_in(cached_until),
                     'full_text': self.py3.safe_format(self.format)}
         else:
             if not self.no_update:
                 self.events = self._get_events()
 
+            cached_until = self.cache_timeout
+
             return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
+                'cached_until': self.py3.time_in(cached_until),
                 'composite': self.py3.safe_format(self.format, self._build_response())
             }
 
@@ -492,22 +496,22 @@ class Py3status:
                 self.no_update = True
                 self.button = event['button']
                 button_index = event['index']
-                self.py3.log(event['index'])
 
-                if self.button == self.button_refresh:
+                if button_index == 'sep':
+                    self.py3.prevent_refresh()
+                elif self.button == self.button_refresh:
                     now = datetime.datetime.now()
                     diff = (now - self.last_update).seconds
                     if diff > 1:
                         self.no_update = False
-                elif button_index != 'sep':
-                    if self.button == self.button_toggle:
-                        self.button_states[button_index] = \
-                            not self.button_states[button_index]
-                    elif self.button == self.button_open:
-                        self.py3.command_run('xdg-open ' + self.event_urls[button_index])
+                elif self.button == self.button_toggle:
+                    self.button_states[button_index] = \
+                        not self.button_states[button_index]
+                elif self.button == self.button_open:
+                    self.py3.command_run('xdg-open ' + self.event_urls[button_index])
+                    self.py3.prevent_refresh()
                 else:
                     self.py3.prevent_refresh()
-
             except IndexError:
                 return
 
