@@ -10,6 +10,9 @@ Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
         (default '~/.config/py3status/google_calendar.auth_token')
+    blacklist_events: Event names in this list will not be shown in the module
+        (case insensitive).
+        (default [])
     button_open: Opens the URL for the clicked on event in the default
         web browser.
         (default 3)
@@ -31,11 +34,11 @@ Configuration parameters:
         strftime directives for dates.
         (default '%a %d-%m')
     format_event: The format for the first toggleable event output.
-        (default '\?color=event {summary}[\?if=location
-        ({location})][\?if=time_to  {time_to}]')
+        (default '[\?color=event {summary}][\?if=location  ({location})]
+        [\?if=time_to  {time_to}]')
     format_event_full: The format for the second toggleable event output.
         (default '[\?color=event {summary}]
-        [\?color=time ({start_time} - {end_time}, {start_date})]')
+        [\?color=time  ({start_time} - {end_time}, {start_date})]')
     format_separator: The string used to separate individual events.
         (default '\?color=separator \|')
     format_time: The format for time related format placeholders (except {time_to}).
@@ -169,14 +172,19 @@ from oauth2client import clientsecrets
 from oauth2client import tools
 from oauth2client.file import Storage
 from httplib2 import ServerNotFoundError
+from tzlocal import get_localzone
 
 
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 APPLICATION_NAME = 'py3status google_calendar module'
+LOCAL_TZ = get_localzone()
 
 
 class Py3status:
+    """
+    """
     auth_token = '~/.config/py3status/google_calendar.auth_token'
+    blacklist_events = []
     button_open = 3
     button_refresh = 2
     button_toggle = 1
@@ -185,9 +193,10 @@ class Py3status:
     force_lowercase = False
     format = '{events}| \?color=event \u2687'
     format_date = '%a %d-%m'
-    format_event = '\?color=event {summary}[\?if=location  ({location})][\?if=time_to  {time_to}]'
-    format_event_full = '[\?color=event {summary}] ' +\
-        '[\?color=time ({start_time} - {end_time}, {start_date})]'
+    format_event = '[\?color=event {summary}]' +\
+        '[\?if=location  ({location})][\?if=time_to  {time_to}]'
+    format_event_full = '[\?color=event {summary}]' +\
+        '[\?color=time  ({start_time} - {end_time}, {start_date})]'
     format_separator = '\?color=separator \|'
     format_time = '%I:%M %p'
     format_time_left = '\?color=time ([\?if=days {days}d ]' +\
@@ -211,7 +220,7 @@ class Py3status:
         self.auth_token = os.path.expanduser(self.auth_token)
 
         self.credentials = self._get_credentials()
-        self.is_authorized = self._authorize_credentials()
+        self.is_authorized = False
 
     def _get_credentials(self):
         """
@@ -299,7 +308,7 @@ class Py3status:
 
     def _gstr_to_date(self, date_str):
         """ Returns a dateime object from a google calendar date string."""
-        return datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        return datetime.datetime.strptime(date_str, '%Y-%m-%d').astimezone(LOCAL_TZ)
 
     def _gstr_to_datetime(self, date_time_str):
         """ Returns a datetime object from a google calendar date/time string."""
@@ -315,11 +324,7 @@ class Py3status:
         Returns in a dict the number of days/hours/minutes and total minutes
         until date_time.
         """
-        now = datetime.datetime.utcnow()
-
-        if date_time.tzinfo is not None \
-                and date_time.tzinfo.utcoffset(date_time) is not None:
-            now = now.replace(tzinfo=pytz.UTC)
+        now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).astimezone(LOCAL_TZ)
 
         diff = date_time - now
 
@@ -384,6 +389,12 @@ class Py3status:
             event_str = {}
 
             event_str['summary'] = event.get('summary')
+
+            if event_str['summary'] is not None:
+                if event_str['summary'].lower() \
+                        in map(lambda e: e.lower(), self.blacklist_events):
+                    continue
+
             event_str['location'] = event.get('location')
             event_str['description'] = event.get('description')
             self.event_urls.append(event['htmlLink'])
@@ -460,7 +471,6 @@ class Py3status:
             return {'cached_until': self.py3.time_in(self.cache_timeout),
                     'full_text': self.py3.safe_format(self.format)}
         else:
-            self.py3.log('gcal: ' + str(self.no_update))
             if not self.no_update:
                 self.events = self._get_events()
 
@@ -482,21 +492,20 @@ class Py3status:
             """
             try:
                 self.no_update = True
-                self.py3.log('on_click: ' + str(self.no_update))
                 self.button = event['button']
-                self.button_index = event['index']
+                button_index = event['index']
 
                 if self.button == self.button_refresh:
                     now = datetime.datetime.now()
                     diff = (now - self.last_update).seconds
                     if diff > 1:
                         self.no_update = False
-                elif self.button_index != 'sep':
+                elif button_index != 'sep':
                     if self.button == self.button_toggle:
-                        self.button_states[self.button_index] = \
-                            not self.button_states[self.button_index]
+                        self.button_states[button_index] = \
+                            not self.button_states[button_index]
                     elif self.button == self.button_open:
-                        self.py3.command_run('xdg-open ' + self.event_urls[self.button_index])
+                        self.py3.command_run('xdg-open ' + self.event_urls[button_index])
                 else:
                     self.py3.prevent_refresh()
 
