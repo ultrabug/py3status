@@ -87,18 +87,18 @@ class Py3status:
     def post_config_hook(self):
         if not self.py3.check_commands('mocp'):
             raise Exception(STRING_NOT_INSTALLED)
-
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+        self.cache = None
 
     def _get_moc_data(self):
         try:
-            data = self.py3.command_output(['mocp', '--info'])
+            data = self.cache = self.py3.command_output(['mocp', '--info'])
             is_started = True
-        except:
-            data = {}
-            is_started = False
+        except self.py3.CommandError as ce:
+            data = self.cache if ce.output else ce.output
+            is_started = True if ce.output else False
         return is_started, data
 
     def moc(self):
