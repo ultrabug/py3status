@@ -88,7 +88,7 @@ class Py3status:
 
     def check_mail(self):
         if self.use_idle:
-            #TODO: check if thread is still running?
+            # TODO: check if thread is still running?
             response = {'cached_until': self.py3.time_in(seconds=1)}
         else:
             self._get_mail_count()
@@ -129,7 +129,7 @@ class Py3status:
                         self.connection = self._connection_starttls()
 
                     self.connection.login(self.user, self.password)
-                    
+
                 self.mail_count = 0
                 directories = self.mailbox.split(',')
 
@@ -138,7 +138,7 @@ class Py3status:
                     unseen_response = self.connection.search(None, self.criterion)
                     mails = unseen_response[1][0].split()
                     self.mail_count += len(mails)
-                    
+
                 if self.use_idle:
                     self.connection.idle()
                 else:
