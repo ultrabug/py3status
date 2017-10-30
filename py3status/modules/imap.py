@@ -14,7 +14,7 @@ Configuration parameters:
     security: login authentication method: 'ssl' or 'starttls'
         (startssl needs python 3.2 or later) (default 'ssl')
     server: server to connect (default None)
-    use_idle: use IMAP4 IDLE instead of polling; requires imaplib2, 
+    use_idle: use IMAP4 IDLE instead of polling; requires imaplib2,
         compatible server; disables cache_timeout (default: False)
     user: login user (default None)
 
