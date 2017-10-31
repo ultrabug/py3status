@@ -258,7 +258,7 @@ class Py3status:
             Have to restart i3 after getting credentials to prevent bad output.
             This only has to be done once on the first run of the module.
             """
-            self.py3.command_output('i3-msg restart')
+            self.py3.command_run('i3-msg restart')
 
         return credentials
 
@@ -464,22 +464,21 @@ class Py3status:
 
         Otherwise, we fetch the events, build the response, and output the resulting composite.
         """
+        composite = {}
+
         if not self.is_authorized:
             cached_until = 0
             self.is_authorized = self._authorize_credentials()
-
-            return {'cached_until': self.py3.time_in(cached_until),
-                    'full_text': self.py3.safe_format(self.format)}
         else:
             if not self.no_update:
                 self.events = self._get_events()
-
+            composite = self._build_response()
             cached_until = self.cache_timeout
 
-            return {
-                'cached_until': self.py3.time_in(cached_until),
-                'composite': self.py3.safe_format(self.format, self._build_response())
-            }
+        return {
+            'cached_until': self.py3.time_in(cached_until),
+            'composite': self.py3.safe_format(self.format, composite)
+        }
 
     def on_click(self, event):
         if self.is_authorized and self.events is not None:
