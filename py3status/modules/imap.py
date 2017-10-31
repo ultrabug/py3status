@@ -31,12 +31,13 @@ SAMPLE OUTPUT
 """
 try:
     from imaplib2 import imaplib2 as imaplib
-    from threading import Thread
+    from threading import Thread  # only necessary with use_idle, which needs imaplib2
     use_lib2 = True  # allow use_idle
 except ImportError:
     import imaplib
     use_lib2 = False
 from ssl import create_default_context
+from socket import error as socket_error
 STRING_UNAVAILABLE = 'N/A'
 
 
@@ -77,6 +78,7 @@ class Py3status:
         # class variables:
         self.mail_count = 0
         self.connection = None
+        self.mail_error = None  # cannot throw self.py3.error from thread
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -93,6 +95,8 @@ class Py3status:
         else:
             self._get_mail_count()
             response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        if self.mail_error is not None:
+            self.py3.error(self.mail_error);
 
         if self.mail_count is None:
             response['color'] = self.py3.COLOR_BAD,
@@ -119,6 +123,14 @@ class Py3status:
         connection.starttls(create_default_context())
         return connection
 
+    def _disconnect(self):
+        try:
+            if self.connection is not None:
+                self.connection.close()
+                self.connection.logout()
+        finally:
+            self.connection = None
+
     def _get_mail_count(self):
         try:
             while True:
@@ -143,11 +155,18 @@ class Py3status:
                     self.connection.idle()
                 else:
                     return
-        except Exception as e:
-            if self.connection is not None:
-                self.connection.close()
-                self.connection.logout()
+        except socket_error:
+            self.mail_error = "Socket error";
             self.connection = None
+            self.mail_count = None
+        except imaplib.IMAP4.error:
+            self.mail_error = "IMAP error";
+            self._disconnect()
+            self.mail_count = None
+        except Exception:
+            self.mail_error = "Unknown error";
+            self._disconnect()
+            self.mail_count = None
 
 
 if __name__ == "__main__":
