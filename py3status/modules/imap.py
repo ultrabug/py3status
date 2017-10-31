@@ -76,7 +76,7 @@ class Py3status:
 
     def post_config_hook(self):
         # class variables:
-        self.mail_count = 0
+        self.mail_count = None
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
 
