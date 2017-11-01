@@ -90,7 +90,7 @@ mute
 
 import re
 from os import devnull, environ as os_environ
-from subprocess import check_output, call
+from subprocess import check_output, call, CalledProcessError
 
 
 class AudioBackend():
@@ -157,7 +157,13 @@ class PamixerBackend(AudioBackend):
         self.cmd = ["pamixer", "--source" if self.is_input else "--sink", self.device]
 
     def get_volume(self):
-        perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
+        try:
+            perc = check_output(self.cmd + ["--get-volume"])
+        except CalledProcessError as cpe:
+            # pamixer throws error on zero percent. see #1135
+            perc = cpe.output
+
+        perc = perc.decode().strip()
         muted = (self.run_cmd(self.cmd + ["--get-mute"]) == 0)
         return perc, muted
 
