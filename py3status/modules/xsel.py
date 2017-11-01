@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
-import os
 """
 Display X selection.
 
@@ -8,10 +6,10 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 0.5)
     command: the clipboard command to run (default 'xsel --output')
     format: display format for this module (default '{selection}')
+    log_file: specify the clipboard log to use (default None)
     max_size: strip the selection to this value (default 15)
     symmetric: show beginning and end of the selection string
         with respect to configured max_size. (default True)
-    log_file: specify the clipboard log to use (default None)
 
 Format placeholders:
     {selection} output from clipboard command
@@ -35,6 +33,10 @@ SAMPLE OUTPUT
 """
 
 
+import time
+import os.path
+
+
 class Py3status:
     """
     """
@@ -42,13 +44,14 @@ class Py3status:
     cache_timeout = 0.5
     command = 'xsel --output'
     format = '{selection}'
+    log_file = None
     max_size = 15
     symmetric = True
-    log_file = None
 
     def post_config_hook(self):
         self.selection_cache = None
-        self.log_file = os.path.expanduser(self.log_file)
+        if self.log_file:
+            self.log_file = os.path.expanduser(self.log_file)
 
     def xsel(self):
         selection = self.py3.command_output(self.command).strip()
@@ -57,7 +60,7 @@ class Py3status:
             with open(self.log_file, "a") as f:
                 datetime = time.strftime("%Y-%m-%d %H:%M:%S")
                 f.write("{}\n{}\n".format(datetime, selection))
-        self.selection_cache = selection
+            self.selection_cache = selection
 
         selection = ' '.join(selection.split())
         if len(selection) >= self.max_size:
