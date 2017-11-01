@@ -24,7 +24,7 @@ Format placeholders:
 Color options:
     color_new_mail: use color when new mail arrives, default to color_good
 
-@author obb and girst
+@author obb, girst
 
 SAMPLE OUTPUT
 {'full_text': 'Mail: 36', 'color': '#00FF00'}
@@ -87,6 +87,7 @@ class Py3status:
         if self.use_idle:
             self.idle_thread = Thread(target=self._get_mail_count)
             self.idle_thread.start()
+        self.port = int(self.port)  # imaplib doesn't care, but imaplib2 does
 
     def check_mail(self):
         if self.use_idle:
@@ -98,7 +99,7 @@ class Py3status:
             self._get_mail_count()
             response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         if self.mail_error is not None:
-            self.py3.error(self.mail_error);
+            self.py3.error(self.mail_error)
 
         if self.mail_count is None:
             response['color'] = self.py3.COLOR_BAD,
@@ -117,11 +118,11 @@ class Py3status:
         return response
 
     def _connection_ssl(self):
-        connection = imaplib.IMAP4_SSL(self.server, int(self.port))
+        connection = imaplib.IMAP4_SSL(self.server, self.port)
         return connection
 
     def _connection_starttls(self):
-        connection = imaplib.IMAP4(self.server, int(self.port))
+        connection = imaplib.IMAP4(self.server, self.port)
         connection.starttls(create_default_context())
         return connection
 
@@ -158,15 +159,15 @@ class Py3status:
                 else:
                     return
         except socket_error:
-            self.mail_error = "Socket error";
+            self.mail_error = "Socket error"
             self.connection = None
             self.mail_count = None
         except imaplib.IMAP4.error:
-            self.mail_error = "IMAP error";
+            self.mail_error = "IMAP error"
             self._disconnect()
             self.mail_count = None
         except Exception:
-            self.mail_error = "Unknown error";
+            self.mail_error = "Unknown error"
             self._disconnect()
             self.mail_count = None
 
