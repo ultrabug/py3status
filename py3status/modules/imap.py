@@ -90,7 +90,9 @@ class Py3status:
 
     def check_mail(self):
         if self.use_idle:
-            # TODO: check if thread is still running?
+            if not self.idle_thread.isAlive():
+                self.idle_thread = Thread(target=self._get_mail_count)
+                self.idle_thread.start()
             response = {'cached_until': self.py3.time_in(seconds=1)}
         else:
             self._get_mail_count()
