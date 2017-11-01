@@ -105,6 +105,9 @@ class Py3status:
         self._issues = '?'
         self._pulls = '?'
         self._notify = '?'
+        # remove a trailing slash in the urls
+        self.url_api = self.url_api.strip('/')
+        self.url_base = self.url_base.strip('/')
 
     def _init(self):
         # Set format if user has not configured it.

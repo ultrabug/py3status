@@ -191,7 +191,7 @@ def get_module_attributes(path):
                         else:
                             attr_value = 'UNKNOWN %s BinOp %s' % (class_name,
                                                                   op)
-                    except:
+                    except Exception:
                         attr_value = 'UNKNOWN %s BinOp error' % class_name
                 else:
                     attr_value = 'UNKNOWN %s' % class_name
