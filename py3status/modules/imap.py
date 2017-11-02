@@ -158,16 +158,16 @@ class Py3status:
                     self.connection.idle()
                 else:
                     return
-        except socket_error:
-            self.mail_error = "Socket error"
+        except socket_error as e:
+            self.mail_error = "Socket error - " + e
             self.connection = None
             self.mail_count = None
-        except imaplib.IMAP4.error:
-            self.mail_error = "IMAP error"
+        except imaplib.IMAP4.error as e:
+            self.mail_error = "IMAP error - " + e
             self._disconnect()
             self.mail_count = None
-        except Exception:
-            self.mail_error = "Unknown error"
+        except Exception as e:
+            self.mail_error = "Unknown error - " + e
             self._disconnect()
             self.mail_count = None
 
