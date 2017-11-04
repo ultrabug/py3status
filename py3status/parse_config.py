@@ -91,6 +91,20 @@ class ConfigParser:
             }
         }
 
+    * environment variable support
+
+        order += env(ORDER_VAR)
+
+        my_module {
+            my_str = env(MY_VAR)
+            my_int = env(MY_INT_VAR, int)
+            my_float = env(MY_FLOAT_VAR, float)
+            my_complex = {
+                'list' : [1, 2, env(MY_LIST_ENTRY, int)],
+                'dict' : {'x': env(MY_DICT_VAL), 'y': 2}
+            }
+        }
+
     * quality feedback on parse errors.
         details include error description, line number, position.
 

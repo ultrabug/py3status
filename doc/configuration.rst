@@ -446,3 +446,47 @@ substituted by the modules text output when the command is run.
 
 If the output of a module is a composite then the output of the part clicked on
 can be accessed using ``$OUTPUT_PART``.
+
+Environment Variables
+---------------------
+
+.. note::
+    New in version 3.7
+
+You may use the value of an environment variable in your configuration with
+the ``env(...)`` directive. These values are captured at startup and may be
+converted to the needed datatype (only ``str``, ``int``, and ``float``
+are currently supported). Without conversion, environment variable
+parameters will be assumed to be strings.
+
+This is primarily designed to obfuscate sensitive information when sharing
+your configuration file, such as usernames, passwords, API keys, etc.
+
+The ``env(...)`` expression can be used anywhere a normal constant would be
+used. Note, you cannot use the directive in place of a dictionary key, i.e
+``{..., env(KEY): 'val', ...}``.
+
+See the examples below!
+
+.. code-block:: py3status
+    :caption: Example
+
+    order += "my_module"
+    order += env(ORDER_MODULE)
+
+    module {
+        normal_parameter = 'some value'
+        env_parameter = env(SOME_ENVIRONMENT_PARAM)
+        sensitive_api_key = env(API_KEY)
+
+        complex_parameter = {
+          'key': env(VAL)
+        }
+
+        list_of_tuples = [
+          (env(APPLE_NUM, int), 'apple'),
+          (2, env(ORANGE))
+        ]
+
+        float_param = env(MY_NUM, float)
+    }
