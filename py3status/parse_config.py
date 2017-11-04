@@ -112,7 +112,7 @@ class ConfigParser:
 
     TOKENS = [
         '#.*$'  # comments
-        '|(?P<env_var>env\([A-Z_][0-9A-Z_]*(, *[a-z]+)?\))' # environment var
+        '|(?P<env_var>env\([A-Z_][0-9A-Z_]*(, *[a-z]+)?\))'  # environment var
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -314,10 +314,10 @@ class ConfigParser:
         match = re.match('env\(([0-9A-Z_]+)(, *[a-z]+)?\)', value)
         env_var, env_type = match.groups()
         if not env_type:
-          env_type = 'str'
+            env_type = 'str'
         else:
-          # Remove comma and whitespace from match
-          env_type = env_type[1:].lstrip()
+            # Remove comma and whitespace from match
+            env_type = env_type[1:].lstrip()
 
         conversion_options = {
             'str': str,
@@ -326,19 +326,20 @@ class ConfigParser:
 
             # Treat booleans specially
             'bool': (lambda val: val.lower() in ('true', '1'))
-          }
+        }
         if env_type not in conversion_options:
-          self.error('Invalid conversion')
+            self.error('Invalid conversion')
 
         # Check the environment variable
         # TODO: dynamic support, (lambda: os.getenv(env_var))
         value = os.getenv(env_var)
         if value is None:
-          self.error('Environment variable undefined')
+            self.error('Environment variable undefined')
 
-        try: return conversion_options[env_type](value)
+        try:
+            return conversion_options[env_type](value)
         except ValueError:
-          self.error('Bad conversion')
+            self.error('Bad conversion')
 
     def separator(self, separator=',', end_token=None):
         '''
