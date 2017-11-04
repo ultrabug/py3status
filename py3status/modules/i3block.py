@@ -99,7 +99,10 @@ RESPONSE_FIELDS = [
 
 
 class Py3status:
-
+    """
+    """
+    # available configuration parameters
+    cache_timeout = None
     command = None
     format = '{output}'
     instance = ''
@@ -108,7 +111,7 @@ class Py3status:
 
     def post_config_hook(self):
         # set interval.  If cache_timeout is used it takes precedence
-        if hasattr(self, 'cache_timeout'):
+        if self.cache_timeout:
             self.interval = self.cache_timeout
         self.interval = getattr(self, 'interval', None)
         # implement i3block interval rules

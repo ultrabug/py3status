@@ -8,6 +8,8 @@ import sys
 
 from pprint import pformat
 
+import pytest
+
 from py3status.composite import Composite
 from py3status.formatter import Formatter
 from py3status.py3 import NoneColor
@@ -77,6 +79,8 @@ def attr_getter_fn(attr):
 
 
 def run_formatter(test_dict):
+    __tracebackhide__ = True
+
     if test_dict.get('py3only') and python2:
         return
     if not test_dict.get('pypy', True) and is_pypy:
@@ -92,6 +96,7 @@ def run_formatter(test_dict):
     except Exception as e:
         if test_dict.get('exception') == str(e):
             return
+        print('Format\n{}\n'.format(test_dict['format']))
         raise e
 
     # simplify the composite and convert to text if possible
@@ -108,9 +113,11 @@ def run_formatter(test_dict):
     if python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
     if result != expected:
+        print('Format\n{}\n'.format(test_dict['format']))
         print('Expected\n{}'.format(pformat(expected)))
         print('Got\n{}'.format(pformat(result)))
-    assert (result == expected)
+    if result != expected:
+        pytest.fail('Results not as expected')
 
 
 def test_1():
@@ -1181,6 +1188,153 @@ def test_inherit_color_2():
     run_formatter({
         'format': '\?color=#F0F [[\?color=good [{number}]]]',
         'expected': [{'color': u'#00FF00', 'full_text': u'42'}]
+    })
+
+
+def test_conditions_1():
+    run_formatter({
+        'format': '\?if=number=42 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_2():
+    run_formatter({
+        'format': '\?if=number=4 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_3():
+    run_formatter({
+        'format': '\?if=!number=42 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_4():
+    run_formatter({
+        'format': '\?if=!number=4 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_5():
+    run_formatter({
+        'format': '\?if=missing=4 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_6():
+    run_formatter({
+        'format': '\?if=name=Björk cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_7():
+    run_formatter({
+        'format': '\?if=name=Jimmy cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_8():
+    run_formatter({
+        'format': '\?if=name= cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_9():
+    run_formatter({
+        'format': '\?if=number= cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_10():
+    run_formatter({
+        'format': '\?if=pi=3.14159265359 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_11():
+    run_formatter({
+        'format': '\?if=pi=3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_12():
+    run_formatter({
+        'format': '\?if=yes=3 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_13():
+    run_formatter({
+        'format': '\?if=no=3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_14():
+    run_formatter({
+        'format': '\?if=number>3 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_15():
+    run_formatter({
+        'format': '\?if=number<50 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_16():
+    run_formatter({
+        'format': '\?if=number>50 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_17():
+    run_formatter({
+        'format': '\?if=number<3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_18():
+    run_formatter({
+        'format': '\?if=name<Andrew cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_19():
+    run_formatter({
+        'format': '\?if=name>Andrew cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_20():
+    run_formatter({
+        'format': '\?if=name<John cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_21():
+    run_formatter({
+        'format': '\?if=name>John cool beans',
+        'expected': ''
     })
 
 

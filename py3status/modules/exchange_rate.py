@@ -23,22 +23,22 @@ SAMPLE OUTPUT
 {'full_text': u'$1.0617 \xa30.8841 \xa5121.5380'}
 """
 
-import re
-
 URL = 'http://query.yahooapis.com/v1/public/yql?'
 URL += 'q=select * from yahoo.finance.xchange where pair in ({currencies})'
 URL += '&env=store://datatables.org/alltableswithkeys&format=json'
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     base = 'EUR'
     cache_timeout = 600
     format = u'${USD} £{GBP} ¥{JPY}'
 
     def post_config_hook(self):
         self.request_timeout = 20
-
-        self.currencies = re.findall('\{([^}]*)\}', self.format)
+        self.currencies = self.py3.get_placeholders_list(self.format)
         # create url
         currencies = ['"%s%s"' % (self.base, cur) for cur in self.currencies]
         self.data_url = URL.format(currencies=','.join(currencies))

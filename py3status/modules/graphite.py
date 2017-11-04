@@ -14,7 +14,6 @@ Configuration parameters:
     http_timeout: HTTP query timeout to graphite.
         (default 10)
     proxy: You can configure the proxy with HTTP or HTTPS.
-        (default: None)
         examples:
             proxy = 'https://myproxy.example.com:1234/'
             proxy = 'http://user:passwd@myproxy.example.com/'
@@ -89,6 +88,7 @@ def format_value(num, value_round=True):
 class Py3status:
     """
     """
+    # available configuration parameters
     cache_timeout = 120
     datapoint_selection = 'max'
     format = ''
@@ -102,6 +102,9 @@ class Py3status:
     value_comparator = 'max'
     value_format = True
     value_round = True
+
+    def post_config_hook(self):
+        self._validate_config()
 
     def _reset_notifications(self):
         """
@@ -220,7 +223,6 @@ class Py3status:
     def graphite(self):
         """
         """
-        self._validate_config()
         self._reset_notifications()
 
         color_key, r_json = self._render_graphite_json()

@@ -63,7 +63,8 @@ SAMPLE OUTPUT
 
 
 class Py3status:
-
+    """
+    """
     # available configuration parameters
     cache_timeout = 7200
     forecast_days = 3
@@ -81,9 +82,13 @@ class Py3status:
     units = 'c'
     woeid = None
 
+    def post_config_hook(self):
+        if not self.woeid:
+            raise Exception('missing woeid')
+
     def _get_forecast(self):
         """
-        Ask Yahoo! Weather. for a forecast
+        Ask Yahoo! Weather for a forecast
         """
         try:
             q = self.py3.request(
@@ -153,11 +158,6 @@ class Py3status:
         return self.icon_default
 
     def weather_yahoo(self):
-        """
-        This method gets executed by py3status
-        """
-        if not self.woeid:
-            raise Exception('missing woeid setting, please configure it')
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': ''

@@ -63,6 +63,11 @@ class HttpResponse:
             elif isinstance(e, HTTPError):
                 self._status_code = e.code
                 self._error_message = reason
+                # we return an HttpResponse but have no response
+                # so create some 'fake' response data.
+                self._text = ''
+                self._json = None
+                self._headers = []
             else:
                 # unknown exception, so just raise it
                 raise RequestURLError(reason)
@@ -100,13 +105,21 @@ class HttpResponse:
         Return an object representing the return json for the request
         """
         try:
-            return json.loads(self.text)
-        except:
-            raise RequestInvalidJSON('Invalid JSON recieved')
+            return self._json
+        except AttributeError:
+            try:
+                self._json = json.loads(self.text)
+                return self._json
+            except:
+                raise RequestInvalidJSON('Invalid JSON received')
 
     @property
     def headers(self):
         """
         Get the headers from the response.
         """
-        return self._response.headers
+        try:
+            return self._headers
+        except AttributeError:
+            self._headers = self._response.headers
+            return self._headers

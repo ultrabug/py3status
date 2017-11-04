@@ -2,7 +2,6 @@ import os
 import imp
 import inspect
 
-from threading import Thread, Timer
 from collections import OrderedDict
 from time import time
 
@@ -12,7 +11,7 @@ from py3status.profiling import profile
 from py3status.formatter import Formatter
 
 
-class Module(Thread):
+class Module:
     """
     This class represents a user module (imported file).
     It is responsible for executing it every given interval and
@@ -22,12 +21,10 @@ class Module(Thread):
     PARAMS_NEW = 'new'
     PARAMS_LEGACY = 'legacy'
 
-    def __init__(self, module, user_modules, py3_wrapper):
+    def __init__(self, module, user_modules, py3_wrapper, instance=None):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
-        Thread.__init__(self)
-
         self.allow_config_clicks = True
         self.allow_urgent = None
         self.cache_time = None
@@ -40,9 +37,8 @@ class Module(Thread):
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.lock = py3_wrapper.lock
         self.methods = OrderedDict()
-        self.module_class = None
+        self.module_class = instance
         self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
         self.module_name = module.split(' ')[0]
@@ -51,7 +47,7 @@ class Module(Thread):
         self.prevent_refresh = False
         self.sleeping = False
         self.terminated = False
-        self.timer = None
+        self.testing = self.config.get('testing')
         self.urgent = False
 
         # create a nice name for the module that matches what the module is
@@ -153,6 +149,10 @@ class Module(Thread):
         """
         Show the error in the bar
         """
+        if self.testing:
+            self._py3_wrapper.report_exception(msg)
+            raise KeyboardInterrupt
+
         if self.error_hide:
             self.hide_errors()
             return
@@ -216,7 +216,7 @@ class Module(Thread):
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
             self._py3_wrapper.log('starting module %s' % self.module_full_name)
-            self.start()
+            self._py3_wrapper.timeout_queue_add_module(self)
 
     def force_update(self):
         """
@@ -229,18 +229,11 @@ class Module(Thread):
             self.methods[meth]['cached_until'] = time()
             if self.config['debug']:
                 self._py3_wrapper.log('clearing cache for method {}'.format(meth))
-        # cancel any existing timer
-        if self.timer:
-            self.timer.cancel()
-        # get the thread to update itself
-        self.timer = Timer(0, self.run)
-        self.timer.start()
+        # set module to update
+        self._py3_wrapper.timeout_queue_add_module(self)
 
     def sleep(self):
         self.sleeping = True
-        # cancel any existing timer
-        if self.timer:
-            self.timer.cancel()
 
     def disable_module(self):
         # hide message
@@ -261,9 +254,7 @@ class Module(Thread):
         if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        delay = max(self.cache_time - time(), 0)
-        self.timer = Timer(delay, self.run)
-        self.timer.start()
+        self._py3_wrapper.timeout_queue_add_module(self, self.cache_time)
 
     def set_updated(self):
         """
@@ -276,10 +267,14 @@ class Module(Thread):
         for method in self.methods.values():
             data = method['last_output']
             if isinstance(data, list):
+                if self.testing:
+                    data[0]['cached_until'] = method.get('cached_until')
                 output.extend(data)
             else:
                 # if the output is not 'valid' then don't add it.
                 if data.get('full_text') or 'separator' in data:
+                    if self.testing:
+                        data['cached_until'] = method.get('cached_until')
                     output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
@@ -456,22 +451,24 @@ class Module(Thread):
             - 'on_click' methods as they'll be called upon a click_event
             - 'kill' methods as they'll be called upon this thread's exit
         """
-        # user provided modules take precedence over py3status provided modules
-        if self.module_name in user_modules:
-            include_path, f_name = user_modules[self.module_name]
-            self._py3_wrapper.log(
-                'loading module "{}" from {}{}'.format(module, include_path,
-                                                       f_name))
-            class_inst = self.load_from_file(include_path + f_name)
-        # load from py3status provided modules
-        else:
-            self._py3_wrapper.log(
-                'loading module "{}" from py3status.modules.{}'.format(
-                    module, self.module_name))
-            class_inst = self.load_from_namespace(self.module_name)
+        if not self.module_class:
+            # user provided modules take precedence over py3status provided modules
+            if self.module_name in user_modules:
+                include_path, f_name = user_modules[self.module_name]
+                self._py3_wrapper.log(
+                    'loading module "{}" from {}{}'.format(module, include_path,
+                                                           f_name))
+                self.module_class = self.load_from_file(include_path + f_name)
+            # load from py3status provided modules
+            else:
+                self._py3_wrapper.log(
+                    'loading module "{}" from py3status.modules.{}'.format(
+                        module, self.module_name))
+                self.module_class = self.load_from_namespace(self.module_name)
 
+        class_inst = self.module_class
         if class_inst:
-            self.module_class = class_inst
+
             try:
                 # containers have items attribute set to a list of contained
                 # module instance names.  If there are no contained items then
@@ -708,18 +705,14 @@ class Module(Thread):
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
-        # cancel any existing timer
-        if self.timer:
-            self.timer.cancel()
-
-        if self.lock.is_set():
+        if self._py3_wrapper.running:
             cache_time = None
             # execute each method of this module
             for meth, obj in self.methods.items():
                 my_method = self.methods[meth]
 
-                # always check the lock
-                if not self.lock.is_set():
+                # always check py3status is running
+                if not self._py3_wrapper.running:
                     break
 
                 # respect the cache set for this method
@@ -799,9 +792,6 @@ class Module(Thread):
                     else:
                         my_method['last_output'] = result
 
-                    # mark module as updated
-                    self.set_updated()
-
                     # debug info
                     if self.config['debug']:
                         self._py3_wrapper.log(
@@ -811,6 +801,10 @@ class Module(Thread):
                     self.allow_config_clicks = True
                     self.error_messages = None
                     self.error_hide = False
+
+                    # mark module as updated
+                    self.set_updated()
+
                 except ModuleErrorException as e:
                     # module has indicated that it has an error
                     self.runtime_error(e.msg, meth)
@@ -827,7 +821,8 @@ class Module(Thread):
                 except Exception as e:
                     msg = 'Instance `{}`, user method `{}` failed'
                     msg = msg.format(self.module_full_name, meth)
-                    self._py3_wrapper.report_exception(msg, notify_user=False)
+                    if not self.testing:
+                        self._py3_wrapper.report_exception(msg, notify_user=False)
                     # added error
                     self.runtime_error(str(e) or e.__class__.__name__, meth)
                     cache_time = time() + getattr(self.module_class,
@@ -841,17 +836,13 @@ class Module(Thread):
             if cache_time == PY3_CACHE_FOREVER:
                 return
             # don't be hasty mate
-            # set timer to do update next time one is needed
-            if not self.sleeping:
-                delay = max(cache_time - time(),
-                            self.config['minimum_interval'])
-                self.timer = Timer(delay, self.run)
-                self.timer.start()
+            # set timeout to do update next time one is needed
+            if not cache_time:
+                cache_time = time() + self.config['minimum_interval']
+
+            self._py3_wrapper.timeout_queue_add_module(self, cache_time)
 
     def kill(self):
-        # stop timer if exists
-        if self.timer:
-            self.timer.cancel()
         # check and execute the 'kill' method if present
         if self.has_kill:
             try:

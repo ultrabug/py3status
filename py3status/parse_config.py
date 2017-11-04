@@ -491,9 +491,12 @@ class ConfigParser:
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == '=':
-                    name, value = self.process_value(
-                        name, value, self.current_module[-1]
-                    )
+                    try:
+                        name, value = self.process_value(
+                            name, value, self.current_module[-1]
+                        )
+                    except IndexError:
+                        self.error('Missing {', previous=True)
                     dictionary[name] = value
                 # appending to existing values
                 elif t_value == '+=':
@@ -539,8 +542,10 @@ def process_config(config_path, py3_wrapper=None):
             # There was a problem use our special error config
             error = e.one_line()
             notify_user(error)
-            error_config = Template(ERROR_CONFIG).substitute(
-                error=error.replace('"', '\\"'))
+            # to display correctly in i3bar we need to do some substitutions
+            for char in ['"', '{', '|']:
+                error = error.replace(char, '\\' + char)
+            error_config = Template(ERROR_CONFIG).substitute(error=error)
             config_info = parse_config(error_config)
 
     # update general section with defaults
@@ -564,13 +569,13 @@ def process_config(config_path, py3_wrapper=None):
         button = ''
         try:
             button = key.split()[1]
-            if int(button) not in range(1, 6):
+            if int(button) not in range(1, 20):
                 button_error = True
         except (ValueError, IndexError):
-                button_error = True
+            button_error = True
 
         if button_error:
-            err = 'Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 saw `{}`'
+            err = 'Invalid on_click for `{}`. Number not in range 1-20: `{}`.'
             notify_user(err.format(group_name, button))
             return False
         clicks = on_click.setdefault(group_name, {})

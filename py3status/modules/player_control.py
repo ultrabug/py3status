@@ -38,7 +38,6 @@ pause
 # line, comma separated.
 
 import os
-import subprocess
 
 try:
     import dbus
@@ -60,7 +59,7 @@ class Py3status:
     supported_players = 'audacious,vlc'
     volume_tick = 1
 
-    def __init__(self):
+    def post_config_hook(self):
         self.status = 'stop'
         self.icon = self.play_icon
 
@@ -95,18 +94,17 @@ class Py3status:
             if button in ('left', 'right'):
                 self._play()
 
-    def _run(self, *args):
+    def _run(self, command):
         if self.debug:
-            self.py3.log('running %s' % repr(*args))
-
-        subprocess.check_output(*args, stderr=subprocess.STDOUT)
+            self.py3.log('running %s' % command)
+        self.py3.command_run(command)
 
     def _play(self):
         self.status = 'play'
         self.icon = self.stop_icon
         player_name = self._detect_running_player()
         if player_name == 'audacious':
-            self._run(['/usr/bin/audacious', '-p'])
+            self._run(['audacious', '-p'])
         elif player_name == 'vlc':
             player = self._get_vlc()
             if player:
@@ -117,7 +115,7 @@ class Py3status:
         self.icon = self.play_icon
         player_name = self._detect_running_player()
         if player_name == 'audacious':
-            self._run(['/usr/bin/audacious', '-s'])
+            self._run(['audacious', '-s'])
         elif player_name == 'vlc':
             player = self._get_vlc()
             if player:
@@ -128,7 +126,7 @@ class Py3status:
         self.icon = self.pause_icon
         player_name = self._detect_running_player()
         if player_name == 'audacious':
-            self._run(['/usr/bin/audacious', '-u'])
+            self._run(['audacious', '-u'])
         elif player_name == 'vlc':
             player = self._get_vlc()
             if player:
@@ -139,7 +137,7 @@ class Py3status:
         """
         sign = '+' if increase else '-'
         delta = "%d%%%s" % (self.volume_tick, sign)
-        self._run(('/usr/bin/amixer', '-q', 'sset', 'Master', delta))
+        self._run(['amixer', '-q', 'sset', 'Master', delta])
 
     def _detect_running_player(self):
         """Detect running player process, if any

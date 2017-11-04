@@ -63,7 +63,6 @@ class Events(Thread):
         self.config = py3_wrapper.config
         self.error = None
         self.py3_config = py3_wrapper.config['py3_config']
-        self.lock = py3_wrapper.lock
         self.modules = py3_wrapper.modules
         self.on_click = self.py3_config['on_click']
         self.output_modules = py3_wrapper.output_modules
@@ -236,15 +235,20 @@ class Events(Thread):
         Example event:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'empty', 'instance': 'first'}
         """
-        while self.lock.is_set():
-            event_str = self.poller_inp.readline()
-            if not event_str:
-                continue
-            try:
-                # remove leading comma if present
-                if event_str[0] == ',':
-                    event_str = event_str[1:]
-                event = loads(event_str)
-                self.dispatch_event(event)
-            except Exception:
-                self.py3_wrapper.report_exception('Event failed')
+        try:
+            while self.py3_wrapper.running:
+                event_str = self.poller_inp.readline()
+                if not event_str:
+                    continue
+                try:
+                    # remove leading comma if present
+                    if event_str[0] == ',':
+                        event_str = event_str[1:]
+                    event = loads(event_str)
+                    self.dispatch_event(event)
+                except Exception:
+                    self.py3_wrapper.report_exception('Event failed')
+        except:
+            err = 'Events thread died, click events are disabled.'
+            self.py3_wrapper.report_exception(err, notify_user=False)
+            self.py3_wrapper.notify_user(err, level='warning')

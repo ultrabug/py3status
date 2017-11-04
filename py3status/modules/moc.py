@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display currently playing song in moc.
+Display song currently playing in moc.
 
 MOC (music on console) is a console audio player for Linux/Unix designed to be
 powerful and easy to use. It consists of two parts, a server (moc) and a
@@ -15,38 +15,35 @@ Configuration parameters:
     format: display format for this module
         (default '\?if=is_started [\?if=is_stopped \[\] moc|
         [\?if=is_paused \|\|][\?if=is_playing >] {title}]')
-    sleep_timeout: sleep interval for this module will be used when moc is not
-        running. this allows aggressive timing in cache_timeout where one might
-        want to refresh moc every 0 second along with time placeholders...
-        or to make moc run once every minute as long as it's not being used.
+    sleep_timeout: when moc is not running, this interval will be used to
+        allow one to refresh constantly with time placeholders and/or
+        to refresh once every minute rather than every few seconds
         (default 20)
 
 Control placeholders:
-    is_paused: a boolean based on moc status
-    is_playing: a boolean based on moc status
-    is_started: a boolean based on moc status
-    is_stopped: a boolean based on moc status
+    {is_paused} a boolean based on moc status
+    {is_playing} a boolean based on moc status
+    {is_started} a boolean based on moc status
+    {is_stopped} a boolean based on moc status
 
 Format placeholders:
-    {totaltime} total time in seconds, eg 72:02
-    {currenttime} elapsed time in [HH:]MM:SS, eg 00:32
-    {album} album name
-    {artist} artist name
+    {album} album name, eg (new output here)
+    {artist} artist name, eg (new output here)
     {avgbitrate} audio average bitrate, eg 230kbps
     {bitrate} audio bitrate, eg 230kbps
     {currentsec} elapsed time in seconds, eg 32
     {currenttime} elapsed time in [HH:]MM:SS, eg 00:32
     {file} file location, eg /home/user/Music...
     {rate} audio rate, eg 44kHz
-    {songtitle} song title
-    {state} playback state, eg PLAY, PAUSE, or STOP
+    {songtitle} song title, eg (new output here)
+    {state} playback state, eg PLAY, PAUSE, STOP
     {timeleft} time left in [HH:]MM:SS, eg 71:30
-    {title} track title (contains artist + songtitle)
+    {title} track title, eg (new output here)
     {totalsec} total time in seconds, eg 4322
     {totaltime} total time in seconds, eg 72:02
 
     Placeholders are retrieved directly from `mocp --info` command.
-    The list was harvested only once and should not represent a full list.
+    The list was harvested once and should not represent a full list.
 
 Color options:
     color_paused: Paused, defaults to color_degraded
@@ -55,6 +52,14 @@ Color options:
 
 Requires:
     moc: a console audio player with simple ncurses interface
+
+Examples:
+```
+# see 'man mocp' for more buttons
+moc {
+    on_click 9 = 'exec mocp --example'
+}
+```
 
 @author lasers
 
@@ -71,7 +76,7 @@ stopped
 from __future__ import division
 
 
-STRING_NOT_INSTALLED = "isn't installed"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
@@ -97,7 +102,7 @@ class Py3status:
 
     def _get_moc_data(self):
         try:
-            data = self.py3.command_output(['mocp', '--info'])
+            data = self.py3.command_output('mocp --info')
             is_started = True
         except:
             data = {}
@@ -105,8 +110,6 @@ class Py3status:
         return is_started, data
 
     def moc(self):
-        """
-        """
         is_paused = is_playing = is_stopped = None
         cached_until = self.sleep_timeout
         color = self.py3.COLOR_BAD
@@ -135,14 +138,16 @@ class Py3status:
         return {
             'cached_until': self.py3.time_in(cached_until),
             'color': color,
-            'full_text': self.py3.safe_format(self.format,
-                                              dict(
-                                                  is_paused=is_paused,
-                                                  is_playing=is_playing,
-                                                  is_started=is_started,
-                                                  is_stopped=is_stopped,
-                                                  **data
-                                              ))
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(
+                    is_paused=is_paused,
+                    is_playing=is_playing,
+                    is_started=is_started,
+                    is_stopped=is_stopped,
+                    **data
+                )
+            )
         }
 
     def on_click(self, event):
