@@ -455,8 +455,8 @@ Environment Variables
 
 You may use the value of an environment variable in your configuration with
 the ``env(...)`` directive. These values are captured at startup and may be
-converted to the needed datatype (only ``str``, ``int``, and ``float``
-are currently supported). Without conversion, environment variable
+converted to the needed datatype (only ``str``, ``int``, ``float``, and
+``bool`` are currently supported). Without conversion, environment variable
 parameters will be assumed to be strings.
 
 This is primarily designed to obfuscate sensitive information when sharing

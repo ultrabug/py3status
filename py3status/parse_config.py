@@ -98,7 +98,7 @@ class ConfigParser:
         my_module {
             my_str = env(MY_VAR)
             my_int = env(MY_INT_VAR, int)
-            my_float = env(MY_FLOAT_VAR, float)
+            my_bool = env(MY_FLAG, bool)
             my_complex = {
                 'list' : [1, 2, env(MY_LIST_ENTRY, int)],
                 'dict' : {'x': env(MY_DICT_VAL), 'y': 2}
@@ -323,6 +323,9 @@ class ConfigParser:
             'str': str,
             'int': int,
             'float': float,
+
+            # Treat booleans specially
+            'bool': (lambda val: val.lower() in ('true', '1'))
           }
         if env_type not in conversion_options:
           self.error('Invalid conversion')
