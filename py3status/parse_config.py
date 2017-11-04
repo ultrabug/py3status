@@ -98,6 +98,7 @@ class ConfigParser:
 
     TOKENS = [
         '#.*$'  # comments
+        '|(?P<env_var>env\([A-Z_][0-9A-Z_]*\))' # environment variable
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -213,6 +214,8 @@ class ConfigParser:
                 t_type = 'literal'
             elif token.group('newline'):
                 t_type = 'newline'
+            elif token.group('env_var'):
+                t_type = 'env_var'
             elif token.group('unknown'):
                 t_type = 'unknown'
             else:
@@ -290,6 +293,18 @@ class ConfigParser:
             return False
         if value.lower() == 'none':
             return None
+        return value
+
+    def make_value_from_env(self, value):
+        # Extract the environment variable
+        env_var = re.match('env\(([0-9A-Z_]+)\)', value).group(1)
+
+        # Check the environment variable
+        # TODO: dynamic support, (lambda: os.getenv(env_var))
+        value = os.getenv(env_var)
+        if value is None:
+          self.error('Environment variable undefined')
+
         return value
 
     def separator(self, separator=',', end_token=None):
@@ -370,6 +385,8 @@ class ConfigParser:
                     continue
             if token['type'] == 'literal':
                 return self.make_value(t_value)
+            if token['type'] == 'env_var':
+                return self.make_value_from_env(t_value)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -458,6 +475,8 @@ class ConfigParser:
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
+            elif t_type == 'env_var':
+                self.error('Name expected')
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:
@@ -584,13 +603,10 @@ def process_config(config_path, py3_wrapper=None):
 
     def get_module_type(name):
         '''
-        i3status, py3status or env?
+        i3status or py3status?
         '''
-        sanitized = name.split()[0]
-        if sanitized in I3S_MODULE_NAMES:
+        if name.split()[0] in I3S_MODULE_NAMES:
             return 'i3status'
-        if sanitized == 'env':
-            return sanitized
         return 'py3status'
 
     def process_module(name, module, parent):
@@ -640,7 +656,7 @@ def process_config(config_path, py3_wrapper=None):
         if module_type == 'i3status':
             if item not in i3s_modules:
                 i3s_modules.append(item)
-        elif module_type == 'py3status':
+        else:
             if item not in py3_modules:
                 py3_modules.append(item)
 
@@ -652,18 +668,10 @@ def process_config(config_path, py3_wrapper=None):
                 continue
 
             append_modules(item)
-            get_env_items(item)
-
             module = modules.get(item, {})
             config[item] = remove_any_contained_modules(module)
             # add any children
             add_container_items(item)
-
-    def get_env_items(module_name):
-        module = modules.get(module_name, {})
-        items = module.get('env', {})
-        for k, v in items.iteritems():
-            module[k] = os.getenv(v)
 
     # create config for modules in order
     for name in config_info.get('order', []):
@@ -671,7 +679,6 @@ def process_config(config_path, py3_wrapper=None):
         config['order'].append(name)
         add_container_items(name)
         append_modules(name)
-        get_env_items(name)
 
         config[name] = remove_any_contained_modules(module)
 
