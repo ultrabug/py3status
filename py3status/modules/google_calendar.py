@@ -163,7 +163,6 @@ SAMPLE OUTPUT
 import httplib2
 import os
 import datetime
-import pytz
 
 from apiclient import discovery
 from oauth2client import client
@@ -171,12 +170,12 @@ from oauth2client import clientsecrets
 from oauth2client import tools
 from oauth2client.file import Storage
 from httplib2 import ServerNotFoundError
-from tzlocal import get_localzone
+from dateutil import parser
+from dateutil.tz import tzlocal
 
 
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 APPLICATION_NAME = 'py3status google_calendar module'
-LOCAL_TZ = get_localzone()
 
 
 class Py3status:
@@ -307,12 +306,11 @@ class Py3status:
 
     def _gstr_to_date(self, date_str):
         """ Returns a dateime object from a google calendar date string."""
-        return datetime.datetime.strptime(date_str, '%Y-%m-%d').astimezone(LOCAL_TZ)
+        return parser.parse(date_str).replace(tzinfo=tzlocal())
 
     def _gstr_to_datetime(self, date_time_str):
         """ Returns a datetime object from a google calendar date/time string."""
-        tmp = ''.join(date_time_str.rsplit(':', 1))
-        return datetime.datetime.strptime(tmp, '%Y-%m-%dT%H:%M:%S%z')
+        return parser.parse(date_time_str)
 
     def _datetime_to_str(self, date_time, dt_format):
         """ Returns a strftime formatted string from a datetime object."""
@@ -323,8 +321,7 @@ class Py3status:
         Returns in a dict the number of days/hours/minutes and total minutes
         until date_time.
         """
-        now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).astimezone(LOCAL_TZ)
-
+        now = datetime.datetime.now(tzlocal())
         diff = date_time - now
 
         days = int(diff.days)
@@ -472,6 +469,7 @@ class Py3status:
         else:
             if not self.no_update:
                 self.events = self._get_events()
+
             composite = self._build_response()
             cached_until = self.cache_timeout
 
