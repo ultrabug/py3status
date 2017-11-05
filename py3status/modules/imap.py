@@ -145,14 +145,16 @@ class Py3status:
 
                     self.connection.login(self.user, self.password)
 
-                self.mail_count = 0
+                tmp_mail_count = 0
                 directories = self.mailbox.split(',')
 
                 for directory in directories:
                     self.connection.select(directory)
                     unseen_response = self.connection.search(None, self.criterion)
                     mails = unseen_response[1][0].split()
-                    self.mail_count += len(mails)
+                    tmp_mail_count += len(mails)
+
+                self.mail_count = tmp_mail_count
 
                 if self.use_idle:
                     self.connection.idle()
