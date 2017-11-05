@@ -5,24 +5,19 @@ Show an indicator when YubiKey is waiting for a touch.
 Configuration parameters:
     format: Display format for the module.
         (default '\?if=is_waiting YubiKey')
-    gpg_check_timeout: Time to wait for gpg check response.
-        Use value as small as possible that doesn't introduce false positives.
-        (default 0.1)
-    gpg_check_watch_paths: A list of files to watch, start gpg check if any one was opened.
-        (default ['~/.gnupg/pubring.kbx', '~/.ssh/known_hosts'])
-    u2f_check_watch_paths: A list of files to watch, toggle u2f check if any one was opened.
-        (default ['~/.config/Yubico/u2f_keys'])
+    socket_path: A path to the yubikey-touch-detector socket file.
+        (default '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket')
 
 Control placeholders:
-    {is_waiting} a boolean indicating whether YubiKey is waiting for a touch.
+    {is_waiting} a boolean, True if YubiKey is waiting for a touch for any reason.
+    {is_waiting_gpg} a boolean, True if YubiKey is waiting for a touch due to a gpg operation.
+    {is_waiting_u2f} a boolean, True if YubiKey is waiting for a touch due to a pam-u2f request.
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'YubiKey'}
 
 Requires:
-    inotify-simple: (for gpg and u2f) to check for requests
-    github.com/maximbaz/pam-u2f: (for u2f) a fork that adds watch capability to pam-u2f module
-    subprocess32: (for gpg) needed only if after all these years you are still using python2
+    github.com/maximbaz/yubikey-touch-detector: tool to detect when YubiKey is waiting for a touch
 
 @author Maxim Baz (https://github.com/maximbaz)
 @license BSD
@@ -30,105 +25,56 @@ Requires:
 
 import time
 import os
-import signal
-import sys
+import socket
 import threading
-import inotify_simple
-
-if os.name == 'posix' and sys.version_info[0] < 3:
-    import subprocess32 as subprocess
-else:
-    import subprocess
 
 
-class GpgWatchingThread(threading.Thread):
+class YubikeyTouchDetectorListener(threading.Thread):
     """
-    A thread watchng if YubiKey is waiting for a touch for gpg access
+    A thread watchng if YubiKey is waiting for a touch
     """
 
     def __init__(self, parent):
-        super(GpgWatchingThread, self).__init__()
+        super(YubikeyTouchDetectorListener, self).__init__()
         self.parent = parent
 
-    def _check_card_status(self):
-        return subprocess.Popen(
-            'gpg --no-tty --card-status',
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            preexec_fn=os.setsid)
-
-    def _set_pending(self, new_value):
-        self.parent.pending_gpg = new_value
-        if not self.parent.pending_u2f:
-            self.parent.py3.update()
+    def _connect_socket(self):
+        try:
+            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket.connect(self.parent.socket_path)
+        except:
+            self.socket = None
 
     def run(self):
-        inotify = inotify_simple.INotify()
-        watches = []
-        for path in self.parent.gpg_check_watch_paths:
-            if os.path.isfile(path):
-                watch = inotify.add_watch(path, inotify_simple.flags.OPEN)
-                watches.append(watch)
-
         while not self.parent.killed.is_set():
-            for event in inotify.read():
-                # e.g. ssh doesn't start immediately, try several seconds to be sure
-                for i in range(20):
-                    with self._check_card_status() as check:
-                        try:
-                            # if this doesn't return very quickly, touch is pending
-                            check.communicate(
-                                timeout=self.parent.gpg_check_timeout)
-                            time.sleep(0.25)
-                        except subprocess.TimeoutExpired:
-                            self._set_pending(True)
-                            os.killpg(check.pid, signal.SIGINT)
-                            check.communicate()
-                            # wait until device is touched
-                            with self._check_card_status() as wait:
-                                wait.communicate()
-                                self._set_pending(False)
-                                break
+            self._connect_socket()
 
-                # ignore all events caused by operations above
-                for _ in inotify.read():
-                    pass
+            if self.socket is None:
+                # Socket is not available, try again soon
+                time.sleep(60)
+                continue
 
-        for watch in watches:
-            inotify.rm_watch(watch)
-
-
-class U2fWatchingThread(threading.Thread):
-    """
-    A thread watchng if YubiKey is waiting for a touch for u2f access
-    """
-
-    def __init__(self, parent):
-        super(U2fWatchingThread, self).__init__()
-        self.parent = parent
-
-    def _set_pending(self, new_value):
-        self.parent.pending_u2f = new_value
-        if not self.parent.pending_gpg:
-            self.parent.py3.update()
-
-    def run(self):
-        inotify = inotify_simple.INotify()
-        watches = []
-        for path in self.parent.u2f_check_watch_paths:
-            if os.path.isfile(path):
-                watch = inotify.add_watch(path, inotify_simple.flags.OPEN)
-                watches.append(watch)
-
-        while not self.parent.killed.is_set():
-            for event in inotify.read():
-                self._set_pending(True)
-                for event in inotify.read():
-                    self._set_pending(False)
-
-        for watch in watches:
-            inotify.rm_watch(watch)
+            while not self.parent.killed.is_set():
+                data = self.socket.recv(5)
+                if not data:
+                    # Connection dropped, need to reconnect
+                    break
+                elif data == b"GPG_1":
+                    self.parent.waiting_gpg += 1
+                    if self.parent.waiting_gpg == 1:
+                        self.parent.py3.update()
+                elif data == b"GPG_0":
+                    self.parent.waiting_gpg -= 1
+                    if self.parent.waiting_gpg == 0:
+                        self.parent.py3.update()
+                elif data == b"U2F_1":
+                    self.parent.waiting_u2f += 1
+                    if self.parent.waiting_u2f == 1:
+                        self.parent.py3.update()
+                elif data == b"U2F_0":
+                    self.parent.waiting_u2f -= 1
+                    if self.parent.waiting_u2f == 0:
+                        self.parent.py3.update()
 
 
 class Py3status:
@@ -136,37 +82,30 @@ class Py3status:
     """
     # available configuration parameters
     format = '\?if=is_waiting YubiKey'
-    gpg_check_timeout = 0.1
-    gpg_check_watch_paths = ['~/.gnupg/pubring.kbx', '~/.ssh/known_hosts']
-    u2f_check_watch_paths = ['~/.config/Yubico/u2f_keys']
+    socket_path = '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket'
 
     def post_config_hook(self):
-        self.gpg_check_watch_paths = [
-            os.path.expanduser(p) for p in self.gpg_check_watch_paths
-        ]
-        self.u2f_check_watch_paths = [
-            os.path.expanduser(p) for p in self.u2f_check_watch_paths
-        ]
+        self.socket_path = os.path.expanduser(self.socket_path)
+        self.socket_path = os.path.expandvars(self.socket_path)
 
         self.killed = threading.Event()
 
-        self.pending_gpg = False
-        self.pending_u2f = False
+        self.waiting_gpg = 0
+        self.waiting_u2f = 0
 
-        if len(self.gpg_check_watch_paths) > 0:
-            GpgWatchingThread(self).start()
-
-        if len(self.u2f_check_watch_paths) > 0:
-            U2fWatchingThread(self).start()
+        YubikeyTouchDetectorListener(self).start()
 
     def yubikey(self):
-        is_waiting = self.pending_gpg or self.pending_u2f
-        format_params = {'is_waiting': is_waiting}
+        format_params = {
+            'is_waiting': self.waiting_gpg > 0 or self.waiting_u2f > 0,
+            'is_waiting_gpg': self.waiting_gpg > 0,
+            'is_waiting_u2f': self.waiting_u2f > 0,
+        }
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, format_params),
         }
-        if is_waiting:
+        if format_params['is_waiting']:
             response['urgent'] = True
         return response
 
