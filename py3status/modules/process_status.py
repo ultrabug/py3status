@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Display if a process is running.
+Display status of a process on your system.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    format: default format for this module (default '{icon}')
-    full: if True, match against full command line (default False)
-    icon_off: show when process not running (default '■')
-    icon_on: show when process running (default '●')
-    process: process name to check for (default None)
+    format: display format for this module (default '{icon}')
+    full: match against the full command line (default False)
+    icon_off: show this if a process is not running (default '■')
+    icon_on: show this if a process is running (default '●')
+    process: specify a process name to use (default None)
 
 Format placeholders:
     {icon} process icon
@@ -23,11 +23,11 @@ Color options:
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 
-off
+not_running
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-STRING_ERROR = 'not configured'
+STRING_ERROR = 'missing process'
 
 
 class Py3status:
