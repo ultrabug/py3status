@@ -131,6 +131,8 @@ class Py3status:
             if self.connection is not None:
                 self.connection.close()
                 self.connection.logout()
+        except:
+            pass
         finally:
             self.connection = None
 
@@ -161,15 +163,15 @@ class Py3status:
                 else:
                     return
         except socket_error as e:
-            self.mail_error = "Socket error - " + e
+            self.py3.log("Socket error - " + str(e))
             self.connection = None
             self.mail_count = None
         except imaplib.IMAP4.error as e:
-            self.mail_error = "IMAP error - " + e
+            self.py3.log("IMAP error - " + str(e))
             self._disconnect()
             self.mail_count = None
         except Exception as e:
-            self.mail_error = "Unknown error - " + e
+            self.mail_error = "Unknown error - " + str(e)
             self._disconnect()
             self.mail_count = None
 
