@@ -4,17 +4,16 @@ Show an indicator when YubiKey is waiting for a touch.
 
 Configuration parameters:
     format: Display format for the module.
-        (default '\?if=is_waiting YubiKey')
+        (default '[\?if=is_gpg YubiKey][\?if=is_u2f YubiKey]')
     socket_path: A path to the yubikey-touch-detector socket file.
         (default '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket')
 
 Control placeholders:
-    {is_waiting} a boolean, True if YubiKey is waiting for a touch for any reason.
-    {is_waiting_gpg} a boolean, True if YubiKey is waiting for a touch due to a gpg operation.
-    {is_waiting_u2f} a boolean, True if YubiKey is waiting for a touch due to a pam-u2f request.
+    {is_gpg} a boolean, True if YubiKey is waiting for a touch due to a gpg operation.
+    {is_u2f} a boolean, True if YubiKey is waiting for a touch due to a pam-u2f request.
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': 'YubiKey'}
+{'full_text': 'YubiKey', 'urgent': True}
 
 Requires:
     github.com/maximbaz/yubikey-touch-detector: tool to detect when YubiKey is waiting for a touch
@@ -81,7 +80,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = '\?if=is_waiting YubiKey'
+    format = '[\?if=is_gpg YubiKey][\?if=is_u2f YubiKey]'
     socket_path = '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket'
 
     def post_config_hook(self):
@@ -97,15 +96,14 @@ class Py3status:
 
     def yubikey(self):
         format_params = {
-            'is_waiting': self.waiting_gpg > 0 or self.waiting_u2f > 0,
-            'is_waiting_gpg': self.waiting_gpg > 0,
-            'is_waiting_u2f': self.waiting_u2f > 0,
+            'is_gpg': self.waiting_gpg > 0,
+            'is_u2f': self.waiting_u2f > 0,
         }
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, format_params),
         }
-        if format_params['is_waiting']:
+        if self.waiting_gpg > 0 or self.waiting_u2f > 0:
             response['urgent'] = True
         return response
 
