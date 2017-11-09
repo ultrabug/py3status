@@ -59,21 +59,14 @@ class YubikeyTouchDetectorListener(threading.Thread):
                     # Connection dropped, need to reconnect
                     break
                 elif data == b"GPG_1":
-                    self.parent.waiting_gpg += 1
-                    if self.parent.waiting_gpg == 1:
-                        self.parent.py3.update()
+                    self.parent.is_waiting_gpg = True
                 elif data == b"GPG_0":
-                    self.parent.waiting_gpg -= 1
-                    if self.parent.waiting_gpg == 0:
-                        self.parent.py3.update()
+                    self.parent.is_waiting_gpg = False
                 elif data == b"U2F_1":
-                    self.parent.waiting_u2f += 1
-                    if self.parent.waiting_u2f == 1:
-                        self.parent.py3.update()
+                    self.parent.is_waiting_u2f = True
                 elif data == b"U2F_0":
-                    self.parent.waiting_u2f -= 1
-                    if self.parent.waiting_u2f == 0:
-                        self.parent.py3.update()
+                    self.parent.is_waiting_u2f = False
+                self.parent.py3.update()
 
 
 class Py3status:
@@ -89,21 +82,21 @@ class Py3status:
 
         self.killed = threading.Event()
 
-        self.waiting_gpg = 0
-        self.waiting_u2f = 0
+        self.is_waiting_gpg = False
+        self.is_waiting_u2f = False
 
         YubikeyTouchDetectorListener(self).start()
 
     def yubikey(self):
         format_params = {
-            'is_gpg': self.waiting_gpg > 0,
-            'is_u2f': self.waiting_u2f > 0,
+            'is_gpg': self.is_waiting_gpg,
+            'is_u2f': self.is_waiting_u2f,
         }
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, format_params),
         }
-        if self.waiting_gpg > 0 or self.waiting_u2f > 0:
+        if self.is_waiting_gpg or self.is_waiting_u2f:
             response['urgent'] = True
         return response
 
