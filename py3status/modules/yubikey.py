@@ -4,7 +4,7 @@ Show an indicator when YubiKey is waiting for a touch.
 
 Configuration parameters:
     format: Display format for the module.
-        (default '[\?if=is_gpg YubiKey][\?if=is_u2f YubiKey]')
+        (default '[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]')
     socket_path: A path to the yubikey-touch-detector socket file.
         (default '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket')
 
@@ -80,7 +80,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = '[\?if=is_gpg YubiKey][\?if=is_u2f YubiKey]'
+    format = '[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]'
     socket_path = '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket'
 
     def post_config_hook(self):
