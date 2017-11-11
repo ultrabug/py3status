@@ -59,13 +59,13 @@ class YubikeyTouchDetectorListener(threading.Thread):
                     # Connection dropped, need to reconnect
                     break
                 elif data == b"GPG_1":
-                    self.parent.is_gpg = True
+                    self.parent.status['is_gpg'] = True
                 elif data == b"GPG_0":
-                    self.parent.is_gpg = False
+                    self.parent.status['is_gpg'] = False
                 elif data == b"U2F_1":
-                    self.parent.is_u2f = True
+                    self.parent.status['is_u2f'] = True
                 elif data == b"U2F_0":
-                    self.parent.is_u2f = False
+                    self.parent.status['is_u2f'] = False
                 self.parent.py3.update()
 
 
@@ -80,23 +80,20 @@ class Py3status:
         self.socket_path = os.path.expanduser(self.socket_path)
         self.socket_path = os.path.expandvars(self.socket_path)
 
+        self.status = {
+            'is_gpg': False,
+            'is_u2f': False,
+        }
+
         self.killed = threading.Event()
-
-        self.is_gpg = False
-        self.is_u2f = False
-
         YubikeyTouchDetectorListener(self).start()
 
     def yubikey(self):
-        format_params = {
-            'is_gpg': self.is_gpg,
-            'is_u2f': self.is_u2f,
-        }
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, format_params),
+            'full_text': self.py3.safe_format(self.format, self.status),
         }
-        if self.is_gpg or self.is_u2f:
+        if any([waiting for waiting in self.status.values()]):
             response['urgent'] = True
         return response
 
