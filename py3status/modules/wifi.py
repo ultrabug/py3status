@@ -17,9 +17,10 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
-    use_sudo: Use sudo to run iw, make sure iw requires some root rights
-        without a password by adding a sudoers entry, eg...
-        '<user> ALL=(ALL) NOPASSWD:/usr/bin/iw dev,/usr/bin/iw dev [a-z]* link'
+    use_sudo: Use sudo to run iw and ip. make sure to give some root rights
+        to run without a password by editing the sudoers file, eg...
+        '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
+        '<user> ALL=(ALL) NOPASSWD:/sbin/ip addr list [a-z]*'
         (default False)
 
 Format placeholders:
@@ -77,13 +78,16 @@ class Py3status:
     def post_config_hook(self):
         self._max_bitrate = 0
         self._ssid = ''
-        self.iw_cmd = self.py3.check_commands(['iw', '/sbin/iw'])
-        # Try and guess the wifi interface
-        cmd = [self.iw_cmd, 'dev']
+        iw = self.py3.check_commands(['iw', '/sbin/iw'])
+        self.iw_dev_id_link = [iw, 'dev', self.device, 'link']
+        self.ip_addr_list_id = ['ip', 'addr', 'list', self.device]
+        # use_sudo?
         if self.use_sudo:
-            cmd.insert(0, 'sudo')
+            for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
+                cmd[0:0] = ['sudo', '-n']
+        # get wireless interface
         try:
-            iw = self.py3.command_output(cmd)
+            iw = self.py3.command_output([iw, 'dev'])
             devices = re.findall('Interface\s*([^\s]+)', iw)
             if not devices or 'wlan0' in devices:
                 self.device = 'wlan0'
@@ -114,11 +118,8 @@ class Py3status:
         """
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
-        cmd = [self.iw_cmd, 'dev', self.device, 'link']
-        if self.use_sudo:
-            cmd.insert(0, 'sudo')
         try:
-            iw = self.py3.command_output(cmd)
+            iw = self.py3.command_output(self.iw_dev_id_link)
         except:
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
@@ -157,10 +158,7 @@ class Py3status:
 
         # check command
         if self.py3.format_contains(self.format, 'ip'):
-            cmd = ['ip', 'addr', 'list', self.device]
-            if self.use_sudo:
-                cmd.insert(0, 'sudo')
-            ip_info = self.py3.command_output(cmd)
+            ip_info = self.py3.command_output(self.ip_addr_list_id)
             ip_match = re.search('inet\s+([0-9.]+)', ip_info)
             if ip_match:
                 ip = ip_match.group(1)
