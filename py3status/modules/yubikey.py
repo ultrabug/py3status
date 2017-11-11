@@ -93,7 +93,7 @@ class Py3status:
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, self.status),
         }
-        if any([waiting for waiting in self.status.values()]):
+        if any(self.status.values()):
             response['urgent'] = True
         return response
 
