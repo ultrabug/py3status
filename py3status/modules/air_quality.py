@@ -16,12 +16,21 @@ Configuration parameters:
         The default quota is max 1000 requests per minute (~16RPS) and with
         burst up to 60 requests. See http://aqicn.org/api/ for more information.
         (default 3600)
-    format: display format for this module (default '{city_name}: {aqi} {category}')
+    format: display format for this module
+        (default '[\?color=bad {message}]
+        |[\?if=aqi&color=aqi {city_name}: {aqi} {category}]')
     format_datetime: specify strftime characters to format (default {})
     location: location or uid to query. To search for nearby stations in Kraków,
         use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
         For best results, use uid instead of name in location, eg `@8691`.
         (default 'Shanghai')
+    quality_thresholds: specify a list of tuples, eg (number, 'color', 'name')
+        (default [(0, '#009966', 'Good'),
+            (51, '#ffde33', 'Moderate'),
+            (101, '#ff9933', 'Sensitively Unhealthy'),
+            (151, '#cc0033', 'Unhealthy'),
+            (201, '#660099', 'Very Unhealthy'),
+            (301, '#7e0023', 'Hazardous')])
 
 Format placeholders:
     {aqi} air quality index
@@ -70,13 +79,11 @@ format_datetime placeholders:
     key: epoch_placeholder, eg time, vtime
     value: % strftime characters to be translated, eg '%b %d' ----> 'Nov 11'
 
-Category options:
-    category_<name>: display name
-        eg category_very_unhealthy = 'Level 5: Wear a mask'
-
 Color options:
-    color_<category>: display color
-        eg color_hazardous = '#7E0023'
+    color_bad: error message (if any) from the site
+
+Color thresholds:
+    aqi: print a color based on the value of aqi
 
 Examples:
 ```
@@ -86,6 +93,7 @@ air_quality {
     format_datetime = {'time': '%-I%P'}
 }
 ```
+
 @author beetleman, lasers
 @license BSD
 
@@ -110,31 +118,6 @@ aqi_hazardous
 
 from datetime import datetime
 
-AQI = (
-    (0, 50, 'good'),
-    (51, 100, 'moderate'),
-    (101, 150, 'sensitively_unhealthy'),
-    (151, 200, 'unhealthy'),
-    (201, 300, 'very_unhealthy'),
-    (301, float('inf'), 'hazardous')
-)
-CATEGORY = {
-    'good': 'Good',
-    'moderate': 'Moderate',
-    'sensitively_unhealthy': 'Sensitively Unhealthy',
-    'unhealthy': 'Unhealthy',
-    'very_unhealthy': 'Very Unhealthy',
-    'hazardous': 'Hazardous',
-}
-COLOR = {
-    'good': '#009966',
-    'moderate': '#FFDE33',
-    'sensitively_unhealthy': '#FF9933',
-    'unhealthy': '#CC0033',
-    'very_unhealthy': '#660099',
-    'hazardous': '#7E0023',
-}
-
 
 class Py3status:
     """
@@ -142,9 +125,18 @@ class Py3status:
     # available configuration parameters
     auth_token = 'demo'
     cache_timeout = 3600
-    format = '{location}: {aqi} {category}'
+    format = ('[\?color=bad {message}]'
+              '|[\?if=aqi&color=aqi {city_name}: {aqi} {category}]')
     format_datetime = {}
     location = 'Shanghai'
+    quality_thresholds = [
+        (0, '#009966', 'Good'),
+        (51, '#FFDE33', 'Moderate'),
+        (101, '#FF9933', 'Sensitively Unhealthy'),
+        (151, '#CC0033', 'Unhealthy'),
+        (201, '#660099', 'Very Unhealthy'),
+        (301, '#7E0023', 'Hazardous')
+    ]
 
     def post_config_hook(self):
         self.auth_token = {'token': self.auth_token}
@@ -154,6 +146,10 @@ class Py3status:
             if (self.py3.format_contains(self.format, word)) and (
                     word in self.format_datetime):
                 self.init_datetimes.append(word)
+
+        self.thresholds = []
+        for index_aqi, index_color, index_category in self.quality_thresholds:
+            self.thresholds.append((index_aqi, index_color))
 
     def _get_aqi_data(self):
         try:
@@ -168,38 +164,28 @@ class Py3status:
         return new_data
 
     def _manipulate(self, data):
-        # get key
-        for start, end, key in AQI:
-            if data['aqi'] >= start and data['aqi'] <= end:
-                key = key
-                break
-        # get category
-        category = getattr(self, 'CATEGORY_{}'.format(key).lower(), None)
-        if not category:
-            category = CATEGORY.get(key)
-        data['category'] = category
-        # get color
-        color = getattr(self.py3, 'COLOR_{}'.format(key.upper()))
-        if not color:
-            color = COLOR.get(key)
-        # format datetime?
+        for index_aqi, index_color, index_category in self.quality_thresholds:
+            if data['aqi'] >= index_aqi:
+                data['category'] = index_category
+
+        if self.thresholds:
+            self.py3.threshold_get_color(data['aqi'], 'aqi')
+
         for k in self.init_datetimes:
             if k in data:
                 data[k] = self.py3.safe_format(datetime.strftime(
                     datetime.fromtimestamp(data[k]), self.format_datetime[k]))
-        return data, color
+        return data
 
     def air_quality(self):
         aqi_data = self._get_aqi_data()
-        color = None
-        if aqi_data:
+        if aqi_data.get('status') == 'ok':
             aqi_data = self._organize(aqi_data)
-            data, color = self._manipulate(aqi_data)
+            aqi_data = self._manipulate(aqi_data)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, data),
-            'color': color,
+            'full_text': self.py3.safe_format(self.format, aqi_data),
         }
 
 
