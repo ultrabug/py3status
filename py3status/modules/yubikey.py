@@ -28,13 +28,13 @@ import socket
 import threading
 
 
-class YubikeyTouchDetectorListener(threading.Thread):
+class YubiKeyTouchDetectorListener(threading.Thread):
     """
     A thread watchng if YubiKey is waiting for a touch
     """
 
     def __init__(self, parent):
-        super(YubikeyTouchDetectorListener, self).__init__()
+        super(YubiKeyTouchDetectorListener, self).__init__()
         self.parent = parent
 
     def _connect_socket(self):
@@ -86,7 +86,7 @@ class Py3status:
         }
 
         self.killed = threading.Event()
-        YubikeyTouchDetectorListener(self).start()
+        YubiKeyTouchDetectorListener(self).start()
 
     def yubikey(self):
         response = {
