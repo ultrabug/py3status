@@ -18,8 +18,7 @@ Configuration parameters:
         (default 3)
     button_refresh: Refreshes the module and updates the list of events.
         (default 2)
-    button_toggle: The button used to toggle between output formats
-        format_event and format_event_full.
+    button_toggle: The button used to toggle what data is displayed for each event.
         (default 1)
     cache_timeout: How often the module is refreshed in seconds
         (default 60)
@@ -33,11 +32,11 @@ Configuration parameters:
     format_date: The format for date related format placeholders. May be any Python
         strftime directives for dates.
         (default '%a %d-%m')
-    format_event: The format for the first toggleable event output.
-        (default '[\?color=event {summary}][ ({location})][ {format_timer}]')
-    format_event_full: The format for the second toggleable event output.
-        (default '[\?color=event {summary}]
-        [\?color=time  ({start_time} - {end_time}, {start_date})]')
+    format_event: The format for each event. The information to display for each event
+        can be toggled with 'button_toggle' based on the value of 'event_full'.
+        (default '[\?color=event {summary}][\?if=!event_full [\?if=location  ({location})]]' +\
+        '[\?if=!event_full  {format_timer}]' +\
+        '[\?if=event_full  ({start_time} - {end_time}, {start_date})]')
     format_separator: The string used to separate individual events.
         (default '\?color=separator \|')
     format_time: The format for time related format placeholders (except {format_timer}).
@@ -188,9 +187,9 @@ class Py3status:
     force_lowercase = False
     format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
-    format_event = '[\?color=event {summary}][ ({location})][ {format_timer}]'
-    format_event_full = '[\?color=event {summary}]' +\
-        '[\?color=time  ({start_time} - {end_time}, {start_date})]'
+    format_event = '[\?color=event {summary}][\?if=!event_full [\?if=location  ({location})]]' +\
+        '[\?if=!event_full  {format_timer}]' +\
+        '[\?if=event_full  ({start_time} - {end_time}, {start_date})]'
     format_separator = '\?color=separator \|'
     format_time = '%I:%M %p'
     format_timer = '\?color=time ([\?if=days {days}d ]' +\
@@ -203,7 +202,6 @@ class Py3status:
     warn_timeout = 300
 
     def post_config_hook(self):
-        self.button = None
         self.button_states = [False] * self.num_events
         self.events = None
         self.no_update = False
@@ -348,21 +346,6 @@ class Py3status:
 
         return time_delta_formatted
 
-    def _check_button_toggle(self, index):
-        """
-        Checks if the button associated with toggling event format between
-        format_event and format_event_full has been pressed. If so,
-        we toggle the format.
-        """
-        if self.button == self.button_toggle and self.button_states[index]:
-            curr_event_format = self.format_event_full
-        else:
-            curr_event_format = self.format_event
-
-        self.no_update = False
-
-        return curr_event_format
-
     def _build_response(self):
         """
         Builds the composite reponse to be output by the module by looping through all
@@ -420,15 +403,14 @@ class Py3status:
                 self._check_warn_threshold(time_delta, event_dict['start_time'],
                                            event_dict['end_time'], event_dict['summary'])
 
-            curr_event_format = self._check_button_toggle(index)
-
             if self.force_lowercase:
                 event_dict = dict((k, v.lower()) if v is not None else (k, v)
                                   for k, v in event_dict.items())
 
             event_formatted = self.py3.safe_format(
-                curr_event_format,
-                {'summary': event_dict['summary'],
+                self.format_event,
+                {'event_full': self.button_states[index],
+                 'summary': event_dict['summary'],
                  'location': event_dict['location'],
                  'description': event_dict['description'],
                  'start_time': event_dict['start_time'],
@@ -436,11 +418,15 @@ class Py3status:
                  'start_date': event_dict['start_date'],
                  'end_date': event_dict['end_date'],
                  'format_timer': time_to_composite})
+            self.py3.log('test')
+            self.py3.log(str(event_formatted))
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
 
             index += 1
+
+            self.no_update = False
 
         format_separator = self.py3.safe_format(self.format_separator)
         self.py3.composite_update(format_separator, {'index': 'sep'})
@@ -487,20 +473,20 @@ class Py3status:
             """
             try:
                 self.no_update = True
-                self.button = event['button']
+                button = event['button']
                 button_index = event['index']
 
                 if button_index == 'sep':
                     self.py3.prevent_refresh()
-                elif self.button == self.button_refresh:
+                elif button == self.button_refresh:
                     now = datetime.datetime.now()
                     diff = (now - self.last_update).seconds
                     if diff > 1:
                         self.no_update = False
-                elif self.button == self.button_toggle:
+                elif button == self.button_toggle:
                     self.button_states[button_index] = \
                         not self.button_states[button_index]
-                elif self.button == self.button_open:
+                elif button == self.button_open:
                     self.py3.command_run('xdg-open ' + self.event_urls[button_index])
                     self.py3.prevent_refresh()
                 else:

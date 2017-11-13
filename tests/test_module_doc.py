@@ -49,8 +49,7 @@ IGNORE_ITEM = [
     ('weather_owm', 'thresholds'),  # dictionary parsing issue
     ('google_calendar', 'format_event'),  # line too long for docstring parsing
     ('google_calendar', 'format_event_full'),  # line too long for docstring parsing
-    ('google_calendar', 'format_time_to'),  # line too long for docstring parsing
-    ('google_calendar', 'format_time_left'),  # line too long for docstring parsing
+    ('google_calendar', 'format_timer')  # line too long for docstring parsing
 ]
 
 # Obsolete parameters will not have alphabetical order checked
