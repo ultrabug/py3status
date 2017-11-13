@@ -34,22 +34,19 @@ Configuration parameters:
         strftime directives for dates.
         (default '%a %d-%m')
     format_event: The format for the first toggleable event output.
-        (default '[\?color=event {summary}][ ({location})][ {time_to}]')
+        (default '[\?color=event {summary}][ ({location})][ {format_timer}]')
     format_event_full: The format for the second toggleable event output.
         (default '[\?color=event {summary}]
         [\?color=time  ({start_time} - {end_time}, {start_date})]')
     format_separator: The string used to separate individual events.
         (default '\?color=separator \|')
-    format_time: The format for time related format placeholders (except {time_to}).
+    format_time: The format for time related format placeholders (except {format_timer}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
-    format_time_left: The format for used for the {time_to} placeholder when when the time
-        displayed is the time left until an event in progress is over.
+    format_timer: The format used for the {format_timer} placeholder to display time
+        until an event starts or time until an event in progress is over based.
         (default '\?color=time ([\?if=days {days}d ]
-        [\?if=hours {hours}h ][\?if=minutes {minutes}m]) left')
-    format_time_to: The format used for the {time_to} placeholder.
-        (default '\?color=time ([\?if=days {days}d ]
-        [\?if=hours {hours}h ][\?if=minutes {minutes}m])')
+        [\?if=hours {hours}h ][\?if=minutes {minutes}m]) [\?if=is_current left]')
     ignore_all_day_events: Sets whether to display all day events or not.
         (default False)
     num_events: The maximum number of events to display.
@@ -57,8 +54,8 @@ Configuration parameters:
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
-    time_to_max: Threshold (in minutes) for when to display the {time_to}
-        string; e.g. if time_to_max = 60, {time_to} will only be displayed
+    time_to_max: Threshold (in minutes) for when to display the {format_timer}
+        string; e.g. if time_to_max = 60, {format_timer} will only be displayed
         for events starting in 60 minutes or less.
         (default 180)
     warn_threshold: The number of minutes until an event starts before a warning is
@@ -72,7 +69,7 @@ Configuration parameters:
 Format placeholders:
     {events} All the events to display.
 
-Format_event & format_event_full placeholders:
+format_event & format_event_full placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.
@@ -80,10 +77,10 @@ Format_event & format_event_full placeholders:
     {start_date} The start date for the event.
     {start_time} The start time for the event.
     {summary} The summary (i.e. title) for the event.
-    {time_to} The time until the event starts (or until it is over
+    {format_timer} The time until the event starts (or until it is over
         if already in progress).
 
-Format_time_to and format_time_left placeholders:
+format_timer placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
     {minutes} The number of minutes until the event.
@@ -191,15 +188,13 @@ class Py3status:
     force_lowercase = False
     format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
-    format_event = '[\?color=event {summary}][ ({location})][ {time_to}]'
+    format_event = '[\?color=event {summary}][ ({location})][ {format_timer}]'
     format_event_full = '[\?color=event {summary}]' +\
         '[\?color=time  ({start_time} - {end_time}, {start_date})]'
     format_separator = '\?color=separator \|'
     format_time = '%I:%M %p'
-    format_time_left = '\?color=time ([\?if=days {days}d ]' +\
-        '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) left'
-    format_time_to = '\?color=time ([\?if=days {days}d ]' +\
-        '[\?if=hours {hours}h ][\?if=minutes {minutes}m])'
+    format_timer = '\?color=time ([\?if=days {days}d ]' +\
+        '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) [\?if=is_current left]'
     ignore_all_day_events = False
     num_events = 3
     thresholds = []
@@ -334,7 +329,7 @@ class Py3status:
                 'minutes': minutes,
                 'total_minutes': total_minutes}
 
-    def _format_timedelta(self, index, time_delta, format):
+    def _format_timedelta(self, index, time_delta, is_current):
         """
         Formats the dict time_to containg days/hours/minutes until an event starts
         into a string according to time_to_formatted.
@@ -345,10 +340,11 @@ class Py3status:
 
         if time_delta['total_minutes'] <= self.time_to_max:
             time_delta_formatted = self.py3.safe_format(
-                format,
+                self.format_timer,
                 {'days': time_delta['days'],
                  'hours': time_delta['hours'],
-                 'minutes': time_delta['minutes']})
+                 'minutes': time_delta['minutes'],
+                 'is_current': is_current})
 
         return time_delta_formatted
 
@@ -382,17 +378,17 @@ class Py3status:
             self.py3.threshold_get_color(index + 1, 'event')
             self.py3.threshold_get_color(index + 1, 'time')
 
-            event_str = {}
+            event_dict = {}
 
-            event_str['summary'] = event.get('summary')
+            event_dict['summary'] = event.get('summary')
 
-            if event_str['summary'] is not None:
-                if event_str['summary'].lower() \
+            if event_dict['summary'] is not None:
+                if event_dict['summary'].lower() \
                         in map(lambda e: e.lower(), self.blacklist_events):
                     continue
 
-            event_str['location'] = event.get('location')
-            event_str['description'] = event.get('description')
+            event_dict['location'] = event.get('location')
+            event_dict['description'] = event.get('description')
             self.event_urls.append(event['htmlLink'])
 
             if event['start'].get('date') is not None:
@@ -405,41 +401,41 @@ class Py3status:
                 start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
                 end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
-            event_str['start_time'] = self._datetime_to_str(start_dt, self.format_time)
-            event_str['end_time'] = self._datetime_to_str(end_dt, self.format_time)
+            event_dict['start_time'] = self._datetime_to_str(start_dt, self.format_time)
+            event_dict['end_time'] = self._datetime_to_str(end_dt, self.format_time)
 
-            event_str['start_date'] = self._datetime_to_str(start_dt, self.format_date)
-            event_str['end_date'] = self._datetime_to_str(end_dt, self.format_date)
+            event_dict['start_date'] = self._datetime_to_str(start_dt, self.format_date)
+            event_dict['end_date'] = self._datetime_to_str(end_dt, self.format_date)
 
             time_delta = self._delta_time(start_dt)
-
             if time_delta['days'] < 0:
                 time_delta = self._delta_time(end_dt)
-                time_to_composite = self._format_timedelta(index, time_delta,
-                                                           self.format_time_left)
+                is_current = True
             else:
-                time_to_composite = self._format_timedelta(index, time_delta,
-                                                           self.format_time_to)
+                is_current = False
 
-            self._check_warn_threshold(time_delta, event_str['start_time'],
-                                       event_str['end_time'], event_str['summary'])
+            time_to_composite = self._format_timedelta(index, time_delta, is_current)
+
+            if self.warn_threshold > 0:
+                self._check_warn_threshold(time_delta, event_dict['start_time'],
+                                           event_dict['end_time'], event_dict['summary'])
 
             curr_event_format = self._check_button_toggle(index)
 
             if self.force_lowercase:
-                event_str = dict((k, v.lower()) if v is not None else (k, v)
-                                 for k, v in event_str.items())
+                event_dict = dict((k, v.lower()) if v is not None else (k, v)
+                                  for k, v in event_dict.items())
 
             event_formatted = self.py3.safe_format(
                 curr_event_format,
-                {'summary': event_str['summary'],
-                 'location': event_str['location'],
-                 'description': event_str['description'],
-                 'start_time': event_str['start_time'],
-                 'end_time': event_str['end_time'],
-                 'start_date': event_str['start_date'],
-                 'end_date': event_str['end_date'],
-                 'time_to': time_to_composite})
+                {'summary': event_dict['summary'],
+                 'location': event_dict['location'],
+                 'description': event_dict['description'],
+                 'start_time': event_dict['start_time'],
+                 'end_time': event_dict['end_time'],
+                 'start_date': event_dict['start_date'],
+                 'end_date': event_dict['end_date'],
+                 'format_timer': time_to_composite})
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
