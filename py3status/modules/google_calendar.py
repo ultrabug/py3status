@@ -33,10 +33,9 @@ Configuration parameters:
         strftime directives for dates.
         (default '%a %d-%m')
     format_event: The format for each event. The information to display for each event
-        can be toggled with 'button_toggle' based on the value of 'event_full'.
-        (default '[\?color=event {summary}][\?if=!event_full [\?if=location  ({location})]]' +\
-        '[\?if=!event_full  {format_timer}]' +\
-        '[\?if=event_full  ({start_time} - {end_time}, {start_date})]')
+        can be toggled with 'button_toggle' based on the value of 'is_toggled'.
+        (default  '[\?color=event {summary}][\?if=is_toggled  ({start_time}
+         - {end_time}, {start_date})|[\?if=location  ({location})] {format_timer}]'
     format_separator: The string used to separate individual events.
         (default '\?color=separator \|')
     format_time: The format for time related format placeholders (except {format_timer}).
@@ -65,10 +64,13 @@ Configuration parameters:
     warn_timeout: The number of seconds before a warning should be displayed again.
         (default 300)
 
+Control placeholders:
+    {is_toggled} a boolean toggled by button_toggle
+
 Format placeholders:
     {events} All the events to display.
 
-format_event & format_event_full placeholders:
+format_event & format_is_toggled placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.
@@ -187,9 +189,8 @@ class Py3status:
     force_lowercase = False
     format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
-    format_event = '[\?color=event {summary}][\?if=!event_full [\?if=location  ({location})]]' +\
-        '[\?if=!event_full  {format_timer}]' +\
-        '[\?if=event_full  ({start_time} - {end_time}, {start_date})]'
+    format_event = '[\?color=event {summary}][\?if=is_toggled  ({start_time}' +\
+        ' - {end_time}, {start_date})|[\?if=location  ({location})] {format_timer}]'
     format_separator = '\?color=separator \|'
     format_time = '%I:%M %p'
     format_timer = '\?color=time ([\?if=days {days}d ]' +\
@@ -330,7 +331,7 @@ class Py3status:
     def _format_timedelta(self, index, time_delta, is_current):
         """
         Formats the dict time_to containg days/hours/minutes until an event starts
-        into a string according to time_to_formatted.
+        into a composite according to time_to_formatted.
 
         Returns: A formatted composite.
         """
@@ -409,7 +410,7 @@ class Py3status:
 
             event_formatted = self.py3.safe_format(
                 self.format_event,
-                {'event_full': self.button_states[index],
+                {'is_toggled': self.button_states[index],
                  'summary': event_dict['summary'],
                  'location': event_dict['location'],
                  'description': event_dict['description'],
@@ -418,8 +419,6 @@ class Py3status:
                  'start_date': event_dict['start_date'],
                  'end_date': event_dict['end_date'],
                  'format_timer': time_to_composite})
-            self.py3.log('test')
-            self.py3.log(str(event_formatted))
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
