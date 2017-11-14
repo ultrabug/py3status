@@ -48,7 +48,6 @@ IGNORE_ITEM = [
     ('spotify', 'sanitize_words'),  # line too long for docstring parsing
     ('weather_owm', 'thresholds'),  # dictionary parsing issue
     ('google_calendar', 'format_event'),  # line too long for docstring parsing
-    ('google_calendar', 'format_event_full'),  # line too long for docstring parsing
     ('google_calendar', 'format_timer')  # line too long for docstring parsing
 ]
 

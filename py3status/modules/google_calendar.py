@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Display upcoming Google Calendar events.
-
+ummary} {start_time} - {end_time}') (default '{summary} {start_time} - {end_time}')
 This module will display information about upcoming Google Calendar events in
 one of two formats which can be toggled with a button press. The
 event's URL may also be opened in a web browser with a button press.
-
+ummary} {start_time} - {end_time}
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
@@ -35,7 +35,9 @@ Configuration parameters:
     format_event: The format for each event. The information to display for each event
         can be toggled with 'button_toggle' based on the value of 'is_toggled'.
         (default  '[\?color=event {summary}][\?if=is_toggled  ({start_time}
-         - {end_time}, {start_date})|[\?if=location  ({location})] {format_timer}]'
+         - {end_time}, {start_date})|[\?if=location  ({location})] [{format_timer}]]'
+    format_notification: The format for event warning notifications.
+        (default '{summary} {start_time} - {end_time}')
     format_separator: The string used to separate individual events.
         (default '\?color=separator \|')
     format_time: The format for time related format placeholders (except {format_timer}).
@@ -70,7 +72,7 @@ Control placeholders:
 Format placeholders:
     {events} All the events to display.
 
-format_event & format_is_toggled placeholders:
+format_event and format_notification placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.
@@ -190,7 +192,8 @@ class Py3status:
     format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
     format_event = '[\?color=event {summary}][\?if=is_toggled  ({start_time}' +\
-        ' - {end_time}, {start_date})|[\?if=location  ({location})] {format_timer}]'
+        ' - {end_time}, {start_date})|[ ({location})][ {format_timer}]]'
+    format_notification = '{summary} {start_time} - {end_time}'
     format_separator = '\?color=separator \|'
     format_time = '%I:%M %p'
     format_timer = '\?color=time ([\?if=days {days}d ]' +\
@@ -271,7 +274,7 @@ class Py3status:
 
     def _get_events(self):
         """
-        Fetches events from the color into a list.
+        Fetches events from the calendar into a list.
 
         Returns: The list of events.
         """
@@ -289,13 +292,22 @@ class Py3status:
 
         return eventsResult.get('items', [])
 
-    def _check_warn_threshold(self, time_to, start, end, summary):
+    def _check_warn_threshold(self, time_to, event_dict):
         """
         Checks if the time until an event starts is less than or equal to the warn_threshold.
         If it is, it presents a warning with self.py3.notify_user.
         """
         if time_to['total_minutes'] <= self.warn_threshold:
-            warn_message = str(summary) + " " + str(start) + " - " + str(end)
+            warn_message = self.py3.safe_format(
+                self.format_notification,
+                {'summary': event_dict['summary'],
+                 'location': event_dict['location'],
+                 'description': event_dict['description'],
+                 'start_time': event_dict['start_time'],
+                 'end_time': event_dict['end_time'],
+                 'start_date': event_dict['start_date'],
+                 'end_date': event_dict['end_date'],
+                 'format_timer': event_dict['time_to']})
             self.py3.notify_user(warn_message, 'warning', self.warn_timeout)
 
     def _gstr_to_date(self, date_str):
@@ -356,9 +368,8 @@ class Py3status:
         """
         responses = []
         self.event_urls = []
-        index = 0
 
-        for event in self.events:
+        for index, event in enumerate(self.events):
             self.py3.threshold_get_color(index + 1, 'event')
             self.py3.threshold_get_color(index + 1, 'time')
 
@@ -398,11 +409,10 @@ class Py3status:
             else:
                 is_current = False
 
-            time_to_composite = self._format_timedelta(index, time_delta, is_current)
+            event_dict['time_to'] = self._format_timedelta(index, time_delta, is_current)
 
             if self.warn_threshold > 0:
-                self._check_warn_threshold(time_delta, event_dict['start_time'],
-                                           event_dict['end_time'], event_dict['summary'])
+                self._check_warn_threshold(time_delta, event_dict)
 
             if self.force_lowercase:
                 event_dict = dict((k, v.lower()) if v is not None else (k, v)
@@ -418,12 +428,10 @@ class Py3status:
                  'end_time': event_dict['end_time'],
                  'start_date': event_dict['start_date'],
                  'end_date': event_dict['end_date'],
-                 'format_timer': time_to_composite})
+                 'format_timer': event_dict['time_to']})
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
-
-            index += 1
 
             self.no_update = False
 
@@ -470,28 +478,25 @@ class Py3status:
 
             Otherwise, we disable event updates.
             """
-            try:
-                self.no_update = True
-                button = event['button']
-                button_index = event['index']
+            self.no_update = True
+            button = event['button']
+            button_index = event['index']
 
-                if button_index == 'sep':
-                    self.py3.prevent_refresh()
-                elif button == self.button_refresh:
-                    now = datetime.datetime.now()
-                    diff = (now - self.last_update).seconds
-                    if diff > 1:
-                        self.no_update = False
-                elif button == self.button_toggle:
-                    self.button_states[button_index] = \
-                        not self.button_states[button_index]
-                elif button == self.button_open:
-                    self.py3.command_run('xdg-open ' + self.event_urls[button_index])
-                    self.py3.prevent_refresh()
-                else:
-                    self.py3.prevent_refresh()
-            except IndexError:
-                return
+            if button_index == 'sep':
+                self.py3.prevent_refresh()
+            elif button == self.button_refresh:
+                now = datetime.datetime.now()
+                diff = (now - self.last_update).seconds
+                if diff > 1:
+                    self.no_update = False
+            elif button == self.button_toggle:
+                self.button_states[button_index] = \
+                    not self.button_states[button_index]
+            elif button == self.button_open:
+                self.py3.command_run('xdg-open ' + self.event_urls[button_index])
+                self.py3.prevent_refresh()
+            else:
+                self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
