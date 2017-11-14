@@ -28,7 +28,7 @@ Configuration parameters:
     is_input: Is this an input device or an output device?
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
-        pactl supports this. (default 120)
+        pactl and pamixer supports this. (default 120)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -154,7 +154,9 @@ class PamixerBackend(AudioBackend):
             self.device = "0"
         # Ignore channel
         self.channel = None
-        self.cmd = ["pamixer", "--source" if self.is_input else "--sink", self.device]
+        is_input = '--source' if self.is_input else '--sink'
+        self.cmd = ['pamixer', '--allow-boost', is_input, self.device]
+        self.max_volume = parent.max_volume
 
     def get_volume(self):
         try:
@@ -168,7 +170,12 @@ class PamixerBackend(AudioBackend):
         return perc, muted
 
     def volume_up(self, delta):
-        self.run_cmd(self.cmd + ["-i", str(delta)])
+        perc, muted = self.get_volume()
+        if int(perc) + delta >= self.max_volume:
+            options = ['--set-volume', str(self.max_volume)]
+        else:
+            options = ['-i', str(delta)]
+        self.run_cmd(self.cmd + options)
 
     def volume_down(self, delta):
         self.run_cmd(self.cmd + ["-d", str(delta)])
