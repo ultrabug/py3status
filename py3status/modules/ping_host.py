@@ -87,7 +87,6 @@ class Py3status:
                                                   })
         }
 
-        print response
         return response
 
 
