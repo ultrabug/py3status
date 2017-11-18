@@ -39,7 +39,7 @@ Configuration parameters:
     format_notification: The format for event warning notifications.
         (default '{summary} {start_time} - {end_time}')
     format_separator: The string used to separate individual events.
-        (default '\?color=separator \|')
+        (default '\|')
     format_time: The format for time related format placeholders (except {format_timer}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
@@ -89,7 +89,6 @@ format_timer placeholders:
     {minutes} The number of minutes until the event.
 
 Color options:
-    color_separator: Color for separator.
     color_event: Color for a single event.
     color_time: Color for the time associated with each event.
 
@@ -194,7 +193,7 @@ class Py3status:
     format_event = '[\?color=event {summary}][\?if=is_toggled  ({start_time}' +\
         ' - {end_time}, {start_date})|[ ({location})][ {format_timer}]]'
     format_notification = '{summary} {start_time} - {end_time}'
-    format_separator = '\?color=separator \|'
+    format_separator = '\|'
     format_time = '%I:%M %p'
     format_timer = '\?color=time ([\?if=days {days}d ]' +\
         '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) [\?if=is_current left]'
@@ -298,16 +297,7 @@ class Py3status:
         If it is, it presents a warning with self.py3.notify_user.
         """
         if time_to['total_minutes'] <= self.warn_threshold:
-            warn_message = self.py3.safe_format(
-                self.format_notification,
-                {'summary': event_dict['summary'],
-                 'location': event_dict['location'],
-                 'description': event_dict['description'],
-                 'start_time': event_dict['start_time'],
-                 'end_time': event_dict['end_time'],
-                 'start_date': event_dict['start_date'],
-                 'end_date': event_dict['end_date'],
-                 'format_timer': event_dict['time_to']})
+            warn_message = self.py3.safe_format(self.format_notification, event_dict)
             self.py3.notify_user(warn_message, 'warning', self.warn_timeout)
 
     def _gstr_to_date(self, date_str):
@@ -409,7 +399,7 @@ class Py3status:
             else:
                 is_current = False
 
-            event_dict['time_to'] = self._format_timedelta(index, time_delta, is_current)
+            event_dict['format_timer'] = self._format_timedelta(index, time_delta, is_current)
 
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
@@ -428,7 +418,7 @@ class Py3status:
                  'end_time': event_dict['end_time'],
                  'start_date': event_dict['start_date'],
                  'end_date': event_dict['end_date'],
-                 'format_timer': event_dict['time_to']})
+                 'format_timer': event_dict['format_timer']})
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
