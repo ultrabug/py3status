@@ -7,9 +7,6 @@ Configuration parameters:
         (default 8)
     brightness_initial: Set brightness to this value on start.
         (default None)
-    brightness_low_tune_threshold: If current value is below this threshold,
-        the value is changed by a minimal value instead of the brightness_delta.
-        (default 0)
     brightness_minimal: Don't go below this brightness to avoid black screen
         (default 1)
     button_down: Button to click to decrease brightness. Setting to 0 disables.
@@ -22,6 +19,9 @@ Configuration parameters:
         (default None)
     format: Display brightness, see placeholders below
         (default '☼: {level}%')
+    low_tune_threshold: If current brightness value is below this threshold,
+        the value is changed by a minimal value instead of the brightness_delta.
+        (default 0)
 
 Format status string parameters:
     {level} brightness
@@ -57,13 +57,13 @@ class Py3status:
     # available configuration parameters
     brightness_delta = 8
     brightness_initial = None
-    brightness_low_tune_threshold = 0
     brightness_minimal = 1
     button_down = 5
     button_up = 4
     cache_timeout = 10
     device = None
     format = u'☼: {level}%'
+    low_tune_threshold = 0
 
     class Meta:
         deprecated = {
@@ -102,13 +102,13 @@ class Py3status:
         level = self._get_backlight_level()
         button = event['button']
         if button == self.button_up:
-            delta = self.brightness_delta if level >= self.brightness_low_tune_threshold else 1
+            delta = self.brightness_delta if level >= self.low_tune_threshold else 1
             level += delta
             if level > 100:
                 level = 100
             self._set_backlight_level(level)
         elif button == self.button_down:
-            delta = self.brightness_delta if level > self.brightness_low_tune_threshold else 1
+            delta = self.brightness_delta if level > self.low_tune_threshold else 1
             level -= delta
             if level < self.brightness_minimal:
                 level = self.brightness_minimal
