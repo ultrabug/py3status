@@ -7,11 +7,11 @@ Configuration parameters:
         (default 8)
     brightness_initial: Set brightness to this value on start.
         (default None)
-    brightness_minimal: Don't go below this brightness to avoid black screen
-        (default 1)
-    brightness_slow: If current brightness value is below this threshold,
+    brightness_low_tune_threshold: If current value is below this threshold,
         the value is changed by a minimal value instead of the brightness_delta.
         (default 0)
+    brightness_minimal: Don't go below this brightness to avoid black screen
+        (default 1)
     button_down: Button to click to decrease brightness. Setting to 0 disables.
         (default 5)
     button_up: Button to click to increase brightness. Setting to 0 disables.
@@ -57,8 +57,8 @@ class Py3status:
     # available configuration parameters
     brightness_delta = 8
     brightness_initial = None
+    brightness_low_tune_threshold = 0
     brightness_minimal = 1
-    brightness_slow = 0
     button_down = 5
     button_up = 4
     cache_timeout = 10
@@ -102,13 +102,13 @@ class Py3status:
         level = self._get_backlight_level()
         button = event['button']
         if button == self.button_up:
-            delta = self.brightness_delta if level >= self.brightness_slow else 1
+            delta = self.brightness_delta if level >= self.brightness_low_tune_threshold else 1
             level += delta
             if level > 100:
                 level = 100
             self._set_backlight_level(level)
         elif button == self.button_down:
-            delta = self.brightness_delta if level > self.brightness_slow else 1
+            delta = self.brightness_delta if level > self.brightness_low_tune_threshold else 1
             level -= delta
             if level < self.brightness_minimal:
                 level = self.brightness_minimal
