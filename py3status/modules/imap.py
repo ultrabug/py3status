@@ -29,13 +29,8 @@ Color options:
 SAMPLE OUTPUT
 {'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
-try:
-    from imaplib2 import imaplib2 as imaplib
-    from threading import Thread  # only necessary with use_idle, which needs imaplib2
-    use_lib2 = True  # allow use_idle
-except ImportError:
-    import imaplib
-    use_lib2 = False
+import imaplib
+from threading import Thread
 from ssl import create_default_context
 from socket import error as socket_error
 STRING_UNAVAILABLE = 'N/A'
@@ -82,12 +77,9 @@ class Py3status:
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
-        if not use_lib2 and self.use_idle:
-            raise ValueError("need imaplib2 for use_idle")
         if self.use_idle:
             self.idle_thread = Thread(target=self._get_mail_count)
             self.idle_thread.start()
-        self.port = int(self.port)  # imaplib doesn't care, but imaplib2 does
 
     def check_mail(self):
         if self.use_idle:
@@ -136,6 +128,21 @@ class Py3status:
         finally:
             self.connection = None
 
+    def _idle(self):
+        directories = self.mailbox.split(',')
+        # make sure we have selected anything:
+        self.connection.select(directories[0])
+        # since imaplib doesn't support IMAP4r1 IDLE, we'll do it manually
+        socket = self.connection.socket()
+        socket.write (b'A001 IDLE\r\n')  # TODO: unique command tag
+        response = socket.read (16)  # (b'+ idling\r\n')
+        if response is not b'+ idling\r\n':
+            pass  # TODO: error handling
+        response = socket.read(4096)  # this will block
+        socket.write(b'DONE\r\n')  # important!
+        response += socket.read(4096)  # (b'A001 OK Idle completed'...)
+
+
     def _get_mail_count(self):
         try:
             while True:
@@ -159,7 +166,7 @@ class Py3status:
                 self.mail_count = tmp_mail_count
 
                 if self.use_idle:
-                    self.connection.idle()
+                    self._idle()
                 else:
                     return
         except socket_error as e:
