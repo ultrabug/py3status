@@ -5,8 +5,17 @@ version 3.7 (milestone)
 * apt_updates module: improved error if apt not installed, by @lasers
 * backlight module: detect and bypass xbacklight limitations, by @lasers
 * diskdata module: new {total_space} placeholder, by @pcewing
+* do_not_disturb module: better support for dunst, by @maximbaz
+* exchange_rate module: use py3 helper to extract placeholders, by @lasers
+* github module: fix urls so trailing / doesn't cause problems, by @lasers
 * icinga2 module: fix missing color parameter, by @lasers
+* moc module: code/documentation cleanups, by @lasers
+* mpris module: code improvements, by @lasers
 * pingdom module: fix when no useful data returned, by @lasers
+* uptime module: code improvements/simplification, by @lasers
+* volume_status module: allow card to be specified for amixer, by @lasers
+* volume_status module: bugfix for pamixer when volume is zero, by @lasers
+* xsel module: allow logging and clear selection, by @JohnAZoidberg
 * yandexdisk_status module: improved error reporting to users, by @lasers
 
 
