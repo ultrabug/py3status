@@ -96,7 +96,8 @@ class ConfigParser:
         order += env(ORDER_VAR)
 
         my_module {
-            my_str = env(MY_VAR)
+            my_guessed_type = env(MY_VAR)
+            my_str = env(MY_VAR, str)
             my_int = env(MY_INT_VAR, int)
             my_bool = env(MY_FLAG, bool)
             my_complex = {
@@ -314,7 +315,7 @@ class ConfigParser:
         match = re.match('env\(([0-9A-Z_]+)(, *[a-z]+)?\)', value)
         env_var, env_type = match.groups()
         if not env_type:
-            env_type = 'str'
+            env_type = 'auto'
         else:
             # Remove comma and whitespace from match
             env_type = env_type[1:].lstrip()
@@ -325,7 +326,10 @@ class ConfigParser:
             'float': float,
 
             # Treat booleans specially
-            'bool': (lambda val: val.lower() in ('true', '1'))
+            'bool': (lambda val: val.lower() in ('true', '1')),
+
+            # Auto-guess the type
+            'auto': self.make_value,
         }
         if env_type not in conversion_options:
             self.error('Invalid conversion')

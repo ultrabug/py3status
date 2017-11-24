@@ -451,13 +451,16 @@ Environment Variables
 ---------------------
 
 .. note::
-    New in version 3.7
+    New in version 3.8
 
 You may use the value of an environment variable in your configuration with
 the ``env(...)`` directive. These values are captured at startup and may be
-converted to the needed datatype (only ``str``, ``int``, ``float``, and
-``bool`` are currently supported). Without conversion, environment variable
-parameters will be assumed to be strings.
+converted to the needed datatype (only ``str``, ``int``, ``float``, ``bool``
+and ``auto`` are currently supported).
+
+Note, the ``auto`` conversion will try to guess the type of the contents and
+automatically convert to that type. Without an explicit conversion function,
+it defaults to ``auto``.
 
 This is primarily designed to obfuscate sensitive information when sharing
 your configuration file, such as usernames, passwords, API keys, etc.
@@ -482,6 +485,9 @@ See the examples below!
         complex_parameter = {
           'key': env(VAL)
         }
+
+        equivalent1 = env(MY_VAL)
+        equivalent2 = env(MY_VAL, auto)
 
         list_of_tuples = [
           (env(APPLE_NUM, int), 'apple'),
