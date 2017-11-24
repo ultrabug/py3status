@@ -6,7 +6,7 @@ import re
 
 from collections import OrderedDict
 from string import Template
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 
 from py3status.constants import (
     I3S_SINGLE_NAMES,
@@ -533,8 +533,14 @@ def process_config(config_path, py3_wrapper=None):
     config = {}
 
     # get the file encoding this is important with multi-byte unicode chars
-    encoding = check_output(['file', '-b', '--mime-encoding', '--dereference', config_path])
-    encoding = encoding.strip().decode('utf-8')
+    try:
+        encoding = check_output(
+            ['file', '-b', '--mime-encoding', '--dereference', config_path]
+        )
+        encoding = encoding.strip().decode('utf-8')
+    except CalledProcessError:
+        # bsd does not have the --mime-encoding so assume utf-8
+        encoding = 'utf-8'
     with codecs.open(config_path, 'r', encoding) as f:
         try:
             config_info = parse_config(f)
