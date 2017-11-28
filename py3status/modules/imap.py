@@ -14,8 +14,8 @@ Configuration parameters:
     security: login authentication method: 'ssl' or 'starttls'
         (startssl needs python 3.2 or later) (default 'ssl')
     server: server to connect (default None)
-    use_idle: use IMAP4 IDLE instead of polling; requires imaplib2,
-        compatible server; disables cache_timeout (default False)
+    use_idle: use IMAP4 IDLE instead of polling; requires compatible
+        server; disables cache_timeout (default False)
     user: login user (default None)
 
 Format placeholders:
@@ -74,6 +74,7 @@ class Py3status:
         self.mail_count = None
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
+        self.command_tag = 0  # IMAP commands are tagged, so responses can be matched up to requests
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -82,6 +83,7 @@ class Py3status:
             self.idle_thread.start()
 
     def check_mail(self):
+        # I -- acquire mail_count
         if self.use_idle:
             if not self.idle_thread.isAlive():
                 self.idle_thread = Thread(target=self._get_mail_count)
@@ -93,6 +95,7 @@ class Py3status:
         if self.mail_error is not None:
             self.py3.error(self.mail_error)
 
+        # II -- format response
         if self.mail_count is None:
             response['color'] = self.py3.COLOR_BAD,
             response['full_text'] = self.py3.safe_format(
@@ -111,11 +114,13 @@ class Py3status:
 
     def _connection_ssl(self):
         connection = imaplib.IMAP4_SSL(self.server, self.port)
+        ## TODO: check if idle is supported
         return connection
 
     def _connection_starttls(self):
         connection = imaplib.IMAP4(self.server, self.port)
         connection.starttls(create_default_context())
+        ## TODO: check if idle is supported
         return connection
 
     def _disconnect(self):
@@ -129,19 +134,29 @@ class Py3status:
             self.connection = None
 
     def _idle(self):
-        directories = self.mailbox.split(',')
-        # make sure we have selected anything:
-        self.connection.select(directories[0])
-        # since imaplib doesn't support IMAP4r1 IDLE, we'll do it manually
-        socket = self.connection.socket()
-        socket.write (b'A001 IDLE\r\n')  # TODO: unique command tag
-        response = socket.read (16)  # (b'+ idling\r\n')
-        if response is not b'+ idling\r\n':
-            pass  # TODO: error handling
-        response = socket.read(4096)  # this will block
-        socket.write(b'DONE\r\n')  # important!
-        response += socket.read(4096)  # (b'A001 OK Idle completed'...)
+        """
+        since imaplib doesn't support IMAP4r1 IDLE, we'll do it by hand
+        """
+        try:
+            self.command_tag += 1
+            command_tag = b'X'+bytes(str(self.command_tag).zfill(3), encoding='ascii')
+            directories = self.mailbox.split(',')
+            self.connection.select(directories[0])  # make sure we have selected anything before idling
+            socket = self.connection.socket()
 
+            socket.write (command_tag + b' IDLE\r\n')
+            response = socket.read (16)  # (b'+ idling\r\n')
+            if not response.decode('ascii').startswith('+ idling'):
+                raise Exception
+            response = socket.read(4096)  # this will block
+            # TODO: timeout
+        except Exception:
+            self.mail_error = "error while initializing IDLE: " + str(response)
+        finally:
+            socket.write(b'DONE\r\n')  # important!
+            response = socket.read(4096)  # (b'X001 OK Idle completed'...)
+            #if not response.decode('ascii').startswith(command_tag.decode('ascii')+' OK'):
+            #    self.mail_error += "error while finalizing IDLE: " + str(response)
 
     def _get_mail_count(self):
         try:
