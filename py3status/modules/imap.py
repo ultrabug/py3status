@@ -93,6 +93,7 @@ class Py3status:
             self._get_mail_count()
             response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         if self.mail_error is not None:
+            self.py3.log(self.mail_error)
             self.py3.error(self.mail_error)
 
         # II -- format response
@@ -137,6 +138,8 @@ class Py3status:
         """
         since imaplib doesn't support IMAP4r1 IDLE, we'll do it by hand
         """
+        class IdleException(Exception):
+            pass
         try:
             self.command_tag += 1
             command_tag = b'X'+bytes(str(self.command_tag).zfill(3), encoding='ascii')
@@ -145,18 +148,16 @@ class Py3status:
             socket = self.connection.socket()
 
             socket.write (command_tag + b' IDLE\r\n')
-            response = socket.read (16)  # (b'+ idling\r\n')
+            response = socket.read (4096)
             if not response.decode('ascii').startswith('+ idling'):
-                raise Exception
+                raise IdleException
             response = socket.read(4096)  # this will block
             # TODO: timeout
-        except Exception:
+        except IdleException:
             self.mail_error = "error while initializing IDLE: " + str(response)
         finally:
             socket.write(b'DONE\r\n')  # important!
             response = socket.read(4096)  # (b'X001 OK Idle completed'...)
-            #if not response.decode('ascii').startswith(command_tag.decode('ascii')+' OK'):
-            #    self.mail_error += "error while finalizing IDLE: " + str(response)
 
     def _get_mail_count(self):
         try:
