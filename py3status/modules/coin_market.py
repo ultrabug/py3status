@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Display cryptocurrency data.
+Display cryptocurrency coins.
 
-The site we retrieve cryptocurrency data from offer various types of data such as
-name, symbol, price, volume, percentage change, total supply, et cetera for a wide
-range of cryptocurrencies and the prices can be obtained in a different currency
-along with USD currency, For more information, visit https://coinmarketcap.com
+The site offer various types of data such as name, symbol, price, volume,
+total supply, et cetera for a wide range of cryptocurrencies and the prices
+can be obtained in a different currency along with optional USD currency.
+For more information, visit https://coinmarketcap.com
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module. A message from the site:
-        Please limit requests to no more than 10 per minute. (default 600)
+    cache_timeout: refresh interval for this module. a message from the site:
+        please limit requests to no more than 10 per minute. (default 600)
     format: display format for this module (default '{format_coin}')
     format_coin: display format for coins
         (default '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]')
@@ -17,7 +17,6 @@ Configuration parameters:
     format_separator: show separator if more than one (default ' ')
     markets: number of top-ranked markets or list of user-inputted markets
         (default ['btc'])
-    request_timeout: time to wait for a response, in seconds (default 5)
     thresholds: for percentage changes (default [(-100, 'bad'), (0, 'good')])
 
 Format placeholder:
@@ -45,7 +44,7 @@ format_coin placeholders:
     {last_updated}       eg 151197295
 
     Placeholders are retrieved directly from the URL.
-    The list was harvested only once and should not represent a full list.
+    The list was harvested once and should not represent a full list.
 
     To print coins in different currency, replace or replicate the placeholders
     below with a valid option (eg '{price_gbp}') to create additional placeholders:
@@ -58,9 +57,9 @@ format_coin placeholders:
     JPY, KRW, MXN, RUB, otherwise USD... and be written in lowercase.
 
 Color thresholds:
-    1h:  print color based on the value of percent_change_1h
-    24h: print color based on the value of percent_change_24h
-    7d:  print color based on the value of percent_change_7d
+    1h:  print a color based on the value of percent_change_1h
+    24h: print a color based on the value of percent_change_24h
+    7d:  print a color based on the value of percent_change_7d
 
 Examples:
 ```
@@ -69,7 +68,12 @@ coin_market {
     format_coin = '{name} £{price_gbp:.2f} ${price_usd:.2f} {percent_change_24h}'
 }
 
-# show customized last_updated time
+# display top five markets
+coin_market {
+    markets = 5
+}
+
+# show and/or customize last_updated time
 coin_market {
     format_coin = '{name} ${price_usd:.2f} '
     format_coin += '[\?color=24h {percent_change_24h}%] {last_updated}'
@@ -94,6 +98,7 @@ losers
 
 from datetime import datetime
 
+
 class Py3status:
     """
     """
@@ -104,13 +109,13 @@ class Py3status:
     format_datetime = {}
     format_separator = ' '
     markets = ['btc']
-    request_timeout = 5
     thresholds = [(-100, 'bad'), (0, 'good')]
 
     def post_config_hook(self):
         self.first_run = self.first_use = True
         self.convert = self.limit = None
         self.url = self.reset_url = 'https://api.coinmarketcap.com/v1/ticker/'
+        self.request_timeout = 10
 
         # convert the datetime?
         self.init_datetimes = []
@@ -194,9 +199,9 @@ class Py3status:
                 self._update_limit(data)
         elif not is_equal:
             # post first_use bad? the markets fell out of the limit + padding.
-            # reset the url to get 1000+ coins again so we can strip, compare,
-            # make new limit + padding for next loop, but we'll use that new
-            # data. otherwise, we would keep going with that first new_data.
+            # reset the url to get 1000+ coins again to strip, compare, make
+            # new limit and padding for the next one, but we'll use this one.
+            # otherwise, we would have kept going with the first one.
             new_data = self._get_coin_data(reset=True)
             new_data = self._strip_data(new_data)
             self._update_limit(new_data)
@@ -213,12 +218,12 @@ class Py3status:
                     market[k] = self.py3.safe_format(datetime.strftime(
                         datetime.fromtimestamp(float(
                             market[k])), self.format_datetime[k]))
-            # fix up percent_change with color thresholds and prefix
-            # all non-negative values with a plus.
+            # fix up percent_change with color thresholds
+            # and prefix all non-negative values with a plus.
             for k, v in market.items():
                 if 'percent_change_' in k and v:
                     temporary[k] = '+%s' % v if float(v) > 0 else v
-                    # remove 'percent_change_' for thresholds: 1h, 24h, or 7d
+                    # remove 'percent_change_' for thresholds 1h, 24h, 7d
                     self.py3.threshold_get_color(v, k[15:])
                 else:
                     temporary[k] = v
@@ -239,14 +244,15 @@ class Py3status:
             if not self.limit:
                 # strip, compare, and maybe update again
                 coin_data = self._organize_data(coin_data)
-            data = self._manipulate_data(coin_data)  # paint coin colors
+            data = self._manipulate_data(coin_data)
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_coin = self.py3.composite_join(format_separator, data)
 
         return {
             'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(self.format, {'format_coin': format_coin})
+            'full_text': self.py3.safe_format(
+                self.format, {'format_coin': format_coin})
         }
 
 
