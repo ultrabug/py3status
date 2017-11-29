@@ -23,21 +23,21 @@ Format placeholder:
     {format_coin} format for cryptocurrency coins
 
 format_coin placeholders:
-    {24h_volume_usd}      eg 1435150000.0
-    {available_supply}    eg 16404825.0
-    {id}                  eg bitcoin
-    {last_updated}        eg 1498135152
-    {market_cap_usd}      eg 44119956596.0
-    {name}                eg Bitcoin
-    {percent_change_1h}   eg -0.17
-    {percent_change_24h}  eg -1.93
-    {percent_change_7d}   eg +14.73
-    {price_btc}           eg 1.0
-    {price_usd}           eg 2689.45
-    {rank}                eg 1
-    {symbol}              eg BTC
-    {total_supply}        eg 16404825.0
-    {max_supply}          eg 21000000.0
+    {id}                 eg bitcoin
+    {name}               eg Bitcoin
+    {symbol}             eg BTC
+    {rank}               eg 1
+    {price_usd}          eg 11163.4
+    {price_btc}          eg 1.0
+    {24h_volume_usd}     eg 10156700000.0
+    {market_cap_usd}     eg 186528134260
+    {available_supply}   eg 16708900.0
+    {total_supply}       eg 16708900.0
+    {max_supply}         eg 21000000.0
+    {percent_change_1h}  eg 0.92
+    {percent_change_24h} eg 11.2
+    {percent_change_7d}  eg 35.96
+    {last_updated}       eg 151197295
 
     Placeholders are retrieved directly from the URL.
     The list was harvested only once and should not represent a full list.
