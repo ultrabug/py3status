@@ -153,7 +153,7 @@ class Py3status:
             socket.write (command_tag + b' IDLE\r\n')
             response = socket.read (4096)
             if not response.decode('ascii').startswith('+ idling'):
-                raise IdleException
+                raise IdleException(response)
             
             # wait for IDLE to return
             socket.setblocking(0)  # so we can timeout if IDLE doesn't return soon enough
@@ -164,8 +164,8 @@ class Py3status:
                 self.py3.log("IDLE timeout reached")
             socket.setblocking(1)
 
-        except IdleException:
-            raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
+        except IdleException as e:
+            raise imaplib.IMAP4.error("While initializing IDLE: " + str(e))
         finally:
             socket.write(b'DONE\r\n')  # important!
             socket.read(4096)  # (b'X001 OK Idle completed'...)
