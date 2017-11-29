@@ -75,7 +75,7 @@ class Py3status:
         self.mail_count = None
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
-        self.command_tag = 0  # IMAP commands are tagged, so responses can be matched up to requests
+        self.command_tag = 0  # IMAPcommands are tagged, so responses can be matched up to requests
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -116,14 +116,14 @@ class Py3status:
 
     def _connection_ssl(self):
         connection = imaplib.IMAP4_SSL(self.server, self.port)
-        if self.use_idle and not b'IDLE' in connection.capability()[1][0].split():
+        if self.use_idle and b'IDLE' not in connection.capability()[1][0].split():
             self.py3.error("Server does not support IDLE")
         return connection
 
     def _connection_starttls(self):
         connection = imaplib.IMAP4(self.server, self.port)
         connection.starttls(create_default_context())
-        if self.use_idle and not b'IDLE' in connection.capability()[1][0].split():
+        if self.use_idle and b'IDLE' not in connection.capability()[1][0].split():
             self.py3.error("Server does not support IDLE")
         return connection
 
@@ -147,19 +147,21 @@ class Py3status:
             self.command_tag = (self.command_tag + 1) % 1000
             command_tag = b'X'+bytes(str(self.command_tag).zfill(3), encoding='ascii')
             directories = self.mailbox.split(',')
-            self.connection.select(directories[0])  # make sure we have selected anything before idling
+            # make sure we have selected anything before idling:
+            self.connection.select(directories[0])
             socket = self.connection.socket()
 
-            socket.write (command_tag + b' IDLE\r\n')
-            response = socket.read (4096)
+            socket.write(command_tag + b' IDLE\r\n')
+            response = socket.read(4096)
             if not response.decode('ascii').startswith('+ idling'):
                 raise IdleException(response)
-            
+
             # wait for IDLE to return
             socket.setblocking(0)  # so we can timeout if IDLE doesn't return soon enough
             ready = select.select([socket], [], [], self.cache_timeout)
             if ready[0]:
-                socket.read(4096)  # list of messages (we don't care what has changed, that gets checked in _get_mail_count)
+                # receive list of messages (we don't care what has changed, that gets checked in _get_mail_count)
+                socket.read(4096)
             else:
                 self.py3.log("IDLE timeout reached")
             socket.setblocking(1)
