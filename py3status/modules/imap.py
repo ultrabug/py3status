@@ -79,16 +79,14 @@ class Py3status:
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
         if self.use_idle:
-            self.idle_thread = Thread(target=self._get_mail_count)
-            self.idle_thread.daemon = True  # automatically exit thread with main program
+            self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
             self.idle_thread.start()
 
     def check_mail(self):
         # I -- acquire mail_count
         if self.use_idle:
             if not self.idle_thread.isAlive():
-                self.idle_thread = Thread(target=self._get_mail_count)
-                self.idle_thread.daemon = True
+                self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
                 self.idle_thread.start()
             response = {'cached_until': self.py3.time_in(seconds=1)}
         else:
@@ -117,13 +115,15 @@ class Py3status:
 
     def _connection_ssl(self):
         connection = imaplib.IMAP4_SSL(self.server, self.port)
-        ## TODO: check if idle is supported
+        if self.use_idle and not b'IDLE' in connection.capability()[1][0].split():
+            self.py3.error("Server does not support IDLE")
         return connection
 
     def _connection_starttls(self):
         connection = imaplib.IMAP4(self.server, self.port)
         connection.starttls(create_default_context())
-        ## TODO: check if idle is supported
+        if self.use_idle and not b'IDLE' in connection.capability()[1][0].split():
+            self.py3.error("Server does not support IDLE")
         return connection
 
     def _disconnect(self):
