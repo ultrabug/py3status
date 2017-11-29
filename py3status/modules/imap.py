@@ -167,8 +167,6 @@ class Py3status:
                 # receive list of messages (we don't care what has changed, that
                 # gets checked in _get_mail_count() )
                 socket.read(4096)
-            else:
-                self.py3.log("socket timed out")
             socket.setblocking(1)
 
         except IdleException as e:
