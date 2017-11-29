@@ -37,6 +37,7 @@ format_coin placeholders:
     {rank}                eg 1
     {symbol}              eg BTC
     {total_supply}        eg 16404825.0
+    {max_supply}          eg 21000000.0
 
     Placeholders are retrieved directly from the URL.
     The list was harvested only once and should not represent a full list.
