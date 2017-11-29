@@ -150,6 +150,7 @@ class Py3status:
             # make sure we have selected anything before idling:
             self.connection.select(directories[0])
             socket = self.connection.socket()
+            socket.settimeout(self.cache_timeout)
 
             socket.write(command_tag + b' IDLE\r\n')
             response = socket.read(4096)
@@ -166,6 +167,8 @@ class Py3status:
                 # receive list of messages (we don't care what has changed, that
                 # gets checked in _get_mail_count() )
                 socket.read(4096)
+            else:
+                self.py3.log("socket timed out")
             socket.setblocking(1)
 
         except IdleException as e:
