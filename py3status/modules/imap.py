@@ -158,13 +158,14 @@ class Py3status:
 
             # wait for IDLE to return
             socket.setblocking(0)  # so we can timeout if IDLE doesn't return soon enough
-            ready = select.select([socket], [], [], self.cache_timeout)
+            if self.cache_timeout > 0:
+                ready = select.select([socket], [], [], self.cache_timeout)
+            else:
+                ready = select.select([socket], [], [])
             if ready[0]:
                 # receive list of messages (we don't care what has changed, that
                 # gets checked in _get_mail_count() )
                 socket.read(4096)
-            else:
-                self.py3.log("IDLE timeout reached")
             socket.setblocking(1)
 
         except IdleException as e:
