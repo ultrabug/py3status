@@ -144,7 +144,7 @@ class Py3status:
         class IdleException(Exception):
             pass
         try:
-            self.command_tag += 1
+            self.command_tag = (self.command_tag + 1) % 1000
             command_tag = b'X'+bytes(str(self.command_tag).zfill(3), encoding='ascii')
             directories = self.mailbox.split(',')
             self.connection.select(directories[0])  # make sure we have selected anything before idling
@@ -166,9 +166,6 @@ class Py3status:
 
         except IdleException:
             raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
-        except Exception:
-            import sys
-            self.py3.log(str(sys.exc_info()[-1].tb_lineno) + " exceptionthrow")
         finally:
             socket.write(b'DONE\r\n')  # important!
             socket.read(4096)  # (b'X001 OK Idle completed'...)
