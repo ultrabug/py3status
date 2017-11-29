@@ -13,6 +13,7 @@ Configuration parameters:
     format: display format for this module (default '{format_coin}')
     format_coin: display format for coins
         (default '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]')
+    format_datetime: specify strftime characters to format (default {})
     format_separator: show separator if more than one (default ' ')
     markets: number of top-ranked markets or list of user-inputted markets
         (default ['btc'])
@@ -21,6 +22,10 @@ Configuration parameters:
 
 Format placeholder:
     {format_coin} format for cryptocurrency coins
+
+format_datetime placeholders:
+    key: epoch_placeholder, eg last_updated
+    value: % strftime characters to be translated, eg '%b %d' ----> 'Nov 29'
 
 format_coin placeholders:
     {id}                 eg bitcoin
@@ -57,11 +62,18 @@ Color thresholds:
     24h: print color based on the value of percent_change_24h
     7d:  print color based on the value of percent_change_7d
 
-Example:
+Examples:
 ```
 # view coins in GBP and optionally USD
 coin_market {
     format_coin = '{name} £{price_gbp:.2f} ${price_usd:.2f} {percent_change_24h}'
+}
+
+# show customized last_updated time
+coin_market {
+    format_coin = '{name} ${price_usd:.2f} '
+    format_coin += '[\?color=24h {percent_change_24h}%] {last_updated}'
+    format_datetime = {'last_updated': '\?color=degraded last updated %-I:%M%P'}
 }
 ```
 
@@ -80,6 +92,7 @@ losers
 ]
 """
 
+from datetime import datetime
 
 class Py3status:
     """
@@ -88,6 +101,7 @@ class Py3status:
     cache_timeout = 600
     format = '{format_coin}'
     format_coin = '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]'
+    format_datetime = {}
     format_separator = ' '
     markets = ['btc']
     request_timeout = 5
@@ -97,6 +111,13 @@ class Py3status:
         self.first_run = self.first_use = True
         self.convert = self.limit = None
         self.url = self.reset_url = 'https://api.coinmarketcap.com/v1/ticker/'
+
+        # convert the datetime?
+        self.init_datetimes = []
+        for word in self.format_datetime:
+            if (self.py3.format_contains(self.format_coin, word)) and (
+                    word in self.format_datetime):
+                self.init_datetimes.append(word)
 
         # find out if we want top-ranked markets or user-inputted markets
         if isinstance(self.markets, int):
@@ -183,11 +204,17 @@ class Py3status:
         return new_data
 
     def _manipulate_data(self, data):
-        # we mess with raw data to get the new results. we fix up percent_change
-        # with color thresholds and prefix all non-negative values wth a plus.
         new_data = []
         for market in data:
             temporary = {}
+            # convert the datetime?
+            for k in self.init_datetimes:
+                if k in market:
+                    market[k] = self.py3.safe_format(datetime.strftime(
+                        datetime.fromtimestamp(float(
+                            market[k])), self.format_datetime[k]))
+            # fix up percent_change with color thresholds and prefix
+            # all non-negative values with a plus.
             for k, v in market.items():
                 if 'percent_change_' in k and v:
                     temporary[k] = '+%s' % v if float(v) > 0 else v
