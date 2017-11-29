@@ -15,7 +15,7 @@ Configuration parameters:
         (startssl needs python 3.2 or later) (default 'ssl')
     server: server to connect (default None)
     use_idle: use IMAP4 IDLE instead of polling; requires compatible
-        server; disables cache_timeout (default False)
+        server; uses cache_timeout for IDLE's timeout (default False)
     user: login user (default None)
 
 Format placeholders:
@@ -31,6 +31,7 @@ SAMPLE OUTPUT
 """
 import imaplib
 from threading import Thread
+import select
 from ssl import create_default_context
 from socket import error as socket_error
 STRING_UNAVAILABLE = 'N/A'
@@ -153,13 +154,24 @@ class Py3status:
             response = socket.read (4096)
             if not response.decode('ascii').startswith('+ idling'):
                 raise IdleException
-            response = socket.read(4096)  # this will block
-            # TODO: timeout
+            
+            # wait for IDLE to return
+            socket.setblocking(0)  # so we can timeout if IDLE doesn't return soon enough
+            ready = select.select([socket], [], [], self.cache_timeout)
+            if ready[0]:
+                socket.read(4096)  # list of messages (we don't care what has changed, that gets checked in _get_mail_count)
+            else:
+                self.py3.log("IDLE timeout reached")
+            socket.setblocking(1)
+
         except IdleException:
             raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
+        except Exception:
+            import sys
+            self.py3.log(str(sys.exc_info()[-1].tb_lineno) + " exceptionthrow")
         finally:
             socket.write(b'DONE\r\n')  # important!
-            response = socket.read(4096)  # (b'X001 OK Idle completed'...)
+            socket.read(4096)  # (b'X001 OK Idle completed'...)
 
     def _get_mail_count(self):
         try:
@@ -188,7 +200,7 @@ class Py3status:
                 else:
                     return
         except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
-            self.py3.log("Recoverable error - " + str(e))
+            self.py3.log("Recoverable error - " + str(e), level=self.py3.LOG_WARNING)
             self._disconnect()
             self.mail_count = None
         except (imaplib.IMAP4.error, Exception) as e:
