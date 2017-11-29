@@ -80,6 +80,7 @@ class Py3status:
             raise ValueError("Unknown security protocol")
         if self.use_idle:
             self.idle_thread = Thread(target=self._get_mail_count)
+            self.idle_thread.daemon = True  # automatically exit thread with main program
             self.idle_thread.start()
 
     def check_mail(self):
@@ -87,6 +88,7 @@ class Py3status:
         if self.use_idle:
             if not self.idle_thread.isAlive():
                 self.idle_thread = Thread(target=self._get_mail_count)
+                self.idle_thread.daemon = True
                 self.idle_thread.start()
             response = {'cached_until': self.py3.time_in(seconds=1)}
         else:
@@ -154,7 +156,7 @@ class Py3status:
             response = socket.read(4096)  # this will block
             # TODO: timeout
         except IdleException:
-            self.mail_error = "error while initializing IDLE: " + str(response)
+            raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
         finally:
             socket.write(b'DONE\r\n')  # important!
             response = socket.read(4096)  # (b'X001 OK Idle completed'...)
@@ -185,16 +187,12 @@ class Py3status:
                     self._idle()
                 else:
                     return
-        except socket_error as e:
-            self.py3.log("Socket error - " + str(e))
-            self.connection = None
-            self.mail_count = None
-        except imaplib.IMAP4.error as e:
-            self.py3.log("IMAP error - " + str(e))
+        except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
+            self.py3.log("Recoverable error - " + str(e))
             self._disconnect()
             self.mail_count = None
-        except Exception as e:
-            self.mail_error = "Unknown error - " + str(e)
+        except (imaplib.IMAP4.error, Exception) as e:
+            self.mail_error = "Fatal error - " + str(e)
             self._disconnect()
             self.mail_count = None
 
