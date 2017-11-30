@@ -61,9 +61,18 @@ class Py3status:
     def post_config_hook(self):
         self.displayed = ''
 
-    def _get_all_outputs(self):
-        outputs = self.py3.command_output(['xrandr']).splitlines()
-        return [x.split()[0] for x in outputs if ' connected' in x]
+    def _get_active_outputs(self):
+        data = self.py3.command_output(['xrandr']).splitlines()
+        connected_outputs = [x.split() for x in data if ' connected' in x]
+        active_outputs = []
+        for output in connected_outputs:
+            for x in output[2:]:
+                if 'x' in x and '+' in x:
+                    active_outputs.append(output[0])
+                    break
+                elif '(' in x:
+                    break
+        return active_outputs
 
     def _get_current_rotation_icon(self, all_outputs):
         data = self.py3.command_output(['xrandr']).splitlines()
@@ -81,8 +90,8 @@ class Py3status:
             rotation = self.horizontal_rotation
         else:
             rotation = self.vertical_rotation
-        outputs = [self.screen] if self.screen else self._get_all_outputs()
         cmd = 'xrandr'
+        outputs = [self.screen] if self.screen else self._get_active_outputs()
         for output in outputs:
             cmd += ' --output %s --rotate %s' % (output, rotation)
         self.py3.command_run(cmd)
@@ -106,7 +115,7 @@ class Py3status:
             self._apply()
 
     def xrandr_rotate(self):
-        all_outputs = self._get_all_outputs()
+        all_outputs = self._get_active_outputs()
         selected_screen_disconnected = (
             self.screen is not None and self.screen not in all_outputs
         )
