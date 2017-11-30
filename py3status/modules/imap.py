@@ -16,7 +16,7 @@ Configuration parameters:
     server: server to connect (default None)
     use_idle: use IMAP4 IDLE instead of polling; requires compatible
         server; uses cache_timeout for IDLE's timeout; will auto detect
-        when set to None (default False)
+        when set to None (default None)
     user: login user (default None)
 
 Format placeholders:
