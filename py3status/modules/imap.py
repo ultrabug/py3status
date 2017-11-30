@@ -51,7 +51,7 @@ class Py3status:
     port = '993'
     security = 'ssl'
     server = None
-    use_idle = False
+    use_idle = None
     user = None
 
     class Meta:
@@ -79,6 +79,11 @@ class Py3status:
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
+        if self.use_idle is None:
+            # connect once to check if we can use IDLE
+            self._connect()
+            self._disconnect()
+            # disconnect
         if self.use_idle:
             self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
             self.idle_thread.start()
@@ -114,18 +119,32 @@ class Py3status:
 
         return response
 
+    def _check_if_idle(self, connection):
+        supports_idle = b'IDLE' in connection.capability()[1][0].split()
+
+        if self.use_idle is None:
+            self.use_idle = supports_idle
+        elif self.use_idle and not supports_idle:
+            self.py3.error("Server does not support IDLE")
+
+        self.py3.log("Will use {}".format('idling' if self.use_idle else 'polling'))
+
     def _connection_ssl(self):
         connection = imaplib.IMAP4_SSL(self.server, self.port)
-        if self.use_idle and b'IDLE' not in connection.capability()[1][0].split():
-            self.py3.error("Server does not support IDLE")
+        self._check_if_idle(connection)
         return connection
 
     def _connection_starttls(self):
         connection = imaplib.IMAP4(self.server, self.port)
         connection.starttls(create_default_context())
-        if self.use_idle and b'IDLE' not in connection.capability()[1][0].split():
-            self.py3.error("Server does not support IDLE")
+        self._check_if_idle(connection)
         return connection
+
+    def _connect(self):
+        if self.security == "ssl":
+            self.connection = self._connection_ssl()
+        elif self.security == "starttls":
+            self.connection = self._connection_starttls()
 
     def _disconnect(self):
         try:
@@ -179,11 +198,7 @@ class Py3status:
         try:
             while True:
                 if self.connection is None:
-                    if self.security == "ssl":
-                        self.connection = self._connection_ssl()
-                    elif self.security == "starttls":
-                        self.connection = self._connection_starttls()
-
+                    self._connect()
                     self.connection.login(self.user, self.password)
 
                 tmp_mail_count = 0
