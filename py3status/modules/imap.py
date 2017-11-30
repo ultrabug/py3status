@@ -33,6 +33,7 @@ SAMPLE OUTPUT
 import imaplib
 from threading import Thread
 import select
+from time import sleep
 from ssl import create_default_context
 from socket import error as socket_error
 STRING_UNAVAILABLE = 'N/A'
@@ -88,7 +89,8 @@ class Py3status:
     def check_mail(self):
         # I -- acquire mail_count
         if self.use_idle is not False:
-            if not self.idle_thread.isAlive():
+            if not self.idle_thread.is_alive():
+                sleep(5)  # rate-limit thread-restarting (when network is offline)
                 self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
                 self.idle_thread.start()
             response = {'cached_until': self.py3.CACHE_FOREVER}
