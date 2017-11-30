@@ -80,12 +80,6 @@ class Py3status:
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
-        if self.use_idle is None:
-            try:
-                self._connect()
-                self._disconnect()
-            except:
-                self.py3.log("Can't detect IDLE capability;Connected?", level=self.py3.LOG_WARNING)
 
         self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
         if self.use_idle:
@@ -93,7 +87,7 @@ class Py3status:
 
     def check_mail(self):
         # I -- acquire mail_count
-        if self.use_idle:
+        if self.use_idle is not False:
             if not self.idle_thread.isAlive():
                 self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
                 self.idle_thread.start()
@@ -124,16 +118,12 @@ class Py3status:
 
     def _check_if_idle(self, connection):
         supports_idle = b'IDLE' in connection.capability()[1][0].split()
-        log_method = False
 
         if self.use_idle is None:
-            log_method = True
             self.use_idle = supports_idle
+            self.py3.log("Will use {}".format('idling' if self.use_idle else 'polling'))
         elif self.use_idle and not supports_idle:
             self.py3.error("Server does not support IDLE")
-
-        if log_method:
-            self.py3.log("Will use {}".format('idling' if self.use_idle else 'polling'))
 
     def _connection_ssl(self):
         connection = imaplib.IMAP4_SSL(self.server, self.port)
@@ -233,6 +223,9 @@ class Py3status:
             self._disconnect()
             self.mail_count = None
         except (imaplib.IMAP4.error, Exception) as e:
+            import traceback
+            foo = traceback.format_exc()
+            self.py3.log(foo, level=self.py3.LOG_ERROR)
             self.mail_error = "Fatal error - " + str(e)
             self._disconnect()
             self.mail_count = None
