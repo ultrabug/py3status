@@ -85,7 +85,8 @@ class Py3status:
                 self._connect()
                 self._disconnect()
             except:
-                self.py3.log("Cannot detect IDLE capability -- likely no connection", level=self.py3.LOG_WARNING)
+                self.py3.log("Cannot detect IDLE capability -- likely no connection", 
+                    level=self.py3.LOG_WARNING)
 
         self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
         if self.use_idle:
