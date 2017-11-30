@@ -119,7 +119,7 @@ class Py3status:
         return response
 
     def _check_if_idle(self, connection):
-        supports_idle = b'IDLE' in connection.capability()[1][0].split()
+        supports_idle = 'IDLE' in connection.capabilities
 
         if self.use_idle is None:
             self.use_idle = supports_idle
