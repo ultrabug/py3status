@@ -15,7 +15,8 @@ Configuration parameters:
         (startssl needs python 3.2 or later) (default 'ssl')
     server: server to connect (default None)
     use_idle: use IMAP4 IDLE instead of polling; requires compatible
-        server; uses cache_timeout for IDLE's timeout (default False)
+        server; uses cache_timeout for IDLE's timeout; will auto detect
+        when set to None (default False)
     user: login user (default None)
 
 Format placeholders:
