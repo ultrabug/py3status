@@ -122,13 +122,16 @@ class Py3status:
 
     def _check_if_idle(self, connection):
         supports_idle = b'IDLE' in connection.capability()[1][0].split()
+        log_method = False
 
         if self.use_idle is None:
+            log_method = True
             self.use_idle = supports_idle
         elif self.use_idle and not supports_idle:
             self.py3.error("Server does not support IDLE")
 
-        self.py3.log("Will use {}".format('idling' if self.use_idle else 'polling'))
+        if log_method:
+            self.py3.log("Will use {}".format('idling' if self.use_idle else 'polling'))
 
     def _connection_ssl(self):
         connection = imaplib.IMAP4_SSL(self.server, self.port)
