@@ -39,17 +39,21 @@ class YubiKeyTouchDetectorListener(threading.Thread):
 
     def _connect_socket(self):
         try:
+            self.parent.error = None
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.socket.connect(self.parent.socket_path)
         except:
             self.socket = None
+            self.parent.error = Exception(
+                "Cannot connect to yubikey-touch-detector")
 
     def run(self):
         while not self.parent.killed.is_set():
             self._connect_socket()
 
             if self.socket is None:
-                # Socket is not available, try again soon
+                # Socket is not available, show error and try again soon
+                self.parent.py3.update()
                 time.sleep(60)
                 continue
 
@@ -84,11 +88,14 @@ class Py3status:
             'is_gpg': False,
             'is_u2f': False,
         }
+        self.error = None
 
         self.killed = threading.Event()
         YubiKeyTouchDetectorListener(self).start()
 
     def yubikey(self):
+        if self.error:
+            raise self.error
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, self.status),
