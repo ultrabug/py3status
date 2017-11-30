@@ -179,8 +179,8 @@ class Py3status:
             socket.settimeout(self.cache_timeout)
 
             socket.write(command_tag + b' IDLE\r\n')
-            response = socket.read(4096)
-            if not response.decode('ascii').startswith('+ idling'):
+            response = socket.read(4096).decode('ascii')
+            if not response.lower().startswith('+ idling'):
                 raise IdleException(response)
 
             # wait for IDLE to return
@@ -199,7 +199,10 @@ class Py3status:
             raise imaplib.IMAP4.error("While initializing IDLE: " + str(e))
         finally:
             socket.write(b'DONE\r\n')  # important!
-            socket.read(4096)  # (b'X001 OK Idle completed'...)
+            response = socket.read(4096).decode(encoding='ascii')
+            expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
+            if not response.lower().startswith(expected_response.lower()):
+                raise imaplib.IMAP4.error("While terminating IDLE: " + response)
 
     def _get_mail_count(self):
         try:
