@@ -95,12 +95,12 @@ class Py3status:
             if not self.idle_thread.isAlive():
                 self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
                 self.idle_thread.start()
-            response = {'cached_until': self.py3.time_in(seconds=1)}
+            response = {'cached_until': self.py3.CACHE_FOREVER}
         else:
             self._get_mail_count()
             response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         if self.mail_error is not None:
-            self.py3.log(self.mail_error)
+            self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
             self.py3.error(self.mail_error)
 
         # II -- format response
@@ -214,6 +214,7 @@ class Py3status:
                 self.mail_count = tmp_mail_count
 
                 if self.use_idle:
+                    self.py3.update()
                     self._idle()
                 else:
                     return
@@ -225,6 +226,8 @@ class Py3status:
             self.mail_error = "Fatal error - " + str(e)
             self._disconnect()
             self.mail_count = None
+        finally:
+            self.py3.update()  # to propagate mail_error
 
 
 if __name__ == "__main__":
