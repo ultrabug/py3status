@@ -81,12 +81,14 @@ class Py3status:
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
         if self.use_idle is None:
-            # connect once to check if we can use IDLE
-            self._connect()
-            self._disconnect()
-            # disconnect
+            try:
+                self._connect()
+                self._disconnect()
+            except:
+                self.py3.log("Cannot detect IDLE capability -- likely no connection", level=self.py3.LOG_WARNING)
+
+        self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
         if self.use_idle:
-            self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
             self.idle_thread.start()
 
     def check_mail(self):
