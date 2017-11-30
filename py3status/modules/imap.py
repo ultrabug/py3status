@@ -155,7 +155,8 @@ class Py3status:
     def _disconnect(self):
         try:
             if self.connection is not None:
-                self.connection.close() if self.connection.state is 'SELECTED'
+                if self.connection.state  'SELECTED':
+                    self.connection.close()
                 self.connection.logout()
         except:
             pass
