@@ -194,7 +194,7 @@ class Py3status:
             response = socket.read(4096).decode(encoding='ascii')
             expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
             if not response.lower().startswith(expected_response.lower()):
-                raise imaplib.IMAP4.error("While terminating IDLE: " + response)
+                raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
 
     def _get_mail_count(self):
         try:
@@ -225,9 +225,6 @@ class Py3status:
             self._disconnect()
             self.mail_count = None
         except (imaplib.IMAP4.error, Exception) as e:
-            import traceback
-            foo = traceback.format_exc()
-            self.py3.log(foo, level=self.py3.LOG_ERROR)
             self.mail_error = "Fatal error - " + str(e)
             self._disconnect()
             self.mail_count = None
