@@ -697,23 +697,19 @@ def process_config(config_path, py3_wrapper=None):
                 fixed[k] = v
         return fixed
 
-    def append_modules(item):
-        module_type = get_module_type(item)
-        if module_type == 'i3status':
-            if item not in i3s_modules:
-                i3s_modules.append(item)
-        else:
-            if item not in py3_modules:
-                py3_modules.append(item)
-
     def add_container_items(module_name):
         module = modules.get(module_name, {})
         items = module.get('items', [])
         for item in items:
             if item in config:
                 continue
-
-            append_modules(item)
+            module_type = get_module_type(item)
+            if module_type == 'i3status':
+                if item not in i3s_modules:
+                    i3s_modules.append(item)
+            else:
+                if item not in py3_modules:
+                    py3_modules.append(item)
             module = modules.get(item, {})
             config[item] = remove_any_contained_modules(module)
             # add any children
@@ -722,10 +718,15 @@ def process_config(config_path, py3_wrapper=None):
     # create config for modules in order
     for name in config_info.get('order', []):
         module = modules.get(name, {})
+        module_type = get_module_type(name)
         config['order'].append(name)
         add_container_items(name)
-        append_modules(name)
-
+        if module_type == 'i3status':
+            if name not in i3s_modules:
+                i3s_modules.append(name)
+        else:
+            if name not in py3_modules:
+                py3_modules.append(name)
         config[name] = remove_any_contained_modules(module)
 
     config['on_click'] = on_click
