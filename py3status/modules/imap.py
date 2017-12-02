@@ -78,13 +78,10 @@ class Py3status:
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
         self.command_tag = 0  # IMAPcommands are tagged, so responses can be matched up to requests
+        self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
-
-        self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
-        if self.use_idle:
-            self.idle_thread.start()
 
     def check_mail(self):
         # I -- acquire mail_count
@@ -223,7 +220,6 @@ class Py3status:
         except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
             self.py3.log("Recoverable error - " + str(e), level=self.py3.LOG_WARNING)
             self._disconnect()
-            self.mail_count = None
         except (imaplib.IMAP4.error, Exception) as e:
             self.mail_error = "Fatal error - " + str(e)
             self._disconnect()
