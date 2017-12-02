@@ -113,7 +113,8 @@ class ConfigParser:
 
     TOKENS = [
         '#.*$'  # comments
-        '|(?P<env_var>env\([A-Z_][0-9A-Z_]*(, *[a-z]+)?\))'  # environment var
+        # environment variables
+        '|(?P<env_var>env\(\s*([0-9A-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -312,13 +313,14 @@ class ConfigParser:
 
     def make_value_from_env(self, value):
         # Extract the environment variable and type
-        match = re.match('env\(([0-9A-Z_]+)(, *[a-z]+)?\)', value)
+        match = re.match('env\(\s*([0-9A-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\)', value)
         env_var, env_type = match.groups()
         if not env_type:
             env_type = 'auto'
         else:
             # Remove comma and whitespace from match
-            env_type = env_type[1:].lstrip()
+            # i.e '   ,  my_conversion' -> 'my_conversion'
+            env_type = env_type.strip()[1:].lstrip()
 
         conversion_options = {
             'str': str,
@@ -332,13 +334,13 @@ class ConfigParser:
             'auto': self.make_value,
         }
         if env_type not in conversion_options:
-            self.error('Invalid conversion')
+            self.error('Invalid env conversion function in env_var')
 
         # Check the environment variable
         # TODO: dynamic support, (lambda: os.getenv(env_var))
         value = os.getenv(env_var)
         if value is None:
-            self.error('Environment variable undefined')
+            self.error('Environment variable \'%s\' undefined' % env_var)
 
         try:
             return conversion_options[env_type](value)
