@@ -247,7 +247,10 @@ index-3
 {'color': '#0000FF', 'full_text': 'third index'}
 """
 
+import shlex
+from os import setpgrp
 from os.path import expanduser
+from subprocess import Popen
 STRING_ERROR = 'missing list'
 
 
@@ -290,7 +293,8 @@ class Py3status:
 
     def switch(self):
         if not self.button_action or self.is_action:
-            self.py3.command_run(self.new_list[self.active_index]['command'])
+            Popen(shlex.split(
+                self.new_list[self.active_index]['command']), preexec_fn=setpgrp)
             self.index = self.active_index
             self.is_action = False
 
