@@ -79,7 +79,6 @@ class Py3status:
         self.mail_error = None  # cannot throw self.py3.error from thread
         self.command_tag = 0  # IMAPcommands are tagged, so responses can be matched up to requests
         self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
-        self.first_run = True
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -138,9 +137,8 @@ class Py3status:
             self.connection = self._connection_ssl()
         elif self.security == "starttls":
             self.connection = self._connection_starttls()
-        if self.first_run:
+        if self.use_idle = None:
             self._check_if_idle(self.connection)
-            self.first_run = False
 
     def _disconnect(self):
         try:
