@@ -876,12 +876,13 @@ class Py3:
         A CommandError is raised if an error occurs
         """
         # make a pretty command for error loggings and...
-        # convert the non-shell command to sequence if it is a string
-        if not shell and isinstance(command, basestring):
+        if isinstance(command, basestring):
             pretty_cmd = command
-            command = shlex.split(command)
         else:
             pretty_cmd = ' '.join(command)
+        # convert the non-shell command to sequence if it is a string
+        if not shell and isinstance(command, basestring):
+            command = shlex.split(command)
 
         stderr = STDOUT if capture_stderr else PIPE
 
