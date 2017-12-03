@@ -16,6 +16,16 @@ except NameError:
 
 
 def main():
+    # detect gevent option early because monkey patching should be done before
+    # everything else starts kicking
+    if '-g' in sys.argv or '--gevent' in sys.argv:
+        try:
+            from gevent import monkey
+            monkey.patch_all()
+        except ImportError:
+            print('Requested gevent, but it is not installed!')
+            sys.exit(4)
+
     from py3status.core import Py3statusWrapper
     try:
         locale.setlocale(locale.LC_ALL, '')

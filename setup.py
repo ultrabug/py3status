@@ -75,6 +75,7 @@ setup(
     author_email='ultrabug@ultrabug.net',
     description='py3status: an extensible i3status wrapper written in python',
     long_description=read('README.rst'),
+    extras_require={'gevent': ['gevent >= 1.1']},
     url='https://github.com/ultrabug/py3status',
     download_url='https://github.com/ultrabug/py3status/tags',
     license='BSD',

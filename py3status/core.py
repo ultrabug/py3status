@@ -397,6 +397,13 @@ class Py3statusWrapper:
                             '--debug',
                             action="store_true",
                             help="be verbose in syslog")
+        parser.add_argument('-g',
+                            '--gevent',
+                            action="store_true",
+                            default=False,
+                            dest="gevent",
+                            help="""enable gevent monkey patching
+                            (default False)""")
         parser.add_argument('-i',
                             '--include',
                             action="append",
@@ -450,6 +457,7 @@ class Py3statusWrapper:
         config['cache_timeout'] = options.cache_timeout
         config['debug'] = options.debug
         config['dbus_notify'] = options.dbus_notify
+        config['gevent'] = options.gevent
         if options.include_paths:
             config['include_paths'] = options.include_paths
         config['interval'] = int(options.interval)
@@ -459,6 +467,21 @@ class Py3statusWrapper:
 
         # all done
         return config
+
+    def gevent_monkey_patch_report(self):
+        """
+        Report effective gevent monkey patching on the logs.
+        """
+        try:
+            import gevent.socket
+            import socket
+            if gevent.socket.socket is socket.socket:
+                self.log('gevent monkey patching is active')
+            else:
+                self.log('gevent monkey patching failed', level='error')
+        except ImportError:
+            self.log('gevent is not installed, monkey patching failed',
+                     level='error')
 
     def get_user_modules(self):
         """
@@ -575,6 +598,9 @@ class Py3statusWrapper:
         if self.config['debug']:
             self.log(
                 'py3status started with config {}'.format(self.config))
+
+        if self.config['gevent']:
+            self.gevent_monkey_patch_report()
 
         # read i3status.conf
         config_path = self.config['i3status_config_path']
