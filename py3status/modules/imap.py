@@ -137,7 +137,7 @@ class Py3status:
             self.connection = self._connection_ssl()
         elif self.security == "starttls":
             self.connection = self._connection_starttls()
-        if self.use_idle = None:
+        if self.use_idle is None:
             self._check_if_idle(self.connection)
 
     def _disconnect(self):
