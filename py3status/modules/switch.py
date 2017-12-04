@@ -21,6 +21,12 @@ Control list placeholders:
     index: list index (first items only)
 
 Note:
+    If you are only using button_action, then the loop will be implied because
+    we only can travel one way. If you set the scrolling buttons too, then
+    we can scroll through the list freely without any actions. This behavior
+    will be opposite for the scrolling buttons without the button_action too.
+
+Note:
     Short explanation. The list is simply a list of 2-tuples.
     The first items will be formatted. The second items will be executed. eg,
         list = [
