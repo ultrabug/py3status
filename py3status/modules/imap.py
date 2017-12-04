@@ -189,6 +189,9 @@ class Py3status:
             socket.write(b'DONE\r\n')  # important!
             response = socket.read(4096).decode(encoding='ascii')
             expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
+            if response.lower().startswith('* '.lower()):  # '* OK Still here', mostly
+                # sometimes, more messages come in between reading and DONEing; so read them again
+                response = socket.read(4096).decode(encoding='ascii')
             if not response.lower().startswith(expected_response.lower()):
                 raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
 
