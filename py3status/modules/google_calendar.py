@@ -94,8 +94,9 @@ Color options:
     color_time: Color for the time associated with each event.
 
 Requires:
-    1. Python library google-api-python-client (can be obtained with pip).
-    2. OAuth 2.0 credentials for the Google Calendar api.
+    1. Python library google-api-python-client.
+    2. Python library python-dateutil.
+    3. OAuth 2.0 credentials for the Google Calendar api.
 
     Follow Step 1 of the guide here to obtain your OAuth 2.0 credentials:
     https://developers.google.com/google-apps/calendar/quickstart/python
