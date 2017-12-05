@@ -157,6 +157,7 @@ class Py3status:
         """
         class IdleException(Exception):
             pass
+        socket = None
         try:
             self.command_tag = (self.command_tag + 1) % 1000
             command_tag = b'X'+bytes(str(self.command_tag).zfill(3), encoding='ascii')
@@ -186,6 +187,8 @@ class Py3status:
         except IdleException as e:
             raise imaplib.IMAP4.error("While initializing IDLE: " + str(e))
         finally:
+            if socket is None:
+                return
             socket.write(b'DONE\r\n')  # important!
             response = socket.read(4096).decode(encoding='ascii')
             expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
