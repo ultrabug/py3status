@@ -45,16 +45,16 @@ class HttpResponse:
             parts[3] = urlencode(url_params)
             # rebuild the url
             url = urlunsplit(parts)
-        request = Request(url, headers=headers)
         if auth:
             # we need to do the encode/decode to keep python 3 happy
             auth_str = base64.b64encode(('%s:%s' % (auth)).encode('utf-8'))
-            request.add_header('Authorization', 'Basic %s' % auth_str.decode('utf-8'))
+            headers['Authorization'] = 'Basic %s' % auth_str.decode('utf-8')
         if data:
-            data = urlencode(data)
+            data = urlencode(data).encode()
+        request = Request(url, headers=headers)
 
         try:
-            self._response = urlopen(request, data=None, timeout=timeout)
+            self._response = urlopen(request, data=data, timeout=timeout)
             self._error_message = None
         except URLError as e:
             reason = e.reason
