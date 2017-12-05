@@ -194,10 +194,10 @@ class Py3status:
     format_event = '[\?color=event {summary}][\?if=is_toggled  ({start_time}' +\
         ' - {end_time}, {start_date})|[ ({location})][ {format_timer}]]'
     format_notification = '{summary} {start_time} - {end_time}'
-    format_separator = '\|'
+    format_separator = ' \| '
     format_time = '%I:%M %p'
     format_timer = '\?color=time ([\?if=days {days}d ]' +\
-        '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) [\?if=is_current left]'
+        '[\?if=hours {hours}h ][\?if=minutes {minutes}m])[\?if=is_current  left]'
     ignore_all_day_events = False
     num_events = 3
     response_to_events = ['accepted']
