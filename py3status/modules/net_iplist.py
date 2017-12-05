@@ -63,6 +63,9 @@ from fnmatch import fnmatch
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     cache_timeout = 30
     format = 'Network: {format_iface}'
     format_iface = '{iface}:[ {ip4}][ {ip6}]'

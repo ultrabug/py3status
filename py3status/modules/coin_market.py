@@ -13,7 +13,7 @@ Configuration parameters:
     format: display format for this module (default '{format_coin}')
     format_coin: display format for coins
         (default '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]')
-    format_separator: show separator only if more than one (default ' ')
+    format_separator: show separator if more than one (default ' ')
     markets: number of top-ranked markets or list of user-inputted markets
         (default ['btc'])
     request_timeout: time to wait for a response, in seconds (default 5)
@@ -81,6 +81,9 @@ losers
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     cache_timeout = 600
     format = '{format_coin}'
     format_coin = '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]'

@@ -856,7 +856,12 @@ class Py3:
                 command, stdout=PIPE, stderr=PIPE, close_fds=True
             ).wait()
         except Exception as e:
-            msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e.errno)
+            # make a pretty command for error loggings and...
+            if isinstance(command, basestring):
+                pretty_cmd = command
+            else:
+                pretty_cmd = ' '.join(command)
+            msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
     def command_output(self, command, shell=False, capture_stderr=False):
@@ -870,9 +875,13 @@ class Py3:
 
         A CommandError is raised if an error occurs
         """
+        # make a pretty command for error loggings and...
         # convert the non-shell command to sequence if it is a string
         if not shell and isinstance(command, basestring):
+            pretty_cmd = command
             command = shlex.split(command)
+        else:
+            pretty_cmd = ' '.join(command)
 
         stderr = STDOUT if capture_stderr else PIPE
 
@@ -880,7 +889,7 @@ class Py3:
             process = Popen(command, stdout=PIPE, stderr=stderr, close_fds=True,
                             universal_newlines=True, shell=shell)
         except Exception as e:
-            msg = 'Command `{cmd}` {error}'.format(cmd=command[0], error=e)
+            msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
@@ -895,19 +904,19 @@ class Py3:
             # reason is not entirely clear.
             if retcode == -15:
                 msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
-                self.log(msg.format(cmd=command))
+                self.log(msg.format(cmd=pretty_cmd))
             else:
                 msg = 'Command `{cmd}` returned non-zero exit status {error}'
                 output_oneline = output.replace('\n', ' ')
                 if output_oneline:
                     msg += ' ({output})'
-                msg = msg.format(cmd=command[0], error=retcode, output=output_oneline)
+                msg = msg.format(cmd=pretty_cmd, error=retcode, output=output_oneline)
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
         if error:
             msg = "Command '{cmd}' had error {error}".format(
-                cmd=command[0], error=error
+                cmd=pretty_cmd, error=error
             )
             raise exceptions.CommandError(
                 msg, error_code=retcode, error=error, output=output

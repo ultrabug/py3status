@@ -51,6 +51,8 @@ Configuration parameters:
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
+    response_to_events: Only display events for which the response status is
+        on the list. (default ['accepted'])
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
@@ -172,7 +174,6 @@ from httplib2 import ServerNotFoundError
 from dateutil import parser
 from dateutil.tz import tzlocal
 
-
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 APPLICATION_NAME = 'py3status google_calendar module'
 
@@ -193,12 +194,13 @@ class Py3status:
     format_event = '[\?color=event {summary}][\?if=is_toggled  ({start_time}' +\
         ' - {end_time}, {start_date})|[ ({location})][ {format_timer}]]'
     format_notification = '{summary} {start_time} - {end_time}'
-    format_separator = '\|'
+    format_separator = ' \| '
     format_time = '%I:%M %p'
     format_timer = '\?color=time ([\?if=days {days}d ]' +\
-        '[\?if=hours {hours}h ][\?if=minutes {minutes}m]) [\?if=is_current left]'
+        '[\?if=hours {hours}h ][\?if=minutes {minutes}m])[\?if=is_current  left]'
     ignore_all_day_events = False
     num_events = 3
+    response_to_events = ['accepted']
     thresholds = []
     time_to_max = 180
     warn_threshold = 0
@@ -240,7 +242,8 @@ class Py3status:
 
         if not credentials or credentials.invalid:
             try:
-                flow = client.flow_from_clientsecrets(self.client_secret, SCOPES)
+                flow = client.flow_from_clientsecrets(self.client_secret,
+                                                      SCOPES)
                 flow.user_agent = APPLICATION_NAME
                 if flags:
                     credentials = tools.run_flow(flow, store, flags)
@@ -248,7 +251,6 @@ class Py3status:
                     credentials = tools.run(flow, store)
             except clientsecrets.InvalidClientSecretsError:
                 raise Exception('missing client_secret')
-
             """
             Have to restart i3 after getting credentials to prevent bad output.
             This only has to be done once on the first run of the module.
@@ -278,18 +280,54 @@ class Py3status:
         Returns: The list of events.
         """
         self.last_update = datetime.datetime.now()
-        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        now = datetime.datetime.utcnow().isoformat(
+        ) + 'Z'  # 'Z' indicates UTC time
 
         event_cache = self.events
+        events = []
 
         try:
             eventsResult = self.service.events().list(
-                calendarId='primary', timeMin=now, maxResults=self.num_events, singleEvents=True,
+                calendarId='primary',
+                timeMin=now,
+                singleEvents=True,
                 orderBy='startTime').execute(num_retries=5)
-        except:
+        except Exception:
             return event_cache
+        else:
+            for event in eventsResult.get('items', []):
+                # filter out events that we did not accept (default)
+                # unless we organized them with no attendees
+                i_organized = event.get('organizer', {}).get('self', False)
+                has_attendees = event.get('attendees', [])
+                for attendee in event.get('attendees', []):
+                    if attendee.get('self') is True:
+                        if attendee[
+                                'responseStatus'] in self.response_to_events:
+                            break
+                else:
+                    if not i_organized and has_attendees:
+                        continue
 
-        return eventsResult.get('items', [])
+                # lower case output
+                if self.force_lowercase is True:
+                    for key in ['description', 'location', 'summary']:
+                        event[key] = event.get(key, '').lower()
+
+                # ignore all day events if configured
+                if event['start'].get('date') is not None:
+                    if self.ignore_all_day_events:
+                        continue
+
+                # filter out blacklisted event names
+                if event['summary'] is not None:
+                    if event['summary'].lower() \
+                            in map(lambda e: e.lower(), self.blacklist_events):
+                        continue
+
+                events.append(event)
+
+        return events[:self.num_events]
 
     def _check_warn_threshold(self, time_to, event_dict):
         """
@@ -297,7 +335,8 @@ class Py3status:
         If it is, it presents a warning with self.py3.notify_user.
         """
         if time_to['total_minutes'] <= self.warn_threshold:
-            warn_message = self.py3.safe_format(self.format_notification, event_dict)
+            warn_message = self.py3.safe_format(self.format_notification,
+                                                event_dict)
             self.py3.notify_user(warn_message, 'warning', self.warn_timeout)
 
     def _gstr_to_date(self, date_str):
@@ -325,10 +364,12 @@ class Py3status:
         minutes = int((diff.seconds / 60) - (hours * 60)) + 1
         total_minutes = int((diff.seconds / 60) + (days * 24 * 60)) + 1
 
-        return {'days': days,
-                'hours': hours,
-                'minutes': minutes,
-                'total_minutes': total_minutes}
+        return {
+            'days': days,
+            'hours': hours,
+            'minutes': minutes,
+            'total_minutes': total_minutes
+        }
 
     def _format_timedelta(self, index, time_delta, is_current):
         """
@@ -340,12 +381,16 @@ class Py3status:
         time_delta_formatted = ''
 
         if time_delta['total_minutes'] <= self.time_to_max:
-            time_delta_formatted = self.py3.safe_format(
-                self.format_timer,
-                {'days': time_delta['days'],
-                 'hours': time_delta['hours'],
-                 'minutes': time_delta['minutes'],
-                 'is_current': is_current})
+            time_delta_formatted = self.py3.safe_format(self.format_timer, {
+                'days':
+                time_delta['days'],
+                'hours':
+                time_delta['hours'],
+                'minutes':
+                time_delta['minutes'],
+                'is_current':
+                is_current
+            })
 
         return time_delta_formatted
 
@@ -366,31 +411,27 @@ class Py3status:
             event_dict = {}
 
             event_dict['summary'] = event.get('summary')
-
-            if event_dict['summary'] is not None:
-                if event_dict['summary'].lower() \
-                        in map(lambda e: e.lower(), self.blacklist_events):
-                    continue
-
             event_dict['location'] = event.get('location')
             event_dict['description'] = event.get('description')
             self.event_urls.append(event['htmlLink'])
 
             if event['start'].get('date') is not None:
-                if self.ignore_all_day_events:
-                    continue
-                else:
-                    start_dt = self._gstr_to_date(event['start'].get('date'))
-                    end_dt = self._gstr_to_date(event['end'].get('date'))
+                start_dt = self._gstr_to_date(event['start'].get('date'))
+                end_dt = self._gstr_to_date(event['end'].get('date'))
             else:
-                start_dt = self._gstr_to_datetime(event['start'].get('dateTime'))
+                start_dt = self._gstr_to_datetime(
+                    event['start'].get('dateTime'))
                 end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
-            event_dict['start_time'] = self._datetime_to_str(start_dt, self.format_time)
-            event_dict['end_time'] = self._datetime_to_str(end_dt, self.format_time)
+            event_dict['start_time'] = self._datetime_to_str(start_dt,
+                                                             self.format_time)
+            event_dict['end_time'] = self._datetime_to_str(end_dt,
+                                                           self.format_time)
 
-            event_dict['start_date'] = self._datetime_to_str(start_dt, self.format_date)
-            event_dict['end_date'] = self._datetime_to_str(end_dt, self.format_date)
+            event_dict['start_date'] = self._datetime_to_str(start_dt,
+                                                             self.format_date)
+            event_dict['end_date'] = self._datetime_to_str(end_dt,
+                                                           self.format_date)
 
             time_delta = self._delta_time(start_dt)
             if time_delta['days'] < 0:
@@ -399,26 +440,32 @@ class Py3status:
             else:
                 is_current = False
 
-            event_dict['format_timer'] = self._format_timedelta(index, time_delta, is_current)
+            event_dict['format_timer'] = self._format_timedelta(
+                index, time_delta, is_current)
 
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
 
-            if self.force_lowercase:
-                event_dict = dict((k, v.lower()) if v is not None else (k, v)
-                                  for k, v in event_dict.items())
-
-            event_formatted = self.py3.safe_format(
-                self.format_event,
-                {'is_toggled': self.button_states[index],
-                 'summary': event_dict['summary'],
-                 'location': event_dict['location'],
-                 'description': event_dict['description'],
-                 'start_time': event_dict['start_time'],
-                 'end_time': event_dict['end_time'],
-                 'start_date': event_dict['start_date'],
-                 'end_date': event_dict['end_date'],
-                 'format_timer': event_dict['format_timer']})
+            event_formatted = self.py3.safe_format(self.format_event, {
+                'is_toggled':
+                self.button_states[index],
+                'summary':
+                event_dict['summary'],
+                'location':
+                event_dict['location'],
+                'description':
+                event_dict['description'],
+                'start_time':
+                event_dict['start_time'],
+                'end_time':
+                event_dict['end_time'],
+                'start_date':
+                event_dict['start_date'],
+                'end_date':
+                event_dict['end_date'],
+                'format_timer':
+                event_dict['format_timer']
+            })
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
@@ -483,7 +530,8 @@ class Py3status:
                 self.button_states[button_index] = \
                     not self.button_states[button_index]
             elif button == self.button_open:
-                self.py3.command_run('xdg-open ' + self.event_urls[button_index])
+                self.py3.command_run('xdg-open ' + self.event_urls[
+                    button_index])
                 self.py3.prevent_refresh()
             else:
                 self.py3.prevent_refresh()

@@ -94,6 +94,8 @@ RETRY_TIMEOUT_NO_CONTENT = 5
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     align = 'center'
     button_next = 5

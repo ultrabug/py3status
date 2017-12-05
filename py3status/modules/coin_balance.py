@@ -118,6 +118,9 @@ REQUEST = {
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     cache_timeout = 30
     coin_password = None
     coin_username = None
