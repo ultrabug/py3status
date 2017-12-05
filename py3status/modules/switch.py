@@ -299,8 +299,9 @@ class Py3status:
 
     def switch(self):
         if not self.button_action or self.is_action:
-            Popen(shlex.split(
-                self.new_list[self.active_index]['command']), preexec_fn=setpgrp)
+            command = self.new_list[self.active_index]['command']
+            if command:
+                Popen(shlex.split(command), preexec_fn=setpgrp)
             self.index = self.active_index
             self.is_action = False
 
