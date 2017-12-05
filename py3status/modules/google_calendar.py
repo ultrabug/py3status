@@ -38,7 +38,7 @@ Configuration parameters:
     format_notification: The format for event warning notifications.
         (default '{summary} {start_time} - {end_time}')
     format_separator: The string used to separate individual events.
-        (default '\|')
+        (default ' \| ')
     format_time: The format for time related format placeholders (except {format_timer}).
         May use any Python strftime directives for times.
         (default '%I:%M %p')
