@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Display upcoming Google Calendar events.
-ummary} {start_time} - {end_time}') (default '{summary} {start_time} - {end_time}')
 This module will display information about upcoming Google Calendar events in
 one of two formats which can be toggled with a button press. The
 event's URL may also be opened in a web browser with a button press.
-ummary} {start_time} - {end_time}
+
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
