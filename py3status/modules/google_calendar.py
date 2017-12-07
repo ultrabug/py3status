@@ -303,10 +303,11 @@ class Py3status:
                 for attendee in event.get('attendees', []):
                     if attendee.get('self') is True:
                         if attendee[
-                                'responseStatus'] in self.response_to_events:
+                                'responseStatus'] in self.only_if_response:
                             break
                 else:
-                    if not i_organized and has_attendees:
+                    # we did not organize the event or we did not accept it
+                    if not i_organized or has_attendees:
                         continue
 
                 # lower case output
