@@ -22,9 +22,9 @@ def main():
         try:
             from gevent import monkey
             monkey.patch_all()
-        except ImportError:
-            print('Requested gevent, but it is not installed!')
-            sys.exit(4)
+        except Exception:
+            # user will be notified when we start
+            pass
 
     from py3status.core import Py3statusWrapper
     try:
