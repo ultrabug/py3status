@@ -25,7 +25,7 @@ Configuration parameters:
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
     events_within_hours: Select events within the next given hours.
-        (default 120)
+        (default 12)
     force_lowercase: Sets whether to force all event output to lower case.
         (default False)
     format: The format for module output.
