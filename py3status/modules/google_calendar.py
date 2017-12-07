@@ -24,6 +24,8 @@ Configuration parameters:
     client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
+    events_within_hours: Select events within the next given hours.
+        (default 120)
     force_lowercase: Sets whether to force all event output to lower case.
         (default False)
     format: The format for module output.
@@ -188,6 +190,7 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
+    events_within_hours = 12
     force_lowercase = False
     format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
@@ -280,16 +283,17 @@ class Py3status:
         Returns: The list of events.
         """
         self.last_update = datetime.datetime.now()
-        now = datetime.datetime.utcnow().isoformat(
-        ) + 'Z'  # 'Z' indicates UTC time
+        time_min = datetime.datetime.utcnow()
+        time_max = time_min + datetime.timedelta(hours=self.events_within_hours)
 
-        event_cache = self.events
+        event_cache = self.events or []
         events = []
 
         try:
             eventsResult = self.service.events().list(
                 calendarId='primary',
-                timeMin=now,
+                timeMax=time_max.isoformat() + 'Z',  # 'Z' indicates UTC time
+                timeMin=time_min.isoformat() + 'Z',  # 'Z' indicates UTC time
                 singleEvents=True,
                 orderBy='startTime').execute(num_retries=5)
         except Exception:
