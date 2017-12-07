@@ -478,10 +478,10 @@ class Py3statusWrapper:
             if gevent.socket.socket is socket.socket:
                 self.log('gevent monkey patching is active')
             else:
-                self.log('gevent monkey patching failed', level='error')
+                self.notify_user('gevent monkey patching failed')
         except ImportError:
-            self.log('gevent is not installed, monkey patching failed',
-                     level='error')
+            self.notify_user(
+                'gevent is not installed, monkey patching failed')
 
     def get_user_modules(self):
         """
@@ -709,8 +709,8 @@ class Py3statusWrapper:
                 cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
                        '-t', '10000', 'py3status', msg]
             else:
-                py3_config = self.config['py3_config']
-                nagbar_font = py3_config.get('py3status').get('nagbar_font')
+                py3_config = self.config.get('py3_config', {})
+                nagbar_font = py3_config.get('py3status', {}).get('nagbar_font')
                 if nagbar_font:
                     cmd = ['i3-nagbar', '-f', nagbar_font, '-m', msg, '-t', level]
                 else:
@@ -718,8 +718,8 @@ class Py3statusWrapper:
             Popen(cmd,
                   stdout=open('/dev/null', 'w'),
                   stderr=open('/dev/null', 'w'))
-        except:
-            pass
+        except Exception as err:
+            self.log('notify_user error: %s' % err)
 
     def stop(self):
         """
