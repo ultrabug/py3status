@@ -66,22 +66,22 @@ class Py3status:
     def post_config_hook(self):
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+        self.ping_command = [
+            'ping', '-c', '1', '-W', '%s' % self.timeout, self.url]
 
     def _connection_present(self):
         if '://' in self.url:
             try:
                 urlopen(self.url, timeout=self.timeout)
+                return True
             except:
                 return False
-            else:
-                return True
         else:
             try:
-                self.py3.command_output(['ping', '-c', '1', self.url])
+                self.py3.command_output(self.ping_command)
+                return True
             except:
                 return False
-            else:
-                return True
 
     def online_status(self):
         if self._connection_present():
