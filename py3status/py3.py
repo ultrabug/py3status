@@ -1008,7 +1008,7 @@ class Py3:
         return color
 
     def request(self, url, params=None, data=None, headers=None,
-                timeout=None, auth=None):
+                timeout=None, auth=None, cookiejar=None):
         """
         Make a request to a url and retrieve the results.
 
@@ -1039,4 +1039,5 @@ class Py3:
                             data=data,
                             headers=headers,
                             timeout=timeout,
-                            auth=auth)
+                            auth=auth,
+                            cookiejar=cookiejar)
