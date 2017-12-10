@@ -52,7 +52,7 @@ Configuration parameters:
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
-    only_if_response: Only display events for which the response status is
+    response: Only display events for which the response status is
         on the list. (default ['accepted'])
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
@@ -203,7 +203,7 @@ class Py3status:
         '[\?if=hours {hours}h ][\?if=minutes {minutes}m])[\?if=is_current  left]'
     ignore_all_day_events = False
     num_events = 3
-    only_if_response = ['accepted']
+    response = ['accepted']
     thresholds = []
     time_to_max = 180
     warn_threshold = 0
@@ -307,7 +307,7 @@ class Py3status:
                 for attendee in event.get('attendees', []):
                     if attendee.get('self') is True:
                         if attendee[
-                                'responseStatus'] in self.only_if_response:
+                                'responseStatus'] in self.response:
                             break
                 else:
                     # we did not organize the event or we did not accept it
