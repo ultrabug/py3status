@@ -52,9 +52,7 @@ class HttpResponse:
             headers['Authorization'] = 'Basic %s' % auth_str.decode('utf-8')
         if data:
             data = urlencode(data).encode()
-        print(cookiejar)
         if cookiejar is not None:
-            print("prout")
             self._cookiejar = cookiejar
             opener = build_opener(HTTPCookieProcessor(cookiejar))
             install_opener(opener)
