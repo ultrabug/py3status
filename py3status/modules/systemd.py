@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the status of a service on your system.
+Display status of a service on your system.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)

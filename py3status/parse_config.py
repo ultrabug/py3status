@@ -6,7 +6,7 @@ import re
 
 from collections import OrderedDict
 from string import Template
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 
 from py3status.constants import (
     I3S_SINGLE_NAMES,
@@ -533,8 +533,14 @@ def process_config(config_path, py3_wrapper=None):
     config = {}
 
     # get the file encoding this is important with multi-byte unicode chars
-    encoding = check_output(['file', '-b', '--mime-encoding', '--dereference', config_path])
-    encoding = encoding.strip().decode('utf-8')
+    try:
+        encoding = check_output(
+            ['file', '-b', '--mime-encoding', '--dereference', config_path]
+        )
+        encoding = encoding.strip().decode('utf-8')
+    except CalledProcessError:
+        # bsd does not have the --mime-encoding so assume utf-8
+        encoding = 'utf-8'
     with codecs.open(config_path, 'r', encoding) as f:
         try:
             config_info = parse_config(f)
@@ -632,19 +638,23 @@ def process_config(config_path, py3_wrapper=None):
                 fixed[k] = v
         return fixed
 
+    def append_modules(item):
+        module_type = get_module_type(item)
+        if module_type == 'i3status':
+            if item not in i3s_modules:
+                i3s_modules.append(item)
+        else:
+            if item not in py3_modules:
+                py3_modules.append(item)
+
     def add_container_items(module_name):
         module = modules.get(module_name, {})
         items = module.get('items', [])
         for item in items:
             if item in config:
                 continue
-            module_type = get_module_type(item)
-            if module_type == 'i3status':
-                if item not in i3s_modules:
-                    i3s_modules.append(item)
-            else:
-                if item not in py3_modules:
-                    py3_modules.append(item)
+
+            append_modules(item)
             module = modules.get(item, {})
             config[item] = remove_any_contained_modules(module)
             # add any children
@@ -653,15 +663,10 @@ def process_config(config_path, py3_wrapper=None):
     # create config for modules in order
     for name in config_info.get('order', []):
         module = modules.get(name, {})
-        module_type = get_module_type(name)
         config['order'].append(name)
         add_container_items(name)
-        if module_type == 'i3status':
-            if name not in i3s_modules:
-                i3s_modules.append(name)
-        else:
-            if name not in py3_modules:
-                py3_modules.append(name)
+        append_modules(name)
+
         config[name] = remove_any_contained_modules(module)
 
     config['on_click'] = on_click
