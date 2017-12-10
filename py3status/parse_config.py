@@ -114,7 +114,7 @@ class ConfigParser:
     TOKENS = [
         '#.*$'  # comments
         # environment variables
-        '|(?P<env_var>env\(\s*([0-9A-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
+        '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -313,7 +313,8 @@ class ConfigParser:
 
     def make_value_from_env(self, value):
         # Extract the environment variable and type
-        match = re.match('env\(\s*([0-9A-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\)', value)
+        match = re.match(
+            'env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\)', value)
         env_var, env_type = match.groups()
         if not env_type:
             env_type = 'auto'
