@@ -204,7 +204,7 @@ class PactlBackend(AudioBackend):
     def get_default_device(self):
         device_id = None
 
-        # Find the default device for the the device type
+        # Find the default device for the device type
         default_dev_pattern = re.compile(r'^Default {}: (.*)$'.format(self.device_type_cap))
         for info_line in check_output(['pactl', 'info']).decode('utf-8').splitlines():
             default_dev_match = default_dev_pattern.match(info_line)
