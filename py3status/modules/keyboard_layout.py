@@ -3,9 +3,14 @@
 Display keyboard layout.
 
 Configuration parameters:
+    button_next: Button to click to cycle up through available layouts
+        (default 4)
+    button_prev: Button to click to cycle down through available layouts
+        (default 5)
     cache_timeout: refresh interval for this module (default 10)
     colors: deprecated. see color options below (default None)
     format: display format for this module (default '{layout}')
+    layouts: a list of layout that the user can select (default None)
 
 Format placeholders:
     {layout} keyboard layout
@@ -17,6 +22,14 @@ Requires:
     xkblayout-state:
         or
     setxkbmap: and `xset` (works for the first two predefined layouts.)
+
+Examples:
+```
+# define keyboard layouts that can be switched between
+keyboard_layout {
+    layouts = ['gb', 'fr', 'dvorak']
+}
+```
 
 @author shadowprince, tuxitop
 @license Eclipse Public License
@@ -47,9 +60,12 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_next = 4
+    button_prev = 5
     cache_timeout = 10
     colors = None
     format = '{layout}'
+    layouts = None
 
     def post_config_hook(self):
         try:
@@ -58,8 +74,15 @@ class Py3status:
         except:
             self._command = self._setxkbmap
 
+        if not self.layouts:
+            self.layouts = []
+        # We use a copy of layouts so that we can add extra layouts without
+        # affecting the original list
+        self._layouts = self.layouts[:]
+        self._last_layout = None
+
         self.colors_dict = {}
-        # old compatability: set default values
+        # old compatibility: set default values
         self.defaults = {
             'fr': '#268BD2',
             'ru': '#F75252',
@@ -68,7 +91,17 @@ class Py3status:
         }
 
     def keyboard_layout(self):
-        lang = self._command().strip() or '??'
+        layout = self._command() or '??'
+        # If the current layout is not in our layouts list we need to add it
+        if layout not in self._layouts:
+            self._layouts = [layout] + self.layouts
+            self._active = 0
+        # show new layout if it has been changed externally
+        if layout != self._last_layout:
+            self._active = self._layouts.index(layout)
+            self._last_layout = layout
+        lang = self._layouts[self._active]
+
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, {'layout': lang})
@@ -81,7 +114,7 @@ class Py3status:
         lang_color = getattr(self.py3, 'COLOR_%s' % lang.upper())
         if not lang_color:
             lang_color = self.colors_dict.get(lang)
-        if not lang_color:  # old compatability: try default value
+        if not lang_color:  # old compatibility: try default value
             lang_color = self.defaults.get(lang)
         if lang_color:
             response['color'] = lang_color
@@ -89,7 +122,9 @@ class Py3status:
         return response
 
     def _xkblayout(self):
-        return self.py3.command_output(["xkblayout-state", "print", "%s"])
+        return self.py3.command_output(
+            ["xkblayout-state", "print", "%s"]
+        ).strip()
 
     def _setxkbmap(self):
         # this method works only for the first two predefined layouts.
@@ -101,6 +136,19 @@ class Py3status:
         xset_output = self.py3.command_output(["xset", "-q"])
         led_mask = re.match(LEDMASK_RE, xset_output).groups(0)[0]
         return layouts[int(led_mask)]
+
+    def _set_active(self, delta):
+        self._active += delta
+        self._active = self._active % len(self._layouts)
+        layout = self._layouts[self._active]
+        self.py3.command_run(['setxkbmap', '-layout', layout])
+
+    def on_click(self, event):
+        button = event['button']
+        if button == self.button_next:
+            self._set_active(1)
+        if button == self.button_prev:
+            self._set_active(-1)
 
 
 if __name__ == "__main__":
