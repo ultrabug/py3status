@@ -151,7 +151,7 @@ class Py3status:
             }
         if data['ratio'] >= self.limit_warning:
             color = self.py3.COLOR_RATIO_OK or self.py3.COLOR_GOOD
-        elif data['ratio'] >= self.limit_required:
+        elif data['ratio'] >= (self.limit_required or data['requiredratio']):
             color = self.py3.COLOR_RATIO_WARNING or self.py3.COLOR_DEGRADED
         else:
             color = self.py3.COLOR_RATIO_KO or self.py3.COLOR_BAD
