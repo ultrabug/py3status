@@ -218,7 +218,7 @@ class Py3status:
 
     def _run_command(self, env):
         """
-        Run command(s) and return return output and urgency.
+        Run command(s) and return output and urgency.
         """
         output = ''
         urgent = False
