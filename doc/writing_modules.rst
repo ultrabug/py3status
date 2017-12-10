@@ -344,11 +344,10 @@ The response can include the folowing keys
 The time (in seconds since the epoch) that the output will be classed as no longer valid and the output
 function will be called again.
 
-Since version 3.1, if no ``cached_until`` value is provided the the
-output will be cached for ``cache_timeout`` seconds by default this is
-``60`` and can be set using the ``-t`` or ``--timeout`` option when running
-py3status.  To never expire the ``self.py3.CACHE_FOREVER`` constant should be
-used.
+Since version 3.1, if no ``cached_until`` value is provided the output will
+be cached for ``cache_timeout`` seconds by default this is ``60`` and can be
+set using the ``-t`` or ``--timeout`` option when running py3status.  To never
+expire the ``self.py3.CACHE_FOREVER`` constant should be used.
 
 ``cached_until`` should be generated via the ``self.py3.time_in()`` method.
 
@@ -447,7 +446,7 @@ The format of a composite is as follows:
     }
 
 The ``index`` key in the response is used to identify the individual block and
-when the the modules ``on_click()`` method is called the event will include this.
+when the modules ``on_click()`` method is called the event will include this.
 Supplied index values should be strings.  If no index is given then it will
 have an integer value indicating its position in the composite.
 
