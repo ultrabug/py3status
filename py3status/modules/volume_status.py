@@ -92,8 +92,9 @@ import re
 from os import devnull, environ as os_environ
 from subprocess import check_output, call, CalledProcessError
 
-STRING_NOT_INSTALLED = 'not installed'
 STRING_ERROR = 'invalid command'
+STRING_NOT_INSTALLED = 'not installed'
+COMMAND_NOT_INSTALLED = 'command `%s` {}'.format(STRING_NOT_INSTALLED)
 
 
 class AudioBackend():
@@ -315,7 +316,7 @@ class Py3status:
         elif self.command not in ['amixer', 'pamixer', 'pactl']:
             raise Exception(STRING_ERROR)
         elif not self.py3.check_commands(self.command):
-            raise Exception('%s %s' % (self.command, STRING_NOT_INSTALLED))
+            raise Exception(COMMAND_NOT_INSTALLED % self.command)
         if not self.command:
             raise Exception(STRING_NOT_INSTALLED)
 
