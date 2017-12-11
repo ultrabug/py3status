@@ -90,13 +90,12 @@ class Py3status:
                 sleep(5)  # rate-limit thread-restarting (when network is offline)
                 self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
                 self.idle_thread.start()
-            response = {'cached_until': self.py3.CACHE_FOREVER}
         else:
             self._get_mail_count()
-            response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         if self.mail_error is not None:
             self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
-            self.py3.error(self.mail_error)
+            self.py3.error(self.mail_error, timeout=self.py3.CACHE_FOREVER)
 
         # II -- format response
         if self.mail_count is None:
