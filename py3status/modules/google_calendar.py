@@ -24,6 +24,8 @@ Configuration parameters:
     client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
+    events_within_hours: Select events within the next given hours.
+        (default 12)
     force_lowercase: Sets whether to force all event output to lower case.
         (default False)
     format: The format for module output.
@@ -50,7 +52,7 @@ Configuration parameters:
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
-    response_to_events: Only display events for which the response status is
+    response: Only display events for which the response status is
         on the list. (default ['accepted'])
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
@@ -188,6 +190,7 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 60
     client_secret = '~/.config/py3status/google_calendar.client_secret'
+    events_within_hours = 12
     force_lowercase = False
     format = '{events}|\?color=event \u2687'
     format_date = '%a %d-%m'
@@ -200,7 +203,7 @@ class Py3status:
         '[\?if=hours {hours}h ][\?if=minutes {minutes}m])[\?if=is_current  left]'
     ignore_all_day_events = False
     num_events = 3
-    response_to_events = ['accepted']
+    response = ['accepted']
     thresholds = []
     time_to_max = 180
     warn_threshold = 0
@@ -280,16 +283,17 @@ class Py3status:
         Returns: The list of events.
         """
         self.last_update = datetime.datetime.now()
-        now = datetime.datetime.utcnow().isoformat(
-        ) + 'Z'  # 'Z' indicates UTC time
+        time_min = datetime.datetime.utcnow()
+        time_max = time_min + datetime.timedelta(hours=self.events_within_hours)
 
-        event_cache = self.events
+        event_cache = self.events or []
         events = []
 
         try:
             eventsResult = self.service.events().list(
                 calendarId='primary',
-                timeMin=now,
+                timeMax=time_max.isoformat() + 'Z',  # 'Z' indicates UTC time
+                timeMin=time_min.isoformat() + 'Z',  # 'Z' indicates UTC time
                 singleEvents=True,
                 orderBy='startTime').execute(num_retries=5)
         except Exception:
@@ -303,10 +307,11 @@ class Py3status:
                 for attendee in event.get('attendees', []):
                     if attendee.get('self') is True:
                         if attendee[
-                                'responseStatus'] in self.response_to_events:
+                                'responseStatus'] in self.response:
                             break
                 else:
-                    if not i_organized and has_attendees:
+                    # we did not organize the event or we did not accept it
+                    if not i_organized or has_attendees:
                         continue
 
                 # lower case output
