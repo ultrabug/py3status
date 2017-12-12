@@ -312,7 +312,8 @@ class OWMException(Exception):
 
 
 class Py3status:
-
+    """
+    """
     api_key = None
     cache_timeout = 600
     city = None
@@ -762,10 +763,9 @@ class Py3status:
 
 
 if __name__ == '__main__':
-    '''
+    """
     Run module in test mode.
-    '''
-
+    """
     import os
     from py3status.module_test import module_test
 

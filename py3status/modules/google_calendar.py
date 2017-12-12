@@ -173,8 +173,8 @@ class Py3status:
     format_notification = '{summary} {start_time} - {end_time}'
     format_separator = ' \| '
     format_time = '%I:%M %p'
-    format_timer = '\?color=time ([\?if=days {days}d ]' +\
-        '[\?if=hours {hours}h ][\?if=minutes {minutes}m])[\?if=is_current  left]'
+    format_timer = '\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]' +\
+        '[\?if=minutes {minutes}m])[\?if=is_current  left]'
     ignore_all_day_events = False
     num_events = 3
     response = ['accepted']
@@ -259,8 +259,6 @@ class Py3status:
         self.last_update = datetime.datetime.now()
         time_min = datetime.datetime.utcnow()
         time_max = time_min + datetime.timedelta(hours=self.events_within_hours)
-
-        event_cache = self.events or []
         events = []
 
         try:
@@ -271,7 +269,7 @@ class Py3status:
                 singleEvents=True,
                 orderBy='startTime').execute(num_retries=5)
         except Exception:
-            return event_cache
+            return self.events or events
         else:
             for event in eventsResult.get('items', []):
                 # filter out events that we did not accept (default)
@@ -361,16 +359,14 @@ class Py3status:
         time_delta_formatted = ''
 
         if time_delta['total_minutes'] <= self.time_to_max:
-            time_delta_formatted = self.py3.safe_format(self.format_timer, {
-                'days':
-                time_delta['days'],
-                'hours':
-                time_delta['hours'],
-                'minutes':
-                time_delta['minutes'],
-                'is_current':
-                is_current
-            })
+            time_delta_formatted = self.py3.safe_format(
+                self.format_timer, {
+                    'days': time_delta['days'],
+                    'hours': time_delta['hours'],
+                    'minutes': time_delta['minutes'],
+                    'is_current': is_current,
+                }
+            )
 
         return time_delta_formatted
 
@@ -426,26 +422,19 @@ class Py3status:
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
 
-            event_formatted = self.py3.safe_format(self.format_event, {
-                'is_toggled':
-                self.button_states[index],
-                'summary':
-                event_dict['summary'],
-                'location':
-                event_dict['location'],
-                'description':
-                event_dict['description'],
-                'start_time':
-                event_dict['start_time'],
-                'end_time':
-                event_dict['end_time'],
-                'start_date':
-                event_dict['start_date'],
-                'end_date':
-                event_dict['end_date'],
-                'format_timer':
-                event_dict['format_timer']
-            })
+            event_formatted = self.py3.safe_format(
+                self.format_event, {
+                    'is_toggled': self.button_states[index],
+                    'summary': event_dict['summary'],
+                    'location': event_dict['location'],
+                    'description': event_dict['description'],
+                    'start_time': event_dict['start_time'],
+                    'end_time': event_dict['end_time'],
+                    'start_date': event_dict['start_date'],
+                    'end_date': event_dict['end_date'],
+                    'format_timer': event_dict['format_timer'],
+                }
+            )
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
