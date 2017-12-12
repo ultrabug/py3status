@@ -28,7 +28,7 @@ Configuration parameters:
     is_input: Is this an input device or an output device?
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
-        pactl supports this. (default 120)
+        pactl and pamixer supports this. (default 120)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -92,6 +92,10 @@ import re
 from os import devnull, environ as os_environ
 from subprocess import check_output, call, CalledProcessError
 
+STRING_ERROR = 'invalid command `%s`'
+STRING_NOT_AVAILABLE = 'no available binary'
+COMMAND_NOT_INSTALLED = 'command `%s` not installed'
+
 
 class AudioBackend():
     def __init__(self, parent):
@@ -154,7 +158,9 @@ class PamixerBackend(AudioBackend):
             self.device = "0"
         # Ignore channel
         self.channel = None
-        self.cmd = ["pamixer", "--source" if self.is_input else "--sink", self.device]
+        is_input = '--source' if self.is_input else '--sink'
+        self.cmd = ['pamixer', '--allow-boost', is_input, self.device]
+        self.max_volume = parent.max_volume
 
     def get_volume(self):
         try:
@@ -168,7 +174,12 @@ class PamixerBackend(AudioBackend):
         return perc, muted
 
     def volume_up(self, delta):
-        self.run_cmd(self.cmd + ["-i", str(delta)])
+        perc, muted = self.get_volume()
+        if int(perc) + delta >= self.max_volume:
+            options = ['--set-volume', str(self.max_volume)]
+        else:
+            options = ['-i', str(delta)]
+        self.run_cmd(self.cmd + options)
 
     def volume_down(self, delta):
         self.run_cmd(self.cmd + ["-d", str(delta)])
@@ -299,9 +310,15 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        if self.command is None:
+        if not self.command:
             self.command = self.py3.check_commands(
                 ['amixer', 'pamixer', 'pactl'])
+        elif self.command not in ['amixer', 'pamixer', 'pactl']:
+            raise Exception(STRING_ERROR % self.command)
+        elif not self.py3.check_commands(self.command):
+            raise Exception(COMMAND_NOT_INSTALLED % self.command)
+        if not self.command:
+            raise Exception(STRING_NOT_AVAILABLE)
 
         # turn integers to strings
         if self.card is not None:
@@ -316,8 +333,6 @@ class Py3status:
             self.backend = PamixerBackend(self)
         elif self.command == 'pactl':
             self.backend = PactlBackend(self)
-        else:
-            raise NameError("Unknown command")
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
