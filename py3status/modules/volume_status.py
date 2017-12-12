@@ -8,14 +8,12 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
-    button_down: Button to click to decrease volume. Setting to 0 disables.
-        (default 0)
-    button_mute: Button to click to toggle mute. Setting to 0 disables.
-        (default 0)
-    button_up: Button to click to increase volume. Setting to 0 disables.
-        (default 0)
+    button_down: button to decrease volume (default None)
+    button_mute: button to toggle mute (default None)
+    button_up: button to increase volume (default None)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
+    card: Card to use. amixer supports this. (default None)
     channel: channel to track. Default value is backend dependent.
         (default None)
     command: Choose between "amixer", "pamixer" or "pactl".
@@ -30,7 +28,7 @@ Configuration parameters:
     is_input: Is this an input device or an output device?
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
-        pactl supports this (default 120)
+        pactl and pamixer supports this. (default 120)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -92,13 +90,14 @@ mute
 
 import re
 from os import devnull, environ as os_environ
-from subprocess import check_output, call
+from subprocess import check_output, call, CalledProcessError
 
 
 class AudioBackend():
     def __init__(self, parent):
-        self.device = parent.device
+        self.card = parent.card
         self.channel = parent.channel
+        self.device = parent.device
         self.is_input = parent.is_input
         self.parent = parent
         self.setup(parent)
@@ -113,14 +112,19 @@ class AudioBackend():
 
 class AmixerBackend(AudioBackend):
     def setup(self, parent):
-        if self.device is None:
-            self.device = 'default'
+        if self.card is None:
+            self.card = '0'
         if self.channel is None:
             self.channel = 'Capture' if self.is_input else 'Master'
-        self.cmd = ['amixer', '-q', '-D', self.device, 'sset', self.channel]
+        if self.device is None:
+            self.device = 'default'
+        self.cmd = ['amixer', '-q', '-D', self.device,
+                    '-c', self.card, 'sset', self.channel]
+        self.get_volume_cmd = ['amixer', '-D', self.device,
+                               '-c', self.card, 'sget', self.channel]
 
     def get_volume(self):
-        output = check_output(['amixer', '-D', self.device, 'sget', self.channel]).decode('utf-8')
+        output = check_output(self.get_volume_cmd).decode('utf-8')
 
         # find percentage and status
         p = re.compile(r'\[(\d{1,3})%\].*\[(\w{2,3})\]')
@@ -150,15 +154,28 @@ class PamixerBackend(AudioBackend):
             self.device = "0"
         # Ignore channel
         self.channel = None
-        self.cmd = ["pamixer", "--source" if self.is_input else "--sink", self.device]
+        is_input = '--source' if self.is_input else '--sink'
+        self.cmd = ['pamixer', '--allow-boost', is_input, self.device]
+        self.max_volume = parent.max_volume
 
     def get_volume(self):
-        perc = check_output(self.cmd + ["--get-volume"]).decode('utf-8').strip()
+        try:
+            perc = check_output(self.cmd + ["--get-volume"])
+        except CalledProcessError as cpe:
+            # pamixer throws error on zero percent. see #1135
+            perc = cpe.output
+
+        perc = perc.decode().strip()
         muted = (self.run_cmd(self.cmd + ["--get-mute"]) == 0)
         return perc, muted
 
     def volume_up(self, delta):
-        self.run_cmd(self.cmd + ["-i", str(delta)])
+        perc, muted = self.get_volume()
+        if int(perc) + delta >= self.max_volume:
+            options = ['--set-volume', str(self.max_volume)]
+        else:
+            options = ['-i', str(delta)]
+        self.run_cmd(self.cmd + options)
 
     def volume_down(self, delta):
         self.run_cmd(self.cmd + ["-d", str(delta)])
@@ -187,7 +204,7 @@ class PactlBackend(AudioBackend):
     def get_default_device(self):
         device_id = None
 
-        # Find the default device for the the device type
+        # Find the default device for the device type
         default_dev_pattern = re.compile(r'^Default {}: (.*)$'.format(self.device_type_cap))
         for info_line in check_output(['pactl', 'info']).decode('utf-8').splitlines():
             default_dev_match = default_dev_pattern.match(info_line)
@@ -246,10 +263,11 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_down = 0
-    button_mute = 0
-    button_up = 0
+    button_down = None
+    button_mute = None
+    button_up = None
     cache_timeout = 10
+    card = None
     channel = None
     command = None
     device = None
@@ -261,7 +279,6 @@ class Py3status:
     volume_delta = 5
 
     class Meta:
-
         def deprecate_function(config):
             # support old thresholds
             return {
@@ -289,16 +306,16 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        # Guess command if not set
         if self.command is None:
             self.command = self.py3.check_commands(
-                ['amixer', 'pamixer', 'pactl']
-            )
+                ['amixer', 'pamixer', 'pactl'])
 
-        # device sometimes is an integer but should be passed to commands as a
-        # str.  So fix it here.
+        # turn integers to strings
+        if self.card is not None:
+            self.card = '%s' % self.card
         if self.device is not None:
             self.device = '%s' % self.device
+        self.volume_delta = int(self.volume_delta)
 
         if self.command == 'amixer':
             self.backend = AmixerBackend(self)
@@ -346,17 +363,16 @@ class Py3status:
         """
         button = event['button']
         # volume up
-        if self.button_up and button == self.button_up:
+        if button == self.button_up:
             self.backend.volume_up(self.volume_delta)
         # volume down
-        elif self.button_down and button == self.button_down:
+        elif button == self.button_down:
             self.backend.volume_down(self.volume_delta)
         # toggle mute
-        elif self.button_mute and button == self.button_mute:
+        elif button == self.button_mute:
             self.backend.toggle_mute()
 
 
-# test if run directly
 if __name__ == "__main__":
     """
     Run module in test mode.

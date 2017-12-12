@@ -34,7 +34,7 @@ off
 from os import setpgrp
 from subprocess import Popen, PIPE
 
-STRING_UNAVAILABLE = "isn't installed"
+STRING_UNAVAILABLE = "not installed"
 
 
 class Py3status:

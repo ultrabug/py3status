@@ -64,6 +64,7 @@ ERROR_PROTOCOL = 'Error: Failed to register event handler!'
 class Py3status:
     """
     """
+    # available configuration parameters
     cache_timeout = 2
     control_address = '127.0.0.1'
     control_password = None

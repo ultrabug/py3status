@@ -64,6 +64,9 @@ def markdown_2_rst(lines):
         else:
             if code and line.strip():
                 line = '    ' + line
+            else:
+                # escape any backslashes
+                line = line.replace('\\', '\\\\')
             out.append(line)
     return out
 

@@ -46,6 +46,9 @@ IGNORE_ITEM = [
     ('kdeconnector', '_dev'),  # move to __init__ etc
     ('arch_updates', 'format'),  # dynamic
     ('spotify', 'sanitize_words'),  # line too long for docstring parsing
+    ('weather_owm', 'thresholds'),  # dictionary parsing issue
+    ('google_calendar', 'format_event'),  # line too long for docstring parsing
+    ('google_calendar', 'format_timer')  # line too long for docstring parsing
 ]
 
 # Obsolete parameters will not have alphabetical order checked
@@ -190,7 +193,7 @@ def get_module_attributes(path):
                         else:
                             attr_value = 'UNKNOWN %s BinOp %s' % (class_name,
                                                                   op)
-                    except:
+                    except Exception:
                         attr_value = 'UNKNOWN %s BinOp error' % class_name
                 else:
                     attr_value = 'UNKNOWN %s' % class_name

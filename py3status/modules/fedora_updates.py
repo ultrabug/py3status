@@ -34,6 +34,8 @@ import re
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 600
     check_security = True
@@ -92,9 +94,6 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    """
-    Test this module by calling it directly.
-    """
     """
     Run module in test mode.
     """

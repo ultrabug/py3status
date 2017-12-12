@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default 'BT[: {format_device}]')
     format_device: display format for bluetooth devices (default '{name}')
-    format_separator: show separator only if more than one (default '\|')
+    format_separator: show separator if more than one (default '\|')
 
 Format placeholders:
     {format_device} format for bluetooth devices

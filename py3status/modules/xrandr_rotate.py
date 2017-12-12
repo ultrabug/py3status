@@ -34,7 +34,7 @@ Color options:
     color_degraded: Screen is disconnected
     color_good: Displayed rotation is active
 
-@author Maxim Baz (https://github.com/maximbaz)
+@author Maxim Baz (https://github.com/maximbaz), @lasers
 @license BSD
 
 SAMPLE OUTPUT
@@ -61,29 +61,40 @@ class Py3status:
     def post_config_hook(self):
         self.displayed = ''
 
-    def _get_all_outputs(self):
-        cmd = 'xrandr -q | grep " connected [^(]" | cut -d " " -f1'
-        return self.py3.command_output(cmd, shell=True).splitlines()
+    def _get_active_outputs(self):
+        data = self.py3.command_output(['xrandr']).splitlines()
+        connected_outputs = [x.split() for x in data if ' connected' in x]
+        active_outputs = []
+        for output in connected_outputs:
+            for x in output[2:]:
+                if 'x' in x and '+' in x:
+                    active_outputs.append(output[0])
+                    break
+                elif '(' in x:
+                    break
+        return active_outputs
 
     def _get_current_rotation_icon(self, all_outputs):
+        data = self.py3.command_output(['xrandr']).splitlines()
         output = self.screen or all_outputs[0]
-        cmd = 'xrandr -q | grep "^' + output + '" | cut -d " " -f4'
-        output = self.py3.command_output(cmd, shell=True).strip()
-        # xrandr may skip printing the 'normal', in which case the output would
-        # start from '('
-        is_horizontal = (output.startswith('(') or
-                         output in ['normal', 'inverted'])
-        return self.horizontal_icon if is_horizontal else self.vertical_icon
+        output_line = ''.join([x for x in data if x.startswith(output)])
+
+        for x in output_line.split():
+            if 'normal' in x or 'inverted' in x:
+                return self.horizontal_icon
+            elif 'left' in x or 'right' in x:
+                return self.vertical_icon
 
     def _apply(self):
         if self.displayed == self.horizontal_icon:
             rotation = self.horizontal_rotation
         else:
             rotation = self.vertical_rotation
-        outputs = [self.screen] if self.screen else self._get_all_outputs()
+        cmd = 'xrandr'
+        outputs = [self.screen] if self.screen else self._get_active_outputs()
         for output in outputs:
-            cmd = 'xrandr --output ' + output + ' --rotate ' + rotation
-            self.py3.command_run(cmd)
+            cmd += ' --output %s --rotate %s' % (output, rotation)
+        self.py3.command_run(cmd)
 
     def _switch_selection(self):
         if self.displayed == self.horizontal_icon:
@@ -104,7 +115,7 @@ class Py3status:
             self._apply()
 
     def xrandr_rotate(self):
-        all_outputs = self._get_all_outputs()
+        all_outputs = self._get_active_outputs()
         selected_screen_disconnected = (
             self.screen is not None and self.screen not in all_outputs
         )

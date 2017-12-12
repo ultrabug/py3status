@@ -1,4 +1,32 @@
-version 3.7 (milestone)
+version 3.7 (2017-11-30)
+* NOTE: this is a performance focused release
+* deep rework of the usage and scheduling of threads to run modules: now py3status does not keep one thread per module running permanently but instead uses a queue to spawn a thread to execute the module only when its cache expires, by @tobes
+* memory footprint of py3status got largely reduced thanks to the threads modifications and thanks to a nice hunt on ever growing and useless variables done by @tobes
+* the next release will contain logic to switch from threads to greenlets and go further in optimizing py3status
+* conversion of many modules to use post_config_hook, by @lasers
+* improve spelling in documentation, by @lasers
+* let Py3.contains_format() accept a list of placeholder names
+* py3: print full command in the error logs, by @lasers
+* air_quality module: fix attributeerror exception, by @lasers
+* apt_updates module: improved error if apt not installed, by @lasers
+* backlight module: allow slower value change after a threshold, by @maximbaz
+* backlight module: detect and bypass xbacklight limitations, by @lasers
+* diskdata module: new {total_space} placeholder, by @pcewing
+* do_not_disturb module: better support for dunst, by @maximbaz
+* exchange_rate module: use py3 helper to extract placeholders, by @lasers
+* github module: fix urls so trailing / doesn't cause problems, by @lasers
+* icinga2 module: fix missing color parameter, by @lasers
+* moc module: code/documentation cleanups, by @lasers
+* mpris module: code improvements, by @lasers
+* pingdom module: fix when no useful data returned, by @lasers
+* uptime module: code improvements/simplification, by @lasers
+* volume_status module: allow card to be specified for amixer, by @lasers
+* volume_status module: bugfix for pamixer when volume is zero, by @lasers
+* xrandr_rotate module: run command once, by @lasers
+* xrandr_rotate: replace shell commands with python codes, by @lasers
+* xsel module: allow logging and clear selection, by @JohnAZoidberg
+* yandexdisk_status module: improved error reporting to users, by @lasers
+
 
 version 3.6 (2017-08-22)
 * faster py3-cmd, by @tobes

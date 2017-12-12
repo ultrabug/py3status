@@ -106,6 +106,9 @@ def _get_in(coll, path, default=None):
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     auth_token = 'demo'
     cache_timeout = 3600
     format = '{location}: {aqi} {category}'
@@ -123,7 +126,7 @@ class Py3status:
         try:
             self._api_data = self.py3.request(self.url_full, params=self.url_token).json()
         except (self.py3.RequestException):
-            self._api_data = None
+            self._api_data = {}
 
     def _update_key(self):
         if self._api_data.get('status') == 'ok':
@@ -138,7 +141,7 @@ class Py3status:
         self._key = 'unknown'
 
     def _get_full_text(self):
-        aqi = _get_in(self._api_data, ['data', 'aqi'])
+        aqi = _get_in(self._api_data, ['data', 'aqi'], {})
         iaqi = _get_in(self._api_data, ['data', 'iaqi'], {})
         city = _get_in(self._api_data, ['data', 'city'], {})
         try:

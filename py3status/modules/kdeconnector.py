@@ -99,7 +99,8 @@ class Py3status:
     status_no_notif = ''
     status_notif = u' ✉'
 
-    _dev = None
+    def post_config_hook(self):
+        self._dev = None
 
     def _init_dbus(self):
         """

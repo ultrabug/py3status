@@ -82,7 +82,7 @@ HEX_RE = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
 class Py3status:
     """
     """
-    # configuration parameters
+    # available configuration parameters
     cycle_time = 1
     force = False
     format = '{output}'
