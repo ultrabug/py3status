@@ -92,7 +92,7 @@ import re
 from os import devnull, environ as os_environ
 from subprocess import check_output, call, CalledProcessError
 
-STRING_ERROR = 'invalid command'
+STRING_ERROR = 'invalid command `%s`'
 STRING_NOT_INSTALLED = 'not installed'
 COMMAND_NOT_INSTALLED = 'command `%s` {}'.format(STRING_NOT_INSTALLED)
 
@@ -314,7 +314,7 @@ class Py3status:
             self.command = self.py3.check_commands(
                 ['amixer', 'pamixer', 'pactl'])
         elif self.command not in ['amixer', 'pamixer', 'pactl']:
-            raise Exception(STRING_ERROR)
+            raise Exception(STRING_ERROR % self.command)
         elif not self.py3.check_commands(self.command):
             raise Exception(COMMAND_NOT_INSTALLED % self.command)
         if not self.command:
