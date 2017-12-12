@@ -314,10 +314,11 @@ class Py3status:
                     if not i_organized or has_attendees:
                         continue
 
-                # lower case output
-                if self.force_lowercase is True:
-                    for key in ['description', 'location', 'summary']:
-                        event[key] = event.get(key, '').lower()
+                # strip and lower case output if needed
+                for key in ['description', 'location', 'summary']:
+                    event[key] = event.get(key, '').strip()
+                    if self.force_lowercase is True:
+                        event[key] = event[key].lower()
 
                 # ignore all day events if configured
                 if event['start'].get('date') is not None:
