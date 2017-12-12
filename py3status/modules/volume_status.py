@@ -94,8 +94,7 @@ from subprocess import check_output, call, CalledProcessError
 
 STRING_ERROR = 'invalid command `%s`'
 STRING_NOT_AVAILABLE = 'no available binary'
-STRING_NOT_INSTALLED = 'not installed'
-COMMAND_NOT_INSTALLED = 'command `%s` {}'.format(STRING_NOT_INSTALLED)
+COMMAND_NOT_INSTALLED = 'command `%s` not installed'
 
 
 class AudioBackend():
