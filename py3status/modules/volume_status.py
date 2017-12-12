@@ -93,6 +93,7 @@ from os import devnull, environ as os_environ
 from subprocess import check_output, call, CalledProcessError
 
 STRING_ERROR = 'invalid command `%s`'
+STRING_NOT_AVAILABLE = 'no available binary'
 STRING_NOT_INSTALLED = 'not installed'
 COMMAND_NOT_INSTALLED = 'command `%s` {}'.format(STRING_NOT_INSTALLED)
 
@@ -318,7 +319,7 @@ class Py3status:
         elif not self.py3.check_commands(self.command):
             raise Exception(COMMAND_NOT_INSTALLED % self.command)
         if not self.command:
-            raise Exception(STRING_NOT_INSTALLED)
+            raise Exception(STRING_NOT_AVAILABLE)
 
         # turn integers to strings
         if self.card is not None:
