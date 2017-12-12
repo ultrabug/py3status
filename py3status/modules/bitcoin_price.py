@@ -1,46 +1,90 @@
 # -*- coding: utf-8 -*-
-# FIXME color_index param
 """
-Display bitcoin using bitcoincharts.com.
+Display cryptocurrency data.
+
+The site offer various types of data such as symbol, trades, volumes,
+weighted prices, et cetera for a wide range of cryptocurrencies.
+For more information, visit https://bitcoincharts.com
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module. A message from
-        the site: Don't query more often than once every 15 minutes
-        (default 900)
-    color_index: Index of the market responsible for coloration,
-        -1 means no coloration, except when only one market is selected
-        (default -1)
-    field: Field that is displayed per market,
-        see http://bitcoincharts.com/about/markets-api/ (default 'close')
-    format: display format for this module (default '{format_bitcoin}')
-    format_bitcoin: display format for bitcoin (default '{market}: {price}{symbol}')
-    format_separator: show separator if more than one (default ', ')
-    hide_on_error: show error message (default False)
-    markets: list of supported markets http://bitcoincharts.com/markets/list/
-        (default 'btceUSD, btcdeEUR')
-    symbols: if possible, convert currency abbreviations to symbols
+    cache_timeout: refresh interval for this module. A message from the site:
+        Don't query more often than once every 15 minutes (default 900)
+    format: display format for this module (default '{format_coin}')
+    format_coin: display format for coins
+        (default '{symbol} [\?color=close {close:.2f}]')
+    format_separator: show separator if more than one (default ' ')
+    markets: specify a list of markets to use
+        (default ['coinbaseUSD', 'coinbaseEUR', 'btceUSD', 'btcdeEUR'])
+    request_timeout: time to wait for a response, in seconds (default 10)
+    symbols: if possible, convert `{currency}` abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
+    thresholds: specify thresholds for changes between updates
+        (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
+
+    See https://bitcoincharts.com/markets/list/ for a list of markets.
 
 Format placeholders:
-    {format_bitcoin} format for bitcoin
+    {format_coin} format for cryptocurrency coins
+    {xxx_24h}     eg weighted price for last 24 hours eg (new output here)
+    {xxx_7d}      eg weighted price for last 7 days eg (new output here)
+    {xxx_30d}     eg weighted price for last 30 days eg (new output here)
 
-format_bitcoin placeholders:
-    {market} market names
-    {price} current prices
-    {symbol} currency symbols
+    Bitcoincharts offers weighted prices for several currencies.
+    Weighted prices are calculated for the last 24 hours, 7 days and 30 days.
+    You can use this to price goods and services in Bitcoins. This will yield
+    much lower fluctuations than using a single market's latest price.
+
+    To print weighed prices in different currency, replicate the placeholders
+    below with a valid option, eg `{usd_24h}`. You can use many as you like.
+
+    Valid options are: ARS, AUD, BRL, CAD, CHF, CLP, CZK, DKK, EUR, GBP, HKD,
+    IDR, ILS, INR, JPY, KRW, MXN, MYR, NGN, NOK, NZD, PKR, PLN, RUB, SEK, SGD,
+    SLL, THB, USD, VEF, VND, ZAR... and be written in lowercase.
+
+format_coin placeholders:
+    {symbol}          short name for market, eg localbtcUSD
+    {currency}        base currency of the market, eg USD, EUR, RUB, JPY, etc
+    {bid}             highest bid price, eg 1704347.14
+    {ask}             lowest ask price, eg 12100.0,
+    {avg}             average price, eg 17265.00867749991
+    {latest_trade}    unixtime of latest trade, eg 1513072778
+    {high}            highest trade during day, eg 68874.32
+    {low}             lowest trade during day, eg 11401.79
+    {close}           latest trade, eg 24183.56
+    {volume}          total trade volume of day in BTC, eg 143.11342831
+    {currency_volume} total trade volume of day in currency, eg 2470854.5816389113
+    {weighted_price}  weighted price for this day eg 17265.00867749991
+    {duration}        duration, eg 89282
 
 Color options:
-    color_bad: Price has dropped or not available
-    color_good: Price has increased
+    color_bad: the price has dropped since the last interval.
+    color_degraded: the price hasn't changed since the last interval.
+    color_good: the price has increased since the last interval.
 
-@author Andre Doser <doser.andre AT gmail.com>
+Color thresholds:
+    format_coin:
+        `placeholder`: print a color based on the value of `{placeholder}`
+
+DEPRECATION TODO:
+    param: field
+    old: price = _rate = market[self.field]... to {price}
+    new: convert {????} to {price} if self.field is '????'
+    May be hard to deprecate some things here.
+
+@author Andre Doser <doser.andre AT gmail.com>, lasers
 
 SAMPLE OUTPUT
-{'full_text': u'btce: 809.40$, btcde: 785.00\u20ac'}
+[
+    {'full_text': 'coinbaseUSD'}, {'full_text': '17139.00', 'color': '#f00'},
+    {'full_text': 'coinbaseEUR'}, {'full_text': '14412.76', 'color': '#0f0'},
+    {'full_text': 'btceUSD'}, {'full_text': '2546.00', 'color': '#ff0'},
+    {'full_text': 'btcdeEUR'}, {'full_text': '13649.00', 'color': '#0f0'},
+]
 """
 
-STRING_UNAVAILABLE = 'N/A'
-STRING_ERROR = 'bitcoin_price: site unreachable'
+URL_MARKETS = 'https://api.bitcoincharts.com/v1/markets.json'
+URL_WEIGHTED_PRICES = 'https://api.bitcoincharts.com/v1/weighted_prices.json'
+MAP = {'AUD': '$', 'CNY': '¥', 'EUR': '€', 'GBP': '£', 'USD': '$', 'YEN': '¥'}
 
 
 class Py3status:
@@ -48,14 +92,13 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 900
-    color_index = -1
-    field = 'close'
-    format = '{format_bitcoin}'
-    format_bitcoin = '{market}: {price}{symbol}'
-    format_separator = ', '
-    hide_on_error = False
-    markets = 'btceUSD, btcdeEUR'
+    format = '{format_coin}'
+    format_coin = '{symbol} [\?color=close {close:.2f}]'
+    format_separator = ' '
+    markets = ['coinbaseUSD', 'coinbaseEUR', 'btceUSD', 'btcdeEUR']
+    request_timeout = 10
     symbols = True
+    thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
 
     class Meta:
         update_config = {
@@ -93,86 +136,115 @@ class Py3status:
                     'param': 'bitcoin_separator',
                     'msg': 'obsolete set using `format_separator`',
                 },
+                {
+                    'param': 'hide_on_error',
+                    'msg': 'obsolete param',
+                },
+            ],
+            'rename': [
+                {
+                    'param': 'format_bitcoin',
+                    'new': 'format_coin',
+                    'msg': 'obsolete parameter use `format_coin`',
+                },
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'format_bitcoin',
+                    'new': 'format_coin',
+                    'format_strings': ['format'],
+                },
+                {
+                    'placeholder': 'price',
+                    'new': 'close',
+                    'format_strings': ['format_coin'],
+                },
             ],
         }
 
     def post_config_hook(self):
-        """
-        Initialize last_price, set the currency mapping
-        and the url containing the data.
-        """
-        self.currency_map = {
-            'AUD': '$',
-            'CNY': '¥',
-            'EUR': '€',
-            'GBP': '£',
-            'USD': '$',
-            'YEN': '¥'
-        }
-        self.last_price = 0
+        if isinstance(self.markets, str):
+            self.markets = [x.strip() for x in self.markets.split(',')]
+        # END DEPRECATION
+        self.first_run = True
+        self.last_market = {}
+        self.last_weighted = {}
         self.request_timeout = 10
-        self.url = 'https://api.bitcoincharts.com/v1/markets.json'
+        placeholders = self.py3.get_placeholders_list(self.format_coin)
+        for index, x in enumerate(self.markets, 1):
+            self.last_market[index] = {x: None for x in placeholders}
+        self.init_weighted_prices = self.py3.format_contains(
+            self.format, ['*_24h', '*_30d', '*_7d'])
 
-    def _get_price(self, data, market, field):
-        """
-        Given the data (in json format), returns the
-        field for a given market.
-        """
-        for m in data:
-            if m['symbol'] == market:
-                return m[field]
-
-    def get_rate(self):
-        # get the data from bitcoincharts api
+    def _get_markets(self):
         try:
             data = self.py3.request(
-                self.url, timeout=self.request_timeout).json()
+                URL_MARKETS, timeout=self.request_timeout).json()
         except self.py3.RequestException:
-            return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': '' if self.hide_on_error else STRING_ERROR
-            }
+            data = {}
+        return data
 
-        # get the rate for each market given
-        color_rate, rates, markets = None, [], self.markets.split(',')
-        for i, market in enumerate(markets):
-            market = market.strip()
-            try:
-                rate = self._get_price(data, market, self.field)
-                # coloration
-                if i == self.color_index or len(markets) == 1:
-                    color_rate = rate
-            except KeyError:
-                continue
+    def _get_weighted_prices(self):
+        try:
+            data = self.py3.request(
+                URL_WEIGHTED_PRICES, timeout=self.request_timeout).json()
+            data = {k.lower(): v for k, v in data.items()}
+            data = self.py3.flatten_dict(data, '_')
+        except self.py3.RequestException:
+            data = {}
+        return data
 
-            # market/price/symbol
-            _market = market[:-3] if rate else market
-            _price = rate if rate else STRING_UNAVAILABLE
-            _symbol = self.currency_map.get(market[-3:], market[-3:])
-            _symbol = _symbol if self.symbols else market
+    def bitcoin_price(self):
+        format_coin = None
+        weighted_prices = {}
 
-            rates.append(self.py3.safe_format(
-                self.format_bitcoin, {'market': _market, 'price': _price, 'symbol': _symbol})
+        if self.first_run:
+            self.first_run = False
+            cached_until = 0
+        else:
+            cached_until = self.cache_timeout
+            data = self._get_markets()
+            new_data = []
+
+            if self.init_weighted_prices:
+                weighted_prices = self._get_weighted_prices()
+
+            for index, symbol in enumerate(self.markets, 1):
+                for market in data:
+                    if symbol == market['symbol']:
+                        if self.symbols:
+                            sign = market['currency']
+                            market['currency'] = MAP.get(sign, sign)
+
+                        for k, v in self.last_market[index].items():
+                            if self.last_market[index][k] is None:
+                                self.last_market[index][k] = 0
+                            elif isinstance(market[k], (int, float)):
+                                market_value = float(market[k])
+                                last_market = float(self.last_market[index][k])
+                                result = 0
+                                if market_value < last_market:
+                                    result = -1
+                                elif market_value > last_market:
+                                    result = 1
+                                if self.thresholds:
+                                    self.py3.threshold_get_color(result, k)
+                                self.last_market[index][k] = market_value
+
+                        new_data.append(self.py3.safe_format(
+                            self.format_coin, market))
+                        break
+
+            format_separator = self.py3.safe_format(self.format_separator)
+            format_coin = self.py3.composite_join(format_separator, new_data)
+
+        return {
+            'cached_until': self.py3.time_in(cached_until),
+            'full_text': self.py3.safe_format(self.format, dict(
+                format_coin=format_coin,
+                **weighted_prices)
             )
-
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
-        # colorize if an index is given or only one market is selected
-        if len(rates) == 1 or self.color_index > -1:
-            if self.last_price == 0:
-                pass
-            elif color_rate < self.last_price:
-                response['color'] = self.py3.COLOR_BAD
-            elif color_rate > self.last_price:
-                response['color'] = self.py3.COLOR_GOOD
-            self.last_price = color_rate
-
-        format_separator = self.py3.safe_format(self.format_separator)
-        format_bitcoin = self.py3.composite_join(format_separator, rates)
-        response['full_text'] = self.py3.safe_format(
-            self.format, {'format_bitcoin': format_bitcoin})
-        return response
+        }
 
 
 if __name__ == '__main__':
