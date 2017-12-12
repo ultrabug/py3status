@@ -51,9 +51,11 @@ class YubiKeyTouchDetectorListener(threading.Thread):
         while not self.parent.killed.is_set():
             self._connect_socket()
 
+            # Refresh once to show or clear error as needed
+            self.parent.py3.update()
+
             if self.socket is None:
-                # Socket is not available, show error and try again soon
-                self.parent.py3.update()
+                # Socket is not available, try again soon
                 time.sleep(60)
                 continue
 
@@ -95,7 +97,8 @@ class Py3status:
 
     def yubikey(self):
         if self.error:
-            raise self.error
+            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
+
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, self.status),
