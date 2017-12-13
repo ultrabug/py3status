@@ -60,7 +60,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.displayed = ''
-        self.scrolling = None
+        self.scrolling = False
 
     def _get_active_outputs(self):
         data = self.py3.command_output(['xrandr']).splitlines()
