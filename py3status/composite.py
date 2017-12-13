@@ -77,6 +77,12 @@ class Composite:
         """
         return self._content
 
+    def text(self):
+        """
+        Return the text only component of the composite.
+        """
+        return ''.join([x.get('full_text', '') for x in self._content])
+
     def simplify(self):
         """
         Simplify the content of a Composite merging any parts that can be
@@ -112,11 +118,13 @@ class Composite:
         This is used in joining strings, responses and Composites.
         The output will be a Composite.
         """
-
         output = Composite()
         first_item = True
         for item in items:
-            # add separator but not before the first item
+            # skip empty items
+            if not item:
+                continue
+            # skip separator on first item
             if first_item:
                 first_item = False
             else:

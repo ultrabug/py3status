@@ -28,12 +28,19 @@ import subprocess
 import sys
 
 LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 600
     format = 'UPD[\?not_zero : {apt}]'
+
+    def post_config_hook(self):
+        if not self.py3.check_commands('apt'):
+            raise Exception(STRING_NOT_INSTALLED)
 
     def check_updates(self):
         apt_updates = self._check_apt_updates()

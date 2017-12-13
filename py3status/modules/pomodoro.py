@@ -122,7 +122,7 @@ class Py3status:
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
 
-    def __init__(self):
+    def post_config_hook(self):
         self._initialized = False
 
     def _init(self):

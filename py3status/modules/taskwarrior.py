@@ -20,7 +20,7 @@ SAMPLE OUTPUT
 """
 
 import json
-STRING_NOT_INSTALLED = "isn't installed"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:

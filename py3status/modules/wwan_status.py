@@ -63,6 +63,9 @@ from time import sleep
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     baudrate = 115200
     cache_timeout = 5
     consider_3G_degraded = False

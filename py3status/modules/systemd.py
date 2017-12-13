@@ -1,39 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-Check systemd unit status.
-
-Check the status of a systemd unit.
+Display status of a service on your system.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 5)
-    format: Format for module output (default "{unit}: {status}")
-    unit: Name of the unit (default "dbus.service")
+    cache_timeout: refresh interval for this module (default 5)
+    format: display format for this module (default '{unit}: {status}')
+    unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
-    {unit} name of the unit
-    {status} 'active', 'inactive' or 'not-found'
+    {unit} unit name, eg sshd
+    {status} unit status, eg active, inactive, not-found
 
 Color options:
-    color_good: Unit active
-    color_bad: Unit inactive
-    color_degraded: Unit not found
+    color_good: unit active
+    color_bad: unit inactive
+    color_degraded: unit not-found
 
-Example:
-
+Examples:
 ```
-# Check status of vpn service
-# Start with left click
-# Stop with right click
+# show the status of vpn service
+# left click to start, right click to stop
 systemd vpn {
     unit = 'vpn.service'
-    on_click 1 = "exec sudo systemctl start vpn"
-    on_click 3 = "exec sudo systemctl stop vpn"
-    format = '{unit} is {status}'
+    on_click 1 = 'exec sudo systemctl start vpn'
+    on_click 3 = 'exec sudo systemctl stop vpn'
 }
 ```
 
 Requires:
-    pydbus: python lib for dbus
+    pydbus: pythonic dbus library
 
 @author Adrian Lopez <adrianlzt@gmail.com>
 @license BSD
@@ -43,6 +38,8 @@ from pydbus import SystemBus
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 5
     format = '{unit}: {status}'
@@ -51,13 +48,9 @@ class Py3status:
     def post_config_hook(self):
         bus = SystemBus()
         systemd = bus.get('org.freedesktop.systemd1')
-        s_unit = systemd.LoadUnit(self.unit)
-        self.systemd_unit = bus.get('.systemd1', s_unit)
+        self.systemd_unit = bus.get('.systemd1', systemd.LoadUnit(self.unit))
 
-    def check_status(self, i3s_output_list, i3s_config):
-        """
-        Ask dbus to get Status and loaded status for the unit
-        """
+    def systemd(self):
         status = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')
         exists = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'LoadState')
 
@@ -71,13 +64,12 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
-        full_text = self.py3.safe_format(self.format, {'unit': self.unit, 'status': status})
-        response = {
+        return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text,
-            'color': color
+            'color': color,
+            'full_text': self.py3.safe_format(
+                self.format, {'unit': self.unit, 'status': status})
         }
-        return response
 
 
 if __name__ == "__main__":

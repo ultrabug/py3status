@@ -19,6 +19,9 @@ Configuration parameters:
         (default None)
     format: Display brightness, see placeholders below
         (default '☼: {level}%')
+    low_tune_threshold: If current brightness value is below this threshold,
+        the value is changed by a minimal value instead of the brightness_delta.
+        (default 0)
 
 Format status string parameters:
     {level} brightness
@@ -60,6 +63,7 @@ class Py3status:
     cache_timeout = 10
     device = None
     format = u'☼: {level}%'
+    low_tune_threshold = 0
 
     class Meta:
         deprecated = {
@@ -80,7 +84,14 @@ class Py3status:
         if self.device is None:
             raise Exception(STRING_NOT_AVAILABLE)
 
-        self.xbacklight = self.py3.check_commands(['xbacklight'])
+        # check for an error code and an output
+        self.xbacklight = False
+        try:
+            if self.py3.command_output(['xbacklight', '-get']):
+                self.xbacklight = True
+        except:
+            pass
+
         if self.xbacklight and self.brightness_initial:
             self._set_backlight_level(self.brightness_initial)
 
@@ -91,12 +102,14 @@ class Py3status:
         level = self._get_backlight_level()
         button = event['button']
         if button == self.button_up:
-            level += self.brightness_delta
+            delta = self.brightness_delta if level >= self.low_tune_threshold else 1
+            level += delta
             if level > 100:
                 level = 100
             self._set_backlight_level(level)
         elif button == self.button_down:
-            level -= self.brightness_delta
+            delta = self.brightness_delta if level > self.low_tune_threshold else 1
+            level -= delta
             if level < self.brightness_minimal:
                 level = self.brightness_minimal
             self._set_backlight_level(level)

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Display if a process is running.
+Display status of a process on your system.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    format: default format for this module (default '{icon}')
-    full: if True, match against full command line (default False)
-    icon_off: show when process not running (default '■')
-    icon_on: show when process running (default '●')
-    process: process name to check for (default None)
+    format: display format for this module (default '{icon}')
+    full: match against the full command line (default False)
+    icon_off: show this if a process is not running (default '■')
+    icon_on: show this if a process is running (default '●')
+    process: specify a process name to use (default None)
 
 Format placeholders:
     {icon} process icon
@@ -23,10 +23,11 @@ Color options:
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 
-off
+not_running
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
-STRING_ERROR = 'process_status: N/A'
+
+STRING_ERROR = 'missing process'
 
 
 class Py3status:
@@ -57,27 +58,22 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if not self.process:
+            raise Exception(STRING_ERROR)
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+        self.pgrep_command = ['pgrep', self.process]
+        if self.full:
+            self.pgrep_command.insert(1, '-f')
 
     def _is_running(self):
         try:
-            pgrep = ["pgrep", self.process]
-            if self.full:
-                pgrep = ["pgrep", "-f", self.process]
-            self.py3.command_output(pgrep)
+            self.py3.command_output(self.pgrep_command)
             return True
         except:
             return False
 
     def process_status(self):
-        if self.process is None:
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
-            }
-
         if self._is_running():
             icon = self.icon_on
             color = self.color_on

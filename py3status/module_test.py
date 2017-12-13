@@ -20,10 +20,12 @@ class MockPy3statusWrapper:
             'testing': True,
             'log_file': True,
         }
+        self.events_thread = self.EventThread()
         self.i3status_thread = None
         self.lock = Event()
         self.output_modules = {}
-        self.events_thread = self.EventThread()
+        self.running = True
+
         self.lock.set()
 
         # shared code
@@ -35,6 +37,9 @@ class MockPy3statusWrapper:
         pass
 
     def notify_user(self, *arg, **kw):
+        pass
+
+    def timeout_queue_add_module(self, *arg, **kw):
         pass
 
     def log(self, *arg, **kw):

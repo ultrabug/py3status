@@ -160,7 +160,7 @@ class Py3status:
     state_play = u'▶'
     state_stop = u'◾'
 
-    def __init__(self):
+    def post_config_hook(self):
         self._dbus = None
         self._data = {}
         self._control_states = {}
@@ -171,10 +171,36 @@ class Py3status:
         self._player = None
         self._player_details = {}
         self._tries = 0
-
-    def post_config_hook(self):
+        # start last
         self._dbus = SessionBus()
         self._start_listener()
+        self._states = {
+            'pause': {
+                'action': 'Pause',
+                'clickable': 'CanPause',
+                'icon': self.icon_pause
+            },
+            'play': {
+                'action': 'Play',
+                'clickable': 'CanPlay',
+                'icon': self.icon_play
+            },
+            'stop': {
+                'action': 'Stop',
+                'clickable': 'True',  # The MPRIS API lacks 'CanStop' function.
+                'icon': self.icon_stop
+            },
+            'next': {
+                'action': 'Next',
+                'clickable': 'CanGoNext',
+                'icon': self.icon_next
+            },
+            'previous': {
+                'action': 'Previous',
+                'clickable': 'CanGoPrevious',
+                'icon': self.icon_previous
+            }
+        }
 
     def _init_data(self):
         self._data = {
@@ -268,29 +294,9 @@ class Py3status:
         return (placeholders, color, update)
 
     def _get_control_states(self):
-        control_states = {
-            'pause': {'action': 'Pause',
-                      'clickable': 'CanPause',
-                      'icon': self.icon_pause},
-            'play': {'action': 'Play',
-                     'clickable': 'CanPlay',
-                     'icon': self.icon_play},
-            'stop': {'action': 'Stop',
-                     # Workaround: The MPRIS API has no CanStop function.
-                     'clickable': 'True',
-                     'icon': self.icon_stop},
-            'next': {'action': 'Next',
-                     'clickable': 'CanGoNext',
-                     'icon': self.icon_next},
-            'previous': {'action': 'Previous',
-                         'clickable': 'CanGoPrevious',
-                         'icon': self.icon_previous}
-        }
-
         state = 'pause' if self._data.get('state') == PLAYING else 'play'
-        control_states['toggle'] = control_states[state]
-
-        return control_states
+        self._states['toggle'] = self._states[state]
+        return self._states
 
     def _get_response_buttons(self):
         response = {}
@@ -514,6 +520,8 @@ class Py3status:
         """
         Get the current output format and return it.
         """
+        if self._kill:
+            raise KeyboardInterrupt
         current_player_id = self._player_details.get('id')
         cached_until = self.py3.CACHE_FOREVER
 
@@ -530,12 +538,7 @@ class Py3status:
             (text, color, cached_until) = self._get_text()
             self._control_states = self._get_control_states()
             buttons = self._get_response_buttons()
-            composite = self.py3.build_composite(self.format,
-                                                 text,
-                                                 buttons)
-
-        if self._kill:
-            raise KeyboardInterrupt
+            composite = self.py3.safe_format(self.format, dict(text, **buttons))
 
         if (self._data.get('error_occurred') or
                 current_player_id != self._player_details.get('id')):

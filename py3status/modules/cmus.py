@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display currently playing song in cmus.
+Display song currently playing in cmus.
 
 cmus (C* Music Player) is a small, fast and powerful console audio player
 which supports most major audio formats. Various features include gapless
@@ -17,44 +17,43 @@ Configuration parameters:
         *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]
         [\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]
         |\?show cmus: waiting for user input]]')*
-    sleep_timeout: sleep interval for this module will be used when cmus is not
-        running. this allows aggressive timing in cache_timeout where one might
-        want to refresh cmus every 0 second along with time placeholders...
-        or to make cmus run once every minute as long as it's not being used.
-        (default 20)
+    sleep_timeout: sleep interval for this module. when cmus is not running,
+        this interval will be used. this allows some flexible timing where one
+        might want to refresh constantly with some placeholders... or to refresh
+        only once every minute rather than every few seconds. (default 20)
 
 Control placeholders:
-    is_paused: a boolean based on cmus status
-    is_playing: a boolean based on cmus status
-    is_started: a boolean based on cmus status
-    is_stopped: a boolean based on cmus status
-    continue: a boolean based on data status
-    play_library: a boolean based on data status
-    play_sorted: a boolean based on data status
-    repeat: a boolean based on data status
-    repeat_current: a boolean based on data status
-    replaygain: a boolean based on data status
-    replaygain_limit: a boolean based on data status
-    shuffle: a boolean based on data status
-    softvol: a boolean based on data status
-    stream: a boolean based on data status
+    {is_paused} a boolean based on cmus status
+    {is_playing} a boolean based on cmus status
+    {is_started} a boolean based on cmus status
+    {is_stopped} a boolean based on cmus status
+    {continue} a boolean based on data status
+    {play_library} a boolean based on data status
+    {play_sorted} a boolean based on data status
+    {repeat} a boolean based on data status
+    {repeat_current} a boolean based on data status
+    {replaygain} a boolean based on data status
+    {replaygain_limit} a boolean based on data status
+    {shuffle} a boolean based on data status
+    {softvol} a boolean based on data status
+    {stream} a boolean based on data status
 
 Format placeholders:
-    {durationtime} length time in [HH:]MM:SS, eg 02:51
-    {positiontime} elapsed time in [HH:]MM:SS, eg 00:17
-    {aaa_mode} shuffle songs between artist, album, or all. eg album
-    {albumartist} album artist
-    {album} album name
-    {artist} artist name
+    {aaa_mode} shuffle mode, eg artist, album, all
+    {albumartist} album artist, eg (new output here)
+    {album} album name, eg (new output here)
+    {artist} artist name, eg (new output here)
     {bitrate} audio bitrate, eg 229
     {comment} comment, eg URL
     {date} year number, eg 2015
     {duration} length time in seconds, eg 171
+    {durationtime} length time in [HH:]MM:SS, eg 02:51
     {file} file location, eg /home/user/Music...
     {position} elapsed time in seconds, eg 17
+    {positiontime} elapsed time in [HH:]MM:SS, eg 00:17
     {replaygain_preamp} replay gain preamp, eg 0.000000
-    {status} playback status, eg playing, paused, or stopped
-    {title} track title
+    {status} playback status, eg playing, paused, stopped
+    {title} track title, eg (new output here)
     {tracknumber} track number, eg 0
     {vol_left} left volume number, eg 90
     {vol_right} right volume number, eg 90
@@ -88,7 +87,7 @@ waiting
 from __future__ import division
 
 
-STRING_NOT_INSTALLED = "isn't installed"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:

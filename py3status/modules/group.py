@@ -94,6 +94,8 @@ RETRY_TIMEOUT_NO_CONTENT = 5
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     align = 'center'
     button_next = 5
@@ -130,7 +132,7 @@ class Py3status:
                 self.format = u'{output}'
         # if no button then force open
         if not self.py3.format_contains(self.format, 'button'):
-                self.open = True
+            self.open = True
         self.py3.register_function('content_function', self._content_function)
         self.py3.register_function('urgent_function', self._urgent_function)
 
@@ -163,12 +165,13 @@ class Py3status:
         for i in range(len(self.items)):
             output = self.py3.get_output(self.items[i])
             if not output:
-                continue
-            widths.append(sum([len(x['full_text']) for x in output]))
+                widths.append(0)
+            else:
+                widths.append(sum([len(x['full_text']) for x in output]))
             if i == self.active:
                 current = output
                 current_width = widths[-1]
-        if widths:
+        if widths and current:
             width = max(widths)
             padding = ' ' * (width - current_width)
             if self.align == 'right':
