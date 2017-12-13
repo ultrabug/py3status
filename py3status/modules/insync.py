@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display Insync status
+Display Insync status.
 
 Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
 

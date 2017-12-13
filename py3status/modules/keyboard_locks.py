@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Monitor CapsLock, NumLock, and ScrLock keys
+Monitor CapsLock, NumLock, and ScrLock keys.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 1)
