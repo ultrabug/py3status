@@ -1182,7 +1182,7 @@ __storage_get(key)__
 Retrieve a value of a key for the module. Or `None` if the key has no value for
 the given key.
 
-__storage_delete(key=None)__
+__storage_del(key=None)__
 
 Remove the value stored with the key from storage.
 If key is not supplied then all values for the module are removed.
@@ -1190,6 +1190,10 @@ If key is not supplied then all values for the module are removed.
 __storage_keys()__
 
 Return a list of the keys for values stored for the module or an empty list.
+
+__storage_keys()__
+
+Return a key, value iterator of the stored data for the module.
 
 ***
 

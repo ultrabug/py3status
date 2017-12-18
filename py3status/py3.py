@@ -935,7 +935,7 @@ class Py3:
 
     def storage_set(self, key, value):
         """
-        Store a value for the module
+        Store a value for the module.
         """
         if not self._module:
             return
@@ -945,7 +945,7 @@ class Py3:
 
     def storage_get(self, key):
         """
-        Retrieve a value for the module
+        Retrieve a value for the module.
         """
         if not self._module:
             return
@@ -953,7 +953,7 @@ class Py3:
         module_name = self._module.module_full_name
         return self._storage.storage_get(module_name, key)
 
-    def storage_delete(self, key=None):
+    def storage_del(self, key=None):
         """
         Remove the value stored with the key from storage.
         If key is not supplied then all values for the module are removed.
@@ -962,7 +962,7 @@ class Py3:
             return
         self._storage_init()
         module_name = self._module.module_full_name
-        return self._storage.storage_delete(module_name, key=key)
+        return self._storage.storage_del(module_name, key=key)
 
     def storage_keys(self):
         """
@@ -973,6 +973,18 @@ class Py3:
         self._storage_init()
         module_name = self._module.module_full_name
         return self._storage.storage_keys(module_name)
+
+    def storage_items(self):
+        """
+        Return a key, value iterator of the stored data for the module.
+        """
+        if not self._module:
+            return {}.items()
+        self._storage_init()
+        module_name = self._module.module_full_name
+        for key in self._storage.storage_keys(module_name):
+            value = self._storage.storage_get(module_name, key)
+            yield (key, value)
 
     def play_sound(self, sound_file):
         """

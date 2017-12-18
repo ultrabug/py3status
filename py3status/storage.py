@@ -3,7 +3,7 @@ from __future__ import with_statement
 import os
 
 from collections import Iterable, Mapping
-from pickle import load, dump
+from pickle import dump, load
 from tempfile import NamedTemporaryFile
 
 
@@ -30,25 +30,25 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
-        self.py3_wrapper.log('Stored data')
+        self.py3_wrapper.log('stored data:')
         self.py3_wrapper.log(self.data)
         self.initialized = True
 
     def save(self):
         """
-        Save our data to disk.  We want to always have a valid file.
+        Save our data to disk. We want to always have a valid file.
         """
-        f = NamedTemporaryFile(dir=os.path.dirname(self.storage_path))
-        # we use protocol=2 for python 2/3 compatibility
-        dump(self.data, f, protocol=2)
-        f.flush()
-        os.fsync(f.fileno())
-        tmppath = f.name
-        os.rename(tmppath, self.storage_path)
+        with NamedTemporaryFile(dir=os.path.dirname(self.storage_path)) as f:
+            # we use protocol=2 for python 2/3 compatibility
+            dump(self.data, f, protocol=2)
+            f.flush()
+            os.fsync(f.fileno())
+            tmppath = f.name
+            os.rename(tmppath, self.storage_path)
 
     def fix(self, item):
         """
-        make sure all strings are unicode for python 2/3 compatability
+        Make sure all strings are unicode for python 2/3 compatability
         """
         if not self.is_python_2:
             return item
@@ -78,7 +78,7 @@ class Storage:
         key = self.fix(key)
         return self.data.get(module_name, {}).get(key, None)
 
-    def storage_delete(self, module_name, key=None):
+    def storage_del(self, module_name, key=None):
         key = self.fix(key)
         if module_name in self.data and key in self.data[module_name]:
             del self.data[module_name][key]

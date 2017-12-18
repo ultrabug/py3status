@@ -451,6 +451,21 @@ Supplied index values should be strings.  If no index is given then it will
 have an integer value indicating its position in the composite.
 
 
+Module data storage
+-------------------
+
+Py3status allows modules to maintain state through the use of the storage
+functions of the Py3 helper.
+
+Currently bool, int, float, None, unicode, dicts, lists, datetimes etc are
+supported.  Basically anything that can be pickled.  We do our best to ensure
+that the resulting pickles are compatable with both python versions 2 and 3.
+
+The following helper functions are defined in the modules :ref:`py3`.
+
+These functions may return ``None`` if storage is not available.
+
+
 Module documentation
 --------------------
 
