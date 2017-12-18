@@ -39,13 +39,15 @@ class Storage:
         """
         Save our data to disk. We want to always have a valid file.
         """
-        with NamedTemporaryFile(dir=os.path.dirname(self.storage_path)) as f:
+        with NamedTemporaryFile(
+                dir=os.path.dirname(self.storage_path), delete=False
+        ) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)
             f.flush()
             os.fsync(f.fileno())
             tmppath = f.name
-            os.rename(tmppath, self.storage_path)
+        os.rename(tmppath, self.storage_path)
 
     def fix(self, item):
         """

@@ -459,13 +459,23 @@ functions of the Py3 helper.
 
 Currently bool, int, float, None, unicode, dicts, lists, datetimes etc are
 supported.  Basically anything that can be pickled.  We do our best to ensure
-that the resulting pickles are compatable with both python versions 2 and 3.
+that the resulting pickles are compatible with both python versions 2 and 3.
 
 The following helper functions are defined in the modules :ref:`py3`.
 
 These functions may return ``None`` if storage is not available as well as some
 metadata such as storage creation timestamp ``_ctime`` and
 last modification timestamp ``_mtime``.
+
+Example:
+
+.. code-block:: python
+
+    def module_function(self):
+        # set some storage
+        self.py3.storage_set('my_key', value)
+        # get the value or None if key not present
+        value = self.py3.storage_get('my_key')
 
 
 Module documentation
