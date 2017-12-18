@@ -1191,9 +1191,9 @@ __storage_keys()__
 
 Return a list of the keys for values stored for the module or an empty list.
 
-__storage_keys()__
+__storage_items()__
 
-Return a key, value iterator of the stored data for the module.
+Return key, value pairs of the stored data for the module.
 
 ***
 

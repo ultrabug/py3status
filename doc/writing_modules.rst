@@ -463,7 +463,9 @@ that the resulting pickles are compatable with both python versions 2 and 3.
 
 The following helper functions are defined in the modules :ref:`py3`.
 
-These functions may return ``None`` if storage is not available.
+These functions may return ``None`` if storage is not available as well as some
+metadata such as storage creation timestamp ``_ctime`` and
+last modification timestamp ``_mtime``.
 
 
 Module documentation

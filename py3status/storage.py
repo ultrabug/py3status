@@ -5,6 +5,7 @@ import os
 from collections import Iterable, Mapping
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
+from time import time
 
 
 class Storage:
@@ -64,6 +65,9 @@ class Storage:
         return item
 
     def storage_set(self, module_name, key, value):
+        if key.startswith('_'):
+            raise ValueError('cannot set keys starting with an underscore "_"')
+
         key = self.fix(key)
         value = self.fix(value)
         if self.data.get(module_name, {}).get(key) == value:
@@ -72,6 +76,10 @@ class Storage:
         if module_name not in self.data:
             self.data[module_name] = {}
         self.data[module_name][key] = value
+        ts = time()
+        if '_ctime' not in self.data[module_name]:
+            self.data[module_name]['_ctime'] = ts
+        self.data[module_name]['_mtime'] = ts
         self.save()
 
     def storage_get(self, module_name, key):
