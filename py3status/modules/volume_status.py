@@ -8,9 +8,9 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
-    button_down: button to decrease volume (default None)
-    button_mute: button to toggle mute (default None)
-    button_up: button to increase volume (default None)
+    button_down: button to decrease volume (default 5)
+    button_mute: button to toggle mute (default 1)
+    button_up: button to increase volume (default 4)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
     card: Card to use. amixer supports this. (default None)
@@ -42,17 +42,10 @@ Color options:
     color_muted: Volume is muted, if not supplied color_bad is used
         if set to `None` then the threshold color will be used.
 
-Example:
-
+Examples:
 ```
-# Add mouse clicks to change volume
 # Set thresholds to rainbow colors
-
 volume_status {
-    button_up = 4
-    button_down = 5
-    button_mute = 2
-
     thresholds = [
         (0, "#FF0000"),
         (10, "#E2571E"),
@@ -267,9 +260,9 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_down = None
-    button_mute = None
-    button_up = None
+    button_down = 5
+    button_mute = 1
+    button_up = 4
     cache_timeout = 10
     card = None
     channel = None
