@@ -135,10 +135,13 @@ class Py3status:
 
         timer = self.py3.composite_create(composites)
 
-        return {
+        response = {
             'cached_until': cached_until,
             'full_text': self.py3.safe_format(self.format, {'timer': timer})
         }
+        if self.done:
+            response['urgent'] = True
+        return response
 
     def on_click(self, event):
         deltas = {
@@ -149,10 +152,13 @@ class Py3status:
         index = event['index']
         button = event['button']
 
-        # If played an alarm sound then cancel the sound on any putton press
-        if self.alarm:
-            self.py3.stop_sound()
-            self.alarm = False
+        # If played an alarm sound, then cancel the sound and urgent on any
+        # button press... otherwise, we only cancel an urgent
+        if self.done:
+            self.done = False
+            if self.alarm:
+                self.py3.stop_sound()
+                self.alarm = False
             return
 
         if button == 1:

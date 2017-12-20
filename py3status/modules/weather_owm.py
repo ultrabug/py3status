@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-'''
-Ultimately customizable weather module based on the Timezone API
-(https://timezoneapi.io) and the OpenWeatherMap API
-(https://openweathermap.org).
-
-Requires an API key for OpenWeatherMap (OWM), but the free tier allows you
-enough requests/sec to get accurate weather even up to the minute.
+"""
+Display ultimately customizable weather.
 
 This module allows you to specify an icon for nearly every weather scenario
 imaginable. The default configuration options lump many of the icons into
 a few groups, and due to the limitations of UTF-8, this is really as expressive
 as it gets.
+
+This module uses Timezone API (https://timezoneapi.io) and
+OpenWeatherMap API (https://openweathermap.org).
+
+Requires an API key for OpenWeatherMap (OWM), but the free tier allows you
+enough requests/sec to get accurate weather even up to the minute.
 
 I would highly suggest you install an additional font, such as the incredible
 (and free!) Weather Icons font (https://erikflowers.github.io/weather-icons),
@@ -250,7 +251,7 @@ Outputs: 🌫 ○ 59°F, foggy ⛅ ☼ 🌧`
 
 @author alexoneill
 @licence MIT
-'''
+"""
 
 import datetime
 
@@ -311,7 +312,8 @@ class OWMException(Exception):
 
 
 class Py3status:
-
+    """
+    """
     api_key = None
     cache_timeout = 600
     city = None
@@ -761,10 +763,9 @@ class Py3status:
 
 
 if __name__ == '__main__':
-    '''
+    """
     Run module in test mode.
-    '''
-
+    """
     import os
     from py3status.module_test import module_test
 

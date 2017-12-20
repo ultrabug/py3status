@@ -38,16 +38,6 @@ Color options:
 SAMPLE OUTPUT
 {'full_text': u'btce: 809.40$, btcde: 785.00\u20ac'}
 """
-import json
-
-try:
-    # python 3
-    from urllib.error import URLError
-    from urllib.request import urlopen
-except ImportError:
-    # python 2
-    from urllib2 import URLError
-    from urllib2 import urlopen
 
 STRING_UNAVAILABLE = 'N/A'
 STRING_ERROR = 'bitcoin_price: site unreachable'
@@ -120,6 +110,7 @@ class Py3status:
             'YEN': '¥'
         }
         self.last_price = 0
+        self.request_timeout = 10
         self.url = 'http://api.bitcoincharts.com/v1/markets.json'
 
     def _get_price(self, data, market, field):
@@ -134,8 +125,9 @@ class Py3status:
     def get_rate(self):
         # get the data from bitcoincharts api
         try:
-            data = json.loads(urlopen(self.url).read().decode())
-        except URLError:
+            data = self.py3.request(
+                self.url, timeout=self.request_timeout).json()
+        except self.py3.RequestException:
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
                 'color': self.py3.COLOR_BAD,
