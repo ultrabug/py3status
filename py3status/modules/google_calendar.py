@@ -399,6 +399,9 @@ class Py3status:
                     event['start'].get('dateTime'))
                 end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
+            if end_dt < datetime.datetime.now(tzlocal()):
+                continue
+
             event_dict['start_time'] = self._datetime_to_str(start_dt,
                                                              self.format_time)
             event_dict['end_time'] = self._datetime_to_str(end_dt,
