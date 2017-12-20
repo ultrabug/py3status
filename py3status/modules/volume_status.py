@@ -8,9 +8,9 @@ Volume up/down and Toggle mute via mouse clicks can be easily added see
 example.
 
 Configuration parameters:
-    button_down: button to decrease volume (default None)
-    button_mute: button to toggle mute (default None)
-    button_up: button to increase volume (default None)
+    button_down: button to decrease volume (default 5)
+    button_mute: button to toggle mute (default 1)
+    button_up: button to increase volume (default 4)
     cache_timeout: how often we refresh this module in seconds.
         (default 10)
     card: Card to use. amixer supports this. (default None)
@@ -42,17 +42,10 @@ Color options:
     color_muted: Volume is muted, if not supplied color_bad is used
         if set to `None` then the threshold color will be used.
 
-Example:
-
+Examples:
 ```
-# Add mouse clicks to change volume
 # Set thresholds to rainbow colors
-
 volume_status {
-    button_up = 4
-    button_down = 5
-    button_mute = 2
-
     thresholds = [
         (0, "#FF0000"),
         (10, "#E2571E"),
@@ -91,6 +84,10 @@ mute
 import re
 from os import devnull, environ as os_environ
 from subprocess import check_output, call, CalledProcessError
+
+STRING_ERROR = 'invalid command `%s`'
+STRING_NOT_AVAILABLE = 'no available binary'
+COMMAND_NOT_INSTALLED = 'command `%s` not installed'
 
 
 class AudioBackend():
@@ -263,9 +260,9 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_down = None
-    button_mute = None
-    button_up = None
+    button_down = 5
+    button_mute = 1
+    button_up = 4
     cache_timeout = 10
     card = None
     channel = None
@@ -306,9 +303,15 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        if self.command is None:
+        if not self.command:
             self.command = self.py3.check_commands(
                 ['amixer', 'pamixer', 'pactl'])
+        elif self.command not in ['amixer', 'pamixer', 'pactl']:
+            raise Exception(STRING_ERROR % self.command)
+        elif not self.py3.check_commands(self.command):
+            raise Exception(COMMAND_NOT_INSTALLED % self.command)
+        if not self.command:
+            raise Exception(STRING_NOT_AVAILABLE)
 
         # turn integers to strings
         if self.card is not None:
@@ -323,8 +326,6 @@ class Py3status:
             self.backend = PamixerBackend(self)
         elif self.command == 'pactl':
             self.backend = PactlBackend(self)
-        else:
-            raise NameError("Unknown command")
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):

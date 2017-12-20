@@ -91,6 +91,21 @@ class ConfigParser:
             }
         }
 
+    * environment variable support
+
+        order += env(ORDER_VAR)
+
+        my_module {
+            my_guessed_type = env(MY_VAR)
+            my_str = env(MY_VAR, str)
+            my_int = env(MY_INT_VAR, int)
+            my_bool = env(MY_FLAG, bool)
+            my_complex = {
+                'list' : [1, 2, env(MY_LIST_ENTRY, int)],
+                'dict' : {'x': env(MY_DICT_VAL), 'y': 2}
+            }
+        }
+
     * quality feedback on parse errors.
         details include error description, line number, position.
 
@@ -98,6 +113,8 @@ class ConfigParser:
 
     TOKENS = [
         '#.*$'  # comments
+        # environment variables
+        '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -213,6 +230,8 @@ class ConfigParser:
                 t_type = 'literal'
             elif token.group('newline'):
                 t_type = 'newline'
+            elif token.group('env_var'):
+                t_type = 'env_var'
             elif token.group('unknown'):
                 t_type = 'unknown'
             else:
@@ -292,6 +311,43 @@ class ConfigParser:
             return None
         return value
 
+    def make_value_from_env(self, value):
+        # Extract the environment variable and type
+        match = re.match(
+            'env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\)', value)
+        env_var, env_type = match.groups()
+        if not env_type:
+            env_type = 'auto'
+        else:
+            # Remove comma and whitespace from match
+            # i.e '   ,  my_conversion' -> 'my_conversion'
+            env_type = env_type.strip()[1:].lstrip()
+
+        conversion_options = {
+            'str': str,
+            'int': int,
+            'float': float,
+
+            # Treat booleans specially
+            'bool': (lambda val: val.lower() in ('true', '1')),
+
+            # Auto-guess the type
+            'auto': self.make_value,
+        }
+        if env_type not in conversion_options:
+            self.error('Invalid env conversion function in env_var')
+
+        # Check the environment variable
+        # TODO: dynamic support, (lambda: os.getenv(env_var))
+        value = os.getenv(env_var)
+        if value is None:
+            self.error('Environment variable \'%s\' undefined' % env_var)
+
+        try:
+            return conversion_options[env_type](value)
+        except ValueError:
+            self.error('Bad conversion')
+
     def separator(self, separator=',', end_token=None):
         '''
         Read through tokens till the required separator is found.  We ignore
@@ -370,6 +426,8 @@ class ConfigParser:
                     continue
             if token['type'] == 'literal':
                 return self.make_value(t_value)
+            if token['type'] == 'env_var':
+                return self.make_value_from_env(t_value)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -458,6 +516,8 @@ class ConfigParser:
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
+            elif t_type == 'env_var':
+                self.error('Name expected')
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:

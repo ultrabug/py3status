@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display currently playing song in cmus.
+Display song currently playing in cmus.
 
 cmus (C* Music Player) is a small, fast and powerful console audio player
 which supports most major audio formats. Various features include gapless

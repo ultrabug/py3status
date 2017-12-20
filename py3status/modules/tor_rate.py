@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current transfer rates of a tor instance
+Display transfer rates of a tor instance.
 
 Configuration parameters:
     cache_timeout: An integer specifying the cache life-time of the modules

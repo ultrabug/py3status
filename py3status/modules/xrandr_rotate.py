@@ -60,6 +60,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.displayed = ''
+        self.scrolling = False
 
     def _get_active_outputs(self):
         data = self.py3.command_output(['xrandr']).splitlines()
@@ -102,18 +103,6 @@ class Py3status:
         else:
             self.displayed = self.horizontal_icon
 
-    def on_click(self, event):
-        """
-        Click events
-            - left click & scroll up/down: switch between rotations
-            - right click: apply selected rotation
-        """
-        button = event['button']
-        if button in [1, 4, 5]:
-            self._switch_selection()
-        elif button == 3:
-            self._apply()
-
     def xrandr_rotate(self):
         all_outputs = self._get_active_outputs()
         selected_screen_disconnected = (
@@ -123,7 +112,7 @@ class Py3status:
             self.displayed = ''
             full_text = ''
         else:
-            if not self.displayed:
+            if not self.scrolling:
                 self.displayed = self._get_current_rotation_icon(all_outputs)
 
             if len(all_outputs) == 1:
@@ -145,7 +134,21 @@ class Py3status:
         elif self.displayed == self._get_current_rotation_icon(all_outputs):
             response['color'] = self.py3.COLOR_GOOD
 
+        self.scrolling = False
         return response
+
+    def on_click(self, event):
+        """
+        Click events
+            - left click & scroll up/down: switch between rotations
+            - right click: apply selected rotation
+        """
+        button = event['button']
+        if button in [1, 4, 5]:
+            self.scrolling = True
+            self._switch_selection()
+        elif button == 3:
+            self._apply()
 
 
 if __name__ == "__main__":
