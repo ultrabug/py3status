@@ -3,11 +3,15 @@
 Display tasks in thunderbird calendar.
 
 Configuration parameters:
-    cache_timeout: how often we refresh usage in seconds (default: 120s)
+    cache_timeout: how often we refresh usage in seconds (default 120)
     err_exception: error message when an exception is raised
+        (default 'error: calendar parsing failed')
     err_profile: error message regarding profile path and read access
+        (default 'error: profile not readable')
     format: see placeholders below
+        (default 'tasks:[{due}] current:{current}')
     profile_path: path to the user thunderbird profile (not optional)
+        (default '')
 
 Format of status string placeholders:
     {completed} completed tasks
