@@ -68,11 +68,12 @@ class Py3status:
             completed = len(tasks) - due
             current = duetasks[0] if due else ''
 
-            return self._response(self.format.format(due=due,
-                                                     completed=completed,
-                                                     current=current))
+            return self._response(
+                self.format.format(
+                    due=due, completed=completed, current=current))
         except Exception:
             return self._response(self.err_exception, _err_color)
+
 
 if __name__ == "__main__":
     x = Py3status()
