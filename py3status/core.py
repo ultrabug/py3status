@@ -1,7 +1,6 @@
 from __future__ import print_function
 from __future__ import division
 
-import argparse
 import os
 import sys
 import time
@@ -191,7 +190,7 @@ class Py3statusWrapper:
     This is the py3status wrapper.
     """
 
-    def __init__(self):
+    def __init__(self, options):
         """
         Useful variables we'll need.
         """
@@ -201,6 +200,7 @@ class Py3statusWrapper:
         self.lock = Event()
         self.modules = {}
         self.notified_messages = set()
+        self.options = options
         self.output_modules = {}
         self.py3_modules = []
         self.py3_modules_initialized = False
@@ -338,10 +338,7 @@ class Py3statusWrapper:
 
         # defaults
         config = {
-            'cache_timeout': 60,
-            'interval': 1,
             'minimum_interval': 0.1,  # minimum module update interval
-            'dbus_notify': False,
         }
 
         # include path to search for user modules
@@ -354,118 +351,21 @@ class Py3statusWrapper:
         ]
         config['version'] = version
 
-        # i3status config file default detection
-        # respect i3status' file detection order wrt issue #43
-        i3status_config_file_candidates = [
-            '{}/.i3status.conf'.format(home_path),
-            '{}/i3status/config'.format(os.environ.get(
-                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
-            '/etc/i3status.conf',
-            '{}/i3status/config'.format(os.environ.get('XDG_CONFIG_DIRS',
-                                                       '/etc/xdg'))
-        ]
-        for fn in i3status_config_file_candidates:
-            if os.path.isfile(fn):
-                i3status_config_file_default = fn
-                break
-        else:
-            # if none of the default files exists, we will default
-            # to ~/.i3/i3status.conf
-            i3status_config_file_default = '{}/.i3/i3status.conf'.format(
-                home_path)
-
-        # command line options
-        parser = argparse.ArgumentParser(
-            description='The agile, python-powered, i3status wrapper')
-        parser = argparse.ArgumentParser(add_help=True)
-        parser.add_argument('-b',
-                            '--dbus-notify',
-                            action="store_true",
-                            default=False,
-                            dest="dbus_notify",
-                            help="""use notify-send to send user notifications
-                                    rather than i3-nagbar,
-                                    requires a notification daemon eg dunst""")
-        parser.add_argument('-c',
-                            '--config',
-                            action="store",
-                            dest="i3status_conf",
-                            type=str,
-                            default=i3status_config_file_default,
-                            help="path to i3status config file")
-        parser.add_argument('-d',
-                            '--debug',
-                            action="store_true",
-                            help="be verbose in syslog")
-        parser.add_argument('-g',
-                            '--gevent',
-                            action="store_true",
-                            default=False,
-                            dest="gevent",
-                            help="""enable gevent monkey patching
-                            (default False)""")
-        parser.add_argument('-i',
-                            '--include',
-                            action="append",
-                            dest="include_paths",
-                            help="""include user-written modules from those
-                            directories (default ~/.i3/py3status)""")
-        parser.add_argument('-l',
-                            '--log-file',
-                            action="store",
-                            dest="log_file",
-                            type=str,
-                            default=None,
-                            help="path to py3status log file")
-        parser.add_argument('-n',
-                            '--interval',
-                            action="store",
-                            dest="interval",
-                            type=float,
-                            default=config['interval'],
-                            help="update interval in seconds (default 1 sec)")
-        parser.add_argument('-s',
-                            '--standalone',
-                            action="store_true",
-                            help="standalone mode, do not use i3status")
-        parser.add_argument('-t',
-                            '--timeout',
-                            action="store",
-                            dest="cache_timeout",
-                            type=int,
-                            default=config['cache_timeout'],
-                            help="""default injection cache timeout in seconds
-                            (default 60 sec)""")
-        parser.add_argument('-v',
-                            '--version',
-                            action="store_true",
-                            help="""show py3status version and exit""")
-        parser.add_argument('cli_command', nargs='*', help=argparse.SUPPRESS)
-
-        options = parser.parse_args()
-
-        if options.cli_command:
-            config['cli_command'] = options.cli_command
-
-        # only asked for version
-        if options.version:
-            print('py3status version {} (python {})'.format(config['version'],
-                                                            python_version()))
-            sys.exit(0)
-
         # override configuration and helper variables
+        options = self.options
         config['cache_timeout'] = options.cache_timeout
         config['debug'] = options.debug
         config['dbus_notify'] = options.dbus_notify
         config['gevent'] = options.gevent
         if options.include_paths:
             config['include_paths'] = options.include_paths
+        # FIXME we allow giving interval as a float and then make it an int!
         config['interval'] = int(options.interval)
         config['log_file'] = options.log_file
         config['standalone'] = options.standalone
         config['i3status_config_path'] = options.i3status_conf
-
-        # all done
+        if options.cli_command:
+            config['cli_command'] = options.cli_command
         return config
 
     def gevent_monkey_patch_report(self):
