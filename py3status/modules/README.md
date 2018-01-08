@@ -4,6 +4,8 @@
 
 **[air_quality](#air_quality)** — Display air quality polluting in a given location.
 
+**[amimullvad](#amimullvad)** - Display the status of the Mullvad VPN connection
+
 **[arch_updates](#arch_updates)** — Display number of pending updates for Arch Linux.
 
 **[aws_bill](#aws_bill)** — Display bill for Amazon Web Services.
@@ -214,6 +216,16 @@ air_quality {
     **author** beetleman, lasers
 
     **license** BSD
+
+---
+
+### <a name="amimullvad"></a>amimullvad
+
+Display the status of the Mullvad VPN connection. Uses 
+`https://am.i.mullvad.net/json` to determine status. If connected shows country
+connected to.
+
+No configuration needed.
 
 ---
 
