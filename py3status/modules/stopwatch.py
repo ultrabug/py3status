@@ -42,6 +42,7 @@ paused
 
 from time import time
 
+
 class Py3status:
     """
     """
@@ -113,7 +114,8 @@ class Py3status:
 
         return {
             'cached_until': cached_until,
-            'full_text': self.py3.safe_format(self.format, {'stopwatch': stopwatch})
+            'full_text':
+            self.py3.safe_format(self.format, {'stopwatch': stopwatch})
         }
 
     def on_click(self, event):
@@ -142,10 +144,6 @@ class Py3status:
             self.paused = False
             self.time_state = None
             self.color = None
-
-        if not self.running:
-            # change timer section HH:MM:SS
-            t = self.time_state
 
 
 if __name__ == "__main__":
