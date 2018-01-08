@@ -41,8 +41,6 @@ paused
 """
 
 from time import time
-from threading import Timer
-
 
 class Py3status:
     """
@@ -119,12 +117,6 @@ class Py3status:
         }
 
     def on_click(self, event):
-        deltas = {
-            'hours': 3600,
-            'mins': 60,
-            'seconds': 1
-        }
-        index = event['index']
         button = event['button']
 
         if button == 1:
