@@ -233,24 +233,25 @@ Format placeholders:
         {temperature} Output of format_temperature
         {wind} Output of format_wind
 
-Example configuration:
+Examples:
 ```
+# change icons
 weather_owm {
-  api_key = '...'
-
-  icons {
+  icons = {
     '200': "☔"
     '230_232': "🌧"
   }
 }
 ```
-Outputs: 🌫 ○ 59°F, foggy ⛅ ☼ 🌧`
-- Currently foggy, 59°F outside, with forecast of cloudy tomorrow, sunny the
-  next day, then rainy
-
 
 @author alexoneill
 @licence MIT
+
+SAMPLE OUTPUT
+{'full_text': 'New York 🌫 ○ 30°F, mist ☁ ☁ ☁'}
+
+diff_weather
+{'full_text': '🌫 ○ 59°F, foggy ⛅ ☼ 🌧'}
 """
 
 import datetime
