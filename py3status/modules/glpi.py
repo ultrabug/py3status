@@ -25,6 +25,11 @@ Color options:
 
 Requires:
     MySQL-python: http://pypi.python.org/pypi/MySQL-python
+
+@author ultrabug
+
+SAMPLE OUTPUT
+{'color': 'full_text': '53 tickets'}
 """
 
 import MySQLdb
