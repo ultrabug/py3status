@@ -583,8 +583,9 @@ class Block:
                 text += conversion(item)
                 continue
             elif text:
-                if (not first and
-                        (text.strip() == '' or out[-1].get('color') == color)):
+                if (not first and (
+                        text.strip() == '' or out and
+                        out[-1].get('color') == color)):
                     out[-1]['full_text'] += text
                 else:
                     part = {'full_text': text}
