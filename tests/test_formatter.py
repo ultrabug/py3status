@@ -1338,6 +1338,20 @@ def test_conditions_21():
     })
 
 
+def test_conditions_22():
+    run_formatter({
+        'format': '\?if=missing>John cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_23():
+    run_formatter({
+        'format': '[\?if=None=None cool] beans',
+        'expected': ' beans'
+    })
+
+
 if __name__ == '__main__':
     # run tests
     import sys
