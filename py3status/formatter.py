@@ -349,6 +349,10 @@ class Condition:
             variable = None
         value = self.value
 
+        # if None, return oppositely
+        if variable is None:
+            return not self.default
+
         # convert the value to a correct type
         if isinstance(variable, bool):
             value = bool(self.value)
