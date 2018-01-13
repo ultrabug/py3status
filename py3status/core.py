@@ -65,6 +65,9 @@ class NoneSetting:
     # this attribute is used to identify that this is a none setting
     none_setting = True
 
+    def __len__(self):
+        return 0
+
     def __repr__(self):
         # this is for output via module_test
         return 'None'
@@ -106,6 +109,14 @@ class Common:
         if hasattr(param, 'none_setting'):
             # check py3status general section
             param = config['general'].get(attribute, self.none_setting)
+        # If this is a color and it is like #123 convert it to #112233
+        if param and (attribute == 'color' or attribute.startswith('color_')):
+            if len(param) == 4 and param[0] == '#':
+                param = (
+                    '#' + param[1] + param[1] + param[2] +
+                    param[2] + param[3] + param[3]
+                )
+
         return param
 
     def report_exception(self, msg, notify_user=True, level='error',
