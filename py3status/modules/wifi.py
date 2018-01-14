@@ -79,22 +79,23 @@ class Py3status:
         self._max_bitrate = 0
         self._ssid = ''
         iw = self.py3.check_commands(['iw', '/sbin/iw'])
-        self.iw_dev_id_link = [iw, 'dev', self.device, 'link']
-        self.ip_addr_list_id = ['ip', 'addr', 'list', self.device]
-        # use_sudo?
-        if self.use_sudo:
-            for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
-                cmd[0:0] = ['sudo', '-n']
         # get wireless interface
         try:
-            iw = self.py3.command_output([iw, 'dev'])
-            devices = re.findall('Interface\s*([^\s]+)', iw)
+            data = self.py3.command_output([iw, 'dev'])
+            devices = re.findall('Interface\s*([^\s]+)', data)
             if not devices or 'wlan0' in devices:
                 self.device = 'wlan0'
             else:
                 self.device = devices[0]
         except:
             pass
+
+        self.iw_dev_id_link = [iw, 'dev', self.device, 'link']
+        self.ip_addr_list_id = ['ip', 'addr', 'list', self.device]
+        # use_sudo?
+        if self.use_sudo:
+            for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
+                cmd[0:0] = ['sudo', '-n']
 
         # DEPRECATION WARNING
         format_down = getattr(self, 'format_down', None)
