@@ -65,6 +65,9 @@ class NoneSetting:
     # this attribute is used to identify that this is a none setting
     none_setting = True
 
+    def __len__(self):
+        return 0
+
     def __repr__(self):
         # this is for output via module_test
         return 'None'
@@ -106,6 +109,14 @@ class Common:
         if hasattr(param, 'none_setting'):
             # check py3status general section
             param = config['general'].get(attribute, self.none_setting)
+        # If this is a color and it is like #123 convert it to #112233
+        if param and (attribute == 'color' or attribute.startswith('color_')):
+            if len(param) == 4 and param[0] == '#':
+                param = (
+                    '#' + param[1] + param[1] + param[2] +
+                    param[2] + param[3] + param[3]
+                )
+
         return param
 
     def report_exception(self, msg, notify_user=True, level='error',
@@ -378,10 +389,10 @@ class Py3statusWrapper:
             if gevent.socket.socket is socket.socket:
                 self.log('gevent monkey patching is active')
             else:
-                self.notify_user('gevent monkey patching failed')
+                self.notify_user('gevent monkey patching failed.')
         except ImportError:
             self.notify_user(
-                'gevent is not installed, monkey patching failed')
+                'gevent is not installed, monkey patching failed.')
 
     def get_user_modules(self):
         """
@@ -596,9 +607,12 @@ class Py3statusWrapper:
         msg_hash = hash(u'{}#{}#{}'.format(module_name, limit_key, msg))
         if msg_hash in self.notified_messages:
             return
+        elif module_name:
+            log_msg = 'Module `%s` sent a notification. "%s"' % (module_name, msg)
+            self.log(log_msg, level)
         else:
             self.log(msg, level)
-            self.notified_messages.add(msg_hash)
+        self.notified_messages.add(msg_hash)
 
         try:
             if dbus:
