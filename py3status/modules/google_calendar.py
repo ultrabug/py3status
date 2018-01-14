@@ -132,7 +132,7 @@ google_calendar {
 
 SAMPLE OUTPUT
 [
-   {'full_text': 'Homer\'s Birthday (742 Evergreen Terrace) (1h 23m) | '},
+   {'full_text': "Homer's Birthday (742 Evergreen Terrace) (1h 23m) | "},
    {'full_text': 'Doctor's Appointment | Lunch with John'},
 ]
 """
