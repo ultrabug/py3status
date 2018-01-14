@@ -34,7 +34,7 @@ Color options:
     color_degraded: Screen is disconnected
     color_good: Displayed rotation is active
 
-@author Maxim Baz (https://github.com/maximbaz), @lasers
+@author Maxim Baz (https://github.com/maximbaz), lasers
 @license BSD
 
 SAMPLE OUTPUT
@@ -115,7 +115,7 @@ class Py3status:
             if not self.scrolling:
                 self.displayed = self._get_current_rotation_icon(all_outputs)
 
-            if len(all_outputs) == 1:
+            if self.screen or len(all_outputs) == 1:
                 screen = self.screen or all_outputs[0]
             else:
                 screen = 'ALL'
