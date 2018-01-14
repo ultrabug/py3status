@@ -389,10 +389,10 @@ class Py3statusWrapper:
             if gevent.socket.socket is socket.socket:
                 self.log('gevent monkey patching is active')
             else:
-                self.notify_user('gevent monkey patching failed')
+                self.notify_user('gevent monkey patching failed.')
         except ImportError:
             self.notify_user(
-                'gevent is not installed, monkey patching failed')
+                'gevent is not installed, monkey patching failed.')
 
     def get_user_modules(self):
         """
@@ -607,9 +607,12 @@ class Py3statusWrapper:
         msg_hash = hash(u'{}#{}#{}'.format(module_name, limit_key, msg))
         if msg_hash in self.notified_messages:
             return
+        elif module_name:
+            log_msg = 'Module `%s` sent a notification. "%s"' % (module_name, msg)
+            self.log(log_msg, level)
         else:
             self.log(msg, level)
-            self.notified_messages.add(msg_hash)
+        self.notified_messages.add(msg_hash)
 
         try:
             if dbus:
