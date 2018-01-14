@@ -49,8 +49,17 @@ Configuration parameters:
         `{button}` not in format (default True)
 
 Format placeholders:
-    {button} The button to open/close or change the displayed group
-    {output} Output of current active module
+    # {button} button to toggle or scroll
+    # {internal} module's internally used name, eg my_project, _anon_module_0
+    # {module} module name/type, eg github
+    # {number} module's internally used number, eg 0
+    # {optional} module's optionally given name, eg my_project
+    # {output} module's output, eg (new output here)
+    {button} button to open/close or change the displayed module
+    {module} module name e.g. `github my_project`
+    {module_internal} internally used name for the module
+    {module_type} type of module e.g. `github`
+    {output} module output
 
 Example:
 
@@ -59,7 +68,7 @@ Example:
 # Change between disk modules every 30 seconds
 ...
 order += "group disks"
-...
+ ...
 
 group disks {
     cycle = 30
@@ -237,10 +246,44 @@ class Py3status:
             format_control = self.format_button_closed
             format = self.format_closed
 
+        # # mine
+        # format = '[\?color=degraded OPTIONAL: {optional} ]'
+        # format += '[\?color=bad&show \[{number}\]] {module}: {output}'
+        # format += '[\?color=bad&show  // INTERNAL:] {internal}'
+        # module, internal = self._get_current_module_name().split()
+        # if '_anon_module_' in internal:
+        #     number = internal.split('_anon_module_')[-1]
+        #     optional = ''
+        # else:
+        #     number = ''
+        #     optional = internal
+
+        # button = {'full_text': format_control, 'index': 'button'}
+        # composites = {
+        #     'button': self.py3.composite_create(button),
+        #     'module': module,
+        #     'optional': optional,
+        #     'internal': internal,
+        #     'number': number,
+        #     'output': self.py3.composite_create(current_output),
+        # }
+        # output = self.py3.safe_format(format, composites)
+
+        # # yours
+        # format = 'MODULE: {module} // MOD_TYPE: '
+        # format += '{module_type} // MOD_INT:: {module_internal}: {output}'
+        #
+        module = self._get_current_module_name()
+        module_type, module_internal = module.split()
+        if '_anon_module_' in module_internal:
+            module = module_type
         button = {'full_text': format_control, 'index': 'button'}
         composites = {
-            'output': self.py3.composite_create(current_output),
             'button': self.py3.composite_create(button),
+            'module': module,           # same?
+            'module_type': module_type,
+            'module_internal': module,  # same?
+            'output': self.py3.composite_create(current_output),
         }
         output = self.py3.safe_format(format, composites)
 
