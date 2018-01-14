@@ -1080,7 +1080,7 @@ class Py3:
         return color
 
     def request(self, url, params=None, data=None, headers=None,
-                timeout=None, auth=None):
+                timeout=None, auth=None, cookiejar=None):
         """
         Make a request to a url and retrieve the results.
 
@@ -1090,6 +1090,7 @@ class Py3:
         :param headers: http headers to be added to the request as a dict
         :param timeout: timeout for the request in seconds
         :param auth: authentication info as tuple `(username, password)`
+        :param cookiejar: an object of a CookieJar subclass
 
         :returns: HttpResponse
         """
@@ -1111,4 +1112,5 @@ class Py3:
                             data=data,
                             headers=headers,
                             timeout=timeout,
-                            auth=auth)
+                            auth=auth,
+                            cookiejar=cookiejar)
