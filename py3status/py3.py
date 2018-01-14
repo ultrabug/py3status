@@ -690,6 +690,17 @@ class Py3:
         """
         return self._formatter.get_placeholder_formats_list(format_string)
 
+    def update_placeholder_formats(self, format_string, formats):
+        """
+        Update a format string adding formats if they are not already present.
+        This is useful when for example a placeholder has a floating point
+        value but by default we only want to show it to a certain precision.
+        """
+
+        return self._formatter.update_placeholder_formats(
+            format_string, formats
+        )
+
     def safe_format(self, format_string, param_dict=None,
                     force_composite=False, attr_getter=None):
         """
