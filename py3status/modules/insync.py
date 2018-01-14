@@ -63,7 +63,7 @@ class Py3status:
         # sync progress
         try:
             queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()
-        except:
+        except Exception:
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
                 'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
@@ -79,7 +79,7 @@ class Py3status:
         # status
         try:
             status = self.py3.command_output(["insync", "get_status"]).strip()
-        except:
+        except Exception:
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
                 'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
@@ -89,8 +89,7 @@ class Py3status:
         color = self.py3.COLOR_DEGRADED
         format = self.format
         if status == "Insync doesn't seem to be running. Start it first.":
-            color = self.py3.COLOR_BAD
-            format = STRING_ERROR
+            self.py3.error(STRING_ERROR)
         elif status == "OFFLINE":
             color = self.py3.COLOR_BAD
             status = self.status_offline
