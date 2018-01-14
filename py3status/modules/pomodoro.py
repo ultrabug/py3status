@@ -238,7 +238,7 @@ class Py3status:
         if not self._initialized:
             self._init()
 
-        cached_until = 0
+        cached_until = self.py3.time_in(0)
         if self._running:
             self._time_left = ceil(self._end_time - time())
             time_left = ceil(self._time_left)
