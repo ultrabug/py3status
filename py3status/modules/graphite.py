@@ -68,7 +68,7 @@ Color options:
 @author ultrabug
 
 SAMPLE OUTPUT
-{'color': 'full_text': '412 req/s'}
+{'full_text': '412 req/s'}
 """
 from requests import get
 from syslog import syslog, LOG_INFO
