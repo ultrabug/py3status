@@ -10,6 +10,7 @@ Configuration parameters:
     status_offline: show when Insync is offline (default 'OFFLINE')
     status_paused: show when Insync is paused (default 'PAUSED')
     status_share: show when Insync is sharing (default 'SHARE')
+    status_synced: show when Insync has finished syncing (default 'SYNCED')
     status_syncing: show when Insync is syncing (default 'SYNCING')
 
 Format placeholders:
@@ -18,7 +19,7 @@ Format placeholders:
 
 Color options:
     color_bad: Offline
-    color_degraded: Default
+    color_degraded: Default (e.g. Paused/Syncing)
     color_good: Synced
 
 Requires:
@@ -51,6 +52,7 @@ class Py3status:
     status_offline = 'OFFLINE'
     status_paused = 'PAUSED'
     status_share = 'SHARE'
+    status_synced = 'SYNCED'
     status_syncing = 'SYNCING'
 
     def post_config_hook(self):
@@ -85,14 +87,17 @@ class Py3status:
             }
 
         color = self.py3.COLOR_DEGRADED
+        format = self.format
         if status == "Insync doesn't seem to be running. Start it first.":
             color = self.py3.COLOR_BAD
-            status = STRING_ERROR
+            format = STRING_ERROR
         elif status == "OFFLINE":
             color = self.py3.COLOR_BAD
             status = self.status_offline
-        elif status == "SHARE":
+        elif status == "SYNCED":
             color = self.py3.COLOR_GOOD
+            status = self.status_synced
+        elif status == "SHARE":
             status = self.status_share
         elif status == "PAUSED":
             status = self.status_paused
@@ -103,7 +108,7 @@ class Py3status:
             'color': color,
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
-                self.format, {'status': status, 'queued': queued})
+                format, {'status': status, 'queued': queued})
         }
 
 
