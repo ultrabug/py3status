@@ -196,6 +196,8 @@ class Py3status:
             self._toggle_timer()
         elif button == self.button_reset:
             self._reset_timer()
+        else:
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
