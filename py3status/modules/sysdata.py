@@ -2,8 +2,24 @@
 """
 Display system RAM, SWAP and CPU utilization.
 
+Example:
+```
+decimals = {
+    'swap_used': 1,
+    'mem_used': 1,
+    'mem_used_percent': 0
+}
+format = "[\?color=mem \uf2db {swap_used}+{mem_used}GB ({mem_used_percent}%)]"
+# Output (yellow with memory icon of font-awesome in front):
+# \uf2db 0.0+4.0GB (53%)
+```
+
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
+    decimals: precision of decimals. With the default all are precise to
+        2 decimal places. Measurements have the same name as their
+        format placeholders
+        (default {})
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
@@ -45,7 +61,7 @@ Color thresholds:
 NOTE: If using the `{cpu_temp}` option, the `sensors` command should
 be available, provided by the `lm-sensors` or `lm_sensors` package.
 
-@author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol
+@author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol, JohnAZoidberg
 
 SAMPLE OUTPUT
 [
@@ -210,6 +226,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    decimals = {}
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
@@ -232,21 +249,18 @@ class Py3status:
 
         def update_deprecated_placeholder_format(config):
             padding = config.get('padding', 0)
-            precision = config.get('precision', 2)
-            format_vals = ':{padding}.{precision}f'.format(padding=padding,
-                                                           precision=precision)
+            decimals = config.get("decimals", {})
+            measurements = [
+                'cpu_usage', 'cpu_temp',
+                'load1', 'load5', 'load15',
+                'mem_total', 'mem_used', 'mem_used_percent',
+                'swap_total', 'swap_used', 'swap_used_percent'
+            ]
             return {
-                'cpu_usage': format_vals,
-                'cpu_temp': format_vals,
-                'load1': format_vals,
-                'load5': format_vals,
-                'load15': format_vals,
-                'mem_total': format_vals,
-                'mem_used': format_vals,
-                'mem_used_percent': format_vals,
-                'swap_total': format_vals,
-                'swap_used': format_vals,
-                'swap_used_percent': format_vals,
+                measurement: ':{padding}.{precision}f'.format(
+                        padding=padding,
+                        precision=decimals.get(measurement, 2))
+                for measurement in measurements
             }
 
         deprecated = {
