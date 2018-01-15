@@ -1044,17 +1044,20 @@ class Py3:
             self._thresholds_init()
 
         color = None
-        try:
-            value = float(value)
-        except ValueError:
-            color = self._get_color('error') or self._get_color('bad')
+        # if value is None, pass it along. otherwise try it.
+        if value is not None:
+            try:
+                value = float(value)
+            except ValueError:
+                color = self._get_color('error') or self._get_color('bad')
 
         # if name not in thresholds info then use defaults
         name_used = name
         if name_used not in self._thresholds:
             name_used = None
         thresholds = self._thresholds.get(name_used)
-        if color is None and thresholds:
+        # if value is None, pass it along. otherwise try it.
+        if value is not None and color is None and thresholds:
             # if gradients are enabled then we use them
             if self._get_config_setting('gradients'):
                 try:
