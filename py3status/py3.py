@@ -907,7 +907,7 @@ class Py3:
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
-        if self._is_python_2:
+        if self._is_python_2 and isinstance(output, str):
             output = output.decode('utf-8')
             error = error.decode('utf-8')
         retcode = process.poll()
