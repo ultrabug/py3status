@@ -17,7 +17,7 @@ Configuration parameters:
         burst up to 60 requests. See http://aqicn.org/api/ for more information.
         (default 3600)
     format: display format for this module
-        (default '[\?color=bad {message}]
+        (default '[\?if=status=error&color=bad {data}]
         |[\?if=aqi&color=aqi {city_name}: {aqi} {category}]')
     format_datetime: specify strftime characters to format (default {})
     location: location or uid to query. To search for nearby stations in Kraków,
@@ -41,9 +41,9 @@ Format placeholders:
     {city_geo_1} monitoring station longitude
     {city_name} monitoring station name
     {city_url} monitoring station url
+    {data} error message, eg Over quota, Invalid key, Unknown city
     {dominentpol} dominant pollutant, eg pm25
     {idx} Unique ID for the city monitoring station, eg 7396
-    {message} error message, eg Over quota, Invalid key, Unknown city
     {status} status message, eg ok, error
     {time} epoch timestamp, eg 1510246800
     {time_s} local timestamp, eg 2017-11-09 17:00:00
@@ -80,7 +80,7 @@ format_datetime placeholders:
     value: % strftime characters to be translated, eg '%b %d' ----> 'Nov 11'
 
 Color options:
-    color_bad: error message (if any) from the site
+    color_bad: print a color for error (if any) from the site
 
 Color thresholds:
     aqi: print a color based on the value of aqi
@@ -125,7 +125,7 @@ class Py3status:
     # available configuration parameters
     auth_token = 'demo'
     cache_timeout = 3600
-    format = ('[\?color=bad {message}]'
+    format = ('[\?if=status=error&color=bad {data}]'
               '|[\?if=aqi&color=aqi {city_name}: {aqi} {category}]')
     format_datetime = {}
     location = 'Shanghai'
