@@ -40,8 +40,7 @@ example
 """
 
 import re
-
-STRING_UNAVAILABLE = "external_script: N/A"
+STRING_ERROR = 'missing script_path'
 
 
 class Py3status:
@@ -53,14 +52,11 @@ class Py3status:
     script_path = None
     strip_output = False
 
-    def external_script(self):
+    def post_config_hook(self):
         if not self.script_path:
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
+            raise Exception(STRING_ERROR)
 
+    def external_script(self):
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
