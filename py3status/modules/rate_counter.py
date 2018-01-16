@@ -5,30 +5,34 @@ Display calculated time spent and costs.
 Configuration parameters:
     button_reset: mouse button to reset the timer (default 3)
     button_toggle: mouse button to toggle the timer (default 1)
-    cache_timeout: refresh interval for this module (default 5)
     config_file: specify a file to save time between sessions
         (default '~/.config/py3status/rate_counter.save')
     format: display format for this module
-        *(default '[\?not_zero {days} days ][\?not_zero {hours}:]'
-        '{minutes}:{seconds} / ${total}')*
+        *(default '\?color=running \u2295[\?not_zero {days} days ]'
+        '[\?not_zero {hours}:]{minutes}:{seconds} / ${total}')*
     rate: specify the hourly pay rate to use (default 30)
     tax: specify the tax value to use, 1.02 is 2% (default 1.02)
+    thresholds: specify color thresholds to use
+        (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
-    {days} The number of whole days in running timer
-    {hours} The remaining number of whole hours in running timer
-    {minutes} The remaining number of whole minutes in running timer
+    {days} The number of days in running timer
+    {hours} The remaining number of hours in running timer
+    {minutes} The remaining number of minutes in running timer
     {rate} The user inputted hourly rate
     {seconds} The remaining number of seconds in running timer
     {subtotal} The subtotal cost (time * rate)
     {tax} The tax cost, based on the subtotal cost
     {total} The total cost (subtotal + tax)
-    {total_hours} The total number of whole hours in running timer
-    {total_minutes} The total number of whole minutes in running timer
+    {total_hours} The total number of hours in running timer
+    {total_minutes} The total number of minutes in running timer
 
-Color options:
-    color_running: Running, defaults to color_good
-    color_stopped: Stopped, defaults to color_bad
+    For numeral placeholders, you can use `{placeholder:.0f}` to indicate a
+    precision of a floating point to display the value in or `{placeholder:d}`
+    to display the value in a decimal integer.
+
+Color thresholds:
+    running: print a color based on the value of running boolean
 
 @author Amaury Brisou <py3status AT puzzledge.org>, lasers
 
@@ -41,7 +45,6 @@ running
 
 import os
 import time
-
 SECONDS_IN_MIN = 60.0  # 60
 SECONDS_IN_HOUR = 60 * SECONDS_IN_MIN  # 3600
 SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR  # 86400
@@ -53,12 +56,12 @@ class Py3status:
     # available configuration parameters
     button_reset = 3
     button_toggle = 1
-    cache_timeout = 5
     config_file = '~/.config/py3status/rate_counter.save'
-    format = ('[\?not_zero {days} days ][\?not_zero {hours}:]'
-              '{minutes}:{seconds} / ${total}')
+    format = ('\?color=running \u2295[\?not_zero {days} days ]'
+              '[\?not_zero {hours}:]{minutes}:{seconds} / ${total}')
     rate = 30
     tax = 1.02
+    thresholds = [(0, 'bad'), (1, 'good')]
 
     class Meta:
         deprecated = {
@@ -95,12 +98,16 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        periods = [('*hours', 3600), ('*minutes', 60), ('*seconds', 1)]
+        for name, cache in periods:
+            if self.py3.format_contains(self.format, name):
+                self.cache_timeout = cache
         self.config_file = os.path.expanduser(self.config_file)
         self.running = False
         self.saved_time = 0
         self.start_time = self._current_time
-        self.color_running = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD
-        self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
+        self.rate = float(self.rate)
+        self.tax = float(self.tax)
         try:
             with open(self.config_file) as f:
                 self.saved_time = float(f.read())
@@ -120,13 +127,13 @@ class Py3status:
         remaining_seconds = time_in_seconds % SECONDS_IN_DAY
         hours = int(remaining_seconds / SECONDS_IN_HOUR)
         remaining_seconds = remaining_seconds % SECONDS_IN_HOUR
-        minutes = '%02d' % (remaining_seconds / SECONDS_IN_MIN)
-        seconds = '%02d' % (remaining_seconds % SECONDS_IN_MIN)
+        minutes = '{:02d}'.format(int(remaining_seconds / SECONDS_IN_MIN))
+        seconds = '{:02d}'.format(int(remaining_seconds % SECONDS_IN_MIN))
         return days, hours, minutes, seconds
 
     def _reset_timer(self):
         if not self.running:
-            self.saved_time = 0.0
+            self.saved_time = 0
             try:
                 with open(self.config_file, 'w') as f:
                     f.write('0')
@@ -158,22 +165,25 @@ class Py3status:
             pass
 
     def rate_counter(self):
-        cached_until = self.py3.CACHE_FOREVER
-        color = self.color_stopped
-        running_time = self.saved_time
-
         if self.running:
             cached_until = self.py3.time_in(self.cache_timeout)
-            color = self.color_running
             running_time = self._current_time - self.start_time
+        else:
+            cached_until = self.py3.CACHE_FOREVER
+            running_time = self.saved_time
 
         days, hours, minutes, seconds = self._seconds_to_time(running_time)
-        subtotal = float(self.rate) * (running_time / SECONDS_IN_HOUR)
-        total = round(subtotal * float(self.tax), 2)
+        subtotal = self.rate * (running_time / SECONDS_IN_HOUR)
+        total = subtotal * self.tax
+        tax = total - subtotal
+        total = '{:.2f}'.format(total)
+        total_hours = '{:.2f}'.format(running_time / SECONDS_IN_HOUR)
+        total_minutes = '{:.2f}'.format(running_time / SECONDS_IN_MIN)
+
+        self.py3.threshold_get_color(int(self.running), 'running')
 
         return {
             'cached_until': cached_until,
-            'color': color,
             'full_text': self.py3.safe_format(
                 self.format, {
                     'days': days,
@@ -182,10 +192,10 @@ class Py3status:
                     'rate': self.rate,
                     'seconds': seconds,
                     'subtotal': subtotal,
-                    'tax': total - subtotal,
+                    'tax': tax,
                     'total': total,
-                    'total_hours': running_time // SECONDS_IN_HOUR,
-                    'total_minutes': running_time // SECONDS_IN_MIN,
+                    'total_hours': total_hours,
+                    'total_minutes': total_minutes,
                 }
             )
         }
