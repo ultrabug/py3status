@@ -9,8 +9,8 @@ Configuration parameters:
     config_file: specify a file to save time between sessions
         (default '~/.config/py3status/rate_counter.save')
     format: display format for this module
-        (default '[\?not_zero {days} days ][\?not_zero {hours}:]
-        {minutes:02d}:{seconds:02d} / ${total:.2f}')
+        *(default '[\?not_zero {days} days ][\?not_zero {hours}:]'
+        '{minutes}:{seconds} / ${total}')*
     rate: specify the hourly pay rate to use (default 30)
     tax: specify the tax value to use, 1.02 is 2% (default 1.02)
 
@@ -55,8 +55,8 @@ class Py3status:
     button_toggle = 1
     cache_timeout = 5
     config_file = '~/.config/py3status/rate_counter.save'
-    format = '[\?not_zero {days} days ][\?not_zero {hours}:]' +\
-        '{minutes:02d}:{seconds:02d} / ${total:.2f}'
+    format = ('[\?not_zero {days} days ][\?not_zero {hours}:]'
+              '{minutes}:{seconds} / ${total}')
     rate = 30
     tax = 1.02
 
@@ -120,8 +120,8 @@ class Py3status:
         remaining_seconds = time_in_seconds % SECONDS_IN_DAY
         hours = int(remaining_seconds / SECONDS_IN_HOUR)
         remaining_seconds = remaining_seconds % SECONDS_IN_HOUR
-        minutes = int(remaining_seconds / SECONDS_IN_MIN)
-        seconds = int(remaining_seconds % SECONDS_IN_MIN)
+        minutes = '%02d' % (remaining_seconds / SECONDS_IN_MIN)
+        seconds = '%02d' % (remaining_seconds % SECONDS_IN_MIN)
         return days, hours, minutes, seconds
 
     def _reset_timer(self):
@@ -169,7 +169,7 @@ class Py3status:
 
         days, hours, minutes, seconds = self._seconds_to_time(running_time)
         subtotal = float(self.rate) * (running_time / SECONDS_IN_HOUR)
-        total = subtotal * float(self.tax)
+        total = round(subtotal * float(self.tax), 2)
 
         return {
             'cached_until': cached_until,
