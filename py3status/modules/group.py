@@ -123,11 +123,12 @@ class Py3status:
         if not self.items:
             raise Exception(STRING_ERROR)
 
-        self._first_run = True
         self.active = 0
         self.last_active = 0
         self.urgent = False
-        self._cycle_time = time() + self.cycle
+        self.urgent_history = {}
+        self.cycle_timeout = self.cycle
+        self.cycle_time = time() + self.cycle
 
         self.open = bool(self.open)
         # set default format etc based on click_mode
@@ -144,8 +145,8 @@ class Py3status:
 
     def _content_function(self):
         """
-        This returns a set containing the actively shown module.  This is so we
-        only get update events triggered for these modules.
+        This returns a set containing the actively shown module.
+        This is so we only get update events triggered for these modules.
         """
         # ensure that active is valid
         self.active = self.active % len(self.items)
@@ -154,7 +155,8 @@ class Py3status:
 
     def _urgent_function(self, module_list):
         """
-        A contained module has become urgent.  We want to display it to the user
+        A contained module has become urgent.
+        We want to display it to the user.
         """
         for module in module_list:
             if module in self.items:
@@ -200,54 +202,60 @@ class Py3status:
         self.last_active = self.active
 
     def group(self):
-        if self.open:
-            urgent = False
-            if self.cycle and time() >= self._cycle_time:
-                self._change_active(1)
-                self._cycle_time = time() + self.cycle
-            update_time = self.cycle or None
-            current_output = self._get_output()
-            # if the output is empty try and find some output
-            if not current_output:
-                if self._first_run:
-                    self._first_run = False
-                    return {
-                        "cached_until": self.py3.time_in(MAX_NO_CONTENT_WAIT),
-                        "full_text": "",
-                    }
+        update_time = None
+        self.cycle = 0
 
-                self._change_active(1)
-                current_output = self._get_output()
-                # there is no output for any module retry later
-                self._first_run = False
+        # get an output. again if empty (twice).
+        for x in range(3):
+            output = self._get_output()
+            if output:
+                break
+            self._change_active(1)
         else:
-            urgent = self.urgent
-            current_output = []
-            update_time = None
+            update_time = MAX_NO_CONTENT_WAIT
 
-        if self.open:
-            format_control = self.format_button_open
-            format = self.format
-        else:
-            format_control = self.format_button_closed
-            format = self.format_closed
+        # check for urgents
+        urgent = output and output[0].get("urgent")
+        self.urgent_history[self.active] = urgent
+        mod_urgent = any(self.urgent_history.values())
 
-        button = {"full_text": format_control, "index": "button"}
-        composites = {
-            "output": self.py3.composite_create(current_output),
-            "button": self.py3.composite_create(button),
-        }
-        output = self.py3.safe_format(format, composites)
+        # keep cycling if no urgent
+        if not urgent:
+            self.cycle = self.cycle_timeout
+            if time() >= self.cycle_time:
+                self._change_active(1)
+                self.cycle_time = time() + self.cycle
 
+        # time
+        update_time = update_time or self.cycle or None
         if update_time is not None:
-            cached_until = self.py3.time_in(update_time)
+            cached_until = self.py3.time_in(self.cycle)
         else:
             cached_until = self.py3.CACHE_FOREVER
 
-        response = {"cached_until": cached_until, "full_text": output}
+        if self.open:
+            format_control = self.format_button_open
+            current_format = self.format
+            urgent = False
+        else:
+            format_control = self.format_button_closed
+            current_format = self.format_closed
+            urgent = mod_urgent or self.urgent
 
+        button = {"full_text": format_control, "index": "button"}
+        response = {
+            "cached_until": cached_until,
+            "full_text": self.py3.safe_format(
+                current_format,
+                {
+                    "output": self.py3.composite_create(output),
+                    "button": self.py3.composite_create(button),
+                },
+            ),
+        }
         if urgent:
             response["urgent"] = urgent
+            self.urgent = False
         return response
 
     def on_click(self, event):
@@ -267,22 +275,16 @@ class Py3status:
 
         self.cycle = self.cycle_timeout
         self.cycle_time = time() + self.cycle
-        refresh = False
 
         if button == self.button_next:
             if self.open:
                 self._change_active(+1)
-                refresh = True
         elif button == self.button_prev:
             if self.open:
                 self._change_active(-1)
-                refresh = True
         elif button == self.button_toggle:
             if index == "button":
                 self.open = not self.open
-                refresh = True
-        if not refresh:
-            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
