@@ -50,6 +50,7 @@ class Runner(Thread):
         self.daemon = True
         self.module = module
         self.py3_wrapper = py3_wrapper
+        self.start()
 
     def run(self):
         try:
@@ -71,6 +72,37 @@ class NoneSetting:
     def __repr__(self):
         # this is for output via module_test
         return 'None'
+
+
+class Task:
+    """
+    A simple task that can be run by the scheduler.
+    """
+
+    def run(self):
+        raise NotImplemented()
+
+
+class CheckI3StatusThread(Task):
+    """
+    Checks that the i3status thread is alive
+    """
+
+    def __init__(self, i3status_thread, py3_wrapper):
+        self.i3status_thread = i3status_thread
+        self.timeout_queue_add = py3_wrapper.timeout_queue_add
+        self.notify_user = py3_wrapper.notify_user
+
+    def run(self):
+        # check i3status thread
+        if not self.i3status_thread.is_alive():
+            err = self.i3status_thread.error
+            if not err:
+                err = 'I3status died horribly.'
+            self.notify_user(err)
+        else:
+            # check again in 5 seconds
+            self.timeout_queue_add(self, int(time.time()) + 5)
 
 
 class Common:
@@ -232,13 +264,14 @@ class Py3statusWrapper:
         self.timeout_queue_lookup = {}
         self.timeout_keys = []
 
-    def timeout_queue_add_module(self, module, cache_time=0):
+    def timeout_queue_add(self, item, cache_time=0):
         """
-        Add a module to be run at a future time.
+        Add a item to be run at a future time.
+        This must be a Module, I3statusModule or a Task
         """
         # add the info to the add queue.  We do this so that actually adding
         # the module is done in the core thread.
-        self.timeout_add_queue.append((module, cache_time))
+        self.timeout_add_queue.append((item, cache_time))
         # if the timeout_add_queue is not due to be processed until after this
         # update request is due then trigger an update now.
         if self.timeout_due is None or cache_time < self.timeout_due:
@@ -328,13 +361,7 @@ class Py3statusWrapper:
         # run any modules that are due
         while self.timeout_update_due:
             module = self.timeout_update_due.popleft()
-
-            if isinstance(module, Module):
-                r = Runner(module, self)
-                r.start()
-            else:
-                # i3status module
-                module.update()
+            Runner(module, self)
 
         # we return how long till we next need to process the timeout_queue
         if self.timeout_due is not None:
@@ -542,6 +569,11 @@ class Py3statusWrapper:
         if self.config['debug']:
             self.log('i3status thread {} with config {}'.format(
                 i3s_mode, self.config['py3_config']))
+
+        # add i3status thread monitoring task
+        if i3s_mode == 'started':
+            task = CheckI3StatusThread(self.i3status_thread, self)
+            self.timeout_queue_add(task)
 
         # setup input events thread
         self.events_thread = Events(self)
