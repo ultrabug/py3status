@@ -76,7 +76,13 @@ class Py3status:
         if self.strip_output:
             output_text = output_text.strip()
 
-        response['full_text'] = self.py3.safe_format(self.format, {'output': output_text})
+        if not output_text:
+            return {
+                "full_text": "",
+                "cached_until": self.py3.time_in(self.cache_timeout)
+            }
+        else:
+            response['full_text'] = self.py3.safe_format(self.format, {'output': output_text})
         return response
 
 
