@@ -193,7 +193,6 @@ class Py3status:
 
         self.credentials = self._get_credentials()
         self.is_authorized = False
-        self.first_run = True
 
     def _get_credentials(self):
         """
