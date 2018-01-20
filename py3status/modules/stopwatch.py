@@ -127,7 +127,7 @@ class Py3status:
                 self.running = False
                 self.paused = True
                 self.time_state = int(time() - self.time_start)
-                self.color = '#FFFF00'
+                self.color = self.py3.COLOR_BAD
             else:
                 # start/restart stopwatch
                 if self.paused:
@@ -136,7 +136,7 @@ class Py3status:
                 else:
                     self.time_start = time()
                     self.running = True
-                self.color = '#00FF00'
+                self.color = self.py3.COLOR_GOOD
 
         if button == 2:
             # reset and pause stopwatch
