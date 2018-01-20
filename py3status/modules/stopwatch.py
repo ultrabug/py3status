@@ -47,9 +47,9 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = 'Stopwatch {stopwatch}'
     button_reset = 3
     button_toggle = 1
+    format = 'Stopwatch {stopwatch}'
 
     def _reset_time(self):
         self.running = False
