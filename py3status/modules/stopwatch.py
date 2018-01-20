@@ -55,6 +55,8 @@ class Py3status:
         self.time_state = None
         self.color = None
         self.paused = False
+        self.button_reset = 3
+        self.button_toggle = 1
 
     def stopwatch(self):
 
@@ -85,25 +87,22 @@ class Py3status:
             {
                 'full_text': str(hours),
                 'color': self.color,
-                'index': 'hours',
             },
             {
-                'color': '#CCCCCC',
+                'color': self.color,
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(mins),
+                'full_text': make_2_didget(minutes),
                 'color': self.color,
-                'index': 'mins',
             },
             {
-                'color': '#CCCCCC',
+                'color': self.color,
                 'full_text': ':',
             },
             {
                 'full_text': make_2_didget(seconds),
                 'color': self.color,
-                'index': 'seconds',
             },
         ]
 
@@ -118,7 +117,7 @@ class Py3status:
     def on_click(self, event):
         button = event['button']
 
-        if button == 1:
+        if button == self.button_toggle:
             if self.running:
                 # pause stopwatch
                 self.running = False
@@ -134,7 +133,7 @@ class Py3status:
                 else:
                     self.time_start = time()
 
-        if button == 2:
+        if button == self.button_reset:
             # reset and pause stopwatch
             self.running = False
             self.paused = False
