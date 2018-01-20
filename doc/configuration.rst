@@ -128,6 +128,17 @@ To use an encoded string add ``:base64`` to the name of the parameter.
 .. note::
     Base64 encoding is very simple and should not be considered secure in any way.
 
+Configuring cache_timeout
+-------------------------
+
+Since version 3.8, users can specify `cache_timeout = -1`
+in the config to signal the module to run once.
+
+.. code-block:: py3status
+    xrandr {
+        cache_timeout = -1
+    }
+
 Configuring colors
 ------------------
 

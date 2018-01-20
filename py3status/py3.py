@@ -557,15 +557,15 @@ class Py3:
         .. note::
 
             from version 3.1 modules no longer need to explicitly set a
-            ``cached_until`` in their response unless they wish to directly control
-            it.
+            ``cached_until`` in their response unless they wish to directly
+            control it.
 
         seconds specifies the number of seconds that should occure before the
         update is required.
 
         sync_to causes the update to be syncronised to a time period.  1 would
-        cause the update on the second, 60 to the nearest minute. By defalt we
-        syncronise to the nearest second. 0 will disable this feature.
+        cause the update on the second, 60 to the nearest minute. By default
+        we syncronise to the nearest second. 0 will disable this feature.
 
         offset is used to alter the base time used. A timer that started at a
         certain time could set that as the offset and any syncronisation would
@@ -583,6 +583,9 @@ class Py3:
                 except AttributeError:
                     # use default cache_timeout
                     seconds = self._module.config['cache_timeout']
+        # cache_4ever
+        elif seconds < 0:
+            return PY3_CACHE_FOREVER
 
         # Unless explicitly set we sync to the nearest second
         # Unless the requested update is in less than a second
