@@ -117,6 +117,16 @@ Using dnf:
 
     $ dnf install py3status
 
+Debian
+------
+Packaged by @sdelafond, and available via apt-get:
+::
+
+    $ apt-get install py3status
+
+For now it's only in testing and unstable, but will soon be added to
+stable-backports.
+
 Options
 =======
 You can see the help of py3status by issuing `py3status -h`:
