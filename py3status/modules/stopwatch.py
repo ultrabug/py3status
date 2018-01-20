@@ -72,11 +72,8 @@ class Py3status:
             else:
                 t = 0
 
-        # Hours
         hours, t = divmod(t, 3600)
-        # Minutes
-        mins, t = divmod(t, 60)
-        # Seconds
+        minutes, t = divmod(t, 60)
         seconds = t
 
         if self.running:
@@ -126,11 +123,11 @@ class Py3status:
                 # pause stopwatch
                 self.running = False
                 self.paused = True
-                self.time_state = int(time() u- self.time_start)
+                self.time_state = int(time() - self.time_start)
                 self.color = self.py3.COLOR_BAD
             else:
-                self.running = True
                 self.color = self.py3.COLOR_GOOD
+                self.running = True
                 # start/restart stopwatch
                 if self.paused:
                     self.time_start = int(time() - self.time_state)
