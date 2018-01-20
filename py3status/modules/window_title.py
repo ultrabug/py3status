@@ -7,6 +7,8 @@ This module prints the properties of a focused window at frequent intervals.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 0.5)
     format: display format for this module (default '{title}')
+    max_width: If width of title is greater, shrink it and add '...'
+        (default 120)
 
 Format placeholders:
     {class} class name
@@ -41,6 +43,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 0.5
     format = '{title}'
+    max_width = 120
 
     def _find_focused(self, tree):
         if isinstance(tree, list):
@@ -58,6 +61,11 @@ class Py3status:
         tree = loads(self.py3.command_output('i3-msg -t get_tree'))
         window_properties = self._find_focused(tree).get(
             'window_properties', {'title': ''})
+
+        if ('title' in window_properties and
+                len(window_properties['title']) > self.max_width):
+            window_properties['title'] = u"...{}".format(
+                window_properties['title'][-(self.max_width - 3):])
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
