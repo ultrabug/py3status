@@ -6,9 +6,11 @@ This is a very basic stopwatch. You can start, pause and reset the
 stopwatch.
 
 Button 1 starts/pauses the stopwatch.
-Button 2 resets stopwatch.
+Button 3 resets stopwatch.
 
 Configuration parameters:
+    button_reset: button event id to reset the stopwatch
+    button_toggle: button event id to start/pause the stopwatch
     format: display format for this module (default 'Stopwatch {stopwatch}')
 
 Format placeholders:
