@@ -114,8 +114,8 @@ class Py3status:
 
         return {
             'cached_until': cached_until,
-            'full_text':
-            self.py3.safe_format(self.format, {'stopwatch': stopwatch})
+            'full_text': self.py3.safe_format(
+                self.format, {'stopwatch': stopwatch})
         }
 
     def on_click(self, event):
@@ -130,7 +130,7 @@ class Py3status:
                 self.color = self.py3.COLOR_BAD
             else:
                 self.running = True
-                self.color = self.py3.COLOR_GOOD                
+                self.color = self.py3.COLOR_GOOD
                 # start/restart stopwatch
                 if self.paused:
                     self.time_start = int(time() - self.time_state)
