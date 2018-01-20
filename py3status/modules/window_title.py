@@ -45,6 +45,11 @@ class Py3status:
     format = '{title}'
     max_width = 120
 
+    def post_config_hook(self):
+        # empty defaults to replace window properties
+        self.empty_defaults = {
+            x: '' for x in self.py3.get_placeholders_list(self.format)}
+
     def _find_focused(self, tree):
         if isinstance(tree, list):
             for el in tree:
@@ -60,10 +65,9 @@ class Py3status:
     def window_title(self):
         tree = loads(self.py3.command_output('i3-msg -t get_tree'))
         window_properties = self._find_focused(tree).get(
-            'window_properties', {'title': ''})
+            'window_properties', self.empty_defaults)
 
-        if ('title' in window_properties and
-                len(window_properties['title']) > self.max_width):
+        if len(window_properties.get('title', '')) > self.max_width:
             window_properties['title'] = u"...{}".format(
                 window_properties['title'][-(self.max_width - 3):])
 
