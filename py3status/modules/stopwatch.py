@@ -51,18 +51,23 @@ class Py3status:
     button_reset = 3
     button_toggle = 1
 
-    def post_config_hook(self):
+    def _reset_time(self):
         self.running = False
-        self.time_start = None
+        self.paused = False
         self.time_state = None
         self.color = None
-        self.paused = False
+
+    def post_config_hook(self):
+        self.time_start = None
+        self._reset_time()
 
     def stopwatch(self):
 
         if self.running:
+            cached_until = self.py3.time_in(0, offset=1)
             t = int(time() - self.time_start)
         else:
+            cached_until = self.py3.CACHE_FOREVER
             if self.time_state:
                 t = self.time_state
             else:
@@ -71,11 +76,6 @@ class Py3status:
         hours, t = divmod(t, 3600)
         minutes, t = divmod(t, 60)
         seconds = t
-
-        if self.running:
-            cached_until = self.py3.time_in(0, offset=1)
-        else:
-            cached_until = self.py3.CACHE_FOREVER
 
         composites = [
             {
@@ -129,10 +129,7 @@ class Py3status:
 
         if button == self.button_reset:
             # reset and pause stopwatch
-            self.running = False
-            self.paused = False
-            self.time_state = None
-            self.color = None
+            self._reset_time()
 
 
 if __name__ == "__main__":
