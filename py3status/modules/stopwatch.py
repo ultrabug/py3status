@@ -48,6 +48,8 @@ class Py3status:
     """
     # available configuration parameters
     format = 'Stopwatch {stopwatch}'
+    button_reset = 3
+    button_toggle = 1
 
     def post_config_hook(self):
         self.running = False
@@ -55,16 +57,8 @@ class Py3status:
         self.time_state = None
         self.color = None
         self.paused = False
-        self.button_reset = 3
-        self.button_toggle = 1
 
     def stopwatch(self):
-
-        def make_2_didget(value):
-            value = str(value)
-            if len(value) == 1:
-                value = '0' + value
-            return value
 
         if self.running:
             t = int(time() - self.time_start)
@@ -93,7 +87,7 @@ class Py3status:
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(minutes),
+                'full_text': '%02d' % (minutes),
                 'color': self.color,
             },
             {
@@ -101,7 +95,7 @@ class Py3status:
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(seconds),
+                'full_text': '%02d' % (seconds),
                 'color': self.color,
             },
         ]
