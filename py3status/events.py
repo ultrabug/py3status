@@ -4,6 +4,7 @@ import sys
 from threading import Thread
 from subprocess import Popen, PIPE
 from json import loads
+from time import time
 
 from py3status.profiling import profile
 
@@ -13,6 +14,11 @@ try:
 except ImportError:
     # Python 2
     from pipes import quote as shell_quote
+
+
+TIME_CUTTOFF = 0.3
+ACCELERATED_BUTTONS = [1, 3, 4, 5]
+MAX_SPEED = 10
 
 
 class IOPoller:
@@ -81,6 +87,7 @@ class Events(Thread):
         self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
+        self.accel_info = {}
 
     def get_module_text(self, module_name, event):
         """
@@ -232,6 +239,28 @@ class Events(Thread):
 
         # guess the module config name
         module_name = '{} {}'.format(name, instance).strip()
+
+        accel_info = self.accel_info.get(
+            module_name, {'time': 0, 'speed': 1, 'button': 0}
+        )
+        t = time()
+        if event['button'] != accel_info['button'] or t - accel_info['time'] > TIME_CUTTOFF:
+            accel_info['button'] = event['button']
+            speed = 1
+        else:
+            speed = accel_info['speed']
+            speed += 1
+            if speed > MAX_SPEED:
+                speed = MAX_SPEED
+
+        accel_info['speed'] = speed
+        accel_info['time'] = t
+        self.accel_info[module_name] = accel_info
+
+        if event['button'] not in ACCELERATED_BUTTONS:
+            speed = None
+        event['speed'] = speed
+
         # do the work
         task = EventTask(module_name, event, self)
         self.py3_wrapper.timeout_queue_add(task)

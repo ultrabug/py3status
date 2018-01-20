@@ -365,10 +365,10 @@ class Py3status:
         button = event['button']
         # volume up
         if button == self.button_up:
-            self.backend.volume_up(self.volume_delta)
+            self.backend.volume_up(event['speed'] or self.volume_delta)
         # volume down
         elif button == self.button_down:
-            self.backend.volume_down(self.volume_delta)
+            self.backend.volume_down(event['speed'] or self.volume_delta)
         # toggle mute
         elif button == self.button_mute:
             self.backend.toggle_mute()
