@@ -27,9 +27,9 @@ Configuration parameters:
     hide_when_full: hide any information when battery is fully charged (when
         the battery level is greater than or equal to 'threshold_full')
         (default False)
-    measurement_mode: either 'acpi' or 'sys', or None to autodetect. 'sys'
-        should be more robust and does not have any extra requirements, however
-        the time measurement may not work in some cases
+    measurement_mode: specify 'acpi', 'upower', 'sys', or None to autodetect.
+        'sys' should be more robust and does not have any extra requirements,
+        however the time measurement may not work in some cases
         (default None)
     notification: show current battery state as notification on click
         (default False)
@@ -64,10 +64,11 @@ Color options:
     color_good: Battery level is above thresholds
 
 Requires:
-    - the `acpi` the acpi command line utility (only if
-        `measurement_mode='acpi'`)
+    acpi: (optional) client for battery, power, and thermal readings
+    upower: (optional) abstraction for enumerating power devices,
+        listening to device events and querying history and statistics
 
-@author shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r
+@author shadowprince, AdamBSteele, maximbaz, 4iar, m45t3r, lasers
 @license Eclipse Public License
 
 SAMPLE OUTPUT
@@ -164,11 +165,13 @@ class Py3status:
         if self.measurement_mode is None:
             if self.py3.check_commands(["acpi"]):
                 self.measurement_mode = "acpi"
+            elif self.py3.check_commands(['upower']):
+                self.measurement_mode = 'upower'
             elif os.path.isdir(self.sys_battery_path):
                 self.measurement_mode = "sys"
 
         self.py3.log("Measurement mode: " + self.measurement_mode)
-        if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
+        if self.measurement_mode not in ['acpi', 'upower', 'sys']:
             raise NameError("Invalid measurement mode")
 
     def battery_level(self):
@@ -301,6 +304,42 @@ class Py3status:
             battery_list.append(battery)
         return battery_list
 
+    def _extract_battery_information_from_upower(self):
+        """
+        Extract the information from upower dump
+        """
+        def _parse_battery_data(output):
+            charging = 'charging' == output['state']
+            time_to_x = 'time_to_full' if charging else 'time_to_empty'
+
+            try:
+                # upower prints 'time to x' when charging or discharging
+                time = output[time_to_x]
+            except KeyError:
+                time = FULLY_CHARGED
+            return {
+                'percent_charged': int(output['percentage'].strip('%')),
+                'capacity': int(output['capacity'].strip('%')),
+                'charging': charging,
+                'time_remaining': time
+            }
+
+        upower_list = []
+        for device in self.py3.command_output(['upower', '-d']).split('\n\n'):
+            device = device.splitlines()
+            if 'battery' in device[0]:
+                temporary = {}
+                for line in device:
+                    try:
+                        key, value = line.split(':', 1)
+                        key = key.strip().replace(' ', '_').replace('-', '_')
+                        temporary[key] = value.strip()
+                    except ValueError:
+                        pass
+                upower_list.append(temporary)
+
+        return [_parse_battery_data(battery) for battery in upower_list]
+
     def _hms_to_seconds(self, t):
         h, m, s = [int(i) for i in t.split(':')]
         return 3600 * h + 60 * m + s
@@ -313,6 +352,8 @@ class Py3status:
     def _refresh_battery_info(self):
         if self.measurement_mode == "acpi":
             battery_list = self._extract_battery_information_from_acpi()
+        elif self.measurement_mode == 'upower':
+            battery_list = self._extract_battery_information_from_upower()
         else:
             battery_list = self._extract_battery_information_from_sys()
 
