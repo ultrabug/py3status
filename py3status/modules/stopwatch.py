@@ -9,8 +9,8 @@ Button 1 starts/pauses the stopwatch.
 Button 3 resets stopwatch.
 
 Configuration parameters:
-    button_reset: button event id to reset the stopwatch
-    button_toggle: button event id to start/pause the stopwatch
+    button_reset: button event id to reset the stopwatch (default 3)
+    button_toggle: button event id to start/pause the stopwatch (default 1)
     format: display format for this module (default 'Stopwatch {stopwatch}')
 
 Format placeholders:
@@ -53,15 +53,14 @@ class Py3status:
     button_toggle = 1
     format = 'Stopwatch {stopwatch}'
 
+    def post_config_hook(self):
+        self.time_start = None
+
     def _reset_time(self):
         self.running = False
         self.paused = False
         self.time_state = None
         self.color = None
-
-    def post_config_hook(self):
-        self.time_start = None
-        self._reset_time()
 
     def stopwatch(self):
 
