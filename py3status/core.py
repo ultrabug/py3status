@@ -105,6 +105,18 @@ class CheckI3StatusThread(Task):
             self.timeout_queue_add(self, int(time.time()) + 5)
 
 
+class ModuleRunner(Task):
+    """
+    Starts up a Module
+    """
+
+    def __init__(self, module):
+        self.module = module
+
+    def run(self):
+        self.module.start_module()
+
+
 class Common:
     """
     This class is used to hold core functionality so that it can be shared more
@@ -246,15 +258,14 @@ class Py3statusWrapper:
         self.options = options
         self.output_modules = {}
         self.py3_modules = []
-        self.py3_modules_initialized = False
         self.running = True
         self.update_queue = deque()
         self.update_request = Event()
 
         # shared code
-        common = Common(self)
-        self.get_config_attribute = common.get_config_attribute
-        self.report_exception = common.report_exception
+        self.common = Common(self)
+        self.get_config_attribute = self.common.get_config_attribute
+        self.report_exception = self.common.report_exception
 
         # these are used to schedule module updates
         self.timeout_add_queue = deque()
@@ -756,11 +767,6 @@ class Py3statusWrapper:
             update = [update]
         self.update_queue.extend(update)
 
-        # if all our py3status modules are not ready to receive updates then we
-        # don't want to get them to update.
-        if not self.py3_modules_initialized:
-            return
-
         # find containers that use the modules that updated
         containers = self.config['py3_config']['.module_groups']
         containers_to_update = set()
@@ -926,17 +932,10 @@ class Py3statusWrapper:
         # content_function.
         self.create_output_modules()
 
-        # Some modules need to be prepared before they can run
-        # eg run their post_config_hook
+        # start up all our modules
         for module in self.modules.values():
-            module.prepare_module()
-
-        # modules can now receive updates
-        self.py3_modules_initialized = True
-
-        # start modules
-        for module in self.modules.values():
-            module.start_module()
+            task = ModuleRunner(module)
+            self.timeout_queue_add(task)
 
         # this will be our output set to the correct length for the number of
         # items in the bar
