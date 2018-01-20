@@ -117,8 +117,8 @@ Using dnf:
 
     $ dnf install py3status
 
-Debian
-------
+Debian/Ubuntu
+-------------
 Packaged by @sdelafond, and available via apt-get:
 ::
 
