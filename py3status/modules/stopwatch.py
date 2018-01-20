@@ -55,6 +55,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.time_start = None
+        self._reset_time()
 
     def _reset_time(self):
         self.running = False
