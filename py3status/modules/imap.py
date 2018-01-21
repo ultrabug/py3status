@@ -32,7 +32,6 @@ SAMPLE OUTPUT
 """
 import imaplib
 from threading import Thread
-import select
 from time import sleep
 from ssl import create_default_context
 from socket import error as socket_error
@@ -189,13 +188,14 @@ class Py3status:
             socket.write(command_tag + b' IDLE\r\n')
             response = _timeoutread(socket, 4096, 5)
             if response is None:
-                raise imaplib.IMAP4.error("While initializing IDLE: server didn't respond to 'IDLE' in time")
+                raise imaplib.IMAP4.error(
+                    "While initializing IDLE: server didn't respond to 'IDLE' in time")
             response = response.decode('ascii')
             if not response.lower().startswith('+ idling'):
                 raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
 
             while True:
-                response = _timeoutread(socket,4096, self.cache_timeout)
+                response = _timeoutread(socket, 4096, self.cache_timeout)
                 if response is None:
                     self.py3.log("IDLE timed out")
                     break
@@ -212,14 +212,16 @@ class Py3status:
             socket.write(b'DONE\r\n')  # important!
             response = _timeoutread(socket, 4096, 5)
             if response is None:
-                raise imaplib.IMAP4.abort("While terminating IDLE: server didn't respond to 'DONE' in time")
+                raise imaplib.IMAP4.abort(
+                    "While terminating IDLE: server didn't respond to 'DONE' in time")
             response = response.decode(encoding='ascii')
             expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
             if response.lower().startswith('* '.lower()):  # '* OK Still here', mostly
                 # sometimes, more messages come in between reading and DONEing; so read them again
                 response = _timeoutread(socket, 4096, 5)
                 if response is None:
-                    raise imaplib.IMAP4.abort("While terminating IDLE: server didn't respond to 'DONE' in time")
+                    raise imaplib.IMAP4.abort(
+                        "While terminating IDLE: server didn't respond to 'DONE' in time")
                 response = response.decode(encoding='ascii')
             if not response.lower().startswith(expected_response.lower()):
                 raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
