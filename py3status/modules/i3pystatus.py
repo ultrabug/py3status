@@ -206,6 +206,8 @@ SKIP_ATTRS = [
 
 
 class Py3status:
+    """
+    """
 
     module = None
 
@@ -294,7 +296,6 @@ class Py3status:
             callbacks.append((click, dbclick))
 
         self._click_timer = ClickTimer(self, callbacks)
-        self._due_time = 0
         self._last_content = None
         self._timeout = 1
 
