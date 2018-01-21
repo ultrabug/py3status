@@ -13,6 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 from time import time
 
 from py3status import exceptions
+from py3status.constants import COLOR_NAMES
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
@@ -146,7 +147,8 @@ class Py3:
             # not set should be treated as None
             if name.startswith('color_'):
                 if hasattr(param, 'none_setting'):
-                    param = None
+                    # see if named color and use if it is
+                    param = COLOR_NAMES.get(name[6:].lower())
                 elif param is None:
                     param = self._none_color
             # if a non-color parameter and was not set then set to default

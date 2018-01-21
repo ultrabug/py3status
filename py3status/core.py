@@ -17,6 +17,7 @@ from traceback import extract_tb, format_tb, format_stack
 
 import py3status.docstrings as docstrings
 from py3status.command import CommandServer
+from py3status.constants import COLOR_NAMES
 from py3status.events import Events
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
@@ -157,14 +158,16 @@ class Common:
         if hasattr(param, 'none_setting'):
             # check py3status general section
             param = config['general'].get(attribute, self.none_setting)
-        # If this is a color and it is like #123 convert it to #112233
         if param and (attribute == 'color' or attribute.startswith('color_')):
-            if len(param) == 4 and param[0] == '#':
+            if param[0] != '#':
+                # named color
+                param = COLOR_NAMES.get(param.lower(), self.none_setting)
+            elif len(param) == 4:
+                # This is a color like #123 convert it to #112233
                 param = (
                     '#' + param[1] + param[1] + param[2] +
                     param[2] + param[3] + param[3]
                 )
-
         return param
 
     def report_exception(self, msg, notify_user=True, level='error',

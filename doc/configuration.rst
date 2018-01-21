@@ -140,6 +140,11 @@ If a module does not specify colors but it is in a container, then the colors
 of the container will be used if they are set, before using ones defined in the
 general section.
 
+Generally colors can specified using hex values eg ``#FF00FF`` or ``#F0F``.  It
+is also possible to use css3 color names eg ``red``
+``hotpink``.  For a list of available color names see
+`<https://drafts.csswg.org/css-color/#named-colors>`_.
+
 .. code-block:: py3status
     :caption: Example
 
