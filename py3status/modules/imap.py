@@ -154,8 +154,29 @@ class Py3status:
         """
         since imaplib doesn't support IMAP4r1 IDLE, we'll do it by hand
         """
-        class IdleException(Exception):
-            pass
+        def _timeoutread(socket, count, timeout):
+            """
+            a wrapper around select(2) and read(2), so we don't have to worry about
+            dropping network connections; returns the data read or None on timeout
+            """
+            from select import select
+
+            socket.settimeout(timeout)
+            socket.setblocking(0)
+
+            if timeout > 0:
+                ready = select([socket], [], [], timeout)
+            else:
+                ready = select([socket], [], [])
+
+            socket.setblocking(1)
+
+            if ready[0]:
+                response = socket.read(count)
+                return response
+            else:
+                return None
+
         socket = None
         try:
             self.command_tag = (self.command_tag + 1) % 1000
@@ -164,36 +185,42 @@ class Py3status:
             # make sure we have selected anything before idling:
             self.connection.select(directories[0])
             socket = self.connection.socket()
-            socket.settimeout(self.cache_timeout)
 
             socket.write(command_tag + b' IDLE\r\n')
-            response = socket.read(4096).decode('ascii')
+            response = _timeoutread(socket, 4096, 5)
+            if response is None:
+                raise imaplib.IMAP4.error("While initializing IDLE: server didn't respond to 'IDLE' in time")
+            response = response.decode('ascii')
             if not response.lower().startswith('+ idling'):
-                raise IdleException(response)
+                raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
 
-            # wait for IDLE to return
-            socket.setblocking(0)  # so we can timeout if IDLE doesn't return soon enough
-            if self.cache_timeout > 0:
-                ready = select.select([socket], [], [], self.cache_timeout)
-            else:
-                ready = select.select([socket], [], [])
-            if ready[0]:
-                # receive list of messages (we don't care what has changed, that
-                # gets checked in _get_mail_count() )
-                socket.read(4096)
-            socket.setblocking(1)
+            while True:
+                response = _timeoutread(socket,4096, self.cache_timeout)
+                if response is None:
+                    self.py3.log("IDLE timed out")
+                    break
+                else:
+                    response = response.decode('ascii')
+                    if response.lower().startswith('* OK'.lower()):
+                        continue  # don't terminate on continuation message
+                    else:
+                        break
 
-        except IdleException as e:
-            raise imaplib.IMAP4.error("While initializing IDLE: " + str(e))
         finally:
             if socket is None:
                 return
             socket.write(b'DONE\r\n')  # important!
-            response = socket.read(4096).decode(encoding='ascii')
+            response = _timeoutread(socket, 4096, 5)
+            if response is None:
+                raise imaplib.IMAP4.abort("While terminating IDLE: server didn't respond to 'DONE' in time")
+            response = response.decode(encoding='ascii')
             expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
             if response.lower().startswith('* '.lower()):  # '* OK Still here', mostly
                 # sometimes, more messages come in between reading and DONEing; so read them again
-                response = socket.read(4096).decode(encoding='ascii')
+                response = _timeoutread(socket, 4096, 5)
+                if response is None:
+                    raise imaplib.IMAP4.abort("While terminating IDLE: server didn't respond to 'DONE' in time")
+                response = response.decode(encoding='ascii')
             if not response.lower().startswith(expected_response.lower()):
                 raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
 
