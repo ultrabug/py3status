@@ -16,9 +16,11 @@ except NameError:
 
 
 def main():
+    from py3status.cli import parse_cli
+    options = parse_cli()
     # detect gevent option early because monkey patching should be done before
     # everything else starts kicking
-    if '-g' in sys.argv or '--gevent' in sys.argv:
+    if options.gevent:
         try:
             from gevent import monkey
             monkey.patch_all()
@@ -35,7 +37,7 @@ def main():
 
     py3 = None
     try:
-        py3 = Py3statusWrapper()
+        py3 = Py3statusWrapper(options)
         py3.setup()
     except (IOPipeError, KeyboardInterrupt):
         if py3:

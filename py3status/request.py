@@ -7,14 +7,15 @@ try:
     from urllib.error import URLError, HTTPError
     from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
     from urllib.request import (
-        urlopen, Request
+        urlopen, Request, build_opener, install_opener, HTTPCookieProcessor
     )
     IS_PYTHON_3 = True
 except ImportError:
     # Python 2
     from urllib import urlencode
     from urllib2 import (
-        urlopen, Request, URLError, HTTPError
+        urlopen, Request, URLError, HTTPError,
+        build_opener, install_opener, HTTPCookieProcessor
     )
     from urlparse import urlsplit, urlunsplit, parse_qsl
     IS_PYTHON_3 = False
@@ -31,7 +32,7 @@ class HttpResponse:
     The aim is to support both python 2 and 3 and be a simple as possible
     """
 
-    def __init__(self, url, params, data, headers, timeout, auth):
+    def __init__(self, url, params, data, headers, timeout, auth, cookiejar):
         # fix the url if needed
         url_parts = urlsplit(url)
         if url_parts.query or params:
@@ -51,6 +52,11 @@ class HttpResponse:
             headers['Authorization'] = 'Basic %s' % auth_str.decode('utf-8')
         if data:
             data = urlencode(data).encode()
+        if cookiejar is not None:
+            self._cookiejar = cookiejar
+            opener = build_opener(HTTPCookieProcessor(cookiejar))
+            install_opener(opener)
+
         request = Request(url, headers=headers)
 
         try:
@@ -123,3 +129,20 @@ class HttpResponse:
         except AttributeError:
             self._headers = self._response.headers
             return self._headers
+
+    @property
+    def cookiejar(self):
+        """
+        Get the cookie jar
+        """
+        try:
+            return self._cookiejar
+        except AttributeError:
+            return None
+
+    @cookiejar.setter
+    def cookiejar(self, cj):
+        """
+        Set the cookie jar in care we want to change it after object creation
+        """
+        self._cookiejar = cj

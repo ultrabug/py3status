@@ -66,6 +66,9 @@ Color options:
     color_degraded: threshold_degraded has been exceeded
 
 @author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': '412 req/s'}
 """
 from requests import get
 from syslog import syslog, LOG_INFO

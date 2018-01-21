@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Display upcoming Google Calendar events.
-This module will display information about upcoming Google Calendar events in
-one of two formats which can be toggled with a button press. The
-event's URL may also be opened in a web browser with a button press.
+
+This module will display information about upcoming Google Calendar events
+in one of two formats which can be toggled with a button press. The event
+URL may also be opened in a web browser with a button press.
 
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
@@ -12,12 +13,11 @@ Configuration parameters:
     blacklist_events: Event names in this list will not be shown in the module
         (case insensitive).
         (default [])
-    button_open: Opens the URL for the clicked on event in the default
-        web browser.
+    button_open: Opens the event URL in the default web browser.
         (default 3)
     button_refresh: Refreshes the module and updates the list of events.
         (default 2)
-    button_toggle: The button used to toggle what data is displayed for each event.
+    button_toggle: Toggles a boolean to hide/show the data for each event.
         (default 1)
     cache_timeout: How often the module is refreshed in seconds
         (default 60)
@@ -30,24 +30,25 @@ Configuration parameters:
         (default False)
     format: The format for module output.
         (default '{events}|\?color=event \u2687')
-    format_date: The format for date related format placeholders. May be any Python
-        strftime directives for dates.
+    format_date: The format for date related format placeholders.
+        May be any Python strftime directives for dates.
         (default '%a %d-%m')
-    format_event: The format for each event. The information to display for each event
-        can be toggled with 'button_toggle' based on the value of 'is_toggled'.
-        (default  '[\?color=event {summary}][\?if=is_toggled  ({start_time}
-         - {end_time}, {start_date})|[\?if=location  ({location})] [{format_timer}]]'
+    format_event: The format for each event. The information can be toggled
+        with 'button_toggle' based on the value of 'is_toggled'.
+        (default '[\?color=event {summary}][\?if=is_toggled  ({start_time}
+         - {end_time}, {start_date})|[\?if=location  ({location})]
+        [{format_timer}]]'
     format_notification: The format for event warning notifications.
         (default '{summary} {start_time} - {end_time}')
     format_separator: The string used to separate individual events.
         (default ' \| ')
-    format_time: The format for time related format placeholders (except {format_timer}).
+    format_time: The format for time-related placeholders except `{format_timer}`.
         May use any Python strftime directives for times.
         (default '%I:%M %p')
-    format_timer: The format used for the {format_timer} placeholder to display time
-        until an event starts or time until an event in progress is over based.
-        (default '\?color=time ([\?if=days {days}d ]
-        [\?if=hours {hours}h ][\?if=minutes {minutes}m]) [\?if=is_current left]')
+    format_timer: The format used for the {format_timer} placeholder to display
+        time until an event starts or time until an event in progress is over.
+        (default '\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]
+        [\?if=minutes {minutes}m]) [\?if=is_current left]')
     ignore_all_day_events: Sets whether to display all day events or not.
         (default False)
     num_events: The maximum number of events to display.
@@ -57,16 +58,16 @@ Configuration parameters:
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
-    time_to_max: Threshold (in minutes) for when to display the {format_timer}
-        string; e.g. if time_to_max = 60, {format_timer} will only be displayed
-        for events starting in 60 minutes or less.
+    time_to_max: Threshold (in minutes) for when to display the `{format_timer}`
+        string; e.g. if time_to_max is 60, `{format_timer}` will only be
+        displayed for events starting in 60 minutes or less.
         (default 180)
-    warn_threshold: The number of minutes until an event starts before a warning is
-        displayed to notify the user; e.g. if warn_threshold = 30 and an event is
-        starting in 30 minutes or less, a notification will be displayed. disabled (= 0)
-        by default.
+    warn_threshold: The number of minutes until an event starts before a
+        warning is displayed to notify the user; e.g. if warn_threshold is 30
+        and an event is starting in 30 minutes or less, a notification will be
+        displayed. disabled by default.
         (default 0)
-    warn_timeout: The number of seconds before a warning should be displayed again.
+    warn_timeout: The number of seconds before a warning should be issued again.
         (default 300)
 
 Control placeholders:
@@ -118,10 +119,10 @@ Examples:
 # add color gradients for events and dates/times
 google_calendar {
     thresholds = {
-        'event': [(1, '#d0e6ff'), (2, '#bbdaff'), (3, '#99c7ff'), (4, '#86bcff'),
-            (5, '#62a9ff'), (6, '#8c8cff'), (7, '#7979ff')],
-        'time': [(1, '#ffcece'), (2, '#ffbfbf'), (3, '#ff9f9f'), (4, '#ff7f7f'),
-            (5, '#ff5f5f'), (6, '#ff3f3f'), (7, '#ff1f1f')]
+        'event': [(1, '#d0e6ff'), (2, '#bbdaff'), (3, '#99c7ff'),
+            (4, '#86bcff'), (5, '#62a9ff'), (6, '#8c8cff'), (7, '#7979ff')],
+        'time': [(1, '#ffcece'), (2, '#ffbfbf'), (3, '#ff9f9f'),
+            (4, '#ff7f7f'), (5, '#ff5f5f'), (6, '#ff3f3f'), (7, '#ff1f1f')]
     }
 }
 ```
@@ -131,35 +132,8 @@ google_calendar {
 
 SAMPLE OUTPUT
 [
-    {
-      'full_text':'Homer's Birthday (742 Evergreen Terrace) (1h 23m)',
-      'index':0,
-      'separator':False,
-      'separator_block_width':0,
-      'cached_until':1509008337.0
-   },
-   {
-      'full_text':'|',
-      'index':'sep',
-      'separator':False,
-      'separator_block_width':0
-   },
-   {
-      'full_text':'Doctor's Appointment',
-      'index':1,
-      'separator':False,
-      'separator_block_width':0
-   },
-   {
-      'full_text':'|',
-      'index':'sep',
-      'separator':False,
-      'separator_block_width':0
-   },
-   {
-      'full_text':'Lunch with John',
-      'index':2
-   }
+   {'full_text': "Homer's Birthday (742 Evergreen Terrace) (1h 23m) | "},
+   {'full_text': "Doctor's Appointment | Lunch with John"},
 ]
 """
 
@@ -199,8 +173,8 @@ class Py3status:
     format_notification = '{summary} {start_time} - {end_time}'
     format_separator = ' \| '
     format_time = '%I:%M %p'
-    format_timer = '\?color=time ([\?if=days {days}d ]' +\
-        '[\?if=hours {hours}h ][\?if=minutes {minutes}m])[\?if=is_current  left]'
+    format_timer = '\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]' +\
+        '[\?if=minutes {minutes}m])[\?if=is_current  left]'
     ignore_all_day_events = False
     num_events = 3
     response = ['accepted']
@@ -219,7 +193,6 @@ class Py3status:
 
         self.credentials = self._get_credentials()
         self.is_authorized = False
-        self.first_run = True
 
     def _get_credentials(self):
         """
@@ -285,8 +258,6 @@ class Py3status:
         self.last_update = datetime.datetime.now()
         time_min = datetime.datetime.utcnow()
         time_max = time_min + datetime.timedelta(hours=self.events_within_hours)
-
-        event_cache = self.events or []
         events = []
 
         try:
@@ -297,7 +268,7 @@ class Py3status:
                 singleEvents=True,
                 orderBy='startTime').execute(num_retries=5)
         except Exception:
-            return event_cache
+            return self.events or events
         else:
             for event in eventsResult.get('items', []):
                 # filter out events that we did not accept (default)
@@ -314,10 +285,11 @@ class Py3status:
                     if not i_organized or has_attendees:
                         continue
 
-                # lower case output
-                if self.force_lowercase is True:
-                    for key in ['description', 'location', 'summary']:
-                        event[key] = event.get(key, '').lower()
+                # strip and lower case output if needed
+                for key in ['description', 'location', 'summary']:
+                    event[key] = event.get(key, '').strip()
+                    if self.force_lowercase is True:
+                        event[key] = event[key].lower()
 
                 # ignore all day events if configured
                 if event['start'].get('date') is not None:
@@ -336,8 +308,8 @@ class Py3status:
 
     def _check_warn_threshold(self, time_to, event_dict):
         """
-        Checks if the time until an event starts is less than or equal to the warn_threshold.
-        If it is, it presents a warning with self.py3.notify_user.
+        Checks if the time until an event starts is less than or equal to the
+        warn_threshold. If True, issue a warning with self.py3.notify_user.
         """
         if time_to['total_minutes'] <= self.warn_threshold:
             warn_message = self.py3.safe_format(self.format_notification,
@@ -345,11 +317,11 @@ class Py3status:
             self.py3.notify_user(warn_message, 'warning', self.warn_timeout)
 
     def _gstr_to_date(self, date_str):
-        """ Returns a dateime object from a google calendar date string."""
+        """ Returns a dateime object from calendar date string."""
         return parser.parse(date_str).replace(tzinfo=tzlocal())
 
     def _gstr_to_datetime(self, date_time_str):
-        """ Returns a datetime object from a google calendar date/time string."""
+        """ Returns a datetime object from calendar date/time string."""
         return parser.parse(date_time_str)
 
     def _datetime_to_str(self, date_time, dt_format):
@@ -378,31 +350,29 @@ class Py3status:
 
     def _format_timedelta(self, index, time_delta, is_current):
         """
-        Formats the dict time_to containg days/hours/minutes until an event starts
-        into a composite according to time_to_formatted.
+        Formats the dict time_to containg days/hours/minutes until an
+        event starts into a composite according to time_to_formatted.
 
         Returns: A formatted composite.
         """
         time_delta_formatted = ''
 
         if time_delta['total_minutes'] <= self.time_to_max:
-            time_delta_formatted = self.py3.safe_format(self.format_timer, {
-                'days':
-                time_delta['days'],
-                'hours':
-                time_delta['hours'],
-                'minutes':
-                time_delta['minutes'],
-                'is_current':
-                is_current
-            })
+            time_delta_formatted = self.py3.safe_format(
+                self.format_timer, {
+                    'days': time_delta['days'],
+                    'hours': time_delta['hours'],
+                    'minutes': time_delta['minutes'],
+                    'is_current': is_current,
+                }
+            )
 
         return time_delta_formatted
 
     def _build_response(self):
         """
-        Builds the composite reponse to be output by the module by looping through all
-        events and formatting the necessary strings.
+        Builds the composite reponse to be output by the module by looping
+        through all events and formatting the necessary strings.
 
         Returns: A composite containing the individual response for each event.
         """
@@ -428,6 +398,9 @@ class Py3status:
                     event['start'].get('dateTime'))
                 end_dt = self._gstr_to_datetime(event['end'].get('dateTime'))
 
+            if end_dt < datetime.datetime.now(tzlocal()):
+                continue
+
             event_dict['start_time'] = self._datetime_to_str(start_dt,
                                                              self.format_time)
             event_dict['end_time'] = self._datetime_to_str(end_dt,
@@ -451,26 +424,19 @@ class Py3status:
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
 
-            event_formatted = self.py3.safe_format(self.format_event, {
-                'is_toggled':
-                self.button_states[index],
-                'summary':
-                event_dict['summary'],
-                'location':
-                event_dict['location'],
-                'description':
-                event_dict['description'],
-                'start_time':
-                event_dict['start_time'],
-                'end_time':
-                event_dict['end_time'],
-                'start_date':
-                event_dict['start_date'],
-                'end_date':
-                event_dict['end_date'],
-                'format_timer':
-                event_dict['format_timer']
-            })
+            event_formatted = self.py3.safe_format(
+                self.format_event, {
+                    'is_toggled': self.button_states[index],
+                    'summary': event_dict['summary'],
+                    'location': event_dict['location'],
+                    'description': event_dict['description'],
+                    'start_time': event_dict['start_time'],
+                    'end_time': event_dict['end_time'],
+                    'start_date': event_dict['start_date'],
+                    'end_date': event_dict['end_date'],
+                    'format_timer': event_dict['format_timer'],
+                }
+            )
 
             self.py3.composite_update(event_formatted, {'index': index})
             responses.append(event_formatted)
@@ -487,10 +453,11 @@ class Py3status:
         """
         The method that outputs the response.
 
-        First, we check credential authorization. If no authorization, we display an error message,
-        and try authorizing again in 5 seconds.
+        First, we check credential authorization. If no authorization, we
+        display an error message, and try authorizing again in 5 seconds.
 
-        Otherwise, we fetch the events, build the response, and output the resulting composite.
+        Otherwise, we fetch the events, build the response, and output
+        the resulting composite.
         """
         composite = {}
 
@@ -512,11 +479,11 @@ class Py3status:
     def on_click(self, event):
         if self.is_authorized and self.events is not None:
             """
-            If button_refresh is clicked, we allow the events to be updated if the
-            last event update occured at least 1 second ago. This prevents a bug that
-            can crash py3status since refreshing the module too fast results in
-            incomplete event information being fetched as _get_events() is called
-            repeatedly.
+            If button_refresh is clicked, we allow the events to be updated
+            if the last event update occured at least 1 second ago. This
+            prevents a bug that can crash py3status since refreshing the
+            module too fast results in incomplete event information being
+            fetched as _get_events() is called repeatedly.
 
             Otherwise, we disable event updates.
             """

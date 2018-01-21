@@ -90,8 +90,6 @@ Using pip:
 
     $ pip install py3status
 
-Note: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
-
 Gentoo Linux
 ------------
 Using emerge:
@@ -116,6 +114,20 @@ Using dnf:
 ::
 
     $ dnf install py3status
+
+Debian/Ubuntu
+-------------
+Packaged by @sdelafond, and available via apt-get:
+::
+
+    $ apt-get install py3status
+
+For now it's only in testing and unstable, but will soon be added to
+stable-backports.
+
+Note: if you want to use pip, you should consider using *pypi-install*
+from the *python-stdeb* package (which will create a .deb out from a
+python package) instead of directly calling pip.
 
 Options
 =======

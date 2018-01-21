@@ -337,7 +337,7 @@ Example response:
         'cached_until': 1470922537,  # Time in seconds since the epoch
     }
 
-The response can include the folowing keys
+The response can include the following keys
 
 **cached_until**
 
@@ -423,7 +423,7 @@ Whilst most modules return a simple response eg:
 Sometimes it is useful to provide a more complex, composite response.  A
 composite is made up of more than one simple response which allows for example
 a response that has multiple colors.  Different parts of the response can also
-be differentiated between when a click event occures and so allow clicking on
+be differentiated between when a click event occurs and so allow clicking on
 different parts of the response to have different outcomes.  The different
 parts of the composite will not have separators between them in the output so
 they will appear as a single module to the user.
@@ -451,19 +451,46 @@ Supplied index values should be strings.  If no index is given then it will
 have an integer value indicating its position in the composite.
 
 
+Module data storage
+-------------------
+
+Py3status allows modules to maintain state through the use of the storage
+functions of the Py3 helper.
+
+Currently bool, int, float, None, unicode, dicts, lists, datetimes etc are
+supported.  Basically anything that can be pickled.  We do our best to ensure
+that the resulting pickles are compatible with both python versions 2 and 3.
+
+The following helper functions are defined in the modules :ref:`py3`.
+
+These functions may return ``None`` if storage is not available as well as some
+metadata such as storage creation timestamp ``_ctime`` and
+last modification timestamp ``_mtime``.
+
+Example:
+
+.. code-block:: python
+
+    def module_function(self):
+        # set some storage
+        self.py3.storage_set('my_key', value)
+        # get the value or None if key not present
+        value = self.py3.storage_get('my_key')
+
+
 Module documentation
 --------------------
 
 All contributed modules should have correct documentation.  This documentation
 is in a specific format and is used to generate user documentation.
 
-The docsting of a module is used.  The format is as follows:
+The docstring of a module is used.  The format is as follows:
 
 - Single line description of the module followed by a single blank line.
 
 - Longer description of the module providing more detail.
 
-- Configuration parameters.  This section describes the user setable
+- Configuration parameters.  This section describes the user settable
   parameters for the module.  All parameters should be listed (in alphabetical
   order). default values should be given in parentheses eg ``(default 7)``.
 
@@ -476,9 +503,9 @@ The docsting of a module is used.  The format is as follows:
   module uses.
 
 - Requires.  A list of all the additional requirements for the module to work.
-  These may be command line utilities, python librarys etc.
+  These may be command line utilities, python libraries etc.
 
-- Example.  Example configerations for the module can be given.
+- Example.  Example configurations for the module can be given.
 
 - Author and license.  Finally information on the modules author and a license
   can be provided.
@@ -750,7 +777,7 @@ placeholders for user configurations.
 Module testing
 --------------
 
-Each module should be able to run independantly for testing purposes.
+Each module should be able to run independently for testing purposes.
 This is simply done by adding the following code to the bottom of your module.
 
 .. code-block:: python

@@ -31,6 +31,7 @@ class Module:
         self.click_events = False
         self.config = py3_wrapper.config
         self.disabled = False
+        self.enabled = False
         self.error_messages = None
         self.error_hide = False
         self.has_post_config_hook = False
@@ -144,6 +145,7 @@ class Module:
                 msg = 'Exception in `%s` post_config_hook()' % self.module_full_name
                 self._py3_wrapper.report_exception(msg, notify_user=False)
                 self._py3_wrapper.log('terminating module %s' % self.module_full_name)
+        self.enabled = True
 
     def runtime_error(self, msg, method):
         """
@@ -213,16 +215,17 @@ class Module:
         """
         Start the module running.
         """
+        self.prepare_module()
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
             self._py3_wrapper.log('starting module %s' % self.module_full_name)
-            self._py3_wrapper.timeout_queue_add_module(self)
+            self._py3_wrapper.timeout_queue_add(self)
 
     def force_update(self):
         """
         Forces an update of the module.
         """
-        if self.disabled or self.terminated:
+        if self.disabled or self.terminated or not self.enabled:
             return
         # clear cached_until for each method to allow update
         for meth in self.methods:
@@ -230,7 +233,7 @@ class Module:
             if self.config['debug']:
                 self._py3_wrapper.log('clearing cache for method {}'.format(meth))
         # set module to update
-        self._py3_wrapper.timeout_queue_add_module(self)
+        self._py3_wrapper.timeout_queue_add(self)
 
     def sleep(self):
         self.sleeping = True
@@ -254,7 +257,7 @@ class Module:
         if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        self._py3_wrapper.timeout_queue_add_module(self, self.cache_time)
+        self._py3_wrapper.timeout_queue_add(self, self.cache_time)
 
     def set_updated(self):
         """
@@ -840,7 +843,7 @@ class Module:
             if not cache_time:
                 cache_time = time() + self.config['minimum_interval']
 
-            self._py3_wrapper.timeout_queue_add_module(self, cache_time)
+            self._py3_wrapper.timeout_queue_add(self, cache_time)
 
     def kill(self):
         # check and execute the 'kill' method if present

@@ -2,7 +2,7 @@
 """
 Display foreign exchange rates.
 
-The exchange rate data comes from Yahoo Finance.
+The exchange rate data comes from https://www.mycurrency.net/service/rates
 
 For a list of three letter currency codes please see
 https://en.wikipedia.org/wiki/ISO_4217 NOTE: Not all listed currencies may be
@@ -20,12 +20,11 @@ Configuration parameters:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': u'$1.0617 \xa30.8841 \xa5121.5380'}
+{'full_text': u'$1.061 \xa30.884 \xa5121.538'}
 """
 
-URL = 'http://query.yahooapis.com/v1/public/yql?'
-URL += 'q=select * from yahoo.finance.xchange where pair in ({currencies})'
-URL += '&env=store://datatables.org/alltableswithkeys&format=json'
+URL = 'https://www.mycurrency.net/service/rates'
+UA = 'Mozilla/5.0 py3status'
 
 
 class Py3status:
@@ -39,31 +38,33 @@ class Py3status:
     def post_config_hook(self):
         self.request_timeout = 20
         self.currencies = self.py3.get_placeholders_list(self.format)
-        # create url
-        currencies = ['"%s%s"' % (self.base, cur) for cur in self.currencies]
-        self.data_url = URL.format(currencies=','.join(currencies))
-        # cache for rates data as sometimes we do not receive valid data
+        # set the default precision
+        default_formats = {x: ':.3f' for x in self.currencies}
+        self.format = self.py3.update_placeholder_formats(
+            self.format, default_formats
+        )
         self.rates_data = {currency: '?' for currency in self.currencies}
+        self.headers = {'User-Agent': UA}
 
     def rates(self):
         try:
-            result = self.py3.request(self.data_url, timeout=self.request_timeout)
-        except (self.py3.RequestException):
+            result = self.py3.request(
+                URL, timeout=self.request_timeout, headers=self.headers
+            )
+        except self.py3.RequestException:
             result = None
-        rates = []
+        rates = {}
         if result:
             data = result.json()
-            try:
-                rates = data['query']['results']['rate']
-            except (KeyError, TypeError):
-                pass
-
-        # Single currency is not passed as a 1 element list
-        if isinstance(rates, list):
-            for rate in rates:
-                self.rates_data[rate['id'][3:]] = rate['Rate']
-        else:
-            self.rates_data[rates['id'][3:]] = rates['Rate']
+            for item in data:
+                rates[item['currency_code']] = item['rate']
+            base_rate = 1.0 / rates.get(self.base)
+            for currency in self.currencies:
+                try:
+                    rate = rates[currency] * base_rate
+                except:
+                    rate = '?'
+                self.rates_data[currency] = rate
 
         return {
             'full_text': self.py3.safe_format(self.format, self.rates_data),
