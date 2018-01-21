@@ -112,7 +112,7 @@ class Py3status:
     thresholds = [(-100, 'bad'), (0, 'good')]
 
     def post_config_hook(self):
-        self.first_run = self.first_use = True
+        self.first_use = True
         self.convert = self.limit = None
         self.url = self.reset_url = 'https://api.coinmarketcap.com/v1/ticker/'
         self.request_timeout = 10
@@ -191,7 +191,7 @@ class Py3status:
 
         # first_use bad? the user entered bad markets. stop here (error).
         # otherwise, make a limit for first time on 1000+ coins.
-        if self.first_use:
+        if data and self.first_use:
             self.first_use = False
             if not is_equal:
                 self.py3.error('bad markets')
@@ -233,24 +233,18 @@ class Py3status:
         return new_data
 
     def coin_market(self):
-        data = []
-        if self.first_run:
-            self.first_run = False
-            cached_until = 0
-        else:
-            # first 1000+ coins (then %s coins)
-            cached_until = self.cache_timeout
-            coin_data = self._get_coin_data()
-            if not self.limit:
-                # strip, compare, and maybe update again
-                coin_data = self._organize_data(coin_data)
-            data = self._manipulate_data(coin_data)
+        # first 1000+ coins (then %s coins)
+        coin_data = self._get_coin_data()
+        if not self.limit:
+            # strip, compare, and maybe update again
+            coin_data = self._organize_data(coin_data)
+        data = self._manipulate_data(coin_data)
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_coin = self.py3.composite_join(format_separator, data)
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
                 self.format, {'format_coin': format_coin})
         }
