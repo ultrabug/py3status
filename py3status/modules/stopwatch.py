@@ -2,15 +2,13 @@
 """
 A simple stopwatch.
 
-This is a very basic stopwatch. You can start, pause and reset the
-stopwatch.
-
-Button 1 starts/pauses the stopwatch.
-Button 3 resets stopwatch.
+This module is able to start tracking the amount of time elapsed
+when activated through a mouse click. The stopwatch can also be
+paused, resumed and with a different mouse button, reset to zero.
 
 Configuration parameters:
-    button_reset: button event id to reset the stopwatch (default 3)
-    button_toggle: button event id to start/pause the stopwatch (default 1)
+    button_reset: mouse button to reset the stopwatch (default 3)
+    button_toggle: mouse button to start/stop the stopwatch (default 1)
     format: display format for this module (default 'Stopwatch {stopwatch}')
 
 Format placeholders:
@@ -19,7 +17,7 @@ Format placeholders:
 @author Jonas Heinrich
 
 SAMPLE OUTPUT
-{'full_text': 'Stopwatch 0:01:00'}
+{'full_text': 'Stopwatch 0:00:00'}
 
 running
 [
@@ -38,7 +36,7 @@ paused
     {'full_text': ':'},
     {'color': '#FFFF00', 'full_text': '00'},
     {'full_text': ':'},
-    {'color': '#FFFF00', 'full_text': '54'},
+    {'color': '#FFFF00', 'full_text': '58'},
 ]
 """
 
@@ -128,10 +126,11 @@ class Py3status:
                     self.time_start = int(time() - self.time_state)
                 else:
                     self.time_start = time()
-
-        if button == self.button_reset:
+        elif button == self.button_reset:
             # reset and pause stopwatch
             self._reset_time()
+        else:
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
