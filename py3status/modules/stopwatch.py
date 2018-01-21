@@ -7,7 +7,7 @@ when activated through a mouse click. The stopwatch can also be
 paused, resumed and with a different mouse button, reset to zero.
 
 Configuration parameters:
-    button_reset: mouse button to reset the stopwatch (default 3)
+    button_reset: mouse button to reset the stopwatch (default 2)
     button_toggle: mouse button to start/stop the stopwatch (default 1)
     format: display format for this module (default 'Stopwatch {stopwatch}')
 
@@ -47,7 +47,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_reset = 3
+    button_reset = 2
     button_toggle = 1
     format = 'Stopwatch {stopwatch}'
 
@@ -117,7 +117,7 @@ class Py3status:
                 self.running = False
                 self.paused = True
                 self.time_state = int(time() - self.time_start)
-                self.color = self.py3.COLOR_BAD
+                self.color = self.py3.COLOR_DEGRADED
             else:
                 self.color = self.py3.COLOR_GOOD
                 self.running = True
