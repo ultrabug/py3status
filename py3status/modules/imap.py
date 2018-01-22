@@ -196,8 +196,7 @@ class Py3status:
 
             while True:
                 response = _timeoutread(socket, 4096, self.cache_timeout)
-                if response is None:
-                    self.py3.log("IDLE timed out")
+                if response is None:  # IDLE timed out
                     break
                 else:
                     response = response.decode('ascii')
