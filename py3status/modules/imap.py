@@ -181,7 +181,7 @@ class Py3status:
                     if response.lower().startswith('* OK'.lower()):
                         continue  # don't terminate on continuation message
                 except socket_error:
-                    break # IDLE timed out
+                    break  # IDLE timed out
                 break
 
         finally:
