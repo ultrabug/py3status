@@ -94,7 +94,8 @@ class Py3status:
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         if self.mail_error is not None:
             self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
-            self.py3.error(self.mail_error, timeout=self.py3.CACHE_FOREVER)
+            self.mail_error = None
+            self.py3.error(self.mail_error)
 
         # II -- format response
         if self.mail_count is None:
@@ -138,6 +139,8 @@ class Py3status:
         if self.use_idle is None:
             self._check_if_idle(self.connection)
 
+        self.connection.socket().settimeout(self.cache_timeout)
+
     def _disconnect(self):
         try:
             if self.connection is not None:
@@ -153,30 +156,8 @@ class Py3status:
         """
         since imaplib doesn't support IMAP4r1 IDLE, we'll do it by hand
         """
-        def _timeoutread(socket, count, timeout):
-            """
-            a wrapper around select(2) and read(2), so we don't have to worry about
-            dropping network connections; returns the data read or None on timeout
-            """
-            from select import select
-
-            socket.settimeout(timeout)
-            socket.setblocking(0)
-
-            if timeout > 0:
-                ready = select([socket], [], [], timeout)
-            else:
-                ready = select([socket], [], [])
-
-            socket.setblocking(1)
-
-            if ready[0]:
-                response = socket.read(count)
-                return response
-            else:
-                return None
-
         socket = None
+
         try:
             self.command_tag = (self.command_tag + 1) % 1000
             command_tag = b'X'+bytes(str(self.command_tag).zfill(3), encoding='ascii')
@@ -186,39 +167,38 @@ class Py3status:
             socket = self.connection.socket()
 
             socket.write(command_tag + b' IDLE\r\n')
-            response = _timeoutread(socket, 4096, 5)
-            if response is None:
+            try:
+                response = socket.read(4096).decode('ascii')
+            except socket_error:
                 raise imaplib.IMAP4.error(
                     "While initializing IDLE: server didn't respond to 'IDLE' in time")
-            response = response.decode('ascii')
             if not response.lower().startswith('+ idling'):
                 raise imaplib.IMAP4.error("While initializing IDLE: " + str(response))
 
             while True:
-                response = _timeoutread(socket, 4096, self.cache_timeout)
-                if response is None:  # IDLE timed out
-                    break
-                else:
-                    response = response.decode('ascii')
+                try:
+                    response = socket.read(4096).decode('ascii')
                     if response.lower().startswith('* OK'.lower()):
                         continue  # don't terminate on continuation message
-                    else:
-                        break
+                except socket_error:
+                    break # IDLE timed out
+                break
 
         finally:
             if socket is None:
                 return
             socket.write(b'DONE\r\n')  # important!
-            response = _timeoutread(socket, 4096, 5)
-            if response is None:
+            try:
+                response = socket.read(4096).decode('ascii')
+            except socket_error:
                 raise imaplib.IMAP4.abort(
                     "While terminating IDLE: server didn't respond to 'DONE' in time")
-            response = response.decode(encoding='ascii')
             expected_response = (command_tag + b' OK Idle completed').decode(encoding='ascii')
             if response.lower().startswith('* '.lower()):  # '* OK Still here', mostly
                 # sometimes, more messages come in between reading and DONEing; so read them again
-                response = _timeoutread(socket, 4096, 5)
-                if response is None:
+                try:
+                    response = socket.read(4096).decode('ascii')
+                except socket_error:
                     raise imaplib.IMAP4.abort(
                         "While terminating IDLE: server didn't respond to 'DONE' in time")
                 response = response.decode(encoding='ascii')
