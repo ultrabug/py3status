@@ -201,7 +201,6 @@ class Py3status:
                 except socket_error:
                     raise imaplib.IMAP4.abort(
                         "While terminating IDLE: server didn't respond to 'DONE' in time")
-                response = response.decode(encoding='ascii')
             if not response.lower().startswith(expected_response.lower()):
                 raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
 
