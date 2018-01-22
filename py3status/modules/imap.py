@@ -183,13 +183,16 @@ class Py3status:
             while True:
                 try:
                     response = socket.read(4096).decode('ascii')
-                    if not response.upper().startswith('* OK'): break
-                    else: continue  # ignore '* OK Still here'
+                    if response.upper().startswith('* OK'):
+                        continue  # ignore '* OK Still here'
+                    else:
+                        break
                 except socket_error:  # IDLE timed out
                     break
 
         finally:  # terminate IDLE command gracefully
-            if socket is None: return
+            if socket is None:
+                return
 
             socket.write(b'DONE\r\n')  # important! Can't query IMAP again otherwise
             try:
