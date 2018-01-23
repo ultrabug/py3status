@@ -62,7 +62,6 @@ class Py3status:
         self.color = None
 
     def stopwatch(self):
-
         if self.running:
             cached_until = self.py3.time_in(0, offset=1)
             t = int(time() - self.time_start)
@@ -77,35 +76,14 @@ class Py3status:
         minutes, t = divmod(t, 60)
         seconds = t
 
-        composites = [
-            {
-                'full_text': str(hours),
-                'color': self.color,
-            },
-            {
-                'color': self.color,
-                'full_text': ':',
-            },
-            {
-                'full_text': '%02d' % (minutes),
-                'color': self.color,
-            },
-            {
-                'color': self.color,
-                'full_text': ':',
-            },
-            {
-                'full_text': '%02d' % (seconds),
-                'color': self.color,
-            },
-        ]
-
-        stopwatch = self.py3.composite_create(composites)
+        stopwatch = self.py3.safe_format('\?color=%s %d:%02d:%02d' % (
+            self.color, hours, minutes, seconds))
 
         return {
             'cached_until': cached_until,
             'full_text': self.py3.safe_format(
-                self.format, {'stopwatch': stopwatch})
+                self.format, {'stopwatch': stopwatch}
+            )
         }
 
     def on_click(self, event):
