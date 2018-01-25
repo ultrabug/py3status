@@ -11,6 +11,7 @@ Configuration parameters:
     mailbox: name of the mailbox to check (default 'INBOX')
     password: login password (default None)
     port: number to use (default '993')
+    read_timeout: timeout for read(2) syscalls (default: 5)
     security: login authentication method: 'ssl' or 'starttls'
         (startssl needs python 3.2 or later) (default 'ssl')
     server: server to connect (default None)
@@ -50,6 +51,7 @@ class Py3status:
     mailbox = 'INBOX'
     password = None
     port = '993'
+    read_timeout = 5
     security = 'ssl'
     server = None
     use_idle = None
@@ -86,7 +88,7 @@ class Py3status:
         # I -- acquire mail_count
         if self.use_idle is not False:
             if not self.idle_thread.is_alive():
-                sleep(5)  # rate-limit thread-restarting (when network is offline)
+                sleep(self.read_timeout)  # rate-limit thread-restarting (when network is offline)
                 self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
                 self.idle_thread.start()
         else:
@@ -140,7 +142,7 @@ class Py3status:
             self._check_if_idle(self.connection)
 
         # trigger a socket.timeout if any IMAP request isn't completed in time:
-        self.connection.socket().settimeout(self.cache_timeout)
+        self.connection.socket().settimeout(self.read_timeout)
 
     def _disconnect(self):
         try:
@@ -180,6 +182,7 @@ class Py3status:
                 raise imaplib.IMAP4.abort("While initializing IDLE: " + str(response))
 
             # wait for changes (EXISTS, EXPUNGE, etc.):
+            socket.settimeout(self.cache_timeout)
             while True:
                 try:
                     response = socket.read(4096).decode('ascii')
@@ -194,6 +197,7 @@ class Py3status:
             if socket is None:
                 return
 
+            socket.settimeout(self.read_timeout)
             socket.write(b'DONE\r\n')  # important! Can't query IMAP again otherwise
             try:
                 response = socket.read(4096).decode('ascii')
