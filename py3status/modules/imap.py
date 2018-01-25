@@ -11,7 +11,7 @@ Configuration parameters:
     mailbox: name of the mailbox to check (default 'INBOX')
     password: login password (default None)
     port: number to use (default '993')
-    read_timeout: timeout for read(2) syscalls (default: 5)
+    read_timeout: timeout for read(2) syscalls (default 5)
     security: login authentication method: 'ssl' or 'starttls'
         (startssl needs python 3.2 or later) (default 'ssl')
     server: server to connect (default None)
