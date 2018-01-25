@@ -6,6 +6,7 @@ Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
     cache_timeout: refresh interval for this module (default 60)
     criterion: status of emails to check for (default 'UNSEEN')
+    debug: log warnings (default False)
     format: display format for this module (default 'Mail: {unseen}')
     hide_if_zero: hide this module when no new mail (default False)
     mailbox: name of the mailbox to check (default 'INBOX')
@@ -46,6 +47,7 @@ class Py3status:
     allow_urgent = False
     cache_timeout = 60
     criterion = 'UNSEEN'
+    debug = False
     format = 'Mail: {unseen}'
     hide_if_zero = False
     mailbox = 'INBOX'
@@ -79,7 +81,7 @@ class Py3status:
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
         self.command_tag = 0  # IMAPcommands are tagged, so responses can be matched up to requests
-        self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
+        self.idle_thread = Thread()
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -89,7 +91,8 @@ class Py3status:
         if self.use_idle is not False:
             if not self.idle_thread.is_alive():
                 sleep(self.read_timeout)  # rate-limit thread-restarting (when network is offline)
-                self.idle_thread = Thread(target=self._get_mail_count, daemon=True)
+                self.idle_thread = Thread(target=self._get_mail_count)
+                self.idle_thread.daemon = True
                 self.idle_thread.start()
         else:
             self._get_mail_count()
@@ -125,11 +128,11 @@ class Py3status:
             self.py3.error("Server does not support IDLE")
 
     def _connection_ssl(self):
-        connection = imaplib.IMAP4_SSL(self.server, self.port)
+        connection = imaplib.IMAP4_SSL(self.server, int(self.port))
         return connection
 
     def _connection_starttls(self):
-        connection = imaplib.IMAP4(self.server, self.port)
+        connection = imaplib.IMAP4(self.server, int(self.port))
         connection.starttls(create_default_context())
         return connection
 
@@ -240,7 +243,8 @@ class Py3status:
                 else:
                     return
         except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
-            self.py3.log("Recoverable error - " + str(e), level=self.py3.LOG_WARNING)
+            if self.debug:
+                self.py3.log("Recoverable error - " + str(e), level=self.py3.LOG_WARNING)
             self._disconnect()
         except (imaplib.IMAP4.error, Exception) as e:
             self.mail_error = "Fatal error - " + str(e)
