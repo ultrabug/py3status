@@ -90,8 +90,6 @@ Using pip:
 
     $ pip install py3status
 
-Note: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
-
 Gentoo Linux
 ------------
 Using emerge:
@@ -141,6 +139,20 @@ If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want
 
 In this example I included the python packages **pytz** and **tzlocal** which are necessary for the py3status module **clock**.
 The default packages that come with i3 (dmenu, i3status, i3lock) have to be mentioned if they should still be there.
+
+Debian/Ubuntu
+-------------
+Packaged by @sdelafond, and available via apt-get:
+::
+
+    $ apt-get install py3status
+
+For now it's only in testing and unstable, but will soon be added to
+stable-backports.
+
+Note: if you want to use pip, you should consider using *pypi-install*
+from the *python-stdeb* package (which will create a .deb out from a
+python package) instead of directly calling pip.
 
 Options
 =======

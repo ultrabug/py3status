@@ -48,7 +48,9 @@ Installation
 +                   +-------------------------------+-------------------------------------+
 |                   |``$ pacaur -S py3status-git``  |Real-time updates from master branch.|
 +-------------------+-------------------------------+-------------------------------------+
-|**Debian & Ubuntu**|``$ pypi-install py3status``   |Usually in `python-stdeb` package.   |
+|**Debian & Ubuntu**|``$ apt-get install py3status``|Stable updates.                      |
+|                   |                               |In testing and unstable, and soon in |
+|                   |                               |stable backports.                    |
 +-------------------+-------------------------------+-------------------------------------+
 |**Fedora**         |``$ dnf install py3status``    |                                     |
 +-------------------+-------------------------------+-------------------------------------+
