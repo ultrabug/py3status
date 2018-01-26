@@ -30,7 +30,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    filter = 'start.before:today status:pending'
+    filter = 'status:pending'
     format = '{task}'
 
     def post_config_hook(self):
