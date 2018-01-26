@@ -45,7 +45,6 @@ class Py3status:
             task_command = 'task %s export' % self.filter
         else:
             task_command = 'task export'
-        task_command = 'task %s export' % filter
         task_json = json.loads(self.py3.command_output(task_command))
         task_result = ', '.join(map(describeTask, task_json))
         return {
