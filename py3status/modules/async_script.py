@@ -14,7 +14,6 @@ Configuration parameters:
     color_on_even_lines: if true, skips every second line of output and
         uses its content as color (default False)
     format: see placeholders below (default '{output}')
-    restart_on_exit: restarts the script when it exits (default: True)
     script_path: script you want to show output of (compulsory)
         (default None)
     strip_output: shall we strip leading and trailing spaces from output
@@ -42,6 +41,7 @@ example
 """
 
 import re
+import shlex, subprocess
 from threading import Thread
 from time import sleep
 STRING_ERROR = 'missing script_path'
@@ -53,7 +53,6 @@ class Py3status:
     # available configuration parameters
     color_on_even_lines = False
     format = '{output}'
-    restart_on_exit = True  # TODO
     script_path = None
     strip_output = False
 
@@ -67,9 +66,8 @@ class Py3status:
             raise Exception(STRING_ERROR)
 
     def external_script(self):
-        sleep(.1)
         response = {}
-        response['cached_until'] = self.py3.time_in(self.py3.CACHE_FOREVER)
+        response['cached_until'] = self.py3.CACHE_FOREVER
 
         if not self.command_thread.is_alive():
             self.command_thread = Thread(target=self._command_start)
@@ -79,19 +77,17 @@ class Py3status:
         if self.command_color is not None:
             response['color'] = self.command_color
 
-        if self.command_output is not None:
-            response['full_text'] = self.py3.safe_format(
-                self.format, {'output': self.command_output})
+        response['full_text'] = self.py3.safe_format(
+            self.format, {'output': self.command_output})
         return response
 
     def _command_start(self):
-        # start application, update self.command_output
-        # restart if self.restart_on_exit, save color if self.color_on_even_lines
-
-        import shlex, subprocess
         command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
         try:
           while True:
+            if command.poll() is not None:
+                self.py3.log('restart')
+                command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
             output = command.stdout.readline().decode()
             self.command_output = output.strip()
             if self.color_on_even_lines:
