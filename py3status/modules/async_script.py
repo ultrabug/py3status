@@ -40,7 +40,7 @@ example
 
 import re
 import shlex
-import subprocess
+from subprocess import Popen, PIPE
 from threading import Thread
 
 
@@ -78,16 +78,15 @@ class Py3status:
         if self.command_color is not None:
             response['color'] = self.command_color
 
-        response['full_text'] = self.py3.safe_format(
-            self.format, {'output': self.command_output})
+        response['full_text'] = self.py3.safe_format(self.format, {'output': self.command_output})
         return response
 
     def _command_start(self):
         try:
-            command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
+            command = Popen(shlex.split(self.script_path), stdout=PIPE)
             while True:
                 if command.poll() is not None:  # script has exited/died; restart it
-                  command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
+                    command = Popen(shlex.split(self.script_path), stdout=PIPE)
 
                 output = command.stdout.readline().decode().strip()
 
