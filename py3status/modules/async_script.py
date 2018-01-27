@@ -3,16 +3,14 @@
 Display output of a given script, updating the display when new lines
 come in.
 
-TODO:rewrite Display output of any executable script set by `script_path`.
-Only the first two lines of output will be used. The first line is used
-as the displayed text. If the output has two or more lines, the second
-line is set as the text color (and should hence be a valid hex color
-code such as #FF0000 for red).
-The script should not have any parameters, but it could work.
+Always displays the last line of output from a given script, set by
+`script_path`. If a line contains only a color (/^#[0-F]{6}$/), it is
+used as such (set force_nocolor to disable).
+The script may have parameters.
 
 Configuration parameters:
-    color_on_even_lines: if true, skips every second line of output and
-        uses its content as color (default False)
+    force_nocolor: if true, won't check if a line contains color
+        (default False)
     format: see placeholders below (default '{output}')
     script_path: script you want to show output of (compulsory)
         (default None)
@@ -27,11 +25,11 @@ i3status.conf example:
 ```
 external_script {
     format = "{output}"
-    script_path = "/usr/bin/dmesg"
+    script_path = "ping 127.0.0.1"
 }
 ```
 
-@author frimdo ztracenastopa@centrum.cz
+@author frimdo ztracenastopa@centrum.cz, girst
 
 SAMPLE OUTPUT
 {'full_text': 'script output'}
@@ -44,14 +42,13 @@ import re
 import shlex, subprocess
 from threading import Thread
 from time import sleep
-STRING_ERROR = 'missing script_path'
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    color_on_even_lines = False
+    force_nocolor = False
     format = '{output}'
     script_path = None
     strip_output = False
@@ -61,14 +58,19 @@ class Py3status:
         self.command_thread = Thread()
         self.command_output = None
         self.command_color = None
+        self.command_error = None  # cannot throw self.py3.error from thread
 
         if not self.script_path:
-            raise Exception(STRING_ERROR)
+            self.py3.error ("script_path is mandatory")
 
     def external_script(self):
+        self.py3.log("bar")
         response = {}
         response['cached_until'] = self.py3.CACHE_FOREVER
 
+        if self.command_error is not None:
+            self.py3.log(self.command_error, level=self.py3.LOG_ERROR)
+            self.py3.error(self.command_error, timeout=self.py3.CACHE_FOREVER)
         if not self.command_thread.is_alive():
             self.command_thread = Thread(target=self._command_start)
             self.command_thread.daemon = True
@@ -82,25 +84,22 @@ class Py3status:
         return response
 
     def _command_start(self):
-        command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
         try:
-          while True:
-            if command.poll() is not None:
-                self.py3.log('restart')
-                command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
-            output = command.stdout.readline().decode()
-            self.command_output = output.strip()
-            if self.color_on_even_lines:
-                output = command.stdout.readline().decode()
-                if re.search(r'^#[0-9a-fA-F]{6}$', output):
+            command=subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
+            while True:
+                if command.poll() is not None:  # script has exited/died; restart it
+                    command=subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
+
+                output = command.stdout.readline().decode().strip()
+
+                if re.search(r'^#[0-9a-fA-F]{6}$', output) and not self.force_nocolor:
                     self.command_color = output
                 else:
-                    self.command_color = None
-                    self.command_output = output.strip()
-            self.py3.update()
-            sleep(.1)
+                    self.command_output = output
+                    self.py3.update()
         except Exception as e:
-            self.py3.log(str(e))
+            self.command_error = str(e)
+            self.py3.update()
 
 if __name__ == "__main__":
     """
