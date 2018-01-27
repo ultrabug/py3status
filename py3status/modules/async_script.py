@@ -39,9 +39,9 @@ example
 """
 
 import re
-import shlex, subprocess
+import shlex
+import subprocess
 from threading import Thread
-from time import sleep
 
 
 class Py3status:
@@ -61,7 +61,7 @@ class Py3status:
         self.command_error = None  # cannot throw self.py3.error from thread
 
         if not self.script_path:
-            self.py3.error ("script_path is mandatory")
+            self.py3.error("script_path is mandatory")
 
     def external_script(self):
         response = {}
@@ -84,10 +84,10 @@ class Py3status:
 
     def _command_start(self):
         try:
-            command=subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
+            command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
             while True:
                 if command.poll() is not None:  # script has exited/died; restart it
-                    command=subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
+                  command = subprocess.Popen(shlex.split(self.script_path), stdout=subprocess.PIPE)
 
                 output = command.stdout.readline().decode().strip()
 
@@ -100,9 +100,10 @@ class Py3status:
             self.command_error = str(e)
             self.py3.update()
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
-    module_test(Py3status, config={'script_path':'ping 127.0.0.1'})
+    module_test(Py3status, config={'script_path': 'ping 127.0.0.1'})
