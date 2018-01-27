@@ -64,7 +64,6 @@ class Py3status:
             self.py3.error ("script_path is mandatory")
 
     def external_script(self):
-        self.py3.log("bar")
         response = {}
         response['cached_until'] = self.py3.CACHE_FOREVER
 
