@@ -43,6 +43,7 @@ example
 
 import re
 from threading import Thread
+from time import sleep
 STRING_ERROR = 'missing script_path'
 
 
@@ -50,7 +51,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    color_on_even_lines = False  # TODO
+    color_on_even_lines = False
     format = '{output}'
     restart_on_exit = True  # TODO
     script_path = None
@@ -60,11 +61,13 @@ class Py3status:
         # class variables:
         self.command_thread = Thread()
         self.command_output = None
+        self.command_color = None
 
         if not self.script_path:
             raise Exception(STRING_ERROR)
 
     def external_script(self):
+        sleep(.1)
         response = {}
         response['cached_until'] = self.py3.time_in(self.py3.CACHE_FOREVER)
 
@@ -72,18 +75,13 @@ class Py3status:
             self.command_thread = Thread(target=self._command_start)
             self.command_thread.daemon = True
             self.command_thread.start()
-        #if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
-        #    response['color'] = output_color
 
-        #if self.command_output is not None:
-        #    output_text = output_lines[-1]
-        #    if self.strip_output:
-        #        output_text = output_text.strip()
-        #else:
-        #    output_text = ''
+        if self.command_color is not None:
+            response['color'] = self.command_color
 
-        response['full_text'] = self.py3.safe_format(
-            self.format, {'output': self.command_output})
+        if self.command_output is not None:
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'output': self.command_output})
         return response
 
     def _command_start(self):
@@ -95,9 +93,16 @@ class Py3status:
         try:
           while True:
             output = command.stdout.readline().decode()
-            self.py3.log(output)
-            self.command_output = output[-1]
+            self.command_output = output.strip()
+            if self.color_on_even_lines:
+                output = command.stdout.readline().decode()
+                if re.search(r'^#[0-9a-fA-F]{6}$', output):
+                    self.command_color = output
+                else:
+                    self.command_color = None
+                    self.command_output = output.strip()
             self.py3.update()
+            sleep(.1)
         except Exception as e:
             self.py3.log(str(e))
 
@@ -106,4 +111,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-    module_test(Py3status)
+    module_test(Py3status, config={'script_path':'ping 127.0.0.1'})
