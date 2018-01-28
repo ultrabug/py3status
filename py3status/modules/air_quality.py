@@ -24,12 +24,12 @@ Configuration parameters:
         For best results, use uid instead of name in location, eg `@8691`.
         (default 'Shanghai')
     quality_thresholds: specify a list of tuples, eg (number, 'color', 'name')
-        (default [(0, '#009966', 'Good'),
-            (51, '#ffde33', 'Moderate'),
-            (101, '#ff9933', 'Sensitively Unhealthy'),
-            (151, '#cc0033', 'Unhealthy'),
+        *(default [(0, '#009966', 'Good'),
+            (51, '#FFDE33', 'Moderate'),
+            (101, '#FF9933', 'Sensitively Unhealthy'),
+            (151, '#CC0033', 'Unhealthy'),
             (201, '#660099', 'Very Unhealthy'),
-            (301, '#7e0023', 'Hazardous')])
+            (301, '#7E0023', 'Hazardous')])*
 
 Format placeholders:
     {aqi} air quality index

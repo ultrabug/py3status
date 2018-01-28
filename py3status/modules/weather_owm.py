@@ -300,12 +300,9 @@ THRESHOLDS_ALL = 'all'
 THRESHOLDS_NAMES = set([THRESHOLDS_ALL, 'current', 'min', 'max'])
 
 # Thresholds defaults
-THRESHOLDS = dict([(THRESHOLDS_ALL, [
-    (-100, '#0FF'),
-    (0, '#00F'),
-    (50, '#0F0'),
-    (150, '#FF0')
-])])
+THRESHOLDS = {
+    'all': [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')]
+}
 
 
 class OWMException(Exception):
