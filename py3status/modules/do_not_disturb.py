@@ -16,9 +16,9 @@ Configuration parameters:
     state_on: Message when the "Do Not Disturb" mode is enabled.
         (default 'ON')
     signal_off: Signal to send to the process to disable "Do Not Distrub"
-        (default '-SIGTERM')
+        (default 'SIGTERM')
     signal_on: Signal to send to the process to enable "Do Not Distrub"
-        (default '-SIGUSR1')
+        (default 'SIGUSR1')
 
 Color options:
     color_bad: "Do Not Disturb" mode is enabled.
@@ -48,8 +48,8 @@ class Py3status:
     refresh_interval = 0.25
     state_off = 'OFF'
     state_on = 'ON'
-    signal_off = '-SIGTERM'
-    signal_on = '-SIGUSR1'
+    signal_off = 'SIGTERM'
+    signal_on = 'SIGUSR1'
 
     def post_config_hook(self):
         self.is_on = False
@@ -86,7 +86,7 @@ class Py3status:
         if event['button'] == 1:
             self.is_on = not self.is_on
             if self._is_dunst():
-                new_flag = self.signal_on if self.is_on else self.signal_off
+                new_flag = "--signal {}".format(self.signal_on if self.is_on else self.signal_off)
                 system("killall {} dunst".format(new_flag))
             else:
                 if self.is_on:
