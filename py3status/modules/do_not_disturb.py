@@ -11,14 +11,14 @@ Configuration parameters:
         (default 'dunst')
     refresh_interval: Refresh interval to use for killing notification manager process.
         (default 0.25)
-    state_off: Message when the "Do Not Disturb" mode is disabled.
-        (default 'OFF')
-    state_on: Message when the "Do Not Disturb" mode is enabled.
-        (default 'ON')
     signal_off: Signal to send to the process to disable "Do Not Distrub"
         (default 'SIGTERM')
     signal_on: Signal to send to the process to enable "Do Not Distrub"
         (default 'SIGUSR1')
+    state_off: Message when the "Do Not Disturb" mode is disabled.
+        (default 'OFF')
+    state_on: Message when the "Do Not Disturb" mode is enabled.
+        (default 'ON')
 
 Color options:
     color_bad: "Do Not Disturb" mode is enabled.
@@ -46,10 +46,10 @@ class Py3status:
     format = '{state}'
     notification_manager = 'dunst'
     refresh_interval = 0.25
-    state_off = 'OFF'
-    state_on = 'ON'
     signal_off = 'SIGTERM'
     signal_on = 'SIGUSR1'
+    state_off = 'OFF'
+    state_on = 'ON'
 
     def post_config_hook(self):
         self.is_on = False
