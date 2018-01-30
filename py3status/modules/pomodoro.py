@@ -10,13 +10,13 @@ Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
         (default False)
     format: define custom time format. See placeholders below (default '{ss}')
-    format_separator: separator between minutes:seconds (default ':')
     format_active: format to display when timer is active
         (default 'Pomodoro [{format}]')
     format_break: format to display during break
         (default 'Break #{breakno} [{format}]')
     format_break_stopped: format to display during a break that is stopped
         (default 'Break #{breakno} ({format})')
+    format_separator: separator between minutes:seconds (default ':')
     format_stopped: format to display when timer is stopped
         (default 'Pomodoro ({format})')
     max_breaks: maximum number of breaks (default 4)
@@ -124,8 +124,8 @@ class Py3status:
     format_active = u'Pomodoro [{format}]'
     format_break = u'Break #{breakno} [{format}]'
     format_break_stopped = u'Break #{breakno} ({format})'
-    format_stopped = u'Pomodoro ({format})'
     format_separator = u":"
+    format_stopped = u'Pomodoro ({format})'
     max_breaks = 4
     num_progress_bars = 5
     sound_break_end = None
