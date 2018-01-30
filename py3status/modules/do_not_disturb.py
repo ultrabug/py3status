@@ -86,7 +86,8 @@ class Py3status:
         if event['button'] == 1:
             self.is_on = not self.is_on
             if self._is_dunst():
-                new_flag = "--signal {}".format(self.dunst_signal_on if self.is_on else self.dunst_signal_off)
+                new_flag = "--signal {}".format(self.dunst_signal_on
+                        if self.is_on else self.dunst_signal_off)
                 system("killall {} dunst".format(new_flag))
             else:
                 if self.is_on:
