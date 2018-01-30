@@ -135,7 +135,6 @@ class Py3status:
         self._timer = None
         self._end_time = None
         self._player = Player()
-        self._format = 'Pomodoro {time}'
         self._alert = False
         if self.display_bar is True:
             self.format = u'{bar}'
@@ -155,7 +154,6 @@ class Py3status:
             self._time_left = self.timer_break
             self._section_time = self.timer_break
             self._break_number += 1
-            self._format = 'Break #{} {{time}}'.format(self._break_number)
             self._prefix = 'Break #{}'.format(self._break_number)
             if self._break_number > self.max_breaks:
                 self._time_left = self.timer_long_break
@@ -167,7 +165,6 @@ class Py3status:
                 self._play_sound(self.sound_break_end)
             self._time_left = self.timer_pomodoro
             self._section_time = self.timer_pomodoro
-            self._format = 'Pomodoro {time}'
             self._prefix = 'Pomodoro'
             self._active = True
 
