@@ -5,16 +5,16 @@ Turn on and off dbus notifications.
 A left mouse click will toggle the state of this module.
 
 Configuration parameters:
+    dunst_signal_off: Signal to send to the dunst process to disable "Do Not Distrub"
+        (default 'SIGTERM')
+    dunst_signal_on: Signal to send to the dunst process to enable "Do Not Distrub"
+        (default 'SIGUSR1')
     format: Display format for the "Do Not Disturb" module.
         (default '{state}')
     notification_manager: The process name of your notification manager.
         (default 'dunst')
     refresh_interval: Refresh interval to use for killing notification manager process.
         (default 0.25)
-    signal_off: Signal to send to the process to disable "Do Not Distrub"
-        (default 'SIGTERM')
-    signal_on: Signal to send to the process to enable "Do Not Distrub"
-        (default 'SIGUSR1')
     state_off: Message when the "Do Not Disturb" mode is disabled.
         (default 'OFF')
     state_on: Message when the "Do Not Disturb" mode is enabled.
@@ -43,11 +43,11 @@ class Py3status:
     """
     """
     # available configuration parameters
+    dunst_signal_off = 'SIGTERM'
+    dunst_signal_on = 'SIGUSR1'
     format = '{state}'
     notification_manager = 'dunst'
     refresh_interval = 0.25
-    signal_off = 'SIGTERM'
-    signal_on = 'SIGUSR1'
     state_off = 'OFF'
     state_on = 'ON'
 
@@ -86,7 +86,7 @@ class Py3status:
         if event['button'] == 1:
             self.is_on = not self.is_on
             if self._is_dunst():
-                new_flag = "--signal {}".format(self.signal_on if self.is_on else self.signal_off)
+                new_flag = "--signal {}".format(self.dunst_signal_on if self.is_on else self.dunst_signal_off)
                 system("killall {} dunst".format(new_flag))
             else:
                 if self.is_on:
