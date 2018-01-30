@@ -16,9 +16,9 @@ Configuration parameters:
     format_break: format to display during break
         (default 'Break #{breakno} [{format}]')
     format_break_stopped: format to display during a break that is stopped
-        (default 'Break #{breakno} ({format}')
-    format_stopped: format to display when timer is stopped (default
-        'Pomodoro ({format})')
+        (default 'Break #{breakno} ({format})')
+    format_stopped: format to display when timer is stopped
+        (default 'Pomodoro ({format})')
     max_breaks: maximum number of breaks (default 4)
     num_progress_bars: number of progress bars (default 5)
     sound_break_end: break end sound (file path) (requires pyglet
