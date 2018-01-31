@@ -65,6 +65,9 @@ Dynamic configuration parameters:
         Example: DP1_workspaces = "1,2,3"
     <OUTPUT>_rotate: rotate the output as told
         Example: DP1_rotate = "left"
+    <OUTPUT>_mode: define the mode (resolution) for the output
+                   if not specified use --auto : prefered mode
+        Example: eDP1_mode = "2560x1440
 
 Color options:
     color_bad: Displayed layout unavailable
