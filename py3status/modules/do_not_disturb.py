@@ -5,9 +5,9 @@ Turn on and off dbus notifications.
 A left mouse click will toggle the state of this module.
 
 Configuration parameters:
-    dunst_signal_off: Signal to send to the dunst process to disable "Do Not Distrub"
+    dunst_signal_off: Signal to send to the dunst process to disable "Do Not Disturb."
         (default 'SIGTERM')
-    dunst_signal_on: Signal to send to the dunst process to enable "Do Not Distrub"
+    dunst_signal_on: Signal to send to the dunst process to enable "Do Not Disturb."
         (default 'SIGUSR1')
     format: Display format for the "Do Not Disturb" module.
         (default '{state}')
