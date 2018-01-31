@@ -1,0 +1,144 @@
+# -*- coding: utf-8 -*-
+
+"""
+Emerge_status provides a short information on the current
+emerge status if there is an emerge process currently running
+
+Configuration parameters:
+    cache_timeout: how often we refresh this module in second (default 1)
+    emerge_log_file: in case it is placed somewhere else than the default
+        (default '/var/log/emerge.log')
+    format: Display format to user (default '{current} / {total}')
+    hide_if_zero: Don't show in bar if there is no emerge running (default True)
+
+    More format options:
+        Ex: '{current} / {total}'
+        Result: "3 / 14"
+        Ex: '{current} / {total} = {'
+        Result: "3 / 14 = py3status"
+        Ex: '{category} - {pkg}'
+        Result: "x11-misc - py3status"
+
+@author: AnwariasEu
+"""
+
+import os
+import re
+
+
+class Py3status:
+    """
+    """
+    cache_timeout = 1
+    emerge_log_file = '/var/log/emerge.log'
+    format = u'{current} / {total}'
+    hide_if_zero = True
+
+    def _emergeRunning(self):
+        """
+        Use pgrep to check if emerge is running.
+
+        Returns true if at least one instance of emerge is running.
+        """
+        tmp = os.popen("pgrep emerge").read()
+        pcount = tmp.count("\n")
+        if pcount > 0:
+            return True
+        else:
+            return False
+
+    def _getProgress(self):
+        """
+        Get current progress of emerge.
+
+        returns a dict containing current and total value.
+        """
+        ret = {}
+        ret['current'] = None
+        ret['total'] = None
+        ret['err'] = False
+        ret['err_text'] = ""
+        ret['category'] = None
+        ret['pkg'] = None
+
+        input_data = []
+
+        """
+        Try to open file, if unable throw error to be catched later
+        """
+        try:
+            with open(self.emerge_log_file, 'r') as fp:
+                for line in fp:
+                    input_data.append(line)
+        except IOError as err:
+            ret['err'] = True
+            ret['err_text'] = "Opening {} failed: {}" \
+                .format(self.emerge_log_file, err)
+            return ret
+
+        """
+        Traverse emerge.log from bottom up to get latest information
+        """
+
+        input_data.reverse()
+
+        for line in input_data:
+            terminated = re.search("\*\*\* terminating\.", line)
+            if terminated:
+                ret['current'] = "0"
+                ret['total'] = "0"
+                break
+            else:
+                match = re.search(">>> emerge.*", line)
+                if match:
+                    status_re = (
+                        "\((?P<current>[0-9]+) of (?P<total>[0-9]+)\) "
+                        "(?P<category>[a-zA-Z0-9\-]+)\/(?P<pkg>[a-zA-Z0-9\.]+)"
+                    )
+                    res = re.search(status_re, match.group())
+                    if res:
+                        ret['current'] = res.group('current')
+                        ret['total'] = res.group('total')
+                        ret['category'] = res.group('category')
+                        ret['pkg'] = res.group('pkg')
+                    else:
+                        ret['err'] = True
+                        ret['err_text'] = 'Regex did not match a line'
+                    break
+        return ret
+
+    def emerge_status(self):
+        """
+        Emerge Status main routine
+        """
+        response = {}
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        if self._emergeRunning():
+            self.ret = self._getProgress()
+            if self.ret['err']:
+                response['full_text'] = self.py3.safe_format(
+                    u"emerge_status error: {err_text}", self.ret['err_text'])
+            else:
+                response['full_text'] = self.py3.safe_format(
+                    self.format, self.ret)
+        else:
+            if self.hide_if_zero:
+                response['full_text'] = ""
+            else:
+                self.ret = {}
+                self.ret['current'] = "0"
+                self.ret['total'] = "0"
+                self.ret['category'] = ""
+                self.ret['pkg'] = ""
+                response['full_text'] = self.py3.safe_format(
+                    self.format, self.ret)
+
+        return response
+
+
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+    module_test(Py3status)
