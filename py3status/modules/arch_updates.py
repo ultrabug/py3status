@@ -8,11 +8,14 @@ also waiting.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
+    check_aur_cmd: Command to run to check AUR updates,
+        must print one line per update on STDOUT
+        (default 'cower -u')
     format: Display format to use
         (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
     hide_if_zero: Don't show on bar if True
         (default False)
-    include_aur: Set to True to use 'cower' to check for AUR updates
+    include_aur: Set to True to check for AUR updates
         (default False)
 
 Format placeholders:
@@ -21,7 +24,7 @@ Format placeholders:
     {total} Total updates pending
 
 Requires:
-    cower: Needed to display pending 'aur' updates
+    cower: Needed to display pending 'aur' updates unless you customize 'check_aur_cmd'
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -46,6 +49,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 600
+    check_aur_cmd = 'cower -u'
     format = ''
     hide_if_zero = False
     include_aur = False
@@ -63,7 +67,8 @@ class Py3status:
             self.include_pacman = True
 
         # check cower installed
-        if self.include_aur and not self.py3.check_commands(['cower']):
+        if self.include_aur and self.check_aur_cmd == 'cower -u' and \
+                not self.py3.check_commands(['cower']):
             self.py3.notify_user('cower is not installed cannot check aur')
             self.include_aur = False
 
@@ -104,9 +109,8 @@ class Py3status:
 
     def _check_aur_updates(self):
         """
-        This method will use the 'cower' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
+        This method will determine how many updates are waiting
+        to be installed from the AUR.
         """
         # For reasons best known to its author, 'cower' returns a non-zero
         # status code upon successful execution, if there is any output.
@@ -116,7 +120,7 @@ class Py3status:
 
         pending_updates = b""
         try:
-            pending_updates = str(subprocess.check_output(["cower", "-u"]))
+            pending_updates = str(subprocess.check_output(self.check_aur_cmd, shell=True))
         except subprocess.CalledProcessError as cp_error:
             pending_updates = cp_error.output
         except:
