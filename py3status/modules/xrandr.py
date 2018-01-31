@@ -288,20 +288,25 @@ class Py3status:
             if output in combination:
                 pos = getattr(self, '{}_pos'.format(output), '0x0')
                 rotation = getattr(self, '{}_rotate'.format(output), 'normal')
+                resolution = getattr(self, '{}_mode'.format(output), None)
+                resolution = '--mode {}'.format(resolution) if resolution else '--auto'
                 if rotation not in ['inverted', 'left', 'normal', 'right']:
                     self.py3.log('configured rotation {} is not valid'.format(
                         rotation))
                     rotation = 'normal'
                 #
                 if mode == 'clone' and previous_output is not None:
-                    cmd += ' --auto --same-as {}'.format(previous_output)
+                    cmd += ' {} --same-as {}'.format(resolution,
+                                                     previous_output)
                 else:
                     if ('above' in pos or 'below' in pos or 'left-of' in pos or
                             'right-of' in pos):
-                        cmd += ' --auto --{} --rotate {}'.format(pos, rotation)
+                        cmd += ' {} --{} --rotate {}'.format(resolution, pos,
+                                                             rotation)
                     else:
-                        cmd += ' --auto --pos {} --rotate {}'.format(pos,
-                                                                     rotation)
+                        cmd += ' {} --pos {} --rotate {}'.format(resolution,
+                                                                 pos,
+                                                                 rotation)
                 previous_output = output
             else:
                 cmd += ' --off'
