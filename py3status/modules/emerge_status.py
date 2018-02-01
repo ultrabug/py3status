@@ -11,13 +11,19 @@ Configuration parameters:
     format: Display format to user (default '{current} / {total}')
     hide_if_zero: Don't show in bar if there is no emerge running (default True)
 
-    More format options:
-        Ex: '{current} / {total}'
-        Result: "3 / 14"
-        Ex: '{current} / {total} = {'
-        Result: "3 / 14 = py3status"
-        Ex: '{category} - {pkg}'
-        Result: "x11-misc - py3status"
+Format placeholders:
+    {current} Number of package that is currently emerged
+    {total} Total number of packages that will be emerged
+    {category} Category of the currently emerged package
+    {pkg} Name of the currently emerged packaged
+
+Format examples:
+     {current} / {total}'
+    Result: "3 / 14"
+    '{current} / {total} = {pkg}'
+    Result: "3 / 14 = py3status"
+    '{category} - {pkg}'
+    Result: "x11-misc - py3status"
 
 @author: AnwariasEu
 """
