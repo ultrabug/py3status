@@ -175,9 +175,10 @@ simple
 """
 
 from fnmatch import fnmatch
-from collections import OrderedDict
+from json import loads as json_loads
 
 STRING_NOT_INSTALLED = 'not installed'
+STRING_OLD_VERSION = 'install new version 3.4.0+'
 SENSOR_NAMES = [
     'alarm', 'beep', 'crit', 'crit_alarm', 'crit_hyst', 'emergency',
     'emergency_hyst', 'input', 'max', 'min', 'offset' 'type',
@@ -200,8 +201,18 @@ class Py3status:
     thresholds = {'auto.input': True}
 
     def post_config_hook(self):
-        if not self.py3.check_commands('sensors'):
+        self.sensors_command = 'sensors -j'
+        if not self.py3.check_commands(self.sensors_command.split()[0]):
             raise Exception(STRING_NOT_INSTALLED)
+
+        try:
+            lm_sensors_data = self._get_lm_sensors_data()
+        except self.py3.CommandError:
+            raise Exception(STRING_OLD_VERSION)
+
+        self.first_run = True
+        if not self.py3.format_contains(self.format_chip, 'adapter'):
+            self.sensors_command += 'A'  # don't print adapters
 
         placeholders = self.py3.get_placeholders_list(self.format_sensor)
         format_sensor = {x: ':g' for x in placeholders if x != 'name'}
@@ -210,19 +221,12 @@ class Py3status:
             self.format_sensor, format_sensor
         )
 
-        self.first_run = True
-        self.sensors_command = 'sensors -u'
-        if not self.py3.format_contains(self.format_chip, 'adapter'):
-            self.sensors_command += 'A'  # don't print adapters
-
         if self.chips:
-            lm_sensors_data = self._get_lm_sensors_data()
             chips = []
             for _filter in self.chips:
-                for chunk in lm_sensors_data.split('\n\n')[:-1]:
-                    for line in chunk.splitlines():
-                        if fnmatch(line, _filter):
-                            chips.append(line)
+                for chip_name in lm_sensors_data.keys():
+                    if fnmatch(chip_name, _filter):
+                        chips.append(chip_name)
                         break
             self.sensors_command += ' {}'.format(' '.join(chips))
 
@@ -249,45 +253,38 @@ class Py3status:
             self.thresholds_man.remove('auto.input')
 
     def _get_lm_sensors_data(self):
-        return self.py3.command_output(self.sensors_command)
+        return json_loads(self.py3.command_output(self.sensors_command))
 
     def lm_sensors(self):
         lm_sensors_data = self._get_lm_sensors_data()
         new_chip = []
 
-        for chunk in lm_sensors_data.split('\n\n')[:-1]:
-            chip = {'sensors': OrderedDict()}
-            first_line = True
-            sensor_name = None
+        for chip_name, sensors in lm_sensors_data.items():
+            # chips
+            chip = {
+                'name': chip_name,
+                'adapter': sensors.pop('Adapter', None),
+                'sensors': {},
+            }
+
+            # sensors
             new_sensor = []
-
-            for line in chunk.splitlines():
-                if line.startswith('  '):
-                    if not sensor_name:
+            for sensor_name, sensor in sensors.items():
+                sensor_name = sensor_name.lower().replace(' ', '_')
+                if self.sensors:
+                    if self.first_run:
+                        for _filter in self.sensors:
+                            if fnmatch(sensor_name, _filter):
+                                self.sensors_list.append(sensor_name)
+                    if sensor_name not in self.sensors_list:
                         continue
-                    key, value = line.split(': ')
-                    prefix, key = key.split('_', 1)
+                chip['sensors'][sensor_name] = {'name': sensor_name}
+                for key, value in sensor.items():
+                    temp, key = key.split('_', 1)
                     chip['sensors'][sensor_name][key] = value
-                elif first_line:
-                    chip['name'] = line
-                    first_line = False
-                elif 'Adapter:' in line:
-                    chip['adapter'] = line[9:]
-                else:
-                    sensor_name = line[:-1].lower().replace(' ', '_')
-                    if self.sensors:
-                        if self.first_run:
-                            for _filter in self.sensors:
-                                if fnmatch(sensor_name, _filter):
-                                    self.sensors_list.append(sensor_name)
-                        if sensor_name not in self.sensors_list:
-                            sensor_name = None
-                            continue
-                    chip['sensors'][sensor_name] = {}
 
-            for name, sensor in chip['sensors'].items():
-                sensor['name'] = name
-
+            # thresholds
+            for sensor_name, sensor in chip['sensors'].items():
                 for x in self.thresholds_man:
                     if x in sensor:
                         self.py3.threshold_get_color(sensor[x], x)
