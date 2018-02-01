@@ -69,7 +69,8 @@ from datetime import timedelta
 from time import sleep
 
 
-SPOTIFY_CMD = 'dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}'
+SPOTIFY_CMD = """dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify
+                 /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
 
 
 class Py3status:
