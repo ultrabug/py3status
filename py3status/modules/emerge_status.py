@@ -27,7 +27,6 @@ Format examples:
 @author AnwariasEu
 """
 
-import os
 import re
 
 
@@ -41,15 +40,13 @@ class Py3status:
 
     def _emergeRunning(self):
         """
-        Use pgrep to check if emerge is running.
-
+        Check if emerge is running.
         Returns true if at least one instance of emerge is running.
         """
-        tmp = os.popen("pgrep emerge").read()
-        pcount = tmp.count("\n")
-        if pcount > 0:
+        try:
+            self.py3.command_output(['pidof', 'emerge'])
             return True
-        else:
+        except:
             return False
 
     def _getProgress(self):
