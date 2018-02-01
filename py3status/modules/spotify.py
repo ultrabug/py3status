@@ -27,12 +27,23 @@ Color options:
     color_paused: Song is stopped or paused, defaults to color_degraded
     color_playing: Song is playing, defaults to color_good
 
+Click Events:
+    You can add some config to your i3status.conf to  create click events
+    For example
+
+    - play_paused = 1 ==> left click : Pause/Play
+    - next_song = 4 ==> scroll up : Next song
+    - previous_song = 5 ==> scroll down : Previous song
+
 i3status.conf example:
 
 ```
 spotify {
     format = "{title} by {artist} -> {time}"
     format_down = "no Spotify"
+    next_song = 4
+    previous_song = 5
+    play_paused = 1
 }
 ```
 
@@ -51,9 +62,14 @@ stopped
 {'color': '#FF0000', 'full_text': 'Spotify stopped'}
 """
 
-from datetime import timedelta
 import dbus
 import re
+
+from datetime import timedelta
+from time import sleep
+
+
+SPOTIFY_CMD = 'dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}'
 
 
 class Py3status:
@@ -77,6 +93,9 @@ class Py3status:
         'stereo',
         'version'
     ]
+
+    def _spotify_cmd(self, action):
+        return SPOTIFY_CMD.format(cmd=action)
 
     def post_config_hook(self):
         """
@@ -170,6 +189,31 @@ class Py3status:
             'full_text': text
         }
         return response
+
+    def on_click(self, event):
+        """
+        Click events
+            - Pause/Play
+            - Next song
+            - Previous song
+
+        Sleep to "invalidate cache" and give the time to change the song to refresh the display
+        """
+
+        button = event['button']
+        if button is None:
+            pass
+        elif button == self.play_paused:
+            self.py3.command_run(self._spotify_cmd('PlayPause'))
+            sleep(0.1)
+
+        elif button == self.next_song:
+            self.py3.command_run(self._spotify_cmd('Next'))
+            sleep(0.1)
+
+        elif button == self.previous_song:
+            self.py3.command_run(self._spotify_cmd('Previous'))
+            sleep(0.1)
 
 
 if __name__ == "__main__":
