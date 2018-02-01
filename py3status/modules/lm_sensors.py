@@ -161,7 +161,7 @@ sensor_names
 """
 
 from fnmatch import fnmatch
-from collections import OrderedDict
+from json import loads
 
 STRING_NOT_INSTALLED = "not installed"
 
@@ -182,7 +182,8 @@ class Py3status:
     thresholds = {"auto.input": True}
 
     def post_config_hook(self):
-        if not self.py3.check_commands("sensors"):
+        self.lm_sensors_command = ["sensors", "-j"]
+        if not self.py3.check_commands(self.lm_sensors_command):
             raise Exception(STRING_NOT_INSTALLED)
 
         placeholders = self.py3.get_placeholders_list(self.format_sensor)
@@ -193,20 +194,15 @@ class Py3status:
         )
 
         self.first_run = True
-        self.lm_sensors_command = "sensors -u"
-        if not self.py3.format_contains(self.format_chip, "adapter"):
-            self.lm_sensors_command += "A"  # don't print adapters
 
         if self.chips:
             lm_sensors_data = self._get_lm_sensors_data()
-            chips = []
+            chips = set()
             for _filter in self.chips:
-                for chunk in lm_sensors_data.split("\n\n")[:-1]:
-                    for line in chunk.splitlines():
-                        if fnmatch(line, _filter):
-                            chips.append(_filter)
-                        break
-            self.lm_sensors_command += " {}".format(" ".join(chips))
+                for chip_name in lm_sensors_data:
+                    if fnmatch(chip_name, _filter):
+                        chips.add(_filter)
+            self.lm_sensors_command += chips
 
         self.sensors = {"list": [], "name": {}, "sensors": self.sensors}
 
@@ -232,48 +228,46 @@ class Py3status:
             self.thresholds_man.remove("auto.input")
 
     def _get_lm_sensors_data(self):
-        return self.py3.command_output(self.lm_sensors_command)
+        return loads(self.py3.command_output(self.lm_sensors_command))
 
     def lm_sensors(self):
         lm_sensors_data = self._get_lm_sensors_data()
         new_chip = []
 
-        for chunk in lm_sensors_data.split("\n\n")[:-1]:
-            chip = {"sensors": OrderedDict()}
-            first_line = True
-            sensor_name = None
+        for chip_name, sensors in lm_sensors_data.items():
+            chip = {
+                "name": chip_name,
+                "adapter": sensors.pop("Adapter"),
+                "sensors": {},
+            }
+
             new_sensor = []
+            for sensor_key, sensor in sensors.items():
+                try:
+                    sensor_name = self.sensors["name"][sensor_key]
+                except KeyError:
+                    sensor_name = sensor_key.lower().replace(" ", "_")
+                    self.sensors["name"][sensor_key] = sensor_name
 
-            for line in chunk.splitlines():
-                if line.startswith("  "):
-                    if not sensor_name:
+                if self.sensors["sensors"]:
+                    if self.first_run:
+                        for _filter in self.sensors["sensors"]:
+                            if fnmatch(sensor_name, _filter):
+                                self.sensors["list"].append(sensor_name)
+                    if sensor_name not in self.sensors["list"]:
                         continue
-                    key, value = line.split(": ")
-                    prefix, key = key.split("_", 1)
-                    chip["sensors"][sensor_name][key] = value
-                elif first_line:
-                    chip["name"] = line
-                    first_line = False
-                elif "Adapter:" in line:
-                    chip["adapter"] = line[9:]
-                else:
-                    try:
-                        sensor_name = self.sensors["name"][line]
-                    except KeyError:
-                        sensor_name = line[:-1].lower().replace(" ", "_")
-                        self.sensors["name"][line] = sensor_name
-                    if self.sensors["sensors"]:
-                        if self.first_run:
-                            for _filter in self.sensors["sensors"]:
-                                if fnmatch(sensor_name, _filter):
-                                    self.sensors["list"].append(sensor_name)
-                        if sensor_name not in self.sensors["list"]:
-                            sensor_name = None
-                            continue
-                    chip["sensors"][sensor_name] = {}
 
-            for name, sensor in chip["sensors"].items():
-                sensor["name"] = name
+                chip["sensors"][sensor_name] = {}
+                for temp_key, value in sensor.items():
+                    try:
+                        temp_name = self.sensors["name"][temp_key]
+                    except KeyError:
+                        temp_name = temp_key.split("_", 1)[-1]
+                        self.sensors["name"][temp_key] = temp_name
+                    chip["sensors"][sensor_name][temp_name] = value
+
+            for sensor_name, sensor in chip["sensors"].items():
+                sensor["name"] = sensor_name
 
                 for x in self.thresholds_man:
                     if x in sensor:
