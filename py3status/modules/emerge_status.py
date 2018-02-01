@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Emerge_status provides a short information on the current
 emerge status if there is an emerge process currently running
