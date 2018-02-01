@@ -25,7 +25,7 @@ Format examples:
     '{category} - {pkg}'
     Result: "x11-misc - py3status"
 
-@author: AnwariasEu
+@author AnwariasEu
 """
 
 import os
