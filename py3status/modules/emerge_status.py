@@ -44,7 +44,7 @@ class Py3status:
         Returns true if at least one instance of emerge is running.
         """
         try:
-            self.py3.command_output(['pidof', 'emerge'])
+            self.py3.command_output(['pgrep', 'emerge'])
             return True
         except:
             return False
