@@ -85,8 +85,7 @@ class Py3status:
         input_data.reverse()
 
         for line in input_data:
-            terminated = re.search("\*\*\* terminating\.", line)
-            if terminated:
+            if "*** terminating." in line:
                 ret['current'] = "0"
                 ret['total'] = "0"
                 break
