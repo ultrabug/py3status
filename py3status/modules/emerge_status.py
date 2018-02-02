@@ -29,6 +29,8 @@ Format examples:
 
 import re
 
+STRING_NOT_INSTALLED = "emerge not installed"
+
 
 class Py3status:
     """
@@ -48,6 +50,10 @@ class Py3status:
             return True
         except:
             return False
+
+    def post_config_hook(self):
+        if not self.py3.check_commands('emerge'):
+            raise Exception(STRING_NOT_INSTALLED)
 
     def _getProgress(self):
         """
