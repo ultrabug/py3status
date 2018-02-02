@@ -4,7 +4,7 @@ Emerge_status provides a short information on the current
 emerge status if there is an emerge process currently running
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in second (default 1)
+    cache_timeout: how often we refresh this module in second (default 0)
     emerge_log_file: in case it is placed somewhere else than the default
         (default '/var/log/emerge.log')
     format: Display format to user (default '{current} / {total}')
@@ -35,7 +35,7 @@ STRING_NOT_INSTALLED = "emerge not installed"
 class Py3status:
     """
     """
-    cache_timeout = 1
+    cache_timeout = 0
     emerge_log_file = '/var/log/emerge.log'
     format = u'{current} / {total}'
     hide_if_zero = True
