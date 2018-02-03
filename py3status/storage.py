@@ -96,3 +96,43 @@ class Storage:
 
     def storage_keys(self, module_name):
         return self.data.get(module_name, {}).keys()
+
+class StorageObject:
+    """
+    Base class for objects that we want to fit in storage.
+    """
+    def _data_dump(self):
+        """
+        Must return something picklable to be stored.
+        """
+        pass
+
+    def _data_load(self, data):
+        """
+        Takes something that comes from storage to build the object.
+        """
+        pass
+
+    def storage_init(self, storage, py3_wrapper, is_python_2, module_name):
+        """
+        Storage related constructor.
+
+        There isn't any "real" constructor because the children class will often have
+        multiple inheritance and we don't want to mess with MRO...
+        """
+        self._storage = storage
+        if not self._storage.initialized:
+            self._storage.init(py3_wrapper, is_python_2)
+        self._module_name = module_name
+
+    def save(self, key):
+        """
+        Store object.
+        """
+        return self._storage.storage_set(self._module_name, key, self._data_dump())
+
+    def load(self, key):
+        """
+        Retrieve object.
+        """
+        return self._data_load(self._storage.storage_get(self._module_name,key))

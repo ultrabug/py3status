@@ -17,6 +17,7 @@ from py3status.constants import COLOR_NAMES
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
+from py3status.storageobjects.persistentcookiejar import PersistentCookieJar
 from py3status.util import Gradiants
 
 
@@ -1008,6 +1009,21 @@ class Py3:
             value = self._storage.storage_get(module_name, key)
             items.add((key, value))
         return items
+
+    def storage_new_cookiejar(self, policy=None):
+        """
+        Return an instance of persistant cookie jar using our storage system.
+
+        Can be used like original CookieJar constructor
+        """
+        cj = PersistentCookieJar(policy)
+        cj.storage_init(
+                self._storage,
+                self._module._py3_wrapper,
+                self._is_python_2,
+                self._module.module_full_name
+            )
+        return cj
 
     def play_sound(self, sound_file):
         """
