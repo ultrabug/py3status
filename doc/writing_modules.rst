@@ -457,7 +457,11 @@ Module data storage
 Py3status allows modules to maintain state through the use of the storage
 functions of the Py3 helper.
 
-Currently bool, int, float, None, unicode, dicts, lists, datetimes etc are
+
+Using storage methods directly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Currently, bool, int, float, None, unicode, dicts, lists, datetimes etc are
 supported.  Basically anything that can be pickled.  We do our best to ensure
 that the resulting pickles are compatible with both python versions 2 and 3.
 
@@ -476,6 +480,36 @@ Example:
         self.py3.storage_set('my_key', value)
         # get the value or None if key not present
         value = self.py3.storage_get('my_key')
+
+
+Using a ``StorageObject`` subclass
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some non-pickleable objects have been treated to be pickleable anyway. For
+now, there is a ``PersistentCookieJar`` class which is a ``StorageObject``
+child class. So, instead of regular ``CookieJar``, if you want to use
+py3status storage system, you will have to create a ``PersistentCookieJar``
+via the Py3 helper.
+
+Example:
+
+.. code-block:: python
+
+    def module(self):
+        # create the cookie jar
+        cj = self.py3.storage_new_cookiejar()
+        # recover the cookies saved in storage
+        cj.load('my_key')
+        # do your stuff with the cookiejar
+        r = self.py3.request(url,cookiejar=cj)
+        # save the cookies into storage
+        cj.save('my_key')
+
+
+For developpers that are interrested in developping other storeable
+structures, ``StorageObject`` implements ``load()`` and ``save()`` methods
+which call ``_data_load()`` and ``_data_dumps`` methods which need to be
+implemented in children classes.
 
 
 Module documentation
