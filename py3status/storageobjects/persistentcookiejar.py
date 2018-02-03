@@ -7,6 +7,7 @@ except ImportError:
 
 from py3status.storage import StorageObject
 
+
 class PersistentCookieJar(CookieJar, StorageObject):
     """
     Custom CookieJar child class that will use our storage module.

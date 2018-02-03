@@ -97,6 +97,7 @@ class Storage:
     def storage_keys(self, module_name):
         return self.data.get(module_name, {}).keys()
 
+
 class StorageObject:
     """
     Base class for objects that we want to fit in storage.
