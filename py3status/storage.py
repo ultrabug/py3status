@@ -136,4 +136,4 @@ class StorageObject:
         """
         Retrieve object.
         """
-        return self._data_load(self._storage.storage_get(self._module_name,key))
+        return self._data_load(self._storage.storage_get(self._module_name, key))
