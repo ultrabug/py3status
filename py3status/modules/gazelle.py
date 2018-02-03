@@ -39,13 +39,6 @@ Color options:
 
 from py3status.exceptions import RequestException
 
-try:
-    # Python 3
-    from http.cookiejar import (CookieJar, MozillaCookieJar)
-except ImportError:
-    # Python 2
-    from cookielib import (CookieJar, MozillaCookieJar)
-
 
 class Py3status:
     """
@@ -101,7 +94,6 @@ class Py3status:
         return resp.json()
 
     def post_config_hook(self):
-        #self._cookiejar = MozillaCookieJar(self.cookiepath)
         self._cookiejar = self.py3.storage_new_cookiejar()
         try:
             self._cookiejar.load(self.baseurl)
