@@ -13,9 +13,6 @@ Configuration parameters:
     baseurl: Base URL of the tracker (with protocol and no trailing slash)
         (default 'https://mytracker.stuff')
     cache_timeout: How often we refresh this module in seconds (default 60)
-    cookiepath: Path of the file containing identification cookie, can be None if
-        you want to create a new session at each load of the module
-        (default '/var/tmp/gazelle_ratio_cookie.txt')
     format: See placeholders below (default 'Ratio: {ratio}')
     limit_required: minimum ratio tolerated by tracker (if defined, overrides value given
         by API, so you are just likely not to fill it) (default None)
@@ -57,7 +54,6 @@ class Py3status:
     # available configuration parameters
     baseurl = 'https://mytracker.stuff'
     cache_timeout = 60
-    cookiepath = '/var/tmp/gazelle_ratio_cookie.txt'
     format = 'Ratio: {ratio}'
     limit_required = None
     limit_warning = 1
@@ -87,20 +83,11 @@ class Py3status:
                     level=self.py3.LOG_ERROR
                     )
             raise
-        try:
-            self._cookiejar.save(ignore_discard=True)
-        except IOError:
-            self.py3.log(
-                    "Cannot write cookie at %s" % self.cookiepath,
-                    level=self.py3.LOG_WARNING
-                    )
-        except AttributeError:
-            pass  # That means that no cookie pass has been set
-        else:
-            self.py3.log(
-                    "Created cookie at %s" % self.cookiepath,
-                    level=self.py3.LOG_INFO
-                    )
+        self._cookiejar.save(self.baseurl)
+        self.py3.log(
+                "Saved cookie in storage",
+                level=self.py3.LOG_INFO
+                )
 
     def _index(self):
         resp = self.py3.request(
@@ -114,25 +101,17 @@ class Py3status:
         return resp.json()
 
     def post_config_hook(self):
-        if self.cookiepath:
-            self._cookiejar = MozillaCookieJar(self.cookiepath)
-            try:
-                self._cookiejar.load(ignore_discard=True)
-                self._index()  # just to try if saved cookie is good
-            except IOError:
-                self.py3.log(
-                        "Cannot read cookie at %s" % self.cookiepath,
-                        level=self.py3.LOG_INFO
-                        )
-                self._login()
-            except RequestException:
-                self.py3.log(
-                        "Cookie invalid or outdated. Re-logging.",
-                        level=self.py3.LOG_INFO
-                        )
-                self._login()
-        else:
-            self._cookiejar = CookieJar()
+        #self._cookiejar = MozillaCookieJar(self.cookiepath)
+        self._cookiejar = self.py3.storage_new_cookiejar()
+        try:
+            self._cookiejar.load(self.baseurl)
+            self._index()  # just to try if saved cookie is good
+        except RequestException:
+            self.py3.log(
+                    "Cookie invalid, outdated or missing. Re-logging.",
+                    level=self.py3.LOG_INFO
+                    )
+            self._login()
 
     def gazelle(self):
         index = self._index()
