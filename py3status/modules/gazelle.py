@@ -18,6 +18,10 @@ Configuration parameters:
         by API, so you are just likely not to fill it) (default None)
     limit_warning: custom warning ratio (default 1)
     password: Account password (default '')
+    thresholds: specify color thresholds to use
+        *(default {'ratio': [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')],
+        'messages': [(0, 'degraded'), (1, 'good')],
+        'notifs': [(0, 'degraded'), (1, 'good')]})*
     username: Account username (default '')
 
 Format placeholders:
@@ -26,12 +30,6 @@ Format placeholders:
     {upload} account upload amount
     {messages} number of unread messages
     {notifs} number of new notifications
-
-Color options:
-    color_ratio_ok: color when ration is bigger than 1 (default color_good)
-    color_ratio_warning: color when ration is between required ratio and 1
-        (available only when tracker has a dynamic required ratio (default color_warning)
-    color_ratio_ko: color when ratio below required ratio (default color_bad)
 
 @author raspbeguy <raspbeguy@hashtagueule.fr>
 @license MIT
@@ -51,6 +49,10 @@ class Py3status:
     limit_required = None
     limit_warning = 1
     password = ''
+    thresholds = {
+            'ratio': [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')],
+            'messages': [(0, 'degraded'), (1, 'good')],
+            'notifs': [(0, 'degraded'), (1, 'good')]}
     username = ''
 
     def _readable_size(self, size):
@@ -120,17 +122,26 @@ class Py3status:
             'messages': result['notifications']['messages'],
             'notifs': result['notifications']['notifications']
             }
-        if data['ratio'] >= self.limit_warning:
-            color = self.py3.COLOR_RATIO_OK or self.py3.COLOR_GOOD
-        elif data['ratio'] >= (self.limit_required or data['requiredratio']):
-            color = self.py3.COLOR_RATIO_WARNING or self.py3.COLOR_DEGRADED
-        else:
-            color = self.py3.COLOR_RATIO_KO or self.py3.COLOR_BAD
+
+        # Ok, so if you think that what I'll do next stinks a bit, remember that
+        # the color threshold design in py3status is a gigantic turd.
+        # Main reason of this ugliness is the impossibility to natively define a
+        # variable threshold, so I have to replace keyword by the actual value.
+        for n, item in enumerate(self.thresholds['ratio']):
+            if item[0] == "requiredratio":
+                lst = list(item)
+                lst[0] = data['requiredratio']
+                self.thresholds['ratio'][n] = tuple(lst)
+        # End of horrible code
+
+        self.py3.threshold_get_color(data['ratio'], 'ratio')
+        self.py3.threshold_get_color(data['messages'], 'messages')
+        self.py3.threshold_get_color(data['notifs'], 'notifs')
+
         full_text = self.py3.safe_format(self.format, data)
         return {
             'full_text': full_text,
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color
         }
 
 
