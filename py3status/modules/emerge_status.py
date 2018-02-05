@@ -5,8 +5,6 @@ emerge status if there is an emerge process currently running
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in second (default 0)
-    emerge_log_file: in case it is placed somewhere else than the default
-        (default '/var/log/emerge.log')
     format: Display format to user (default '{current} / {total}')
     hide_if_zero: Don't show in bar if there is no emerge running (default True)
 
@@ -36,7 +34,6 @@ class Py3status:
     """
     """
     cache_timeout = 0
-    emerge_log_file = '/var/log/emerge.log'
     format = u'{current} / {total}'
     hide_if_zero = True
 
@@ -61,6 +58,8 @@ class Py3status:
 
         returns a dict containing current and total value.
         """
+        emerge_log_file = '/var/log/emerge.log'
+
         ret = {}
         ret['current'] = None
         ret['total'] = None
@@ -75,13 +74,13 @@ class Py3status:
         Try to open file, if unable throw error to be catched later
         """
         try:
-            with open(self.emerge_log_file, 'r') as fp:
+            with open(emerge_log_file, 'r') as fp:
                 for line in fp:
                     input_data.append(line)
         except IOError as err:
             ret['err'] = True
             ret['err_text'] = "Opening {} failed: {}" \
-                .format(self.emerge_log_file, err)
+                .format(emerge_log_file, err)
             return ret
 
         """
