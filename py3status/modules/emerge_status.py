@@ -13,6 +13,7 @@ Format placeholders:
     {total} Total number of packages that will be emerged
     {category} Category of the currently emerged package
     {pkg} Name of the currently emerged packaged
+    {action} Current emerge action
 
 Format examples:
      {current} / {total}'
@@ -63,6 +64,7 @@ class Py3status:
         ret['total'] = None
         ret['category'] = None
         ret['pkg'] = None
+        ret['action'] = None
 
         input_data = []
 
@@ -92,6 +94,7 @@ class Py3status:
                 if match:
                     status_re = (
                         "\((?P<current>[0-9]+) of (?P<total>[0-9]+)\) "
+                        "\((?P<action>[a-zA-Z0-9\/]+( [a-zA-Z0-9]+)?) "
                         "(?P<category>[a-zA-Z0-9\-]+)\/(?P<pkg>[a-zA-Z0-9\.]+)"
                     )
                     res = re.search(status_re, match.group())
@@ -100,6 +103,7 @@ class Py3status:
                         ret['total'] = res.group('total')
                         ret['category'] = res.group('category')
                         ret['pkg'] = res.group('pkg')
+                        ret['action'] = res.group('action')
                     else:
                         raise Exception('Regex did not match a line')
                     break
@@ -123,6 +127,7 @@ class Py3status:
                 self.ret['total'] = "0"
                 self.ret['category'] = ""
                 self.ret['pkg'] = ""
+                self.ret['action'] = "None"
                 response['full_text'] = self.py3.safe_format(
                     self.format, self.ret)
 
