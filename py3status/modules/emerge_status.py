@@ -27,8 +27,6 @@ Format examples:
 
 import re
 
-STRING_NOT_INSTALLED = "emerge not installed"
-
 
 class Py3status:
     """
@@ -50,7 +48,7 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.py3.check_commands('emerge'):
-            raise Exception(STRING_NOT_INSTALLED)
+            raise Exception("emerge not installed")
 
     def _getProgress(self):
         """
@@ -63,8 +61,6 @@ class Py3status:
         ret = {}
         ret['current'] = None
         ret['total'] = None
-        ret['err'] = False
-        ret['err_text'] = ""
         ret['category'] = None
         ret['pkg'] = None
 
@@ -78,10 +74,7 @@ class Py3status:
                 for line in fp:
                     input_data.append(line)
         except IOError as err:
-            ret['err'] = True
-            ret['err_text'] = "Opening {} failed: {}" \
-                .format(emerge_log_file, err)
-            return ret
+            raise Exception(err)
 
         """
         Traverse emerge.log from bottom up to get latest information
@@ -108,8 +101,7 @@ class Py3status:
                         ret['category'] = res.group('category')
                         ret['pkg'] = res.group('pkg')
                     else:
-                        ret['err'] = True
-                        ret['err_text'] = 'Regex did not match a line'
+                        raise Exception('Regex did not match a line')
                     break
         return ret
 
@@ -121,12 +113,7 @@ class Py3status:
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         if self._emergeRunning():
             self.ret = self._getProgress()
-            if self.ret['err']:
-                response['full_text'] = self.py3.safe_format(
-                    u"emerge_status error: {err_text}", self.ret['err_text'])
-            else:
-                response['full_text'] = self.py3.safe_format(
-                    self.format, self.ret)
+            response['full_text'] = self.py3.safe_format(self.format, self.ret)
         else:
             if self.hide_if_zero:
                 response['full_text'] = ""
