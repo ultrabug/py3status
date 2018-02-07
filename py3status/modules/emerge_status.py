@@ -104,8 +104,6 @@ class Py3status:
                         ret['category'] = res.group('category')
                         ret['pkg'] = res.group('pkg')
                         ret['action'] = res.group('action')
-                    else:
-                        raise Exception('Regex did not match a line')
                     break
         return ret
 
