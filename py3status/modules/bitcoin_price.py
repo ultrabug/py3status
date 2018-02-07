@@ -18,16 +18,13 @@ Configuration parameters:
     request_timeout: time to wait for a response, in seconds (default 10)
     symbols: if possible, convert `{currency}` abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
-    thresholds: specify thresholds for changes between updates
+    thresholds: specify color thresholds for changes between updates
         (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
 
     See https://bitcoincharts.com/markets/list/ for a list of markets.
 
 Format placeholders:
     {format_market} format for cryptocurrency markets
-    {xxx_24h}       eg weighted price for last 24 hours eg (new output here)
-    {xxx_7d}        eg weighted price for last 7 days eg (new output here)
-    {xxx_30d}       eg weighted price for last 30 days eg (new output here)
 
     Bitcoincharts offers weighted prices for several currencies.
     Weighted prices are calculated for the last 24 hours, 7 days and 30 days.
@@ -37,13 +34,17 @@ Format placeholders:
     To print weighed prices in different currency, replicate the placeholders
     below with a valid option, eg `{usd_24h}`. You can use many as you like.
 
+    {xxx_24h}       eg weighted price for last 24 hours eg 1234.56
+    {xxx_7d}        eg weighted price for last  7 days eg 1234.56
+    {xxx_30d}       eg weighted price for last 30 days eg 1234.56
+
     Valid options are: ARS, AUD, BRL, CAD, CHF, CLP, CZK, DKK, EUR, GBP, HKD,
     IDR, ILS, INR, JPY, KRW, MXN, MYR, NGN, NOK, NZD, PKR, PLN, RUB, SEK, SGD,
     SLL, THB, USD, VEF, VND, ZAR... and be written in lowercase.
 
 format_market placeholders:
     {symbol}          short name for market, eg localbtcUSD
-    {currency}        base currency of the market, eg USD, EUR, RUB, JPY, etc
+    {currency}        base currency of the market, eg USD, EUR, GBP
     {bid}             highest bid price, eg 1704347.14
     {ask}             lowest ask price, eg 12100.0,
     {avg}             average price, eg 17265.00867749991
@@ -57,19 +58,18 @@ format_market placeholders:
     {duration}        duration, eg 89282
 
 Color options:
-    color_bad: the price has dropped since the last interval.
-    color_degraded: the price hasn't changed since the last interval.
-    color_good: the price has increased since the last interval.
+    color_bad: the price has dropped since the last interval
+    color_degraded: the price hasn't changed since the last interval
+    color_good: the price has increased since the last interval
 
 Color thresholds:
     format_market:
-        `placeholder`: print a color based on the value of `{placeholder}`
+        xxx: print a color based on changes between `xxx` and last `xxx`
 
 DEPRECATION TODO:
     param: field
     old: price = _rate = market[self.field]... to {price}
     new: convert {????} to {price} if self.field is '????'
-    May be hard to deprecate some things here.
 
 @author Andre Doser <doser.andre AT gmail.com>, lasers
 
@@ -98,7 +98,7 @@ class Py3status:
     markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
     request_timeout = 10
     symbols = True
-    thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
+    thresholds = [(-1, 'bad'), (0, 'darkgray'), (1, 'good')]
 
     class Meta:
         update_config = {
@@ -165,12 +165,12 @@ class Py3status:
     def post_config_hook(self):
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
-        # END DEPRECATION
-        self.last_market = {}
-        self.last_weighted = {}
+        # end deprecation
+        self.last_market = self.py3.storage_get('last_market') or {}
+        self.last_weighted = self.py3.storage_get('last_weighted') or {}
         self.request_timeout = 10
         placeholders = self.py3.get_placeholders_list(self.format_market)
-        for index, x in enumerate(self.markets, 1):
+        for index, x in enumerate(self.markets):
             self.last_market[index] = {x: None for x in placeholders}
         self.init_markets = self.py3.format_contains(
             self.format, 'format_market')
@@ -206,13 +206,12 @@ class Py3status:
         if self.init_weighted_prices:
             weighted_prices_data = self._get_weighted_prices()
 
-        for index, symbol in enumerate(self.markets, 1):
+        for index, symbol in enumerate(self.markets):
             for market in markets_data:
                 if symbol == market['symbol']:
                     if self.symbols:
                         sign = market['currency']
                         market['currency'] = MAP.get(sign, sign)
-
                     for k, v in self.last_market[index].items():
                         if self.last_market[index][k] is None:
                             self.last_market[index][k] = 0
