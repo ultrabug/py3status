@@ -172,6 +172,8 @@ class Py3status:
         placeholders = self.py3.get_placeholders_list(self.format_market)
         for index, x in enumerate(self.markets, 1):
             self.last_market[index] = {x: None for x in placeholders}
+        self.init_markets = self.py3.format_contains(
+            self.format, 'format_market')
         self.init_weighted_prices = self.py3.format_contains(
             self.format, ['*_24h', '*_30d', '*_7d'])
 
@@ -195,12 +197,14 @@ class Py3status:
 
     def bitcoin_price(self):
         format_market = None
-        weighted_prices = {}
+        weighted_prices_data = {}
+        markets_data = {}
         new_data = []
 
-        markets_data = self._get_markets()
+        if self.init_markets:
+            markets_data = self._get_markets()
         if self.init_weighted_prices:
-            weighted_prices = self._get_weighted_prices()
+            weighted_prices_data = self._get_weighted_prices()
 
         for index, symbol in enumerate(self.markets, 1):
             for market in markets_data:
@@ -236,7 +240,7 @@ class Py3status:
             'full_text': self.py3.safe_format(
                 self.format, dict(
                     format_market=format_market,
-                    **weighted_prices
+                    **weighted_prices_data
                 )
             )
         }
