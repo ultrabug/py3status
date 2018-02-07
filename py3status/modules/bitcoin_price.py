@@ -9,8 +9,8 @@ For more information, visit https://bitcoincharts.com
 Configuration parameters:
     cache_timeout: refresh interval for this module. A message from the site:
         Don't query more often than once every 15 minutes (default 900)
-    format: display format for this module (default '{format_coin}')
-    format_coin: display format for coins
+    format: display format for this module (default '{format_market}')
+    format_market: display format for cryptocurrency markets
         (default '{symbol} [\?color=close {close:.2f}]')
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of markets to use
@@ -24,10 +24,10 @@ Configuration parameters:
     See https://bitcoincharts.com/markets/list/ for a list of markets.
 
 Format placeholders:
-    {format_coin} format for cryptocurrency coins
-    {xxx_24h}     eg weighted price for last 24 hours eg (new output here)
-    {xxx_7d}      eg weighted price for last 7 days eg (new output here)
-    {xxx_30d}     eg weighted price for last 30 days eg (new output here)
+    {format_market} format for cryptocurrency markets
+    {xxx_24h}       eg weighted price for last 24 hours eg (new output here)
+    {xxx_7d}        eg weighted price for last 7 days eg (new output here)
+    {xxx_30d}       eg weighted price for last 30 days eg (new output here)
 
     Bitcoincharts offers weighted prices for several currencies.
     Weighted prices are calculated for the last 24 hours, 7 days and 30 days.
@@ -41,7 +41,7 @@ Format placeholders:
     IDR, ILS, INR, JPY, KRW, MXN, MYR, NGN, NOK, NZD, PKR, PLN, RUB, SEK, SGD,
     SLL, THB, USD, VEF, VND, ZAR... and be written in lowercase.
 
-format_coin placeholders:
+format_market placeholders:
     {symbol}          short name for market, eg localbtcUSD
     {currency}        base currency of the market, eg USD, EUR, RUB, JPY, etc
     {bid}             highest bid price, eg 1704347.14
@@ -62,7 +62,7 @@ Color options:
     color_good: the price has increased since the last interval.
 
 Color thresholds:
-    format_coin:
+    format_market:
         `placeholder`: print a color based on the value of `{placeholder}`
 
 DEPRECATION TODO:
@@ -92,8 +92,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 900
-    format = '{format_coin}'
-    format_coin = '{symbol} [\?color=close {close:.2f}]'
+    format = '{format_market}'
+    format_market = '{symbol} [\?color=close {close:.2f}]'
     format_separator = ' '
     markets = ['coinbaseUSD', 'coinbaseEUR', 'btceUSD', 'btcdeEUR']
     request_timeout = 10
@@ -144,20 +144,20 @@ class Py3status:
             'rename': [
                 {
                     'param': 'format_bitcoin',
-                    'new': 'format_coin',
-                    'msg': 'obsolete parameter use `format_coin`',
+                    'new': 'format_market',
+                    'msg': 'obsolete parameter use `format_market`',
                 },
             ],
             'rename_placeholder': [
                 {
                     'placeholder': 'format_bitcoin',
-                    'new': 'format_coin',
+                    'new': 'format_market',
                     'format_strings': ['format'],
                 },
                 {
                     'placeholder': 'price',
                     'new': 'close',
-                    'format_strings': ['format_coin'],
+                    'format_strings': ['format_market'],
                 },
             ],
         }
@@ -169,7 +169,7 @@ class Py3status:
         self.last_market = {}
         self.last_weighted = {}
         self.request_timeout = 10
-        placeholders = self.py3.get_placeholders_list(self.format_coin)
+        placeholders = self.py3.get_placeholders_list(self.format_market)
         for index, x in enumerate(self.markets, 1):
             self.last_market[index] = {x: None for x in placeholders}
         self.init_weighted_prices = self.py3.format_contains(
@@ -194,16 +194,16 @@ class Py3status:
         return data
 
     def bitcoin_price(self):
-        format_coin = None
+        format_market = None
         weighted_prices = {}
         new_data = []
 
-        data = self._get_markets()
+        markets_data = self._get_markets()
         if self.init_weighted_prices:
             weighted_prices = self._get_weighted_prices()
 
         for index, symbol in enumerate(self.markets, 1):
-            for market in data:
+            for market in markets_data:
                 if symbol == market['symbol']:
                     if self.symbols:
                         sign = market['currency']
@@ -225,17 +225,19 @@ class Py3status:
                             self.last_market[index][k] = market_value
 
                     new_data.append(self.py3.safe_format(
-                        self.format_coin, market))
+                        self.format_market, market))
                     break
 
         format_separator = self.py3.safe_format(self.format_separator)
-        format_coin = self.py3.composite_join(format_separator, new_data)
+        format_market = self.py3.composite_join(format_separator, new_data)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, dict(
-                format_coin=format_coin,
-                **weighted_prices)
+            'full_text': self.py3.safe_format(
+                self.format, dict(
+                    format_market=format_market,
+                    **weighted_prices
+                )
             )
         }
 
