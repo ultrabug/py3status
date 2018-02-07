@@ -166,7 +166,6 @@ class Py3status:
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # END DEPRECATION
-        self.first_run = True
         self.last_market = {}
         self.last_weighted = {}
         self.request_timeout = 10
@@ -197,49 +196,43 @@ class Py3status:
     def bitcoin_price(self):
         format_coin = None
         weighted_prices = {}
+        new_data = []
 
-        if self.first_run:
-            self.first_run = False
-            cached_until = 0
-        else:
-            cached_until = self.cache_timeout
-            data = self._get_markets()
-            new_data = []
+        data = self._get_markets()
+        if self.init_weighted_prices:
+            weighted_prices = self._get_weighted_prices()
 
-            if self.init_weighted_prices:
-                weighted_prices = self._get_weighted_prices()
+        for index, symbol in enumerate(self.markets, 1):
+            for market in data:
+                if symbol == market['symbol']:
+                    if self.symbols:
+                        sign = market['currency']
+                        market['currency'] = MAP.get(sign, sign)
 
-            for index, symbol in enumerate(self.markets, 1):
-                for market in data:
-                    if symbol == market['symbol']:
-                        if self.symbols:
-                            sign = market['currency']
-                            market['currency'] = MAP.get(sign, sign)
+                    for k, v in self.last_market[index].items():
+                        if self.last_market[index][k] is None:
+                            self.last_market[index][k] = 0
+                        elif isinstance(market[k], (int, float)):
+                            market_value = float(market[k])
+                            last_market = float(self.last_market[index][k])
+                            result = 0
+                            if market_value < last_market:
+                                result = -1
+                            elif market_value > last_market:
+                                result = 1
+                            if self.thresholds:
+                                self.py3.threshold_get_color(result, k)
+                            self.last_market[index][k] = market_value
 
-                        for k, v in self.last_market[index].items():
-                            if self.last_market[index][k] is None:
-                                self.last_market[index][k] = 0
-                            elif isinstance(market[k], (int, float)):
-                                market_value = float(market[k])
-                                last_market = float(self.last_market[index][k])
-                                result = 0
-                                if market_value < last_market:
-                                    result = -1
-                                elif market_value > last_market:
-                                    result = 1
-                                if self.thresholds:
-                                    self.py3.threshold_get_color(result, k)
-                                self.last_market[index][k] = market_value
+                    new_data.append(self.py3.safe_format(
+                        self.format_coin, market))
+                    break
 
-                        new_data.append(self.py3.safe_format(
-                            self.format_coin, market))
-                        break
-
-            format_separator = self.py3.safe_format(self.format_separator)
-            format_coin = self.py3.composite_join(format_separator, new_data)
+        format_separator = self.py3.safe_format(self.format_separator)
+        format_coin = self.py3.composite_join(format_separator, new_data)
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, dict(
                 format_coin=format_coin,
                 **weighted_prices)
