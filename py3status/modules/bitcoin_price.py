@@ -14,7 +14,7 @@ Configuration parameters:
         (default '{symbol} [\?color=close {close:.2f}]')
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of markets to use
-        (default ['coinbaseUSD', 'coinbaseEUR', 'btceUSD', 'btcdeEUR'])
+        (default ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR'])
     request_timeout: time to wait for a response, in seconds (default 10)
     symbols: if possible, convert `{currency}` abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
@@ -77,8 +77,8 @@ SAMPLE OUTPUT
 [
     {'full_text': 'coinbaseUSD'}, {'full_text': '17139.00', 'color': '#f00'},
     {'full_text': 'coinbaseEUR'}, {'full_text': '14412.76', 'color': '#0f0'},
-    {'full_text': 'btceUSD'}, {'full_text': '2546.00', 'color': '#ff0'},
-    {'full_text': 'btcdeEUR'}, {'full_text': '13649.00', 'color': '#0f0'},
+    {'full_text': 'bitstampUSD'}, {'full_text': '2546.00', 'color': '#ff0'},
+    {'full_text': 'bitstampEUR'}, {'full_text': '13649.00', 'color': '#0f0'},
 ]
 """
 
@@ -95,7 +95,7 @@ class Py3status:
     format = '{format_market}'
     format_market = '{symbol} [\?color=close {close:.2f}]'
     format_separator = ' '
-    markets = ['coinbaseUSD', 'coinbaseEUR', 'btceUSD', 'btcdeEUR']
+    markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
     request_timeout = 10
     symbols = True
     thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
