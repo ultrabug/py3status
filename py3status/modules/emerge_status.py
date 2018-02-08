@@ -6,7 +6,7 @@ emerge status if there is an emerge process currently running
 Configuration parameters:
     cache_timeout: how often we refresh this module in second (default 0)
     format: Display format to user (default 'EMRG: {current} / {total}')
-    hide_if_zero: Don't show in bar if there is no emerge running (default True)
+    hide_if_zero: Don't show in bar if there is no emerge running (default False)
 
 Format placeholders:
     {current} Number of package that is currently emerged
@@ -34,7 +34,7 @@ class Py3status:
     """
     cache_timeout = 0
     format = u'EMRG: {current} / {total}'
-    hide_if_zero = True
+    hide_if_zero = False
 
     def _emergeRunning(self):
         """
