@@ -73,8 +73,7 @@ class Py3status:
         """
         try:
             with open(emerge_log_file, 'r') as fp:
-                for line in fp:
-                    input_data.append(line)
+                input_data = fp.readlines()
         except IOError as err:
             raise Exception(err)
 
