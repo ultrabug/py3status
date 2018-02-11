@@ -14,9 +14,6 @@ Configuration parameters:
         (default 'https://mytracker.stuff')
     cache_timeout: How often we refresh this module in seconds (default 60)
     format: See placeholders below (default 'Ratio: {ratio}')
-    limit_required: minimum ratio tolerated by tracker (if defined, overrides value given
-        by API, so you are just likely not to fill it) (default None)
-    limit_warning: custom warning ratio (default 1)
     password: Account password (default '')
     thresholds: specify color thresholds to use
         *(default {'ratio': [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')],
@@ -46,8 +43,6 @@ class Py3status:
     baseurl = 'https://mytracker.stuff'
     cache_timeout = 60
     format = 'Ratio: {ratio}'
-    limit_required = None
-    limit_warning = 1
     password = ''
     thresholds = {
             'ratio': [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')],
