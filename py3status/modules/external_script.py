@@ -61,7 +61,7 @@ class Py3status:
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
-            output = self.py3.command_output(self.script_path, shell=True)
+            output = self.py3.command_output(self.script_path, shell=True, localized=True)
             output_lines = output.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]
