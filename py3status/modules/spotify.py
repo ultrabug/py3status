@@ -31,9 +31,9 @@ Click Events:
     You can add some config to your i3status.conf to  create click events
     For example
 
-    - play_paused = 1 ==> left click : Pause/Play
-    - next_song = 4 ==> scroll up : Next song
-    - previous_song = 5 ==> scroll down : Previous song
+    - button_play_pause = 1 ==> left click : Pause/Play
+    - button_next = 4 ==> scroll up : Next song
+    - button_previous = 5 ==> scroll down : Previous song
 
 i3status.conf example:
 
@@ -204,15 +204,15 @@ class Py3status:
         button = event['button']
         if button is None:
             pass
-        elif button == self.play_paused:
+        elif button == self.button_play_pause:
             self.py3.command_run(self._spotify_cmd('PlayPause'))
             sleep(0.1)
 
-        elif button == self.next_song:
+        elif button == self.button_next:
             self.py3.command_run(self._spotify_cmd('Next'))
             sleep(0.1)
 
-        elif button == self.previous_song:
+        elif button == self.button_previous:
             self.py3.command_run(self._spotify_cmd('Previous'))
             sleep(0.1)
 
