@@ -6,19 +6,20 @@ This module can get various useful infos about you on a private tracker.
 You can display your ratio, upload size, download size.
 The only requirements are that the private tracker is based on the Gazelle framework,
 for instance Apollo or Redacted, and that the sysops didn't block API access somehow.
-This module can save session cookies, and it is advised to avoid too much opened sessions
-that could potentially get you troubles due to a suspect activity.
+This module will save session cookies to avoid too much opened sessions which could
+potentially put you into troubles due to a suspect activity.
 
 Configuration parameters:
-    baseurl: Base URL of the tracker (with protocol and no trailing slash)
-        (default 'https://mytracker.stuff')
+    baseurl: Base URL of the tracker (example: https://what.cd) (default None)
     cache_timeout: How often we refresh this module in seconds (default 60)
     format: See placeholders below (default 'Ratio: {ratio}')
     password: Account password (default '')
     thresholds: specify color thresholds to use
-        *(default {'ratio': [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')],
-        'messages': [(0, 'degraded'), (1, 'good')],
-        'notifs': [(0, 'degraded'), (1, 'good')]})*
+        (default [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')])
+    urgent_new_messages: set output urgent mode when there are new messages
+        (default False)
+    urgent_new_notifs: set output urgent mode when there are new notifications
+        (default False)
     username: Account username (default '')
 
 Format placeholders:
@@ -34,20 +35,21 @@ Format placeholders:
 
 from py3status.exceptions import RequestException
 
+import re
+
 
 class Py3status:
     """
     """
 
     # available configuration parameters
-    baseurl = 'https://mytracker.stuff'
+    baseurl = None
     cache_timeout = 60
     format = 'Ratio: {ratio}'
     password = ''
-    thresholds = {
-            'ratio': [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')],
-            'messages': [(0, 'degraded'), (1, 'good')],
-            'notifs': [(0, 'degraded'), (1, 'good')]}
+    thresholds = [(0, 'bad'), ('requiredratio', 'degraded'), (1, 'good')]
+    urgent_new_messages = False
+    urgent_new_notifs = False
     username = ''
 
     def _readable_size(self, size):
@@ -91,6 +93,15 @@ class Py3status:
         return resp.json()
 
     def post_config_hook(self):
+        # Check if given URL is really an URL
+        if not isinstance(self.baseurl, str) or not re.search("^https?://", self.baseurl):
+            self.py3.error("Invalid URL")
+        self.baseurl = self.baseurl.strip('/')
+        if not isinstance(self.username, str) or not isinstance(self.password, str):
+            self.py3.error("Invalid login info")
+        # Make a copy of thresholds list with keywords
+        self._thresholds_orig = list(self.thresholds)
+
         self._cookiejar = self.py3.storage_new_cookiejar()
         try:
             self._cookiejar.load(self.baseurl)
@@ -103,11 +114,15 @@ class Py3status:
             self._login()
 
     def gazelle(self):
-        index = self._index()
-        if index['status'] != "success":
-            msg = "Tracker failed to give me user info"
-            self.py3.log(msg, level=self.py3.LOG_ERROR)
-            raise RequestException(msg)
+        try:
+            index = self._index()
+            if index['status'] != "success":
+                msg = "Tracker failed to give me user info"
+                self.py3.log(msg, level=self.py3.LOG_ERROR)
+                raise RequestException(msg)
+        except RequestException:
+            self.py3.error("Network error")
+
         result = index['response']
         data = {
             'ratio': result['userstats']['ratio'],
@@ -122,21 +137,22 @@ class Py3status:
         # the color threshold design in py3status is a gigantic turd.
         # Main reason of this ugliness is the impossibility to natively define a
         # variable threshold, so I have to replace keyword by the actual value.
-        for n, item in enumerate(self.thresholds['ratio']):
+        for n, item in enumerate(self._thresholds_orig):
             if item[0] == "requiredratio":
                 lst = list(item)
                 lst[0] = data['requiredratio']
-                self.thresholds['ratio'][n] = tuple(lst)
+                self.thresholds[n] = tuple(lst)
         # End of horrible code
 
-        self.py3.threshold_get_color(data['ratio'], 'ratio')
-        self.py3.threshold_get_color(data['messages'], 'messages')
-        self.py3.threshold_get_color(data['notifs'], 'notifs')
+        self.py3.threshold_get_color(data['ratio'])
 
         full_text = self.py3.safe_format(self.format, data)
         return {
             'full_text': full_text,
             'cached_until': self.py3.time_in(self.cache_timeout),
+            'urgent':
+                (self.urgent_new_messages and bool(data['messages'])) or
+                (self.urgent_new_notifs and bool(data['notifs']))
         }
 
 
