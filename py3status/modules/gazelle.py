@@ -144,7 +144,7 @@ class Py3status:
                 self.thresholds[n] = tuple(lst)
         # End of horrible code
 
-        self.py3.threshold_get_color(data['ratio'])
+        self.py3.threshold_get_color(data['ratio'], 'ratio')
 
         full_text = self.py3.safe_format(self.format, data)
         return {
