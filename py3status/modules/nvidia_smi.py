@@ -143,6 +143,39 @@ class Py3status:
 
 
 if __name__ == "__main__":
+    from sys import argv
+    if '--list-properties' in argv:
+        from sys import exit
+        from json import dumps
+        from subprocess import check_output
+
+        help_cmd = 'nvidia-smi --help-query-gpu'
+        help_data = check_output(help_cmd.split()).decode()
+
+        new_properties = []
+        e = ['Default', 'Exclusive_Thread', 'Exclusive_Process', 'Prohibited']
+        for line in help_data.splitlines():
+            if line.startswith('"'):
+                properties = line.split('"')[1::2]
+                for name in properties:
+                    if name not in e:
+                        new_properties.append(name)
+
+        properties = ','.join(new_properties)
+        gpu_cmd = 'nvidia-smi --format=csv,noheader,nounits --query-gpu='
+        gpu_data = check_output((gpu_cmd + properties).split()).decode()
+
+        new_gpus = []
+        msg = 'This GPU contains {} supported properties.'
+        for line in gpu_data.splitlines():
+            gpu = dict(zip(new_properties, line.split(', ')))
+            gpu = {k: v for k, v in gpu.items() if '[Not Supported]' not in v}
+            gpu['= ' + msg.format(len(gpu))] = ''
+            gpu['=' * (len(msg) + 2)] = ''
+            new_gpus.append(gpu)
+
+        print(dumps(new_gpus, sort_keys=True, indent=4))
+        exit()
     """
     Run module in test mode.
     """
