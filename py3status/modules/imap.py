@@ -99,8 +99,8 @@ class Py3status:
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
         if self.mail_error is not None:
             self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
-            self.mail_error = None
             self.py3.error(self.mail_error)
+            self.mail_error = None
 
         # II -- format response
         if self.mail_count is None:
