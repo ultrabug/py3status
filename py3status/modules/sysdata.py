@@ -64,147 +64,6 @@ ONE_MIB = pow(1024, 2)  # 1 MiB in B
 ONE_GIB = pow(1024, 3)  # 1 GiB in B
 
 
-class GetData:
-    """
-    Get system status
-    """
-
-    def __init__(self, parent):
-        self.py3 = parent.py3
-
-    def cpu(self):
-        """
-        Get the cpu usage data from /proc/stat :
-          cpu  2255 34 2290 22625563 6290 127 456 0 0
-          - user: normal processes executing in user mode
-          - nice: niced processes executing in user mode
-          - system: processes executing in kernel mode
-          - idle: twiddling thumbs
-          - iowait: waiting for I/O to complete
-          - irq: servicing interrupts
-          - softirq: servicing softirqs
-          - steal: involuntary wait
-          - guest: running a normal guest
-          - guest_nice: running a niced guest
-        These numbers identify the amount of time the CPU has spent performing
-        different kinds of work.  Time units are in USER_HZ
-        (typically hundredths of a second)
-        """
-        with open('/proc/stat', 'r') as fd:
-            line = fd.readline()
-        cpu_data = line.split()
-        total_cpu_time = sum(map(int, cpu_data[1:]))
-        cpu_idle_time = int(cpu_data[4])
-
-        # return the cpu total&idle time
-        return total_cpu_time, cpu_idle_time
-
-    def load(self):
-        """
-        Get the load average from /proc/loadavg :
-        """
-        with open('/proc/loadavg', 'r') as fd:
-            line = fd.readline()
-        load_data = line.split()
-        load1 = float(load_data[0])
-        load5 = float(load_data[1])
-        load15 = float(load_data[2])
-        return load1, load5, load15
-
-    def calc_mem_info(self, unit='GiB', memi=dict, keys=list):
-        """
-        Parse /proc/meminfo, grab the memory capacity and used size
-        then return; Memory size 'total_mem', Used_mem, percentage
-        of used memory, and units of mem (KiB, MiB, GiB).
-        """
-
-        total_mem_kib = memi[keys[0]]
-        mem_free = sum([memi[item] for item in keys[1:]])
-
-        try:
-            used_mem_kib = (total_mem_kib - mem_free)
-            used_mem_p = 100 * used_mem_kib / total_mem_kib
-            multiplier = {
-                'KiB': ONE_KIB / ONE_KIB,
-                'MiB': ONE_KIB / ONE_MIB,
-                'GiB': ONE_KIB / ONE_GIB,
-            }
-            if unit.lower() == 'dynamic':
-                # If less than 1 GiB, use MiB
-                if (multiplier['GiB'] * total_mem_kib) < 1:
-                    unit = 'MiB'
-                else:
-                    unit = 'GiB'
-            if unit in multiplier.keys():
-                total_mem = multiplier[unit] * total_mem_kib
-                used_mem = multiplier[unit] * used_mem_kib
-            else:
-                raise ValueError(
-                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
-        except:
-            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
-            unit = 'UNKNOWN'
-
-        # If total memory is <1GB, results are in megabytes.
-        # Otherwise, results are in gigabytes.
-        return total_mem, used_mem, used_mem_p, unit
-
-    def mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
-        memi = {}
-        result = {}
-
-        with open('/proc/meminfo', 'r') as fd:
-            for s in fd:
-                tok = s.split()
-                memi[tok[0]] = float(tok[1])
-
-        if mem:
-            result["mem"] = self.calc_mem_info(
-                mem_unit,
-                memi,
-                ["MemTotal:", "MemFree:", "Buffers:", "Cached:"]
-            )
-        if swap:
-            result["swap"] = self.calc_mem_info(
-                swap_unit,
-                memi,
-                ["SwapTotal:", "SwapFree:"]
-            )
-
-        return result
-
-    def cpuTemp(self, zone, unit):
-        """
-        Tries to determine CPU temperature using the 'sensors' command.
-        Searches for the CPU temperature by looking for a value prefixed
-        by either "CPU Temp" or "Core 0" - does not look for or average
-        out temperatures of all codes if more than one.
-        """
-
-        sensors = None
-        command = ['sensors']
-        if unit == u'°F':
-            command.append('-f')
-        elif unit not in [u'°C', 'K']:
-            return 'unknown unit'
-        if zone:
-            try:
-                sensors = self.py3.command_output(command + [zone])
-            except:
-                pass
-        if not sensors:
-            sensors = self.py3.command_output(command)
-        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
-        if m:
-            cpu_temp = float(m.groups()[1].strip()[:-2])
-            if unit == 'K':
-                cpu_temp += 273.15
-        else:
-            cpu_temp = '?'
-
-        return cpu_temp
-
-
 class Py3status:
     """
     """
@@ -301,7 +160,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.data = GetData(self)
         self.cpu_total = 0
         self.cpu_idle = 0
         temp_unit = self.temp_unit.upper()
@@ -316,10 +174,142 @@ class Py3status:
         self.mem_info = self.py3.format_contains(self.format, 'mem_*')
         self.swap_info = self.py3.format_contains(self.format, 'swap_*')
 
-    def sysData(self):
+    def _get_cpu(self):
+        """
+        Get the cpu usage data from /proc/stat :
+          cpu  2255 34 2290 22625563 6290 127 456 0 0
+          - user: normal processes executing in user mode
+          - nice: niced processes executing in user mode
+          - system: processes executing in kernel mode
+          - idle: twiddling thumbs
+          - iowait: waiting for I/O to complete
+          - irq: servicing interrupts
+          - softirq: servicing softirqs
+          - steal: involuntary wait
+          - guest: running a normal guest
+          - guest_nice: running a niced guest
+        These numbers identify the amount of time the CPU has spent performing
+        different kinds of work.  Time units are in USER_HZ
+        (typically hundredths of a second)
+        """
+        with open('/proc/stat', 'r') as fd:
+            line = fd.readline()
+        cpu_data = line.split()
+        total_cpu_time = sum(map(int, cpu_data[1:]))
+        cpu_idle_time = int(cpu_data[4])
+
+        # return the cpu total&idle time
+        return total_cpu_time, cpu_idle_time
+
+    def _get_loadavg(self):
+        """
+        Get the load average from /proc/loadavg :
+        """
+        with open('/proc/loadavg', 'r') as fd:
+            line = fd.readline()
+        load_data = line.split()
+        load1 = float(load_data[0])
+        load5 = float(load_data[1])
+        load15 = float(load_data[2])
+        return load1, load5, load15
+
+    def _calc_mem_info(self, unit='GiB', memi=dict, keys=list):
+        """
+        Parse /proc/meminfo, grab the memory capacity and used size
+        then return; Memory size 'total_mem', Used_mem, percentage
+        of used memory, and units of mem (KiB, MiB, GiB).
+        """
+
+        total_mem_kib = memi[keys[0]]
+        mem_free = sum([memi[item] for item in keys[1:]])
+
+        try:
+            used_mem_kib = (total_mem_kib - mem_free)
+            used_mem_p = 100 * used_mem_kib / total_mem_kib
+            multiplier = {
+                'KiB': ONE_KIB / ONE_KIB,
+                'MiB': ONE_KIB / ONE_MIB,
+                'GiB': ONE_KIB / ONE_GIB,
+            }
+            if unit.lower() == 'dynamic':
+                # If less than 1 GiB, use MiB
+                if (multiplier['GiB'] * total_mem_kib) < 1:
+                    unit = 'MiB'
+                else:
+                    unit = 'GiB'
+            if unit in multiplier.keys():
+                total_mem = multiplier[unit] * total_mem_kib
+                used_mem = multiplier[unit] * used_mem_kib
+            else:
+                raise ValueError(
+                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
+        except:
+            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
+            unit = 'UNKNOWN'
+
+        # If total memory is <1GB, results are in megabytes.
+        # Otherwise, results are in gigabytes.
+        return total_mem, used_mem, used_mem_p, unit
+
+    def _get_mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
+        memi = {}
+        result = {}
+
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1])
+
+        if mem:
+            result["mem"] = self._calc_mem_info(
+                mem_unit,
+                memi,
+                ["MemTotal:", "MemFree:", "Buffers:", "Cached:"]
+            )
+        if swap:
+            result["swap"] = self._calc_mem_info(
+                swap_unit,
+                memi,
+                ["SwapTotal:", "SwapFree:"]
+            )
+
+        return result
+
+    def _get_cputemp(self, zone, unit):
+        """
+        Tries to determine CPU temperature using the 'sensors' command.
+        Searches for the CPU temperature by looking for a value prefixed
+        by either "CPU Temp" or "Core 0" - does not look for or average
+        out temperatures of all codes if more than one.
+        """
+
+        sensors = None
+        command = ['sensors']
+        if unit == u'°F':
+            command.append('-f')
+        elif unit not in [u'°C', 'K']:
+            return 'unknown unit'
+        if zone:
+            try:
+                sensors = self.py3.command_output(command + [zone])
+            except:
+                pass
+        if not sensors:
+            sensors = self.py3.command_output(command)
+        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        if m:
+            cpu_temp = float(m.groups()[1].strip()[:-2])
+            if unit == 'K':
+                cpu_temp += 273.15
+        else:
+            cpu_temp = '?'
+
+        return cpu_temp
+
+    def sysdata(self):
         # get CPU usage info
         if self.py3.format_contains(self.format, 'cpu_usage'):
-            cpu_total, cpu_idle = self.data.cpu()
+            cpu_total, cpu_idle = self._get_cpu()
             cpu_usage = 0
             if cpu_total != self.cpu_total:
                 cpu_usage = (1 - (
@@ -332,12 +322,12 @@ class Py3status:
 
         # if specified as a formatting option, also get the CPU temperature
         if self.py3.format_contains(self.format, 'cpu_temp'):
-            cpu_temp = self.data.cpuTemp(self.zone, self.temp_unit)
+            cpu_temp = self._get_cputemp(self.zone, self.temp_unit)
             self.values['cpu_temp'] = cpu_temp
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM/SWAP usage info
-        memi = self.data.mem(self.mem_unit, self.swap_unit, self.mem_info, self.swap_info)
+        memi = self._get_mem(self.mem_unit, self.swap_unit, self.mem_info, self.swap_info)
 
         # set RAM usage info
         if self.mem_info:
@@ -359,7 +349,7 @@ class Py3status:
 
         # get load average
         if self.py3.format_contains(self.format, 'load*'):
-            load1, load5, load15 = self.data.load()
+            load1, load5, load15 = self._get_loadavg()
             self.values['load1'] = load1
             self.values['load5'] = load5
             self.values['load15'] = load15
@@ -389,5 +379,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)
