@@ -4,6 +4,8 @@ Display system RAM, SWAP and CPU utilization.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
+    cpu_temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
+        (default '°C')
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
@@ -11,8 +13,6 @@ Configuration parameters:
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
-    temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
-        (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: thermal zone to use. If None try to guess CPU temperature
@@ -20,6 +20,7 @@ Configuration parameters:
 
 Format placeholders:
     {cpu_temp} cpu temperature
+    {cpu_temp_unit} cpu temperature unit
     {cpu_usage} cpu usage percentage
     {load1} load average over the last minute
     {load5} load average over the five minutes
@@ -32,7 +33,6 @@ Format placeholders:
     {swap_unit} unit for swap
     {swap_used} used swap
     {swap_used_percent} used swap percentage
-    {temp_unit} temperature unit
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
@@ -70,11 +70,11 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    cpu_temp_unit = u'°C'
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
     mem_unit = 'GiB'
     swap_unit = 'GiB'
-    temp_unit = u'°C'
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
@@ -131,6 +131,20 @@ class Py3status:
                     'msg': 'obsolete, use the format_* parameters',
                 },
             ],
+            'rename': [
+                {
+                    'param': 'temp_unit',
+                    'new': 'cpu_temp_unit',
+                    'msg': 'obsolete parameter use `cpu_temp_unit`',
+                },
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'temp_unit',
+                    'new': 'cpu_temp_unit',
+                    'format_strings': ['format'],
+                },
+            ],
             'update_placeholder_format': [
                 {
                     'function': update_deprecated_placeholder_format,
@@ -162,14 +176,14 @@ class Py3status:
 
     def post_config_hook(self):
         self.last_cpu = {}
-        temp_unit = self.temp_unit.upper()
-        if temp_unit in ['C', u'°C']:
-            temp_unit = u'°C'
-        elif temp_unit in ['F', u'°F']:
-            temp_unit = u'°F'
-        elif not temp_unit == 'K':
-            temp_unit = 'unknown unit'
-        self.temp_unit = temp_unit
+        cpu_temp_unit = self.cpu_temp_unit.upper()
+        if cpu_temp_unit in ['C', u'°C']:
+            cpu_temp_unit = u'°C'
+        elif cpu_temp_unit in ['F', u'°F']:
+            cpu_temp_unit = u'°F'
+        elif not cpu_temp_unit == 'K':
+            cpu_temp_unit = 'unknown unit'
+        self.cpu_temp_unit = cpu_temp_unit
         self.init = {'meminfo': []}
         names = ['cpu_temp', 'cpu_usage', 'load', 'mem', 'swap']
         placeholders = ['cpu_temp', 'cpu_usage', 'load*', 'mem_*', 'swap_*']
@@ -292,14 +306,14 @@ class Py3status:
         return cpu_temp
 
     def sysdata(self):
-        sys = {'temp_unit': self.temp_unit}
+        sys = {'cpu_temp_unit': self.cpu_temp_unit}
 
         if self.init['cpu_usage']:
             sys['cpu_usage'] = self._calc_cpu_percent(self._get_stat())
             self.py3.threshold_get_color(sys['cpu_usage'], 'cpu')
 
         if self.init['cpu_temp']:
-            sys['cpu_temp'] = self._get_cputemp(self.zone, self.temp_unit)
+            sys['cpu_temp'] = self._get_cputemp(self.zone, self.cpu_temp_unit)
             self.py3.threshold_get_color(sys['cpu_temp'], 'temp')
 
         if self.init['meminfo']:
