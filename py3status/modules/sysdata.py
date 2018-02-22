@@ -331,12 +331,10 @@ class Py3status:
 
         # set RAM usage info
         if self.mem_info:
-            mem_total, mem_used, mem_used_percent, mem_unit = memi["mem"]
-            sys['mem_total'] = mem_total
-            sys['mem_used'] = mem_used
-            sys['mem_used_percent'] = mem_used_percent
-            sys['mem_unit'] = mem_unit
-            self.py3.threshold_get_color(mem_used_percent, 'mem')
+            mem_keys = [
+                'mem_total', 'mem_used', 'mem_used_percent', 'mem_unit']
+            sys.update(zip(mem_keys, memi['mem']))
+            self.py3.threshold_get_color(sys['mem_used_percent'], 'mem')
 
         # set SWAP usage info
         if self.swap_info:
@@ -354,13 +352,15 @@ class Py3status:
             self.py3.threshold_get_color(load_data[0], 'load')
 
         try:
-            self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
+            self.py3.threshold_get_color(
+                max(cpu_usage, sys['mem_used_percent']), 'max_cpu_mem')
         except:
             try:
                 self.py3.threshold_get_color(cpu_usage, 'max_cpu_mem')
             except:
                 try:
-                    self.py3.threshold_get_color(mem_used_percent, 'max_cpu_mem')
+                    self.py3.threshold_get_color(
+                        sys['mem_used_percent'], 'max_cpu_mem')
                 except:
                     pass
 
