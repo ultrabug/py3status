@@ -169,7 +169,6 @@ class Py3status:
             temp_unit = u'°F'
         elif not temp_unit == 'K':
             temp_unit = 'unknown unit'
-        self.values = {'temp_unit': temp_unit}
         self.temp_unit = temp_unit
         self.mem_info = self.py3.format_contains(self.format, 'mem_*')
         self.swap_info = self.py3.format_contains(self.format, 'swap_*')
@@ -307,6 +306,7 @@ class Py3status:
         return cpu_temp
 
     def sysdata(self):
+        sys = {'temp_unit': self.temp_unit}
         # get CPU usage info
         if self.py3.format_contains(self.format, 'cpu_usage'):
             cpu_total, cpu_idle = self._get_cpu()
@@ -315,7 +315,7 @@ class Py3status:
                 cpu_usage = (1 - (
                     float(cpu_idle - self.cpu_idle) / float(cpu_total - self.cpu_total)
                 )) * 100
-            self.values['cpu_usage'] = cpu_usage
+            sys['cpu_usage'] = cpu_usage
             self.cpu_total = cpu_total
             self.cpu_idle = cpu_idle
             self.py3.threshold_get_color(cpu_usage, 'cpu')
@@ -323,7 +323,7 @@ class Py3status:
         # if specified as a formatting option, also get the CPU temperature
         if self.py3.format_contains(self.format, 'cpu_temp'):
             cpu_temp = self._get_cputemp(self.zone, self.temp_unit)
-            self.values['cpu_temp'] = cpu_temp
+            sys['cpu_temp'] = cpu_temp
             self.py3.threshold_get_color(cpu_temp, 'temp')
 
         # get RAM/SWAP usage info
@@ -332,27 +332,27 @@ class Py3status:
         # set RAM usage info
         if self.mem_info:
             mem_total, mem_used, mem_used_percent, mem_unit = memi["mem"]
-            self.values['mem_total'] = mem_total
-            self.values['mem_used'] = mem_used
-            self.values['mem_used_percent'] = mem_used_percent
-            self.values['mem_unit'] = mem_unit
+            sys['mem_total'] = mem_total
+            sys['mem_used'] = mem_used
+            sys['mem_used_percent'] = mem_used_percent
+            sys['mem_unit'] = mem_unit
             self.py3.threshold_get_color(mem_used_percent, 'mem')
 
         # set SWAP usage info
         if self.swap_info:
             swap_total, swap_used, swap_used_percent, swap_unit = memi["swap"]
-            self.values['swap_total'] = swap_total
-            self.values['swap_used'] = swap_used
-            self.values['swap_used_percent'] = swap_used_percent
-            self.values['swap_unit'] = swap_unit
+            sys['swap_total'] = swap_total
+            sys['swap_used'] = swap_used
+            sys['swap_used_percent'] = swap_used_percent
+            sys['swap_unit'] = swap_unit
             self.py3.threshold_get_color(swap_used_percent, 'swap')
 
         # get load average
         if self.py3.format_contains(self.format, 'load*'):
             load1, load5, load15 = self._get_loadavg()
-            self.values['load1'] = load1
-            self.values['load5'] = load5
-            self.values['load15'] = load15
+            sys['load1'] = load1
+            sys['load5'] = load5
+            sys['load15'] = load15
             self.py3.threshold_get_color(load1, 'load')
 
         try:
@@ -368,7 +368,7 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, self.values)
+            'full_text': self.py3.safe_format(self.format, sys)
         }
 
         return response
