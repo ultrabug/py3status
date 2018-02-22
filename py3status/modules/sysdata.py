@@ -349,11 +349,9 @@ class Py3status:
 
         # get load average
         if self.py3.format_contains(self.format, 'load*'):
-            load1, load5, load15 = self._get_loadavg()
-            sys['load1'] = load1
-            sys['load5'] = load5
-            sys['load15'] = load15
-            self.py3.threshold_get_color(load1, 'load')
+            load_data = self._get_loadavg()
+            sys.update(zip(['load1', 'load5', 'load15'], load_data))
+            self.py3.threshold_get_color(load_data[0], 'load')
 
         try:
             self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
