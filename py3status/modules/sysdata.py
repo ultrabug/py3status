@@ -340,12 +340,10 @@ class Py3status:
 
         # set SWAP usage info
         if self.swap_info:
-            swap_total, swap_used, swap_used_percent, swap_unit = memi["swap"]
-            sys['swap_total'] = swap_total
-            sys['swap_used'] = swap_used
-            sys['swap_used_percent'] = swap_used_percent
-            sys['swap_unit'] = swap_unit
-            self.py3.threshold_get_color(swap_used_percent, 'swap')
+            swap_keys = [
+                'swap_total', 'swap_used', 'swap_used_percent', 'swap_unit']
+            sys.update(zip(swap_keys, memi['swap']))
+            self.py3.threshold_get_color(sys['swap_used_percent'], 'swap')
 
         # get load average
         if self.py3.format_contains(self.format, 'load*'):
