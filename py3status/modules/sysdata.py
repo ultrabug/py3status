@@ -56,6 +56,7 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division
+from os import getloadavg
 
 import re
 
@@ -200,18 +201,6 @@ class Py3status:
         # return the cpu total&idle time
         return total_cpu_time, cpu_idle_time
 
-    def _get_loadavg(self):
-        """
-        Get the load average from /proc/loadavg :
-        """
-        with open('/proc/loadavg', 'r') as fd:
-            line = fd.readline()
-        load_data = line.split()
-        load1 = float(load_data[0])
-        load5 = float(load_data[1])
-        load15 = float(load_data[2])
-        return load1, load5, load15
-
     def _calc_mem_info(self, unit='GiB', memi=dict, keys=list):
         """
         Parse /proc/meminfo, grab the memory capacity and used size
@@ -345,9 +334,9 @@ class Py3status:
 
         # get load average
         if self.py3.format_contains(self.format, 'load*'):
-            load_data = self._get_loadavg()
-            sys.update(zip(['load1', 'load5', 'load15'], load_data))
-            self.py3.threshold_get_color(load_data[0], 'load')
+            load_keys = ['load1', 'load5', 'load15']
+            sys.update(zip(load_keys, getloadavg()))
+            self.py3.threshold_get_color(sys['load1'], 'load')
 
         try:
             self.py3.threshold_get_color(
