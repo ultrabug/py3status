@@ -161,8 +161,7 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.cpu_total = 0
-        self.cpu_idle = 0
+        self.last_cpu = {}
         temp_unit = self.temp_unit.upper()
         if temp_unit in ['C', u'°C']:
             temp_unit = u'°C'
@@ -174,32 +173,14 @@ class Py3status:
         self.mem_info = self.py3.format_contains(self.format, 'mem_*')
         self.swap_info = self.py3.format_contains(self.format, 'swap_*')
 
-    def _get_cpu(self):
-        """
-        Get the cpu usage data from /proc/stat :
-          cpu  2255 34 2290 22625563 6290 127 456 0 0
-          - user: normal processes executing in user mode
-          - nice: niced processes executing in user mode
-          - system: processes executing in kernel mode
-          - idle: twiddling thumbs
-          - iowait: waiting for I/O to complete
-          - irq: servicing interrupts
-          - softirq: servicing softirqs
-          - steal: involuntary wait
-          - guest: running a normal guest
-          - guest_nice: running a niced guest
-        These numbers identify the amount of time the CPU has spent performing
-        different kinds of work.  Time units are in USER_HZ
-        (typically hundredths of a second)
-        """
-        with open('/proc/stat', 'r') as fd:
-            line = fd.readline()
-        cpu_data = line.split()
-        total_cpu_time = sum(map(int, cpu_data[1:]))
-        cpu_idle_time = int(cpu_data[4])
-
-        # return the cpu total&idle time
-        return total_cpu_time, cpu_idle_time
+    def _get_stat(self):
+        # miscellaneous kernel statistics https://git.io/vn21n
+        with open('/proc/stat') as f:
+            fields = f.readline().split()
+            return {
+                'total': sum(map(int, fields[1:])),
+                'idle': int(fields[4]),
+            }
 
     def _calc_mem_info(self, unit='GiB', memi=dict, keys=list):
         """
@@ -263,6 +244,17 @@ class Py3status:
 
         return result
 
+    def _calc_cpu_percent(self, cpu):
+        cpu_usage = 0
+        if cpu['total'] != self.last_cpu.get('total'):
+            cpu_usage = (1 - (
+                (cpu['idle'] - self.last_cpu.get('idle', 0)) /
+                (cpu['total'] - self.last_cpu.get('total', 0))
+            )) * 100
+
+        self.last_cpu.update(cpu)
+        return cpu_usage
+
     def _get_cputemp(self, zone, unit):
         """
         Tries to determine CPU temperature using the 'sensors' command.
@@ -298,16 +290,8 @@ class Py3status:
         sys = {'temp_unit': self.temp_unit}
         # get CPU usage info
         if self.py3.format_contains(self.format, 'cpu_usage'):
-            cpu_total, cpu_idle = self._get_cpu()
-            cpu_usage = 0
-            if cpu_total != self.cpu_total:
-                cpu_usage = (1 - (
-                    float(cpu_idle - self.cpu_idle) / float(cpu_total - self.cpu_total)
-                )) * 100
-            sys['cpu_usage'] = cpu_usage
-            self.cpu_total = cpu_total
-            self.cpu_idle = cpu_idle
-            self.py3.threshold_get_color(cpu_usage, 'cpu')
+            sys['cpu_usage'] = self._calc_cpu_percent(self._get_stat())
+            self.py3.threshold_get_color(sys['cpu_usage'], 'cpu')
 
         # if specified as a formatting option, also get the CPU temperature
         if self.py3.format_contains(self.format, 'cpu_temp'):
@@ -340,10 +324,10 @@ class Py3status:
 
         try:
             self.py3.threshold_get_color(
-                max(cpu_usage, sys['mem_used_percent']), 'max_cpu_mem')
+                max(sys['cpu_usage'], sys['mem_used_percent']), 'max_cpu_mem')
         except:
             try:
-                self.py3.threshold_get_color(cpu_usage, 'max_cpu_mem')
+                self.py3.threshold_get_color(sys['cpu_usage'], 'max_cpu_mem')
             except:
                 try:
                     self.py3.threshold_get_color(
