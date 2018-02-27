@@ -48,6 +48,8 @@
 
 **[github](#github)** — Display Github notifications and issue/pull requests for a repo.
 
+**[gitlab_todo](#gitlab_todo)** — Display the numbers of gitlab todo(s) you have.
+
 **[glpi](#glpi)** — Display number of open tickets from GLPI.
 
 **[gpmdp](#gpmdp)** — Display song currently playing in Google Play Music Desktop Player.
@@ -1174,6 +1176,38 @@ github {
 ```
 
 **author** tobes
+
+---
+
+### <a name="gitlab_todo"></a>gitlab_todo
+When you log into GitLab, you normally want to see where you should spend your time and take some action, or what you need to keep an eye on. All without the mess of a huge pile of e-mail notifications.
+Todos is a chronological list of to-dos that are waiting for your input, all in a simple dashboard.
+This module use the Gitlab API (v4) to retrieve and show the numbers of todo(s) you have.
+
+Configuration parameters:
+  - `auth_token` "huge_available_token" an available token from your gitlab account, [here](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html) to create a personal access token.
+  - `gitlab_url` "https://gitlab.enterprise.com" The gitlab URL than you want to reach
+  - `trigger_low` The number of unread todos before you must take care (default 3)
+  - `trigger_hi` The number of todos who say you are very late (default 6)
+  - `color_low` The "take care" color (default #4286f4)
+  - `color_hi` The "late" (default #cb4b16)
+
+Requires:
+  - `python-gitlab`
+
+Example:
+```
+[...]
+order += "gitlab_todo"
+[...]
+
+gitlab_todo {
+  auth_token = "powerfull_right_token"
+  gitlab_url = 'https://gitlab.enterprise.com'
+}
+```
+
+**author** sebPomme
 
 ---
 
