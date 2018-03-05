@@ -17,7 +17,7 @@ class Storage:
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
         config_dir = os.path.dirname(
-            py3_wrapper.config['i3status_config_path']
+            py3_wrapper.config.get('i3status_config_path', '/tmp')
         )
         storage_path = os.path.join(config_dir, 'py3status.data')
         self.storage_path = storage_path

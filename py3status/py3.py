@@ -13,6 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 from time import time
 
 from py3status import exceptions
+from py3status.constants import COLOR_NAMES
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
@@ -104,6 +105,8 @@ class Py3:
     def __init__(self, module=None):
         self._audio = None
         self._config_setting = {}
+        self._english_env = dict(os.environ)
+        self._english_env['LC_ALL'] = 'C'
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._is_python_2 = sys.version_info < (3, 0)
@@ -146,7 +149,8 @@ class Py3:
             # not set should be treated as None
             if name.startswith('color_'):
                 if hasattr(param, 'none_setting'):
-                    param = None
+                    # see if named color and use if it is
+                    param = COLOR_NAMES.get(name[6:].lower())
                 elif param is None:
                     param = self._none_color
             # if a non-color parameter and was not set then set to default
@@ -877,7 +881,7 @@ class Py3:
             msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command, shell=False, capture_stderr=False):
+    def command_output(self, command, shell=False, capture_stderr=False, localized=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -885,6 +889,7 @@ class Py3:
         :param command: command to run can be a str or list
         :param shell: if `True` then command is run through the shell
         :param capture_stderr: if `True` then STDERR is piped to STDOUT
+        :param localized: if `False` then command is forced to use its default (English) locale
 
         A CommandError is raised if an error occurs
         """
@@ -898,10 +903,12 @@ class Py3:
             command = shlex.split(command)
 
         stderr = STDOUT if capture_stderr else PIPE
+        env = self._english_env if not localized else None
 
         try:
             process = Popen(command, stdout=PIPE, stderr=stderr, close_fds=True,
-                            universal_newlines=True, shell=shell)
+                            universal_newlines=True, shell=shell,
+                            env=env)
         except Exception as e:
             msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e)
             raise exceptions.CommandError(msg, error_code=e.errno)

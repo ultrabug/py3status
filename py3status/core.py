@@ -17,6 +17,7 @@ from traceback import extract_tb, format_tb, format_stack
 
 import py3status.docstrings as docstrings
 from py3status.command import CommandServer
+from py3status.constants import COLOR_NAMES
 from py3status.events import Events
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
@@ -45,10 +46,11 @@ class Runner(Thread):
     """
     A Simple helper to run a module in a Thread so it is non-locking.
     """
-    def __init__(self, module, py3_wrapper):
+    def __init__(self, module, py3_wrapper, module_name):
         Thread.__init__(self)
         self.daemon = True
         self.module = module
+        self.module_name = module_name
         self.py3_wrapper = py3_wrapper
         self.start()
 
@@ -57,6 +59,9 @@ class Runner(Thread):
             self.module.run()
         except:
             self.py3_wrapper.report_exception('Runner')
+        # the module is no longer running so notify the timeout logic
+        if self.module_name:
+            self.py3_wrapper.timeout_finished.append(self.module_name)
 
 
 class NoneSetting:
@@ -105,6 +110,18 @@ class CheckI3StatusThread(Task):
             self.timeout_queue_add(self, int(time.time()) + 5)
 
 
+class ModuleRunner(Task):
+    """
+    Starts up a Module
+    """
+
+    def __init__(self, module):
+        self.module = module
+
+    def run(self):
+        self.module.start_module()
+
+
 class Common:
     """
     This class is used to hold core functionality so that it can be shared more
@@ -141,14 +158,16 @@ class Common:
         if hasattr(param, 'none_setting'):
             # check py3status general section
             param = config['general'].get(attribute, self.none_setting)
-        # If this is a color and it is like #123 convert it to #112233
         if param and (attribute == 'color' or attribute.startswith('color_')):
-            if len(param) == 4 and param[0] == '#':
+            if param[0] != '#':
+                # named color
+                param = COLOR_NAMES.get(param.lower(), self.none_setting)
+            elif len(param) == 4:
+                # This is a color like #123 convert it to #112233
                 param = (
                     '#' + param[1] + param[1] + param[2] +
                     param[2] + param[3] + param[3]
                 )
-
         return param
 
     def report_exception(self, msg, notify_user=True, level='error',
@@ -246,23 +265,25 @@ class Py3statusWrapper:
         self.options = options
         self.output_modules = {}
         self.py3_modules = []
-        self.py3_modules_initialized = False
         self.running = True
         self.update_queue = deque()
         self.update_request = Event()
 
         # shared code
-        common = Common(self)
-        self.get_config_attribute = common.get_config_attribute
-        self.report_exception = common.report_exception
+        self.common = Common(self)
+        self.get_config_attribute = self.common.get_config_attribute
+        self.report_exception = self.common.report_exception
 
         # these are used to schedule module updates
         self.timeout_add_queue = deque()
         self.timeout_due = None
-        self.timeout_update_due = deque()
+        self.timeout_finished = deque()
+        self.timeout_keys = []
+        self.timeout_missed = {}
         self.timeout_queue = {}
         self.timeout_queue_lookup = {}
-        self.timeout_keys = []
+        self.timeout_running = set()
+        self.timeout_update_due = deque()
 
     def timeout_queue_add(self, item, cache_time=0):
         """
@@ -358,10 +379,33 @@ class Py3statusWrapper:
             except IndexError:
                 self.timeout_due = None
 
+        # process any finished modules.
+        # Now that the module has finished running it may have been marked to
+        # be triggered again. This is most likely to happen when events are
+        # being processed and the events are arriving much faster than the
+        # module can handle them.  It is important as a module may handle
+        # events but not trigger the module update.  If during the event the
+        # module is due to update the update is not actioned but it needs to be
+        # once the events have finished or else the module will no longer
+        # continue to update.
+        while self.timeout_finished:
+            module_name = self.timeout_finished.popleft()
+            self.timeout_running.discard(module_name)
+            if module_name in self.timeout_missed:
+                module = self.timeout_missed.pop(module_name)
+                self.timeout_update_due.append(module)
+
         # run any modules that are due
         while self.timeout_update_due:
             module = self.timeout_update_due.popleft()
-            Runner(module, self)
+            module_name = getattr(module, 'module_full_name', None)
+            # if the module is running then we do not want to trigger it but
+            # instead wait till it has finished running and then trigger
+            if module_name and module_name in self.timeout_running:
+                self.timeout_missed[module_name] = module
+            else:
+                self.timeout_running.add(module_name)
+                Runner(module, self, module_name)
 
         # we return how long till we next need to process the timeout_queue
         if self.timeout_due is not None:
@@ -756,11 +800,6 @@ class Py3statusWrapper:
             update = [update]
         self.update_queue.extend(update)
 
-        # if all our py3status modules are not ready to receive updates then we
-        # don't want to get them to update.
-        if not self.py3_modules_initialized:
-            return
-
         # find containers that use the modules that updated
         containers = self.config['py3_config']['.module_groups']
         containers_to_update = set()
@@ -926,17 +965,10 @@ class Py3statusWrapper:
         # content_function.
         self.create_output_modules()
 
-        # Some modules need to be prepared before they can run
-        # eg run their post_config_hook
+        # start up all our modules
         for module in self.modules.values():
-            module.prepare_module()
-
-        # modules can now receive updates
-        self.py3_modules_initialized = True
-
-        # start modules
-        for module in self.modules.values():
-            module.start_module()
+            task = ModuleRunner(module)
+            self.timeout_queue_add(task)
 
         # this will be our output set to the correct length for the number of
         # items in the bar

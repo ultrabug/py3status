@@ -98,11 +98,6 @@ class Py3status:
             ]
         }
 
-    def __init__(self, *args, **kwargs):
-        self.last_interface = None
-        self.last_stat = self._get_stat()
-        self.last_time = time()
-
     def post_config_hook(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):
@@ -112,6 +107,10 @@ class Py3status:
         placeholders = self.py3.get_placeholder_formats_list(self.format_value)
         values = ['{%s}' % x[1] for x in placeholders if x[0] == 'value']
         self._value_formats = values
+        # last
+        self.last_interface = None
+        self.last_stat = self._get_stat()
+        self.last_time = time()
 
     def currentSpeed(self):
         ns = self._get_stat()
