@@ -16,6 +16,8 @@ Configuration parameters:
         (default "{stream_name} is offline.")
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
+    twitch_client_id: Your client id. Create your own key at http://dev.twitch.tv
+        (default None)
 
 Format placeholders:
     {stream_name} name of the streamer
@@ -46,13 +48,14 @@ class Py3status:
     format_invalid = "{stream_name} does not exist!"
     format_offline = "{stream_name} is offline."
     stream_name = None
+    twitch_client_id = None
 
     def post_config_hook(self):
         self._display_name = None
 
     def _get_display_name(self):
         url = 'https://api.twitch.tv/kraken/users/' + self.stream_name
-        display_name_request = requests.get(url)
+        display_name_request = requests.get(url, headers={'Client-ID': self.twitch_client_id})
         self._display_name = display_name_request.json().get('display_name')
 
     def is_streaming(self):
@@ -62,7 +65,7 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER
             }
 
-        r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
+        r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name, headers={'Client-ID': self.twitch_client_id})
         if not self._display_name:
             self._get_display_name()
         if 'error' in r.json():
