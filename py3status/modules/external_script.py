@@ -13,6 +13,8 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 15)
     format: see placeholders below (default '{output}')
+    localize: should script output be localized (if available)
+        (default True)
     script_path: script you want to show output of (compulsory)
         (default None)
     strip_output: shall we strip leading and trailing spaces from output
@@ -40,8 +42,7 @@ example
 """
 
 import re
-
-STRING_UNAVAILABLE = "external_script: N/A"
+STRING_ERROR = 'missing script_path'
 
 
 class Py3status:
@@ -50,21 +51,20 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 15
     format = '{output}'
+    localize = True
     script_path = None
     strip_output = False
 
-    def external_script(self):
+    def post_config_hook(self):
         if not self.script_path:
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
+            raise Exception(STRING_ERROR)
 
+    def external_script(self):
+        output_lines = None
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
-            output = self.py3.command_output(self.script_path, shell=True)
+            output = self.py3.command_output(self.script_path, shell=True, localized=self.localize)
             output_lines = output.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]
@@ -75,12 +75,15 @@ class Py3status:
             output = e.output or e.error
             self.py3.error(output)
 
-        output_text = output_lines[0]
+        if output_lines:
+            output_text = output_lines[0]
+            if self.strip_output:
+                output_text = output_text.strip()
+        else:
+            output_text = ''
 
-        if self.strip_output:
-            output_text = output_text.strip()
-
-        response['full_text'] = self.py3.safe_format(self.format, {'output': output_text})
+        response['full_text'] = self.py3.safe_format(
+            self.format, {'output': output_text})
         return response
 
 

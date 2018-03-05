@@ -25,6 +25,9 @@ calendar.
 ex: profile_path = "/home/user/.thunderbird/1yawevtp.default"
 
 @author mrt-prodz
+
+SAMPLE OUTPUT
+{'full_text': 'tasks[3] current: finish the birdhouse'}
 """
 from sqlite3 import connect
 from os import access, R_OK

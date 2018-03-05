@@ -50,6 +50,19 @@ class IOPoller:
             return None
 
 
+class EventTask:
+    """
+    A simple task that can be run by the scheduler.
+    """
+    def __init__(self, module_name, event, events_thread):
+        self.events_thread = events_thread
+        self.module_full_name = module_name
+        self.event = event
+
+    def run(self):
+        self.events_thread.process_event(self.module_full_name, self.event)
+
+
 class Events(Thread):
     """
     This class is responsible for dispatching event JSONs sent by the i3bar.
@@ -220,7 +233,8 @@ class Events(Thread):
         # guess the module config name
         module_name = '{} {}'.format(name, instance).strip()
         # do the work
-        self.process_event(module_name, event)
+        task = EventTask(module_name, event, self)
+        self.py3_wrapper.timeout_queue_add(task)
 
     @profile
     def run(self):

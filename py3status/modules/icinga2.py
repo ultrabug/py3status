@@ -22,6 +22,18 @@ Configuration parameters:
 @author Ben Oswald <ben.oswald@root-space.de>
 @license BSD License <https://opensource.org/licenses/BSD-2-Clause>
 @source https://github.com/nazco/i3status-modules
+
+SAMPLE OUTPUT
+{'full_text': 'OK: 0'}
+
+warning
+{'full_text': 'WARNING: 1'}
+
+critical
+{'full_text': 'CRITICAL: 2'}
+
+unknown
+{'full_text': 'UNKNOWN: 3'}
 """
 
 import requests

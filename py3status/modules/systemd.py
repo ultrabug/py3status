@@ -32,6 +32,15 @@ Requires:
 
 @author Adrian Lopez <adrianlzt@gmail.com>
 @license BSD
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'sshd.service: active'}
+
+inactive
+{'color': '#FF0000', 'full_text': 'sshd.service: inactive'}
+
+not-found
+{'color': '#FFFF00', 'full_text': 'sshd.service: not-found'}
 """
 
 from pydbus import SystemBus

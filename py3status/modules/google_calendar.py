@@ -132,8 +132,8 @@ google_calendar {
 
 SAMPLE OUTPUT
 [
-   {'full_text':'Homer's Birthday (742 Evergreen Terrace) (1h 23m) | '},
-   {'full_text':'Doctor's Appointment | Lunch with John'},
+   {'full_text': "Homer's Birthday (742 Evergreen Terrace) (1h 23m) | "},
+   {'full_text': "Doctor's Appointment | Lunch with John"},
 ]
 """
 
@@ -193,7 +193,6 @@ class Py3status:
 
         self.credentials = self._get_credentials()
         self.is_authorized = False
-        self.first_run = True
 
     def _get_credentials(self):
         """
