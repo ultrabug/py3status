@@ -8,6 +8,8 @@ if a channel is currently streaming or not.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 10)
+    client_id: Your client id. Create your own key at http://dev.twitch.tv
+        (default None)
     format: Display format when online
         (default "{stream_name} is live!")
     format_invalid: Display format when streamer does not exist
@@ -15,8 +17,6 @@ Configuration parameters:
     format_offline: Display format when offline
         (default "{stream_name} is offline.")
     stream_name: name of streamer(twitch.tv/<stream_name>)
-        (default None)
-    client_id: Your client id. Create your own key at http://dev.twitch.tv
         (default None)
 
 Format placeholders:
@@ -32,7 +32,7 @@ Client ID:
     Name: <your_name>_py3status
     OAuth Redirect URI: http://localhost
     Application Category: Application Integration
-    
+
 
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
@@ -52,11 +52,11 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    client_id = None
     format = "{stream_name} is live!"
     format_invalid = "{stream_name} does not exist!"
     format_offline = "{stream_name} is offline."
     stream_name = None
-    client_id = None
 
     def post_config_hook(self):
         self._display_name = None
