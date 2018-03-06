@@ -116,7 +116,7 @@ class Py3status:
             # We know 7.0 and 7.1 returns a literal 'nothing' string.
             # Deadbeef stopped doing that in 7.2 so we adds a quick check
             # here to skip status if it contains 'nothing' or FMT_SEPARATOR.
-            if out not in ['nothing', u'\x1e']:
+            if out not in ['nothing', FMT_SEPARATOR]:
 
                 # split placeholders results
                 status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
