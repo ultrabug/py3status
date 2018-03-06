@@ -73,9 +73,10 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER
             }
 
-        r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name,
-                         headers={'Client-ID': self.client_id}
-                         )
+        r = requests.get(
+            'https://api.twitch.tv/kraken/streams/' + self.stream_name,
+            headers={'Client-ID': self.client_id}
+        )
         if not self._display_name:
             self._get_display_name()
         if 'error' in r.json():
