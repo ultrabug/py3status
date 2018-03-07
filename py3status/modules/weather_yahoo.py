@@ -119,7 +119,7 @@ SAMPLE OUTPUT
 
 from datetime import datetime
 DATETIME_FORECAST = '%d %b %Y'
-DATETIME_GENERAL = '%a, %d %b %Y %H:%M %p %Z'
+DATETIME_GENERAL = '%a, %d %b %Y %I:%M %p %Z'
 
 URL = 'https://query.yahooapis.com/v1/public/yql?q='
 URL += 'select * from weather.forecast where woeid='
