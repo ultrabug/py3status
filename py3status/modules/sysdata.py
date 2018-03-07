@@ -170,11 +170,13 @@ class Py3status:
         elif not temp_unit == 'K':
             temp_unit = 'unknown unit'
         self.temp_unit = temp_unit
-        self.init = {}
+        self.init = {'meminfo': []}
         names = ['cpu_temp', 'cpu_usage', 'load', 'mem', 'swap']
         placeholders = ['cpu_temp', 'cpu_usage', 'load*', 'mem_*', 'swap_*']
         for name, placeholder in zip(names, placeholders):
             self.init[name] = self.py3.format_contains(self.format, placeholder)
+            if name in ['mem', 'swap'] and self.init[name]:
+                self.init['meminfo'].append(name)
 
     def _get_stat(self):
         # miscellaneous kernel statistics https://git.io/vn21n
@@ -300,7 +302,7 @@ class Py3status:
             sys['cpu_temp'] = self._get_cputemp(self.zone, self.temp_unit)
             self.py3.threshold_get_color(sys['cpu_temp'], 'temp')
 
-        if self.init['mem'] or self.init['swap']:
+        if self.init['meminfo']:
             memi = self._get_mem(
                 self.mem_unit, self.swap_unit, self.init['mem'], self.init['swap'])
 
