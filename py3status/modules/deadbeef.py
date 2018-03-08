@@ -45,6 +45,7 @@ from subprocess import check_output
 
 FMT_PARAMETER = ['isplaying']
 FMT_SEPARATOR = u'\u001e'
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -78,6 +79,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if not self.py3.check_commands('deadbeef'):
+            raise Exception(STRING_NOT_INSTALLED)
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
