@@ -244,10 +244,14 @@ class Placeholder:
                 # type then we see if we can coerce it to be.  This allows
                 # the user to format types that normally would not be
                 # allowed eg '123' it also allows {:d} to be used as a
-                # shorthand for {:.0f}.  If the parameter cannot be
-                # successfully converted then the format is removed.
+                # shorthand for {:.0f}.  Use {:g} to remove insignificant
+                # trailing zeroes and the decimal point too if there are
+                # no remaining digits following it.  If the parameter cannot
+                # be successfully converted then the format will be removed.
                 try:
                     if 'f' in self.format:
+                        value = float(value)
+                    if 'g' in self.format:
                         value = float(value)
                     if 'd' in self.format:
                         value = int(float(value))
@@ -344,6 +348,10 @@ class Condition:
         except:
             variable = None
         value = self.value
+
+        # if None, return oppositely
+        if variable is None:
+            return not self.default
 
         # convert the value to a correct type
         if isinstance(variable, bool):
@@ -579,8 +587,9 @@ class Block:
                 text += conversion(item)
                 continue
             elif text:
-                if (not first and
-                        (text.strip() == '' or out[-1].get('color') == color)):
+                if (not first and (
+                        text.strip() == '' or out and
+                        out[-1].get('color') == color)):
                     out[-1]['full_text'] += text
                 else:
                     part = {'full_text': text}
