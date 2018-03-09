@@ -184,17 +184,17 @@ class Py3status:
 
         except ValueError:
             # when status.get(...) returns None; e.g. during reversal of playlist
-            text = "No song information!" if not self.hide_on_error else ""
+            text = "No song information!"
             state = None
         except socket.error:
-            text = "Failed to connect to mpd!" if not self.hide_on_error else ""
+            text = "Failed to connect to mpd!"
             state = None
         except ConnectionError:
-            text = "Error while connecting to mpd!" if not self.hide_on_error else ""
+            text = "Error while connecting to mpd!"
             state = None
             self._get_mpd(disconnect=True)
         except CommandError:
-            text = "Failed to authenticate to mpd!" if not self.hide_on_error else ""
+            text = "Failed to authenticate to mpd!"
             state = None
             self._get_mpd(disconnect=True)
 
@@ -203,7 +203,7 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
+            'full_text': text if state or not self.hide_on_error else "",
         }
 
         if state:
