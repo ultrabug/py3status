@@ -564,17 +564,22 @@ class Py3:
             ``cached_until`` in their response unless they wish to directly control
             it.
 
-        seconds specifies the number of seconds that should occure before the
-        update is required.
+        :param seconds: specifies the number of seconds that should occure before the
+            update is required.  Passing a value of ``CACHE_FOREVER`` returns
+            ``CACHE_FOREVER`` which can be useful for some modules.
 
-        sync_to causes the update to be syncronised to a time period.  1 would
-        cause the update on the second, 60 to the nearest minute. By defalt we
-        syncronise to the nearest second. 0 will disable this feature.
+        :param sync_to: causes the update to be syncronised to a time period.  1 would
+            cause the update on the second, 60 to the nearest minute. By defalt we
+            syncronise to the nearest second. 0 will disable this feature.
 
-        offset is used to alter the base time used. A timer that started at a
-        certain time could set that as the offset and any syncronisation would
-        then be relative to that time.
+        :param offset: is used to alter the base time used. A timer that started at a
+            certain time could set that as the offset and any syncronisation would
+            then be relative to that time.
         """
+
+        # if called with CACHE_FOREVER we just return this
+        if seconds is self.CACHE_FOREVER:
+            return self.CACHE_FOREVER
 
         if seconds is None:
             # If we have a sync_to then seconds can be 0
