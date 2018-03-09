@@ -53,9 +53,9 @@ class Py3status:
     format = '{host} is {sec}s behind'
     warning_threshold = 100
     critical_threshold = 250
-    host = 'einstein'
-    user = 'root'
-    passwd = 'paloAlto'
+    host = ''
+    user = ''
+    passwd = ''
     port = 3306
 
     def mysql_slave(self):
