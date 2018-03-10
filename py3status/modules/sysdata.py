@@ -278,7 +278,7 @@ class Py3status:
         return cpu_temp
 
     def sysdata(self):
-        sys = {'temp_unit': self.temp_unit}
+        sys = {'max_used_percent': 0, 'temp_unit': self.temp_unit}
 
         if self.init['cpu_percent']:
             sys['cpu_used_percent'] = self._calc_cpu_percent(self._get_stat())
@@ -309,18 +309,10 @@ class Py3status:
             sys.update(zip(load_keys, getloadavg()))
             self.py3.threshold_get_color(sys['load1'], 'load')
 
-        try:
-            self.py3.threshold_get_color(
-                max(sys['cpu_used_percent'], sys['mem_used_percent']), 'max_cpu_mem')
-        except:
-            try:
-                self.py3.threshold_get_color(sys['cpu_used_percent'], 'max_cpu_mem')
-            except:
-                try:
-                    self.py3.threshold_get_color(
-                        sys['mem_used_percent'], 'max_cpu_mem')
-                except:
-                    pass
+        sys['max_used_percent'] = max(
+            [perc for name, perc in sys.items() if 'used_percent' in name]
+        )
+        self.py3.threshold_get_color(sys['max_used_percent'], 'max_cpu_mem')
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
