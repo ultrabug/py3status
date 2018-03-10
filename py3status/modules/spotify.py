@@ -3,6 +3,9 @@
 Display song currently playing in Spotify.
 
 Configuration parameters:
+    button_next: button to switch to next song (default None)
+    button_play_pause: button to toggle play/pause (default None)
+    button_previous: button to switch to previous song (default None)
     cache_timeout: how often to update the bar (default 5)
     format: see placeholders below (default '{artist} : {title}')
     format_down: define output if spotify is not running
@@ -27,23 +30,15 @@ Color options:
     color_paused: Song is stopped or paused, defaults to color_degraded
     color_playing: Song is playing, defaults to color_good
 
-Click Events:
-    You can add some config to your i3status.conf to  create click events
-    For example
-
-    - button_play_pause = 1 ==> left click : Pause/Play
-    - button_next = 4 ==> scroll up : Next song
-    - button_previous = 5 ==> scroll down : Previous song
-
 i3status.conf example:
 
 ```
 spotify {
+    button_next = 4
+    button_play_pause = 1
+    button_previous = 5
     format = "{title} by {artist} -> {time}"
     format_down = "no Spotify"
-    next_song = 4
-    previous_song = 5
-    play_paused = 1
 }
 ```
 
@@ -77,6 +72,9 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_next = None
+    button_play_pause = None
+    button_previous = None
     cache_timeout = 5
     format = '{artist} : {title}'
     format_down = 'Spotify not running'
@@ -193,25 +191,14 @@ class Py3status:
 
     def on_click(self, event):
         """
-        Click events
-            - Pause/Play
-            - Next song
-            - Previous song
-
-        Sleep to "invalidate cache" and give the time to change the song to refresh the display
         """
-
         button = event['button']
-        if button is None:
-            pass
-        elif button == self.button_play_pause:
+        if button == self.button_play_pause:
             self.py3.command_run(self._spotify_cmd('PlayPause'))
             sleep(0.1)
-
         elif button == self.button_next:
             self.py3.command_run(self._spotify_cmd('Next'))
             sleep(0.1)
-
         elif button == self.button_previous:
             self.py3.command_run(self._spotify_cmd('Previous'))
             sleep(0.1)
