@@ -4,8 +4,7 @@ Display tasks currently running in taskwarrior.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
-    filter: arguments passed to the command
-        (default 'start.before:today status:pending')
+    filter: specify one or more criteria to use (default 'status:pending')
     format: display format for this module (default '{task}')
 
 Format placeholders:
@@ -22,7 +21,7 @@ SAMPLE OUTPUT
 """
 
 import json
-STRING_NOT_INSTALLED = "not installed"
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -36,16 +35,16 @@ class Py3status:
     def post_config_hook(self):
         if not self.py3.check_commands('task'):
             raise Exception(STRING_NOT_INSTALLED)
+        if self.filter:
+            self.task_command = 'task %s export' % self.filter
+        else:
+            self.task_command = 'task export'
 
     def taskWarrior(self):
         def describeTask(taskObj):
             return str(taskObj['id']) + ' ' + taskObj['description']
 
-        if self.filter:
-            task_command = 'task %s export' % self.filter
-        else:
-            task_command = 'task export'
-        task_json = json.loads(self.py3.command_output(task_command))
+        task_json = json.loads(self.py3.command_output(self.task_command))
         task_result = ', '.join(map(describeTask, task_json))
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
