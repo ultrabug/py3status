@@ -50,7 +50,7 @@ pomodoro {
 }
 ```
 
-@author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
+@author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch, ricci
 
 SAMPLE OUTPUT
 {'color': '#FF0000', 'full_text': u'Pomodoro (1500)'}
