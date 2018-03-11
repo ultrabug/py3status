@@ -169,7 +169,7 @@ class Py3status:
             self._time_left = self.timer_break
             self._section_time = self.timer_break
             self._break_number += 1
-            if self._break_number > self.max_breaks:
+            if self._break_number >= self.max_breaks:
                 self._time_left = self.timer_long_break
                 self._section_time = self.timer_long_break
                 self._break_number = 0
