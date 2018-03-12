@@ -6,6 +6,7 @@ based on ModemManager, NetworkManager and dbus.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds.
         (default 5)
+<<<<<<< HEAD
     format: What to display upon regular connection
         *(default '[\?color=state WWAN: {status}] '
         '[\?if=m3gpp_registration_state=HOME - {m3gpp_operator_name} ] '
@@ -85,7 +86,6 @@ Requires:
     ModemManager
     NetworkManager
     pydbus
-
 
 @author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
 
@@ -298,7 +298,6 @@ class Py3status:
                 'm3gpp_registration_state']]
 
             # @lasers_question: what else can we get from modem_proxy?
-            #
             bearer = modem_proxy.Bearers[0]
 
             # get interface name
