@@ -22,7 +22,11 @@ Configuration parameters:
         (default 'WWAN: {operator}')
     format_up: What to display upon regular connection
         (default 'WWAN: {operator} {netgen} ({signal})')
-    modem: The device to send commands to. (default 'first')
+    modem: The device to use from NetworkManager config
+        (default '', empty value will use first find modem or 
+        use 'busctl introspect org.freedesktop.ModemManager1 \
+                                /org/freedesktop/ModemManager1/Modem/0'
+        and read .EquipmentIdentifier)
 
 Color options:
     color_bad: Error or no connection
