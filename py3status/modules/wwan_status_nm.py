@@ -62,7 +62,7 @@ class Py3status:
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
         bus = SystemBus()
-        """ 
+        """
         find the modem
         """
         for id in range(0, 20):
@@ -71,16 +71,15 @@ class Py3status:
             try:
                 proxy = bus.get('.ModemManager1', device)
 
-                equipment_identifier = str(proxy.EquipmentIdentifier)
+                eqid = str(proxy.EquipmentIdentifier)
 
-                if (self.modem != "" and equipment_identifier == self.modem
-                    ) or (self.modem == ""):
+                if (self.modem != ""
+                        and eqid == self.modem) or (self.modem == ""):
                     state = proxy.State
                     signal = str(proxy.SignalQuality[0]) + '%'
-                    current_modes = proxy.CurrentModes[0]
-                    current_capabilities = proxy.CurrentCapabilities  #TODO: use me for know max mode
-                    current_operator = proxy.OperatorName
-                    netgen = self._get_capabilities(current_modes)
+                    modes = proxy.CurrentModes[0]
+                    operator = proxy.OperatorName
+                    netgen = self._get_capabilities(modes)
 
                     if state == 11:
                         response['full_text'] = self.py3.safe_format(
@@ -88,13 +87,13 @@ class Py3status:
                             dict(
                                 netgen=netgen[1],
                                 signal=signal,
-                                operator=current_operator))
+                                operator=operator))
                         """
                         green color if 4G, else yellow
                         """
                         if netgen[0] == 4:
                             response['color'] = self.py3.COLOR_GOOD
-                        elif netgen[0] == 3 and self.consider_3G_degraded == False:
+                        elif netgen[0] == 3 and self.consider_3G_degraded is False:
                             response['color'] = self.py3.COLOR_GOOD
                         else:
                             response['color'] = self.py3.COLOR_DEGRADED
@@ -105,7 +104,7 @@ class Py3status:
                             dict(
                                 netgen=netgen[1],
                                 signal=signal,
-                                operator=current_operator))
+                                operator=operator))
                         response['color'] = self.py3.COLOR_BAD
                 else:
                     response['full_text'] = self.py3.safe_format(
