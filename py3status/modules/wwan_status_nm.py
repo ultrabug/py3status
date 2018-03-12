@@ -1,53 +1,105 @@
 # -*- coding: utf-8 -*-
 """
-Display wwan network operator, signal and netgen properties,
+Display wwan network operator, signal and access_technologies properties,
 based on ModemManager, NetworkManager and dbus.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds.
         (default 5)
-    consider_3G_degraded: If set to True, only 4G-networks will be
-        considered 'good'; 3G connections are shown
-        as 'degraded', which is yellow by default. Mostly
-        useful if you want to keep track of where there
-        is a 4G connection.
-        (default False)
-    format_down: What to display when the modem is not plugged in
-        (default 'WWAN: {operator} {netgen} ({signal})')
-    format_error: What to display when modem can't be accessed.
-        (default 'WWAN: {error}')
-    format_no_service: What to display when the modem does not have a
-        network connection. This allows to omit the (then
-        meaningless) network generation.
-        (default 'WWAN: {operator}')
-    format_up: What to display upon regular connection
-        (default 'WWAN: {operator} {netgen} ({signal})')
-    modem: The device to use from NetworkManager config
-        (default '', empty value will use first find modem or 
-        use 'busctl introspect org.freedesktop.ModemManager1 \
-                                /org/freedesktop/ModemManager1/Modem/0'
-        and read .EquipmentIdentifier)
+    format: What to display upon regular connection
+        *(default '[\?color=state WWAN: {status}] '
+        '[\?if=m3gpp_registration_state=HOME - {m3gpp_operator_name} ] '
+        '[\?if=m3gpp_registration_state=ROAMING - {m3gpp_operator_name} ]'
+        '[\?color=access_technologies {access_technologies} ]'
+        '[([\?color=signal_quality_0 {signal_quality_0}%]) ]'
+        '[\?if=signal_quality_1=False&color=signal_quality_1 \[!\]] '
+        '[\?if=state=11 [{format_ipv4}] [{format_stats}]]')*
+    format_ipv4: What to display about ipv4 network config
+        (default '{address}')
+    format_ipv6: What to display about ipv6 network config
+        (default '{address}')
+    format_stats: What to display about network usage
+        (default '{duration_hms}')
+    modem: The modem device to use. If None
+        will use first find modem or
+        'busctl introspect org.freedesktop.ModemManager1 /org/freedesktop/ModemManager1/Modem/0'
+        and read '.EquipmentIdentifier')
+        (default None)
+    thresholds: specify color thresholds to use (see below for access_technologies values)
+    *(default {
+        'signal_quality_0': [
+            (0, 'bad'), (10, 'orange'), (30, 'degraded'), (50, 'good')],
+        'signal_quality_1': [
+            (False, 'bad'), (True, 'good')],
+        'access_technologies': [
+            (2, 'bad'), (32, 'orange'), (512, 'degraded'), (16384, 'good')],
+        'state': [
+            (-1, 'bad'), (4, 'orange'), (5, 'degraded'), (11, 'good')]
+        })*
 
-Color options:
-    color_bad: Error or no connection
-    color_degraded: Low generation connection eg 2G
-    color_good: Good connection
+Format placeholders:
+    {format_ipv4}               ipv4 format
+    {format_ipv6}               ipv6 format
+    {format_stats}              connection statistics
+    {interface}                 interface name
+    {access_technologies}       network speed
+    {access_technologies_human}  network speed human readable
+    {m3gpp_registration_state} is registred on network operator
+    {m3gpp_operator_name}       network operator name
+    {signal_quality_0}          network signal quality
+    {signal_quality_1}          is signal quality recently updated (if True)
+    {status}                    network status
+
+format_ipv4 placeholders:
+    {address}   ip address
+    {dns1}      dns1
+    {dns2}      dns2
+    {gateway}   gateway
+    {mtu}       mtu
+    {prefix}    netmask prefix
+
+format_ipv6 placeholders:
+    {address}   ip address
+    {dns1}      dns1
+    {dns2}      dns2
+    {gateway}   gateway
+    {mtu}       mtu
+    {prefix}    netmask prefix
+
+format_stats placeholders:
+    {duration}      time since connected
+    {duration_hms}  time since connected h:m:s
+    {tx_bytes}      tx-bytes (depends on modem)
+    {rx_bytes}      rx-bytes (depends on modem)
+
+Color thresholds:
+    {state} State/Status color
+    {access_technologies}  Access technologies color (2G, 3G, 4G)
+    {signal_quality_0}     Signal quality color
+    {signal_quality_1}     Signal quality recently updated boolean color
+
+Enum:
+    https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html
 
 Requires:
     ModemManager
     NetworkManager
     pydbus
 
-@author Cyril Levis <levis.cyril@gmail.com>
+
+@author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'Bouygues Telecom 4G (19%)'}
-
-off
-{'color': '#FF0000', 'full_text': u'Bouygues Telecom 4G (12%)'}
+NOTE: Skip this part until we're finished with the module first.
 """
 
+from datetime import timedelta
+
 from pydbus import SystemBus
+
+STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
+STRING_NOT_INSTALLED = 'not installed'
+STRING_UNKNOWN = "n/a"
 
 
 class Py3status:
@@ -55,77 +107,231 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    consider_3G_degraded = False
-    format_error = 'WWAN: {error}'
-    format_down = 'WWAN: {operator} {netgen} ({signal})'
-    format_up = 'WWAN: {operator} {netgen} ({signal})'
-    modem = ""
+    format = (
+        u'[\?color=state WWAN: {status}] '
+        u'[\?if=m3gpp_registration_state=HOME - {m3gpp_operator_name} ] '
+        u'[\?if=m3gpp_registration_state=ROAMING - {m3gpp_operator_name} ]'
+        u'[\?color=access_technologies {access_technologies_human} ]'
+        u'[([\?color=signal_quality_0 {signal_quality_0}%]) ]'
+        u'[\?if=signal_quality_1]|[\?color=signal_quality_1 \[!\]]'
+        u'[\?if=state=11 [{format_ipv4}] [{format_stats}]]')
+    format_ipv4 = u'{address}'
+    format_ipv6 = u'{address}'
+    format_stats = u'{duration_hms}'
+    modem = None
+    thresholds = {
+        'access_technologies_human': [(2, 'bad'), (32, 'orange'),
+                                      (512, 'degraded'), (16384, 'good')],
+        'signal_quality_0': [(0, 'bad'), (10, 'orange'), (30, 'degraded'),
+                             (50, 'good')],
+        'signal_quality_1': [(False, 'bad'), (True, 'good')],
+        'state': [(-1, 'bad'), (4, 'orange'), (5, 'degraded'), (11, 'good')]
+    }
+
+    def post_config_hook(self):
+        for command in ['ModemManager', 'NetworkManager']:
+            if not self.py3.check_commands(command):
+                raise Exception('%s %s' % (command, STRING_NOT_INSTALLED))
+
+        # network states dict
+        # https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemState
+        self.states = {
+            -1: 'failed',
+            0: STRING_UNKNOWN,
+            1: 'initializing',
+            2: 'locked',
+            3: 'disabled',
+            4: 'disabling',
+            5: 'enabling',
+            6: 'enabled',
+            7: 'searching',
+            8: 'registered',
+            9: 'disconnecting',
+            10: 'connecting',
+            11: 'connected'
+        }
+
+        # network speed dict
+        # https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemAccessTechnology
+        self.speed = {
+            0: STRING_UNKNOWN,
+            1 << 0: 'POTS',  # 2
+            1 << 1: 'GSM',
+            1 << 2: 'GSM Compact',
+            1 << 3: 'GPRS',
+            1 << 4: 'EDGE',
+            1 << 5: 'UMTS',  # 32
+            1 << 6: 'HSDPA',
+            1 << 7: 'HSUPA',
+            1 << 8: 'HSPA',
+            1 << 9: 'HSPA+',  # 512
+            1 << 10: '1XRTT',
+            1 << 11: 'EVDO0',
+            1 << 12: 'EVDOA',
+            1 << 13: 'EVDOB',
+            1 << 14: 'LTE'  # 16384
+        }
+
+        # network registration states
+        # https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModem3gppRegistrationState
+        self.rstates = {
+            0: 'IDLE',
+            1: 'HOME',
+            2: 'SEARCHING',
+            3: 'DENIED',
+            4: 'UNKNOWN',
+            5: 'ROAMING'
+        }
+
+        self.bus = SystemBus()
+
+    def _get_modem_proxy(self):
+        try:
+            modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
+            modems = modemmanager_proxy.GetManagedObjects()
+        except:
+            modems = {}
+
+        # browse modems objects
+        for objects in modems.items():
+            modem_path = objects[0]
+            modem_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, modem_path)
+
+            # we can maybe choose another selector
+            # avoid weird issues with special unicode chars
+            eqid = '{}'.format(modem_proxy.EquipmentIdentifier)
+
+            # use selected modem or first find
+            if self.modem is None or self.modem == eqid:
+                # return modem proxy
+                return modem_proxy
+        else:
+            return {}
+
+    def _get_network_config(self, bearer):
+        network_config = {}
+        try:
+            bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
+            network_config['ipv4'] = bearer_proxy.Ip4Config
+            network_config['ipv6'] = bearer_proxy.Ip6Config
+        except:
+            pass
+        return network_config
+
+    def _get_interface(self, bearer):
+        try:
+            bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
+            return bearer_proxy.Interface
+        except:
+            return None
+
+    def _get_stats(self, bearer):
+        stats = {}
+        try:
+            bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
+            stats = bearer_proxy.Stats
+            stats['duration_hms'] = timedelta(seconds=stats['duration'])
+        except:
+            pass
+        return stats
+
+    def _get_status(self, modem_proxy):
+        modem_data = {}
+        try:
+            modem_data = modem_proxy.GetStatus()
+            # use human readable status format
+        except:
+            # i try another solution for handle suspend/resume pb
+            # i force a state unknow != no data state in dict
+            modem_data['state'] = 0
+        # and i translate state to human status here
+        modem_data['status'] = self.states[modem_data['state']]
+        return modem_data
+
+    def _organize(self, data):
+        new_data = {}
+        for key, value in data.items():
+            key = key.lower().replace('-', '_')
+            if isinstance(value, (list, tuple)):
+                if len(value) > 1:
+                    for i, v in enumerate(value):
+                        new_data['%s_%s' % (key, i)] = v
+                elif len(value) == 1:
+                    new_data[key] = value[0]
+                else:
+                    new_data[key] = None
+            else:
+                new_data[key] = value
+
+        return new_data
 
     def wwan_status_nm(self):
-        response = {}
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        data = {}
 
-        bus = SystemBus()
-        """
-        find the modem
-        """
-        for id in range(0, 20):
-            device = 'Modem/' + str(id)
+        # get status informations
+        modem_proxy = self._get_modem_proxy()
+        data = self._organize(self._get_status(modem_proxy))
 
-            try:
-                proxy = bus.get('.ModemManager1', device)
+        # start to build return data dict
+        # if state < 8, we have no signal data
 
-                eqid = str(proxy.EquipmentIdentifier)
+        # self.py3.log('-' * 20)
+        # self.py3.log(data)
+        # self.py3.log('-' * 20)
 
-                if (self.modem != ""
-                        and eqid == self.modem) or (self.modem == ""):
-                    state = proxy.State
-                    signal = str(proxy.SignalQuality[0]) + '%'
-                    modes = proxy.CurrentModes[0]
-                    operator = proxy.OperatorName
-                    netgen = self._get_capabilities(modes)
+        # @lasers_question: can data['state'] fail here?
+        # @Cyrinux_answer: now no, see _get_status (before sometime
+        # we get empty dict with no state
+        # we might not need this, but lets see.
+        if data['state'] >= 8:
 
-                    if state == 11:
-                        response['full_text'] = self.py3.safe_format(
-                            self.format_up,
-                            dict(
-                                netgen=netgen[1],
-                                signal=signal,
-                                operator=operator))
-                        """
-                        green color if 4G, else yellow
-                        """
-                        if netgen[0] == 4:
-                            response['color'] = self.py3.COLOR_GOOD
-                        elif netgen[0] == 3 and self.consider_3G_degraded is False:
-                            response['color'] = self.py3.COLOR_GOOD
-                        else:
-                            response['color'] = self.py3.COLOR_DEGRADED
+            # access technologies
+            if data['access_technologies']:
+                highest_access_bit = 1 << (
+                    data['access_technologies'].bit_length() - 1)
+            else:
+                highest_access_bit = 0
+            data['access_technologies_human'] = self.speed[highest_access_bit]
 
-                    else:
-                        response['full_text'] = self.py3.safe_format(
-                            self.format_down,
-                            dict(
-                                netgen=netgen[1],
-                                signal=signal,
-                                operator=operator))
-                        response['color'] = self.py3.COLOR_BAD
-                else:
-                    response['full_text'] = self.py3.safe_format(
-                        self.format_error, dict(error='wrong or empty modem'))
-                    response['color'] = self.py3.COLOR_BAD
-                return response
+            # use human readable registration state format
+            data['m3gpp_registration_state'] = self.rstates[data[
+                'm3gpp_registration_state']]
 
-            except:
-                pass
+            # @lasers_question: what else can we get from modem_proxy?
+            #
+            bearer = modem_proxy.Bearers[0]
 
-    def _get_capabilities(self, c):
-        """
-        TODO: improve the following dict based on this doc
-        https://developer.gnome.org/NetworkManager/stable/nm-dbus-types.html#NMDeviceModemCapabilities
-        """
-        capabilities = {8: (3, '3G+'), 12: (4, '4G')}
-        return capabilities.get(c, (0, 'no data'))
+            # get interface name
+            interface = self._get_interface(bearer)
+            data['interface'] = interface
+
+            # Get network config
+            network_config = self._get_network_config(bearer)
+            ipv4 = network_config.get('ipv4', {})
+            ipv6 = network_config.get('ipv6', {})
+
+            # Add network config to data dict
+            data['format_ipv4'] = self.py3.safe_format(self.format_ipv4, ipv4)
+            data['format_ipv6'] = self.py3.safe_format(self.format_ipv6, ipv6)
+
+            # Get connection statistics
+            stats = self._organize(self._get_stats(bearer))
+            data['format_stats'] = self.py3.safe_format(
+                self.format_stats, stats)
+
+            # @Cyrinux_question
+            # get status color here, i put this here else we can loop over composite
+            # maybe we must organize data and then loop over all?
+            # not sure we want/can color network_config and stats for the moment
+            # for now, we color everything. nice and easy. also, idk whats in data.
+            for k, v in data.items():
+                if isinstance(v, (float, int)):
+                    self.py3.threshold_get_color(v, k)
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, data)
+        }
 
 
 if __name__ == "__main__":
