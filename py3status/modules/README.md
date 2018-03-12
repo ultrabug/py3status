@@ -3365,7 +3365,7 @@ Configuration parameters:
  Format placeholders:
     {icon} Xscreensaver icon
 
-**author** neutronst4r &lt;c7420{at}posteo{dot}net&gt;, lasers
+**author** neutronst4r, lasers
 
 ---
 

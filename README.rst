@@ -90,8 +90,6 @@ Using pip:
 
     $ pip install py3status
 
-Note: **Debian users** should use **pypi-install** from the *python-stdeb* package instead of pip.
-
 Gentoo Linux
 ------------
 Using emerge:
@@ -116,6 +114,45 @@ Using dnf:
 ::
 
     $ dnf install py3status
+
+NixOS
+----------
+Installing in local environment using nix-env:
+::
+    $ nix-env -i python3.6-py3status-3.7
+
+To have it globally persistent add to your NixOS configuration file py3status as a Python 3.6 package with
+::
+    (python36.withPackages(ps: with ps; [ py3status ]))
+
+If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
+::
+    services.xserver.windowManager.i3 = {
+      enable = true;
+      extraPackages = with pkgs; [
+        dmenu
+        i3status
+        i3lock
+        (python36.withPackages(ps: with ps; [ py3status pytz tzlocal ]))
+      ];
+    };
+
+In this example I included the python packages **pytz** and **tzlocal** which are necessary for the py3status module **clock**.
+The default packages that come with i3 (dmenu, i3status, i3lock) have to be mentioned if they should still be there.
+
+Debian/Ubuntu
+-------------
+Packaged by @sdelafond, and available via apt-get:
+::
+
+    $ apt-get install py3status
+
+For now it's only in testing and unstable, but will soon be added to
+stable-backports.
+
+Note: if you want to use pip, you should consider using *pypi-install*
+from the *python-stdeb* package (which will create a .deb out from a
+python package) instead of directly calling pip.
 
 Options
 =======

@@ -50,6 +50,38 @@ class IOPoller:
             return None
 
 
+class EventTask:
+    """
+    A simple task that can be run by the scheduler.
+    """
+    def __init__(self, module_name, event, default_event, events_thread):
+        self.events_thread = events_thread
+        self.module_full_name = module_name
+        self.default_event = default_event
+        self.event = event
+
+    def run(self):
+        self.events_thread.process_event(
+            self.module_full_name, self.event, self.default_event
+        )
+
+
+class EventClickTask:
+    """
+    A task to run an external on_click event
+    """
+    def __init__(self, module_name, event, events_thread, command):
+        self.events_thread = events_thread
+        self.module_name = module_name
+        self.command = command
+        self.event = event
+
+    def run(self):
+        self.events_thread.on_click_dispatcher(
+            self.module_name, self.event, self.command
+        )
+
+
 class Events(Thread):
     """
     This class is responsible for dispatching event JSONs sent by the i3bar.
@@ -132,39 +164,19 @@ class Events(Thread):
         self.py3_wrapper.log('i3-msg module="{}" command="{}" stdout={}'.format(
             module_name, command, i3_msg_pipe.stdout.read()))
 
-    def process_event(self, module_name, event, top_level=True):
+    def process_event(self, module_name, event, default_event=False):
         """
         Process the event for the named module.
         Events may have been declared in i3status.conf, modules may have
         on_click() functions. There is a default middle click event etc.
         """
-        button = event.get('button', 0)
-        default_event = False
 
         # get the module that the event is for
         module_info = self.output_modules.get(module_name)
-        if not module_info:
-            return
-        module = module_info['module']
-
-        # execute any configured i3-msg command
-        # we do not do this for containers
-        # modules that have failed do not execute their config on_click
-        if top_level and module.allow_config_clicks:
-            click_module = event['name']
-            if event['instance']:
-                click_module += ' ' + event['instance']
-            btn = str(button)
-            if self.on_click.get(click_module, {}).get(btn):
-                self.on_click_dispatcher(click_module,
-                                         event,
-                                         self.on_click[module_name].get(btn))
-            # otherwise setup default action on button 2 press
-            elif button == 2:
-                default_event = True
 
         # if module is a py3status one call it.
         if module_info['type'] == 'py3status':
+            module = module_info['module']
             module.click_event(event)
             if self.config['debug']:
                 self.py3_wrapper.log('dispatching event {}'.format(event))
@@ -186,7 +198,7 @@ class Events(Thread):
         module_groups = self.py3_config['.module_groups']
         containers = module_groups.get(module_name, [])
         for container in containers:
-            self.process_event(container, event, top_level=False)
+            self.process_event(container, event)
 
     def dispatch_event(self, event):
         '''
@@ -219,8 +231,28 @@ class Events(Thread):
 
         # guess the module config name
         module_name = '{} {}'.format(name, instance).strip()
+
+        default_event = False
+        module_info = self.output_modules.get(module_name)
+        if not module_info:
+            return
+        module = module_info['module']
+        # execute any configured i3-msg command
+        # we do not do this for containers
+        # modules that have failed do not execute their config on_click
+        if module.allow_config_clicks:
+            button = event.get('button', 0)
+            on_click = self.on_click.get(module_name, {}).get(str(button))
+            if on_click:
+                task = EventClickTask(module_name, event, self, on_click)
+                self.py3_wrapper.timeout_queue_add(task)
+            # otherwise setup default action on button 2 press
+            elif button == 2:
+                default_event = True
+
         # do the work
-        self.process_event(module_name, event)
+        task = EventTask(module_name, event, default_event, self)
+        self.py3_wrapper.timeout_queue_add(task)
 
     @profile
     def run(self):
