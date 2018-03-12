@@ -66,8 +66,7 @@ Examples:
 # compact
 hddtemp {
     format = 'HDD {format_hdd}'
-    format_hdd = '\?color=temperature {temperature}'
-    format_separator = ','
+    format_hdd = '\?color=temperature {temperature}°C'
 }
 
 # show paths instead of names
@@ -80,24 +79,24 @@ SAMPLE OUTPUT
 [
     {'full_text': u'ADATA SP550 '},
     {'full_text': u'32°C', 'color': '#00FF00'},
-    {'full_text': u'WDC WD10EURX-63FH1Y0 '},
+    {'full_text': u'SanDisk SDSSDA240 '},
     {'full_text': u'44°C', 'color': '#FFFF00'},
 ]
 
 path
 [
-    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '22°C'}
-    {'full_text': '/dev/sdb '}, {'color': '#FFA500', u'full_text': '44°C'}
+    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '22°C'},
+    {'full_text': '/dev/sdb '}, {'color': '#FFA500', u'full_text': '44°C'},
 ]
 
 compact
 [
     {'full_text': 'HDD '},
-    {'color': '#FF0000', 'full_text': '53'}, {'full_text': ','},
-    {'color': '#FFFF00', 'full_text': '44'}, {'full_text': ','},
-    {'color': '#FFA500', 'full_text': '51'}, {'full_text': ','},
-    {'color': '#00BFFF', 'full_text': '24'}, {'full_text': ','},
-    {'color': '#00FF00', 'full_text': '32'},
+    {'color': '#00BFFF', u'full_text': '24°C '},
+    {'color': '#00FF00', u'full_text': '32°C '},
+    {'color': '#FFFF00', u'full_text': '44°C '},
+    {'color': '#FFA500', u'full_text': '51°C '},
+    {'color': '#FF0000', u'full_text': '53°C'},
 ]
 """
 
