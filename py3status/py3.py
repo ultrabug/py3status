@@ -514,9 +514,14 @@ class Py3:
         # force unicode for python2 str
         if self._is_python_2 and isinstance(msg, str):
             msg = msg.decode('utf-8')
-        module_name = self._module.module_full_name
-        self._py3_wrapper.notify_user(
-            msg, level=level, rate_limit=rate_limit, module_name=module_name)
+        if msg:
+            module_name = self._module.module_full_name
+            self._py3_wrapper.notify_user(
+                msg=msg,
+                level=level,
+                rate_limit=rate_limit,
+                module_name=module_name,
+            )
 
     def register_function(self, function_name, function):
         """
