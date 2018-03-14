@@ -39,7 +39,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format_master = '[\?color=seconds {host} is master]'
-    format_slave = '[\?color=seconds {host} is {sec}s behind]'
+    format_slave = '[\?color=seconds {host} is {seconds}s behind]'
     host = None
     passwd = None
     port = 3306
@@ -54,27 +54,22 @@ class Py3status:
 
     def mysql_slave(self):
         try:
-            data = self._getSlaveStatus()
-            sec = data['Seconds_Behind_Master']
-            self.py3.threshold_get_color(sec, 'seconds')
+            data = self._get_slave_status()
+            seconds = data['Seconds_Behind_Master']
             form = self.format_slave
         except:
             form = self.format_master
-            sec = -1
-            self.py3.threshold_get_color(sec, 'seconds')
+            seconds = -1
+        self.py3.threshold_get_color(sec, 'seconds')
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(form, {'sec': str(sec), 'host': self.host})
+            'full_text': self.py3.safe_format(form, {'seconds': str(seconds), 'host': self.host})
         }
 
-    def _getSlaveStatus(self):
+    def _get_slave_status(self):
         '''Returns a dictionary of the 'SHOW SLAVE STATUS;' command output.'''
-        try:
-            conn = connect(user=self.user, passwd=self.passwd, host=self.host, port=self.port)
-        except:
-            print('Failed to connect.')
-            exit(3)
+        conn = connect(user=self.user, passwd=self.passwd, host=self.host, port=self.port)
         cur = conn.cursor()
         cur.execute('''SHOW SLAVE STATUS;''')
         keys = [desc[0] for desc in cur.description]
