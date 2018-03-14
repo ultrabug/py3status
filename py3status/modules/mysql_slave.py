@@ -6,13 +6,15 @@ This module displays the number of seconds the slave is behind the master.
 
 Configuration parameters:
     cache_timeout: refresh cache_timeout for this module (default 5)
-    format_master: format used for master_servers (default '[\\?color=seconds {host} is master]')
-    format_slave: format used for slave servers (default '[\\?color=seconds {host} is {sec}s behind]')
+    format_master: format used for master_servers
+                    (default '[\\?color=seconds {host} is master]')
+    format_slave: format used for slave servers 
+                    (default '[\\?color=seconds {host} is {sec}s behind]')
     host: the host to connect to (default None)
     passwd: the password to use for the connection (default None)
     port: the port to connect to (default 3306)
     thresholds: a threshold list of tuples, -1 used for a master hosts
-                (default [(-1, 'blue'), (0, 'deepskyblue'), (100, 'good'), (300, 'degraded'), (600, 'bad')])
+      (default [(-1, 'blue'), (0, 'deepskyblue'), (100, 'good'), (300, 'degraded'), (600, 'bad')])
     user: the user used for the connection (default None)
 
 Requires:
