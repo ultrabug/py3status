@@ -9,7 +9,7 @@ Configuration parameters:
     format_master: format used for master_servers
                     (default '[\\?color=seconds {host} is master]')
     format_slave: format used for slave servers
-                    (default '[\\?color=seconds {host} is {sec}s behind]')
+                    (default '[\\?color=seconds {host} is {seconds}s behind]')
     host: the host to connect to (default None)
     passwd: the password to use for the connection (default None)
     port: the port to connect to (default 3306)
