@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Display MYSQL slave state.
+Display MySQL/MariaDB slave state.
 
-This module displays the number of secodns the slave is behind the master.
+This module displays the number of seconds the slave is behind the master.
 
 Configuration parameters:
-    interval: refresh interval for this module (default 10)
+    cache_timeout: refresh cache_timeout for this module (default 10)
     format: display format for this module (default 'SELinux: {state}')
     warning_threshold: defaults to 100
     critical_threshold: defaults to 200
     host: defaults to localhost
-    user:
-    passwd:
+    user: defaults to None
+    passwd: defaults to None
     port: defaults to 3306
 
 Format placeholders:
@@ -29,55 +29,48 @@ Requires:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'test 0 seconds', 'color': '#00FF00'}
-
-permissive
-{'full_text': 'test 100 seconds', 'color': '#FFFF00'}
-
-disabled
-{'full_text': 'test 200 seconds', 'color': '#FF0000'}
+{'full_text': 'test is 0s behind'}
+{'full_text': 'test is 509s behind'}
+{'full_text': 'test is master'}
 """
 
 from __future__ import absolute_import
-try:
-    from MySQLdb import connect
-except ImportError:
-    print('Failed to import MySQLdb. Is mysqlclient installed?')
-    exit(3)
+from MySQLdb import connect
 
 class Py3status:
     """
     """
     # available configuration parameters
-    interval = 5
-    format = '{host} is {sec}s behind'
-    warning_threshold = 100
-    critical_threshold = 250
-    host = ''
-    user = ''
-    passwd = ''
+    cache_timeout = 5
+    format_slave = '[\?color=seconds {host} is {sec}s behind]'
+    format_master = '[\?color=seconds {host} is master]'
+    thresholds = [
+            (-1, 'blue'),
+            (0, 'deepskyblue'),
+            (100, 'good'),
+            (300, 'degraded'),
+            (600, 'bad')
+        ]
+    host = None
+    user = None
+    passwd = None
     port = 3306
 
     def mysql_slave(self):
         try:
             data = self._getSlaveStatus()
             sec = data['Seconds_Behind_Master']
-            if sec > self.critical_threshold:
-                color = self.py3.COLOR_BAD
-            elif sec < self.warning_threshold:
-                color = self.py3.COLOR_GOOD
-            else:
-                color = self.py3.COLOR_WARNING
-            form = self.format
+            self.py3.threshold_get_color(sec, 'seconds')
+            form = self.format_slave
         except:
-            form = "{host} is master"
+            form = self.format_master
             sec = -1
+            self.py3.threshold_get_color(sec, 'seconds')
             color = self.py3.COLOR_GOOD
 
         return {
-            'cached_until': self.py3.time_in(self.interval),
-            'full_text': self.py3.safe_format(form, {'sec': str(sec), 'host': self.host}),
-            'color': color
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(form, {'sec': str(sec), 'host': self.host})
         }
 
     def _getSlaveStatus(self):
@@ -91,6 +84,7 @@ class Py3status:
         cur.execute('''SHOW SLAVE STATUS;''')
         keys = [desc[0] for desc in cur.description]
         values = cur.fetchone()
+        conn.close()
         return dict(zip(keys, values))
 
 if __name__ == '__main__':
