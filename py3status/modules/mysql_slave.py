@@ -10,8 +10,9 @@ Configuration parameters:
     format_slave: format used for slave servers (default '[\\?color=seconds {host} is {sec}s behind]')
     host: the host to connect to (default None)
     passwd: the password to use for the connection (default None)
-    port: the port to connect to (default None)
-    thresholds: a threshold list of tuples, -1 used for a master hosts (default [(-1, 'blue'), (0, 'deepskyblue'), (100, 'good'), (300, 'degraded'), (600, 'bad')])
+    port: the port to connect to (default 3306)
+    thresholds: a threshold list of tuples, -1 used for a master hosts
+                (default [(-1, 'blue'), (0, 'deepskyblue'), (100, 'good'), (300, 'degraded'), (600, 'bad')])
     user: the user used for the connection (default None)
 
 Requires:
