@@ -60,7 +60,7 @@ class Py3status:
         except:
             form = self.format_master
             seconds = -1
-        self.py3.threshold_get_color(sec, 'seconds')
+        self.py3.threshold_get_color(seconds, 'seconds')
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
