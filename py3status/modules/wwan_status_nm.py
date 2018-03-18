@@ -5,25 +5,22 @@ based on ModemManager, NetworkManager and dbus.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds.
-        (default 5)
+        (default 10)
     format: What to display upon regular connection
-        *(default '[\?color=state WWAN: {status}] '
-        '[\?if=m3gpp_registration_state=HOME - {m3gpp_operator_name} ] '
-        '[\?if=m3gpp_registration_state=ROAMING - {m3gpp_operator_name} ]'
-        '[\?color=access_technologies {access_technologies} ]'
-        '[([\?color=signal_quality_0 {signal_quality_0}%]) ]'
-        '[\?if=signal_quality_1=True []|\?show&color=signal_quality_1 \[!\] ]'
-        '[\?if=state=11 [{format_ipv4}] [{format_stats}]]')*
+	*(default 'WWAN [\?color=state {status}] '
+	'[\?if=m3gpp_registration_name=HOME {m3gpp_operator_name}] '
+	'[\?if=m3gpp_registration_name=ROAMING {m3gpp_operator_name} ]'
+	'[\?color=access_technologies {access_technologies_name} ]'
+	'[([\?color=signal_quality_0 {signal_quality_0}]]'
+	'[\?color=signal_quality_1 {percent_symbol}])] '
+        '[\?if=state=11 [{format_ipv4}][ {format_stats}]])*
     format_ipv4: What to display about ipv4 network config
         (default '{address}')
     format_ipv6: What to display about ipv6 network config
         (default '{address}')
     format_stats: What to display about network usage
         (default '{duration_hms}')
-    modem: The modem device to use. If None
-        will use first find modem or
-        'busctl introspect org.freedesktop.ModemManager1 /org/freedesktop/ModemManager1/Modem/0'
-        and read '.EquipmentIdentifier')
+    modem: Specify modem device to use. Otherwise, first available device.
         (default None)
     thresholds: specify color thresholds to use (see below for access_technologies values)
     *(default {
@@ -38,14 +35,16 @@ Configuration parameters:
         })*
 
 Format placeholders:
+    {access_technologies_name}  network speed human readable, eg LTE
+    {access_technologies}       network speed (bit), eg 192
     {format_ipv4}               ipv4 format
     {format_ipv6}               ipv6 format
     {format_stats}              connection statistics
     {interface}                 interface name
-    {access_technologies}       network speed
-    {access_technologies_human}  network speed human readable
-    {m3gpp_registration_state} is registred on network operator
     {m3gpp_operator_name}       network operator name
+    {m3gpp_registration_name}   is registred on network operator, eg ROAMING
+    {m3gpp_registration_state}  is registred on network operator, eg 1
+    {percent_symbol}            percent symbol, eg %
     {signal_quality_0}          network signal quality
     {signal_quality_1}          is signal quality recently updated (if True)
     {status}                    network status
@@ -78,13 +77,16 @@ Color thresholds:
     {signal_quality_0}     Signal quality color
     {signal_quality_1}     Signal quality recently updated boolean color
 
-Enum:
-    https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html
+Enum:  # noqa
+    0: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html
+    1: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemState
+    2: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemAccessTechnology
+    3: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModem3gppRegistrationState
 
 Requires:
-    ModemManager
-    NetworkManager
-    pydbus
+    modemmanager: mobile broadband modem management service
+    networkmanager: network connection manager and user applications
+    pydbus: pythonic dbus library
 
 @author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
 
@@ -92,38 +94,37 @@ SAMPLE OUTPUT
 NOTE: Skip this part until we're finished with the module first.
 """
 
-from datetime import timedelta
-
 from pydbus import SystemBus
+from datetime import timedelta
 
 STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
 STRING_NOT_INSTALLED = 'not installed'
-STRING_UNKNOWN = "n/a"
+STRING_UNKNOWN = 'n/a'
+STRING_PERCENT_SYMBOL = '%'
 
 
 class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 5
-    format = (
-        u'[\?color=state WWAN: {status}] '
-        u'[\?if=m3gpp_registration_state=HOME - {m3gpp_operator_name} ] '
-        u'[\?if=m3gpp_registration_state=ROAMING - {m3gpp_operator_name} ]'
-        u'[\?color=access_technologies {access_technologies_human} ]'
-        u'[([\?color=signal_quality_0 {signal_quality_0}%]) ]'
-        u'[\?if=signal_quality_1=True []|\?show&color=signal_quality_1 \[!\] ]'
-        u'[\?if=state=11 [{format_ipv4}] [{format_stats}]]')
+    cache_timeout = 10
+    format = (u'WWAN [\?color=state {status}] '
+              u'[\?if=m3gpp_registration_name=HOME {m3gpp_operator_name} ] '
+              u'[\?if=m3gpp_registration_name=ROAMING {m3gpp_operator_name} ]'
+              u'[\?color=access_technologies {access_technologies_name} ]'
+              u'[([\?color=signal_quality_0 {signal_quality_0}]]'
+              u'[[\?color=signal_quality_1 {percent_symbol}]) ]'
+              u'[\?if=state=11 [{format_ipv4}] [{format_stats}]]')
     format_ipv4 = u'{address}'
     format_ipv6 = u'{address}'
     format_stats = u'{duration_hms}'
     modem = None
     thresholds = {
-        'access_technologies_human': [(2, 'bad'), (32, 'orange'),
-                                      (512, 'degraded'), (16384, 'good')],
+        'access_technologies': [(2, 'bad'), (32, 'orange'), (512, 'degraded'),
+                                (16384, 'good')],
         'signal_quality_0': [(0, 'bad'), (10, 'orange'), (30, 'degraded'),
                              (50, 'good')],
-        'signal_quality_1': [(False, 'bad'), (True, 'good')],
+        'signal_quality_1': [(False, 'darkgrey'), (True, 'degraded')],
         'state': [(-1, 'bad'), (4, 'orange'), (5, 'degraded'), (11, 'good')]
     }
 
@@ -132,8 +133,7 @@ class Py3status:
             if not self.py3.check_commands(command):
                 raise Exception('%s %s' % (command, STRING_NOT_INSTALLED))
 
-        # network states dict
-        # https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemState
+        # enum 1: network states
         self.states = {
             -1: 'failed',
             0: STRING_UNKNOWN,
@@ -149,10 +149,8 @@ class Py3status:
             10: 'connecting',
             11: 'connected'
         }
-
-        # network speed dict
-        # https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemAccessTechnology
-        self.speed = {
+        # enum 2: network speed
+        self.network_speed = {
             0: STRING_UNKNOWN,
             1 << 0: 'POTS',  # 2
             1 << 1: 'GSM',
@@ -171,9 +169,8 @@ class Py3status:
             1 << 14: 'LTE'  # 16384
         }
 
-        # network registration states
-        # https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModem3gppRegistrationState
-        self.rstates = {
+        # enum 3: network registration state
+        self.registration_states = {
             0: 'IDLE',
             1: 'HOME',
             2: 'SEARCHING',
@@ -185,11 +182,12 @@ class Py3status:
         self.bus = SystemBus()
 
     def _get_modem_proxy(self):
+        modems = {}
         try:
             modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
             modems = modemmanager_proxy.GetManagedObjects()
         except:
-            modems = {}
+            pass
 
         # browse modems objects
         for objects in modems.items():
@@ -202,7 +200,6 @@ class Py3status:
 
             # use selected modem or first find
             if self.modem is None or self.modem == eqid:
-                # return modem proxy
                 return modem_proxy
         else:
             return {}
@@ -237,21 +234,17 @@ class Py3status:
         try:
             bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
             stats = bearer_proxy.Stats
-            stats['duration_hms'] = timedelta(seconds=stats['duration'])
+            stats['duration_hms'] = str(timedelta(seconds=stats['duration']))
         except:
             pass
         return stats
 
     def _get_status(self, modem_proxy):
-        modem_data = {}
+        modem_data = {'state': 0}
         try:
             modem_data = modem_proxy.GetStatus()
-            # use human readable status format
         except:
-            # i try another solution for handle suspend/resume pb
-            # i force a state unknow != no data state in dict
-            modem_data['state'] = 0
-        # and i translate state to human status here
+            pass
         modem_data['status'] = self.states[modem_data['state']]
         return modem_data
 
@@ -274,7 +267,6 @@ class Py3status:
 
     def wwan_status_nm(self):
         data = {}
-
         # get status informations
         modem_proxy = self._get_modem_proxy()
         data = self._organize(self._get_status(modem_proxy))
@@ -284,25 +276,23 @@ class Py3status:
         if data['state'] >= 8:
 
             # access technologies
-            if data['access_technologies']:
-                highest_access_bit = 1 << (
-                    data['access_technologies'].bit_length() - 1)
+            key = 'access_technologies'
+            new_key = '%s_name' % key
+            if data[key]:
+                bit = 1 << (data[key].bit_length() - 1)
             else:
-                highest_access_bit = 0
-            data['access_technologies_human'] = self.speed[highest_access_bit]
+                bit = 0
+            data[new_key] = self.network_speed[bit]
 
             # use human readable registration state format
-            data['m3gpp_registration_state'] = self.rstates[data[
-                'm3gpp_registration_state']]
+            key = 'm3gpp_registration_state'
+            new_key = key.replace('_state', '_name')
+            data[new_key] = self.registration_states[data[key]]
 
-            # @lasers_question: what else can we get from modem_proxy?
-            # nothing else, we same api we can get SMS from sim card but
-            # it is for another dedicated module ;)
             bearer = self._get_bearer(modem_proxy)
 
             # get interface name
-            interface = self._get_interface(bearer)
-            data['interface'] = interface
+            data['interface'] = self._get_interface(bearer)
 
             # Get network config
             network_config = self._get_network_config(bearer)
@@ -315,8 +305,13 @@ class Py3status:
 
             # Get connection statistics
             stats = self._organize(self._get_stats(bearer))
+            self.py3.log(stats)
             data['format_stats'] = self.py3.safe_format(
                 self.format_stats, stats)
+            self.py3.log(data['format_stats'])
+
+            # Add percent symbol as placeholder
+            data['percent_symbol'] = STRING_PERCENT_SYMBOL
 
             # colorize data
             for k, v in data.items():
