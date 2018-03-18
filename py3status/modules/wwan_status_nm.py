@@ -113,7 +113,7 @@ class Py3status:
         u'[\?if=m3gpp_registration_state=ROAMING - {m3gpp_operator_name} ]'
         u'[\?color=access_technologies {access_technologies_human} ]'
         u'[([\?color=signal_quality_0 {signal_quality_0}%]) ]'
-        u'[\?if=signal_quality_1]|[\?color=signal_quality_1 \[!\]]'
+        u'[\?if=signal_quality_1=True []|\?show&color=signal_quality_1 \[!\] ]'
         u'[\?if=state=11 [{format_ipv4}] [{format_stats}]]')
     format_ipv4 = u'{address}'
     format_ipv6 = u'{address}'
@@ -282,11 +282,6 @@ class Py3status:
 
         # start to build return data dict
         # if state < 8, we have no signal data
-
-        # @lasers_question: can data['state'] fail here?
-        # @Cyrinux_answer: now no, see _get_status (before sometime
-        # we get empty dict with no state
-        # we might not need this, but lets see.
         if data['state'] >= 8:
 
             # access technologies
@@ -302,6 +297,8 @@ class Py3status:
                 'm3gpp_registration_state']]
 
             # @lasers_question: what else can we get from modem_proxy?
+            # nothing else, we same api we can get SMS from sim card but
+            # it is for another dedicated module ;)
             bearer = self._get_bearer(modem_proxy)
 
             # get interface name
@@ -322,11 +319,7 @@ class Py3status:
             data['format_stats'] = self.py3.safe_format(
                 self.format_stats, stats)
 
-            # @Cyrinux_question
-            # get status color here, i put this here else we can loop over composite
-            # maybe we must organize data and then loop over all?
-            # not sure we want/can color network_config and stats for the moment
-            # for now, we color everything. nice and easy. also, idk whats in data.
+            # colorize data
             for k, v in data.items():
                 if isinstance(v, (float, int)):
                     self.py3.threshold_get_color(v, k)
@@ -343,6 +336,3 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
     module_test(Py3status)
-"""
-Enum: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html
-"""
