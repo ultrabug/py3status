@@ -302,14 +302,14 @@ class Py3status:
                 'm3gpp_registration_state']]
 
             # @lasers_question: what else can we get from modem_proxy?
+            bearer = self._get_bearer(modem_proxy)
 
             # get interface name
-            interface = self._get_interface(self._get_bearer(modem_proxy))
+            interface = self._get_interface(bearer)
             data['interface'] = interface
 
             # Get network config
-            network_config = self._get_network_config(
-                self._get_bearer(modem_proxy))
+            network_config = self._get_network_config(bearer)
             ipv4 = network_config.get('ipv4', {})
             ipv6 = network_config.get('ipv6', {})
 
@@ -318,8 +318,7 @@ class Py3status:
             data['format_ipv6'] = self.py3.safe_format(self.format_ipv6, ipv6)
 
             # Get connection statistics
-            stats = self._organize(
-                self._get_stats(self._get_bearer(modem_proxy)))
+            stats = self._organize(self._get_stats(bearer))
             data['format_stats'] = self.py3.safe_format(
                 self.format_stats, stats)
 
