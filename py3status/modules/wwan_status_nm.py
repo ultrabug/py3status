@@ -6,14 +6,13 @@ based on ModemManager, NetworkManager and dbus.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds.
         (default 5)
-<<<<<<< HEAD
     format: What to display upon regular connection
         *(default '[\?color=state WWAN: {status}] '
         '[\?if=m3gpp_registration_state=HOME - {m3gpp_operator_name} ] '
         '[\?if=m3gpp_registration_state=ROAMING - {m3gpp_operator_name} ]'
         '[\?color=access_technologies {access_technologies} ]'
         '[([\?color=signal_quality_0 {signal_quality_0}%]) ]'
-        '[\?if=signal_quality_1=False&color=signal_quality_1 \[!\]] '
+        '[\?if=signal_quality_1=True []|\?show&color=signal_quality_1 \[!\] ]'
         '[\?if=state=11 [{format_ipv4}] [{format_stats}]]')*
     format_ipv4: What to display about ipv4 network config
         (default '{address}')
