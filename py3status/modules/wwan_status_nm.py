@@ -208,6 +208,14 @@ class Py3status:
         else:
             return {}
 
+    def _get_bearer(self, modem_proxy):
+        bearer = {}
+        try:
+            bearer = modem_proxy.Bearers[0]
+        except:
+            pass
+        return bearer
+
     def _get_network_config(self, bearer):
         network_config = {}
         try:
@@ -275,10 +283,6 @@ class Py3status:
         # start to build return data dict
         # if state < 8, we have no signal data
 
-        # self.py3.log('-' * 20)
-        # self.py3.log(data)
-        # self.py3.log('-' * 20)
-
         # @lasers_question: can data['state'] fail here?
         # @Cyrinux_answer: now no, see _get_status (before sometime
         # we get empty dict with no state
@@ -298,14 +302,14 @@ class Py3status:
                 'm3gpp_registration_state']]
 
             # @lasers_question: what else can we get from modem_proxy?
-            bearer = modem_proxy.Bearers[0]
 
             # get interface name
-            interface = self._get_interface(bearer)
+            interface = self._get_interface(self._get_bearer(modem_proxy))
             data['interface'] = interface
 
             # Get network config
-            network_config = self._get_network_config(bearer)
+            network_config = self._get_network_config(
+                self._get_bearer(modem_proxy))
             ipv4 = network_config.get('ipv4', {})
             ipv6 = network_config.get('ipv6', {})
 
@@ -314,7 +318,8 @@ class Py3status:
             data['format_ipv6'] = self.py3.safe_format(self.format_ipv6, ipv6)
 
             # Get connection statistics
-            stats = self._organize(self._get_stats(bearer))
+            stats = self._organize(
+                self._get_stats(self._get_bearer(modem_proxy)))
             data['format_stats'] = self.py3.safe_format(
                 self.format_stats, stats)
 
