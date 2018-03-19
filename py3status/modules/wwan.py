@@ -26,6 +26,8 @@ Configuration parameters:
 Format placeholders:
     {access_technologies}       network speed, in bit, eg 192
     {access_technologies_name}  network speed names, eg LTE
+    {current_bands}             modem band, eg 1
+    {current_bands_name}        modem band name, eg GSM/GPRS/EDGE 900 MHz.
     {format_ipv4}               format for ipv4 network config
     {format_ipv6}               format for ipv6 network config
     {format_stats}              format for network connection statistics
@@ -69,6 +71,7 @@ Enum:  # noqa
     1: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemState
     2: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemAccessTechnology
     3: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModem3gppRegistrationState
+    4: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemBand
 
 Requires:
     modemmanager: mobile broadband modem management service
@@ -90,17 +93,17 @@ wwan {
 
 # show state name and network information if connected, else show state only
 wwan {
-    format = '\?color=state [\?if=state=11 {state_name} [{format_ipv4}|{format_ipv6}]|{state_name}]'
+    format = 'WWAN \?color=state [\?if=state=11 {state_name} [{format_ipv4}|{format_ipv6}]|{state_name}]'
 }
 
 # show state with state colored
 wwan {
-    format = '\?color=state {state_name}'
+    format = 'WWAN \?color=state {state_name}'
 }
 
 # show access technologies name, custom state up for connected and down if disconnected
 wwan
-    format = '{access_technologies_name} [\?if=state=11 \?color=state up|down]
+    format = 'WWAN \?color=state {access_technologies_name} [\?if=state=11 up|down]'
 }
 # ```
 
@@ -110,8 +113,9 @@ SAMPLE OUTPUT
 NOTE: Skip this part until we're finished with the module first.
 """
 
-from pydbus import SystemBus
 from datetime import timedelta
+
+from pydbus import SystemBus
 
 STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
 STRING_NOT_INSTALLED = 'not installed'
@@ -186,16 +190,91 @@ class Py3status:
             4: 'UNKNOWN',
             5: 'ROAMING'
         }
+        # enum 4: modem bands
+        self.modem_bands = {
+            0: 'Unknown or invalid band.',
+            1: 'GSM/GPRS/EDGE 900 MHz.',
+            2: 'GSM/GPRS/EDGE 1800 MHz.',
+            3: 'GSM/GPRS/EDGE 1900 MHz.',
+            4: 'GSM/GPRS/EDGE 850 MHz.',
+            5: 'WCDMA 2100 MHz (Class I).',
+            6: 'WCDMA 3GPP 1800 MHz (Class III).',
+            7: 'WCDMA 3GPP AWS 1700/2100 MHz (Class IV).',
+            8: 'WCDMA 3GPP UMTS 800 MHz (Class VI).',
+            9: 'WCDMA 3GPP UMTS 850 MHz (Class V).',
+            10: 'WCDMA 3GPP UMTS 900 MHz (Class VIII).',
+            11: 'WCDMA 3GPP UMTS 1700 MHz (Class IX).',
+            12: 'WCDMA 3GPP UMTS 1900 MHz (Class II).',
+            13: 'WCDMA 3GPP UMTS 2600 MHz (Class VII, internal).',
+            31: 'E-UTRAN band I.',
+            32: 'E-UTRAN band II.',
+            33: 'E-UTRAN band III.',
+            34: 'E-UTRAN band IV.',
+            35: 'E-UTRAN band V.',
+            36: 'E-UTRAN band VI.',
+            37: 'E-UTRAN band VII.',
+            38: 'E-UTRAN band VIII.',
+            39: 'E-UTRAN band IX.',
+            40: 'E-UTRAN band X.',
+            41: 'E-UTRAN band XI.',
+            42: 'E-UTRAN band XII.',
+            43: 'E-UTRAN band XIII.',
+            44: 'E-UTRAN band XIV.',
+            47: 'E-UTRAN band XVII.',
+            48: 'E-UTRAN band XVIII.',
+            49: 'E-UTRAN band XIX.',
+            50: 'E-UTRAN band XX.',
+            51: 'E-UTRAN band XXI.',
+            52: 'E-UTRAN band XXII.',
+            53: 'E-UTRAN band XXIII.',
+            54: 'E-UTRAN band XXIV.',
+            55: 'E-UTRAN band XXV.',
+            56: 'E-UTRAN band XXVI.',
+            63: 'E-UTRAN band XXXIII.',
+            64: 'E-UTRAN band XXXIV.',
+            65: 'E-UTRAN band XXXV.',
+            66: 'E-UTRAN band XXXVI.',
+            67: 'E-UTRAN band XXXVII.',
+            68: 'E-UTRAN band XXXVIII.',
+            69: 'E-UTRAN band XXXIX.',
+            70: 'E-UTRAN band XL.',
+            71: 'E-UTRAN band XLI.',
+            72: 'E-UTRAN band XLII.',
+            73: 'E-UTRAN band XLIII.',
+            128: 'CDMA Band Class 0 (US Cellular 850MHz).',
+            129: 'CDMA Band Class 1 (US PCS 1900MHz).',
+            130: 'CDMA Band Class 2 (UK TACS 900MHz).',
+            131: 'CDMA Band Class 3 (Japanese TACS).',
+            132: 'CDMA Band Class 4 (Korean PCS).',
+            134: 'CDMA Band Class 5 (NMT 450MHz).',
+            135: 'CDMA Band Class 6 (IMT2000 2100MHz).',
+            136: 'CDMA Band Class 7 (Cellular 700MHz).',
+            137: 'CDMA Band Class 8 (1800MHz).',
+            138: 'CDMA Band Class 9 (900MHz).',
+            139: 'CDMA Band Class 10 (US Secondary 800).',
+            140: 'CDMA Band Class 11 (European PAMR 400MHz).',
+            141: 'CDMA Band Class 12 (PAMR 800MHz).',
+            142: 'CDMA Band Class 13 (IMT2000 2500MHz Expansion).',
+            143: 'CDMA Band Class 14 (More US PCS 1900MHz).',
+            144: 'CDMA Band Class 15 (AWS 1700MHz).',
+            145: 'CDMA Band Class 16 (US 2500MHz).',
+            146: 'CDMA Band Class 17 (US 2500MHz Forward Link Only).',
+            147: 'CDMA Band Class 18 (US 700MHz Public Safety).',
+            148: 'CDMA Band Class 19 (US Lower 700MHz).',
+            256: 'auto'
+        }
 
         self.bus = SystemBus()
         self.init = {'ip': []}
         names = [
-            'access_technologies_name', 'm3gpp_registration_name',
-            'interface_name', 'ipv4', 'ipv6', 'stats'
+            'current_bands', 'access_technologies_name',
+            'm3gpp_registration_name', 'interface_name', 'ipv4', 'ipv6',
+            'stats'
         ]
         placeholders = [
-            'access_technologies_name', 'm3gpp_registration_name',
-            'interface_name', 'format_ipv4', 'format_ipv6', 'format_stats'
+            'current_bands_name', 'access_technologies_name',
+            'm3gpp_registration_name', 'interface_name', 'format_ipv4',
+            'format_ipv6', 'format_stats'
         ]
         for name, placeholder in zip(names, placeholders):
             self.init[name] = self.py3.format_contains(self.format,
@@ -204,12 +283,8 @@ class Py3status:
                 self.init['ip'].append(name)
 
     def _get_modem_proxy(self):
-        modems = {}
-        try:
-            modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
-            modems = modemmanager_proxy.GetManagedObjects()
-        except:
-            pass
+        modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
+        modems = modemmanager_proxy.GetManagedObjects()
 
         for objects in modems.items():
             modem_path = objects[0]
@@ -302,6 +377,12 @@ class Py3status:
                 else:
                     bit = 0
                 wwan_data[new_key] = self.network_speed[bit]
+
+            # modem band
+            if self.init['current_bands']:
+                key = 'current_bands'
+                new_key = '%s_name' % key
+                wwan_data[new_key] = self.modem_bands[wwan_data[key]]
 
             # registration state and name
             if self.init['m3gpp_registration_name']:
