@@ -289,7 +289,7 @@ class Py3status:
         for objects in modems.items():
             modem_path = objects[0]
             modem_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, modem_path)
-            eqid = '{}'.format(modem_proxy.EquipmentIdentifier)
+            eqid = modem_proxy.EquipmentIdentifier
 
             if self.modem is None or self.modem == eqid:
                 return modem_proxy
