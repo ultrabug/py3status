@@ -6,18 +6,18 @@ This module displays the number of seconds the slave is behind the master.
 
 Configuration parameters:
     cache_timeout: refresh cache_timeout for this module (default 5)
+    database: The type of module where we need to call the conenct method from
+        (default 'MySQLdb')
     format: display format for this module
         *(default '\?color=seconds_behind_master {host} is '
-        '[\?if=seconds_behind_master {seconds_behind_master}s behind|master]') *
-    host: the host to connect to (default None)
-    passwd: the password to use for the connection (default None)
-    port: the port to connect to (default 3306)
+              '[{seconds_behind_master}s behind|\?show master]')*
+    parameters: The parameters needed for the connect function
+        (default {'user': None, 'port': None, 'passwd': None, 'host': None})
     query: The sql query to run (default 'show slave status')
     thresholds: a threshold list of tuples, -1 used for a master hosts
         (default {'seconds_behind_master':
             [(0, 'deepskyblue'), (100, 'good'), (300, 'degraded'), (600, 'bad')]
         })
-    user: the user used for the connection (default None)
 
 Requires:
     MySQLdb: python package for python
@@ -31,8 +31,7 @@ SAMPLE OUTPUT
 {'full_text': 'test is master'}
 """
 
-from __future__ import absolute_import
-from MySQLdb import connect
+from importlib import import_module
 
 
 class Py3status:
@@ -40,11 +39,15 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
+    database = 'MySQLdb'
     format = ('\?color=seconds_behind_master {host} is '
-              '[\?if=seconds_behind_master {seconds_behind_master}s behind|master]')
-    host = 'albert'
-    passwd = 'paloAlto'
-    port = 3306
+              '[{seconds_behind_master}s behind|\?show master]')
+    parameters = {
+        'host': None,
+        'user': None,
+        'passwd': None,
+        'port': None,
+    }
     query = 'show slave status'
     thresholds = {
         'seconds_behind_master': [
@@ -54,11 +57,17 @@ class Py3status:
             (600, 'bad')
         ]
     }
-    user = 'root'
 
-    def _get_mysql_data(self):
+    def post_config_hook(self):
+        if not self.database:
+            raise Exception('Missing database')
+        if not self.parameters:
+            raise Exception('Missing parameters')
+        self.connect = getattr(import_module(self.database), 'connect')
+
+    def _get_sql_data(self):
         '''Returns a dictionary of the query output.'''
-        conn = connect(user=self.user, passwd=self.passwd, host=self.host, port=self.port)
+        conn = self.connect(**self.parameters)
         cur = conn.cursor()
         cur.execute(self.query)
         keys = [desc[0].lower() for desc in cur.description]
@@ -66,13 +75,12 @@ class Py3status:
         conn.close()
         return dict(zip(keys, values))
 
-    def mysql_slave(self):
+    def sql(self):
         try:
-            data = self._get_mysql_data()
+            data = self._get_sql_data()
         except:
             data = {}
-
-        data['host'] = self.host
+        data['host'] = self.parameters['host']
 
         for k, v in data.items():
             self.py3.threshold_get_color(data[k], k)
