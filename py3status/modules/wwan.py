@@ -297,40 +297,20 @@ class Py3status:
             return {}
 
     def _get_bearer(self, modem_proxy):
-        bearer = {}
-        try:
-            bearer = modem_proxy.Bearers[0]
-        except:
-            pass
-        return bearer
+        return modem_proxy.Bearers[0]
 
     def _get_network_config(self, bearer):
         network_config = {}
-        try:
-            bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
-            network_config['ipv4'] = bearer_proxy.Ip4Config
-            network_config['ipv6'] = bearer_proxy.Ip6Config
-        except:
-            pass
+        bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
+        network_config['ipv4'] = bearer_proxy.Ip4Config
+        network_config['ipv6'] = bearer_proxy.Ip6Config
         return network_config
 
     def _get_interface(self, bearer):
-        interface = None
-        try:
-            bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
-            interface = bearer_proxy.Interface
-        except:
-            pass
-        return interface
+        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
 
     def _get_stats(self, bearer):
-        stats = {}
-        try:
-            bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
-            stats = bearer_proxy.Stats
-        except:
-            pass
-        return stats
+        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Stats
 
     def _get_status(self, modem_proxy):
         modem_data = {}
