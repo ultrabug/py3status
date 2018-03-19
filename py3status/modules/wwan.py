@@ -22,7 +22,7 @@ Format placeholders:
     {format_ipv4}                   format for ipv4 network config
     {format_ipv6}                   format for ipv6 network config
     {format_stats}                  format for network connection statistics
-    {interface_name}                network interface name, eg @cyrinux TODO:
+    {interface_name}                network interface name, eg wwp0s20f0u2i12
     {m3gpp_registration_state}      network registration state, eg 1
     {m3gpp_registration_state_name} network registration state name, eg HOME
     {m3gpp_operator_code}           network operator code, eg 496
@@ -121,13 +121,14 @@ wwan
 @author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
 
 SAMPLE OUTPUT
-{'color': '#00ff00', 'full_text': 'WW: (88% at py3status Telcom) 192.168.1.218'}
+{'color': '#00ff00', 'full_text': 'WW: (88% at Py3status Telcom) 12.69.169.32'}
 
 down
 {'color': '#ff0000', 'full_text': 'WW: down'}
 """
 
 from datetime import timedelta
+
 from pydbus import SystemBus
 
 STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
@@ -142,7 +143,6 @@ class Py3status:
     format = (
         '\?color=state WW: [\?if=state_name=connected ({signal_quality_0}%'
         ' at {m3gpp_operator_name}) [{format_ipv4}][{format_ipv6}]|down]')
-
     format_ipv4 = u'{address}'
     format_ipv6 = u'{address}'
     format_stats = u'{duration_hms}'
