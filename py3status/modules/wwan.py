@@ -5,41 +5,32 @@ Display WWAN network operator, signal, properties, and more.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module
-        *(default '\?color=state WW: [\?if=state=11 ({signal_quality_0}% at '
-        '{m3gpp_operator_name}) [{format_ipv4}|{format_ipv6}]|down]')
+        *(default '\?color=state WW: [\?if=state_name=connected ({signal_quality_0}% at '
+        '{m3gpp_operator_name}) [{format_ipv4}][{format_ipv6}]|down]')
     format_ipv4: display format for ipv4 network config (default '{address}')
     format_ipv6: display format for ipv4 network config (default '{address}')
     format_stats: display format for network statistics (default '{duration_hms}')
     modem: specify a modem device to use. otherwise, auto (default None)
     thresholds: specify color thresholds to use
-    *(default {
-        'signal_quality_0': [
-            (0, 'bad'), (10, 'orange'), (30, 'degraded'), (50, 'good')],
-        'signal_quality_1': [
-            (False, 'bad'), (True, 'good')],
-        'access_technologies': [
-            (2, 'bad'), (32, 'orange'), (512, 'degraded'), (16384, 'good')],
-        'state': [
-            (-1, 'bad'), (4, 'orange'), (5, 'degraded'), (11, 'good')]
-        })*
+        (default [(0, 'bad'), (11, 'good')])
 
 Format placeholders:
-    {access_technologies}       network speed, in bit, eg 192
-    {access_technologies_name}  network speed names, eg LTE
-    {current_bands}             modem band, eg 1
-    {current_bands_name}        modem band name, eg GSM/GPRS/EDGE 900 MHz.
-    {format_ipv4}               format for ipv4 network config
-    {format_ipv6}               format for ipv6 network config
-    {format_stats}              format for network connection statistics
-    {interface_name}            network interface name
-    {m3gpp_registration_state}  network registration states, eg 1
-    {m3gpp_registration_name}   network registration names, eg HOME, ROAMING
-    {m3gpp_operator_code}       network operator code, eg 496
-    {m3gpp_operator_name}       network operator name, eg py3status Telecom
-    {signal_quality_0}          signal quality percentage, eg 88
-    {signal_quality_1}          signal quality refreshed
-    {state}                     network states, eg 7, 11
-    {state_name}                network state names, eg searching, connecting
+    {access_technologies}           network speed, in bit, eg 192
+    {access_technologies_name}      network speed names, eg LTE
+    {current_bands}                 modem band, eg 1
+    {current_bands_name}            modem band name, eg GSM/GPRS/EDGE 900 MHz.
+    {format_ipv4}                   format for ipv4 network config
+    {format_ipv6}                   format for ipv6 network config
+    {format_stats}                  format for network connection statistics
+    {interface_name}                network interface name, eg @cyrinux TODO:
+    {m3gpp_registration_state}      network registration state, eg 1
+    {m3gpp_registration_state_name} network registration state name, eg HOME
+    {m3gpp_operator_code}           network operator code, eg 496
+    {m3gpp_operator_name}           network operator name, eg py3status Telecom
+    {signal_quality_0}              signal quality percentage, eg 88
+    {signal_quality_1}              signal quality refreshed, eg True/False
+    {state}                         network state, eg 0, 7, 11
+    {state_name}                    network state name, eg searching, connected
 
 format_ipv4 placeholders:
     {address} ip address
@@ -80,41 +71,63 @@ Requires:
 
 Examples:
 # ```
+# add starter pack thresholds. you do not need to add them all.
+wwan {
+    thresholds = {
+        'access_technologies': [
+            (2, 'bad'), (32, 'orange'), (512, 'degraded'), (16384, 'good')
+        ],
+        'signal_quality_0': [
+            (0, 'bad'), (10, 'orange'), (30, 'degraded'), (50, 'good')
+        ],
+        'signal_quality_1': [
+            (False, 'darkgrey'), (True, 'degraded')
+        ],
+        'state': [
+            (-1, 'bad'), (4, 'orange'), (5, 'degraded'), (11, 'good')
+        ]
+    }
+}
+
 # customize WWAN format
 wwan {
     format = 'WWAN [\?color=state {state_name}] '
-    format += '[\?if=m3gpp_registration_name=HOME {m3gpp_operator_name} ] '
-    format += '[\?if=m3gpp_registration_name=ROAMING {m3gpp_operator_name} ]'
+    format += '[\?if=m3gpp_registration_state_name=HOME {m3gpp_operator_name} ] '
+    format += '[\?if=m3gpp_registration_state_name=ROAMING {m3gpp_operator_name} ]'
     format += '[\?color=access_technologies {access_technologies_name} ]'
     format += '[([\?color=signal_quality_0 {signal_quality_0}]]'
     format += '[\?if=signal_quality_1=False&color=signal_quality_1 \[!\]|] '
-    format += '[\?if=state=11 [{format_ipv4}] [{format_stats}]]')
+    format += '[\?if=state_name=connected [{format_ipv4}] [{format_stats}]]')
 }
 
 # show state name and network information if connected, else show state only
 wwan {
-    format = 'WWAN \?color=state [\?if=state=11 {state_name} [{format_ipv4}|{format_ipv6}]|{state_name}]'
+    format = 'WWAN [\?color=state [{format_ipv4}]'
+    format += '[{format_ipv6}] {state_name}]'
 }
 
 # show state with state colored
 wwan {
-    format = 'WWAN \?color=state {state_name}'
+    format = '\?color=state WWAN {state_name}'
 }
 
 # show access technologies name, custom state up for connected and down if disconnected
 wwan
-    format = 'WWAN \?color=state [{access_technologies_name}] [\?if=state=11 up|down]'
+    format = 'WWAN [\?color=state [{access_technologies_name}]'
+    format += ' [\?if=state=11 up|down]]'
 }
 # ```
 
 @author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
 
 SAMPLE OUTPUT
-NOTE: Skip this part until we're finished with the module first.
+{'color': '#00ff00', 'full_text': 'WW: (88% at py3status Telcom) 192.168.1.218'}
+
+down
+{'color': '#ff0000', 'full_text': 'WW: down'}
 """
 
 from datetime import timedelta
-
 from pydbus import SystemBus
 
 STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
@@ -126,20 +139,15 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = ('\?color=state WW: [\?if=state=11 ({signal_quality_0}% at '
-              '{m3gpp_operator_name}) [{format_ipv4}|{format_ipv6}]|down]')
+    format = (
+        '\?color=state WW: [\?if=state_name=connected ({signal_quality_0}%'
+        ' at {m3gpp_operator_name}) [{format_ipv4}][{format_ipv6}]|down]')
+
     format_ipv4 = u'{address}'
     format_ipv6 = u'{address}'
     format_stats = u'{duration_hms}'
     modem = None
-    thresholds = {
-        'access_technologies': [(2, 'bad'), (32, 'orange'), (512, 'degraded'),
-                                (16384, 'good')],
-        'signal_quality_0': [(0, 'bad'), (10, 'orange'), (30, 'degraded'),
-                             (50, 'good')],
-        'signal_quality_1': [(False, 'darkgrey'), (True, 'degraded')],
-        'state': [(-1, 'bad'), (4, 'orange'), (5, 'degraded'), (11, 'good')]
-    }
+    thresholds = [(0, 'bad'), (11, 'good')]
 
     def post_config_hook(self):
         for command in ['ModemManager', 'NetworkManager']:
@@ -164,7 +172,7 @@ class Py3status:
         }
         # enum 2: network speed
         self.network_speed = {
-            0: 'unknown',
+            0: 'Unknown',
             1 << 0: 'POTS',  # 2
             1 << 1: 'GSM',
             1 << 2: 'GSM Compact',
@@ -267,7 +275,7 @@ class Py3status:
         self.bus = SystemBus()
         self.init = {'ip': []}
         names = [
-            'current_bands', 'access_technologies_name',
+            'current_bands_name', 'access_technologies_name',
             'm3gpp_registration_name', 'interface_name', 'ipv4', 'ipv6',
             'stats'
         ]
@@ -296,29 +304,34 @@ class Py3status:
         else:
             return {}
 
-    def _get_bearer(self, modem_proxy):
-        return modem_proxy.Bearers[0]
-
-    def _get_network_config(self, bearer):
-        network_config = {}
-        bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
-        network_config['ipv4'] = bearer_proxy.Ip4Config
-        network_config['ipv6'] = bearer_proxy.Ip6Config
-        return network_config
-
-    def _get_interface(self, bearer):
-        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
-
-    def _get_stats(self, bearer):
-        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Stats
-
-    def _get_status(self, modem_proxy):
+    def _get_modem_status_data(self, modem_proxy):
         modem_data = {}
         try:
             modem_data = modem_proxy.GetStatus()
         except:
             pass
         return modem_data
+
+    def _get_bearer(self, modem_proxy):
+        bearer = {}
+        try:
+            bearer = modem_proxy.Bearers[0]
+        except:
+            pass
+        return bearer
+
+    def _get_interface(self, bearer):
+        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
+
+    def _get_network_config(self, bearer):
+        bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
+        return {
+            'ipv4': bearer_proxy.Ip4Config,
+            'ipv6': bearer_proxy.Ip6Config,
+        }
+
+    def _get_stats(self, bearer):
+        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Stats
 
     def _organize(self, data):
         new_data = {}
@@ -339,56 +352,61 @@ class Py3status:
 
     def wwan_status_nm(self):
         modem_proxy = self._get_modem_proxy()
-        wwan_data = self._organize(self._get_status(modem_proxy))
+        wwan_data = self._organize(self._get_modem_status_data(modem_proxy))
         network_state = wwan_data.get('state', 0)
         wwan_data['state_name'] = self.network_states[network_state]
 
         # no signal data if less than 8
         if network_state >= 8:
 
-            bearer = self._get_bearer(modem_proxy)
+            name = '_name'
 
             # access technologies and name
             if self.init['access_technologies_name']:
                 key = 'access_technologies'
-                new_key = '%s_name' % key
                 if wwan_data[key]:
                     bit = 1 << (wwan_data[key].bit_length() - 1)
                 else:
                     bit = 0
-                wwan_data[new_key] = self.network_speed[bit]
+                wwan_data[key + name] = self.network_speed[bit]
 
             # modem band
-            if self.init['current_bands']:
+            if self.init['current_bands_name']:
                 key = 'current_bands'
-                new_key = '%s_name' % key
-                wwan_data[new_key] = self.modem_bands[wwan_data[key]]
+                wwan_data[key + name] = self.modem_bands[wwan_data[key]]
 
             # registration state and name
             if self.init['m3gpp_registration_name']:
                 key = 'm3gpp_registration_state'
-                new_key = key.replace('state', 'name')
-                wwan_data[new_key] = self.registration_states[wwan_data[key]]
+                wwan_data[key
+                          + name] = self.registration_states[wwan_data[key]]
 
-            # interface name
-            if self.init['interface_name']:
-                wwan_data['interface_name'] = self._get_interface(bearer)
+            # get bearer
+            bearer = self._get_bearer(modem_proxy)
 
-            # ipv4 and ipv6 network config
-            if self.init['ip']:
-                network_config = self._get_network_config(bearer)
-                formats = {'ipv4': self.format_ipv4, 'ipv6': self.format_ipv6}
-                for x in self.init['ip']:
-                    wwan_data['format_' + x] = self.py3.safe_format(
-                        formats[x], network_config.get(x, {}))
+            if bearer:
+                # interface name
+                if self.init['interface_name']:
+                    wwan_data['interface_name'] = self._get_interface(bearer)
 
-            # network connection statistics
-            if self.init['stats']:
-                stats = self._organize(self._get_stats(bearer))
-                stats['duration_hms'] = str(
-                    timedelta(seconds=stats.get('duration', 0)))
-                wwan_data['format_stats'] = self.py3.safe_format(
-                    self.format_stats, stats)
+                # ipv4 and ipv6 network config
+                if self.init['ip']:
+                    network_config = self._get_network_config(bearer)
+                    format_ip = {
+                        'ipv4': self.format_ipv4,
+                        'ipv6': self.format_ipv6
+                    }
+                    for x in self.init['ip']:
+                        wwan_data['format_' + x] = self.py3.safe_format(
+                            format_ip[x], network_config.get(x, {}))
+
+                # network connection statistics
+                if self.init['stats']:
+                    stats = self._organize(self._get_stats(bearer))
+                    stats['duration_hms'] = str(
+                        timedelta(seconds=stats.get('duration', 0)))
+                    wwan_data['format_stats'] = self.py3.safe_format(
+                        self.format_stats, stats)
 
             # thresholds
             for k, v in wwan_data.items():
