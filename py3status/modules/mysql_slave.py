@@ -6,10 +6,9 @@ This module displays the number of seconds the slave is behind the master.
 
 Configuration parameters:
     cache_timeout: refresh cache_timeout for this module (default 5)
-    format_fail: format used for master_servers
-      (default '[\?color=seconds_behind_master {host} is master]')
-    format_ok: format used for slave servers
-      (default '[\?color=seconds_behind_master {host} is {seconds_behind_master}s behind]')
+    format: display format for this module
+        *(default '\?color=seconds_behind_master {host} is '
+        '[\?if=seconds_behind_master {seconds_behind_master}s behind|master]') *
     host: the host to connect to (default None)
     passwd: the password to use for the connection (default None)
     port: the port to connect to (default 3306)
@@ -41,10 +40,10 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format_fail = '[\?color=seconds_behind_master {host} is master]'
-    format_ok = '[\?color=seconds_behind_master {host} is {seconds_behind_master}s behind]'
-    host = None
-    passwd = None
+    format = ('\?color=seconds_behind_master {host} is '
+              '[\?if=seconds_behind_master {seconds_behind_master}s behind|master]')
+    host = 'albert'
+    passwd = 'paloAlto'
     port = 3306
     query = 'show slave status'
     thresholds = {
@@ -55,7 +54,7 @@ class Py3status:
             (600, 'bad')
         ]
     }
-    user = None
+    user = 'root'
 
     def _get_mysql_data(self):
         '''Returns a dictionary of the query output.'''
@@ -70,18 +69,17 @@ class Py3status:
     def mysql_slave(self):
         try:
             data = self._get_mysql_data()
-            for k, v in data.items():
-                self.py3.threshold_get_color(data[k], k)
-            form = self.format_ok
         except:
             data = {}
-            form = self.format_fail
 
         data['host'] = self.host
 
+        for k, v in data.items():
+            self.py3.threshold_get_color(data[k], k)
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(form, data)
+            'full_text': self.py3.safe_format(self.format, data)
         }
 
 
