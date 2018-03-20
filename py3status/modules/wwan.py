@@ -7,9 +7,10 @@ Configuration parameters:
     format: display format for this module
         *(default '\?color=state WW: [\?if=state_name=connected '
         '({signal_quality_0}% at {m3gpp_operator_name}) '
-        '[{format_ipv4}][ {format_ipv6}]|{state_name}]')*
+        '[{format_ipv4}][{format_ipv6}]|{state_name}] [{format_messages}]')*
     format_ipv4: display format for ipv4 network (default '[{address}]')
     format_ipv6: display format for ipv6 network (default '[{address}]')
+    format_messages: display format for SMS messages (default '[\?if=counter {counter} sms]')
     format_stats: display format for statistics (default '{duration_hms}')
     modem: specify a modem device to use. otherwise, auto (default None)
     thresholds: specify color thresholds to use
@@ -22,6 +23,7 @@ Format placeholders:
     {current_bands_name}            modem band name, eg GSM/GPRS/EDGE 900 MHz
     {format_ipv4}                   format for ipv4 network config
     {format_ipv6}                   format for ipv6 network config
+    {format_messages}               format for SMS messages
     {format_stats}                  format for network connection statistics
     {interface_name}                network interface name, eg wwp0s20f0u2i12
     {m3gpp_registration_state}      network registration state, eg 1
@@ -48,6 +50,14 @@ format_ipv6 placeholders:
     {gateway} gateway
     {mtu}     mtu
     {prefix}  netmask prefix
+
+format_messages placeholders:
+    {counter} sms counter
+    {last_message} last message received, eg: '+33601020304: hello how are you?'
+    {last_message_short} last message received, eg: '+33601020304: hello...'
+    {last_text} last text received, eg: 'hello how are you?'
+    {last_text_short} last text received, eg: 'hello...'
+    {last_contat} last contact, eg: '+33601020304'
 
 format_stats placeholders:
     {duration}     time since connected, in seconds, eg 171
@@ -80,6 +90,11 @@ wwan {
 wwan
     format = 'WWAN: [\?color=state [{access_technologies_name}]'
     format += ' [\?if=state=11 up|down]]'
+}
+
+# show SMS messages only
+wwan
+    format = 'SMS: [{format_messages}]'
 }
 
 # add starter pack thresholds. you do not need to add them all.
@@ -122,9 +137,11 @@ down
 """
 
 from datetime import timedelta
+
 from pydbus import SystemBus
 
 STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
+STRING_MODEMMANAGER_SMS_PATH = '/org/freedesktop/ModemManager1/SMS/'
 STRING_MODEM_ERROR = 'MM_MODEM_STATE_FAILED'
 STRING_NOT_INSTALLED = 'not installed'
 
@@ -134,13 +151,16 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = ('\?color=state WW: [\?if=state_name=connected '
-              '({signal_quality_0}% at {m3gpp_operator_name}) '
-              '[{format_ipv4}][ {format_ipv6}]|{state_name}]')
+    format = (
+        '\?color=state WW: [\?if=state_name=connected '
+        '({signal_quality_0}% at {m3gpp_operator_name}) '
+        '[{format_ipv4}][ {format_ipv6}]|{state_name}] [{format_messages}]')
     format_ipv4 = u'[{address}]'
     format_ipv6 = u'[{address}]'
     format_stats = u'{duration_hms}'
+    format_messages = u'[\?if=counter {counter} sms]'
     modem = None
+    message_text_max_size = 4
     thresholds = [(0, 'bad'), (11, 'good')]
 
     def post_config_hook(self):
@@ -279,12 +299,12 @@ class Py3status:
         names = [
             'current_bands_name', 'access_technologies_name',
             'm3gpp_registration_name', 'interface_name', 'ipv4', 'ipv6',
-            'stats'
+            'stats', 'messages'
         ]
         placeholders = [
             'current_bands_name', 'access_technologies_name',
             'm3gpp_registration_name', 'interface_name', 'format_ipv4',
-            'format_ipv6', 'format_stats'
+            'format_ipv6', 'format_stats', 'format_messages'
         ]
         for name, placeholder in zip(names, placeholders):
             self.init[name] = self.py3.format_contains(self.format,
@@ -322,6 +342,41 @@ class Py3status:
             pass
         return bearer
 
+    def _get_messages(self, modem_proxy):
+        messages_data = {}
+        key = 0
+        try:
+            messages = modem_proxy.Messages
+            # loop on sms list for organize them
+            sms_data = {}
+            for msg in messages:
+                id = int(msg.replace(STRING_MODEMMANAGER_SMS_PATH, ''))
+                sms_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, msg)
+                contact = sms_proxy.SMSC
+                text = sms_proxy.Text
+                key += 1
+                sms_data[key] = {'id': id, 'contact': contact, 'text': text}
+                messages_data['last_contact'] = '{}'.format(contact)
+                messages_data['last_text'] = '{}'.format(text)
+                messages_data['last_text_short'] = '{}'.format(
+                    self._trunc_message(text))
+                messages_data['last_message'] = '{}: {}'.format(contact, text)
+                messages_data['last_message_short'] = '{}: {}'.format(
+                    contact, self._trunc_message(text))
+            messages_data['messages'] = sms_data
+
+            # get sms counter
+            messages_counter = len(messages_data['messages'])
+            messages_data['counter'] = messages_counter
+        except:
+            pass
+
+        return messages_data
+
+    def _trunc_message(self, message):
+        return (message[:self.message_text_max_size] + '...'
+                ) if len(message) > self.message_text_max_size else message
+
     def _get_interface(self, bearer):
         return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
 
@@ -355,6 +410,12 @@ class Py3status:
         modem_proxy = self._get_modem_proxy()
         wwan_data = self._get_modem_status_data(modem_proxy)
         wwan_data = self._organize(wwan_data)
+
+        # messages sms
+        if self.init['messages']:
+            messages = self._get_messages(modem_proxy)
+            wwan_data['format_messages'] = self.py3.safe_format(
+                self.format_messages, messages)
 
         # state and name
         key = 'state'
