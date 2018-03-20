@@ -7,9 +7,9 @@ Configuration parameters:
     format: display format for this module
         *(default '\?color=state WW: [\?if=state_name=connected '
         '({signal_quality_0}% at {m3gpp_operator_name}) '
-        '[{format_ipv4}][{format_ipv6}]|down]')*
-    format_ipv4: display format for ipv4 network (default '{address}')
-    format_ipv6: display format for ipv6 network (default '{address}')
+        '[{format_ipv4}][ {format_ipv6}]|{state_name}]')*
+    format_ipv4: display format for ipv4 network (default '[{address}]')
+    format_ipv6: display format for ipv6 network (default '[{address}]')
     format_stats: display format for statistics (default '{duration_hms}')
     modem: specify a modem device to use. otherwise, auto (default None)
     thresholds: specify color thresholds to use
@@ -136,9 +136,9 @@ class Py3status:
     cache_timeout = 10
     format = ('\?color=state WW: [\?if=state_name=connected '
               '({signal_quality_0}% at {m3gpp_operator_name}) '
-              '[{format_ipv4}][{format_ipv6}]|down]')
-    format_ipv4 = u'{address}'
-    format_ipv6 = u'{address}'
+              '[{format_ipv4}][ {format_ipv6}]|{state_name}]')
+    format_ipv4 = u'[{address}]'
+    format_ipv6 = u'[{address}]'
     format_stats = u'{duration_hms}'
     modem = None
     thresholds = [(0, 'bad'), (11, 'good')]
@@ -387,7 +387,8 @@ class Py3status:
             # registration state and name
             if self.init['m3gpp_registration_name']:
                 key = 'm3gpp_registration_state'
-                wwan_data[key + name] = self.registration_states[wwan_data[key]]
+                wwan_data[key
+                          + name] = self.registration_states[wwan_data[key]]
 
             # get bearer
             bearer = self._get_bearer(modem_proxy)
