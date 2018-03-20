@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Display WWAN network operator, signal, properties, and more.
+Display WWANs, IP addresses, signals, properties, and more.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module
-        (default '\?color=state WW: [\?if=state_name=connected '
+        *(default '\?color=state WW: [\?if=state_name=connected '
         '({signal_quality_0}% at {m3gpp_operator_name}) '
-        '[{format_ipv4}][{format_ipv6}]|down]')
+        '[{format_ipv4}][{format_ipv6}]|down]')*
     format_ipv4: display format for ipv4 network (default '{address}')
     format_ipv6: display format for ipv6 network (default '{address}')
     format_stats: display format for statistics (default '{duration_hms}')
@@ -19,7 +19,7 @@ Format placeholders:
     {access_technologies}           network speed, in bit, eg 192
     {access_technologies_name}      network speed names, eg LTE
     {current_bands}                 modem band, eg 1
-    {current_bands_name}            modem band name, eg GSM/GPRS/EDGE 900 MHz.
+    {current_bands_name}            modem band name, eg GSM/GPRS/EDGE 900 MHz
     {format_ipv4}                   format for ipv4 network config
     {format_ipv6}                   format for ipv6 network config
     {format_stats}                  format for network connection statistics
@@ -27,7 +27,7 @@ Format placeholders:
     {m3gpp_registration_state}      network registration state, eg 1
     {m3gpp_registration_state_name} network registration state name, eg HOME
     {m3gpp_operator_code}           network operator code, eg 496
-    {m3gpp_operator_name}           network operator name, eg py3status Telecom
+    {m3gpp_operator_name}           network operator name, eg Py3status Telecom
     {signal_quality_0}              signal quality percentage, eg 88
     {signal_quality_1}              signal quality refreshed, eg True/False
     {state}                         network state, eg 0, 7, 11
@@ -64,19 +64,19 @@ Requires:
     pydbus: pythonic dbus library
 
 Examples:
-# ```
+```
+# show state names, eg initializing, searching, registred, connecting.
+wwan {
+    format = '\?color=state WWAN: {state_name}'
+}
+
 # show state names, and when connected, show network information too.
 wwan {
     format = 'WWAN: [\?color=state [{format_ipv4}]'
     format += '[{format_ipv6}] {state_name}]'
 }
 
-# show state names, eg initializing, searching, registred, connecting,
-wwan {
-    format = '\?color=state WWAN: {state_name}'
-}
-
-# show internet access technologies name with up/down state
+# show internet access technologies name with up/down state.
 wwan
     format = 'WWAN: [\?color=state [{access_technologies_name}]'
     format += ' [\?if=state=11 up|down]]'
@@ -110,8 +110,7 @@ wwan {
     format += '[\?if=!signal_quality_1&color=signal_quality_1 \[!\]|] '
     format += '[\?if=state_name=connected [{format_ipv4}] [{format_stats}]]')
 }
-
-# ```
+```
 
 @author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
 
@@ -145,11 +144,13 @@ class Py3status:
     thresholds = [(0, 'bad'), (11, 'good')]
 
     def post_config_hook(self):
-        for command in ['ModemManager', 'NetworkManager']:
+        modem_manager = ['ModemManager', '/usr/sbin/ModemManager']
+        network_manager = ['NetworkManager', '/usr/sbin/NetworkManager']
+        for command in (modem_manager, network_manager):
             if not self.py3.check_commands(command):
-                raise Exception('%s %s' % (command, STRING_NOT_INSTALLED))
+                raise Exception('%s %s' % (command[0], STRING_NOT_INSTALLED))
 
-        # search: 'modemmanager flags and enumerations'
+        # search: modemmanager flags and enumerations
         # enum 1: #MMModemState
         # enum 2: #MMModemAccessTechnology
         # enum 3: #MMModem3gppRegistrationState
@@ -355,9 +356,9 @@ class Py3status:
         wwan_data = self._get_modem_status_data(modem_proxy)
         wwan_data = self._organize(wwan_data)
 
+        # state and name
         key = 'state'
         name = '_name'
-
         wwan_data[key] = wwan_data.get(key, 0)
         wwan_data[key + name] = self.network_states[wwan_data[key]]
 
@@ -386,8 +387,7 @@ class Py3status:
             # registration state and name
             if self.init['m3gpp_registration_name']:
                 key = 'm3gpp_registration_state'
-                wwan_data[key
-                          + name] = self.registration_states[wwan_data[key]]
+                wwan_data[key + name] = self.registration_states[wwan_data[key]]
 
             # get bearer
             bearer = self._get_bearer(modem_proxy)
