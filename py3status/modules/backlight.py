@@ -85,7 +85,7 @@ class Py3status:
             raise Exception(STRING_NOT_AVAILABLE)
 
         self.format = self.py3.update_placeholder_formats(
-                self.format, {'level': ':d'}
+            self.format, {'level': ':d'}
         )
         # check for an error code and an output
         self.xbacklight = False
