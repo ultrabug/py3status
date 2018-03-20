@@ -5,11 +5,12 @@ Display WWAN network operator, signal, properties, and more.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module
-        *(default '\?color=state WW: [\?if=state_name=connected ({signal_quality_0}% at '
-        '{m3gpp_operator_name}) [{format_ipv4}][{format_ipv6}]|down]')
-    format_ipv4: display format for ipv4 network config (default '{address}')
-    format_ipv6: display format for ipv4 network config (default '{address}')
-    format_stats: display format for network statistics (default '{duration_hms}')
+        (default '\?color=state WW: [\?if=state_name=connected '
+        '({signal_quality_0}% at {m3gpp_operator_name}) '
+        '[{format_ipv4}][{format_ipv6}]|down]')
+    format_ipv4: display format for ipv4 network (default '{address}')
+    format_ipv6: display format for ipv6 network (default '{address}')
+    format_stats: display format for statistics (default '{duration_hms}')
     modem: specify a modem device to use. otherwise, auto (default None)
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (11, 'good')])
@@ -57,13 +58,6 @@ format_stats placeholders:
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
-Enum:  # noqa
-    0: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html
-    1: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemState
-    2: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemAccessTechnology
-    3: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModem3gppRegistrationState
-    4: https://www.freedesktop.org/software/ModemManager/api/1.0.0/ModemManager-Flags-and-Enumerations.html#MMModemBand
-
 Requires:
     modemmanager: mobile broadband modem management service
     networkmanager: network connection manager and user applications
@@ -71,6 +65,23 @@ Requires:
 
 Examples:
 # ```
+# show state names, and when connected, show network information too.
+wwan {
+    format = 'WWAN: [\?color=state [{format_ipv4}]'
+    format += '[{format_ipv6}] {state_name}]'
+}
+
+# show state names, eg initializing, searching, registred, connecting,
+wwan {
+    format = '\?color=state WWAN: {state_name}'
+}
+
+# show internet access technologies name with up/down state
+wwan
+    format = 'WWAN: [\?color=state [{access_technologies_name}]'
+    format += ' [\?if=state=11 up|down]]'
+}
+
 # add starter pack thresholds. you do not need to add them all.
 wwan {
     thresholds = {
@@ -91,31 +102,15 @@ wwan {
 
 # customize WWAN format
 wwan {
-    format = 'WWAN [\?color=state {state_name}] '
+    format = 'WWAN: [\?color=state {state_name}] '
     format += '[\?if=m3gpp_registration_state_name=HOME {m3gpp_operator_name} ] '
     format += '[\?if=m3gpp_registration_state_name=ROAMING {m3gpp_operator_name} ]'
     format += '[\?color=access_technologies {access_technologies_name} ]'
     format += '[([\?color=signal_quality_0 {signal_quality_0}]]'
-    format += '[\?if=signal_quality_1=False&color=signal_quality_1 \[!\]|] '
+    format += '[\?if=!signal_quality_1&color=signal_quality_1 \[!\]|] '
     format += '[\?if=state_name=connected [{format_ipv4}] [{format_stats}]]')
 }
 
-# show state name and network information if connected, else show state only
-wwan {
-    format = 'WWAN [\?color=state [{format_ipv4}]'
-    format += '[{format_ipv6}] {state_name}]'
-}
-
-# show state with state colored
-wwan {
-    format = '\?color=state WWAN {state_name}'
-}
-
-# show access technologies name, custom state up for connected and down if disconnected
-wwan
-    format = 'WWAN [\?color=state [{access_technologies_name}]'
-    format += ' [\?if=state=11 up|down]]'
-}
 # ```
 
 @author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
@@ -128,10 +123,10 @@ down
 """
 
 from datetime import timedelta
-
 from pydbus import SystemBus
 
 STRING_MODEMMANAGER_DBUS = 'org.freedesktop.ModemManager1'
+STRING_MODEM_ERROR = 'MM_MODEM_STATE_FAILED'
 STRING_NOT_INSTALLED = 'not installed'
 
 
@@ -140,9 +135,9 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = (
-        '\?color=state WW: [\?if=state_name=connected ({signal_quality_0}%'
-        ' at {m3gpp_operator_name}) [{format_ipv4}][{format_ipv6}]|down]')
+    format = ('\?color=state WW: [\?if=state_name=connected '
+              '({signal_quality_0}% at {m3gpp_operator_name}) '
+              '[{format_ipv4}][{format_ipv6}]|down]')
     format_ipv4 = u'{address}'
     format_ipv6 = u'{address}'
     format_stats = u'{duration_hms}'
@@ -153,6 +148,12 @@ class Py3status:
         for command in ['ModemManager', 'NetworkManager']:
             if not self.py3.check_commands(command):
                 raise Exception('%s %s' % (command, STRING_NOT_INSTALLED))
+
+        # search: 'modemmanager flags and enumerations'
+        # enum 1: #MMModemState
+        # enum 2: #MMModemAccessTechnology
+        # enum 3: #MMModem3gppRegistrationState
+        # enum 4: #MMModemBand
 
         # enum 1: network states
         self.network_states = {
@@ -347,20 +348,27 @@ class Py3status:
                     new_data[key] = None
             else:
                 new_data[key] = value
-
         return new_data
 
-    def wwan_status_nm(self):
+    def wwan(self):
         modem_proxy = self._get_modem_proxy()
-        wwan_data = self._organize(self._get_modem_status_data(modem_proxy))
-        network_state = wwan_data.get('state', 0)
-        wwan_data['state_name'] = self.network_states[network_state]
+        wwan_data = self._get_modem_status_data(modem_proxy)
+        wwan_data = self._organize(wwan_data)
 
-        # no signal data if less than 8
-        if network_state >= 8:
+        key = 'state'
+        name = '_name'
 
-            name = '_name'
+        wwan_data[key] = wwan_data.get(key, 0)
+        wwan_data[key + name] = self.network_states[wwan_data[key]]
 
+        # if state is -1, modem failed. stop here. report error.
+        # if state is less than 8, we are not connected. skip.
+        # if state is 8 or more, we are connected. start work.
+        if wwan_data[key] == -1:
+            self.py3.error(STRING_MODEM_ERROR)
+        elif wwan_data[key] < 8:
+            pass
+        else:
             # access technologies and name
             if self.init['access_technologies_name']:
                 key = 'access_technologies'
@@ -408,10 +416,10 @@ class Py3status:
                     wwan_data['format_stats'] = self.py3.safe_format(
                         self.format_stats, stats)
 
-            # thresholds
-            for k, v in wwan_data.items():
-                if isinstance(v, (float, int)):
-                    self.py3.threshold_get_color(v, k)
+        # thresholds
+        for k, v in wwan_data.items():
+            if isinstance(v, (float, int)):
+                self.py3.threshold_get_color(v, k)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
