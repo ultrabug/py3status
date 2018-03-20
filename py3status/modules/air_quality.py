@@ -17,8 +17,7 @@ Configuration parameters:
         burst up to 60 requests. See http://aqicn.org/api/ for more information.
         (default 3600)
     format: display format for this module
-        (default '[\?if=status=error&color=bad {data}]
-        |[\?if=aqi&color=aqi {city_name}: {aqi} {category}]')
+        (default '[\?color=aqi {city_name}: {aqi} {category}]')
     format_datetime: specify strftime characters to format (default {})
     location: location or uid to query. To search for nearby stations in Kraków,
         use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
@@ -41,10 +40,8 @@ Format placeholders:
     {city_geo_1} monitoring station longitude
     {city_name} monitoring station name
     {city_url} monitoring station url
-    {data} error message, eg Over quota, Invalid key, Unknown city
     {dominentpol} dominant pollutant, eg pm25
     {idx} Unique ID for the city monitoring station, eg 7396
-    {status} status message, eg ok, error
     {time} epoch timestamp, eg 1510246800
     {time_s} local timestamp, eg 2017-11-09 17:00:00
     {time_tz} local timezone, eg -06:00
@@ -125,8 +122,7 @@ class Py3status:
     # available configuration parameters
     auth_token = 'demo'
     cache_timeout = 3600
-    format = ('[\?if=status=error&color=bad {data}]'
-              '|[\?if=aqi&color=aqi {city_name}: {aqi} {category}]')
+    format = '[\?color=aqi {city_name}: {aqi} {category}]'
     format_datetime = {}
     location = 'Shanghai'
     quality_thresholds = [
@@ -140,6 +136,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.auth_token = {'token': self.auth_token}
+        self.request_timeout = 10
         self.url = 'http://api.waqi.info/feed/%s/' % self.location
         self.init_datetimes = []
         for word in self.format_datetime:
@@ -153,7 +150,9 @@ class Py3status:
 
     def _get_aqi_data(self):
         try:
-            return self.py3.request(self.url, params=self.auth_token).json()
+            return self.py3.request(
+                self.url, params=self.auth_token, timeout=self.request_timeout
+            ).json()
         except self.py3.RequestException:
             return {}
 
@@ -182,6 +181,8 @@ class Py3status:
         if aqi_data.get('status') == 'ok':
             aqi_data = self._organize(aqi_data)
             aqi_data = self._manipulate(aqi_data)
+        elif aqi_data.get('status') == 'error':
+            self.py3.error(aqi_data.get('data'))
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
