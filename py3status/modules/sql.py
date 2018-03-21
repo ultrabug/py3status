@@ -4,11 +4,23 @@ Display data stored in MariaDB, MySQL, sqlite3, and hopefully more.
 
 Configuration parameters:
     cache_timeout: refresh cache_timeout for this module (default 10)
-    database: specify a database name to import (default None)
-    format: display format for this module (default None)
+    database: specify database name to import (default None)
+    format: display format for this module (default '{format_row}')
+    format_row: display format for SQL rows (default None)
+    format_separator: show separator if more than one (default ' ')
     parameters: specify connection parameters to use (default None)
-    query: specify a command to query on the database (default None)
+    query: specify command to query a database (default None)
     thresholds: specify color thresholds to use (default [])
+
+Format placeholders:
+    {row} number of SQL rows
+    {format_row} format for SQL rows
+
+Color thresholds:
+    format:
+        row: print a color based on the number of SQL rows
+    format_row:
+        xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     mariadb: fast sql database server, drop-in replacement for mysql
@@ -17,7 +29,7 @@ Requires:
 
 Examples:
 ```
-# specify a database name to import
+# specify database name to import
 sql {
     database = 'sqlite3'  # from sqlite3 import connect
     database = 'MySQLdb'  # from MySQLdb import connect
@@ -29,47 +41,51 @@ http://mysql-python.sourceforge.net/MySQLdb.html#functions-and-attributes
 https://docs.python.org/3/library/sqlite3.html#module-functions-and-constants
 sql {
     name = 'MySQLdb'
+    format = '{host} {passd} ...'
     parameters = {
-        'host': 'host', 'passwd': 'password', ...
+        'host': 'host',
+        'passwd': 'password',
+        '...': '...',
     }
 }
 
-# specify a command to query on the database
+# specify command to query a database
 sql {
     query = 'SHOW SLAVE STATUS'
     query = 'SELECT * FROM cal_todos'
     query = '...'
 }
 
-# real example, display number of seconds behind master with MySQLdb
+# display number of seconds behind master with MySQLdb
 sql {
     database = 'MySQLdb'
-    format = '\?color=seconds_behind_master {host} is '
-    format += '[{seconds_behind_master}s behind|\?show master]'
-    parameters = {'host': 'localhost', 'passwd': '********'}
+    format_row = '\?color=seconds_behind_master {host} is '
+    format_row += '[{seconds_behind_master}s behind|\?show master]'
+    parameters = {
+        'host': 'localhost',
+        'passwd': '********'
+    }
     query = 'SHOW SLAVE STATUS'
     thresholds = [
         (0, 'deepskyblue'), (100, 'good'), (300, 'degraded'), (600, 'bad')
     ]
 }
 
-# real example, query thunderbird_todo title with sqlite3
+# display titles of thunderbird tasks with sqlite3
 sql {
     database = 'sqlite3'
-    format = '{title}'
+    format_row = '{title}'
+    format_separator = ', '
     query = 'SELECT * FROM cal_todos'
     parameters = '~/.thunderbird/user.default/calendar-data/local.sqlite'
 }
 ```
 
-
-
 @author cereal2nd
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': '509 seconds behind master'}
-{'full_text': 'master'}
+{'full_text': 'New Row Item 1, New Row Item 2'}
 """
 
 from importlib import import_module
@@ -82,52 +98,77 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     database = None
-    format = None
+    format = '{format_row}'
+    format_row = None
+    format_separator = ' '
     parameters = None
     query = None
     thresholds = []
 
     def post_config_hook(self):
-        for config_name in ['database', 'format', 'parameters', 'query']:
+        names = ['database', 'format', 'format_row', 'parameters', 'query']
+        for config_name in names:
+            if config_name == 'format_row':
+                if not self.py3.format_contains(self.format, config_name):
+                    continue
             if not getattr(self, config_name, None):
                 raise Exception('missing %s' % config_name)
+
         self.connect = getattr(import_module(self.database), 'connect')
-        self.is_param_a_string = isinstance(self.parameters, str)
-        if self.is_param_a_string:
+        self.is_parameters_a_string = isinstance(self.parameters, str)
+        if self.is_parameters_a_string:
             self.parameters = expanduser(self.parameters)
 
     def _get_sql_data(self):
-        if self.is_param_a_string:
-            conn = self.connect(self.parameters)
+        if self.is_parameters_a_string:
+            con = self.connect(self.parameters)
         else:
-            conn = self.connect(**self.parameters)
-        cur = conn.cursor()
+            con = self.connect(**self.parameters)
+        cur = con.cursor()
         cur.execute(self.query)
-        keys = [desc[0].lower() for desc in cur.description]
-        values = [format(val) for val in cur.fetchone()]
-        conn.close()
-        return dict(zip(keys, values))
+        sql_keys = [desc[0].lower() for desc in cur.description]
+        sql_values = cur.fetchall()
+        cur.close()
+        con.close()
+        return [dict(zip(sql_keys, values)) for values in sql_values]
 
     def sql(self):
         sql_data = {}
+        format_row = None
+        count_row = None
+
         try:
-            sql_data = self._get_sql_data()
+            data = self._get_sql_data()
         except:
             pass
-
-        if self.thresholds:
-            for k, v in sql_data.items():
-                self.py3.threshold_get_color(v, k)
-
-        if self.is_param_a_string:
-            new_sql_data = sql_data
         else:
-            new_sql_data = self.parameters.copy()
-            new_sql_data.update(sql_data)
+            new_data = []
+            count_row = len(data)
+            for row in data:
+                if self.thresholds:
+                    for key, value in row.items():
+                        self.py3.threshold_get_color(value, key)
+
+                new_data.append(self.py3.safe_format(self.format_row, row))
+
+            format_separator = self.py3.safe_format(self.format_separator)
+            format_row = self.py3.composite_join(format_separator, new_data)
+
+            if self.thresholds:
+                self.py3.threshold_get_color(count_row, 'row')
+
+        if not self.is_parameters_a_string:
+            sql_data.update(self.parameters)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, new_sql_data)
+            'full_text': self.py3.safe_format(
+                self.format, dict(
+                    format_row=format_row,
+                    row=count_row,
+                    **sql_data
+                )
+            )
         }
 
 
