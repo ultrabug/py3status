@@ -92,7 +92,7 @@ class Py3status:
             if not getattr(self, config_name, None):
                 raise Exception('missing %s' % config_name)
         self.connect = getattr(import_module(self.database), 'connect')
-        self.is_param_a_string = isinstance(self.parameters, basestring)
+        self.is_param_a_string = isinstance(self.parameters, str)
         if self.is_param_a_string:
             self.parameters = expanduser(self.parameters)
 
