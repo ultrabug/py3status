@@ -41,7 +41,7 @@ sql {
     query = '...'
 }
 
-# display number of seconds behind master with MySQLdb
+# real example, display number of seconds behind master with MySQLdb
 sql {
     database = 'MySQLdb'
     format += '[{seconds_behind_master}s behind|\?show master]'
@@ -53,7 +53,7 @@ sql {
     ]
 }
 
-# query todo title with sqlite3
+# real example, query thunderbird_todo title with sqlite3
 sql {
     database = 'sqlite3'
     format = '{title}'
@@ -92,7 +92,7 @@ class Py3status:
             if not getattr(self, config_name, None):
                 raise Exception('missing %s' % config_name)
         self.connect = getattr(import_module(self.database), 'connect')
-        self.is_param_a_string = isinstance(self.parameters, str)
+        self.is_param_a_string = isinstance(self.parameters, basestring)
         if self.is_param_a_string:
             self.parameters = expanduser(self.parameters)
 
@@ -115,8 +115,9 @@ class Py3status:
         except:
             pass
 
-        for k, v in sql_data.items():
-            self.py3.threshold_get_color(v, k)
+        if self.thresholds:
+            for k, v in sql_data.items():
+                self.py3.threshold_get_color(v, k)
 
         if self.is_param_a_string:
             merged_sql_data = sql_data
