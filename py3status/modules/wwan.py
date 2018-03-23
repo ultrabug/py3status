@@ -23,13 +23,14 @@ Format placeholders:
     {current_bands_name}            modem band name, eg GSM/GPRS/EDGE 900 MHz
     {format_ipv4}                   format for ipv4 network config
     {format_ipv6}                   format for ipv6 network config
-    {format_message}               format for SMS messages
+    {format_message}                format for SMS messages
     {format_stats}                  format for network connection statistics
     {interface_name}                network interface name, eg wwp0s20f0u2i12
-    {m3gpp_registration_state}      network registration state, eg 1
     {m3gpp_registration_state_name} network registration state name, eg HOME
+    {m3gpp_registration_state}      network registration state, eg 1
     {m3gpp_operator_code}           network operator code, eg 496
     {m3gpp_operator_name}           network operator name, eg Py3status Telecom
+    {message}                       number of messages
     {signal_quality_0}              signal quality percentage, eg 88
     {signal_quality_1}              signal quality refreshed, eg True/False
     {state}                         network state, eg 0, 7, 11
@@ -52,12 +53,10 @@ format_ipv6 placeholders:
     {prefix}  netmask prefix
 
 format_message placeholders:
-    {messages_counter} messages counter
-    {last_message} last message received, eg: '+33601020304: hello how are you?'
-    {last_message_short} last message received, eg: '+33601020304: hello...'
-    {last_text} last text received, eg: 'hello how are you?'
-    {last_text_short} last text received, eg: 'hello...'
-    {last_contat} last contact, eg: '+33601020304'
+    {index} message index
+    {message} last message received, eg: '+33601020304: hello how are you?'
+    {text} last text received, eg: 'hello how are you?'
+    {contact} last contact, eg: '+33601020304'
 
 format_stats placeholders:
     {duration}     time since connected, in seconds, eg 171
@@ -150,18 +149,18 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 10
-    format = (
-        '\?color=state WW: [\?if=state_name=connected '
-        '({signal_quality_0}% at {m3gpp_operator_name}) '
-        '[{format_ipv4}][ {format_ipv6}]|{state_name}] [{format_message}]')
+    cache_timeout = 2
+    # format = (
+    #     '\?color=state WW: [\?if=state_name=connected '
+    #     '({signal_quality_0}% at {m3gpp_operator_name}) '
+    #     '[{format_ipv4}][ {format_ipv6}]|{state_name}] [{format_message}]')
+    format = u'{state_name} {format_message}'
     format_ipv4 = u'[{address}]'
     format_ipv6 = u'[{address}]'
     format_stats = u'{duration_hms}'
-    format_message = u'[\?color=messages_counter {messages_counter} sms]'
+    # format_message = u'{messages_counter} [\?if=index=1 {message}]'
+    format_message = u'{contact} {text}'
     modem = None
-    message_text_max_size = 10
-    allow_urgent = True
     thresholds = [(0, 'bad'), (11, 'good')]
 
     def post_config_hook(self):
@@ -300,7 +299,7 @@ class Py3status:
         names = [
             'current_bands_name', 'access_technologies_name',
             'm3gpp_registration_name', 'interface_name', 'ipv4', 'ipv6',
-            'stats', 'messages'
+            'stats', 'message'
         ]
         placeholders = [
             'current_bands_name', 'access_technologies_name',
@@ -343,79 +342,30 @@ class Py3status:
             pass
         return bearer
 
-    def _organize_messages(self, messages):
-        messages_data = {}
-        if messages:
-            sms_data = []
-            for msg in messages:
-                id = int(msg.replace(STRING_MODEMMANAGER_SMS_PATH, ''))
-                sms_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, msg)
-                contact = sms_proxy.Number
-                text = sms_proxy.Text
-                text_short = self._truncate_message(text)
-                messages_data['last_contact'] = '{}'.format(contact)
-                messages_data['last_text'] = '{}'.format(text)
-                messages_data['last_text_short'] = '{}'.format(
-                    self._truncate_message(text))
-                sms_data.insert(
-                    0, {
-                        'id': id,
-                        'contact': contact,
-                        'text': text,
-                        'text_short': text_short
-                    })
-            messages_data['messages'] = sms_data
-
-            # get last message infos
-            messages_data['last_message'] = '{}: {}'.format(
-                sms_data[-1]['contact'], sms_data[-1]['text'])
-            messages_data['last_message_short'] = '{}: {}'.format(
-                sms_data[-1]['contact'], sms_data[-1]['text_short'])
-        return messages_data
-
     def _get_messages(self, modem_proxy):
         messages = {}
-        messages_data = {}
-        new_messages = False
-
-        # get messages from modem
         try:
             messages = modem_proxy.Messages
         except:
             pass
 
-        messages_data = self._organize_messages(messages)
-
-        previous_messages_counter = int(
-            self.py3.storage_get('wwan_messages_counter') or 0)
-
-        # get sms counter
-        messages_counter = len(messages_data['messages'])
-        messages_data['previous_messages_counter'] = previous_messages_counter
-        messages_data['messages_counter'] = messages_counter
-
-        return messages_data
+        return messages
 
     def _notify_message(self, messages_data):
-        new_messages = False
+        # TODO: make format_notification (OPTIONAL)
+        # =========================================
         # set new message placeholder to true
-        if self.allow_urgent == True and messages_data['messages_counter'] > messages_data['previous_messages_counter']:
-            new_messages = True
+        if messages_data['counter'] > messages_data['previous_messages_counter']:
             # notify user with last message
-            self.py3.notify_user(messages_data['last_message'], rate_limit=60)
+            # self.py3.notify_user(messages_data['last_message'], rate_limit=60)
             self.py3.log('new messages!')
             # save last counter
             self.py3.storage_set('wwan_messages_counter',
-                                 messages_data['messages_counter'])
+                                 messages_data['counter'])
         else:
             self.py3.log('no new messages')
 
-        messages_data['new_messages'] = new_messages
         return messages_data
-
-    def _truncate_message(self, message):
-        return (message[:self.message_text_max_size] + '...'
-                ) if len(message) > self.message_text_max_size else message
 
     def _get_interface(self, bearer):
         return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
@@ -452,12 +402,32 @@ class Py3status:
         wwan_data = self._organize(wwan_data)
 
         # messages sms
-        if self.init['messages']:
-            messages_data = self._notify_message(
-                self._get_messages(modem_proxy))
+        if self.init['message']:
+            new_messages = []
+            messages_data = self._get_messages(modem_proxy)
+            for index, msg in enumerate(messages_data, 1):
+                id = msg.rsplit('/', 1)[-1]
+                sms_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, msg)
+                contact = sms_proxy.Number
+                text = sms_proxy.Text
+                new_messages.append(
+                    self.py3.safe_format(
+                        self.format_message, {
+                            'index': index,
+                            'id': id,
+                            'contact': contact,
+                            'text': text,
+                        }))
 
             wwan_data['format_message'] = self.py3.safe_format(
-                self.format_message, messages_data)
+                self.format_message, new_messages)
+            self.py3.log(wwan_data)
+
+        previous_messages_counter = int(
+            self.py3.storage_get('wwan_messages_counter') or 0)
+
+        # get sms counter
+        wwan_data['previous_messages_counter'] = previous_messages_counter
 
         # state and name
         key = 'state'

@@ -747,7 +747,7 @@ class Py3:
         ``title`` if title but no artist,
         and ``file`` if file is present but not artist or title.
 
-        param_dict is a dictionary of palceholders that will be substituted.
+        param_dict is a dictionary of placeholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
 
