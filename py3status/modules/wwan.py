@@ -161,7 +161,7 @@ class Py3status:
     format_message = u'[\?color=messages_counter {messages_counter} sms]'
     modem = None
     message_text_max_size = 10
-    notify_on_new_message = True
+    allow_urgent = True
     thresholds = [(0, 'bad'), (11, 'good')]
 
     def post_config_hook(self):
@@ -386,11 +386,8 @@ class Py3status:
 
         messages_data = self._organize_messages(messages)
 
-        if self.py3.storage_get('wwan_messages_counter') == None:
-            previous_messages_counter = 0
-        else:
-            previous_messages_counter = int(
-                self.py3.storage_get('wwan_messages_counter'))
+        previous_messages_counter = int(
+            self.py3.storage_get('wwan_messages_counter') or 0)
 
         # get sms counter
         messages_counter = len(messages_data['messages'])
@@ -402,10 +399,10 @@ class Py3status:
     def _notify_message(self, messages_data):
         new_messages = False
         # set new message placeholder to true
-        if self.notify_on_new_message == True and messages_data['messages_counter'] > messages_data['previous_messages_counter']:
+        if self.allow_urgent == True and messages_data['messages_counter'] > messages_data['previous_messages_counter']:
             new_messages = True
             # notify user with last message
-            self.py3.notify_user(messages_data['last_message'])
+            self.py3.notify_user(messages_data['last_message'], rate_limit=60)
             self.py3.log('new messages!')
             # save last counter
             self.py3.storage_set('wwan_messages_counter',
