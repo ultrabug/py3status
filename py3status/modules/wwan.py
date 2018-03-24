@@ -166,6 +166,7 @@ class Py3status:
     format_ipv4 = u'[{address}]'
     format_ipv6 = u'[{address}]'
     format_message = u'[\?if=index<1 {contact} [\?max_length=10 {text}...]]'
+    format_notification = u'[\?if=index<1 {contact} [{text}]]'
     format_message_separator = u' '
     format_stats = u'{duration_hms}'
     modem = None
@@ -360,24 +361,24 @@ class Py3status:
 
         return messages
 
-    def _notify_message(self, messages_data):
+    def _notify_message(self, wwan_data):
         # TODO: make format_notification (OPTIONAL)
         # =========================================
         previous_messages_counter = int(
             self.py3.storage_get('wwan_messages_counter') or 0)
         # set new message placeholder to true
-        if messages_data['message'] > previous_messages_counter:
+        if wwan_data['message'] > previous_messages_counter:
+            notification = 'test'
+            self.py3.notify_user(notification)
             # notify user with last message
-            self.py3.log(messages_data)
-            # self.py3.notify_user(messages_data['message'], rate_limit=60)
             self.py3.log('new messages!')
             # save last counter
-            self.py3.storage_set('wwan_messages_counter',
-                                 messages_data['message'])
+            self.py3.storage_set('wwan_messages_counter', wwan_data['message'])
         else:
+            notification = 'test2'
             self.py3.log('no new messages')
 
-        return messages_data
+        return wwan_data
 
     def _get_interface(self, bearer):
         return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
@@ -413,13 +414,11 @@ class Py3status:
         wwan_data = self._get_modem_status_data(modem_proxy)
         wwan_data = self._organize(wwan_data)
 
+        # notify last message
         if self.init['message'] or self.allow_urgent == True:
             messages_data = self._get_messages(modem_proxy)
             message_counter = (len(messages_data) or 0)
-            self.py3.log(message_counter)
             wwan_data['message'] = message_counter
-
-            self._notify_message(wwan_data)
 
         # messages sms
         if self.init['format_message']:
@@ -427,7 +426,11 @@ class Py3status:
             messages_data = self._get_messages(modem_proxy)
             for index, msg in enumerate(messages_data):
                 id = msg.rsplit('/', 1)[-1]
-                sms_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, msg)
+                sms_proxy = {}
+                try:
+                    sms_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, msg)
+                except:
+                    break
                 contact = sms_proxy.Number
                 text = sms_proxy.Text
                 new_messages.append(
@@ -438,19 +441,13 @@ class Py3status:
                             'contact': contact,
                             'text': text,
                         }))
-
             format_message_separator = self.py3.safe_format(
                 self.format_message_separator)
             format_message = self.py3.composite_join(format_message_separator,
                                                      new_messages)
-
             wwan_data['format_message'] = format_message
 
-        previous_messages_counter = int(
-            self.py3.storage_get('wwan_messages_counter') or 0)
-
-        # get sms counter
-        wwan_data['previous_messages'] = previous_messages_counter
+        wwan_data = self._notify_message(wwan_data)
 
         # state and name
         key = 'state'
