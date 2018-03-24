@@ -662,6 +662,25 @@ class Py3:
         self._format_placeholders_cache[format_string][key] = False
         return False
 
+    def get_control_placeholders_list(self, format_string):
+        """
+        Returns a list of conditional placeholders in ``format_string``.
+
+        :param format_string: accepts a string or a list of strings
+        """
+        if isinstance(format_string, basestring):
+            format_string = [format_string]
+        names = []
+        for string in format_string:
+            for character in '!&=<>~[]':
+                if character in string:
+                    string = string.replace(character, ' ')
+            malformed_list = string.split('\?if')[1::1]
+            for malformed_string in malformed_list:
+                placeholder = malformed_string.split()[0]
+                names.append(placeholder)
+        return names
+
     def get_placeholders_list(self, format_string, match=None):
         """
         Returns a list of placeholders in ``format_string``.
