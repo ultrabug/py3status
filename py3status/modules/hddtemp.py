@@ -13,8 +13,8 @@ Configuration parameters:
         (default '{name} [\?color=temperature {temperature}°{unit}]')
     format_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
-        *(default [(0, 'deepskyblue'), (25, 'good'),
-        (41, 'degraded'), (46, 'orange'), (51, 'bad')])*
+        *(default [(19, 'skyblue'), (24, 'deepskyblue'), (25, 'lime'),
+        (41, 'yellow'), (46, 'orange'), (51, 'red'), (56, 'tomato')])*
 
 Format placeholders:
     {format_hdd} format for hard drives
@@ -63,7 +63,7 @@ Backblaze:
 
 Examples:
 ```
-# compact
+# compact the format
 hddtemp {
     format = 'HDD {format_hdd}'
     format_hdd = '\?color=temperature {temperature}°C'
@@ -73,30 +73,37 @@ hddtemp {
 hddtemp {
     format_hdd = '{path} [\?color=temperature {temperature}°{unit}]'
 }
+
+# show more colors
+hddtemp {
+    gradients = True
+}
 ```
 
 SAMPLE OUTPUT
 [
     {'full_text': u'ADATA SP550 '},
-    {'full_text': u'32°C', 'color': '#00FF00'},
+    {'full_text': u'32°C ', 'color': '#00FF00'},
     {'full_text': u'SanDisk SDSSDA240 '},
     {'full_text': u'44°C', 'color': '#FFFF00'},
 ]
 
 path
 [
-    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '22°C'},
+    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '22°C '},
     {'full_text': '/dev/sdb '}, {'color': '#FFA500', u'full_text': '44°C'},
 ]
 
 compact
 [
     {'full_text': 'HDD '},
+    {'color': '#87CEEB', u'full_text': '19°C '},
     {'color': '#00BFFF', u'full_text': '24°C '},
     {'color': '#00FF00', u'full_text': '32°C '},
     {'color': '#FFFF00', u'full_text': '44°C '},
     {'color': '#FFA500', u'full_text': '51°C '},
-    {'color': '#FF0000', u'full_text': '53°C'},
+    {'color': '#FF0000', u'full_text': '53°C '},
+    {'color': '#FF6347', u'full_text': '56°C'},
 ]
 """
 
@@ -111,8 +118,8 @@ class Py3status:
     format = '{format_hdd}'
     format_hdd = u'{name} [\?color=temperature {temperature}°{unit}]'
     format_separator = ' '
-    thresholds = [(0, 'deepskyblue'), (25, 'good'),
-                  (41, 'degraded'), (46, 'orange'), (51, 'bad')]
+    thresholds = [(19, 'skyblue'), (24, 'deepskyblue'), (25, 'lime'),
+                  (41, 'yellow'), (46, 'orange'), (51, 'red'), (56, 'tomato')]
 
     def post_config_hook(self):
         self.keys = ['path', 'name', 'temperature', 'unit']
