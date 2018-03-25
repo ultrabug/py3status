@@ -103,11 +103,11 @@ def parse_cli():
         help="default injection cache timeout in seconds (default 60 sec)")
     parser.add_argument(
         '-m',
-        '--disable-mouse',
-        action="store_false",
-        dest="enable_mouse",
-        default=True,
-        help="disable all mouse events")
+        '--disable-click-events',
+        action="store_true",
+        dest="disable_click_events",
+        default=False,
+        help="disable all click events")
     parser.add_argument(
         '-v',
         '--version',
