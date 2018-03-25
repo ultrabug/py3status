@@ -105,6 +105,8 @@ class Py3:
     def __init__(self, module=None):
         self._audio = None
         self._config_setting = {}
+        self._english_env = dict(os.environ)
+        self._english_env['LC_ALL'] = 'C'
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._is_python_2 = sys.version_info < (3, 0)
@@ -512,9 +514,14 @@ class Py3:
         # force unicode for python2 str
         if self._is_python_2 and isinstance(msg, str):
             msg = msg.decode('utf-8')
-        module_name = self._module.module_full_name
-        self._py3_wrapper.notify_user(
-            msg, level=level, rate_limit=rate_limit, module_name=module_name)
+        if msg:
+            module_name = self._module.module_full_name
+            self._py3_wrapper.notify_user(
+                msg=msg,
+                level=level,
+                rate_limit=rate_limit,
+                module_name=module_name,
+            )
 
     def register_function(self, function_name, function):
         """
@@ -562,17 +569,22 @@ class Py3:
             ``cached_until`` in their response unless they wish to directly control
             it.
 
-        seconds specifies the number of seconds that should occure before the
-        update is required.
+        :param seconds: specifies the number of seconds that should occure before the
+            update is required.  Passing a value of ``CACHE_FOREVER`` returns
+            ``CACHE_FOREVER`` which can be useful for some modules.
 
-        sync_to causes the update to be syncronised to a time period.  1 would
-        cause the update on the second, 60 to the nearest minute. By defalt we
-        syncronise to the nearest second. 0 will disable this feature.
+        :param sync_to: causes the update to be syncronised to a time period.  1 would
+            cause the update on the second, 60 to the nearest minute. By defalt we
+            syncronise to the nearest second. 0 will disable this feature.
 
-        offset is used to alter the base time used. A timer that started at a
-        certain time could set that as the offset and any syncronisation would
-        then be relative to that time.
+        :param offset: is used to alter the base time used. A timer that started at a
+            certain time could set that as the offset and any syncronisation would
+            then be relative to that time.
         """
+
+        # if called with CACHE_FOREVER we just return this
+        if seconds is self.CACHE_FOREVER:
+            return self.CACHE_FOREVER
 
         if seconds is None:
             # If we have a sync_to then seconds can be 0
@@ -879,7 +891,7 @@ class Py3:
             msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command, shell=False, capture_stderr=False):
+    def command_output(self, command, shell=False, capture_stderr=False, localized=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -887,6 +899,7 @@ class Py3:
         :param command: command to run can be a str or list
         :param shell: if `True` then command is run through the shell
         :param capture_stderr: if `True` then STDERR is piped to STDOUT
+        :param localized: if `False` then command is forced to use its default (English) locale
 
         A CommandError is raised if an error occurs
         """
@@ -900,10 +913,12 @@ class Py3:
             command = shlex.split(command)
 
         stderr = STDOUT if capture_stderr else PIPE
+        env = self._english_env if not localized else None
 
         try:
             process = Popen(command, stdout=PIPE, stderr=stderr, close_fds=True,
-                            universal_newlines=True, shell=shell)
+                            universal_newlines=True, shell=shell,
+                            env=env)
         except Exception as e:
             msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e)
             raise exceptions.CommandError(msg, error_code=e.errno)
@@ -1046,17 +1061,20 @@ class Py3:
             self._thresholds_init()
 
         color = None
-        try:
-            value = float(value)
-        except ValueError:
-            color = self._get_color('error') or self._get_color('bad')
+        # if value is None, pass it along. otherwise try it.
+        if value is not None:
+            try:
+                value = float(value)
+            except ValueError:
+                color = self._get_color('error') or self._get_color('bad')
 
         # if name not in thresholds info then use defaults
         name_used = name
         if name_used not in self._thresholds:
             name_used = None
         thresholds = self._thresholds.get(name_used)
-        if color is None and thresholds:
+        # if value is None, pass it along. otherwise try it.
+        if value is not None and color is None and thresholds:
             # if gradients are enabled then we use them
             if self._get_config_setting('gradients'):
                 try:
@@ -1068,12 +1086,13 @@ class Py3:
                     self._threshold_gradients[name_used] = (colors, minimum, maximum)
 
                 if value < minimum:
-                    return colors[0]
-                if value > maximum:
-                    return colors[-1]
-                value -= minimum
-                col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
-                color = colors[col_index]
+                    color = colors[0]
+                elif value > maximum:
+                    color = colors[-1]
+                else:
+                    value -= minimum
+                    col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
+                    color = colors[col_index]
 
             elif color is None:
                 color = thresholds[0][1]

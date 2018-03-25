@@ -8,6 +8,8 @@ if a channel is currently streaming or not.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 10)
+    client_id: Your client id. Create your own key at http://dev.twitch.tv
+        (default None)
     format: Display format when online
         (default "{stream_name} is live!")
     format_invalid: Display format when streamer does not exist
@@ -23,6 +25,14 @@ Format placeholders:
 Color options:
     color_bad: Stream offline or error
     color_good: Stream is live
+
+Client ID:
+    Example settings when creating your app at http://dev.twitch.tv
+
+    Name: <your_name>_py3status
+    OAuth Redirect URI: http://localhost
+    Application Category: Application Integration
+
 
 @author Alex Caswell horatioesf@virginmedia.com
 @license BSD
@@ -42,6 +52,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    client_id = None
     format = "{stream_name} is live!"
     format_invalid = "{stream_name} does not exist!"
     format_offline = "{stream_name} is offline."
@@ -52,7 +63,7 @@ class Py3status:
 
     def _get_display_name(self):
         url = 'https://api.twitch.tv/kraken/users/' + self.stream_name
-        display_name_request = requests.get(url)
+        display_name_request = requests.get(url, headers={'Client-ID': self.client_id})
         self._display_name = display_name_request.json().get('display_name')
 
     def is_streaming(self):
@@ -62,7 +73,10 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER
             }
 
-        r = requests.get('https://api.twitch.tv/kraken/streams/' + self.stream_name)
+        r = requests.get(
+            'https://api.twitch.tv/kraken/streams/' + self.stream_name,
+            headers={'Client-ID': self.client_id}
+        )
         if not self._display_name:
             self._get_display_name()
         if 'error' in r.json():

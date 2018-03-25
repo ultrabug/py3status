@@ -74,9 +74,18 @@ Color options:
     color_degraded: Using a fallback layout
     color_good: Displayed layout active
 
-Example config:
+Notes:
+    Some days are just bad days. Running `xrandr --query` command can
+    cause unexplainable brief screen freezes due to an overall combination
+    of computer hardware, installed software, your choice of linux distribution,
+    and/or some other unknown factors such as recent system updates.
 
+    Configuring `cache_timeout` with a different number, eg `3600` (an hour)
+    or `-1` (runs once) can be used to remedy this issue. See issue #580.
+
+Examples:
 ```
+# start with a preferable setup
 xrandr {
     force_on_start = "eDP1+DP1"
     DP1_pos = "left-of eDP1"

@@ -90,7 +90,8 @@ cycle_again
 
 from time import time
 
-RETRY_TIMEOUT_NO_CONTENT = 5
+# maximum wait for initial content at startup
+MAX_NO_CONTENT_WAIT = 5
 
 
 class Py3status:
@@ -118,6 +119,7 @@ class Py3status:
         if not self.items:
             self.cycle = 0
 
+        self._first_run = True
         self.active = 0
         self.last_active = 0
         self.urgent = False
@@ -220,11 +222,17 @@ class Py3status:
             current_output = self._get_output()
             # if the output is empty try and find some output
             if not current_output:
+                if self._first_run:
+                    self._first_run = False
+                    return {
+                        'cached_until': self.py3.time_in(MAX_NO_CONTENT_WAIT),
+                        'full_text': '',
+                    }
+
                 self._change_active(1)
                 current_output = self._get_output()
                 # there is no output for any module retry later
-                if not current_output:
-                    update_time = RETRY_TIMEOUT_NO_CONTENT
+                self._first_run = False
         else:
             urgent = self.urgent
             current_output = []

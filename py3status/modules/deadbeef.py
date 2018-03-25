@@ -45,6 +45,7 @@ from subprocess import check_output
 
 FMT_PARAMETER = ['isplaying']
 FMT_SEPARATOR = u'\u001e'
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -78,6 +79,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if not self.py3.check_commands('deadbeef'):
+            raise Exception(STRING_NOT_INSTALLED)
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
@@ -116,7 +119,7 @@ class Py3status:
             # We know 7.0 and 7.1 returns a literal 'nothing' string.
             # Deadbeef stopped doing that in 7.2 so we adds a quick check
             # here to skip status if it contains 'nothing' or FMT_SEPARATOR.
-            if out not in ['nothing', u'\x1e']:
+            if out not in ['nothing', FMT_SEPARATOR]:
 
                 # split placeholders results
                 status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
