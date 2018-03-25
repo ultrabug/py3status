@@ -1086,12 +1086,13 @@ class Py3:
                     self._threshold_gradients[name_used] = (colors, minimum, maximum)
 
                 if value < minimum:
-                    return colors[0]
-                if value > maximum:
-                    return colors[-1]
-                value -= minimum
-                col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
-                color = colors[col_index]
+                    color = colors[0]
+                elif value > maximum:
+                    color = colors[-1]
+                else:
+                    value -= minimum
+                    col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
+                    color = colors[col_index]
 
             elif color is None:
                 color = thresholds[0][1]
