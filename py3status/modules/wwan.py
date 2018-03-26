@@ -11,7 +11,7 @@ Configuration parameters:
     format_ipv4: display format for ipv4 network (default '[{address}]')
     format_ipv6: display format for ipv6 network (default '[{address}]')
     format_message: display format for SMS messages
-        (default '[\?color=messages {messages} sms]')
+        (default '[\?color=message {message} sms]')
     format_message_separator: show separator if more than one (default ' ')
     format_stats: display format for statistics (default '{duration_hms}')
     modem: specify a modem device to use. otherwise, auto (default None)
@@ -171,7 +171,7 @@ class Py3status:
     format_stats = u'{duration_hms}'
     modem = None
     thresholds = [(0, 'bad'), (11, 'good')]
-    allow_urgent = False
+    allow_urgent = True  # delete me later
 
     def post_config_hook(self):
         modem_manager = ['ModemManager', '/usr/sbin/ModemManager']
@@ -368,15 +368,10 @@ class Py3status:
             self.py3.storage_get('wwan_messages_counter') or 0)
         # set new message placeholder to true
         if wwan_data['message'] > previous_messages_counter:
-            notification = 'test'
             self.py3.notify_user(notification)
             # notify user with last message
-            self.py3.log('new messages!')
             # save last counter
             self.py3.storage_set('wwan_messages_counter', wwan_data['message'])
-        else:
-            notification = 'test2'
-            self.py3.log('no new messages')
 
         return wwan_data
 
@@ -447,7 +442,7 @@ class Py3status:
                                                      new_messages)
             wwan_data['format_message'] = format_message
 
-        wwan_data = self._notify_message(wwan_data)
+            wwan_data = self._notify_message(wwan_data)
 
         # state and name
         key = 'state'
