@@ -1,5 +1,4 @@
 version 3.8 (2018-04-01)
-* fix travis whitespace error, by @girst
 * xrandr: document issue #580, by @lasers
 * backlight: fix flake8 error, by @lasers
 * air_quality: replace error format with error helper, by @lasers
@@ -14,8 +13,7 @@ version 3.8 (2018-04-01)
 * spotify module: quick QA for #1276, by @Ultrabug
 * thunderbird_todos: new module from scratch, by @lasers
 * thunderbird_todos: rename thunderbird_calendar to this, by @lasers
-* deduplicate hide_on_error_check, by @girst
-* fix ValueError, allow hiding on error, by @girst
+** fix ValueError, allow hiding on error, by @girst
 * deadbeef: not installed, by @lasers
 * sysdata: post_config_hook initializations (meminfo), by @lasers
 * sysdata: post_config_hook initializations, by @lasers
@@ -41,7 +39,6 @@ version 3.8 (2018-04-01)
 * sysdata: remove class getdata, by @lasers
 * py3: return gradients properly, by @lasers
 * net_rate: use post_config_hook, by @lasers
-* small fix in error handling, by @girst
 * formatter: add {:g} to remove trailing zeroes, by @lasers
 * change on_click variables to match py3status conventions : button_*, by @qn
 * Typo fixes, by @Robert Ricci
@@ -67,17 +64,6 @@ version 3.8 (2018-04-01)
 * Choose a more sensible default filter, by @regnat
 * Remove forgotten garbage line, by @regnat
 * Add installation instructions for NixOS, by @Daniel Schaefer
-* allow disabling debug logs, py2 fixes, by @girst
-* for travis: s/://, by @girst
-* add read_timeout to speed up restarts on network timeouts, by @girst
-* put 'if error: return' on two lines for travis, by @girst
-* _idle(): s/error/abort; cleanup (see below), by @girst
-* travis wants two spaces in front of a comment. :|, by @girst
-* remove remnant of _timeoutwait(), by @girst
-* use timeout everywhere -- also on imaplib functions, by @girst
-* Remove unnecessary log(IDLE timeout) message, by @girst
-* travis, by @girst
-* replace socket.read() with _timeoutread(), honor 'still there', by @girst
 * quick QA on i3pystatus module, by @Ultrabug
 * allow test modules to use storage, by @tobes
 * Move and eidt note about pypi-install vs. pip for Debian, by @Sébastien Delafond
@@ -153,7 +139,6 @@ version 3.8 (2018-04-01)
 * quick consistency/cleanup fixes (docs), by @lasers
 * bitcoin_price: use helpers, by @lasers
 * google_calendar module: strip location description and summary output, by @Ultrabug
-* add timeout=py3.CACHE_FOREVER to self.py3.error(), by @girst
 * volume_status: add boost for pamixer, by @lasers
 * allow selection of keyboard layout, by @tobes
 * Added support for lower case in env vars, by @Alex O'Neill
@@ -176,7 +161,6 @@ version 3.8 (2018-04-01)
 * google_calendar: rename response_to_events option to only_if_response, by @Ultrabug
 * google_calendar: add event_within_hours option to limit events selection to a time frame, by @Ultrabug
 * google_calendar: fix event selection logic when self organized, by @Ultrabug
-* fix 'local variable socket referenced before assignment', by @girst
 * add dateutil to requires in docstring, by @Igor Grebenkov
 * fix docstring to pass flake8, by @Igor Grebenkov
 * fix juocstring, by @Igor Grebenkov
@@ -184,47 +168,12 @@ version 3.8 (2018-04-01)
 * google_calendar module: prettier format, by @Ultrabug
 * google_calendar module: code QA and refactoring, by @Ultrabug
 * add new google_calendar module thx to @igorgrebenkov, by @Ultrabug
-* catch 'OK still there' (_now_ i'm done), by @girst
 * post version 3.7, by @Ultrabug
-* s/=/is/, by @girst
-* go back to `use_idle is None` instead of first_run, by @girst
-* show "will use {polling,idling}" even if use_idle set explicitly, by @girst
-* incorporate laser's feedback, by @girst
 * Undid append_modules refactor., by @Alex O'Neill
 * Expanded matching options for env_var., by @Alex O'Neill
-* use IMAP.capabilities instead of IMAP.capabilities, by @girst
-* make errors during IDLE-DONE non-fatal, by @girst
-* throttle thread-restarting, by @girst
-* move check for idlability outside of _post_config_hook, by @girst
-* _idle(): check if DONE succeeded, by @girst
 * Show error if cannot connect to the socket, by @Maxim Baz
-* I'm getting tired :|, by @girst
-* fix if 'selected', by @girst
-* check .state before login(), close(), by @girst
-* travis again, by @girst
-* travis: line too long, by @girst
-* wrap test for IDLE in try/catch, by @girst
 * version 3.7, by @Ultrabug
-* shut up travis, by @girst
-* only log idling/polling if use_idle==None, by @girst
-* use py3.update() instead of updating once per second when IDLEing, by @girst
-* update doc for use_idle = None, by @girst
-* when use_imap = None, auto detect IDLE availability, by @girst
-* remove timeout logging again, by @girst
-* more socket timeout-ing, by @girst
-* fix cache_timeout==0; remove logging of IDLE timeout, by @girst
-* make travis stop complaining, III, by @girst
-* make travis shut up, II, by @girst
-* make travis stop complaining, by @girst
-* don't use response variable in IdleException, by @girst
-* keep IDLE tags < 1000, by @girst
-* implement timeouts with select(); log recoverable errors as LOG_WARNING;, by @girst
-* implement idle-checker, by @girst
-* make _idle() throw a fatal exception; to be caught by _get_mail_count, by @girst
-* cleaning up IDLE, by @girst
-* workin' on the IDLE, by @girst
 * Reverted back to env(...) notation, auto casting, by @Alex O'Neill
-* drop imaplib2 dependency; reimplement IDLE ourselves, by @girst
 * remove color_separator, clean up _check_warn_threshold(), by @Igor Grebenkov
 * add new module: transmission, by @lasers
 * added format_notification + small fixes, by @Igor Grebenkov
@@ -238,26 +187,15 @@ version 3.8 (2018-04-01)
 * Simplify is_waiting logic, no need to count numbers, by @Maxim Baz
 * Improve default format value, by @Maxim Baz
 * Get rid of the precomputed 'is_waiting', by @Maxim Baz
-* log instead of error; cast exception to string, by @girst
 * Use external tool for detection, by @Maxim Baz
-* use tmp_mail_count, so counter won't glitch during update, by @girst
 * Fix linter issues, by @Alex O'Neill
 * Added bool support for env vars, by @Alex O'Neill
 * Added documentation for env var tokem., by @Alex O'Neill
 * Added rudimentary type conversions for env vars., by @Alex O'Neill
 * Added support for environment variables in config., by @Alex O'Neill
 * change datetime parsing for python2 compatibility, by @Igor Grebenkov
-* be more verbose in py3.error, by @girst
-* fix `use_idle` default not in docstring, by @girst
-* flake8 fixes, do int(port) in post_config_hook, by @girst
-* add thread.isAlive checking, by @girst
 * one return statement + command_output -> command_run, by @Igor Grebenkov
-* don't pretend to start with 0 new mails, ..., by @girst
-* throw errors from within thread, by @girst
-* travis complains about a single misplaced space :|, by @girst
-* travis compaining about whitespace :|, by @girst
-* merge imap_idle and imap; incorporate lasers' feedback, by @girst
-* WIP: IMAP4 IDLE unread messages, by @girst
+** WIP: IMAP4 IDLE unread messages, by @girst
 * changed un-authorized cached_until time, by @Igor Grebenkov
 * log event['index'], by @Igor Grebenkov
 * added event blacklist feature + small fixes, by @Igor Grebenkov
