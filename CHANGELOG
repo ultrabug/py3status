@@ -4,7 +4,6 @@ version 3.8 (2018-04-01)
 * air_quality: replace error format with error helper, by @lasers
 * hddtemp: accuracy thresholds and gradients, by @lasers
 * py3: dismiss empty notifications, by @lasers
-* removed email, by @Christian Kropla
 * readthedocs: fix hddtemp screenshots, by @lasers
 * taskwarrior: post-merge QA, use post_config_hook, by @lasers
 * pomodoro: add @ricci in the author list, by @Ultrabug
