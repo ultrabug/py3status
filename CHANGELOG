@@ -1,46 +1,20 @@
 version 3.8 (2018-04-01)
 * fix travis whitespace error, by @girst
-* Merge pull request #1319 from lasers/xrandr-docs, by @Ultrabug
-* Merge pull request #1175 from girst/master, by @Ultrabug
 * xrandr: document issue #580, by @lasers
-* Merge pull request #1301 from girst/mpd-valueerrorexception, by @Ultrabug
-* Merge pull request #1314 from lasers/hddtemp-thresholds+gradients, by @Ultrabug
-* Merge pull request #1280 from lasers/gradients-bug, by @Ultrabug
-* Merge pull request #1311 from lasers/py3-notify_user, by @Ultrabug
-* Merge pull request #1132 from lasers/mergeformat-keyboard_locks, by @Ultrabug
-* Merge pull request #1317 from lasers/air_quality-remove-error, by @Ultrabug
 * backlight: fix flake8 error, by @lasers
 * air_quality: replace error format with error helper, by @lasers
 * hddtemp: accuracy thresholds and gradients, by @lasers
 * py3: dismiss empty notifications, by @lasers
-* Merge pull request #1306 from lasers/readthedocs-hddtemp, by @Ultrabug
-* Merge pull request #1308 from neutronst4r/master, by @Ultrabug
 * removed email, by @Christian Kropla
 * readthedocs: fix hddtemp screenshots, by @lasers
-* Merge pull request #1304 from lasers/taskwarrior-qa, by @Ultrabug
 * taskwarrior: post-merge QA, use post_config_hook, by @lasers
-* Merge pull request #1100 from regnat/taskwarrior, by @Ultrabug
-* Merge pull request #1298 from lasers/sysdata-init, by @Ultrabug
-* Merge pull request #1285 from lasers/newmodule-hddtemp, by @Ultrabug
-* Merge pull request #1299 from lasers/deadbeef-not-installed, by @Ultrabug
 * pomodoro: add @ricci in the author list, by @Ultrabug
-* Merge pull request #1273 from ricci/pomodoro-strings, by @Ultrabug
 * add new module: hddtemp, by @lasers
 * spotify module: flake8 QA, by @Ultrabug
 * spotify module: quick QA for #1276, by @Ultrabug
-* Merge pull request #1276 from Nollain/spotify_click_event, by @Ultrabug
-* Merge pull request #1161 from lasers/newmodule-transmission, by @Ultrabug
-* Merge pull request #1205 from lasers/newmodule-thunderbird-todos, by @Ultrabug
 * thunderbird_todos: new module from scratch, by @lasers
 * thunderbird_todos: rename thunderbird_calendar to this, by @lasers
-* Merge pull request #1240 from lasers/thresholds-none, by @Ultrabug
-* Merge pull request #1260 from ultrabug/time_in-forever, by @Ultrabug
-* Merge pull request #1297 from lasers/twitch, by @Ultrabug
-* Merge pull request #1248 from ultrabug/group-cleaner-startup, by @Ultrabug
-* Merge pull request #1277 from ultrabug/external_on_click_no_delay, by @Ultrabug
-* Merge branch 'mpd-valueerrorexception' of https://github.com/girst/py3status into mpd-valueerrorexception, by @girst
 * deduplicate hide_on_error_check, by @girst
-* Merge branch 'master' into mpd-valueerrorexception, by @girst
 * fix ValueError, allow hiding on error, by @girst
 * deadbeef: not installed, by @lasers
 * sysdata: post_config_hook initializations (meminfo), by @lasers
@@ -54,8 +28,6 @@ version 3.8 (2018-04-01)
 * [FIX] Twitch API requires an app client id, by @James Curtis
 * formatter: reject the condition if none, by @lasers
 * formatter: inherit commands properly, by @lasers
-* Merge branch 'JohnAZoidberg-nixos', by @tobes
-* Merge branch 'master' into nixos, by @tobes
 * fix deadbeaf error, by @tobes
 * external_script: make output localization optional, by @Woland
 * external_script: use localized command output, by @Woland
@@ -72,7 +44,6 @@ version 3.8 (2018-04-01)
 * small fix in error handling, by @girst
 * formatter: add {:g} to remove trailing zeroes, by @lasers
 * change on_click variables to match py3status conventions : button_*, by @qn
-* Merge branch 'master' into pomodoro-strings, by @Robert Ricci
 * Typo fixes, by @Robert Ricci
 * Revise indentation to make flake8 happy, by @Robert Ricci
 * Fix long line, by @Robert Ricci
@@ -80,12 +51,9 @@ version 3.8 (2018-04-01)
 * Re-order parameters and attributes to make CI happy, by @Robert Ricci
 * Use 'bare' signal name, by @Robert Ricci
 * Allow DND signals to be configured, by @Robert Ricci
-* Merge branch 'master' into pomodoro-strings, by @Robert Ricci
 * Allow external on_click events to run immediately, by @tobes
 * split SPOTIFY_CMD on 2 lines to respect flake8, by @qn
 * Enable click events for spotify, by @qn
-* Merge branch 'master' of https://github.com/ultrabug/py3status, by @qn
-* Merge branch 'master' into nixos, by @Daniel Schaefer
 * add docstring example for {output}_mode dynamic parameter of xrandr module, by @qn
 * allow overiding xrandr resolution using {output}_mode, by @qn
 * add docstring example for {output}_mode dynamic parameter of xrandr module, by @qn
@@ -98,7 +66,6 @@ version 3.8 (2018-04-01)
 * keyboard_locks: merge formats, by @lasers
 * Choose a more sensible default filter, by @regnat
 * Remove forgotten garbage line, by @regnat
-* Merge branch 'master' into nixos, by @Daniel Schaefer
 * Add installation instructions for NixOS, by @Daniel Schaefer
 * allow disabling debug logs, py2 fixes, by @girst
 * for travis: s/://, by @girst
@@ -111,29 +78,17 @@ version 3.8 (2018-04-01)
 * Remove unnecessary log(IDLE timeout) message, by @girst
 * travis, by @girst
 * replace socket.read() with _timeoutread(), honor 'still there', by @girst
-* Merge branch 'master' of https://github.com/ultrabug/py3status, by @girst
 * quick QA on i3pystatus module, by @Ultrabug
-* Merge pull request #691 from ultrabug/i3pystatus-support, by @Ultrabug
-* Merge pull request #1237 from ultrabug/named-colors, by @Ultrabug
-* Merge pull request #1263 from ultrabug/storage-fix-for-testing, by @Ultrabug
-* Merge pull request #1256 from ultrabug/events-run-in-thread, by @Ultrabug
-* Merge pull request #1262 from sdelafond/master, by @Ultrabug
 * allow test modules to use storage, by @tobes
 * Move and eidt note about pypi-install vs. pip for Debian, by @Sébastien Delafond
-* Merge remote-tracking branch 'upstream/master' into github/master, by @Sébastien Delafond
 * window_title: be nice to users, by @lasers
 * window_title: preserve max_width, by @lasers
 * window_title: add new placeholders, by @lasers
 * allow time_in(CACHE_FOREVER), by @tobes
-* Merge pull request #1158 from lasers/air_quality-changes, by @Ultrabug
-* Merge pull request #1249 from ultrabug/backlight-allow-float, by @Ultrabug
-* Merge pull request #1247 from ultrabug/github-no-first, by @Ultrabug
-* Merge pull request #1246 from ultrabug/parallelize-module-start, by @Ultrabug
 * coin_market: remove first_run, by @lasers
 * Also mention Ubuntu (#1255), by @Sébastien Delafond
 * Add documentation about availability in Debian to README.dst (Closes: #1253), by @Sébastien Delafond
 * Run event in threads to fix latency problems, by @tobes
-* Merge remote-tracking branch 'upstream/master' into github/master, by @Sébastien Delafond
 * Also mention Ubuntu (#1255), by @Sébastien Delafond
 * google_calendar: remove unused variable, by @lasers
 * Add documentation about availability in Debian to README.dst (Closes: #1253), by @Sébastien Delafond
@@ -143,7 +98,6 @@ version 3.8 (2018-04-01)
 * external_script: fix indexerror exception, by @lasers
 * github: don't treat first run as special, by @tobes
 * start modules in threads to parallelize, by @tobes
-* Merge pull request #1123 from ultrabug/i3status-thread-monitoring-task, by @Ultrabug
 * taskwarrior: make generated command more explicit, by @regnat
 * taskwarrior: fix params order, by @regnat
 * taskwarrior: guard against null inputs, by @regnat
@@ -166,35 +120,16 @@ version 3.8 (2018-04-01)
 * modules: add new missing screenshots, by @lasers
 * core: support shorthand hex colors (thx @tobes), by @lasers
 * insync module: handle error properly, by @Ultrabug
-* Merge pull request #966 from Cypher1/insync_updates, by @Ultrabug
-* Merge pull request #1152 from lasers/netdata-annihilate-the-lines, by @Ultrabug
-* Merge pull request #1229 from tobes/exchange_rate-new-feed, by @Ultrabug
 * exchange_rates: use new feed, by @tobes
-* Merge pull request #1177 from lasers/coin_market-changes, by @Ultrabug
-* Merge pull request #1218 from lasers/xrandr_rotate-screen, by @Ultrabug
-* Merge pull request #1193 from raspbeguy/request-cookies, by @Ultrabug
-* Merge pull request #1203 from ultrabug/doc-fixups, by @Ultrabug
-* Merge pull request #1223 from lasers/profiling, by @Ultrabug
-* Merge pull request #1225 from lasers/pomodoro-intervals, by @Ultrabug
-* Merge pull request #1157 from lasers/wifi-use-sudo, by @Ultrabug
-* Merge pull request #1159 from lasers/newmodule-weather_yahoo, by @Ultrabug
 * core: make notify_user less ambiguous in the logs, by @lasers
 * docs: add profiling section, by @lasers
 * pomodoro: fix cached_until intervals, by @lasers
 * xrandr_rotate: display screen properly, by @lasers
-* Merge pull request #1208 from ultrabug/cli-arguments, by @Ultrabug
 * move arg parsing to own file to help decouple stuff, by @tobes
-* Merge branch 'master' into request-cookies, by @Raspbeguy
 * typo fixes, by @tobes
 * set docstring defaults, by @tobes
-* Merge pull request #583 from ultrabug/data-storage, by @Ultrabug
-* Merge branch 'master' into data-storage, by @Ultrabug
 * fix thunderbird_calendar QA breaking travis, by @Ultrabug
 * data storage fix ups, by @tobes
-* Merge pull request #1192 from ultrabug/keyboard-layouts-choice, by @Ultrabug
-* Merge pull request #1202 from lasers/volume_status-mouse-buttons, by @Ultrabug
-* Merge pull request #1204 from igorgrebenkov/google_calendar_fix_sleep_bug, by @Ultrabug
-* Merge pull request #213 from mrt-prodz/thunderbird_calendar, by @Ultrabug
 * fix resume from sleep bug, by @Igor Grebenkov
 * add new parameter description (because good doc is life), by @raspbeguy
 * module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
@@ -207,36 +142,21 @@ version 3.8 (2018-04-01)
 * coin_market: don't sort the placeholders, by @lasers
 * coin_market: expose a new placeholder, by @lasers
 * weather_yahoo: new module from scratch, by @lasers
-* Merge branch 'master' into insync_updates, by @Ultrabug
 * xrandr_rotate module: fix scrolling init value, by @Ultrabug
-* Merge pull request #1108 from lasers/xrandr_rotate-refresh, by @Ultrabug
-* Merge pull request #1180 from lasers/timer-urgent, by @Ultrabug
-* Merge pull request #1129 from lasers/bitcoin_price-request, by @Ultrabug
-* Merge pull request #1110 from maximbaz/add_yubikey_module, by @Ultrabug
-* Merge pull request #1196 from lasers/document-this!, by @Ultrabug
-* Merge pull request #1149 from alexoneill/feature/env-support, by @Ultrabug
 * Use py3.error with CACHE_FOREVER, by @Maxim Baz
-* Merge branch 'feature/env-support' of github.com:/alexoneill/py3status into feature/env-support, by @Alex O'Neill
-* Merge remote-tracking branch 'upstream/master' into feature/env-support, by @Alex O'Neill
-* Merge pull request #1127 from lasers/volume_status-not-installed, by @Ultrabug
 * volume_status: check the binaries (rev d), by @lasers
 * volume_status: check the binaries (rev c), by @lasers
 * volume_status: check the binaries (rev b), by @lasers
 * volume_status: check the binaries (rev), by @lasers
 * volume_status: check the binaries, by @lasers
-* Merge branch 'master' into data-storage, by @Ultrabug
-* Merge branch 'master' into feature/env-support, by @Ultrabug
 * quick consistency/cleanup fixes (codes), by @lasers
 * quick consistency/cleanup fixes (docs), by @lasers
 * bitcoin_price: use helpers, by @lasers
 * google_calendar module: strip location description and summary output, by @Ultrabug
-* Merge branch 'master' into master, by @girst
 * add timeout=py3.CACHE_FOREVER to self.py3.error(), by @girst
 * volume_status: add boost for pamixer, by @lasers
 * allow selection of keyboard layout, by @tobes
 * Added support for lower case in env vars, by @Alex O'Neill
-* Merge branch 'feature/env-support' of github.com:/alexoneill/py3status into feature/env-support, by @Alex O'Neill
-* Merge remote-tracking branch 'upstream/master' into feature/env-support, by @Alex O'Neill
 * request cookies: remove silly debug print, by @raspbeguy
 * add cookies handling for request, by @raspbeguy
 * deadbeef: add sleep_timeout, by @lasers
@@ -245,7 +165,6 @@ version 3.8 (2018-04-01)
 * timer: add urgent, by @lasers
 * timer: add colors, by @lasers
 * py3: fix pretty_cmd for shell, by @lasers
-* Merge pull request #1190 from lasers/what-the-the-fsck, by @Ultrabug
 * remove doubled words typos, by @lasers
 * online_status: fix timeout for ping, by @lasers
 * Small refactor for append_modules., by @Alex O'Neill
@@ -258,8 +177,6 @@ version 3.8 (2018-04-01)
 * google_calendar: add event_within_hours option to limit events selection to a time frame, by @Ultrabug
 * google_calendar: fix event selection logic when self organized, by @Ultrabug
 * fix 'local variable socket referenced before assignment', by @girst
-* Merge remote-tracking branch 'upstream/master', by @girst
-* Merge pull request #1068 from igorgrebenkov/addmodule_google_calendar, by @Ultrabug
 * add dateutil to requires in docstring, by @Igor Grebenkov
 * fix docstring to pass flake8, by @Igor Grebenkov
 * fix juocstring, by @Igor Grebenkov
@@ -267,14 +184,12 @@ version 3.8 (2018-04-01)
 * google_calendar module: prettier format, by @Ultrabug
 * google_calendar module: code QA and refactoring, by @Ultrabug
 * add new google_calendar module thx to @igorgrebenkov, by @Ultrabug
-* Merge branch 'master' into master, by @girst
 * catch 'OK still there' (_now_ i'm done), by @girst
 * post version 3.7, by @Ultrabug
 * s/=/is/, by @girst
 * go back to `use_idle is None` instead of first_run, by @girst
 * show "will use {polling,idling}" even if use_idle set explicitly, by @girst
 * incorporate laser's feedback, by @girst
-* Merge branch 'master' into feature/env-support, by @Alex O'Neill
 * Undid append_modules refactor., by @Alex O'Neill
 * Expanded matching options for env_var., by @Alex O'Neill
 * use IMAP.capabilities instead of IMAP.capabilities, by @girst
@@ -286,7 +201,6 @@ version 3.8 (2018-04-01)
 * I'm getting tired :|, by @girst
 * fix if 'selected', by @girst
 * check .state before login(), close(), by @girst
-* Merge branch 'master' into master, by @girst
 * travis again, by @girst
 * travis: line too long, by @girst
 * wrap test for IDLE in try/catch, by @girst
@@ -309,18 +223,14 @@ version 3.8 (2018-04-01)
 * make _idle() throw a fatal exception; to be caught by _get_mail_count, by @girst
 * cleaning up IDLE, by @girst
 * workin' on the IDLE, by @girst
-* Merge remote-tracking branch 'upstream/master' into feature/env-support, by @Alex O'Neill
 * Reverted back to env(...) notation, auto casting, by @Alex O'Neill
 * drop imaplib2 dependency; reimplement IDLE ourselves, by @girst
-* Merge remote-tracking branch 'upstream/master', by @girst
-* Merge remote-tracking branch 'upstream/master' into feature/env-support, by @Alex O'Neill
 * remove color_separator, clean up _check_warn_threshold(), by @Igor Grebenkov
 * add new module: transmission, by @lasers
 * added format_notification + small fixes, by @Igor Grebenkov
 * minor format+doc fixes, by @Igor Grebenkov
 * folded format_event and format_event_full into just format_event, by @Igor Grebenkov
 * fold format_time_to and format_time_left into format_timer, by @Igor Grebenkov
-* Merge remote-tracking branch 'upstream/master' into feature/env-support, by @Alex O'Neill
 * Simplify condition, by @Maxim Baz
 * Naming, by @Maxim Baz
 * Store request statuses in a dictionary, by @Maxim Baz
@@ -328,17 +238,14 @@ version 3.8 (2018-04-01)
 * Simplify is_waiting logic, no need to count numbers, by @Maxim Baz
 * Improve default format value, by @Maxim Baz
 * Get rid of the precomputed 'is_waiting', by @Maxim Baz
-* Merge branch 'master' of https://github.com/girst/py3status, by @girst
 * log instead of error; cast exception to string, by @girst
 * Use external tool for detection, by @Maxim Baz
-* Merge branch 'master' into master, by @girst
 * use tmp_mail_count, so counter won't glitch during update, by @girst
 * Fix linter issues, by @Alex O'Neill
 * Added bool support for env vars, by @Alex O'Neill
 * Added documentation for env var tokem., by @Alex O'Neill
 * Added rudimentary type conversions for env vars., by @Alex O'Neill
 * Added support for environment variables in config., by @Alex O'Neill
-* Merge branch 'master' into feature/env-support, by @Alex O'Neill
 * change datetime parsing for python2 compatibility, by @Igor Grebenkov
 * be more verbose in py3.error, by @girst
 * fix `use_idle` default not in docstring, by @girst
@@ -365,9 +272,7 @@ version 3.8 (2018-04-01)
 * add error handling for missing client_secret + small fixes, by @Igor Grebenkov
 * added some more color customization + minor fixes, by @Igor Grebenkov
 * moved auth_token and client_secret init to post_config_hook(), by @Igor Grebenkov
-* Merge branch 'addmodule_google_calendar' of github.com:igorgrebenkov/py3status into addmodule_google_calendar, by @Igor Grebenkov
 * fixed all-day event bug, by @Igor Grebenkov
-* Merge branch 'master' into addmodule_google_calendar, by @Ultrabug
 * Update requirements section, by @Maxim Baz
 * Extract nested classes, rename sudo check to u2f check, by @Maxim Baz
 * Consume watch capability from a forked pam-u2f, by @Maxim Baz
@@ -387,13 +292,10 @@ version 3.8 (2018-04-01)
 * improve logging for modules, by @tobes
 * Colors now implemented using thresholds, by @Igor Grebenkov
 * Changed defaults for auth_token and client_secret, by @Igor Grebenkov
-* Merge branch 'master' of https://github.com/ultrabug/py3status into addmodule_google_calendar, by @Igor Grebenkov
 * removed gcal from auth token name, by @Igor Grebenkov
 * auth_token now takes a path including the file name, by @Igor Grebenkov
 * shortened some configuration parameters, by @Igor Grebenkov
-* Merge branch 'addmodule_google_calendar' of github.com:igorgrebenkov/py3status into addmodule_google_calendar, by @Igor Grebenkov
 * misc small updates:, by @Igor Grebenkov
-* Merge branch 'master' into addmodule_google_calendar, by @Igor Grebenkov
 * remove accidentally added binary file, by @Igor Grebenkov
 * fixed pytest errors, by @Igor Grebenkov
 * fix another docstring typo, by @Igor Grebenkov
@@ -401,22 +303,17 @@ version 3.8 (2018-04-01)
 * fix unused variable, by @Igor Grebenkov
 * added google calendar module, by @Igor Grebenkov
 * Persistent storage for modules, by @tobes
-* Merge branch 'master' into insync_updates, by @Joshua Pratt
 * Added first go at environment block, by @Alex O'Neill
-* Merge branch 'master' into insync_updates, by @Joshua Pratt
 * Attempting to fix Travis error for insync module, by @Cypher
-* Merge branch 'master' of https://github.com/ultrabug/py3status into insync_updates, by @Cypher
 * Update doc, by @Cypher
 * Updated Insync module to recognise SYNCED state, by @Cypher
 * variables ordering (same for docstring), by @Themistokle Benetatos
 * removing blank lines with whitespace, by @Themistokle Benetatos
-* Merge pull request #2 from pydsigner/patch-5, by @Themistokle Benetatos
 * Add missing parenthesis, by @Daniel Foerster
 * A little more cleanup, by @Daniel Foerster
 * Fix error response mistakes, by @Daniel Foerster
 * Error tweaks, by @Daniel Foerster
 * cleaner selection of current task, customized error messages, docstring matching new guidelines, by @Themistokle Benetatos
-* Merge pull request #1 from pydsigner/patch-4, by @Themistokle Benetatos
 * Handle the SQL results better, by @Daniel Foerster
 * display thunderbird calendar tasks, by @Themistokle Benetatos
 
