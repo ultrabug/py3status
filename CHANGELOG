@@ -21,7 +21,7 @@ version 3.8 (2018-04-01)
 ** [FIX] Twitch API requires an app client id, by @James Curtis
 * formatter: reject the condition if none, by @lasers
 * formatter: inherit commands properly, by @lasers
-* fix deadbeaf error, by @tobes
+** fix deadbeaf error, by @tobes
 ** external_script: use localized command output, by @Woland
 ** py3: command_output call command with LC_ALL=C, by @Woland
 ** volume_status: use py3.command_output, by @Woland
@@ -35,54 +35,48 @@ version 3.8 (2018-04-01)
 * net_rate: use post_config_hook, by @lasers
 * formatter: add {:g} to remove trailing zeroes, by @lasers
 ** Allow DND signals to be configured, by @Robert Ricci
-* Allow external on_click events to run immediately, by @tobes
+** Allow external on_click events to run immediately, by @tobes
 ** Enable click events for spotify, by @qn
 ** allow overiding xrandr resolution using {output}_mode, by @qn
 ** pomodoro: make formats more customizable, by @Robert Ricci
 * keyboard_locks: merge formats, by @lasers
 * Add installation instructions for NixOS, by @Daniel Schaefer
 * quick QA on i3pystatus module, by @Ultrabug
-* allow test modules to use storage, by @tobes
+** allow test modules to use storage, by @tobes
 * window_title: be nice to users, by @lasers
 * window_title: preserve max_width, by @lasers
 * window_title: add new placeholders, by @lasers
-* allow time_in(CACHE_FOREVER), by @tobes
+** allow time_in(CACHE_FOREVER), by @tobes
 * coin_market: remove first_run, by @lasers
-* Run event in threads to fix latency problems, by @tobes
+** Run event in threads to fix latency problems, by @tobes
 * google_calendar: remove unused variable, by @lasers
 ** Document availability as a Debian package, by @Sébastien Delafond
-* allow brightness as a float, by @tobes
-* group: allow waiting for active module, by @tobes
+** allow brightness as a float, by @tobes
+** group: allow waiting for active module, by @tobes
 * external_script: fix indexerror exception, by @lasers
-* github: don't treat first run as special, by @tobes
-* start modules in threads to parallelize, by @tobes
+** github: don't treat first run as special, by @tobes
+** start modules in threads to parallelize, by @tobes
 ** taskwarrior: make the command customizable, by @regnat
 * external_script: use post_config_hook, by @lasers
 * air_quality: more cleanups, by @lasers
 * air_quality: add quality thresholds, by @lasers
 * fix gevent patch_subprocess side effect on py2 decoding, fixes #1209, by @Ultrabug
 * py3: make thresholds take None for an answer, by @lasers
-* task to monitor i3status thread, by @tobes
+** task to monitor i3status thread, by @tobes
 * air_quality: new module from scratch, by @lasers
-* allow named colors, by @tobes
-* support i3pystatus modules, by @tobes
+** allow named colors, by @tobes
+** support i3pystatus modules, by @tobes
 * wifi: set after, not before, by @lasers
-* even more screenshot pain!, by @tobes
-* more screenshot pain!, by @tobes
-* fix broken screenshots, by @tobes
 * modules: add new missing screenshots, by @lasers
 * core: support shorthand hex colors (thx @tobes), by @lasers
 * insync module: handle error properly, by @Ultrabug
-* exchange_rates: use new feed, by @tobes
+** exchange_rates: use new feed, by @tobes
 * core: make notify_user less ambiguous in the logs, by @lasers
 * docs: add profiling section, by @lasers
 * pomodoro: fix cached_until intervals, by @lasers
 * xrandr_rotate: display screen properly, by @lasers
-* move arg parsing to own file to help decouple stuff, by @tobes
-* typo fixes, by @tobes
-* set docstring defaults, by @tobes
+** move arg parsing to own file to help decouple stuff, by @tobes
 * fix thunderbird_calendar QA breaking travis, by @Ultrabug
-* data storage fix ups, by @tobes
 * module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
 * module storage: move documentation, add methods and overall review with tobes, by @Ultrabug
 * volume_status: enable mouse buttons, by @lasers
@@ -104,7 +98,7 @@ version 3.8 (2018-04-01)
 * bitcoin_price: use helpers, by @lasers
 * google_calendar module: strip location description and summary output, by @Ultrabug
 * volume_status: add boost for pamixer, by @lasers
-* allow selection of keyboard layout, by @tobes
+** allow selection of keyboard layout, by @tobes
 ** add cookies handling for request, by @raspbeguy
 * deadbeef: add sleep_timeout, by @lasers
 * google_calendar module: rename only_if_response option to response, by @Ultrabug
@@ -118,8 +112,6 @@ version 3.8 (2018-04-01)
 ** Make POST requests work, by @raspbeguy
 * dont die on gevent failure, report failure properly instead when starting, by @Ultrabug
 * add option to enable support for green threads using gevent., by @Ultrabug
-* fix docstring for google calendar, by @tobes
-* do not disturb: fix docstring, by @tobes
 * google_calendar: rename response_to_events option to only_if_response, by @Ultrabug
 * google_calendar: add event_within_hours option to limit events selection to a time frame, by @Ultrabug
 * google_calendar: fix event selection logic when self organized, by @Ultrabug
@@ -134,10 +126,10 @@ version 3.8 (2018-04-01)
 ** Add YubiKey module, by @Maxim Baz
 * xrandr_rotate: refresh properly, by @lasers
 * xrandr_rotate: move down on_click, by @lasers
-* update standalone testing, by @tobes
-* improve logging for modules, by @tobes
+** update standalone testing, by @tobes
+** improve logging for modules, by @tobes
 ** added google calendar module, by @Igor Grebenkov
-* Persistent storage for modules, by @tobes
+** Persistent storage for modules, by @tobes
 ** Updated Insync module to recognise SYNCED state, by @Cypher
 ** thunderbird_calendar: code QA, cleanups, by @Daniel Foerster
 ** display thunderbird calendar tasks, by @Themistokle Benetatos
