@@ -23,10 +23,9 @@ version 3.8 (2018-04-01)
 * formatter: reject the condition if none, by @lasers
 * formatter: inherit commands properly, by @lasers
 * fix deadbeaf error, by @tobes
-* external_script: make output localization optional, by @Woland
-* external_script: use localized command output, by @Woland
-* py3: command_output call command with LC_ALL=C, by @Woland
-* volume_status: use py3.command_output, by @Woland
+** external_script: use localized command output, by @Woland
+** py3: command_output call command with LC_ALL=C, by @Woland
+** volume_status: use py3.command_output, by @Woland
 * sysdata: replace /proc/loadavg with getloadavg(), by @lasers
 * sysdata: zip up the swap stuffs, by @lasers
 * sysdata: zip up the mem stuffs, by @lasers
