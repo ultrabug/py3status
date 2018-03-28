@@ -54,9 +54,9 @@ version 3.8 (2018-04-01)
 * [FIX] Twitch API requires an app client id, by @James Curtis
 * formatter: reject the condition if none, by @lasers
 * formatter: inherit commands properly, by @lasers
-* Merge branch 'JohnAZoidberg-nixos', by @Toby Dacre
+* Merge branch 'JohnAZoidberg-nixos', by @tobes
 * Merge branch 'master' into nixos, by @tobes
-* fix deadbeaf error, by @Toby Dacre
+* fix deadbeaf error, by @tobes
 * external_script: make output localization optional, by @Woland
 * external_script: use localized command output, by @Woland
 * py3: command_output call command with LC_ALL=C, by @Woland
@@ -81,7 +81,7 @@ version 3.8 (2018-04-01)
 * Use 'bare' signal name, by @Robert Ricci
 * Allow DND signals to be configured, by @Robert Ricci
 * Merge branch 'master' into pomodoro-strings, by @Robert Ricci
-* Allow external on_click events to run immediately, by @Toby Dacre
+* Allow external on_click events to run immediately, by @tobes
 * split SPOTIFY_CMD on 2 lines to respect flake8, by @qn
 * Enable click events for spotify, by @qn
 * Merge branch 'master' of https://github.com/ultrabug/py3status, by @qn
@@ -118,13 +118,13 @@ version 3.8 (2018-04-01)
 * Merge pull request #1263 from ultrabug/storage-fix-for-testing, by @Ultrabug
 * Merge pull request #1256 from ultrabug/events-run-in-thread, by @Ultrabug
 * Merge pull request #1262 from sdelafond/master, by @Ultrabug
-* allow test modules to use storage, by @Toby Dacre
+* allow test modules to use storage, by @tobes
 * Move and eidt note about pypi-install vs. pip for Debian, by @Sébastien Delafond
 * Merge remote-tracking branch 'upstream/master' into github/master, by @Sébastien Delafond
 * window_title: be nice to users, by @lasers
 * window_title: preserve max_width, by @lasers
 * window_title: add new placeholders, by @lasers
-* allow time_in(CACHE_FOREVER), by @Toby Dacre
+* allow time_in(CACHE_FOREVER), by @tobes
 * Merge pull request #1158 from lasers/air_quality-changes, by @Ultrabug
 * Merge pull request #1249 from ultrabug/backlight-allow-float, by @Ultrabug
 * Merge pull request #1247 from ultrabug/github-no-first, by @Ultrabug
@@ -132,17 +132,17 @@ version 3.8 (2018-04-01)
 * coin_market: remove first_run, by @lasers
 * Also mention Ubuntu (#1255), by @Sébastien Delafond
 * Add documentation about availability in Debian to README.dst (Closes: #1253), by @Sébastien Delafond
-* Run event in threads to fix latency problems, by @Toby Dacre
+* Run event in threads to fix latency problems, by @tobes
 * Merge remote-tracking branch 'upstream/master' into github/master, by @Sébastien Delafond
 * Also mention Ubuntu (#1255), by @Sébastien Delafond
 * google_calendar: remove unused variable, by @lasers
 * Add documentation about availability in Debian to README.dst (Closes: #1253), by @Sébastien Delafond
 * Document availability as a Debian package (#1253), by @Sébastien Delafond
-* allow brightness as a float, by @Toby Dacre
-* group: allow waiting for active module, by @Toby Dacre
+* allow brightness as a float, by @tobes
+* group: allow waiting for active module, by @tobes
 * external_script: fix indexerror exception, by @lasers
-* github: don't treat first run as special, by @Toby Dacre
-* start modules in threads to parallelize, by @Toby Dacre
+* github: don't treat first run as special, by @tobes
+* start modules in threads to parallelize, by @tobes
 * Merge pull request #1123 from ultrabug/i3status-thread-monitoring-task, by @Ultrabug
 * taskwarrior: make generated command more explicit, by @regnat
 * taskwarrior: fix params order, by @regnat
@@ -155,21 +155,21 @@ version 3.8 (2018-04-01)
 * air_quality: add quality thresholds, by @lasers
 * fix gevent patch_subprocess side effect on py2 decoding, fixes #1209, by @Ultrabug
 * py3: make thresholds take None for an answer, by @lasers
-* task to monitor i3status thread, by @Toby Dacre
+* task to monitor i3status thread, by @tobes
 * air_quality: new module from scratch, by @lasers
-* allow named colors, by @Toby Dacre
-* support i3pystatus modules, by @Toby Dacre
+* allow named colors, by @tobes
+* support i3pystatus modules, by @tobes
 * wifi: set after, not before, by @lasers
-* even more screenshot pain!, by @Toby Dacre
-* more screenshot pain!, by @Toby Dacre
-* fix broken screenshots, by @Toby Dacre
+* even more screenshot pain!, by @tobes
+* more screenshot pain!, by @tobes
+* fix broken screenshots, by @tobes
 * modules: add new missing screenshots, by @lasers
 * core: support shorthand hex colors (thx @tobes), by @lasers
 * insync module: handle error properly, by @Ultrabug
 * Merge pull request #966 from Cypher1/insync_updates, by @Ultrabug
 * Merge pull request #1152 from lasers/netdata-annihilate-the-lines, by @Ultrabug
 * Merge pull request #1229 from tobes/exchange_rate-new-feed, by @Ultrabug
-* exchange_rates: use new feed, by @Toby Dacre
+* exchange_rates: use new feed, by @tobes
 * Merge pull request #1177 from lasers/coin_market-changes, by @Ultrabug
 * Merge pull request #1218 from lasers/xrandr_rotate-screen, by @Ultrabug
 * Merge pull request #1193 from raspbeguy/request-cookies, by @Ultrabug
@@ -183,14 +183,14 @@ version 3.8 (2018-04-01)
 * pomodoro: fix cached_until intervals, by @lasers
 * xrandr_rotate: display screen properly, by @lasers
 * Merge pull request #1208 from ultrabug/cli-arguments, by @Ultrabug
-* move arg parsing to own file to help decouple stuff, by @Toby Dacre
+* move arg parsing to own file to help decouple stuff, by @tobes
 * Merge branch 'master' into request-cookies, by @Raspbeguy
-* typo fixes, by @Toby Dacre
-* set docstring defaults, by @Toby Dacre
+* typo fixes, by @tobes
+* set docstring defaults, by @tobes
 * Merge pull request #583 from ultrabug/data-storage, by @Ultrabug
 * Merge branch 'master' into data-storage, by @Ultrabug
 * fix thunderbird_calendar QA breaking travis, by @Ultrabug
-* data storage fix ups, by @Toby Dacre
+* data storage fix ups, by @tobes
 * Merge pull request #1192 from ultrabug/keyboard-layouts-choice, by @Ultrabug
 * Merge pull request #1202 from lasers/volume_status-mouse-buttons, by @Ultrabug
 * Merge pull request #1204 from igorgrebenkov/google_calendar_fix_sleep_bug, by @Ultrabug
@@ -233,7 +233,7 @@ version 3.8 (2018-04-01)
 * Merge branch 'master' into master, by @girst
 * add timeout=py3.CACHE_FOREVER to self.py3.error(), by @girst
 * volume_status: add boost for pamixer, by @lasers
-* allow selection of keyboard layout, by @Toby Dacre
+* allow selection of keyboard layout, by @tobes
 * Added support for lower case in env vars, by @Alex O'Neill
 * Merge branch 'feature/env-support' of github.com:/alexoneill/py3status into feature/env-support, by @Alex O'Neill
 * Merge remote-tracking branch 'upstream/master' into feature/env-support, by @Alex O'Neill
@@ -252,8 +252,8 @@ version 3.8 (2018-04-01)
 * Make POST requests work, by @raspbeguy
 * dont die on gevent failure, report failure properly instead when starting, by @Ultrabug
 * add option to enable support for green threads using gevent., by @Ultrabug
-* fix docstring for google calendar, by @Toby Dacre
-* do not disturb: fix docstring, by @Toby Dacre
+* fix docstring for google calendar, by @tobes
+* do not disturb: fix docstring, by @tobes
 * google_calendar: rename response_to_events option to only_if_response, by @Ultrabug
 * google_calendar: add event_within_hours option to limit events selection to a time frame, by @Ultrabug
 * google_calendar: fix event selection logic when self organized, by @Ultrabug
@@ -383,8 +383,8 @@ version 3.8 (2018-04-01)
 * xrandr_rotate: move down on_click, by @lasers
 * move all methods inside class Py3status; make default thresholds empty, by @Igor Grebenkov
 * changed how time until an event in progress is over is displayed, by @Igor Grebenkov
-* update standalone testing, by @Toby Dacre
-* improve logging for modules, by @Toby Dacre
+* update standalone testing, by @tobes
+* improve logging for modules, by @tobes
 * Colors now implemented using thresholds, by @Igor Grebenkov
 * Changed defaults for auth_token and client_secret, by @Igor Grebenkov
 * Merge branch 'master' of https://github.com/ultrabug/py3status into addmodule_google_calendar, by @Igor Grebenkov
@@ -400,7 +400,7 @@ version 3.8 (2018-04-01)
 * fixed mistake in docstring; used quotes instead of backticks, by @Igor Grebenkov
 * fix unused variable, by @Igor Grebenkov
 * added google calendar module, by @Igor Grebenkov
-* Persistent storage for modules, by @Toby Dacre
+* Persistent storage for modules, by @tobes
 * Merge branch 'master' into insync_updates, by @Joshua Pratt
 * Added first go at environment block, by @Alex O'Neill
 * Merge branch 'master' into insync_updates, by @Joshua Pratt
