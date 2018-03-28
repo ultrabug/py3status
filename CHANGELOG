@@ -139,9 +139,7 @@ version 3.8 (2018-04-01)
 * improve logging for modules, by @tobes
 ** added google calendar module, by @Igor Grebenkov
 * Persistent storage for modules, by @tobes
-* Attempting to fix Travis error for insync module, by @Cypher
-* Update doc, by @Cypher
-* Updated Insync module to recognise SYNCED state, by @Cypher
+** Updated Insync module to recognise SYNCED state, by @Cypher
 ** thunderbird_calendar: code QA, cleanups, by @Daniel Foerster
 ** display thunderbird calendar tasks, by @Themistokle Benetatos
 
