@@ -116,7 +116,6 @@ version 3.8 (2018-04-01)
 * set docstring defaults, by @tobes
 * fix thunderbird_calendar QA breaking travis, by @Ultrabug
 * data storage fix ups, by @tobes
-* fix resume from sleep bug, by @Igor Grebenkov
 * add new parameter description (because good doc is life), by @raspbeguy
 * module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
 * module storage: move documentation, add methods and overall review with tobes, by @Ultrabug
@@ -159,59 +158,20 @@ version 3.8 (2018-04-01)
 * google_calendar: rename response_to_events option to only_if_response, by @Ultrabug
 * google_calendar: add event_within_hours option to limit events selection to a time frame, by @Ultrabug
 * google_calendar: fix event selection logic when self organized, by @Ultrabug
-* add dateutil to requires in docstring, by @Igor Grebenkov
-* fix docstring to pass flake8, by @Igor Grebenkov
-* fix juocstring, by @Igor Grebenkov
-* merge upstream google_calendar branch, by @Igor Grebenkov
 * google_calendar module: prettier format, by @Ultrabug
 * google_calendar module: code QA and refactoring, by @Ultrabug
 * add new google_calendar module thx to @igorgrebenkov, by @Ultrabug
 * post version 3.7, by @Ultrabug
 * version 3.7, by @Ultrabug
-* remove color_separator, clean up _check_warn_threshold(), by @Igor Grebenkov
 * add new module: transmission, by @lasers
-* added format_notification + small fixes, by @Igor Grebenkov
-* minor format+doc fixes, by @Igor Grebenkov
-* folded format_event and format_event_full into just format_event, by @Igor Grebenkov
-* fold format_time_to and format_time_left into format_timer, by @Igor Grebenkov
 ** Added support for environment variables in config., by @Alex O'Neill
-* change datetime parsing for python2 compatibility, by @Igor Grebenkov
-* one return statement + command_output -> command_run, by @Igor Grebenkov
 ** WIP: IMAP4 IDLE unread messages, by @girst
-* changed un-authorized cached_until time, by @Igor Grebenkov
-* log event['index'], by @Igor Grebenkov
-* added event blacklist feature + small fixes, by @Igor Grebenkov
-* rework approach to button clicks + small fixes, by @Igor Grebenkov
-* added force lowercase feature, by @Igor Grebenkov
-* add ignore allday events + fix all-day event bug, by @Igor Grebenkov
-* supports UTC offsets + remove hardcoded warning, by @Igor Grebenkov
-* fix refresh bug + BrokenPipe fix attempt, by @Igor Grebenkov
-* fixed bug when clicking on a separator, by @Igor Grebenkov
-* added button refresh, by @Igor Grebenkov
-* removed format_error and hardcoded refresh, by @Igor Grebenkov
-* add error handling for missing client_secret + small fixes, by @Igor Grebenkov
-* added some more color customization + minor fixes, by @Igor Grebenkov
-* moved auth_token and client_secret init to post_config_hook(), by @Igor Grebenkov
-* fixed all-day event bug, by @Igor Grebenkov
 ** Add YubiKey module, by @Maxim Baz
 * xrandr_rotate: refresh properly, by @lasers
 * xrandr_rotate: move down on_click, by @lasers
-* move all methods inside class Py3status; make default thresholds empty, by @Igor Grebenkov
-* changed how time until an event in progress is over is displayed, by @Igor Grebenkov
 * update standalone testing, by @tobes
 * improve logging for modules, by @tobes
-* Colors now implemented using thresholds, by @Igor Grebenkov
-* Changed defaults for auth_token and client_secret, by @Igor Grebenkov
-* removed gcal from auth token name, by @Igor Grebenkov
-* auth_token now takes a path including the file name, by @Igor Grebenkov
-* shortened some configuration parameters, by @Igor Grebenkov
-* misc small updates:, by @Igor Grebenkov
-* remove accidentally added binary file, by @Igor Grebenkov
-* fixed pytest errors, by @Igor Grebenkov
-* fix another docstring typo, by @Igor Grebenkov
-* fixed mistake in docstring; used quotes instead of backticks, by @Igor Grebenkov
-* fix unused variable, by @Igor Grebenkov
-* added google calendar module, by @Igor Grebenkov
+** added google calendar module, by @Igor Grebenkov
 * Persistent storage for modules, by @tobes
 * Attempting to fix Travis error for insync module, by @Cypher
 * Update doc, by @Cypher
