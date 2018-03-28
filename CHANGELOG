@@ -111,7 +111,6 @@ version 3.8 (2018-04-01)
 * set docstring defaults, by @tobes
 * fix thunderbird_calendar QA breaking travis, by @Ultrabug
 * data storage fix ups, by @tobes
-* add new parameter description (because good doc is life), by @raspbeguy
 * module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
 * module storage: move documentation, add methods and overall review with tobes, by @Ultrabug
 * volume_status: enable mouse buttons, by @lasers
@@ -134,8 +133,7 @@ version 3.8 (2018-04-01)
 * google_calendar module: strip location description and summary output, by @Ultrabug
 * volume_status: add boost for pamixer, by @lasers
 * allow selection of keyboard layout, by @tobes
-* request cookies: remove silly debug print, by @raspbeguy
-* add cookies handling for request, by @raspbeguy
+** add cookies handling for request, by @raspbeguy
 * deadbeef: add sleep_timeout, by @lasers
 * google_calendar module: rename only_if_response option to response, by @Ultrabug
 * timer: add urgent (fix), by @lasers
@@ -145,7 +143,7 @@ version 3.8 (2018-04-01)
 * remove doubled words typos, by @lasers
 * online_status: fix timeout for ping, by @lasers
 ** Small refactor for append_modules., by @Alex O'Neill
-* Make POST requests work, by @raspbeguy
+** Make POST requests work, by @raspbeguy
 * dont die on gevent failure, report failure properly instead when starting, by @Ultrabug
 * add option to enable support for green threads using gevent., by @Ultrabug
 * fix docstring for google calendar, by @tobes
