@@ -140,7 +140,6 @@ version 3.8 (2018-04-01)
 * google_calendar module: strip location description and summary output, by @Ultrabug
 * volume_status: add boost for pamixer, by @lasers
 * allow selection of keyboard layout, by @tobes
-* Added support for lower case in env vars, by @Alex O'Neill
 * request cookies: remove silly debug print, by @raspbeguy
 * add cookies handling for request, by @raspbeguy
 * deadbeef: add sleep_timeout, by @lasers
@@ -151,7 +150,7 @@ version 3.8 (2018-04-01)
 * py3: fix pretty_cmd for shell, by @lasers
 * remove doubled words typos, by @lasers
 * online_status: fix timeout for ping, by @lasers
-* Small refactor for append_modules., by @Alex O'Neill
+** Small refactor for append_modules., by @Alex O'Neill
 * Make POST requests work, by @raspbeguy
 * dont die on gevent failure, report failure properly instead when starting, by @Ultrabug
 * add option to enable support for green threads using gevent., by @Ultrabug
@@ -168,21 +167,14 @@ version 3.8 (2018-04-01)
 * google_calendar module: code QA and refactoring, by @Ultrabug
 * add new google_calendar module thx to @igorgrebenkov, by @Ultrabug
 * post version 3.7, by @Ultrabug
-* Undid append_modules refactor., by @Alex O'Neill
-* Expanded matching options for env_var., by @Alex O'Neill
 * version 3.7, by @Ultrabug
-* Reverted back to env(...) notation, auto casting, by @Alex O'Neill
 * remove color_separator, clean up _check_warn_threshold(), by @Igor Grebenkov
 * add new module: transmission, by @lasers
 * added format_notification + small fixes, by @Igor Grebenkov
 * minor format+doc fixes, by @Igor Grebenkov
 * folded format_event and format_event_full into just format_event, by @Igor Grebenkov
 * fold format_time_to and format_time_left into format_timer, by @Igor Grebenkov
-* Fix linter issues, by @Alex O'Neill
-* Added bool support for env vars, by @Alex O'Neill
-* Added documentation for env var tokem., by @Alex O'Neill
-* Added rudimentary type conversions for env vars., by @Alex O'Neill
-* Added support for environment variables in config., by @Alex O'Neill
+** Added support for environment variables in config., by @Alex O'Neill
 * change datetime parsing for python2 compatibility, by @Igor Grebenkov
 * one return statement + command_output -> command_run, by @Igor Grebenkov
 ** WIP: IMAP4 IDLE unread messages, by @girst
@@ -221,7 +213,6 @@ version 3.8 (2018-04-01)
 * fix unused variable, by @Igor Grebenkov
 * added google calendar module, by @Igor Grebenkov
 * Persistent storage for modules, by @tobes
-* Added first go at environment block, by @Alex O'Neill
 * Attempting to fix Travis error for insync module, by @Cypher
 * Update doc, by @Cypher
 * Updated Insync module to recognise SYNCED state, by @Cypher
