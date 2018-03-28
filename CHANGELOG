@@ -23,7 +23,7 @@ version 3.8 (2018-04-01)
 ** allow overiding xrandr resolution using {output}_mode, by @qn
 ** pomodoro: make formats more customizable, by @Robert Ricci
 ** keyboard_locks: merge formats, by @lasers
-* Add installation instructions for NixOS, by @Daniel Schaefer
+** Add installation instructions for NixOS, by @Daniel Schaefer
 ** allow test modules to use storage, by @tobes
 ** window_title: add new placeholders + simplifying by @lasers
 ** allow time_in(CACHE_FOREVER), by @tobes
