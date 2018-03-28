@@ -6,10 +6,8 @@ version 3.8 (2018-04-01)
 * py3: dismiss empty notifications, by @lasers
 * readthedocs: fix hddtemp screenshots, by @lasers
 * taskwarrior: post-merge QA, use post_config_hook, by @lasers
-* pomodoro: add @ricci in the author list, by @Ultrabug
 * add new module: hddtemp, by @lasers
-* spotify module: flake8 QA, by @Ultrabug
-* spotify module: quick QA for #1276, by @Ultrabug
+** add multiple QA fixes for multiple modules, by @Ultrabug
 * thunderbird_todos: new module from scratch, by @lasers
 * thunderbird_todos: rename thunderbird_calendar to this, by @lasers
 ** fix ValueError, allow hiding on error, by @girst
@@ -41,7 +39,6 @@ version 3.8 (2018-04-01)
 ** pomodoro: make formats more customizable, by @Robert Ricci
 * keyboard_locks: merge formats, by @lasers
 * Add installation instructions for NixOS, by @Daniel Schaefer
-* quick QA on i3pystatus module, by @Ultrabug
 ** allow test modules to use storage, by @tobes
 * window_title: be nice to users, by @lasers
 * window_title: preserve max_width, by @lasers
@@ -60,7 +57,6 @@ version 3.8 (2018-04-01)
 * external_script: use post_config_hook, by @lasers
 * air_quality: more cleanups, by @lasers
 * air_quality: add quality thresholds, by @lasers
-* fix gevent patch_subprocess side effect on py2 decoding, fixes #1209, by @Ultrabug
 * py3: make thresholds take None for an answer, by @lasers
 ** task to monitor i3status thread, by @tobes
 * air_quality: new module from scratch, by @lasers
@@ -69,16 +65,14 @@ version 3.8 (2018-04-01)
 * wifi: set after, not before, by @lasers
 * modules: add new missing screenshots, by @lasers
 * core: support shorthand hex colors (thx @tobes), by @lasers
-* insync module: handle error properly, by @Ultrabug
 ** exchange_rates: use new feed, by @tobes
 * core: make notify_user less ambiguous in the logs, by @lasers
 * docs: add profiling section, by @lasers
 * pomodoro: fix cached_until intervals, by @lasers
 * xrandr_rotate: display screen properly, by @lasers
 ** move arg parsing to own file to help decouple stuff, by @tobes
-* fix thunderbird_calendar QA breaking travis, by @Ultrabug
-* module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
-* module storage: move documentation, add methods and overall review with tobes, by @Ultrabug
+** module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
+** module storage: move documentation, add methods and overall review with tobes, by @Ultrabug
 * volume_status: enable mouse buttons, by @lasers
 * wifi: use sudo in post_config_hook, by @lasers
 * netdata: annihilate the lines, by @lasers
@@ -87,7 +81,6 @@ version 3.8 (2018-04-01)
 * coin_market: don't sort the placeholders, by @lasers
 * coin_market: expose a new placeholder, by @lasers
 * weather_yahoo: new module from scratch, by @lasers
-* xrandr_rotate module: fix scrolling init value, by @Ultrabug
 * volume_status: check the binaries (rev d), by @lasers
 * volume_status: check the binaries (rev c), by @lasers
 * volume_status: check the binaries (rev b), by @lasers
@@ -96,12 +89,10 @@ version 3.8 (2018-04-01)
 * quick consistency/cleanup fixes (codes), by @lasers
 * quick consistency/cleanup fixes (docs), by @lasers
 * bitcoin_price: use helpers, by @lasers
-* google_calendar module: strip location description and summary output, by @Ultrabug
 * volume_status: add boost for pamixer, by @lasers
 ** allow selection of keyboard layout, by @tobes
 ** add cookies handling for request, by @raspbeguy
 * deadbeef: add sleep_timeout, by @lasers
-* google_calendar module: rename only_if_response option to response, by @Ultrabug
 * timer: add urgent (fix), by @lasers
 * timer: add urgent, by @lasers
 * timer: add colors, by @lasers
@@ -110,16 +101,8 @@ version 3.8 (2018-04-01)
 * online_status: fix timeout for ping, by @lasers
 ** Small refactor for append_modules., by @Alex O'Neill
 ** Make POST requests work, by @raspbeguy
-* dont die on gevent failure, report failure properly instead when starting, by @Ultrabug
-* add option to enable support for green threads using gevent., by @Ultrabug
-* google_calendar: rename response_to_events option to only_if_response, by @Ultrabug
-* google_calendar: add event_within_hours option to limit events selection to a time frame, by @Ultrabug
-* google_calendar: fix event selection logic when self organized, by @Ultrabug
-* google_calendar module: prettier format, by @Ultrabug
-* google_calendar module: code QA and refactoring, by @Ultrabug
-* add new google_calendar module thx to @igorgrebenkov, by @Ultrabug
-* post version 3.7, by @Ultrabug
-* version 3.7, by @Ultrabug
+** add option to enable support for green threads using gevent., by @Ultrabug
+** google_calendar: code QA, good fixups, add new configs, by @Ultrabug
 * add new module: transmission, by @lasers
 ** Added support for environment variables in config., by @Alex O'Neill
 ** WIP: IMAP4 IDLE unread messages, by @girst
