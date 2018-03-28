@@ -35,15 +35,10 @@ version 3.8 (2018-04-01)
 * py3: return gradients properly, by @lasers
 * net_rate: use post_config_hook, by @lasers
 * formatter: add {:g} to remove trailing zeroes, by @lasers
-* change on_click variables to match py3status conventions : button_*, by @qn
 ** Allow DND signals to be configured, by @Robert Ricci
 * Allow external on_click events to run immediately, by @tobes
-* split SPOTIFY_CMD on 2 lines to respect flake8, by @qn
-* Enable click events for spotify, by @qn
-* add docstring example for {output}_mode dynamic parameter of xrandr module, by @qn
-* allow overiding xrandr resolution using {output}_mode, by @qn
-* add docstring example for {output}_mode dynamic parameter of xrandr module, by @qn
-* allow overiding xrandr resolution using {output}_mode, by @qn
+** Enable click events for spotify, by @qn
+** allow overiding xrandr resolution using {output}_mode, by @qn
 ** pomodoro: make formats more customizable, by @Robert Ricci
 * keyboard_locks: merge formats, by @lasers
 * Choose a more sensible default filter, by @regnat
