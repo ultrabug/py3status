@@ -36,13 +36,7 @@ version 3.8 (2018-04-01)
 * net_rate: use post_config_hook, by @lasers
 * formatter: add {:g} to remove trailing zeroes, by @lasers
 * change on_click variables to match py3status conventions : button_*, by @qn
-* Typo fixes, by @Robert Ricci
-* Revise indentation to make flake8 happy, by @Robert Ricci
-* Fix long line, by @Robert Ricci
-* Rename signal parameters, they are dunst-specific, by @Robert Ricci
-* Re-order parameters and attributes to make CI happy, by @Robert Ricci
-* Use 'bare' signal name, by @Robert Ricci
-* Allow DND signals to be configured, by @Robert Ricci
+** Allow DND signals to be configured, by @Robert Ricci
 * Allow external on_click events to run immediately, by @tobes
 * split SPOTIFY_CMD on 2 lines to respect flake8, by @qn
 * Enable click events for spotify, by @qn
@@ -50,11 +44,7 @@ version 3.8 (2018-04-01)
 * allow overiding xrandr resolution using {output}_mode, by @qn
 * add docstring example for {output}_mode dynamic parameter of xrandr module, by @qn
 * allow overiding xrandr resolution using {output}_mode, by @qn
-* pomodoro: Fix style errors caught by CI, by @Robert Ricci
-* pomodoro: docstring fixes, by @Robert Ricci
-* pomodoro: Add whitespace to make CI happy, by @Robert Ricci
-* pomodoro: make formats more customizable, by @Robert Ricci
-* pomodoro: removed unused variable, by @Robert Ricci
+** pomodoro: make formats more customizable, by @Robert Ricci
 * keyboard_locks: merge formats, by @lasers
 * Choose a more sensible default filter, by @regnat
 * Remove forgotten garbage line, by @regnat
