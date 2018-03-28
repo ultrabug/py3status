@@ -19,11 +19,7 @@ version 3.8 (2018-04-01)
 * sysdata: post_config_hook initializations, by @lasers
 * sysdata: clean up stat, make new cpuinfo, by @lasers
 * twitch: rename twitch_streaming to twitch, by @lasers
-* [REF] Better PEP8 formatting, by @James Curtis
-* [REF] Params not in alphabetical order, by @James Curtis
-* [FIX] Comply with PR comments, by @James Curtis
-* [FIX] Missing new line at end of file, by @James Curtis
-* [FIX] Twitch API requires an app client id, by @James Curtis
+** [FIX] Twitch API requires an app client id, by @James Curtis
 * formatter: reject the condition if none, by @lasers
 * formatter: inherit commands properly, by @lasers
 * fix deadbeaf error, by @tobes
