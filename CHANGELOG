@@ -44,19 +44,14 @@ version 3.8 (2018-04-01)
 * Add installation instructions for NixOS, by @Daniel Schaefer
 * quick QA on i3pystatus module, by @Ultrabug
 * allow test modules to use storage, by @tobes
-* Move and eidt note about pypi-install vs. pip for Debian, by @Sébastien Delafond
 * window_title: be nice to users, by @lasers
 * window_title: preserve max_width, by @lasers
 * window_title: add new placeholders, by @lasers
 * allow time_in(CACHE_FOREVER), by @tobes
 * coin_market: remove first_run, by @lasers
-* Also mention Ubuntu (#1255), by @Sébastien Delafond
-* Add documentation about availability in Debian to README.dst (Closes: #1253), by @Sébastien Delafond
 * Run event in threads to fix latency problems, by @tobes
-* Also mention Ubuntu (#1255), by @Sébastien Delafond
 * google_calendar: remove unused variable, by @lasers
-* Add documentation about availability in Debian to README.dst (Closes: #1253), by @Sébastien Delafond
-* Document availability as a Debian package (#1253), by @Sébastien Delafond
+** Document availability as a Debian package, by @Sébastien Delafond
 * allow brightness as a float, by @tobes
 * group: allow waiting for active module, by @tobes
 * external_script: fix indexerror exception, by @lasers
