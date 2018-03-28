@@ -154,15 +154,12 @@ version 3.8 (2018-04-01)
 * Attempting to fix Travis error for insync module, by @Cypher
 * Update doc, by @Cypher
 * Updated Insync module to recognise SYNCED state, by @Cypher
-* variables ordering (same for docstring), by @Themistokle Benetatos
-* removing blank lines with whitespace, by @Themistokle Benetatos
 * Add missing parenthesis, by @Daniel Foerster
 * A little more cleanup, by @Daniel Foerster
 * Fix error response mistakes, by @Daniel Foerster
 * Error tweaks, by @Daniel Foerster
-* cleaner selection of current task, customized error messages, docstring matching new guidelines, by @Themistokle Benetatos
 * Handle the SQL results better, by @Daniel Foerster
-* display thunderbird calendar tasks, by @Themistokle Benetatos
+** display thunderbird calendar tasks, by @Themistokle Benetatos
 
 
 version 3.7 (2017-11-30)
