@@ -129,7 +129,6 @@ version 3.8 (2018-04-01)
 * coin_market: expose a new placeholder, by @lasers
 * weather_yahoo: new module from scratch, by @lasers
 * xrandr_rotate module: fix scrolling init value, by @Ultrabug
-* Use py3.error with CACHE_FOREVER, by @Maxim Baz
 * volume_status: check the binaries (rev d), by @lasers
 * volume_status: check the binaries (rev c), by @lasers
 * volume_status: check the binaries (rev b), by @lasers
@@ -171,7 +170,6 @@ version 3.8 (2018-04-01)
 * post version 3.7, by @Ultrabug
 * Undid append_modules refactor., by @Alex O'Neill
 * Expanded matching options for env_var., by @Alex O'Neill
-* Show error if cannot connect to the socket, by @Maxim Baz
 * version 3.7, by @Ultrabug
 * Reverted back to env(...) notation, auto casting, by @Alex O'Neill
 * remove color_separator, clean up _check_warn_threshold(), by @Igor Grebenkov
@@ -180,14 +178,6 @@ version 3.8 (2018-04-01)
 * minor format+doc fixes, by @Igor Grebenkov
 * folded format_event and format_event_full into just format_event, by @Igor Grebenkov
 * fold format_time_to and format_time_left into format_timer, by @Igor Grebenkov
-* Simplify condition, by @Maxim Baz
-* Naming, by @Maxim Baz
-* Store request statuses in a dictionary, by @Maxim Baz
-* Simplify naming, by @Maxim Baz
-* Simplify is_waiting logic, no need to count numbers, by @Maxim Baz
-* Improve default format value, by @Maxim Baz
-* Get rid of the precomputed 'is_waiting', by @Maxim Baz
-* Use external tool for detection, by @Maxim Baz
 * Fix linter issues, by @Alex O'Neill
 * Added bool support for env vars, by @Alex O'Neill
 * Added documentation for env var tokem., by @Alex O'Neill
@@ -211,17 +201,7 @@ version 3.8 (2018-04-01)
 * added some more color customization + minor fixes, by @Igor Grebenkov
 * moved auth_token and client_secret init to post_config_hook(), by @Igor Grebenkov
 * fixed all-day event bug, by @Igor Grebenkov
-* Update requirements section, by @Maxim Baz
-* Extract nested classes, rename sudo check to u2f check, by @Maxim Baz
-* Consume watch capability from a forked pam-u2f, by @Maxim Baz
-* Refresh module only when needed, by @Maxim Baz
-* Unify configuration options for both checks, by @Maxim Baz
-* Drastically improve gpg detection performance, by @Maxim Baz
-* Improve detection of when touch happened for GPG operation, by @Maxim Baz
-* Small improvements, by @Maxim Baz
-* Add urgent flag, use more explanatory default text, by @Maxim Baz
-* Simplify module configuration, by @Maxim Baz
-* Add YubiKey module, by @Maxim Baz
+** Add YubiKey module, by @Maxim Baz
 * xrandr_rotate: refresh properly, by @lasers
 * xrandr_rotate: move down on_click, by @lasers
 * move all methods inside class Py3status; make default thresholds empty, by @Igor Grebenkov
