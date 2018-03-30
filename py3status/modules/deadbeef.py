@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display song currently playing in deadbeef.
+Display songs currently playing in DeaDBeeF.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
@@ -98,7 +98,6 @@ class Py3status:
         self.placeholders = list(
             set(self.py3.get_placeholders_list(self.format)) |
             set(FMT_PARAMETER))
-        self.empty_status = {x: '' for x in self.placeholders}
         fmt = FMT_SEPARATOR.join(['%{}%'.format(x) for x in self.placeholders])
         self.cmd = 'deadbeef --nowplaying-tf "%s"' % fmt
 
@@ -111,7 +110,7 @@ class Py3status:
 
     def deadbeef(self):
         color = self.color_stopped
-        status = self.empty_status
+        status = {}
         cached_until = self.sleep_timeout
 
         if self._is_running():
