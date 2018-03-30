@@ -123,19 +123,13 @@ class Py3status:
             # how status output and color should look... mainly to stay
             # consistency between versions.
             out = check_output(self.cmd, shell=True).decode('utf-8')
+            status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
 
-            # We know 7.0 and 7.1 returns a literal 'nothing' string.
-            # Deadbeef stopped doing that in 7.2 so we adds a quick check
-            # here to skip status if it contains 'nothing' or FMT_SEPARATOR.
-            if out not in ['nothing', FMT_SEPARATOR]:
+            if status['isplaying']:
+                color = self.color_playing
+            else:
+                color = self.color_paused
 
-                # split placeholders results
-                status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
-
-                if status['isplaying'] == '1':
-                    color = self.color_playing
-                else:
-                    color = self.color_paused
         return {
             'cached_until': self.py3.time_in(cached_until),
             'full_text': self.py3.safe_format(self.format, status),
