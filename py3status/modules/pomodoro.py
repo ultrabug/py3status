@@ -11,9 +11,9 @@ Configuration parameters:
         (default False)
     format: define custom time format. See placeholders below (default '{ss}')
     format_active: format to display when timer is active
-        (default 'Pomodoro [{format}]')
+        (default 'Pomodoro \[{format}\]')
     format_break: format to display during break
-        (default 'Break #{breakno} [{format}]')
+        (default 'Break #{breakno} \[{format}\]')
     format_break_stopped: format to display during a break that is stopped
         (default 'Break #{breakno} ({format})')
     format_separator: separator between minutes:seconds (default ':')
@@ -121,8 +121,8 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     format = u'{ss}'
-    format_active = u'Pomodoro [{format}]'
-    format_break = u'Break #{breakno} [{format}]'
+    format_active = u'Pomodoro \[{format}\]'
+    format_break = u'Break #{breakno} \[{format}\]'
     format_break_stopped = u'Break #{breakno} ({format})'
     format_separator = u":"
     format_stopped = u'Pomodoro ({format})'
@@ -269,6 +269,7 @@ class Py3status:
         vals = {
             'ss': int(time_left),
             'mm': int(ceil(time_left / 60)),
+            'breakno': self._break_number
         }
 
         if self.py3.format_contains(self.format, 'mmss'):
@@ -289,7 +290,7 @@ class Py3status:
         if self.py3.format_contains(self.format, 'bar'):
             vals['bar'] = self._setup_bar()
 
-        formatted = self.format.format(**vals)
+        vals['format'] = self.py3.safe_format(self.format, vals)
 
         if self._running:
             if self._active:
@@ -304,8 +305,8 @@ class Py3status:
             cached_until = self.py3.CACHE_FOREVER
 
         response = {
-            'full_text': format.format(breakno=self._break_number, format=formatted, **vals),
             'cached_until': cached_until,
+            'full_text': self.py3.safe_format(format, vals)
         }
 
         if self._alert:
