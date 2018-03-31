@@ -428,7 +428,6 @@ class Py3status:
                     break
                 contact = sms_proxy.Number
                 text = sms_proxy.Text
-                timestamp = sms_proxy.Timestamp
                 new_messages.append(
                     self.py3.safe_format(
                         self.format_message, {
@@ -436,7 +435,6 @@ class Py3status:
                             'id': id,
                             'contact': contact,
                             'text': text,
-                            'timestamp': timestamp,
                         }))
             format_message_separator = self.py3.safe_format(
                 self.format_message_separator)
