@@ -1,84 +1,84 @@
-version 3.8 (2018-04-01)
+version 3.8 (2018-04-02)
+* py3: command_output call command with lc_all=c, by woland
 * py3: dismiss empty notifications, by @lasers
-* taskwarrior: use post_config_hook, by @lasers
-* add new module: hddtemp, by @lasers
-* add multiple QA fixes for multiple modules, by @Ultrabug
-* thunderbird_todos: new module from scratch, by @lasers
-* mpd_status: fix ValueError, allow hiding on error, by @girst
-* deadbeef: check if deadbeef is installed, by @lasers
-* Twitch API requires an app client id, by James Curtis
-* formatter: reject the condition if none, by @lasers
-* formatter: inherit commands properly, by @lasers
-* fix deadbeaf error, by @tobes
-* external_script: use localized command output, by Woland
-* py3: command_output call command with LC_ALL=C, by Woland
-* volume_status: use py3.command_output, by Woland
-* sysdata: first half of cleanup efforts, by @lasers
+* py3: make thresholds take none for an answer, by @lasers
 * py3: return gradients properly, by @lasers
-* net_rate: use post_config_hook, by @lasers
-* formatter: add {:g} to remove trailing zeroes, by @lasers
-* Allow do_not_disturb signals to be configured, by Robert Ricci
-* Allow external on_click events to run immediately, by @tobes
-* Enable click events for spotify, by @Nollain
-* allow overiding xrandr resolution using {output}_mode, by @Nollain
-* pomodoro: make formats more customizable, by Robert Ricci
-* keyboard_locks: merge formats, by @lasers
-* Add installation instructions for NixOS, by Daniel Schaefer
-* allow test modules to use storage, by @tobes
-* window_title: add new placeholders + simplifying, by @lasers
-* allow time_in(CACHE_FOREVER), by @tobes
-* coin_market: remove first_run, by @lasers
-* Run event in threads to fix latency problems, by @tobes
-* Document availability as a Debian package, by Sébastien Delafond
-* allow brightness as a float, by @tobes
-* group: allow waiting for active module, by @tobes
-* external_script: fix indexerror exception, by @lasers
-* github: don't treat first run as special, by @tobes
+* run event in threads to fix latency problems, by @tobes
 * start modules in threads to parallelize, by @tobes
-* taskwarrior: make the command customizable, by @regnat
-* external_script: use post_config_hook, by @lasers
-* py3: make thresholds take None for an answer, by @lasers
-* task to monitor i3status thread, by @tobes
-* air_quality: new module from scratch, by @lasers
-* allow named colors, by @tobes
-* support i3pystatus modules, by @tobes
-* core: support shorthand hex colors (thx @tobes), by @lasers
-* exchange_rates: use new feed, by @tobes
-* core: make notify_user less ambiguous in the logs, by @lasers
-* pomodoro: fix cached_until intervals, by @lasers
-* xrandr_rotate: display screen properly, by @lasers
-* move arg parsing to own file to help decouple stuff, by @tobes
-* module storage: add ctime and mtime metadata keys on storage_set, by @Ultrabug
-* module storage: move documentation, add methods and overall review with tobes, by @Ultrabug
-* volume_status: enable mouse buttons, by @lasers
-* wifi: use sudo in post_config_hook, by @lasers
-* netdata: annihilate the lines, by @lasers
-* coin_market: expose placeholder, add format_datetime, cleanups, by @lasers
-* weather_yahoo: new module from scratch, by @lasers
-* volume_status: check the binaries, by @lasers
-* bitcoin_price: use py3.request helper, by @lasers
-* volume_status: add boost for pamixer, by @lasers
-* allow selection of keyboard layout, by @tobes
-* add cookies handling for request, by @raspbeguy
-* deadbeef: add sleep_timeout, by @lasers
-* timer: add urgent + timer: add colors, by @lasers
-* online_status: fix timeout for ping, by @lasers
-* parse_config: Small refactor for append_modules., by Alex O'Neill
-* Make POST requests work, by @raspbeguy
-* add option to enable support for green threads using gevent., by @Ultrabug
-* google_calendar: code QA, fixups, add new configs, by @Ultrabug
-* add new module: transmission, by @lasers
-* Added support for environment variables in config., by Alex O'Neill
-* imap: support for IMAP-IDLE; enabled by default, by @girst
-* Add YubiKey module, by Maxim Baz
-* xrandr_rotate: refresh properly, by @lasers
-* update standalone testing, by @tobes
+* persistent storage for modules, by @tobes
+* added support for environment variables in config, by alex o'neill
+* formatter: add {:g} to remove trailing zeroes, by @lasers
+* formatter: inherit commands properly, by @lasers
+* formatter: reject the condition if none, by @lasers
 * improve logging for modules, by @tobes
-* added google_calendar module, by Igor Grebenkov
-* Persistent storage for modules, by @tobes
-* Updated Insync module to recognise SYNCED state, by @Cypher1
-* thunderbird_calendar: code QA, cleanups, by Daniel Foerster
-* display thunderbird_calendar tasks, by Themistokle Benetatos
+* add cookies handling for request, by @raspbeguy
+* add installation instructions for nixos, by daniel schaefer
+* add multiple qa fixes for multiple modules, by @ultrabug
+* add new module: hddtemp, by @lasers
+* add new module: transmission, by @lasers
+* add option to enable support for green threads using gevent, by @ultrabug
+* add yubikey module, by maxim baz
+* added google_calendar module, by igor grebenkov
+* air_quality: new module from scratch, by @lasers
+* allow brightness as a float, by @tobes
+* allow do_not_disturb signals to be configured, by robert ricci
+* allow external on_click events to run immediately, by @tobes
+* allow named colors, by @tobes
+* allow overiding xrandr resolution using {output}_mode, by @nollain
+* allow selection of keyboard layout, by @tobes
+* allow test modules to use storage, by @tobes
+* allow time_in(cache_forever), by @tobes
+* bitcoin_price: use py3.request helper, by @lasers
+* coin_market: expose placeholder, add format_datetime, cleanups, by @lasers
+* coin_market: remove first_run, by @lasers
+* core: make notify_user less ambiguous in the logs, by @lasers
+* core: support shorthand hex colors (thx @tobes), by @lasers
+* deadbeef: add sleep_timeout, by @lasers
+* deadbeef: check if deadbeef is installed, by @lasers
+* display thunderbird_calendar tasks, by themistokle benetatos
+* document availability as a debian package, by sébastien delafond
+* enable click events for spotify, by @nollain
+* exchange_rates: use new feed, by @tobes
+* external_script: fix indexerror exception, by @lasers
+* external_script: use localized command output, by woland
+* external_script: use post_config_hook, by @lasers
+* fix deadbeaf error, by @tobes
+* github: don't treat first run as special, by @tobes
+* google_calendar: code qa, fixups, add new configs, by @ultrabug
+* group: allow waiting for active module, by @tobes
+* imap: support for imap-idle; enabled by default, by @girst
+* keyboard_locks: merge formats, by @lasers
+* make post requests work, by @raspbeguy
+* module storage: add ctime and mtime metadata keys on storage_set, by @ultrabug
+* module storage: move documentation, add methods and overall review with tobes, by @ultrabug
+* move arg parsing to own file to help decouple stuff, by @tobes
+* mpd_status: fix valueerror, allow hiding on error, by @girst
+* net_rate: use post_config_hook, by @lasers
+* netdata: annihilate the lines, by @lasers
+* online_status: fix timeout for ping, by @lasers
+* parse_config: small refactor for append_modules, by alex o'neill
+* pomodoro: fix cached_until intervals, by @lasers
+* pomodoro: make formats more customizable, by robert ricci
+* support i3pystatus modules, by @tobes
+* sysdata: first half of cleanup efforts, by @lasers
+* task to monitor i3status thread, by @tobes
+* taskwarrior: make the command customizable, by @regnat
+* taskwarrior: use post_config_hook, by @lasers
+* thunderbird_calendar: code qa, cleanups, by daniel foerster
+* thunderbird_todos: new module from scratch, by @lasers
+* timer: add urgent + timer: add colors, by @lasers
+* twitch api requires an app client id, by james curtis
+* update standalone testing, by @tobes
+* updated insync module to recognise synced state, by @cypher1
+* volume_status: add boost for pamixer, by @lasers
+* volume_status: check the binaries, by @lasers
+* volume_status: enable mouse buttons, by @lasers
+* volume_status: use py3.command_output, by woland
+* weather_yahoo: new module from scratch, by @lasers
+* wifi: use sudo in post_config_hook, by @lasers
+* window_title: add new placeholders + simplifying, by @lasers
+* xrandr_rotate: display screen properly, by @lasers
+* xrandr_rotate: refresh properly, by @lasers
 
 
 version 3.7 (2017-11-30)

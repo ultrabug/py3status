@@ -1,1 +1,1 @@
-version = '3.8_pre'
+version = '3.8'
