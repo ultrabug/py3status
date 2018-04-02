@@ -3,8 +3,12 @@
 Display song currently playing in deadbeef.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 1)
+    cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '[{artist} - ][{title}]')
+    sleep_timeout: when deadbeef is not running, this interval will be used
+        to allow one to refresh constantly with time placeholders and/or
+        to refresh once every minute rather than every few seconds
+        (default 20)
 
 Format placeholders:
     {album} name of the album
@@ -41,12 +45,16 @@ from subprocess import check_output
 
 FMT_PARAMETER = ['isplaying']
 FMT_SEPARATOR = u'\u001e'
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
-    cache_timeout = 1
+    cache_timeout = 5
     format = '[{artist} - ][{title}]'
+    sleep_timeout = 20
 
     class Meta:
         deprecated = {
@@ -71,6 +79,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if not self.py3.check_commands('deadbeef'):
+            raise Exception(STRING_NOT_INSTALLED)
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
@@ -94,8 +104,10 @@ class Py3status:
     def deadbeef(self):
         color = self.color_stopped
         status = self.empty_status
+        cached_until = self.sleep_timeout
 
         if self._is_running():
+            cached_until = self.cache_timeout
             # Starting deadbeef may generate lot of startup noises either
             # with or without error codes. Running command below may sometimes
             # change how things behaves onscreen. We use subprocess to ignore
@@ -107,7 +119,7 @@ class Py3status:
             # We know 7.0 and 7.1 returns a literal 'nothing' string.
             # Deadbeef stopped doing that in 7.2 so we adds a quick check
             # here to skip status if it contains 'nothing' or FMT_SEPARATOR.
-            if out not in ['nothing', u'\x1e']:
+            if out not in ['nothing', FMT_SEPARATOR]:
 
                 # split placeholders results
                 status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
@@ -117,7 +129,7 @@ class Py3status:
                 else:
                     color = self.color_paused
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': self.py3.time_in(cached_until),
             'full_text': self.py3.safe_format(self.format, status),
             'color': color,
         }

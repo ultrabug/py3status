@@ -7,8 +7,8 @@ Configuration parameters:
     format: display format for this module
         *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑]
         [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
-    nic: network interface to use (default None)
-    thresholds: color thresholds to use
+    nic: specify a network interface to use (default None)
+    thresholds: specify color thresholds to use
         *(default {'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
         'total': [(0, 'good'), (400, 'degraded'), (700, 'bad')]})*
 
@@ -33,25 +33,6 @@ SAMPLE OUTPUT
     {'full_text': 'T(Mb): 394↓  45↑ 438↕', 'color': '#FFFF00'},
 ]
 """
-
-
-class GetData:
-    """
-    Get system status.
-    """
-    def __init__(self, nic):
-        self.nic = nic
-
-    def netBytes(self):
-        """
-        Get bytes directly from /proc.
-        """
-        with open('/proc/net/dev') as fh:
-            net_data = fh.read().split()
-        interface_index = net_data.index(self.nic + ':')
-        received_bytes = int(net_data[interface_index + 1])
-        transmitted_bytes = int(net_data[interface_index + 9])
-        return received_bytes, transmitted_bytes
 
 
 class Py3status:
@@ -124,13 +105,10 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        """
-        Get network interface.
-        """
-        self.old_transmitted = 0
-        self.old_received = 0
+        self.last_transmitted_bytes = 0
+        self.last_received_bytes = 0
+        # Get default gateway from /proc.
         if self.nic is None:
-            # Get default gateway directly from /proc.
             with open('/proc/net/route') as fh:
                 for line in fh:
                     fields = line.strip().split()
@@ -141,37 +119,42 @@ class Py3status:
                 self.nic = 'lo'
             self.py3.log('selected nic: %s' % self.nic)
 
+    def _get_bytes(self):
+        with open('/proc/net/dev') as fh:
+            net_data = fh.read().split()
+        interface_index = net_data.index(self.nic + ':')
+        received_bytes = int(net_data[interface_index + 1])
+        transmitted_bytes = int(net_data[interface_index + 9])
+        return received_bytes, transmitted_bytes
+
     def netdata(self):
-        """
-        Calculate network speed and network traffic.
-        """
-        data = GetData(self.nic)
-        received_bytes, transmitted_bytes = data.netBytes()
-
-        # net_speed (statistic)
-        down = (received_bytes - self.old_received) / 1024.
-        up = (transmitted_bytes - self.old_transmitted) / 1024.
-        self.old_received = received_bytes
-        self.old_transmitted = transmitted_bytes
-
-        # net_traffic (statistic)
-        download = received_bytes / 1024 / 1024.
-        upload = transmitted_bytes / 1024 / 1024.
+        received_bytes, transmitted_bytes = self._get_bytes()
+        # speed
+        down = (received_bytes - self.last_received_bytes) / 1024.0
+        up = (transmitted_bytes - self.last_transmitted_bytes) / 1024.0
+        # history
+        self.last_received_bytes = received_bytes
+        self.last_transmitted_bytes = transmitted_bytes
+        # traffic
+        download = received_bytes / 1024 / 1024.0
+        upload = transmitted_bytes / 1024 / 1024.0
         total = download + upload
-
-        # color threshold
+        # threshold
         self.py3.threshold_get_color(down, 'down')
         self.py3.threshold_get_color(total, 'total')
 
-        netdata = self.py3.safe_format(self.format, {'down': down,
-                                                     'up': up,
-                                                     'download': download,
-                                                     'upload': upload,
-                                                     'total': total,
-                                                     'nic': self.nic})
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': netdata
+            'full_text': self.py3.safe_format(
+                self.format, {
+                    'down': down,
+                    'up': up,
+                    'download': download,
+                    'upload': upload,
+                    'total': total,
+                    'nic': self.nic
+                }
+            )
         }
 
 

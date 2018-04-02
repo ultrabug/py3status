@@ -124,17 +124,16 @@ class I3statusModule:
     def get_latest(self):
         return [self.item.copy()]
 
-    def update(self):
+    def run(self):
         """
         updates the modules output.
         Currently only time and tztime need to do this
         """
         if self.update_time_value():
             self.i3status.py3_wrapper.notify_update(self.module_name)
-        due_time = int(time()) + self.time_delta
         due_time = self.py3.time_in(sync_to=self.time_delta)
 
-        self.i3status.py3_wrapper.timeout_queue_add_module(self, due_time)
+        self.i3status.py3_wrapper.timeout_queue_add(self, due_time)
 
     def update_from_item(self, item):
         """
@@ -158,12 +157,21 @@ class I3statusModule:
             t = time()
             if self.time_zone_check_due < t:
                 self.set_time_zone(item)
-                # Check again in 30 mins.  We do this in case the timezone used
-                # has switched to/from summer time
-                self.time_zone_check_due = (int(t) // 1800) + 1800
+                # If we are late for our timezone update then schedule the next
+                # update to happen when we next get new data from i3status
+                interval = self.i3status.update_interval
+                if (
+                        self.time_zone_check_due and
+                        (t - self.time_zone_check_due > 5 + interval)
+                ):
+                    self.time_zone_check_due = 0
+                else:
+                    # Check again in 30 mins.  We do this in case the timezone
+                    # used has switched to/from summer time
+                    self.time_zone_check_due = ((int(t) // 1800) * 1800) + 1800
                 if not self.time_started:
                     self.time_started = True
-                    self.i3status.py3_wrapper.timeout_queue_add_module(self)
+                    self.i3status.py3_wrapper.timeout_queue_add(self)
             is_updated = False
             # update time to be shown
         return is_updated
@@ -255,6 +263,10 @@ class I3status(Thread):
         self.tmpfile_path = None
         self.update_due = 0
 
+        # the update interval is useful to know
+        self.update_interval = self.py3_wrapper.get_config_attribute(
+            'general', 'interval'
+        )
         # do any initialization
         self.setup()
 
@@ -267,27 +279,6 @@ class I3status(Thread):
             self.i3modules[conf_name] = module
             if module.is_time_module:
                 self.time_modules.append(module)
-
-    def update_times(self):
-        """
-        Update time for any i3status time/tztime items.
-        Returns the time till next update needed.
-        """
-        now = time()
-        if now > self.update_due:
-            updated = []
-            for module in self.time_modules:
-                if module.update_time_value():
-                    updated.append(module.module_name)
-            if updated:
-                # trigger the update so new time is shown
-                self.py3_wrapper.notify_update(updated)
-                # time we next need to do an update
-            self.update_due = int(now) + 1
-
-        # return time till next update wanted
-        # currently once a second
-        return 1 - (now % 1)
 
     def valid_config_param(self, param_name, cleanup=False):
         """

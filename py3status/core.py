@@ -1,7 +1,6 @@
 from __future__ import print_function
 from __future__ import division
 
-import argparse
 import os
 import sys
 import time
@@ -18,8 +17,9 @@ from traceback import extract_tb, format_tb, format_stack
 
 import py3status.docstrings as docstrings
 from py3status.command import CommandServer
+from py3status.constants import COLOR_NAMES
 from py3status.events import Events
-from py3status.helpers import print_line, print_stderr
+from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
@@ -46,16 +46,22 @@ class Runner(Thread):
     """
     A Simple helper to run a module in a Thread so it is non-locking.
     """
-    def __init__(self, module, py3_wrapper):
+    def __init__(self, module, py3_wrapper, module_name):
         Thread.__init__(self)
+        self.daemon = True
         self.module = module
+        self.module_name = module_name
         self.py3_wrapper = py3_wrapper
+        self.start()
 
     def run(self):
         try:
             self.module.run()
         except:
             self.py3_wrapper.report_exception('Runner')
+        # the module is no longer running so notify the timeout logic
+        if self.module_name:
+            self.py3_wrapper.timeout_finished.append(self.module_name)
 
 
 class NoneSetting:
@@ -65,9 +71,55 @@ class NoneSetting:
     # this attribute is used to identify that this is a none setting
     none_setting = True
 
+    def __len__(self):
+        return 0
+
     def __repr__(self):
         # this is for output via module_test
         return 'None'
+
+
+class Task:
+    """
+    A simple task that can be run by the scheduler.
+    """
+
+    def run(self):
+        raise NotImplemented()
+
+
+class CheckI3StatusThread(Task):
+    """
+    Checks that the i3status thread is alive
+    """
+
+    def __init__(self, i3status_thread, py3_wrapper):
+        self.i3status_thread = i3status_thread
+        self.timeout_queue_add = py3_wrapper.timeout_queue_add
+        self.notify_user = py3_wrapper.notify_user
+
+    def run(self):
+        # check i3status thread
+        if not self.i3status_thread.is_alive():
+            err = self.i3status_thread.error
+            if not err:
+                err = 'I3status died horribly.'
+            self.notify_user(err)
+        else:
+            # check again in 5 seconds
+            self.timeout_queue_add(self, int(time.time()) + 5)
+
+
+class ModuleRunner(Task):
+    """
+    Starts up a Module
+    """
+
+    def __init__(self, module):
+        self.module = module
+
+    def run(self):
+        self.module.start_module()
 
 
 class Common:
@@ -106,6 +158,16 @@ class Common:
         if hasattr(param, 'none_setting'):
             # check py3status general section
             param = config['general'].get(attribute, self.none_setting)
+        if param and (attribute == 'color' or attribute.startswith('color_')):
+            if param[0] != '#':
+                # named color
+                param = COLOR_NAMES.get(param.lower(), self.none_setting)
+            elif len(param) == 4:
+                # This is a color like #123 convert it to #112233
+                param = (
+                    '#' + param[1] + param[1] + param[2] +
+                    param[2] + param[3] + param[3]
+                )
         return param
 
     def report_exception(self, msg, notify_user=True, level='error',
@@ -190,7 +252,7 @@ class Py3statusWrapper:
     This is the py3status wrapper.
     """
 
-    def __init__(self):
+    def __init__(self, options):
         """
         Useful variables we'll need.
         """
@@ -200,28 +262,46 @@ class Py3statusWrapper:
         self.lock = Event()
         self.modules = {}
         self.notified_messages = set()
+        self.options = options
         self.output_modules = {}
         self.py3_modules = []
-        self.py3_modules_initialized = False
         self.running = True
         self.update_queue = deque()
         self.update_request = Event()
 
         # shared code
-        common = Common(self)
-        self.get_config_attribute = common.get_config_attribute
-        self.report_exception = common.report_exception
+        self.common = Common(self)
+        self.get_config_attribute = self.common.get_config_attribute
+        self.report_exception = self.common.report_exception
 
         # these are used to schedule module updates
-        self.timeout_update_due = deque()
+        self.timeout_add_queue = deque()
+        self.timeout_due = None
+        self.timeout_finished = deque()
+        self.timeout_keys = []
+        self.timeout_missed = {}
         self.timeout_queue = {}
         self.timeout_queue_lookup = {}
-        self.timeout_keys = []
+        self.timeout_running = set()
+        self.timeout_update_due = deque()
 
-    def timeout_queue_add_module(self, module, cache_time=0):
+    def timeout_queue_add(self, item, cache_time=0):
+        """
+        Add a item to be run at a future time.
+        This must be a Module, I3statusModule or a Task
+        """
+        # add the info to the add queue.  We do this so that actually adding
+        # the module is done in the core thread.
+        self.timeout_add_queue.append((item, cache_time))
+        # if the timeout_add_queue is not due to be processed until after this
+        # update request is due then trigger an update now.
+        if self.timeout_due is None or cache_time < self.timeout_due:
+            self.update_request.set()
+
+    def timeout_process_add_queue(self, module, cache_time):
         """
         Add a module to the timeout_queue if it is scheduled in the future or
-        if it is due for an update imediately just trigger that.
+        if it is due for an update immediately just trigger that.
 
         the timeout_queue is a dict with the scheduled time as the key and the
         value is a list of module instance names due to be updated at that
@@ -236,22 +316,16 @@ class Py3statusWrapper:
         # remove if already in the queue
         key = self.timeout_queue_lookup.get(module)
         if key:
-            try:
-                queue_item = self.timeout_queue[key]
-                try:
-                    queue_item.remove(module)
-                except KeyError:
-                    pass
-                if not queue_item:
-                    del self.timeout_queue[key]
-                    self.timeout_keys.remove(key)
-            except KeyError:
-                pass
+            queue_item = self.timeout_queue[key]
+            queue_item.remove(module)
+            if not queue_item:
+                del self.timeout_queue[key]
+                self.timeout_keys.remove(key)
 
         if cache_time == 0:
             # if cache_time is 0 we can just trigger the module update
             self.timeout_update_due.append(module)
-            self.update_request.set()
+            self.timeout_queue_lookup[module] = None
         else:
             # add the module to the timeout queue
             if cache_time not in self.timeout_keys:
@@ -259,6 +333,12 @@ class Py3statusWrapper:
                 self.timeout_keys.append(cache_time)
                 # sort keys so earliest is first
                 self.timeout_keys.sort()
+
+                # when is next timeout due?
+                try:
+                    self.timeout_due = self.timeout_keys[0]
+                except IndexError:
+                    self.timeout_due = None
             else:
                 self.timeout_queue[cache_time].add(module)
             # note that the module is in the timeout_queue
@@ -268,6 +348,9 @@ class Py3statusWrapper:
         """
         Check the timeout_queue and set any due modules to update.
         """
+        # process any items that need adding to the queue
+        while self.timeout_add_queue:
+            self.timeout_process_add_queue(*self.timeout_add_queue.popleft())
         now = time.time()
         due_timeouts = []
         # find any due timeouts
@@ -276,35 +359,57 @@ class Py3statusWrapper:
                 break
             due_timeouts.append(timeout)
 
-        # process them
-        for timeout in due_timeouts:
-            modules = self.timeout_queue[timeout]
-            # remove from the queue
-            del self.timeout_queue[timeout]
-            self.timeout_keys.remove(timeout)
+        if due_timeouts:
+            # process them
+            for timeout in due_timeouts:
+                modules = self.timeout_queue[timeout]
+                # remove from the queue
+                del self.timeout_queue[timeout]
+                self.timeout_keys.remove(timeout)
 
-            for module in modules:
-                # module no longer in queue
-                del self.timeout_queue_lookup[module]
-                # tell module to update
+                for module in modules:
+                    # module no longer in queue
+                    del self.timeout_queue_lookup[module]
+                    # tell module to update
+                    self.timeout_update_due.append(module)
+
+            # when is next timeout due?
+            try:
+                self.timeout_due = self.timeout_keys[0]
+            except IndexError:
+                self.timeout_due = None
+
+        # process any finished modules.
+        # Now that the module has finished running it may have been marked to
+        # be triggered again. This is most likely to happen when events are
+        # being processed and the events are arriving much faster than the
+        # module can handle them.  It is important as a module may handle
+        # events but not trigger the module update.  If during the event the
+        # module is due to update the update is not actioned but it needs to be
+        # once the events have finished or else the module will no longer
+        # continue to update.
+        while self.timeout_finished:
+            module_name = self.timeout_finished.popleft()
+            self.timeout_running.discard(module_name)
+            if module_name in self.timeout_missed:
+                module = self.timeout_missed.pop(module_name)
                 self.timeout_update_due.append(module)
 
         # run any modules that are due
         while self.timeout_update_due:
             module = self.timeout_update_due.popleft()
-
-            if isinstance(module, Module):
-                r = Runner(module, self)
-                r.start()
+            module_name = getattr(module, 'module_full_name', None)
+            # if the module is running then we do not want to trigger it but
+            # instead wait till it has finished running and then trigger
+            if module_name and module_name in self.timeout_running:
+                self.timeout_missed[module_name] = module
             else:
-                # i3status module
-                module.update()
+                self.timeout_running.add(module_name)
+                Runner(module, self, module_name)
 
         # we return how long till we next need to process the timeout_queue
-        try:
-            return self.timeout_keys[0] - time.time()
-        except IndexError:
-            return None
+        if self.timeout_due is not None:
+            return self.timeout_due - time.time()
 
     def get_config(self):
         """
@@ -315,10 +420,7 @@ class Py3statusWrapper:
 
         # defaults
         config = {
-            'cache_timeout': 60,
-            'interval': 1,
             'minimum_interval': 0.1,  # minimum module update interval
-            'dbus_notify': False,
         }
 
         # include path to search for user modules
@@ -331,111 +433,37 @@ class Py3statusWrapper:
         ]
         config['version'] = version
 
-        # i3status config file default detection
-        # respect i3status' file detection order wrt issue #43
-        i3status_config_file_candidates = [
-            '{}/.i3status.conf'.format(home_path),
-            '{}/i3status/config'.format(os.environ.get(
-                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
-            '/etc/i3status.conf',
-            '{}/i3status/config'.format(os.environ.get('XDG_CONFIG_DIRS',
-                                                       '/etc/xdg'))
-        ]
-        for fn in i3status_config_file_candidates:
-            if os.path.isfile(fn):
-                i3status_config_file_default = fn
-                break
-        else:
-            # if none of the default files exists, we will default
-            # to ~/.i3/i3status.conf
-            i3status_config_file_default = '{}/.i3/i3status.conf'.format(
-                home_path)
-
-        # command line options
-        parser = argparse.ArgumentParser(
-            description='The agile, python-powered, i3status wrapper')
-        parser = argparse.ArgumentParser(add_help=True)
-        parser.add_argument('-b',
-                            '--dbus-notify',
-                            action="store_true",
-                            default=False,
-                            dest="dbus_notify",
-                            help="""use notify-send to send user notifications
-                                    rather than i3-nagbar,
-                                    requires a notification daemon eg dunst""")
-        parser.add_argument('-c',
-                            '--config',
-                            action="store",
-                            dest="i3status_conf",
-                            type=str,
-                            default=i3status_config_file_default,
-                            help="path to i3status config file")
-        parser.add_argument('-d',
-                            '--debug',
-                            action="store_true",
-                            help="be verbose in syslog")
-        parser.add_argument('-i',
-                            '--include',
-                            action="append",
-                            dest="include_paths",
-                            help="""include user-written modules from those
-                            directories (default ~/.i3/py3status)""")
-        parser.add_argument('-l',
-                            '--log-file',
-                            action="store",
-                            dest="log_file",
-                            type=str,
-                            default=None,
-                            help="path to py3status log file")
-        parser.add_argument('-n',
-                            '--interval',
-                            action="store",
-                            dest="interval",
-                            type=float,
-                            default=config['interval'],
-                            help="update interval in seconds (default 1 sec)")
-        parser.add_argument('-s',
-                            '--standalone',
-                            action="store_true",
-                            help="standalone mode, do not use i3status")
-        parser.add_argument('-t',
-                            '--timeout',
-                            action="store",
-                            dest="cache_timeout",
-                            type=int,
-                            default=config['cache_timeout'],
-                            help="""default injection cache timeout in seconds
-                            (default 60 sec)""")
-        parser.add_argument('-v',
-                            '--version',
-                            action="store_true",
-                            help="""show py3status version and exit""")
-        parser.add_argument('cli_command', nargs='*', help=argparse.SUPPRESS)
-
-        options = parser.parse_args()
-
-        if options.cli_command:
-            config['cli_command'] = options.cli_command
-
-        # only asked for version
-        if options.version:
-            print('py3status version {} (python {})'.format(config['version'],
-                                                            python_version()))
-            sys.exit(0)
-
         # override configuration and helper variables
+        options = self.options
         config['cache_timeout'] = options.cache_timeout
         config['debug'] = options.debug
         config['dbus_notify'] = options.dbus_notify
+        config['gevent'] = options.gevent
         if options.include_paths:
             config['include_paths'] = options.include_paths
+        # FIXME we allow giving interval as a float and then make it an int!
         config['interval'] = int(options.interval)
         config['log_file'] = options.log_file
         config['standalone'] = options.standalone
         config['i3status_config_path'] = options.i3status_conf
-
-        # all done
+        if options.cli_command:
+            config['cli_command'] = options.cli_command
         return config
+
+    def gevent_monkey_patch_report(self):
+        """
+        Report effective gevent monkey patching on the logs.
+        """
+        try:
+            import gevent.socket
+            import socket
+            if gevent.socket.socket is socket.socket:
+                self.log('gevent monkey patching is active')
+            else:
+                self.notify_user('gevent monkey patching failed.')
+        except ImportError:
+            self.notify_user(
+                'gevent is not installed, monkey patching failed.')
 
     def get_user_modules(self):
         """
@@ -553,6 +581,9 @@ class Py3statusWrapper:
             self.log(
                 'py3status started with config {}'.format(self.config))
 
+        if self.config['gevent']:
+            self.gevent_monkey_patch_report()
+
         # read i3status.conf
         config_path = self.config['i3status_config_path']
         self.config['py3_config'] = process_config(config_path, self)
@@ -582,6 +613,11 @@ class Py3statusWrapper:
         if self.config['debug']:
             self.log('i3status thread {} with config {}'.format(
                 i3s_mode, self.config['py3_config']))
+
+        # add i3status thread monitoring task
+        if i3s_mode == 'started':
+            task = CheckI3StatusThread(self.i3status_thread, self)
+            self.timeout_queue_add(task)
 
         # setup input events thread
         self.events_thread = Events(self)
@@ -647,9 +683,12 @@ class Py3statusWrapper:
         msg_hash = hash(u'{}#{}#{}'.format(module_name, limit_key, msg))
         if msg_hash in self.notified_messages:
             return
+        elif module_name:
+            log_msg = 'Module `%s` sent a notification. "%s"' % (module_name, msg)
+            self.log(log_msg, level)
         else:
             self.log(msg, level)
-            self.notified_messages.add(msg_hash)
+        self.notified_messages.add(msg_hash)
 
         try:
             if dbus:
@@ -660,8 +699,8 @@ class Py3statusWrapper:
                 cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
                        '-t', '10000', 'py3status', msg]
             else:
-                py3_config = self.config['py3_config']
-                nagbar_font = py3_config.get('py3status').get('nagbar_font')
+                py3_config = self.config.get('py3_config', {})
+                nagbar_font = py3_config.get('py3status', {}).get('nagbar_font')
                 if nagbar_font:
                     cmd = ['i3-nagbar', '-f', nagbar_font, '-m', msg, '-t', level]
                 else:
@@ -669,8 +708,8 @@ class Py3statusWrapper:
             Popen(cmd,
                   stdout=open('/dev/null', 'w'),
                   stderr=open('/dev/null', 'w'))
-        except:
-            pass
+        except Exception as err:
+            self.log('notify_user error: %s' % err)
 
     def stop(self):
         """
@@ -761,11 +800,6 @@ class Py3statusWrapper:
             update = [update]
         self.update_queue.extend(update)
 
-        # if all our py3status modules are not ready to receive updates then we
-        # don't want to get them to update.
-        if not self.py3_modules_initialized:
-            return
-
         # find containers that use the modules that updated
         containers = self.config['py3_config']['.module_groups']
         containers_to_update = set()
@@ -844,6 +878,7 @@ class Py3statusWrapper:
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = self.modules[name]
                 output_modules[name]['type'] = 'py3status'
+                output_modules[name]['color'] = self.mappings_color.get(name)
         # i3status modules
         for name in i3modules:
             if name not in output_modules:
@@ -851,6 +886,7 @@ class Py3statusWrapper:
                 output_modules[name]['position'] = positions.get(name, [])
                 output_modules[name]['module'] = i3modules[name]
                 output_modules[name]['type'] = 'i3status'
+                output_modules[name]['color'] = self.mappings_color.get(name)
 
         self.output_modules = output_modules
 
@@ -870,20 +906,17 @@ class Py3statusWrapper:
         # Store mappings for later use.
         self.mappings_color = mappings
 
-    def process_module_output(self, outputs):
+    def process_module_output(self, module):
         """
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
         """
-        for output in outputs:
-            # Color: substitute the config defined color
-            if 'color' not in output:
-                # Get the module name from the output.
-                module_name = '{} {}'.format(
-                    output['name'], output.get('instance', '').split(' ')[0]
-                ).strip()
-                color = self.mappings_color.get(module_name)
-                if color:
+        outputs = module['module'].get_latest()
+        color = module['color']
+        if color:
+            for output in outputs:
+                # Color: substitute the config defined color
+                if 'color' not in output:
                     output['color'] = color
         # Create the json string output.
         return ','.join([dumps(x) for x in outputs])
@@ -922,7 +955,6 @@ class Py3statusWrapper:
         signal(SIGTERM, self.terminate)
 
         # initialize usage variables
-        i3status_thread = self.i3status_thread
         py3_config = self.config['py3_config']
 
         # prepare the color mappings
@@ -933,24 +965,17 @@ class Py3statusWrapper:
         # content_function.
         self.create_output_modules()
 
-        # Some modules need to be prepared before they can run
-        # eg run their post_config_hook
+        # start up all our modules
         for module in self.modules.values():
-            module.prepare_module()
-
-        # modules can now receive updates
-        self.py3_modules_initialized = True
-
-        # start modules
-        for module in self.modules.values():
-            module.start_module()
+            task = ModuleRunner(module)
+            self.timeout_queue_add(task)
 
         # this will be our output set to the correct length for the number of
         # items in the bar
         output = [None] * len(py3_config['order'])
 
-        interval = self.config['interval']
-        last_sec = 0
+        write = sys.__stdout__.write
+        flush = sys.__stdout__.flush
 
         # start our output
         header = {
@@ -958,8 +983,8 @@ class Py3statusWrapper:
             'click_events': True,
             'stop_signal': SIGTSTP
         }
-        print_line(dumps(header))
-        print_line('[[]')
+        write(dumps(header))
+        write('\n[[]\n')
 
         update_due = None
         # main loop
@@ -975,45 +1000,22 @@ class Py3statusWrapper:
             while not self.i3bar_running:
                 time.sleep(0.1)
 
-            sec = int(time.time())
-
-            # only check everything is good each second
-            if sec > last_sec:
-                last_sec = sec
-
-                # check i3status thread
-                if not i3status_thread.is_alive():
-                    err = i3status_thread.error
-                    if not err:
-                        err = 'I3status died horribly.'
-                    self.notify_user(err)
-
-                # check events thread
-                if not self.events_thread.is_alive():
-                    # don't spam the user with i3-nagbar warnings
-                    if not hasattr(self.events_thread, 'nagged'):
-                        self.events_thread.nagged = True
-                        err = 'Events thread died, click events are disabled.'
-                        self.notify_user(err, level='warning')
-
-                # update i3status time/tztime items
-                if interval == 0 or sec % interval == 0:
-                    update_due = i3status_thread.update_times()
-
             # check if an update is needed
             if self.update_queue:
                 while (len(self.update_queue)):
                     module_name = self.update_queue.popleft()
                     module = self.output_modules[module_name]
+                    out = self.process_module_output(module)
+
                     for index in module['position']:
                         # store the output as json
-                        out = module['module'].get_latest()
-                        output[index] = self.process_module_output(out)
+                        output[index] = out
 
                 # build output string
                 out = ','.join([x for x in output if x])
                 # dump the line to stdout
-                print_line(',[{}]'.format(out))
+                write(',[{}]\n'.format(out))
+                flush()
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Display system information from uname.
+Display system information.
 
 Configuration parameters:
-    format: see placeholders below (default '{system} {release} {machine}')
+    format: display format for this module (default '{system} {release}')
 
 Format placeholders:
     {system} system/OS name, e.g. 'Linux', 'Windows', or 'Java'
@@ -16,7 +16,7 @@ Format placeholders:
 @author ultrabug (inspired by ndalliard)
 
 SAMPLE OUTPUT
-{'full_text': 'Linux 4.8.15-300.fc25.x86_64 x86_64'}
+{'full_text': 'Linux 4.8.15-300.fc25.x86_64'}
 """
 
 from platform import uname
@@ -26,7 +26,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    format = '{system} {release} {machine}'
+    format = '{system} {release}'
 
     class Meta:
         deprecated = {
@@ -38,20 +38,14 @@ class Py3status:
             ],
         }
 
-    def show_uname(self):
-        system, node, release, version, machine, processor = uname()
-        response = {
+    def uname(self):
+        keys = ['system', 'node', 'release', 'version', 'machine', 'processor']
+        full_text = self.py3.safe_format(self.format, dict(zip(keys, uname())))
+
+        return {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(
-                self.format,
-                dict(system=system,
-                     node=node,
-                     release=release,
-                     version=version,
-                     machine=machine,
-                     processor=processor))
+            'full_text': full_text
         }
-        return response
 
 
 if __name__ == "__main__":

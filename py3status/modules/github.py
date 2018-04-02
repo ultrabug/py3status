@@ -35,6 +35,10 @@ Configuration parameters:
         (default 'all')
     repo: Github repo to check
         (default 'ultrabug/py3status')
+    url_api: Change only if using Enterprise Github, example https://github.domain.com/api/v3.
+        (default 'https://api.github.com')
+    url_base: Change only if using Enterprise Github, example https://github.domain.com.
+        (default 'https://github.com')
     username: Github username, needed to check notifications.
         (default None)
 
@@ -78,11 +82,10 @@ except ImportError:
     import urllib.parse as urlparse
 
 
-GITHUB_API_URL = 'https://api.github.com'
-GITHUB_URL = 'https://github.com/'
-
-
 class Py3status:
+    """
+    """
+    # available configuration parameters
     auth_token = None
     button_action = 3
     button_refresh = 2
@@ -91,17 +94,20 @@ class Py3status:
     format_notifications = ' N{notifications_count}'
     notifications = 'all'
     repo = 'ultrabug/py3status'
+    url_api = 'https://api.github.com'
+    url_base = 'https://github.com'
     username = None
 
     def post_config_hook(self):
-        self.first = True
         self.notification_warning = False
         self.repo_warning = False
         self._issues = '?'
         self._pulls = '?'
         self._notify = '?'
+        # remove a trailing slash in the urls
+        self.url_api = self.url_api.strip('/')
+        self.url_base = self.url_base.strip('/')
 
-    def _init(self):
         # Set format if user has not configured it.
         if not self.format:
             if self.username and self.auth_token:
@@ -114,9 +120,7 @@ class Py3status:
         """
         Get counts for requests that return 'total_count' in the json response.
         """
-        if self.first:
-            return '?'
-        url = GITHUB_API_URL + url + '&per_page=1'
+        url = self.url_api + url + '&per_page=1'
         # if we have authentication details use them as we get better
         # rate-limiting.
         if self.username and self.auth_token:
@@ -145,12 +149,10 @@ class Py3status:
                                      'auth_token to check notifications.')
                 self.notification_warning = True
             return '?'
-        if self.first:
-            return '?'
         if self.notifications == 'all' or not self.repo:
-            url = GITHUB_API_URL + '/notifications'
+            url = self.url_api + '/notifications'
         else:
-            url = GITHUB_API_URL + '/repos/' + self.repo + '/notifications'
+            url = self.url_api + '/repos/' + self.repo + '/notifications'
         url += '?per_page=100'
         try:
             info = self.py3.request(url, timeout=10,
@@ -186,8 +188,6 @@ class Py3status:
                 self.repo_warning = True
 
     def github(self):
-        if self.first:
-            self._init()
         status = {}
         urgent = False
         # issues
@@ -224,11 +224,7 @@ class Py3status:
             status['repo'] = 'Error'
         status['repo_full'] = self.repo
 
-        if self.first:
-            cached_until = 0
-            self.first = False
-        else:
-            cached_until = self.py3.time_in(self.cache_timeout)
+        cached_until = self.py3.time_in(self.cache_timeout)
 
         return {
             'full_text': self.py3.safe_format(self.format, status),
@@ -242,14 +238,14 @@ class Py3status:
             # open github in browser
             if self._notify and self._notify != '?':
                 # open github notifications page
-                url = GITHUB_URL + 'notifications'
+                url = self.url_base + '/notifications'
             else:
                 if self.notifications == 'all' and not self.repo:
                     # open github.com if there are no unread notifications and no repo
-                    url = GITHUB_URL
+                    url = self.url_base
                 else:
                     # open repo page if there are no unread notifications
-                    url = GITHUB_URL + self.repo
+                    url = self.url_base + '/' + self.repo
             # open url in default browser
             self.py3.command_run('xdg-open {}'.format(url))
             self.py3.prevent_refresh()

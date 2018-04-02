@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display the current transfer rates of a tor instance
+Display transfer rates of a tor instance.
 
 Configuration parameters:
     cache_timeout: An integer specifying the cache life-time of the modules
@@ -64,6 +64,7 @@ ERROR_PROTOCOL = 'Error: Failed to register event handler!'
 class Py3status:
     """
     """
+    # available configuration parameters
     cache_timeout = 2
     control_address = '127.0.0.1'
     control_password = None

@@ -6,6 +6,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
+    hide_on_error: hide the status if an error has occurred (default False)
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
     host: mpd host (default 'localhost')
@@ -65,7 +66,7 @@ stopped
 import datetime
 import re
 import socket
-from mpd import MPDClient, CommandError
+from mpd import MPDClient, CommandError, ConnectionError
 
 
 def song_attr(song, attr):
@@ -100,6 +101,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
+    hide_on_error = False
     hide_when_paused = False
     hide_when_stopped = True
     host = 'localhost'
@@ -116,6 +118,27 @@ class Py3status:
         if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
+        # class variables:
+        self.client = None
+
+    def _get_mpd(self, disconnect=False):
+        if disconnect:
+            try:
+                self.client.disconnect()
+            finally:
+                self.client = None
+            return
+
+        try:
+            if self.client is None:
+                self.client = MPDClient()
+                self.client.connect(host=self.host, port=self.port)
+                if self.password:
+                    self.client.password(self.password)
+            return self.client
+        except (socket.error, ConnectionError, CommandError) as e:
+            self.client = None
+            raise e
 
     def _state_character(self, state):
         if state == 'play':
@@ -128,12 +151,7 @@ class Py3status:
 
     def current_track(self):
         try:
-            c = MPDClient()
-            c.connect(host=self.host, port=self.port)
-            if self.password:
-                c.password(self.password)
-
-            status = c.status()
+            status = self._get_mpd().status()
             song = int(status.get('song', 0))
             next_song = int(status.get('nextsong', 0))
 
@@ -144,7 +162,7 @@ class Py3status:
                 text = ''
 
             else:
-                playlist_info = c.playlistinfo()
+                playlist_info = self._get_mpd().playlistinfo()
                 try:
                     song = playlist_info[song]
                 except IndexError:
@@ -164,22 +182,28 @@ class Py3status:
 
                 text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
+        except ValueError:
+            # when status.get(...) returns None; e.g. during reversal of playlist
+            text = "No song information!"
+            state = None
         except socket.error:
             text = "Failed to connect to mpd!"
             state = None
+        except ConnectionError:
+            text = "Error while connecting to mpd!"
+            state = None
+            self._get_mpd(disconnect=True)
         except CommandError:
             text = "Failed to authenticate to mpd!"
             state = None
-            c.disconnect()
-        else:
-            c.disconnect()
+            self._get_mpd(disconnect=True)
 
         if len(text) > self.max_width:
             text = u'{}...'.format(text[:self.max_width - 3])
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
+            'full_text': text if state or not self.hide_on_error else "",
         }
 
         if state:
@@ -192,6 +216,9 @@ class Py3status:
                 response['color'] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
 
         return response
+
+    def kill(self):
+        self._get_mpd(disconnect=True)
 
 
 if __name__ == "__main__":

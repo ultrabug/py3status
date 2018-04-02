@@ -23,6 +23,9 @@ Configuration parameters:
         (default None)
     format: Display brightness, see placeholders below
         (default '☼: {level}%')
+    low_tune_threshold: If current brightness value is below this threshold,
+        the value is changed by a minimal value instead of the brightness_delta.
+        (default 0)
 
 Format status string parameters:
     {level} brightness
@@ -77,6 +80,7 @@ class Py3status:
     command = 'xbacklight'
     device = None
     format = u'☼: {level}%'
+    low_tune_threshold = 0
 
     class Meta:
         deprecated = {
@@ -97,6 +101,9 @@ class Py3status:
         if self.device is None:
             raise Exception(STRING_NOT_AVAILABLE)
 
+        self.format = self.py3.update_placeholder_formats(
+            self.format, {'level': ':d'}
+        )
         # check for an error code and an output
         self.command_available = False
         try:
@@ -119,12 +126,14 @@ class Py3status:
         level = self._get_backlight_level()
         button = event['button']
         if button == self.button_up:
-            level += self.brightness_delta
+            delta = self.brightness_delta if level >= self.low_tune_threshold else 1
+            level += delta
             if level > 100:
                 level = 100
             self._set_backlight_level(level)
         elif button == self.button_down:
-            level -= self.brightness_delta
+            delta = self.brightness_delta if level > self.low_tune_threshold else 1
+            level -= delta
             if level < self.brightness_minimal:
                 level = self.brightness_minimal
             self._set_backlight_level(level)
@@ -133,14 +142,14 @@ class Py3status:
         self.py3.command_run(self._command_set(level))
 
     def _get_backlight_level(self):
-        if self.command_available:
-            level = self.py3.command_output(self._command_get()).strip()
-            return round(float(level))
+        if self.xbacklight:
+            level = self.py3.command_output(['xbacklight', '-get']).strip()
+            return float(level)
         for brightness_line in open("%s/brightness" % self.device, 'rb'):
             brightness = int(brightness_line)
         for brightness_max_line in open("%s/max_brightness" % self.device, 'rb'):
             brightness_max = int(brightness_max_line)
-        return brightness * 100 // brightness_max
+        return brightness * 100 / brightness_max
 
     # Returns the string array for the command to get the current backlight level
     def _command_get(self):

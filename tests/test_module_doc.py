@@ -35,6 +35,8 @@ IGNORE_ILLEGAL_CONFIG_OPTIONS = [
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
 IGNORE_ITEM = [
+    ('air_quality', 'format'),  # line too long for docstring parsing
+    ('air_quality', 'quality_thresholds'),  # line too long for docstring parsing
     ('moc', 'format'),  # line too long for docstring parsing
     ('cmus', 'format'),  # line too long for docstring parsing
     ('netdata', 'format'),  # line too long for docstring parsing
@@ -46,6 +48,9 @@ IGNORE_ITEM = [
     ('kdeconnector', '_dev'),  # move to __init__ etc
     ('arch_updates', 'format'),  # dynamic
     ('spotify', 'sanitize_words'),  # line too long for docstring parsing
+    ('weather_owm', 'thresholds'),  # dictionary parsing issue
+    ('google_calendar', 'format_event'),  # line too long for docstring parsing
+    ('google_calendar', 'format_timer')  # line too long for docstring parsing
 ]
 
 # Obsolete parameters will not have alphabetical order checked
@@ -190,7 +195,7 @@ def get_module_attributes(path):
                         else:
                             attr_value = 'UNKNOWN %s BinOp %s' % (class_name,
                                                                   op)
-                    except:
+                    except Exception:
                         attr_value = 'UNKNOWN %s BinOp error' % class_name
                 else:
                     attr_value = 'UNKNOWN %s' % class_name

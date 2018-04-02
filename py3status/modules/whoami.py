@@ -3,7 +3,7 @@
 Display logged-in username.
 
 Configuration parameters:
-    format: display format for whoami (default '{username}')
+    format: display format for this module (default '{username}')
 
 Format placeholders:
     {username} display current username
@@ -37,14 +37,10 @@ class Py3status:
         }
 
     def whoami(self):
-        """
-        We use the getpass module to get the current user.
-        """
-        username = '{}'.format(getuser())
-
         return {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, {'username': username})
+            'full_text': self.py3.safe_format(
+                self.format, {'username': getuser()})
         }
 
 
