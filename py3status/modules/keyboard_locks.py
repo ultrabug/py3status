@@ -30,13 +30,10 @@ keyboard_locks {
 ```
 
 SAMPLE OUTPUT
-[
-    {'color': '#00FF00', 'full_text': 'CAPS NUM '},
-    {'color': '#FF0000', 'full_text': 'SCR'},
-]
+{'color': '#00FF00', 'full_text': 'CAPS NUM'}
 
 no_locks
-{'color': '#FF0000', 'full_text': 'CAPS NUM SCR'},
+{'color': '#FF0000', 'full_text': 'CAPS NUM SCR'}
 """
 
 
