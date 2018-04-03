@@ -209,8 +209,6 @@ class Py3status:
 
         if self.init['markets']:
             markets_data = self._get_markets()
-        if self.init['weighted_prices']:
-            weighted_prices_data = self._get_weighted_prices()
 
         for index, symbol in enumerate(self.markets):
             for market in markets_data:
@@ -240,6 +238,11 @@ class Py3status:
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_market = self.py3.composite_join(format_separator, new_data)
+
+        if self.init['weighted_prices']:
+            weighted_prices_data = self._get_weighted_prices()
+            for k, v in weighted_prices_data.items():
+                self.py3.threshold_get_color(v, k)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
