@@ -13,21 +13,20 @@ Configuration parameters:
     format_ip4_separator: show separator if more than one (default ', ')
     format_ip6: display format for IPv6 addresses (default '{ip}')
     format_ip6_separator: show separator if more than one (default ', ')
-    interface_blacklist: specify a list of interfaces to ignore. (default ['lo'])
-    ip_blacklist: specify a list of IP addresses to ignore. (default [])
-    thresholds: specify color thresholds to use.
+    interface_blacklist: specify a list of interfaces to ignore (default ['lo'])
+    ip_blacklist: specify a list of IP addresses to ignore (default [])
+    thresholds: specify color thresholds to use
         (default [(0, 'bad'), (1, 'good')])
     use_sudo: use sudo to run ip, make sure to allow ip some root rights
         without a password by adding a sudoers entry, eg...
-        '<user> ALL=(ALL) NOPASSWD:/sbin/ip address show'
-        (default False)
+        '<user> ALL=(ALL) NOPASSWD:/sbin/ip address show' (default False)
 
-Note:
+Notes:
     `interface_blacklist` and `ip_blacklist` accepts shell-style wildcards.
 
 Format placeholders:
-    {format_interface} format for network interfaces
     {interface} number of network interfaces
+    {format_interface} format for network interfaces
 
 format_interface placeholders:
     {name} interface name, eg eno1
@@ -63,7 +62,7 @@ net_iplist {
     ip_blacklist = ['127.*', '::1']
 }
 
-# show colorized ip4 interfaces
+# show colorized ipv4 interfaces
 net_iplist {
     format = '{format_interface}'
     format_interface = '[\?color=ip {name}][ {format_ip4}]'
@@ -73,10 +72,11 @@ net_iplist {
 @author guiniol, lasers
 
 SAMPLE OUTPUT
-{'color': '#00FF00',
- 'full_text': u'wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
+[
+    {'color': '#00FF00', 'full_text': u'wls1: 192.168.1.3 '},
+    {'color': '#00FF00', 'full_text': u'fe80::f861:44bd:694a:b99c'},
+]
 """
-
 
 import re
 from fnmatch import fnmatch
