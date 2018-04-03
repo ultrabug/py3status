@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Display cryptocurrency data.
+Display cryptocurrency markets.
 
 The site offer various types of data such as symbol, trades, volumes,
-weighted prices, et cetera for a wide range of cryptocurrencies.
+weighted prices, et cetera for a wide range of cryptocurrency markets.
 For more information, visit https://bitcoincharts.com
 
 Configuration parameters:
@@ -15,16 +15,16 @@ Configuration parameters:
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of markets to use
         (default ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR'])
-    request_timeout: time to wait for a response, in seconds (default 10)
     symbols: if possible, convert `{currency}` abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
     thresholds: specify color thresholds to use
         (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
 
-    See https://bitcoincharts.com/markets/list/ for a list of markets.
-
 Format placeholders:
     {format_market} format for cryptocurrency markets
+    {xxx_24h}       eg weighted price for last 24 hours eg 1234.56
+    {xxx_7d}        eg weighted price for last  7 days eg 1234.56
+    {xxx_30d}       eg weighted price for last 30 days eg 1234.56
 
     Bitcoincharts offers weighted prices for several currencies.
     Weighted prices are calculated for the last 24 hours, 7 days and 30 days.
@@ -32,11 +32,7 @@ Format placeholders:
     much lower fluctuations than using a single market's latest price.
 
     To print weighed prices in different currency, replicate the placeholders
-    below with a valid option, eg `{usd_24h}`. You can use many as you like.
-
-    {xxx_24h}       eg weighted price for last 24 hours eg 1234.56
-    {xxx_7d}        eg weighted price for last  7 days eg 1234.56
-    {xxx_30d}       eg weighted price for last 30 days eg 1234.56
+    above with a valid option, eg `{usd_24h}`. You can use many as you like.
 
     Valid options are: ARS, AUD, BRL, CAD, CHF, CLP, CZK, DKK, EUR, GBP, HKD,
     IDR, ILS, INR, JPY, KRW, MXN, MYR, NGN, NOK, NZD, PKR, PLN, RUB, SEK, SGD,
@@ -57,19 +53,19 @@ format_market placeholders:
     {weighted_price}  weighted price for this day eg 17265.00867749991
     {duration}        duration, eg 89282
 
+Notes:
+    See http://bitcoincharts.com/markets/list/ for a list of markets.
+
 Color options:
     color_bad: the price has dropped since the last interval
     color_degraded: the price hasn't changed since the last interval
     color_good: the price has increased since the last interval
 
 Color thresholds:
+    format:
+        xxx: print a color based on changes between `xxx` and last `xxx`
     format_market:
         xxx: print a color based on changes between `xxx` and last `xxx`
-
-DEPRECATION TODO:
-    param: field
-    old: price = _rate = market[self.field]... to {price}
-    new: convert {????} to {price} if self.field is '????'
 
 @author Andre Doser <doser.andre AT gmail.com>, lasers
 
@@ -96,7 +92,6 @@ class Py3status:
     format_market = '{symbol} [\?color=close {close:.2f}]'
     format_separator = ' '
     markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
-    request_timeout = 10
     symbols = True
     thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
 
@@ -166,8 +161,10 @@ class Py3status:
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # end deprecation
+        self.request_timeout = 10
         self.last_market = self.py3.storage_get('last_market') or {}
         self.last_weighted = self.py3.storage_get('last_weighted') or {}
+        self.placeholders = self.py3.get_placeholders_list(self.format_market)
         self.init = {
             'markets': self.py3.format_contains(self.format, 'format_market'),
             'weighted_prices': self.py3.format_contains(
@@ -216,8 +213,11 @@ class Py3status:
                     if self.symbols:
                         sign = market['currency']
                         market['currency'] = MAP.get(sign, sign)
-
-                    for key, value in market.items():
+                    # waste not, want not?
+                    for x in self.placeholders:
+                        if x not in market:
+                            continue
+                        key, value = x, market[x]
                         # color: None and same values gets degraded.
                         result = 0
                         if self.last_market[name].get(key) is None:
@@ -239,8 +239,8 @@ class Py3status:
                         self.format_market, market))
                     break
 
-        format_separator = self.py3.safe_format(self.format_separator)
-        format_market = self.py3.composite_join(format_separator, new_data)
+            format_separator = self.py3.safe_format(self.format_separator)
+            format_market = self.py3.composite_join(format_separator, new_data)
 
         if self.init['weighted_prices']:
             weighted_prices_data = self._get_weighted_prices()
