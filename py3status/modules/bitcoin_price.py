@@ -98,7 +98,7 @@ class Py3status:
     markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
     request_timeout = 10
     symbols = True
-    thresholds = [(-1, 'bad'), (0, 'darkgray'), (1, 'good')]
+    thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
 
     class Meta:
         update_config = {
@@ -170,8 +170,9 @@ class Py3status:
         self.last_weighted = self.py3.storage_get('last_weighted') or {}
         self.request_timeout = 10
         placeholders = self.py3.get_placeholders_list(self.format_market)
-        for index, x in enumerate(self.markets):
-            self.last_market[index] = {x: None for x in placeholders}
+        if not self.last_market:
+            for index, x in enumerate(self.markets):
+                self.last_market[index] = {x: None for x in placeholders}
         self.init = {
             'markets': self.py3.format_contains(self.format, 'format_market'),
             'weighted_prices': self.py3.format_contains(
@@ -195,6 +196,10 @@ class Py3status:
         except self.py3.RequestException:
             data = {}
         return data
+
+    def kill(self):
+        self.py3.storage_set('last_market', self.last_market)
+        self.py3.storage_set('last_weighted', self.last_weighted)
 
     def bitcoin_price(self):
         format_market = None
