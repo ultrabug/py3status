@@ -207,15 +207,18 @@ class Py3status:
 
             for name in self.markets:
                 for market in markets_data:
+                    # skip nonmatched markets
                     if name != market['symbol']:
                         continue
                     if name not in self.last_market:
                         self.last_market[name] = {}
+                    # convert {currency} abbrevs to symbols
                     if self.symbols:
                         sign = market['currency']
                         market['currency'] = MAP.get(sign, sign)
 
                     for key, value in market.items():
+                        # color: None and same values gets degraded.
                         result = 0
                         if self.last_market[name].get(key) is None:
                             self.last_market[name][key] = result
@@ -228,6 +231,7 @@ class Py3status:
                                 result = 1
                             self.last_market[name][key] = market_value
 
+                        # color: it went down? bad. it went up? good.
                         if self.thresholds:
                             self.py3.threshold_get_color(result, key)
 
