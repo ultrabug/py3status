@@ -185,3 +185,8 @@ Note that this will also send a SIGUSR1 signal to i3status.
 ::
 
     killall -USR1 py3status
+
+To refresh individual modules, the `py3-cmd <http://py3status.readthedocs.io/en/latest/py3-cmd.html>`_ utility can be used, e.g.:
+::
+
+   py3-cmd refresh wifi
