@@ -172,10 +172,11 @@ class Py3status:
         placeholders = self.py3.get_placeholders_list(self.format_market)
         for index, x in enumerate(self.markets):
             self.last_market[index] = {x: None for x in placeholders}
-        self.init_markets = self.py3.format_contains(
-            self.format, 'format_market')
-        self.init_weighted_prices = self.py3.format_contains(
-            self.format, ['*_24h', '*_30d', '*_7d'])
+        self.init = {
+            'markets': self.py3.format_contains(self.format, 'format_market'),
+            'weighted_prices': self.py3.format_contains(
+                self.format, ['*_24h', '*_30d', '*_7d']),
+        }
 
     def _get_markets(self):
         try:
@@ -201,9 +202,9 @@ class Py3status:
         markets_data = {}
         new_data = []
 
-        if self.init_markets:
+        if self.init['markets']:
             markets_data = self._get_markets()
-        if self.init_weighted_prices:
+        if self.init['weighted_prices']:
             weighted_prices_data = self._get_weighted_prices()
 
         for index, symbol in enumerate(self.markets):
