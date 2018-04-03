@@ -103,15 +103,17 @@ class Py3status:
         self.re_interface = re.compile(r'\d+: (?P<interface>\w+):')
         self.re_ip4 = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
         self.re_ip6 = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
-        self.count_ip4 = self.py3.format_contains(self.format_interface, 'ip4')
-        self.count_ip6 = self.py3.format_contains(self.format_interface, 'ip6')
-        self.init_ip4 = self.py3.format_contains(self.format_ip4, 'ip') and (
-            self.py3.format_contains(self.format_interface, 'format_ip4'))
-        self.init_ip6 = self.py3.format_contains(self.format_ip6, 'ip') and (
-            self.py3.format_contains(self.format_interface, 'format_ip6'))
         self.ip_command = ['ip', 'address', 'show']
         if self.use_sudo:
             self.ip_command[0:0] = ['sudo', '-n']
+        self.init = {}
+        for ip in ['ip4', 'ip6']:
+            x = 'count_%s' % ip
+            self.init[x] = self.py3.format_contains(self.format_interface, ip)
+            x = 'format_%s' % ip
+            self.init[x] = self.py3.format_contains(getattr(self, x), 'ip') and (
+                self.py3.format_contains(self.format_interface, x)
+            )
 
     def _blacklist(self, string, blacklist):
         for ignore in blacklist:
@@ -159,32 +161,32 @@ class Py3status:
             format_ip4 = None
             new_ip4 = []
             count_ip4 = 0
-            if self.init_ip4 or self.count_ip4:
+            if self.init['format_ip4'] or self.init['count_ip4']:
                 for ip4 in ips.get('ip4', []):
                     if not self._blacklist(ip4, self.ip_blacklist):
                         is_connected = True
                         count_ip4 += 1
-                        if self.init_ip4:
+                        if self.init['format_ip4']:
                             new_ip4.append(self.py3.safe_format(
                                 self.format_ip4, {'ip': ip4}))
 
-            if self.init_ip4:
+            if self.init['format_ip4']:
                 format_ip4 = self.py3.composite_join(self.py3.safe_format(
                     self.format_ip4_separator), new_ip4)
 
             format_ip6 = None
             new_ip6 = []
             count_ip6 = 0
-            if self.init_ip6 or self.count_ip6:
+            if self.init['format_ip6'] or self.init['count_ip6']:
                 for ip6 in ips.get('ip6', []):
                     if not self._blacklist(ip6, self.ip_blacklist):
                         is_connected = True
                         count_ip6 += 1
-                        if self.init_ip6:
+                        if self.init['format_ip6']:
                             new_ip6.append(self.py3.safe_format(
                                 self.format_ip6, {'ip': ip6}))
 
-            if self.init_ip6:
+            if self.init['format_ip6']:
                 format_ip6 = self.py3.composite_join(self.py3.safe_format(
                     self.format_ip6_separator), new_ip6)
 
