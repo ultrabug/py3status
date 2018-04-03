@@ -171,8 +171,8 @@ class Py3status:
         self.request_timeout = 10
         placeholders = self.py3.get_placeholders_list(self.format_market)
         if not self.last_market:
-            for symbol in self.markets:
-                self.last_market[symbol] = {x: None for x in placeholders}
+            for name in self.markets:
+                self.last_market[name] = {x: None for x in placeholders}
         self.init = {
             'markets': self.py3.format_contains(self.format, 'format_market'),
             'weighted_prices': self.py3.format_contains(
@@ -210,24 +210,24 @@ class Py3status:
         if self.init['markets']:
             markets_data = self._get_markets()
 
-            for symbol in self.markets:
+            for name in self.markets:
                 for market in markets_data:
-                    if symbol == market['symbol']:
+                    if name == market['symbol']:
                         if self.symbols:
                             sign = market['currency']
                             market['currency'] = MAP.get(sign, sign)
-                        for k, v in self.last_market[symbol].items():
+                        for k, v in self.last_market[name].items():
                             result = 0
-                            if self.last_market[symbol][k] is None:
-                                self.last_market[symbol][k] = result
+                            if self.last_market[name][k] is None:
+                                self.last_market[name][k] = result
                             elif isinstance(market[k], (int, float)):
                                 market_value = float(market[k])
-                                last_market = float(self.last_market[symbol][k])
+                                last_market = float(self.last_market[name][k])
                                 if market_value < last_market:
                                     result = -1
                                 elif market_value > last_market:
                                     result = 1
-                                self.last_market[symbol][k] = market_value
+                                self.last_market[name][k] = market_value
 
                             if self.thresholds:
                                 self.py3.threshold_get_color(result, k)
