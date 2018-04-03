@@ -18,7 +18,7 @@ Configuration parameters:
     request_timeout: time to wait for a response, in seconds (default 10)
     symbols: if possible, convert `{currency}` abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
-    thresholds: specify color thresholds for changes between updates
+    thresholds: specify color thresholds to use
         (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
 
     See https://bitcoincharts.com/markets/list/ for a list of markets.
@@ -219,19 +219,20 @@ class Py3status:
                         sign = market['currency']
                         market['currency'] = MAP.get(sign, sign)
                     for k, v in self.last_market[index].items():
+                        result = 0
                         if self.last_market[index][k] is None:
-                            self.last_market[index][k] = 0
+                            self.last_market[index][k] = result
                         elif isinstance(market[k], (int, float)):
                             market_value = float(market[k])
                             last_market = float(self.last_market[index][k])
-                            result = 0
                             if market_value < last_market:
                                 result = -1
                             elif market_value > last_market:
                                 result = 1
-                            if self.thresholds:
-                                self.py3.threshold_get_color(result, k)
                             self.last_market[index][k] = market_value
+
+                        if self.thresholds:
+                            self.py3.threshold_get_color(result, k)
 
                     new_data.append(self.py3.safe_format(
                         self.format_market, market))
