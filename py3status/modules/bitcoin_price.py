@@ -168,11 +168,6 @@ class Py3status:
         # end deprecation
         self.last_market = self.py3.storage_get('last_market') or {}
         self.last_weighted = self.py3.storage_get('last_weighted') or {}
-        self.request_timeout = 10
-        placeholders = self.py3.get_placeholders_list(self.format_market)
-        if not self.last_market:
-            for name in self.markets:
-                self.last_market[name] = {x: None for x in placeholders}
         self.init = {
             'markets': self.py3.format_contains(self.format, 'format_market'),
             'weighted_prices': self.py3.format_contains(
@@ -212,29 +207,33 @@ class Py3status:
 
             for name in self.markets:
                 for market in markets_data:
-                    if name == market['symbol']:
-                        if self.symbols:
-                            sign = market['currency']
-                            market['currency'] = MAP.get(sign, sign)
-                        for k, v in self.last_market[name].items():
-                            result = 0
-                            if self.last_market[name][k] is None:
-                                self.last_market[name][k] = result
-                            elif isinstance(market[k], (int, float)):
-                                market_value = float(market[k])
-                                last_market = float(self.last_market[name][k])
-                                if market_value < last_market:
-                                    result = -1
-                                elif market_value > last_market:
-                                    result = 1
-                                self.last_market[name][k] = market_value
+                    if name != market['symbol']:
+                        continue
+                    if name not in self.last_market:
+                        self.last_market[name] = {}
+                    if self.symbols:
+                        sign = market['currency']
+                        market['currency'] = MAP.get(sign, sign)
 
-                            if self.thresholds:
-                                self.py3.threshold_get_color(result, k)
+                    for key, value in market.items():
+                        result = 0
+                        if self.last_market[name].get(key) is None:
+                            self.last_market[name][key] = result
+                        elif isinstance(value, (int, float)):
+                            market_value = market[key]
+                            last_market = self.last_market[name][key]
+                            if market_value < last_market:
+                                result = -1
+                            elif market_value > last_market:
+                                result = 1
+                            self.last_market[name][key] = market_value
 
-                        new_data.append(self.py3.safe_format(
-                            self.format_market, market))
-                        break
+                        if self.thresholds:
+                            self.py3.threshold_get_color(result, key)
+
+                    new_data.append(self.py3.safe_format(
+                        self.format_market, market))
+                    break
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_market = self.py3.composite_join(format_separator, new_data)
