@@ -210,31 +210,32 @@ class Py3status:
         if self.init['markets']:
             markets_data = self._get_markets()
 
-        for index, symbol in enumerate(self.markets):
-            for market in markets_data:
-                if symbol == market['symbol']:
-                    if self.symbols:
-                        sign = market['currency']
-                        market['currency'] = MAP.get(sign, sign)
-                    for k, v in self.last_market[index].items():
-                        result = 0
-                        if self.last_market[index][k] is None:
-                            self.last_market[index][k] = result
-                        elif isinstance(market[k], (int, float)):
-                            market_value = float(market[k])
-                            last_market = float(self.last_market[index][k])
-                            if market_value < last_market:
-                                result = -1
-                            elif market_value > last_market:
-                                result = 1
-                            self.last_market[index][k] = market_value
+            for index, symbol in enumerate(self.markets):
+                for market in markets_data:
+                    if symbol == market['symbol']:
+                        if self.symbols:
+                            sign = market['currency']
+                            market['currency'] = MAP.get(sign, sign)
+                        self.py3.log(self.last_market)
+                        for k, v in self.last_market[index].items():
+                            result = 0
+                            if self.last_market[index][k] is None:
+                                self.last_market[index][k] = result
+                            elif isinstance(market[k], (int, float)):
+                                market_value = float(market[k])
+                                last_market = float(self.last_market[index][k])
+                                if market_value < last_market:
+                                    result = -1
+                                elif market_value > last_market:
+                                    result = 1
+                                self.last_market[index][k] = market_value
 
-                        if self.thresholds:
-                            self.py3.threshold_get_color(result, k)
+                            if self.thresholds:
+                                self.py3.threshold_get_color(result, k)
 
-                    new_data.append(self.py3.safe_format(
-                        self.format_market, market))
-                    break
+                        new_data.append(self.py3.safe_format(
+                            self.format_market, market))
+                        break
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_market = self.py3.composite_join(format_separator, new_data)
