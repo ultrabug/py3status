@@ -373,7 +373,7 @@ class ConfigParser:
             'auto': self.make_value,
         }
 
-        match = re.match('exec\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)'  , value)
+        match = re.match('exec\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)', value)
         shell, _, var_type = match.groups()
         try:
             shell_stdout = str(check_output(shell, shell=True).rstrip(), encoding='utf-8')
