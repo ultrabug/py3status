@@ -11,12 +11,11 @@ Configuration parameters:
         Don't query more often than once every 15 minutes (default 900)
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
-        (default '{symbol} [\?color=close {close:.2f}]')
+        (default '{symbol} [\?color=last_close {close:.2f}]')
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of markets to use
         (default ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR'])
-    symbols: if possible, convert `{currency}` abbreviations to symbols
-        e.g. USD -> $, EUR -> € and so on (default True)
+    symbols: convert `{currency}` to signs, eg $, €, etc (default True)
     thresholds: specify color thresholds to use
         (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
 
@@ -63,9 +62,35 @@ Color options:
 
 Color thresholds:
     format:
-        xxx: print a color based on changes between `xxx` and last `xxx`
+        xxx: print a color based on the value of `xxx` placeholder
+        last_xxx: print a color based on changes between `xxx` and last `xxx`
     format_market:
-        xxx: print a color based on changes between `xxx` and last `xxx`
+        xxx: print a color based on the value of `xxx` placeholder
+        last_xxx: print a color based on changes between `xxx` and last `xxx`
+
+Examples:
+```
+# colorize usd_24h weighted prices
+bitcoin_price {
+    format = '[{format_market} usd_24h [\?color=last_usd_24h {usd_24h}]]'
+}
+
+# add currency signs
+bitcoin_price {
+    format_market = '[{symbol} [\?color=last_close {currency}{close:.2f}]]'
+}
+
+# round to the nearest dollar
+bitcoin_price {
+    format_market = '{symbol} [\?color=last_close {close:.0f}]'
+}
+
+# remove last 3 letters from symbol, hack
+bitcoin_price {
+    format_market = '[[\?max_length=-3 {symbol}] '
+    format_market += '[\?color=last_close {currency}{close:.2f}]]'
+}
+```
 
 @author Andre Doser <doser.andre AT gmail.com>, lasers
 
@@ -89,7 +114,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 900
     format = '{format_market}'
-    format_market = '{symbol} [\?color=close {close:.2f}]'
+    format_market = '{symbol} [\?color=last_close {close:.2f}]'
     format_separator = ' '
     markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
     symbols = True
@@ -161,17 +186,20 @@ class Py3status:
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # end deprecation
+        self.init = {}
+        self.placeholders = {}
+        self.last_data = self.py3.storage_get('last_data') or {}
         self.request_timeout = 10
-        self.last_market = self.py3.storage_get('last_market') or {}
-        self.last_weighted = self.py3.storage_get('last_weighted') or {}
-        self.placeholders = self.py3.get_placeholders_list(self.format_market)
-        self.init = {
-            'markets': self.py3.format_contains(self.format, 'format_market'),
-            'weighted_prices': self.py3.format_contains(
-                self.format, ['*_24h', '*_30d', '*_7d']),
-        }
+        init_policies = [
+            # names, format contains placeholders, format_string
+            ('markets', 'format_market', self.format_market),
+            ('weighted_prices', ['*_24h', '*_30d', '*_7d'], self.format)
+        ]
+        for x in init_policies:
+            self.init[x[0]] = self.py3.format_contains(self.format, x[1])
+            self.placeholders[x[0]] = self.py3.get_placeholders_list(x[2])
 
-    def _get_markets(self):
+    def _get_markets_data(self):
         try:
             data = self.py3.request(
                 URL_MARKETS, timeout=self.request_timeout).json()
@@ -179,7 +207,7 @@ class Py3status:
             data = {}
         return data
 
-    def _get_weighted_prices(self):
+    def _get_weighted_prices_data(self):
         try:
             data = self.py3.request(
                 URL_WEIGHTED_PRICES, timeout=self.request_timeout).json()
@@ -189,63 +217,66 @@ class Py3status:
             data = {}
         return data
 
+    def _manipulate(self, data, placeholders, name):
+        for key in placeholders:
+            if key not in data:
+                continue
+            result = 0
+            value = data[key]
+            self.last_data.setdefault(name, {})
+            if name == 'weighted_prices':
+                value = float(value)
+            if isinstance(value, (int, float)):
+                last_value = self.last_data[name].get(key)
+                self.last_data[name][key] = value
+                if last_value is not None:
+                    if value < last_value:
+                        result = -1
+                    elif value > last_value:
+                        result = 1
+            # it went down? bad. it went up? good. otherwise, degraded.
+            if self.thresholds:
+                self.py3.threshold_get_color(value, key)
+                self.py3.threshold_get_color(result, 'last_' + key)
+
     def kill(self):
-        self.py3.storage_set('last_market', self.last_market)
-        self.py3.storage_set('last_weighted', self.last_weighted)
+        self.py3.storage_set('last_data', self.last_data)
 
     def bitcoin_price(self):
         format_market = None
         weighted_prices_data = {}
         markets_data = {}
-        new_data = []
 
         if self.init['markets']:
-            markets_data = self._get_markets()
+            markets_data = self._get_markets_data()
+            new_market = []
 
             for name in self.markets:
                 for market in markets_data:
                     # skip nonmatched markets
                     if name != market['symbol']:
                         continue
-                    if name not in self.last_market:
-                        self.last_market[name] = {}
                     # convert {currency} abbrevs to symbols
                     if self.symbols:
                         sign = market['currency']
                         market['currency'] = MAP.get(sign, sign)
-                    # waste not, want not?
-                    for x in self.placeholders:
-                        if x not in market:
-                            continue
-                        key, value = x, market[x]
-                        # color: None and same values gets degraded.
-                        result = 0
-                        if self.last_market[name].get(key) is None:
-                            self.last_market[name][key] = result
-                        elif isinstance(value, (int, float)):
-                            market_value = market[key]
-                            last_market = self.last_market[name][key]
-                            if market_value < last_market:
-                                result = -1
-                            elif market_value > last_market:
-                                result = 1
-                            self.last_market[name][key] = market_value
-
-                        # color: it went down? bad. it went up? good.
-                        if self.thresholds:
-                            self.py3.threshold_get_color(result, key)
-
-                    new_data.append(self.py3.safe_format(
-                        self.format_market, market))
+                    # waste not, want not
+                    self._manipulate(market, self.placeholders['markets'], name)
+                    new_market.append(
+                        self.py3.safe_format(self.format_market, market)
+                    )
                     break
 
             format_separator = self.py3.safe_format(self.format_separator)
-            format_market = self.py3.composite_join(format_separator, new_data)
+            format_market = self.py3.composite_join(format_separator, new_market)
 
         if self.init['weighted_prices']:
-            weighted_prices_data = self._get_weighted_prices()
-            for k, v in weighted_prices_data.items():
-                self.py3.threshold_get_color(v, k)
+            weighted_prices_data = self._get_weighted_prices_data()
+            self._manipulate(
+                weighted_prices_data,
+                self.placeholders['weighted_prices'],
+                'weighted_prices'
+            )
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
