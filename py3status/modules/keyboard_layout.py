@@ -54,6 +54,7 @@ us
 import re
 LAYOUTS_RE = re.compile(r".*layout:\s*((\w+,?)+).*", flags=re.DOTALL)
 LEDMASK_RE = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*", flags=re.DOTALL)
+VARIANTS_RE = re.compile(r".*variant:\s*(([\w-]+,?)+).*", flags=re.DOTALL)
 
 
 class Py3status:
@@ -111,7 +112,13 @@ class Py3status:
             self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
                 layout.split('=') for layout in self.colors.split(',')))
 
-        lang_color = getattr(self.py3, 'COLOR_%s' % lang.upper())
+        # colorize languages containing spaces and/or dashes too
+        language = lang.upper()
+        for character in ' -':
+            if character in language:
+                language = language.replace(character, '_')
+
+        lang_color = getattr(self.py3, 'COLOR_%s' % language)
         if not lang_color:
             lang_color = self.colors_dict.get(lang)
         if not lang_color:  # old compatibility: try default value
@@ -131,7 +138,11 @@ class Py3status:
         out = self.py3.command_output(["setxkbmap", "-query"])
         layouts = re.match(LAYOUTS_RE, out).group(1).split(",")
         if len(layouts) == 1:
-            return layouts[0]
+            variant = re.match(VARIANTS_RE, out)
+            if variant:
+                return layouts[0] + ' ' + variant.group(1)
+            else:
+                return layouts[0]
 
         xset_output = self.py3.command_output(["xset", "-q"])
         led_mask = re.match(LEDMASK_RE, xset_output).groups(0)[0]
@@ -141,7 +152,7 @@ class Py3status:
         self._active += delta
         self._active = self._active % len(self._layouts)
         layout = self._layouts[self._active]
-        self.py3.command_run(['setxkbmap', '-layout', layout])
+        self.py3.command_run('setxkbmap -layout {}'.format(layout))
 
     def on_click(self, event):
         button = event['button']
