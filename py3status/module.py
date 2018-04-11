@@ -10,6 +10,12 @@ from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
 
+# basestring does not exist in python3
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 class Module:
     """
@@ -328,7 +334,7 @@ class Module:
 
         if 'align' in mod_config:
             align = mod_config['align']
-            if not (isinstance(align, str) and
+            if not (isinstance(align, basestring) and
                     align.lower() in ("left", "center", "right")):
                 err = 'invalid "align" attribute, valid values are:'
                 err += ' left, center, right'
