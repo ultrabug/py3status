@@ -211,30 +211,22 @@ class Py3status:
 
     def _get_weather_data(self):
         try:
-            query = self.py3.request(self.url, timeout=self.request_timeout)
+            return self.py3.request(
+                self.url, timeout=self.request_timeout).json()
         except self.py3.RequestException:
             return {}
-        if query.status_code != 200:
-            self.py3.log('HTTP response returned code %s' % query.status_code)
-            return {}
-        return query.json()
 
     def _organize(self, data):
-        try:
-            today = data['query']['results']['channel']['item']['condition']
-            forecasts = data['query']['results']['channel']['item']['forecast']
-            # skip today?
-            if not self.forecast_today:
-                forecasts.pop(0)
-            # set number of forecast_days
-            forecasts = forecasts[:self.forecast_days]
-            # add extras
-            channel = data['query']['results']['channel']
-            channel = self.py3.flatten_dict(channel, delimiter='_')
-        except:
-            today = {}
-            forecasts = {}
-            channel = {}
+        today = data['query']['results']['channel']['item']['condition']
+        forecasts = data['query']['results']['channel']['item']['forecast']
+        # skip today?
+        if not self.forecast_today:
+            forecasts.pop(0)
+        # set number of forecast_days
+        forecasts = forecasts[:self.forecast_days]
+        # add extras
+        channel = data['query']['results']['channel']
+        channel = self.py3.flatten_dict(channel, delimiter='_')
         return today, forecasts, channel
 
     def _get_icon(self, forecast):
