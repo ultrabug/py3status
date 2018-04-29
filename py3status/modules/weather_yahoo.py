@@ -261,20 +261,26 @@ class Py3status:
                     channel['item_pubDate'] = self.py3.safe_format(
                         datetime.strftime(datetime.strptime(
                             channel['item_pubDate'], DATETIME_GENERAL),
-                            self.format_datetime['format']))
+                            self.format_datetime['format']
+                        )
+                    )
 
                 if self.datetime_init['format_today']:
                     today['date'] = self.py3.safe_format(
                         datetime.strftime(datetime.strptime(
                             today['date'], DATETIME_GENERAL),
-                            self.format_datetime['format_today']))
+                            self.format_datetime['format_today']
+                        )
+                    )
 
                 if self.datetime_init['format_forecast']:
                     for forecast in forecasts:
                         forecast['date'] = self.py3.safe_format(
                             datetime.strftime(datetime.strptime(
                                 forecast['date'], DATETIME_FORECAST),
-                                self.format_datetime['format_forecast']))
+                                self.format_datetime['format_forecast']
+                            )
+                        )
 
             if today:
                 if self.thresholds:
@@ -285,7 +291,8 @@ class Py3status:
                         icon=self._get_icon(today),
                         unit=self.unit,
                         **today
-                    ))
+                    )
+                )
 
             if forecasts:
                 for forecast in forecasts:
@@ -293,12 +300,15 @@ class Py3status:
                         self.py3.threshold_get_color(forecast['high'], 'high')
                         self.py3.threshold_get_color(forecast['low'], 'low')
 
-                    new_data.append(self.py3.safe_format(
-                        self.format_forecast, dict(
-                            icon=self._get_icon(forecast),
-                            unit=self.unit,
-                            **forecast
-                        )))
+                    new_data.append(
+                        self.py3.safe_format(
+                            self.format_forecast, dict(
+                                icon=self._get_icon(forecast),
+                                unit=self.unit,
+                                **forecast
+                            )
+                        )
+                    )
 
             format_separator = self.py3.safe_format(self.format_separator)
             format_forecast = self.py3.composite_join(format_separator, new_data)
