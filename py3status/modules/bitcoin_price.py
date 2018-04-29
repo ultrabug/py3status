@@ -13,8 +13,8 @@ Configuration parameters:
     format_market: display format for cryptocurrency markets
         (default '{symbol} [\?color=last_close {currency}{close:.2f}]')
     format_separator: show separator if more than one (default ' ')
-    markets: specify a list of markets to use
-        (default ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR'])
+    markets: specify a list of active/inactive markets to use,
+        see https://bitcoincharts.com/markets/list (default ['coinbaseUSD'])
     symbols: convert `{currency}` to signs, eg $, €, etc (default True)
     thresholds: specify color thresholds to use
         (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
@@ -52,9 +52,6 @@ format_market placeholders:
     {weighted_price}  weighted price for this day eg 17265.00867749991
     {duration}        duration, eg 89282
 
-Notes:
-    See http://bitcoincharts.com/markets/list/ for a list of markets.
-
 Color options:
     color_bad: the price has dropped since the last interval
     color_degraded: the price hasn't changed since the last interval
@@ -91,10 +88,9 @@ bitcoin_price {
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'coinbaseUSD'}, {'full_text': '17139.00', 'color': '#f00'},
-    {'full_text': 'coinbaseEUR'}, {'full_text': '14412.76', 'color': '#0f0'},
-    {'full_text': 'bitstampUSD'}, {'full_text': '2546.00', 'color': '#ff0'},
-    {'full_text': 'bitstampEUR'}, {'full_text': '13649.00', 'color': '#0f0'},
+    {'full_text': 'bitstampUSD '}, {'full_text': '$9471.52 ', 'color': '#ff0000'},
+    {'full_text': 'coinbaseUSD '}, {'full_text': '$9458.00 ', 'color': '#ffff00'},
+    {'full_text': 'localbtcUSD '}, {'full_text': '$9700.00', 'color': '#00ff00'},
 ]
 """
 
@@ -111,7 +107,7 @@ class Py3status:
     format = '{format_market}'
     format_market = '{symbol} [\?color=last_close {currency}{close:.2f}]'
     format_separator = ' '
-    markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
+    markets = ['coinbaseUSD']
     symbols = True
     thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
 
