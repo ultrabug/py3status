@@ -153,16 +153,17 @@ class Py3status:
     def post_config_hook(self):
         if not self.woeid:
             raise Exception('missing woeid')
-        self.init_datetime_format = self.py3.format_contains(
-            self.format, 'item_pubDate') and 'format' in self.format_datetime
-        self.init_datetime_format_today = self.py3.format_contains(
-            self.format_today, 'date') and 'format_today' in self.format_datetime
-        self.init_datetime_format_forecast = self.py3.format_contains(
-            self.format_forecast, 'date') and 'format_forecast' in self.format_datetime
-        self.init_datetimes = any([
-            self.init_datetime_format,
-            self.init_datetime_format_today,
-            self.init_datetime_format_forecast])
+
+        self.datetime_init = {'datetime': []}
+        names = ['format', 'format_today', 'format_forecast']
+        placeholders = ['item_pubDate', 'date', 'date']
+        for name, placeholder, in zip(names, placeholders):
+            self.datetime_init[name] = (self.py3.format_contains(getattr(
+                self, name), placeholder) and name in self.format_datetime
+            )
+            if self.datetime_init[name]:
+                self.datetime_init['datetime'].append(name)
+
         self.unit = self.unit.upper()
         self.url = URL.format(woeid=self.woeid, unit=self.unit.lower())
         self.conditions = [
@@ -255,20 +256,20 @@ class Py3status:
 
             today, forecasts, channel = self._organize(weather_data)
 
-            if self.init_datetimes:
-                if self.init_datetime_format:
+            if self.datetime_init['datetime']:
+                if self.datetime_init['format']:
                     channel['item_pubDate'] = self.py3.safe_format(
                         datetime.strftime(datetime.strptime(
                             channel['item_pubDate'], DATETIME_GENERAL),
                             self.format_datetime['format']))
 
-                if self.init_datetime_format_today:
+                if self.datetime_init['format_today']:
                     today['date'] = self.py3.safe_format(
                         datetime.strftime(datetime.strptime(
                             today['date'], DATETIME_GENERAL),
                             self.format_datetime['format_today']))
 
-                if self.init_datetime_format_forecast:
+                if self.datetime_init['format_forecast']:
                     for forecast in forecasts:
                         forecast['date'] = self.py3.safe_format(
                             datetime.strftime(datetime.strptime(
