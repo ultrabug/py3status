@@ -11,7 +11,7 @@ Configuration parameters:
         Don't query more often than once every 15 minutes (default 900)
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
-        (default '{symbol} [\?color=last_close {close:.2f}]')
+        (default '{symbol} [\?color=last_close {currency}{close:.2f}]')
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of markets to use
         (default ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR'])
@@ -38,7 +38,7 @@ Format placeholders:
     SLL, THB, USD, VEF, VND, ZAR... and be written in lowercase.
 
 format_market placeholders:
-    {symbol}          short name for market, eg localbtcUSD
+    {symbol}          alias for market name, eg localbtcUSD
     {currency}        base currency of the market, eg USD, EUR, GBP
     {bid}             highest bid price, eg 1704347.14
     {ask}             lowest ask price, eg 12100.0,
@@ -75,11 +75,6 @@ bitcoin_price {
     format = '[{format_market} usd_24h [\?color=last_usd_24h {usd_24h}]]'
 }
 
-# add currency signs
-bitcoin_price {
-    format_market = '[{symbol} [\?color=last_close {currency}{close:.2f}]]'
-}
-
 # round to the nearest dollar
 bitcoin_price {
     format_market = '{symbol} [\?color=last_close {close:.0f}]'
@@ -114,7 +109,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 900
     format = '{format_market}'
-    format_market = '{symbol} [\?color=last_close {close:.2f}]'
+    format_market = '{symbol} [\?color=last_close {currency}{close:.2f}]'
     format_separator = ' '
     markets = ['coinbaseUSD', 'coinbaseEUR', 'bitstampUSD', 'bitstampEUR']
     symbols = True
