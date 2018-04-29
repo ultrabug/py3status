@@ -34,6 +34,7 @@ class Module:
         """
         self.allow_config_clicks = True
         self.allow_urgent = None
+        self.block_options = []
         self.cache_time = None
         self.click_events = False
         self.config = py3_wrapper.config
@@ -325,7 +326,7 @@ class Module:
 
             if 'align' in mod_config:
                 align = mod_config['align']
-                if not (isinstance(align, basestring) and
+                if not isinstance(align, basestring) and (
                         align.lower() in ('left', 'center', 'right')):
                     err = 'invalid "align" attribute, valid values are:'
                     err += ' left, center, right'
@@ -349,6 +350,29 @@ class Module:
                 raise TypeError(err)
 
             self.i3s_module_options['separator_block_width'] = sep_block_width
+
+        for name in ('background', 'border'):
+            if name in mod_config:
+                param = mod_config[name]
+                if not isinstance(param, basestring):
+                    err = 'invalid "{}" attribute, '.format(name)
+                    err += 'should be a string'
+                    raise TypeError(err)
+                self.py3_module_options[name] = Py3(self)._get_color(param)
+                self.block_options.append(name)
+
+                if name != 'border':
+                    continue
+                borders = ('top', 'bottom', 'left', 'right')
+                for name in ('border_' + x for x in borders):
+                    if name in mod_config:
+                        param = mod_config[name]
+                        if not isinstance(param, int):
+                            err = 'invalid "{}" attribute, '.format(name)
+                            err += 'should be an int'
+                            raise TypeError(err)
+                        self.py3_module_options[name] = param
+                        self.block_options.append(name)
 
     def process_composite(self, response):
         """
@@ -411,6 +435,10 @@ class Module:
             # if urgent we want to set this to all parts
             elif urgent and 'urgent' not in item:
                 item['urgent'] = urgent
+
+            # set background and border colors
+            for option_name in self.block_options:
+                item[option_name] = self.py3_module_options[option_name]
 
         # set min_width
         if 'min_width' in self.py3_module_options:
