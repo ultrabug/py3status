@@ -27,8 +27,8 @@ Configuration parameters:
     woeid: specify Yahoo! WOEID to use, required (default None)
 
 Note:
-    The placeholder `{format_today}` will show the current conditions in `format`.
-    The config `forecast_today` will show today's forecast in `format_forecast`.
+    The placeholder `{format_today}` shows the current conditions in `format`.
+    The config `forecast_today` shows today's forecast in `format_forecast`.
 
 Format placeholders:
     {atmosphere_humidity}   humidity, eg 96
@@ -76,10 +76,10 @@ format_forecast placeholders:
 
 Color thresholds:
     format:
-        temp: a color based on current temperature
+        temp: print a color based on the value of current temperature
     format_forecast:
-        high: a color based on high temperature
-        low: a color based on low temperature
+        high: print a color based on the value of high temperature
+        low: print a color based on the value of low temperature
 
 Examples:
 ```
@@ -95,12 +95,12 @@ weather_yahoo {
     format = '[{format_today} ][{format_forecast}][ {item_pubDate}]'
     format_today = '{date} {icon}'
     format_forecast = '{date} {icon}'
-    format_separator = '\?color=bad  - '
+    format_separator = '\?color=violet  \| '
 
     format_datetime = {
-        'format_today': '\?color=bad&show %A',
+        'format': '\?color=darkgray %-I%P',
+        'format_today': '\?color=violet %A',
         'format_forecast': '%a %b %d',
-        'format': '%-I%P'
     }
 }
 
@@ -115,6 +115,15 @@ weather_yahoo {
 
 SAMPLE OUTPUT
 {'full_text': u'\u2602 \u2601 \u2601 \u2601'}
+
+example_weather
+[
+    {'full_text': u'Wednesday', 'color': '#ee82ee'},
+    {'full_text': u' \u2601 Thu Mar 08 \u2600'},
+    {'full_text': u' | ', 'color': '#ee82ee'},
+    {'full_text': u'Fri Mar 09 \u2601'},
+    {'full_text': u' 3am', 'color': '#a9a9a9'},
+]
 """
 
 from datetime import datetime
