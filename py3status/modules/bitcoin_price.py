@@ -174,15 +174,13 @@ class Py3status:
                     'new': 'format_market',
                     'format_strings': ['format'],
                 },
-                {
-                    'placeholder': 'price',
-                    'new': 'close',
-                    'format_strings': ['format_market'],
-                },
             ],
         }
 
     def post_config_hook(self):
+        # start deprecation
+        self.field = getattr(self, 'field', 'close')
+        self.price = self.py3.format_contains(self.format_market, 'price*')
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # end deprecation
@@ -256,6 +254,14 @@ class Py3status:
                     # skip nonmatched markets
                     if name != market['symbol']:
                         continue
+                    # deprecation: show field->price + market==symbol
+                    if self.price:
+                        market['market'] = market['symbol']
+                        sign = market['currency']
+                        market['symbol'] = MAP.get(sign, sign)
+                        if self.field in market:
+                            market['price'] = market[self.field]
+                    # end deprecation
                     # convert {currency} abbrevs to symbols
                     if self.symbols:
                         sign = market['currency']
