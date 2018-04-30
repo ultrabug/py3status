@@ -313,7 +313,12 @@ class Module:
         mod_config = self.config['py3_config'].get(module, {})
 
         if 'min_width' in mod_config:
-            self.module_options['min_width'] = mod_config['min_width']
+            min_width = mod_config['min_width']
+            if not isinstance(min_width, int):
+                err = 'invalid "min_width" attribute should be an int'
+                raise TypeError(err)
+
+            self.module_options['min_width'] = min_width
 
         if 'separator' in mod_config:
             separator = mod_config['separator']
