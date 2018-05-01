@@ -303,7 +303,7 @@ class Py3status:
     def post_config_hook(self):
         if not self.command:
             self.command = self.py3.check_commands(
-                ['amixer', 'pamixer', 'pactl'])
+                ['pamixer', 'pactl', 'amixer'])
         elif self.command not in ['amixer', 'pamixer', 'pactl']:
             raise Exception(STRING_ERROR % self.command)
         elif not self.py3.check_commands(self.command):

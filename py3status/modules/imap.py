@@ -167,7 +167,7 @@ class Py3status:
         try:
             # build a new command tag (Xnnn) as bytes:
             self.command_tag = (self.command_tag + 1) % 1000
-            command_tag = b'X'+bytes(str(self.command_tag).zfill(3), 'ascii')
+            command_tag = b'X' + bytes(str(self.command_tag).zfill(3), 'ascii')
 
             # make sure we have selected anything before idling:
             directories = self.mailbox.split(',')
