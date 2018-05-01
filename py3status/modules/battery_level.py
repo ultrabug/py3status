@@ -279,7 +279,9 @@ class Py3status:
             r = _parse_battery_info(path)
 
             capacity = r.get("POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL"))
-            present_rate = r.get("POWER_SUPPLY_POWER_NOW", r.get("POWER_SUPPLY_CURRENT_NOW"))
+            present_rate = r.get("POWER_SUPPLY_POWER_NOW",
+                                 r.get("POWER_SUPPLY_CURRENT_NOW",
+                                       r.get("POWER_SUPPLY_VOLTAGE_NOW")))
             remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW"))
 
             battery = {}
