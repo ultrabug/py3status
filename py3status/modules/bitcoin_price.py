@@ -149,7 +149,11 @@ class Py3status:
                 },
                 {
                     'param': 'hide_on_error',
-                    'msg': 'obsolete param',
+                    'msg': 'obsolete parameter',
+                },
+                {
+                    'param': 'color_index',
+                    'msg': 'obsolete parameter',
                 },
             ],
             'rename': [
