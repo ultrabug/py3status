@@ -108,12 +108,11 @@ class ConfigParser:
 
     * execute shell code
 
-        order += exec(pass show git|head -n1)
         my_module {
-            my_guessed_type = env(MY_VAR)
-            my_str = exec(pass show git|head -n1, str)
-            my_int = exec(pass show git|head -n1, int)
-            my_bool = exec(pass show git|head -n1, bool)
+            my_guessed_type = shell(pass show git|head -n1)
+            my_str = shell(pass show git|head -n1, str)
+            my_int = shell(pass show git|head -n1, int)
+            my_bool = shell(pass show git|head -n1, bool)
         }
 
         (shell code may not include any parenthesis!)
@@ -127,7 +126,7 @@ class ConfigParser:
         '#.*$'  # comments
         # environment variables
         '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
-        '|(?P<shell>exec\(.+?(\s*,\s*(int|float|str|bool|auto))?\))'  # shell code
+        '|(?P<shell>shell\(.+?(\s*,\s*(int|float|str|bool|auto))?\))'  # shell code
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -363,7 +362,7 @@ class ConfigParser:
         except ValueError:
             self.error('Bad conversion')
 
-    def make_value_from_exec(self, value):
+    def make_value_from_shell(self, value):
         conversion_options = {
             'int': int,
             'float': float,
@@ -373,7 +372,7 @@ class ConfigParser:
             'auto': self.make_value,
         }
 
-        match = re.match('exec\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)', value)
+        match = re.match('shell\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)', value)
         shell, _, var_type = match.groups()
         try:
             shell_stdout = str(check_output(shell, shell=True).rstrip(), encoding='utf-8')
@@ -469,7 +468,7 @@ class ConfigParser:
             if token['type'] == 'env_var':
                 return self.make_value_from_env(t_value)
             if token['type'] == 'shell':
-                return self.make_value_from_exec(t_value)
+                return self.make_value_from_shell(t_value)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -561,7 +560,7 @@ class ConfigParser:
             elif t_type == 'env_var':
                 self.error('Name expected')
             elif t_type == 'shell':
-                self.error('Name expected')
+                self.error('Shell command expected')
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:
