@@ -172,17 +172,20 @@ class Py3status:
         for line in current.splitlines():
             try:
                 s = line.split(' ')
+                infos = line[line.find('('):]
                 if s[1] == 'connected':
-                    output, state = s[0], s[1]
-                    if s[2][0] == '(':
-                        mode, infos = None, ' '.join(s[2:]).strip('\n')
-                    else:
-                        mode, infos = s[2], ' '.join(s[3:]).strip('\n')
-                        active_layout.append(output)
+                    output, state, mode = s[0], s[1], None
+                    for index, x in enumerate(s[2:], 2):
+                        if 'x' in x and '+' in x:
+                            mode = x
+                            active_layout.append(output)
+                            infos = line[line.find(s[index + 1]):]
+                            break
+                        elif '(' in x:
+                            break
                     connected.append(output)
                 elif s[1] == 'disconnected':
-                    output, state = s[0], s[1]
-                    mode, infos = None, ' '.join(s[2:]).strip('\n')
+                    output, state, mode = s[0], s[1], None
                     disconnected.append(output)
                 else:
                     continue
