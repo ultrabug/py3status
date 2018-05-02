@@ -18,9 +18,9 @@ Configuration parameters:
     format: display format for this module (default '{format_output}')
     format_output: display format for active outputs
         (default '{name} {brightness} {gamma_red} {gamma_green} {gamma_blue}')
-    format_output_options: display format for output options (default {})
     format_output_separator: show separator if more than one (default ' ')
-    output_options: specify output option keys and values to use (default {})
+    options: specify a dict consisting of option types and a dict
+        consisting of output-related settings to use (default {})
     outputs: specify a list of active outputs to use (default [])
 
 Format placeholders:
@@ -42,11 +42,30 @@ format_output placeholders:
     {scale} scale value, eg 1.0
     {skip_update} values to skip on updates, eg rotate, reflect
 
+format_output placeholders (randomizing ranges):
+    {brightness_randomize} brightness randomizing range, eg (0, 5)
+    {delta_randomize} delta randomizing range, eg (0, 5)
+    {gamma_blue_randomize} gamma blue randomizing range, eg (0, 5)
+    {gamma_green_randomize} gamma green randomizing range, eg (0, 5)
+    {gamma_red_randomize} gamma red randomizing range, eg (0, 5)
+    {scale_randomize} scale randomizing range, eg (0, 5)
+
+format_output placeholders (scrolling ranges):
+    {brightness_scroll} brightness scrolling range, eg (-100, 100)
+    {delta_scroll} delta scrolling range, eg (-100, 100)
+    {gamma_blue_scroll} gamma blue scrolling range, eg (-100, 100)
+    {gamma_green_scroll} gamma green scrolling range, eg (-100, 100)
+    {gamma_red_scroll} gamma red scrolling range, eg (-100, 100)
+    {scale_scroll} scale scrolling range, eg (-100, 100)
+
 format_output_option_{xxx} placeholders:
     {value} display format for this option
 
 Examples:
 ```
+# xrandr_tweaks comes with gamma colors by default. programming can be fun
+# when we can repeatedly click on OUTPUT name to find a decent color scheme.
+
 # adjust brightness
 xrandr_tweaks {
     format_output = '{name} {brightness}'
@@ -57,111 +76,112 @@ xrandr_tweaks {
     format_output = '{name} {brightness} {gamma_red}'
 }
 
-# xrandr_rotate alternative
-xrandr_tweaks {
-    format_output = '{rotate}'
-}
-
 # start with chocolate brown gamma
 xrandr_tweaks {
-    output_options = {
-        'gamma_red': 1.70,
-        'gamma_green': 1.20,
-    }
-}
-
-# invert screen color, scroll down/up once
-xrandr_tweaks {
-    format_output = '{name} {brightness}'
-    output_options = {'delta': 2.0}
-}
-
-# default output_options
-xrandr_tweaks {
-    output_options = {
-        'brightness': 1.0,
-        'delta': 0.05,
-        'gamma_blue': 1.0,
-        'gamma_green': 1.0,
-        'gamma_red': 1.0,
-        'ignore': [],
-        'name': None,
-        'reflect': 'normal',
-        'reflection': ['normal', 'xy', 'x', 'y'],
-        'rotate': 'normal',
-        'rotation': ['normal', 'right', 'inverted', 'left'],
-        'scale': 1.0,
-        'skip_update': [],
+    options = {
+        'output': {
+            'gamma_red': 1.70,
+            'gamma_green': 1.20,
+        }
     }
 }
 
 # we can also configure per-output parameters
 xrandr_tweaks {
-    output_options = {
-        'brightness': [0.75, 1.0],      # two outputs
-        'rotate': ['normal', 'left'],   # two outputs
-        'ignore': [
-            ['brightness', 'rotate'],
-            ['brightness', 'reflect'],  # two outputs
-        ]
+    options = {
+        'output': {
+            'brightness': [0.75, 1.0],      # two outputs
+            'rotate': ['normal', 'left'],   # two outputs
+            'ignore': [
+                ['brightness', 'rotate'],
+                ['brightness', 'reflect'],  # two outputs
+            ]
+        }
     }
 }
 
-# default format_output_options
+# default options
 xrandr_tweaks {
-    format_output_options = {
-        'brightness': '\?color=#a9a9a9 {value:.2f}',
-        'delta': '\?color=#fff000 {value:.2f}',
-        'gamma_blue': '\?color=#00bfff {value:.2f}',
-        'gamma_green': '\?color=#00ff00 {value:.2f}',
-        'gamma_red': '\?color=#ff0000 {value:.2f}',
-        'ignore': '\?color=#6a6a6a {value}',
-        'name': '\?color=#ffffff {value}',
-        'reflect': '\?color=#00ffff {value}',
-        'reflection': '\?color=#00a9a9 {value}',
-        'rotate': '\?color=#00ff00 {value}',
-        'rotation': '\?color=#00a900 {value}',
-        'scale': '\?color=#ff00ff {value:.2f}',
-        'skip_update': '\?color=#a90000 {value}',
+    # scroll down to OPTIONS to see all options. you can specify options
+    # the same way here. we also support scrolling ranges and randomizing
+    # ranges for floating values. the ranges should be a 2-tuple consisting
+    # of minimal and maximum values, see examples below.
+    format_output = '{name} {gamma_blue} {gamma_blue_scroll}'
+    options = {
+        'output': {
+            'gamma_blue': 1.0,
+            'gamma_blue_scroll': (-0.3, 3.3), # scrolling range example
+            'gamma_blue_randomize': (-10, 10), # randomizing range example
+        },
+        'format_output': {
+            'default': '\?color=lightblue {value:2f}',  # undefined format
+            'gamma_blue': '\?color=#00bfff {value:.2f}',
+            'gamma_blue_scroll': '\?color=skyblue {value:2f}',
+            'gamma_blue_randomize': '\?color=skyblue {value:2f}',
+        }
     }
 }
 
-# customize gamma colors and formatting
+# give gamma colors soft colors and hide the values
 xrandr_tweaks {
-    format_output_options = {
-        'gamma_red': '\?color=tomato {value:.3f}',
-        'gamma_green': '\?color=lightgreen {value:.3f}',
-        'gamma_blue': '\?color=lightblue {value:.3f}',
+    format_output = '{gamma_red} {gamma_green} {gamma_blue}'
+    options = {
+        'format_output': {
+            'gamma_red': '\?color=tomato R',
+            'gamma_green': '\?color=lightgreen G',
+            'gamma_blue': '\?color=lightblue B',
+        }
     }
 }
 
-# specify parameters to ignore when randomizing or resetting all values
+# ignore parameters when randomizing or resetting all values (options)
 xrandr_tweaks {
-    output_options = {'ignore': 'delta'}               # ignore one thing
-    output_options = {'ignore': ['rotate', 'reflect']} # ignore two things
-    output_options = {
-        'ignore': [
-            ['brightness', 'rotate'],  # ignore this on output 1
-            ['gamma_red', 'reflect'],  # ignore this on output 2
-        ]
+    options = {
+        'output': {
+            'ignore': 'delta',               # ignore one thing
+                # OR
+            'ignore': ['rotate', 'reflect'], # ignore two things
+                # OR
+            'ignore': [
+                ['brightness', 'rotate'],    # ignore this on output 1
+                ['gamma_red', 'reflect'],    # ignore this on output 2
+            ]
+        },
+        'format_output': {
+            'ignore': '\?color=#6a6a6a {value}',
+        }
     }
+}
+
+# ignore parameters when randomizing or resetting all values (externals)
+xrandr_tweak
+    output_option_ignore = 'delta'                # ignore one thing
+        # OR
+    output_option_ignore = ['rotate', 'reflect']  # ignore two things
+        # OR
+    output_option_ignore = [
+        ['brightness', 'rotate'],    # ignore this on output 1
+        ['gamma_red', 'reflect'],    # ignore this on output 2
+    ]
+    format_output_option_ignore = '\?color=#6a6a6a {value}'
 }
 
 # for best results, add this slew of parameters to your config.
 it is more practical to randomize colors without brightness and others.
 xrandr_tweaks {
-    output_options = {
-        'ignore': ['brightness', 'delta', 'rotate', 'reflect', 'scale']
-    }
+    format_output = '{name} {ignore}'
+    output_option_ignore = [
+        'brightness', 'delta', 'rotate', 'reflect', 'scale'
+    ]
 }
 
 # adjust scale to zoom out by default
 xrandr_tweaks {
-    format_outputs = '{scale}'
-    output_options = {'scale': 1.25}
+    format_output = '{name} {scale}'
+    output_option_scale = 1.25
 }
 
-# add delta too to adjust/randomize delta.
+# add delta too to adjust and/or randomize delta.
 xrandr_tweaks {
     format_output = '{name} {brightness} {delta}'
 }
@@ -180,32 +200,56 @@ xrandr_tweaks {
 
 # do you even name your outputs?
 xrandr_tweaks {
-    output_options = {'name': ['Timmy!', 'Jimmy!']}
-    format_output_separator = '\?color=bad   Cripple Fight!  '
+    output_option_name = ['Timmy!', 'Jimmy!']
+    format_output_separator = '\?color=bad  ~~Cripple Fight!~~ '
 }
 
-# xrandr_rotate minimal
+# xrandr_rotate alternative, live update
+xrandr_tweaks {
+    format_output = '{rotate}'
+}
+
+# xrandr_rotate minimal, rotate two ways
 xrandr_tweaks {
     format_output = '{name} {rotate}'
-    output_options = {
-        'rotation': ['normal', 'left'], # rotate only normal, left
-        'skip_update': ['rotate'],  # skip update on scroll
+    options = {
+        'output': {
+            'rotation': ['normal', 'left'], # rotate only normal, left
+            'skip_update': ['rotate'],  # skip update on scroll
+        }
     }
 }
 
-# xrandr_rotate full
+# xrandr_rotate maximum, rotate two ways, override values, set rotate layout
 xrandr_tweaks {
     format_output = '{name} {rotate}'
-    output_options = {
-        'rotate': ['normal', 'left'],   # two outputs, start normal, left
-        'rotation': ['normal', 'left'], # rotate only normal, left
-        'skip_update': ['rotate'],      # skip update on scroll
+    options = {
+        'output': {
+            'rotate': ['normal', 'left'],   # two outputs, start normal, left
+            'rotation': ['normal', 'left'], # rotate only normal, left
+            'skip_update': ['rotate'],  # skip update on scroll
+        }
     }
-    format_option_rotate = '\?color=lime '
-    format_option_rotate += '[\?if=value=normal&show N]'
-    format_option_rotate += '[\?if=value=inverted&show I]'
-    format_option_rotate += '[\?if=value=left&show L]'
-    format_option_rotate += '[\?if=value=right&show R]'
+    format_output_option_rotate = '\?color=lime '
+    format_output_option_rotate += '[\?if=value=normal&show N]'
+    format_output_option_rotate += '[\?if=value=inverted&show I]'
+    format_output_option_rotate += '[\?if=value=left&show L]'
+    format_output_option_rotate += '[\?if=value=right&show R]'
+}
+
+# invert screen color
+xrandr_tweaks {
+    format = 'INVERT {format_output}'
+    format_output = '{brightness}'
+    options = {
+        'output': {
+            'brightness_scroll': (-1.0, 1.0),
+            'delta': 2.0,
+        },
+        'format_output': {
+            'brightness': '\?if=value=1&color=bad OFF|\?color=good ON',
+        }
+    }
 }
 ```
 
@@ -241,61 +285,68 @@ class Py3status:
     button_update = 1
     format = '{format_output}'
     format_output = '{name} {brightness} {gamma_red} {gamma_green} {gamma_blue}'
-    format_output_options = {}
     format_output_separator = ' '
-    output_options = {}
+    options = {}
     outputs = []
 
     def post_config_hook(self):
-        output_options = {
-            'brightness': 1.0,
-            'delta': 0.05,
-            'gamma_blue': 1.0,
-            'gamma_green': 1.0,
-            'gamma_red': 1.0,
-            'ignore': [],
-            'name': '',
-            'reflection': ['normal', 'xy', 'x', 'y'],
-            'reflect': 'normal',
-            'rotate': 'normal',
-            'rotation': ['normal', 'right', 'inverted', 'left'],
-            'scale': 1.0,
-            'skip_update': [],
+        # OPTIONS
+        local_options = {
+            'output': {
+                'brightness': 1.0,
+                'delta': 0.05,
+                'gamma_blue': 1.0,
+                'gamma_green': 1.0,
+                'gamma_red': 1.0,
+                'ignore': [],
+                'name': None,
+                'reflect': 'normal',
+                'reflection': ['normal', 'xy', 'x', 'y'],
+                'rotate': 'normal',
+                'rotation': ['normal', 'right', 'inverted', 'left'],
+                'scale': 1.0,
+                'skip_update': [],
+                'scroll': (-100, 100),
+                'randomize': (0, 5),
+            },
+            'format_output': {
+                'default': '\?color=lightblue {value:.2f}',
+                'brightness': '\?color=#a9a9a9 {value:.2f}',
+                'delta': '\?color=#fff000 {value:.2f}',
+                'gamma_blue': '\?color=#00bfff {value:.2f}',
+                'gamma_green': '\?color=#00ff00 {value:.2f}',
+                'gamma_red': '\?color=#ff0000 {value:.2f}',
+                'ignore': '\?color=#6a6a6a {value}',
+                'name': '\?color=#ffffff {value}',
+                'reflect': '\?color=#00ffff {value}',
+                'reflection': '\?color=#00a9a9 {value}',
+                'rotate': '\?color=#00ff00 {value}',
+                'rotation': '\?color=#00a900 {value}',
+                'scale': '\?color=#ff00ff {value:.2f}',
+                'skip_update': '\?color=#a90000 {value}',
+            }
         }
-        format_output_options = {
-            'brightness': '\?color=#a9a9a9 {value:.2f}',
-            'delta': '\?color=#fff000 {value:.2f}',
-            'gamma_blue': '\?color=#00bfff {value:.2f}',
-            'gamma_green': '\?color=#00ff00 {value:.2f}',
-            'gamma_red': '\?color=#ff0000 {value:.2f}',
-            'ignore': '\?color=#6a6a6a {value}',
-            'name': '\?color=#ffffff {value}',
-            'reflect': '\?color=#00ffff {value}',
-            'reflection': '\?color=#00a9a9 {value}',
-            'rotate': '\?color=#00ff00 {value}',
-            'rotation': '\?color=#00a900 {value}',
-            'scale': '\?color=#ff00ff {value:.2f}',
-            'skip_update': '\?color=#a90000 {value}',
-        }
-        format_output_options.update(self.format_output_options)
-
-        # external format_output_option
-        external_output_options = {}
-        for name in format_output_options:
-            format_string = getattr(self, 'format_output_option_' + name, None)
-            if format_string:
-                external_output_options[name] = format_string
-        format_output_options.update(external_output_options)
-        self.format_output_options = format_output_options
-
         # update configs
-        self.random = (0, 5)
+        output_options = local_options['output']
+        for key, value in local_options.items():
+            local_options[key].update(self.options.get(key, {}))
+            external = '{}_option_'.format(key)
+            temporary = {}
+            for name in value:
+                option = getattr(self, external + name, None)
+                if option:
+                    temporary[name] = option
+            local_options.setdefault(key, {}).update(temporary)
+        self.options = local_options
+
+        # init configs
         self.click = {'name': None, 'output': None}
         self.last_command = None
         self.gamma_list = ['gamma_red', 'gamma_green', 'gamma_blue']
         delta_list = self.gamma_list + ['brightness', 'delta', 'scale']
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
-        placeholders = list(set(['delta', 'ignore', 'skip_update'] + (
+        defaults = ['delta', 'ignore', 'skip_update', 'scroll', 'randomize']
+        placeholders = list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)))
         )
         self.format_output_placeholders = [
@@ -316,7 +367,7 @@ class Py3status:
 
             # check options for starting values, otherwise add ours.
             lists = ['ignore', 'rotation', 'reflection', 'skip_update']
-            for k, v in self.output_options.items():
+            for k, v in self.options['output'].items():
                 if k in lists:
                     if isinstance(v, (int, float, str)):
                         key[output][k] = [v]
@@ -365,10 +416,20 @@ class Py3status:
                     if update_gamma:
                         update_gamma = False
                         for rgb in self.gamma_list:
+                            _scroll = key[output].get(
+                                '{}_scroll'.format(rgb),
+                                key[output]['scroll']
+                            )
+                            _randomize = key[output].get(
+                                '{}_randomize'.format(rgb),
+                                key[output]['randomize']
+                            )
                             self.cog[output][rgb] = {
                                 'switch': float('inf'),
                                 'value': key[output][rgb],
                                 'reset': key[output][rgb],
+                                'scroll': _scroll,
+                                'randomize': _randomize,
                             }
                     continue
                 config = {'value': key[output][name]}
@@ -376,6 +437,22 @@ class Py3status:
                 if name in delta_list:
                     config['switch'] = float('inf')
                     config['reset'] = key[output][name]
+                    for x in ['scroll', 'randomize']:
+                        config[x] = key[output].get(
+                            '{}_{}'.format(name, x),
+                            key[output][x]
+                        )
+
+                # delta ranges can't go under zero
+                if 'delta' in name:
+                    for x in ['scroll', 'randomize']:
+                        new_key = 'delta_{}'.format(x)
+                        _param = key[output].get(new_key)
+                        if _param:
+                            config[x] = _param = (0, _param[1])
+                            if new_key in name:
+                                config['value'] = _param = (0, _param[1])
+
                 # rotate, reflect
                 if name in ['rotate', 'reflect']:
                     if name == 'rotate':
@@ -389,6 +466,8 @@ class Py3status:
                         config['reset'] = key[output][name]
                 # config
                 self.cog[output][name] = config
+        # debug log
+        self.py3.log(self.cog)
 
     def _get_xrandr_data(self):
         return self.py3.command_output(['xrandr'])
@@ -425,8 +504,10 @@ class Py3status:
                 value = self.cog[output][name]['value']
                 if isinstance(value, list):
                     value = ', '.join(value)
+                elif isinstance(value, tuple):
+                    value = format(value)
                 # gamma red, green, blue
-                if 'gamma' in name:
+                elif 'gamma' in name:
                     if update_gamma:
                         update_gamma = False
                         command += ' --gamma {}'.format(':'.join(
@@ -434,13 +515,16 @@ class Py3status:
                              for rgb in self.gamma_list])
                         )
                 # commands
-                if name in ['brightness', 'rotate', 'reflect', 'scale']:
+                elif name in ['brightness', 'rotate', 'reflect', 'scale']:
                     command += ' --{} {}'.format(name, value)
                     if name in ['scale']:
                         command += 'x{}'.format(value)
                 # composite
                 format_output_option = self.py3.safe_format(
-                    self.format_output_options[name], {'value': value}
+                    self.options['format_output'].get(
+                        name, self.options['format_output']['default']
+                    ),
+                    {'value': value}
                 )
                 index = {'index': '{}/{}'.format(output, name)}
                 self.py3.composite_update(format_output_option, index)
@@ -457,13 +541,12 @@ class Py3status:
         return format_output, command
 
     def _scroll_randomize(self, output, name, switch):
+        # randomize a number value. for brightness, delta, gamma, scale.
+        # randomize a list value. for reflect, rotate.
         if isinstance(switch, float):
-            # randomize a number value. for brightness, delta, gamma, scale.
-            self.cog[output][name]['value'] = uniform(
-                self.random[0], self.random[1]
-            )
+            value = self.cog[output][name]['randomize']
+            self.cog[output][name]['value'] = uniform(value[0], value[1])
         elif isinstance(switch, list):
-            # randomize a list value. for reflect and rotate.
             self.cog[output][name]['value'] = choice(switch)
 
     def _scroll_reset(self, output, name, prevent_refresh=True):
@@ -476,20 +559,27 @@ class Py3status:
             self.py3.prevent_refresh()
 
     def _scroll_values(self, output, name, switch, delta):
+        # switch a number value. for brightness, delta, gamma, scale.
+        # switch a list of names. for reflect and rotate.
         if isinstance(switch, float):
-            # switch a number value. for brightness, delta, gamma, scale.
+            _scroll = self.cog[output][name]['scroll']
             if delta > 0:
                 self.cog[output][name]['value'] = (
                     self.cog[output][name]['value'] +
                     self.cog[output]['delta']['value']
+                )
+                self.cog[output][name]['value'] = min(
+                    self.cog[output][name]['value'], _scroll[1]
                 )
             elif delta < 0:
                 self.cog[output][name]['value'] = (
                     self.cog[output][name]['value'] -
                     self.cog[output]['delta']['value']
                 )
+                self.cog[output][name]['value'] = max(
+                    self.cog[output][name]['value'], _scroll[0]
+                )
         elif isinstance(switch, list):
-            # switch a list of names. for reflect and rotate.
             switch = self.cog[output][name]['switch']
             self.cog[output][name]['index'] += delta
             self.cog[output][name]['index'] = (
