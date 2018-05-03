@@ -381,37 +381,30 @@ class Py3status:
                 if rgb not in self.format_output_placeholders:
                     key[output][rgb] = 1.0
 
+            # parse values
+            def _parse_values(v):
+                count_options = len(v)
+                if count_options == count_outputs:
+                    key[output][k] = v[index_output]
+                if count_options == 0:
+                    key[output][k] = v
+                elif count_options > count_outputs:
+                    key[output][k] = v[-count_outputs]
+                elif count_options < count_outputs:
+                    key[output][k] = v[-1]
+
             # check options for starting values, otherwise add ours.
             lists = ['ignore', 'rotation', 'reflection', 'skip_update']
             for k, v in self.options['output'].items():
+                key[output][k] = v
                 if k in lists:
-                    if isinstance(v, (int, float, str)):
-                        key[output][k] = [v]
-                    elif isinstance(v, list):
+                    if isinstance(v, list):
                         if any(isinstance(el, list) for el in v):
-                            count_options = len(v)
-                            if count_options == count_outputs:
-                                key[output][k] = v[index_output]
-                            if count_options == 0:
-                                key[output][k] = v
-                            elif count_options > count_outputs:
-                                key[output][k] = v[-count_outputs]
-                            elif count_options < count_outputs:
-                                key[output][k] = v[-1]
-                        else:
-                            key[output][k] = v
+                            _parse_values(v)
+                    else:
+                        key[output][k] = [v]
                 elif isinstance(v, list):
-                    count_options = len(v)
-                    if count_options == count_outputs:
-                        key[output][k] = v[index_output]
-                    if count_options == 0:
-                        key[output][k] = v
-                    elif count_options > count_outputs:
-                        key[output][k] = v[-count_outputs]
-                    elif count_options < count_outputs:
-                        key[output][k] = v[-1]
-                else:
-                    key[output][k] = v
+                    _parse_values(v)
 
             # add options from default config
             if not key[output].get('name'):
@@ -467,7 +460,6 @@ class Py3status:
                             '{}_{}'.format(name, x),
                             key[output][x]
                         )
-
                 # delta ranges can't go under zero
                 if 'delta' in name:
                     for x in ['scroll', 'randomize']:
@@ -477,7 +469,6 @@ class Py3status:
                             config[x] = _param = (0, _param[1])
                             if new_key in name:
                                 config['value'] = _param = (0, _param[1])
-
                 # rotate, reflect
                 if name in ['rotate', 'reflect']:
                     if name == 'rotate':
@@ -563,7 +554,6 @@ class Py3status:
                     command += ' --{} {}'.format(name, value)
                     if name in ['scale']:
                         command += 'x{}'.format(value)
-
                 # composite
                 format_output_option = self.py3.safe_format(
                     self.options['format_output'].get(
