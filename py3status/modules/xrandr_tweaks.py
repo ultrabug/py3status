@@ -194,6 +194,13 @@ xrandr_tweaks {
     outputs = ['DP-*']  # fnmatch
 }
 
+# rearrange the outputs
+xrandr_tweaks {
+    outputs = ['DP-2', 'DP-3']  # DP-2 first
+        OR
+    outputs = ['DP-3', 'DP-*']  # DP-3 first
+}
+
 # it's always good to add arandr or a script
 xrandr_tweaks {
     on_click 8 = 'exec arandr'
@@ -497,16 +504,20 @@ class Py3status:
         for output in connected_outputs:
             for x in output[2:]:
                 if 'x' in x and '+' in x:
-                    if self.outputs:
-                        for _filter in self.outputs:
-                            if fnmatch(output[0], _filter):
-                                active_outputs.append(output[0])
-                                break
-                    else:
-                        active_outputs.append(output[0])
+                    active_outputs.append(output[0])
                     break
                 elif '(' in x:
                     break
+
+        if self.outputs:
+            matched_outputs = []
+            for _filter in self.outputs:
+                for output in active_outputs:
+                    if fnmatch(output, _filter):
+                        if output not in matched_outputs:
+                            matched_outputs.append(output)
+            return matched_outputs
+
         return active_outputs  # returns a list, eg ['DP-2', 'DP-3']
 
     def _manipulate(self, active_outputs):
