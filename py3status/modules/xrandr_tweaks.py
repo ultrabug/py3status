@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Change Xrandr brightness, gamma, rotation, reflection, and more.
+Control screen brightness, gamma, rotation, reflection, and more with Xrandr.
 
-Right-click on the value to reset a value.
-Right-click on the name to reset all values.
-Middle-click on the value to randomize a value.
-Middle-click on the name to randomize all values.
-Scroll on the value to increase/decrease the value.
-Scroll on the name doesn't do anything to the values.
+Quick manual:
+ * Right-click on the value to reset a value.  * * * * * *
+ * Right-click on the name to reset all values.  * * * * *
+ * Middle-click on the value to randomize a value. * * * *
+ * Middle-click on the name to randomize all values. * * *
+ * Scroll on the value to increase/decrease the value. * *
+ * Scroll on the name doesn't do anything to the values. *
 
 Configuration parameters:
     button_next: mouse button to switch next values (default 4)
@@ -22,6 +23,16 @@ Configuration parameters:
     options: specify a dict consisting of option types and a dict
         consisting of output-related settings to use (default {})
     outputs: specify a list of active outputs to use (default [])
+
+Configuration parameters (external):
+    format_output_option_<NAME>: replace NAME with an option name
+        eg, format_output_option_rotate = '\?color=lime {value:.2f}'
+        eg, format_output_option_gamma_green = 1.0
+        eg, format_output_option_ignore = '\?color=gray {value}'
+    output_option_<NAME>: replace NAME with an option name
+        eg, output_option_brightness = 1.0
+        eg, output_option_rotate = ['normal', 'left']
+        eg, output_option_ignore = 'brightness'
 
 Format placeholders:
     {output} number of active outputs, eg 2
@@ -59,13 +70,13 @@ format_output placeholders (scrolling ranges):
     {gamma_red_scroll} gamma red scrolling range, eg (-100, 100)
     {scale_scroll} scale scrolling range, eg (-100, 100)
 
-format_output_option_{xxx} placeholders:
+format_output_option_xxx placeholders:
     {value} display format for this option
 
 Examples:
 ```
 # xrandr_tweaks comes with gamma colors by default. programming can be fun
-# when we can repeatedly click on OUTPUT name to find a decent color scheme.
+# when we can click on OUTPUT name repeatedly to use a decent color scheme.
 
 # adjust brightness
 xrandr_tweaks {
