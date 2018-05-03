@@ -17,7 +17,7 @@ Configuration parameters:
     button_update: mouse button to run last command (default 1)
     format: display format for this module (default '{format_output}')
     format_output: display format for active outputs
-        (default '{name} {brightness} {gamma_red} {gamma_green} {gamma_blue}')
+        (default '{name} {gamma_red} {gamma_green} {gamma_blue}')
     format_output_separator: show separator if more than one (default ' ')
     options: specify a dict consisting of option types and a dict
         consisting of output-related settings to use (default {})
@@ -290,7 +290,7 @@ class Py3status:
     button_reset = 3
     button_update = 1
     format = '{format_output}'
-    format_output = '{name} {brightness} {gamma_red} {gamma_green} {gamma_blue}'
+    format_output = '{name} {gamma_red} {gamma_green} {gamma_blue}'
     format_output_separator = ' '
     options = {}
     outputs = []
