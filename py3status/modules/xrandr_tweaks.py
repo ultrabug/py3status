@@ -35,6 +35,7 @@ format_output placeholders:
     {gamma_red} gamma red value, eg 1.0
     {ignore} parameters to ignore, eg brightness, rotate
     {name} output name, eg DP-2, DP-3
+    {primary} primary output, eg 0.0, 1.0
     {reflection} reflection values, eg normal, x, y, xy
     {reflect} reflection value, eg normal
     {rotate} rotation value, eg normal
@@ -251,6 +252,11 @@ xrandr_tweaks {
         }
     }
 }
+
+# set primary output
+xrandr_tweaks {
+    format_output = '{name} {primary} {brightness}'
+}
 ```
 
 @author lasers
@@ -300,24 +306,26 @@ class Py3status:
                 'gamma_red': 1.0,
                 'ignore': [],
                 'name': None,
+                'primary': False,
+                'randomize': (0, 5),
                 'reflect': 'normal',
                 'reflection': ['normal', 'xy', 'x', 'y'],
                 'rotate': 'normal',
                 'rotation': ['normal', 'right', 'inverted', 'left'],
                 'scale': 1.0,
-                'skip_update': [],
                 'scroll': (-100, 100),
-                'randomize': (0, 5),
+                'skip_update': [],
             },
             'format_output': {
-                'default': '\?color=lightblue {value:.2f}',
                 'brightness': '\?color=#a9a9a9 {value:.2f}',
+                'default': '\?color=lightblue {value:.2f}',
                 'delta': '\?color=#fff000 {value:.2f}',
                 'gamma_blue': '\?color=#00bfff {value:.2f}',
                 'gamma_green': '\?color=#00ff00 {value:.2f}',
                 'gamma_red': '\?color=#ff0000 {value:.2f}',
                 'ignore': '\?color=#6a6a6a {value}',
                 'name': '\?color=#ffffff {value}',
+                'primary': '\?if=value&color=gold \[P\]|\?color=darkgray \[P\]',
                 'reflect': '\?color=#00ffff {value}',
                 'reflection': '\?color=#00a9a9 {value}',
                 'rotate': '\?color=#00ff00 {value}',
@@ -345,6 +353,7 @@ class Py3status:
         self.gamma_list = ['gamma_red', 'gamma_green', 'gamma_blue']
         delta_list = self.gamma_list + ['brightness', 'delta', 'scale']
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
+        self.is_primary = self.py3.format_contains(self.format_output, 'primary')
         defaults = ['delta', 'ignore', 'skip_update', 'scroll', 'randomize']
         placeholders = list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)))
@@ -402,8 +411,11 @@ class Py3status:
                 key[output]['name'] = output
             for name, option in output_options.items():
                 key[output].setdefault(name, option)
-                if not key[output][name]:
+                if key[output][name] is None:
                     key[output][name] = option
+
+        # debug key log
+        # self.py3.log(key)
 
         # initialize outputs with options
         self.cog = {}
@@ -433,6 +445,12 @@ class Py3status:
                             }
                     continue
                 config = {'value': key[output][name]}
+                # primary
+                if name in ['primary']:
+                    switch = [True, False]
+                    config['index'] = switch.index(key[output][name])
+                    config['switch'] = switch
+                    config['reset'] = key[output][name]
                 # scrollable
                 if name in delta_list:
                     config['switch'] = float('inf')
@@ -466,8 +484,8 @@ class Py3status:
                         config['reset'] = key[output][name]
                 # config
                 self.cog[output][name] = config
-        # debug log
-        self.py3.log(self.cog)
+        # debug cog log
+        # self.py3.log(self.cog)
 
     def _get_xrandr_data(self):
         return self.py3.command_output(['xrandr'])
@@ -495,6 +513,16 @@ class Py3status:
         # make composites to format and command to run
         new_output = []
         command = 'xrandr'
+
+        if self.is_primary:
+            primary = None
+            for output, v in self.cog.items():
+                if v['primary']['value']:
+                    primary = output
+                self.cog[output]['primary']['value'] = False
+            # if primary is None:
+            #     command += ' --noprimary'
+
         for output in active_outputs:
             options = {}
             update_gamma = True
@@ -506,6 +534,11 @@ class Py3status:
                     value = ', '.join(value)
                 elif isinstance(value, tuple):
                     value = format(value)
+                # primary
+                elif 'primary' in name:
+                    if output == primary:
+                        value = True
+                        command += ' --primary'
                 # gamma red, green, blue
                 elif 'gamma' in name:
                     if update_gamma:
@@ -519,6 +552,7 @@ class Py3status:
                     command += ' --{} {}'.format(name, value)
                     if name in ['scale']:
                         command += 'x{}'.format(value)
+
                 # composite
                 format_output_option = self.py3.safe_format(
                     self.options['format_output'].get(
@@ -538,6 +572,7 @@ class Py3status:
             self.format_output_separator)
         format_output = self.py3.composite_join(
             format_output_separator, new_output)
+
         return format_output, command
 
     def _scroll_randomize(self, output, name, switch):
@@ -598,6 +633,13 @@ class Py3status:
             if (not name or
                     name not in self.cog[output]['skip_update']['value']):
                 self.py3.command_run(command)
+                # debug command log
+                line = '============================\n'
+                log = line
+                for x in command.split('--output'):
+                    log += '=== {}\n'.format(x)
+                log += line
+                self.py3.log(log.strip())
             self.last_command = command
 
         return {
