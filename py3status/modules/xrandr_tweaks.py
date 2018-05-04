@@ -275,7 +275,7 @@ xrandr_tweaks {
     }
 }
 
-# set primary output
+# set primary option
 xrandr_tweaks {
     format_output = '{name} {primary} {brightness} {rotate}'
 
@@ -284,6 +284,14 @@ xrandr_tweaks {
     # so you should only use this config when you don't want to define a
     # primary output for good rather than switching on/off.
     noprimary = True
+}
+
+# set current option
+# this return the current screen configuration without polling for hardware
+# changes. i recommend you to use this config whenever possible as we don't
+# need to poll hardware changes for small things like brightness, gamma, etc.
+xrandr_tweaks {
+    current = True
 }
 ```
 
@@ -392,6 +400,7 @@ class Py3status:
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
         self.noprimary = getattr(self, 'noprimary', None)
+        self.current = getattr(self, 'current', None)
         defaults = [
             'auto', 'delta', 'ignore', 'mode', 'pos', 'randomize', 'scroll',
             'skip_update', 'rate'
@@ -551,6 +560,11 @@ class Py3status:
         command = 'xrandr'
         primary = None
 
+        # current
+        if self.current:
+            command += ' --current'
+
+        # primary pre-game
         if self.is_primary:
             for output, v in self.cog.items():
                 if v['primary']['value']:
