@@ -34,6 +34,22 @@ Configuration parameters (external):
         eg, output_option_rotate = ['normal', 'left']
         eg, output_option_ignore = 'brightness'
 
+Configuration parameters (global):
+    nograb: Apply the modifications without grabbing the screen. It avoids to
+        block other applications during the update but it might also cause some
+        applications that detect screen resize to receive old values.
+        (default False)
+    display: This option selects the X display to use. Note this refers to
+        the X screen abstraction, not the monitor (or output).
+        (default None)
+    screen: This option selects which screen to manipulate. Note this refers
+        to the X screen abstraction, not the monitor (or output).
+        (default None)
+    current: Return the current screen configuration, without polling for
+        hardware changes.
+        (default False)
+    noprimary: Don't define a primary output.
+
 Format placeholders:
     {output} number of active outputs, eg 2
     {format_output} format for active outputs
@@ -391,6 +407,13 @@ class Py3status:
             per_options.setdefault(key, {}).update(temporary)
         self.per_options = per_options
 
+        # global options
+        self.global_options = {}
+        for name in ['nograb', 'current', 'noprimary', 'display', 'screen']:
+            value = getattr(self, name, None)
+            if value:
+                self.global_options[name] = value
+
         # init configs
         # self.first_run = True
         self.click = {'name': None, 'output': None}
@@ -399,8 +422,6 @@ class Py3status:
         delta_list = self.gamma_list + ['brightness', 'delta', 'scale']
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
-        self.noprimary = getattr(self, 'noprimary', None)
-        self.current = getattr(self, 'current', None)
         defaults = [
             'auto', 'delta', 'ignore', 'mode', 'pos', 'randomize', 'scroll',
             'skip_update', 'rate'
@@ -560,10 +581,6 @@ class Py3status:
         command = 'xrandr'
         primary = None
 
-        # current
-        if self.current:
-            command += ' --current'
-
         # primary pre-game
         if self.is_primary:
             for output, v in self.cog.items():
@@ -571,9 +588,14 @@ class Py3status:
                     primary = output
                 self.cog[output]['primary']['value'] = False
 
-        # noprimary
-        if self.noprimary and not primary:
-            command += ' --noprimary'
+        # add global options
+        for name, value in self.global_options.items():
+            if name == 'noprimary':
+                if primary:
+                    continue
+            if name in ['display', 'screen']:
+                name = '{} {}'.format(name, value)
+            command += ' --{}'.format(name)
 
         # per output options
         for output in active_outputs:
