@@ -20,9 +20,9 @@ Configuration parameters:
     format_output: display format for active outputs
         (default '{name} {gamma_red} {gamma_green} {gamma_blue}')
     format_output_separator: show separator if more than one (default ' ')
-    options: specify a dict consisting of option types and a dict
-        consisting of output-related settings to use (default {})
     outputs: specify a list of active outputs to use (default [])
+    per_options: specify a dict consisting of option types and a dict
+        consisting of output-related settings to use (default {})
 
 Configuration parameters (external):
     format_output_option_<NAME>: replace NAME with an option name
@@ -90,7 +90,7 @@ xrandr_tweaks {
 
 # start with chocolate brown gamma
 xrandr_tweaks {
-    options = {
+    per_options = {
         'output': {
             'gamma_red': 1.70,
             'gamma_green': 1.20,
@@ -100,7 +100,7 @@ xrandr_tweaks {
 
 # we can also configure per-output parameters
 xrandr_tweaks {
-    options = {
+    per_options = {
         'output': {
             'brightness': [0.75, 1.0],      # two outputs
             'rotate': ['normal', 'left'],   # two outputs
@@ -119,7 +119,7 @@ xrandr_tweaks {
     # ranges for floating values. the ranges should be a 2-tuple consisting
     # of minimal and maximum values, see examples below.
     format_output = '{name} {gamma_blue} {gamma_blue_scroll}'
-    options = {
+    per_options = {
         'output': {
             'gamma_blue': 1.0,
             'gamma_blue_scroll': (-0.3, 3.3), # scrolling range example
@@ -137,7 +137,7 @@ xrandr_tweaks {
 # give gamma colors soft colors and hide the values
 xrandr_tweaks {
     format_output = '{gamma_red} {gamma_green} {gamma_blue}'
-    options = {
+    per_options = {
         'format_output': {
             'gamma_red': '\?color=tomato R',
             'gamma_green': '\?color=lightgreen G',
@@ -148,7 +148,7 @@ xrandr_tweaks {
 
 # ignore parameters when randomizing or resetting all values (options)
 xrandr_tweaks {
-    options = {
+    per_options = {
         'output': {
             'ignore': 'delta',               # ignore one thing
                 # OR
@@ -231,7 +231,7 @@ xrandr_tweaks {
 # xrandr_rotate minimal, rotate two ways
 xrandr_tweaks {
     format_output = '{name} {rotate}'
-    options = {
+    per_options = {
         'output': {
             'rotation': ['normal', 'left'], # rotate only normal, left
             'skip_update': ['rotate'],  # skip update on scroll
@@ -242,7 +242,7 @@ xrandr_tweaks {
 # xrandr_rotate maximum, rotate two ways, override values, set rotate layout
 xrandr_tweaks {
     format_output = '{name} {rotate}'
-    options = {
+    per_options = {
         'output': {
             'rotate': ['normal', 'left'],   # two outputs, start normal, left
             'rotation': ['normal', 'left'], # rotate only normal, left
@@ -260,7 +260,7 @@ xrandr_tweaks {
 xrandr_tweaks {
     format = 'INVERT {format_output}'
     format_output = '{brightness}'
-    options = {
+    per_options = {
         'output': {
             'brightness_scroll': (-1.0, 1.0),
             'delta': 2.0,
@@ -310,12 +310,12 @@ class Py3status:
     format = '{format_output}'
     format_output = '{name} {gamma_red} {gamma_green} {gamma_blue}'
     format_output_separator = ' '
-    options = {}
     outputs = []
+    per_options = {}
 
     def post_config_hook(self):
         # OPTIONS
-        local_options = {
+        per_options = {
             'output': {
                 'brightness': 1.0,
                 'delta': 0.05,
@@ -335,8 +335,9 @@ class Py3status:
                 'skip_update': [],
             },
             'format_output': {
+                'None': '\?color=lightblue {value:.2f}',
+                'auto': '\?color=degraded&show {value}',
                 'brightness': '\?color=#a9a9a9 {value:.2f}',
-                'default': '\?color=lightblue {value:.2f}',
                 'delta': '\?color=#fff000 {value:.2f}',
                 'gamma_blue': '\?color=#00bfff {value:.2f}',
                 'gamma_green': '\?color=#00ff00 {value:.2f}',
@@ -352,18 +353,18 @@ class Py3status:
                 'skip_update': '\?color=#a90000 {value}',
             }
         }
-        # update configs
-        output_options = local_options['output']
-        for key, value in local_options.items():
-            local_options[key].update(self.options.get(key, {}))
-            external = '{}_option_'.format(key)
+        # update external configs
+        per_options_output = per_options['output']
+        for key, value in per_options.items():
+            per_options[key].update(self.per_options.get(key, {}))
+            external = 'per_option_{}_'.format(key)
             temporary = {}
             for name in value:
                 option = getattr(self, external + name, None)
                 if option:
                     temporary[name] = option
-            local_options.setdefault(key, {}).update(temporary)
-        self.options = local_options
+            per_options.setdefault(key, {}).update(temporary)
+        self.per_options = per_options
 
         # init configs
         self.click = {'name': None, 'output': None}
@@ -377,7 +378,7 @@ class Py3status:
             self.py3.get_placeholders_list(self.format_output)))
         )
         self.format_output_placeholders = [
-            x for x in placeholders if x in output_options
+            x for x in placeholders if x in per_options_output
         ]
         xrandr_data = self._get_xrandr_data()
         active_outputs = self._get_active_outputs(xrandr_data)
@@ -394,19 +395,19 @@ class Py3status:
 
             # parse values
             def _parse_values(v):
-                count_options = len(v)
-                if count_options == count_outputs:
+                count_per_options = len(v)
+                if count_per_options == count_outputs:
                     key[output][k] = v[index_output]
-                if count_options == 0:
+                if count_per_options == 0:
                     key[output][k] = v
-                elif count_options > count_outputs:
+                elif count_per_options > count_outputs:
                     key[output][k] = v[-count_outputs]
-                elif count_options < count_outputs:
+                elif count_per_options < count_outputs:
                     key[output][k] = v[-1]
 
             # check options for starting values, otherwise add ours.
             lists = ['ignore', 'rotation', 'reflection', 'skip_update']
-            for k, v in self.options['output'].items():
+            for k, v in self.per_options['output'].items():
                 key[output][k] = v
                 if k in lists:
                     if isinstance(v, list):
@@ -420,7 +421,7 @@ class Py3status:
             # add options from default config
             if not key[output].get('name'):
                 key[output]['name'] = output
-            for name, option in output_options.items():
+            for name, option in per_options_output.items():
                 key[output].setdefault(name, option)
                 if key[output][name] is None:
                     key[output][name] = option
@@ -567,8 +568,8 @@ class Py3status:
                         command += 'x{}'.format(value)
                 # composite
                 format_output_option = self.py3.safe_format(
-                    self.options['format_output'].get(
-                        name, self.options['format_output']['default']
+                    self.per_options['format_output'].get(
+                        name, self.per_options['format_output']['None']
                     ),
                     {'value': value}
                 )
