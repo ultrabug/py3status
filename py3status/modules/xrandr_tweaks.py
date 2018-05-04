@@ -50,6 +50,7 @@ format_output placeholders:
     {name} output name, eg DP-2, DP-3
     {pos} position for the output, eg 0x0
     {primary} primary output, eg 0.0, 1.0
+    {rate} position for the output, eg 60
     {reflection} reflection values, eg normal, x, y, xy
     {reflect} reflection value, eg normal
     {rotate} rotation value, eg normal
@@ -338,6 +339,7 @@ class Py3status:
                 'pos': None,
                 'primary': False,
                 'randomize': (0, 5),
+                'rate': None,
                 'reflect': 'normal',
                 'reflection': ['normal', 'xy', 'x', 'y'],
                 'rotate': 'normal',
@@ -359,6 +361,7 @@ class Py3status:
                 'name': '\?color=#ffffff {value}',
                 'pos': '\?color=cyan {value}',
                 'primary': '\?if=value&color=gold \[P\]|\?color=darkgray \[P\]',
+                'rate': '\?color=lime {value}',
                 'reflect': '\?color=#00ffff {value}',
                 'reflection': '\?color=#00a9a9 {value}',
                 'rotate': '\?color=#00ff00 {value}',
@@ -391,7 +394,7 @@ class Py3status:
         self.noprimary = getattr(self, 'noprimary', None)
         defaults = [
             'auto', 'delta', 'ignore', 'mode', 'pos', 'randomize', 'scroll',
-            'skip_update',
+            'skip_update', 'rate'
         ]
         placeholders = list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)))
@@ -573,8 +576,8 @@ class Py3status:
                 # auto
                 elif 'auto' in name:
                     command += ' --auto'
-                # mode, pos
-                elif name in ['mode', 'pos']:
+                # mode, pos, rate
+                elif name in ['mode', 'pos', 'rate']:
                     if value:
                         command += ' --{} {}'.format(name, value)
                 # primary
