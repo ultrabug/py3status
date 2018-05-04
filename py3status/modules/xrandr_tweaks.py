@@ -48,6 +48,7 @@ format_output placeholders:
     {ignore} parameters to ignore, eg brightness, rotate
     {mode} name or xid for mode, eg 1920x1200
     {name} output name, eg DP-2, DP-3
+    {pos} position for the output, eg 0x0
     {primary} primary output, eg 0.0, 1.0
     {reflection} reflection values, eg normal, x, y, xy
     {reflect} reflection value, eg normal
@@ -334,6 +335,7 @@ class Py3status:
                 'ignore': [],
                 'mode': None,
                 'name': None,
+                'pos': None,
                 'primary': False,
                 'randomize': (0, 5),
                 'reflect': 'normal',
@@ -355,6 +357,7 @@ class Py3status:
                 'ignore': '\?color=#6a6a6a {value}',
                 'mode': '\?color=violet {value}',
                 'name': '\?color=#ffffff {value}',
+                'pos': '\?color=cyan {value}',
                 'primary': '\?if=value&color=gold \[P\]|\?color=darkgray \[P\]',
                 'reflect': '\?color=#00ffff {value}',
                 'reflection': '\?color=#00a9a9 {value}',
@@ -387,8 +390,8 @@ class Py3status:
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
         self.noprimary = getattr(self, 'noprimary', None)
         defaults = [
-            'delta', 'ignore', 'skip_update', 'scroll', 'randomize', 'auto',
-            'mode',
+            'auto', 'delta', 'ignore', 'mode', 'pos', 'randomize', 'scroll',
+            'skip_update',
         ]
         placeholders = list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)))
@@ -570,10 +573,10 @@ class Py3status:
                 # auto
                 elif 'auto' in name:
                     command += ' --auto'
-                # mode
-                elif 'mode' in name:
+                # mode, pos
+                elif name in ['mode', 'pos']:
                     if value:
-                        command += ' --mode {}'.format(value)
+                        command += ' --{} {}'.format(name, value)
                 # primary
                 elif 'primary' in name:
                     if output == primary:
