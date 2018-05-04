@@ -274,7 +274,13 @@ xrandr_tweaks {
 
 # set primary output
 xrandr_tweaks {
-    format_output = '{name} {primary} {brightness}'
+    format_output = '{name} {primary} {brightness} {rotate}'
+
+    # optionally, we can enable noprimary option too. this does not seem
+    # to work well for me when switching between primary and nonprimary.
+    # so you should only use this config when you don't want to define a
+    # primary output for good rather than switching on/off.
+    noprimary = True
 }
 ```
 
@@ -369,12 +375,14 @@ class Py3status:
         self.per_options = per_options
 
         # init configs
+        # self.first_run = True
         self.click = {'name': None, 'output': None}
         self.last_command = None
         self.gamma_list = ['gamma_red', 'gamma_green', 'gamma_blue']
         delta_list = self.gamma_list + ['brightness', 'delta', 'scale']
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
+        self.noprimary = getattr(self, 'noprimary', None)
         defaults = [
             'delta', 'ignore', 'skip_update', 'scroll', 'randomize', 'auto'
         ]
@@ -531,16 +539,19 @@ class Py3status:
         # make composites to format and command to run
         new_output = []
         command = 'xrandr'
+        primary = None
 
         if self.is_primary:
-            primary = None
             for output, v in self.cog.items():
                 if v['primary']['value']:
                     primary = output
                 self.cog[output]['primary']['value'] = False
-            # if primary is None:
-            #     command += ' --noprimary'
 
+        # noprimary
+        if self.noprimary and not primary:
+            command += ' --noprimary'
+
+        # per output options
         for output in active_outputs:
             options = {}
             update_gamma = True
@@ -661,6 +672,8 @@ class Py3status:
                 log += line
                 self.py3.log(log.strip())
             self.last_command = command
+
+        # self.first_run = False
 
         return {
             'cached_until': self.py3.CACHE_FOREVER,
