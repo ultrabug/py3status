@@ -46,6 +46,7 @@ format_output placeholders:
     {gamma_green} gamma green value, eg 1.0
     {gamma_red} gamma red value, eg 1.0
     {ignore} parameters to ignore, eg brightness, rotate
+    {mode} name or xid for mode, eg 1920x1200
     {name} output name, eg DP-2, DP-3
     {primary} primary output, eg 0.0, 1.0
     {reflection} reflection values, eg normal, x, y, xy
@@ -331,6 +332,7 @@ class Py3status:
                 'gamma_green': 1.0,
                 'gamma_red': 1.0,
                 'ignore': [],
+                'mode': None,
                 'name': None,
                 'primary': False,
                 'randomize': (0, 5),
@@ -351,6 +353,7 @@ class Py3status:
                 'gamma_green': '\?color=#00ff00 {value:.2f}',
                 'gamma_red': '\?color=#ff0000 {value:.2f}',
                 'ignore': '\?color=#6a6a6a {value}',
+                'mode': '\?color=violet {value}',
                 'name': '\?color=#ffffff {value}',
                 'primary': '\?if=value&color=gold \[P\]|\?color=darkgray \[P\]',
                 'reflect': '\?color=#00ffff {value}',
@@ -384,7 +387,8 @@ class Py3status:
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
         self.noprimary = getattr(self, 'noprimary', None)
         defaults = [
-            'delta', 'ignore', 'skip_update', 'scroll', 'randomize', 'auto'
+            'delta', 'ignore', 'skip_update', 'scroll', 'randomize', 'auto',
+            'mode',
         ]
         placeholders = list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)))
@@ -566,6 +570,10 @@ class Py3status:
                 # auto
                 elif 'auto' in name:
                     command += ' --auto'
+                # mode
+                elif 'mode' in name:
+                    if value:
+                        command += ' --mode {}'.format(value)
                 # primary
                 elif 'primary' in name:
                     if output == primary:
