@@ -49,6 +49,11 @@ Configuration parameters (global):
         hardware changes.
         (default False)
     noprimary: Don't define a primary output.
+        (default False)
+    dpi: This also sets the reported physical size values of the screen, it uses
+        the specified DPI value to compute an appropriate physical size using
+        whatever pixel size will be set.
+        (default None)
 
 Format placeholders:
     {output} number of active outputs, eg 2
@@ -409,7 +414,10 @@ class Py3status:
 
         # global options
         self.global_options = {}
-        for name in ['nograb', 'current', 'noprimary', 'display', 'screen']:
+        global_list = [
+            'nograb', 'current', 'noprimary', 'display', 'screen', 'dpi'
+        ]
+        for name in global_list:
             value = getattr(self, name, None)
             if value:
                 self.global_options[name] = value
@@ -593,9 +601,10 @@ class Py3status:
             if name == 'noprimary':
                 if primary:
                     continue
-            if name in ['display', 'screen']:
-                name = '{} {}'.format(name, value)
-            command += ' --{}'.format(name)
+            if value == True:  # noqa e712
+                command += ' --{}'.format(name)
+            else:
+                command += ' --{} {}'.format(name, value)
 
         # per output options
         for output in active_outputs:
