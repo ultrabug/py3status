@@ -3,12 +3,12 @@
 Control screen brightness, gamma, rotation, reflection, and more with Xrandr.
 
 Quick manual:
- * Right-click on the value to reset a value.  * * * * * *
- * Right-click on the name to reset all values.  * * * * *
- * Middle-click on the value to randomize a value. * * * *
- * Middle-click on the name to randomize all values. * * *
- * Scroll on the value to increase/decrease the value. * *
- * Scroll on the name doesn't do anything to the values. *
+    Right-click on the value to reset a value.  * * * * *  __  _______
+    Right-click on the name to reset all values.  * * * *  \ \/ /_   _|
+    Middle-click on the value to randomize a value. * * *   \  /  | |
+    Middle-click on the name to randomize all values. * *   /  \  | |
+    Scroll on the value to increase/decrease the value. *  /_/\_\ |_|
+    Scroll on the name doesn't do anything to the values.
 
 Configuration parameters:
     button_next: mouse button to switch next values (default 4)
@@ -25,11 +25,11 @@ Configuration parameters:
         consisting of output-related settings to use (default {})
 
 Configuration parameters (external):
-    per_option_format_output_<NAME>: replace NAME with an option name
+    per_option_format_output_xxx:
         eg, per_option_format_output_rotate = '\?color=lime {value:.2f}'
         eg, per_option_format_output_gamma_green = 1.0
         eg, per_option_format_output_ignore = '\?color=gray {value}'
-    per_option_output_<NAME>: replace NAME with an option name
+    per_option_output_xxx:
         eg, per_option_output_brightness = 1.0
         eg, per_option_output_rotate = ['normal', 'left']
         eg, per_option_output_ignore = 'brightness'
@@ -102,7 +102,7 @@ per_option_format_output_xxx placeholders:
 Examples:
 ```
 # xrandr_tweaks comes with gamma colors by default. programming can be fun
-# when we can click on OUTPUT name repeatedly to use a decent color scheme.
+# when we can click on OUTPUT name repeatedly to find a decent color scheme.
 
 # adjust brightness
 xrandr_tweaks {
@@ -314,6 +314,11 @@ xrandr_tweaks {
 # need to poll hardware changes for small things like brightness, gamma, etc.
 xrandr_tweaks {
     current = True
+}
+
+# share your xrandr_tweaks snippets here
+xrandr_tweaks {
+    format = "..."
 }
 ```
 
