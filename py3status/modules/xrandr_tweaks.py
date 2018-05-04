@@ -25,14 +25,14 @@ Configuration parameters:
         consisting of output-related settings to use (default {})
 
 Configuration parameters (external):
-    format_output_option_<NAME>: replace NAME with an option name
-        eg, format_output_option_rotate = '\?color=lime {value:.2f}'
-        eg, format_output_option_gamma_green = 1.0
-        eg, format_output_option_ignore = '\?color=gray {value}'
-    output_option_<NAME>: replace NAME with an option name
-        eg, output_option_brightness = 1.0
-        eg, output_option_rotate = ['normal', 'left']
-        eg, output_option_ignore = 'brightness'
+    per_option_format_output_<NAME>: replace NAME with an option name
+        eg, per_option_format_output_rotate = '\?color=lime {value:.2f}'
+        eg, per_option_format_output_gamma_green = 1.0
+        eg, per_option_format_output_ignore = '\?color=gray {value}'
+    per_option_output_<NAME>: replace NAME with an option name
+        eg, per_option_output_brightness = 1.0
+        eg, per_option_output_rotate = ['normal', 'left']
+        eg, per_option_output_ignore = 'brightness'
 
 Configuration parameters (global):
     nograb: Apply the modifications without grabbing the screen. It avoids to
@@ -90,7 +90,7 @@ format_output placeholders (scrolling ranges):
     {gamma_red_scroll} gamma red scrolling range, eg (-100, 100)
     {scale_scroll} scale scrolling range, eg (-100, 100)
 
-format_output_option_xxx placeholders:
+per_option_format_output_xxx placeholders:
     {value} display format for this option
 
 Examples:
@@ -187,22 +187,22 @@ xrandr_tweaks {
 
 # ignore parameters when randomizing or resetting all values (externals)
 xrandr_tweak
-    output_option_ignore = 'delta'                # ignore one thing
+    per_option_output_ignore = 'delta'                # ignore one thing
         # OR
-    output_option_ignore = ['rotate', 'reflect']  # ignore two things
+    per_option_output_ignore = ['rotate', 'reflect']  # ignore two things
         # OR
-    output_option_ignore = [
+    per_option_output_ignore = [
         ['brightness', 'rotate'],    # ignore this on output 1
         ['gamma_red', 'reflect'],    # ignore this on output 2
     ]
-    format_output_option_ignore = '\?color=#6a6a6a {value}'
+    per_option_format_output_ignore = '\?color=#6a6a6a {value}'
 }
 
 # for best results, add this slew of parameters to your config.
 it is more practical to randomize colors without brightness and others.
 xrandr_tweaks {
     format_output = '{name} {ignore}'
-    output_option_ignore = [
+    per_option_output_ignore = [
         'brightness', 'delta', 'rotate', 'reflect', 'scale'
     ]
 }
@@ -210,7 +210,7 @@ xrandr_tweaks {
 # adjust scale to zoom out by default
 xrandr_tweaks {
     format_output = '{name} {scale}'
-    output_option_scale = 1.25
+    per_option_output_scale = 1.25
 }
 
 # add delta too to adjust and/or randomize delta.
@@ -239,7 +239,7 @@ xrandr_tweaks {
 
 # do you even name your outputs?
 xrandr_tweaks {
-    output_option_name = ['Timmy!', 'Jimmy!']
+    per_option_output_name = ['Timmy!', 'Jimmy!']
     format_output_separator = '\?color=bad  ~~Cripple Fight!~~ '
 }
 
@@ -269,11 +269,11 @@ xrandr_tweaks {
             'skip_update': ['rotate'],  # skip update on scroll
         }
     }
-    format_output_option_rotate = '\?color=lime '
-    format_output_option_rotate += '[\?if=value=normal&show N]'
-    format_output_option_rotate += '[\?if=value=inverted&show I]'
-    format_output_option_rotate += '[\?if=value=left&show L]'
-    format_output_option_rotate += '[\?if=value=right&show R]'
+    per_option_format_output_rotate = '\?color=lime '
+    per_option_format_output_rotate += '[\?if=value=normal&show N]'
+    per_option_format_output_rotate += '[\?if=value=inverted&show I]'
+    per_option_format_output_rotate += '[\?if=value=left&show L]'
+    per_option_format_output_rotate += '[\?if=value=right&show R]'
 }
 
 # invert screen color
