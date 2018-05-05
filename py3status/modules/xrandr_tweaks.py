@@ -35,6 +35,9 @@ Configuration parameters (external):
         eg, per_option_output_ignore = 'brightness'
 
 Configuration parameters (global):
+    debug:
+        Enables the command log and no specified changes will be carried out.
+        This parameter is made to work on the module without changing anything.
     nograb: Apply the modifications without grabbing the screen. It avoids to
         block other applications during the update but it might also cause some
         applications that detect screen resize to receive old values.
@@ -419,6 +422,9 @@ class Py3status:
             per_options.setdefault(key, {}).update(temporary)
         self.per_options = per_options
 
+        # debug?
+        self.debug = getattr(self, 'debug', False)
+
         # global options
         self.global_options = {}
         global_list = [
@@ -729,14 +735,19 @@ class Py3status:
             name, output = self.click['name'], self.click['output']
             if (not name or
                     name not in self.cog[output]['skip_update']['value']):
-                self.py3.command_run(command)
                 # debug command log
-                line = '============================\n'
-                log = line
-                for x in command.split('--output'):
-                    log += '=== {}\n'.format(x)
-                log += line
-                self.py3.log(log.strip())
+                if not self.debug:
+                    self.py3.command_run(command)
+                else:
+                    line = '===' * 10 + '\n'
+                    log = line
+                    for i, x in enumerate(command.split('--output')):
+                        if i == 0:
+                            log += '=== {}\n'.format(x)
+                        else:
+                            log += '=== --output{}\n'.format(x)
+                    log += line
+                    self.py3.log(log.strip())
             self.last_command = command
 
         # self.first_run = False
@@ -761,7 +772,7 @@ class Py3status:
         switch = self.cog[output][name].get('switch')
         self.click.update({'output': output, 'name': name})
 
-        if button == self.button_update:
+        if button == self.button_update and not self.debug:
             self.py3.command_run(self.last_command)
         elif button == self.button_reset:
             if name == 'name':
