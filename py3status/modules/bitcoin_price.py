@@ -11,18 +11,22 @@ Configuration parameters:
         Don't query more often than once every 15 minutes (default 900)
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
-        (default '{symbol} [\?color=close_last {currency_symbol}{close:.2f}]')
+        *(default '{symbol} {currency_symbol}{close:.2f} '
+        '[\?color=close_change {close_change}%]')*
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of active/inactive markets to use,
         see https://bitcoincharts.com/markets/list (default ['coinbaseUSD'])
     thresholds: specify color thresholds to use
-        (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
+        (default [(-1, 'bad'), (0, 'good')])
 
 Format placeholders:
     {format_market} format for cryptocurrency markets
-    {xxx_24h}       eg weighted price for last 24 hours eg 1234.56
-    {xxx_7d}        eg weighted price for last  7 days eg 1234.56
-    {xxx_30d}       eg weighted price for last 30 days eg 1234.56
+    {xxx_24h}       weighted price for last 24 hours eg 1234.56
+    {xxx_7d}        weighted price for last  7 days eg 1234.56
+    {xxx_30d}       weighted price for last 30 days eg 1234.56
+    {xxx_amount}    amount differences between intervals, eg +$33.56
+    {xxx_change}    percent change between intervals, eg +0.12
+                    Replace xxx with valid options below.
 
     Bitcoincharts offers weighted prices for several currencies.
     Weighted prices are calculated for the last 24 hours, 7 days and 30 days.
@@ -37,9 +41,8 @@ Format placeholders:
     SLL, THB, USD, VEF, VND, ZAR... and be written in lowercase.
 
 format_market placeholders:
-    {symbol}          alias for market name, eg localbtcUSD
+    {symbol}          short name for market, eg localbtcUSD
     {currency}        market currency, eg USD, EUR, GBP, etc
-    {currency_symbol} market currency symbol, eg $, €, £, etc
     {bid}             highest bid price, eg 1704347.14
     {ask}             lowest ask price, eg 12100.0,
     {avg}             average price, eg 17265.00867749991
@@ -52,35 +55,55 @@ format_market placeholders:
     {weighted_price}  weighted price for this day eg 17265.00867749991
     {duration}        duration, eg 89282
 
+format_market placeholders (custom):
+    {currency_symbol} market currency symbol, eg $, €, £, etc
+    {xxx_amount}      amount differences between intervals, eg +$33.56
+    {xxx_change}      percent change between intervlas, eg +0.12
+                      Replace xxx with placeholders above.
+
 Color options:
     color_bad: the price has dropped since the last interval
-    color_degraded: the price hasn't changed since the last interval
-    color_good: the price has increased since the last interval
+    color_good: the price hasn't changed or increased since the last interval
 
 Color thresholds:
     format:
-        xxx: print a color based on the value of `xxx` placeholder
-        xxx_last: print a color based on changes between `xxx` and last `xxx`
+        xxx:        print a color based on the value of `xxx` placeholder
+        xxx_change: print a color based on percent change between intervals
+        xxx_amount: print a color based on the value of `xxx_amount` placeholder
     format_market:
-        xxx: print a color based on the value of `xxx` placeholder
-        xxx_last: print a color based on changes between `xxx` and last `xxx`
+        xxx:        print a color based on the value of `xxx` placeholder
+        xxx_change: print a color based on percent change between intervals
+        xxx_amount: print a color based on the value of `xxx_amount` placeholder
 
 Examples:
 ```
-# colorize usd_24h weighted prices
+# add more markets
 bitcoin_price {
-    format = '[{format_market} usd_24h [\?color=usd_24h_last {usd_24h}]]'
+    markets = ['bitstampUSD', 'coinbaseUSD', 'localbtcUSD']
 }
 
-# round to the nearest dollar
+# colorize usd_24h weighted prices, this requires you not to restart module
+# for long time, so basically maybe this is a hardcore level or we can find
+# out when coinmarket changes its weighted_price statistics. all for a color.
 bitcoin_price {
-    format_market = '{symbol} [\?color=close_last {close:.0f}]'
+    format = '[{format_market} usd_24h [\?color=usd_24h_change ${usd_24h}]]'
 }
 
-# remove last 3 letters from symbol, hack
+# round to the nearest whole number
 bitcoin_price {
-    format_market = '[[\?max_length=-3 {symbol}] '
-    format_market += '[\?color=close_last {currency_symbol}{close:.2f}]]'
+    format_market = '{symbol} [\?color=close_change {currency_symbol}{close:.0f}]'
+}
+
+# remove last 3 letters from symbol, formatter hack
+bitcoin_price {
+    format_market = '[\?max_length=-3 {symbol}] '
+    format_market += '[\?color=close_change {currency_symbol}{close:.2f}]'
+}
+
+# display amount differences between intervals too
+bitcoin_price {
+    format_market = '{symbol} {currency_symbol}{close:.2f} '
+    format_market += '[\?color=close_change {close_change}%, {close_amount}]'
 }
 ```
 
@@ -88,9 +111,10 @@ bitcoin_price {
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'bitstampUSD '}, {'full_text': '$9471.52 ', 'color': '#ff0000'},
-    {'full_text': 'coinbaseUSD '}, {'full_text': '$9458.00 ', 'color': '#ffff00'},
-    {'full_text': 'localbtcUSD '}, {'full_text': '$9700.00', 'color': '#00ff00'},
+    {'full_text': 'bitstampUSD $9471.52 '},
+    {'full_text': '-1.18%', 'color': '#ff0000'},
+    {'full_text': 'localbtcUSD $9700.00 '},
+    {'full_text': '+1.39%', 'color': '#00ff00'},
 ]
 """
 
@@ -105,10 +129,11 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 900
     format = '{format_market}'
-    format_market = '{symbol} [\?color=close_last {currency_symbol}{close:.2f}]'
+    format_market = ('{symbol} {currency_symbol}{close:.2f} '
+                     '[\?color=close_change {close_change}%]')
     format_separator = ' '
     markets = ['coinbaseUSD']
-    thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
+    thresholds = [(-1, 'bad'), (0, 'good')]
 
     class Meta:
         update_config = {
@@ -175,26 +200,33 @@ class Py3status:
         # start deprecation
         self.field = getattr(self, 'field', 'close')
         self.symbols = getattr(self, 'symbols', True)
-        self.price = self.py3.format_contains(self.format_market, 'price*')
+        self.is_price = self.py3.format_contains(self.format_market, 'price*')
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # end deprecation
         self.init = {}
+        self.cache = {}
         self.placeholders = {}
-        self.cache_data = self.py3.storage_get('cache_data') or {}
         self.request_timeout = 10
         init_policies = [
             # names, format contains placeholders, format_string
             ('markets', 'format_market', self.format_market),
-            ('weighted_prices', ['*_24h', '*_30d', '*_7d'], self.format)
+            ('weighted_prices', ['*_24h*', '*_30d*', '*_7d*'], self.format)
         ]
+
         for x in init_policies:
             self.init[x[0]] = self.py3.format_contains(self.format, x[1])
-            self.placeholders[x[0]] = []
-            if self.init[x[0]]:
-                for placeholder in self.py3.get_placeholders_list(x[2]):
-                    if '_last' not in placeholder:
-                        self.placeholders[x[0]].append(placeholder)
+            self.placeholders[x[0]] = self.py3.get_placeholders_list(x[2])
+            new_list = []
+            # add {example} instead of {example_change} or {example_amount}
+            for name in self.placeholders[x[0]]:
+                for partial in ['_amount', '_change']:
+                    if partial in name:
+                        new_list.append(name.split(partial)[0])
+                        break
+                else:
+                    new_list.append(name)
+            self.placeholders[x[0]] = list(set(new_list))
 
     def _get_markets_data(self):
         try:
@@ -214,30 +246,57 @@ class Py3status:
             data = {}
         return data
 
+    def _tr(self, value, num=2, trim=False):
+        string = '{:g}' if trim else '{:.2f}'
+        return string.format(int(value * 10 ** num) / 10 ** num)
+
     def _manipulate(self, data, placeholders, name):
+
         for key in placeholders:
             if key not in data:
                 continue
-            result = 0
+            # start with empty
+            sign = MAP.get(data.get('currency', data.get('currency')))
+            amount_key, amount = key + '_amount', 0
+            change_key, change = key + '_change', 0
+            data.update({
+                amount_key: sign + self._tr(amount),
+                change_key: self._tr(change, trim=True),
+            })
             value = data[key]
-            self.cache_data.setdefault(name, {})
+            self.cache.setdefault(name, {})
+            # wp values are strings instead of floats
             if name == 'weighted_prices':
                 value = float(value)
             if isinstance(value, (int, float)):
-                last_value = self.cache_data[name].get(key)
-                self.cache_data[name][key] = value
+                # update cache
+                last_value = self.cache[name].get(key)
+                self.cache[name][key] = value
                 if last_value is not None:
-                    if value < last_value:
-                        result = -1
-                    elif value > last_value:
-                        result = 1
-            # it went down? bad. it went up? good. otherwise, degraded.
+                    amount = value - last_value
+                    # negative amount
+                    if amount < 0:
+                        amount_str = '-' + sign + self._tr(abs(amount))
+                        change = ((value - last_value) / value) * 100.0
+                        change_str = self._tr(change, trim=True)
+                    # positive amount
+                    elif amount > 0:
+                        amount_str = '+' + sign + self._tr(amount)
+                        change = ((value - last_value) / last_value) * 100.0
+                        change_str = '+' + self._tr(change, trim=True)
+                    # same amount
+                    else:
+                        amount_str = sign + self._tr(amount)
+                        change_str = self._tr(change, trim=True)
+
+                    data[amount_key] = amount_str
+                    data[change_key] = change_str
+
             if self.thresholds:
                 self.py3.threshold_get_color(value, key)
-                self.py3.threshold_get_color(result, '{}_last'.format(key))
+                self.py3.threshold_get_color(change, change_key)
 
-    def kill(self):
-        self.py3.storage_set('cache_data', self.cache_data)
+        return data
 
     def bitcoin_price(self):
         format_market = None
@@ -257,8 +316,7 @@ class Py3status:
                     market['currency_symbol'] = MAP.get(sign, sign)
                     # deprecation: show field->price + market==symbol
                     _market = market['symbol']
-                    if self.price:
-                        market['market'] = market['symbol']
+                    if self.is_price:
                         market['symbol'] = market['currency_symbol']
                         if self.field in market:
                             market['price'] = market[self.field]
@@ -267,19 +325,23 @@ class Py3status:
                     else:
                         market['market'] = _market
                     # end deprecation
-                    # waste not, want not
-                    self._manipulate(market, self.placeholders['markets'], name)
+                    # run manipulation on fetched placeholders
+                    market = self._manipulate(
+                        market, self.placeholders['markets'], name
+                    )
                     new_market.append(
                         self.py3.safe_format(self.format_market, market)
                     )
                     break
 
             format_separator = self.py3.safe_format(self.format_separator)
-            format_market = self.py3.composite_join(format_separator, new_market)
+            format_market = self.py3.composite_join(
+                format_separator, new_market
+            )
 
         if self.init['weighted_prices']:
             weighted_prices_data = self._get_weighted_prices_data()
-            self._manipulate(
+            weighted_prices_data = self._manipulate(
                 weighted_prices_data,
                 self.placeholders['weighted_prices'],
                 'weighted_prices'
