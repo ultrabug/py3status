@@ -11,11 +11,10 @@ Configuration parameters:
         Don't query more often than once every 15 minutes (default 900)
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
-        (default '{symbol} [\?color=close_last {currency}{close:.2f}]')
+        (default '{symbol} [\?color=close_last {currency_symbol}{close:.2f}]')
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of active/inactive markets to use,
         see https://bitcoincharts.com/markets/list (default ['coinbaseUSD'])
-    symbols: convert `{currency}` to signs, eg $, €, etc (default True)
     thresholds: specify color thresholds to use
         (default [(-1, 'bad'), (0, 'degraded'), (1, 'good')])
 
@@ -39,7 +38,8 @@ Format placeholders:
 
 format_market placeholders:
     {symbol}          alias for market name, eg localbtcUSD
-    {currency}        base currency of the market, eg USD, EUR, GBP
+    {currency}        market currency, eg USD, EUR, GBP, etc
+    {currency_symbol} market currency symbol, eg $, €, £, etc
     {bid}             highest bid price, eg 1704347.14
     {ask}             lowest ask price, eg 12100.0,
     {avg}             average price, eg 17265.00867749991
@@ -80,7 +80,7 @@ bitcoin_price {
 # remove last 3 letters from symbol, hack
 bitcoin_price {
     format_market = '[[\?max_length=-3 {symbol}] '
-    format_market += '[\?color=close_last {currency}{close:.2f}]]'
+    format_market += '[\?color=close_last {currency_symbol}{close:.2f}]]'
 }
 ```
 
@@ -105,10 +105,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 900
     format = '{format_market}'
-    format_market = '{symbol} [\?color=close_last {currency}{close:.2f}]'
+    format_market = '{symbol} [\?color=close_last {currency_symbol}{close:.2f}]'
     format_separator = ' '
     markets = ['coinbaseUSD']
-    symbols = True
     thresholds = [(-1, 'bad'), (0, 'degraded'), (1, 'good')]
 
     class Meta:
@@ -175,6 +174,7 @@ class Py3status:
     def post_config_hook(self):
         # start deprecation
         self.field = getattr(self, 'field', 'close')
+        self.symbols = getattr(self, 'symbols', True)
         self.price = self.py3.format_contains(self.format_market, 'price*')
         if isinstance(self.markets, str):
             self.markets = [x.strip() for x in self.markets.split(',')]
@@ -253,18 +253,20 @@ class Py3status:
                     # skip nonmatched markets
                     if name != market['symbol']:
                         continue
+                    sign = market['currency']
+                    market['currency_symbol'] = MAP.get(sign, sign)
                     # deprecation: show field->price + market==symbol
+                    _market = market['symbol']
                     if self.price:
                         market['market'] = market['symbol']
-                        sign = market['currency']
-                        market['symbol'] = MAP.get(sign, sign)
+                        market['symbol'] = market['currency_symbol']
                         if self.field in market:
                             market['price'] = market[self.field]
-                    # end deprecation
-                    # convert {currency} abbrevs to symbols
                     if self.symbols:
-                        sign = market['currency']
-                        market['currency'] = MAP.get(sign, sign)
+                        market['market'] = _market[:-3]
+                    else:
+                        market['market'] = _market
+                    # end deprecation
                     # waste not, want not
                     self._manipulate(market, self.placeholders['markets'], name)
                     new_market.append(
