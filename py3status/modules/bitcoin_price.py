@@ -11,7 +11,7 @@ Configuration parameters:
         Don't query more often than once every 15 minutes (default 900)
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
-        (default '{symbol} [\?color=last_close {currency}{close:.2f}]')
+        (default '{symbol} [\?color=close_last {currency}{close:.2f}]')
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of active/inactive markets to use,
         see https://bitcoincharts.com/markets/list (default ['coinbaseUSD'])
@@ -60,27 +60,27 @@ Color options:
 Color thresholds:
     format:
         xxx: print a color based on the value of `xxx` placeholder
-        last_xxx: print a color based on changes between `xxx` and last `xxx`
+        xxx_last: print a color based on changes between `xxx` and last `xxx`
     format_market:
         xxx: print a color based on the value of `xxx` placeholder
-        last_xxx: print a color based on changes between `xxx` and last `xxx`
+        xxx_last: print a color based on changes between `xxx` and last `xxx`
 
 Examples:
 ```
 # colorize usd_24h weighted prices
 bitcoin_price {
-    format = '[{format_market} usd_24h [\?color=last_usd_24h {usd_24h}]]'
+    format = '[{format_market} usd_24h [\?color=usd_24h_last {usd_24h}]]'
 }
 
 # round to the nearest dollar
 bitcoin_price {
-    format_market = '{symbol} [\?color=last_close {close:.0f}]'
+    format_market = '{symbol} [\?color=close_last {close:.0f}]'
 }
 
 # remove last 3 letters from symbol, hack
 bitcoin_price {
     format_market = '[[\?max_length=-3 {symbol}] '
-    format_market += '[\?color=last_close {currency}{close:.2f}]]'
+    format_market += '[\?color=close_last {currency}{close:.2f}]]'
 }
 ```
 
@@ -105,7 +105,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 900
     format = '{format_market}'
-    format_market = '{symbol} [\?color=last_close {currency}{close:.2f}]'
+    format_market = '{symbol} [\?color=close_last {currency}{close:.2f}]'
     format_separator = ' '
     markets = ['coinbaseUSD']
     symbols = True
@@ -181,7 +181,7 @@ class Py3status:
         # end deprecation
         self.init = {}
         self.placeholders = {}
-        self.last_data = self.py3.storage_get('last_data') or {}
+        self.cache_data = self.py3.storage_get('cache_data') or {}
         self.request_timeout = 10
         init_policies = [
             # names, format contains placeholders, format_string
@@ -190,7 +190,11 @@ class Py3status:
         ]
         for x in init_policies:
             self.init[x[0]] = self.py3.format_contains(self.format, x[1])
-            self.placeholders[x[0]] = self.py3.get_placeholders_list(x[2])
+            self.placeholders[x[0]] = []
+            if self.init[x[0]]:
+                for placeholder in self.py3.get_placeholders_list(x[2]):
+                    if '_last' not in placeholder:
+                        self.placeholders[x[0]].append(placeholder)
 
     def _get_markets_data(self):
         try:
@@ -216,12 +220,12 @@ class Py3status:
                 continue
             result = 0
             value = data[key]
-            self.last_data.setdefault(name, {})
+            self.cache_data.setdefault(name, {})
             if name == 'weighted_prices':
                 value = float(value)
             if isinstance(value, (int, float)):
-                last_value = self.last_data[name].get(key)
-                self.last_data[name][key] = value
+                last_value = self.cache_data[name].get(key)
+                self.cache_data[name][key] = value
                 if last_value is not None:
                     if value < last_value:
                         result = -1
@@ -230,10 +234,10 @@ class Py3status:
             # it went down? bad. it went up? good. otherwise, degraded.
             if self.thresholds:
                 self.py3.threshold_get_color(value, key)
-                self.py3.threshold_get_color(result, 'last_' + key)
+                self.py3.threshold_get_color(result, '{}_last'.format(key))
 
     def kill(self):
-        self.py3.storage_set('last_data', self.last_data)
+        self.py3.storage_set('cache_data', self.cache_data)
 
     def bitcoin_price(self):
         format_market = None
