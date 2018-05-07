@@ -8,7 +8,7 @@ if a channel is currently streaming or not.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 10)
-    client_id: Your client id. Create your own key at http://dev.twitch.tv
+    client_id: Your client id. Create your own key at https://dev.twitch.tv
         (default None)
     format: Display format when online
         (default "{stream_name} is live!")
@@ -27,10 +27,10 @@ Color options:
     color_good: Stream is live
 
 Client ID:
-    Example settings when creating your app at http://dev.twitch.tv
+    Example settings when creating your app at https://dev.twitch.tv
 
     Name: <your_name>_py3status
-    OAuth Redirect URI: http://localhost
+    OAuth Redirect URI: https://localhost
     Application Category: Application Integration
 
 
