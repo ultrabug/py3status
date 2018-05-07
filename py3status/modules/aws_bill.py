@@ -17,7 +17,7 @@ Configuration parameters:
         (default '{bill_amount}$')
     s3_bucket_name: The bucket where billing files are sent by AWS.
         Follow this article to activate this feature:
-        http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
+        https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-reports.html
         (default '')
 
 Format placeholders:
