@@ -21,7 +21,7 @@ Format placeholders:
 
 
 Requires:
-    gpmdp: http://www.googleplaymusicdesktopplayer.com/
+    gpmdp: https://www.googleplaymusicdesktopplayer.com/
     gpmdp-remote: https://github.com/iandrewt/gpmdp-remote
 
 @author Aaron Fields https://twitter.com/spirotot
