@@ -9,7 +9,7 @@ Configuration parameters:
     icon_on: show when connection is online (default '●')
     timeout: time to wait for a response, in seconds (default 2)
     url: specify URL to connect when checking for a connection
-        (default 'http://www.google.com')
+        (default 'https://www.google.com')
 
 Format placeholders:
     {icon} connection status
@@ -45,7 +45,7 @@ class Py3status:
     icon_off = u'■'
     icon_on = u'●'
     timeout = 2
-    url = 'http://www.google.com'
+    url = 'https://www.google.com'
 
     class Meta:
         deprecated = {
