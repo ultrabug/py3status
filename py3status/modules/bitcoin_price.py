@@ -111,7 +111,7 @@ class Py3status:
         }
         self.last_price = 0
         self.request_timeout = 10
-        self.url = 'http://api.bitcoincharts.com/v1/markets.json'
+        self.url = 'https://api.bitcoincharts.com/v1/markets.json'
 
     def _get_price(self, data, market, field):
         """
