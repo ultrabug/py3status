@@ -501,3 +501,40 @@ See the examples below!
 
         float_param = env(MY_NUM, float)
     }
+
+
+Inline Shell Code
+-----------------
+
+.. note::
+    New in version 3.9
+
+You can use the standard output of a shell script in your configuration with
+the ``shell(...)`` directive. These values are captured at startup and may be
+converted to the needed datatype (only ``str``, ``int``, ``float``, ``bool``
+and ``auto`` (the default) are currently supported).
+
+The shell script executed must return a single line of text on stdout and
+then terminate. If the type is explicitly declared ``bool``, the exit status
+of the script is respected (a non-zero exit status being interpreted falsey).
+In any other case if the script exits with a non-zero exit status an error
+will be thrown.
+
+Please be aware that due to the way the parser works, you may not include any
+closing parenthesis ( ``)`` ) in the expression. Wrap your commands in a script
+file and call it instead.
+
+The ``shell(...)`` expression can be used anywhere a constant or an ``env(...)``
+directive can be used (see the section "Environment Variables").
+
+Usage example:
+
+.. code-block:: py3status
+    :caption: Example
+
+    my_module {
+        password = shell(pass show myPasswd | head -n1)
+        some_string = shell(/opt/mydaemon/get_api_key.sh, str)
+        pid = shell(cat /var/run/mydaemon/pidfile, int)
+        my_bool = shell(pgrep thttpd, bool)
+    }
