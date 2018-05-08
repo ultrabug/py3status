@@ -499,6 +499,14 @@ class Py3status:
                 if key[output][name] is None:
                     key[output][name] = option
 
+        # remove empty default placeholders like mode, pos, rate, etc
+        # in post_config_hook before we start xrandr. less looping.
+        for placeholder in self.format_output_placeholders:
+            for output in active_outputs:
+                if key[output].get(placeholder) is None:
+                    self.format_output_placeholders.remove(placeholder)
+                    break
+
         # debug key log
         # self.py3.log(key)
 
