@@ -65,6 +65,7 @@ Format placeholders:
 format_output placeholders:
     {crtc} crtc value, an index in a list or xid
     {auto} auto value, eg True, False
+    {preferred} preferred value, eg True, False
     {brightness} brightness value, eg 1.0
     {delta} delta value, eg 0.05, 0.1, 0.25
     {gamma_blue} gamma blue value, eg 1.0
@@ -366,6 +367,7 @@ class Py3status:
         per_options = {
             'output': {
                 'auto': True,
+                'preferred': False,
                 'brightness': 1.0,
                 'crtc': None,
                 'delta': 0.05,
@@ -444,8 +446,8 @@ class Py3status:
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
         defaults = [
-            'auto', 'crtc', 'delta', 'ignore', 'mode', 'pos', 'randomize',
-            'scroll', 'skip_update', 'rate'
+            'auto', 'preferred', 'crtc', 'delta', 'ignore', 'mode', 'pos',
+            'randomize', 'scroll', 'skip_update', 'rate'
         ]
         placeholders = sorted(list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)
@@ -640,8 +642,9 @@ class Py3status:
                 elif isinstance(value, tuple):
                     value = format(value)
                 # auto
-                elif 'auto' in name:
-                    command += ' --auto'
+                elif name in ['auto', 'preferred']:
+                    if value:
+                        command += ' --{}'.format(name)
                 # mode, pos, rate, crtc
                 elif name in ['mode', 'pos', 'rate', 'crtc']:
                     if value:
