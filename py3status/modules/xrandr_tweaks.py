@@ -66,6 +66,7 @@ format_output placeholders:
     {crtc} crtc value, an index in a list or xid
     {auto} auto value, eg True, False
     {preferred} preferred value, eg True, False
+    {off} off value, eg True, False
     {brightness} brightness value, eg 1.0
     {delta} delta value, eg 0.05, 0.1, 0.25
     {gamma_blue} gamma blue value, eg 1.0
@@ -75,7 +76,7 @@ format_output placeholders:
     {mode} name or xid for mode, eg 1920x1200
     {name} output name, eg DP-2, DP-3
     {pos} position for the output, eg 0x0
-    {primary} primary output, eg 0.0, 1.0
+    {primary} primary output, eg True, False
     {rate} position for the output, eg 60
     {reflection} reflection values, eg normal, x, y, xy
     {reflect} reflection value, eg normal
@@ -368,6 +369,7 @@ class Py3status:
             'output': {
                 'auto': True,
                 'preferred': False,
+                'off': False,
                 'brightness': 1.0,
                 'crtc': None,
                 'delta': 0.05,
@@ -391,6 +393,7 @@ class Py3status:
             },
             'format_output': {
                 'None': '\?color=lightblue {value:.2f}',
+                'preferred': '\?color=lightblue&show {value}',
                 'auto': '\?color=degraded&show {value}',
                 'brightness': '\?color=#a9a9a9 {value:.2f}',
                 'delta': '\?color=#fff000 {value:.2f}',
@@ -402,6 +405,7 @@ class Py3status:
                 'name': '\?color=#ffffff {value}',
                 'pos': '\?color=cyan {value}',
                 'primary': '\?if=value&color=gold \[P\]|\?color=darkgray \[P\]',
+                'off': '\?if=value&color=white \u25cb|\?color=white \u25cf',
                 'rate': '\?color=lime {value}',
                 'reflect': '\?color=#00ffff {value}',
                 'reflection': '\?color=#00a9a9 {value}',
@@ -446,8 +450,8 @@ class Py3status:
         self.is_delta = self.py3.format_contains(self.format_output, 'delta')
         self.is_primary = self.py3.format_contains(self.format_output, 'primary')
         defaults = [
-            'auto', 'preferred', 'crtc', 'delta', 'ignore', 'mode', 'pos',
-            'randomize', 'scroll', 'skip_update', 'rate'
+            'auto', 'preferred', 'off', 'crtc', 'delta', 'ignore', 'mode',
+            'pos', 'randomize', 'scroll', 'skip_update', 'rate'
         ]
         placeholders = sorted(list(set(defaults + (
             self.py3.get_placeholders_list(self.format_output)
@@ -503,11 +507,14 @@ class Py3status:
 
         # remove empty default placeholders like mode, pos, rate, etc
         # in post_config_hook before we start xrandr. less looping.
+        format_output_placeholders = []
         for placeholder in self.format_output_placeholders:
             for output in active_outputs:
-                if key[output].get(placeholder) is None:
-                    self.format_output_placeholders.remove(placeholder)
+                if key[output][placeholder] is not None:
+                    if placeholder not in format_output_placeholders:
+                        format_output_placeholders.append(placeholder)
                     break
+        self.format_output_placeholders = format_output_placeholders
 
         # debug key log
         # self.py3.log(key)
@@ -540,8 +547,8 @@ class Py3status:
                             }
                     continue
                 config = {'value': key[output][name]}
-                # primary
-                if name in ['primary']:
+                # primary/off
+                if name in ['primary', 'off']:
                     switch = [True, False]
                     config['index'] = switch.index(key[output][name])
                     config['switch'] = switch
@@ -595,6 +602,9 @@ class Py3status:
                 elif '(' in x:
                     break
 
+        # EXPERIMENTAL - USE CONNECTED_OUTPUTS FOR {off}
+        active_outputs = [x[0] for x in connected_outputs]
+
         if self.outputs:
             matched_outputs = []
             for _filter in self.outputs:
@@ -642,9 +652,21 @@ class Py3status:
                 elif isinstance(value, tuple):
                     value = format(value)
                 # auto
-                elif name in ['auto', 'preferred']:
+                elif name in ['auto', 'preferred', 'off']:
                     if value:
-                        command += ' --{}'.format(name)
+                        update_command = True
+                        # skip adding auto if users want preferred or off
+                        if name == 'auto':
+                            for x in ['preferred', 'off']:
+                                if self.cog[output].get(x, {}).get('value'):
+                                    update_command = False
+                        # skip adding preferred if users want off
+                        elif name == 'preferred':
+                            for x in ['off']:
+                                if self.cog[output].get(x, {}).get('value'):
+                                    update_command = False
+                        if update_command:
+                            command += ' --{}'.format(name)
                 # mode, pos, rate, crtc
                 elif name in ['mode', 'pos', 'rate', 'crtc']:
                     if value:
@@ -783,7 +805,7 @@ class Py3status:
         switch = self.cog[output][name].get('switch')
         self.click.update({'output': output, 'name': name})
 
-        if button == self.button_update and not self.debug:
+        if button == self.button_update:
             self.py3.command_run(self.last_command)
         elif button == self.button_reset:
             if name == 'name':
