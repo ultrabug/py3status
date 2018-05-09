@@ -19,8 +19,8 @@ Configuration parameters:
     format_separator: separator between minutes:seconds (default ':')
     format_stopped: format to display when timer is stopped
         (default 'Pomodoro ({format})')
-    max_breaks: maximum number of breaks (default 4)
     num_progress_bars: number of progress bars (default 5)
+    pomodoros: specify a number of pomodoros (intervals) (default 4)
     sound_break_end: break end sound (file path) (requires pyglet
         or pygame) (default None)
     sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet
@@ -126,14 +126,25 @@ class Py3status:
     format_break_stopped = u'Break #{breakno} ({format})'
     format_separator = u":"
     format_stopped = u'Pomodoro ({format})'
-    max_breaks = 4
     num_progress_bars = 5
+    pomodoros = 4
     sound_break_end = None
     sound_pomodoro_end = None
     sound_pomodoro_start = None
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'max_breaks',
+                    'new': 'pomodoros',
+                    'msg': 'obsolete parameter use `pomodoros`',
+                },
+            ]
+        }
 
     def post_config_hook(self):
         self._initialized = False
@@ -169,7 +180,7 @@ class Py3status:
             self._time_left = self.timer_break
             self._section_time = self.timer_break
             self._break_number += 1
-            if self._break_number > self.max_breaks:
+            if self._break_number >= self.pomodoros:
                 self._time_left = self.timer_long_break
                 self._section_time = self.timer_long_break
                 self._break_number = 0
