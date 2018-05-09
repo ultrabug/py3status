@@ -148,6 +148,38 @@ class Py3status:
 
     def post_config_hook(self):
         self._initialized = False
+        # deprecation
+        self._format_active = u'Pomodoro \[{format}\]'
+        self._format_break = u'Break #{breakno} \[{format}\]'
+        self._format_break_stopped = u'Break #{breakno} ({format})'
+        self._format_separator = u":"
+        self._format_stopped = u'Pomodoro ({format})'
+        formats = ['active', 'break', 'break_stopped', 'separator', 'stopped']
+        notify = False
+        for name in formats:
+            name = 'format_{}'.format(name)
+            f = getattr(self, name, None)
+            F = getattr(self, '_' + name, None)
+            if f != F:
+                if ('\\' in f and '\\\\' not in f and
+                   '\[' not in f and '\]' not in f and '\|' not in f):
+                    f = f.replace('\\', '\\\\')
+                    notify = True
+                if '[' in f and '\[' not in f:
+                    f = f.replace('[', '\[')
+                    notify = True
+                if ']' in f and '\]' not in f:
+                    f = f.replace(']', '\]')
+                    notify = True
+                if '|' in f and '\|' not in f:
+                    f = f.replace('|', '\|')
+                    notify = True
+                setattr(self, name, f)
+        if notify:
+            msg = 'action required: please escape the '
+            msg += 'brackets, slashes, or bar in formats'
+            self.py3.notify_user(msg)
+        # end deprecation
 
     def _init(self):
         self._break_number = 0
