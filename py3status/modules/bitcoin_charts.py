@@ -24,8 +24,8 @@ Format placeholders:
     {xxx_24h}       weighted price for last 24 hours eg 1234.56
     {xxx_7d}        weighted price for last  7 days eg 1234.56
     {xxx_30d}       weighted price for last 30 days eg 1234.56
-    {xxx_amount}    amount differences between intervals, eg +$33.56
-    {xxx_change}    percent change between intervals, eg +0.12
+    {xxx_change}    percent changes between intervals, eg +0.12
+    {xxx_diff}      differences between intervals, eg +$33.56
                     Replace xxx with valid options below.
 
     Bitcoincharts offers weighted prices for several currencies.
@@ -57,8 +57,8 @@ format_market placeholders:
 
 format_market placeholders (custom):
     {currency_symbol} market currency symbol, eg $, €, £, etc
-    {xxx_amount}      amount differences between intervals, eg +$33.56
     {xxx_change}      percent change between intervlas, eg +0.12
+    {xxx_diff}        differences between intervals, eg +$33.56
                       Replace xxx with placeholders above.
 
 Color options:
@@ -69,11 +69,11 @@ Color thresholds:
     format:
         xxx:        print a color based on the value of `xxx` placeholder
         xxx_change: print a color based on percent change between intervals
-        xxx_amount: print a color based on the value of `xxx_amount` placeholder
+        xxx_diff:   print a color based on the value of `xxx_diff` placeholder
     format_market:
         xxx:        print a color based on the value of `xxx` placeholder
         xxx_change: print a color based on percent change between intervals
-        xxx_amount: print a color based on the value of `xxx_amount` placeholder
+        xxx_diff:   print a color based on the value of `xxx_diff` placeholder
 
 Examples:
 ```
@@ -100,10 +100,10 @@ bitcoin_price {
     format_market += '[\?color=close_change {currency_symbol}{close:.2f}]'
 }
 
-# display amount differences between intervals too
+# display differences between intervals too
 bitcoin_price {
     format_market = '{symbol} {currency_symbol}{close:.2f} '
-    format_market += '[\?color=close_change {close_change}%, {close_amount}]'
+    format_market += '[\?color=close_change {close_change}%, {close_diff}]'
 }
 ```
 
@@ -218,9 +218,9 @@ class Py3status:
             self.init[x[0]] = self.py3.format_contains(self.format, x[1])
             self.placeholders[x[0]] = self.py3.get_placeholders_list(x[2])
             new_list = []
-            # add {example} instead of {example_change} or {example_amount}
+            # add {example} instead of {example_change} or {example_diff}
             for name in self.placeholders[x[0]]:
-                for partial in ['_amount', '_change']:
+                for partial in ['_diff', '_change']:
                     if partial in name:
                         new_list.append(name.split(partial)[0])
                         break
@@ -256,11 +256,15 @@ class Py3status:
             if key not in data:
                 continue
             # start with empty
-            sign = MAP.get(data.get('currency', data.get('currency')))
-            amount_key, amount = key + '_amount', 0
             change_key, change = key + '_change', 0
+            diff_key, diff = key + '_diff', 0
+            # no currency sign for non-currency placeholders
+            if key in ['latest_trade', 'duration', 'volume']:
+                sign = ''
+            else:
+                sign = MAP.get(data.get('currency', data.get('currency')))
             data.update({
-                amount_key: sign + self._tr(amount),
+                diff_key: sign + self._tr(diff),
                 change_key: self._tr(change, trim=True),
             })
             value = data[key]
@@ -273,28 +277,30 @@ class Py3status:
                 last_value = self.cache[name].get(key)
                 self.cache[name][key] = value
                 if last_value is not None:
-                    amount = value - last_value
-                    # negative amount
-                    if amount < 0:
-                        amount_str = '-' + sign + self._tr(abs(amount))
+                    diff = value - last_value
+                    # negative diff
+                    if diff < 0:
+                        diff_str = '-' + sign + self._tr(abs(diff))
                         change = ((value - last_value) / value) * 100.0
                         change_str = self._tr(change, trim=True)
-                    # positive amount
-                    elif amount > 0:
-                        amount_str = '+' + sign + self._tr(amount)
+                    # positive diff
+                    elif diff > 0:
+                        diff_str = '+' + sign + self._tr(diff)
                         change = ((value - last_value) / last_value) * 100.0
                         change_str = '+' + self._tr(change, trim=True)
-                    # same amount
+                    # same diff
                     else:
-                        amount_str = sign + self._tr(amount)
+                        diff_str = sign + self._tr(diff)
                         change_str = self._tr(change, trim=True)
 
-                    data[amount_key] = amount_str
+                    data[diff_key] = diff_str
                     data[change_key] = change_str
 
             if self.thresholds:
                 self.py3.threshold_get_color(value, key)
                 self.py3.threshold_get_color(change, change_key)
+
+        self.py3.log(data)
 
         return data
 
