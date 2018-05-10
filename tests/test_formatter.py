@@ -39,6 +39,8 @@ param_dict = {
     'str_int': '123',
     'str_float': '123.456',
     'str_nan': "I'm not a number",
+    'trailing_zeroes_1': '50.000',
+    'trailing_zeroes_2': '5.500',
 
     'composite_basic': Composite([{'full_text': 'red ', 'color': '#FF0000'},
                                   {'full_text': 'green ', 'color': '#00FF00'},
@@ -1349,6 +1351,20 @@ def test_conditions_23():
     run_formatter({
         'format': '[\?if=None=None cool] beans',
         'expected': ' beans'
+    })
+
+
+def test_trailing_zeroes_1():
+    run_formatter({
+        'format': '{trailing_zeroes_1} becomes {trailing_zeroes_1:g}',
+        'expected': '50.000 becomes 50'
+    })
+
+
+def test_trailing_zeroes_2():
+    run_formatter({
+        'format': '{trailing_zeroes_2} becomes {trailing_zeroes_2:g}',
+        'expected': '5.500 becomes 5.5'
     })
 
 
