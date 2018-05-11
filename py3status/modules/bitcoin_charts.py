@@ -12,10 +12,10 @@ Configuration parameters:
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
         *(default '{symbol} {currency_symbol}{close:.2f} '
-        '[\?color=close_change {close_change}%]')*
+        '[\?color=close_change {close_diff}]')*
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of active/inactive markets to use,
-        see https://bitcoincharts.com/markets/list (default ['coinbaseUSD'])
+        see https://bitcoincharts.com/markets/list (default ['bitstampUSD'])
     thresholds: specify color thresholds to use
         (default [(-1, 'bad'), (0, 'good')])
 
@@ -51,13 +51,13 @@ format_market placeholders:
     {low}             lowest trade during day, eg 11401.79
     {close}           latest trade, eg 24183.56
     {volume}          total trade volume of day in BTC, eg 143.11342831
-    {currency_volume} total trade volume of day in currency, eg 2470854.5816389113
+    {currency_volume} total trade volume of day in currency, eg 2470854.581638
     {weighted_price}  weighted price for this day eg 17265.00867749991
     {duration}        duration, eg 89282
 
 format_market placeholders (custom):
     {currency_symbol} market currency symbol, eg $, €, £, etc
-    {xxx_change}      percent change between intervlas, eg +0.12
+    {xxx_change}      percent change between intervals, eg +0.12
     {xxx_diff}        differences between intervals, eg +$33.56
                       Replace xxx with placeholders above.
 
@@ -78,32 +78,33 @@ Color thresholds:
 Examples:
 ```
 # add more markets
-bitcoin_price {
+bitcoin_charts {
     markets = ['bitstampUSD', 'coinbaseUSD', 'localbtcUSD']
 }
 
 # colorize usd_24h weighted prices, this requires you not to restart module
 # for long time, so basically maybe this is a hardcore level or we can find
 # out when coinmarket changes its weighted_price statistics. all for a color.
-bitcoin_price {
+bitcoin_charts {
     format = '[{format_market} usd_24h [\?color=usd_24h_change ${usd_24h}]]'
 }
 
 # round to the nearest whole number
-bitcoin_price {
+bitcoin_charts {
     format_market = '{symbol} [\?color=close_change {currency_symbol}{close:.0f}]'
 }
 
 # remove last 3 letters from symbol, formatter hack
-bitcoin_price {
+bitcoin_charts {
     format_market = '[\?max_length=-3 {symbol}] '
     format_market += '[\?color=close_change {currency_symbol}{close:.2f}]'
 }
 
-# display differences between intervals too
-bitcoin_price {
+# display change, diff differences between intervals
+bitcoin_charts {
     format_market = '{symbol} {currency_symbol}{close:.2f} '
-    format_market += '[\?color=close_change {close_change}%, {close_diff}]'
+    format_market += '[\?color=close_change {close_diff}], '
+    format_market += '[\?color=close_change {close_change}%]'
 }
 ```
 
@@ -118,6 +119,7 @@ SAMPLE OUTPUT
 ]
 """
 
+from math import floor
 URL_MARKETS = 'https://api.bitcoincharts.com/v1/markets.json'
 URL_WEIGHTED_PRICES = 'https://api.bitcoincharts.com/v1/weighted_prices.json'
 MAP = {'AUD': '$', 'CNY': '¥', 'EUR': '€', 'GBP': '£', 'USD': '$', 'YEN': '¥'}
@@ -130,9 +132,9 @@ class Py3status:
     cache_timeout = 900
     format = '{format_market}'
     format_market = ('{symbol} {currency_symbol}{close:.2f} '
-                     '[\?color=close_change {close_change}%]')
+                     '[\?color=close_change {close_diff}]')
     format_separator = ' '
-    markets = ['coinbaseUSD']
+    markets = ['bitstampUSD']
     thresholds = [(-1, 'bad'), (0, 'good')]
 
     class Meta:
@@ -246,12 +248,13 @@ class Py3status:
             data = {}
         return data
 
-    def _tr(self, value, num=2, trim=False):
-        string = '{:g}' if trim else '{:.2f}'
-        return string.format(int(value * 10 ** num) / 10 ** num)
+    def _tr(self, value, change=False, num=2):
+        # {xxx_change}    percent changes between intervals, eg +0.12
+        # {xxx_diff}      differences between intervals, eg +$33.56
+        string = '{:g}' if change else '{:.2f}'
+        return string.format(floor(value * 10 ** num) / 10 ** num)
 
     def _manipulate(self, data, placeholders, name):
-
         for key in placeholders:
             if key not in data:
                 continue
@@ -265,7 +268,7 @@ class Py3status:
                 sign = MAP.get(data.get('currency', data.get('currency')))
             data.update({
                 diff_key: sign + self._tr(diff),
-                change_key: self._tr(change, trim=True),
+                change_key: self._tr(change, True),
             })
             value = data[key]
             self.cache.setdefault(name, {})
@@ -282,16 +285,16 @@ class Py3status:
                     if diff < 0:
                         diff_str = '-' + sign + self._tr(abs(diff))
                         change = ((value - last_value) / value) * 100.0
-                        change_str = self._tr(change, trim=True)
+                        change_str = self._tr(change, True)
                     # positive diff
                     elif diff > 0:
                         diff_str = '+' + sign + self._tr(diff)
                         change = ((value - last_value) / last_value) * 100.0
-                        change_str = '+' + self._tr(change, trim=True)
+                        change_str = '+' + self._tr(change, True)
                     # same diff
                     else:
                         diff_str = sign + self._tr(diff)
-                        change_str = self._tr(change, trim=True)
+                        change_str = self._tr(change, True)
 
                     data[diff_key] = diff_str
                     data[change_key] = change_str
@@ -300,11 +303,9 @@ class Py3status:
                 self.py3.threshold_get_color(value, key)
                 self.py3.threshold_get_color(change, change_key)
 
-        self.py3.log(data)
-
         return data
 
-    def bitcoin_price(self):
+    def bitcoin_charts(self):
         format_market = None
         weighted_prices_data = {}
         markets_data = {}
@@ -362,6 +363,9 @@ class Py3status:
                 )
             )
         }
+
+    def on_click(self, event):
+        self.py3.prevent_refresh()  # pls no refresh
 
 
 if __name__ == '__main__':
