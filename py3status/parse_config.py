@@ -106,6 +106,17 @@ class ConfigParser:
             }
         }
 
+    * execute shell code
+
+        my_module {
+            my_guessed_type = shell(pass show git|head -n1)
+            my_str = shell(pass show git|head -n1, str)
+            my_int = shell(pass show git|head -n1, int)
+            my_bool = shell(pass show git|head -n1, bool)
+        }
+
+        (shell code may not include any parenthesis!)
+
     * quality feedback on parse errors.
         details include error description, line number, position.
 
@@ -115,6 +126,7 @@ class ConfigParser:
         '#.*$'  # comments
         # environment variables
         '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
+        '|(?P<shell>shell\(.+?(\s*,\s*(int|float|str|bool|auto))?\))'  # shell code
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -232,6 +244,8 @@ class ConfigParser:
                 t_type = 'newline'
             elif token.group('env_var'):
                 t_type = 'env_var'
+            elif token.group('shell'):
+                t_type = 'shell'
             elif token.group('unknown'):
                 t_type = 'unknown'
             else:
@@ -348,6 +362,31 @@ class ConfigParser:
         except ValueError:
             self.error('Bad conversion')
 
+    def make_value_from_shell(self, value):
+        conversion_options = {
+            'int': int,
+            'float': float,
+            'str': str,
+
+            'bool': (lambda val: val.lower() in ('', 'true', '1')),
+            'auto': self.make_value,
+        }
+
+        match = re.match('shell\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)', value)
+        shell, _, var_type = match.groups()
+        try:
+            shell_stdout = str(check_output(shell, shell=True).rstrip(), encoding='utf-8')
+        except CalledProcessError:
+            if var_type is not None and var_type.lower() == 'bool':
+                return False
+            self.error('shell script exited with an error')
+        if var_type is None:
+            return shell_stdout
+        try:
+            return conversion_options[var_type](shell_stdout)
+        except ValueError:
+            self.error('Bad conversion')
+
     def separator(self, separator=',', end_token=None):
         '''
         Read through tokens till the required separator is found.  We ignore
@@ -428,6 +467,8 @@ class ConfigParser:
                 return self.make_value(t_value)
             if token['type'] == 'env_var':
                 return self.make_value_from_env(t_value)
+            if token['type'] == 'shell':
+                return self.make_value_from_shell(t_value)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -518,6 +559,8 @@ class ConfigParser:
                 name.append(value)
             elif t_type == 'env_var':
                 self.error('Name expected')
+            elif t_type == 'shell':
+                self.error('Shell command expected')
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:

@@ -74,9 +74,18 @@ Color options:
     color_degraded: Using a fallback layout
     color_good: Displayed layout active
 
-Example config:
+Notes:
+    Some days are just bad days. Running `xrandr --query` command can
+    cause unexplainable brief screen freezes due to an overall combination
+    of computer hardware, installed software, your choice of linux distribution,
+    and/or some other unknown factors such as recent system updates.
 
+    Configuring `cache_timeout` with a different number, eg `3600` (an hour)
+    or `-1` (runs once) can be used to remedy this issue. See issue #580.
+
+Examples:
 ```
+# start with a preferable setup
 xrandr {
     force_on_start = "eDP1+DP1"
     DP1_pos = "left-of eDP1"
@@ -163,17 +172,20 @@ class Py3status:
         for line in current.splitlines():
             try:
                 s = line.split(' ')
+                infos = line[line.find('('):]
                 if s[1] == 'connected':
-                    output, state = s[0], s[1]
-                    if s[2][0] == '(':
-                        mode, infos = None, ' '.join(s[2:]).strip('\n')
-                    else:
-                        mode, infos = s[2], ' '.join(s[3:]).strip('\n')
-                        active_layout.append(output)
+                    output, state, mode = s[0], s[1], None
+                    for index, x in enumerate(s[2:], 2):
+                        if 'x' in x and '+' in x:
+                            mode = x
+                            active_layout.append(output)
+                            infos = line[line.find(s[index + 1]):]
+                            break
+                        elif '(' in x:
+                            break
                     connected.append(output)
                 elif s[1] == 'disconnected':
-                    output, state = s[0], s[1]
-                    mode, infos = None, ' '.join(s[2:]).strip('\n')
+                    output, state, mode = s[0], s[1], None
                     disconnected.append(output)
                 else:
                     continue
