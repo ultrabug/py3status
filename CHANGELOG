@@ -1,3 +1,20 @@
+version 3.9 (2018-05-14)
+* added --disable_click_events (-m) option to disable all click events, by @jamethy
+* allow executing shell code in the config using shell(), by @girst
+* test_formatter: add {:g} to remove trailing zeroes, by @lasers
+* add py3-cmd to Control section of README, by @kmoe
+* fix issue where cache_timeout non-numeric wrt #1340, by @tobes
+* py3: play sounds with ffplay, by @lasers
+* battery_level module: fixed for systems without POWER_SUPPLY_POWER_NOW neither POWER_SUPPLY_CURRENT_NOW, by @adrianlzt
+* bitcoin_price module: changed request url from http to https, by @zack-baker
+* keyboard_layout module: add variants support, by @lasers
+* keyboard_locks module: rearrange locks, by @lasers
+* pomodoro module: fix off-by-one error, rename max_breaks to pomodoros, by @lasers
+* volume_status : prioritize default sound system fixing pulseaudio and alsa detection, by @saengowp
+* weather_yahoo module: date bugfix and a series of changes, by @lasers
+* xrandr module: parse mode properly, by @lasers
+
+
 version 3.8 (2018-04-02)
 * py3: command_output call command with lc_all=c, by woland
 * py3: dismiss empty notifications, by @lasers
