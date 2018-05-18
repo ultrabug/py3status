@@ -45,7 +45,7 @@ class Py3status:
     def _get_context(self):
         context = "none"
         task_context = self.py3.command_output('task context show')
-        if not task_context.startswith("No context") :
+        if not task_context.startswith("No context"):
             context = task_context.split('\'')[1]
         return context
 
@@ -60,7 +60,9 @@ class Py3status:
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'task': task_result, 'context': self._get_context(), 'nb_tasks': nb_tasks})
+            'full_text': self.py3.safe_format(self.format, {'task': task_result,
+                                                            'context': self._get_context(),
+                                                            'nb_tasks': nb_tasks})
         }
 
 
