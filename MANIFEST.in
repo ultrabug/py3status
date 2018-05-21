@@ -1,2 +1,7 @@
-include CHANGELOG LICENSE README.rst
-recursive-include modules *.py
+recursive-include py3status *.py
+recursive-include tests *.py
+recursive-include doc *.rst *.md *.txt *.py
+
+include CHANGELOG
+include LICENSE
+include README.rst
