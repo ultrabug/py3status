@@ -27,8 +27,8 @@ Configuration parameters:
     woeid: specify Yahoo! WOEID to use, required (default None)
 
 Note:
-    The placeholder `{format_today}` will show the current conditions in `format`.
-    The config `forecast_today` will show today's forecast in `format_forecast`.
+    The placeholder `{format_today}` shows the current conditions in `format`.
+    The config `forecast_today` shows today's forecast in `format_forecast`.
 
 Format placeholders:
     {atmosphere_humidity}   humidity, eg 96
@@ -76,10 +76,10 @@ format_forecast placeholders:
 
 Color thresholds:
     format:
-        temp: a color based on current temperature
+        temp: print a color based on the value of current temperature
     format_forecast:
-        high: a color based on high temperature
-        low: a color based on low temperature
+        high: print a color based on the value of high temperature
+        low: print a color based on the value of low temperature
 
 Examples:
 ```
@@ -95,12 +95,12 @@ weather_yahoo {
     format = '[{format_today} ][{format_forecast}][ {item_pubDate}]'
     format_today = '{date} {icon}'
     format_forecast = '{date} {icon}'
-    format_separator = '\?color=bad  - '
+    format_separator = '\?color=violet  \| '
 
     format_datetime = {
-        'format_today': '\?color=bad&show %A',
+        'format': '\?color=darkgray %-I%P',
+        'format_today': '\?color=violet %A',
         'format_forecast': '%a %b %d',
-        'format': '%-I%P'
     }
 }
 
@@ -115,11 +115,20 @@ weather_yahoo {
 
 SAMPLE OUTPUT
 {'full_text': u'\u2602 \u2601 \u2601 \u2601'}
+
+example_weather
+[
+    {'full_text': u'Wednesday', 'color': '#ee82ee'},
+    {'full_text': u' \u2601 Thu Mar 08 \u2600'},
+    {'full_text': u' | ', 'color': '#ee82ee'},
+    {'full_text': u'Fri Mar 09 \u2601'},
+    {'full_text': u' 3am', 'color': '#a9a9a9'},
+]
 """
 
 from datetime import datetime
 DATETIME_FORECAST = '%d %b %Y'
-DATETIME_GENERAL = '%a, %d %b %Y %H:%M %p %Z'
+DATETIME_GENERAL = '%a, %d %b %Y %I:%M %p %Z'
 
 URL = 'https://query.yahooapis.com/v1/public/yql?q='
 URL += 'select * from weather.forecast where woeid='
@@ -153,16 +162,17 @@ class Py3status:
     def post_config_hook(self):
         if not self.woeid:
             raise Exception('missing woeid')
-        self.init_datetime_format = self.py3.format_contains(
-            self.format, 'item_pubDate') and 'format' in self.format_datetime
-        self.init_datetime_format_today = self.py3.format_contains(
-            self.format_today, 'date') and 'format_today' in self.format_datetime
-        self.init_datetime_format_forecast = self.py3.format_contains(
-            self.format_forecast, 'date') and 'format_forecast' in self.format_datetime
-        self.init_datetimes = any([
-            self.init_datetime_format,
-            self.init_datetime_format_today,
-            self.init_datetime_format_forecast])
+
+        self.datetime_init = {'datetime': []}
+        names = ['format', 'format_today', 'format_forecast']
+        placeholders = ['item_pubDate', 'date', 'date']
+        for name, placeholder, in zip(names, placeholders):
+            self.datetime_init[name] = (self.py3.format_contains(getattr(
+                self, name), placeholder) and name in self.format_datetime
+            )
+            if self.datetime_init[name]:
+                self.datetime_init['datetime'].append(name)
+
         self.unit = self.unit.upper()
         self.url = URL.format(woeid=self.woeid, unit=self.unit.lower())
         self.conditions = [
@@ -211,30 +221,22 @@ class Py3status:
 
     def _get_weather_data(self):
         try:
-            query = self.py3.request(self.url, timeout=self.request_timeout)
+            return self.py3.request(
+                self.url, timeout=self.request_timeout).json()
         except self.py3.RequestException:
             return {}
-        if query.status_code != 200:
-            self.py3.log('HTTP response returned code %s' % query.status_code)
-            return {}
-        return query.json()
 
     def _organize(self, data):
-        try:
-            today = data['query']['results']['channel']['item']['condition']
-            forecasts = data['query']['results']['channel']['item']['forecast']
-            # skip today?
-            if not self.forecast_today:
-                forecasts.pop(0)
-            # set number of forecast_days
-            forecasts = forecasts[:self.forecast_days]
-            # add extras
-            channel = data['query']['results']['channel']
-            channel = self.py3.flatten_dict(channel, delimiter='_')
-        except:
-            today = {}
-            forecasts = {}
-            channel = {}
+        today = data['query']['results']['channel']['item']['condition']
+        forecasts = data['query']['results']['channel']['item']['forecast']
+        # skip today?
+        if not self.forecast_today:
+            forecasts.pop(0)
+        # set number of forecast_days
+        forecasts = forecasts[:self.forecast_days]
+        # add extras
+        channel = data['query']['results']['channel']
+        channel = self.py3.flatten_dict(channel, delimiter='_')
         return today, forecasts, channel
 
     def _get_icon(self, forecast):
@@ -263,25 +265,31 @@ class Py3status:
 
             today, forecasts, channel = self._organize(weather_data)
 
-            if self.init_datetimes:
-                if self.init_datetime_format:
+            if self.datetime_init['datetime']:
+                if self.datetime_init['format']:
                     channel['item_pubDate'] = self.py3.safe_format(
                         datetime.strftime(datetime.strptime(
                             channel['item_pubDate'], DATETIME_GENERAL),
-                            self.format_datetime['format']))
+                            self.format_datetime['format']
+                        )
+                    )
 
-                if self.init_datetime_format_today:
+                if self.datetime_init['format_today']:
                     today['date'] = self.py3.safe_format(
                         datetime.strftime(datetime.strptime(
                             today['date'], DATETIME_GENERAL),
-                            self.format_datetime['format_today']))
+                            self.format_datetime['format_today']
+                        )
+                    )
 
-                if self.init_datetime_format_forecast:
+                if self.datetime_init['format_forecast']:
                     for forecast in forecasts:
                         forecast['date'] = self.py3.safe_format(
                             datetime.strftime(datetime.strptime(
                                 forecast['date'], DATETIME_FORECAST),
-                                self.format_datetime['format_forecast']))
+                                self.format_datetime['format_forecast']
+                            )
+                        )
 
             if today:
                 if self.thresholds:
@@ -292,7 +300,8 @@ class Py3status:
                         icon=self._get_icon(today),
                         unit=self.unit,
                         **today
-                    ))
+                    )
+                )
 
             if forecasts:
                 for forecast in forecasts:
@@ -300,12 +309,15 @@ class Py3status:
                         self.py3.threshold_get_color(forecast['high'], 'high')
                         self.py3.threshold_get_color(forecast['low'], 'low')
 
-                    new_data.append(self.py3.safe_format(
-                        self.format_forecast, dict(
-                            icon=self._get_icon(forecast),
-                            unit=self.unit,
-                            **forecast
-                        )))
+                    new_data.append(
+                        self.py3.safe_format(
+                            self.format_forecast, dict(
+                                icon=self._get_icon(forecast),
+                                unit=self.unit,
+                                **forecast
+                            )
+                        )
+                    )
 
             format_separator = self.py3.safe_format(self.format_separator)
             format_forecast = self.py3.composite_join(format_separator, new_data)

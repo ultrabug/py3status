@@ -10,41 +10,87 @@ countries have their own air quality indices, corresponding to different nationa
 air quality standards.
 
 Configuration parameters:
-    auth_token: Required. Personal token. http://aqicn.org (default 'demo')
+    auth_token: Personal token required. See http://aqicn.org/data-platform/token
+        for more information. (default 'demo')
     cache_timeout: refresh interval for this module. A message from the site:
-        The default quota is max 1000 (one thousand) requests per minute (~16RPS)
-        and with burst up to 60 requests. Read more: http://aqicn.org/api/
+        The default quota is max 1000 requests per minute (~16RPS) and with
+        burst up to 60 requests. See http://aqicn.org/api/ for more information.
         (default 3600)
-    format: display format for this module (default '{location}: {aqi} {category}')
+    format: display format for this module
+        (default '[\?color=aqi {city_name}: {aqi} {category}]')
+    format_datetime: specify strftime characters to format (default {})
     location: location or uid to query. To search for nearby stations in Kraków,
         use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
-        We recommend you to use uid instead of name in location, eg "@8691"
+        For best results, use uid instead of name in location, eg `@8691`.
         (default 'Shanghai')
+    quality_thresholds: specify a list of tuples, eg (number, 'color', 'name')
+        (default [(0, '#009966', 'Good'),
+            (51, '#ffde33', 'Moderate'),
+            (101, '#ff9933', 'Sensitively Unhealthy'),
+            (151, '#cc0033', 'Unhealthy'),
+            (201, '#660099', 'Very Unhealthy'),
+            (301, '#7e0023', 'Hazardous')])
 
 Format placeholders:
     {aqi} air quality index
-    {category} health risk category
-    {location} location or uid
+    {attributions_0_name} attribution name
+    {attributions_0_url} attribution url
+    {category} health risk category, eg Good, Moderate, Unhealthy, etc
+    {city_geo_0} monitoring station latitude
+    {city_geo_1} monitoring station longitude
+    {city_name} monitoring station name
+    {city_url} monitoring station url
+    {dominentpol} dominant pollutant, eg pm25
+    {idx} Unique ID for the city monitoring station, eg 7396
+    {time} epoch timestamp, eg 1510246800
+    {time_s} local timestamp, eg 2017-11-09 17:00:00
+    {time_tz} local timezone, eg -06:00
 
-Note: Stations may use {pm25}, {pm10}, {o3}, {so2}, or other parameters.
-See http://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+    `{attribution_?_name}` can have more than 0.
+    `{attribution_?_url}` can have more than 0.
 
-Category options:
-    category_<name>: display name
-        eg category_very_unhealthy = 'Level 5: Wear a mask'
+    Your station may have individual scores for pollutants not listed below.
+    See http://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+    for an explicit list of valid placeholders to use, eg
+
+    {iaqi_co}   individual score for pollutant carbon monoxide
+    {iaqi_h}    individual score for pollutant h (?)
+    {iaqi_no2}  individual score for pollutant nitrogen dioxide
+    {iaqi_o3}   individual score for pollutant ozone
+    {iaqi_pm25} individual score for pollutant particulates
+                smaller than 2.5 μm in aerodynamic diameter
+    {iaqi_pm10} individual score for pollutant particulates
+                smaller than 10 μm in aerodynamic diameter
+    {iaqi_pm15} individual score for pollutant particulates
+                smaller than than 15 μm in aerodynamic diameter
+    {iaqi_p}    individual score for pollutant particulates
+    {iaqi_so2}  individual score for pollutant sulfur dioxide
+    {iaqi_t}    individual score for pollutant t (?)
+    {iaqi_w}    individual score for pollutant w (?)
+
+    AQI denotes an air quality index. IQAI denotes an individual AQI score.
+    Try https://en.wikipedia.org/wiki/Air_pollution#Pollutants for more
+    information on the pollutants retrieved from your monitoring station.
+
+format_datetime placeholders:
+    key: epoch_placeholder, eg time, vtime
+    value: % strftime characters to be translated, eg '%b %d' ----> 'Nov 11'
 
 Color options:
-    color_<category>: display color
-        eg color_hazardous = '#7E0023'
+    color_bad: print a color for error (if any) from the site
 
-Example:
+Color thresholds:
+    aqi: print a color based on the value of aqi
+
+Examples:
 ```
+# show last updated time
 air_quality {
-    auth_token = 'demo'
-    location = 'Shanghai'
-    format = 'Shanghai: {aqi} {category}'
+    format = '{city_name}: {aqi} {category} - {time}'
+    format_datetime = {'time': '%-I%P'}
 }
 ```
+
 @author beetleman, lasers
 @license BSD
 
@@ -67,42 +113,7 @@ aqi_hazardous
 {'color':'#7E0023', 'full_text':'Shanghai: 301 Hazardous'}
 """
 
-AQI = (
-    (0, 50, 'good'),
-    (51, 100, 'moderate'),
-    (101, 150, 'sensitively_unhealthy'),
-    (151, 200, 'unhealthy'),
-    (201, 300, 'very_unhealthy'),
-    (301, float('inf'), 'hazardous')
-)
-CATEGORY = {
-    'good': 'Good',
-    'hazardous': 'Hazardous',
-    'moderate': 'Moderate',
-    'sensitively_unhealthy': 'Sensitively Unhealthy',
-    'unhealthy': 'Unhealthy',
-    'unknown': 'Unknown',
-    'very_unhealthy': 'Very Unhealthy',
-}
-COLOR = {
-    'good': '#009966',
-    'hazardous': '#7E0023',
-    'moderate': '#FFDE33',
-    'sensitively_unhealthy': '#FF9933',
-    'unhealthy': '#CC0033',
-    'unknown': '#ffffff',
-    'very_unhealthy': '#660099',
-}
-STRING_UNKNOWN = 'Unknown'
-URL = 'http://api.waqi.info'
-
-
-def _get_in(coll, path, default=None):
-    first = path[0]
-    rest = path[1:len(path)]
-    if len(path) == 1:
-        return coll.get(first, default)
-    return _get_in(coll.get(first, default), rest, default)
+from datetime import datetime
 
 
 class Py3status:
@@ -111,65 +122,71 @@ class Py3status:
     # available configuration parameters
     auth_token = 'demo'
     cache_timeout = 3600
-    format = '{location}: {aqi} {category}'
+    format = '[\?color=aqi {city_name}: {aqi} {category}]'
+    format_datetime = {}
     location = 'Shanghai'
+    quality_thresholds = [
+        (0, '#009966', 'Good'),
+        (51, '#FFDE33', 'Moderate'),
+        (101, '#FF9933', 'Sensitively Unhealthy'),
+        (151, '#CC0033', 'Unhealthy'),
+        (201, '#660099', 'Very Unhealthy'),
+        (301, '#7E0023', 'Hazardous')
+    ]
 
     def post_config_hook(self):
-        url_path = 'feed/{}'.format(self.location)
-        self.url_token = {'token': self.auth_token}
-        self.url_full = '{url_base}/{url_path}/'.format(
-            url_base=URL,
-            url_path=url_path
-        )
+        self.auth_token = {'token': self.auth_token}
+        self.request_timeout = 10
+        self.url = 'http://api.waqi.info/feed/%s/' % self.location
+        self.init_datetimes = []
+        for word in self.format_datetime:
+            if (self.py3.format_contains(self.format, word)) and (
+                    word in self.format_datetime):
+                self.init_datetimes.append(word)
 
-    def _update_data(self):
+        self.thresholds = []
+        for index_aqi, index_color, index_category in self.quality_thresholds:
+            self.thresholds.append((index_aqi, index_color))
+
+    def _get_aqi_data(self):
         try:
-            self._api_data = self.py3.request(self.url_full, params=self.url_token).json()
-        except (self.py3.RequestException):
-            self._api_data = {}
+            return self.py3.request(
+                self.url, params=self.auth_token, timeout=self.request_timeout
+            ).json()
+        except self.py3.RequestException:
+            return {}
 
-    def _update_key(self):
-        if self._api_data.get('status') == 'ok':
-            aqi = _get_in(self._api_data, ['data', 'aqi'], -1)
-            if type(aqi) is not int:
-                self._key = 'unknown'
-                return
-            for start, end, key in AQI:
-                if aqi >= start and aqi <= end:
-                    self._key = key
-                    return
-        self._key = 'unknown'
+    def _organize(self, data):
+        new_data = {}
+        for k, v in self.py3.flatten_dict(data, delimiter='_').items():
+            new_data[''.join(k.replace('data_', '', 1).rsplit('_v', 1))] = v
+        return new_data
 
-    def _get_full_text(self):
-        aqi = _get_in(self._api_data, ['data', 'aqi'], {})
-        iaqi = _get_in(self._api_data, ['data', 'iaqi'], {})
-        city = _get_in(self._api_data, ['data', 'city'], {})
-        try:
-            category = getattr(self, 'CATEGORY_{}'.format(self._key).lower())
-        except:
-            category = CATEGORY.get(self._key)
-        if not category:
-            category = STRING_UNKNOWN
-        return self.py3.safe_format(self.format,
-                                    dict(location=city.get('name'),
-                                         category=category,
-                                         aqi=aqi,
-                                         **{k: v.get('v') for k, v in iaqi.items()}))
+    def _manipulate(self, data):
+        for index_aqi, index_color, index_category in self.quality_thresholds:
+            if data['aqi'] >= index_aqi:
+                data['category'] = index_category
 
-    def _get_color(self):
-        color = getattr(self.py3, 'COLOR_{}'.format(self._key.upper()))
-        if not color:
-            color = COLOR.get(self._key)
-        return color
+        if self.thresholds:
+            self.py3.threshold_get_color(data['aqi'], 'aqi')
+
+        for k in self.init_datetimes:
+            if k in data:
+                data[k] = self.py3.safe_format(datetime.strftime(
+                    datetime.fromtimestamp(data[k]), self.format_datetime[k]))
+        return data
 
     def air_quality(self):
-        self._update_data()
-        self._update_key()
+        aqi_data = self._get_aqi_data()
+        if aqi_data.get('status') == 'ok':
+            aqi_data = self._organize(aqi_data)
+            aqi_data = self._manipulate(aqi_data)
+        elif aqi_data.get('status') == 'error':
+            self.py3.error(aqi_data.get('data'))
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self._get_full_text(),
-            'color': self._get_color()
+            'full_text': self.py3.safe_format(self.format, aqi_data),
         }
 
 

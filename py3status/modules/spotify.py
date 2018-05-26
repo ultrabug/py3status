@@ -3,6 +3,9 @@
 Display song currently playing in Spotify.
 
 Configuration parameters:
+    button_next: button to switch to next song (default None)
+    button_play_pause: button to toggle play/pause (default None)
+    button_previous: button to switch to previous song (default None)
     cache_timeout: how often to update the bar (default 5)
     format: see placeholders below (default '{artist} : {title}')
     format_down: define output if spotify is not running
@@ -31,6 +34,9 @@ i3status.conf example:
 
 ```
 spotify {
+    button_next = 4
+    button_play_pause = 1
+    button_previous = 5
     format = "{title} by {artist} -> {time}"
     format_down = "no Spotify"
 }
@@ -51,32 +57,35 @@ stopped
 {'color': '#FF0000', 'full_text': 'Spotify stopped'}
 """
 
-from datetime import timedelta
 import dbus
 import re
+
+from datetime import timedelta
+from time import sleep
+
+SPOTIFY_CMD = """dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify
+                 /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
 
 
 class Py3status:
     """
     """
     # available configuration parameters
+    button_next = None
+    button_play_pause = None
+    button_previous = None
     cache_timeout = 5
     format = '{artist} : {title}'
     format_down = 'Spotify not running'
     format_stopped = 'Spotify stopped'
     sanitize_titles = True
     sanitize_words = [
-        'bonus',
-        'demo',
-        'edit',
-        'explicit',
-        'extended',
-        'feat',
-        'mono',
-        'remaster',
-        'stereo',
-        'version'
+        'bonus', 'demo', 'edit', 'explicit', 'extended', 'feat', 'mono',
+        'remaster', 'stereo', 'version'
     ]
+
+    def _spotify_cmd(self, action):
+        return SPOTIFY_CMD.format(cmd=action)
 
     def post_config_hook(self):
         """
@@ -86,14 +95,16 @@ class Py3status:
         # - Remastered 2012
         # / Radio Edit
         # ; Remastered
-        self.after_delimiter = self._compile_re(r"([\-,;/])([^\-,;/])*(META_WORDS_HERE).*")
+        self.after_delimiter = self._compile_re(
+            r"([\-,;/])([^\-,;/])*(META_WORDS_HERE).*")
 
         # Match brackets with their content containing any metadata word
         # examples:
         # (Remastered 2017)
         # [Single]
         # (Bonus Track)
-        self.inside_brackets = self._compile_re(r"([\(\[][^)\]]*?(META_WORDS_HERE)[^)\]]*?[\)\]])")
+        self.inside_brackets = self._compile_re(
+            r"([\(\[][^)\]]*?(META_WORDS_HERE)[^)\]]*?[\)\]])")
 
     def _compile_re(self, expression):
         """
@@ -111,8 +122,8 @@ class Py3status:
         try:
             self.__bus = bus.get_object('org.mpris.MediaPlayer2.spotify',
                                         '/org/mpris/MediaPlayer2')
-            self.player = dbus.Interface(
-                self.__bus, 'org.freedesktop.DBus.Properties')
+            self.player = dbus.Interface(self.__bus,
+                                         'org.freedesktop.DBus.Properties')
 
             try:
                 metadata = self.player.Get('org.mpris.MediaPlayer2.Player',
@@ -127,29 +138,24 @@ class Py3status:
                     title = self._sanitize_title(title)
 
                 playback_status = self.player.Get(
-                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
-                )
+                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
                 if playback_status.strip() == 'Playing':
                     color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
                 else:
                     color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
             except Exception:
-                return (
-                    self.format_stopped,
-                    self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED)
+                return (self.format_stopped, self.py3.COLOR_PAUSED or
+                        self.py3.COLOR_DEGRADED)
 
-            return (
-                self.py3.safe_format(
-                    self.format,
-                    dict(title=title,
-                         artist=artist,
-                         album=album,
-                         time=rtime)
-                ), color)
+            return (self.py3.safe_format(self.format,
+                                         dict(
+                                             title=title,
+                                             artist=artist,
+                                             album=album,
+                                             time=rtime)), color)
         except Exception:
-            return (
-                self.format_down,
-                self.py3.COLOR_OFFLINE or self.py3.COLOR_BAD)
+            return (self.format_down, self.py3.COLOR_OFFLINE or
+                    self.py3.COLOR_BAD)
 
     def _sanitize_title(self, title):
         """
@@ -170,6 +176,20 @@ class Py3status:
             'full_text': text
         }
         return response
+
+    def on_click(self, event):
+        """
+        """
+        button = event['button']
+        if button == self.button_play_pause:
+            self.py3.command_run(self._spotify_cmd('PlayPause'))
+            sleep(0.1)
+        elif button == self.button_next:
+            self.py3.command_run(self._spotify_cmd('Next'))
+            sleep(0.1)
+        elif button == self.button_previous:
+            self.py3.command_run(self._spotify_cmd('Previous'))
+            sleep(0.1)
 
 
 if __name__ == "__main__":
