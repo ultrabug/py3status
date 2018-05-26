@@ -1,6 +1,5 @@
 import os
 import imp
-import inspect
 
 from collections import OrderedDict
 from time import time
@@ -17,9 +16,6 @@ class Module:
     It is responsible for executing it every given interval and
     caching its output based on user will.
     """
-
-    PARAMS_NEW = 'new'
-    PARAMS_LEGACY = 'legacy'
 
     def __init__(self, module, user_modules, py3_wrapper, instance=None):
         """
@@ -408,38 +404,6 @@ class Module:
             elif urgent and 'urgent' not in item:
                 item['urgent'] = urgent
 
-    def _params_type(self, method_name, instance):
-        """
-        Check to see if this is a legacy method or shiny new one
-
-        legacy update method:
-            def update(self, i3s_output_list, i3s_config):
-                ...
-
-        new update method:
-            def update(self):
-                ...
-
-        Returns False if the method does not exist,
-        else PARAMS_NEW or PARAMS_LEGACY
-        """
-
-        method = getattr(instance, method_name, None)
-        if not method:
-            return False
-
-        # Check the parameters we simply count the number of args and don't
-        # allow any extras like keywords.
-        arg_count = 1
-        # on_click method has extra events parameter
-        if method_name == 'on_click':
-            arg_count = 2
-        args, vargs, kw, defaults = inspect.getargspec(method)
-        if len(args) == arg_count and not vargs and not kw:
-            return self.PARAMS_NEW
-        else:
-            return self.PARAMS_LEGACY
-
     def load_methods(self, module, user_modules):
         """
         Read the given user-written py3status class file and store its methods.
@@ -626,11 +590,10 @@ class Module:
                 else:
                     m_type = type(getattr(class_inst, method))
                     if 'method' in str(m_type):
-                        params_type = self._params_type(method, class_inst)
                         if method == 'on_click':
-                            self.click_events = params_type
+                            self.click_events = True
                         elif method == 'kill':
-                            self.has_kill = params_type
+                            self.has_kill = True
                         elif method == 'post_config_hook':
                             self.has_post_config_hook = True
                         else:
@@ -641,7 +604,6 @@ class Module:
                             # of this module.
                             method_obj = {
                                 'cached_until': time(),
-                                'call_type': params_type,
                                 'instance': None,
                                 'last_output': {
                                     'name': method,
@@ -683,13 +645,7 @@ class Module:
 
             elif self.click_events:
                 click_method = getattr(self.module_class, 'on_click')
-                if self.click_events == self.PARAMS_NEW:
-                    # new style modules
-                    click_method(event)
-                else:
-                    # legacy modules had extra parameters passed
-                    click_method(self.i3status_thread.json_list,
-                                 self.config['py3_config']['general'], event)
+                click_method(event)
                 self.set_updated()
             else:
                 # nothing has happened so no need for refresh
@@ -728,14 +684,7 @@ class Module:
                     # execute method and get its output
                     meth = my_method['method']
                     method = getattr(self.module_class, meth)
-                    if my_method['call_type'] == self.PARAMS_NEW:
-                        # new style modules
-                        response = method()
-                    else:
-                        # legacy modules had parameters passed
-                        response = method(
-                            self.i3status_thread.json_list,
-                            self.config['py3_config']['general'])
+                    response = method()
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -852,12 +801,7 @@ class Module:
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, 'kill')
-                if self.has_kill == self.PARAMS_NEW:
-                    kill_method()
-                else:
-                    # legacy call parameters
-                    kill_method(self.i3status_thread.json_list,
-                                self.config['py3_config']['general'])
+                kill_method()
             except Exception:
                 # this would be stupid to die on exit
                 pass
