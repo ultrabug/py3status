@@ -38,7 +38,7 @@ class Module:
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.methods = OrderedDict()
+        self.method = {}
         self.module_class = instance
         self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
@@ -69,7 +69,7 @@ class Module:
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
-            self.methods['error'] = {}
+            self.method = {}
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
@@ -171,9 +171,9 @@ class Module:
         if self.error_messages != errors:
             self.error_messages = errors
             self.error_index = 0
-        self.error_output(self.error_messages[self.error_index], method)
+        self.error_output(self.error_messages[self.error_index])
 
-    def error_output(self, message, method_affected=None):
+    def error_output(self, message):
         """
         Something is wrong with the module so we want to output the error to
         the i3bar
@@ -191,11 +191,8 @@ class Module:
             'instance': self.module_inst,
             'name': self.module_name,
         }
-        for method in self.methods.values():
-            if method_affected and method['method'] != method_affected:
-                continue
 
-            method['last_output'] = [error]
+        self.method['last_output'] = [error]
 
         self.allow_config_clicks = False
         self.set_updated()
@@ -204,8 +201,7 @@ class Module:
         """
         hide the module in the i3bar
         """
-        for method in self.methods.values():
-            method['last_output'] = {}
+        self.method['last_output'] = {}
 
         self.allow_config_clicks = False
         self.error_hide = True
@@ -228,10 +224,9 @@ class Module:
         if self.disabled or self.terminated or not self.enabled:
             return
         # clear cached_until for each method to allow update
-        for meth in self.methods:
-            self.methods[meth]['cached_until'] = time()
-            if self.config['debug']:
-                self._py3_wrapper.log('clearing cache for method {}'.format(meth))
+        self.method['cached_until'] = time()
+        if self.config['debug']:
+            self._py3_wrapper.log('clearing cache for module {}'.format(self.module_full_name))
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
@@ -267,18 +262,18 @@ class Module:
         """
         # get latest output
         output = []
-        for method in self.methods.values():
-            data = method['last_output']
-            if isinstance(data, list):
+        data = self.method['last_output']
+        if isinstance(data, list):
+            if self.testing:
+                data[0]['cached_until'] = self.method.get('cached_until')
+            output.extend(data)
+        else:
+            # if the output is not 'valid' then don't add it.
+            if data.get('full_text') or 'separator' in data:
                 if self.testing:
-                    data[0]['cached_until'] = method.get('cached_until')
-                output.extend(data)
-            else:
-                # if the output is not 'valid' then don't add it.
-                if data.get('full_text') or 'separator' in data:
-                    if self.testing:
-                        data['cached_until'] = method.get('cached_until')
-                    output.append(data)
+                    data['cached_until'] = self.method.get('cached_until')
+                output.append(data)
+
         # if changed store and force display update.
         if output != self.last_output:
             # has the modules output become urgent?
@@ -639,7 +634,10 @@ class Module:
                         elif method == 'post_config_hook':
                             self.has_post_config_hook = True
                         else:
-                            # the method_obj stores infos about each method
+                            if self.method:
+                                raise Exception('multiple module methods')
+
+                            # the method_obj stores infos about the method
                             # of this module.
                             method_obj = {
                                 'cached_until': time(),
@@ -652,14 +650,14 @@ class Module:
                                 'method': method,
                                 'name': None
                             }
-                            self.methods[method] = method_obj
+                            self.method = method_obj
 
         # done, log some debug info
         if self.config['debug']:
             self._py3_wrapper.log(
-                'module "{}" click_events={} has_kill={} methods={}'.format(
+                'module "{}" click_events={} has_kill={} method={}'.format(
                     module, self.click_events, self.has_kill,
-                    self.methods.keys()))
+                    self.method.get('method')))
 
     def click_event(self, event):
         """
@@ -711,21 +709,24 @@ class Module:
         if self._py3_wrapper.running:
             cache_time = None
             # execute each method of this module
-            for meth, obj in self.methods.items():
-                my_method = self.methods[meth]
+            # FIXME this while/break is to aid code review and we should remove
+            # it and dedent the code once this is merged.
+            while True:
+                my_method = self.method
 
                 # always check py3status is running
                 if not self._py3_wrapper.running:
                     break
 
                 # respect the cache set for this method
-                if time() < obj['cached_until']:
-                    if not cache_time or obj['cached_until'] < cache_time:
-                        cache_time = obj['cached_until']
+                if time() < my_method['cached_until']:
+                    if not cache_time or my_method['cached_until'] < cache_time:
+                        cache_time = my_method['cached_until']
                     continue
 
                 try:
                     # execute method and get its output
+                    meth = my_method['method']
                     method = getattr(self.module_class, meth)
                     if my_method['call_type'] == self.PARAMS_NEW:
                         # new style modules
@@ -831,6 +832,7 @@ class Module:
                     cache_time = time() + getattr(self.module_class,
                                                   'cache_timeout',
                                                   self.config['cache_timeout'])
+                break  # FIXME to be removed see above
 
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
