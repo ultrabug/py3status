@@ -1,7 +1,6 @@
 import os
 import imp
 
-from collections import OrderedDict
 from time import time
 
 from py3status.composite import Composite
