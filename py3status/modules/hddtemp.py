@@ -83,15 +83,16 @@ hddtemp {
 SAMPLE OUTPUT
 [
     {'full_text': u'ADATA SP550 '},
-    {'full_text': u'32°C ', 'color': '#00FF00'},
+    {'full_text': u'25°C ', 'color': '#00FF00'},
     {'full_text': u'SanDisk SDSSDA240 '},
-    {'full_text': u'44°C', 'color': '#FFFF00'},
+    {'full_text': u'41°C', 'color': '#FFFF00'},
 ]
 
 path
 [
-    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '22°C '},
-    {'full_text': '/dev/sdb '}, {'color': '#FFA500', u'full_text': '44°C'},
+    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '24°C '},
+    {'full_text': '/dev/sdb '}, {'color': '#00FF00', u'full_text': '25°C '},
+    {'full_text': '/dev/sdc '}, {'color': '#FF0000', u'full_text': '51°C'},
 ]
 
 compact
@@ -99,10 +100,10 @@ compact
     {'full_text': 'HDD '},
     {'color': '#87CEEB', u'full_text': '19°C '},
     {'color': '#00BFFF', u'full_text': '24°C '},
-    {'color': '#00FF00', u'full_text': '32°C '},
-    {'color': '#FFFF00', u'full_text': '44°C '},
-    {'color': '#FFA500', u'full_text': '51°C '},
-    {'color': '#FF0000', u'full_text': '53°C '},
+    {'color': '#00FF00', u'full_text': '25°C '},
+    {'color': '#FFFF00', u'full_text': '41°C '},
+    {'color': '#FFA500', u'full_text': '46°C '},
+    {'color': '#FF0000', u'full_text': '51°C '},
     {'color': '#FF6347', u'full_text': '56°C'},
 ]
 """
