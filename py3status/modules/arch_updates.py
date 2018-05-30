@@ -21,6 +21,7 @@ Format placeholders:
     {total} Total updates pending
 
 Requires:
+    pacman-contrib: Needed for 'checkupdates' command line utility
     cower: Needed to display pending 'aur' updates
 
 @author Iain Tatch <iain.tatch@gmail.com>
