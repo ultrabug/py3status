@@ -1,8 +1,6 @@
 import os
 import imp
-import inspect
 
-from collections import OrderedDict
 from time import time
 
 from py3status.composite import Composite
@@ -17,9 +15,6 @@ class Module:
     It is responsible for executing it every given interval and
     caching its output based on user will.
     """
-
-    PARAMS_NEW = 'new'
-    PARAMS_LEGACY = 'legacy'
 
     def __init__(self, module, user_modules, py3_wrapper, instance=None):
         """
@@ -38,7 +33,7 @@ class Module:
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.methods = OrderedDict()
+        self.method = {}
         self.module_class = instance
         self.module_full_name = module
         self.module_inst = ''.join(module.split(' ')[1:])
@@ -69,7 +64,7 @@ class Module:
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
-            self.methods['error'] = {}
+            self.method = {}
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
@@ -171,9 +166,9 @@ class Module:
         if self.error_messages != errors:
             self.error_messages = errors
             self.error_index = 0
-        self.error_output(self.error_messages[self.error_index], method)
+        self.error_output(self.error_messages[self.error_index])
 
-    def error_output(self, message, method_affected=None):
+    def error_output(self, message):
         """
         Something is wrong with the module so we want to output the error to
         the i3bar
@@ -191,11 +186,8 @@ class Module:
             'instance': self.module_inst,
             'name': self.module_name,
         }
-        for method in self.methods.values():
-            if method_affected and method['method'] != method_affected:
-                continue
 
-            method['last_output'] = [error]
+        self.method['last_output'] = [error]
 
         self.allow_config_clicks = False
         self.set_updated()
@@ -204,8 +196,7 @@ class Module:
         """
         hide the module in the i3bar
         """
-        for method in self.methods.values():
-            method['last_output'] = {}
+        self.method['last_output'] = {}
 
         self.allow_config_clicks = False
         self.error_hide = True
@@ -228,10 +219,9 @@ class Module:
         if self.disabled or self.terminated or not self.enabled:
             return
         # clear cached_until for each method to allow update
-        for meth in self.methods:
-            self.methods[meth]['cached_until'] = time()
-            if self.config['debug']:
-                self._py3_wrapper.log('clearing cache for method {}'.format(meth))
+        self.method['cached_until'] = time()
+        if self.config['debug']:
+            self._py3_wrapper.log('clearing cache for module {}'.format(self.module_full_name))
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
@@ -267,18 +257,18 @@ class Module:
         """
         # get latest output
         output = []
-        for method in self.methods.values():
-            data = method['last_output']
-            if isinstance(data, list):
+        data = self.method['last_output']
+        if isinstance(data, list):
+            if self.testing:
+                data[0]['cached_until'] = self.method.get('cached_until')
+            output.extend(data)
+        else:
+            # if the output is not 'valid' then don't add it.
+            if data.get('full_text') or 'separator' in data:
                 if self.testing:
-                    data[0]['cached_until'] = method.get('cached_until')
-                output.extend(data)
-            else:
-                # if the output is not 'valid' then don't add it.
-                if data.get('full_text') or 'separator' in data:
-                    if self.testing:
-                        data['cached_until'] = method.get('cached_until')
-                    output.append(data)
+                    data['cached_until'] = self.method.get('cached_until')
+                output.append(data)
+
         # if changed store and force display update.
         if output != self.last_output:
             # has the modules output become urgent?
@@ -412,38 +402,6 @@ class Module:
             # if urgent we want to set this to all parts
             elif urgent and 'urgent' not in item:
                 item['urgent'] = urgent
-
-    def _params_type(self, method_name, instance):
-        """
-        Check to see if this is a legacy method or shiny new one
-
-        legacy update method:
-            def update(self, i3s_output_list, i3s_config):
-                ...
-
-        new update method:
-            def update(self):
-                ...
-
-        Returns False if the method does not exist,
-        else PARAMS_NEW or PARAMS_LEGACY
-        """
-
-        method = getattr(instance, method_name, None)
-        if not method:
-            return False
-
-        # Check the parameters we simply count the number of args and don't
-        # allow any extras like keywords.
-        arg_count = 1
-        # on_click method has extra events parameter
-        if method_name == 'on_click':
-            arg_count = 2
-        args, vargs, kw, defaults = inspect.getargspec(method)
-        if len(args) == arg_count and not vargs and not kw:
-            return self.PARAMS_NEW
-        else:
-            return self.PARAMS_LEGACY
 
     def load_methods(self, module, user_modules):
         """
@@ -631,19 +589,20 @@ class Module:
                 else:
                     m_type = type(getattr(class_inst, method))
                     if 'method' in str(m_type):
-                        params_type = self._params_type(method, class_inst)
                         if method == 'on_click':
-                            self.click_events = params_type
+                            self.click_events = True
                         elif method == 'kill':
-                            self.has_kill = params_type
+                            self.has_kill = True
                         elif method == 'post_config_hook':
                             self.has_post_config_hook = True
                         else:
-                            # the method_obj stores infos about each method
+                            if self.method:
+                                raise Exception('multiple module methods')
+
+                            # the method_obj stores infos about the method
                             # of this module.
                             method_obj = {
                                 'cached_until': time(),
-                                'call_type': params_type,
                                 'instance': None,
                                 'last_output': {
                                     'name': method,
@@ -652,14 +611,14 @@ class Module:
                                 'method': method,
                                 'name': None
                             }
-                            self.methods[method] = method_obj
+                            self.method = method_obj
 
         # done, log some debug info
         if self.config['debug']:
             self._py3_wrapper.log(
-                'module "{}" click_events={} has_kill={} methods={}'.format(
+                'module "{}" click_events={} has_kill={} method={}'.format(
                     module, self.click_events, self.has_kill,
-                    self.methods.keys()))
+                    self.method.get('method')))
 
     def click_event(self, event):
         """
@@ -685,13 +644,7 @@ class Module:
 
             elif self.click_events:
                 click_method = getattr(self.module_class, 'on_click')
-                if self.click_events == self.PARAMS_NEW:
-                    # new style modules
-                    click_method(event)
-                else:
-                    # legacy modules had extra parameters passed
-                    click_method(self.i3status_thread.json_list,
-                                 self.config['py3_config']['general'], event)
+                click_method(event)
                 self.set_updated()
             else:
                 # nothing has happened so no need for refresh
@@ -711,30 +664,26 @@ class Module:
         if self._py3_wrapper.running:
             cache_time = None
             # execute each method of this module
-            for meth, obj in self.methods.items():
-                my_method = self.methods[meth]
+            # FIXME this while/break is to aid code review and we should remove
+            # it and dedent the code once this is merged.
+            while True:
+                my_method = self.method
 
                 # always check py3status is running
                 if not self._py3_wrapper.running:
                     break
 
                 # respect the cache set for this method
-                if time() < obj['cached_until']:
-                    if not cache_time or obj['cached_until'] < cache_time:
-                        cache_time = obj['cached_until']
+                if time() < my_method['cached_until']:
+                    if not cache_time or my_method['cached_until'] < cache_time:
+                        cache_time = my_method['cached_until']
                     continue
 
                 try:
                     # execute method and get its output
+                    meth = my_method['method']
                     method = getattr(self.module_class, meth)
-                    if my_method['call_type'] == self.PARAMS_NEW:
-                        # new style modules
-                        response = method()
-                    else:
-                        # legacy modules had parameters passed
-                        response = method(
-                            self.i3status_thread.json_list,
-                            self.config['py3_config']['general'])
+                    response = method()
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -831,6 +780,7 @@ class Module:
                     cache_time = time() + getattr(self.module_class,
                                                   'cache_timeout',
                                                   self.config['cache_timeout'])
+                break  # FIXME to be removed see above
 
             if cache_time is None:
                 cache_time = time() + self.config['cache_timeout']
@@ -850,12 +800,7 @@ class Module:
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, 'kill')
-                if self.has_kill == self.PARAMS_NEW:
-                    kill_method()
-                else:
-                    # legacy call parameters
-                    kill_method(self.i3status_thread.json_list,
-                                self.config['py3_config']['general'])
+                kill_method()
             except Exception:
                 # this would be stupid to die on exit
                 pass

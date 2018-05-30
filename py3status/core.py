@@ -521,7 +521,7 @@ class Py3statusWrapper:
             try:
                 my_m = Module(module, user_modules, self)
                 # only handle modules with available methods
-                if my_m.methods:
+                if my_m.method:
                     self.modules[module] = my_m
                 elif self.config['debug']:
                     self.log(
