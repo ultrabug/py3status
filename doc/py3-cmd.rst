@@ -46,7 +46,7 @@ You can specify the button to simulate.
     py3-cmd click 5 backlight
 
 You can also specify the button using one of the named shortcuts
-``leftclick``, ``rightclick``, ``middleclick``, ``scrollup``, ``scrolldown``.
+``leftclick``, ``rightclick``, ``middleclick``, ``scrollup``, ``scrolldown``, ``frameclick``.
 
 .. code-block:: shell
 
@@ -55,6 +55,9 @@ You can also specify the button using one of the named shortcuts
 
     # send a click event to the backlight module with button 5
     py3-cmd scrolldown backlight
+
+    # simulate a click on a frame button to toggle a framed module display
+    py3-cmd frameclick 'frame pomodoro'
 
 
 Calling commands from i3
