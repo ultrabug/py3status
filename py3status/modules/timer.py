@@ -100,7 +100,7 @@ class Py3status:
         # Hours
         hours, t = divmod(t, 3600)
         # Minutes
-        mins, t = divmod(t, 60)
+        minutes, t = divmod(t, 60)
         # Seconds
         seconds = t
 
@@ -119,9 +119,9 @@ class Py3status:
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(mins),
+                'full_text': make_2_didget(minutes),
                 'color': self.color,
-                'index': 'mins',
+                'index': 'minutes',
             },
             {
                 'full_text': ':',
@@ -146,7 +146,7 @@ class Py3status:
     def on_click(self, event):
         deltas = {
             'hours': 3600,
-            'mins': 60,
+            'minutes': 60,
             'seconds': 1
         }
         index = event['index']
