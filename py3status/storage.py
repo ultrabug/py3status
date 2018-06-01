@@ -16,10 +16,12 @@ class Storage:
     def init(self, py3_wrapper, is_python_2):
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
-        config_dir = os.path.dirname(
-            py3_wrapper.config.get('i3status_config_path', '/tmp')
-        )
-        storage_path = os.path.join(config_dir, 'py3status.data')
+
+        # use $XDG_CACHE_HOME or ~/.cache
+        config_dir = os.environ.get('XDG_CACHE_HOME')
+        if not config_dir:
+            config_dir = os.path.expanduser('~/.cache')
+        storage_path = os.path.join(config_dir, 'py3status_cache')
         self.storage_path = storage_path
         try:
             with open(storage_path, 'rb') as f:
@@ -31,8 +33,8 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
-        self.py3_wrapper.log('stored data:')
-        self.py3_wrapper.log(self.data)
+        string = 'storage_path: {}\nstorage_data: {}'
+        self.py3_wrapper.log(string.format(storage_path, self.data))
         self.initialized = True
 
     def save(self):
