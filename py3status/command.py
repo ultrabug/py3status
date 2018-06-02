@@ -263,7 +263,7 @@ def send_command():
     py3status instances.
     """
 
-    def output(msg):
+    def verbose(msg):
         """
         print output if verbose is set.
         """
@@ -295,23 +295,23 @@ def send_command():
 
     msg = msg.encode('utf-8')
     if len(msg) > MAX_SIZE:
-        output('Message length too long, max length (%s)' % MAX_SIZE)
+        verbose('Message length too long, max length (%s)' % MAX_SIZE)
 
     # find all likely socket addresses
     uds_list = glob.glob('{}.[0-9]*'.format(SERVER_ADDRESS))
 
-    output('message "%s"' % msg)
+    verbose('message "%s"' % msg)
     for uds in uds_list:
         # Create a UDS socket
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
         # Connect the socket to the port where the server is listening
-        output('connecting to %s' % uds)
+        verbose('connecting to %s' % uds)
         try:
             sock.connect(uds)
         except socket.error:
             # this is a stale socket so delete it
-            output('stale socket deleting')
+            verbose('stale socket deleting')
             try:
                 os.unlink(uds)
             except OSError:
@@ -319,9 +319,9 @@ def send_command():
             continue
         try:
             # Send data
-            output('sending')
+            verbose('sending')
             sock.sendall(msg)
 
         finally:
-            output('closing socket')
+            verbose('closing socket')
             sock.close()
