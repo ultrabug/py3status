@@ -17,14 +17,21 @@ class Storage:
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
 
-        # use $XDG_CACHE_HOME or ~/.cache
-        config_dir = os.environ.get('XDG_CACHE_HOME')
-        if not config_dir:
-            config_dir = os.path.expanduser('~/.cache')
-        storage_path = os.path.join(config_dir, 'py3status_cache')
-        self.storage_path = storage_path
+        self.config = py3_wrapper.config
+        py3_config = self.config.get('py3_config', {})
+        storage_file = py3_config.get('py3status', {}).get('storage_file')
+
+        if storage_file:
+            storage_file = os.path.expanduser(storage_file)
+        else:
+            storage_path = os.environ.get('XDG_CACHE_HOME')
+            if not storage_path:
+                storage_path = os.path.expanduser('~/.cache')
+            storage_file = os.path.join(storage_path, 'py3status_cache')
+
+        self.storage_file = storage_file
         try:
-            with open(storage_path, 'rb') as f:
+            with open(storage_file, 'rb') as f:
                 try:
                     # python3
                     self.data = load(f, encoding='bytes')
@@ -33,8 +40,8 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
-        string = 'storage_path: {}\nstorage_data: {}'
-        self.py3_wrapper.log(string.format(storage_path, self.data))
+        string = 'storage_file: {}\nstorage_data: {}'
+        self.py3_wrapper.log(string.format(storage_file, self.data))
         self.initialized = True
 
     def save(self):
@@ -42,14 +49,14 @@ class Storage:
         Save our data to disk. We want to always have a valid file.
         """
         with NamedTemporaryFile(
-                dir=os.path.dirname(self.storage_path), delete=False
+                dir=os.path.dirname(self.storage_file), delete=False
         ) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)
             f.flush()
             os.fsync(f.fileno())
             tmppath = f.name
-        os.rename(tmppath, self.storage_path)
+        os.rename(tmppath, self.storage_file)
 
     def fix(self, item):
         """
