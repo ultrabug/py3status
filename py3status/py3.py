@@ -1037,6 +1037,15 @@ class Py3:
             c = shlex.split('{} {}'.format(cmd, sound_file))
             self._audio = Popen(c)
 
+    def get_composite_string(self, format_string):
+        """
+        Return a string from a Composite.
+        """
+        if isinstance(format_string, Composite):
+            return format_string.text()
+        else:
+            return ''
+
     def stop_sound(self):
         """
         Stops any currently playing sounds for this module.
