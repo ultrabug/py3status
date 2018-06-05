@@ -8,7 +8,7 @@ Configuration parameters:
         *(default '\?color=state WW: [\?if=state_name=connected '
         '({signal_quality_0}% at {m3gpp_operator_name}) '
         '[{format_ipv4}[\?soft  ]{format_ipv6}]|{state_name}]'
-        '[SMS {messages} [{format_message}]]')*
+        '[ SMS {messages} [{format_message}]]')*
     format_ipv4: display format for ipv4 network (default '[{address}]')
     format_ipv6: display format for ipv6 network (default '[{address}]')
     format_message: display format for SMS messages
@@ -103,12 +103,9 @@ wwan
 
 # SMS counter
 wwan {
-    format = 'You have {messages} messages.'
+    format = 'SMS: {message}/{messages}'
 }
 
-wwan {
-    format = 'You have {message} new message.'
-}
 
 # add starter pack thresholds. you do not need to add them all.
 wwan {
@@ -185,7 +182,7 @@ class Py3status:
     format = ('\?color=state WW: [\?if=state_name=connected '
               '({signal_quality_0}% at {m3gpp_operator_name}) '
               '[{format_ipv4}[\?soft  ]{format_ipv6}]'
-              '|{state_name}][SMS {messages} [{format_message}]]')
+              '|{state_name}][ SMS {messages} [{format_message}]]')
     format_ipv4 = u'[{address}]'
     format_ipv6 = u'[{address}]'
     format_message = u'\?if=index<2 {number} [\?max_length=10 {text}...]'
