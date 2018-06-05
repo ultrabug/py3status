@@ -1041,10 +1041,9 @@ class Py3:
         """
         Return a string from a Composite.
         """
-        if isinstance(format_string, Composite):
-            return format_string.text()
-        else:
+        if not isinstance(format_string, Composite):
             return ''
+        return format_string.text()
 
     def stop_sound(self):
         """
