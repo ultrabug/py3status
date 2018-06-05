@@ -3,12 +3,12 @@
 Display WWANs, IP addresses, signals, properties, and more.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 2)
+    cache_timeout: refresh interval for this module (default 5)
     format: display format for this module
         *(default '\?color=state WW: [\?if=state_name=connected '
         '({signal_quality_0}% at {m3gpp_operator_name}) '
         '[{format_ipv4}[\?soft  ]{format_ipv6}]|{state_name}]'
-        '[\?soft  ][SMS {messages} [{format_message}]]')*
+        '[SMS {messages} [{format_message}]]')*
     format_ipv4: display format for ipv4 network (default '[{address}]')
     format_ipv6: display format for ipv6 network (default '[{address}]')
     format_message: display format for SMS messages
@@ -61,7 +61,7 @@ format_message placeholders:
     {index}   message index
     {message} message received, eg: '+33601020304: hello how are you?'
     {text}    text received, eg: 'hello how are you?'
-    {number} number/contact, eg: '+33601020304'
+    {number}  contact number, eg: '+33601020304'
 
 format_stats placeholders:
     {duration}     time since connected, in seconds, eg 171
@@ -104,6 +104,10 @@ wwan
 # SMS counter
 wwan {
     format = 'You have {messages} messages.'
+}
+
+wwan {
+    format = 'You have {message} new message.'
 }
 
 # add starter pack thresholds. you do not need to add them all.
@@ -177,11 +181,11 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 2
+    cache_timeout = 5
     format = ('\?color=state WW: [\?if=state_name=connected '
               '({signal_quality_0}% at {m3gpp_operator_name}) '
               '[{format_ipv4}[\?soft  ]{format_ipv6}]'
-              '|{state_name}][\?soft  ][SMS {messages} [{format_message}]]')
+              '|{state_name}][SMS {messages} [{format_message}]]')
     format_ipv4 = u'[{address}]'
     format_ipv6 = u'[{address}]'
     format_message = u'\?if=index<2 {number} [\?max_length=10 {text}...]'
@@ -395,6 +399,8 @@ class Py3status:
     def _count_messages(self, message_data):
         count_messages = len(message_data)
         count_message = max(0, count_messages - self.last_messages)
+        if count_message == count_messages:
+            count_message = 0
         self.last_messages = count_messages
         return count_message, count_messages
 
@@ -407,16 +413,16 @@ class Py3status:
                     self.py3.safe_format(
                         self.format_message, {
                             'index': index,
-                            'id': msg.rsplit('/', 1)[-1],
                             'number': sms_proxy.Number,
-                            'text': sms_proxy.Text,
-                            'timestamp': sms_proxy.Timestamp,
+                            'text': sms_proxy.Text
                         }))
             except:
                 break
 
-        format_message_separator = self.py3.safe_format(self.format_message_separator)
-        format_message = self.py3.composite_join(format_message_separator, new_message)
+        format_message_separator = self.py3.safe_format(
+            self.format_message_separator)
+        format_message = self.py3.composite_join(format_message_separator,
+                                                 new_message)
 
         return format_message
 
@@ -527,8 +533,7 @@ class Py3status:
 
                 # format sms messages?
                 if self.init['format_message']:
-                    wwan_data['format_message'] = self._manipulate_message(
-                        message_data)
+                    wwan_data['format_message'] = self._manipulate_message(message_data)
 
         # thresholds
         for k, v in wwan_data.items():

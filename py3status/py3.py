@@ -851,6 +851,14 @@ class Py3:
         """
         return isinstance(item, Composite)
 
+    def get_composite_string(self, format_string):
+        """
+        Return a string from a Composite.
+        """
+        if not isinstance(format_string, Composite):
+            return ''
+        return format_string.text()
+
     def check_commands(self, cmd_list):
         """
         Checks to see if commands in list are available using ``which``.
@@ -1036,14 +1044,6 @@ class Py3:
             sound_file = os.path.expanduser(sound_file)
             c = shlex.split('{} {}'.format(cmd, sound_file))
             self._audio = Popen(c)
-
-    def get_composite_string(self, format_string):
-        """
-        Return a string from a Composite.
-        """
-        if not isinstance(format_string, Composite):
-            return ''
-        return format_string.text()
 
     def stop_sound(self):
         """
