@@ -3,16 +3,16 @@
 Display WWANs, IP addresses, signals, properties, and more.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 10)
+    cache_timeout: refresh interval for this module (default 2)
     format: display format for this module
         *(default '\?color=state WW: [\?if=state_name=connected '
         '({signal_quality_0}% at {m3gpp_operator_name}) '
         '[{format_ipv4}[\?soft  ]{format_ipv6}]|{state_name}]'
-        '[SMS {message} [{format_message}]]')*
+        '[\?soft  ][SMS {messages} [{format_message}]]')*
     format_ipv4: display format for ipv4 network (default '[{address}]')
     format_ipv6: display format for ipv6 network (default '[{address}]')
     format_message: display format for SMS messages
-        (default '\?if=index<1 {contact} [\?max_length=10 {text}...]')
+        (default '\?if=index<2 {number} [\?max_length=10 {text}...]')
     format_message_separator: show separator if more than one (default ' ')
     format_notification: specify notification to use (default None)
     format_stats: display format for statistics (default '{duration_hms}')
@@ -61,7 +61,7 @@ format_message placeholders:
     {index}   message index
     {message} message received, eg: '+33601020304: hello how are you?'
     {text}    text received, eg: 'hello how are you?'
-    {contact} contact, eg: '+33601020304'
+    {number} number/contact, eg: '+33601020304'
 
 format_stats placeholders:
     {duration}     time since connected, in seconds, eg 171
@@ -103,7 +103,7 @@ wwan
 
 # SMS counter
 wwan {
-    format = 'You have {message} messages.'
+    format = 'You have {messages} messages.'
 }
 
 # add starter pack thresholds. you do not need to add them all.
@@ -133,7 +133,6 @@ wwan {
     format += '[([\?color=signal_quality_0 {signal_quality_0}]]'
     format += '[\?if=!signal_quality_1&color=signal_quality_1 \[!\]|] '
     format += '[\?if=state_name=connected [{format_ipv4}] [{format_stats}]]')
-    # hopefully we will simplify some of the things here one day. (DELETE ME)
 }
 
 # notify users when an event occur... such as new messages, change in state,
@@ -151,7 +150,7 @@ wwan {
     format_notification += '[\?if=state_name=disconnected Disconnected.]'
 
     # message notification
-    format_notification += '[\?if=message {format_message}]'
+    format_notification += '[\?if=message>0 {format_message}]'
 }
 ```
 
@@ -178,14 +177,14 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 10
+    cache_timeout = 2
     format = ('\?color=state WW: [\?if=state_name=connected '
               '({signal_quality_0}% at {m3gpp_operator_name}) '
               '[{format_ipv4}[\?soft  ]{format_ipv6}]'
-              '|{state_name}][SMS {message} [{format_message}]]')
+              '|{state_name}][\?soft  ][SMS {messages} [{format_message}]]')
     format_ipv4 = u'[{address}]'
     format_ipv6 = u'[{address}]'
-    format_message = u'\?if=index<1 {contact} [\?max_length=10 {text}...]'
+    format_message = u'\?if=index<2 {number} [\?max_length=10 {text}...]'
     format_message_separator = u' '
     format_notification = None
     format_stats = u'{duration_hms}'
@@ -409,7 +408,7 @@ class Py3status:
                         self.format_message, {
                             'index': index,
                             'id': msg.rsplit('/', 1)[-1],
-                            'contact': sms_proxy.Number,
+                            'number': sms_proxy.Number,
                             'text': sms_proxy.Text,
                             'timestamp': sms_proxy.Timestamp,
                         }))
@@ -528,7 +527,8 @@ class Py3status:
 
                 # format sms messages?
                 if self.init['format_message']:
-                    wwan_data['format_message'] = self._manipulate_message(message_data)
+                    wwan_data['format_message'] = self._manipulate_message(
+                        message_data)
 
         # thresholds
         for k, v in wwan_data.items():
@@ -542,8 +542,7 @@ class Py3status:
 
             if notification and notification != self.last_notification:
                 self.last_notification = notification
-                self.py3.storage_set('last_notification',
-                                     self.last_notification)
+                self.py3.storage_set('last_notification', self.last_notification)
                 self.py3.notify_user(composite)
 
         response = {
