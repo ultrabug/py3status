@@ -59,7 +59,6 @@ format_ipv6 placeholders:
 
 format_message placeholders:
     {index}   message index
-    {message} message received, eg: '+33601020304: hello how are you?'
     {text}    text received, eg: 'hello how are you?'
     {number}  contact number, eg: '+33601020304'
 
@@ -146,6 +145,9 @@ wwan {
 
     # notify users on low signal percent 25%
     format_notification = '\?if=signal_quality_0<25 Low signal'
+
+    # prepare message format for notifications
+    format_message = '[\?if=index=1 [{number}] [{text}]]'
 
     # notify users on conneced state
     format_notification = '[\?if=state_name=connected Connected.]'
@@ -402,8 +404,6 @@ class Py3status:
     def _count_messages(self, message_data):
         count_messages = len(message_data)
         count_message = max(0, count_messages - self.last_messages)
-        if count_message == count_messages:
-            count_message = 0
         self.last_messages = count_messages
         return count_message, count_messages
 
@@ -422,10 +422,8 @@ class Py3status:
             except:
                 break
 
-        format_message_separator = self.py3.safe_format(
-            self.format_message_separator)
-        format_message = self.py3.composite_join(format_message_separator,
-                                                 new_message)
+        format_message_separator = self.py3.safe_format(self.format_message_separator)
+        format_message = self.py3.composite_join(format_message_separator, new_message)
 
         return format_message
 
@@ -519,8 +517,10 @@ class Py3status:
                 if self.init['stats']:
                     stats = self._organize(self._get_stats(bearer))
                     if stats:
-                        stats['duration_hms'] = format(timedelta(seconds=stats['duration']))
-                    wwan_data['format_stats'] = self.py3.safe_format(self.format_stats, stats)
+                        stats['duration_hms'] = format(
+                            timedelta(seconds=stats['duration']))
+                    wwan_data['format_stats'] = self.py3.safe_format(
+                        self.format_stats, stats)
 
         # message and format message
         if self.init['sms_message']:
@@ -532,7 +532,7 @@ class Py3status:
                 if wwan_data['message']:
                     urgent = True
 
-                # format sms messages?
+                # format sms messages
                 if self.init['format_message']:
                     wwan_data['format_message'] = self._manipulate_message(message_data)
 
@@ -544,6 +544,7 @@ class Py3status:
         # notifications
         if self.format_notification:
             composite = self.py3.safe_format(self.format_notification, wwan_data)
+
             notification = self.py3.get_composite_string(composite)
 
             if notification and notification != self.last_notification:
