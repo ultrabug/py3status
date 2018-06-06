@@ -70,7 +70,8 @@ format_stats placeholders:
     {rx_bytes}     receive bytes
 
 Color thresholds:
-    xxx: print a color based on the value of `xxx` placeholder
+    format:
+        xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     modemmanager: mobile broadband modem management service
@@ -324,7 +325,7 @@ class Py3status:
         }
 
         self.bus = SystemBus()
-        self.init = {'ip': [], 'sms_message': []}
+        self.init = {'ip': [], 'sms_message': [], 'thresholds': []}
         self.last_messages = 0
         self.last_notification = self.py3.storage_get('last_notification')
 
@@ -351,6 +352,11 @@ class Py3status:
                         if name in ['message', 'format_message']:
                             if name not in self.init['sms_message']:
                                 self.init['sms_message'].append(name)
+
+        # init thresholds - partial future helper code
+        for x in self.format.replace('&', ' ').split('color=')[1::1]:
+            self.init['thresholds'].append(x.split()[0])
+        self.init['thresholds'] = list(set(self.init['thresholds']))
 
     def _get_modem_proxy(self):
         modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
@@ -513,10 +519,8 @@ class Py3status:
                 if self.init['stats']:
                     stats = self._organize(self._get_stats(bearer))
                     if stats:
-                        stats['duration_hms'] = format(
-                            timedelta(seconds=stats['duration']))
-                    wwan_data['format_stats'] = self.py3.safe_format(
-                        self.format_stats, stats)
+                        stats['duration_hms'] = format(timedelta(seconds=stats['duration']))
+                    wwan_data['format_stats'] = self.py3.safe_format(self.format_stats, stats)
 
         # message and format message
         if self.init['sms_message']:
@@ -533,9 +537,9 @@ class Py3status:
                     wwan_data['format_message'] = self._manipulate_message(message_data)
 
         # thresholds
-        for k, v in wwan_data.items():
-            if isinstance(v, (float, int)):
-                self.py3.threshold_get_color(v, k)
+        for x in self.init['thresholds']:
+            if x in wwan_data:
+                self.py3.threshold_get_color(wwan_data[x], x)
 
         # notifications
         if self.format_notification:
