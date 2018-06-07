@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display WWANs, IP addresses, signals, properties, and more.
+Display WWANs, IP addresses, signals, properties and sms.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
@@ -16,7 +16,7 @@ Configuration parameters:
     format_message_separator: show separator if more than one (default ' ')
     format_notification: specify notification to use (default None)
     format_stats: display format for statistics (default '{duration_hms}')
-    modem: specify a modem device to use. otherwise, auto (default None)
+    modem: specify a modem device to use, otherwise auto (default None)
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (11, 'good')])
 
@@ -79,7 +79,7 @@ Requires:
 
 Examples:
 ```
-# show state names, eg initializing, searching, registred, connecting.
+# show state names, eg initializing, searching, registered, connecting.
 wwan {
     format = '\?color=state WWAN: {state_name}'
 }
@@ -140,25 +140,20 @@ wwan {
 # disconnected, etc. you need to specify formatting correctly so it does not
 # return anything. otherwise, you always get notifications.
 wwan {
-    # notify users on signal refreshes
-    format_notification = '\?if=signal_quality_1 Signal refresh'
-
     # notify users on low signal percent 25%
     format_notification = '\?if=signal_quality_0<25 Low signal'
 
-    # prepare message format for notifications
-    format_message = '[\?if=index=1 [{number}] [{text}]]'
-
-    # notify users on conneced state
+    # notify users on connected state
     format_notification = '[\?if=state_name=connected Connected.]'
     format_notification += '[\?if=state_name=disconnected Disconnected.]'
 
     # message notification
-    format_notification += '[\?if=message>0 {format_message}]'
+    format_message = '[\?if=index=1 [{number}] [{text}]]'
+    format_notification = '[\?if=message>0 {format_message}]'
 }
 ```
 
-@author Cyril Levis <levis.cyril@gmail.com>, girst (https://gir.st/), lasers
+@author Cyril Levis (@cyrinux), girst (https://gir.st/), lasers
 
 SAMPLE OUTPUT
 {'color': '#00ff00', 'full_text': 'WW: (88% at Py3status Telcom) 12.69.169.32'}
@@ -329,7 +324,7 @@ class Py3status:
         self.bus = SystemBus()
         self.init = {'ip': [], 'sms_message': [], 'thresholds': []}
         self.last_messages = 0
-        self.last_notification = self.py3.storage_get('last_notification')
+        self.last_notification = self.py3.storage_get('notification')
 
         names = [
             'current_bands_name', 'access_technologies_name',
@@ -341,6 +336,8 @@ class Py3status:
             'm3gpp_registration_name', 'interface_name', 'format_ipv4',
             'format_ipv6', 'format_stats', 'format_message', 'message*'
         ]
+
+        # init methods
         format_strings = [self.format, self.format_notification]
         for name, placeholder in zip(names, placeholders):
             self.init[name] = []
@@ -422,8 +419,12 @@ class Py3status:
             except:
                 break
 
-        format_message_separator = self.py3.safe_format(self.format_message_separator)
-        format_message = self.py3.composite_join(format_message_separator, new_message)
+        format_message_separator = self.py3.safe_format(
+            self.format_message_separator
+        )
+        format_message = self.py3.composite_join(
+            format_message_separator, new_message
+        )
 
         return format_message
 
@@ -518,9 +519,11 @@ class Py3status:
                     stats = self._organize(self._get_stats(bearer))
                     if stats:
                         stats['duration_hms'] = format(
-                            timedelta(seconds=stats['duration']))
+                            timedelta(seconds=stats['duration'])
+                        )
                     wwan_data['format_stats'] = self.py3.safe_format(
-                        self.format_stats, stats)
+                        self.format_stats, stats
+                    )
 
         # message and format message
         if self.init['sms_message']:
@@ -534,7 +537,9 @@ class Py3status:
 
                 # format sms messages
                 if self.init['format_message']:
-                    wwan_data['format_message'] = self._manipulate_message(message_data)
+                    wwan_data['format_message'] = self._manipulate_message(
+                        message_data
+                    )
 
         # thresholds
         for x in self.init['thresholds']:
@@ -543,20 +548,24 @@ class Py3status:
 
         # notifications
         if self.format_notification:
-            composite = self.py3.safe_format(self.format_notification, wwan_data)
 
-            notification = self.py3.get_composite_string(composite)
+            # get a notification
+            format_notification = self.py3.safe_format(
+                self.format_notification, wwan_data
+            )
+            notification = self.py3.get_composite_string(
+                format_notification
+            )
 
             if notification and notification != self.last_notification:
                 self.last_notification = notification
-                self.py3.storage_set('last_notification', self.last_notification)
-                self.py3.notify_user(composite)
+                self.py3.storage_set('notification', notification)
+                self.py3.notify_user(notification)
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(self.format, wwan_data)
         }
-
         if urgent:
             response['urgent'] = True
         return response
