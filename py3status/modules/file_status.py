@@ -26,6 +26,7 @@ missing
 """
 
 from os.path import expanduser, exists
+from glob import glob
 
 ERR_NO_PATH = 'no path given'
 
@@ -58,7 +59,7 @@ class Py3status:
 
     def post_config_hook(self):
         if self.path:
-            self.path = expanduser(self.path)
+            self.path = glob(self.path)
 
     def file_status(self):
         if self.path is None:
@@ -68,12 +69,12 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
             }
 
-        if exists(self.path):
-            icon = self.icon_available
-            color = self.py3.COLOR_GOOD
-        else:
-            icon = self.icon_unavailable
-            color = self.py3.COLOR_BAD
+        icon = self.icon_unavailable
+        color = self.py3.COLOR_BAD
+        for path in self.path:
+            if exists(expanduser(path)):
+                icon = self.icon_available
+                color = self.py3.COLOR_GOOD
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
