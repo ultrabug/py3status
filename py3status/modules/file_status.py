@@ -57,10 +57,6 @@ class Py3status:
             ],
         }
 
-    def post_config_hook(self):
-        if self.path:
-            self.path = map(expanduser, glob(self.path))
-
     def file_status(self):
         if self.path is None:
             return {
@@ -69,12 +65,18 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
             }
 
+        paths = glob(expanduser(self.path))
+        if isinstance(paths, str):
+            paths = [paths]
+
         icon = self.icon_unavailable
         color = self.py3.COLOR_BAD
-        for path in self.path:
+
+        for path in paths:
             if exists(path):
                 icon = self.icon_available
                 color = self.py3.COLOR_GOOD
+                break
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
