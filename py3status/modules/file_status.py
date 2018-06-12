@@ -7,7 +7,7 @@ Configuration parameters:
     format: format of the output. (default '{icon}')
     icon_available: icon to display when available (default '●')
     icon_unavailable: icon to display when unavailable (default '■')
-    path: the path to a file or dir to check if it exists (default None)
+    path: the path(s) to a file or dir to check if it exists, take a list (default None)
 
 Color options:
     color_bad: Error or file/directory does not exist
@@ -26,7 +26,8 @@ missing
 """
 
 from glob import glob
-from os.path import exists, expanduser
+from itertools import chain
+from os.path import expanduser
 
 ERR_NO_PATH = 'no path given'
 
@@ -57,6 +58,14 @@ class Py3status:
             ],
         }
 
+    def post_config_hook(self):
+        if self.path:
+            # backward compatibility, str to list
+            if isinstance(self.path, str):
+                self.path = [self.path]
+            # expand user paths
+            self.path = [*map(expanduser, self.path)]
+
     def file_status(self):
         if self.path is None:
             return {
@@ -65,18 +74,17 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
             }
 
-        paths = glob(expanduser(self.path))
-        if isinstance(paths, str):
-            paths = [paths]
+        # expand user to paths
+        paths = [*map(glob, self.path)]
+        # merge list of paths
+        paths = [x for x in chain.from_iterable(paths)]
 
         icon = self.icon_unavailable
         color = self.py3.COLOR_BAD
 
-        for path in paths:
-            if exists(path):
-                icon = self.icon_available
-                color = self.py3.COLOR_GOOD
-                break
+        if paths:
+            icon = self.icon_available
+            color = self.py3.COLOR_GOOD
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
