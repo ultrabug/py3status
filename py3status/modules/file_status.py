@@ -64,7 +64,7 @@ class Py3status:
             if isinstance(self.path, str):
                 self.path = [self.path]
             # expand user paths
-            self.path = [*map(expanduser, self.path)]
+            self.path = list(map(expanduser, self.path))
 
     def file_status(self):
         if self.path is None:
@@ -74,8 +74,8 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
             }
 
-        # expand user to paths
-        paths = [*map(glob, self.path)]
+        # expand glob from paths
+        paths = list(map(glob, self.path))
         # merge list of paths
         paths = [x for x in chain.from_iterable(paths)]
 
