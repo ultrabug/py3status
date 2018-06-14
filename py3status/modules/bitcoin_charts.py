@@ -367,9 +367,6 @@ class Py3status:
             )
         }
 
-    def on_click(self, event):
-        self.py3.prevent_refresh()  # pls no refresh
-
 
 if __name__ == '__main__':
     """
