@@ -12,7 +12,7 @@ Configuration parameters:
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
         *(default '{symbol} {currency_symbol}{close:.2f} '
-        '[\?color=close_change {close_diff}]')*
+        '[\?color=close_change {close_sign}{close_change}%]')*
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of active/inactive markets to use,
         see https://bitcoincharts.com/markets/list (default ['bitstampUSD'])
@@ -24,9 +24,12 @@ Format placeholders:
     {xxx_24h}       weighted price for last 24 hours eg 1234.56
     {xxx_7d}        weighted price for last  7 days eg 1234.56
     {xxx_30d}       weighted price for last 30 days eg 1234.56
-    {xxx_change}    percent changes between intervals, eg +0.12
-    {xxx_diff}      differences between intervals, eg +$33.56
-                    Replace xxx with valid options below.
+  * {xxx_sign}      sign change between intervals, eg '', +, -
+  * {xxx_change}    percent change between intervals, eg 0.123456
+  * {xxx_diff}      actual difference between intervals, eg 33.56
+
+    The symbol `*` denotes custom and is not part of the Bitcoincharts.
+    Replace xxx with options below.
 
     Bitcoincharts offers weighted prices for several currencies.
     Weighted prices are calculated for the last 24 hours, 7 days and 30 days.
@@ -54,12 +57,13 @@ format_market placeholders:
     {currency_volume} total trade volume of day in currency, eg 2470854.581638
     {weighted_price}  weighted price for this day eg 17265.00867749991
     {duration}        duration, eg 89282
+  * {currency_symbol} market currency symbol, eg $, €, £, etc
+  * {xxx_sign}        sign change between intervals, eg '', +, -
+  * {xxx_change}      percent change between intervals, eg 0.123456
+  * {xxx_diff}        actual difference between intervals, eg 33.56
 
-format_market placeholders (custom):
-    {currency_symbol} market currency symbol, eg $, €, £, etc
-    {xxx_change}      percent change between intervals, eg +0.12
-    {xxx_diff}        differences between intervals, eg +$33.56
-                      Replace xxx with placeholders above.
+    The symbol `*` denotes custom and is not part of the Bitcoincharts.
+    Replace xxx with placeholders above.
 
 Color options:
     color_bad: the price has dropped since the last interval
@@ -82,11 +86,17 @@ bitcoin_charts {
     markets = ['bitstampUSD', 'coinbaseUSD', 'localbtcUSD']
 }
 
-# colorize usd_24h weighted prices, this requires you not to restart module
-# for long time, so basically maybe this is a hardcore level or we can find
-# out when coinmarket changes its weighted_price statistics. all for a color.
+# colorize usd_24h weighted prices
 bitcoin_charts {
-    format = '[{format_market} usd_24h [\?color=usd_24h_change ${usd_24h}]]'
+    format = '[\?color=gold&show MARKET][ {format_market} ]'
+    format += '[\?color=gold&show USD_24H][ ${usd_24h} '
+    format += '[\?color=usd_24h_change {usd_24h_sign}${usd_24h_diff}], '
+    format += '[\?color=usd_24h_change {usd_24h_sign}{usd_24h_change}%]]'
+
+    # i believe this switches over at around 7:00 AM UTC so it should be the
+    # only time you can catch this in action between dailys, otherwise it will
+    # be same and unchanged until the next day. this format shows everything
+    # you can use with one {usd_24h} placeholder.
 }
 
 # round to the nearest whole number
@@ -94,17 +104,26 @@ bitcoin_charts {
     format_market = '{symbol} [\?color=close_change {currency_symbol}{close:.0f}]'
 }
 
-# remove last 3 letters from symbol, formatter hack
+# remove last 3 letters, eg USD, from (market name) symbol, formatter hack
 bitcoin_charts {
     format_market = '[\?max_length=-3 {symbol}] '
     format_market += '[\?color=close_change {currency_symbol}{close:.2f}]'
 }
 
-# display change, diff differences between intervals
+# format differences between intervals, eg sign, change, diff
 bitcoin_charts {
     format_market = '{symbol} {currency_symbol}{close:.2f} '
-    format_market += '[\?color=close_change {close_diff}], '
-    format_market += '[\?color=close_change {close_change}%]'
+    format_market += '[\?color=close_change {close_sign}{currency_symbol}{close_diff}], '
+    format_market += '[\?color=close_change {close_sign}{close_change}%]'
+
+    # it is easier to use $. otherwise, it is useful to use {currency_symbol}
+    # if you're planning on using mixed {currency} markets in your format
+}
+
+# colorize degraded on zeroes or zero differences
+bitcoin_charts {
+    thresholds = [(-1, 'bad'), (0, 'degraded'), (0.001, 'good')]
+    # you may like darkgray or other dark color better
 }
 ```
 
@@ -119,7 +138,6 @@ SAMPLE OUTPUT
 ]
 """
 
-from math import floor
 URL_MARKETS = 'https://api.bitcoincharts.com/v1/markets.json'
 URL_WEIGHTED_PRICES = 'https://api.bitcoincharts.com/v1/weighted_prices.json'
 MAP = {'AUD': '$', 'CNY': '¥', 'EUR': '€', 'GBP': '£', 'USD': '$', 'YEN': '¥'}
@@ -132,7 +150,7 @@ class Py3status:
     cache_timeout = 900
     format = '{format_market}'
     format_market = ('{symbol} {currency_symbol}{close:.2f} '
-                     '[\?color=close_change {close_diff}]')
+                     '[\?color=close_change {close_sign}{close_change}%]')
     format_separator = ' '
     markets = ['bitstampUSD']
     thresholds = [(-1, 'bad'), (0, 'good')]
@@ -206,29 +224,38 @@ class Py3status:
         if not isinstance(self.markets, list):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # end deprecation
+        self.diff_keys = ['_sign', '_change', '_diff']
         self.init = {}
         self.cache = {}
-        self.placeholders = {}
         self.request_timeout = 10
+        self.thresholds_init = {}
         init_policies = [
             # names, format contains placeholders, format_string
-            ('markets', 'format_market', self.format_market),
+            ('markets', None, self.format_market),
             ('weighted_prices', ['*_24h*', '*_30d*', '*_7d*'], self.format)
         ]
 
+        # init markets, weighted_priecs
         for x in init_policies:
-            self.init[x[0]] = self.py3.format_contains(self.format, x[1])
-            self.placeholders[x[0]] = self.py3.get_placeholders_list(x[2])
+            matched_placeholders = self.py3.get_placeholders_list(x[2], x[1])
             new_list = []
-            # add {example} instead of {example_change} or {example_diff}
-            for name in self.placeholders[x[0]]:
-                for partial in ['_diff', '_change']:
-                    if partial in name:
+            # add example instead of example_change, example_diff
+            for name in matched_placeholders:
+                for partial in self.diff_keys:
+                    if name.endswith(partial):
                         new_list.append(name.split(partial)[0])
                         break
                 else:
                     new_list.append(name)
-            self.placeholders[x[0]] = list(set(new_list))
+            self.init[x[0]] = list(set(new_list))
+        if not self.py3.format_contains(self.format, 'format_market'):
+            self.init['markets'] = []
+
+        # partial future helper code
+        for name in ('format', 'format_market'):
+            self.thresholds_init[name] = []
+            for x in getattr(self, name).replace('&', ' ').split('color=')[1::1]:
+                self.thresholds_init[name].append(x.split()[0])
 
     def _get_markets_data(self):
         try:
@@ -248,70 +275,8 @@ class Py3status:
             data = {}
         return data
 
-    def _tr(self, value, change=False, num=2):
-        # {xxx_change}    percent changes between intervals, eg +0.12
-        # {xxx_diff}      differences between intervals, eg +$33.56
-        string = '{:g}' if change else '{:.2f}'
-        return string.format(floor(value * 10 ** num) / 10 ** num)
-
-    def _manipulate(self, data, placeholders, name):
-        for key in placeholders:
-            if key not in data:
-                continue
-            # start with empty
-            change_key, change = key + '_change', 0
-            diff_key, diff = key + '_diff', 0
-            # no currency sign for non-currency placeholders
-            if key in ['latest_trade', 'duration', 'volume']:
-                sign = ''
-            else:
-                sign = MAP.get(data.get('currency', data.get('currency')))
-                # convert None to ''
-                if not sign:
-                    sign = ''
-            data.update({
-                diff_key: sign + self._tr(diff),
-                change_key: self._tr(change, True),
-            })
-            value = data[key]
-            self.cache.setdefault(name, {})
-            # wp values are strings instead of floats
-            if name == 'weighted_prices':
-                value = float(value)
-            if isinstance(value, (int, float)):
-                # update cache
-                last_value = self.cache[name].get(key)
-                self.cache[name][key] = value
-                if last_value is not None:
-                    diff = value - last_value
-                    # negative diff
-                    if diff < 0:
-                        diff_str = '-' + sign + self._tr(abs(diff))
-                        change = ((value - last_value) / value) * 100.0
-                        change_str = self._tr(change, True)
-                    # positive diff
-                    elif diff > 0:
-                        diff_str = '+' + sign + self._tr(diff)
-                        change = ((value - last_value) / last_value) * 100.0
-                        change_str = '+' + self._tr(change, True)
-                    # same diff
-                    else:
-                        diff_str = sign + self._tr(diff)
-                        change_str = self._tr(change, True)
-
-                    data[diff_key] = diff_str
-                    data[change_key] = change_str
-
-            if self.thresholds:
-                self.py3.threshold_get_color(value, key)
-                self.py3.threshold_get_color(change, change_key)
-
-        return data
-
     def bitcoin_charts(self):
-        format_market = None
-        weighted_prices_data = {}
-        markets_data = {}
+        charts_data = {}
 
         if self.init['markets']:
             markets_data = self._get_markets_data()
@@ -324,6 +289,7 @@ class Py3status:
                         continue
                     sign = market['currency']
                     market['currency_symbol'] = MAP.get(sign, sign)
+
                     # deprecation: show field->price + market==symbol
                     _market = market['symbol']
                     if self.is_price:
@@ -335,10 +301,21 @@ class Py3status:
                     else:
                         market['market'] = _market
                     # end deprecation
-                    # run manipulation on fetched placeholders
-                    market = self._manipulate(
-                        market, self.placeholders['markets'], name
-                    )
+
+                    for key in self.init['markets']:
+                        try:
+                            value = float(market[key])
+                        except (KeyError, TypeError, ValueError):
+                            continue
+                        market.update(dict(zip(
+                            [key + x for x in self.diff_keys],
+                            self.py3.format_diffs(key, value, name)
+                        )))
+
+                    for x in self.thresholds_init['format_market']:
+                        if x in market:
+                            self.py3.threshold_get_color(market[x], x)
+
                     new_market.append(
                         self.py3.safe_format(self.format_market, market)
                     )
@@ -348,23 +325,29 @@ class Py3status:
             format_market = self.py3.composite_join(
                 format_separator, new_market
             )
+            charts_data['format_market'] = format_market
 
         if self.init['weighted_prices']:
             weighted_prices_data = self._get_weighted_prices_data()
-            weighted_prices_data = self._manipulate(
-                weighted_prices_data,
-                self.placeholders['weighted_prices'],
-                'weighted_prices'
-            )
+            for key in self.init['weighted_prices']:
+                try:
+                    value = float(weighted_prices_data[key])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                weighted_prices_data.update(dict(zip(
+                    [key + x for x in self.diff_keys],
+                    self.py3.format_diffs(key, value, 'weighted_prices')
+                )))
+
+            for x in self.thresholds_init['format']:
+                if x in weighted_prices_data:
+                    self.py3.threshold_get_color(weighted_prices_data[x], x)
+
+            charts_data.update(weighted_prices_data)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, dict(
-                    format_market=format_market,
-                    **weighted_prices_data
-                )
-            )
+            'full_text': self.py3.safe_format(self.format, charts_data),
         }
 
 
