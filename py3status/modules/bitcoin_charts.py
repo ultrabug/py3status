@@ -266,6 +266,9 @@ class Py3status:
                 sign = ''
             else:
                 sign = MAP.get(data.get('currency', data.get('currency')))
+                # convert None to ''
+                if not sign:
+                    sign = ''
             data.update({
                 diff_key: sign + self._tr(diff),
                 change_key: self._tr(change, True),
