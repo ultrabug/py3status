@@ -34,6 +34,13 @@ Requires:
 
 import dbus
 
+bus_name = 'org.xfce.Xfconf'
+channel = 'xfce4-notifyd'
+interface_name = 'org.xfce.Xfconf'
+object_path = '/org/xfce/Xfconf'
+setting = '/do-not-disturb'
+
+
 class Py3status:
     """
     """
@@ -43,21 +50,14 @@ class Py3status:
     dnd_on = "On"
     format = 'DND: {status}'
 
-    # not intended to be overriden
-    bus_name = 'org.xfce.Xfconf'
-    channel = 'xfce4-notifyd'
-    interface_name = 'org.xfce.Xfconf'
-    object_path = '/org/xfce/Xfconf'
-    setting = '/do-not-disturb'
-
     def post_config_hook(self):
         self.session_bus = dbus.SessionBus()
-        self.dnd_object = self.session_bus.get_object(self.bus_name, self.object_path) 
-        self.interface = dbus.Interface(self.dnd_object, self.interface_name)
+        self.dnd_object = self.session_bus.get_object(bus_name, object_path)
+        self.interface = dbus.Interface(self.dnd_object, interface_name)
 
     def xfce4_notifyd(self):
 
-        self.status = self.dnd_object.GetProperty(self.channel, self.setting)
+        self.status = self.dnd_object.GetProperty(channel, setting)
 
         status = self.dnd_off
         color = self.py3.COLOR_GOOD
@@ -80,7 +80,8 @@ class Py3status:
         if self.status:
             new_status = 0
 
-        self.interface.SetProperty(self.channel, self.setting, new_status)
+        self.interface.SetProperty(channel, setting, new_status)
+
 
 if __name__ == "__main__":
     """
