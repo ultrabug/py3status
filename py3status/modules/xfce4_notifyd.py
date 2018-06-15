@@ -6,9 +6,9 @@ Toggles DND status on click
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
-    format: display format for this module (default 'DND: {status}')                    
     dnd_off: status string when DND is off (default 'Off')
     dnd_on: status string when DND is on (default 'On')
+    format: display format for this module (default 'DND: {status}')
 
 Format of status string placeholders:
     {status} replaced with dnd_off when DND is off, dnd_on when it is on
@@ -20,8 +20,8 @@ Color options:
 Examples:
 ```
 xfce4_notifyd {
-+     dnd_off = "🙉"                                                                       
-+     dnd_on = "🙈" 
+     dnd_off = "🙉"
+     dnd_on = "🙈"
 }
 ```
 
@@ -39,16 +39,16 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = 'DND: {status}'
     dnd_off = "Off"
     dnd_on = "On"
+    format = 'DND: {status}'
 
     # not intended to be overriden
-    interface_name = bus_name = 'org.xfce.Xfconf'
-    object_path = '/org/xfce/Xfconf'
+    bus_name = 'org.xfce.Xfconf'
     channel = 'xfce4-notifyd'
+    interface_name = 'org.xfce.Xfconf'
+    object_path = '/org/xfce/Xfconf'
     setting = '/do-not-disturb'
-
 
     def post_config_hook(self):
         self.session_bus = dbus.SessionBus()
