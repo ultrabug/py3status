@@ -4,11 +4,9 @@ Display if a files or directories exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
-    format: format of the output. (default '\?if=paths ● {format_path}|■')
+    format: format of the output. (default '\?if=paths ●|■')
     format_path: format of the path output. (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
-    icon_available: icon to display when available (default '●')
-    icon_unavailable: icon to display when unavailable (default '■')
     path: the path(s) to a file or dir to check if it exists, take a list (default None)
 
 Color options:
@@ -17,7 +15,6 @@ Color options:
 
 Format placeholders:
     {format_path} paths of matching files
-    {icon} icon for the current availability
 
 format_path path placeholders:
     {basename} basename of matching files
@@ -33,7 +30,7 @@ file_status {
 }
 ```
 
-@author obb, Moritz Lüdecke, Cyril Levis (@cyrinux)
+@author obb, Moritz Lüdecke, Cyril Levis (@cyrinux), @lasers
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf test.py'}
@@ -46,6 +43,7 @@ from glob import glob
 from os.path import basename, expanduser
 
 ERR_NO_PATH = 'no path given'
+DEFAULT_FORMAT = u'\?if=paths ●|■'
 
 
 class Py3status:
@@ -53,11 +51,9 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = u'\?if=paths ● {format_path}|■'
+    format = DEFAULT_FORMAT
     format_path = u'{basename}'
     format_path_separator = u' '
-    icon_available = u'●'
-    icon_unavailable = u'■'
     path = None
 
     class Meta:
@@ -77,6 +73,15 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        # deprecation
+        on = getattr(self, 'icon_available', None)
+        off = getattr(self, 'icon_unavailable', None)
+        if self.format == DEFAULT_FORMAT and (on or off):
+            self.format = u'\?if=paths {}|{}'.format(on or u'●', off or u'■')
+            msg = 'DEPRECATION: you are using old style configuration '
+            msg += 'parameters you should update to use the new format.'
+            self.py3.log(msg)
+
         if self.path:
             # backward compatibility, str to list
             if not isinstance(self.path, list):
@@ -105,17 +110,13 @@ class Py3status:
         file_status_data['paths'] = len(paths)
 
         # fill data, legacy stuff
-        file_status_data['icon'] = self.icon_unavailable
         color = self.py3.COLOR_BAD
         if paths:
-            file_status_data['icon'] = self.icon_available
             color = self.py3.COLOR_GOOD
 
         # format paths
         if self.init['format_path']:
-            self.format_path_separator = self.py3.safe_format(
-                self.format_path_separator
-            )
+            self.format_path_separator = self.py3.safe_format(self.format_path_separator)
 
             format_path = {}
 
