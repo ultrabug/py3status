@@ -4,8 +4,7 @@ Display if a files or directories exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
-    format: format of the output. (default '{icon} {format_path}')
-    format: format of the output. (default '\?if=files ● {format_path}|■')
+    format: format of the output. (default '\?if=paths ● {format_path}|■')
     format_path: format of the path output. (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
     icon_available: icon to display when available (default '●')
@@ -44,7 +43,6 @@ missing
 """
 
 from glob import glob
-from itertools import chain
 from os.path import basename, expanduser
 
 ERR_NO_PATH = 'no path given'
@@ -79,9 +77,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.placeholders = set(
-            self.py3.get_placeholders_list(self.format_path))
-
         if self.path:
             # backward compatibility, str to list
             if not isinstance(self.path, list):
@@ -89,8 +84,9 @@ class Py3status:
             # expand user paths
             self.path = list(map(expanduser, self.path))
 
-            self.format_path_separator = self.py3.safe_format(
-                self.format_path_separator)
+            self.init = {'format_path': []}
+            for x in set(self.py3.get_placeholders_list(self.format_path)):
+                self.init['format_path'].append(x)
 
     def file_status(self):
         if self.path is None:
@@ -116,21 +112,27 @@ class Py3status:
             color = self.py3.COLOR_GOOD
 
         # format paths
-        if set(['basename', 'fullname']) & self.placeholders:
+        if self.init['format_path']:
+            self.format_path_separator = self.py3.safe_format(
+                self.format_path_separator
+            )
+
             format_path = {}
 
-            if set(['basename']) & self.placeholders:
+            if 'basename' in self.init['format_path']:
                 format_path['basename'] = map(basename, paths)
 
-            if set(['fullpath']) & self.placeholders:
+            if 'fullpath' in self.init['format_path']:
                 format_path['fullpath'] = paths
 
-            for x in self.placeholders:
+            for x in self.init['format_path']:
                 format_path[x] = self.py3.composite_join(
-                    self.format_path_separator, format_path[x])
+                    self.format_path_separator, format_path[x]
+                )
 
             file_status_data['format_path'] = self.py3.safe_format(
-                self.format_path, format_path)
+                self.format_path, format_path
+            )
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
