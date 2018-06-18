@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Display if a file or directory exists.
+Display if a files or directories exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
     format: format of the output. (default '{icon} {format_path}')
+    format: format of the output. (default '\?if=files ● {format_path}|■')
     format_path: format of the path output. (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
     icon_available: icon to display when available (default '●')
@@ -28,6 +29,7 @@ Examples:
 # check files with wildcard, or contain user path, full paths
 file_status {
     path = ['/tmp/test*', '~user/test1']
+    format = u'\?if=paths ● {format_path}|■ no files found'
     format_path = '{fullpath}'
 }
 ```
@@ -53,7 +55,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = u'{icon} {format_path}'
+    format = u'\?if=paths ● {format_path}|■'
     format_path = u'{basename}'
     format_path_separator = u' '
     icon_available = u'●'
@@ -77,12 +79,18 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.placeholders = set(
+            self.py3.get_placeholders_list(self.format_path))
+
         if self.path:
             # backward compatibility, str to list
             if not isinstance(self.path, list):
                 self.path = [self.path]
             # expand user paths
             self.path = list(map(expanduser, self.path))
+
+            self.format_path_separator = self.py3.safe_format(
+                self.format_path_separator)
 
     def file_status(self):
         if self.path is None:
@@ -97,28 +105,29 @@ class Py3status:
         # expand glob from paths
         paths = list(map(glob, self.path))
         # merge list of paths
-        paths = [x for x in chain.from_iterable(paths)]
+        paths = sorted([files for path in self.path for files in glob(path)])
+        file_status_data['paths'] = len(paths)
 
-        # fill data
+        # fill data, legacy stuff
         file_status_data['icon'] = self.icon_unavailable
         color = self.py3.COLOR_BAD
-
         if paths:
             file_status_data['icon'] = self.icon_available
             color = self.py3.COLOR_GOOD
 
         # format paths
-        if self.format_path:
+        if set(['basename', 'fullname']) & self.placeholders:
             format_path = {}
 
-            format_path_separator = self.py3.safe_format(
-                self.format_path_separator)
+            if set(['basename']) & self.placeholders:
+                format_path['basename'] = map(basename, paths)
 
-            format_path['basename'] = self.py3.composite_join(
-                format_path_separator, map(basename, paths))
+            if set(['fullpath']) & self.placeholders:
+                format_path['fullpath'] = paths
 
-            format_path['full'] = self.py3.composite_join(
-                format_path_separator, paths)
+            for x in self.placeholders:
+                format_path[x] = self.py3.composite_join(
+                    self.format_path_separator, format_path[x])
 
             file_status_data['format_path'] = self.py3.safe_format(
                 self.format_path, format_path)
