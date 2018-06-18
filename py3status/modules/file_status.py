@@ -47,11 +47,6 @@ from os.path import basename, expanduser
 
 ERR_NO_PATH = 'no path given'
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
 
 class Py3status:
     """
@@ -84,7 +79,7 @@ class Py3status:
     def post_config_hook(self):
         if self.path:
             # backward compatibility, str to list
-            if isinstance(self.path, basestring):
+            if not isinstance(self.path, list):
                 self.path = [self.path]
             # expand user paths
             self.path = list(map(expanduser, self.path))
