@@ -92,12 +92,8 @@ class Py3status:
             msg += 'parameters you should update to use the new format.'
             self.py3.log(msg)
 
-        if self.path is None:
-            return {
-                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                'full_text': ERR_NO_PATH,
-                'cached_until': self.py3.CACHE_FOREVER,
-            }
+        if not self.path:
+            raise Exception(ERR_NO_PATH)
 
         # backward compatibility, str to list
         if not isinstance(self.path, list):
@@ -118,8 +114,7 @@ class Py3status:
         if self.init['format_path']:
             format_path = {}
             format_path_separator = self.py3.safe_format(
-                self.format_path_separator
-            )
+                self.format_path_separator)
 
             for key in self.init['format_path']:
                 if key == 'basename':
@@ -129,8 +124,7 @@ class Py3status:
                 else:
                     continue
                 format_path[key] = self.py3.composite_join(
-                    format_path_separator, temps_paths
-                )
+                    format_path_separator, temps_paths)
 
             format_path = self.py3.safe_format(self.format_path, format_path)
 
@@ -139,13 +133,13 @@ class Py3status:
             self.py3.threshold_get_color(paths_number, 'paths')
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, {
-                    'paths': paths_number,
-                    'format_path': format_path
-                }
-            )
+            'cached_until':
+            self.py3.time_in(self.cache_timeout),
+            'full_text':
+            self.py3.safe_format(self.format, {
+                'paths': paths_number,
+                'format_path': format_path
+            })
         }
 
         return response
