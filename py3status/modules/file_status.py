@@ -7,7 +7,7 @@ Configuration parameters:
     format: format of the output. (default '\?color=paths [\?if=paths ●|■]')
     format_path: format of the path output. (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
-    path: the path(s) to a file or dir to check if it exists, take a list (default None)
+    path: specify a string or a list of paths to check (default None)
     thresholds: specify color thresholds to use (default [(0, 'bad'), (1, 'good')])
 
 Color options:
@@ -39,7 +39,7 @@ file_status {
 }
 ```
 
-@author obb, Moritz Lüdecke, Cyril Levis (@cyrinux), @lasers
+@author obb, Moritz Lüdecke, Cyril Levis (@cyrinux)
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf'}
@@ -92,18 +92,6 @@ class Py3status:
             msg += 'parameters you should update to use the new format.'
             self.py3.log(msg)
 
-        if self.path:
-            # backward compatibility, str to list
-            if not isinstance(self.path, list):
-                self.path = [self.path]
-            # expand user paths
-            self.path = list(map(expanduser, self.path))
-
-            self.init = {
-                'format_path': self.py3.get_placeholders_list(self.format_path)
-            }
-
-    def file_status(self):
         if self.path is None:
             return {
                 'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
@@ -111,19 +99,27 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
             }
 
+        # backward compatibility, str to list
+        if not isinstance(self.path, list):
+            self.path = [self.path]
+        # expand user paths
+        self.path = list(map(expanduser, self.path))
+
+        self.init = {
+            'format_path': self.py3.get_placeholders_list(self.format_path)
+        }
+
+    def file_status(self):
         # init datas
         paths = sorted([files for path in self.path for files in glob(path)])
         paths_number = len(paths)
-
-        # get thresholds
-        if self.thresholds:
-            self.py3.threshold_get_color(paths_number, 'paths')
 
         # format paths
         if self.init['format_path']:
             format_path = {}
             format_path_separator = self.py3.safe_format(
-                self.format_path_separator)
+                self.format_path_separator
+            )
 
             for key in self.init['format_path']:
                 if key == 'basename':
@@ -133,18 +129,23 @@ class Py3status:
                 else:
                     continue
                 format_path[key] = self.py3.composite_join(
-                    format_path_separator, temps_paths)
+                    format_path_separator, temps_paths
+                )
 
             format_path = self.py3.safe_format(self.format_path, format_path)
 
+        # get thresholds
+        if self.thresholds:
+            self.py3.threshold_get_color(paths_number, 'paths')
+
         response = {
-            'cached_until':
-            self.py3.time_in(self.cache_timeout),
-            'full_text':
-            self.py3.safe_format(self.format, {
-                'paths': paths_number,
-                'format_path': format_path
-            })
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {
+                    'paths': paths_number,
+                    'format_path': format_path
+                }
+            )
         }
 
         return response
