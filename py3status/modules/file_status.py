@@ -4,10 +4,11 @@ Display if a files or directories exists.
 
 Configuration parameters:
     cache_timeout: how often to run the check (default 10)
-    format: format of the output. (default '\?if=paths ●|■')
+    format: format of the output. (default '\?color=paths [\?if=paths ●|■]')
     format_path: format of the path output. (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
     path: the path(s) to a file or dir to check if it exists, take a list (default None)
+    thresholds: specify color thresholds to use (default [(0, 'bad'), (1, 'good')])
 
 Color options:
     color_bad: Error or file/directory does not exist
@@ -29,12 +30,19 @@ file_status {
     format = u'\?if=paths ● {format_path}|■ no files found'
     format_path = '{fullpath}'
 }
+
+# change color on files match
+file_status {
+    path = ['/tmp/test*', '~user/test1']
+    format = u'\?color=paths ●'
+    thresholds = [(0, 'bad'), (1, 'good')]
+}
 ```
 
 @author obb, Moritz Lüdecke, Cyril Levis (@cyrinux), @lasers
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'\u25cf test.py'}
+{'color': '#00FF00', 'full_text': u'\u25cf'}
 
 missing
 {'color': '#FF0000', 'full_text': u'\u25a0'}
@@ -44,7 +52,7 @@ from glob import glob
 from os.path import basename, expanduser
 
 ERR_NO_PATH = 'no path given'
-DEFAULT_FORMAT = u'\?if=paths ●|■'
+DEFAULT_FORMAT = u'\?color=paths [\?if=paths ●|■]'
 
 
 class Py3status:
@@ -56,6 +64,7 @@ class Py3status:
     format_path = u'{basename}'
     format_path_separator = u' '
     path = None
+    thresholds = [(0, 'bad'), (1, 'good')]
 
     class Meta:
         deprecated = {
@@ -106,15 +115,15 @@ class Py3status:
         paths = sorted([files for path in self.path for files in glob(path)])
         paths_number = len(paths)
 
-        # fill data, legacy stuff
-        color = self.py3.COLOR_BAD
-        if paths:
-            color = self.py3.COLOR_GOOD
+        # get thresholds
+        if self.thresholds:
+            self.py3.threshold_get_color(paths_number, 'paths')
 
         # format paths
         if self.init['format_path']:
             format_path = {}
-            format_path_separator = self.py3.safe_format(self.format_path_separator)
+            format_path_separator = self.py3.safe_format(
+                self.format_path_separator)
 
             for key in self.init['format_path']:
                 if key == 'basename':
@@ -124,22 +133,18 @@ class Py3status:
                 else:
                     continue
                 format_path[key] = self.py3.composite_join(
-                    format_path_separator, temps_paths
-                )
+                    format_path_separator, temps_paths)
 
-            format_path = self.py3.safe_format(
-                self.format_path, format_path
-            )
+            format_path = self.py3.safe_format(self.format_path, format_path)
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, {
-                    'paths': paths_number,
-                    'format_path': format_path
-                }
-            ),
-            'color': color
+            'cached_until':
+            self.py3.time_in(self.cache_timeout),
+            'full_text':
+            self.py3.safe_format(self.format, {
+                'paths': paths_number,
+                'format_path': format_path
+            })
         }
 
         return response
