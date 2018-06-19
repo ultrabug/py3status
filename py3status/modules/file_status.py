@@ -15,6 +15,7 @@ Color options:
 
 Format placeholders:
     {format_path} paths of matching files
+    {paths} number of paths, eg 1, 2, 3
 
 format_path path placeholders:
     {basename} basename of matching files
@@ -89,9 +90,9 @@ class Py3status:
             # expand user paths
             self.path = list(map(expanduser, self.path))
 
-            self.init = {'format_path': []}
-            for x in set(self.py3.get_placeholders_list(self.format_path)):
-                self.init['format_path'].append(x)
+            self.init = {
+                'format_path': self.py3.get_placeholders_list(self.format_path)
+            }
 
     def file_status(self):
         if self.path is None:
@@ -101,13 +102,9 @@ class Py3status:
                 'cached_until': self.py3.CACHE_FOREVER,
             }
 
-        # init data
-        file_status_data = {}
-        # expand glob from paths
-        paths = list(map(glob, self.path))
-        # merge list of paths
+        # init datas
         paths = sorted([files for path in self.path for files in glob(path)])
-        file_status_data['paths'] = len(paths)
+        paths_number = len(paths)
 
         # fill data, legacy stuff
         color = self.py3.COLOR_BAD
@@ -116,28 +113,32 @@ class Py3status:
 
         # format paths
         if self.init['format_path']:
-            self.format_path_separator = self.py3.safe_format(self.format_path_separator)
-
             format_path = {}
+            format_path_separator = self.py3.safe_format(self.format_path_separator)
 
-            if 'basename' in self.init['format_path']:
-                format_path['basename'] = map(basename, paths)
-
-            if 'fullpath' in self.init['format_path']:
-                format_path['fullpath'] = paths
-
-            for x in self.init['format_path']:
-                format_path[x] = self.py3.composite_join(
-                    self.format_path_separator, format_path[x]
+            for key in self.init['format_path']:
+                if key == 'basename':
+                    temps_paths = map(basename, paths)
+                elif key == 'fullpath':
+                    temps_paths = paths
+                else:
+                    continue
+                format_path[key] = self.py3.composite_join(
+                    format_path_separator, temps_paths
                 )
 
-            file_status_data['format_path'] = self.py3.safe_format(
+            format_path = self.py3.safe_format(
                 self.format_path, format_path
             )
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, file_status_data),
+            'full_text': self.py3.safe_format(
+                self.format, {
+                    'paths': paths_number,
+                    'format_path': format_path
+                }
+            ),
             'color': color
         }
 
