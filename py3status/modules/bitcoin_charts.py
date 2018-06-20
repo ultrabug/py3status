@@ -203,7 +203,7 @@ class Py3status:
         self.field = getattr(self, 'field', 'close')
         self.symbols = getattr(self, 'symbols', True)
         self.is_price = self.py3.format_contains(self.format_market, 'price*')
-        if isinstance(self.markets, str):
+        if not isinstance(self.markets, list):
             self.markets = [x.strip() for x in self.markets.split(',')]
         # end deprecation
         self.init = {}
