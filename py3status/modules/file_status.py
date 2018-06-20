@@ -1,41 +1,46 @@
 # -*- coding: utf-8 -*-
 """
-Display if a files or directories exists.
+Display if files or directories exists.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format: format of the output. (default '\?color=paths [\?if=paths ●|■]')
-    format_path: format of the path output. (default '{basename}')
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module
+        (default '\?color=paths [\?if=paths ●|■]')
+    format_path: format for paths (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
     path: specify a string or a list of paths to check (default None)
-    thresholds: specify color thresholds to use (default [(0, 'bad'), (1, 'good')])
-
-Color options:
-    color_bad: Error or file/directory does not exist
-    color_good: File or directory exists
+    thresholds: specify color thresholds to use
+        (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
-    {format_path} paths of matching files
+    {format_path} format for paths
     {paths} number of paths, eg 1, 2, 3
 
 format_path path placeholders:
-    {basename} basename of matching files
-    {fullpath} fullpath of matching files
+    {basename} basename of pathname
+    {pathname} pathname
+
+Color options:
+    color_bad: files or directories does not exist
+    color_good: files or directories exists
+
+Color thresholds:
+    format:
+        paths: print a color based on the number of paths
 
 Examples:
 ```
-# check files with wildcard, or contain user path, full paths
+# add multiple paths with wildcard or with pathnames
 file_status {
-    path = ['/tmp/test*', '~user/test1']
-    format = u'\?if=paths ● {format_path}|■ no files found'
-    format_path = '{fullpath}'
+    path = ['/tmp/test*', '~user/test1', '~/Videos/*.mp4']
 }
 
-# change color on files match
+# colorize basenames
 file_status {
-    path = ['/tmp/test*', '~user/test1']
-    format = u'\?color=paths ●'
-    thresholds = [(0, 'bad'), (1, 'good')]
+    path = ['~/.config/i3/modules/*.py']
+    format = '{format_path}'
+    format_path = '\?color=good {basename}'
+    format_path_separator = ', '
 }
 ```
 
@@ -51,7 +56,7 @@ missing
 from glob import glob
 from os.path import basename, expanduser
 
-ERR_NO_PATH = 'no path given'
+STRING_NO_PATH = 'no path given'
 DEFAULT_FORMAT = u'\?color=paths [\?if=paths ●|■]'
 
 
@@ -83,66 +88,72 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if not self.path:
+            raise Exception(STRING_NO_PATH)
+
         # deprecation
         on = getattr(self, 'icon_available', None)
         off = getattr(self, 'icon_unavailable', None)
         if self.format == DEFAULT_FORMAT and (on or off):
             self.format = u'\?if=paths {}|{}'.format(on or u'●', off or u'■')
+            new_format = u'\?color=paths [\?if=paths {}|{}]'
+            self.format = new_format.format(on or u'●', off or u'■')
             msg = 'DEPRECATION: you are using old style configuration '
             msg += 'parameters you should update to use the new format.'
             self.py3.log(msg)
 
-        if not self.path:
-            raise Exception(ERR_NO_PATH)
-
-        # backward compatibility, str to list
+        # convert str to list + expand path
         if not isinstance(self.path, list):
             self.path = [self.path]
-        # expand user paths
         self.path = list(map(expanduser, self.path))
 
-        self.init = {
-            'format_path': self.py3.get_placeholders_list(self.format_path)
-        }
+        self.init = {'format_path': []}
+        if self.py3.format_contains(self.format, 'format_path'):
+            self.init['format_path'] = self.py3.get_placeholders_list(
+                self.format_path
+            )
 
     def file_status(self):
         # init datas
         paths = sorted([files for path in self.path for files in glob(path)])
-        paths_number = len(paths)
+        count_path = len(paths)
+        format_path = None
 
         # format paths
         if self.init['format_path']:
-            format_path = {}
+            new_data = []
             format_path_separator = self.py3.safe_format(
-                self.format_path_separator)
+                self.format_path_separator
+            )
 
-            for key in self.init['format_path']:
-                if key == 'basename':
-                    temps_paths = map(basename, paths)
-                elif key == 'fullpath':
-                    temps_paths = paths
-                else:
-                    continue
-                format_path[key] = self.py3.composite_join(
-                    format_path_separator, temps_paths)
+            for pathname in paths:
+                path = {}
+                for key in self.init['format_path']:
+                    if key == 'basename':
+                        value = basename(pathname)
+                    elif key == 'pathname':
+                        value = pathname
+                    else:
+                        continue
+                    path[key] = self.py3.safe_format(value)
+                new_data.append(self.py3.safe_format(self.format_path, path))
 
-            format_path = self.py3.safe_format(self.format_path, format_path)
+            format_path = self.py3.composite_join(
+                format_path_separator, new_data
+            )
 
-        # get thresholds
         if self.thresholds:
-            self.py3.threshold_get_color(paths_number, 'paths')
+            self.py3.threshold_get_color(count_path, 'paths')
 
-        response = {
-            'cached_until':
-            self.py3.time_in(self.cache_timeout),
-            'full_text':
-            self.py3.safe_format(self.format, {
-                'paths': paths_number,
-                'format_path': format_path
-            })
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {
+                    'paths': count_path,
+                    'format_path': format_path
+                }
+            )
         }
-
-        return response
 
 
 if __name__ == "__main__":
