@@ -16,7 +16,7 @@ Format placeholders:
     {format_path} format for paths
     {paths} number of paths, eg 1, 2, 3
 
-format_path path placeholders:
+format_path placeholders:
     {basename} basename of pathname
     {pathname} pathname
 
@@ -56,8 +56,8 @@ missing
 from glob import glob
 from os.path import basename, expanduser
 
-STRING_NO_PATH = 'no path given'
-DEFAULT_FORMAT = u'\?color=paths [\?if=paths ●|■]'
+STRING_NO_PATH = 'missing path'
+DEFAULT_FORMAT = u'\?color=paths [\?if=paths \u25cf|\u25a0]'
 
 
 class Py3status:
@@ -95,9 +95,9 @@ class Py3status:
         on = getattr(self, 'icon_available', None)
         off = getattr(self, 'icon_unavailable', None)
         if self.format == DEFAULT_FORMAT and (on or off):
-            self.format = u'\?if=paths {}|{}'.format(on or u'●', off or u'■')
+            self.format = u'\?if=paths {}|{}'.format(on or u'\u25cf', off or u'\u25a0')
             new_format = u'\?color=paths [\?if=paths {}|{}]'
-            self.format = new_format.format(on or u'●', off or u'■')
+            self.format = new_format.format(on or u'\u25cf', off or u'\u25a0')
             msg = 'DEPRECATION: you are using old style configuration '
             msg += 'parameters you should update to use the new format.'
             self.py3.log(msg)
