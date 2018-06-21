@@ -12,7 +12,7 @@ Configuration parameters:
     format: display format for this module (default '{format_market}')
     format_market: display format for cryptocurrency markets
         *(default '{symbol} {currency_symbol}{close:.2f} '
-        '[\?color=close_change {close_sign}{close_change}%]')*
+        '[\?color=close_change {close_sign}{close_change:.2f}%]')*
     format_separator: show separator if more than one (default ' ')
     markets: specify a list of active/inactive markets to use,
         see https://bitcoincharts.com/markets/list (default ['bitstampUSD'])
@@ -149,8 +149,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 900
     format = '{format_market}'
-    format_market = ('{symbol} {currency_symbol}{close:.2f} '
-                     '[\?color=close_change {close_sign}{close_change}%]')
+    format_market = (
+        '{symbol} {currency_symbol}{close:.2f} '
+        '[\?color=close_change {close_sign}{close_change:.2f}%]')
     format_separator = ' '
     markets = ['bitstampUSD']
     thresholds = [(-1, 'bad'), (0, 'good')]
@@ -226,7 +227,6 @@ class Py3status:
         # end deprecation
         self.diff_keys = ['_sign', '_change', '_diff']
         self.init = {}
-        self.cache = {}
         self.request_timeout = 10
         self.thresholds_init = {}
         init_policies = [
@@ -235,7 +235,7 @@ class Py3status:
             ('weighted_prices', ['*_24h*', '*_30d*', '*_7d*'], self.format)
         ]
 
-        # init markets, weighted_priecs
+        # init markets, weighted_prices
         for x in init_policies:
             matched_placeholders = self.py3.get_placeholders_list(x[2], x[1])
             new_list = []
