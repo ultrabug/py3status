@@ -57,7 +57,6 @@ from glob import glob
 from os.path import basename, expanduser
 
 STRING_NO_PATH = 'missing path'
-DEFAULT_FORMAT = u'\?color=paths [\?if=paths \u25cf|\u25a0]'
 
 
 class Py3status:
@@ -65,7 +64,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = DEFAULT_FORMAT
+    format = u'\?color=paths [\?if=paths \u25cf|\u25a0]'
     format_path = u'{basename}'
     format_path_separator = u' '
     path = None
@@ -91,16 +90,11 @@ class Py3status:
         if not self.path:
             raise Exception(STRING_NO_PATH)
 
-        # deprecation
-        self.on = getattr(self, 'icon_available', None)
-        self.off = getattr(self, 'icon_unavailable', None)
-        if self.format == DEFAULT_FORMAT and (self.on or self.off):
-            self.format = u'\?if=paths {}|{}'.format(self.on or u'\u25cf', self.off or u'\u25a0')
-            new_format = u'\?color=paths [\?if=paths {}|{}]'
-            self.format = new_format.format(self.on or u'\u25cf', self.off or u'\u25a0')
-            msg = 'DEPRECATION: you are using old style configuration '
-            msg += 'parameters you should update to use the new format.'
-            self.py3.log(msg)
+        # icon deprecation
+        on = getattr(self, 'icon_available', None)
+        off = getattr(self, 'icon_unavailable', None)
+        new_icon = u'\?color=paths [\?if=paths {}|{}]'.format(on, off)
+        self.format = self.format.replace('{icon}', new_icon)
 
         # convert str to list + expand path
         if not isinstance(self.path, list):
@@ -109,27 +103,22 @@ class Py3status:
 
         self.init = {'format_path': []}
         if self.py3.format_contains(self.format, 'format_path'):
-            self.init['format_path'] = self.py3.get_placeholders_list(self.format_path)
+            self.init['format_path'] = self.py3.get_placeholders_list(
+                self.format_path
+            )
 
     def file_status(self):
         # init datas
         paths = sorted([files for path in self.path for files in glob(path)])
         count_path = len(paths)
         format_path = None
-        icon = None
-
-        # format icon
-        if self.py3.format_contains(self.format, 'icon'):
-            if count_path > 0:
-                icon = self.on
-            else:
-                icon = self.off
 
         # format paths
         if self.init['format_path']:
             new_data = []
             format_path_separator = self.py3.safe_format(
-                self.format_path_separator)
+                self.format_path_separator
+            )
 
             for pathname in paths:
                 path = {}
@@ -156,8 +145,7 @@ class Py3status:
             'full_text': self.py3.safe_format(
                 self.format, {
                     'paths': count_path,
-                    'format_path': format_path,
-                    'icon': icon
+                    'format_path': format_path
                 }
             )
         }
