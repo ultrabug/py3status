@@ -165,13 +165,12 @@ class Py3status:
         write = 0
         with open('/proc/diskstats', 'r') as fd:
             for line in fd:
+                data = line.split()
                 if disk:
-                    if " "+disk+" " in line:
-                        data = line.split()
+                    if data[2] == disk:
                         read += int(data[5]) * self.sector_size
                         write += int(data[9]) * self.sector_size
                 else:
-                    data = line.split()
                     if data[1] == '0':
                         read += int(data[5]) * self.sector_size
                         write += int(data[9]) * self.sector_size
