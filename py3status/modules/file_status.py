@@ -91,8 +91,8 @@ class Py3status:
             raise Exception(STRING_NO_PATH)
 
         # icon deprecation
-        on = getattr(self, 'icon_available', None)
-        off = getattr(self, 'icon_unavailable', None)
+        on = getattr(self, 'icon_available', u'\u25cf')
+        off = getattr(self, 'icon_unavailable', u'\u25a0')
         new_icon = u'\?color=paths [\?if=paths {}|{}]'.format(on, off)
         self.format = self.format.replace('{icon}', new_icon)
 
