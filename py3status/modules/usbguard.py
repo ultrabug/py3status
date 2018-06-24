@@ -1,30 +1,62 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# UsbGuard module
 from gi.repository import GLib
 from pydbus import SystemBus
-
-bus = SystemBus()
-proxy = bus.get('org.usbguard')
-proxy_devices = proxy[".Devices"]
-devices_filter = '/org/usbguard/Devices'
-loop = GLib.MainLoop()
+from threading import Thread
 
 
-def cb_server_signal_emission(*args):
+class Py3status:
+    format = u'usb: {device_name} / id: {device_id}'
+    cache_timeout = 60
+    data = {'device_name': '', 'device_id': ''}
+
+    def post_config_hook(self):
+        self.usbguard_thread = Thread()
+        self.bus = SystemBus()
+        self.proxy = self.bus.get('org.usbguard')
+        self.proxy_devices = self.proxy[".Devices"]
+
+    def _get_last_device(self):
+        self.loop = GLib.MainLoop()
+        devices_filter = '/org/usbguard/Devices'
+
+        def cb_devices_presence_changed(*args):
+            device = args[4]
+            data = {'device_name': '', 'device_id': ''}
+            device_name = device[4]['name']
+            device_id = device[0]
+            if not data['device_name'] or data['device_name'] != device_name:
+                data['device_name'] = device_name
+                data['device_id'] = device_id
+            self.data = data
+
+        self.bus.subscribe(
+            object=devices_filter,
+            signal='DevicePresenceChanged',
+            signal_fired=cb_devices_presence_changed)
+
+        self.loop.run()
+
+    def usbguard(self):
+        self.usbguard_thread = Thread(target=self._get_last_device)
+        self.usbguard_thread.daemon = True
+        self.usbguard_thread.start()
+        self.py3.update()
+        return {
+            'cached_until':
+            self.py3.time_in(self.cache_timeout),
+            'full_text':
+            self.py3.safe_format(
+                self.format, {
+                    'device_id': self.data['device_id'],
+                    'device_name': self.data['device_name']
+                })
+        }
+
+
+if __name__ == "__main__":
     """
-    Callback on emitting signal from server
+    Run module in test mode.
     """
-    print("Message: ", args)
-    print("Data: ", str(args[4][4]))
-    device = args[4]
-    device_name = device[4]['name']
-    device_id = device[0]
-    print("Id: ", device_id)
-    print("Name: ", device_name)
-
-
-bus.subscribe(
-    object=devices_filter,
-    signal='DevicePresenceChanged',
-    signal_fired=cb_server_signal_emission)
-
-loop.run()
+    from py3status.module_test import module_test
+    module_test(Py3status)
