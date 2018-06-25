@@ -9,128 +9,139 @@
 # @author Cyril Levis (@cyrinux)
 # """
 
+import threading
+from time import sleep
+
 from gi.repository import GLib
 from pydbus import SystemBus
-from threading import Thread
-from time import sleep
 
 USBGUARD_CMD = """usbguard {action}-device {device_id}"""
 
 
+class UsbguardListener(threading.Thread):
+    def __init__(self, parent):
+        super(UsbguardListener, self).__init__()
+        self.parent = parent
+
+    def _setup_bus(self):
+        self.devices_filter = '/org/usbguard/Devices'
+        self.bus = SystemBus()
+        try:
+            self.parent.error = None
+            self.proxy = self.bus.get('org.usbguard')
+            self.proxy_devices = self.proxy[".Devices"]
+        except:
+            self.parent.error = Exception("usbguard-dbus service not running")
+
+    # on device change signal
+    def _cb_devices_presence_changed(self, *args):
+        device = self.parent.device
+        device_args = args[4]
+        device_id = device_args[0]
+        device_hash = device_args[4]['hash']
+        device_name = device_args[4]['name']
+        device_perms = device_args[3]
+        device_status = device_args[1]
+        device['device_name'] = None
+        device['device_id'] = None
+        device['device_hash'] = None
+
+        # if device inserted (1), removed (3)
+        if device_status == 1:
+            device['device_id'] = device_id
+            device['device_hash'] = device_hash
+            device['device_name'] = device_name
+            if 'block id' in device_perms:
+                self.parent.device = device
+        self.parent.py3.update()
+
+    # on policy change signal
+    def _cb_devices_policy_changed(self, *args):
+        device = self.parent.device
+        device_args = args[4]
+        device_perms = device_args[3]
+        actions = ['allow', 'reject']
+        for x in actions:
+            if x in device_perms:
+                device['device_name'] = None
+                device['device_id'] = None
+                device['device_hash'] = None
+                self.parent.device = device
+                self.parent.py3.update()
+                break
+
+    def run(self):
+        while not self.parent.killed.is_set():
+            self._setup_bus()
+            self.bus.subscribe(
+                object=self.devices_filter,
+                signal='DevicePresenceChanged',
+                signal_fired=self._cb_devices_presence_changed)
+
+            self.bus.subscribe(
+                object=self.devices_filter,
+                signal='DevicePolicyChanged',
+                signal_fired=self._cb_devices_policy_changed)
+
+            self.loop = GLib.MainLoop()
+            self.loop.run()
+
+
 class Py3status:
-    format = u'usbguard: {device_name}'
+    # available configuration options
+    format = u'[usbguard: [{device_name}]]'
     button_allow = 1
     button_block = None
     button_reject = 3
     allow_urgent = False
 
     def post_config_hook(self):
-        self.usbguard_thread = Thread()
-        self.bus = SystemBus()
-        self.proxy = self.bus.get('org.usbguard')
-        self.proxy_devices = self.proxy[".Devices"]
         self.device = {
             'device_name': None,
             'device_id': None,
             'device_hash': None
         }
+        self.error = None
+        self.killed = threading.Event()
+        UsbguardListener(self).start()
 
     def _usbguard_cmd(self, action):
         return USBGUARD_CMD.format(
             action=action, device_id=self.device['device_id'])
 
-    def _loop_devices(self):
-        self.loop = GLib.MainLoop()
-        devices_filter = '/org/usbguard/Devices'
-
-        # on device change signal
-        def cb_devices_presence_changed(*args):
-            device = self.device
-            device_args = args[4]
-            device_id = device_args[0]
-            device_hash = device_args[4]['hash']
-            device_name = device_args[4]['name']
-            device_perms = device_args[3]
-            device_status = device_args[1]
-
-            # if device inserted (1), removed (3)
-            if device_status == 1:
-                # if it is blocked device
-                if 'block id' in str(device_perms) and device_name:
-                    # TODO: add device to an array
-                    device['device_name'] = device_name
-                    device['device_id'] = device_id
-                    device['device_hash'] = device_hash
-                    self.py3.update()
-            # TODO: remove device from array if removed
-            else:
-                device['device_name'] = None
-                device['device_id'] = None
-                device['device_hash'] = None
-                self.py3.update()
-            self.device = device
-
-        self.bus.subscribe(
-            object=devices_filter,
-            signal='DevicePresenceChanged',
-            signal_fired=cb_devices_presence_changed)
-
-        # on policy change signal
-        def cb_devices_policy_changed(*args):
-            device = self.device
-            device_args = args[4]
-            device_perms = device_args[3]
-            if 'reject id' in device_perms:
-                device['device_name'] = None
-                device['device_id'] = None
-                device['device_hash'] = None
-                self.device = device
-                self.py3.update()
-            elif 'allow id' in device_perms:
-                device['device_name'] = None
-                device['device_id'] = None
-                device['device_hash'] = None
-                self.device = device
-                self.py3.update()
-
-        self.bus.subscribe(
-            object=devices_filter,
-            signal='DevicePolicyChanged',
-            signal_fired=cb_devices_policy_changed)
-
-        self.loop.run()
-
     def usbguard(self):
         """
         """
-        self.usbguard_thread = Thread(target=self._loop_devices)
-        self.usbguard_thread.daemon = True
-        self.usbguard_thread.start()
+        if self.error:
+            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
-        if self.allow_urgent:
-            urgent = True
-
-        return {
+        response = {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, self.device),
-            'urgent': urgent
+            'full_text': self.py3.safe_format(self.format, self.device)
         }
+        if self.allow_urgent:
+            response['urgent'] = True
+        return response
 
     def on_click(self, event):
         """
         """
         button = event['button']
+        action = None
         if self.button_allow and button == self.button_allow:
             action = 'allow'
-            self.py3.command_run(self._usbguard_cmd(action))
         elif self.button_reject and button == self.button_reject:
             action = 'reject'
-            self.py3.command_run(self._usbguard_cmd(action))
         elif self.button_block and button == self.button_block:
             action = 'block'
+
+        if action:
             self.py3.command_run(self._usbguard_cmd(action))
             sleep(0.1)
-        self.py3.update()
+            self.py3.update()
+
+    def kill(self):
+        self.killed.set()
 
 
 if __name__ == "__main__":
