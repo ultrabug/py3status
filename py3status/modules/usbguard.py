@@ -11,11 +11,8 @@
 
 import threading
 from time import sleep
-
 from gi.repository import GLib
 from pydbus import SystemBus
-
-USBGUARD_CMD = """usbguard {action}-device {device_id}"""
 
 
 class UsbguardListener(threading.Thread):
@@ -37,8 +34,8 @@ class UsbguardListener(threading.Thread):
     def _cb_devices_presence_changed(self, *args):
         device = self.parent.device
         device_args = args[4]
-        device_id = device_args[0]
         device_hash = device_args[4]['hash']
+        device_id = device_args[0]
         device_name = device_args[4]['name']
         device_perms = device_args[3]
         device_status = device_args[1]
@@ -48,8 +45,8 @@ class UsbguardListener(threading.Thread):
 
         # if device inserted (1), removed (3)
         if device_status == 1:
-            device['device_id'] = device_id
             device['device_hash'] = device_hash
+            device['device_id'] = device_id
             device['device_name'] = device_name
             if 'block id' in device_perms:
                 self.parent.device = device
@@ -101,17 +98,23 @@ class Py3status:
             'device_id': None,
             'device_hash': None
         }
+        dbus = SystemBus()
+        self.proxy = dbus.get('org.usbguard')
         self.error = None
+        self.targets = {'allow': 0, 'block': 1, 'reject': 2}
         self.killed = threading.Event()
         UsbguardListener(self).start()
 
-    def _usbguard_cmd(self, action):
-        return USBGUARD_CMD.format(
-            action=action, device_id=self.device['device_id'])
+    def _usbguard_dbus_cmd(self, action):
+        return self.proxy.applyDevicePolicy(self.device['device_id'],
+                                            self.targets[action], 0)
 
     def usbguard(self):
         """
         """
+        dbus = SystemBus()
+        proxy = dbus.get('org.usbguard')
+
         if self.error:
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
@@ -136,7 +139,7 @@ class Py3status:
             action = 'block'
 
         if action:
-            self.py3.command_run(self._usbguard_cmd(action))
+            self._usbguard_dbus_cmd(action)
             sleep(0.1)
             self.py3.update()
 
