@@ -21,8 +21,7 @@ class Py3status:
     format = u'usbguard: {device_name}'
     button_allow = 1
     button_block = None
-    button_reject = 2
-    cache_timeout = 60
+    button_reject = 3
     allow_urgent = False
 
     def post_config_hook(self):
@@ -62,12 +61,13 @@ class Py3status:
                     device['device_name'] = device_name
                     device['device_id'] = device_id
                     device['device_hash'] = device_hash
+                    self.py3.update()
             # TODO: remove device from array if removed
             else:
                 device['device_name'] = None
                 device['device_id'] = None
                 device['device_hash'] = None
-
+                self.py3.update()
             self.device = device
 
         self.bus.subscribe(
@@ -85,11 +85,13 @@ class Py3status:
                 device['device_id'] = None
                 device['device_hash'] = None
                 self.device = device
+                self.py3.update()
             elif 'allow id' in device_perms:
                 device['device_name'] = None
                 device['device_id'] = None
                 device['device_hash'] = None
                 self.device = device
+                self.py3.update()
 
         self.bus.subscribe(
             object=devices_filter,
@@ -109,7 +111,7 @@ class Py3status:
             urgent = True
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, self.device),
             'urgent': urgent
         }
