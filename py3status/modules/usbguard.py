@@ -1,18 +1,40 @@
 # -*- coding: utf-8 -*-
-# """
-#
-# need usbguard dbus service running
-# sudo systemctl enable --now usbguard-dbus.service
-#
-# middle clic reject
-# left clic allow
-# @author Cyril Levis (@cyrinux)
-# """
+"""
+Usbguard i3 companion to replace default 'usbguard-applet-qt'.
+Show an indicator when a new usb device is plugged,
+we can allow or reject a device.
+
+Configuration parameters:
+    allow_urgent: Allow urgent (default False)
+    button_allow: Button to allow the device. (default 1)
+    button_block: Button to block the device (default None)
+    button_reject: Button to reject the device. (default 3)
+    format: Display format for the module. (default '[UsbGuard: [{device_name}]]')
+
+Format placeholders:
+    {device_name} the device name of last device plugged.
+    {device_id} the usbguard device id of last device plugged.
+    {device_hash} the usbguard device unique hash of last device plugged.
+
+Requires:
+    https://usbguard.github.io:
+    "The USBGuard software framework helps to protect your
+    computer against rogue USB devices..."
+
+@author Cyril Levis (@cyrinux)
+@license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'Usbguard: Mass Storage', 'urgent': True}
+"""
 
 import threading
 from time import sleep
 from gi.repository import GLib
 from pydbus import SystemBus
+
+DBUS_INTERFACE = 'org.usbguard'
+DBUS_DEVICE_FILTER = '/org/usbguard/Devices'
 
 
 class UsbguardListener(threading.Thread):
@@ -20,12 +42,12 @@ class UsbguardListener(threading.Thread):
         super(UsbguardListener, self).__init__()
         self.parent = parent
 
-    def _setup_bus(self):
-        self.devices_filter = '/org/usbguard/Devices'
-        self.bus = SystemBus()
+    def _setup_dbus(self):
+        self.dbus = SystemBus()
+        self.dbus_devices_filter = DBUS_DEVICE_FILTER
         try:
             self.parent.error = None
-            self.proxy = self.bus.get('org.usbguard')
+            self.proxy = self.dbus.get(DBUS_INTERFACE)
             self.proxy_devices = self.proxy[".Devices"]
         except:
             self.parent.error = Exception("usbguard-dbus service not running")
@@ -69,14 +91,14 @@ class UsbguardListener(threading.Thread):
 
     def run(self):
         while not self.parent.killed.is_set():
-            self._setup_bus()
-            self.bus.subscribe(
-                object=self.devices_filter,
+            self._setup_dbus()
+            self.dbus.subscribe(
+                object=self.dbus_devices_filter,
                 signal='DevicePresenceChanged',
                 signal_fired=self._cb_devices_presence_changed)
 
-            self.bus.subscribe(
-                object=self.devices_filter,
+            self.dbus.subscribe(
+                object=self.dbus_devices_filter,
                 signal='DevicePolicyChanged',
                 signal_fired=self._cb_devices_policy_changed)
 
@@ -86,11 +108,11 @@ class UsbguardListener(threading.Thread):
 
 class Py3status:
     # available configuration options
-    format = u'[usbguard: [{device_name}]]'
+    allow_urgent = False
     button_allow = 1
     button_block = None
     button_reject = 3
-    allow_urgent = False
+    format = u'[UsbGuard: [{device_name}]]'
 
     def post_config_hook(self):
         self.device = {
@@ -98,9 +120,13 @@ class Py3status:
             'device_id': None,
             'device_hash': None
         }
-        dbus = SystemBus()
-        self.proxy = dbus.get('org.usbguard')
         self.error = None
+        self.dbus = SystemBus()
+        try:
+            self.proxy = self.dbus.get(DBUS_INTERFACE)
+        except:
+            self.parent.error = Exception("usbguard-dbus service not running")
+
         self.targets = {'allow': 0, 'block': 1, 'reject': 2}
         self.killed = threading.Event()
         UsbguardListener(self).start()
@@ -112,9 +138,6 @@ class Py3status:
     def usbguard(self):
         """
         """
-        dbus = SystemBus()
-        proxy = dbus.get('org.usbguard')
-
         if self.error:
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
