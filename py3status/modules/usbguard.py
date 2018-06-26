@@ -119,6 +119,7 @@ class Py3status:
             'device_id': None,
             'device_hash': None
         }
+        self.allow_urgent = True
         self.dbus_interface = 'org.usbguard'
         self.dbus_devices = '/org/usbguard/Devices'
         self.error = None
@@ -137,19 +138,8 @@ class Py3status:
         return self.proxy.applyDevicePolicy(
             self.device['device_id'], self.targets[action], self.permanant)
 
-    def usbguard(self):
-        urgent = True
-        if self.error:
-            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
-
-        response = {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, self.device)
-        }
-        if not urgent:
-            response['urgent'] = False
-
-        return response
+    def kill(self):
+        self.killed.set()
 
     def on_click(self, event):
         button = event['button']
@@ -169,8 +159,20 @@ class Py3status:
         sleep(0.1)
         self.py3.update()
 
-    def kill(self):
-        self.killed.set()
+    def usbguard(self):
+        urgent = True
+        if self.error:
+            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
+
+        response = {
+            'cached_until': self.py3.CACHE_FOREVER,
+            'full_text': self.py3.safe_format(self.format, self.device)
+        }
+        if self.allow_urgent == False:
+            urgent = False
+        response['urgent'] = urgent
+
+        return response
 
 
 if __name__ == "__main__":
