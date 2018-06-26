@@ -16,6 +16,8 @@ Format placeholders:
     {device_hash} the usbguard device unique hash of last device plugged.
 
 Requires:
+    pydbus: pythonic dbus library
+    python-gobject: pythonic binding for gobject
     usbguard: usb device authorization policy framework
 
 @author Cyril Levis (@cyrinux)
