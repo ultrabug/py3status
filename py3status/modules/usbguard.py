@@ -6,8 +6,8 @@ we can allow or reject a device.
 
 Configuration parameters:
     button_allow: Button to allow the device. (default 1)
-    button_block: Button to block the device (default None)
-    button_reject: Button to reject the device. (default 2)
+    button_block: Button to block the device (default 2)
+    button_reject: Button to reject the device. (default None)
     format: Display format for the module. (default '[USBGuard: [{device_name}]]')
 
 Format placeholders:
@@ -109,8 +109,8 @@ class Py3status:
     """
     """
     button_allow = 1
-    button_block = None
-    button_reject = 2
+    button_block = 2
+    button_reject = None
     format = u'[USBGuard: [{device_name}]]'
 
     def post_config_hook(self):
@@ -159,11 +159,15 @@ class Py3status:
         elif button == self.button_reject:
             action = 'reject'
         elif button == self.button_block:
-            action = 'block'
+            self.device = {
+                'device_name': None,
+                'device_id': None,
+                'device_hash': None
+            }
         if action:
             self._usbguard_cmd(action)
-            sleep(0.1)
-            self.py3.update()
+        sleep(0.1)
+        self.py3.update()
 
     def kill(self):
         self.killed.set()
