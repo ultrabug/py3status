@@ -6,7 +6,7 @@ we can allow or reject a device.
 
 Configuration parameters:
     button_allow: Button to allow the device. (default 1)
-    button_block: Button to block the device (default 2)
+    button_block: Button to block the device (default 3)
     button_reject: Button to reject the device. (default None)
     format: Display format for the module. (default '[USBGuard: [{device_name}]]')
 
@@ -109,7 +109,7 @@ class Py3status:
     """
     """
     button_allow = 1
-    button_block = 2
+    button_block = 3
     button_reject = None
     format = u'[USBGuard: [{device_name}]]'
 
@@ -119,7 +119,6 @@ class Py3status:
             'device_id': None,
             'device_hash': None
         }
-        self.allow_urgent = True
         self.dbus_interface = 'org.usbguard'
         self.dbus_devices = '/org/usbguard/Devices'
         self.error = None
@@ -160,19 +159,14 @@ class Py3status:
         self.py3.update()
 
     def usbguard(self):
-        urgent = True
         if self.error:
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
-        response = {
+        return {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, self.device)
+            'full_text': self.py3.safe_format(self.format, self.device),
+            'urgent': True
         }
-        if self.allow_urgent == False:
-            urgent = False
-        response['urgent'] = urgent
-
-        return response
 
 
 if __name__ == "__main__":
