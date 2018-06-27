@@ -11,9 +11,13 @@ Configuration parameters:
     format: Display format for the module. (default '[USBGuard: [{name}]]')
 
 Format placeholders:
+    {hash} the usbguard device unique hash of last device plugged.
     {name} the device name of last device plugged.
+    {parent-hash} the usbguard port hash where device is plugged.
+    {serial} ???
     {usbguard_id} the usbguard device id of last device plugged.
-    {device_hash} the usbguard device unique hash of last device plugged.
+    {via-port} the usb port where device is plugged.
+    {with-interface} ???
 
 Requires:
     pydbus: pythonic dbus library
