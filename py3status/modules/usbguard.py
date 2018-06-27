@@ -29,6 +29,7 @@ SAMPLE OUTPUT
 
 import threading
 from time import sleep
+
 from gi.repository import GLib
 from pydbus import SystemBus
 
@@ -43,23 +44,11 @@ class UsbguardListener(threading.Thread):
         super(UsbguardListener, self).__init__()
         self.parent = parent
 
-    def _setup_dbus(self):
-        self.dbus = SystemBus()
-        try:
-            self.parent.error = None
-            self.proxy = self.dbus.get(self.parent.dbus_interface)
-        except:
-            self.parent.error = Exception(STRING_USBGUARD_DBUS)
-
     # on device change signal
     def _on_devices_presence_changed(self, *event):
         device = self.parent.device
         device_perms = event[4][3]
         device_state = event[4][1]
-
-        # 'reset' device
-        for key in device:
-            device[key] = None
 
         # if inserted
         if device_state == 1:  # 1 inserted, 3 removed
@@ -71,7 +60,11 @@ class UsbguardListener(threading.Thread):
                             device[key] = event[4][4][key]
                         else:
                             device[key] = None
-                self.parent.device = device
+        else:
+            # 'reset' device
+            for key in device:
+                device[key] = None
+        self.parent.device = device
         self.parent.py3.update()
 
     # on policy change signal
@@ -90,13 +83,13 @@ class UsbguardListener(threading.Thread):
 
     def run(self):
         while not self.parent.killed.is_set():
-            self._setup_dbus()
-            self.dbus.subscribe(
+            self.parent._init_dbus()
+            self.parent.dbus.subscribe(
                 object=self.parent.dbus_devices,
                 signal='DevicePresenceChanged',
                 signal_fired=self._on_devices_presence_changed)
 
-            self.dbus.subscribe(
+            self.parent.dbus.subscribe(
                 object=self.parent.dbus_devices,
                 signal='DevicePolicyChanged',
                 signal_fired=self._on_devices_policy_changed)
@@ -113,6 +106,16 @@ class Py3status:
     button_reject = None
     format = u'[USBGuard: [{name}]]'
 
+    def _init_dbus(self):
+        self.dbus_interface = 'org.usbguard'
+        self.dbus_devices = '/org/usbguard/Devices'
+        self.dbus = SystemBus()
+        self.error = None
+        try:
+            self.proxy = self.dbus.get(self.dbus_interface)
+        except:
+            self.error = Exception(STRING_USBGUARD_DBUS)
+
     def post_config_hook(self):
         placeholders = [
             'id', 'name', 'via-port', 'hash', 'parent-hash', 'serial',
@@ -123,40 +126,30 @@ class Py3status:
             if self.py3.format_contains(self.format, placeholder):
                 self.device[placeholder] = None
         self.device['usbguard_id'] = None
-        self.dbus_interface = 'org.usbguard'
-        self.dbus_devices = '/org/usbguard/Devices'
-        self.error = None
-        self.dbus = SystemBus()
-        try:
-            self.proxy = self.dbus.get(self.dbus_interface)
-        except:
-            self.parent.error = Exception(STRING_USBGUARD_DBUS)
 
-        self.targets = {'allow': 0, 'block': 1, 'reject': 2}
+        self._init_dbus()
+
         self.permanant = False
         self.killed = threading.Event()
         UsbguardListener(self).start()
 
     def _usbguard_cmd(self, action):
-        return self.proxy.applyDevicePolicy(
-            self.device['usbguard_id'], self.targets[action], self.permanant)
+        targets = {'allow': 0, 'block': 1, 'reject': 2}
+        return self.proxy.applyDevicePolicy(self.device['usbguard_id'],
+                                            targets[action], self.permanant)
 
     def kill(self):
         self.killed.set()
 
     def on_click(self, event):
         button = event['button']
-        action = None
         if button == self.button_allow:
-            action = 'allow'
+            self._usbguard_cmd('allow')
         elif button == self.button_reject:
-            action = 'reject'
+            self._usbguard_cmd('reject')
         elif button == self.button_block:
-            # 'reset' device
             for key in self.device:
                 self.device[key] = None
-        if action:
-            self._usbguard_cmd(action)
         sleep(0.1)
         self.py3.update()
 
