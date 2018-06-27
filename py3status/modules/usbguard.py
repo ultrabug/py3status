@@ -13,11 +13,11 @@ Configuration parameters:
 Format placeholders:
     {hash} the usbguard device unique hash of last device plugged.
     {name} the device name of last device plugged.
-    {parent-hash} the usbguard port hash where device is plugged.
+    {parent_hash} the usbguard port hash where device is plugged.
     {serial} ???
     {usbguard_id} the usbguard device id of last device plugged.
-    {via-port} the usb port where device is plugged.
-    {with-interface} ???
+    {via_port} the usb port where device is plugged.
+    {with_interface} ???
 
 Requires:
     pydbus: pythonic dbus library
@@ -58,16 +58,18 @@ class UsbguardListener(threading.Thread):
         if device_state == 1:  # 1 inserted, 3 removed
             if 'block id' in device_perms:
                 device['usbguard_id'] = event[4][0]
-                for key in device:
-                    if key in event[4][4]:
-                        if event[4][4][key]:
-                            device[key] = event[4][4][key]
+                for new_key in device:
+                    old_key = new_key.replace('_', '-')
+                    if old_key in event[4][4]:
+                        if event[4][4][old_key]:
+                            device[new_key] = event[4][4][old_key]
                         else:
-                            device[key] = None
+                            device[new_key] = None
         else:
             # 'reset' device
-            for key in device:
-                device[key] = None
+            for new_key in device:
+                old_key = new_key.replace('_', '-')
+                device[new_key] = None
         self.parent.device = device
         self.parent.py3.update()
 
@@ -79,8 +81,8 @@ class UsbguardListener(threading.Thread):
         actions = ['allow id', 'reject id']
         for action in actions:
             if action in device_perms:
-                for key in device:
-                    device[key] = None
+                for new_key in device:
+                    device[new_key] = None
                 self.parent.device = device
                 self.parent.py3.update()
                 break
@@ -122,8 +124,8 @@ class Py3status:
 
     def post_config_hook(self):
         placeholders = [
-            'id', 'name', 'via-port', 'hash', 'parent-hash', 'serial',
-            'with-interface'
+            'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
+            'with_interface'
         ]
         self.device = {}
         for placeholder in placeholders:
