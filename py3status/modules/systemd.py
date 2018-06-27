@@ -6,9 +6,10 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '{unit}: {status}')
     unit: specify the systemd unit to use (default 'dbus.service')
+    hideExtension: suppress extension of the systemd unit (default False)
 
 Format of status string placeholders:
-    {unit} unit name, eg sshd
+    {unit} unit name, eg sshd.service
     {status} unit status, eg active, inactive, not-found
 
 Color options:
@@ -53,6 +54,7 @@ class Py3status:
     cache_timeout = 5
     format = '{unit}: {status}'
     unit = 'dbus.service'
+    hideExtension = False
 
     def post_config_hook(self):
         bus = SystemBus()
@@ -73,11 +75,16 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
+        if self.hideExtension and self.unit.endswith('.service'):
+            unitPrintName = self.unit[:-8]
+        else:
+            unitPrintName = self.unit
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': self.py3.safe_format(
-                self.format, {'unit': self.unit, 'status': status})
+                self.format, {'unit': unitPrintName, 'status': status})
         }
 
 
