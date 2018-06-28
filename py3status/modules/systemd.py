@@ -6,6 +6,11 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '{unit}: {status}')
     unit: specify the systemd unit to use (default 'dbus.service')
+    hide_if_default: suppress the output if the systemd unit is in default state (default 'Off')
+        'Off' the output is never suppressed
+        'On' the output is suppressed if the unit is (enabled and active) or (disabled and inactive)
+        'active' the output is suppressed if the unit is active
+        'inactive' the output is suppressed if the unit is inactive
 
 Format of status string placeholders:
     {unit} unit name, eg sshd
@@ -51,8 +56,9 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = '{unit}: {status}'
+    format = '\?if=!hide {unit}: {status}'
     unit = 'dbus.service'
+    hide_if_default = 'Off'
 
     def post_config_hook(self):
         bus = SystemBus()
@@ -62,6 +68,7 @@ class Py3status:
     def systemd(self):
         status = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')
         exists = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'LoadState')
+        state = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'UnitFileState')
 
         if exists == 'not-found':
             color = self.py3.COLOR_DEGRADED
@@ -73,11 +80,16 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
+        if self.hide_if_default == 'On':
+            hide = ( status == 'active' and state == 'enabled' ) or ( status == 'inactive' and state == 'disabled' )
+        else:
+            hide = status == self.hide_if_default
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': self.py3.safe_format(
-                self.format, {'unit': self.unit, 'status': status})
+                self.format, {'hide': hide, 'unit': self.unit, 'status': status})
         }
 
 
