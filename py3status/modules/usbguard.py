@@ -8,7 +8,8 @@ Configuration parameters:
     button_allow: Button to allow the device. (default 1)
     button_block: Button to block the device (default 3)
     button_reject: Button to reject the device. (default None)
-    format: Display format for the module. (default '[USBGuard: [{name}]]')
+    format: Display format for the module. (default '[USBGuard: {name}]')
+    format_separator: format separator for usb devices. (default ' | ')
 
 Format placeholders:
     {hash} the usbguard device unique hash of last device plugged.
@@ -43,49 +44,51 @@ STRING_USBGUARD_DBUS = 'usbguard-dbus service not running'
 class UsbguardListener(threading.Thread):
     """
     """
-
     def __init__(self, parent):
         super(UsbguardListener, self).__init__()
         self.parent = parent
 
     # on device change signal
     def _on_devices_presence_changed(self, *event):
-        device = self.parent.device
         device_perms = event[4][3]
         device_state = event[4][1]
+        usbguard_id = event[4][0]
 
         # if inserted
         if device_state == 1:  # 1 inserted, 3 removed
             if 'block id' in device_perms:
-                device['usbguard_id'] = event[4][0]
-                for new_key in device:
+                device = dict(usbguard_id=usbguard_id, index=usbguard_id)
+                for new_key in self.parent.placeholders:
                     old_key = new_key.replace('_', '-')
                     if old_key in event[4][4]:
                         if event[4][4][old_key]:
                             device[new_key] = event[4][4][old_key]
                         else:
                             device[new_key] = None
+                self.parent.data[usbguard_id] = device
         else:
-            # 'reset' device
-            for new_key in device:
-                old_key = new_key.replace('_', '-')
-                device[new_key] = None
-        self.parent.device = device
+            if self.parent.data[usbguard_id]:
+                del self.parent.data[usbguard_id]
+
+        self.parent.new_data = self.parent._manipulate_devices(
+            self.parent.data)
         self.parent.py3.update()
 
     # on policy change signal
     def _on_devices_policy_changed(self, *event):
-        device = self.parent.device
         # TODO: send notification with action
+        usbguard_id = event[4][0]
         device_perms = event[4][3]
         actions = ['allow id', 'reject id']
         for action in actions:
             if action in device_perms:
-                for new_key in device:
-                    device[new_key] = None
-                self.parent.device = device
-                self.parent.py3.update()
-                break
+                if self.parent.data[usbguard_id]:
+                    del self.parent.data[usbguard_id]
+                    break
+
+        self.parent.new_data = self.parent._manipulate_devices(
+            self.parent.data)
+        self.parent.py3.update()
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -110,7 +113,8 @@ class Py3status:
     button_allow = 1
     button_block = 3
     button_reject = None
-    format = u'[USBGuard: [{name}]]'
+    format = u'[USBGuard: {name}]'
+    format_separator = u' | '
 
     def _init_dbus(self):
         self.dbus_interface = 'org.usbguard'
@@ -122,42 +126,72 @@ class Py3status:
         except:
             self.error = Exception(STRING_USBGUARD_DBUS)
 
-    def post_config_hook(self):
-        placeholders = [
+    def _init_placeholders(self):
+        available_placeholders = [
             'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
             'with_interface'
         ]
-        self.device = {}
-        for placeholder in placeholders:
+
+        placeholders = {}
+
+        for placeholder in available_placeholders:
             if self.py3.format_contains(self.format, placeholder):
-                self.device[placeholder] = None
-        self.device['usbguard_id'] = None
+                placeholders[placeholder] = None
 
+        placeholders['usbguard_id'] = None
+        return placeholders
+
+    def post_config_hook(self):
         self._init_dbus()
+        self.data = {}
+        self.new_data = []
 
-        self.permanant = False
+        self.placeholders = self._init_placeholders()
+
+        self.permanant_rule = False
         self.killed = threading.Event()
         UsbguardListener(self).start()
 
-    def _usbguard_cmd(self, action):
-        targets = {'allow': 0, 'block': 1, 'reject': 2}
-        return self.proxy.applyDevicePolicy(self.device['usbguard_id'],
-                                            targets[action], self.permanant)
+    def _usbguard_cmd(self, action, usbguard_id):
+        if action and int(usbguard_id):
+            targets = {'allow': 0, 'block': 1, 'reject': 2}
+            if action == 'block':
+                if self.data[usbguard_id]:
+                    del self.data[usbguard_id]
+                    self.new_data = self._manipulate_devices(self.data)
+                    self.py3.update()
+
+            return self.proxy.applyDevicePolicy(
+                usbguard_id, targets[action], self.permanant_rule
+            )
 
     def kill(self):
         self.killed.set()
 
     def on_click(self, event):
+        self.py3.log(event)
         button = event['button']
+        usbguard_id = event['index']
         if button == self.button_allow:
-            self._usbguard_cmd('allow')
+            self._usbguard_cmd('allow', usbguard_id)
         elif button == self.button_reject:
-            self._usbguard_cmd('reject')
+            self._usbguard_cmd('reject', usbguard_id)
         elif button == self.button_block:
-            for key in self.device:
-                self.device[key] = None
+            self._usbguard_cmd('block', usbguard_id)
         sleep(0.1)
         self.py3.update()
+
+    def _manipulate_devices(self, data):
+        composite = []
+        for device in data:
+            device_formatted = self.py3.safe_format(self.format, data[device])
+            self.py3.composite_update(device_formatted,
+                                      {'index': data[device]['index']})
+            composite.append(device_formatted)
+
+        format_separator = self.py3.safe_format(self.format_separator)
+
+        return self.py3.composite_join(format_separator, composite)
 
     def usbguard(self):
         if self.error:
@@ -165,7 +199,7 @@ class Py3status:
 
         return {
             'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, self.device),
+            'composite': self.new_data,
             'urgent': True
         }
 
