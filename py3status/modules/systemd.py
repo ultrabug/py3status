@@ -82,7 +82,8 @@ class Py3status:
             color = self.py3.COLOR_DEGRADED
 
         if self.hide_if_default == 'On':
-            hide = ( status == 'active' and state == 'enabled' ) or ( status == 'inactive' and state == 'disabled' )
+            hide = (status == 'active' and state == 'enabled') or \
+                   (status == 'inactive' and state == 'disabled')
         else:
             hide = status == self.hide_if_default
 
