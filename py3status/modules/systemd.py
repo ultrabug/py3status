@@ -5,8 +5,8 @@ Display status of a service on your system.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '{unit}: {status}')
-    unit: specify the systemd unit to use (default 'dbus.service')
     hideExtension: suppress extension of the systemd unit (default False)
+    unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
     {unit} unit name, eg sshd.service
