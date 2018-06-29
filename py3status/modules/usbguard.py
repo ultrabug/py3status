@@ -8,7 +8,7 @@ Configuration parameters:
     button_allow: Button to allow the device. (default 1)
     button_block: Button to block the device (default 3)
     button_reject: Button to reject the device. (default None)
-    format: Display format for the module. (default '[USBGuard: {format_device}]')
+    format: Display format for the module. (default '[{format_device}]')
     format_device: format separator for usb devices. (default '{name}')
     format_device_separator: format separator for usb devices. (default ' | ')
 
@@ -24,13 +24,14 @@ Format placeholders:
 Requires:
     pydbus: pythonic dbus library
     python-gobject: pythonic binding for gobject
-    usbguard: usb device authorization policy framework
+    usbguard: usb device authorization policy framework, WITHOUT usbguard-applet-qt running
+
 
 @author Cyril Levis (@cyrinux)
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'USBGuard: Mass Storage', 'urgent': True}
+{'full_text': 'Mass Storage', 'urgent': True}
 """
 
 import threading
@@ -92,6 +93,7 @@ class UsbguardListener(threading.Thread):
                         'format_device'] = self.parent._manipulate_devices(
                             self.parent.data)
                     break
+        self.parent.py3.update()
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -116,7 +118,7 @@ class Py3status:
     button_allow = 1
     button_block = 3
     button_reject = None
-    format = u'[USBGuard: {format_device}]'
+    format = u'[{format_device}]'
     format_device = u'{name}'
     format_device_separator = u' | '
 
@@ -130,11 +132,14 @@ class Py3status:
         except:
             self.error = Exception(STRING_USBGUARD_DBUS)
 
+    def _toggle_permanant(self):
+        self.is_permanant = not self.is_permanant
+
     def post_config_hook(self):
         self._init_dbus()
         self.data = {}
         self.new_data = {}
-        self.permanant_rule = False
+        self.is_permanant = False
 
         # init placeholders
         available_placeholders = [
@@ -164,7 +169,7 @@ class Py3status:
                     self.py3.update()
 
             self.proxy.applyDevicePolicy(usbguard_id, targets[action],
-                                         self.permanant_rule)
+                                         self.is_permanant)
 
     def kill(self):
         self.killed.set()
@@ -194,6 +199,7 @@ class Py3status:
 
             format_device = self.py3.composite_join(format_device_separator,
                                                     format_device)
+
         return format_device
 
     def usbguard(self):
@@ -206,7 +212,8 @@ class Py3status:
             composite = self.py3.safe_format(self.format, self.new_data)
             response['composite'] = composite
         else:
-            response['full_text'] = ''
+            response['full_text'] = self.py3.safe_format(
+                self.format, {'format_device': ''})
 
         return response
 
