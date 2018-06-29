@@ -57,8 +57,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = '\?if=!hide {unit}: {status}'
-    unit = 'dbus.service'
     hide_if_default = 'Off'
+    unit = 'dbus.service'
 
     def post_config_hook(self):
         bus = SystemBus()
