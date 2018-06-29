@@ -34,7 +34,6 @@ SAMPLE OUTPUT
 """
 
 import threading
-from time import sleep
 
 from gi.repository import GLib
 from pydbus import SystemBus
@@ -133,31 +132,30 @@ class Py3status:
         except:
             self.error = Exception(STRING_USBGUARD_DBUS)
 
-    def _init_placeholders(self):
-        available_placeholders = [
-            'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
-            'with_interface', 'format_device'
-        ]
-
-        placeholders = {}
-
-        for placeholder in available_placeholders:
-            if self.py3.format_contains(self.format_device, placeholder):
-                placeholders[placeholder] = None
-
-        placeholders['usbguard_id'] = None
-        return placeholders
-
     def post_config_hook(self):
         self._init_dbus()
         self.data = {}
         self.new_data = {}
         self.permanant_rule = False
-        self.placeholders = self._init_placeholders()
+
+        # init placeholders
+        available_placeholders = [
+            'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
+            'with_interface', 'format_device'
+        ]
+
+        self.placeholders = {}
+
+        for placeholder in available_placeholders:
+            if self.py3.format_contains(self.format_device, placeholder):
+                self.placeholders[placeholder] = None
+
+        self.placeholders['usbguard_id'] = None
+
         self.killed = threading.Event()
         UsbguardListener(self).start()
 
-    def _usbguard_cmd(self, action, usbguard_id):
+    def _set_policy(self, action, usbguard_id):
         if action and int(usbguard_id):
             targets = {'allow': 0, 'block': 1, 'reject': 2}
             if action == 'block':
@@ -167,27 +165,24 @@ class Py3status:
                         self.data)
                     self.py3.update()
 
-            return self.proxy.applyDevicePolicy(usbguard_id, targets[action],
-                                                self.permanant_rule)
+            self.proxy.applyDevicePolicy(usbguard_id, targets[action],
+                                         self.permanant_rule)
 
     def kill(self):
         self.killed.set()
 
     def on_click(self, event):
-        self.py3.log(event)
         button = event['button']
         usbguard_id = event['index']
         if button == self.button_allow:
-            self._usbguard_cmd('allow', usbguard_id)
+            self._set_policy('allow', usbguard_id)
         elif button == self.button_reject:
-            self._usbguard_cmd('reject', usbguard_id)
+            self._set_policy('reject', usbguard_id)
         elif button == self.button_block:
-            self._usbguard_cmd('block', usbguard_id)
-        sleep(0.1)
-        self.py3.update()
+            self._set_policy('block', usbguard_id)
 
     def _manipulate_devices(self, data):
-        composite = []
+        format_device = []
         format_device_separator = self.py3.safe_format(
             self.format_device_separator)
         self.py3.composite_update(format_device_separator, {'index': 'sep'})
@@ -197,11 +192,11 @@ class Py3status:
                                                     data[device])
             self.py3.composite_update(device_formatted,
                                       {'index': data[device]['index']})
-            composite.append(device_formatted)
+            format_device.append(device_formatted)
 
-            composite = self.py3.composite_join(format_device_separator,
-                                                composite)
-        return composite
+            format_device = self.py3.composite_join(format_device_separator,
+                                                    format_device)
+        return format_device
 
     def usbguard(self):
         if self.error:
