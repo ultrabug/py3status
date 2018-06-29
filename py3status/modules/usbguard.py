@@ -8,8 +8,9 @@ Configuration parameters:
     button_allow: Button to allow the device. (default 1)
     button_block: Button to block the device (default 3)
     button_reject: Button to reject the device. (default None)
-    format: Display format for the module. (default '[USBGuard: {name}]')
-    format_separator: format separator for usb devices. (default ' | ')
+    format: Display format for the module. (default '[USBGuard: {format_device}]')
+    format_device: format separator for usb devices. (default '{name}')
+    format_device_separator: format separator for usb devices. (default ' | ')
 
 Format placeholders:
     {hash} the usbguard device unique hash of last device plugged.
@@ -44,6 +45,7 @@ STRING_USBGUARD_DBUS = 'usbguard-dbus service not running'
 class UsbguardListener(threading.Thread):
     """
     """
+
     def __init__(self, parent):
         super(UsbguardListener, self).__init__()
         self.parent = parent
@@ -66,12 +68,15 @@ class UsbguardListener(threading.Thread):
                         else:
                             device[new_key] = None
                 self.parent.data[usbguard_id] = device
+                self.parent.new_data[
+                    'format_device'] = self.parent._manipulate_devices(
+                        self.parent.data)
         else:
-            if self.parent.data[usbguard_id]:
+            if usbguard_id in self.parent.data:
                 del self.parent.data[usbguard_id]
-
-        self.parent.new_data = self.parent._manipulate_devices(
-            self.parent.data)
+                self.parent.new_data[
+                    'format_device'] = self.parent._manipulate_devices(
+                        self.parent.data)
         self.parent.py3.update()
 
     # on policy change signal
@@ -82,13 +87,14 @@ class UsbguardListener(threading.Thread):
         actions = ['allow id', 'reject id']
         for action in actions:
             if action in device_perms:
-                if self.parent.data[usbguard_id]:
+                if usbguard_id in self.parent.data:
                     del self.parent.data[usbguard_id]
+                    self.parent.new_data[
+                        'format_device'] = self.parent._manipulate_devices(
+                            self.parent.data)
                     break
 
-        self.parent.new_data = self.parent._manipulate_devices(
-            self.parent.data)
-        self.parent.py3.update()
+                self.parent.py3.update()
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -113,8 +119,9 @@ class Py3status:
     button_allow = 1
     button_block = 3
     button_reject = None
-    format = u'[USBGuard: {name}]'
-    format_separator = u' | '
+    format = u'[USBGuard: {format_device}]'
+    format_device = u'{name}'
+    format_device_separator = u' | '
 
     def _init_dbus(self):
         self.dbus_interface = 'org.usbguard'
@@ -129,13 +136,13 @@ class Py3status:
     def _init_placeholders(self):
         available_placeholders = [
             'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
-            'with_interface'
+            'with_interface', 'format_device'
         ]
 
         placeholders = {}
 
         for placeholder in available_placeholders:
-            if self.py3.format_contains(self.format, placeholder):
+            if self.py3.format_contains(self.format_device, placeholder):
                 placeholders[placeholder] = None
 
         placeholders['usbguard_id'] = None
@@ -144,11 +151,9 @@ class Py3status:
     def post_config_hook(self):
         self._init_dbus()
         self.data = {}
-        self.new_data = []
-
-        self.placeholders = self._init_placeholders()
-
+        self.new_data = {}
         self.permanant_rule = False
+        self.placeholders = self._init_placeholders()
         self.killed = threading.Event()
         UsbguardListener(self).start()
 
@@ -158,12 +163,12 @@ class Py3status:
             if action == 'block':
                 if self.data[usbguard_id]:
                     del self.data[usbguard_id]
-                    self.new_data = self._manipulate_devices(self.data)
+                    self.new_data['format_devices'] = self._manipulate_devices(
+                        self.data)
                     self.py3.update()
 
-            return self.proxy.applyDevicePolicy(
-                usbguard_id, targets[action], self.permanant_rule
-            )
+            return self.proxy.applyDevicePolicy(usbguard_id, targets[action],
+                                                self.permanant_rule)
 
     def kill(self):
         self.killed.set()
@@ -183,25 +188,34 @@ class Py3status:
 
     def _manipulate_devices(self, data):
         composite = []
+        format_device_separator = self.py3.safe_format(
+            self.format_device_separator)
+        self.py3.composite_update(format_device_separator, {'index': 'sep'})
+
         for device in data:
-            device_formatted = self.py3.safe_format(self.format, data[device])
+            device_formatted = self.py3.safe_format(self.format_device,
+                                                    data[device])
             self.py3.composite_update(device_formatted,
                                       {'index': data[device]['index']})
             composite.append(device_formatted)
 
-        format_separator = self.py3.safe_format(self.format_separator)
-
-        return self.py3.composite_join(format_separator, composite)
+            composite = self.py3.composite_join(format_device_separator,
+                                                composite)
+        return composite
 
     def usbguard(self):
         if self.error:
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
-        return {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'composite': self.new_data,
-            'urgent': True
-        }
+        response = {'cached_until': self.py3.CACHE_FOREVER, 'urgent': True}
+
+        if len(self.new_data):
+            composite = self.py3.safe_format(self.format, self.new_data)
+            response['composite'] = composite
+        else:
+            response['full_text'] = ''
+
+        return response
 
 
 if __name__ == "__main__":
