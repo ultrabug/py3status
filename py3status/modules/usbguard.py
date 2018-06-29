@@ -93,8 +93,6 @@ class UsbguardListener(threading.Thread):
                             self.parent.data)
                     break
 
-                self.parent.py3.update()
-
     def run(self):
         while not self.parent.killed.is_set():
             self.parent._init_dbus()
