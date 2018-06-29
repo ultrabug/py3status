@@ -8,7 +8,8 @@ Configuration parameters:
     unit: specify the systemd unit to use (default 'dbus.service')
     hide_if_default: suppress the output if the systemd unit is in default state (default 'Off')
         'Off' the output is never suppressed
-        'On' the output is suppressed if the unit is (enabled and active) or (disabled and inactive)
+        'On' the output is suppressed if the unit is (enabled and active)
+                                                  or (disabled and inactive)
         'active' the output is suppressed if the unit is active
         'inactive' the output is suppressed if the unit is inactive
 
