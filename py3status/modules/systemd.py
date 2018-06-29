@@ -4,14 +4,15 @@ Display status of a service on your system.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
-    format: display format for this module (default '{unit}: {status}')
-    unit: specify the systemd unit to use (default 'dbus.service')
-    hide_if_default: suppress the output if the systemd unit is in default state (default 'Off')
+    format: display format for this module (default '\?if=!hide {unit}: {status}')
+    hide_if_default: suppress the output if the systemd unit is in default state
         'Off' the output is never suppressed
         'On' the output is suppressed if the unit is (enabled and active)
                                                   or (disabled and inactive)
         'active' the output is suppressed if the unit is active
         'inactive' the output is suppressed if the unit is inactive
+        (default 'Off')
+    unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
     {unit} unit name, eg sshd
