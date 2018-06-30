@@ -35,7 +35,6 @@ SAMPLE OUTPUT
 """
 
 import threading
-
 from gi.repository import GLib
 from pydbus import SystemBus
 
@@ -68,15 +67,12 @@ class UsbguardListener(threading.Thread):
                         else:
                             device[new_key] = None
                 self.parent.data[usbguard_id] = device
-                self.parent.new_data[
-                    'format_device'] = self.parent._manipulate_devices(
-                        self.parent.data)
         else:
             if usbguard_id in self.parent.data:
                 del self.parent.data[usbguard_id]
-                self.parent.new_data[
-                    'format_device'] = self.parent._manipulate_devices(
-                        self.parent.data)
+        self.parent.new_data[
+            'format_device'] = self.parent._manipulate_devices(
+                self.parent.data)
         self.parent.py3.update()
 
     # on policy change signal
@@ -164,12 +160,11 @@ class Py3status:
             if action == 'block':
                 if self.data[usbguard_id]:
                     del self.data[usbguard_id]
-                    self.new_data['format_devices'] = self._manipulate_devices(
+                    self.new_data['format_device'] = self._manipulate_devices(
                         self.data)
-                    self.py3.update()
-
-            self.proxy.applyDevicePolicy(usbguard_id, targets[action],
-                                         self.is_permanant)
+            else:
+                self.proxy.applyDevicePolicy(usbguard_id, targets[action],
+                                             self.is_permanant)
 
     def kill(self):
         self.killed.set()
