@@ -11,8 +11,22 @@ Configuration parameters:
     format: Display format for the module. (default '[{format_device}]')
     format_device: format separator for usb devices. (default '{name}')
     format_device_separator: format separator for usb devices. (default ' \?color=separator \| ')
+    format_notification: format for notification on action (default '{name} is {action}')
 
 Format placeholders:
+    {format_device} format device list
+
+format_device:
+    {hash} the usbguard device unique hash of last device plugged.
+    {name} the device name of last device plugged.
+    {parent_hash} the usbguard port hash where device is plugged.
+    {serial} ???
+    {usbguard_id} the usbguard device id of last device plugged.
+    {via_port} the usb port where device is plugged.
+    {with_interface} ???
+
+format_notification:
+    {action} action taken for the device
     {hash} the usbguard device unique hash of last device plugged.
     {name} the device name of last device plugged.
     {parent_hash} the usbguard port hash where device is plugged.
@@ -77,7 +91,6 @@ class UsbguardListener(threading.Thread):
 
     # on policy change signal
     def _on_devices_policy_changed(self, *event):
-        # TODO: send notification with action
         usbguard_id = event[4][0]
         device_perms = event[4][3]
         actions = ['allow id', 'reject id']
@@ -117,6 +130,7 @@ class Py3status:
     format = u'[{format_device}]'
     format_device = u'{name}'
     format_device_separator = u' \?color=separator \| '
+    format_notification = u'{name} is {action}'
 
     def _init_dbus(self):
         self.dbus_interface = 'org.usbguard'
@@ -146,7 +160,9 @@ class Py3status:
         self.placeholders = {}
 
         for placeholder in available_placeholders:
-            if self.py3.format_contains(self.format_device, placeholder):
+            if self.py3.format_contains(
+                    self.format_device + self.format_notification,
+                    placeholder):
                 self.placeholders[placeholder] = None
 
         self.placeholders['usbguard_id'] = None
@@ -158,6 +174,19 @@ class Py3status:
         if action and index and index != 'sep':
             usbguard_id = index
             targets = {'allow': 0, 'block': 1, 'reject': 2}
+
+            # notifications
+            if self.format_notification:
+                format_notification = self.data[index]
+                format_notification['action'] = action
+                # get a notification
+                format_notification = self.py3.safe_format(
+                    self.format_notification, format_notification)
+                notification = self.py3.get_composite_string(
+                    format_notification)
+                self.py3.notify_user(notification)
+
+            # apply policy
             if action == 'block':
                 if self.data[usbguard_id]:
                     del self.data[usbguard_id]
