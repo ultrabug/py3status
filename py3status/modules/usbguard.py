@@ -10,7 +10,7 @@ Configuration parameters:
     button_reject: Button to reject the device. (default None)
     format: Display format for the module. (default '[{format_device}]')
     format_device: format separator for usb devices. (default '{name}')
-    format_device_separator: format separator for usb devices. (default ' | ')
+    format_device_separator: format separator for usb devices. (default ' \?color=separator \| ')
 
 Format placeholders:
     {hash} the usbguard device unique hash of last device plugged.
@@ -116,7 +116,7 @@ class Py3status:
     button_reject = None
     format = u'[{format_device}]'
     format_device = u'{name}'
-    format_device_separator = u' | '
+    format_device_separator = u' \?color=separator \| '
 
     def _init_dbus(self):
         self.dbus_interface = 'org.usbguard'
@@ -154,8 +154,9 @@ class Py3status:
         self.killed = threading.Event()
         UsbguardListener(self).start()
 
-    def _set_policy(self, action, usbguard_id):
-        if action and int(usbguard_id):
+    def _set_policy(self, action, index):
+        if action and index and index != 'sep':
+            usbguard_id = index
             targets = {'allow': 0, 'block': 1, 'reject': 2}
             if action == 'block':
                 if self.data[usbguard_id]:
@@ -171,13 +172,13 @@ class Py3status:
 
     def on_click(self, event):
         button = event['button']
-        usbguard_id = event['index']
+        index = event['index']
         if button == self.button_allow:
-            self._set_policy('allow', usbguard_id)
+            self._set_policy('allow', index)
         elif button == self.button_reject:
-            self._set_policy('reject', usbguard_id)
+            self._set_policy('reject', index)
         elif button == self.button_block:
-            self._set_policy('block', usbguard_id)
+            self._set_policy('block', index)
 
     def _manipulate_devices(self, data):
         format_device = []
@@ -192,8 +193,8 @@ class Py3status:
                                       {'index': data[device]['index']})
             format_device.append(device_formatted)
 
-            format_device = self.py3.composite_join(format_device_separator,
-                                                    format_device)
+        format_device = self.py3.composite_join(format_device_separator,
+                                                format_device)
 
         return format_device
 
