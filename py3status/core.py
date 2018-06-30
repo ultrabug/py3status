@@ -651,7 +651,8 @@ class Py3statusWrapper:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-    def notify_user(self, msg, level='error', rate_limit=None, module_name=''):
+    def notify_user(self, msg, level='error', rate_limit=None, module_name='',
+                    icon=None, title='py3status'):
         """
         Display notification to user via i3-nagbar or send-notify
         We also make sure to log anything to keep trace of it.
@@ -660,8 +661,11 @@ class Py3statusWrapper:
         """
         dbus = self.config.get('dbus_notify')
         if dbus:
-            # force msg to be a string
+            # force msg, icon, title to be a string
+            title = u'{}'.format(title)
             msg = u'{}'.format(msg)
+            if icon:
+                icon = u'{}'.format(icon)
         else:
             msg = u'py3status: {}'.format(msg)
         if level != 'info' and module_name == '':
@@ -697,8 +701,11 @@ class Py3statusWrapper:
                 msg = msg.replace('&', '&amp;')
                 msg = msg.replace('<', '&lt;')
                 msg = msg.replace('>', '&gt;')
-                cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
-                       '-t', '10000', 'py3status', msg]
+                cmd = ['notify-send']
+                if icon:
+                    cmd += ['-i', icon]
+                cmd += ['-u', DBUS_LEVELS.get(level, 'normal'), '-t', '10000']
+                cmd += [title, msg]
             else:
                 py3_config = self.config.get('py3_config', {})
                 nagbar_font = py3_config.get('py3status', {}).get('nagbar_font')
