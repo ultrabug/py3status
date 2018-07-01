@@ -760,8 +760,8 @@ class Py3statusWrapper:
                 return
         update_i3status = False
         for name, module in self.output_modules.items():
-            if (module_string is None or (exact and name == module_string)
-                    or (not exact and name.startswith(module_string))):
+            if (module_string is None or (exact and name == module_string) or
+                    (not exact and name.startswith(module_string))):
                 if module['type'] == 'py3status':
                     if self.config['debug']:
                         self.log('refresh py3status module {}'.format(name))

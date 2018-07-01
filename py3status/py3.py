@@ -515,10 +515,11 @@ class Py3:
         if isinstance(title, Composite):
             title = title.text()
         # force unicode for python2 str
-        if self._is_python_2 and isinstance(msg, str):
-            msg = msg.decode('utf-8')
-        if self._is_python_2 and isinstance(title, str):
-            title = title.decode('utf-8')
+        if self._is_python_2:
+            if isinstance(msg, str):
+                msg = msg.decode('utf-8')
+            if isinstance(title, str):
+                title = title.decode('utf-8')
         if msg:
             module_name = self._module.module_full_name
             self._py3_wrapper.notify_user(
