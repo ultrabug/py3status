@@ -685,11 +685,13 @@ class Py3statusWrapper:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash(u'{}#{}#{}'.format(module_name, limit_key, msg))
+        msg_hash = hash(u'{}#{}#{}#{}'.format(module_name, limit_key, msg, title))
         if msg_hash in self.notified_messages:
             return
         elif module_name:
-            log_msg = 'Module `%s` sent a notification. "%s"' % (module_name, msg)
+            log_msg = 'Module `%s` sent a notification. "%s: %s"' % (
+                module_name, title, msg
+            )
             self.log(log_msg, level)
         else:
             self.log(msg, level)
@@ -758,9 +760,8 @@ class Py3statusWrapper:
                 return
         update_i3status = False
         for name, module in self.output_modules.items():
-            if (module_string is None or
-                    (exact and name == module_string) or
-                    (not exact and name.startswith(module_string))):
+            if (module_string is None or (exact and name == module_string)
+                    or (not exact and name.startswith(module_string))):
                 if module['type'] == 'py3status':
                     if self.config['debug']:
                         self.log('refresh py3status module {}'.format(name))
