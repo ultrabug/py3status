@@ -49,6 +49,7 @@ SAMPLE OUTPUT
 """
 
 import threading
+
 from gi.repository import GLib
 from pydbus import SystemBus
 
@@ -156,15 +157,13 @@ class Py3status:
             'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
             'with_interface', 'format_device'
         ]
-
         self.placeholders = {}
-
+        placeholders = self.py3.get_placeholders_list(
+            self.format_device + self.format_notification
+        )
         for placeholder in available_placeholders:
-            if self.py3.format_contains(
-                    self.format_device + self.format_notification,
-                    placeholder):
+            if placeholder in placeholders:
                 self.placeholders[placeholder] = None
-
         self.placeholders['usbguard_id'] = None
 
         self.killed = threading.Event()
@@ -179,22 +178,31 @@ class Py3status:
             if self.format_notification:
                 format_notification = self.data[index]
                 format_notification['action'] = action
-                # get a notification
                 format_notification = self.py3.safe_format(
-                    self.format_notification, format_notification)
+                    self.format_notification, format_notification
+                )
                 notification = self.py3.get_composite_string(
-                    format_notification)
-                self.py3.notify_user(notification)
+                    format_notification
+                )
+                # self.py3.notify_user(
+                #     notification, title='USBGuard',
+                #     icon='/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg'
+                # )
+                self.py3.notify_user(
+                    notification
+                )
 
             # apply policy
             if action == 'block':
                 if self.data[usbguard_id]:
                     del self.data[usbguard_id]
                     self.new_data['format_device'] = self._manipulate_devices(
-                        self.data)
+                        self.data
+                    )
             else:
-                self.proxy.applyDevicePolicy(usbguard_id, targets[action],
-                                             self.is_permanant)
+                self.proxy.applyDevicePolicy(
+                    usbguard_id, targets[action], self.is_permanant
+                )
 
     def kill(self):
         self.killed.set()
@@ -211,19 +219,20 @@ class Py3status:
 
     def _manipulate_devices(self, data):
         format_device = []
-        format_device_separator = self.py3.safe_format(
-            self.format_device_separator)
+        format_device_separator = self.py3.safe_format(self.format_device_separator)
         self.py3.composite_update(format_device_separator, {'index': 'sep'})
 
         for device in data:
             device_formatted = self.py3.safe_format(self.format_device,
                                                     data[device])
-            self.py3.composite_update(device_formatted,
-                                      {'index': data[device]['index']})
+            self.py3.composite_update(
+                device_formatted, {'index': data[device]['index']}
+            )
             format_device.append(device_formatted)
 
-        format_device = self.py3.composite_join(format_device_separator,
-                                                format_device)
+        format_device = self.py3.composite_join(
+            format_device_separator, format_device
+        )
 
         return format_device
 
@@ -238,7 +247,8 @@ class Py3status:
             response['composite'] = composite
         else:
             response['full_text'] = self.py3.safe_format(
-                self.format, {'format_device': ''})
+                self.format, {'format_device': ''}
+            )
 
         return response
 
