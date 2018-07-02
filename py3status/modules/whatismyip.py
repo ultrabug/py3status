@@ -25,12 +25,12 @@ Configuration parameters:
         (default 'https://ifconfig.co/json')
 
 Format placeholders:
-    {icon} display the icon
-    {country} display the country, eg: 'France'
-    {country_iso} display the country, eg: 'FR'
-    {ip} display current ip address
-    {ip_decimal} display current ip address in decimal
-    {city} display the city
+    {icon}        eg ●, ■
+    {country}     eg France
+    {country_iso} eg FR
+    {ip}          eg 123.45.67.890
+    {ip_decimal}  eg 1234567890
+    {city}        eg Paris
     any other key in JSON fetched from `url_geo`
 
 Color options:
@@ -38,7 +38,7 @@ Color options:
     color_degraded: Output is unexpected (IP/country mismatch, etc.)
     color_good: Online
 
-@author ultrabug
+@author ultrabug, Cyril Levis (@cyrinux)
 
 SAMPLE OUTPUT
 {'full_text': '37.48.108.0'}
