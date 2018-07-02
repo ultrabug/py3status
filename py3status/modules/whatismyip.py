@@ -5,7 +5,7 @@ Display public IP address and online status.
 Configuration parameters:
     button_refresh: mouse button to refresh this module (default 2)
     button_toggle: mouse button to toggle between states (default 1)
-    cache_timeout: how often we refresh this module in seconds (default 30)
+    cache_timeout: how often we refresh this module in seconds (default 60)
     expected: define expected values for format placeholders,
         and use `color_degraded` to show the output of this module
         if any of them does not match the actual value.
@@ -22,12 +22,15 @@ Configuration parameters:
     negative_cache_timeout: how often to check again when offline (default 2)
     timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
-        (default 'https://freegeoip.net/json/')
+        (default 'https://ifconfig.co/json')
 
 Format placeholders:
     {icon} display the icon
-    {country} display the country
+    {country} display the country, eg: 'France'
+    {country_iso} display the country, eg: 'FR'
     {ip} display current ip address
+    {ip_decimal} display current ip address in decimal
+    {city} display the city
     any other key in JSON fetched from `url_geo`
 
 Color options:
@@ -41,14 +44,14 @@ SAMPLE OUTPUT
 {'full_text': '37.48.108.0'}
 
 geo
-{'full_text': '37.48.108.0 Russia'}
+{'full_text': '37.48.108.0 France'}
 
 mode
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
 URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
-URL_GEO_NEW_DEFAULT = 'https://freegeoip.net/json/'
+URL_GEO_NEW_DEFAULT = 'https://ifconfig.co/json'
 
 
 class Py3status:
@@ -57,7 +60,7 @@ class Py3status:
     # available configuration parameters
     button_refresh = 2
     button_toggle = 1
-    cache_timeout = 30
+    cache_timeout = 60
     expected = None
     format = '{ip}'
     hide_when_offline = False
@@ -97,7 +100,7 @@ class Py3status:
         # Backwards compatibility
         self.substitutions = {}
         if self.url_geo == URL_GEO_NEW_DEFAULT:
-            self.substitutions['country'] = 'country_name'
+            self.substitutions['country_code'] = 'country_iso'
         elif self.url_geo == URL_GEO_OLD_DEFAULT:
             self.substitutions['ip'] = 'query'
 
