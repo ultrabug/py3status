@@ -49,7 +49,7 @@ SAMPLE OUTPUT
 """
 
 import threading
-from pprint import pprint
+
 from gi.repository import GLib
 from pydbus import SystemBus
 
@@ -63,13 +63,6 @@ class UsbguardListener(threading.Thread):
     def __init__(self, parent):
         super(UsbguardListener, self).__init__()
         self.parent = parent
-
-    def _get_all_devices(self):
-        blocked_devices = []
-        devices = self.parent.proxy.listDevices('match')
-        for device in devices:
-            for x in device:
-                print(x[0])
 
     # on device change signal
     def _on_devices_presence_changed(self, *event):
@@ -115,7 +108,6 @@ class UsbguardListener(threading.Thread):
     def run(self):
         while not self.parent.killed.is_set():
             self.parent._init_dbus()
-            self._get_all_devices()
             self.parent.dbus.subscribe(
                 object=self.parent.dbus_devices,
                 signal='DevicePresenceChanged',
@@ -150,6 +142,46 @@ class Py3status:
             self.proxy = self.dbus.get(self.dbus_interface)
         except:
             self.error = Exception(STRING_USBGUARD_DBUS)
+
+    def _get_all_devices(self):
+        devices_array = []
+        response = {}
+        devices = self.parent.proxy.listDevices('match')
+        keys = [
+            'serial', 'rule', 'id', 'name', 'hash', 'parent_hash', 'via_port',
+            'with_interface'
+        ]
+        _regex_serial = re.compile(r'\S*serial \"(\S+)\"\S*')
+        _regex_rule = re.compile(r'^(\S+)')
+        _regex_id = re.compile(r'id (\S+)')
+        _regex_name = re.compile(r'name \"(.*)\" hash')
+        _regex_hash = re.compile(r'hash \"(.*)\" parent-hash')
+        _regex_parent_hash = re.compile(r'parent-hash \"(.*)\" via-port')
+        _regex_via_port = re.compile(r'via-port \"(.*)\" with-interface')
+        _regex_with_interface = re.compile(r'with-interface \{ (.*) \}$')
+
+        for usbguard_id, device in devices:
+            params = {}
+            data['usbguard_id'] = usbguard_id
+            for key in keys:
+                value = None
+                regex = eval('_regex_' + key)
+                value = regex.findall(device)
+                if value:
+                    value = value[0]
+                    value = value.encode('latin-1').decode('unicode_escape')
+                    value = value.encode('latin-1').decode('utf-8')
+                else:
+                    value = ''
+                params[key] = value
+            devices_array.append(params)
+
+        for index, device in sorted(enumerate(devices_array), reverse=False):
+            response[index] = device
+
+        print(response)
+        pprint(response)
+        return response
 
     def _toggle_permanant(self):
         self.is_permanant = not self.is_permanant
@@ -189,11 +221,14 @@ class Py3status:
                     self.format_notification, format_notification)
                 notification = self.py3.get_composite_string(
                     format_notification)
-                # self.py3.notify_user(
-                #     notification, title='USBGuard',
-                #     icon='/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg'
-                # )
-                self.py3.notify_user(notification)
+                self.py3.notify_user(
+                    notification,
+                    title='USBGuard',
+                    icon=
+                    '/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
+                #self.py3.notify_user(
+                #    notification
+                #)
 
             # apply policy
             if action == 'block':
