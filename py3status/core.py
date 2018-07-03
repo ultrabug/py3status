@@ -651,7 +651,8 @@ class Py3statusWrapper:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-    def notify_user(self, msg, level='error', rate_limit=None, module_name=''):
+    def notify_user(self, msg, level='error', rate_limit=None, module_name='',
+                    icon=None, title='py3status'):
         """
         Display notification to user via i3-nagbar or send-notify
         We also make sure to log anything to keep trace of it.
@@ -660,8 +661,11 @@ class Py3statusWrapper:
         """
         dbus = self.config.get('dbus_notify')
         if dbus:
-            # force msg to be a string
+            # force msg, icon, title to be a string
+            title = u'{}'.format(title)
             msg = u'{}'.format(msg)
+            if icon:
+                icon = u'{}'.format(icon)
         else:
             msg = u'py3status: {}'.format(msg)
         if level != 'info' and module_name == '':
@@ -681,11 +685,13 @@ class Py3statusWrapper:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash(u'{}#{}#{}'.format(module_name, limit_key, msg))
+        msg_hash = hash(u'{}#{}#{}#{}'.format(module_name, limit_key, msg, title))
         if msg_hash in self.notified_messages:
             return
         elif module_name:
-            log_msg = 'Module `%s` sent a notification. "%s"' % (module_name, msg)
+            log_msg = 'Module `%s` sent a notification. "%s: %s"' % (
+                module_name, title, msg
+            )
             self.log(log_msg, level)
         else:
             self.log(msg, level)
@@ -697,8 +703,11 @@ class Py3statusWrapper:
                 msg = msg.replace('&', '&amp;')
                 msg = msg.replace('<', '&lt;')
                 msg = msg.replace('>', '&gt;')
-                cmd = ['notify-send', '-u', DBUS_LEVELS.get(level, 'normal'),
-                       '-t', '10000', 'py3status', msg]
+                cmd = ['notify-send']
+                if icon:
+                    cmd += ['-i', icon]
+                cmd += ['-u', DBUS_LEVELS.get(level, 'normal'), '-t', '10000']
+                cmd += [title, msg]
             else:
                 py3_config = self.config.get('py3_config', {})
                 nagbar_font = py3_config.get('py3status', {}).get('nagbar_font')
@@ -751,8 +760,7 @@ class Py3statusWrapper:
                 return
         update_i3status = False
         for name, module in self.output_modules.items():
-            if (module_string is None or
-                    (exact and name == module_string) or
+            if (module_string is None or (exact and name == module_string) or
                     (not exact and name.startswith(module_string))):
                 if module['type'] == 'py3status':
                     if self.config['debug']:
