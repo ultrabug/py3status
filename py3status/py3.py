@@ -502,18 +502,24 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(self, msg, level='info', rate_limit=5):
+    def notify_user(self, msg, level='info', rate_limit=5, title='py3status', icon=None):
         """
         Send a notification to the user.
         level must be 'info', 'error' or 'warning'.
         rate_limit is the time period in seconds during which this message
         should not be repeated.
+        icon must be an icon path or icon name.
         """
         if isinstance(msg, Composite):
             msg = msg.text()
+        if isinstance(title, Composite):
+            title = title.text()
         # force unicode for python2 str
-        if self._is_python_2 and isinstance(msg, str):
-            msg = msg.decode('utf-8')
+        if self._is_python_2:
+            if isinstance(msg, str):
+                msg = msg.decode('utf-8')
+            if isinstance(title, str):
+                title = title.decode('utf-8')
         if msg:
             module_name = self._module.module_full_name
             self._py3_wrapper.notify_user(
@@ -521,6 +527,8 @@ class Py3:
                 level=level,
                 rate_limit=rate_limit,
                 module_name=module_name,
+                title=title,
+                icon=icon
             )
 
     def register_function(self, function_name, function):
@@ -850,6 +858,14 @@ class Py3:
         Check if item is a Composite and return True if it is.
         """
         return isinstance(item, Composite)
+
+    def get_composite_string(self, format_string):
+        """
+        Return a string from a Composite.
+        """
+        if not isinstance(format_string, Composite):
+            return ''
+        return format_string.text()
 
     def check_commands(self, cmd_list):
         """
