@@ -161,7 +161,7 @@ class Py3status:
             # get the deltas into variable
             delta = deltas[interface] if interface else None
 
-        except TypeError:
+        except (TypeError, ValueError):
             delta = None
             interface = None
             hide = self.hide_if_zero
