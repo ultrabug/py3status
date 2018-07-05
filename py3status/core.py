@@ -932,13 +932,21 @@ class Py3statusWrapper:
             if hasattr(color, "none_setting"):
                 color = None
             mappings[name] = color
+
+            max_size = self.get_config_attribute(name, 'max_size')
+            if hasattr(max_size, 'none_setting'):
+                max_size = None
+            mappings[name] = max_size
+
         # Store mappings for later use.
+        self.mappings_max_size = mappings
         self.mappings_color = mappings
 
     def process_module_output(self, module):
         """
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
+        Shortened text 'short_text' processing occurs here.
         """
         outputs = module["module"].get_latest()
         color = module["color"]

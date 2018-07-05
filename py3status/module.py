@@ -659,6 +659,15 @@ class Module:
                 param = True
             self.allow_urgent = param
 
+            # max_size
+            # get the value form the config or use the module default if
+            # supplied.
+            fn = self._py3_wrapper.get_config_attribute
+            param = fn(self.module_full_name, 'max_size')
+            if hasattr(param, 'none_setting'):
+                param = True
+            self.max_size = param
+
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
                 if method.startswith("_"):
