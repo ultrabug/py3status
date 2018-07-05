@@ -15,6 +15,12 @@ Configuration parameters:
 Format placeholders:
     {row} number of SQL rows
     {format_row} format for SQL rows
+    Parameters can be placeholders too, eg {host}, {passd}
+
+Format_row placeholders:
+    {...} placeholder name often found in the database
+    {...} placeholder name often found in the database
+    {...} placeholder name often found in the database
 
 Color thresholds:
     format:
@@ -59,8 +65,8 @@ sql {
 # display number of seconds behind master with MySQLdb
 sql {
     database = 'MySQLdb'
-    format_row = '\?color=seconds_behind_master {host} is '
-    format_row += '[{seconds_behind_master}s behind|\?show master]'
+    format_row = '\?color=Seconds_Behind_Master {host} is '
+    format_row += '[{Seconds_Behind_Master}s behind|\?show master]'
     parameters = {
         'host': 'localhost',
         'passwd': '********'
@@ -115,15 +121,23 @@ class Py3status:
                 raise Exception('missing %s' % config_name)
 
         self.connect = getattr(import_module(self.database), 'connect')
-        self.is_parameters_a_string = isinstance(self.parameters, str)
-        if self.is_parameters_a_string:
+        self.is_parameters_a_dict = isinstance(self.parameters, dict)
+        if not self.is_parameters_a_dict:
             self.parameters = expanduser(self.parameters)
 
+        # partial future helper code
+        self.thresholds_init = {}
+        for name in ('format', 'format_row'):
+            self.thresholds_init[name] = []
+            param = getattr(self, name) or ''
+            for x in param.replace('&', ' ').split('color=')[1::1]:
+                self.thresholds_init[name].append(x.split()[0])
+
     def _get_sql_data(self):
-        if self.is_parameters_a_string:
-            con = self.connect(self.parameters)
-        else:
+        if self.is_parameters_a_dict:
             con = self.connect(**self.parameters)
+        else:
+            con = self.connect(self.parameters)
         cur = con.cursor()
         cur.execute(self.query)
         sql_keys = [desc[0].lower() for desc in cur.description]
@@ -134,8 +148,8 @@ class Py3status:
 
     def sql(self):
         sql_data = {}
-        format_row = None
-        count_row = None
+        if self.is_parameters_a_dict:
+            sql_data.update(self.parameters)
 
         try:
             data = self._get_sql_data()
@@ -145,30 +159,23 @@ class Py3status:
             new_data = []
             count_row = len(data)
             for row in data:
-                if self.thresholds:
-                    for key, value in row.items():
-                        self.py3.threshold_get_color(value, key)
+                for x in self.thresholds_init['format_row']:
+                    if x in row:
+                        self.py3.threshold_get_color(row[x], x)
 
                 new_data.append(self.py3.safe_format(self.format_row, row))
 
             format_separator = self.py3.safe_format(self.format_separator)
             format_row = self.py3.composite_join(format_separator, new_data)
+            sql_data.update({'row': count_row, 'format_row': format_row})
 
-            if self.thresholds:
-                self.py3.threshold_get_color(count_row, 'row')
-
-        if not self.is_parameters_a_string:
-            sql_data.update(self.parameters)
+            for x in self.thresholds_init['format']:
+                if x in sql_data:
+                    self.py3.threshold_get_color(sql_data[x], x)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, dict(
-                    format_row=format_row,
-                    row=count_row,
-                    **sql_data
-                )
-            )
+            'full_text': self.py3.safe_format(self.format, sql_data),
         }
 
 
