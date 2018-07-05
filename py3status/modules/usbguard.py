@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 USBGuard i3 companion to replace default 'usbguard-applet-qt'.
@@ -146,6 +147,7 @@ class Py3status:
     def _get_all_devices(self):
         devices_array = []
         response = {}
+        # TODO: filter, match, allow, block
         devices = self.parent.proxy.listDevices('match')
         keys = [
             'serial', 'rule', 'id', 'name', 'hash', 'parent_hash', 'via_port',
@@ -221,14 +223,14 @@ class Py3status:
                     self.format_notification, format_notification)
                 notification = self.py3.get_composite_string(
                     format_notification)
-                self.py3.notify_user(
-                    notification,
-                    title='USBGuard',
-                    icon=
-                    '/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
                 #self.py3.notify_user(
-                #    notification
-                #)
+                #    notification,
+                #    title='USBGuard',
+                #    icon=
+                #    '/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
+                self.py3.notify_user(
+                    notification
+                )
 
             # apply policy
             if action == 'block':
