@@ -21,6 +21,7 @@ SAMPLE OUTPUT
 
 """
 
+from errno import ENOENT
 from mailbox import Maildir, NoSuchMailboxError
 from os import listdir, path
 from shlex import split
@@ -67,9 +68,13 @@ class Data:
                 except NoSuchMailboxError:
                     raise MaildirException(
                         "invalid path: {path}".format(path=mdir))
-                except FileNotFoundError:
+                except IOError as err:
+                    if err.errno == ENOENT:
+                        raise MaildirException(
+                            "invalid maildir: {path}".format(path=mdir))
                     raise MaildirException(
-                        "invalid maildir: {path}".format(path=mdir))
+                        "failed to read maildir at {path}: {error}".format(
+                            path=mdir, error=err))
         self.mboxes = mboxes
         self.mbox_state = state
         self.unread = unread
