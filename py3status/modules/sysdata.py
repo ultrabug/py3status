@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_usage}%], '
-        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+        '[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -51,7 +51,7 @@ SAMPLE OUTPUT
 [
     {'color': '#00FF00', 'full_text': 'CPU: 9.60%'},
     {'full_text': ', '},
-    {'color': '#FFFF00', 'full_text': 'Mem: 1.91/3.76 GB (50.96%)'}
+    {'color': '#FFFF00', 'full_text': 'Mem: 1.91/3.76 GiB (50.96%)'}
 ]
 """
 
@@ -60,10 +60,6 @@ from os import getloadavg
 
 import re
 
-ONE_KIB = pow(1024, 1)  # 1 KiB in B
-ONE_MIB = pow(1024, 2)  # 1 MiB in B
-ONE_GIB = pow(1024, 3)  # 1 GiB in B
-
 
 class Py3status:
     """
@@ -71,7 +67,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "[\?color=cpu CPU: {cpu_usage}%], " \
-             "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+             "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
     mem_unit = 'GiB'
     swap_unit = 'GiB'
     temp_unit = u'°C'
@@ -196,33 +192,11 @@ class Py3status:
 
         total_mem_kib = memi[keys[0]]
         mem_free = sum([memi[item] for item in keys[1:]])
-
-        try:
-            used_mem_kib = (total_mem_kib - mem_free)
-            used_mem_p = 100 * used_mem_kib / total_mem_kib
-            multiplier = {
-                'KiB': ONE_KIB / ONE_KIB,
-                'MiB': ONE_KIB / ONE_MIB,
-                'GiB': ONE_KIB / ONE_GIB,
-            }
-            if unit.lower() == 'dynamic':
-                # If less than 1 GiB, use MiB
-                if (multiplier['GiB'] * total_mem_kib) < 1:
-                    unit = 'MiB'
-                else:
-                    unit = 'GiB'
-            if unit in multiplier.keys():
-                total_mem = multiplier[unit] * total_mem_kib
-                used_mem = multiplier[unit] * used_mem_kib
-            else:
-                raise ValueError(
-                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
-        except:
-            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
-            unit = 'UNKNOWN'
-
-        # If total memory is <1GB, results are in megabytes.
-        # Otherwise, results are in gigabytes.
+        used_mem_kib = (total_mem_kib - mem_free)
+        used_mem_p = 100 * used_mem_kib / total_mem_kib
+        unit = 'B' if unit == 'dynamic' else unit
+        (total_mem, unit) = self.py3.format_units(total_mem_kib * 1024, unit=unit)
+        (used_mem, _) = self.py3.format_units(used_mem_kib * 1024, unit=unit)
         return total_mem, used_mem, used_mem_p, unit
 
     def _get_mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
