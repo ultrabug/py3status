@@ -121,9 +121,9 @@ class Py3status:
 
     cache_timeout = 10
     error_timeout = 10
-    name = 'MAIL:'
     format = '{name} {unread}'
     mailboxes = ''
+    name = 'MAIL:'
 
     def __init__(self):
         """Initialisation."""
