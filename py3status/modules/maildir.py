@@ -5,9 +5,9 @@
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     error_timeout: error message reset interval (default 10)
-    name: module name (default 'MAIL:')
     format: display format for this module (default '{name} {unread}')
     mailboxes: space-separated list of maildirs to monitor (default '')
+    name: module name (default 'MAIL:')
 
 Format placeholders:
     {name} module name
