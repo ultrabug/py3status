@@ -53,6 +53,7 @@ import threading
 
 from gi.repository import GLib
 from pydbus import SystemBus
+import re
 
 STRING_USBGUARD_DBUS = 'usbguard-dbus service not running'
 
@@ -181,8 +182,6 @@ class Py3status:
         for index, device in sorted(enumerate(devices_array), reverse=False):
             response[index] = device
 
-        print(response)
-        pprint(response)
         return response
 
     def _toggle_permanant(self):
@@ -223,14 +222,11 @@ class Py3status:
                     self.format_notification, format_notification)
                 notification = self.py3.get_composite_string(
                     format_notification)
-                #self.py3.notify_user(
-                #    notification,
-                #    title='USBGuard',
-                #    icon=
-                #    '/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
                 self.py3.notify_user(
-                    notification
-                )
+                    notification,
+                    title='USBGuard',
+                    icon=
+                    '/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
 
             # apply policy
             if action == 'block':
