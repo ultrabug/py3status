@@ -563,7 +563,8 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, wwan_data)
+            'full_text': self.py3.safe_format(self.format, wwan_data),
+            'short_text': self.py3.safe_format(self.short_format, wwan_data)
         }
         if urgent:
             response['urgent'] = True
