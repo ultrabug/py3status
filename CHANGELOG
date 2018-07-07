@@ -1,5 +1,19 @@
+version 3.11 (2018-07-05)
+* py3.notify_user: add support for title and icon parameters to tune notifications, by @cyrinux
+* new gitlab module: to powerfully manage your gitlab notifs/todos, by @lasers
+* new wwan network manager module, by @cyrinux
+* arch_updates module: update documentation to include the pacman-contrib requirement by @markrileybot
+* diskdata module: fix stats computation, fixes #1373 by @scotte
+* file_status module: add support for several paths with new format options, by @cyrinux
+* hddtemp module: workaround for hddtemp byte bug, by @lasers
+* net_rate module: handle non-existent interfaces better, fixes #1377, by @scotte
+* sysdata module: use py3.format_units, by @simon04
+* whatismyip module: replace freegeoip.net which has move and now require an api key, by @cyrinux
+
+
 version 3.10 (2018-05-21)
 * fix pip installation reported on #1351 by @lainiwa
+
 
 version 3.9 (2018-05-14)
 * added --disable_click_events (-m) option to disable all click events, by @jamethy
