@@ -190,10 +190,11 @@ class Module:
             color = None
 
         error = {
-            "full_text": message,
-            "color": color,
-            "instance": self.module_inst,
-            "name": self.module_name,
+            'full_text': message,
+            'short_text': message,
+            'color': color,
+            'instance': self.module_inst,
+            'name': self.module_name,
         }
         for method in self.methods.values():
             if method_affected and method["method"] != method_affected:
@@ -279,7 +280,7 @@ class Module:
                 output.extend(data)
             else:
                 # if the output is not 'valid' then don't add it.
-                if data.get("full_text") or "separator" in data:
+                if data.get('full_text') or data.get('short_text') or 'separator' in data:
                     if self.testing:
                         data["cached_until"] = method.get("cached_until")
                     output.append(data)
@@ -682,12 +683,16 @@ class Module:
                             # the method_obj stores infos about each method
                             # of this module.
                             method_obj = {
-                                "cached_until": time(),
-                                "call_type": params_type,
-                                "instance": None,
-                                "last_output": {"name": method, "full_text": ""},
-                                "method": method,
-                                "name": None,
+                                'cached_until': time(),
+                                'call_type': params_type,
+                                'instance': None,
+                                'last_output': {
+                                    'name': method,
+                                    'full_text': '',
+                                    'short_text': ''
+                                },
+                                'method': method,
+                                'name': None
                             }
                             self.methods[method] = method_obj
 
