@@ -66,7 +66,7 @@ class Py3status:
     format = u'\?color=path [\?if=path \u25cf|\u25a0]'
     format_path = u'{basename}'
     format_path_separator = u' '
-    path = None
+    paths = None
     thresholds = [(0, 'bad'), (1, 'good')]
 
     class Meta:
@@ -86,6 +86,13 @@ class Py3status:
                     'param': 'path',
                     'new': 'paths',
                     'msg': 'obsolete parameter use `paths`'
+                },
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'paths',
+                    'new': 'path',
+                    'format_strings': ['format'],
                 },
             ],
         }
