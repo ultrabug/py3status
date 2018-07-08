@@ -22,12 +22,17 @@ class Storage:
         storage_file = py3_config.get('py3status', {}).get('storage_file')
 
         if storage_file:
+            storage_path = None
             storage_file = os.path.expanduser(storage_file)
+            if '/' not in storage_file:
+                storage_path = os.environ.get('XDG_CACHE_HOME')
         else:
             storage_path = os.environ.get('XDG_CACHE_HOME')
-            if not storage_path:
-                storage_path = os.path.expanduser('~/.cache')
-            storage_file = os.path.join(storage_path, 'py3status_cache')
+            storage_file = 'py3status_cache'
+
+        if not storage_path:
+            storage_path = os.path.expanduser('~/.cache')
+        storage_file = os.path.join(storage_path, storage_file)
 
         self.storage_file = storage_file
         try:
