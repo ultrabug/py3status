@@ -51,6 +51,7 @@ SAMPLE OUTPUT
 
 import threading
 
+from pprint import pprint
 from gi.repository import GLib
 from pydbus import SystemBus
 import re
@@ -88,8 +89,9 @@ class UsbguardListener(threading.Thread):
             if usbguard_id in self.parent.data:
                 del self.parent.data[usbguard_id]
         self.parent.new_data[
-            'format_device'] = self.parent._manipulate_devices(
-                self.parent.data)
+            'format_device'] = self.parent._manipulate_devices(self.parent.data)
+        self.parent.all_device = self.parent._get_all_devices()
+        self.parent.new_data['format_all_devices'] = self.parent._manipulate_all_devices(self.parent.all_devices)
         self.parent.py3.update()
 
     # on policy change signal
@@ -102,10 +104,12 @@ class UsbguardListener(threading.Thread):
                 if usbguard_id in self.parent.data:
                     del self.parent.data[usbguard_id]
                     self.parent.new_data[
-                        'format_device'] = self.parent._manipulate_devices(
-                            self.parent.data)
+                        'format_device'] = self.parent._manipulate_devices(self.parent.data)
+                    self.parent.new_data[
+                        'format_all_devices'] = self.parent._manipulate_all_devices(self.parent.all_devices)
                     break
         self.parent.py3.update()
+        self.parent.all_device = self.parent._get_all_devices()
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -130,8 +134,9 @@ class Py3status:
     button_allow = 1
     button_block = 3
     button_reject = None
-    format = u'[{format_device}]'
+    format = u'[{format_device} {format_all_devices}]'
     format_device = u'{name}'
+    format_all_devices = u'{name}'
     format_device_separator = u' \?color=separator \| '
     format_notification = u'{name} is {action}'
 
@@ -149,7 +154,7 @@ class Py3status:
         devices_array = []
         response = {}
         # TODO: filter, match, allow, block
-        devices = self.parent.proxy.listDevices('match')
+        devices = self.proxy.listDevices('match')
         keys = [
             'serial', 'rule', 'id', 'name', 'hash', 'parent_hash', 'via_port',
             'with_interface'
@@ -165,7 +170,8 @@ class Py3status:
 
         for usbguard_id, device in devices:
             params = {}
-            data['usbguard_id'] = usbguard_id
+            params['usbguard_id'] = usbguard_id
+            params['index'] = usbguard_id
             for key in keys:
                 value = None
                 regex = eval('_regex_' + key)
@@ -182,6 +188,7 @@ class Py3status:
         for index, device in sorted(enumerate(devices_array), reverse=False):
             response[index] = device
 
+        pprint(response)
         return response
 
     def _toggle_permanant(self):
@@ -189,6 +196,7 @@ class Py3status:
 
     def post_config_hook(self):
         self._init_dbus()
+        self.all_devices = {}
         self.data = {}
         self.new_data = {}
         self.is_permanant = False
@@ -196,11 +204,11 @@ class Py3status:
         # init placeholders
         available_placeholders = [
             'id', 'name', 'via_port', 'hash', 'parent_hash', 'serial',
-            'with_interface', 'format_device'
+            'with_interface', 'format_device', 'format_all_devices'
         ]
         self.placeholders = {}
-        placeholders = self.py3.get_placeholders_list(self.format_device +
-                                                      self.format_notification)
+        placeholders = self.py3.get_placeholders_list(
+            self.format_device + self.format_notification + self.format_all_devices)
         for placeholder in available_placeholders:
             if placeholder in placeholders:
                 self.placeholders[placeholder] = None
@@ -222,21 +230,16 @@ class Py3status:
                     self.format_notification, format_notification)
                 notification = self.py3.get_composite_string(
                     format_notification)
-                self.py3.notify_user(
-                    notification,
-                    title='USBGuard',
-                    icon=
-                    '/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
+                self.py3.notify_user( notification, title='USBGuard', icon='/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg')
 
             # apply policy
             if action == 'block':
                 if self.data[usbguard_id]:
                     del self.data[usbguard_id]
-                    self.new_data['format_device'] = self._manipulate_devices(
-                        self.data)
+                    self.new_data['format_device'] = self._manipulate_devices(self.data)
+                    self.new_data['format_all_devices'] = self._manipulate_all_devices(self.all_devices)
             else:
-                self.proxy.applyDevicePolicy(usbguard_id, targets[action],
-                                             self.is_permanant)
+                self.proxy.applyDevicePolicy(usbguard_id, targets[action], self.is_permanant)
 
     def kill(self):
         self.killed.set()
@@ -251,6 +254,21 @@ class Py3status:
         elif button == self.button_block:
             self._set_policy('block', index)
 
+    def _manipulate_all_devices(self, data):
+        format_all_devices = []
+        format_device_separator = self.py3.safe_format(self.format_device_separator)
+        self.py3.composite_update(format_device_separator, {'index': 'sep'})
+
+        for device in data:
+            device_formatted = self.py3.safe_format(self.format_all_devices, data[device])
+            self.py3.composite_update(device_formatted,
+                                      {'index': data[device]['index']})
+            format_all_devices.append(device_formatted)
+
+        format_all_devices = self.py3.composite_join(format_device_separator, format_all_devices)
+
+        return format_all_devices
+
     def _manipulate_devices(self, data):
         format_device = []
         format_device_separator = self.py3.safe_format(
@@ -260,18 +278,18 @@ class Py3status:
         for device in data:
             device_formatted = self.py3.safe_format(self.format_device,
                                                     data[device])
-            self.py3.composite_update(device_formatted,
-                                      {'index': data[device]['index']})
+            self.py3.composite_update(device_formatted, {'index': data[device]['index']})
             format_device.append(device_formatted)
 
-        format_device = self.py3.composite_join(format_device_separator,
-                                                format_device)
-
+        format_device = self.py3.composite_join(format_device_separator, format_device)
         return format_device
 
     def usbguard(self):
         if self.error:
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
+
+        self.all_devices = self._get_all_devices()
+        self.new_data['format_all_devices'] = self._manipulate_all_devices(self.all_devices)
 
         response = {'cached_until': self.py3.CACHE_FOREVER, 'urgent': True}
 
@@ -280,7 +298,10 @@ class Py3status:
             response['composite'] = composite
         else:
             response['full_text'] = self.py3.safe_format(
-                self.format, {'format_device': ''})
+                self.format, {
+                    'format_device': '',
+                    'format_all_devices': ''
+                })
 
         return response
 
