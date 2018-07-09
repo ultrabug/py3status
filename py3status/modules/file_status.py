@@ -149,12 +149,16 @@ class Py3status:
 
         if self.thresholds:
             self.py3.threshold_get_color(count_path, 'path')
+            self.py3.threshold_get_color(count_path, 'paths')
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
+            'cached_until':
+            self.py3.time_in(self.cache_timeout),
+            'full_text':
+            self.py3.safe_format(
                 self.format, {
                     'path': count_path,
+                    'paths': count_path,
                     'format_path': format_path
                 }
             )
