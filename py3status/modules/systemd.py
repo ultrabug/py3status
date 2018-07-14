@@ -5,7 +5,7 @@ Display status of a service on your system.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '{unit}: {status}')
-    hideExtension: suppress extension of the systemd unit (default False)
+    hide_extension: suppress extension of the systemd unit (default False)
     unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
@@ -53,7 +53,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = '{unit}: {status}'
-    hideExtension = False
+    hide_extension = False
     unit = 'dbus.service'
 
     def post_config_hook(self):
@@ -75,7 +75,7 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
-        if self.hideExtension and self.unit.endswith('.service'):
+        if self.hide_extension and self.unit.endswith('.service'):
             unitPrintName = self.unit[:-8]
         else:
             unitPrintName = self.unit
