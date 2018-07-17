@@ -107,8 +107,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
-    format_play = None
     format_pause = None
+    format_play = None
     format_stop = None
     hide_on_error = False
     hide_when_paused = False
@@ -128,15 +128,18 @@ class Py3status:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
 
-        if self.format_play and not self.py3.get_placeholders_list(self.format_play) and '%' in self.format_play:
+        if self.format_play and not self.py3.get_placeholders_list(self.format_play) \
+                and '%' in self.format_play:
             self.format_play = re.sub('%([a-z]+)%', r'{\1}', self.format_play)
             self.py3.log('Old % style format DEPRECATED use { style format')
 
-        if self.format_pause and not self.py3.get_placeholders_list(self.format_pause) and '%' in self.format_pause:
+        if self.format_pause and not self.py3.get_placeholders_list(self.format_pause) \
+                and '%' in self.format_pause:
             self.format_pause = re.sub('%([a-z]+)%', r'{\1}', self.format_pause)
             self.py3.log('Old % style format DEPRECATED use { style format')
 
-        if self.format_stop and not self.py3.get_placeholders_list(self.format_stop) and '%' in self.format_stop:
+        if self.format_stop and not self.py3.get_placeholders_list(self.format_stop) \
+                and '%' in self.format_stop:
             self.format_stop = re.sub('%([a-z]+)%', r'{\1}', self.format_stop)
             self.py3.log('Old % style format DEPRECATED use { style format')
 
