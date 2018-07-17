@@ -6,6 +6,12 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
+    format_play: template string when mpd is playing
+        (default: None)
+    format_pause: template string when mpd is paused
+        (default: None)
+    format_stop: template string when mpd is stoped
+        (default: None)
     hide_on_error: hide the status if an error has occurred (default False)
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
@@ -101,6 +107,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
+    format_play = None
+    format_pause = None
+    format_stop = None
     hide_on_error = False
     hide_when_paused = False
     hide_when_stopped = True
@@ -118,6 +127,19 @@ class Py3status:
         if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
             self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
             self.py3.log('Old % style format DEPRECATED use { style format')
+
+        if self.format_play and not self.py3.get_placeholders_list(self.format_play) and '%' in self.format_play:
+            self.format_play = re.sub('%([a-z]+)%', r'{\1}', self.format_play)
+            self.py3.log('Old % style format DEPRECATED use { style format')
+
+        if self.format_pause and not self.py3.get_placeholders_list(self.format_pause) and '%' in self.format_pause:
+            self.format_pause = re.sub('%([a-z]+)%', r'{\1}', self.format_pause)
+            self.py3.log('Old % style format DEPRECATED use { style format')
+
+        if self.format_stop and not self.py3.get_placeholders_list(self.format_stop) and '%' in self.format_stop:
+            self.format_stop = re.sub('%([a-z]+)%', r'{\1}', self.format_stop)
+            self.py3.log('Old % style format DEPRECATED use { style format')
+
         # class variables:
         self.client = None
 
@@ -180,7 +202,14 @@ class Py3status:
                         return song_attr(next_song, attr[5:])
                     return song_attr(song, attr)
 
-                text = self.py3.safe_format(self.format, attr_getter=attr_getter)
+                if self.format_play and state == 'play':
+                    text = self.py3.safe_format(self.format_play, attr_getter=attr_getter)
+                elif self.format_pause and state == 'pause':
+                    text = self.py3.safe_format(self.format_pause, attr_getter=attr_getter)
+                elif self.format_stop and state == 'stop':
+                    text = self.py3.safe_format(self.format_stop, attr_getter=attr_getter)
+                else:
+                    text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
         except ValueError:
             # when status.get(...) returns None; e.g. during reversal of playlist
@@ -188,6 +217,7 @@ class Py3status:
             state = None
         except socket.error:
             text = "Failed to connect to mpd!"
+
             state = None
         except ConnectionError:
             text = "Error while connecting to mpd!"
