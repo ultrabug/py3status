@@ -6,9 +6,9 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
-    format_play: template string when mpd is playing
-        (default: None)
     format_pause: template string when mpd is paused
+        (default: None)
+    format_play: template string when mpd is playing
         (default: None)
     format_stop: template string when mpd is stoped
         (default: None)
