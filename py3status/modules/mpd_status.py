@@ -7,11 +7,11 @@ Configuration parameters:
     format: template string (see below)
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
     format_pause: template string when mpd is paused
-        (default: None)
+        (default None)
     format_play: template string when mpd is playing
-        (default: None)
+        (default None)
     format_stop: template string when mpd is stoped
-        (default: None)
+        (default None)
     hide_on_error: hide the status if an error has occurred (default False)
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
