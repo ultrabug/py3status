@@ -220,7 +220,6 @@ class Py3status:
             state = None
         except socket.error:
             text = "Failed to connect to mpd!"
-
             state = None
         except ConnectionError:
             text = "Error while connecting to mpd!"
