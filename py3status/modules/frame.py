@@ -112,26 +112,26 @@ class Py3status:
 
         # get the child modules output.
         output = []
-        if self.open:
-            for item in self.items:
-                out = self.py3.get_output(item)[:]
-                if self.format_separator is None:
-                    if out and "separator" not in out[-1]:
-                        # we copy the item as we do not want to change the
-                        # original.
-                        last_item = out[-1].copy()
-                        last_item["separator"] = True
-                        out[-1] = last_item
-                else:
-                    if self.format_separator:
-                        out += [{"full_text": self.format_separator}]
-                output += out
-            urgent = False
+        for item in self.items:
+            out = self.py3.get_output(item)[:]
+            if self.format_separator is None:
+                if out and "separator" not in out[-1]:
+                    # we copy the item as we do not want to change the
+                    # original.
+                    last_item = out[-1].copy()
+                    last_item["separator"] = True
+                    out[-1] = last_item
+            else:
+                if self.format_separator:
+                    out += [{"full_text": self.format_separator}]
+            output += out
+        urgent = False
 
-            # Remove last separator
-            if self.format_separator:
-                output = output[:-1]
-        else:
+        # Remove last separator
+        if self.format_separator:
+            output = output[:-1]
+
+        if not self.open:
             urgent = self.urgent
 
         if self.py3.format_contains(self.format, "button"):
@@ -144,10 +144,26 @@ class Py3status:
         else:
             button = None
 
+        for i in output:
+            try:
+                if not self.py3.is_color(i["color"]):
+                    i["color"] = self.py3.COLOR_GOOD
+            except KeyError:
+                i["color"] = self.py3.COLOR_GOOD
+        colors = [int(i["color"].lstrip("#"), base=16)
+                  for i in output]
+        if colors:
+            color = "#%x" % int(sum(colors) / len(colors))
+        else:
+            color = None
+
+        if not self.open:
+            output = []
         composites = {
             "output": self.py3.composite_create(output),
             "button": self.py3.composite_create(button),
         }
+
         output = self.py3.safe_format(self.format, composites)
         response = {
             "cached_until": self.py3.CACHE_FOREVER,
@@ -156,6 +172,9 @@ class Py3status:
 
         if urgent:
             response["urgent"] = urgent
+
+        if color:
+            response["color"] = color
 
         return response
 
