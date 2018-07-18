@@ -146,7 +146,7 @@ class Py3status:
         self.dbus = SystemBus()
         self.error = None
         try:
-            self.proxy = self.dbus.get(self.dbus_interface)
+            self.proxy = self.dbus.get(self.dbus_interface, self.dbus_devices)
         except:
             self.error = Exception(STRING_USBGUARD_DBUS)
 
