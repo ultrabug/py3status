@@ -6,12 +6,12 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '\?if=!hide {unit}: {status}')
     hide_if_default: suppress the output if the systemd unit is in default state
-        'Off' the output is never suppressed
-        'On' the output is suppressed if the unit is (enabled and active)
+        'off' the output is never suppressed
+        'on' the output is suppressed if the unit is (enabled and active)
                                                   or (disabled and inactive)
         'active' the output is suppressed if the unit is active
         'inactive' the output is suppressed if the unit is inactive
-        (default 'Off')
+        (default 'off')
     unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
@@ -59,7 +59,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = '\?if=!hide {unit}: {status}'
-    hide_if_default = 'Off'
+    hide_if_default = 'off'
     unit = 'dbus.service'
 
     def post_config_hook(self):
@@ -82,7 +82,7 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
-        if self.hide_if_default == 'On':
+        if self.hide_if_default == 'on':
             hide = (status == 'active' and state == 'enabled') or \
                    (status == 'inactive' and state == 'disabled')
         else:
