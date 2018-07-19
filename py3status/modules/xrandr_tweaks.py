@@ -402,7 +402,7 @@ class Py3status:
                 'gamma_red': '\?color=#ff0000 {value:.2f}',
                 'ignore': '\?color=#6a6a6a {value}',
                 'mode': '\?color=violet {value}',
-                'name': '\?color=#ffffff {value}',
+                'name': '{value}',
                 'pos': '\?color=cyan {value}',
                 'primary': '\?if=value&color=gold \[P\]|\?color=darkgray \[P\]',
                 'off': '\?if=value&color=white \u25cb|\?color=white \u25cf',
