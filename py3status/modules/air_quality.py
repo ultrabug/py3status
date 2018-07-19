@@ -154,7 +154,7 @@ class Py3status:
                 self.url, params=self.auth_token, timeout=self.request_timeout
             ).json()
         except self.py3.RequestException:
-            return {}
+            return None
 
     def _organize(self, data):
         new_data = {}
