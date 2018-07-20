@@ -109,7 +109,8 @@ single
 
 """
 
-from collections import OrderedDict, deque
+from collections import deque
+from collections import OrderedDict
 from itertools import combinations
 from time import sleep
 
@@ -233,8 +234,8 @@ class Py3status:
 
         # Preserve the order in which user defined the output combinations
         if whitelist:
-            available = reversed(
-                [comb for comb in whitelist if comb in available])
+            available = reversed([comb for comb in whitelist
+                                  if comb in available])
 
         self.available_combinations = deque(available)
         self.combinations_map = combinations_map
@@ -256,8 +257,8 @@ class Py3status:
         we display the last selected combination.
         """
         for _ in range(len(self.available_combinations)):
-            if (self.displayed is None
-                    and self.available_combinations[0] == self.active_layout):
+            if (self.displayed is None and
+                    self.available_combinations[0] == self.active_layout):
                 self.displayed = self.available_combinations[0]
                 break
             else:
@@ -304,24 +305,24 @@ class Py3status:
                 pos = getattr(self, '{}_pos'.format(output), '0x0')
                 rotation = getattr(self, '{}_rotate'.format(output), 'normal')
                 resolution = getattr(self, '{}_mode'.format(output), None)
-                resolution = '--mode {}'.format(
-                    resolution) if resolution else '--auto'
+                resolution = '--mode {}'.format(resolution) if resolution else '--auto'
                 if rotation not in ['inverted', 'left', 'normal', 'right']:
-                    self.py3.log(
-                        'configured rotation {} is not valid'.format(rotation))
+                    self.py3.log('configured rotation {} is not valid'.format(
+                        rotation))
                     rotation = 'normal'
                 #
                 if mode == 'clone' and previous_output is not None:
                     cmd += ' {} --same-as {}'.format(resolution,
                                                      previous_output)
                 else:
-                    if ('above' in pos or 'below' in pos or 'left-of' in pos
-                            or 'right-of' in pos):
-                        cmd += ' {} --{} --rotate {}'.format(
-                            resolution, pos, rotation)
+                    if ('above' in pos or 'below' in pos or 'left-of' in pos or
+                            'right-of' in pos):
+                        cmd += ' {} --{} --rotate {}'.format(resolution, pos,
+                                                             rotation)
                     else:
-                        cmd += ' {} --pos {} --rotate {}'.format(
-                            resolution, pos, rotation)
+                        cmd += ' {} --pos {} --rotate {}'.format(resolution,
+                                                                 pos,
+                                                                 rotation)
                 previous_output = output
             else:
                 cmd += ' --off'
@@ -432,8 +433,8 @@ class Py3status:
         self._set_available_combinations()
         self._choose_what_to_display()
 
-        if (len(self.available_combinations) < 2
-                and self.hide_if_single_combination):
+        if (len(self.available_combinations) < 2 and
+                self.hide_if_single_combination):
             full_text = self.py3.safe_format(self.format, {'output': ''})
         else:
             if self.fixed_width is True:
