@@ -18,6 +18,8 @@ For convenience, this module also proposes some added features:
 
 Configuration parameters:
     cache_timeout: how often to (re)detect the outputs (default 10)
+    command: a custom command to be run after display configuration changes
+        (default None)
     fallback: when the current output layout is not available anymore,
         fallback to this layout if available. This is very handy if you
         have a laptop and switched to an external screen for presentation
@@ -119,8 +121,8 @@ class Py3status:
     """
     """
     # available configuration parameters
-    background_command = None
     cache_timeout = 10
+    command = None
     fallback = True
     fixed_width = True
     force_on_start = None
@@ -334,13 +336,11 @@ class Py3status:
             self.active_mode = mode
         self.py3.log('command "{}" exit code {}'.format(cmd, code))
 
-        self._apply_background()
+        if self.command:
+            self.py3.command_run(self.command)
+
         # move workspaces to outputs as configured
         self._apply_workspaces(combination, mode)
-
-    def _apply_background(self):
-        if self.background_command:
-            self.py3.command_run(self.background_command)
 
     def _apply_workspaces(self, combination, mode):
         """
@@ -377,7 +377,6 @@ class Py3status:
         on your laptop by switching back to the integrated screen
         automatically !
         """
-
         if len(self.active_comb) == 1:
             self._choose_what_to_display(force_refresh=True)
             self._apply()
