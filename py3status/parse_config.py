@@ -35,9 +35,12 @@ class ParseException(Exception):
         self.position = position
         self.token = token.replace('\n', '\\n')
 
-    def one_line(self):
-        return 'CONFIG ERROR: {} saw `{}` at line {} position {}'.format(
-            self.error, self.token, self.line_no, self.position)
+    def one_line(self, config_path):
+        filename = os.path.basename(config_path)
+        notif = 'CONFIG ERROR: {} saw `{}` at line {} position {} in file {}'
+        return notif.format(
+            self.error, self.token, self.line_no, self.position, filename
+        )
 
     def __str__(self):
         marker = ' ' * (self.position - 1) + '^'
@@ -649,7 +652,7 @@ def process_config(config_path, py3_wrapper=None):
             config_info = parse_config(f)
         except ParseException as e:
             # There was a problem use our special error config
-            error = e.one_line()
+            error = e.one_line(config_path)
             notify_user(error)
             # to display correctly in i3bar we need to do some substitutions
             for char in ['"', '{', '|']:
