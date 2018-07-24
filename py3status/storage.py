@@ -19,24 +19,24 @@ class Storage:
 
         self.config = py3_wrapper.config
         py3_config = self.config.get('py3_config', {})
-        storage_file = py3_config.get('py3status', {}).get('storage_file')
+        storage_config = py3_config.get('py3status', {}).get('storage')
 
-        if storage_file:
-            storage_path = None
-            storage_file = os.path.expanduser(storage_file)
-            if '/' not in storage_file:
-                storage_path = os.environ.get('XDG_CACHE_HOME')
+        if storage_config:
+            storage_file = os.path.expanduser(storage_config)
+            if '/' in storage_file:
+                storage_dir = None
+            else:
+                storage_dir = os.environ.get('XDG_CACHE_HOME')
         else:
-            storage_path = os.environ.get('XDG_CACHE_HOME')
-            storage_file = 'py3status_cache'
+            storage_dir = os.environ.get('XDG_CACHE_HOME')
+            storage_file = 'py3status_cache.data'
 
-        if not storage_path:
-            storage_path = os.path.expanduser('~/.cache')
-        storage_file = os.path.join(storage_path, storage_file)
+        if not storage_dir:
+            storage_dir = os.path.expandvars(os.path.expanduser('~/.cache'))
+        self.storage_path = os.path.join(storage_dir, storage_file)
 
-        self.storage_file = storage_file
         try:
-            with open(storage_file, 'rb') as f:
+            with open(self.storage_path, 'rb') as f:
                 try:
                     # python3
                     self.data = load(f, encoding='bytes')
@@ -45,8 +45,11 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
-        string = 'storage_file: {}\nstorage_data: {}'
-        self.py3_wrapper.log(string.format(storage_file, self.data))
+        self.py3_wrapper.log(
+            'storage_path: {}\nstorage_data: {}'.format(
+                self.storage_path, self.data
+            )
+        )
         self.initialized = True
 
     def save(self):
@@ -54,14 +57,14 @@ class Storage:
         Save our data to disk. We want to always have a valid file.
         """
         with NamedTemporaryFile(
-                dir=os.path.dirname(self.storage_file), delete=False
+                dir=os.path.dirname(self.storage_path), delete=False
         ) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)
             f.flush()
             os.fsync(f.fileno())
             tmppath = f.name
-        os.rename(tmppath, self.storage_file)
+        os.rename(tmppath, self.storage_path)
 
     def fix(self, item):
         """
