@@ -268,11 +268,11 @@ class Placeholder:
                 value = value_ = output.format(**{self.key: value})
 
             if block.commands.not_zero:
-                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+                valid = value_ not in ['', 'None', None, False, '0', '0.0', 0, 0.0]
             else:
                 # '', None, and False are ignored
                 # numbers like 0 and 0.0 are not.
-                valid = not (value_ in ['', None] or value_ is False)
+                valid = not (value_ in ['', 'None', None] or value_ is False)
             enough = False
         except:
             # Exception raised when we don't have the param
