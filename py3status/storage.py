@@ -4,6 +4,7 @@ import os
 
 from collections import Iterable, Mapping
 from pickle import dump, load
+from json import dumps
 from tempfile import NamedTemporaryFile
 from time import time
 
@@ -45,11 +46,10 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
-        self.py3_wrapper.log(
-            'storage_path: {}\nstorage_data: {}'.format(
-                self.storage_path, self.data
-            )
-        )
+        self.py3_wrapper.log('storage_path: {}'.format(self.storage_path))
+        if self.data:
+            data = ['\n:' + x for x in dumps(self.data, indent=4).splitlines()]
+            self.py3_wrapper.log('storage_data: {}'.format(''.join(data)))
         self.initialized = True
 
     def save(self):
