@@ -7,7 +7,7 @@ Configuration parameters:
     format: display format for this module
         (default '\?color=interface [{format_interface}|\?show no interfaces]')
     format_interface: display format for network interfaces
-        (default '\?if=is_connected {name}:[ {format_ip4}][ {format_ip6}]')
+        (default '\?if=connected {name}:[ {format_ip4}][ {format_ip6}]')
     format_interface_separator: show separator if more than one (default ' ')
     format_ip4: display format for IPv4 addresses (default '{ip}')
     format_ip4_separator: show separator if more than one (default ', ')
@@ -35,7 +35,7 @@ format_interface placeholders:
     {ip4} number of IPv4 addresses
     {ip6} number of IPv6 addresses
     {ip} number of IP addresses
-    {is_connected} a boolean based on interface data
+    {connected} a boolean based on interface data
 
 format_ip4 placeholders:
     {ip} IPv4 address, eg 192.168.1.103
@@ -88,7 +88,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = '\?color=interface [{format_interface}|\?show no interfaces]'
-    format_interface = '\?if=is_connected {name}:[ {format_ip4}][ {format_ip6}]'
+    format_interface = '\?if=connected {name}:[ {format_ip4}][ {format_ip6}]'
     format_interface_separator = ' '
     format_ip4 = '{ip}'
     format_ip4_separator = ', '
@@ -156,7 +156,7 @@ class Py3status:
             if self._blacklist(interface, self.interface_blacklist):
                 continue
 
-            is_connected = False
+            connected = False
 
             format_ip4 = None
             new_ip4 = []
@@ -164,7 +164,7 @@ class Py3status:
             if self.init['format_ip4'] or self.init['count_ip4']:
                 for ip4 in ips.get('ip4', []):
                     if not self._blacklist(ip4, self.ip_blacklist):
-                        is_connected = True
+                        connected = True
                         count_ip4 += 1
                         if self.init['format_ip4']:
                             new_ip4.append(self.py3.safe_format(
@@ -180,7 +180,7 @@ class Py3status:
             if self.init['format_ip6'] or self.init['count_ip6']:
                 for ip6 in ips.get('ip6', []):
                     if not self._blacklist(ip6, self.ip_blacklist):
-                        is_connected = True
+                        connected = True
                         count_ip6 += 1
                         if self.init['format_ip6']:
                             new_ip6.append(self.py3.safe_format(
@@ -190,7 +190,7 @@ class Py3status:
                 format_ip6 = self.py3.composite_join(self.py3.safe_format(
                     self.format_ip6_separator), new_ip6)
 
-            if is_connected:
+            if connected:
                 count_interface += 1
 
             count_ip = count_ip4 + count_ip6
@@ -205,7 +205,7 @@ class Py3status:
                     'name': interface,
                     'format_ip4': format_ip4,
                     'format_ip6': format_ip6,
-                    'is_connected': is_connected,
+                    'connected': connected,
                     'ip': count_ip,
                     'ip4': count_ip4,
                     'ip6': count_ip6,
