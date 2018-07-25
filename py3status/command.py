@@ -21,7 +21,7 @@ examples:
         py3-cmd refresh "weather_yahoo chicago"
 
         # refresh all modules
-        py3-cmd refresh all
+        py3-cmd refresh --all
 """
 CLICK_EPILOG = """
 examples:
@@ -57,8 +57,8 @@ INFORMATION = [
     ('v', 'verbose', 'enable verbose mode'),
 ]
 SUBPARSERS = [
-    ('click', 'click modules'),
-    ('refresh', 'refresh modules'),
+    ('click', 'click modules', '+'),
+    ('refresh', 'refresh modules', '*'),
 ]
 CLICK_OPTIONS = [
     ('button', 'specify a button number (default %(default)s)'),
@@ -69,6 +69,9 @@ CLICK_OPTIONS = [
     ('width', 'specify a width of the block, in pixel'),
     ('x', 'specify absolute X on the bar, from the top left'),
     ('y', 'specify absolute Y on the bar, from the top left'),
+]
+REFRESH_OPTIONS = [
+    ('all', 'refresh all modules')
 ]
 
 
@@ -270,7 +273,7 @@ def command_parser():
     sps = {}
 
     # subparsers: add refresh, click
-    for name, msg in SUBPARSERS:
+    for name, msg, nargs in SUBPARSERS:
         sps[name] = subparsers.add_parser(
             name,
             epilog=eval('{}_EPILOG'.format(name.upper())),
@@ -278,7 +281,7 @@ def command_parser():
             add_help=False,
             help=msg
         )
-        sps[name].add_argument(nargs='+', dest='module', help='module name')
+        sps[name].add_argument(nargs=nargs, dest='module', help='module name')
 
     # ALIAS_DEPRECATION: subparsers: add click (aliases)
     buttons = {
@@ -300,6 +303,12 @@ def command_parser():
         else:
             sp.add_argument(arg, metavar='INT', type=int, help=msg)
 
+    # refresh subparser: add all
+    sp = sps['refresh']
+    for name, msg in REFRESH_OPTIONS:
+        arg = '--{}'.format(name)
+        sp.add_argument(arg, action='store_true', help=msg)
+
     # parse args, post-processing
     options = parser.parse_args()
 
@@ -312,9 +321,21 @@ def command_parser():
                 pass
     elif options.command == 'refresh':
         # refresh all
-        if 'all' in options.module:
+        # ALL_DEPRECATION
+        if options.module is None:
+            options.module = []
+        # end
+        valid = False
+        if options.all:  # keep this
             options.command = 'refresh_all'
             options.module = []
+            valid = True
+        if 'all' in options.module:  # remove this later
+            options.command = 'refresh_all'
+            options.module = []
+            valid = True
+        if not options.module and not valid:
+            sps['refresh'].error('missing positional or optional arguments')
     elif options.version:
         # print version
         from platform import python_version

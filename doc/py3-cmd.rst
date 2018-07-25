@@ -14,7 +14,6 @@ refresh
 ^^^^^^^
 
 Cause named module(s) to have their output refreshed.
-To refresh all modules use the ``all`` keyword.
 
 .. code-block:: shell
 
@@ -28,7 +27,7 @@ To refresh all modules use the ``all`` keyword.
     py3-cmd refresh "weather_yahoo chicago"
 
     # refresh all modules
-    py3-cmd refresh all
+    py3-cmd refresh --all
 
 
 click
