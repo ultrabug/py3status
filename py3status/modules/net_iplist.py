@@ -7,7 +7,7 @@ Configuration parameters:
     format: display format for this module
         (default '\?color=interface [{format_interface}|\?show no interfaces]')
     format_interface: display format for network interfaces
-        (default '\?if=connected {name}:[ {format_ip4}][ {format_ip6}]')
+        (default '\?if=active {name}:[ {format_ip4}][ {format_ip6}]')
     format_interface_separator: show separator if more than one (default ' ')
     format_ip4: display format for IPv4 addresses (default '{ip}')
     format_ip4_separator: show separator if more than one (default ', ')
@@ -30,12 +30,12 @@ Format placeholders:
 
 format_interface placeholders:
     {name} interface name, eg eno1
+    {active} a boolean based on interface data
     {format_ip4} format for IPv4 addresses
     {format_ip6} format for IPv6 addresses
     {ip4} number of IPv4 addresses
     {ip6} number of IPv6 addresses
     {ip} number of IP addresses
-    {connected} a boolean based on interface data
 
 format_ip4 placeholders:
     {ip} IPv4 address, eg 192.168.1.103
@@ -88,7 +88,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = '\?color=interface [{format_interface}|\?show no interfaces]'
-    format_interface = '\?if=connected {name}:[ {format_ip4}][ {format_ip6}]'
+    format_interface = '\?if=active {name}:[ {format_ip4}][ {format_ip6}]'
     format_interface_separator = ' '
     format_ip4 = '{ip}'
     format_ip4_separator = ', '
@@ -98,6 +98,9 @@ class Py3status:
     ip_blacklist = []
     thresholds = [(0, 'bad'), (1, 'good')]
     use_sudo = False
+
+    format = '{format_interface}'
+    format_interface = '[\?color=ip {name}][ {format_ip4}]'
 
     def post_config_hook(self):
         self.re_interface = re.compile(r'\d+: (?P<interface>\w+):')
@@ -159,15 +162,16 @@ class Py3status:
             if self._blacklist(interface, self.interface_blacklist):
                 continue
 
-            connected = False
+            active = False
 
+            # ip4
             format_ip4 = None
             new_ip4 = []
             count_ip4 = 0
             if self.init['format_ip4'] or self.init['count_ip4']:
                 for ip4 in ips.get('ip4', []):
                     if not self._blacklist(ip4, self.ip_blacklist):
-                        connected = True
+                        active = True
                         count_ip4 += 1
                         if self.init['format_ip4']:
                             new_ip4.append(self.py3.safe_format(
@@ -179,13 +183,14 @@ class Py3status:
                 format_ip4 = self.py3.composite_join(
                     format_ip4_separator, new_ip4)
 
+            # ip6
             format_ip6 = None
             new_ip6 = []
             count_ip6 = 0
             if self.init['format_ip6'] or self.init['count_ip6']:
                 for ip6 in ips.get('ip6', []):
                     if not self._blacklist(ip6, self.ip_blacklist):
-                        connected = True
+                        active = True
                         count_ip6 += 1
                         if self.init['format_ip6']:
                             new_ip6.append(self.py3.safe_format(
@@ -197,7 +202,8 @@ class Py3status:
                 format_ip6 = self.py3.composite_join(
                     format_ip6_separator, new_ip6)
 
-            if connected:
+            # end
+            if active:
                 count_interface += 1
 
             count_ip = count_ip4 + count_ip6
@@ -212,9 +218,9 @@ class Py3status:
                     self.format_interface,
                     {
                         'name': interface,
+                        'active': active,
                         'format_ip4': format_ip4,
                         'format_ip6': format_ip6,
-                        'connected': connected,
                         'ip': count_ip,
                         'ip4': count_ip4,
                         'ip6': count_ip6,
@@ -224,7 +230,6 @@ class Py3status:
 
         self.py3.threshold_get_color(count_interface, 'interface')
 
-        # interface
         format_interface_separator = self.py3.safe_format(
             self.format_interface_separator)
         format_interface = self.py3.composite_join(
