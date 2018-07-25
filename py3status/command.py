@@ -52,6 +52,7 @@ examples:
         # more options. however, there are no modules that
         # uses the aforementioned options.
 """
+# EXEC_EPILOG = ''
 INFORMATION = [
     ('V', 'version', 'show version number and exit'),
     ('v', 'verbose', 'enable verbose mode'),
@@ -59,6 +60,7 @@ INFORMATION = [
 SUBPARSERS = [
     ('click', 'click modules', '+'),
     ('refresh', 'refresh modules', '*'),
+    # ('exec', 'execute methods', '+'),
 ]
 CLICK_OPTIONS = [
     ('button', 'specify a button number (default %(default)s)'),
