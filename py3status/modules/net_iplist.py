@@ -104,13 +104,16 @@ class Py3status:
         self.re_ip4 = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
         self.re_ip6 = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
         self.ip_command = ['ip', 'address', 'show']
+
+        # use sudo?
         if self.use_sudo:
             self.ip_command[0:0] = ['sudo', '-n']
+
         self.init = {}
         for ip in ['ip4', 'ip6']:
-            x = 'count_%s' % ip
+            x = 'count_{}'.format(ip)
             self.init[x] = self.py3.format_contains(self.format_interface, ip)
-            x = 'format_%s' % ip
+            x = 'format_{}'.format(ip)
             self.init[x] = self.py3.format_contains(getattr(self, x), 'ip') and (
                 self.py3.format_contains(self.format_interface, x)
             )
@@ -171,8 +174,10 @@ class Py3status:
                                 self.format_ip4, {'ip': ip4}))
 
             if self.init['format_ip4']:
-                format_ip4 = self.py3.composite_join(self.py3.safe_format(
-                    self.format_ip4_separator), new_ip4)
+                format_ip4_separator = self.py3.safe_format(
+                    self.format_ip4_separator)
+                format_ip4 = self.py3.composite_join(
+                    format_ip4_separator, new_ip4)
 
             format_ip6 = None
             new_ip6 = []
@@ -187,8 +192,10 @@ class Py3status:
                                 self.format_ip6, {'ip': ip6}))
 
             if self.init['format_ip6']:
-                format_ip6 = self.py3.composite_join(self.py3.safe_format(
-                    self.format_ip6_separator), new_ip6)
+                format_ip6_separator = self.py3.safe_format(
+                    self.format_ip6_separator)
+                format_ip6 = self.py3.composite_join(
+                    format_ip6_separator, new_ip6)
 
             if connected:
                 count_interface += 1
@@ -200,21 +207,28 @@ class Py3status:
                 self.py3.threshold_get_color(count_ip4, 'ip4')
                 self.py3.threshold_get_color(count_ip6, 'ip6')
 
-            new_interface.append(self.py3.safe_format(
-                self.format_interface, {
-                    'name': interface,
-                    'format_ip4': format_ip4,
-                    'format_ip6': format_ip6,
-                    'connected': connected,
-                    'ip': count_ip,
-                    'ip4': count_ip4,
-                    'ip6': count_ip6,
-                }))
+            new_interface.append(
+                self.py3.safe_format(
+                    self.format_interface,
+                    {
+                        'name': interface,
+                        'format_ip4': format_ip4,
+                        'format_ip6': format_ip6,
+                        'connected': connected,
+                        'ip': count_ip,
+                        'ip4': count_ip4,
+                        'ip6': count_ip6,
+                    }
+                )
+            )
 
-        if self.thresholds:
-            self.py3.threshold_get_color(count_interface, 'interface')
-        format_interface = self.py3.composite_join(self.py3.safe_format(
-            self.format_interface_separator), new_interface)
+        self.py3.threshold_get_color(count_interface, 'interface')
+
+        # interface
+        format_interface_separator = self.py3.safe_format(
+            self.format_interface_separator)
+        format_interface = self.py3.composite_join(
+            format_interface_separator, new_interface)
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
@@ -222,7 +236,9 @@ class Py3status:
                 self.format, {
                     'format_interface': format_interface,
                     'interface': count_interface
-                })}
+                }
+            )
+        }
 
 
 if __name__ == "__main__":
