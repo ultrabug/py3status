@@ -121,6 +121,9 @@ class Py3status:
                 raise Exception('missing %s' % config_name)
 
         self.connect = getattr(import_module(self.database), 'connect')
+        self.operational_error = getattr(
+            import_module(self.database), 'OperationalError'
+        )
         self.is_parameters_a_dict = isinstance(self.parameters, dict)
         if not self.is_parameters_a_dict:
             self.parameters = expanduser(self.parameters)
@@ -132,7 +135,6 @@ class Py3status:
             )
 
     def _get_sql_data(self):
-        self.py3.log('=== {}'.format(self.thresholds_init))
         if self.is_parameters_a_dict:
             connection = self.connect(**self.parameters)
         else:
@@ -152,7 +154,7 @@ class Py3status:
 
         try:
             data = self._get_sql_data()
-        except:
+        except self.operational_error:
             pass
         else:
             new_data = []
