@@ -85,7 +85,8 @@ class Task:
     """
 
     def run(self):
-        raise NotImplemented()
+        # F901 'raise NotImplemented' should be 'raise NotImplementedError'
+        raise NotImplemented()  # noqa f901
 
 
 class CheckI3StatusThread(Task):
