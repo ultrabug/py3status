@@ -60,7 +60,7 @@ class Py3status:
             for currency in self.currencies:
                 try:
                     rate = rates[currency] * base_rate
-                except:
+                except KeyError:
                     rate = '?'
                 self.rates_data[currency] = rate
 
