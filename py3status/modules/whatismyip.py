@@ -17,9 +17,10 @@ Configuration parameters:
     hide_when_offline: hide the module output when offline (default False)
     icon_off: what to display when offline (default '■')
     icon_on: what to display when online (default '●')
+    ignore_warnings: ignore negative_cache_timeout warnings (default False)
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
-    negative_cache_timeout: how often to check again when offline (default 2)
+    negative_cache_timeout: how often to check again when offline (default 60)
     timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
         (default 'https://ifconfig.co/json')
@@ -52,6 +53,7 @@ mode
 
 URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
 URL_GEO_NEW_DEFAULT = 'https://ifconfig.co/json'
+UA = 'Mozilla/5.0 py3status'
 
 
 class Py3status:
@@ -66,8 +68,9 @@ class Py3status:
     hide_when_offline = False
     icon_off = u'■'
     icon_on = u'●'
+    ignore_warnings = False
     mode = 'ip'
-    negative_cache_timeout = 2
+    negative_cache_timeout = 60
     timeout = 5
     url_geo = URL_GEO_NEW_DEFAULT
 
@@ -97,6 +100,12 @@ class Py3status:
         if self.expected is None:
             self.expected = {}
 
+        # Alert about negative_cache_timeout
+        if self.negative_cache_timeout < 60 and self.ignore_warnings is False:
+            self.py3.error(
+                'warning, negative_cache_timeout should be > 60 to prevent ' +
+                'from being blacklisted by API')
+
         # Backwards compatibility
         self.substitutions = {}
         if self.url_geo == URL_GEO_NEW_DEFAULT:
@@ -121,8 +130,14 @@ class Py3status:
     def _get_my_ip_info(self):
         """
         """
+        self.headers = {'User-Agent': UA}
+
         try:
-            info = self.py3.request(self.url_geo, timeout=self.timeout).json()
+            info = self.py3.request(
+                self.url_geo,
+                timeout=self.timeout,
+                headers=self.headers,
+            ).json()
             for old, new in self.substitutions.items():
                 info[old] = info.get(new)
             return info
