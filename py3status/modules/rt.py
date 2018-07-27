@@ -36,7 +36,7 @@ SAMPLE OUTPUT
 
 try:
     import pymysql as mysql
-except:
+except (ImportError, ModuleNotFoundError):  # py2/py3
     import MySQLdb as mysql
 
 
