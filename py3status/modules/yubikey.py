@@ -42,10 +42,12 @@ class YubiKeyTouchDetectorListener(threading.Thread):
             self.parent.error = None
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.socket.connect(self.parent.socket_path)
-        except:
+        except FileNotFoundError:
             self.socket = None
-            self.parent.error = Exception(
-                "Cannot connect to yubikey-touch-detector")
+            self.parent.error = '[Errno 2] No such socket'
+        except Exception as e:
+            self.socket = None
+            self.parent.error = format(e)
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -97,7 +99,7 @@ class Py3status:
 
     def yubikey(self):
         if self.error:
-            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
+            self.py3.error(self.error)
 
         response = {
             'cached_until': self.py3.CACHE_FOREVER,
