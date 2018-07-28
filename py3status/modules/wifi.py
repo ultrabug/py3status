@@ -87,7 +87,7 @@ class Py3status:
                 self.device = 'wlan0'
             else:
                 self.device = devices[0]
-        except:
+        except self.py3.CommandError:
             pass
 
         self.iw_dev_id_link = [iw, 'dev', self.device, 'link']
@@ -121,7 +121,7 @@ class Py3status:
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
         try:
             iw = self.py3.command_output(self.iw_dev_id_link)
-        except:
+        except self.py3.CommandError:
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
                     'full_text': STRING_ERROR}
