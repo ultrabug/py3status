@@ -14,21 +14,20 @@ refresh
 ^^^^^^^
 
 Cause named module(s) to have their output refreshed.
-To refresh all modules use the ``all`` keyword.
 
 .. code-block:: shell
 
-    # refresh any wifi modules
+    # refresh all instances of the wifi module
     py3-cmd refresh wifi
 
-    # refresh wifi module instance eth0
-    py3-cmd refresh "wifi eth0"
+    # refresh multiple modules
+    py3-cmd refresh coin_market github weather_yahoo
 
-    # refresh any wifi or whatismyip modules
-    py3-cmd refresh wifi whatismyip
+    # refresh module with instance name
+    py3-cmd refresh "weather_yahoo chicago"
 
-    # refresh all py3status modules
-    py3-cmd refresh all
+    # refresh all modules
+    py3-cmd refresh --all
 
 
 click
@@ -39,22 +38,27 @@ You can specify the button to simulate.
 
 .. code-block:: shell
 
-    # send a click event to the whatismyip module (button 1)
-    py3-cmd click whatismyip
+    # send a left/middle/right click
+    py3-cmd click --button 1 dpms      # left
+    py3-cmd click --button 2 sysdata   # middle
+    py3-cmd click --button 3 pomodoro  # right
 
-    # send a click event to the backlight module with button 5
-    py3-cmd click 5 backlight
-
-You can also specify the button using one of the named shortcuts
-``leftclick``, ``rightclick``, ``middleclick``, ``scrollup``, ``scrolldown``.
+    # send a up/down click
+    py3-cmd click --button 4 volume_status  # up
+    py3-cmd click --button 5 volume_status  # down
 
 .. code-block:: shell
 
-    # send a click event to the whatismyip module (button 1)
-    py3-cmd leftclick whatismyip
+    # toggle button in frame module
+    py3-cmd click --button 1 --index button frame  # left
 
-    # send a click event to the backlight module with button 5
-    py3-cmd scrolldown backlight
+    # change modules in group module
+    py3-cmd click --button 5 --index button group  # down
+
+    # change time units in timer module
+    py3-cmd click --button 4 --index hours timer    # up
+    py3-cmd click --button 4 --index minutes timer  # up
+    py3-cmd click --button 4 --index seconds timer  # up
 
 
 Calling commands from i3
