@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import argparse
 import glob
 import json
@@ -12,6 +14,7 @@ SERVER_ADDRESS = '/tmp/py3status_uds'
 MAX_SIZE = 1024
 
 BUTTONS = {
+    'frameclick': 0,
     'leftclick': 1,
     'middleclick': 2,
     'rightclick': 3,
@@ -83,16 +86,33 @@ class CommandRunner:
             if module['type'] == 'py3status':
                 name = module['module'].module_name
                 instance = module['module'].module_inst
+
+                # this is a frame click request
+                if name == 'frame':
+                    # if the 'frameclick' named click event was requested
+                    # we simulate a click on the frame button instead
+                    if button == 0:
+                        button = 1
+                        instance = '{} button'.format(
+                            ''.join(module_name.split(' ')[1:]))
+                    # when the button is a standard one (1-5) we simulate a
+                    # user click on the first sub module of the frame
+                    else:
+                        name, instance = module['module'].config['py3_config'][
+                            module_name]['items'][0].split(' ')
             else:
                 name = module['module'].name
                 instance = module['module'].instance
             # our fake event, we do not know x, y so set to None
             event = {
-                'y': None,
-                'x': None,
                 'button': button,
-                'name': name,
                 'instance': instance,
+                'name': name,
+                'relative_x': None,
+                'relative_y': None,
+                'width': None,
+                'x': None,
+                'y': None,
             }
             if self.debug:
                 self.py3_wrapper.log(event)
