@@ -255,8 +255,8 @@ class Placeholder:
                         value = float(value)
                     if 'd' in self.format:
                         value = int(float(value))
-                    output = u'{%s%s}' % (self.key, self.format)
-                    value = output.format(**{self.key: value})
+                    output = u'{[%s]%s}' % (self.key, self.format)
+                    value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
