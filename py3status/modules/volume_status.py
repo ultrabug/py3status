@@ -304,6 +304,10 @@ class Py3status:
         if not self.command:
             self.command = self.py3.check_commands(
                 ['pamixer', 'pactl', 'amixer'])
+            # pactl may be automatically installed, check for pulseaudio too
+            if self.command == 'pactl':
+                if not self.py3.check_commands('pulseaudio'):
+                    self.command = self.py3.check_commands('amixer')
         elif self.command not in ['amixer', 'pamixer', 'pactl']:
             raise Exception(STRING_ERROR % self.command)
         elif not self.py3.check_commands(self.command):
