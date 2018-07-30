@@ -154,7 +154,7 @@ class Py3status:
                 self.url, params=self.auth_token, timeout=self.request_timeout
             ).json()
         except self.py3.RequestException:
-            return {}
+            return None
 
     def _organize(self, data):
         new_data = {}
@@ -178,11 +178,12 @@ class Py3status:
 
     def air_quality(self):
         aqi_data = self._get_aqi_data()
-        if aqi_data.get('status') == 'ok':
-            aqi_data = self._organize(aqi_data)
-            aqi_data = self._manipulate(aqi_data)
-        elif aqi_data.get('status') == 'error':
-            self.py3.error(aqi_data.get('data'))
+        if aqi_data:
+            if aqi_data.get('status') == 'ok':
+                aqi_data = self._organize(aqi_data)
+                aqi_data = self._manipulate(aqi_data)
+            elif aqi_data.get('status') == 'error':
+                self.py3.error(aqi_data.get('data'))
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
