@@ -184,6 +184,7 @@ class PamixerBackend(AudioBackend):
 
 class PactlBackend(AudioBackend):
     def setup(self, parent):
+        self.parent = parent
         # get available device number if not specified
         self.device_type = 'source' if self.is_input else 'sink'
         self.device_type_pl = self.device_type + 's'
@@ -223,14 +224,19 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(['pactl', 'list', self.device_type_pl]).strip()
-        muted, perc = self.re_volume.search(output).groups()
-
+        output_matches = self.re_volume.search(output)
+        if output_matches is None and self.parent.device is None:
+            # This happens when device changed and no device was specified explictly.
+            # Try again.
+            self.device = None
+            self.setup(self.parent)
+            output_matches = self.re_volume.search(output)
+        muted, perc = output_matches.groups()
         # muted should be 'on' or 'off'
         if muted in ['yes', 'no']:
             muted = (muted == 'yes')
         else:
             muted = False
-
         return perc, muted
 
     def volume_up(self, delta):
