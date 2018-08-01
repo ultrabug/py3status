@@ -97,6 +97,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.headers = {'User-Agent': UA}
+
         if self.expected is None:
             self.expected = {}
 
@@ -130,8 +132,6 @@ class Py3status:
     def _get_my_ip_info(self):
         """
         """
-        self.headers = {'User-Agent': UA}
-
         try:
             info = self.py3.request(
                 self.url_geo,
