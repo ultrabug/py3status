@@ -224,10 +224,10 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(['pactl', 'list', self.device_type_pl]).strip()
-
         output_matches = self.re_volume.search(output)
-        if output_matches is None:
-            # This happens when device changed. Try again.
+        if output_matches is None and self.parent.device is None:
+            # This happens when device changed and no device was specified explictly.
+            # Try again.
             self.device = None
             self.setup(self.parent)
             output_matches = self.re_volume.search(output)
@@ -237,7 +237,6 @@ class PactlBackend(AudioBackend):
             muted = (muted == 'yes')
         else:
             muted = False
-
         return perc, muted
 
     def volume_up(self, delta):
