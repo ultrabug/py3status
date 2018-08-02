@@ -55,7 +55,7 @@ missing
 from glob import glob
 from os.path import basename, expanduser
 
-STRING_NO_PATH = 'missing path'
+STRING_NO_PATHS = 'missing paths'
 
 
 class Py3status:
@@ -99,7 +99,7 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.paths:
-            raise Exception(STRING_NO_PATH)
+            raise Exception(STRING_NO_PATHS)
 
         # icon deprecation
         on = getattr(self, 'icon_available', u'\u25cf')
