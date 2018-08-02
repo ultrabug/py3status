@@ -17,7 +17,6 @@ Configuration parameters:
     hide_when_offline: hide the module output when offline (default False)
     icon_off: what to display when offline (default '■')
     icon_on: what to display when online (default '●')
-    ignore_warnings: ignore negative_cache_timeout warnings (default False)
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
     negative_cache_timeout: how often to check again when offline (default 60)
@@ -68,7 +67,6 @@ class Py3status:
     hide_when_offline = False
     icon_off = u'■'
     icon_on = u'●'
-    ignore_warnings = False
     mode = 'ip'
     negative_cache_timeout = 60
     timeout = 5
@@ -103,7 +101,7 @@ class Py3status:
             self.expected = {}
 
         # Alert about negative_cache_timeout
-        if self.negative_cache_timeout < 60 and self.ignore_warnings is False:
+        if self.negative_cache_timeout < 60:
             self.py3.error(
                 'warning, negative_cache_timeout should be > 60 to prevent ' +
                 'from being blacklisted by API')
