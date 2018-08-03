@@ -198,7 +198,7 @@ class PactlBackend(AudioBackend):
 
     def update_device(self):
         self.re_volume = re.compile(
-            r'{} \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(
+            r'{} \#{}.*?State: (\w+).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(
                 self.device_type_cap, self.device
             ), re.M | re.DOTALL
         )
@@ -230,15 +230,17 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(['pactl', 'list', self.device_type_pl]).strip()
+        do_reinit = False
         try:
-            muted, perc = self.re_volume.search(output).groups()
+            pa_state, muted, perc = self.re_volume.search(output).groups()
         except AttributeError:
             muted, perc = False, 0
+            do_reinit = True
             # if device is unset, try again with possibly
             # a new default device, otherwise print 0
-            if self.reinit_device:
-                self.device = self.get_default_device()
-                self.update_device()
+        if (do_reinit or pa_state != 'RUNNING') and self.reinit_device:
+            self.device = self.get_default_device()
+            self.update_device()
 
         # muted should be 'on' or 'off'
         if muted in ['yes', 'no']:
