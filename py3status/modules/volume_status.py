@@ -230,15 +230,13 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(['pactl', 'list', self.device_type_pl]).strip()
-        do_reinit = False
         try:
-            pa_state, muted, perc = self.re_volume.search(output).groups()
+            state, muted, perc = self.re_volume.search(output).groups()
         except AttributeError:
-            muted, perc = False, 0
-            do_reinit = True
+            state, muted, perc = None, False, 0
             # if device is unset, try again with possibly
             # a new default device, otherwise print 0
-        if (do_reinit or pa_state != 'RUNNING') and self.reinit_device:
+        if self.reinit_device and state != 'RUNNING':
             self.device = self.get_default_device()
             self.update_device()
 
