@@ -189,12 +189,19 @@ class PactlBackend(AudioBackend):
         self.device_type_pl = self.device_type + 's'
         self.device_type_cap = self.device_type[0].upper() + self.device_type[1:]
 
+        self.reinit_device = self.device is None
         if self.device is None:
             self.device = self.get_default_device()
 
         self.max_volume = parent.max_volume
-        self.re_volume = re.compile(r'{} \#{}.*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'
-                                    .format(self.device_type_cap, self.device), re.M | re.DOTALL)
+        self.update_device()
+
+    def update_device(self):
+        self.re_volume = re.compile(
+            r'{} \#{}.*?State: (\w+).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(
+                self.device_type_cap, self.device
+            ), re.M | re.DOTALL
+        )
 
     def get_default_device(self):
         device_id = None
@@ -223,7 +230,15 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(['pactl', 'list', self.device_type_pl]).strip()
-        muted, perc = self.re_volume.search(output).groups()
+        try:
+            state, muted, perc = self.re_volume.search(output).groups()
+        except AttributeError:
+            state, muted, perc = None, False, 0
+            # if device is unset, try again with possibly
+            # a new default device, otherwise print 0
+        if self.reinit_device and state != 'RUNNING':
+            self.device = self.get_default_device()
+            self.update_device()
 
         # muted should be 'on' or 'off'
         if muted in ['yes', 'no']:
@@ -302,8 +317,11 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.command:
-            self.command = self.py3.check_commands(
-                ['pamixer', 'pactl', 'amixer'])
+            commands = ['pamixer', 'pactl', 'amixer']
+            # pamixer, pactl requires pulseaudio to work
+            if not self.py3.check_commands('pulseaudio'):
+                commands = ['amixer']
+            self.command = self.py3.check_commands(commands)
         elif self.command not in ['amixer', 'pamixer', 'pactl']:
             raise Exception(STRING_ERROR % self.command)
         elif not self.py3.check_commands(self.command):

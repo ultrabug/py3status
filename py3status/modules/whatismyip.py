@@ -19,7 +19,6 @@ Configuration parameters:
     icon_on: what to display when online (default '●')
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
-    negative_cache_timeout: how often to check again when offline (default 2)
     timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
         (default 'https://ifconfig.co/json')
@@ -67,7 +66,6 @@ class Py3status:
     icon_off = u'■'
     icon_on = u'●'
     mode = 'ip'
-    negative_cache_timeout = 2
     timeout = 5
     url_geo = URL_GEO_NEW_DEFAULT
 
@@ -77,6 +75,10 @@ class Py3status:
                 {
                     'param': 'url',
                     'msg': 'obsolete parameter, use `url_geo` instead',
+                },
+                {
+                    'param': 'negative_cache_timeout',
+                    'msg': 'obsolete parameter',
                 },
             ],
             'rename': [
@@ -134,14 +136,13 @@ class Py3status:
         """
         info = self._get_my_ip_info()
         response = {
-            'cached_until': self.py3.time_in(self.negative_cache_timeout)
+            'cached_until': self.py3.time_in(self.cache_timeout)
         }
 
         if info is None and self.hide_when_offline:
             response['full_text'] = ''
         elif info is not None:
             info['icon'] = self.icon_on
-            response['cached_until'] = self.py3.time_in(self.cache_timeout)
             response['color'] = self.py3.COLOR_GOOD
             for key, val in self.expected.items():
                 if val != info.get(key):

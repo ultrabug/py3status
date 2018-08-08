@@ -24,7 +24,6 @@ SAMPLE OUTPUT
 """
 
 URL = 'https://www.mycurrency.net/service/rates'
-UA = 'Mozilla/5.0 py3status'
 
 
 class Py3status:
@@ -44,12 +43,11 @@ class Py3status:
             self.format, default_formats
         )
         self.rates_data = {currency: '?' for currency in self.currencies}
-        self.headers = {'User-Agent': UA}
 
     def rates(self):
         try:
             result = self.py3.request(
-                URL, timeout=self.request_timeout, headers=self.headers
+                URL, timeout=self.request_timeout
             )
         except self.py3.RequestException:
             result = None

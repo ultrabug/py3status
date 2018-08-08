@@ -69,12 +69,16 @@ class Py3status:
             self.include_aur = False
 
     def check_updates(self):
-        pacman_updates = self._check_pacman_updates()
-        aur_updates = self._check_aur_updates()
-        if aur_updates == '?':
-            total = pacman_updates
-        else:
-            total = pacman_updates + aur_updates
+        pacman_updates = aur_updates = total = None
+
+        if self.include_pacman:
+            pacman_updates = self._check_pacman_updates()
+
+        if self.include_aur:
+            aur_updates = self._check_aur_updates()
+
+        if pacman_updates is not None or aur_updates is not None:
+            total = (pacman_updates or 0) + (aur_updates or 0)
 
         if self.hide_if_zero and total == 0:
             full_text = ''
@@ -97,10 +101,12 @@ class Py3status:
         This method will use the 'checkupdates' command line utility
         to determine how many updates are waiting to be installed via
         'pacman -Syu'.
+        Returns: None if unable to determine number of pending updates
         """
-        if not self.include_pacman:
-            return 0
-        pending_updates = str(subprocess.check_output(["checkupdates"]))
+        try:
+            pending_updates = str(subprocess.check_output(["checkupdates"]))
+        except subprocess.CalledProcessError:
+            return None
         return pending_updates.count(LINE_SEPARATOR)
 
     def _check_aur_updates(self):
@@ -108,21 +114,18 @@ class Py3status:
         This method will use the 'cower' command line utility
         to determine how many updates are waiting to be installed
         from the AUR.
+        Returns: None if unable to determine number of pending updates
         """
         # For reasons best known to its author, 'cower' returns a non-zero
         # status code upon successful execution, if there is any output.
         # See https://github.com/falconindy/cower/blob/master/cower.c#L2596
-        if not self.include_aur:
-            return '?'
-
         pending_updates = b""
         try:
-            pending_updates = str(subprocess.check_output(["cower", "-u"]))
+            subprocess.check_output(["cower", "--update"])
         except subprocess.CalledProcessError as cp_error:
             pending_updates = cp_error.output
-        except:
-            pending_updates = '?'
-        return str(pending_updates).count(LINE_SEPARATOR)
+            return str(pending_updates).count(LINE_SEPARATOR)
+        return None
 
 
 if __name__ == "__main__":
