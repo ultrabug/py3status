@@ -106,20 +106,6 @@ class Py3status:
         elif self.url_geo == URL_GEO_OLD_DEFAULT:
             self.substitutions['ip'] = 'query'
 
-    def on_click(self, event):
-        """
-        Toggle between display modes 'ip' and 'status'
-        """
-        button = event['button']
-        if button == self.button_toggle:
-            if self.mode == 'ip':
-                self.mode = 'status'
-            else:
-                self.mode = 'ip'
-        elif button != self.button_refresh:
-            # prevent refresh
-            self.py3.prevent_refresh()
-
     def _get_my_ip_info(self):
         """
         """
@@ -156,6 +142,20 @@ class Py3status:
             response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
         return response
+
+    def on_click(self, event):
+        """
+        Toggle between display modes 'ip' and 'status'
+        """
+        button = event['button']
+        if button == self.button_toggle:
+            if self.mode == 'ip':
+                self.mode = 'status'
+            else:
+                self.mode = 'ip'
+        elif button != self.button_refresh:
+            # prevent refresh
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
