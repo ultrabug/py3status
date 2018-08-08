@@ -11,6 +11,7 @@ from math import log10
 from pprint import pformat
 from subprocess import Popen, PIPE, STDOUT
 from time import time
+from uuid import uuid4
 
 from py3status import exceptions
 from py3status.constants import COLOR_NAMES
@@ -18,6 +19,7 @@ from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradiants
+from py3status.version import version
 
 
 PY3_CACHE_FOREVER = -1
@@ -114,6 +116,7 @@ class Py3:
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
+        self._uid = uuid4()
 
         if module:
             self._i3s_config = module._py3_wrapper.config['py3_config']['general']
@@ -1156,6 +1159,11 @@ class Py3:
 
         if headers is None:
             headers = {}
+
+        if 'User-Agent' not in headers:
+            headers['User-Agent'] = 'py3status/{} {}'.format(
+                version, self._uid
+            )
 
         return HttpResponse(url,
                             params=params,
