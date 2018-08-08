@@ -19,7 +19,7 @@ Configuration parameters:
     icon_on: what to display when online (default '●')
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
-    negative_cache_timeout: how often to check again when offline (default 2)
+    negative_cache_timeout: how often to check again when offline (default 60)
     timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
         (default 'https://ifconfig.co/json')
@@ -52,6 +52,7 @@ mode
 
 URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
 URL_GEO_NEW_DEFAULT = 'https://ifconfig.co/json'
+UA = 'Mozilla/5.0 py3status'
 
 
 class Py3status:
@@ -67,7 +68,7 @@ class Py3status:
     icon_off = u'■'
     icon_on = u'●'
     mode = 'ip'
-    negative_cache_timeout = 2
+    negative_cache_timeout = 60
     timeout = 5
     url_geo = URL_GEO_NEW_DEFAULT
 
@@ -94,8 +95,16 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.headers = {'User-Agent': UA}
+
         if self.expected is None:
             self.expected = {}
+
+        # Alert about negative_cache_timeout
+        if self.negative_cache_timeout < 60:
+            self.py3.error(
+                'warning, negative_cache_timeout should be > 60 to prevent ' +
+                'from being blacklisted by API')
 
         # Backwards compatibility
         self.substitutions = {}
@@ -122,7 +131,11 @@ class Py3status:
         """
         """
         try:
-            info = self.py3.request(self.url_geo, timeout=self.timeout).json()
+            info = self.py3.request(
+                self.url_geo,
+                timeout=self.timeout,
+                headers=self.headers,
+            ).json()
             for old, new in self.substitutions.items():
                 info[old] = info.get(new)
             return info
