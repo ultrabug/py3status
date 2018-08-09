@@ -17,21 +17,21 @@ class Storage:
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
         config_dir = os.path.dirname(
-            py3_wrapper.config.get('i3status_config_path', '/tmp')
+            py3_wrapper.config.get("i3status_config_path", "/tmp")
         )
-        storage_path = os.path.join(config_dir, 'py3status.data')
+        storage_path = os.path.join(config_dir, "py3status.data")
         self.storage_path = storage_path
         try:
-            with open(storage_path, 'rb') as f:
+            with open(storage_path, "rb") as f:
                 try:
                     # python3
-                    self.data = load(f, encoding='bytes')
+                    self.data = load(f, encoding="bytes")
                 except TypeError:
                     # python2
                     self.data = load(f)
         except IOError:
             pass
-        self.py3_wrapper.log('stored data:')
+        self.py3_wrapper.log("stored data:")
         self.py3_wrapper.log(self.data)
         self.initialized = True
 
@@ -40,7 +40,7 @@ class Storage:
         Save our data to disk. We want to always have a valid file.
         """
         with NamedTemporaryFile(
-                dir=os.path.dirname(self.storage_path), delete=False
+            dir=os.path.dirname(self.storage_path), delete=False
         ) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)
@@ -56,7 +56,7 @@ class Storage:
         if not self.is_python_2:
             return item
         if isinstance(item, str):
-            return item.decode('utf-8')
+            return item.decode("utf-8")
         if isinstance(item, unicode):  # noqa <-- python3 has no unicode
             return item
         if isinstance(item, Mapping):
@@ -67,7 +67,7 @@ class Storage:
         return item
 
     def storage_set(self, module_name, key, value):
-        if key.startswith('_'):
+        if key.startswith("_"):
             raise ValueError('cannot set keys starting with an underscore "_"')
 
         key = self.fix(key)
@@ -79,9 +79,9 @@ class Storage:
             self.data[module_name] = {}
         self.data[module_name][key] = value
         ts = time()
-        if '_ctime' not in self.data[module_name]:
-            self.data[module_name]['_ctime'] = ts
-        self.data[module_name]['_mtime'] = ts
+        if "_ctime" not in self.data[module_name]:
+            self.data[module_name]["_ctime"] = ts
+        self.data[module_name]["_mtime"] = ts
         self.save()
 
     def storage_get(self, module_name, key):

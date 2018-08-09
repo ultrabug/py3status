@@ -3,7 +3,8 @@ import sys
 
 try:
     from setproctitle import setproctitle
-    setproctitle('py3status')
+
+    setproctitle("py3status")
 except ImportError:
     pass
 
@@ -17,22 +18,25 @@ except NameError:
 
 def main():
     from py3status.cli import parse_cli
+
     options = parse_cli()
     # detect gevent option early because monkey patching should be done before
     # everything else starts kicking
     if options.gevent:
         try:
             from gevent import monkey
+
             monkey.patch_all()
         except Exception:
             # user will be notified when we start
             pass
 
     from py3status.core import Py3statusWrapper
+
     try:
-        locale.setlocale(locale.LC_ALL, '')
+        locale.setlocale(locale.LC_ALL, "")
     except locale.Error:
-        print('No locale available')
+        print("No locale available")
         sys.exit(2)
 
     py3 = None
@@ -41,11 +45,11 @@ def main():
         py3.setup()
     except (IOPipeError, KeyboardInterrupt):
         if py3:
-            py3.notify_user('Setup interrupted')
+            py3.notify_user("Setup interrupted")
         sys.exit(0)
     except Exception:
-        if py3 and not py3.config.get('cli_command'):
-            py3.report_exception('Setup error')
+        if py3 and not py3.config.get("cli_command"):
+            py3.report_exception("Setup error")
         else:
             # we cannot report this Exception
             raise
@@ -56,12 +60,12 @@ def main():
     except (IOPipeError, KeyboardInterrupt):
         pass
     except Exception:
-        py3.report_exception('Runtime error')
+        py3.report_exception("Runtime error")
         sys.exit(3)
     finally:
         py3.stop()
         sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

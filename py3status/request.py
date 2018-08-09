@@ -7,21 +7,34 @@ try:
     from urllib.error import URLError, HTTPError
     from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
     from urllib.request import (
-        urlopen, Request, build_opener, install_opener, HTTPCookieProcessor
+        urlopen,
+        Request,
+        build_opener,
+        install_opener,
+        HTTPCookieProcessor,
     )
+
     IS_PYTHON_3 = True
 except ImportError:
     # Python 2
     from urllib import urlencode
     from urllib2 import (
-        urlopen, Request, URLError, HTTPError,
-        build_opener, install_opener, HTTPCookieProcessor
+        urlopen,
+        Request,
+        URLError,
+        HTTPError,
+        build_opener,
+        install_opener,
+        HTTPCookieProcessor,
     )
     from urlparse import urlsplit, urlunsplit, parse_qsl
+
     IS_PYTHON_3 = False
 
 from py3status.exceptions import (
-    RequestTimeout, RequestURLError, RequestInvalidJSON
+    RequestTimeout,
+    RequestURLError,
+    RequestInvalidJSON,
 )
 
 
@@ -48,8 +61,8 @@ class HttpResponse:
             url = urlunsplit(parts)
         if auth:
             # we need to do the encode/decode to keep python 3 happy
-            auth_str = base64.b64encode(('%s:%s' % (auth)).encode('utf-8'))
-            headers['Authorization'] = 'Basic %s' % auth_str.decode('utf-8')
+            auth_str = base64.b64encode(("%s:%s" % (auth)).encode("utf-8"))
+            headers["Authorization"] = "Basic %s" % auth_str.decode("utf-8")
         if data:
             data = urlencode(data).encode()
         if cookiejar is not None:
@@ -65,20 +78,20 @@ class HttpResponse:
         except URLError as e:
             reason = e.reason
             if isinstance(reason, socket.timeout):
-                raise RequestTimeout('request timed out')
+                raise RequestTimeout("request timed out")
             elif isinstance(e, HTTPError):
                 self._status_code = e.code
                 self._error_message = reason
                 # we return an HttpResponse but have no response
                 # so create some 'fake' response data.
-                self._text = ''
+                self._text = ""
                 self._json = None
                 self._headers = []
             else:
                 # unknown exception, so just raise it
                 raise RequestURLError(reason)
         except socket.timeout:
-            raise RequestTimeout('request timed out')
+            raise RequestTimeout("request timed out")
 
     @property
     def status_code(self):
@@ -100,10 +113,10 @@ class HttpResponse:
             return self._text
         except AttributeError:
             if IS_PYTHON_3:
-                encoding = self._response.headers.get_content_charset('utf-8')
+                encoding = self._response.headers.get_content_charset("utf-8")
             else:
-                encoding = self._response.headers.getparam('charset')
-            self._text = self._response.read().decode(encoding or 'utf-8')
+                encoding = self._response.headers.getparam("charset")
+            self._text = self._response.read().decode(encoding or "utf-8")
         return self._text
 
     def json(self):
@@ -117,7 +130,7 @@ class HttpResponse:
                 self._json = json.loads(self.text)
                 return self._json
             except:
-                raise RequestInvalidJSON('Invalid JSON received')
+                raise RequestInvalidJSON("Invalid JSON received")
 
     @property
     def headers(self):
