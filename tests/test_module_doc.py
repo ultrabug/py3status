@@ -18,60 +18,53 @@ from collections import OrderedDict
 
 from py3status.docstrings import core_module_docstrings
 
-IGNORE_MODULE = [
-]
+IGNORE_MODULE = []
 
 ILLEGAL_CONFIG_OPTIONS = [
-    'min_width',
-    'separator',
-    'separator_block_width',
-    'align',
+    "min_width",
+    "separator",
+    "separator_block_width",
+    "align",
 ]
 
-IGNORE_ILLEGAL_CONFIG_OPTIONS = [
-    ('group', 'align'),
-]
+IGNORE_ILLEGAL_CONFIG_OPTIONS = [("group", "align")]
 
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
 IGNORE_ITEM = [
-    ('air_quality', 'format'),  # line too long for docstring parsing
-    ('air_quality', 'quality_thresholds'),  # line too long for docstring parsing
-    ('moc', 'format'),  # line too long for docstring parsing
-    ('cmus', 'format'),  # line too long for docstring parsing
-    ('netdata', 'format'),  # line too long for docstring parsing
-    ('i3block', 'cache_timeout'),  # can be overriden by interval so undefined
-    ('screenshot', 'save_path'),  # home dir issue
-    ('rate_counter', 'config_file'),  # home dir issue
-    ('group', 'format'),  # dynamic depending on click_mode
-    ('github', 'format'),  # dynamic
-    ('kdeconnector', '_dev'),  # move to __init__ etc
-    ('arch_updates', 'format'),  # dynamic
-    ('spotify', 'sanitize_words'),  # line too long for docstring parsing
-    ('weather_owm', 'thresholds'),  # dictionary parsing issue
-    ('google_calendar', 'format_event'),  # line too long for docstring parsing
-    ('google_calendar', 'format_timer')  # line too long for docstring parsing
+    ("air_quality", "format"),  # line too long for docstring parsing
+    (
+        "air_quality",
+        "quality_thresholds",
+    ),  # line too long for docstring parsing
+    ("moc", "format"),  # line too long for docstring parsing
+    ("cmus", "format"),  # line too long for docstring parsing
+    ("netdata", "format"),  # line too long for docstring parsing
+    ("i3block", "cache_timeout"),  # can be overriden by interval so undefined
+    ("screenshot", "save_path"),  # home dir issue
+    ("rate_counter", "config_file"),  # home dir issue
+    ("group", "format"),  # dynamic depending on click_mode
+    ("github", "format"),  # dynamic
+    ("kdeconnector", "_dev"),  # move to __init__ etc
+    ("arch_updates", "format"),  # dynamic
+    ("spotify", "sanitize_words"),  # line too long for docstring parsing
+    ("weather_owm", "thresholds"),  # dictionary parsing issue
+    ("google_calendar", "format_event"),  # line too long for docstring parsing
+    ("google_calendar", "format_timer"),  # line too long for docstring parsing
 ]
 
 # Obsolete parameters will not have alphabetical order checked
-OBSOLETE_PARAM = [
-]
+OBSOLETE_PARAM = []
 
 RE_PARAM = re.compile(
-    '^  - `(?P<name>[^`]*)`.*?('
-    '\*\(default (?P<value>('
-    '.*'
-    '))\)\*)?$'
+    "^  - `(?P<name>[^`]*)`.*?(" "\*\(default (?P<value>(" ".*" "))\)\*)?$"
 )
 
-AST_LITERAL_TYPES = {
-    'Num': 'n',
-    'Str': 's',
-    'NameConstant': 'value',
-}
+AST_LITERAL_TYPES = {"Num": "n", "Str": "s", "NameConstant": "value"}
 
-MODULE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           '..', 'py3status', 'modules')
+MODULE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "py3status", "modules"
+)
 
 
 def docstring_params(docstring):
@@ -93,9 +86,9 @@ def docstring_params(docstring):
             return params
         lines = []
         for part in docstring[start:]:
-            if part == '\n':
+            if part == "\n":
                 break
-            if part.startswith('  - '):
+            if part.startswith("  - "):
                 lines.append(part[:-1])
                 continue
             lines[-1] += part[:-1]
@@ -103,102 +96,102 @@ def docstring_params(docstring):
         for line in lines:
             match = RE_PARAM.match(line)
             if match:
-                if match.group('value'):
+                if match.group("value"):
                     try:
-                        value = eval(match.group('value'))
+                        value = eval(match.group("value"))
                         if isinstance(value, str):
                             try:
-                                value = value.decode('utf-8')
+                                value = value.decode("utf-8")
                             except AttributeError:
                                 # python3
                                 pass
                         try:
-                            value = value.replace('&amp;', '&')
-                            value = value.replace('&lt;', '<')
-                            value = value.replace('&gt;', '>')
+                            value = value.replace("&amp;", "&")
+                            value = value.replace("&lt;", "<")
+                            value = value.replace("&gt;", ">")
                         except AttributeError:
                             pass
                         # wrap in tuple to distinguish None from missing
-                        value = (value, )
+                        value = (value,)
                     except (SyntaxError, NameError):
-                        value = '?Unknown?'
+                        value = "?Unknown?"
                 else:
                     value = None
-                params[match.group('name')] = value
+                params[match.group("name")] = value
         return params
 
-    params = find_params(find_line('Configuration parameters:\n'))
-    obsolete = find_params(find_line('Obsolete configuration parameters:\n'))
+    params = find_params(find_line("Configuration parameters:\n"))
+    obsolete = find_params(find_line("Obsolete configuration parameters:\n"))
     return params, obsolete
 
 
 def get_module_attributes(path):
-    '''
+    """
     Get the attributes from the module from the ast.  We use ast because this
     way we can examine modules even if we do not have their required python
     modules installed.
-    '''
+    """
     names = {}
     attributes = OrderedDict()
-    python2_names = {
-        'True': True,
-        'False': False,
-        'None': None,
-    }
+    python2_names = {"True": True, "False": False, "None": None}
 
     def get_values(source, dest, extra=None):
-        '''
+        """
         Get a list of the configuration parameters and their defaults.
-        '''
+        """
 
         def get_value(value):
-            '''
+            """
             Get the actual value from the ast allowing recursion
-            '''
+            """
             class_name = value.__class__.__name__
             # if this is a literal then get its value
             value_type = AST_LITERAL_TYPES.get(class_name)
             if value_type:
                 attr_value = getattr(value, value_type)
             else:
-                if class_name == 'Dict':
-                    attr_value = dict(zip(
-                        list(map(get_value, value.keys)),
-                        list(map(get_value, value.values))
-                    ))
-                elif class_name == 'List':
+                if class_name == "Dict":
+                    attr_value = dict(
+                        zip(
+                            list(map(get_value, value.keys)),
+                            list(map(get_value, value.values)),
+                        )
+                    )
+                elif class_name == "List":
                     attr_value = list(map(get_value, value.elts))
-                elif class_name == 'Name':
+                elif class_name == "Name":
                     # in python 2 True, False, None are Names rather than
                     # NameConstant so we use them for the default
                     default = python2_names.get(value.id)
                     attr_value = extra.get(value.id, default)
-                elif class_name == 'Tuple':
+                elif class_name == "Tuple":
                     attr_value = tuple(map(get_value, value.elts))
-                elif class_name == 'UnaryOp':
+                elif class_name == "UnaryOp":
                     op = value.op.__class__.__name__
                     attr_value = get_value(value.operand)
                     # we only understand negation
-                    if op == 'USub':
+                    if op == "USub":
                         attr_value = -attr_value
                     else:
-                        attr_value = 'UNKNOWN %s UnaryOp %s' % (class_name, op)
-                elif class_name == 'BinOp':
+                        attr_value = "UNKNOWN %s UnaryOp %s" % (class_name, op)
+                elif class_name == "BinOp":
                     left = get_value(value.left)
                     right = get_value(value.right)
                     op = value.op.__class__.__name__
                     try:
-                        if op == 'Add':
+                        if op == "Add":
                             attr_value = left + right
-                        elif op == 'Mult':
+                        elif op == "Mult":
                             attr_value = left * right
                         else:
-                            attr_value = 'UNKNOWN %s BinOp %s' % (class_name,
-                                                                  op)
+                            attr_value = "UNKNOWN %s BinOp %s" % (
+                                class_name,
+                                op,
+                            )
                     except Exception:
-                        attr_value = 'UNKNOWN %s BinOp error' % class_name
+                        attr_value = "UNKNOWN %s BinOp error" % class_name
                 else:
-                    attr_value = 'UNKNOWN %s' % class_name
+                    attr_value = "UNKNOWN %s" % class_name
             return attr_value
 
         if extra is None:
@@ -206,25 +199,28 @@ def get_module_attributes(path):
 
         for line in source:
             if isinstance(line, ast.Assign):
-                if (len(line.targets) == 1 and
-                        isinstance(line.targets[0], ast.Name)):
+                if len(line.targets) == 1 and isinstance(
+                    line.targets[0], ast.Name
+                ):
                     attr = line.targets[0].id
                     value = line.value
                     dest[attr] = get_value(value)
 
     with open(path) as f:
-        tree = ast.parse(f.read(), '')
+        tree = ast.parse(f.read(), "")
         # some modules have constants defined we need to find these
         get_values(tree.body, names)
         for statement in tree.body:
             # look for the Py3status class and find it's attributes
-            if (isinstance(statement, ast.ClassDef) and
-                    statement.name == 'Py3status'):
+            if (
+                isinstance(statement, ast.ClassDef)
+                and statement.name == "Py3status"
+            ):
                 get_values(statement.body, attributes, names)
     return attributes
 
 
-def _gen_diff(source, target, source_label='Source', target_label='Target'):
+def _gen_diff(source, target, source_label="Source", target_label="Target"):
     # Create a unique object for determining if the list is missing an entry
     blank = object()
 
@@ -235,17 +231,16 @@ def _gen_diff(source, target, source_label='Source', target_label='Target'):
 
     # Determine the length of the longest item in the list
     max_elem_len = max([len(str(elem)) for elem in source])
-    padding = '    '
-    format_str = padding + ('%%%ds %%s %%s' % max_elem_len)
+    padding = "    "
+    format_str = padding + ("%%%ds %%s %%s" % max_elem_len)
 
     # Set up initial output contents
-    middle_orig = '  '
+    middle_orig = "  "
     out = [
         format_str % (source_label, middle_orig, target_label),
-
         # Length of dashes is enough for the longest element on both sides,
         # plus the size of the middle symbol(s), plus two spaces for separation
-        padding + ('-' * (2 * max_elem_len + len(middle_orig) + 2))
+        padding + ("-" * (2 * max_elem_len + len(middle_orig) + 2)),
     ]
 
     for (have, want) in zip(source, target):
@@ -254,22 +249,22 @@ def _gen_diff(source, target, source_label='Source', target_label='Target'):
 
         # The current version is missing this line
         if have == blank:
-            middle = '<<'
-            have = ''
+            middle = "<<"
+            have = ""
 
         # The target version is missing this line
         elif want == blank:
-            middle = '>>'
-            want = ''
+            middle = ">>"
+            want = ""
 
         # Both lines exist, but are different
         elif have != want:
-            middle = '!!'
+            middle = "!!"
 
         # Place the diff into the output
         out.append(format_str % (str(have), middle, str(want)))
 
-    return '\n'.join(out) + '\n'
+    return "\n".join(out) + "\n"
 
 
 def check_docstrings():
@@ -280,18 +275,18 @@ def check_docstrings():
         if module_name in IGNORE_MODULE:
             continue
 
-        path = os.path.join(MODULE_PATH, '%s.py' % module_name)
+        path = os.path.join(MODULE_PATH, "%s.py" % module_name)
         mod_config = get_module_attributes(path)
 
         params, obsolete = docstring_params(docstrings[module_name])
 
         if list(params.keys()) != list(sorted(params.keys())):
             keys = list(params.keys())
-            msg = 'config params not in alphabetical order should be\n{keys}'
+            msg = "config params not in alphabetical order should be\n{keys}"
             errors.append(msg.format(keys=_gen_diff(keys, sorted(keys))))
         if list(obsolete.keys()) != list(sorted(obsolete.keys())):
             keys = list(obsolete.keys())
-            msg = 'obsolete params not in alphabetical order should be\n{keys}'
+            msg = "obsolete params not in alphabetical order should be\n{keys}"
             errors.append(msg.format(keys=_gen_diff(keys, sorted(keys))))
 
         # combine docstring parameters
@@ -305,9 +300,9 @@ def check_docstrings():
         bad_config_params -= set(allowed_bad_config_params)
 
         if bad_config_params:
-            msg = 'The following config parameters are reserved and'
-            msg += 'should not be used by modules:\n    {}'
-            errors.append(msg.format(', '.join(bad_config_params)))
+            msg = "The following config parameters are reserved and"
+            msg += "should not be used by modules:\n    {}"
+            errors.append(msg.format(", ".join(bad_config_params)))
 
         # check attributes are in alphabetical order
         keys = list(mod_config.keys())
@@ -318,7 +313,7 @@ def check_docstrings():
             if item[0] == module_name and item[1] in keys:
                 keys.remove(item[1])
         if keys != sorted(keys):
-            errors.append('Attributes not in alphabetical order, should be')
+            errors.append("Attributes not in alphabetical order, should be")
             errors.append(_gen_diff(keys, sorted(keys)))
 
         for param in sorted(mod_config.keys()):
@@ -326,17 +321,17 @@ def check_docstrings():
                 continue
             default = mod_config[param]
             if param not in params:
-                msg = '{}: (default {!r}) not in module docstring'
+                msg = "{}: (default {!r}) not in module docstring"
                 errors.append(msg.format(param, default))
                 continue
             default_doc = params[param]
             if default_doc is None:
-                msg = '`{}` default not in docstring add (default {!r})'
+                msg = "`{}` default not in docstring add (default {!r})"
                 errors.append(msg.format(param, default))
                 del params[param]
                 continue
             if default_doc[0] != default:
-                msg = '`{}` (default {!r}) does not match docstring {!r}'
+                msg = "`{}` (default {!r}) does not match docstring {!r}"
                 errors.append(msg.format(param, default, default_doc[0]))
                 del params[param]
                 continue
@@ -345,20 +340,24 @@ def check_docstrings():
         for param in params:
             if (module_name, param) in IGNORE_ITEM:
                 continue
-            errors.append('{} in module docstring but not module'.format(param))
+            errors.append(
+                "{} in module docstring but not module".format(param)
+            )
         if errors:
-            all_errors += ['=' * 30, module_name, '=' * 30] + errors + ['\n']
+            all_errors += ["=" * 30, module_name, "=" * 30] + errors + ["\n"]
     return all_errors
 
 
 def test_docstrings():
     errors = check_docstrings()
     if errors:
-        print('Docstring error(s) detected!\n\n')
-        print('The tests may give incorrect errors for some configuration '
-              'parameters that the tests do not understand. '
-              'Such parameters can be excluded from the test by adding them '
-              'to the IGNORE_ITEM list in tests/test_module_doc.py\n\n')
+        print("Docstring error(s) detected!\n\n")
+        print(
+            "The tests may give incorrect errors for some configuration "
+            "parameters that the tests do not understand. "
+            "Such parameters can be excluded from the test by adding them "
+            "to the IGNORE_ITEM list in tests/test_module_doc.py\n\n"
+        )
         for error in errors:
             print(error)
-        assert(False)
+        assert False
