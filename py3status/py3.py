@@ -1137,6 +1137,11 @@ class Py3:
         """
         Make a request to a url and retrieve the results.
 
+        If the headers parameter does not provide an 'User-Agent' key, one will
+        be added automatically following the convention:
+
+            py3status/<version> <per session random uuid>
+
         :param url: url to request eg `http://example.com`
         :param params: extra query string parameters as a dict
         :param data: POST data as a dict.  If this is not supplied the GET method will be used
