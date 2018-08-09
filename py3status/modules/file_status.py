@@ -5,16 +5,16 @@ Display if files or directories exists.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module
-        (default '\?color=paths [\?if=paths ●|■]')
+        (default '\?color=path [\?if=path ●|■]')
     format_path: format for paths (default '{basename}')
     format_path_separator: show separator if more than one (default ' ')
-    path: specify a string or a list of paths to check (default None)
+    paths: specify a string or a list of paths to check (default None)
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
     {format_path} format for paths
-    {paths} number of paths, eg 1, 2, 3
+    {path} number of paths, eg 1, 2, 3
 
 format_path placeholders:
     {basename} basename of pathname
@@ -26,24 +26,23 @@ Color options:
 
 Color thresholds:
     format:
-        paths: print a color based on the number of paths
+        path: print a color based on the number of paths
 
 Examples:
-```
 # add multiple paths with wildcard or with pathnames
+```
 file_status {
-    path = ['/tmp/test*', '~user/test1', '~/Videos/*.mp4']
+    paths = ['/tmp/test*', '~user/test1', '~/Videos/*.mp4']
 }
 
 # colorize basenames
 file_status {
-    path = ['~/.config/i3/modules/*.py']
+    paths = ['~/.config/i3/modules/*.py']
     format = '{format_path}'
     format_path = '\?color=good {basename}'
     format_path_separator = ', '
 }
 ```
-
 @author obb, Moritz Lüdecke, Cyril Levis (@cyrinux)
 
 SAMPLE OUTPUT
@@ -56,7 +55,7 @@ missing
 from glob import glob
 from os.path import basename, expanduser
 
-STRING_NO_PATH = 'missing path'
+STRING_NO_PATHS = 'missing paths'
 
 
 class Py3status:
@@ -64,10 +63,10 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = u'\?color=paths [\?if=paths \u25cf|\u25a0]'
+    format = u'\?color=path [\?if=path \u25cf|\u25a0]'
     format_path = u'{basename}'
     format_path_separator = u' '
-    path = None
+    paths = None
     thresholds = [(0, 'bad'), (1, 'good')]
 
     class Meta:
@@ -83,23 +82,35 @@ class Py3status:
                     'new': 'icon_unavailable',
                     'msg': 'obsolete parameter use `icon_unavailable`'
                 },
+                {
+                    'param': 'path',
+                    'new': 'paths',
+                    'msg': 'obsolete parameter use `paths`'
+                },
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'paths',
+                    'new': 'path',
+                    'format_strings': ['format'],
+                },
             ],
         }
 
     def post_config_hook(self):
-        if not self.path:
-            raise Exception(STRING_NO_PATH)
+        if not self.paths:
+            raise Exception(STRING_NO_PATHS)
 
         # icon deprecation
         on = getattr(self, 'icon_available', u'\u25cf')
         off = getattr(self, 'icon_unavailable', u'\u25a0')
-        new_icon = u'\?color=paths [\?if=paths {}|{}]'.format(on, off)
+        new_icon = u'\?color=path [\?if=path {}|{}]'.format(on, off)
         self.format = self.format.replace('{icon}', new_icon)
 
         # convert str to list + expand path
-        if not isinstance(self.path, list):
-            self.path = [self.path]
-        self.path = list(map(expanduser, self.path))
+        if not isinstance(self.paths, list):
+            self.paths = [self.paths]
+        self.paths = list(map(expanduser, self.paths))
 
         self.init = {'format_path': []}
         if self.py3.format_contains(self.format, 'format_path'):
@@ -109,7 +120,7 @@ class Py3status:
 
     def file_status(self):
         # init datas
-        paths = sorted([files for path in self.path for files in glob(path)])
+        paths = sorted([files for path in self.paths for files in glob(path)])
         count_path = len(paths)
         format_path = None
 
@@ -137,13 +148,16 @@ class Py3status:
             )
 
         if self.thresholds:
+            self.py3.threshold_get_color(count_path, 'path')
             self.py3.threshold_get_color(count_path, 'paths')
 
         return {
             'cached_until':
             self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
+            'full_text':
+            self.py3.safe_format(
                 self.format, {
+                    'path': count_path,
                     'paths': count_path,
                     'format_path': format_path
                 }
