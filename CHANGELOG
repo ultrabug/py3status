@@ -1,3 +1,19 @@
+version 3.12 (2018-08-09)
+* WARNING: after this release, py3status coding style CI will enforce the 'black' formatter: https://pypi.org/project/black/
+* it looks like some i3 freezes that affected py3status (see #941) have been fixed https://github.com/i3/i3/issues/2539, next i3 release (>4.15) should contain the fix
+* py3.request adds a default User-Agent header when none is provided
+* py3-cmd: refactoring to add more options for click and refresh commands, add frame click support for #1349, by @lasers
+* formatter: parse placeholders with periods, by @lasers
+* air_quality module: display nothing instead of error on api error, by @cyrinux
+* arch_updates module: better error handling when no internet connection, by @btmcg
+* exchange_rate module: use the new core default user-agent
+* file_status module: patch to fix plural wording, by @cyrinux
+* volume_status module: skip pactl and pamixer if no pulseaudio, by @lasers and reported by @raingart
+* volume_status module: (pactl) reinitialize default device, fixes #1402 by @lasers as reported by @sridhars
+* whatismyip module: deprecate negative_cache_timeout parameter
+* xrandr module: add support for setting background, by @evypb
+
+
 version 3.11 (2018-07-05)
 * py3.notify_user: add support for title and icon parameters to tune notifications, by @cyrinux
 * new gitlab module: to powerfully manage your gitlab notifs/todos, by @lasers
