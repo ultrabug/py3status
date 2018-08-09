@@ -41,53 +41,54 @@ import requests
 class Py3status:
     """
     """
+
     # available configuration parameters
-    app_key = ''
+    app_key = ""
     cache_timeout = 600
-    checks = ''
-    format = '{pingdom}'
-    login = ''
+    checks = ""
+    format = "{pingdom}"
+    login = ""
     max_latency = 500
-    password = ''
+    password = ""
     request_timeout = 15
 
     def pingdom_checks(self):
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': ''
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": "",
         }
         pingdom = None
 
         # parse some configuration parameters
         if not isinstance(self.checks, list):
-            self.checks = self.checks.split(',')
+            self.checks = self.checks.split(",")
 
         r = requests.get(
-            'https://api.pingdom.com/api/2.0/checks',
+            "https://api.pingdom.com/api/2.0/checks",
             auth=(self.login, self.password),
-            headers={'App-Key': self.app_key},
+            headers={"App-Key": self.app_key},
             timeout=self.request_timeout,
         )
         result = r.json()
-        if 'checks' in result:
+        if "checks" in result:
             for check in [
-                ck for ck in result['checks'] if ck['name'] in self.checks
+                ck for ck in result["checks"] if ck["name"] in self.checks
             ]:
-                if check['status'] == 'up':
-                    pingdom += '{}: {}ms, '.format(
-                        check['name'],
-                        check['lastresponsetime']
+                if check["status"] == "up":
+                    pingdom += "{}: {}ms, ".format(
+                        check["name"], check["lastresponsetime"]
                     )
-                    if check['lastresponsetime'] > self.max_latency:
-                        response['color'] = self.py3.COLOR_DEGRADED
+                    if check["lastresponsetime"] > self.max_latency:
+                        response["color"] = self.py3.COLOR_DEGRADED
                 else:
-                    response['color'] = self.py3.COLOR_BAD
-                    pingdom += '{}: DOWN'.format(
-                        check['name'],
-                        check['lastresponsetime']
+                    response["color"] = self.py3.COLOR_BAD
+                    pingdom += "{}: DOWN".format(
+                        check["name"], check["lastresponsetime"]
                     )
-            pingdom = pingdom.strip(', ')
-            response['full_text'] = self.py3.safe_format(self.format, {'pingdom': pingdom})
+            pingdom = pingdom.strip(", ")
+            response["full_text"] = self.py3.safe_format(
+                self.format, {"pingdom": pingdom}
+            )
 
         return response
 
@@ -97,4 +98,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

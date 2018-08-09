@@ -76,24 +76,25 @@ import re
 import math
 from time import time
 
-HEX_RE = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
+HEX_RE = re.compile("#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})")
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cycle_time = 1
     force = False
-    format = '{output}'
+    format = "{output}"
     gradient = [
-        '#FF0000',
-        '#FFFF00',
-        '#00FF00',
-        '#00FFFF',
-        '#0000FF',
-        '#FF00FF',
-        '#FF0000',
+        "#FF0000",
+        "#FFFF00",
+        "#00FF00",
+        "#00FFFF",
+        "#0000FF",
+        "#FF00FF",
+        "#FF0000",
     ]
     multi_color = True
     steps = 10
@@ -107,29 +108,37 @@ class Py3status:
             Convert hex color #xxx or #xxxxxx to [r, g, b].
             """
             if not HEX_RE.match(color):
-                color = '#FFF'
+                color = "#FFF"
             if len(color) == 7:
-                return (int(color[1:3], 16), int(color[3:5], 16),
-                        int(color[5:], 16))
-            return (int(color[1], 16) * 17, int(color[2], 16) * 17,
-                    int(color[3], 16) * 17)
+                return (
+                    int(color[1:3], 16),
+                    int(color[3:5], 16),
+                    int(color[5:], 16),
+                )
+            return (
+                int(color[1], 16) * 17,
+                int(color[2], 16) * 17,
+                int(color[3], 16) * 17,
+            )
 
         def to_hex(color):
             """
             Convert [r, g, b] to hex.
             """
-            return '#{:02X}{:02X}{:02X}'.format(
-                int(color[0]), int(color[1]), int(color[2]))
+            return "#{:02X}{:02X}{:02X}".format(
+                int(color[0]), int(color[1]), int(color[2])
+            )
 
         def make_color(c1, c2, t):
             """
             Generate a mid color between c1 and c2.
             """
+
             def fade(i):
                 a = c1[i]
                 b = c2[i]
-                x = (b * t)
-                x += (a * (1 - t))
+                x = b * t
+                x += a * (1 - t)
                 return x
 
             c1 = from_hex(c1)
@@ -142,8 +151,15 @@ class Py3status:
         else:
             for i in range(len(self.gradient) - 1):
                 for j in range(self.steps):
-                    colors.append(to_hex(make_color(self.gradient[
-                        i], self.gradient[i + 1], j / (self.steps))))
+                    colors.append(
+                        to_hex(
+                            make_color(
+                                self.gradient[i],
+                                self.gradient[i + 1],
+                                j / (self.steps),
+                            )
+                        )
+                    )
         self.colors = colors
         self.active_color = 0
         self._set_cycle_time()
@@ -173,8 +189,8 @@ class Py3status:
         output = []
         for item in self.items:
             out = self.py3.get_output(item)
-            if out and 'separator' not in out[-1]:
-                out[-1]['separator'] = True
+            if out and "separator" not in out[-1]:
+                out[-1]["separator"] = True
             output += out
         return output
 
@@ -183,10 +199,7 @@ class Py3status:
         Make a rainbow!
         """
         if not self.items:
-            return {
-                'full_text': '',
-                'cached_until': self.py3.CACHE_FOREVER
-            }
+            return {"full_text": "", "cached_until": self.py3.CACHE_FOREVER}
 
         if time() >= self._cycle_time - (self.cycle_time / 10):
             self.active_color = (self.active_color + 1) % len(self.colors)
@@ -200,20 +213,19 @@ class Py3status:
             step = len(self.colors) // len(content)
         for index, item in enumerate(content):
             if self.multi_color:
-                offset = (self.active_color + (index * step)) % len(self.colors)
+                offset = (self.active_color + (index * step)) % len(
+                    self.colors
+                )
                 color = self.colors[offset]
             obj = item.copy()
-            if self.force or not obj.get('color'):
-                obj['color'] = color
+            if self.force or not obj.get("color"):
+                obj["color"] = color
             output.append(obj)
 
-        composites = {'output': self.py3.composite_create(output)}
+        composites = {"output": self.py3.composite_create(output)}
         rainbow = self.py3.safe_format(self.format, composites)
 
-        return {
-            'cached_until': self._cycle_time,
-            'full_text': rainbow
-        }
+        return {"cached_until": self._cycle_time, "full_text": rainbow}
 
 
 if __name__ == "__main__":
@@ -221,4 +233,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -38,51 +38,65 @@ import subprocess
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 5
     file_length = 4
     push = True
-    save_path = '~/Pictures/'
-    screenshot_command = 'gnome-screenshot -f'
+    save_path = "~/Pictures/"
+    screenshot_command = "gnome-screenshot -f"
     upload_path = "/files"
-    upload_server = 'puzzledge.org'
-    upload_user = 'erol'
+    upload_server = "puzzledge.org"
+    upload_user = "erol"
 
     def post_config_hook(self):
         self.save_path = os.path.expanduser(self.save_path)
-        self.full_text = ''
+        self.full_text = ""
 
     def on_click(self, event):
 
         file_name = self._filename_generator(self.file_length)
 
-        command = '%s %s/%s%s' % (self.screenshot_command, self.save_path,
-                                  file_name, '.jpg')
+        command = "%s %s/%s%s" % (
+            self.screenshot_command,
+            self.save_path,
+            file_name,
+            ".jpg",
+        )
 
         subprocess.Popen(command.split())
 
-        self.full_text = '%s%s' % (file_name, '.jpg')
+        self.full_text = "%s%s" % (file_name, ".jpg")
 
-        if (self.push and self.upload_server and self.upload_user and
-                self.upload_path):
-            command = 'scp %s/%s%s %s@%s:%s' % (
-                self.save_path, file_name, '.jpg', self.upload_user,
-                self.upload_server, self.upload_path)
+        if (
+            self.push
+            and self.upload_server
+            and self.upload_user
+            and self.upload_path
+        ):
+            command = "scp %s/%s%s %s@%s:%s" % (
+                self.save_path,
+                file_name,
+                ".jpg",
+                self.upload_user,
+                self.upload_server,
+                self.upload_path,
+            )
             subprocess.Popen(command.split())
 
-    def _filename_generator(self,
-                            size=6,
-                            chars=string.ascii_lowercase + string.digits):
-        return ''.join(random.choice(chars) for _ in range(size))
+    def _filename_generator(
+        self, size=6, chars=string.ascii_lowercase + string.digits
+    ):
+        return "".join(random.choice(chars) for _ in range(size))
 
     def screenshot(self):
-        if self.full_text == '':
-            self.full_text = 'SHOT'
+        if self.full_text == "":
+            self.full_text = "SHOT"
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': self.py3.COLOR_GOOD,
-            'full_text': self.full_text
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": self.py3.COLOR_GOOD,
+            "full_text": self.full_text,
         }
         return response
 
@@ -92,4 +106,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

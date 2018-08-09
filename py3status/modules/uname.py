@@ -25,27 +25,20 @@ from platform import uname
 class Py3status:
     """
     """
+
     # available configuration parameters
-    format = '{system} {release}'
+    format = "{system} {release}"
 
     class Meta:
         deprecated = {
-            'remove': [
-                {
-                    'param': 'cache_timeout',
-                    'msg': 'obsolete parameter',
-                },
-            ],
+            "remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]
         }
 
     def uname(self):
-        keys = ['system', 'node', 'release', 'version', 'machine', 'processor']
+        keys = ["system", "node", "release", "version", "machine", "processor"]
         full_text = self.py3.safe_format(self.format, dict(zip(keys, uname())))
 
-        return {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': full_text
-        }
+        return {"cached_until": self.py3.CACHE_FOREVER, "full_text": full_text}
 
 
 if __name__ == "__main__":
@@ -53,4 +46,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

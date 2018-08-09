@@ -31,12 +31,13 @@ import socket
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = '{host}:{port} {state}'
-    host = 'localhost'
-    icon_off = 'DOWN'
-    icon_on = 'UP'
+    format = "{host}:{port} {state}"
+    host = "localhost"
+    icon_off = "DOWN"
+    icon_on = "UP"
     port = 22
 
     def post_config_hook(self):
@@ -54,9 +55,11 @@ class Py3status:
             color = self.color_on
             state = self.icon_on
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'full_text': self.py3.safe_format(self.format, {'state': state}),
-                'color': color}
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"state": state}),
+            "color": color,
+        }
 
 
 if __name__ == "__main__":
@@ -64,4 +67,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -42,14 +42,15 @@ from threading import Thread, Event
 class Py3status:
     """
     """
+
     # available configuration parameters
-    dunst_signal_off = 'SIGTERM'
-    dunst_signal_on = 'SIGUSR1'
-    format = '{state}'
-    notification_manager = 'dunst'
+    dunst_signal_off = "SIGTERM"
+    dunst_signal_on = "SIGUSR1"
+    format = "{state}"
+    notification_manager = "dunst"
     refresh_interval = 0.25
-    state_off = 'OFF'
-    state_on = 'ON'
+    state_off = "OFF"
+    state_on = "ON"
 
     def post_config_hook(self):
         self.is_on = False
@@ -58,7 +59,7 @@ class Py3status:
             self._init_periodic_notifications_killer()
 
     def _is_dunst(self):
-        return self.notification_manager == 'dunst'
+        return self.notification_manager == "dunst"
 
     def _init_periodic_notifications_killer(self):
         self.running = Event()
@@ -68,7 +69,9 @@ class Py3status:
             def run(this):
                 while not self.killed.is_set():
                     if self.running.wait():
-                        system("killall '{}'".format(self.notification_manager))
+                        system(
+                            "killall '{}'".format(self.notification_manager)
+                        )
                         sleep(self.refresh_interval)
 
         MyThread().start()
@@ -76,18 +79,21 @@ class Py3status:
     def do_not_disturb(self):
         state = self.state_on if self.is_on else self.state_off
         response = {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, {'state': state}),
-            'color': self.py3.COLOR_BAD if self.is_on else self.py3.COLOR_GOOD
+            "cached_until": self.py3.CACHE_FOREVER,
+            "full_text": self.py3.safe_format(self.format, {"state": state}),
+            "color": self.py3.COLOR_BAD if self.is_on else self.py3.COLOR_GOOD,
         }
         return response
 
     def on_click(self, event):
-        if event['button'] == 1:
+        if event["button"] == 1:
             self.is_on = not self.is_on
             if self._is_dunst():
-                new_flag = "--signal {}".format(self.dunst_signal_on
-                                                if self.is_on else self.dunst_signal_off)
+                new_flag = "--signal {}".format(
+                    self.dunst_signal_on
+                    if self.is_on
+                    else self.dunst_signal_off
+                )
                 system("killall {} dunst".format(new_flag))
             else:
                 if self.is_on:
@@ -106,4 +112,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

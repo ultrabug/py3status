@@ -43,35 +43,38 @@ import socket
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 300
-    domain = ''
-    format = '{total_count} NS {status}'
+    domain = ""
+    format = "{total_count} NS {status}"
     lifetime = 0.3
-    nameservers = ''
-    resolvers = ''
+    nameservers = ""
+    resolvers = ""
 
     def ns_checker(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout),
-                    'color': self.py3.COLOR_GOOD,
-                    'full_text': ''}
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": self.py3.COLOR_GOOD,
+            "full_text": "",
+        }
         count_nok = 0
         count_ok = 0
         nameservers = []
-        status = 'OK'
+        status = "OK"
 
         # parse some configuration parameters
         if not isinstance(self.nameservers, list):
-            self.nameservers = self.nameservers.split(',')
+            self.nameservers = self.nameservers.split(",")
         if not isinstance(self.resolvers, list):
-            self.resolvers = self.resolvers.split(',')
+            self.resolvers = self.resolvers.split(",")
 
         my_resolver = dns.resolver.Resolver()
         my_resolver.lifetime = self.lifetime
         if self.resolvers:
             my_resolver.nameservers = self.resolvers
 
-        my_ns = my_resolver.query(self.domain, 'NS')
+        my_ns = my_resolver.query(self.domain, "NS")
 
         # Insert each NS ip address in nameservers
         for ns in my_ns:
@@ -83,20 +86,22 @@ class Py3status:
         for ns in nameservers:
             my_resolver.nameservers = [ns]
             try:
-                my_resolver.query(self.domain, 'A')
+                my_resolver.query(self.domain, "A")
                 count_ok += 1
             except:
                 count_nok += 1
-                status = 'NOK'
-                response['color'] = self.py3.COLOR_BAD
+                status = "NOK"
+                response["color"] = self.py3.COLOR_BAD
 
-        response['full_text'] = self.py3.safe_format(
+        response["full_text"] = self.py3.safe_format(
             self.format,
-            dict(total_count=len(nameservers),
-                 nok_count=count_nok,
-                 ok_count=count_ok,
-                 status=status,
-                 ))
+            dict(
+                total_count=len(nameservers),
+                nok_count=count_nok,
+                ok_count=count_ok,
+                status=status,
+            ),
+        )
 
         return response
 
@@ -106,4 +111,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

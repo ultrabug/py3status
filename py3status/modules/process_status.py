@@ -27,34 +27,35 @@ not_running
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-STRING_ERROR = 'missing process'
+STRING_ERROR = "missing process"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = '{icon}'
+    format = "{icon}"
     full = False
-    icon_off = u'■'
-    icon_on = u'●'
+    icon_off = u"■"
+    icon_on = u"●"
     process = None
 
     class Meta:
         deprecated = {
-            'rename': [
+            "rename": [
                 {
-                    'param': 'format_running',
-                    'new': 'icon_on',
-                    'msg': 'obsolete parameter use `icon_on`',
+                    "param": "format_running",
+                    "new": "icon_on",
+                    "msg": "obsolete parameter use `icon_on`",
                 },
                 {
-                    'param': 'format_not_running',
-                    'new': 'icon_off',
-                    'msg': 'obsolete parameter use `icon_off`',
+                    "param": "format_not_running",
+                    "new": "icon_off",
+                    "msg": "obsolete parameter use `icon_off`",
                 },
-            ],
+            ]
         }
 
     def post_config_hook(self):
@@ -62,9 +63,9 @@ class Py3status:
             raise Exception(STRING_ERROR)
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
-        self.pgrep_command = ['pgrep', self.process]
+        self.pgrep_command = ["pgrep", self.process]
         if self.full:
-            self.pgrep_command.insert(1, '-f')
+            self.pgrep_command.insert(1, "-f")
 
     def _is_running(self):
         try:
@@ -82,10 +83,11 @@ class Py3status:
             color = self.color_off
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': self.py3.safe_format(
-                self.format, {'icon': icon, 'process': self.process})
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": color,
+            "full_text": self.py3.safe_format(
+                self.format, {"icon": icon, "process": self.process}
+            ),
         }
 
 
@@ -94,4 +96,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

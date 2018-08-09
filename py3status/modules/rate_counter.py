@@ -52,11 +52,12 @@ SECS_IN_DAY = 24 * SECS_IN_HOUR  # 86400
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 5
-    config_file = '~/.i3/py3status/counter-config.save'
-    format = 'Time: {days} day {hours}:{mins:02d} Cost: {total}'
-    format_money = '{price}$'
+    config_file = "~/.i3/py3status/counter-config.save"
+    format = "Time: {days} day {hours}:{mins:02d} Cost: {total}"
+    format_money = "{price}$"
     hour_price = 30
     tax = 1.02
 
@@ -113,20 +114,20 @@ class Py3status:
 
     def kill(self):
         self._stop_timer()
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             f.write(str(self.saved_time))
 
     def on_click(self, event):
-        if event['button'] == 1:
+        if event["button"] == 1:
             self._toggle_timer()
-        elif event['button'] == 3:
+        elif event["button"] == 3:
             self._reset()
 
     def _reset(self):
         if not self.running:
             self.saved_time = 0.0
-            with open(self.config_file, 'w') as f:
-                f.write('0')
+            with open(self.config_file, "w") as f:
+                f.write("0")
 
     def counter(self):
         running_time = 0.0
@@ -140,27 +141,32 @@ class Py3status:
         days, hours, mins, secs = self.secs_to_dhms(running_time)
         subtotal = float(self.hour_price) * (running_time / SECS_IN_HOUR)
         total = subtotal * float(self.tax)
-        subtotal_cost = self.py3.safe_format(self.format_money,
-                                             {'price': '%.2f' % subtotal})
-        total_cost = self.py3.safe_format(self.format_money,
-                                          {'price': '%.2f' % total})
-        tax_cost = self.py3.safe_format(self.format_money,
-                                        {'price': '%.2f' % (total - subtotal)})
+        subtotal_cost = self.py3.safe_format(
+            self.format_money, {"price": "%.2f" % subtotal}
+        )
+        total_cost = self.py3.safe_format(
+            self.format_money, {"price": "%.2f" % total}
+        )
+        tax_cost = self.py3.safe_format(
+            self.format_money, {"price": "%.2f" % (total - subtotal)}
+        )
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': self.py3.safe_format(
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": color,
+            "full_text": self.py3.safe_format(
                 self.format,
-                dict(days=days,
-                     hours=hours,
-                     mins=mins,
-                     secs=secs,
-                     total_hours=running_time // SECS_IN_HOUR,
-                     total_mins=running_time // SECS_IN_MIN,
-                     subtotal=subtotal_cost,
-                     total=total_cost,
-                     tax=tax_cost,)
-            )
+                dict(
+                    days=days,
+                    hours=hours,
+                    mins=mins,
+                    secs=secs,
+                    total_hours=running_time // SECS_IN_HOUR,
+                    total_mins=running_time // SECS_IN_MIN,
+                    subtotal=subtotal_cost,
+                    total=total_cost,
+                    tax=tax_cost,
+                ),
+            ),
         }
         return response
 
@@ -170,4 +176,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

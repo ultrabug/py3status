@@ -44,13 +44,15 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division  # python2 compatibility
-STRING_ERROR = 'vnstat: returned wrong'
-STRING_NOT_INSTALLED = 'not installed'
+
+STRING_ERROR = "vnstat: returned wrong"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 180
     coloring = {}
@@ -70,13 +72,16 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
-        if not self.py3.check_commands('vnstat'):
+        if not self.py3.check_commands("vnstat"):
             raise Exception(STRING_NOT_INSTALLED)
 
-        self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
+        self.value_format = "{value:%s.%sf} {unit}" % (
+            self.left_align,
+            self.precision,
+        )
         # list of units, first one - value/initial_multi, second - value/1024,
         # third - value/1024^2, etc...
-        self.units = ["kb", "mb", "gb", "tb", ]
+        self.units = ["kb", "mb", "gb", "tb"]
 
     def _divide_and_format(self, value):
         # Divide a value and return formatted string
@@ -91,20 +96,25 @@ class Py3status:
     def vntstat(self):
         def filter_stat():
             # Get statistics in list of lists of words
-            out = self.py3.command_output(["vnstat", "--exportdb"]).splitlines()
+            out = self.py3.command_output(
+                ["vnstat", "--exportdb"]
+            ).splitlines()
             for x in out:
                 if x.startswith("{};0;".format(self.statistics_type)):
                     return x
+
         try:
-            type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(";")
+            type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(
+                ";"
+            )
         except:
             return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
+                "cached_until": self.py3.time_in(self.cache_timeout),
+                "color": self.py3.COLOR_BAD,
+                "full_text": STRING_ERROR,
             }
 
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
 
         up = (int(txm) * 1024 + int(txk)) * 1024
         down = (int(rxm) * 1024 + int(rxk)) * 1024
@@ -116,13 +126,16 @@ class Py3status:
             if stat["total"] < k * 1024 * 1024:
                 break
             else:
-                response['color'] = self.coloring[k]
+                response["color"] = self.coloring[k]
 
-        response['full_text'] = self.py3.safe_format(
+        response["full_text"] = self.py3.safe_format(
             self.format,
-            dict(total=self._divide_and_format(stat['total']),
-                 up=self._divide_and_format(stat['up']),
-                 down=self._divide_and_format(stat['down'])))
+            dict(
+                total=self._divide_and_format(stat["total"]),
+                up=self._divide_and_format(stat["up"]),
+                down=self._divide_and_format(stat["down"]),
+            ),
+        )
         return response
 
 
@@ -131,4 +144,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

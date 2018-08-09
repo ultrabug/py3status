@@ -49,48 +49,49 @@ mode
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
-URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
-URL_GEO_NEW_DEFAULT = 'https://ifconfig.co/json'
+URL_GEO_OLD_DEFAULT = "http://ip-api.com/json"
+URL_GEO_NEW_DEFAULT = "https://ifconfig.co/json"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_refresh = 2
     button_toggle = 1
     cache_timeout = 60
     expected = None
-    format = '{ip}'
+    format = "{ip}"
     hide_when_offline = False
-    icon_off = u'■'
-    icon_on = u'●'
-    mode = 'ip'
+    icon_off = u"■"
+    icon_on = u"●"
+    mode = "ip"
     timeout = 5
     url_geo = URL_GEO_NEW_DEFAULT
 
     class Meta:
         deprecated = {
-            'remove': [
+            "remove": [
                 {
-                    'param': 'url',
-                    'msg': 'obsolete parameter, use `url_geo` instead',
+                    "param": "url",
+                    "msg": "obsolete parameter, use `url_geo` instead",
                 },
                 {
-                    'param': 'negative_cache_timeout',
-                    'msg': 'obsolete parameter',
+                    "param": "negative_cache_timeout",
+                    "msg": "obsolete parameter",
                 },
             ],
-            'rename': [
+            "rename": [
                 {
-                    'param': 'format_online',
-                    'new': 'icon_on',
-                    'msg': 'obsolete parameter, use `icon_on` instead',
+                    "param": "format_online",
+                    "new": "icon_on",
+                    "msg": "obsolete parameter, use `icon_on` instead",
                 },
                 {
-                    'param': 'format_offline',
-                    'new': 'icon_off',
-                    'msg': 'obsolete parameter, use `icon_off` instead',
+                    "param": "format_offline",
+                    "new": "icon_off",
+                    "msg": "obsolete parameter, use `icon_off` instead",
                 },
             ],
         }
@@ -102,20 +103,20 @@ class Py3status:
         # Backwards compatibility
         self.substitutions = {}
         if self.url_geo == URL_GEO_NEW_DEFAULT:
-            self.substitutions['country_code'] = 'country_iso'
+            self.substitutions["country_code"] = "country_iso"
         elif self.url_geo == URL_GEO_OLD_DEFAULT:
-            self.substitutions['ip'] = 'query'
+            self.substitutions["ip"] = "query"
 
     def on_click(self, event):
         """
         Toggle between display modes 'ip' and 'status'
         """
-        button = event['button']
+        button = event["button"]
         if button == self.button_toggle:
-            if self.mode == 'ip':
-                self.mode = 'status'
+            if self.mode == "ip":
+                self.mode = "status"
             else:
-                self.mode = 'ip'
+                self.mode = "ip"
         elif button != self.button_refresh:
             # prevent refresh
             self.py3.prevent_refresh()
@@ -135,26 +136,24 @@ class Py3status:
         """
         """
         info = self._get_my_ip_info()
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout)
-        }
+        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
 
         if info is None and self.hide_when_offline:
-            response['full_text'] = ''
+            response["full_text"] = ""
         elif info is not None:
-            info['icon'] = self.icon_on
-            response['color'] = self.py3.COLOR_GOOD
+            info["icon"] = self.icon_on
+            response["color"] = self.py3.COLOR_GOOD
             for key, val in self.expected.items():
                 if val != info.get(key):
-                    response['color'] = self.py3.COLOR_DEGRADED
+                    response["color"] = self.py3.COLOR_DEGRADED
                     break
-            if self.mode == 'ip':
-                response['full_text'] = self.py3.safe_format(self.format, info)
+            if self.mode == "ip":
+                response["full_text"] = self.py3.safe_format(self.format, info)
             else:
-                response['full_text'] = self.icon_on
+                response["full_text"] = self.icon_on
         else:
-            response['full_text'] = self.icon_off
-            response['color'] = self.py3.COLOR_BAD
+            response["full_text"] = self.icon_off
+            response["color"] = self.py3.COLOR_BAD
         return response
 
 
@@ -163,4 +162,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -52,6 +52,7 @@ us
 """
 
 import re
+
 LAYOUTS_RE = re.compile(r".*layout:\s*((\w+,?)+).*", flags=re.DOTALL)
 LEDMASK_RE = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*", flags=re.DOTALL)
 VARIANTS_RE = re.compile(r".*variant:\s*(([\w-]+,?)+).*", flags=re.DOTALL)
@@ -60,12 +61,13 @@ VARIANTS_RE = re.compile(r".*variant:\s*(([\w-]+,?)+).*", flags=re.DOTALL)
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_next = 4
     button_prev = 5
     cache_timeout = 10
     colors = None
-    format = '{layout}'
+    format = "{layout}"
     layouts = None
 
     def post_config_hook(self):
@@ -85,14 +87,14 @@ class Py3status:
         self.colors_dict = {}
         # old compatibility: set default values
         self.defaults = {
-            'fr': '#268BD2',
-            'ru': '#F75252',
-            'ua': '#FCE94F',
-            'us': '#729FCF',
+            "fr": "#268BD2",
+            "ru": "#F75252",
+            "ua": "#FCE94F",
+            "us": "#729FCF",
         }
 
     def keyboard_layout(self):
-        layout = self._command() or '??'
+        layout = self._command() or "??"
         # If the current layout is not in our layouts list we need to add it
         if layout not in self._layouts:
             self._layouts = [layout] + self.layouts
@@ -104,27 +106,31 @@ class Py3status:
         lang = self._layouts[self._active]
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'layout': lang})
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"layout": lang}),
         }
 
         if self.colors and not self.colors_dict:
-            self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
-                layout.split('=') for layout in self.colors.split(',')))
+            self.colors_dict = dict(
+                (k.strip(), v.strip())
+                for k, v in (
+                    layout.split("=") for layout in self.colors.split(",")
+                )
+            )
 
         # colorize languages containing spaces and/or dashes too
         language = lang.upper()
-        for character in ' -':
+        for character in " -":
             if character in language:
-                language = language.replace(character, '_')
+                language = language.replace(character, "_")
 
-        lang_color = getattr(self.py3, 'COLOR_%s' % language)
+        lang_color = getattr(self.py3, "COLOR_%s" % language)
         if not lang_color:
             lang_color = self.colors_dict.get(lang)
         if not lang_color:  # old compatibility: try default value
             lang_color = self.defaults.get(lang)
         if lang_color:
-            response['color'] = lang_color
+            response["color"] = lang_color
 
         return response
 
@@ -140,7 +146,7 @@ class Py3status:
         if len(layouts) == 1:
             variant = re.match(VARIANTS_RE, out)
             if variant:
-                return layouts[0] + ' ' + variant.group(1)
+                return layouts[0] + " " + variant.group(1)
             else:
                 return layouts[0]
 
@@ -152,10 +158,10 @@ class Py3status:
         self._active += delta
         self._active = self._active % len(self._layouts)
         layout = self._layouts[self._active]
-        self.py3.command_run('setxkbmap -layout {}'.format(layout))
+        self.py3.command_run("setxkbmap -layout {}".format(layout))
 
     def on_click(self, event):
-        button = event['button']
+        button = event["button"]
         if button == self.button_next:
             self._set_active(1)
         if button == self.button_prev:
@@ -167,4 +173,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -97,18 +97,19 @@ MAX_NO_CONTENT_WAIT = 5
 class Py3status:
     """
     """
+
     # available configuration parameters
-    align = 'center'
+    align = "center"
     button_next = 5
     button_prev = 4
     button_toggle = 1
-    click_mode = 'all'
+    click_mode = "all"
     cycle = 0
     fixed_width = False
     format = None
-    format_button_closed = u'+'
-    format_button_open = u'-'
-    format_closed = u'{button}'
+    format_button_closed = u"+"
+    format_button_open = u"-"
+    format_closed = u"{button}"
     open = True
 
     class Meta:
@@ -128,15 +129,15 @@ class Py3status:
         self.open = bool(self.open)
         # set default format etc based on click_mode
         if self.format is None:
-            if self.click_mode == 'button':
-                self.format = u'{output} {button}'
+            if self.click_mode == "button":
+                self.format = u"{output} {button}"
             else:
-                self.format = u'{output}'
+                self.format = u"{output}"
         # if no button then force open
-        if not self.py3.format_contains(self.format, 'button'):
+        if not self.py3.format_contains(self.format, "button"):
             self.open = True
-        self.py3.register_function('content_function', self._content_function)
-        self.py3.register_function('urgent_function', self._urgent_function)
+        self.py3.register_function("content_function", self._content_function)
+        self.py3.register_function("urgent_function", self._urgent_function)
 
     def _content_function(self):
         """
@@ -169,22 +170,23 @@ class Py3status:
             if not output:
                 widths.append(0)
             else:
-                widths.append(sum([len(x['full_text']) for x in output]))
+                widths.append(sum([len(x["full_text"]) for x in output]))
             if i == self.active:
                 current = output
                 current_width = widths[-1]
         if widths and current:
             width = max(widths)
-            padding = ' ' * (width - current_width)
-            if self.align == 'right':
-                current[0]['full_text'] = padding + current[0]['full_text']
-            elif self.align == 'center':
+            padding = " " * (width - current_width)
+            if self.align == "right":
+                current[0]["full_text"] = padding + current[0]["full_text"]
+            elif self.align == "center":
                 cut = len(padding) // 2
-                current[0]['full_text'] = padding[:cut] + \
-                    current[0]['full_text']
-                current[-1]['full_text'] += padding[cut:]
+                current[0]["full_text"] = (
+                    padding[:cut] + current[0]["full_text"]
+                )
+                current[-1]["full_text"] += padding[cut:]
             else:
-                current[-1]['full_text'] += padding
+                current[-1]["full_text"] += padding
         return current
 
     def _get_current_module_name(self):
@@ -208,10 +210,7 @@ class Py3status:
 
         # hide if no contents
         if not self.items:
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'full_text': '',
-            }
+            return {"cached_until": self.py3.CACHE_FOREVER, "full_text": ""}
 
         if self.open:
             urgent = False
@@ -225,8 +224,8 @@ class Py3status:
                 if self._first_run:
                     self._first_run = False
                     return {
-                        'cached_until': self.py3.time_in(MAX_NO_CONTENT_WAIT),
-                        'full_text': '',
+                        "cached_until": self.py3.time_in(MAX_NO_CONTENT_WAIT),
+                        "full_text": "",
                     }
 
                 self._change_active(1)
@@ -245,10 +244,10 @@ class Py3status:
             format_control = self.format_button_closed
             format = self.format_closed
 
-        button = {'full_text': format_control, 'index': 'button'}
+        button = {"full_text": format_control, "index": "button"}
         composites = {
-            'output': self.py3.composite_create(current_output),
-            'button': self.py3.composite_create(button),
+            "output": self.py3.composite_create(current_output),
+            "button": self.py3.composite_create(button),
         }
         output = self.py3.safe_format(format, composites)
 
@@ -257,13 +256,10 @@ class Py3status:
         else:
             cached_until = self.py3.CACHE_FOREVER
 
-        response = {
-            'cached_until': cached_until,
-            'full_text': output
-        }
+        response = {"cached_until": cached_until, "full_text": output}
 
         if urgent:
-            response['urgent'] = urgent
+            response["urgent"] = urgent
         return response
 
     def on_click(self, event):
@@ -275,20 +271,22 @@ class Py3status:
 
         # if click_mode is button then we only action clicks that are
         # directly on the group not its contents.
-        if self.click_mode == 'button':
-            if (not self.py3.is_my_event(event) or
-                    event.get('index') != 'button'):
+        if self.click_mode == "button":
+            if (
+                not self.py3.is_my_event(event)
+                or event.get("index") != "button"
+            ):
                 return
 
         # reset cycle time
         self._cycle_time = time() + self.cycle
-        if self.button_next and event['button'] == self.button_next:
+        if self.button_next and event["button"] == self.button_next:
             self._change_active(1)
-        if self.button_prev and event['button'] == self.button_prev:
+        if self.button_prev and event["button"] == self.button_prev:
             self._change_active(-1)
-        if self.button_toggle and event['button'] == self.button_toggle:
+        if self.button_toggle and event["button"] == self.button_toggle:
             # we only toggle if button was used
-            if event.get('index') == 'button':
+            if event.get("index") == "button":
                 self.urgent = False
                 self.open = not self.open
 
@@ -298,4 +296,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

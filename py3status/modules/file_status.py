@@ -55,45 +55,46 @@ missing
 from glob import glob
 from os.path import basename, expanduser
 
-STRING_NO_PATHS = 'missing paths'
+STRING_NO_PATHS = "missing paths"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = u'\?color=path [\?if=path \u25cf|\u25a0]'
-    format_path = u'{basename}'
-    format_path_separator = u' '
+    format = u"\?color=path [\?if=path \u25cf|\u25a0]"
+    format_path = u"{basename}"
+    format_path_separator = u" "
     paths = None
-    thresholds = [(0, 'bad'), (1, 'good')]
+    thresholds = [(0, "bad"), (1, "good")]
 
     class Meta:
         deprecated = {
-            'rename': [
+            "rename": [
                 {
-                    'param': 'format_available',
-                    'new': 'icon_available',
-                    'msg': 'obsolete parameter use `icon_available`'
+                    "param": "format_available",
+                    "new": "icon_available",
+                    "msg": "obsolete parameter use `icon_available`",
                 },
                 {
-                    'param': 'format_unavailable',
-                    'new': 'icon_unavailable',
-                    'msg': 'obsolete parameter use `icon_unavailable`'
+                    "param": "format_unavailable",
+                    "new": "icon_unavailable",
+                    "msg": "obsolete parameter use `icon_unavailable`",
                 },
                 {
-                    'param': 'path',
-                    'new': 'paths',
-                    'msg': 'obsolete parameter use `paths`'
+                    "param": "path",
+                    "new": "paths",
+                    "msg": "obsolete parameter use `paths`",
                 },
             ],
-            'rename_placeholder': [
+            "rename_placeholder": [
                 {
-                    'placeholder': 'paths',
-                    'new': 'path',
-                    'format_strings': ['format'],
-                },
+                    "placeholder": "paths",
+                    "new": "path",
+                    "format_strings": ["format"],
+                }
             ],
         }
 
@@ -102,19 +103,19 @@ class Py3status:
             raise Exception(STRING_NO_PATHS)
 
         # icon deprecation
-        on = getattr(self, 'icon_available', u'\u25cf')
-        off = getattr(self, 'icon_unavailable', u'\u25a0')
-        new_icon = u'\?color=path [\?if=path {}|{}]'.format(on, off)
-        self.format = self.format.replace('{icon}', new_icon)
+        on = getattr(self, "icon_available", u"\u25cf")
+        off = getattr(self, "icon_unavailable", u"\u25a0")
+        new_icon = u"\?color=path [\?if=path {}|{}]".format(on, off)
+        self.format = self.format.replace("{icon}", new_icon)
 
         # convert str to list + expand path
         if not isinstance(self.paths, list):
             self.paths = [self.paths]
         self.paths = list(map(expanduser, self.paths))
 
-        self.init = {'format_path': []}
-        if self.py3.format_contains(self.format, 'format_path'):
-            self.init['format_path'] = self.py3.get_placeholders_list(
+        self.init = {"format_path": []}
+        if self.py3.format_contains(self.format, "format_path"):
+            self.init["format_path"] = self.py3.get_placeholders_list(
                 self.format_path
             )
 
@@ -125,7 +126,7 @@ class Py3status:
         format_path = None
 
         # format paths
-        if self.init['format_path']:
+        if self.init["format_path"]:
             new_data = []
             format_path_separator = self.py3.safe_format(
                 self.format_path_separator
@@ -133,10 +134,10 @@ class Py3status:
 
             for pathname in paths:
                 path = {}
-                for key in self.init['format_path']:
-                    if key == 'basename':
+                for key in self.init["format_path"]:
+                    if key == "basename":
                         value = basename(pathname)
-                    elif key == 'pathname':
+                    elif key == "pathname":
                         value = pathname
                     else:
                         continue
@@ -148,20 +149,19 @@ class Py3status:
             )
 
         if self.thresholds:
-            self.py3.threshold_get_color(count_path, 'path')
-            self.py3.threshold_get_color(count_path, 'paths')
+            self.py3.threshold_get_color(count_path, "path")
+            self.py3.threshold_get_color(count_path, "paths")
 
         return {
-            'cached_until':
-            self.py3.time_in(self.cache_timeout),
-            'full_text':
-            self.py3.safe_format(
-                self.format, {
-                    'path': count_path,
-                    'paths': count_path,
-                    'format_path': format_path
-                }
-            )
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(
+                self.format,
+                {
+                    "path": count_path,
+                    "paths": count_path,
+                    "format_path": format_path,
+                },
+            ),
         }
 
 
@@ -170,4 +170,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -52,8 +52,9 @@ from threading import Timer
 class Py3status:
     """
     """
+
     # available configuration parameters
-    format = 'Timer {timer}'
+    format = "Timer {timer}"
     sound = None
     time = 60
 
@@ -80,11 +81,10 @@ class Py3status:
         self.timer()
 
     def timer(self):
-
         def make_2_didget(value):
             value = str(value)
             if len(value) == 1:
-                value = '0' + value
+                value = "0" + value
             return value
 
         if self.running or self.done:
@@ -110,47 +110,35 @@ class Py3status:
             cached_until = self.py3.CACHE_FOREVER
 
         composites = [
+            {"full_text": str(hours), "color": self.color, "index": "hours"},
+            {"full_text": ":"},
             {
-                'full_text': str(hours),
-                'color': self.color,
-                'index': 'hours',
+                "full_text": make_2_didget(minutes),
+                "color": self.color,
+                "index": "minutes",
             },
+            {"full_text": ":"},
             {
-                'full_text': ':',
-            },
-            {
-                'full_text': make_2_didget(minutes),
-                'color': self.color,
-                'index': 'minutes',
-            },
-            {
-                'full_text': ':',
-            },
-            {
-                'full_text': make_2_didget(seconds),
-                'color': self.color,
-                'index': 'seconds',
+                "full_text": make_2_didget(seconds),
+                "color": self.color,
+                "index": "seconds",
             },
         ]
 
         timer = self.py3.composite_create(composites)
 
         response = {
-            'cached_until': cached_until,
-            'full_text': self.py3.safe_format(self.format, {'timer': timer})
+            "cached_until": cached_until,
+            "full_text": self.py3.safe_format(self.format, {"timer": timer}),
         }
         if self.done:
-            response['urgent'] = True
+            response["urgent"] = True
         return response
 
     def on_click(self, event):
-        deltas = {
-            'hours': 3600,
-            'minutes': 60,
-            'seconds': 1
-        }
-        index = event['index']
-        button = event['button']
+        deltas = {"hours": 3600, "minutes": 60, "seconds": 1}
+        index = event["index"]
+        button = event["button"]
 
         # If played an alarm sound, then cancel the sound and urgent on any
         # button press... otherwise, we only cancel an urgent
@@ -181,7 +169,9 @@ class Py3status:
                 if self.alarm_timer:
                     self.alarm_timer.cancel()
                 self.done = False
-                self.alarm_timer = Timer(self.time_left or self.time, self._time_up)
+                self.alarm_timer = Timer(
+                    self.time_left or self.time, self._time_up
+                )
                 self.alarm_timer.start()
 
         if button == 2:
@@ -221,4 +211,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -120,32 +120,33 @@ from time import sleep
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
     command = None
     fallback = True
     fixed_width = True
     force_on_start = None
-    format = '{output}'
+    format = "{output}"
     hide_if_single_combination = False
-    icon_clone = '='
-    icon_extend = '+'
+    icon_clone = "="
+    icon_extend = "+"
     output_combinations = None
 
     class Meta:
         deprecated = {
-            'rename': [
+            "rename": [
                 {
-                    'param': 'format_clone',
-                    'new': 'icon_clone',
-                    'msg': 'obsolete parameter use `icon_clone`',
+                    "param": "format_clone",
+                    "new": "icon_clone",
+                    "msg": "obsolete parameter use `icon_clone`",
                 },
                 {
-                    'param': 'format_extend',
-                    'new': 'icon_extend',
-                    'msg': 'obsolete parameter use `icon_extend`',
+                    "param": "format_extend",
+                    "new": "icon_extend",
+                    "msg": "obsolete parameter use `icon_extend`",
                 },
-            ],
+            ]
         }
 
     def post_config_hook(self):
@@ -154,7 +155,7 @@ class Py3status:
         """
         self.active_comb = None
         self.active_layout = None
-        self.active_mode = 'extend'
+        self.active_mode = "extend"
         self.displayed = None
         self.max_width = 0
 
@@ -166,28 +167,27 @@ class Py3status:
         connected = list()
         active_layout = list()
         disconnected = list()
-        layout = OrderedDict({
-            'connected': OrderedDict(),
-            'disconnected': OrderedDict()
-        })
+        layout = OrderedDict(
+            {"connected": OrderedDict(), "disconnected": OrderedDict()}
+        )
 
-        current = self.py3.command_output('xrandr')
+        current = self.py3.command_output("xrandr")
         for line in current.splitlines():
             try:
-                s = line.split(' ')
-                infos = line[line.find('('):]
-                if s[1] == 'connected':
+                s = line.split(" ")
+                infos = line[line.find("(") :]
+                if s[1] == "connected":
                     output, state, mode = s[0], s[1], None
                     for index, x in enumerate(s[2:], 2):
-                        if 'x' in x and '+' in x:
+                        if "x" in x and "+" in x:
                             mode = x
                             active_layout.append(output)
-                            infos = line[line.find(s[index + 1]):]
+                            infos = line[line.find(s[index + 1]) :]
                             break
-                        elif '(' in x:
+                        elif "(" in x:
                             break
                     connected.append(output)
-                elif s[1] == 'disconnected':
+                elif s[1] == "disconnected":
                     output, state, mode = s[0], s[1], None
                     disconnected.append(output)
                 else:
@@ -196,16 +196,17 @@ class Py3status:
                 self.py3.log('xrandr error="{}"'.format(err))
             else:
                 layout[state][output] = {
-                    'infos': infos,
-                    'mode': mode,
-                    'state': state
+                    "infos": infos,
+                    "mode": mode,
+                    "state": state,
                 }
 
         # initialize the active layout
         if self.active_layout is None:
             self.active_comb = tuple(active_layout)
             self.active_layout = self._get_string_and_set_width(
-                tuple(active_layout), self.active_mode)
+                tuple(active_layout), self.active_mode
+            )
 
         return layout
 
@@ -219,12 +220,12 @@ class Py3status:
 
         whitelist = None
         if self.output_combinations:
-            whitelist = self.output_combinations.split('|')
+            whitelist = self.output_combinations.split("|")
 
         self.max_width = 0
-        for output in range(len(self.layout['connected'])):
-            for comb in combinations(self.layout['connected'], output + 1):
-                for mode in ['clone', 'extend']:
+        for output in range(len(self.layout["connected"])):
+            for comb in combinations(self.layout["connected"], output + 1):
+                for mode in ["clone", "extend"]:
                     string = self._get_string_and_set_width(comb, mode)
                     if whitelist and string not in whitelist:
                         continue
@@ -236,8 +237,9 @@ class Py3status:
 
         # Preserve the order in which user defined the output combinations
         if whitelist:
-            available = reversed([comb for comb in whitelist
-                                  if comb in available])
+            available = reversed(
+                [comb for comb in whitelist if comb in available]
+            )
 
         self.available_combinations = deque(available)
         self.combinations_map = combinations_map
@@ -246,8 +248,8 @@ class Py3status:
         """
         Construct the string to be displayed and record the max width.
         """
-        show = '{}'.format(self._separator(mode)).join(combination)
-        show = show.rstrip('{}'.format(self._separator(mode)))
+        show = "{}".format(self._separator(mode)).join(combination)
+        show = show.rstrip("{}".format(self._separator(mode)))
         self.max_width = max([self.max_width, len(show)])
         return show
 
@@ -259,8 +261,10 @@ class Py3status:
         we display the last selected combination.
         """
         for _ in range(len(self.available_combinations)):
-            if (self.displayed is None and
-                    self.available_combinations[0] == self.active_layout):
+            if (
+                self.displayed is None
+                and self.available_combinations[0] == self.active_layout
+            ):
                 self.displayed = self.available_combinations[0]
                 break
             else:
@@ -273,13 +277,14 @@ class Py3status:
                 self.displayed = self.available_combinations[0]
             else:
                 self.py3.log(
-                    'xrandr error="displayed combination is not available"')
+                    'xrandr error="displayed combination is not available"'
+                )
 
     def _center(self, s):
         """
         Center the given string on the detected max width.
         """
-        fmt = '{:^%d}' % self.max_width
+        fmt = "{:^%d}" % self.max_width
         return fmt.format(s)
 
     def _apply(self, force=False):
@@ -290,44 +295,54 @@ class Py3status:
             # no change, do nothing
             return
 
-        combination, mode = self.combinations_map.get(self.displayed,
-                                                      (None, None))
+        combination, mode = self.combinations_map.get(
+            self.displayed, (None, None)
+        )
         if combination is None and mode is None:
             # displayed combination cannot be activated, ignore
             return
 
-        cmd = 'xrandr'
-        outputs = list(self.layout['connected'].keys())
-        outputs += list(self.layout['disconnected'].keys())
+        cmd = "xrandr"
+        outputs = list(self.layout["connected"].keys())
+        outputs += list(self.layout["disconnected"].keys())
         previous_output = None
         for output in outputs:
-            cmd += ' --output {}'.format(output)
+            cmd += " --output {}".format(output)
             #
             if output in combination:
-                pos = getattr(self, '{}_pos'.format(output), '0x0')
-                rotation = getattr(self, '{}_rotate'.format(output), 'normal')
-                resolution = getattr(self, '{}_mode'.format(output), None)
-                resolution = '--mode {}'.format(resolution) if resolution else '--auto'
-                if rotation not in ['inverted', 'left', 'normal', 'right']:
-                    self.py3.log('configured rotation {} is not valid'.format(
-                        rotation))
-                    rotation = 'normal'
+                pos = getattr(self, "{}_pos".format(output), "0x0")
+                rotation = getattr(self, "{}_rotate".format(output), "normal")
+                resolution = getattr(self, "{}_mode".format(output), None)
+                resolution = (
+                    "--mode {}".format(resolution) if resolution else "--auto"
+                )
+                if rotation not in ["inverted", "left", "normal", "right"]:
+                    self.py3.log(
+                        "configured rotation {} is not valid".format(rotation)
+                    )
+                    rotation = "normal"
                 #
-                if mode == 'clone' and previous_output is not None:
-                    cmd += ' {} --same-as {}'.format(resolution,
-                                                     previous_output)
+                if mode == "clone" and previous_output is not None:
+                    cmd += " {} --same-as {}".format(
+                        resolution, previous_output
+                    )
                 else:
-                    if ('above' in pos or 'below' in pos or 'left-of' in pos or
-                            'right-of' in pos):
-                        cmd += ' {} --{} --rotate {}'.format(resolution, pos,
-                                                             rotation)
+                    if (
+                        "above" in pos
+                        or "below" in pos
+                        or "left-of" in pos
+                        or "right-of" in pos
+                    ):
+                        cmd += " {} --{} --rotate {}".format(
+                            resolution, pos, rotation
+                        )
                     else:
-                        cmd += ' {} --pos {} --rotate {}'.format(resolution,
-                                                                 pos,
-                                                                 rotation)
+                        cmd += " {} --pos {} --rotate {}".format(
+                            resolution, pos, rotation
+                        )
                 previous_output = output
             else:
-                cmd += ' --off'
+                cmd += " --off"
         #
         code = self.py3.command_run(cmd)
         if code == 0:
@@ -350,11 +365,12 @@ class Py3status:
         Example:
             - DP1_workspaces = "1,2,3"
         """
-        if len(combination) > 1 and mode == 'extend':
+        if len(combination) > 1 and mode == "extend":
             sleep(3)
             for output in combination:
-                workspaces = getattr(self, '{}_workspaces'.format(output),
-                                     '').split(',')
+                workspaces = getattr(
+                    self, "{}_workspaces".format(output), ""
+                ).split(",")
                 for workspace in workspaces:
                     if not workspace:
                         continue
@@ -365,8 +381,11 @@ class Py3status:
                     cmd = 'i3-msg move workspace to output "{}"'.format(output)
                     self.py3.command_run(cmd)
                     # log this
-                    self.py3.log('moved workspace {} to output {}'.format(
-                        workspace, output))
+                    self.py3.log(
+                        "moved workspace {} to output {}".format(
+                            workspace, output
+                        )
+                    )
 
     def _fallback_to_available_output(self):
         """
@@ -397,9 +416,9 @@ class Py3status:
         """
         Return the separator for the given mode.
         """
-        if mode == 'extend':
+        if mode == "extend":
             return self.icon_extend
-        if mode == 'clone':
+        if mode == "clone":
             return self.icon_clone
 
     def _switch_selection(self, direction):
@@ -413,7 +432,7 @@ class Py3status:
             - right click: apply selected mode
             - middle click: force refresh of available modes
         """
-        button = event['button']
+        button = event["button"]
         if button == 4:
             self._switch_selection(-1)
         if button in [1, 5]:
@@ -432,26 +451,28 @@ class Py3status:
         self._set_available_combinations()
         self._choose_what_to_display()
 
-        if (len(self.available_combinations) < 2 and
-                self.hide_if_single_combination):
-            full_text = self.py3.safe_format(self.format, {'output': ''})
+        if (
+            len(self.available_combinations) < 2
+            and self.hide_if_single_combination
+        ):
+            full_text = self.py3.safe_format(self.format, {"output": ""})
         else:
             if self.fixed_width is True:
                 output = self._center(self.displayed)
             else:
                 output = self.displayed
-            full_text = self.py3.safe_format(self.format, {'output': output})
+            full_text = self.py3.safe_format(self.format, {"output": output})
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": full_text,
         }
 
         # coloration
         if self.displayed == self.active_layout:
-            response['color'] = self.py3.COLOR_GOOD
+            response["color"] = self.py3.COLOR_GOOD
         elif self.displayed not in self.available_combinations:
-            response['color'] = self.py3.COLOR_BAD
+            response["color"] = self.py3.COLOR_BAD
 
         # force default layout setup
         if self.force_on_start is not None:
@@ -460,7 +481,7 @@ class Py3status:
 
         # fallback detection
         if self.active_layout not in self.available_combinations:
-            response['color'] = self.py3.COLOR_DEGRADED
+            response["color"] = self.py3.COLOR_DEGRADED
             if self.fallback is True:
                 self._fallback_to_available_output()
 
@@ -472,4 +493,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

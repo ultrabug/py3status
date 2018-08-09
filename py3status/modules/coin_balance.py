@@ -106,29 +106,24 @@ import requests
 from string import Formatter
 
 
-COIN_PORTS = {
-    'bitcoin': 8332,
-    'dogecoin': 22555,
-    'litecoin': 9332,
-}
+COIN_PORTS = {"bitcoin": 8332, "dogecoin": 22555, "litecoin": 9332}
 
-REQUEST = {
-    'method': 'getbalance',
-}
+REQUEST = {"method": "getbalance"}
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 30
     coin_password = None
     coin_username = None
     credentials = None
-    format = 'LTC: {litecoin}'
-    host = 'localhost'
+    format = "LTC: {litecoin}"
+    host = "localhost"
     password = None
-    protocol = 'http'
+    protocol = "http"
     username = None
 
     def post_config_hook(self):
@@ -145,18 +140,18 @@ class Py3status:
             balances[coin] = self._get_balance(coin)
 
         return {
-            'full_text': self.py3.safe_format(self.format, balances),
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, balances),
+            "cached_until": self.py3.time_in(self.cache_timeout),
         }
 
     def _get_daemon_config_value(self, coin, key):
         try:
-            with open(expanduser('~/.{0}/{0}.conf'.format(coin)), 'r') as cfg:
+            with open(expanduser("~/.{0}/{0}.conf".format(coin)), "r") as cfg:
                 for line in cfg.readlines():
                     line = line.strip()
-                    if line.startswith('#'):
+                    if line.startswith("#"):
                         continue
-                    fields = line.split('=', 1)
+                    fields = line.split("=", 1)
                     if len(fields) == 2 and fields[0].strip() == key:
                         return fields[1].strip()
         except IOError as err:
@@ -166,56 +161,57 @@ class Py3status:
 
     def _get_credentials(self, coin):
         if coin not in self._credential_cache:
-            username = getattr(self, '{}_username'.format(coin), None)
+            username = getattr(self, "{}_username".format(coin), None)
             if username is None:
-                username = getattr(self, 'username', None)
+                username = getattr(self, "username", None)
             if username is None:
-                username = self._get_daemon_config_value(coin, 'rpcuser')
+                username = self._get_daemon_config_value(coin, "rpcuser")
 
-            password = getattr(self, '{}_password'.format(coin), None)
+            password = getattr(self, "{}_password".format(coin), None)
             if password is None:
-                password = getattr(self, 'password', None)
+                password = getattr(self, "password", None)
             if password is None:
-                password = self._get_daemon_config_value(coin, 'rpcpassword')
+                password = self._get_daemon_config_value(coin, "rpcpassword")
 
             self._credential_cache[coin] = {
-                'username': username,
-                'password': password,
+                "username": username,
+                "password": password,
             }
 
         return self._credential_cache[coin]
 
     def _get_balance(self, coin):
         if coin not in COIN_PORTS:
-            return 'Unsupported coin'
+            return "Unsupported coin"
 
         credentials = self._get_credentials(coin)
 
         try:
             auth_data = requests.auth.HTTPBasicAuth(**credentials)
-            url = '{protocol}://{host}:{port}'.format(protocol=self.protocol,
-                                                      host=self.host,
-                                                      port=COIN_PORTS[coin])
+            url = "{protocol}://{host}:{port}".format(
+                protocol=self.protocol, host=self.host, port=COIN_PORTS[coin]
+            )
 
             res = requests.post(url=url, auth=auth_data, json=REQUEST)
 
             if res.status_code == requests.codes.ok:
-                return res.json().get('result', None)
+                return res.json().get("result", None)
             elif res.status_code == requests.codes.unauthorized:
-                return 'Authentication failed'
+                return "Authentication failed"
             else:
-                return 'Request Error'
+                return "Request Error"
         except:
-            return 'Connection to \'' + url + '\' failed'
+            return "Connection to '" + url + "' failed"
 
 
 if __name__ == "__main__":
     from py3status.module_test import module_test
+
     config = {
-        'litecoin_username': 'geordi',
-        'litecoin_password': 'WarpByBrahms',
-        'username': 'leah',
-        'password': 'IDontLikeLaForge',
-        'format': 'LTC {litecoin} / BTC {bitcoin} / XDG {dogecoin} / {uknwn}',
+        "litecoin_username": "geordi",
+        "litecoin_password": "WarpByBrahms",
+        "username": "leah",
+        "password": "IDontLikeLaForge",
+        "format": "LTC {litecoin} / BTC {bitcoin} / XDG {dogecoin} / {uknwn}",
     }
     module_test(Py3status, config)

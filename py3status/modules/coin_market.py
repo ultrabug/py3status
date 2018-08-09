@@ -102,26 +102,28 @@ from datetime import datetime
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 600
-    format = '{format_coin}'
-    format_coin = '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]'
+    format = "{format_coin}"
+    format_coin = "{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]"
     format_datetime = {}
-    format_separator = ' '
-    markets = ['btc']
-    thresholds = [(-100, 'bad'), (0, 'good')]
+    format_separator = " "
+    markets = ["btc"]
+    thresholds = [(-100, "bad"), (0, "good")]
 
     def post_config_hook(self):
         self.first_use = True
         self.convert = self.limit = None
-        self.url = self.reset_url = 'https://api.coinmarketcap.com/v1/ticker/'
+        self.url = self.reset_url = "https://api.coinmarketcap.com/v1/ticker/"
         self.request_timeout = 10
 
         # convert the datetime?
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format_coin, word)) and (
-                    word in self.format_datetime):
+                word in self.format_datetime
+            ):
                 self.init_datetimes.append(word)
 
         # find out if we want top-ranked markets or user-inputted markets
@@ -132,10 +134,12 @@ class Py3status:
 
         # create '?convert'
         for item in self.py3.get_placeholders_list(self.format_coin):
-            if (('price' in item and 'price_btc' not in item) or
-                    '24h_volume' in item or 'market_cap' in item) \
-                    and 'usd' not in item:
-                self.convert = '?convert=%s' % (item.split('_')[-1])
+            if (
+                ("price" in item and "price_btc" not in item)
+                or "24h_volume" in item
+                or "market_cap" in item
+            ) and "usd" not in item:
+                self.convert = "?convert=%s" % (item.split("_")[-1])
                 self.url = self.reset_url = self.reset_url + self.convert
                 break
 
@@ -147,7 +151,9 @@ class Py3status:
         if reset:
             self.url = self.reset_url
         try:
-            data = self.py3.request(self.url, timeout=self.request_timeout).json()
+            data = self.py3.request(
+                self.url, timeout=self.request_timeout
+            ).json()
         except self.py3.RequestException:
             data = {}
         return data
@@ -155,19 +161,25 @@ class Py3status:
     def _update_limit(self, data):
         # we use limit if it exists. otherwise, we stretch the limit
         # large enough to obtain (all) self.markets + some padding
-        self.url = self.url + ('&' if self.convert else '?')
+        self.url = self.url + ("&" if self.convert else "?")
         if self.limit:
             limit = self.limit
         else:
             limit = 0
             for market_id in self.markets:
-                index = next((i for (i, d) in enumerate(
-                    data) if d['symbol'] == market_id), -1)
+                index = next(
+                    (
+                        i
+                        for (i, d) in enumerate(data)
+                        if d["symbol"] == market_id
+                    ),
+                    -1,
+                )
                 if index >= limit:
                     limit = index
                     limit += 5  # padding
 
-        self.url += 'limit=%s' % limit
+        self.url += "limit=%s" % limit
 
     def _strip_data(self, data):
         # if self.limit, we don't strip. otherwise, we strip 1000+ coins
@@ -178,7 +190,7 @@ class Py3status:
         else:
             for symbol in self.markets:
                 for market in data:
-                    if symbol == market['symbol']:
+                    if symbol == market["symbol"]:
                         new_data.append(market)
                         break
 
@@ -194,7 +206,7 @@ class Py3status:
         if data and self.first_use:
             self.first_use = False
             if not is_equal:
-                self.py3.error('bad markets')
+                self.py3.error("bad markets")
             else:
                 self._update_limit(data)
         elif not is_equal:
@@ -215,14 +227,17 @@ class Py3status:
             # convert the datetime?
             for k in self.init_datetimes:
                 if k in market:
-                    market[k] = self.py3.safe_format(datetime.strftime(
-                        datetime.fromtimestamp(float(
-                            market[k])), self.format_datetime[k]))
+                    market[k] = self.py3.safe_format(
+                        datetime.strftime(
+                            datetime.fromtimestamp(float(market[k])),
+                            self.format_datetime[k],
+                        )
+                    )
             # fix up percent_change with color thresholds
             # and prefix all non-negative values with a plus.
             for k, v in market.items():
-                if 'percent_change_' in k and v:
-                    temporary[k] = '+%s' % v if float(v) > 0 else v
+                if "percent_change_" in k and v:
+                    temporary[k] = "+%s" % v if float(v) > 0 else v
                     # remove 'percent_change_' for thresholds 1h, 24h, 7d
                     self.py3.threshold_get_color(v, k[15:])
                 else:
@@ -244,9 +259,10 @@ class Py3status:
         format_coin = self.py3.composite_join(format_separator, data)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, {'format_coin': format_coin})
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(
+                self.format, {"format_coin": format_coin}
+            ),
         }
 
 
@@ -255,4 +271,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -65,14 +65,15 @@ from time import sleep
 class Py3status:
     """
     """
+
     # available configuration parameters
     baudrate = 115200
     cache_timeout = 5
     consider_3G_degraded = False
-    format_down = 'WWAN: down'
-    format_error = 'WWAN: {error}'
-    format_no_service = 'WWAN: {status} {ip}'
-    format_up = 'WWAN: {status} ({netgen}) {ip}'
+    format_down = "WWAN: down"
+    format_error = "WWAN: {error}"
+    format_no_service = "WWAN: {status} {ip}"
+    format_up = "WWAN: {status} ({netgen}) {ip}"
     interface = "ppp0"
     modem = "/dev/ttyUSB1"
     modem_timeout = 0.4
@@ -89,11 +90,12 @@ class Py3status:
             degraded_netgen = 2
 
         response = {}
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        response["cached_until"] = self.py3.time_in(self.cache_timeout)
 
         # Check if path exists and is a character device
-        if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(
-                self.modem).st_mode):
+        if os.path.exists(self.modem) and stat.S_ISCHR(
+            os.stat(self.modem).st_mode
+        ):
             print("Found modem " + self.modem)
             try:
                 ser = serial.Serial(
@@ -103,7 +105,8 @@ class Py3status:
                     # they neccessarily work for all modems
                     parity=serial.PARITY_ODD,
                     stopbits=serial.STOPBITS_ONE,
-                    bytesize=serial.EIGHTBITS)
+                    bytesize=serial.EIGHTBITS,
+                )
                 if ser.isOpen():
                     ser.close()
                 ser.open()
@@ -121,50 +124,51 @@ class Py3status:
                 # file
                 # 2) if/when you unplug the device
                 print("Permission error")
-                response['full_text'] = self.py3.safe_format(
-                    self.format_error,
-                    dict(error="no access to " + self.modem)
+                response["full_text"] = self.py3.safe_format(
+                    self.format_error, dict(error="no access to " + self.modem)
                 )
-                response['color'] = self.py3.COLOR_BAD
+                response["color"] = self.py3.COLOR_BAD
                 return response
             # Dissect response
-            for line in modem_response.decode("utf-8").split('\n'):
+            for line in modem_response.decode("utf-8").split("\n"):
                 print(line)
                 if line.startswith(target_line):
                     # Determine IP once the modem responds
                     ip = self._get_ip(self.interface)
                     if not ip:
                         ip = "no ip"
-                    modem_answer = line.split(',')
+                    modem_answer = line.split(",")
                     netgen = len(modem_answer[-2]) + 1
                     netmode = modem_answer[-1].rstrip()[1:-1]
                     if netmode == "NO SERVICE":
-                        response['full_text'] = self.py3.safe_format(
-                            self.format_no_service,
-                            dict(status=netmode, ip=ip)
+                        response["full_text"] = self.py3.safe_format(
+                            self.format_no_service, dict(status=netmode, ip=ip)
                         )
-                        response['color'] = self.py3.COLOR_BAD
+                        response["color"] = self.py3.COLOR_BAD
                     else:
-                        response['full_text'] = self.py3.safe_format(
+                        response["full_text"] = self.py3.safe_format(
                             self.format_up,
-                            dict(status=netmode, netgen=str(netgen) + "G", ip=ip)
+                            dict(
+                                status=netmode, netgen=str(netgen) + "G", ip=ip
+                            ),
                         )
                         if netgen <= degraded_netgen:
-                            response['color'] = self.py3.COLOR_DEGRADED
+                            response["color"] = self.py3.COLOR_DEGRADED
                         else:
-                            response['color'] = self.py3.COLOR_GOOD
+                            response["color"] = self.py3.COLOR_GOOD
                 elif line.startswith("COMMAND NOT SUPPORT") or line.startswith(
-                        "ERROR"):
-                    response['color'] = self.py3.COLOR_BAD
-                    response['full_text'] = self.py3.safe_format(
-                        self.format_error, {'error': "unsupported modem"}
+                    "ERROR"
+                ):
+                    response["color"] = self.py3.COLOR_BAD
+                    response["full_text"] = self.py3.safe_format(
+                        self.format_error, {"error": "unsupported modem"}
                     )
                 else:
                     # Outputs can be multiline, so just try the next one
                     pass
         else:
-            response['color'] = self.py3.COLOR_BAD
-            response['full_text'] = self.format_down
+            response["color"] = self.py3.COLOR_BAD
+            response["full_text"] = self.format_down
         return response
 
     def _get_ip(self, interface):
@@ -175,7 +179,7 @@ class Py3status:
         if interface in ni.interfaces():
             addresses = ni.ifaddresses(interface)
             if ni.AF_INET in addresses:
-                return addresses[ni.AF_INET][0]['addr']
+                return addresses[ni.AF_INET][0]["addr"]
         return ""
 
 
@@ -184,4 +188,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

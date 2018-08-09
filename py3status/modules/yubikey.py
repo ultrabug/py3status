@@ -45,7 +45,8 @@ class YubiKeyTouchDetectorListener(threading.Thread):
         except:
             self.socket = None
             self.parent.error = Exception(
-                "Cannot connect to yubikey-touch-detector")
+                "Cannot connect to yubikey-touch-detector"
+            )
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -65,31 +66,29 @@ class YubiKeyTouchDetectorListener(threading.Thread):
                     # Connection dropped, need to reconnect
                     break
                 elif data == b"GPG_1":
-                    self.parent.status['is_gpg'] = True
+                    self.parent.status["is_gpg"] = True
                 elif data == b"GPG_0":
-                    self.parent.status['is_gpg'] = False
+                    self.parent.status["is_gpg"] = False
                 elif data == b"U2F_1":
-                    self.parent.status['is_u2f'] = True
+                    self.parent.status["is_u2f"] = True
                 elif data == b"U2F_0":
-                    self.parent.status['is_u2f'] = False
+                    self.parent.status["is_u2f"] = False
                 self.parent.py3.update()
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
-    format = '[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]'
-    socket_path = '$XDG_RUNTIME_DIR/yubikey-touch-detector.socket'
+    format = "[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]"
+    socket_path = "$XDG_RUNTIME_DIR/yubikey-touch-detector.socket"
 
     def post_config_hook(self):
         self.socket_path = os.path.expanduser(self.socket_path)
         self.socket_path = os.path.expandvars(self.socket_path)
 
-        self.status = {
-            'is_gpg': False,
-            'is_u2f': False,
-        }
+        self.status = {"is_gpg": False, "is_u2f": False}
         self.error = None
 
         self.killed = threading.Event()
@@ -100,11 +99,11 @@ class Py3status:
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
         response = {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, self.status),
+            "cached_until": self.py3.CACHE_FOREVER,
+            "full_text": self.py3.safe_format(self.format, self.status),
         }
         if any(self.status.values()):
-            response['urgent'] = True
+            response["urgent"] = True
         return response
 
     def kill(self):
@@ -116,4 +115,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

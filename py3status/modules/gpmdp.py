@@ -35,27 +35,37 @@ SAMPLE OUTPUT
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 5
-    format = u'♫ {info}'
+    format = u"♫ {info}"
 
     def gpmdp(self):
         def _run_cmd(cmd):
-            return self.py3.command_output(['gpmdp-remote', cmd]).strip()
+            return self.py3.command_output(["gpmdp-remote", cmd]).strip()
 
-        full_text = ''
-        if _run_cmd('status') == 'Playing':
-            cmds = ['info', 'title', 'artist', 'album', 'status', 'current',
-                    'time_total', 'time_current', 'album_art']
+        full_text = ""
+        if _run_cmd("status") == "Playing":
+            cmds = [
+                "info",
+                "title",
+                "artist",
+                "album",
+                "status",
+                "current",
+                "time_total",
+                "time_current",
+                "album_art",
+            ]
             data = {}
             for cmd in cmds:
-                if self.py3.format_contains(self.format, '{0}'.format(cmd)):
+                if self.py3.format_contains(self.format, "{0}".format(cmd)):
                     data[cmd] = _run_cmd(cmd)
             full_text = self.py3.safe_format(self.format, data)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": full_text,
         }
 
 
@@ -64,4 +74,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -71,33 +71,34 @@ unknown
 from pydbus import SessionBus
 
 
-SERVICE_BUS = 'org.kde.kdeconnect'
-INTERFACE = SERVICE_BUS + '.device'
-INTERFACE_DAEMON = SERVICE_BUS + '.daemon'
-INTERFACE_BATTERY = INTERFACE + '.battery'
-INTERFACE_NOTIFICATIONS = INTERFACE + '.notifications'
-PATH = '/modules/kdeconnect'
-DEVICE_PATH = PATH + '/devices'
-UNKNOWN = 'Unknown'
-UNKNOWN_DEVICE = 'unknown device'
-UNKNOWN_SYMBOL = '?'
+SERVICE_BUS = "org.kde.kdeconnect"
+INTERFACE = SERVICE_BUS + ".device"
+INTERFACE_DAEMON = SERVICE_BUS + ".daemon"
+INTERFACE_BATTERY = INTERFACE + ".battery"
+INTERFACE_NOTIFICATIONS = INTERFACE + ".notifications"
+PATH = "/modules/kdeconnect"
+DEVICE_PATH = PATH + "/devices"
+UNKNOWN = "Unknown"
+UNKNOWN_DEVICE = "unknown device"
+UNKNOWN_SYMBOL = "?"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 30
     device = None
     device_id = None
-    format = '{name}{notif_status} {bat_status} {charge}%'
-    format_disconnected = 'device disconnected'
+    format = "{name}{notif_status} {bat_status} {charge}%"
+    format_disconnected = "device disconnected"
     low_threshold = 20
-    status_bat = u'⬇'
-    status_chr = u'⬆'
-    status_full = u'☻'
-    status_no_notif = ''
-    status_notif = u' ✉'
+    status_bat = u"⬇"
+    status_chr = u"⬆"
+    status_full = u"☻"
+    status_no_notif = ""
+    status_notif = u" ✉"
 
     def post_config_hook(self):
         self._dev = None
@@ -114,8 +115,9 @@ class Py3status:
                 return False
 
         try:
-            self._dev = _bus.get(SERVICE_BUS,
-                                 DEVICE_PATH + '/%s' % self.device_id)
+            self._dev = _bus.get(
+                SERVICE_BUS, DEVICE_PATH + "/%s" % self.device_id
+            )
         except Exception:
             return False
 
@@ -128,11 +130,15 @@ class Py3status:
         _dbus = bus.get(SERVICE_BUS, PATH)
         devices = _dbus.devices()
 
-        if self.device is None and self.device_id is None and len(devices) == 1:
+        if (
+            self.device is None
+            and self.device_id is None
+            and len(devices) == 1
+        ):
             return devices[0]
 
         for id in devices:
-            self._dev = bus.get(SERVICE_BUS, DEVICE_PATH + '/%s' % id)
+            self._dev = bus.get(SERVICE_BUS, DEVICE_PATH + "/%s" % id)
             if self.device == self._dev.name:
                 return id
 
@@ -158,9 +164,9 @@ class Py3status:
         """
         try:
             device = {
-                'name': self._dev.name,
-                'isReachable': self._dev.isReachable,
-                'isTrusted': self._get_isTrusted(),
+                "name": self._dev.name,
+                "isReachable": self._dev.isReachable,
+                "isTrusted": self._get_isTrusted(),
             }
         except Exception:
             return None
@@ -173,8 +179,8 @@ class Py3status:
         """
         try:
             battery = {
-                'charge': self._dev.charge(),
-                'isCharging': self._dev.isCharging() == 1,
+                "charge": self._dev.charge(),
+                "isCharging": self._dev.isCharging() == 1,
             }
         except Exception:
             return None
@@ -187,7 +193,7 @@ class Py3status:
         """
         try:
             notifications = {
-                'activeNotifications': self._dev.activeNotifications()
+                "activeNotifications": self._dev.activeNotifications()
             }
         except Exception:
             return None
@@ -198,30 +204,33 @@ class Py3status:
         """
         Get the battery status
         """
-        if battery['charge'] == -1:
-            return (UNKNOWN_SYMBOL, UNKNOWN, '#FFFFFF')
+        if battery["charge"] == -1:
+            return (UNKNOWN_SYMBOL, UNKNOWN, "#FFFFFF")
 
-        if battery['isCharging']:
+        if battery["isCharging"]:
             status = self.status_chr
             color = self.py3.COLOR_GOOD
         else:
             status = self.status_bat
             color = self.py3.COLOR_DEGRADED
 
-        if not battery['isCharging'] and battery['charge'] <= self.low_threshold:
+        if (
+            not battery["isCharging"]
+            and battery["charge"] <= self.low_threshold
+        ):
             color = self.py3.COLOR_BAD
 
-        if battery['charge'] > 99:
+        if battery["charge"] > 99:
             status = self.status_full
 
-        return (battery['charge'], status, color)
+        return (battery["charge"], status, color)
 
     def _get_notifications_status(self, notifications):
         """
         Get the notifications status
         """
         if notifications:
-            size = len(notifications['activeNotifications'])
+            size = len(notifications["activeNotifications"])
         else:
             size = 0
         status = self.status_notif if size > 0 else self.status_no_notif
@@ -236,10 +245,13 @@ class Py3status:
         if device is None:
             return (UNKNOWN_DEVICE, self.py3.COLOR_BAD)
 
-        if not device['isReachable'] or not device['isTrusted']:
-            return (self.py3.safe_format(self.format_disconnected,
-                                         {'name': device['name']}),
-                    self.py3.COLOR_BAD)
+        if not device["isReachable"] or not device["isTrusted"]:
+            return (
+                self.py3.safe_format(
+                    self.format_disconnected, {"name": device["name"]}
+                ),
+                self.py3.COLOR_BAD,
+            )
 
         battery = self._get_battery()
         (charge, bat_status, color) = self._get_battery_status(battery)
@@ -247,13 +259,19 @@ class Py3status:
         notif = self._get_notifications()
         (notif_size, notif_status) = self._get_notifications_status(notif)
 
-        return (self.py3.safe_format(self.format,
-                                     dict(name=device['name'],
-                                          charge=charge,
-                                          bat_status=bat_status,
-                                          notif_size=notif_size,
-                                          notif_status=notif_status)),
-                color)
+        return (
+            self.py3.safe_format(
+                self.format,
+                dict(
+                    name=device["name"],
+                    charge=charge,
+                    bat_status=bat_status,
+                    notif_size=notif_size,
+                    notif_status=notif_status,
+                ),
+            ),
+            color,
+        )
 
     def kdeconnector(self):
         """
@@ -266,9 +284,9 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
-            'color': color
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": text,
+            "color": color,
         }
         return response
 
@@ -278,4 +296,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

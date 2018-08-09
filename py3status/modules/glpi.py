@@ -38,19 +38,20 @@ import MySQLdb
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 300
     critical = 20
-    db = ''
-    format = '{tickets_open} tickets'
-    host = ''
-    password = ''
+    db = ""
+    format = "{tickets_open} tickets"
+    host = ""
+    password = ""
     timeout = 5
-    user = ''
+    user = ""
     warning = 15
 
     def count_glpi_open_tickets(self):
-        response = {'full_text': ''}
+        response = {"full_text": ""}
 
         mydb = MySQLdb.connect(
             host=self.host,
@@ -60,22 +61,23 @@ class Py3status:
             connect_timeout=self.timeout,
         )
         mycr = mydb.cursor()
-        mycr.execute('''select count(*)
+        mycr.execute(
+            """select count(*)
                         from glpi_tickets
-                        where closedate is NULL and solvedate is NULL;''')
+                        where closedate is NULL and solvedate is NULL;"""
+        )
         row = mycr.fetchone()
         if row:
             open_tickets = int(row[0])
             if open_tickets > self.critical:
-                response.update({'color': self.py3.COLOR_BAD})
+                response.update({"color": self.py3.COLOR_BAD})
             elif open_tickets > self.warning:
-                response.update(
-                    {'color': self.py3.COLOR_DEGRADED}
-                )
-            response['full_text'] = self.py3.safe_format(
-                self.format, {'tickets_open': open_tickets})
+                response.update({"color": self.py3.COLOR_DEGRADED})
+            response["full_text"] = self.py3.safe_format(
+                self.format, {"tickets_open": open_tickets}
+            )
         mydb.close()
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        response["cached_until"] = self.py3.time_in(self.cache_timeout)
 
         return response
 
@@ -85,4 +87,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
