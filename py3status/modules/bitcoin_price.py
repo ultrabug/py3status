@@ -39,56 +39,60 @@ SAMPLE OUTPUT
 {'full_text': u'btce: 809.40$, btcde: 785.00\u20ac'}
 """
 
-STRING_UNAVAILABLE = "N/A"
-STRING_ERROR = "bitcoin_price: site unreachable"
+STRING_UNAVAILABLE = 'N/A'
+STRING_ERROR = 'bitcoin_price: site unreachable'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 900
     color_index = -1
-    field = "close"
-    format = "{format_bitcoin}"
-    format_bitcoin = "{market}: {price}{symbol}"
-    format_separator = ", "
+    field = 'close'
+    format = '{format_bitcoin}'
+    format_bitcoin = '{market}: {price}{symbol}'
+    format_separator = ', '
     hide_on_error = False
-    markets = "btceUSD, btcdeEUR"
+    markets = 'btceUSD, btcdeEUR'
     symbols = True
 
     class Meta:
         update_config = {
-            "update_placeholder_format": [
+            'update_placeholder_format': [
                 {
-                    "placeholder_formats": {"price": ":.2f"},
-                    "format_strings": ["format_bitcoin"],
+                    'placeholder_formats': {
+                        'price': ':.2f',
+                    },
+                    'format_strings': ['format_bitcoin'],
                 }
-            ]
+            ],
         }
 
         def deprecate_function(config):
-            if not config.get("format_separator") and config.get(
-                "bitcoin_separator"
-            ):
-                sep = config.get("bitcoin_separator")
-                sep = sep.replace("\\", "\\\\")
-                sep = sep.replace("[", "\[")
-                sep = sep.replace("]", "\]")
-                sep = sep.replace("|", "\|")
+            if (not config.get('format_separator') and
+                    config.get('bitcoin_separator')):
+                sep = config.get('bitcoin_separator')
+                sep = sep.replace('\\', '\\\\')
+                sep = sep.replace('[', '\[')
+                sep = sep.replace(']', '\]')
+                sep = sep.replace('|', '\|')
 
-                return {"format_separator": sep}
+                return {'format_separator': sep}
             else:
                 return {}
 
         deprecated = {
-            "function": [{"function": deprecate_function}],
-            "remove": [
+            'function': [
                 {
-                    "param": "bitcoin_separator",
-                    "msg": "obsolete set using `format_separator`",
-                }
+                    'function': deprecate_function,
+                },
+            ],
+            'remove': [
+                {
+                    'param': 'bitcoin_separator',
+                    'msg': 'obsolete set using `format_separator`',
+                },
             ],
         }
 
@@ -98,16 +102,16 @@ class Py3status:
         and the url containing the data.
         """
         self.currency_map = {
-            "AUD": "$",
-            "CNY": "¥",
-            "EUR": "€",
-            "GBP": "£",
-            "USD": "$",
-            "YEN": "¥",
+            'AUD': '$',
+            'CNY': '¥',
+            'EUR': '€',
+            'GBP': '£',
+            'USD': '$',
+            'YEN': '¥'
         }
         self.last_price = 0
         self.request_timeout = 10
-        self.url = "https://api.bitcoincharts.com/v1/markets.json"
+        self.url = 'https://api.bitcoincharts.com/v1/markets.json'
 
     def _get_price(self, data, market, field):
         """
@@ -115,24 +119,23 @@ class Py3status:
         field for a given market.
         """
         for m in data:
-            if m["symbol"] == market:
+            if m['symbol'] == market:
                 return m[field]
 
     def get_rate(self):
         # get the data from bitcoincharts api
         try:
             data = self.py3.request(
-                self.url, timeout=self.request_timeout
-            ).json()
+                self.url, timeout=self.request_timeout).json()
         except self.py3.RequestException:
             return {
-                "cached_until": self.py3.time_in(self.cache_timeout),
-                "color": self.py3.COLOR_BAD,
-                "full_text": "" if self.hide_on_error else STRING_ERROR,
+                'cached_until': self.py3.time_in(self.cache_timeout),
+                'color': self.py3.COLOR_BAD,
+                'full_text': '' if self.hide_on_error else STRING_ERROR
             }
 
         # get the rate for each market given
-        color_rate, rates, markets = None, [], self.markets.split(",")
+        color_rate, rates, markets = None, [], self.markets.split(',')
         for i, market in enumerate(markets):
             market = market.strip()
             try:
@@ -149,37 +152,32 @@ class Py3status:
             _symbol = self.currency_map.get(market[-3:], market[-3:])
             _symbol = _symbol if self.symbols else market
 
-            rates.append(
-                self.py3.safe_format(
-                    self.format_bitcoin,
-                    {"market": _market, "price": _price, "symbol": _symbol},
-                )
+            rates.append(self.py3.safe_format(
+                self.format_bitcoin, {'market': _market, 'price': _price, 'symbol': _symbol})
             )
 
-        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
+        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         # colorize if an index is given or only one market is selected
         if len(rates) == 1 or self.color_index > -1:
             if self.last_price == 0:
                 pass
             elif color_rate < self.last_price:
-                response["color"] = self.py3.COLOR_BAD
+                response['color'] = self.py3.COLOR_BAD
             elif color_rate > self.last_price:
-                response["color"] = self.py3.COLOR_GOOD
+                response['color'] = self.py3.COLOR_GOOD
             self.last_price = color_rate
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_bitcoin = self.py3.composite_join(format_separator, rates)
-        response["full_text"] = self.py3.safe_format(
-            self.format, {"format_bitcoin": format_bitcoin}
-        )
+        response['full_text'] = self.py3.safe_format(
+            self.format, {'format_bitcoin': format_bitcoin})
         return response
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

@@ -48,43 +48,42 @@ h
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 10
-    format = "{icon}"
+    format = '{icon}'
     hide_if_disconnected = False
-    horizontal_icon = "H"
-    horizontal_rotation = "normal"
+    horizontal_icon = 'H'
+    horizontal_rotation = 'normal'
     screen = None
-    vertical_icon = "V"
-    vertical_rotation = "left"
+    vertical_icon = 'V'
+    vertical_rotation = 'left'
 
     def post_config_hook(self):
-        self.displayed = ""
+        self.displayed = ''
         self.scrolling = False
 
     def _get_active_outputs(self):
-        data = self.py3.command_output(["xrandr"]).splitlines()
-        connected_outputs = [x.split() for x in data if " connected" in x]
+        data = self.py3.command_output(['xrandr']).splitlines()
+        connected_outputs = [x.split() for x in data if ' connected' in x]
         active_outputs = []
         for output in connected_outputs:
             for x in output[2:]:
-                if "x" in x and "+" in x:
+                if 'x' in x and '+' in x:
                     active_outputs.append(output[0])
                     break
-                elif "(" in x:
+                elif '(' in x:
                     break
         return active_outputs
 
     def _get_current_rotation_icon(self, all_outputs):
-        data = self.py3.command_output(["xrandr"]).splitlines()
+        data = self.py3.command_output(['xrandr']).splitlines()
         output = self.screen or all_outputs[0]
-        output_line = "".join([x for x in data if x.startswith(output)])
+        output_line = ''.join([x for x in data if x.startswith(output)])
 
         for x in output_line.split():
-            if "normal" in x or "inverted" in x:
+            if 'normal' in x or 'inverted' in x:
                 return self.horizontal_icon
-            elif "left" in x or "right" in x:
+            elif 'left' in x or 'right' in x:
                 return self.vertical_icon
 
     def _apply(self):
@@ -92,10 +91,10 @@ class Py3status:
             rotation = self.horizontal_rotation
         else:
             rotation = self.vertical_rotation
-        cmd = "xrandr"
+        cmd = 'xrandr'
         outputs = [self.screen] if self.screen else self._get_active_outputs()
         for output in outputs:
-            cmd += " --output %s --rotate %s" % (output, rotation)
+            cmd += ' --output %s --rotate %s' % (output, rotation)
         self.py3.command_run(cmd)
 
     def _switch_selection(self):
@@ -110,8 +109,8 @@ class Py3status:
             self.screen is not None and self.screen not in all_outputs
         )
         if selected_screen_disconnected and self.hide_if_disconnected:
-            self.displayed = ""
-            full_text = ""
+            self.displayed = ''
+            full_text = ''
         else:
             if not self.scrolling:
                 self.displayed = self._get_current_rotation_icon(all_outputs)
@@ -119,21 +118,21 @@ class Py3status:
             if self.screen or len(all_outputs) == 1:
                 screen = self.screen or all_outputs[0]
             else:
-                screen = "ALL"
-            full_text = self.py3.safe_format(
-                self.format, dict(icon=self.displayed or "?", screen=screen)
-            )
+                screen = 'ALL'
+            full_text = self.py3.safe_format(self.format,
+                                             dict(icon=self.displayed or '?',
+                                                  screen=screen))
 
         response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': full_text
         }
 
         # coloration
         if selected_screen_disconnected and not self.hide_if_disconnected:
-            response["color"] = self.py3.COLOR_DEGRADED
+            response['color'] = self.py3.COLOR_DEGRADED
         elif self.displayed == self._get_current_rotation_icon(all_outputs):
-            response["color"] = self.py3.COLOR_GOOD
+            response['color'] = self.py3.COLOR_GOOD
 
         self.scrolling = False
         return response
@@ -144,7 +143,7 @@ class Py3status:
             - left click & scroll up/down: switch between rotations
             - right click: apply selected rotation
         """
-        button = event["button"]
+        button = event['button']
         if button in [1, 4, 5]:
             self.scrolling = True
             self._switch_selection()
@@ -157,5 +156,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

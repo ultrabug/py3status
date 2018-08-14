@@ -92,54 +92,47 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 RESPONSE_FIELDS = [
-    "full_text",
-    "short_text",
-    "color",
-    "min_width",
-    "align",
-    "urgent",
-    "separator",
-    "separator_block_width",
-    "markup",
+    'full_text', 'short_text', 'color', 'min_width',
+    'align', 'urgent', 'separator', 'separator_block_width',
+    'markup'
 ]
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = None
     command = None
-    format = "{output}"
-    instance = ""
-    label = ""
-    name = ""
+    format = '{output}'
+    instance = ''
+    label = ''
+    name = ''
 
     def post_config_hook(self):
         # set interval.  If cache_timeout is used it takes precedence
         if self.cache_timeout:
             self.interval = self.cache_timeout
-        self.interval = getattr(self, "interval", None)
+        self.interval = getattr(self, 'interval', None)
         # implement i3block interval rules
         self.first_run = True
         self.cache_forever = False
-        if self.interval in ["once", "persist"] or not self.interval:
+        if self.interval in ['once', 'persist'] or not self.interval:
             self.cache_forever = True
-        if self.interval == "repeat":
+        if self.interval == 'repeat':
             self.cache_timeout = 1
         else:
             self.cache_timeout = self.interval
         # no button has been pressed
-        self.x = ""
-        self.y = ""
-        self.button = ""
+        self.x = ''
+        self.y = ''
+        self.button = ''
 
         # set our environ
         self.env = {
-            "BLOCK_INTERVAL": str(self.interval),
-            "BLOCK_INSTANCE": self.instance,
-            "BLOCK_NAME": self.name,
+            'BLOCK_INTERVAL': str(self.interval),
+            'BLOCK_INSTANCE': self.instance,
+            'BLOCK_NAME': self.name,
         }
         self.env.update(environ)
 
@@ -147,12 +140,12 @@ class Py3status:
         # this allows support for pseudo click support
         # echo "Click me"; [[ -z "${BLOCK_BUTTON}" ]] || echo "clicked"
         # pattern finds unquoted ; to split command on
-        pattern = re.compile(r"""((?:[^;"']|"[^"]*"|'[^']*')+)""")
-        self.commands = pattern.split(self.command or "")[1::2]
+        pattern = re.compile(r'''((?:[^;"']|"[^"]*"|'[^']*')+)''')
+        self.commands = pattern.split(self.command or '')[1::2]
         self.errors = []
 
-        if self.interval == "persist":
-            self.persistent_output = ""
+        if self.interval == 'persist':
+            self.persistent_output = ''
             self.thread = Thread(target=self._persist)
             self.thread.daemon = True
             self.thread.start()
@@ -167,14 +160,8 @@ class Py3status:
         # run the block/command
         for command in self.commands:
             try:
-                process = Popen(
-                    [command],
-                    stdout=PIPE,
-                    stderr=PIPE,
-                    universal_newlines=True,
-                    env=self.env,
-                    shell=True,
-                )
+                process = Popen([command], stdout=PIPE, stderr=PIPE,
+                                universal_newlines=True, env=self.env, shell=True)
             except Exception as e:
                 retcode = process.poll()
                 msg = "Command '{cmd}' {error} retcode {retcode}"
@@ -203,27 +190,27 @@ class Py3status:
                 if process.poll():
                     break
                 if self.py3.is_python_2():
-                    line = line.decode("utf-8")
+                    line = line.decode('utf-8')
                 self.persistent_output = line
                 self.py3.update()
-                if line[-1] == "\n":
+                if line[-1] == '\n':
                     has_newlines = True
                     break
-                if line == "":
+                if line == '':
                     break
             if has_newlines:
-                msg = "Switch to newline persist method {cmd}"
+                msg = 'Switch to newline persist method {cmd}'
                 self.py3.log(msg.format(cmd=command))
                 # just read the output in a sane manner
-                for line in iter(process.stdout.readline, b""):
+                for line in iter(process.stdout.readline, b''):
                     if process.poll():
                         break
                     if self.py3.is_python_2():
-                        line = line.decode("utf-8")
+                        line = line.decode('utf-8')
                     self.persistent_output = line
                     self.py3.update()
-        self.py3.log("command exited {cmd}".format(cmd=command))
-        self.persistent_output = "Error\nError\n{}".format(
+        self.py3.log('command exited {cmd}'.format(cmd=command))
+        self.persistent_output = 'Error\nError\n{}'.format(
             self.py3.COLOR_ERROR or self.py3.COLOR_BAD
         )
         self.py3.update()
@@ -232,36 +219,28 @@ class Py3status:
         """
         Run command(s) and return output and urgency.
         """
-        output = ""
+        output = ''
         urgent = False
         # run the block/command
         for command in self.commands:
             try:
-                process = Popen(
-                    command,
-                    stdout=PIPE,
-                    stderr=PIPE,
-                    universal_newlines=True,
-                    env=env,
-                    shell=True,
-                )
+                process = Popen(command, stdout=PIPE, stderr=PIPE,
+                                universal_newlines=True, env=env, shell=True)
             except Exception as e:
                 msg = "Command '{cmd}' {error}"
                 raise Exception(msg.format(cmd=command, error=e))
 
             _output, _error = process.communicate()
             if self.py3.is_python_2():
-                _output = _output.decode("utf-8")
-                _error = _error.decode("utf-8")
+                _output = _output.decode('utf-8')
+                _error = _error.decode('utf-8')
             retcode = process.poll()
 
             # return code of 33 means urgent
             _urgent = retcode == 33
 
             if retcode and retcode != 33 or _error:
-                msg = (
-                    "i3block command '{cmd}' had an error see log for details."
-                )
+                msg = "i3block command '{cmd}' had an error see log for details."
                 msg = msg.format(cmd=command)
                 self.py3.notify_user(msg, rate_limit=None)
                 msg = "i3block command '{cmd}' had error {error} returned {retcode}"
@@ -269,7 +248,7 @@ class Py3status:
                 if hash(msg) not in self.errors:
                     self.py3.log(msg, level=self.py3.LOG_ERROR)
                     self.errors.append(hash(msg))
-                _output = "Error\nError\n{}".format(
+                _output = 'Error\nError\n{}'.format(
                     self.py3.COLOR_ERROR or self.py3.COLOR_BAD
                 )
             # we have got output so update the received output
@@ -282,40 +261,45 @@ class Py3status:
     def block(self):
         # no command
         if not self.command:
-            return {"cached_until": self.py3.CACHE_FOREVER, "full_text": ""}
+            return {
+                'cached_until': self.py3.CACHE_FOREVER,
+                'full_text': '',
+            }
 
         # If an interval is not given then we do not want to create output
         # initially as we should only be reacting to clicks.
         # We just use provided fields
         if not self.interval and self.first_run:
             self.first_run = False
-            block_response = {"full_text": ""}
+            block_response = {
+                'full_text': '',
+            }
             for field in RESPONSE_FIELDS:
                 if hasattr(self, field):
                     block_response[field] = getattr(self, field)
             i3block = self.py3.composite_create(block_response)
-            full_text = self.py3.safe_format(self.format, {"output": i3block})
+            full_text = self.py3.safe_format(self.format, {'output': i3block})
             return {
-                "cached_until": self.py3.CACHE_FOREVER,
-                "full_text": full_text,
+                'cached_until': self.py3.CACHE_FOREVER,
+                'full_text': full_text,
             }
 
-        if self.interval == "persist":
+        if self.interval == 'persist':
             output = self.persistent_output
             urgent = False
         else:
             # set any buttons if they have been pressed
             env = {
-                "BLOCK_BUTTON": self.button,
-                "BLOCK_X": self.x,
-                "BLOCK_Y": self.y,
+                'BLOCK_BUTTON': self.button,
+                'BLOCK_X': self.x,
+                'BLOCK_Y': self.y,
             }
             env.update(self.env)
 
             # reset button click info
-            self.x = ""
-            self.y = ""
-            self.button = ""
+            self.x = ''
+            self.y = ''
+            self.button = ''
 
             output, urgent = self._run_command(env)
 
@@ -328,7 +312,9 @@ class Py3status:
             # at nice times eg on the second, minute etc
             cached_until = self.py3.time_in(sync_to=self.cache_timeout)
 
-        block_response = {"full_text": ""}  # in  case we have no response
+        block_response = {
+            'full_text': '',  # in  case we have no response
+        }
 
         # i3blocks output fields one per line in a set order
         response_lines = len(output)
@@ -340,38 +326,41 @@ class Py3status:
 
         # blocklet label gets prepended
         if self.label:
-            block_response["full_text"] = u"{}{}".format(
-                self.label, block_response["full_text"]
+            block_response['full_text'] = u'{}{}'.format(
+                self.label, block_response['full_text']
             )
-            if "short_text" in block_response:
-                block_response["short_text"] = u"{}{}".format(
-                    self.label, block_response["short_text"]
+            if 'short_text' in block_response:
+                block_response['short_text'] = u'{}{}'.format(
+                    self.label, block_response['short_text']
                 )
 
         # we can now use the blocklet output in our py3status format
         i3block = self.py3.composite_create(block_response)
-        full_text = self.py3.safe_format(self.format, {"output": i3block})
+        full_text = self.py3.safe_format(self.format, {'output': i3block})
 
         # if urgent then set this for the full output
         if urgent:
             if self.py3.is_composite(full_text):
                 for item in full_text:
-                    item["urgent"] = True
+                    item['urgent'] = True
 
         # finally output our response
-        response = {"cached_until": cached_until, "full_text": full_text}
+        response = {
+            'cached_until': cached_until,
+            'full_text': full_text,
+        }
 
         if urgent:
-            response["urgent"] = True
+            response['urgent'] = True
 
         return response
 
     def on_click(self, event):
         # Store button info so we can pass to the blocklet script
         # they are expected to be strings
-        self.x = str(event["x"])
-        self.y = str(event["y"])
-        self.button = str(event["button"])
+        self.x = str(event['x'])
+        self.y = str(event['y'])
+        self.button = str(event['button'])
 
 
 if __name__ == "__main__":
@@ -379,6 +368,8 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
-    config = {"command": "date '+%D %T'", "interval": 1}
+    config = {
+        'command': "date '+%D %T'",
+        'interval': 1
+    }
     module_test(Py3status, config)

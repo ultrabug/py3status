@@ -38,24 +38,23 @@ unknown
 
 import requests
 
-STATUS_NAMES = {0: "OK", 1: "WARNING", 2: "CRITICAL", 3: "UNKNOWN"}
-STRING_NOT_CONFIGURED = "not configured"
+STATUS_NAMES = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
+STRING_NOT_CONFIGURED = 'not configured'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
-    base_url = ""
+    base_url = ''
     ca = True
     cache_timeout = 60
     disable_acknowledge = False
-    format = "{status_name}: {count}"
-    password = ""
+    format = '{status_name}: {count}'
+    password = ''
     status = 0
     url_parameters = "?service_state={service_state}&format=json"
-    user = ""
+    user = ''
 
     def post_config_hook(self):
         if not self.base_url:
@@ -63,16 +62,12 @@ class Py3status:
 
     def get_status(self):
         response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
                 self.format,
                 dict(
-                    status_name=STATUS_NAMES.get(
-                        self.status, "INVALID STATUS"
-                    ),
-                    count=self._query_service_count(self.status),
-                ),
-            ),
+                    status_name=STATUS_NAMES.get(self.status, "INVALID STATUS"),
+                    count=self._query_service_count(self.status)))
         }
         return response
 
@@ -83,8 +78,7 @@ class Py3status:
         result = requests.get(
             self.base_url + url_parameters.format(service_state=state),
             auth=(self.user, self.password),
-            verify=self.ca,
-        )
+            verify=self.ca)
         return len(result.json())
 
 
@@ -93,5 +87,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

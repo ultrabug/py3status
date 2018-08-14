@@ -59,27 +59,26 @@ from collections import OrderedDict
 class Py3status:
     """
     """
-
     # available configuration parameters
-    format = "up {days} days {hours} hours {minutes} minutes"
+    format = 'up {days} days {hours} hours {minutes} minutes'
 
     def post_config_hook(self):
         self.time_periods = OrderedDict()
         periods = [
-            ("decades", 315360000),
-            ("years", 31536000),
-            ("weeks", 604800),
-            ("days", 86400),
-            ("hours", 3600),
-            ("minutes", 60),
-            ("seconds", 1),
+            ('decades', 315360000),
+            ('years', 31536000),
+            ('weeks', 604800),
+            ('days', 86400),
+            ('hours', 3600),
+            ('minutes', 60),
+            ('seconds', 1),
         ]
         for unit, second in periods:
             if self.py3.format_contains(self.format, unit):
                 self.time_periods[unit] = second
 
     def uptime(self):
-        with open("/proc/uptime", "r") as f:
+        with open('/proc/uptime', 'r') as f:
             up = int(float(f.readline().split()[0]))
             offset = time() - up
 
@@ -89,8 +88,8 @@ class Py3status:
             uptime[unit], up = divmod(up, interval)
 
         return {
-            "cached_until": self.py3.time_in(sync_to=interval, offset=offset),
-            "full_text": self.py3.safe_format(self.format, uptime),
+            'cached_until': self.py3.time_in(sync_to=interval, offset=offset),
+            'full_text': self.py3.safe_format(self.format, uptime)
         }
 
 
@@ -99,5 +98,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

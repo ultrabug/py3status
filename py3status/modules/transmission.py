@@ -143,40 +143,31 @@ idle
 """
 
 import time
-
-STRING_NOT_INSTALLED = "transmission-remote not installed"
+STRING_NOT_INSTALLED = 'transmission-remote not installed'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     arguments = None
     button_next = None
     button_previous = None
-    button_run = [(1, "--start"), (2, "--verify"), (3, "--stop")]
+    button_run = [(1, '--start'), (2, '--verify'), (3, '--stop')]
     cache_timeout = 20
-    format = "{format_torrent}"
-    format_separator = " "
-    format_torrent = (
-        "[\?if=is_focused&color=bad X] {status} {id} {name} {done}%"
-    )
+    format = '{format_torrent}'
+    format_separator = ' '
+    format_torrent = '[\?if=is_focused&color=bad X] {status} {id} {name} {done}%'
     thresholds = []
 
     def post_config_hook(self):
-        self.command = "transmission-remote"
+        self.command = 'transmission-remote'
         if not self.py3.check_commands(self.command):
             raise Exception(STRING_NOT_INSTALLED)
         if self.arguments:
-            self.command = "%s %s %s" % (
-                self.command,
-                self.arguments,
-                "--list",
-            )
+            self.command = '%s %s %s' % (self.command, self.arguments, '--list')
         self.init_summary = self.py3.format_contains(
-            self.format, ["up", "down", "have"]
-        )
+            self.format, ['up', 'down', 'have'])
         self.id = 0
         self.state = None
         self.reset_id = self.id
@@ -193,31 +184,31 @@ class Py3status:
             self.state = None
             self.is_scrolling = False
             for d in data:
-                d["is_focused"] = False
+                d['is_focused'] = False
         else:
-            if data and not any(d for d in data if d["is_focused"]):
-                data[0]["is_focused"] = True
+            if data and not any(d for d in data if d['is_focused']):
+                data[0]['is_focused'] = True
 
             length = len(data)
             for index, d in enumerate(data):
-                if d.get("is_focused"):
-                    data[index]["is_focused"] = False
+                if d.get('is_focused'):
+                    data[index]['is_focused'] = False
                     if direction < 0:  # switch previous
                         if index > 0:
-                            data[index - 1]["is_focused"] = True
+                            data[index - 1]['is_focused'] = True
                         else:
-                            data[index]["is_focused"] = True
+                            data[index]['is_focused'] = True
                     elif direction > 0:  # switch next
                         if index < (length - 1):
-                            data[index + 1]["is_focused"] = True
+                            data[index + 1]['is_focused'] = True
                         else:
-                            data[length - 1]["is_focused"] = True
+                            data[length - 1]['is_focused'] = True
                     break
 
             for d in data:
-                if d["is_focused"]:
-                    self.id = d["id"]
-                    self.state = d["status"]
+                if d['is_focused']:
+                    self.id = d['id']
+                    self.state = d['status']
                     break
 
         self._manipulate(data)
@@ -226,32 +217,30 @@ class Py3status:
         self.id = self.reset_id
         new_data = []
         for line in data:
-            new_data.append(
-                {
-                    "is_focused": None,
-                    "id": line[0:6].strip(),
-                    "done": line[7:12].strip().strip("%"),
-                    "have": line[13:23].strip(),
-                    "eta": line[24:33].strip(),
-                    "up": line[34:41].strip(),
-                    "down": line[42:49].strip(),
-                    "ratio": line[50:56].strip(),
-                    "status": line[57:69].strip(),
-                    "name": line[70:].strip(),
-                }
-            )
+            new_data.append({
+                'is_focused': None,
+                'id': line[0:6].strip(),
+                'done': line[7:12].strip().strip('%'),
+                'have': line[13:23].strip(),
+                'eta': line[24:33].strip(),
+                'up': line[34:41].strip(),
+                'down': line[42:49].strip(),
+                'ratio': line[50:56].strip(),
+                'status': line[57:69].strip(),
+                'name': line[70:].strip(),
+            })
         return new_data
 
     def _manipulate(self, data):
         self.shared = data
         new_data = []
         for index, t in enumerate(data, 1):
-            t["index"] = index
+            t['index'] = index
             if not self.is_scrolling:
-                t["is_focused"] = False
+                t['is_focused'] = False
             if self.thresholds:
-                self.py3.threshold_get_color(t["done"], "done")
-                self.py3.threshold_get_color(t["index"], "index")
+                self.py3.threshold_get_color(t['done'], 'done')
+                self.py3.threshold_get_color(t['index'], 'index')
             new_data.append(self.py3.safe_format(self.format_torrent, t))
         return new_data
 
@@ -263,9 +252,9 @@ class Py3status:
             data = self.py3.command_output(self.command).splitlines()
             if self.init_summary:
                 summary_line = data[-1]
-                summary_data["have"] = summary_line[13:23].strip()
-                summary_data["up"] = summary_line[34:41].strip()
-                summary_data["down"] = summary_line[42:49].strip()
+                summary_data['have'] = summary_line[13:23].strip()
+                summary_data['up'] = summary_line[34:41].strip()
+                summary_data['down'] = summary_line[42:49].strip()
             data = data[1:-1]
             self.count_torrent = len(data)
             data = self.torrent_data = self._organize(data)
@@ -275,24 +264,21 @@ class Py3status:
         format_torrent = self.py3.composite_join(format_separator, data)
 
         if self.thresholds:
-            self.py3.threshold_get_color(self.count_torrent, "torrent")
+            self.py3.threshold_get_color(self.count_torrent, 'torrent')
 
         self.is_scrolling = False
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format,
-                dict(
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, dict(
                     torrent=self.count_torrent,
                     format_torrent=format_torrent,
                     **summary_data
-                ),
-            ),
-        }
+                ))}
 
     def on_click(self, event):
-        button = event["button"]
-        self.id = str(self.id).strip("*")
+        button = event['button']
+        self.id = str(self.id).strip('*')
         if button == self.button_next and self.torrent_data:
             self._scroll(+1)
         elif button == self.button_previous and self.torrent_data:
@@ -300,7 +286,7 @@ class Py3status:
         elif self.id:
             for x in self.button_run:
                 if button == x[0]:
-                    cmd = "transmission-remote -t %s %s" % (self.id, x[1])
+                    cmd = 'transmission-remote -t %s %s' % (self.id, x[1])
                     self.py3.command_run(cmd)
                     time.sleep(0.75)
                     break
@@ -311,5 +297,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

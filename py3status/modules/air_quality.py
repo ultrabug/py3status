@@ -119,31 +119,29 @@ from datetime import datetime
 class Py3status:
     """
     """
-
     # available configuration parameters
-    auth_token = "demo"
+    auth_token = 'demo'
     cache_timeout = 3600
-    format = "[\?color=aqi {city_name}: {aqi} {category}]"
+    format = '[\?color=aqi {city_name}: {aqi} {category}]'
     format_datetime = {}
-    location = "Shanghai"
+    location = 'Shanghai'
     quality_thresholds = [
-        (0, "#009966", "Good"),
-        (51, "#FFDE33", "Moderate"),
-        (101, "#FF9933", "Sensitively Unhealthy"),
-        (151, "#CC0033", "Unhealthy"),
-        (201, "#660099", "Very Unhealthy"),
-        (301, "#7E0023", "Hazardous"),
+        (0, '#009966', 'Good'),
+        (51, '#FFDE33', 'Moderate'),
+        (101, '#FF9933', 'Sensitively Unhealthy'),
+        (151, '#CC0033', 'Unhealthy'),
+        (201, '#660099', 'Very Unhealthy'),
+        (301, '#7E0023', 'Hazardous')
     ]
 
     def post_config_hook(self):
-        self.auth_token = {"token": self.auth_token}
+        self.auth_token = {'token': self.auth_token}
         self.request_timeout = 10
-        self.url = "http://api.waqi.info/feed/%s/" % self.location
+        self.url = 'http://api.waqi.info/feed/%s/' % self.location
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format, word)) and (
-                word in self.format_datetime
-            ):
+                    word in self.format_datetime):
                 self.init_datetimes.append(word)
 
         self.thresholds = []
@@ -160,40 +158,36 @@ class Py3status:
 
     def _organize(self, data):
         new_data = {}
-        for k, v in self.py3.flatten_dict(data, delimiter="_").items():
-            new_data["".join(k.replace("data_", "", 1).rsplit("_v", 1))] = v
+        for k, v in self.py3.flatten_dict(data, delimiter='_').items():
+            new_data[''.join(k.replace('data_', '', 1).rsplit('_v', 1))] = v
         return new_data
 
     def _manipulate(self, data):
         for index_aqi, index_color, index_category in self.quality_thresholds:
-            if data["aqi"] >= index_aqi:
-                data["category"] = index_category
+            if data['aqi'] >= index_aqi:
+                data['category'] = index_category
 
         if self.thresholds:
-            self.py3.threshold_get_color(data["aqi"], "aqi")
+            self.py3.threshold_get_color(data['aqi'], 'aqi')
 
         for k in self.init_datetimes:
             if k in data:
-                data[k] = self.py3.safe_format(
-                    datetime.strftime(
-                        datetime.fromtimestamp(data[k]),
-                        self.format_datetime[k],
-                    )
-                )
+                data[k] = self.py3.safe_format(datetime.strftime(
+                    datetime.fromtimestamp(data[k]), self.format_datetime[k]))
         return data
 
     def air_quality(self):
         aqi_data = self._get_aqi_data()
         if aqi_data:
-            if aqi_data.get("status") == "ok":
+            if aqi_data.get('status') == 'ok':
                 aqi_data = self._organize(aqi_data)
                 aqi_data = self._manipulate(aqi_data)
-            elif aqi_data.get("status") == "error":
-                self.py3.error(aqi_data.get("data"))
+            elif aqi_data.get('status') == 'error':
+                self.py3.error(aqi_data.get('data'))
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, aqi_data),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, aqi_data),
         }
 
 
@@ -202,5 +196,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

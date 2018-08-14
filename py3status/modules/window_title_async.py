@@ -34,7 +34,6 @@ import i3ipc
 class Py3status:
     """
     """
-
     # available configuration parameters
     always_show = False
     empty_title = ""
@@ -58,22 +57,20 @@ class Py3status:
             # dont show window title when the window already has means
             # to display it
             if not self.always_show and (
-                w.border == "normal"
-                or w.type == "workspace"
-                or (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)
-            ):
+                    w.border == "normal" or w.type == "workspace" or
+                    (p.layout in ("stacked", "tabbed") and len(p.nodes) > 1)):
 
                 return self.empty_title
 
             else:
                 title = w.name
                 if title is None or w.type == "workspace":
-                    title = ""
+                    title = ''
 
                 if len(title) > self.max_width:
-                    title = title[: self.max_width - 1] + "…"
+                    title = title[:self.max_width - 1] + "…"
 
-                return self.py3.safe_format(self.format, {"title": title})
+                return self.py3.safe_format(self.format, {'title': title})
 
         def update_title(conn, e):
 
@@ -82,10 +79,11 @@ class Py3status:
 
             # check if we need to update title due to changes
             # in the workspace layout
-            layout_changed = hasattr(e, "binding") and (
-                e.binding.command.startswith("layout")
-                or e.binding.command.startswith("move container")
-                or e.binding.command.startswith("border")
+            layout_changed = (
+                hasattr(e, "binding") and
+                (e.binding.command.startswith("layout") or
+                 e.binding.command.startswith("move container") or
+                 e.binding.command.startswith("border"))
             )
 
             if title_changed or layout_changed:
@@ -108,7 +106,7 @@ class Py3status:
         # The order of following callbacks is important!
 
         # clears the title on empty ws
-        conn.on("workspace::focus", clear_title)
+        conn.on('workspace::focus', clear_title)
 
         # clears the title when the last window on ws was closed
         conn.on("window::close", clear_title)
@@ -122,8 +120,8 @@ class Py3status:
 
     def window_title_async(self):
         return {
-            "cached_until": self.py3.CACHE_FOREVER,
-            "full_text": self.title,
+            'cached_until': self.py3.CACHE_FOREVER,
+            'full_text': self.title,
         }
 
 
@@ -131,7 +129,8 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {"always_show": True}
+    config = {
+        'always_show': True,
+    }
     from py3status.module_test import module_test
-
     module_test(Py3status, config=config)

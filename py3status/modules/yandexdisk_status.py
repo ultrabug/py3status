@@ -33,30 +33,27 @@ off
 {'color': '#FF0000', 'full_text': 'Yandex.Disk: Not started'}
 """
 
-STRING_ERROR = "not configured"
-STRING_NOT_INSTALLED = "not installed"
+STRING_ERROR = 'not configured'
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 10
-    format = "Yandex.Disk: {status}"
+    format = 'Yandex.Disk: {status}'
     status_busy = None
-    status_off = "Not started"
-    status_on = "Idle"
+    status_off = 'Not started'
+    status_on = 'Idle'
 
     def post_config_hook(self):
-        if not self.py3.check_commands("yandex-disk"):
+        if not self.py3.check_commands('yandex-disk'):
             raise Exception(STRING_NOT_INSTALLED)
 
     def yandexdisk(self):
         try:
-            status = self.py3.command_output(
-                "yandex-disk status"
-            ).splitlines()[0]
+            status = self.py3.command_output('yandex-disk status').splitlines()[0]
         except:
             self.py3.error(STRING_ERROR)
 
@@ -72,9 +69,9 @@ class Py3status:
                 status = self.status_busy
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "color": color,
-            "full_text": self.py3.safe_format(self.format, {"status": status}),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': self.py3.safe_format(self.format, {'status': status})
         }
 
 
@@ -83,5 +80,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

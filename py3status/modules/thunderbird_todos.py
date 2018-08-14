@@ -152,63 +152,54 @@ from os import path
 from sqlite3 import connect
 from datetime import datetime
 
-STRING_NO_PROFILE = "missing profile"
-STRING_NOT_INSTALLED = "not installed"
+STRING_NO_PROFILE = 'missing profile'
+STRING_NOT_INSTALLED = 'not installed'
 SUPPORTED_FORMAT_TODO_THRESHOLDS = [
-    "index_total",
-    "index_completed",
-    "index_incompleted",
-    "priority",
-]
+    'index_total', 'index_completed', 'index_incompleted', 'priority']
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 60
-    format = "{format_todo}"
+    format = '{format_todo}'
     format_datetime = {}
-    format_separator = " "
-    format_todo = "\?if=!todo_completed {title}"
+    format_separator = ' '
+    format_todo = '\?if=!todo_completed {title}'
     profile = None
     sort = ()
     thresholds = []
 
     def post_config_hook(self):
-        if not self.py3.check_commands("thunderbird"):
+        if not self.py3.check_commands('thunderbird'):
             raise Exception(STRING_NOT_INSTALLED)
 
         # first profile, please.
         if not self.profile:
-            directory = "~/.thunderbird"
-            profile_ini = path.expanduser(directory + "/profiles.ini")
+            directory = '~/.thunderbird'
+            profile_ini = path.expanduser(directory + '/profiles.ini')
             profile = []
             for line in open(profile_ini):
-                if line.startswith("Path="):
-                    profile.append(
-                        "{}/{}".format(
-                            directory, line.split("Path=")[-1].strip()
-                        )
-                    )
+                if line.startswith('Path='):
+                    profile.append('{}/{}'.format(
+                        directory, line.split('Path=')[-1].strip()))
             if not len(profile):
                 raise Exception(STRING_NO_PROFILE)
             self.profile = profile[0]
 
         self.profile = path.expanduser(self.profile)
-        self.path = self.profile + "/calendar-data/local.sqlite"
+        self.path = self.profile + '/calendar-data/local.sqlite'
 
         # convert the datetime?
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format_todo, word)) and (
-                word in self.format_datetime
-            ):
+                    word in self.format_datetime):
                 self.init_datetimes.append(word)
 
     def _get_thunderbird_todos_data(self):
-        x = connect(self.path).cursor().execute("SELECT * FROM cal_todos")
+        x = connect(self.path).cursor().execute('SELECT * FROM cal_todos')
         titles = [todo_tuple[0] for todo_tuple in x.description]
         todos = x.fetchall()
         x.close()
@@ -218,20 +209,19 @@ class Py3status:
         # sort?
         if self.sort:
             data = sorted(
-                data, key=lambda k: k[self.sort[0]], reverse=self.sort[1]
-            )
+                data, key=lambda k: k[self.sort[0]], reverse=self.sort[1])
         # counts and indexes
-        count = {"todo_total": 0, "todo_completed": 0, "todo_incompleted": 0}
+        count = {'todo_total': 0, 'todo_completed': 0, 'todo_incompleted': 0}
         for todo_index, todo in enumerate(data, 1):
-            count["todo_total"] += 1
-            todo["index_total"] = todo_index
-            todo["index_completed"] = todo["index_incompleted"] = None
-            if todo["todo_completed"]:
-                count["todo_completed"] += 1
-                todo["index_completed"] = count["todo_completed"]
+            count['todo_total'] += 1
+            todo['index_total'] = todo_index
+            todo['index_completed'] = todo['index_incompleted'] = None
+            if todo['todo_completed']:
+                count['todo_completed'] += 1
+                todo['index_completed'] = count['todo_completed']
             else:
-                count["todo_incompleted"] += 1
-                todo["index_incompleted"] = count["todo_incompleted"]
+                count['todo_incompleted'] += 1
+                todo['index_incompleted'] = count['todo_incompleted']
 
         return data, count
 
@@ -242,11 +232,8 @@ class Py3status:
             for k in self.init_datetimes:
                 if k in todo:
                     todo[k] = self.py3.safe_format(
-                        datetime.strftime(
-                            datetime.fromtimestamp(float(str(todo[k])[:-6])),
-                            self.format_datetime[k],
-                        )
-                    )
+                        datetime.strftime(datetime.fromtimestamp(float(str(
+                            todo[k])[:-6])), self.format_datetime[k]))
             # use thresholds?
             if self.thresholds:
                 for x in SUPPORTED_FORMAT_TODO_THRESHOLDS:
@@ -270,10 +257,10 @@ class Py3status:
         format_todo = self._manipulate(data, count)
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
                 self.format, dict(format_todo=format_todo, **count)
-            ),
+            )
         }
 
 
@@ -282,5 +269,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

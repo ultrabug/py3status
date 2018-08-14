@@ -31,14 +31,15 @@ off
 
 import dbus
 
-DEFAULT_FORMAT = "BT[: {format_device}]"
+DEFAULT_FORMAT = 'BT[: {format_device}]'
 STRING_NOT_STARTED = "service isn't running"
 
 
 def get_connected_devices():
     bus = dbus.SystemBus()
     manager = dbus.Interface(
-        bus.get_object("org.bluez", "/"), "org.freedesktop.DBus.ObjectManager"
+        bus.get_object("org.bluez", "/"),
+        "org.freedesktop.DBus.ObjectManager"
     )
 
     objects = manager.GetManagedObjects()
@@ -57,51 +58,53 @@ def get_connected_devices():
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 10
     format = DEFAULT_FORMAT
-    format_device = "{name}"
-    format_separator = "\|"
+    format_device = '{name}'
+    format_separator = '\|'
 
     class Meta:
         def deprecate_function(config):
-            if not config.get("format_separator") and config.get(
-                "device_separator"
-            ):
-                sep = config.get("device_separator")
-                sep = sep.replace("\\", "\\\\")
-                sep = sep.replace("[", "\[")
-                sep = sep.replace("]", "\]")
-                sep = sep.replace("|", "\|")
+            if (not config.get('format_separator') and
+                    config.get('device_separator')):
+                sep = config.get('device_separator')
+                sep = sep.replace('\\', '\\\\')
+                sep = sep.replace('[', '\[')
+                sep = sep.replace(']', '\]')
+                sep = sep.replace('|', '\|')
 
-                return {"format_separator": sep}
+                return {'format_separator': sep}
             else:
                 return {}
 
         deprecated = {
-            "function": [{"function": deprecate_function}],
-            "remove": [
+            'function': [
                 {
-                    "param": "device_separator",
-                    "msg": "obsolete set using `format_separator`",
-                }
+                    'function': deprecate_function,
+                },
+            ],
+            'remove': [
+                {
+                    'param': 'device_separator',
+                    'msg': 'obsolete set using `format_separator`',
+                },
             ],
         }
 
     def post_config_hook(self):
         # DEPRECATION WARNING. SPECIAL CASE. DO NOT USE THIS AS EXAMPLE.
-        format_prefix = getattr(self, "format_prefix", None)
-        format_no_conn = getattr(self, "format_no_conn", None)
-        format_no_conn_prefix = getattr(self, "format_no_conn_prefix", None)
+        format_prefix = getattr(self, 'format_prefix', None)
+        format_no_conn = getattr(self, 'format_no_conn', None)
+        format_no_conn_prefix = getattr(self, 'format_no_conn_prefix', None)
 
         placeholders = set(self.py3.get_placeholders_list(self.format))
-        if set(["name", "mac"]) & placeholders:
+        if set(['name', 'mac']) & placeholders:
             # this is an old format so should be format_device
             self.format_device = self.format
             self.format = DEFAULT_FORMAT
-            msg = "DEPRECATION WARNING: your format is using invalid "
-            msg += "placeholders you should update your configuration."
+            msg = 'DEPRECATION WARNING: your format is using invalid '
+            msg += 'placeholders you should update your configuration.'
             self.py3.log(msg)
 
         if self.format != DEFAULT_FORMAT:
@@ -111,13 +114,13 @@ class Py3status:
 
         if format_prefix or format_no_conn_prefix or format_no_conn:
             # create a format that will give the expected output
-            self.format = u"[\?if=format_device {}{{format_device}}|{}{}]".format(
-                format_prefix or "BT: ",
-                format_no_conn_prefix or "BT: ",
-                format_no_conn or "OFF",
+            self.format = u'[\?if=format_device {}{{format_device}}|{}{}]'.format(
+                format_prefix or 'BT: ',
+                format_no_conn_prefix or 'BT: ',
+                format_no_conn or 'OFF'
             )
-            msg = "DEPRECATION WARNING: you are using old style configuration "
-            msg += "parameters you should update to use the new format."
+            msg = 'DEPRECATION WARNING: you are using old style configuration '
+            msg += 'parameters you should update to use the new format.'
             self.py3.log(msg)
 
     def bluetooth(self):
@@ -129,11 +132,8 @@ class Py3status:
         if devices:
             data = []
             for mac, name in devices:
-                data.append(
-                    self.py3.safe_format(
-                        self.format_device, {"name": name, "mac": mac}
-                    )
-                )
+                data.append(self.py3.safe_format(
+                    self.format_device, {'name': name, 'mac': mac}))
 
             format_separator = self.py3.safe_format(self.format_separator)
             format_device = self.py3.composite_join(format_separator, data)
@@ -143,11 +143,10 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"format_device": format_device}
-            ),
-            "color": color,
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {'format_device': format_device}),
+            'color': color,
         }
 
 
@@ -156,5 +155,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

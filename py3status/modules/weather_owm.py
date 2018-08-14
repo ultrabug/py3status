@@ -258,34 +258,36 @@ import datetime
 
 
 # API information
-OWM_API = "2.5"
-OWM_CURR_ENDPOINT = "http://api.openweathermap.org/data/%s/weather?" "APPID=%s&lat=%f&lon=%f&lang=%s"
-OWM_FUTURE_ENDPOINT = "http://api.openweathermap.org/data/%s/forecast?" "APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d"
-IP_ENDPOINT = "https://timezoneapi.io/api/ip"
+OWM_API = '2.5'
+OWM_CURR_ENDPOINT = 'http://api.openweathermap.org/data/%s/weather?' \
+    'APPID=%s&lat=%f&lon=%f&lang=%s'
+OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
+    'APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d'
+IP_ENDPOINT = 'https://timezoneapi.io/api/ip'
 
 # Paths of information to extract from JSON
-IP_CITY = "//data/city"
-IP_COUNTRY = "//data/country"
-IP_GMT_OFF = "//data/datetime/offset_gmt"
-IP_LOC = "//data/location"
-OWM_CLOUD_COVER = "//clouds/all"
-OWM_DESC = "//weather:0/main"
-OWM_DESC_LONG = "//weather:0/description"
-OWM_HUMIDITY = "//main/humidity"
-OWM_PRESSURE = "//main"
-OWM_RAIN = "//rain/3h"
-OWM_SNOW = "//snow/3h"
-OWM_SUNRISE = "//sys/sunrise"
-OWM_SUNSET = "//sys/sunset"
-OWM_TEMP = "//main"
-OWM_WEATHER_ICON = "//weather:0/id"
-OWM_WIND = "//wind"
+IP_CITY = '//data/city'
+IP_COUNTRY = '//data/country'
+IP_GMT_OFF = '//data/datetime/offset_gmt'
+IP_LOC = '//data/location'
+OWM_CLOUD_COVER = '//clouds/all'
+OWM_DESC = '//weather:0/main'
+OWM_DESC_LONG = '//weather:0/description'
+OWM_HUMIDITY = '//main/humidity'
+OWM_PRESSURE = '//main'
+OWM_RAIN = '//rain/3h'
+OWM_SNOW = '//snow/3h'
+OWM_SUNRISE = '//sys/sunrise'
+OWM_SUNSET = '//sys/sunset'
+OWM_TEMP = '//main'
+OWM_WEATHER_ICON = '//weather:0/id'
+OWM_WIND = '//wind'
 
 # Units constants
-RAIN_UNITS = set(["cm", "ft", "in", "mm", "m", "yd"])
+RAIN_UNITS = set(['cm', 'ft', 'in', 'mm', 'm', 'yd'])
 SNOW_UNITS = RAIN_UNITS
-TEMP_UNITS = set(["c", "f", "k"])
-WIND_UNITS = set(["fsec", "msec", "mph", "kmh"])
+TEMP_UNITS = set(['c', 'f', 'k'])
+WIND_UNITS = set(['fsec', 'msec', 'mph', 'kmh'])
 
 # Conversion factors
 FT_FROM_METER = 3.28084
@@ -294,18 +296,16 @@ KMH_FROM_MSEC = 0.277778
 MPH_FROM_MSEC = 2.23694
 
 # Thresholds options
-THRESHOLDS_ALL = "all"
-THRESHOLDS_NAMES = set([THRESHOLDS_ALL, "current", "min", "max"])
+THRESHOLDS_ALL = 'all'
+THRESHOLDS_NAMES = set([THRESHOLDS_ALL, 'current', 'min', 'max'])
 
 # Thresholds defaults
-THRESHOLDS = dict(
-    [
-        (
-            THRESHOLDS_ALL,
-            [(-100, "#0FF"), (0, "#00F"), (50, "#0F0"), (150, "#FF0")],
-        )
-    ]
-)
+THRESHOLDS = dict([(THRESHOLDS_ALL, [
+    (-100, '#0FF'),
+    (0, '#00F'),
+    (50, '#0F0'),
+    (150, '#FF0')
+])])
 
 
 class OWMException(Exception):
@@ -315,48 +315,47 @@ class OWMException(Exception):
 class Py3status:
     """
     """
-
     api_key = None
     cache_timeout = 600
     city = None
     country = None
     forecast_days = 3
     forecast_include_today = False
-    forecast_text_separator = " "
-    format = "{city} {icon} {temperature}[ {rain}], {description} {forecast}"
-    format_clouds = "{icon} {coverage}%"
-    format_forecast = "{icon}"
-    format_humidity = "{icon} {humidity}%"
-    format_pressure = "{icon} {pressure} hPa"
-    format_rain = "[\?if=amount {icon} {amount:.0f} {unit}]"
-    format_snow = "[\?if=amount {icon} {amount:.0f} {unit}]"
-    format_sunrise = "{icon} %-I:%M %p"
-    format_sunset = "{icon} %-I:%M %p"
-    format_temperature = u"{icon} [\?color=all {current:.0f}°{unit}]"
-    format_wind = "[\?if=speed {icon} {speed:.0f} {unit}]"
-    icon_atmosphere = u"🌫"
-    icon_cloud = u"☁"
-    icon_extreme = u"⚠"
-    icon_humidity = u"●"
-    icon_pressure = u"◌"
-    icon_rain = u"🌧"
-    icon_snow = u"❄"
-    icon_sun = u"☼"
-    icon_sunrise = u"⇑"
-    icon_sunset = u"⇓"
-    icon_temperature = u"○"
-    icon_thunderstorm = u"⛈"
-    icon_wind = u"☴"
+    forecast_text_separator = ' '
+    format = '{city} {icon} {temperature}[ {rain}], {description} {forecast}'
+    format_clouds = '{icon} {coverage}%'
+    format_forecast = '{icon}'
+    format_humidity = '{icon} {humidity}%'
+    format_pressure = '{icon} {pressure} hPa'
+    format_rain = '[\?if=amount {icon} {amount:.0f} {unit}]'
+    format_snow = '[\?if=amount {icon} {amount:.0f} {unit}]'
+    format_sunrise = '{icon} %-I:%M %p'
+    format_sunset = '{icon} %-I:%M %p'
+    format_temperature = u'{icon} [\?color=all {current:.0f}°{unit}]'
+    format_wind = '[\?if=speed {icon} {speed:.0f} {unit}]'
+    icon_atmosphere = u'🌫'
+    icon_cloud = u'☁'
+    icon_extreme = u'⚠'
+    icon_humidity = u'●'
+    icon_pressure = u'◌'
+    icon_rain = u'🌧'
+    icon_snow = u'❄'
+    icon_sun = u'☼'
+    icon_sunrise = u'⇑'
+    icon_sunset = u'⇓'
+    icon_temperature = u'○'
+    icon_thunderstorm = u'⛈'
+    icon_wind = u'☴'
     icons = None
-    lang = "en"
+    lang = 'en'
     location = None
     offset_gmt = None
     request_timeout = 10
     thresholds = THRESHOLDS
-    unit_rain = "in"
-    unit_snow = "in"
-    unit_temperature = "F"
-    unit_wind = "mph"
+    unit_rain = 'in'
+    unit_snow = 'in'
+    unit_temperature = 'F'
+    unit_wind = 'mph'
 
     def _get_icons(self):
         if self.icons is None:
@@ -364,31 +363,31 @@ class Py3status:
 
         # Defaults for weather ranges
         defaults = {
-            "200_299": self.icon_thunderstorm,
-            "300_399": self.icon_rain,
-            "500_599": self.icon_rain,
-            "600_699": self.icon_snow,
-            "700_799": self.icon_atmosphere,
-            "800": self.icon_sun,
-            "801_809": self.icon_cloud,
-            "900_909": self.icon_extreme,
-            "950_959": self.icon_wind,
-            "960_999": self.icon_extreme,
+            '200_299': self.icon_thunderstorm,
+            '300_399': self.icon_rain,
+            '500_599': self.icon_rain,
+            '600_699': self.icon_snow,
+            '700_799': self.icon_atmosphere,
+            '800': self.icon_sun,
+            '801_809': self.icon_cloud,
+            '900_909': self.icon_extreme,
+            '950_959': self.icon_wind,
+            '960_999': self.icon_extreme,
         }
 
         # Handling ranges from OpenWeatherMap
         data = {}
         for source in (defaults, self.icons):
             for key in source:
-                if not key.replace("_", "").isdigit():
-                    raise Exception("Invalid icon id: (%s)" % key)
+                if not key.replace('_', '').isdigit():
+                    raise Exception('Invalid icon id: (%s)' % key)
 
-                if "_" in key:
-                    if key.count("_") != 1:
-                        raise Exception("Invalid icon range: %s" % key)
+                if '_' in key:
+                    if key.count('_') != 1:
+                        raise Exception('Invalid icon range: %s' % key)
 
                     # Populate each code
-                    (start, end) = tuple(map(int, key.split("_")))
+                    (start, end) = tuple(map(int, key.split('_')))
                     for code in range(start, end + 1):
                         data[code] = source[key]
 
@@ -400,32 +399,30 @@ class Py3status:
     def post_config_hook(self):
         # Verify the API key
         if self.api_key is None:
-            raise OWMException(
-                "API Key for OpenWeatherMap cannot be empty!"
-                " Go to http://openweathermap.org/appid to"
-                " get an API Key."
-            )
+            raise OWMException('API Key for OpenWeatherMap cannot be empty!'
+                               ' Go to http://openweathermap.org/appid to'
+                               ' get an API Key.')
 
         # Generate our icon array
         self.icons = self._get_icons()
 
         # Verify the units configuration
         if self.unit_rain.lower() not in RAIN_UNITS:
-            raise Exception("unit_rain is not recognized")
+            raise Exception('unit_rain is not recognized')
         if self.unit_snow.lower() not in SNOW_UNITS:
-            raise Exception("unit_snow is not recognized")
+            raise Exception('unit_snow is not recognized')
         if self.unit_temperature.lower() not in TEMP_UNITS:
-            raise Exception("unit_temperature is not recognized")
+            raise Exception('unit_temperature is not recognized')
         if self.unit_wind.lower() not in WIND_UNITS:
-            raise Exception("unit_wind is not recognized")
+            raise Exception('unit_wind is not recognized')
 
         # Check thresholds for validity
         if set(self.thresholds.keys()) > THRESHOLDS_NAMES:
-            raise Exception("threshold name(s) are not recognized")
+            raise Exception('threshold name(s) are not recognized')
 
         # Copy thresholds if available
         if THRESHOLDS_ALL in self.thresholds:
-            for name in THRESHOLDS_NAMES - set([THRESHOLDS_ALL]):
+            for name in (THRESHOLDS_NAMES - set([THRESHOLDS_ALL])):
                 if name not in self.thresholds:
                     self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
@@ -439,21 +436,20 @@ class Py3status:
         req = self.py3.request(url, timeout=self.request_timeout)
         if req.status_code != 200:
             data = req.json()
-            raise OWMException(
-                data["message"] if ("message" in data) else "API Error"
-            )
+            raise OWMException(data['message'] if ('message' in data)
+                               else 'API Error')
 
         return req.json()
 
     def _jpath(self, data, query, default=None):
         # Take the query expression and drill down into the given dictionary
-        parts = query.strip("/").split("/")
+        parts = query.strip('/').split('/')
         for part in parts:
             try:
                 # This represents a key:index expression, representing first
                 # selecting a key, then an index
-                if ":" in part:
-                    (part, index) = tuple(part.split(":"))
+                if ':' in part:
+                    (part, index) = tuple(part.split(':'))
                     data = data[part]
                     data = data[int(index)]
 
@@ -471,26 +467,18 @@ class Py3status:
         # Helper to parse a GMT offset
         def _parse_offset(offset):
             # Parse string
-            (plus, rest) = ((offset[0] == "+"), offset[1:])
-            (hours, mins) = map(int, rest.split(":"))
+            (plus, rest) = ((offset[0] == '+'), offset[1:])
+            (hours, mins) = map(int, rest.split(':'))
 
             # Generate timedelta
             tz_offset = datetime.timedelta(hours=hours, minutes=mins)
-            return tz_offset if plus else -tz_offset
+            return (tz_offset if plus else -tz_offset)
 
         # Preference a user-set location
-        if all(
-            map(
-                lambda x: x is not None,
-                (self.location, self.city, self.country, self.offset_gmt),
-            )
-        ):
-            return (
-                self.location,
-                self.city,
-                self.country,
-                _parse_offset(self.offset_gmt),
-            )
+        if all(map(lambda x: x is not None,
+               (self.location, self.city, self.country, self.offset_gmt))):
+            return (self.location, self.city, self.country,
+                    _parse_offset(self.offset_gmt))
 
         # Contact the Timezone API
         try:
@@ -503,27 +491,25 @@ class Py3status:
         # Extract location data
         lat_lng = self.location
         if self.location is None:
-            location = self._jpath(data, IP_LOC, "0,0")
-            lat_lng = tuple(map(float, location.split(",")))
+            location = self._jpath(data, IP_LOC, '0,0')
+            lat_lng = tuple(map(float, location.split(',')))
 
         # Extract city
         city = self.city
         if self.city is None:
-            city = self._jpath(data, IP_CITY, "")
+            city = self._jpath(data, IP_CITY, '')
 
         # Extract country
         country = self.country
         if self.country is None:
-            country = self._jpath(data, IP_COUNTRY, "")
+            country = self._jpath(data, IP_COUNTRY, '')
 
         # Extract timezone offset
-        tz_offset = (
-            _parse_offset(self.offset_gmt)
-            if (self.offset_gmt is not None)
-            else None
-        )
+        tz_offset = (_parse_offset(self.offset_gmt)
+                     if (self.offset_gmt is not None)
+                     else None)
         if self.offset_gmt is None:
-            offset = self._jpath(data, IP_GMT_OFF, "+0:00")
+            offset = self._jpath(data, IP_GMT_OFF, '+0:00')
             tz_offset = _parse_offset(offset)
 
         return (lat_lng, city, country, tz_offset)
@@ -539,13 +525,12 @@ class Py3status:
             return []
 
         # Get raw data
-        url = self._get_req_url(OWM_FUTURE_ENDPOINT, coords) % (
-            self.forecast_days + 1
-        )
+        url = (self._get_req_url(OWM_FUTURE_ENDPOINT, coords)
+               % (self.forecast_days + 1))
         data = self._make_req(url)
 
         # Extract forecast
-        weathers = data["list"]
+        weathers = data['list']
         return weathers[:-1] if (self.forecast_include_today) else weathers[1:]
 
     def _get_icon(self, wthr):
@@ -554,13 +539,10 @@ class Py3status:
 
     def _format_clouds(self, wthr):
         # Format the cloud cover (default clear)
-        return self.py3.safe_format(
-            self.format_clouds,
-            {
-                "icon": self.icon_cloud,
-                "coverage": self._jpath(wthr, OWM_CLOUD_COVER, 0),
-            },
-        )
+        return self.py3.safe_format(self.format_clouds, {
+            'icon': self.icon_cloud,
+            'coverage': self._jpath(wthr, OWM_CLOUD_COVER, 0),
+        })
 
     def _format_rain(self, wthr):
         # Format rain fall
@@ -570,23 +552,20 @@ class Py3status:
         inches = rain * IN_FROM_MM
 
         options = {
-            "mm": round(rain),
-            "cm": round(rain / 10),
-            "m": round(rain / 100),
-            "in": round(inches),
-            "ft": round(inches / 12),
-            "yd": round(inches / 36),
+            'mm': round(rain),
+            'cm': round(rain / 10),
+            'm': round(rain / 100),
+            'in': round(inches),
+            'ft': round(inches / 12),
+            'yd': round(inches / 36)
         }
 
         # Format the rain fall
-        return self.py3.safe_format(
-            self.format_rain,
-            {
-                "icon": self.icon_rain,
-                "amount": options[self.unit_rain.lower()],
-                "unit": self.unit_rain,
-            },
-        )
+        return self.py3.safe_format(self.format_rain, {
+            'icon': self.icon_rain,
+            'amount': options[self.unit_rain.lower()],
+            'unit': self.unit_rain,
+        })
 
     def _format_snow(self, wthr):
         # Format snow fall
@@ -596,52 +575,47 @@ class Py3status:
         inches = snow * IN_FROM_MM
 
         options = {
-            "mm": round(snow),
-            "cm": round(snow / 10),
-            "m": round(snow / 100),
-            "in": round(inches),
-            "ft": round(inches / 12),
-            "yd": round(inches / 36),
+            'mm': round(snow),
+            'cm': round(snow / 10),
+            'm': round(snow / 100),
+            'in': round(inches),
+            'ft': round(inches / 12),
+            'yd': round(inches / 36)
         }
 
         # Format the snow fall
-        return self.py3.safe_format(
-            self.format_snow,
-            {
-                "icon": self.icon_snow,
-                "amount": options[self.unit_snow.lower()],
-                "unit": self.unit_snow,
-            },
-        )
+        return self.py3.safe_format(self.format_snow, {
+            'icon': self.icon_snow,
+            'amount': options[self.unit_snow.lower()],
+            'unit': self.unit_snow,
+        })
 
     def _format_wind(self, wthr):
         wind = self._jpath(wthr, OWM_WIND, dict())
 
         # Speed and Gust
-        msec_speed = wind["speed"] if ("speed" in wind) else 0
-        msec_gust = wind["gust"] if ("gust" in wind) else 0
+        msec_speed = wind['speed'] if ('speed' in wind) else 0
+        msec_gust = wind['gust'] if ('gust' in wind) else 0
 
         options = {
-            "fsec": {
-                "speed": msec_speed * FT_FROM_METER,
-                "gust": msec_gust * FT_FROM_METER,
-            },
-            "msec": {"speed": msec_speed, "gust": msec_gust},
-            "mph": {
-                "speed": msec_speed * MPH_FROM_MSEC,
-                "gust": msec_gust * MPH_FROM_MSEC,
-            },
-            "kmh": {
-                "speed": msec_speed * KMH_FROM_MSEC,
-                "gust": msec_gust * KMH_FROM_MSEC,
-            },
-        }
+            'fsec': {
+                'speed': msec_speed * FT_FROM_METER,
+                'gust': msec_gust * FT_FROM_METER},
+            'msec': {
+                'speed': msec_speed,
+                'gust': msec_gust},
+            'mph': {
+                'speed': msec_speed * MPH_FROM_MSEC,
+                'gust': msec_gust * MPH_FROM_MSEC},
+            'kmh': {
+                'speed': msec_speed * KMH_FROM_MSEC,
+                'gust': msec_gust * KMH_FROM_MSEC}}
 
         # Get the choice and add more
         choice = options[self.unit_wind.lower()]
-        choice["icon"] = self.icon_wind
-        choice["degree"] = wind["deg"] if ("deg" in wind) else 0
-        choice["unit"] = self.unit_wind
+        choice['icon'] = self.icon_wind
+        choice['degree'] = wind['deg'] if ('deg' in wind) else 0
+        choice['unit'] = self.unit_wind
 
         # Format the wind speed
         return self.py3.safe_format(self.format_wind, choice)
@@ -650,15 +624,15 @@ class Py3status:
         # Format the humidity (default zero humidity)
         humidity = self._jpath(wthr, OWM_HUMIDITY, 0)
 
-        return self.py3.safe_format(
-            self.format_humidity,
-            {"icon": self.icon_humidity, "humidity": humidity},
-        )
+        return self.py3.safe_format(self.format_humidity, {
+            'icon': self.icon_humidity,
+            'humidity': humidity,
+        })
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
         pressure = self._jpath(wthr, OWM_PRESSURE, dict())
-        pressure["icon"] = self.icon_pressure
+        pressure['icon'] = self.icon_pressure
 
         # Format the barometric pressure
         return self.py3.safe_format(self.format_pressure, pressure)
@@ -675,30 +649,30 @@ class Py3status:
             return val * (9.0 / 5.0) - 459.67
 
         options = {
-            "c": {
-                "current": round(kToC(kelvin["temp"])),
-                "max": round(kToC(kelvin["temp_max"])),
-                "min": round(kToC(kelvin["temp_min"])),
+            'c': {
+                'current': round(kToC(kelvin['temp'])),
+                'max': round(kToC(kelvin['temp_max'])),
+                'min': round(kToC(kelvin['temp_min']))
             },
-            "f": {
-                "current": round(kToF(kelvin["temp"])),
-                "max": round(kToF(kelvin["temp_max"])),
-                "min": round(kToF(kelvin["temp_min"])),
+            'f': {
+                'current': round(kToF(kelvin['temp'])),
+                'max': round(kToF(kelvin['temp_max'])),
+                'min': round(kToF(kelvin['temp_min']))
             },
-            "k": {
-                "current": round(kelvin["temp"]),
-                "max": round(kelvin["temp_max"]),
-                "min": round(kelvin["temp_min"]),
-            },
+            'k': {
+                'current': round(kelvin['temp']),
+                'max': round(kelvin['temp_max']),
+                'min': round(kelvin['temp_min'])
+            }
         }
 
         # Get the choice and add more
         choice = options[self.unit_temperature.lower()]
-        choice["icon"] = self.icon_temperature
-        choice["unit"] = self.unit_temperature
+        choice['icon'] = self.icon_temperature
+        choice['unit'] = self.unit_temperature
 
         # Calculate thresholds
-        for name in THRESHOLDS_NAMES - set([THRESHOLDS_ALL]):
+        for name in (THRESHOLDS_NAMES - set([THRESHOLDS_ALL])):
             # Try to apply the specific threshold
             if name in self.thresholds:
                 self.py3.threshold_get_color(choice[name], name)
@@ -709,44 +683,48 @@ class Py3status:
     def _format_sunrise(self, wthr, tz_offset):
         # Get the time for sunrise (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
-            self._jpath(wthr, OWM_SUNRISE, 0)
-        )
+            self._jpath(wthr, OWM_SUNRISE, 0))
         dt += tz_offset
 
         # Format the sunrise
         replaced = dt.strftime(self.format_sunrise)
-        return self.py3.safe_format(replaced, {"icon": self.icon_sunrise})
+        return self.py3.safe_format(replaced, {
+            'icon': self.icon_sunrise,
+        })
 
     def _format_sunset(self, wthr, tz_offset):
         # Get the time for sunset (default is the start of time)
         dt = datetime.datetime.utcfromtimestamp(
-            self._jpath(wthr, OWM_SUNSET, 0)
-        )
+            self._jpath(wthr, OWM_SUNSET, 0))
         dt += tz_offset
 
         # Format the sunset
         replaced = dt.strftime(self.format_sunset)
-        return self.py3.safe_format(replaced, {"icon": self.icon_sunset})
+        return self.py3.safe_format(replaced, {
+            'icon': self.icon_sunset,
+        })
 
     def _format_dict(self, wthr, city, country, tz_offset):
         data = {
             # Standard options
-            "icon": self._get_icon(wthr),
-            "clouds": self._format_clouds(wthr),
-            "rain": self._format_rain(wthr),
-            "snow": self._format_snow(wthr),
-            "wind": self._format_wind(wthr),
-            "humidity": self._format_humidity(wthr),
-            "pressure": self._format_pressure(wthr),
-            "temperature": self._format_temp(wthr),
-            "sunrise": self._format_sunrise(wthr, tz_offset),
-            "sunset": self._format_sunset(wthr, tz_offset),
+            'icon': self._get_icon(wthr),
+            'clouds': self._format_clouds(wthr),
+            'rain': self._format_rain(wthr),
+            'snow': self._format_snow(wthr),
+            'wind': self._format_wind(wthr),
+            'humidity': self._format_humidity(wthr),
+            'pressure': self._format_pressure(wthr),
+            'temperature': self._format_temp(wthr),
+            'sunrise': self._format_sunrise(wthr, tz_offset),
+            'sunset': self._format_sunset(wthr, tz_offset),
+
             # Descriptions (defaults to empty)
-            "main": self._jpath(wthr, OWM_DESC, "").lower(),
-            "description": self._jpath(wthr, OWM_DESC_LONG, "").lower(),
+            'main': self._jpath(wthr, OWM_DESC, '').lower(),
+            'description': self._jpath(wthr, OWM_DESC_LONG, '').lower(),
+
             # Location information
-            "city": city,
-            "country": country,
+            'city': city,
+            'country': country,
         }
 
         return data
@@ -759,21 +737,18 @@ class Py3status:
         forecasts = []
         for day in fcsts:
             future = self._format_dict(day, city, country, tz_offset)
-            forecasts.append(
-                self.py3.safe_format(self.format_forecast, future)
-            )
+            forecasts.append(self.py3.safe_format(self.format_forecast, future))
 
         # Give the final format
-        today["forecast"] = self.py3.composite_join(
-            self.forecast_text_separator, forecasts
-        )
+        today['forecast'] = self.py3.composite_join(
+            self.forecast_text_separator, forecasts)
 
         return self.py3.safe_format(self.format, today)
 
     def weather_owm(self):
         # Get weather information
         loc_tz_info = self._get_loc_tz_info()
-        text = ""
+        text = ''
         if loc_tz_info is not None:
             (coords, city, country, tz_offset) = loc_tz_info
 
@@ -783,12 +758,12 @@ class Py3status:
             text = self._format(wthr, fcsts, city, country, tz_offset)
 
         return {
-            "full_text": text,
-            "cached_until": self.py3.time_in(seconds=self.cache_timeout),
+            'full_text': text,
+            'cached_until': self.py3.time_in(seconds=self.cache_timeout)
         }
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     """
     Run module in test mode.
     """
@@ -796,48 +771,43 @@ if __name__ == "__main__":
     from py3status.module_test import module_test
 
     # All possible outputs
-    all_string = "/".join(
-        [
-            "{clouds}",
-            "{description}",
-            "{main}",
-            "{humidity}",
-            "{pressure}",
-            "{snow}",
-            "{sunrise}",
-            "{sunset}",
-            "{temperature}",
-            "{wind}",
-        ]
-    )
+    all_string = '/'.join([
+        '{clouds}',
+        '{description}',
+        '{main}',
+        '{humidity}',
+        '{pressure}',
+        '{snow}',
+        '{sunrise}',
+        '{sunset}',
+        '{temperature}',
+        '{wind}'
+    ])
 
-    module_test(
-        Py3status,
-        config={
-            "api_key": os.getenv("OWM_API_KEY"),
-            # Select icons
-            "icons": {"200": "☔", "230_232": "🌧"},
-            # Complete configuration
-            "format_clouds": "{icon} {coverage}%",
-            "format_humidity": "{icon} {humidity}%",
-            "format_pressure": "{icon} {pressure} Pa, sea: {sea_level} Pa",
-            "format_rain": "{icon} {amount:.0f} in",
-            "format_snow": "{icon} {amount:.0f} in",
-            "format_temperature": (
-                "{icon}: max: [\?color=max {max:.0f}°F], "
-                "min: [\?color=min {min:.0f}°F], "
-                "current: [\?color=current {current:.0f}°F]"
-            ),
-            "format_wind": (
-                "{icon} {degree}°, gust: {gust:.0f} mph, "
-                "speed: {speed:.0f} mph"
-            ),
-            "format": (
-                "{city}, {country}: {icon} " + all_string + "//{forecast}"
-            ),
-            "format_forecast": ("{icon} " + all_string),
-            # Miscellaneous
-            "forecast_days": 1,
-            "forecast_text_separator": "//",
+    module_test(Py3status, config={
+        'api_key': os.getenv('OWM_API_KEY'),
+
+        # Select icons
+        'icons': {
+            '200': "☔",
+            '230_232': "🌧",
         },
-    )
+
+        # Complete configuration
+        'format_clouds': '{icon} {coverage}%',
+        'format_humidity': '{icon} {humidity}%',
+        'format_pressure': '{icon} {pressure} Pa, sea: {sea_level} Pa',
+        'format_rain': '{icon} {amount:.0f} in',
+        'format_snow': '{icon} {amount:.0f} in',
+        'format_temperature': ('{icon}: max: [\?color=max {max:.0f}°F], '
+                               'min: [\?color=min {min:.0f}°F], '
+                               'current: [\?color=current {current:.0f}°F]'),
+        'format_wind': ('{icon} {degree}°, gust: {gust:.0f} mph, '
+                        'speed: {speed:.0f} mph'),
+        'format': ('{city}, {country}: {icon} ' + all_string + '//{forecast}'),
+        'format_forecast': ('{icon} ' + all_string),
+
+        # Miscellaneous
+        'forecast_days': 1,
+        'forecast_text_separator': '//',
+    })

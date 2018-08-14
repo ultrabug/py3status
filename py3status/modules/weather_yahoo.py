@@ -127,105 +127,94 @@ example_weather
 """
 
 from datetime import datetime
+DATETIME_FORECAST = '%d %b %Y'
+DATETIME_GENERAL = '%a, %d %b %Y %I:%M %p %Z'
 
-DATETIME_FORECAST = "%d %b %Y"
-DATETIME_GENERAL = "%a, %d %b %Y %I:%M %p %Z"
-
-URL = "https://query.yahooapis.com/v1/public/yql?q="
-URL += "select * from weather.forecast where woeid="
+URL = 'https://query.yahooapis.com/v1/public/yql?q='
+URL += 'select * from weather.forecast where woeid='
 URL += '"{woeid}" and u="{unit}"&format=json'
-URL += "&env=store://datatables.org/alltableswithkeys"
+URL += '&env=store://datatables.org/alltableswithkeys'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 7200
     forecast_days = 3
     forecast_today = False
-    format = u"[{format_today} ][{format_forecast}]"
+    format = u'[{format_today} ][{format_forecast}]'
     format_datetime = {}
-    format_forecast = u"{icon}"
-    format_separator = " "
-    format_today = u"{icon}"
-    icon_cloud = u"☁"
-    icon_default = u"?"
-    icon_rain = u"☂"
-    icon_snow = u"☃"
-    icon_sun = u"☀"
+    format_forecast = u'{icon}'
+    format_separator = ' '
+    format_today = u'{icon}'
+    icon_cloud = u'☁'
+    icon_default = u'?'
+    icon_rain = u'☂'
+    icon_snow = u'☃'
+    icon_sun = u'☀'
     request_timeout = 10
     retry_timeout = 60
     thresholds = []
-    unit = "C"
+    unit = 'C'
     woeid = None
 
     def post_config_hook(self):
         if not self.woeid:
-            raise Exception("missing woeid")
+            raise Exception('missing woeid')
 
-        self.datetime_init = {"datetime": []}
-        names = ["format", "format_today", "format_forecast"]
-        placeholders = ["item_pubDate", "date", "date"]
-        for name, placeholder in zip(names, placeholders):
-            self.datetime_init[name] = (
-                self.py3.format_contains(getattr(self, name), placeholder)
-                and name in self.format_datetime
+        self.datetime_init = {'datetime': []}
+        names = ['format', 'format_today', 'format_forecast']
+        placeholders = ['item_pubDate', 'date', 'date']
+        for name, placeholder, in zip(names, placeholders):
+            self.datetime_init[name] = (self.py3.format_contains(getattr(
+                self, name), placeholder) and name in self.format_datetime
             )
             if self.datetime_init[name]:
-                self.datetime_init["datetime"].append(name)
+                self.datetime_init['datetime'].append(name)
 
         self.unit = self.unit.upper()
         self.url = URL.format(woeid=self.woeid, unit=self.unit.lower())
         self.conditions = [
-            ("sun", self.icon_sun, [31, 32, 33, 34, 36]),  # sun
-            (
-                "cloud",
-                self.icon_cloud,  # cloud / early rain
-                [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 44],
-            ),
-            (
-                "snow",
-                self.icon_snow,  # snow
-                [7, 8, 10, 13, 14, 15, 16, 17, 18, 35, 41, 42, 43, 46],
-            ),
-            (
-                "rain",
-                self.icon_rain,  # rain
-                [0, 1, 2, 3, 4, 5, 6, 9, 11, 12, 37, 38, 39, 40, 45, 47],
-            ),
+            ('sun', self.icon_sun,  # sun
+                [31, 32, 33, 34, 36]),
+            ('cloud', self.icon_cloud,  # cloud / early rain
+                [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 44]),
+            ('snow', self.icon_snow,  # snow
+                [7, 8, 10, 13, 14, 15, 16, 17, 18, 35, 41, 42, 43, 46]),
+            ('rain', self.icon_rain,  # rain
+                [0, 1, 2, 3, 4, 5, 6, 9, 11, 12, 37, 38, 39, 40, 45, 47]),
         ]
 
     class Meta:
         deprecated = {
-            "rename": [
+            'rename': [
                 {
-                    "param": "forecast_text_separator",
-                    "new": "format_separator",
-                    "msg": "obsolete parameter use `format_separator`",
+                    'param': 'forecast_text_separator',
+                    'new': 'format_separator',
+                    'msg': 'obsolete parameter use `format_separator`',
                 },
                 {
-                    "param": "forecast_include_today",
-                    "new": "forecast_today",
-                    "msg": "obsolete parameter use `forecast_today`",
+                    'param': 'forecast_include_today',
+                    'new': 'forecast_today',
+                    'msg': 'obsolete parameter use `forecast_today`',
                 },
                 {
-                    "param": "units",
-                    "new": "unit",
-                    "msg": "obsolete parameter use `unit`",
+                    'param': 'units',
+                    'new': 'unit',
+                    'msg': 'obsolete parameter use `unit`',
                 },
             ],
-            "rename_placeholder": [
+            'rename_placeholder': [
                 {
-                    "placeholder": "forecasts",
-                    "new": "format_forecast",
-                    "format_strings": ["format"],
+                    'placeholder': 'forecasts',
+                    'new': 'format_forecast',
+                    'format_strings': ['format'],
                 },
                 {
-                    "placeholder": "today",
-                    "new": "format_today",
-                    "format_strings": ["format"],
+                    'placeholder': 'today',
+                    'new': 'format_today',
+                    'format_strings': ['format'],
                 },
             ],
         }
@@ -233,22 +222,21 @@ class Py3status:
     def _get_weather_data(self):
         try:
             return self.py3.request(
-                self.url, timeout=self.request_timeout
-            ).json()
+                self.url, timeout=self.request_timeout).json()
         except self.py3.RequestException:
             return {}
 
     def _organize(self, data):
-        today = data["query"]["results"]["channel"]["item"]["condition"]
-        forecasts = data["query"]["results"]["channel"]["item"]["forecast"]
+        today = data['query']['results']['channel']['item']['condition']
+        forecasts = data['query']['results']['channel']['item']['forecast']
         # skip today?
         if not self.forecast_today:
             forecasts.pop(0)
         # set number of forecast_days
-        forecasts = forecasts[: self.forecast_days]
+        forecasts = forecasts[:self.forecast_days]
         # add extras
-        channel = data["query"]["results"]["channel"]
-        channel = self.py3.flatten_dict(channel, delimiter="_")
+        channel = data['query']['results']['channel']
+        channel = self.py3.flatten_dict(channel, delimiter='_')
         return today, forecasts, channel
 
     def _get_icon(self, forecast):
@@ -256,8 +244,8 @@ class Py3status:
         Return an icon based on the condition code and description
         https://developer.yahoo.com/weather/documentation.html#codes
         """
-        code = int(forecast["code"])
-        description = forecast["text"].lower()
+        code = int(forecast['code'])
+        description = forecast['text'].lower()
         for condition in self.conditions:
             if condition[0] in description or code in condition[2]:
                 return condition[1]
@@ -277,77 +265,72 @@ class Py3status:
 
             today, forecasts, channel = self._organize(weather_data)
 
-            if self.datetime_init["datetime"]:
-                if self.datetime_init["format"]:
-                    channel["item_pubDate"] = self.py3.safe_format(
-                        datetime.strftime(
-                            datetime.strptime(
-                                channel["item_pubDate"], DATETIME_GENERAL
-                            ),
-                            self.format_datetime["format"],
+            if self.datetime_init['datetime']:
+                if self.datetime_init['format']:
+                    channel['item_pubDate'] = self.py3.safe_format(
+                        datetime.strftime(datetime.strptime(
+                            channel['item_pubDate'], DATETIME_GENERAL),
+                            self.format_datetime['format']
                         )
                     )
 
-                if self.datetime_init["format_today"]:
-                    today["date"] = self.py3.safe_format(
-                        datetime.strftime(
-                            datetime.strptime(today["date"], DATETIME_GENERAL),
-                            self.format_datetime["format_today"],
+                if self.datetime_init['format_today']:
+                    today['date'] = self.py3.safe_format(
+                        datetime.strftime(datetime.strptime(
+                            today['date'], DATETIME_GENERAL),
+                            self.format_datetime['format_today']
                         )
                     )
 
-                if self.datetime_init["format_forecast"]:
+                if self.datetime_init['format_forecast']:
                     for forecast in forecasts:
-                        forecast["date"] = self.py3.safe_format(
-                            datetime.strftime(
-                                datetime.strptime(
-                                    forecast["date"], DATETIME_FORECAST
-                                ),
-                                self.format_datetime["format_forecast"],
+                        forecast['date'] = self.py3.safe_format(
+                            datetime.strftime(datetime.strptime(
+                                forecast['date'], DATETIME_FORECAST),
+                                self.format_datetime['format_forecast']
                             )
                         )
 
             if today:
                 if self.thresholds:
-                    self.py3.threshold_get_color(today["temp"], "temp")
+                    self.py3.threshold_get_color(today['temp'], 'temp')
 
                 format_today = self.py3.safe_format(
-                    self.format_today,
-                    dict(icon=self._get_icon(today), unit=self.unit, **today),
+                    self.format_today, dict(
+                        icon=self._get_icon(today),
+                        unit=self.unit,
+                        **today
+                    )
                 )
 
             if forecasts:
                 for forecast in forecasts:
                     if self.thresholds:
-                        self.py3.threshold_get_color(forecast["high"], "high")
-                        self.py3.threshold_get_color(forecast["low"], "low")
+                        self.py3.threshold_get_color(forecast['high'], 'high')
+                        self.py3.threshold_get_color(forecast['low'], 'low')
 
                     new_data.append(
                         self.py3.safe_format(
-                            self.format_forecast,
-                            dict(
+                            self.format_forecast, dict(
                                 icon=self._get_icon(forecast),
                                 unit=self.unit,
                                 **forecast
-                            ),
+                            )
                         )
                     )
 
             format_separator = self.py3.safe_format(self.format_separator)
-            format_forecast = self.py3.composite_join(
-                format_separator, new_data
-            )
+            format_forecast = self.py3.composite_join(format_separator, new_data)
 
         return {
-            "cached_until": self.py3.time_in(cached_until),
-            "full_text": self.py3.safe_format(
-                self.format,
-                dict(
+            'cached_until': self.py3.time_in(cached_until),
+            'full_text': self.py3.safe_format(
+                self.format, dict(
                     format_today=format_today,
                     format_forecast=format_forecast,
                     **channel
-                ),
-            ),
+                )
+            )
         }
 
 
@@ -356,5 +339,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

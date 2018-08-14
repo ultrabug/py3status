@@ -84,12 +84,11 @@ closed
 class Py3status:
     """
     """
-
     # available configuration parameters
     button_toggle = 1
-    format = "{output}"
-    format_button_closed = u"+"
-    format_button_open = u"-"
+    format = '{output}'
+    format_button_closed = u'+'
+    format_button_open = u'-'
     format_separator = None
     open = True
 
@@ -98,9 +97,9 @@ class Py3status:
 
     def post_config_hook(self):
         self.urgent = False
-        if not self.py3.format_contains(self.format, "button"):
+        if not self.py3.format_contains(self.format, 'button'):
             self.open = True
-        self.py3.register_function("urgent_function", self._urgent_function)
+        self.py3.register_function('urgent_function', self._urgent_function)
 
     def _urgent_function(self, module_list):
         self.urgent = True
@@ -108,7 +107,7 @@ class Py3status:
     def frame(self):
 
         if not self.items:
-            return {"full_text": "", "cached_until": self.py3.CACHE_FOREVER}
+            return {'full_text': '', 'cached_until': self.py3.CACHE_FOREVER}
 
         # get the child modules output.
         output = []
@@ -116,15 +115,15 @@ class Py3status:
             for item in self.items:
                 out = self.py3.get_output(item)[:]
                 if self.format_separator is None:
-                    if out and "separator" not in out[-1]:
+                    if out and 'separator' not in out[-1]:
                         # we copy the item as we do not want to change the
                         # original.
                         last_item = out[-1].copy()
-                        last_item["separator"] = True
+                        last_item['separator'] = True
                         out[-1] = last_item
                 else:
                     if self.format_separator:
-                        out += [{"full_text": self.format_separator}]
+                        out += [{'full_text': self.format_separator}]
                 output += out
             urgent = False
 
@@ -134,28 +133,28 @@ class Py3status:
         else:
             urgent = self.urgent
 
-        if self.py3.format_contains(self.format, "button"):
+        if self.py3.format_contains(self.format, 'button'):
             if self.open:
                 format_control = self.format_button_open
             else:
                 format_control = self.format_button_closed
 
-            button = {"full_text": format_control, "index": "button"}
+            button = {'full_text': format_control, 'index': 'button'}
         else:
             button = None
 
         composites = {
-            "output": self.py3.composite_create(output),
-            "button": self.py3.composite_create(button),
+            'output': self.py3.composite_create(output),
+            'button': self.py3.composite_create(button),
         }
         output = self.py3.safe_format(self.format, composites)
         response = {
-            "cached_until": self.py3.CACHE_FOREVER,
-            "full_text": output,
+            'cached_until': self.py3.CACHE_FOREVER,
+            'full_text': output,
         }
 
         if urgent:
-            response["urgent"] = urgent
+            response['urgent'] = urgent
 
         return response
 
@@ -163,9 +162,9 @@ class Py3status:
         """
         Switch the displayed module or pass the event on to the active module
         """
-        if event["button"] == self.button_toggle:
+        if event['button'] == self.button_toggle:
             # we only toggle if button was used
-            if event.get("index") == "button" and self.py3.is_my_event(event):
+            if event.get('index') == 'button' and self.py3.is_my_event(event):
                 self.urgent = False
                 self.open = not self.open
 
@@ -175,5 +174,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

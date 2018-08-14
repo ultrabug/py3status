@@ -58,103 +58,99 @@ SAMPLE OUTPUT
 {'full_text': 'py3status 48/49'}
 """
 
-STRING_ERROR_AUTH = "missing auth_token"
+STRING_ERROR_AUTH = 'missing auth_token'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     auth_token = None
     button_open = 1
     button_refresh = 2
     cache_timeout = 900
-    format = (
-        "{name} [[{open_issues_count}][\?soft /]"
-        "[{open_merge_requests_count}]]"
-    )
-    project = "gitlab-org/gitlab-ce"
+    format = ('{name} [[{open_issues_count}][\?soft /]'
+              '[{open_merge_requests_count}]]')
+    project = 'gitlab-org/gitlab-ce'
     thresholds = []
 
     def post_config_hook(self):
         if not self.auth_token:
             raise Exception(STRING_ERROR_AUTH)
-        if not self.project.startswith("http"):
-            self.project = "https://gitlab.com/" + self.project
+        if not self.project.startswith('http'):
+            self.project = 'https://gitlab.com/' + self.project
 
         # make urls
-        self.project = self.project.strip("/")
-        base_api = self.project.rsplit("/", 2)[0] + "/api/v4/"
-        uuid = "/" + "%2F".join(self.project.rsplit("/", 2)[1:])
-        single_project = base_api + "projects" + uuid
-        merge_requests = "/merge_requests?state=opened&view=simple&per_page=1"
+        self.project = self.project.strip('/')
+        base_api = self.project.rsplit('/', 2)[0] + '/api/v4/'
+        uuid = '/' + '%2F'.join(self.project.rsplit('/', 2)[1:])
+        single_project = base_api + 'projects' + uuid
+        merge_requests = '/merge_requests?state=opened&view=simple&per_page=1'
         # url stuffs. header, timeout, dict, etc
-        self.headers = {"PRIVATE-TOKEN": self.auth_token}
+        self.headers = {'PRIVATE-TOKEN': self.auth_token}
         self.request_timeout = 10
         self.url = {
-            "single_project": single_project,
-            "merge_requests": single_project + merge_requests,
-            "todos": base_api + "todos",
+            'single_project': single_project,
+            'merge_requests': single_project + merge_requests,
+            'todos': base_api + 'todos'
         }
         # add statistics to url too?
-        if self.py3.format_contains(self.format, "statistics_*"):
-            self.url["single_project"] += "/?statistics=true"
+        if self.py3.format_contains(self.format, 'statistics_*'):
+            self.url['single_project'] += '/?statistics=true'
 
         # init placeholders
-        self.init = {"thresholds": []}
+        self.init = {'thresholds': []}
         placeholders = self.py3.get_placeholders_list(self.format)
-        for x in ["open_merge_requests_count", "todos_count"]:
+        for x in ['open_merge_requests_count', 'todos_count']:
             self.init[x] = x in placeholders
             if self.init[x]:
                 placeholders.remove(x)
-        self.init["single_project"] = bool(placeholders)
+        self.init['single_project'] = bool(placeholders)
 
         # partial future helper code
-        for x in self.format.replace("&", " ").split("color=")[1::1]:
-            self.init["thresholds"].append(x.split()[0])
+        for x in self.format.replace('&', ' ').split('color=')[1::1]:
+            self.init['thresholds'].append(x.split()[0])
 
     def _get_data(self, url):
         try:
             return self.py3.request(
-                url, timeout=self.request_timeout, headers=self.headers
-            )
+                url, timeout=self.request_timeout, headers=self.headers)
         except self.py3.RequestException:
             return {}
 
     def gitlab(self):
         gitlab_data = {}
 
-        if self.init["single_project"]:
-            data = self._get_data(self.url["single_project"])
+        if self.init['single_project']:
+            data = self._get_data(self.url['single_project'])
             if data:
-                gitlab_data.update(self.py3.flatten_dict(data.json(), "_"))
+                gitlab_data.update(self.py3.flatten_dict(data.json(), '_'))
 
-        if self.init["open_merge_requests_count"]:
-            data = self._get_data(self.url["merge_requests"])
+        if self.init['open_merge_requests_count']:
+            data = self._get_data(self.url['merge_requests'])
             if data:
-                gitlab_data["open_merge_requests_count"] = data.headers.get(
-                    "X-Total"
+                gitlab_data['open_merge_requests_count'] = (
+                    data.headers.get('X-Total')
                 )
 
-        if self.init["todos_count"]:
-            data = self._get_data(self.url["todos"])
+        if self.init['todos_count']:
+            data = self._get_data(self.url['todos'])
             if data:
-                gitlab_data["todos_count"] = len(data.json())
+                gitlab_data['todos_count'] = len(data.json())
 
-        for x in self.init["thresholds"]:
+        for x in self.init['thresholds']:
             if x in gitlab_data:
                 self.py3.threshold_get_color(gitlab_data[x], x)
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, gitlab_data),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, gitlab_data)
         }
 
     def on_click(self, event):
-        button = event["button"]
+        button = event['button']
         if button == self.button_open:
-            self.py3.command_run("xdg-open %s" % self.project)
+            self.py3.command_run('xdg-open %s' % self.project)
         if button != self.button_refresh:
             self.py3.prevent_refresh()
 
@@ -164,5 +160,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

@@ -43,21 +43,20 @@ except:
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 300
-    db = ""
-    format = "general: {General}"
-    host = ""
-    password = ""
+    db = ''
+    format = 'general: {General}'
+    host = ''
+    password = ''
     threshold_critical = 20
     threshold_warning = 10
     timeout = 5
-    user = ""
+    user = ''
 
     def rt_tickets(self):
         has_one_queue_formatted = False
-        response = {"full_text": ""}
+        response = {'full_text': ''}
         tickets = {}
 
         mydb = mysql.connect(
@@ -65,11 +64,9 @@ class Py3status:
             user=self.user,
             passwd=self.password,
             db=self.db,
-            connect_timeout=self.timeout,
-        )
+            connect_timeout=self.timeout, )
         mycr = mydb.cursor()
-        mycr.execute(
-            """select q.Name as queue, coalesce(total,0) as total
+        mycr.execute('''select q.Name as queue, coalesce(total,0) as total
             from Queues as q
             left join (
                 select t.Queue as queue, count(t.id) as total
@@ -77,31 +74,27 @@ class Py3status:
                 where Status = 'new' or Status = 'open' or Status = 'stalled'
                 group by t.Queue)
             as s on s.Queue = q.id
-            group by q.Name;"""
-        )
+            group by q.Name;''')
         for row in mycr.fetchall():
             queue, nb_tickets = row
-            if queue == "___Approvals":
+            if queue == '___Approvals':
                 continue
             tickets[queue] = nb_tickets
             if queue in self.format:
                 has_one_queue_formatted = True
                 if nb_tickets > self.threshold_critical:
-                    response.update({"color": self.py3.COLOR_BAD})
-                elif (
-                    nb_tickets > self.threshold_warning
-                    and "color" not in response
-                ):
-                    response.update({"color": self.py3.COLOR_DEGRADED})
+                    response.update({'color': self.py3.COLOR_BAD})
+                elif (nb_tickets > self.threshold_warning and
+                      'color' not in response):
+                    response.update({'color': self.py3.COLOR_DEGRADED})
         if has_one_queue_formatted:
-            response["full_text"] = self.py3.safe_format(self.format, tickets)
+            response['full_text'] = self.py3.safe_format(self.format, tickets)
         else:
-            response["full_text"] = "queue(s) not found ({})".format(
-                self.format
-            )
+            response['full_text'] = 'queue(s) not found ({})'.format(
+                self.format)
         mydb.close()
 
-        response["cached_until"] = self.py3.time_in(self.cache_timeout)
+        response['cached_until'] = self.py3.time_in(self.cache_timeout)
         return response
 
 
@@ -110,5 +103,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

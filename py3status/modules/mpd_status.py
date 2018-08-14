@@ -71,57 +71,53 @@ from mpd import MPDClient, CommandError, ConnectionError
 
 def song_attr(song, attr):
     def parse_mtime(date_str):
-        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+        return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ')
 
-    if attr == "time":
+    if attr == 'time':
         try:
-            duration = int(song["time"])
+            duration = int(song['time'])
             if duration > 0:
                 minutes, seconds = divmod(duration, 60)
-                return "{:d}:{:02d}".format(minutes, seconds)
+                return '{:d}:{:02d}'.format(minutes, seconds)
             raise ValueError
         except (KeyError, ValueError):
-            return ""
-    elif attr == "position":
+            return ''
+    elif attr == 'position':
         try:
-            return "{}".format(int(song["pos"]) + 1)
+            return '{}'.format(int(song['pos']) + 1)
         except (KeyError, ValueError):
-            return ""
-    elif attr == "mtime":
-        return parse_mtime(song["last-modified"]).strftime("%c")
-    elif attr == "mdate":
-        return parse_mtime(song["last-modified"]).strftime("%x")
+            return ''
+    elif attr == 'mtime':
+        return parse_mtime(song['last-modified']).strftime('%c')
+    elif attr == 'mdate':
+        return parse_mtime(song['last-modified']).strftime('%x')
 
-    return song.get(attr, "")
+    return song.get(attr, '')
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 2
-    format = "{state} [[[{artist}] - {title}]|[{file}]]"
+    format = '{state} [[[{artist}] - {title}]|[{file}]]'
     hide_on_error = False
     hide_when_paused = False
     hide_when_stopped = True
-    host = "localhost"
+    host = 'localhost'
     max_width = 120
     password = None
-    port = "6600"
-    state_pause = "[pause]"
-    state_play = "[play]"
-    state_stop = "[stop]"
+    port = '6600'
+    state_pause = '[pause]'
+    state_play = '[play]'
+    state_stop = '[stop]'
 
     def post_config_hook(self):
         # Convert from %placeholder% to {placeholder}
         # This is not perfect but should be good enough
-        if (
-            not self.py3.get_placeholders_list(self.format)
-            and "%" in self.format
-        ):
-            self.format = re.sub("%([a-z]+)%", r"{\1}", self.format)
-            self.py3.log("Old % style format DEPRECATED use { style format")
+        if not self.py3.get_placeholders_list(self.format) and '%' in self.format:
+            self.format = re.sub('%([a-z]+)%', r'{\1}', self.format)
+            self.py3.log('Old % style format DEPRECATED use { style format')
         # class variables:
         self.client = None
 
@@ -145,26 +141,25 @@ class Py3status:
             raise e
 
     def _state_character(self, state):
-        if state == "play":
+        if state == 'play':
             return self.state_play
-        elif state == "pause":
+        elif state == 'pause':
             return self.state_pause
-        elif state == "stop":
+        elif state == 'stop':
             return self.state_stop
-        return "?"
+        return '?'
 
     def current_track(self):
         try:
             status = self._get_mpd().status()
-            song = int(status.get("song", 0))
-            next_song = int(status.get("nextsong", 0))
+            song = int(status.get('song', 0))
+            next_song = int(status.get('nextsong', 0))
 
-            state = status.get("state")
+            state = status.get('state')
 
-            if (state == "pause" and self.hide_when_paused) or (
-                state == "stop" and self.hide_when_stopped
-            ):
-                text = ""
+            if ((state == 'pause' and self.hide_when_paused) or
+                    (state == 'stop' and self.hide_when_stopped)):
+                text = ''
 
             else:
                 playlist_info = self._get_mpd().playlistinfo()
@@ -177,18 +172,15 @@ class Py3status:
                 except IndexError:
                     next_song = {}
 
-                song["state"] = next_song["state"] = self._state_character(
-                    state
-                )
+                song['state'] = next_song['state'] \
+                              = self._state_character(state)
 
                 def attr_getter(attr):
-                    if attr.startswith("next_"):
+                    if attr.startswith('next_'):
                         return song_attr(next_song, attr[5:])
                     return song_attr(song, attr)
 
-                text = self.py3.safe_format(
-                    self.format, attr_getter=attr_getter
-                )
+                text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
         except ValueError:
             # when status.get(...) returns None; e.g. during reversal of playlist
@@ -207,22 +199,21 @@ class Py3status:
             self._get_mpd(disconnect=True)
 
         if len(text) > self.max_width:
-            text = u"{}...".format(text[: self.max_width - 3])
+            text = u'{}...'.format(text[:self.max_width - 3])
 
         response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": text if state or not self.hide_on_error else "",
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': text if state or not self.hide_on_error else "",
         }
 
         if state:
-            if state == "play":
-                response["color"] = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
-            elif state == "pause":
-                response["color"] = (
-                    self.py3.COLOR_PAUSE or self.py3.COLOR_DEGRADED
-                )
-            elif state == "stop":
-                response["color"] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
+            if state == 'play':
+                response['color'] = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
+            elif state == 'pause':
+                response['color'] = (self.py3.COLOR_PAUSE or
+                                     self.py3.COLOR_DEGRADED)
+            elif state == 'stop':
+                response['color'] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
 
         return response
 
@@ -235,5 +226,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

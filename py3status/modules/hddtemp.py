@@ -115,54 +115,45 @@ from string import printable
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 10
-    format = "{format_hdd}"
-    format_hdd = u"{name} [\?color=temperature {temperature}°{unit}]"
-    format_separator = " "
-    thresholds = [
-        (19, "skyblue"),
-        (24, "deepskyblue"),
-        (25, "lime"),
-        (41, "yellow"),
-        (46, "orange"),
-        (51, "red"),
-        (56, "tomato"),
-    ]
+    format = '{format_hdd}'
+    format_hdd = u'{name} [\?color=temperature {temperature}°{unit}]'
+    format_separator = ' '
+    thresholds = [(19, 'skyblue'), (24, 'deepskyblue'), (25, 'lime'),
+                  (41, 'yellow'), (46, 'orange'), (51, 'red'), (56, 'tomato')]
 
     def post_config_hook(self):
-        self.keys = ["path", "name", "temperature", "unit"]
+        self.keys = ['path', 'name', 'temperature', 'unit']
         self.cache_names = {}
 
     def hddtemp(self):
-        line = Telnet("localhost", 7634).read_all().decode("utf-8", "ignore")
+        line = Telnet('localhost', 7634).read_all().decode('utf-8', 'ignore')
         new_data = []
 
-        for chunk in line[1:-1].split("||"):
-            hdd = dict(zip(self.keys, chunk.split("|")))
+        for chunk in line[1:-1].split('||'):
+            hdd = dict(zip(self.keys, chunk.split('|')))
             # workaround for hddtemp byte bug
             try:
-                hdd["name"] = self.cache_names[hdd["name"]]
+                hdd['name'] = self.cache_names[hdd['name']]
             except KeyError:
-                key = "".join(
-                    [x for x in hdd["name"] if x in printable]
-                ).strip()
-                if key.endswith("G B") and key[-4].isdigit():
-                    key = "GB".join(key.rsplit("G B", 1))
-                hdd["name"] = self.cache_names[hdd["name"]] = key
+                key = ''.join(
+                    [x for x in hdd['name'] if x in printable]).strip()
+                if key.endswith('G B') and key[-4].isdigit():
+                    key = 'GB'.join(key.rsplit('G B', 1))
+                hdd['name'] = self.cache_names[hdd['name']] = key
 
-            self.py3.threshold_get_color(hdd["temperature"], "temperature")
+            self.py3.threshold_get_color(hdd['temperature'], 'temperature')
             new_data.append(self.py3.safe_format(self.format_hdd, hdd))
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_hdd = self.py3.composite_join(format_separator, new_data)
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"format_hdd": format_hdd}
-            ),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {'format_hdd': format_hdd}
+            )
         }
 
 
@@ -171,5 +162,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

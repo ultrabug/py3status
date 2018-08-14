@@ -27,20 +27,19 @@ import i3ipc
 class Py3status:
     """
     """
-
     # available configuration parameters
     always_show = False
-    format = u"{counter} ⌫"
+    format = u'{counter} ⌫'
 
     class Meta:
         deprecated = {
-            "format_fix_unnamed_param": [
+            'format_fix_unnamed_param': [
                 {
-                    "param": "format",
-                    "placeholder": "counter",
-                    "msg": "{} should not be used in format use `{counter}`",
-                }
-            ]
+                    'param': 'format',
+                    'placeholder': 'counter',
+                    'msg': '{} should not be used in format use `{counter}`',
+                },
+            ],
         }
 
     def post_config_hook(self):
@@ -52,17 +51,15 @@ class Py3status:
         t.start()
 
     def scratchpad_async(self):
-        response = {"cached_until": self.py3.CACHE_FOREVER}
+        response = {'cached_until': self.py3.CACHE_FOREVER}
 
         if self.urgent:
-            response["urgent"] = True
+            response['urgent'] = True
 
         if self.always_show or self.count > 0:
-            response["full_text"] = self.py3.safe_format(
-                self.format, {"counter": self.count}
-            )
+            response['full_text'] = self.py3.safe_format(self.format, {'counter': self.count})
         else:
-            response["full_text"] = ""
+            response['full_text'] = ''
 
         return response
 
@@ -77,8 +74,8 @@ class Py3status:
 
         update_scratchpad_async(conn)
 
-        conn.on("window::move", update_scratchpad_async)
-        conn.on("window::urgent", update_scratchpad_async)
+        conn.on('window::move', update_scratchpad_async)
+        conn.on('window::urgent', update_scratchpad_async)
 
         conn.main()
 
@@ -87,7 +84,8 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {"always_show": True}
+    config = {
+        'always_show': True
+    }
     from py3status.module_test import module_test
-
     module_test(Py3status, config=config)

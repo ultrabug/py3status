@@ -4,7 +4,6 @@ dist
 *.egg-info
 .tox/
 .cache/
-.pytest_cache/
 
 # sphinx build system
 doc/screenshots

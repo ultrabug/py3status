@@ -40,11 +40,10 @@ import os.path
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 0.5
-    command = "xsel --output"
-    format = "{selection}"
+    command = 'xsel --output'
+    format = '{selection}'
     log_file = None
     max_size = 15
     symmetric = True
@@ -63,18 +62,16 @@ class Py3status:
                 f.write("{}\n{}\n".format(datetime, selection))
             self.selection_cache = selection
 
-        selection = " ".join(selection.split())
+        selection = ' '.join(selection.split())
         if len(selection) >= self.max_size:
             if self.symmetric is True:
                 split = int(self.max_size / 2) - 1
-                selection = selection[:split] + ".." + selection[-split:]
+                selection = selection[:split] + '..' + selection[-split:]
             else:
-                selection = selection[: self.max_size]
+                selection = selection[:self.max_size]
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"selection": selection}
-            ),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, {'selection': selection})
         }
 
 
@@ -83,5 +80,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

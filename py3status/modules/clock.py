@@ -99,13 +99,12 @@ from time import time
 import pytz
 import tzlocal
 
-CLOCK_BLOCKS = u"🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
+CLOCK_BLOCKS = u'🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦'
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     block_hours = 12
     blocks = CLOCK_BLOCKS
@@ -115,10 +114,10 @@ class Py3status:
     cycle = 0
     format = "{Local}"
     format_time = [
-        "[{name_unclear} ]%c",
-        "[{name_unclear} ]%x %X",
-        "[{name_unclear} ]%a %H:%M",
-        "[{name_unclear} ]{icon}",
+        '[{name_unclear} ]%c',
+        '[{name_unclear} ]%x %X',
+        '[{name_unclear} ]%a %H:%M',
+        '[{name_unclear} ]{icon}',
     ]
     round_to_nearest_block = True
 
@@ -131,7 +130,7 @@ class Py3status:
             self.cycle = 0
         # find any declared timezones eg {Europe/London}
         self._items = {}
-        matches = re.findall("\{([^}]*)\}", "".join(self.format))
+        matches = re.findall('\{([^}]*)\}', ''.join(self.format))
         for match in matches:
             self._items[match] = self._get_timezone(match)
 
@@ -144,24 +143,24 @@ class Py3status:
         # display fresh
         self.time_deltas = []
         for format in self.format_time:
-            format_time = re.sub("\{([^}]*)\}", "", format)
-            format_time = format_time.replace("%%", "")
-            if "%f" in format_time:
+            format_time = re.sub('\{([^}]*)\}', '', format)
+            format_time = format_time.replace('%%', '')
+            if '%f' in format_time:
                 # microseconds
                 time_delta = 0
-            elif "%S" in format_time:
+            elif '%S' in format_time:
                 # seconds
                 time_delta = 1
-            elif "%s" in format_time:
+            elif '%s' in format_time:
                 # seconds since unix epoch start
                 time_delta = 1
-            elif "%T" in format_time:
+            elif '%T' in format_time:
                 # seconds included in "%H:%M:%S"
                 time_delta = 1
-            elif "%c" in format_time:
+            elif '%c' in format_time:
                 # Locale’s appropriate date and time representation
                 time_delta = 1
-            elif "%X" in format_time:
+            elif '%X' in format_time:
                 # Locale’s appropriate time representation
                 time_delta = 1
             else:
@@ -169,13 +168,13 @@ class Py3status:
             self.time_deltas.append(time_delta)
 
         # If we have saved details we use them.
-        saved_format = self.py3.storage_get("time_format")
+        saved_format = self.py3.storage_get('time_format')
         if saved_format in self.format_time:
             self.active_time_format = self.format_time.index(saved_format)
         else:
             self.active_time_format = 0
 
-        saved_timezone = self.py3.storage_get("timezone")
+        saved_timezone = self.py3.storage_get('timezone')
         if saved_timezone in self.format:
             self.active = self.format.index(saved_timezone)
         else:
@@ -195,7 +194,7 @@ class Py3status:
         """
         strftime for python 2
         """
-        return t.strftime(fmt.encode("utf-8"))
+        return t.strftime(fmt.encode('utf-8'))
 
     @staticmethod
     def _fmt_strftime_py3(fmt, t):
@@ -209,11 +208,11 @@ class Py3status:
         Find and return the time zone if possible
         """
         # special Local timezone
-        if tz == "Local":
+        if tz == 'Local':
             try:
                 return tzlocal.get_localzone()
             except pytz.UnknownTimeZoneError:
-                return "?"
+                return '?'
 
         # we can use a country code to get tz
         # FIXME this is broken for multi-timezone countries eg US
@@ -222,14 +221,14 @@ class Py3status:
             try:
                 zones = pytz.country_timezones(tz)
             except KeyError:
-                return "?"
+                return '?'
             tz = zones[0]
 
         # get the timezone
         try:
             zone = pytz.timezone(tz)
         except pytz.UnknownTimeZoneError:
-            return "?"
+            return '?'
         return zone
 
     def _change_active(self, diff):
@@ -238,22 +237,22 @@ class Py3status:
         self._cycle_time = time() + self.cycle
         # save the active format
         timezone = self.format[self.active]
-        self.py3.storage_set("timezone", timezone)
+        self.py3.storage_set('timezone', timezone)
 
     def on_click(self, event):
         """
         Switch the displayed module or pass the event on to the active module
         """
-        if event["button"] == self.button_reset:
+        if event['button'] == self.button_reset:
             self._change_active(0)
-        elif event["button"] == self.button_change_time_format:
+        elif event['button'] == self.button_change_time_format:
             self.active_time_format += 1
             if self.active_time_format >= len(self.format_time):
                 self.active_time_format = 0
             # save the active format_time
             time_format = self.format_time[self.active_time_format]
-            self.py3.storage_set("time_format", time_format)
-        elif event["button"] == self.button_change_format:
+            self.py3.storage_set('time_format', time_format)
+        elif event['button'] == self.button_change_format:
             self._change_active(1)
 
     def clock(self):
@@ -266,13 +265,13 @@ class Py3status:
         # update our times
         times = {}
         for name, zone in self._items.items():
-            if zone == "?":
-                times[name] = "?"
+            if zone == '?':
+                times[name] = '?'
             else:
                 t = datetime.now(zone)
                 format_time = self.format_time[self.active_time_format]
                 icon = None
-                if self.py3.format_contains(format_time, "icon"):
+                if self.py3.format_contains(format_time, 'icon'):
                     # calculate the decimal hour
                     h = t.hour + t.minute / 60.
                     if self.round_to_nearest_block:
@@ -283,14 +282,14 @@ class Py3status:
                     icon = self.blocks[idx]
 
                 timezone = zone.zone
-                tzname = timezone.split("/")[-1].replace("_", " ")
+                tzname = timezone.split('/')[-1].replace('_', ' ')
 
                 if self.multiple_tz:
                     name_unclear = tzname
                     timezone_unclear = timezone
                 else:
-                    name_unclear = ""
-                    timezone_unclear = ""
+                    name_unclear = ''
+                    timezone_unclear = ''
 
                 format_time = self.py3.safe_format(
                     format_time,
@@ -300,14 +299,11 @@ class Py3status:
                         name_unclear=name_unclear,
                         timezone=timezone,
                         timezone_unclear=timezone_unclear,
-                    ),
-                )
+                    ))
 
                 if self.py3.is_composite(format_time):
                     for item in format_time:
-                        item["full_text"] = self._fmt_strftime(
-                            item["full_text"], t
-                        )
+                        item['full_text'] = self._fmt_strftime(item['full_text'], t)
                 else:
                     format_time = self._fmt_strftime(format_time, t)
                 times[name] = format_time
@@ -323,8 +319,8 @@ class Py3status:
             timeout = min(timeout, cycle_timeout)
 
         return {
-            "full_text": self.py3.safe_format(self.format[self.active], times),
-            "cached_until": timeout,
+            'full_text': self.py3.safe_format(self.format[self.active], times),
+            'cached_until': timeout
         }
 
 
@@ -333,5 +329,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

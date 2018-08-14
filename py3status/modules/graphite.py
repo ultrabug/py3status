@@ -75,35 +75,34 @@ from syslog import syslog, LOG_INFO
 
 
 def format_value(num, value_round=True):
-    for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if abs(num) < 1000.0:
             if value_round:
-                return "%1.0f%s" % (num, unit)
+                return '%1.0f%s' % (num, unit)
             else:
-                return "%3.1f%s" % (num, unit)
+                return '%3.1f%s' % (num, unit)
         num /= 1000.0
     if value_round:
-        return "%.0f%s" % (num, "Y")
+        return '%.0f%s' % (num, 'Y')
     else:
-        return "%.1f%s" % (num, "Y")
+        return '%.1f%s' % (num, 'Y')
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 120
-    datapoint_selection = "max"
-    format = ""
-    graphite_url = ""
+    datapoint_selection = 'max'
+    format = ''
+    graphite_url = ''
     http_timeout = 10
     proxy = None
-    targets = ""
+    targets = ''
     threshold_bad = None
     threshold_degraded = None
-    timespan = "-2minutes"
-    value_comparator = "max"
+    timespan = '-2minutes'
+    value_comparator = 'max'
     value_format = True
     value_round = True
 
@@ -113,7 +112,7 @@ class Py3status:
     def _reset_notifications(self):
         """
         """
-        self.notification_level = "info"
+        self.notification_level = 'info'
         self.notifications = []
 
     def _validate_config(self):
@@ -125,56 +124,52 @@ class Py3status:
             raise ValueError('missing "graphite_url" configuration')
         if not self.targets:
             raise ValueError('missing "targets" configuration')
-        if self.datapoint_selection not in ["max", "min"]:
+        if self.datapoint_selection not in ['max', 'min']:
             raise ValueError('invalid "datapoint_selection" configuration')
-        if self.value_comparator not in ["max", "min"]:
+        if self.value_comparator not in ['max', 'min']:
             raise ValueError('invalid "value_comparator" configuration')
 
     def _render_graphite_json(self):
         """
         """
-        params = [("format", "json"), ("from", self.timespan)]
-        for target in self.targets.split(";"):
-            params.append(("target", target))
+        params = [('format', 'json'), ('from', self.timespan)]
+        for target in self.targets.split(';'):
+            params.append(('target', target))
 
         proxies = {}
         if self.proxy:
-            if self.proxy.startswith("https"):
-                proxies["https"] = self.proxy
+            if self.proxy.startswith('https'):
+                proxies['https'] = self.proxy
             else:
-                proxies["http"] = self.proxy
+                proxies['http'] = self.proxy
 
-        r = get(
-            "{}/render".format(self.graphite_url),
-            params,
-            timeout=self.http_timeout,
-            proxies=proxies,
-        )
+        r = get('{}/render'.format(self.graphite_url),
+                params,
+                timeout=self.http_timeout,
+                proxies=proxies)
         if r.status_code != 200:
-            raise Exception("HTTP error {}".format(r.status_code))
+            raise Exception('HTTP error {}'.format(r.status_code))
         else:
-            color_key = "good"
+            color_key = 'good'
             r_json = {}
             for metric in r.json():
                 value = None
-                target = metric["target"]
-                for datapoint_list in metric["datapoints"]:
+                target = metric['target']
+                for datapoint_list in metric['datapoints']:
                     point, timestamp = datapoint_list
                     if point is not None:
                         if value is None:
                             value = point
-                        elif self.datapoint_selection == "max":
+                        elif self.datapoint_selection == 'max':
                             value = max(value, point)
-                        elif self.datapoint_selection == "min":
+                        elif self.datapoint_selection == 'min':
                             value = min(value, point)
 
                 if value is None:
                     syslog(
                         LOG_INFO,
-                        "graphite module: no data for target {} with configuration {}".format(
-                            target, self.targets
-                        ),
-                    )
+                        'graphite module: no data for target {} with configuration {}'.format(
+                            target, self.targets))
                     continue
 
                 if self.value_format:
@@ -184,13 +179,12 @@ class Py3status:
 
                 # compare this value to the configured thresholds
                 # and use the worst color to display
-                _color = self._check_threshold_and_get_color(
-                    displayed_value, target, value
-                )
-                if _color == "bad":
-                    color_key = "bad"
-                elif _color == "degraded" and color_key != "bad":
-                    color_key = "degraded"
+                _color = self._check_threshold_and_get_color(displayed_value,
+                                                             target, value)
+                if _color == 'bad':
+                    color_key = 'bad'
+                elif _color == 'degraded' and color_key != 'bad':
+                    color_key = 'degraded'
 
                 r_json[target] = displayed_value
             return color_key, r_json
@@ -198,45 +192,36 @@ class Py3status:
     def _store_notification(self, target, threshold, value):
         """
         """
-        if self.value_comparator == "max":
-            msg = "{}: {} > {}".format(target, value, threshold)
-        elif self.value_comparator == "min":
-            msg = "{}: {} < {}".format(target, value, threshold)
+        if self.value_comparator == 'max':
+            msg = '{}: {} > {}'.format(target, value, threshold)
+        elif self.value_comparator == 'min':
+            msg = '{}: {} < {}'.format(target, value, threshold)
         self.notifications.append(msg)
 
     def _notify_user(self):
         """
         """
         if self.notifications:
-            self.py3.notify_user(
-                "\n".join(self.notifications), level=self.notification_level
-            )
+            self.py3.notify_user('\n'.join(self.notifications),
+                                 level=self.notification_level)
 
     def _check_threshold_and_get_color(self, displayed_value, target, value):
         """
         """
         if self.threshold_bad:
-            if eval(
-                "{}(self.threshold_bad, value) == value".format(
-                    self.value_comparator
-                )
-            ):
-                self._store_notification(
-                    target, self.threshold_bad, displayed_value
-                )
-                self.notification_level = "error"
-                return "bad"
+            if eval('{}(self.threshold_bad, value) == value'.format(
+                    self.value_comparator)):
+                self._store_notification(target, self.threshold_bad,
+                                         displayed_value)
+                self.notification_level = 'error'
+                return 'bad'
         if self.threshold_degraded:
-            if eval(
-                "{}(self.threshold_degraded, value) == value".format(
-                    self.value_comparator
-                )
-            ):
-                self._store_notification(
-                    target, self.threshold_degraded, displayed_value
-                )
-                return "degraded"
-        return "good"
+            if eval('{}(self.threshold_degraded, value) == value'.format(
+                    self.value_comparator)):
+                self._store_notification(target, self.threshold_degraded,
+                                         displayed_value)
+                return 'degraded'
+        return 'good'
 
     def graphite(self):
         """
@@ -247,9 +232,9 @@ class Py3status:
         self._notify_user()
 
         response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "color": getattr(self.py3, "COLOR_{}".format(color_key.upper())),
-            "full_text": self.py3.safe_format(self.format, r_json),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': getattr(self.py3, 'COLOR_{}'.format(color_key.upper())),
+            'full_text': self.py3.safe_format(self.format, r_json)
         }
         return response
 
@@ -259,5 +244,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

@@ -61,7 +61,6 @@ from time import time
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = 10
     disk = None
@@ -71,8 +70,8 @@ class Py3status:
     sector_size = 512
     si_units = False
     thresholds = {
-        "free": [(0, "bad"), (10, "degraded"), (100, "good")],
-        "total": [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")],
+        'free': [(0, "bad"), (10, "degraded"), (100, "good")],
+        'total': [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")]
     }
     unit = "B/s"
 
@@ -89,9 +88,9 @@ class Py3status:
         self.last_time = time()
 
     def space_and_io(self):
-        self.values = {"disk": self.disk if self.disk else "all"}
+        self.values = {'disk': self.disk if self.disk else 'all'}
 
-        if self.py3.format_contains(self.format, ["read", "write", "total"]):
+        if self.py3.format_contains(self.format, ['read', 'write', 'total']):
             # time from previous check
             ios = self._get_io_stats(self.disk)
             timedelta = time() - self.last_time
@@ -108,54 +107,42 @@ class Py3status:
 
             total = read + write
 
-            self.values["read"] = self._format_rate(read)
-            self.values["total"] = self._format_rate(total)
-            self.values["write"] = self._format_rate(write)
-            self.py3.threshold_get_color(read, "read")
-            self.py3.threshold_get_color(total, "total")
-            self.py3.threshold_get_color(write, "write")
+            self.values['read'] = self._format_rate(read)
+            self.values['total'] = self._format_rate(total)
+            self.values['write'] = self._format_rate(write)
+            self.py3.threshold_get_color(read, 'read')
+            self.py3.threshold_get_color(total, 'total')
+            self.py3.threshold_get_color(write, 'write')
 
-        if self.py3.format_contains(
-            self.format, ["free", "used*", "total_space"]
-        ):
-            free, used, used_percent, total_space = self._get_free_space(
-                self.disk
-            )
+        if self.py3.format_contains(self.format, ['free', 'used*', 'total_space']):
+            free, used, used_percent, total_space = self._get_free_space(self.disk)
 
-            self.values["free"] = self.py3.safe_format(
-                self.format_space, {"value": free}
-            )
-            self.values["used"] = self.py3.safe_format(
-                self.format_space, {"value": used}
-            )
-            self.values["used_percent"] = self.py3.safe_format(
-                self.format_space, {"value": used_percent}
-            )
-            self.values["total_space"] = self.py3.safe_format(
-                self.format_space, {"value": total_space}
-            )
-            self.py3.threshold_get_color(free, "free")
-            self.py3.threshold_get_color(used, "used")
+            self.values['free'] = self.py3.safe_format(self.format_space, {'value': free})
+            self.values['used'] = self.py3.safe_format(self.format_space, {'value': used})
+            self.values['used_percent'] = self.py3.safe_format(self.format_space,
+                                                               {'value': used_percent})
+            self.values['total_space'] = self.py3.safe_format(self.format_space,
+                                                              {'value': total_space})
+            self.py3.threshold_get_color(free, 'free')
+            self.py3.threshold_get_color(used, 'used')
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, self.values),
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(self.format, self.values)
         }
 
     def _get_free_space(self, disk):
-        if disk and not disk.startswith("/dev/"):
-            disk = "/dev/" + disk
+        if disk and not disk.startswith('/dev/'):
+            disk = '/dev/' + disk
 
         total = 0
         used = 0
         free = 0
         devs = []
 
-        df = self.py3.command_output("df")
+        df = self.py3.command_output('df')
         for line in df.splitlines():
-            if (disk and line.startswith(disk)) or (
-                disk is None and line.startswith("/dev/")
-            ):
+            if (disk and line.startswith(disk)) or (disk is None and line.startswith('/dev/')):
                 data = line.split()
                 if data[0] in devs:
                     # Make sure to count each block device only one time
@@ -167,16 +154,16 @@ class Py3status:
                 devs.append(data[0])
 
         if total == 0:
-            return free, used, "err", total
+            return free, used, 'err', total
 
         return free, used, 100 * used / total, total
 
     def _get_io_stats(self, disk):
-        if disk and disk.startswith("/dev/"):
+        if disk and disk.startswith('/dev/'):
             disk = disk[5:]
         read = 0
         write = 0
-        with open("/proc/diskstats", "r") as fd:
+        with open('/proc/diskstats', 'r') as fd:
             for line in fd:
                 data = line.split()
                 if disk:
@@ -184,7 +171,7 @@ class Py3status:
                         read += int(data[5]) * self.sector_size
                         write += int(data[9]) * self.sector_size
                 else:
-                    if data[1] == "0":
+                    if data[1] == '0':
                         read += int(data[5]) * self.sector_size
                         write += int(data[9]) * self.sector_size
         return read, write
@@ -193,12 +180,8 @@ class Py3status:
         """
         Return formatted string
         """
-        value, unit = self.py3.format_units(
-            value, unit=self.unit, si=self.si_units
-        )
-        return self.py3.safe_format(
-            self.format_rate, {"value": value, "unit": unit}
-        )
+        value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
+        return self.py3.safe_format(self.format_rate, {'value': value, 'unit': unit})
 
 
 if __name__ == "__main__":
@@ -206,5 +189,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)
