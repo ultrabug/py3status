@@ -11,15 +11,10 @@ Configuration parameters:
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
-    temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
-        (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
-    zone: thermal zone to use. If None try to guess CPU temperature
-        (default None)
 
 Format placeholders:
-    {cpu_temp} cpu temperature
     {cpu_usage} cpu usage percentage
     {load1} load average over the last minute
     {load5} load average over the five minutes
@@ -32,7 +27,6 @@ Format placeholders:
     {swap_unit} unit for swap
     {swap_used} used swap
     {swap_used_percent} used swap percentage
-    {temp_unit} temperature unit
 
 Color thresholds:
     cpu: change color based on the value of cpu_usage
@@ -40,10 +34,6 @@ Color thresholds:
     load: change color based on the value of load1
     mem: change color based on the value of mem_used_percent
     swap: change color based on the value of swap_used_percent
-    temp: change color based on the value of cpu_temp
-
-NOTE: If using the `{cpu_temp}` option, the `sensors` command should
-be available, provided by the `lm-sensors` or `lm_sensors` package.
 
 @author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol
 
@@ -58,7 +48,6 @@ SAMPLE OUTPUT
 from __future__ import division
 from os import getloadavg
 
-import re
 
 
 class Py3status:
@@ -70,9 +59,7 @@ class Py3status:
              "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
     mem_unit = 'GiB'
     swap_unit = 'GiB'
-    temp_unit = u'°C'
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
-    zone = None
 
     class Meta:
 
@@ -93,7 +80,6 @@ class Py3status:
                                                            precision=precision)
             return {
                 'cpu_usage': format_vals,
-                'cpu_temp': format_vals,
                 'load1': format_vals,
                 'load5': format_vals,
                 'load15': format_vals,
@@ -126,6 +112,10 @@ class Py3status:
                     'param': 'precision',
                     'msg': 'obsolete, use the format_* parameters',
                 },
+                {
+                    'param': 'temp_unit',
+                    'msg': 'obsolete, use new module lm_sensors',
+                },
             ],
             'update_placeholder_format': [
                 {
@@ -140,7 +130,6 @@ class Py3status:
                 {
                     'placeholder_formats': {
                         'cpu_usage': ':.2f',
-                        'cpu_temp': ':.2f',
                         'load1': ':.2f',
                         'load5': ':.2f',
                         'load15': ':.2f',
@@ -158,14 +147,6 @@ class Py3status:
 
     def post_config_hook(self):
         self.last_cpu = {}
-        temp_unit = self.temp_unit.upper()
-        if temp_unit in ['C', u'°C']:
-            temp_unit = u'°C'
-        elif temp_unit in ['F', u'°F']:
-            temp_unit = u'°F'
-        elif not temp_unit == 'K':
-            temp_unit = 'unknown unit'
-        self.temp_unit = temp_unit
         self.init = {'meminfo': []}
         names = ['cpu_temp', 'cpu_usage', 'load', 'mem', 'swap']
         placeholders = ['cpu_temp', 'cpu_usage', 'load*', 'mem_*', 'swap_*']
@@ -234,47 +215,12 @@ class Py3status:
         self.last_cpu.update(cpu)
         return cpu_usage
 
-    def _get_cputemp(self, zone, unit):
-        """
-        Tries to determine CPU temperature using the 'sensors' command.
-        Searches for the CPU temperature by looking for a value prefixed
-        by either "CPU Temp" or "Core 0" - does not look for or average
-        out temperatures of all codes if more than one.
-        """
-
-        sensors = None
-        command = ['sensors']
-        if unit == u'°F':
-            command.append('-f')
-        elif unit not in [u'°C', 'K']:
-            return 'unknown unit'
-        if zone:
-            try:
-                sensors = self.py3.command_output(command + [zone])
-            except:
-                pass
-        if not sensors:
-            sensors = self.py3.command_output(command)
-        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
-        if m:
-            cpu_temp = float(m.groups()[1].strip()[:-2])
-            if unit == 'K':
-                cpu_temp += 273.15
-        else:
-            cpu_temp = '?'
-
-        return cpu_temp
-
     def sysdata(self):
-        sys = {'temp_unit': self.temp_unit}
+        sys = {}
 
         if self.init['cpu_usage']:
             sys['cpu_usage'] = self._calc_cpu_percent(self._get_stat())
             self.py3.threshold_get_color(sys['cpu_usage'], 'cpu')
-
-        if self.init['cpu_temp']:
-            sys['cpu_temp'] = self._get_cputemp(self.zone, self.temp_unit)
-            self.py3.threshold_get_color(sys['cpu_temp'], 'temp')
 
         if self.init['meminfo']:
             memi = self._get_mem(
