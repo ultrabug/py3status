@@ -6,8 +6,8 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '[{artist} - ][{title}]')
     sleep_timeout: when deadbeef is not running, this interval will be used
-        to allow one to refresh constantly with time placeholders and/or
-        to refresh once every minute rather than every few seconds
+        to allow faster refreshes with time-related placeholders and/or
+        to refresh few times per minute rather than every few seconds
         (default 20)
 
 Format placeholders:
@@ -31,6 +31,14 @@ Color options:
 
 Requires:
     deadbeef: a GTK+ audio player for GNU/Linux
+
+Examples:
+```
+# see 'deadbeef --help' for more buttons
+deadbeef {
+    on_click 1 = 'exec deadbeef --play-pause'
+    on_click 8 = 'exec deadbeef --random'
+}
 
 @author mrt-prodz, tobes, lasers
 
