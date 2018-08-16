@@ -673,6 +673,29 @@ class Py3:
         self._format_placeholders_cache[format_string][key] = False
         return False
 
+    def get_color_names_list(self, format_strings):
+        """
+        Returns a list of color names in ``format_string``.
+
+        :param format_strings: Accepts a format string or a list of format strings.
+        """
+        if not getattr(self._py3status_module, 'thresholds', None):
+            return []
+        if isinstance(format_strings, basestring):
+            format_strings = [format_strings]
+        names = set()
+        for string in format_strings:
+            for color in string.replace('&', ' ').split('color=')[1::1]:
+                color = color.split()[0]
+                if '#' in color:
+                    continue
+                if color in ['good', 'bad', 'degraded', 'None', 'threshold']:
+                    continue
+                if color in COLOR_NAMES:
+                    continue
+                names.add(color)
+        return list(names)
+
     def get_placeholders_list(self, format_string, match=None):
         """
         Returns a list of placeholders in ``format_string``.
