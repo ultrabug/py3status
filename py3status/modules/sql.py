@@ -18,9 +18,9 @@ Format placeholders:
     Parameters can be placeholders too, eg {host}, {passd}
 
 Format_row placeholders:
-    {...} placeholder name often found in the database
-    {...} placeholder name often found in the database
-    {...} placeholder name often found in the database
+    {xxx} case-sensitive placeholder name often found in the database
+    {xxx} case-sensitive placeholder name often found in the database
+    {xxx} case-sensitive placeholder name often found in the database
 
 Color thresholds:
     format:
@@ -77,7 +77,7 @@ sql {
     ]
 }
 
-# display titles of thunderbird tasks with sqlite3
+# display thunderbird tasks with sqlite3
 sql {
     database = 'sqlite3'
     format_row = '{title}'
@@ -125,25 +125,24 @@ class Py3status:
         if not self.is_parameters_a_dict:
             self.parameters = expanduser(self.parameters)
 
-        # partial future helper code
         self.thresholds_init = {}
         for name in ('format', 'format_row'):
-            self.thresholds_init[name] = []
-            param = getattr(self, name) or ''
-            for x in param.replace('&', ' ').split('color=')[1::1]:
-                self.thresholds_init[name].append(x.split()[0])
+            self.thresholds_init[name] = self.py3.get_color_names_list(
+                getattr(self, name) or ''
+            )
 
     def _get_sql_data(self):
+        self.py3.log('=== {}'.format(self.thresholds_init))
         if self.is_parameters_a_dict:
-            con = self.connect(**self.parameters)
+            connection = self.connect(**self.parameters)
         else:
-            con = self.connect(self.parameters)
-        cur = con.cursor()
-        cur.execute(self.query)
-        sql_keys = [desc[0].lower() for desc in cur.description]
-        sql_values = cur.fetchall()
-        cur.close()
-        con.close()
+            connection = self.connect(self.parameters)
+        cursor = connection.cursor()
+        cursor.execute(self.query)
+        sql_keys = [desc[0].lower() for desc in cursor.description]
+        sql_values = cursor.fetchall()
+        cursor.close()
+        connection.close()
         return [dict(zip(sql_keys, values)) for values in sql_values]
 
     def sql(self):
