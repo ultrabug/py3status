@@ -860,7 +860,7 @@ class Py3:
 
         A Composite object will be returned.
         """
-        return Composite.composite_update(item, update_dict, soft=False)
+        return Composite.composite_update(item, update_dict, soft)
 
     def composite_join(self, separator, items):
         """
