@@ -424,14 +424,14 @@ class Py3:
     def is_python_2(self):
         """
         True if the version of python being used is 2.x
-        Can be helpful for fixing python 2 compatability issues
+        Can be helpful for fixing python 2 compatibility issues
         """
         return self._is_python_2
 
     def is_my_event(self, event):
         """
-        Checks if an event triggered belongs to the module recieving it.  This
-        is mainly for containers who will also recieve events from any children
+        Checks if an event triggered belongs to the module receiving it.  This
+        is mainly for containers who will also receive events from any children
         they have.
 
         Returns True if the event name and instance match that of the module
@@ -580,16 +580,16 @@ class Py3:
             ``cached_until`` in their response unless they wish to directly control
             it.
 
-        :param seconds: specifies the number of seconds that should occure before the
+        :param seconds: specifies the number of seconds that should occur before the
             update is required.  Passing a value of ``CACHE_FOREVER`` returns
             ``CACHE_FOREVER`` which can be useful for some modules.
 
-        :param sync_to: causes the update to be syncronised to a time period.  1 would
-            cause the update on the second, 60 to the nearest minute. By defalt we
-            syncronise to the nearest second. 0 will disable this feature.
+        :param sync_to: causes the update to be synchronized to a time period.  1 would
+            cause the update on the second, 60 to the nearest minute. By default we
+            synchronize to the nearest second. 0 will disable this feature.
 
         :param offset: is used to alter the base time used. A timer that started at a
-            certain time could set that as the offset and any syncronisation would
+            certain time could set that as the offset and any synchronization would
             then be relative to that time.
         """
 
@@ -781,7 +781,7 @@ class Py3:
         ``title`` if title but no artist,
         and ``file`` if file is present but not artist or title.
 
-        param_dict is a dictionary of palceholders that will be substituted.
+        param_dict is a dictionary of placeholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
 
