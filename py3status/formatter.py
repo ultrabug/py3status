@@ -2,6 +2,7 @@
 import re
 import sys
 
+from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
@@ -249,6 +250,8 @@ class Placeholder:
                 # no remaining digits following it.  If the parameter cannot
                 # be successfully converted then the format will be removed.
                 try:
+                    if 'ceil' in self.format:
+                        value = int(ceil(float(value)))
                     if 'f' in self.format:
                         value = float(value)
                     if 'g' in self.format:

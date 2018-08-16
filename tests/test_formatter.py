@@ -1368,6 +1368,20 @@ def test_trailing_zeroes_2():
     })
 
 
+def test_ceiling_numbers_1():
+    run_formatter({
+        'format': '{pi} becomes {pi:ceil}',
+        'expected': '3.14159265359 becomes 4'
+    })
+
+
+def test_ceiling_numbers_2():
+    run_formatter({
+        'format': '{zero_almost} becomes {zero_almost:ceil}',
+        'expected': '0.0001 becomes 1'
+    })
+
+
 if __name__ == '__main__':
     # run tests
     import sys
