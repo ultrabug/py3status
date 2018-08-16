@@ -49,6 +49,8 @@ mode
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
+from time import time
+
 URL_GEO_OLD_DEFAULT = 'http://ip-api.com/json'
 URL_GEO_NEW_DEFAULT = 'https://ifconfig.co/json'
 
@@ -106,23 +108,11 @@ class Py3status:
         elif self.url_geo == URL_GEO_OLD_DEFAULT:
             self.substitutions['ip'] = 'query'
 
-    def on_click(self, event):
-        """
-        Toggle between display modes 'ip' and 'status'
-        """
-        button = event['button']
-        if button == self.button_toggle:
-            if self.mode == 'ip':
-                self.mode = 'status'
-            else:
-                self.mode = 'ip'
-        elif button != self.button_refresh:
-            # prevent refresh
-            self.py3.prevent_refresh()
+        self.ip_data = {}
+        self.toggled = False
+        self.idle_time = 0
 
     def _get_my_ip_info(self):
-        """
-        """
         try:
             info = self.py3.request(self.url_geo, timeout=self.timeout).json()
             for old, new in self.substitutions.items():
@@ -132,12 +122,25 @@ class Py3status:
             return None
 
     def whatismyip(self):
-        """
-        """
-        info = self._get_my_ip_info()
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout)
-        }
+        # refresh
+        current_time = time()
+        refresh = current_time >= self.idle_time
+
+        # time
+        if refresh:
+            self.idle_time = current_time + self.cache_timeout
+            cached_until = self.cache_timeout
+        else:
+            cached_until = self.idle_time - current_time
+
+        # button
+        if self.toggled and not refresh:
+            self.toggled = False
+            info = self.ip_data
+        else:
+            info = self.ip_data = self._get_my_ip_info()
+
+        response = {'cached_until': self.py3.time_in(cached_until)}
 
         if info is None and self.hide_when_offline:
             response['full_text'] = ''
@@ -155,7 +158,24 @@ class Py3status:
         else:
             response['full_text'] = self.icon_off
             response['color'] = self.py3.COLOR_BAD
+
         return response
+
+    def on_click(self, event):
+        """
+        Toggle between display modes 'ip' and 'status'
+        """
+        button = event['button']
+        if button == self.button_toggle:
+            self.toggled = True
+            if self.mode == 'ip':
+                self.mode = 'status'
+            else:
+                self.mode = 'ip'
+        elif button == self.button_refresh:
+            self.idle_time = 0
+        else:
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
