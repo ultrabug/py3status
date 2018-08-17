@@ -238,6 +238,7 @@ class Placeholder:
         """
         return the correct value for the placeholder
         """
+        value = '{%s}' % self.key
         try:
             value = value_ = get_params(self.key)
             if self.format.startswith(':'):
@@ -278,7 +279,6 @@ class Placeholder:
             # Exception raised when we don't have the param
             enough = True
             valid = False
-            value = '{%s}' % self.key
 
         return valid, value, enough
 
