@@ -140,9 +140,8 @@ lm_sensors {
     sensors = ['core*', 'temp*']
 }
 
-# due to complexity, it is not possible to use a sane default format nor
-# to illustrate the example above. if you're done looking at all examples,
-# the particular example above may be something you want to have in your
+# it is not possible to set a sane default format. if you're done looking
+# at the examples, the one above may be something you want to have in your
 # config. please modify accordingly to your chips and sensors. thank you.
 ```
 
@@ -160,16 +159,16 @@ SAMPLE OUTPUT
 cores
 [
     {'full_text': 'CPU '},
-    {'full_text': '62 ', 'color': '#00ff00'}, {'full_text': ','},
-    {'full_text': '76 ', 'color': '#ffff00'}, {'full_text': ','},
-    {'full_text': '83 ', 'color': '#ffa500'}, {'full_text': ','},
-    {'full_text': '92 ', 'color': '#ff0000'}, {'full_text': ','},
+    {'full_text': '62', 'color': '#00ff00'}, {'full_text': ', '},
+    {'full_text': '76', 'color': '#ffff00'}, {'full_text': ', '},
+    {'full_text': '83', 'color': '#ffa500'}, {'full_text': ', '},
+    {'full_text': '92', 'color': '#ff0000'}, {'full_text': ' '},
     {'full_text': 'GPU '}, {'full_text': '52', 'color': '#00ff00'},
 ]
 
 simple
 [
-    {'full_text': 'CPU '}, {'full_text': '58°C', 'color': '#00ff00'},
+    {'full_text': 'CPU '}, {'full_text': '58°C ', 'color': '#00ff00'},
     {'full_text': 'GPU '}, {'full_text': '72°C', 'color': '#ffff00'},
 ]
 """
