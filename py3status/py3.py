@@ -1099,6 +1099,11 @@ class Py3:
 
         If the gradients config parameter is True then rather than sharp
         thresholds we will use a gradient between the color values.
+
+        :param value: numerical value to be graded
+        :param name: accepts a string, otherwise 'threshold'
+            accepts 3-tuples to allow name with different
+            values eg ('name', 'key', 'thresholds')
         """
         # If first run then process the threshold data.
         if self._thresholds is None:
@@ -1112,10 +1117,20 @@ class Py3:
             except ValueError:
                 color = self._get_color('error') or self._get_color('bad')
 
-        # if name not in thresholds info then use defaults
-        name_used = name
-        if name_used not in self._thresholds:
-            name_used = None
+        # allow name with different values
+        if isinstance(name, tuple):
+            name_used = '{}/{}'.format(name[0], name[1])
+            if name[2]:
+                self._thresholds[name_used] = [
+                    (x[0], self._get_color(x[1])) for x in name[2]
+                ]
+            name = name[0]
+        else:
+            # if name not in thresholds info then use defaults
+            name_used = name
+            if name_used not in self._thresholds:
+                name_used = None
+
         thresholds = self._thresholds.get(name_used)
         # if value is None, pass it along. otherwise try it.
         if value is not None and color is None and thresholds:
