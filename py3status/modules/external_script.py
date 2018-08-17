@@ -13,6 +13,8 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 15)
     format: see placeholders below (default '{output}')
+    ignore_stderr: do not treat output on stderr as failure
+        (defaut True)
     localize: should script output be localized (if available)
         (default True)
     script_path: script you want to show output of (compulsory)
@@ -51,6 +53,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 15
     format = '{output}'
+    ignore_stderr = True
     localize = True
     script_path = None
     strip_output = False
@@ -64,7 +67,7 @@ class Py3status:
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
-            output = self.py3.command_output(self.script_path, shell=True, localized=self.localize)
+            output = self.py3.command_output(self.script_path, shell=True, localized=self.localize, ignore_stderr=self.ignore_stderr)
             output_lines = output.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]

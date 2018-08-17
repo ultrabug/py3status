@@ -933,7 +933,7 @@ class Py3:
             msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command, shell=False, capture_stderr=False, localized=False):
+    def command_output(self, command, shell=False, capture_stderr=False, localized=False, ignore_stderr=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -942,6 +942,7 @@ class Py3:
         :param shell: if `True` then command is run through the shell
         :param capture_stderr: if `True` then STDERR is piped to STDOUT
         :param localized: if `False` then command is forced to use its default (English) locale
+        :param ignore_stderr: if `False` then any output on STDERR (unless captured) will fail the command
 
         A CommandError is raised if an error occurs
         """
@@ -987,7 +988,7 @@ class Py3:
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
-        if error:
+        if error and not ignore_stderr:
             msg = "Command '{cmd}' had error {error}".format(
                 cmd=pretty_cmd, error=error
             )
