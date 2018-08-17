@@ -159,11 +159,12 @@ SAMPLE OUTPUT
 cores
 [
     {'full_text': 'CPU '},
-    {'full_text': '62', 'color': '#00ff00'}, {'full_text': ', '},
-    {'full_text': '76', 'color': '#ffff00'}, {'full_text': ', '},
-    {'full_text': '83', 'color': '#ffa500'}, {'full_text': ', '},
-    {'full_text': '92', 'color': '#ff0000'}, {'full_text': ' '},
-    {'full_text': 'GPU '}, {'full_text': '52', 'color': '#00ff00'},
+    {'full_text': '62 ', 'color': '#00ff00'},
+    {'full_text': '76 ', 'color': '#ffff00'},
+    {'full_text': '83 ', 'color': '#ffa500'},
+    {'full_text': '92 ', 'color': '#ff0000'},
+    {'full_text': 'GPU '},
+    {'full_text': '52', 'color': '#00ff00'},
 ]
 
 simple
