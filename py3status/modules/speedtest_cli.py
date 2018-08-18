@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Do a bandwidth test with speedtest-cli. 
+Do a bandwidth test with speedtest-cli.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default -1)
@@ -9,6 +9,7 @@ Configuration parameters:
     sleep_timeout: when speedtest-cli is allready running, this interval will be used
         to allow faster retry refreshes
         (default 20)
+    timeout: timeout when communicating with speedtest.net servers (default 10)
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (11, 'good')])
     unit_bitrate: unit for download/upload rate (default 'MB/s')
@@ -95,6 +96,7 @@ class Py3status:
     }
     unit_bitrate = 'MB/s'
     unit_size = 'MB'
+    timeout = 30
 
     def post_config_hook(self):
         if not self.py3.check_commands('speedtest-cli'):
@@ -103,8 +105,12 @@ class Py3status:
         self.placeholders = list(
             set(self.py3.get_placeholders_list(self.format))
         )
-        self.run = False
-        self.speedtest_command = 'speedtest-cli --json --secure'
+        self.can_refresh = False
+        self.speedtest_command = 'speedtest-cli --json --secure --timeout {}'.format(self.timeout)
+
+        # avoid bad behavior if speedtest timeout greater than cache_timeout
+        if self.cache_timeout < self.timeout:
+            self.cache_timeout = self.timeout + 5 
 
     def _is_running(self):
         try:
@@ -114,15 +120,15 @@ class Py3status:
             return False
 
     def _get_speedtest_data(self):
+        data = {}
         try:
-            line = self.py3.command_output(self.speedtest_command)
+            data = loads(self.py3.command_output(self.speedtest_command))
+            self.py3.log(data)
         except self.py3.CommandError as ce:
+            self.py3.log(ce.output)
             return ce.output
+        return data
 
-        if line:
-            return loads(line)
-        else:
-            return None
 
     def _get_last_speedtest_data(self):
         new_data = {}
@@ -136,15 +142,28 @@ class Py3status:
         speedtest_data = {}
         cached_until = self.sleep_timeout
 
-        if not self._is_running() and self.run:
+        if not self._is_running() and self.can_refresh:
             last_speedtest_data = self._get_last_speedtest_data()
             speedtest_data = self._get_speedtest_data()
             cached_until = self.cache_timeout
 
-            if speedtest_data:
-                self.py3.storage_set('speedtest_data', speedtest_data)
+            if speedtest_data and len(speedtest_data)>1:
                 if last_speedtest_data:
                     speedtest_data.update(last_speedtest_data)
+
+                # create a global "score" for know if cnx is better or not
+                # between two run
+                speedtest_data['total'] = 
+                    int(speedtest_data.get('download', 0)) + 
+                    int(speedtest_data.get('upload',0))
+
+                if 'last_total' in speedtest_data:
+                    if speedtest_data['total'] >= speedtest_data['last_total']:
+                        speedtest_data['speed'] = 'faster'
+                    else:
+                        speedtest_data['speed'] = 'slower'
+                else:
+                    speedtest_data['speed'] = 'good'
 
                 # raw version and units convertion
                 for x in ['download', 'upload']:
@@ -158,15 +177,19 @@ class Py3status:
                     speedtest_data[x], speedtest_data[x + '_unit'] = self.py3.format_units(
                         speedtest_data[x], unit=self.unit_size, si=self.si_units
                     )
-                    
+
+                self.py3.storage_set('speedtest_data', speedtest_data)
+
                 # thresholds
                 for x in self.thresholds:
                     if x in speedtest_data:
                         self.py3.threshold_get_color(speedtest_data[x], x)
+
+                self.py3.log(speedtest_data)
         else:
             # little hack for prevent running speedtest
             # at start, allow only trigger on_click / refresh
-            self.run = True
+            self.can_refresh = True
 
         return {
             'cached_until': self.py3.time_in(cached_until),
