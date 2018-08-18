@@ -33,7 +33,7 @@ Format placeholders:
 
 The module will be triggered on clic only. Not at start.
 
-Note that all placeholders have a version prefixed by `last_`, eg `last_download`.
+Note that all placeholders have a version prefixed by `previous_`, eg `previous_download`.
 This can be usefull to compare two runs.
 
 Requires:
@@ -61,7 +61,7 @@ speedtest_cli {
 
 # colored based on comparation between two last runs
 speedtest_cli {
-    format = ' [[\?if=download_raw<last_download_raw&color=degraded ↓]|[\?color=ok ↑]]'
+    format = ' [[\?if=download_raw<previous_download_raw&color=degraded ↓]|[\?color=ok ↑]]'
 }
 
 @author Cyril Levis (@cyrinux)
@@ -73,48 +73,48 @@ SAMPLE OUTPUT
 from __future__ import division  # python2 compatibility
 from json import loads
 
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
+
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = -1
-    format = u'\u25cf [{ping} ms] [↑ {upload} {upload_unit}] [↓ {download} {download_unit}]'
+    format = (
+        u"\u25cf [{ping} ms] [↑ {upload} {upload_unit}] [↓ {download} {download_unit}]"
+    )
     si_units = False
     sleep_timeout = 20
     thresholds = {
-        'ping': [
-            (200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')
-        ],
-        'download': [
-            (0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')
-        ],
-        'upload': [
-            (0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')
-        ],
+        "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10,
+                                                                    "good")],
+        "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
+        "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
+        "speed" [("good", "good"), ("slower", "degraded"), ("faster","good")],
     }
-    unit_bitrate = 'MB/s'
-    unit_size = 'MB'
+    unit_bitrate = "MB/s"
+    unit_size = "MB"
     timeout = 30
 
     def post_config_hook(self):
-        if not self.py3.check_commands('speedtest-cli'):
+        if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
         self.placeholders = list(
-            set(self.py3.get_placeholders_list(self.format))
-        )
+            set(self.py3.get_placeholders_list(self.format)))
         self.can_refresh = False
-        self.speedtest_command = 'speedtest-cli --json --secure --timeout {}'.format(self.timeout)
+        self.speedtest_command = "speedtest-cli --json --secure --timeout {}".format(
+            self.timeout)
 
         # avoid bad behavior if speedtest timeout greater than cache_timeout
-        if self.cache_timeout < self.timeout:
-            self.cache_timeout = self.timeout + 5 
+        if self.cache_timeout < self.timeout and self.cache_timeout != -1:
+            self.cache_timeout = self.timeout + 5
 
     def _is_running(self):
         try:
-            self.py3.command_output(['pgrep', 'speedtest-cli'])
+            self.py3.command_output(["pgrep", "speedtest-cli"])
             return True
         except:
             return False
@@ -129,81 +129,79 @@ class Py3status:
             return ce.output
         return data
 
-
-    def _get_last_speedtest_data(self):
-        new_data = {}
-        last_data = self.py3.storage_get('speedtest_data')
-        if last_data:
-            for x in last_data:
-                new_data['last_' + x] = last_data[x]
-        return new_data
-
     def speedtest_cli(self):
+        current_data = {}
         speedtest_data = {}
+        previous_data = {}
         cached_until = self.sleep_timeout
 
         if not self._is_running() and self.can_refresh:
-            last_speedtest_data = self._get_last_speedtest_data()
-            speedtest_data = self._get_speedtest_data()
+            previous_data = self.py3.storage_get("speedtest_data")
+            current_data = self._get_speedtest_data()
             cached_until = self.cache_timeout
 
-            if speedtest_data and len(speedtest_data)>1:
-                if last_speedtest_data:
-                    speedtest_data.update(last_speedtest_data)
-
-                # create a global "score" for know if cnx is better or not
+            if current_data and len(current_data) > 1:
+                # create a "total" for know if cnx is better or not
                 # between two run
-                speedtest_data['total'] = 
-                    int(speedtest_data.get('download', 0)) + 
-                    int(speedtest_data.get('upload',0))
+                current_data["total"] = int(current_data.get(
+                    "download", 0)) + int(current_data.get("upload", 0))
 
-                if 'last_total' in speedtest_data:
-                    if speedtest_data['total'] >= speedtest_data['last_total']:
-                        speedtest_data['speed'] = 'faster'
+                if "total" in previous_data:
+                    if current_data["total"] >= previous_data["total"]:
+                        current_data["speed"] = "faster"
                     else:
-                        speedtest_data['speed'] = 'slower'
+                        current_data["speed"] = "slower"
                 else:
-                    speedtest_data['speed'] = 'good'
+                    current_data["speed"] = "good"
 
-                # raw version and units convertion
-                for x in ['download', 'upload']:
-                    speedtest_data[x + '_raw'] = speedtest_data[x]
-                    speedtest_data[x], speedtest_data[x + '_unit'] = self.py3.format_units(
-                        speedtest_data[x], unit=self.unit_bitrate, si=self.si_units
-                    )
+        # zero-ing if not fetched, raw version and units convertion
+        for x in ["download", "upload"]:
+            current_data[x] = current_data.get(x, 0)
+            current_data[x + "_raw"] = current_data[x]
+            current_data[x], current_data[x + "_unit"] = self.py3.format_units(
+                current_data[x], unit=self.unit_bitrate, si=self.si_units)
 
-                for x in ['bytes_received', 'bytes_sent']:
-                    speedtest_data[x + '_raw'] = speedtest_data[x]
-                    speedtest_data[x], speedtest_data[x + '_unit'] = self.py3.format_units(
-                        speedtest_data[x], unit=self.unit_size, si=self.si_units
-                    )
+        for x in ["bytes_received", "bytes_sent"]:
+            current_data[x] = current_data.get(x, 0)
+            current_data[x + "_raw"] = current_data[x]
+            current_data[x], current_data[x + "_unit"] = self.py3.format_units(
+                current_data[x], unit=self.unit_size, si=self.si_units)
 
-                self.py3.storage_set('speedtest_data', speedtest_data)
+        # store last data fetched
+        self.py3.storage_set("speedtest_data", current_data)
 
-                # thresholds
-                for x in self.thresholds:
-                    if x in speedtest_data:
-                        self.py3.threshold_get_color(speedtest_data[x], x)
+        # create placeholders
+        for x in current_data:
+            speedtest_data[x] = current_data[x]
+        for x in previous_data:
+            speedtest_data["previous_" + x] = previous_data[x]
 
-                self.py3.log(speedtest_data)
-        else:
-            # little hack for prevent running speedtest
-            # at start, allow only trigger on_click / refresh
-            self.can_refresh = True
+        # thresholds
+        for x in self.thresholds:
+            if x in speedtest_data:
+                self.py3.threshold_get_color(speedtest_data[x], x)
+
+        self.py3.log(speedtest_data)
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(self.format, speedtest_data)
+            "cached_until": self.py3.time_in(cached_until),
+            "full_text": self.py3.safe_format(self.format, speedtest_data),
         }
 
-
     def on_click(self, event):
-        # trigger refresh on any click
-        pass
+        # little hack for prevent running speedtest
+        # at start, allow only trigger on_click / refresh
+        self.can_refresh = True
+        if self._is_running:
+            self.py3.prevent_refresh()
+        else:
+            pass
+
 
 if __name__ == "__main__":
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
