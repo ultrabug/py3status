@@ -54,7 +54,7 @@ Format placeholders:
     {upload} upload rate to speedtest server, human readable
     {upload_raw} upload rate to speedtest server, for format comparation
     {upload_unit} unit used for upload, eg 'MB/s'
-    
+
 
 The module will be triggered on clic only. Not at start.
 
@@ -114,7 +114,6 @@ MISSING_PLACEHOLDER = "{download} or {upload} placeholder required"
 class Py3status:
     """
     """
-
     # available configuration parameters
     cache_timeout = -1
     format = (
@@ -128,21 +127,21 @@ class Py3status:
                                                                     "good")],
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
-        "quality": [("ok", "good"), ("bad", "degraded"), ("faster", "good"), ("slower", "degraded"), ("faster","good")],
+        "quality": [("ok", "good"), ("bad", "degraded"), ("faster", "good"),
+                    ("slower", "degraded"), ("faster", "good")],
     }
     timeout = 30
     unit_bitrate = "MB/s"
     unit_size = "MB"
-    
 
     def post_config_hook(self):
         if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
-        
+
         self.can_refresh = False
         self.placeholders = list(
             set(self.py3.get_placeholders_list(self.format)))
-        
+
         dont_upload = ''
         if 'upload' not in self.placeholders:
             dont_upload = '--no-upload'
@@ -151,9 +150,9 @@ class Py3status:
         if 'download' not in self.placeholders:
             dont_download = '--no-download'
 
-        server = '' # if not specified, nearest server is use
+        server = ''  # if not specified, nearest server is use
         if self.server_id and int(self.server_id):
-            server = '--server {}'.format(self.server_id) 
+            server = '--server {}'.format(self.server_id)
 
         self.command = "speedtest-cli --json --secure --timeout {} {} {} {}".format(
             self.timeout, dont_upload, dont_download, server)
@@ -224,11 +223,11 @@ class Py3status:
             current_data[x], current_data[x + "_unit"] = self.py3.format_units(
                 current_data[x], unit=self.unit_size, si=self.si_units)
 
-        # extra data, not sure we want to expose 
+        # extra data, not sure we want to expose
         for x in ["server", "client"]:
             if x in current_data:
                 for y in current_data[x]:
-                    current_data[x+'_'+y] = current_data[x][y]
+                    current_data[x + '_' + y] = current_data[x][y]
                 del current_data[x]
 
         # store last data fetched
@@ -255,6 +254,7 @@ class Py3status:
         if self._is_running:
             self.py3.prevent_refresh()
         pass
+
 
 if __name__ == "__main__":
     """
