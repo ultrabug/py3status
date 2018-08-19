@@ -63,7 +63,9 @@ memory
 [
     {'full_text': 'GeForce GTX 1060 '},
     {'color': '#ffff00', 'full_text': '65°C '},
-    {'color': '#00ff00', 'full_text': '188 MiB (3.12%)},
+    {'color': '#00ff00', 'full_text': '188 MiB'},
+    {'color': '#a9a9a9', 'full_text': '|'},
+    {'color': '#00ff00', 'full_text': '3.12%'},
 ]
 
 custom
