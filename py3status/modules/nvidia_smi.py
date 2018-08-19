@@ -56,7 +56,7 @@ nvidia_smi {
 SAMPLE OUTPUT
 [
     {'full_text': 'GeForce GTX 1060 '},
-    {'color': '#00ff00', 'full_text': '51°C '},
+    {'color': '#00ff00', 'full_text': '51°C'},
 ]
 
 memory
