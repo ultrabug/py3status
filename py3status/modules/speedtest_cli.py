@@ -16,19 +16,21 @@ Configuration parameters:
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
 
 Format placeholders:
-    {download} download rate from speedtest server, human readable
-    {download_raw} download rate from speedtest server, for format comparation
-    {download_unit} unit used as , eg 'MB/s'
-    {ping} ping time in ms to speedtest server
-    {upload} upload rate to speedtest server, human readable
-    {upload_raw} upload rate to speedtest server, for format comparation
-    {upload_unit} unit used for upload, eg 'MB/s'
     {bytes_sent} bytes sent during test, human readable
     {bytes_sent_unit} unit used for bytes_sent, eg 'MB'
     {bytes_sent_raw} bytes sent during test, for format comparation
     {bytes_received} bytes received during test, human readable
     {bytes_received_raw} bytes received during test, for format comparation
     {bytes_received_unit} unit used for bytes_received, eg 'MB'
+    {download} download rate from speedtest server, human readable
+    {download_raw} download rate from speedtest server, for format comparation
+    {download_unit} unit used as , eg 'MB/s'
+    {ping} ping time in ms to speedtest server
+    {quality} quality of the connection, eg ok, bad, faster, slower
+    {upload} upload rate to speedtest server, human readable
+    {upload_raw} upload rate to speedtest server, for format comparation
+    {upload_unit} unit used for upload, eg 'MB/s'
+
     {timestamp} timestamp of the run
 
 The module will be triggered on clic only. Not at start.
@@ -74,6 +76,7 @@ from __future__ import division  # python2 compatibility
 from json import loads
 
 STRING_NOT_INSTALLED = "not installed"
+MISSING_PLACEHOLDER = "{download} or {upload} placeholder required"
 
 
 class Py3status:
@@ -86,13 +89,13 @@ class Py3status:
         u"\u25cf [{ping} ms] [↑ {upload} {upload_unit}] [↓ {download} {download_unit}]"
     )
     si_units = False
-    sleep_timeout = 20
+    sleep_timeout = 5
     thresholds = {
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10,
                                                                     "good")],
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
-        "speed" [("good", "good"), ("slower", "degraded"), ("faster","good")],
+        "quality": [("ok", "good"), ("bad", "degraded"), ("faster", "good"), ("slower", "degraded"), ("faster","good")],
     }
     unit_bitrate = "MB/s"
     unit_size = "MB"
@@ -104,9 +107,23 @@ class Py3status:
 
         self.placeholders = list(
             set(self.py3.get_placeholders_list(self.format)))
+
+        dont_download = ''
+        dont_upload = ''
+
         self.can_refresh = False
-        self.speedtest_command = "speedtest-cli --json --secure --timeout {}".format(
-            self.timeout)
+
+        if not any(x in ['download', 'upload'] for x in self.placeholders):
+            raise Exception('%s %s' % (command[0], MISSING_PLACEHOLDER))
+
+        if 'upload' not in self.placeholders:
+            dont_upload = '--no-upload'
+
+        if 'download' not in self.placeholders:
+            dont_download = '--no-download'
+
+        self.speedtest_command = "speedtest-cli --json --secure --timeout {} {} {}".format(
+            self.timeout, dont_upload, dont_download)
 
         # avoid bad behavior if speedtest timeout greater than cache_timeout
         if self.cache_timeout < self.timeout and self.cache_timeout != -1:
@@ -123,10 +140,9 @@ class Py3status:
         data = {}
         try:
             data = loads(self.py3.command_output(self.speedtest_command))
-            self.py3.log(data)
+            # self.py3.log(data)
         except self.py3.CommandError as ce:
-            self.py3.log(ce.output)
-            return ce.output
+            raise Exception('%s') % ce.output
         return data
 
     def speedtest_cli(self):
@@ -146,13 +162,18 @@ class Py3status:
                 current_data["total"] = int(current_data.get(
                     "download", 0)) + int(current_data.get("upload", 0))
 
+                # create "quality" #maybe bad name
                 if "total" in previous_data:
                     if current_data["total"] >= previous_data["total"]:
-                        current_data["speed"] = "faster"
+                        quality = "faster"
                     else:
-                        current_data["speed"] = "slower"
+                        quality = "slower"
                 else:
-                    current_data["speed"] = "good"
+                    if current_data["total"] <= 0:
+                        quality = "bad"
+                    else:
+                        quality = "ok"
+                current_data["quality"] = quality
 
         # zero-ing if not fetched, raw version and units convertion
         for x in ["download", "upload"]:
@@ -189,14 +210,10 @@ class Py3status:
         }
 
     def on_click(self, event):
-        # little hack for prevent running speedtest
-        # at start, allow only trigger on_click / refresh
         self.can_refresh = True
         if self._is_running:
             self.py3.prevent_refresh()
-        else:
-            pass
-
+        pass
 
 if __name__ == "__main__":
     """
