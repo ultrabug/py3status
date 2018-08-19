@@ -5,6 +5,8 @@ Do a bandwidth test with speedtest-cli.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default -1)
     format: display format for this module (default '■ [{ping} ms] [↑ {upload}] [↓ {download}]')
+            {download} and/or {upload} required
+    server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
     si_units: use SI units (default False)
     sleep_timeout: when speedtest-cli is allready running, this interval will be used
         to allow faster retry refreshes
@@ -22,16 +24,37 @@ Format placeholders:
     {bytes_received} bytes received during test, human readable
     {bytes_received_raw} bytes received during test, for format comparation
     {bytes_received_unit} unit used for bytes_received, eg 'MB'
+    {client_country} client country code, eg 'FR'
+    {client_ip} client ip, eg '78.194.13.7'
+    {client_isp} client isp, eg 'Free SAS'
+    {client_ispdlavg} client isp download average, eg '0'
+    {client_isprating} client isp rating, eg 3.7
+    {client_ispulavg} client isp upload average, eg '0'
+    {client_lat} client latitude, eg '48.8534'
+    {client_loggedin} client logged in, eg '0'
+    {client_lon} client longitude, eg '2.3487999999999998'
+    {client_rating} client rating, eg '0'
     {download} download rate from speedtest server, human readable
     {download_raw} download rate from speedtest server, for format comparation
     {download_unit} unit used as , eg 'MB/s'
     {ping} ping time in ms to speedtest server
     {quality} quality of the connection, eg ok, bad, faster, slower
+    {timestamp} timestamp of the run
+    {server_cc} server country code, eg 'FR'
+    {server_country} server country, eg 'France'
+    {server_d} server d, eg '2.316599376968091'
+    {server_host} server host, eg 'speedtest.telecom-paristech.fr:8080'
+    {server_id} server id, eg '11977'
+    {server_lat} server latitude, eg '48.8742'
+    {server_latency} server latency, eg 8.265
+    {server_lon} server longitude, eg 2.3470
+    {server_name} server name, eg 'Paris'
+    {server_sponsor} server sponsor, eg 'Télécom ParisTech'
+    {server_url} server url, eg 'http://speedtest.telecom-paristech.fr/upload.php'
     {upload} upload rate to speedtest server, human readable
     {upload_raw} upload rate to speedtest server, for format comparation
     {upload_unit} unit used for upload, eg 'MB/s'
-
-    {timestamp} timestamp of the run
+    
 
 The module will be triggered on clic only. Not at start.
 
@@ -60,11 +83,20 @@ speedtest_cli {
     format += ' [\?color=download ↓ {download} {download_unit}]'
 }
 
-
 # colored based on comparation between two last runs
 speedtest_cli {
     format = ' [[\?if=download_raw<previous_download_raw&color=degraded ↓]|[\?color=ok ↑]]'
 }
+
+# compare only download
+speedtest_cli {
+    format = '[[\?if=quality=slower&color=download ↓ {download} {download_unit}]'
+    format += '[\?if=quality=faster&color=download ↑ {download} {download_unit}]'
+    format += '[\?if=quality=ok&color=download -> {download} {download_unit}]'
+    format += '[\?if=quality=bad&color=download x {download} {download_unit}]]'
+    format += '|'
+}
+```
 
 @author Cyril Levis (@cyrinux)
 
@@ -88,6 +120,7 @@ class Py3status:
     format = (
         u"\u25cf [{ping} ms] [↑ {upload} {upload_unit}] [↓ {download} {download_unit}]"
     )
+    server_id = None
     si_units = False
     sleep_timeout = 5
     thresholds = {
@@ -97,33 +130,37 @@ class Py3status:
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "quality": [("ok", "good"), ("bad", "degraded"), ("faster", "good"), ("slower", "degraded"), ("faster","good")],
     }
+    timeout = 30
     unit_bitrate = "MB/s"
     unit_size = "MB"
-    timeout = 30
+    
 
     def post_config_hook(self):
         if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
-
+        
+        self.can_refresh = False
         self.placeholders = list(
             set(self.py3.get_placeholders_list(self.format)))
-
-        dont_download = ''
+        
         dont_upload = ''
-
-        self.can_refresh = False
-
-        if not any(x in ['download', 'upload'] for x in self.placeholders):
-            raise Exception('%s %s' % (command[0], MISSING_PLACEHOLDER))
-
         if 'upload' not in self.placeholders:
             dont_upload = '--no-upload'
 
+        dont_download = ''
         if 'download' not in self.placeholders:
             dont_download = '--no-download'
 
-        self.speedtest_command = "speedtest-cli --json --secure --timeout {} {} {}".format(
-            self.timeout, dont_upload, dont_download)
+        server = '' # if not specified, nearest server is use
+        if self.server_id and int(self.server_id):
+            server = '--server {}'.format(self.server_id) 
+
+        self.command = "speedtest-cli --json --secure --timeout {} {} {} {}".format(
+            self.timeout, dont_upload, dont_download, server)
+
+        # fail if download or upload missing
+        if not any(x in ['download', 'upload'] for x in self.placeholders):
+            raise Exception('%s' % (MISSING_PLACEHOLDER))
 
         # avoid bad behavior if speedtest timeout greater than cache_timeout
         if self.cache_timeout < self.timeout and self.cache_timeout != -1:
@@ -139,8 +176,7 @@ class Py3status:
     def _get_speedtest_data(self):
         data = {}
         try:
-            data = loads(self.py3.command_output(self.speedtest_command))
-            # self.py3.log(data)
+            data = loads(self.py3.command_output(self.command))
         except self.py3.CommandError as ce:
             raise Exception('%s') % ce.output
         return data
@@ -188,6 +224,13 @@ class Py3status:
             current_data[x], current_data[x + "_unit"] = self.py3.format_units(
                 current_data[x], unit=self.unit_size, si=self.si_units)
 
+        # extra data, not sure we want to expose 
+        for x in ["server", "client"]:
+            if x in current_data:
+                for y in current_data[x]:
+                    current_data[x+'_'+y] = current_data[x][y]
+                del current_data[x]
+
         # store last data fetched
         self.py3.storage_set("speedtest_data", current_data)
 
@@ -201,8 +244,6 @@ class Py3status:
         for x in self.thresholds:
             if x in speedtest_data:
                 self.py3.threshold_get_color(speedtest_data[x], x)
-
-        self.py3.log(speedtest_data)
 
         return {
             "cached_until": self.py3.time_in(cached_until),
