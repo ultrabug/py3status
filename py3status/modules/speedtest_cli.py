@@ -104,7 +104,6 @@ SAMPLE OUTPUT
 {'full_text': u'\u25cf 208.18 ms \u2191 0.247 MB/s \u2193 0.453 MB/s'}
 """
 
-from __future__ import division  # python2 compatibility
 from json import loads
 
 STRING_NOT_INSTALLED = "not installed"
