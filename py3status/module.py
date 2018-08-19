@@ -320,6 +320,16 @@ class Module:
 
             self.module_options['min_width'] = min_width
 
+            if 'align' in mod_config:
+                align = mod_config['align']
+                if not (isinstance(align, basestring) and
+                        align.lower() in ('left', 'center', 'right')):
+                    err = 'invalid "align" attribute, valid values are:'
+                    err += ' left, center, right'
+                    raise ValueError(err)
+
+                self.module_options['align'] = align
+
         if 'separator' in mod_config:
             separator = mod_config['separator']
             if not isinstance(separator, bool):
@@ -336,16 +346,6 @@ class Module:
                 raise TypeError(err)
 
             self.module_options['separator_block_width'] = sep_block_width
-
-        if 'align' in mod_config:
-            align = mod_config['align']
-            if not (isinstance(align, basestring) and
-                    align.lower() in ("left", "center", "right")):
-                err = 'invalid "align" attribute, valid values are:'
-                err += ' left, center, right'
-                raise ValueError(err)
-
-            self.module_options['align'] = align
 
     def process_composite(self, response):
         """
