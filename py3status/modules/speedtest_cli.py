@@ -4,16 +4,26 @@ Do a bandwidth test with speedtest-cli.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default -1)
-    format: display format for this module (default '■ [{ping} ms] [↑ {upload}] [↓ {download}]')
-            {download} and/or {upload} required
+    format: display format for this module, {download} and/or {upload} required
+        (default '■ [{ping} ms] [↑ {upload}] [↓ {download}]')
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
     si_units: use SI units (default False)
     sleep_timeout: when speedtest-cli is allready running, this interval will be used
         to allow faster retry refreshes
-        (default 20)
-    timeout: timeout when communicating with speedtest.net servers (default 10)
+        (default 5)
     thresholds: specify color thresholds to use
-        (default [(0, 'bad'), (11, 'good')])
+        (default [
+                "ping": 
+                    [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
+                "download": 
+                    [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
+                "upload": 
+                    [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
+                "quality": 
+                    [("ok", "good"), ("bad", "degraded"), ("faster", "good"),
+                            ("slower", "degraded"), ("faster", "good")]
+                ]
+    timeout: timeout when communicating with speedtest.net servers (default 10)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
 
@@ -129,7 +139,7 @@ class Py3status:
         "quality": [("ok", "good"), ("bad", "degraded"), ("faster", "good"),
                     ("slower", "degraded"), ("faster", "good")],
     }
-    timeout = 30
+    timeout = 10
     unit_bitrate = "MB/s"
     unit_size = "MB"
 
@@ -252,7 +262,6 @@ class Py3status:
         self.can_refresh = True
         if self._is_running:
             self.py3.prevent_refresh()
-        pass
 
 
 if __name__ == "__main__":
