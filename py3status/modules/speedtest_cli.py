@@ -123,6 +123,7 @@ MISSING_PLACEHOLDER = "{download} or {upload} placeholder required"
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = -1
     format = (
@@ -132,12 +133,16 @@ class Py3status:
     si_units = False
     sleep_timeout = 5
     thresholds = {
-        "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10,
-                                                                    "good")],
+        "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
-        "quality": [("ok", "good"), ("bad", "degraded"), ("faster", "good"),
-                    ("slower", "degraded"), ("faster", "good")],
+        "quality": [
+            ("ok", "good"),
+            ("bad", "degraded"),
+            ("faster", "good"),
+            ("slower", "degraded"),
+            ("faster", "good"),
+        ],
     }
     timeout = 10
     unit_bitrate = "MB/s"
@@ -148,8 +153,7 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
         self.can_refresh = False
-        self.placeholders = list(
-            set(self.py3.get_placeholders_list(self.format)))
+        self.placeholders = list(set(self.py3.get_placeholders_list(self.format)))
 
         dont_upload = ''
         if 'upload' not in self.placeholders:
@@ -164,7 +168,8 @@ class Py3status:
             server = '--server {}'.format(self.server_id)
 
         self.command = "speedtest-cli --json --secure --timeout {} {} {} {}".format(
-            self.timeout, dont_upload, dont_download, server)
+            self.timeout, dont_upload, dont_download, server
+        )
 
         # fail if download or upload missing
         if not any(x in ['download', 'upload'] for x in self.placeholders):
@@ -203,8 +208,9 @@ class Py3status:
             if current_data and len(current_data) > 1:
                 # create a "total" for know if cnx is better or not
                 # between two run
-                current_data["total"] = int(current_data.get(
-                    "download", 0)) + int(current_data.get("upload", 0))
+                current_data["total"] = int(current_data.get("download", 0)) + int(
+                    current_data.get("upload", 0)
+                )
 
                 # create "quality" #maybe bad name
                 if "total" in previous_data:
@@ -224,13 +230,15 @@ class Py3status:
             current_data[x] = current_data.get(x, 0)
             current_data[x + "_raw"] = current_data[x]
             current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                current_data[x], unit=self.unit_bitrate, si=self.si_units)
+                current_data[x], unit=self.unit_bitrate, si=self.si_units
+            )
 
         for x in ["bytes_received", "bytes_sent"]:
             current_data[x] = current_data.get(x, 0)
             current_data[x + "_raw"] = current_data[x]
             current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                current_data[x], unit=self.unit_size, si=self.si_units)
+                current_data[x], unit=self.unit_size, si=self.si_units
+            )
 
         # extra data, not sure we want to expose
         for x in ["server", "client"]:
