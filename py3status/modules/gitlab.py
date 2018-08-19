@@ -30,11 +30,14 @@ Format placeholders:
         {open_merge_requests_count} number of open merge requests, eg 9
     todos:
         {todos_count}               number of todos, eg 4
+    pipelines:
+        {pipelines_status}          project status of pipelines, eg success
 
 Notes:
     sp: https://docs.gitlab.com/ee/api/projects.html#get-single-project
     mr: https://docs.gitlab.com/ee/api/merge_requests.html
     td: https://docs.gitlab.com/ee/api/todos.html
+    pipe: https://docs.gitlab.com/ee/api/pipelines.html
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
@@ -48,11 +51,12 @@ gitlab {
 
     format = '[\?color=orangered&show ] '
     format += '{name} [[{open_issues_count}][\?soft /]'
-    format += '[{open_merge_requests_count}]]'
+    format += '[{open_merge_requests_count}][\?soft /]'
+    format += '[{pipelines_status}]]'
 }
 ```
 
-@author lasers
+@author lasers, Cyril Levis (@cyrinux)
 
 SAMPLE OUTPUT
 {'full_text': 'py3status 48/49'}
@@ -86,13 +90,15 @@ class Py3status:
         uuid = '/' + '%2F'.join(self.project.rsplit('/', 2)[1:])
         single_project = base_api + 'projects' + uuid
         merge_requests = '/merge_requests?state=opened&view=simple&per_page=1'
+        pipelines = '/pipelines'
         # url stuffs. header, timeout, dict, etc
         self.headers = {'PRIVATE-TOKEN': self.auth_token}
         self.request_timeout = 10
         self.url = {
             'single_project': single_project,
             'merge_requests': single_project + merge_requests,
-            'todos': base_api + 'todos'
+            'todos': base_api + 'todos',
+            'pipelines': single_project + pipelines,
         }
         # add statistics to url too?
         if self.py3.format_contains(self.format, 'statistics_*'):
@@ -101,7 +107,7 @@ class Py3status:
         # init placeholders
         self.init = {'thresholds': []}
         placeholders = self.py3.get_placeholders_list(self.format)
-        for x in ['open_merge_requests_count', 'todos_count']:
+        for x in ['open_merge_requests_count', 'todos_count', 'pipelines_status']:
             self.init[x] = x in placeholders
             if self.init[x]:
                 placeholders.remove(x)
@@ -137,6 +143,11 @@ class Py3status:
             data = self._get_data(self.url['todos'])
             if data:
                 gitlab_data['todos_count'] = len(data.json())
+
+        if self.init['pipelines_status']:
+            data = self._get_data(self.url['pipelines'])
+            if data:
+                gitlab_data['pipelines_status'] = data.json()[0]['status']
 
         for x in self.init['thresholds']:
             if x in gitlab_data:

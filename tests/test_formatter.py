@@ -27,6 +27,7 @@ param_dict = {
     'no': False,
     'empty': '',
     'None': None,
+    'None_str': 'None',
     '?bad name': 'evil',
     u'☂ Very bad name ': u'☂ extremely evil',
     'long_str': 'I am a long string though not too long',
@@ -296,6 +297,10 @@ def test_26():
 
 def test_27():
     run_formatter({'format': '{None}', 'expected': '', })
+
+
+def test_27a():
+    run_formatter({'format': '[Hi, my name is {None_str}]', 'expected': '', })
 
 
 def test_28():
@@ -1365,6 +1370,20 @@ def test_trailing_zeroes_2():
     run_formatter({
         'format': '{trailing_zeroes_2} becomes {trailing_zeroes_2:g}',
         'expected': '5.500 becomes 5.5'
+    })
+
+
+def test_ceiling_numbers_1():
+    run_formatter({
+        'format': '{pi} becomes {pi:ceil}',
+        'expected': '3.14159265359 becomes 4'
+    })
+
+
+def test_ceiling_numbers_2():
+    run_formatter({
+        'format': '{zero_almost} becomes {zero_almost:ceil}',
+        'expected': '0.0001 becomes 1'
     })
 
 

@@ -5,7 +5,7 @@ Display system RAM, SWAP and CPU utilization.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     format: output format string
-        *(default '[\?color=cpu CPU: {cpu_usage}%], '
+        *(default '[\?color=cpu CPU: {cpu_used_percent}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
@@ -20,7 +20,7 @@ Configuration parameters:
 
 Format placeholders:
     {cpu_temp} cpu temperature
-    {cpu_usage} cpu usage percentage
+    {cpu_used_percent} cpu used percentage
     {load1} load average over the last minute
     {load5} load average over the five minutes
     {load15} load average over the fifteen minutes
@@ -35,8 +35,9 @@ Format placeholders:
     {temp_unit} temperature unit
 
 Color thresholds:
-    cpu: change color based on the value of cpu_usage
-    max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
+    cpu: change color based on the value of cpu_used_percent
+    max_cpu_mem: change the color based on the max value
+        of cpu_used_percent and mem_used_percent
     load: change color based on the value of load1
     mem: change color based on the value of mem_used_percent
     swap: change color based on the value of swap_used_percent
@@ -66,7 +67,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = "[\?color=cpu CPU: {cpu_usage}%], " \
+    format = "[\?color=cpu CPU: {cpu_used_percent}%], " \
              "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
     mem_unit = 'GiB'
     swap_unit = 'GiB'
@@ -93,6 +94,7 @@ class Py3status:
                                                            precision=precision)
             return {
                 'cpu_usage': format_vals,
+                'cpu_used_percent': format_vals,
                 'cpu_temp': format_vals,
                 'load1': format_vals,
                 'load5': format_vals,
@@ -108,6 +110,13 @@ class Py3status:
         deprecated = {
             'function': [
                 {'function': deprecate_function},
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'cpu_usage',
+                    'new': 'cpu_used_percent',
+                    'format_strings': ['format'],
+                },
             ],
             'remove': [
                 {
@@ -140,6 +149,7 @@ class Py3status:
                 {
                     'placeholder_formats': {
                         'cpu_usage': ':.2f',
+                        'cpu_used_percent': ':.2f',
                         'cpu_temp': ':.2f',
                         'load1': ':.2f',
                         'load5': ':.2f',
@@ -167,8 +177,10 @@ class Py3status:
             temp_unit = 'unknown unit'
         self.temp_unit = temp_unit
         self.init = {'meminfo': []}
-        names = ['cpu_temp', 'cpu_usage', 'load', 'mem', 'swap']
-        placeholders = ['cpu_temp', 'cpu_usage', 'load*', 'mem_*', 'swap_*']
+        names = ['cpu_temp', 'cpu_percent', 'load', 'mem', 'swap']
+        placeholders = [
+            'cpu_temp', 'cpu_used_percent', 'load*', 'mem_*', 'swap_*'
+        ]
         for name, placeholder in zip(names, placeholders):
             self.init[name] = self.py3.format_contains(self.format, placeholder)
             if name in ['mem', 'swap'] and self.init[name]:
@@ -224,15 +236,15 @@ class Py3status:
         return result
 
     def _calc_cpu_percent(self, cpu):
-        cpu_usage = 0
+        cpu_used_percent = 0
         if cpu['total'] != self.last_cpu.get('total'):
-            cpu_usage = (1 - (
+            cpu_used_percent = (1 - (
                 (cpu['idle'] - self.last_cpu.get('idle', 0)) /
                 (cpu['total'] - self.last_cpu.get('total', 0))
             )) * 100
 
         self.last_cpu.update(cpu)
-        return cpu_usage
+        return cpu_used_percent
 
     def _get_cputemp(self, zone, unit):
         """
@@ -266,11 +278,11 @@ class Py3status:
         return cpu_temp
 
     def sysdata(self):
-        sys = {'temp_unit': self.temp_unit}
+        sys = {'max_used_percent': 0, 'temp_unit': self.temp_unit}
 
-        if self.init['cpu_usage']:
-            sys['cpu_usage'] = self._calc_cpu_percent(self._get_stat())
-            self.py3.threshold_get_color(sys['cpu_usage'], 'cpu')
+        if self.init['cpu_percent']:
+            sys['cpu_used_percent'] = self._calc_cpu_percent(self._get_stat())
+            self.py3.threshold_get_color(sys['cpu_used_percent'], 'cpu')
 
         if self.init['cpu_temp']:
             sys['cpu_temp'] = self._get_cputemp(self.zone, self.temp_unit)
@@ -297,18 +309,10 @@ class Py3status:
             sys.update(zip(load_keys, getloadavg()))
             self.py3.threshold_get_color(sys['load1'], 'load')
 
-        try:
-            self.py3.threshold_get_color(
-                max(sys['cpu_usage'], sys['mem_used_percent']), 'max_cpu_mem')
-        except:
-            try:
-                self.py3.threshold_get_color(sys['cpu_usage'], 'max_cpu_mem')
-            except:
-                try:
-                    self.py3.threshold_get_color(
-                        sys['mem_used_percent'], 'max_cpu_mem')
-                except:
-                    pass
+        sys['max_used_percent'] = max(
+            [perc for name, perc in sys.items() if 'used_percent' in name]
+        )
+        self.py3.threshold_get_color(sys['max_used_percent'], 'max_cpu_mem')
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),

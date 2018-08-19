@@ -2,6 +2,7 @@
 import re
 import sys
 
+from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
@@ -237,6 +238,7 @@ class Placeholder:
         """
         return the correct value for the placeholder
         """
+        value = '{%s}' % self.key
         try:
             value = value_ = get_params(self.key)
             if self.format.startswith(':'):
@@ -249,6 +251,8 @@ class Placeholder:
                 # no remaining digits following it.  If the parameter cannot
                 # be successfully converted then the format will be removed.
                 try:
+                    if 'ceil' in self.format:
+                        value = int(ceil(float(value)))
                     if 'f' in self.format:
                         value = float(value)
                     if 'g' in self.format:
@@ -265,17 +269,16 @@ class Placeholder:
                 value = value_ = output.format(**{self.key: value})
 
             if block.commands.not_zero:
-                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+                valid = value_ not in ['', 'None', None, False, '0', '0.0', 0, 0.0]
             else:
                 # '', None, and False are ignored
                 # numbers like 0 and 0.0 are not.
-                valid = not (value_ in ['', None] or value_ is False)
+                valid = not (value_ in ['', 'None', None] or value_ is False)
             enough = False
         except:
             # Exception raised when we don't have the param
             enough = True
             valid = False
-            value = '{%s}' % self.key
 
         return valid, value, enough
 
@@ -587,9 +590,8 @@ class Block:
                 text += conversion(item)
                 continue
             elif text:
-                if (not first and (
-                        text.strip() == '' or out and
-                        out[-1].get('color') == color)):
+                if (not first and (text == '' or out and
+                   out[-1].get('color') == color)):
                     out[-1]['full_text'] += text
                 else:
                     part = {'full_text': text}

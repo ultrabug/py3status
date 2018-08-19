@@ -424,14 +424,14 @@ class Py3:
     def is_python_2(self):
         """
         True if the version of python being used is 2.x
-        Can be helpful for fixing python 2 compatability issues
+        Can be helpful for fixing python 2 compatibility issues
         """
         return self._is_python_2
 
     def is_my_event(self, event):
         """
-        Checks if an event triggered belongs to the module recieving it.  This
-        is mainly for containers who will also recieve events from any children
+        Checks if an event triggered belongs to the module receiving it.  This
+        is mainly for containers who will also receive events from any children
         they have.
 
         Returns True if the event name and instance match that of the module
@@ -580,16 +580,16 @@ class Py3:
             ``cached_until`` in their response unless they wish to directly control
             it.
 
-        :param seconds: specifies the number of seconds that should occure before the
+        :param seconds: specifies the number of seconds that should occur before the
             update is required.  Passing a value of ``CACHE_FOREVER`` returns
             ``CACHE_FOREVER`` which can be useful for some modules.
 
-        :param sync_to: causes the update to be syncronised to a time period.  1 would
-            cause the update on the second, 60 to the nearest minute. By defalt we
-            syncronise to the nearest second. 0 will disable this feature.
+        :param sync_to: causes the update to be synchronized to a time period.  1 would
+            cause the update on the second, 60 to the nearest minute. By default we
+            synchronize to the nearest second. 0 will disable this feature.
 
         :param offset: is used to alter the base time used. A timer that started at a
-            certain time could set that as the offset and any syncronisation would
+            certain time could set that as the offset and any synchronization would
             then be relative to that time.
         """
 
@@ -672,6 +672,29 @@ class Py3:
                     return True
         self._format_placeholders_cache[format_string][key] = False
         return False
+
+    def get_color_names_list(self, format_strings):
+        """
+        Returns a list of color names in ``format_string``.
+
+        :param format_strings: Accepts a format string or a list of format strings.
+        """
+        if not getattr(self._py3status_module, 'thresholds', None):
+            return []
+        if isinstance(format_strings, basestring):
+            format_strings = [format_strings]
+        names = set()
+        for string in format_strings:
+            for color in string.replace('&', ' ').split('color=')[1::1]:
+                color = color.split()[0]
+                if '#' in color:
+                    continue
+                if color in ['good', 'bad', 'degraded', 'None', 'threshold']:
+                    continue
+                if color in COLOR_NAMES:
+                    continue
+                names.add(color)
+        return list(names)
 
     def get_placeholders_list(self, format_string, match=None):
         """
@@ -758,7 +781,7 @@ class Py3:
         ``title`` if title but no artist,
         and ``file`` if file is present but not artist or title.
 
-        param_dict is a dictionary of palceholders that will be substituted.
+        param_dict is a dictionary of placeholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
 
@@ -837,7 +860,7 @@ class Py3:
 
         A Composite object will be returned.
         """
-        return Composite.composite_update(item, update_dict, soft=False)
+        return Composite.composite_update(item, update_dict, soft)
 
     def composite_join(self, separator, items):
         """
@@ -1076,6 +1099,11 @@ class Py3:
 
         If the gradients config parameter is True then rather than sharp
         thresholds we will use a gradient between the color values.
+
+        :param value: numerical value to be graded
+        :param name: accepts a string, otherwise 'threshold'
+            accepts 3-tuples to allow name with different
+            values eg ('name', 'key', 'thresholds')
         """
         # If first run then process the threshold data.
         if self._thresholds is None:
@@ -1089,10 +1117,20 @@ class Py3:
             except ValueError:
                 color = self._get_color('error') or self._get_color('bad')
 
-        # if name not in thresholds info then use defaults
-        name_used = name
-        if name_used not in self._thresholds:
-            name_used = None
+        # allow name with different values
+        if isinstance(name, tuple):
+            name_used = '{}/{}'.format(name[0], name[1])
+            if name[2]:
+                self._thresholds[name_used] = [
+                    (x[0], self._get_color(x[1])) for x in name[2]
+                ]
+            name = name[0]
+        else:
+            # if name not in thresholds info then use defaults
+            name_used = name
+            if name_used not in self._thresholds:
+                name_used = None
+
         thresholds = self._thresholds.get(name_used)
         # if value is None, pass it along. otherwise try it.
         if value is not None and color is None and thresholds:
