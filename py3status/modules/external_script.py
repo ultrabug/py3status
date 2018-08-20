@@ -14,6 +14,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
         (default 15)
     format: see placeholders below (default '{output}')
+    format_notification: see placeholders below (default '{output}')
     localize: should script output be localized (if available)
         (default True)
     script_path: script you want to show output of (compulsory)
@@ -23,7 +24,10 @@ Configuration parameters:
 
 Format placeholders:
     {line} number of lines in the output
-    {output} output of script given by "script_path"
+    {output} first line of the output of script given by "script_path"
+
+Format notification placeholders:
+    {output} full output of script given by "script_path"
 
 i3status.conf example:
 
@@ -54,6 +58,7 @@ class Py3status:
     button_refresh = 2
     cache_timeout = 15
     format = '{output}'
+    format_notification = '{output}'
     localize = True
     script_path = None
     strip_output = False
@@ -106,7 +111,10 @@ class Py3status:
     def on_click(self, event):
         button = event["button"]
         if button != self.button_refresh:
-            self.py3.notify_user(self.output)
+            if self.format_notification:
+                self.py3.notify_user(self.py3.safe_format(
+                    self.format_notification, {'output': self.output})
+                )
             self.py3.prevent_refresh()
 
 if __name__ == "__main__":
