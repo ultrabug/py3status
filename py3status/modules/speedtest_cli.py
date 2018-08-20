@@ -161,20 +161,23 @@ class Py3status:
         if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
-        # fail if download or upload missing
-        if not any(x in ["download", "upload"] for x in self.placeholders):
-            raise Exception("%s" % (MISSING_PLACEHOLDER))
-
         self.first_run = True
+
         self.placeholders = self.py3.get_placeholders_list(self.format)
 
+        # if download* or upload* missing, run complete test
         dont_upload = ""
-        if "upload" not in self.placeholders:
-            dont_upload = "--no-upload"
-
         dont_download = ""
-        if "download" not in self.placeholders:
-            dont_download = "--no-download"
+        if any(
+            key.startswith(x)
+            for x in ["download", "upload"]
+            for key in self.placeholders
+        ):
+            if not any(key.startswith("upload") for key in self.placeholders):
+                dont_upload = "--no-upload"
+
+            if not any(key.startswith("download") for key in self.placeholders):
+                dont_download = "--no-download"
 
         server = ""  # if not specified, nearest server is use
         if self.server_id and int(self.server_id):
@@ -192,7 +195,7 @@ class Py3status:
 
     def _is_running(self):
         try:
-            self.py3.command_output(["pgrep", "speedtest-cli --json"])
+            self.py3.command_output(["pgrep", "speedtest-cli"])
             return True
         except:
             return False
@@ -204,13 +207,11 @@ class Py3status:
         speedtest_data = {}
         if self.first_run:
             self.first_run = False
-            cached_until = self.py3.time_in(0)
+            cached_until = self.py3.CACHE_FOREVER
         else:
             current_data = {}
             previous_data = {}
             cached_until = self.py3.time_in(self.sleep_timeout)
-            if self.first_run:
-                self.first_run = False
 
             if not self._is_running():
                 previous_data = self.py3.storage_get("speedtest_data")
