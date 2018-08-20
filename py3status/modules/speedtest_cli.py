@@ -11,16 +11,15 @@ Configuration parameters:
     si_units: use SI units (default False)
     sleep_timeout: when speedtest-cli is allready running, this interval will be used
         to allow faster retry refreshes (default 5)
-    thresholds: specify color thresholds to use (default [
-                'download': [(0, 'bad'), (1024, 'degraded'), (1048576, 'good')],
+    thresholds: specify color thresholds to use *(default {
+                'download': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')],
                 'ping': [(200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')],
                 'quality':
                     [
                         ('ok', 'good'), ('bad', 'degraded'),
                         ('faster', 'good'), ('slower', 'degraded'), ('faster', 'good')
                     ],
-                'upload': [(0, 'bad'), (1024, 'degraded'), (1048576, 'good')]
-        ])
+                'upload': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')]})*
     timeout: timeout when communicating with speedtest.net servers (default 10)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
@@ -80,22 +79,16 @@ Examples:
 # colored based on thresholds
 speedtest_cli {
     thresholds = {
-        'download': [
-            (0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')
-        ],
-        'ping': [
-            (200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')
-        ],
-        'quality': [
+        "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
+        "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
+        "quality": [
             ("ok", "good"),
             ("bad", "degraded"),
             ("faster", "good"),
             ("slower", "degraded"),
             ("faster", "good"),
         ],
-        'upload': [
-            (0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')
-        ],
+        "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
     format = '[\?color=ping {ping} ms] [\?color=upload ↑ {upload} {upload_unit}]'
     format += ' [\?color=download ↓ {download} {download_unit}]'
