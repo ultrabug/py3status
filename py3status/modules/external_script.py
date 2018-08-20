@@ -10,11 +10,10 @@ code such as #FF0000 for red).
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
-    button_refresh: button to refresh the module (default 2)
     cache_timeout: how often we refresh this module in seconds
         (default 15)
     format: see placeholders below (default '{output}')
-    format_notification: see placeholders below (default '{output}')
+    format_notification: see placeholders below (default None)
     localize: should script output be localized (if available)
         (default True)
     script_path: script you want to show output of (compulsory)
@@ -27,6 +26,7 @@ Format placeholders:
     {output} first line of the output of script given by "script_path"
 
 Format notification placeholders:
+    {line} number of lines in the output
     {output} full output of script given by "script_path"
 
 i3status.conf example:
@@ -55,15 +55,15 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_refresh = 2
     cache_timeout = 15
     format = '{output}'
-    format_notification = '{output}'
+    format_notification = None
     localize = True
     script_path = None
     strip_output = False
 
     def post_config_hook(self):
+        self.button_refresh = 2
         if not self.script_path:
             raise Exception(STRING_ERROR)
 
@@ -72,9 +72,10 @@ class Py3status:
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
-            self.output = self.py3.command_output(
-                self.script_path, shell=True, localized=self.localize)
-            output_lines = self.output.splitlines()
+            output = self.py3.command_output(
+                self.script_path, shell=True, localized=self.localize
+            )
+            output_lines = output.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]
                 if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
@@ -105,8 +106,15 @@ class Py3status:
         else:
             output = ''
 
+        self.script_data = {
+            'line': len(output_lines),
+            'output': output,
+            'output_full': ' '.join(output.splitlines())
+        }
         response['full_text'] = self.py3.safe_format(
-            self.format, {'output': output, 'line': len(output_lines)})
+            self.format, self.script_data
+        )
+        self.script_data['output_full'] = output
         return response
 
     def on_click(self, event):
@@ -114,7 +122,7 @@ class Py3status:
         if button != self.button_refresh:
             if self.format_notification:
                 self.py3.notify_user(self.py3.safe_format(
-                    self.format_notification, {'output': self.output})
+                    self.format_notification, self.script_data)
                 )
             self.py3.prevent_refresh()
 
