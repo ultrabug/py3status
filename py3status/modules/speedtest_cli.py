@@ -3,24 +3,24 @@
 Do a bandwidth test with speedtest-cli.
 
 Configuration parameters:
-    button_refresh: button to run the check (default 1)
+    button_refresh: button to run the check (default 2)
     button_share: button to open the result link (default None)
     format: display format for this module, {download} and/or {upload} required
         (default '● [{ping} ms] [↑ {upload} {upload_unit}] [↓ {download} {download_unit}]')
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
     si_units: use SI units (default False)
     sleep_timeout: when speedtest-cli is allready running, this interval will be used
-        to allow faster retry refreshes
-        (default 5)
-    thresholds: specify color thresholds to use
-        (default {
+        to allow faster retry refreshes (default 5)
+    thresholds: specify color thresholds to use (default [
                 'download': [(0, 'bad'), (1024, 'degraded'), (1048576, 'good')],
                 'ping': [(200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')],
-                'quality': [('ok', 'good'), ('bad', 'degraded'),
-                            ('faster', 'good'), ('slower', 'degraded'), ('faster', 'good')
-                ],
+                'quality':
+                    [
+                        ('ok', 'good'), ('bad', 'degraded'),
+                        ('faster', 'good'), ('slower', 'degraded'), ('faster', 'good')
+                    ],
                 'upload': [(0, 'bad'), (1024, 'degraded'), (1048576, 'good')]
-        })
+        ])
     timeout: timeout when communicating with speedtest.net servers (default 10)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
@@ -63,6 +63,9 @@ Format placeholders:
     {upload_raw} upload rate to speedtest server, for format comparation
     {upload_unit} unit used for upload, eg 'MB/s'
 
+Color thresholds:
+    format:
+        xxx: print a color based on the value of `xxx` placeholder
 
 The module will be triggered on clic only. Not at start.
 
@@ -130,7 +133,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    button_refresh = 1
+    button_refresh = 2
     button_share = None
     format = (
         u"\u25cf [{ping} ms] [↑ {upload} {upload_unit}] [↓ {download} {download_unit}]"
@@ -158,49 +161,44 @@ class Py3status:
         if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
+        # fail if download or upload missing
+        if not any(x in ["download", "upload"] for x in self.placeholders):
+            raise Exception("%s" % (MISSING_PLACEHOLDER))
+
         self.first_run = True
-        self.placeholders = list(set(self.py3.get_placeholders_list(self.format)))
+        self.placeholders = self.py3.get_placeholders_list(self.format)
 
-        dont_upload = ''
-        if 'upload' not in self.placeholders:
-            dont_upload = '--no-upload'
+        dont_upload = ""
+        if "upload" not in self.placeholders:
+            dont_upload = "--no-upload"
 
-        dont_download = ''
-        if 'download' not in self.placeholders:
-            dont_download = '--no-download'
+        dont_download = ""
+        if "download" not in self.placeholders:
+            dont_download = "--no-download"
 
-        server = ''  # if not specified, nearest server is use
+        server = ""  # if not specified, nearest server is use
         if self.server_id and int(self.server_id):
-            server = '--server {}'.format(self.server_id)
+            server = "--server {}".format(self.server_id)
 
-        share = ''
+        share = ""
         if self.button_share and all(
-            x in self.placeholders for x in ['download', 'upload']
+            x in self.placeholders for x in ["download", "upload"]
         ):
-            share = '--share'
+            share = "--share"
 
         self.command = "speedtest-cli --json --secure --timeout {} {} {} {} {}".format(
             self.timeout, dont_upload, dont_download, server, share
         )
 
-        # fail if download or upload missing
-        if not any(x in ['download', 'upload'] for x in self.placeholders):
-            raise Exception('%s' % (MISSING_PLACEHOLDER))
-
     def _is_running(self):
         try:
-            self.py3.command_output(["pgrep", "speedtest-cli"])
+            self.py3.command_output(["pgrep", "speedtest-cli --json"])
             return True
         except:
             return False
 
     def _get_speedtest_data(self):
-        data = {}
-        try:
-            data = loads(self.py3.command_output(self.command))
-        except self.py3.CommandError as ce:
-            raise Exception('%s') % ce.output
-        return data
+        return loads(self.py3.command_output(self.command)) or None
 
     def speedtest_cli(self):
         speedtest_data = {}
@@ -258,15 +256,15 @@ class Py3status:
             for x in ["server", "client"]:
                 if x in current_data:
                     for y in current_data[x]:
-                        current_data[x + '_' + y] = current_data[x][y]
+                        current_data[x + "_" + y] = current_data[x][y]
                     del current_data[x]
 
             # store last data fetched
             self.py3.storage_set("speedtest_data", current_data)
 
             # get speedtest result url
-            if 'share' in current_data:
-                self.url = current_data['share']
+            if "share" in current_data:
+                self.url = current_data["share"]
 
             # create placeholders
             for x in current_data:
@@ -285,9 +283,9 @@ class Py3status:
         }
 
     def on_click(self, event):
-        button = event['button']
+        button = event["button"]
         if button == self.button_share and self.url:
-            self.py3.command_run('xdg-open %s' % self.url)
+            self.py3.command_run("xdg-open %s" % self.url)
         elif button != self.button_refresh:
             self.py3.prevent_refresh()
 
