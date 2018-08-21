@@ -4,7 +4,8 @@ Display Github notifications and issue/pull requests for a repo.
 
 To check notifications a Github `username` and `personal access token` are
 required.  You can create a personal access token at
-https://github.com/settings/tokens The only `scope` needed is `notifications`,
+https://github.com/settings/tokens/new?scopes=notifications&description=py3status
+The only `scope` needed is `notifications` is selected automatically for you,
 which provides readonly access to notifications.
 
 The Github API is rate limited so setting `cache_timeout` too small may cause
