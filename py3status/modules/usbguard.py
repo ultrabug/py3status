@@ -113,6 +113,7 @@ class UsbguardListener(threading.Thread):
                         'format_all_devices'
                     ] = self.parent._manipulate_all_devices(self.parent.all_devices)
                     break
+
         self.parent.py3.update()
         self.parent.all_device = self.parent._get_all_devices()
 
@@ -143,10 +144,14 @@ class Py3status:
     button_block = 3
     button_reject = None
     format = u'[{format_device} {format_all_devices}]'
-    format_all_devices = u'{name}'
-    format_device = u'{name}'
-    format_device_separator = u' \?color=separator \| '
+    format_all_devices = u'\?color=rule {name}'
+    format_device = u'\?color=rule {name}'
+    format_device_separator = u'[ \?color=separator \| ]'
     format_notification = u'{name} is {action}'
+    thresholds = {
+        'action': [('block', "bad"), ('reject', "degraded"), ('allow', "good")],
+        'rule': [('block', "bad"), ('reject', "degraded"), ('allow', "good")],
+    }
 
     def _init_dbus(self):
         self.dbus_interface = 'org.usbguard'
@@ -202,7 +207,6 @@ class Py3status:
         for index, device in sorted(enumerate(devices_array), reverse=False):
             response[index] = device
 
-        pprint(response)
         return response
 
     def _toggle_permanant(self):
@@ -290,12 +294,23 @@ class Py3status:
         self.py3.composite_update(format_device_separator, {'index': 'sep'})
 
         for device in data:
+            # for x in self.thresholds:
+            #     if x in data[device]:
+            #         self.py3.log(data[device][x])
+            #         color = self.py3.threshold_get_color(data[device][x], x)
+            self.py3.log(data[device]['rule'])
+            color = self.py3.threshold_get_color(data[device]['index'], 'rule')
+            self.py3.log(color)
             device_formatted = self.py3.safe_format(
                 self.format_all_devices, data[device]
             )
             self.py3.composite_update(
                 device_formatted, {'index': data[device]['index']}
             )
+            self.py3.composite_update(
+                device_formatted, {'color': color}
+            )
+            self.py3.log(device_formatted)
             format_all_devices.append(device_formatted)
 
         format_all_devices = self.py3.composite_join(
@@ -311,6 +326,7 @@ class Py3status:
 
         for device in data:
             device_formatted = self.py3.safe_format(self.format_device, data[device])
+
             self.py3.composite_update(
                 device_formatted, {'index': data[device]['index']}
             )
