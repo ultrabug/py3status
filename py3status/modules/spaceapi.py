@@ -10,7 +10,7 @@ Configuration parameters:
     state_closed: show when hackerspace is closed (default 'closed')
     state_open: show when hackerspace is open (default 'open')
     url: specify JSON URL of a hackerspace to retrieve from
-        (default 'http://status.chaospott.de/status.json')
+        (default 'https://status.chaospott.de/status.json')
 
 Format placeholders:
     {state} Hackerspace state
@@ -47,7 +47,7 @@ class Py3status:
     format_lastchanged = 'since %H:%M'
     state_closed = 'closed'
     state_open = 'open'
-    url = 'http://status.chaospott.de/status.json'
+    url = 'https://status.chaospott.de/status.json'
 
     class Meta:
         deprecated = {

@@ -2,7 +2,7 @@
 """
 Display Yahoo! Weather forecast.
 
-See http://developer.yahoo.com/weather for more information.
+See https://developer.yahoo.com/weather for more information.
 Visit http://woeid.rosselliot.co.nz for WOEID, Where On Earth IDentifier.
 
 Configuration parameters:

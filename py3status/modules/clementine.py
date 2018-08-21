@@ -15,7 +15,7 @@ Requires:
         (may be part of qt5-tools)
 
 @author Francois LASSERRE <choiz@me.com>
-@license GNU GPL http://www.gnu.org/licenses/gpl.html
+@license GNU GPL https://www.gnu.org/licenses/gpl.html
 
 SAMPLE OUTPUT
 {'full_text': '♫ Music For Programming - Hivemind'}

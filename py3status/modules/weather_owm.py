@@ -259,9 +259,9 @@ import datetime
 
 # API information
 OWM_API = '2.5'
-OWM_CURR_ENDPOINT = 'http://api.openweathermap.org/data/%s/weather?' \
+OWM_CURR_ENDPOINT = 'https://api.openweathermap.org/data/%s/weather?' \
     'APPID=%s&lat=%f&lon=%f&lang=%s'
-OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
+OWM_FUTURE_ENDPOINT = 'https://api.openweathermap.org/data/%s/forecast?' \
     'APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d'
 IP_ENDPOINT = 'https://timezoneapi.io/api/ip'
 
@@ -400,7 +400,7 @@ class Py3status:
         # Verify the API key
         if self.api_key is None:
             raise OWMException('API Key for OpenWeatherMap cannot be empty!'
-                               ' Go to http://openweathermap.org/appid to'
+                               ' Go to https://openweathermap.org/appid to'
                                ' get an API Key.')
 
         # Generate our icon array
