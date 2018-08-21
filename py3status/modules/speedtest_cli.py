@@ -101,10 +101,10 @@ speedtest_cli {
 
 # compare only download
 speedtest_cli {
-    format = '[[\?if=quality=slower&color=download ↓ {download} {download_unit}]'
-    format += '[\?if=quality=faster&color=download ↑ {download} {download_unit}]'
-    format += '[\?if=quality=ok&color=download -> {download} {download_unit}]'
-    format += '[\?if=quality=bad&color=download x {download} {download_unit}]]'
+    format = '[[\?if=quality=slower&color=download_raw ↓ {download} {download_unit}]'
+    format += '[\?if=quality=faster&color=download_raw ↑ {download} {download_unit}]'
+    format += '[\?if=quality=ok&color=download_raw -> {download} {download_unit}]'
+    format += '[\?if=quality=bad&color=download_raw x {download} {download_unit}]]'
     format += '|'
 }
 ```
@@ -265,6 +265,14 @@ class Py3status:
                 speedtest_data[x] = current_data[x]
             for x in previous_data:
                 speedtest_data["previous_" + x] = previous_data[x]
+
+            # # cast
+            for x in speedtest_data:
+                try:
+                    value = float(speedtest_data[x])
+                except:
+                    value = speedtest_data[x]
+                speedtest_data[x] = value
 
             # thresholds
             for x in self.thresholds:
