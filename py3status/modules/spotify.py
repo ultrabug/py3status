@@ -15,9 +15,8 @@ Configuration parameters:
     sanitize_titles: whether to remove meta data from album/track title
         (default True)
     sanitize_words: which meta data to remove
-        (default ['bonus', 'demo', 'edit', 'explicit',
-                  'extended', 'feat', 'mono', 'remaster',
-                  'stereo', 'version'])
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
 
 Format placeholders:
     {album} album name

@@ -23,10 +23,7 @@ Configuration parameters:
         (default 2)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
-    format: Format of output
-        *(default '{repo} {issues}/{pull_requests}{notifications}'
-        if username and auth_token provided else
-        '{repo} {issues}/{pull_requests}')*
+    format: display format for this module, see Examples below (default None)
     format_notifications: Format of `{notification}` status placeholder.
         (default ' N{notifications_count}')
     notifications: Type of notifications can be `all` for all notifications or
@@ -53,6 +50,15 @@ Format placeholders:
 
 Examples:
 ```
+# default formats
+github {
+    # with username and auth_token, this will be used
+    format = '{repo} {issues}/{pull_requests}{notifications}'
+
+    # otherwise, this will be used
+    format '{repo} {issues}/{pull_requests}'
+}
+
 # set github access credentials
 github {
     auth_token = '40_char_hex_access_token'

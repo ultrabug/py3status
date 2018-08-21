@@ -8,8 +8,7 @@ also waiting.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
-    format: Display format to use
-        (default 'UPD: {pacman}' or 'UPD: {pacman}/{aur}')
+    format: display format for this module, see Examples below (default None)
     hide_if_zero: Don't show on bar if True
         (default False)
     include_aur: Set to True to use 'cower' to check for AUR updates
@@ -26,6 +25,15 @@ Requires:
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
+
+Examples:
+```
+# default formats
+arch_updates {
+    format = 'UPD: {pacman}'        # if include_aur is False
+    format = 'UPD: {pacman}/{aur}'  # if include_aur is True
+}
+```
 
 SAMPLE OUTPUT
 {'full_text': 'UPD: 5'}
@@ -47,12 +55,12 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 600
-    format = ''
+    format = None
     hide_if_zero = False
     include_aur = False
 
     def post_config_hook(self):
-        if self.format == '':
+        if not self.format:
             if not self.include_aur:
                 self.format = FORMAT_PACMAN_ONLY
             else:

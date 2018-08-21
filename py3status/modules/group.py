@@ -36,9 +36,7 @@ Configuration parameters:
         Setting to `0` will disable cycling. (default 0)
     fixed_width: Reduce the size changes when switching to new group
         (default False)
-    format: Format for module output.
-        *(default "{output}" if click_mode is 'all',
-        "{output} {button}" if click_mode 'button')*
+    format: display format for this module, see Examples below (default None)
     format_button_closed: Format for the button when group open
         (default  '+')
     format_button_open: Format for the button when group closed
@@ -52,9 +50,14 @@ Format placeholders:
     {button} The button to open/close or change the displayed group
     {output} Output of current active module
 
-Example:
-
+Examples:
 ```
+# default formats
+group {
+    format = '{output}'           # if click_mode is 'all'
+    format = '{output} {button}'  # if click_mode is 'button'
+}
+
 # Create a disks group that will show space on '/' and '/home'
 # Change between disk modules every 30 seconds
 ...
