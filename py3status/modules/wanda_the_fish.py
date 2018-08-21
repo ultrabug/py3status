@@ -7,8 +7,6 @@ and if loaded, it also takes up precious bar space, memory, and cpu cycles.
 Anybody found using it should be promptly sent for a psychiatric evaluation.
 
 Configuration parameters:
-    button_refresh: mouse button to refresh this module (default 2)
-    button_toggle: mouse button to toggle fortunes (default 1)
     cache_timeout: refresh interval for this module (default 0)
     format: display format for this module
         (default '{nomotion}[{fortune} ]{wanda}{motion}')
@@ -88,8 +86,6 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_refresh = 2
-    button_toggle = 1
     cache_timeout = 0
     format = '{nomotion}[{fortune} ]{wanda}{motion}'
     fortune_timeout = 60
@@ -174,13 +170,9 @@ class Py3status:
         self.py3.storage_set('time', self.time)
 
     def on_click(self, event):
-        button = event['button']
         if not self.fortune_command:
             return
-        elif button == self.button_toggle:
-            self._set_fortune(False if self.toggled else True)
-        elif button != self.button_refresh:
-            self.py3.prevent_refresh()
+        self._set_fortune(False if self.toggled else True)
 
 
 if __name__ == "__main__":
