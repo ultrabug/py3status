@@ -70,7 +70,7 @@ mail {                                       #
                 'user': 'tobes',             #      │
                 'password': 'i_love_python', #
                 'server': 'imap.yahoo.com',  #
-                                             # <---- no port, use secure 993
+                                             # <---- no port, use port 993
                 'urgent': False,             # <---- disable urgent
             }                                #
         ]
@@ -118,21 +118,17 @@ SAMPLE OUTPUT
 identified
 [
     {'full_text': 'IMAP ', 'color': '#00ff00'},
-    {'full_text': 'MAILDIR', 'color': '#ffff00'},
-    {'full_text': 'MBOX', 'color': '#ff0000'},
-    {'full_text': 'Mail 11'},
+    {'full_text': 'MAILDIR ', 'color': '#ffff00'},
+    {'full_text': 'MBOX ', 'color': '#ff0000'},
+    {'full_text': 'Mail 15'},
 ]
 
 individualized
 [
-    {'full_text': 'IMAP ', 'color': '#00ff00'},
-    {'full_text': 'Mail 3'},
-    {'full_text': 'MAILDIR ', 'color': '#ffff00'},
-    {'full_text': 'Mail 1'},
-    {'full_text': 'MBOX ', 'color': '#ff0000'},
-    {'full_text': 'Mail 5'},
+    {'full_text': 'IMAP ', 'color': '#00ff00'}, {'full_text': 'Mail 10 '},
+    {'full_text': 'MAILDIR ', 'color': '#ffff00'}, {'full_text': 'Mail 2 '},
+    {'full_text': 'MBOX ', 'color': '#ff0000'}, {'full_text': 'Mail 3'},
 ]
-
 
 no_mail
 {'full_text': 'No Mail'}
