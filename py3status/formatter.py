@@ -197,7 +197,7 @@ class Formatter:
                 # get value from attr_getter function
                 try:
                     param = attr_getter(key)
-                except:
+                except:  # noqa e722
                     raise Exception()
             else:
                 raise Exception()
@@ -277,7 +277,7 @@ class Placeholder:
                 # numbers like 0 and 0.0 are not.
                 valid = not (value_ in ['', 'None', None] or value_ is False)
             enough = False
-        except:
+        except:  # noqa e722
             # Exception raised when we don't have the param
             enough = True
             valid = False
@@ -350,7 +350,7 @@ class Condition:
         """
         try:
             variable = get_params(self.variable)
-        except:
+        except:  # noqa e722
             variable = None
         value = self.value
 
@@ -364,10 +364,10 @@ class Condition:
         elif isinstance(variable, Number):
             try:
                 value = int(self.value)
-            except:
+            except:  # noqa e722
                 try:
                     value = float(self.value)
-                except:
+                except:  # noqa e722
                     # could not parse
                     return not self.default
 
@@ -386,7 +386,7 @@ class Condition:
         try:
             if get_params(self.variable):
                 return self.default
-        except:
+        except:  # noqa e722
             pass
         return not self.default
 

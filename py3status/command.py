@@ -319,7 +319,7 @@ def command_parser():
         if options.index:
             try:
                 options.index = int(options.index)
-            except:
+            except ValueError:
                 pass
     elif options.command == 'refresh':
         # refresh all

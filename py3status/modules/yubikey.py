@@ -42,7 +42,7 @@ class YubiKeyTouchDetectorListener(threading.Thread):
             self.parent.error = None
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.socket.connect(self.parent.socket_path)
-        except:
+        except:  # noqa e722
             self.socket = None
             self.parent.error = Exception(
                 "Cannot connect to yubikey-touch-detector")

@@ -280,7 +280,7 @@ class Events(Thread):
                     self.dispatch_event(event)
                 except Exception:
                     self.py3_wrapper.report_exception('Event failed')
-        except:
+        except:  # noqa e722
             err = 'Events thread died, click events are disabled.'
             self.py3_wrapper.report_exception(err, notify_user=False)
             self.py3_wrapper.notify_user(err, level='warning')

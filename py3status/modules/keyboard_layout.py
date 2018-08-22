@@ -72,7 +72,7 @@ class Py3status:
         try:
             self._xkblayout()
             self._command = self._xkblayout
-        except:
+        except self.py3.CommandError:
             self._command = self._setxkbmap
 
         if not self.layouts:

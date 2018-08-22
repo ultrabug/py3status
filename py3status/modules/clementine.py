@@ -23,7 +23,6 @@ SAMPLE OUTPUT
 
 CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
 STRING_NOT_INSTALLED = 'not installed'
-STRING_ERROR = "clementine: isn't running"
 INTERNET_RADIO = 'Internet Radio'
 
 
@@ -46,11 +45,10 @@ class Py3status:
             track_id = self.py3.command_output(CMD + '.GetCurrentTrack')
             metadata = self.py3.command_output(CMD + '.GetMetadata {}'.format(track_id))
             lines = filter(None, metadata.splitlines())
-        except:
+        except self.py3.CommandError:
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
+                'full_text': ''
             }
 
         for item in lines:

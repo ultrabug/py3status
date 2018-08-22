@@ -85,7 +85,7 @@ class Py3status:
             try:
                 my_resolver.query(self.domain, 'A')
                 count_ok += 1
-            except:
+            except:  # noqa e722
                 count_nok += 1
                 status = 'NOK'
                 response['color'] = self.py3.COLOR_BAD

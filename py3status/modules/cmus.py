@@ -122,7 +122,7 @@ class Py3status:
         try:
             data = self.py3.command_output(['cmus-remote', '--query'])
             is_started = True
-        except:
+        except self.py3.CommandError:
             data = {}
             is_started = False
         return is_started, data
