@@ -10,6 +10,12 @@ from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
 
+# basestring does not exist in python3
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 class Module:
     """
@@ -307,7 +313,22 @@ class Module:
         mod_config = self.config['py3_config'].get(module, {})
 
         if 'min_width' in mod_config:
-            self.module_options['min_width'] = mod_config['min_width']
+            min_width = mod_config['min_width']
+            if not isinstance(min_width, int):
+                err = 'invalid "min_width" attribute should be an int'
+                raise TypeError(err)
+
+            self.module_options['min_width'] = min_width
+
+            if 'align' in mod_config:
+                align = mod_config['align']
+                if not (isinstance(align, basestring) and
+                        align.lower() in ('left', 'center', 'right')):
+                    err = 'invalid "align" attribute, valid values are:'
+                    err += ' left, center, right'
+                    raise ValueError(err)
+
+                self.module_options['align'] = align
 
         if 'separator' in mod_config:
             separator = mod_config['separator']
@@ -325,16 +346,6 @@ class Module:
                 raise TypeError(err)
 
             self.module_options['separator_block_width'] = sep_block_width
-
-        if 'align' in mod_config:
-            align = mod_config['align']
-            if not (isinstance(align, str) and
-                    align.lower() in ("left", "center", "right")):
-                err = 'invalid "align" attribute, valid values are:'
-                err += ' left, center, right'
-                raise ValueError(err)
-
-            self.module_options['align'] = align
 
     def process_composite(self, response):
         """

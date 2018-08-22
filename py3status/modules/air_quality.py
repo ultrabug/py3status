@@ -10,26 +10,26 @@ countries have their own air quality indices, corresponding to different nationa
 air quality standards.
 
 Configuration parameters:
-    auth_token: Personal token required. See http://aqicn.org/data-platform/token
+    auth_token: Personal token required. See https://aqicn.org/data-platform/token
         for more information. (default 'demo')
     cache_timeout: refresh interval for this module. A message from the site:
         The default quota is max 1000 requests per minute (~16RPS) and with
-        burst up to 60 requests. See http://aqicn.org/api/ for more information.
+        burst up to 60 requests. See https://aqicn.org/api/ for more information.
         (default 3600)
     format: display format for this module
         (default '[\?color=aqi {city_name}: {aqi} {category}]')
     format_datetime: specify strftime characters to format (default {})
     location: location or uid to query. To search for nearby stations in Kraków,
-        use `curl http://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
+        try `https://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
         For best results, use uid instead of name in location, eg `@8691`.
         (default 'Shanghai')
     quality_thresholds: specify a list of tuples, eg (number, 'color', 'name')
-        (default [(0, '#009966', 'Good'),
-            (51, '#ffde33', 'Moderate'),
-            (101, '#ff9933', 'Sensitively Unhealthy'),
-            (151, '#cc0033', 'Unhealthy'),
+        *(default [(0, '#009966', 'Good'),
+            (51, '#FFDE33', 'Moderate'),
+            (101, '#FF9933', 'Sensitively Unhealthy'),
+            (151, '#CC0033', 'Unhealthy'),
             (201, '#660099', 'Very Unhealthy'),
-            (301, '#7e0023', 'Hazardous')])
+            (301, '#7E0023', 'Hazardous')])*
 
 Format placeholders:
     {aqi} air quality index
@@ -50,7 +50,7 @@ Format placeholders:
     `{attribution_?_url}` can have more than 0.
 
     Your station may have individual scores for pollutants not listed below.
-    See http://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+    See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
     for an explicit list of valid placeholders to use, eg
 
     {iaqi_co}   individual score for pollutant carbon monoxide
@@ -137,7 +137,7 @@ class Py3status:
     def post_config_hook(self):
         self.auth_token = {'token': self.auth_token}
         self.request_timeout = 10
-        self.url = 'http://api.waqi.info/feed/%s/' % self.location
+        self.url = 'https://api.waqi.info/feed/%s/' % self.location
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format, word)) and (
