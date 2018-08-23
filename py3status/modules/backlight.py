@@ -112,8 +112,8 @@ class Py3status:
                 float(output)
                 self.command_available = True
             except ValueError:
-                self.command_available = False
-        except:
+                pass
+        except self.py3.CommandError:
             pass
 
         if self.command_available and self.brightness_initial:

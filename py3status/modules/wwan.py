@@ -322,7 +322,11 @@ class Py3status:
         }
 
         self.bus = SystemBus()
-        self.init = {'ip': [], 'sms_message': [], 'thresholds': []}
+        self.init = {
+            'ip': [],
+            'sms_message': [],
+            'thresholds': self.py3.get_color_names_list(self.format),
+        }
         self.last_messages = 0
         self.last_notification = self.py3.storage_get('notification')
 
@@ -352,11 +356,6 @@ class Py3status:
                             if name not in self.init['sms_message']:
                                 self.init['sms_message'].append(name)
 
-        # init thresholds - partial future helper code
-        for x in self.format.replace('&', ' ').split('color=')[1::1]:
-            self.init['thresholds'].append(x.split()[0])
-        self.init['thresholds'] = list(set(self.init['thresholds']))
-
     def _get_modem_proxy(self):
         modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
         modems = modemmanager_proxy.GetManagedObjects()
@@ -375,7 +374,7 @@ class Py3status:
         modem_data = {}
         try:
             modem_data = modem_proxy.GetStatus()
-        except:
+        except:  # noqa e722
             pass
         return modem_data
 
@@ -383,7 +382,7 @@ class Py3status:
         bearer = {}
         try:
             bearer = modem_proxy.Bearers[0]
-        except:
+        except:  # noqa e722
             pass
         return bearer
 
@@ -394,7 +393,7 @@ class Py3status:
         message_data = {}
         try:
             message_data = modem_proxy.Messages
-        except:
+        except:  # noqa e722
             pass
         return message_data
 
@@ -416,7 +415,7 @@ class Py3status:
                             'number': sms_proxy.Number,
                             'text': sms_proxy.Text
                         }))
-            except:
+            except:  # noqa e722
                 break
 
         format_message_separator = self.py3.safe_format(

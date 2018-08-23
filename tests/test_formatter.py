@@ -296,10 +296,18 @@ def test_26():
 
 
 def test_27():
-    run_formatter({'format': '{None}', 'expected': '', })
+    run_formatter({'format': '{None}', 'expected': 'None', })
 
 
 def test_27a():
+    run_formatter({'format': '{None} {no}', 'expected': 'None False', })
+
+
+def test_27b():
+    run_formatter({'format': '[Hello {None}] {no}', 'expected': ' False', })
+
+
+def test_27c():
     run_formatter({'format': '[Hi, my name is {None_str}]', 'expected': '', })
 
 
@@ -312,7 +320,7 @@ def test_29():
 
 
 def test_30():
-    run_formatter({'format': '{no}', 'expected': '', })
+    run_formatter({'format': '{no}', 'expected': 'False', })
 
 
 def test_31():
@@ -1134,7 +1142,7 @@ def test_module_true_value():
 
 
 def test_module_false_value():
-    run_formatter({'format': '{module_false}', 'expected': ''})
+    run_formatter({'format': '{module_false}', 'expected': 'False'})
 
 
 def test_zero_format_1():

@@ -7,6 +7,16 @@ py3status can be controlled remotely via the ``py3-cmd`` cli utility.
 
 This utility allows you to run a number of commands.
 
+.. code-block:: shell
+
+    # button numbers
+    1 = left click
+    2 = middle click
+    3 = right click
+    4 = scroll up
+    5 = scroll down
+
+
 Commands available
 ------------------
 

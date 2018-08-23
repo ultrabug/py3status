@@ -33,7 +33,7 @@ url = 'http://ip-api.com/json'
 format = '{lat}, {lon}'
 
 # access child objects
-url = 'http://api.icndb.com/jokes/random'
+url = 'https://api.icndb.com/jokes/random'
 format = '{value-joke}'
 
 # access title from 0th element of articles list

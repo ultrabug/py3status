@@ -439,6 +439,16 @@ As an added feature and in order to get your i3bar more responsive, every
 py3status modules and i3status modules as described in the refresh command
 below.
 
+.. code-block:: shell
+
+    # button numbers
+    1 = left click
+    2 = middle click
+    3 = right click
+    4 = scroll up
+    5 = scroll down
+
+
 .. code-block:: py3status
     :caption: Example
 

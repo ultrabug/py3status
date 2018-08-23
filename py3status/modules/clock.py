@@ -130,7 +130,7 @@ class Py3status:
             self.cycle = 0
         # find any declared timezones eg {Europe/London}
         self._items = {}
-        matches = re.findall('\{([^}]*)\}', ''.join(self.format))
+        matches = re.findall(r'\{([^}]*)\}', ''.join(self.format))
         for match in matches:
             self._items[match] = self._get_timezone(match)
 
@@ -143,7 +143,7 @@ class Py3status:
         # display fresh
         self.time_deltas = []
         for format in self.format_time:
-            format_time = re.sub('\{([^}]*)\}', '', format)
+            format_time = re.sub(r'\{([^}]*)\}', '', format)
             format_time = format_time.replace('%%', '')
             if '%f' in format_time:
                 # microseconds

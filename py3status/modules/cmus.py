@@ -14,9 +14,9 @@ Configuration parameters:
     button_stop: mouse button to stop the playback (default 3)
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module
-        *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]
-        [\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]
-        |\?show cmus: waiting for user input]]')*
+        *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]'
+        '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]'
+        '|\?show cmus: waiting for user input]]')*
     sleep_timeout: sleep interval for this module. when cmus is not running,
         this interval will be used. this allows some flexible timing where one
         might want to refresh constantly with some placeholders... or to refresh
@@ -99,9 +99,9 @@ class Py3status:
     button_previous = None
     button_stop = 3
     cache_timeout = 5
-    format = '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]' +\
-        '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]' +\
-        '|\?show cmus: waiting for user input]]'
+    format = ('[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]'
+              '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]'
+              '|\?show cmus: waiting for user input]]')
     sleep_timeout = 20
 
     def post_config_hook(self):
@@ -122,7 +122,7 @@ class Py3status:
         try:
             data = self.py3.command_output(['cmus-remote', '--query'])
             is_started = True
-        except:
+        except self.py3.CommandError:
             data = {}
             is_started = False
         return is_started, data

@@ -13,7 +13,7 @@ Format placeholders:
 Requires
     task: https://taskwarrior.org/download/
 
-@author James Smith http://jazmit.github.io/
+@author James Smith https://jazmit.github.io
 @license BSD
 
 SAMPLE OUTPUT
