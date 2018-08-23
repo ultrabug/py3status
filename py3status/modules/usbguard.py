@@ -41,8 +41,14 @@ Requires:
     python-gobject: pythonic binding for gobject
     usbguard: usb device authorization policy framework, WITHOUT usbguard-applet-qt running
 
+```
+Ex:
+Show only block devices:
+format_all_devices = '\?if=rule=block   {name} is {rule}'
+```
 
 @author Cyril Levis (@cyrinux)
+
 @license BSD
 
 SAMPLE OUTPUT
@@ -76,7 +82,7 @@ class UsbguardListener(threading.Thread):
         # if inserted
         if device_state == 1:  # 1 inserted, 3 removed
             if 'block id' in device_perms:
-                device = dict(usbguard_id=usbguard_id, index=usbguard_id)
+                device = dict(usbguard_id=usbguard_id)
                 for new_key in self.parent.placeholders:
                     old_key = new_key.replace('_', '-')
                     if old_key in event[4][4]:
@@ -103,8 +109,9 @@ class UsbguardListener(threading.Thread):
                     del self.parent.data[usbguard_id]
                     break
 
-        self.parent.py3.update()
         self.parent.all_devices = self.parent._get_all_devices()
+        self.parent.py3.update()
+
 
     def run(self):
         while not self.parent.killed.is_set():
@@ -133,7 +140,7 @@ class Py3status:
     button_block = 3
     button_reject = None
     format = u'{format_all_devices}'
-    format_all_devices = u'{name} is {rule}'
+    format_all_devices = u'\?color=rule {name} is {rule}'
     format_device_separator = u'\?color=separator \|'
     format_notification = u'{name} is {action}'
     thresholds = {
@@ -178,7 +185,6 @@ class Py3status:
         for usbguard_id, device in devices:
             params = {}
             params['usbguard_id'] = usbguard_id
-            params['index'] = usbguard_id
             for key in keys:
                 value = None
                 regex = eval('_regex_' + key)
@@ -193,8 +199,11 @@ class Py3status:
             devices_array.append(params)
 
         for index, device in sorted(enumerate(devices_array), reverse=False):
-            response[index] = device
+            response[index + 1] = device
 
+        # self.py3.log('# response')
+        # self.py3.log(response)
+        
         return response
 
     def _toggle_permanant(self):
@@ -232,9 +241,20 @@ class Py3status:
 
     def _set_policy(self, action, index):
         if action and index and index != 'sep':
-            usbguard_id = index
+    
             targets = {'allow': 0, 'block': 1, 'reject': 2}
 
+            self.py3.log('# data')
+            self.py3.log(self.data)
+            self.py3.log('# index')
+            self.py3.log(index)
+            self.py3.log('# action')
+            self.py3.log(action)
+            self.py3.log('# usbguard data')
+            self.py3.log(self.usbguard_data)
+            self.py3.log('# all devices')
+            self.py3.log(self.all_devices)
+            
             # notifications
             if self.format_notification:
                 format_notification = self.data[index]
@@ -250,29 +270,10 @@ class Py3status:
                 )
 
             # apply policy
-            if action == 'block':
-                if self.data[usbguard_id]:
-                    del self.data[usbguard_id]
-                    self.usbguard_data[
-                        'format_all_devices'
-                    ] = self._manipulate_all_devices(self.all_devices)
-            else:
+            if 'usbguard_id' in self.all_devices[index]:
                 self.proxy.applyDevicePolicy(
-                    usbguard_id, targets[action], self.is_permanant
+                    self.all_devices[index]['usbguard_id'], targets[action], self.is_permanant
                 )
-
-    def kill(self):
-        self.killed.set()
-
-    def on_click(self, event):
-        button = event['button']
-        index = event['index']
-        if button == self.button_allow:
-            self._set_policy('allow', index)
-        elif button == self.button_reject:
-            self._set_policy('reject', index)
-        elif button == self.button_block:
-            self._set_policy('block', index)
 
     def _manipulate_all_devices(self, data):
         format_all_devices = []
@@ -287,12 +288,11 @@ class Py3status:
             device_formatted = self.py3.safe_format(
                 self.format_all_devices, data[device]
             )
-            self.py3.composite_update(
-                device_formatted, {'index': data[device]['index']}
-            )
-
-            self.py3.log(device_formatted)
+            # self.py3.log(device_formatted)
             format_all_devices.append(device_formatted)
+
+        for index, device in sorted(enumerate(format_all_devices), reverse=False):
+            format_all_devices[index] = device
 
         format_all_devices = self.py3.composite_join(
             format_device_separator, format_all_devices
@@ -320,6 +320,23 @@ class Py3status:
             )
 
         return response
+
+    def kill(self):
+        self.killed.set()
+
+    def on_click(self, event):
+        button = event['button']
+        index = event['index']
+
+        self.py3.log('# click event')
+        self.py3.log(event)
+                
+        if button == self.button_allow:
+            self._set_policy('allow', index)
+        elif button == self.button_reject:
+            self._set_policy('reject', index)
+        elif button == self.button_block:
+            self._set_policy('block', index)
 
 
 if __name__ == "__main__":
