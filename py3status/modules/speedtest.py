@@ -116,6 +116,7 @@ SAMPLE OUTPUT
 """
 
 from json import loads
+from numbers import Number
 
 STRING_NOT_INSTALLED = "not installed"
 MISSING_PLACEHOLDER = "{download} or {upload} placeholder required"
@@ -211,7 +212,7 @@ class Py3status:
                 previous_data = self.py3.storage_get("speedtest_data")
                 current_data = self._get_speedtest_data()
                 cached_until = self.py3.CACHE_FOREVER
-                
+
                 if current_data and len(current_data) > 1:
                     # create a "total" for know if cnx is better or not
                     # between two run
@@ -265,16 +266,17 @@ class Py3status:
             speedtest_data.update(current_data)
             if previous_data:
                 speedtest_data.update(
-                    {"previous_" + k:v for (k,v) in previous_data.items()}
+                    {"previous_" + k: v for (k, v) in previous_data.items()}
                 )
 
             # # cast
-            for x in speedtest_data:
-                try:
-                    value = float(speedtest_data[x])
-                except:
-                    value = speedtest_data[x]
-                speedtest_data[x] = value
+            speedtest_data.update(
+                {
+                    k: float(v)
+                    for (k, v) in speedtest_data.items()
+                    if isinstance(v, Number)
+                }
+            )
 
             # thresholds
             for x in self.thresholds:
