@@ -4,7 +4,6 @@ import os
 
 from collections import Iterable, Mapping
 from pickle import dump, load
-from json import dumps
 from tempfile import NamedTemporaryFile
 from time import time
 
@@ -17,24 +16,38 @@ class Storage:
     def init(self, py3_wrapper, is_python_2):
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
-
         self.config = py3_wrapper.config
         py3_config = self.config.get('py3_config', {})
-        storage_config = py3_config.get('py3status', {}).get('storage')
 
-        if storage_config:
-            storage_file = os.path.expanduser(storage_config)
-            if '/' in storage_file:
-                storage_dir = None
+        # legacy storage cache
+        legacy_path = ''
+        config_path = py3_wrapper.config.get('i3status_config_path')
+        if config_path:
+            legacy_path = os.path.join(
+                os.path.dirname(config_path), 'py3status.data'
+            )
+        if os.path.exists(legacy_path):
+            new_path = os.path.expanduser('~/.cache/py3status_cache.data')
+            os.rename(legacy_path, new_path)
+            self.storage_path = legacy_path
+        else:
+            # cutting edge storage cache
+            storage_config = py3_config.get('py3status', {}).get('storage')
+            if storage_config:
+                storage_file = os.path.expandvars(
+                    os.path.expanduser(storage_config)
+                )
+                if '/' in storage_file:
+                    storage_dir = None
+                else:
+                    storage_dir = os.environ.get('XDG_CACHE_HOME')
             else:
                 storage_dir = os.environ.get('XDG_CACHE_HOME')
-        else:
-            storage_dir = os.environ.get('XDG_CACHE_HOME')
-            storage_file = 'py3status_cache.data'
+                storage_file = 'py3status_cache.data'
 
-        if not storage_dir:
-            storage_dir = os.path.expandvars(os.path.expanduser('~/.cache'))
-        self.storage_path = os.path.join(storage_dir, storage_file)
+            if not storage_dir:
+                storage_dir = os.path.expanduser('~/.cache')
+            self.storage_path = os.path.join(storage_dir, storage_file)
 
         try:
             with open(self.storage_path, 'rb') as f:
@@ -46,10 +59,10 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
+
         self.py3_wrapper.log('storage_path: {}'.format(self.storage_path))
         if self.data:
-            data = ['\n:' + x for x in dumps(self.data, indent=4).splitlines()]
-            self.py3_wrapper.log('storage_data: {}'.format(''.join(data)))
+            self.py3_wrapper.log('storage_data: {}'.format(self.data))
         self.initialized = True
 
     def save(self):
@@ -57,7 +70,7 @@ class Storage:
         Save our data to disk. We want to always have a valid file.
         """
         with NamedTemporaryFile(
-                dir=os.path.dirname(self.storage_path), delete=False
+            dir=os.path.dirname(self.storage_path), delete=False
         ) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)
