@@ -7,7 +7,7 @@ import sys
 from setuptools import find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
-from setuptools.command.easy_install import _to_ascii, ScriptWriter
+from setuptools.command.easy_install import _to_bytes, ScriptWriter
 
 module_path = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'py3status')
@@ -38,7 +38,7 @@ def install_py3_cmd(installer):
     py_cmd = ScriptWriter.get_header()
     script_text = PY3_CMD_SCRIPT_TEXT.format(py_cmd)
     try:
-        installer.write_script('py3-cmd', _to_ascii(script_text), 'b')
+        installer.write_script('py3-cmd', _to_bytes(script_text), 'b')
     except AttributeError:
         # building wheel etc
         pass
