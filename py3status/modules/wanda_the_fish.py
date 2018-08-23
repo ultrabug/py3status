@@ -21,6 +21,8 @@ Format placeholders:
 Optional:
     fortune-mod: the fortune cookie program from bsd games
 
+@author lasers
+
 Examples:
 ```
 # disable motions when not in use
@@ -44,41 +46,38 @@ wanda_the_fish {
 wanda_the_fish {
     cache_timeout = 2
 }
-
-@author lasers
+```
 
 SAMPLE OUTPUT
 [
-    {'full_text': u'innovate, v.: To annoy people.'},
-    {'full_text': u'<', 'color': '#ffa500'}
-    {'full_text': u'\xba', 'color': '#add8e6'},
-    {'full_text': u',', 'color': '#ff8c00'},
-    {'full_text': u'))', 'color': '#ffa500'},
-    {'full_text': u'))>< , 'color': #ff8c00'},
+    {'full_text': 'innovate, v.: To annoy people.'},
+    {'full_text': ' <', 'color': '#ffa500'},
+    {'full_text': '\xba', 'color': '#add8e6'},
+    {'full_text': ',', 'color': '#ff8c00'},
+    {'full_text': '))', 'color': '#ffa500'},
+    {'full_text': '))>< ', 'color': '#ff8c00'},
 ]
 
-off
+idle
 [
-
-    {'full_text': u'<', 'color': '#ffa500'}
-    {'full_text': u'\xba', 'color': '#add8e6'},
-    {'full_text': u',', 'color': '#ff8c00'},
-    {'full_text': u'))', 'color': '#ffa500'},
-    {'full_text': u'))>3, 'color': #ff8c00'},
+    {'full_text': ' <', 'color': '#ffa500'},
+    {'full_text': '\xba', 'color': '#add8e6'},
+    {'full_text': ',', 'color': '#ff8c00'},
+    {'full_text': '))', 'color': '#ffa500'},
+    {'full_text': '))>3', 'color': '#ff8c00'},
 ]
 
 py3status
 [
-
-    {'full_text': u'py3status is so cool! -- Confucius'},
-    {'full_text': u'<', 'color': '#ffa500'}
-    {'full_text': u'\xba', 'color': '#add8e6'},
-    {'full_text': u',', 'color': '#ff8c00'},
-    {'full_text': u'))', 'color': '#ffa500'},
-    {'full_text': u'))><', 'color': #ff8c00'},
+    {'full_text': 'py3status is so cool!'},
+    {'full_text': ' <', 'color': '#ffa500'},
+    {'full_text': '\xba', 'color': '#add8e6'},
+    {'full_text': ',', 'color': '#ff8c00'},
+    {'full_text': '))', 'color': '#ffa500'},
+    {'full_text': '))><', 'color': '#ff8c00'},
 ]
-
 """
+
 from time import time
 
 
@@ -121,7 +120,7 @@ class Py3status:
         if new:
             try:
                 fortune_data = self.py3.command_output(self.fortune_command)
-            except:
+            except self.py3.CommandError:
                 self.fortune = ''
                 self.fortune_command = None
             else:
@@ -172,7 +171,7 @@ class Py3status:
     def on_click(self, event):
         if not self.fortune_command:
             return
-        self._set_fortune(False if self.toggled else True)
+        self._set_fortune(not self.toggled)
 
 
 if __name__ == "__main__":
