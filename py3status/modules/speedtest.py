@@ -77,7 +77,7 @@ Requires:
 Examples:
 ```
 # colored based on thresholds
-speedtest_cli {
+speedtest {
     thresholds = {
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
@@ -95,12 +95,12 @@ speedtest_cli {
 }
 
 # colored based on comparation between two last runs
-speedtest_cli {
+speedtest {
     format = ' [[\?if=download_raw<previous_download_raw&color=degraded ↓]|[\?color=ok ↑]]'
 }
 
 # compare only download
-speedtest_cli {
+speedtest {
     format = '[[\?if=quality=slower&color=download_raw ↓ {download} {download_unit}]'
     format += '[\?if=quality=faster&color=download_raw ↑ {download} {download_unit}]'
     format += '[\?if=quality=ok&color=download_raw -> {download} {download_unit}]'
@@ -159,18 +159,18 @@ class Py3status:
         self.placeholders = self.py3.get_placeholders_list(self.format)
 
         # if download* or upload* missing, run complete test
-        dont_upload = ""
-        dont_download = ""
+        no_upload = ""
+        no_download = ""
         if any(
             key.startswith(x)
             for x in ["download", "upload"]
             for key in self.placeholders
         ):
             if not any(key.startswith("upload") for key in self.placeholders):
-                dont_upload = "--no-upload"
+                no_upload = "--no-upload"
 
             if not any(key.startswith("download") for key in self.placeholders):
-                dont_download = "--no-download"
+                no_download = " --no-download"
 
         server = ""  # if not specified, nearest server is use
         if self.server_id and int(self.server_id):
@@ -183,7 +183,7 @@ class Py3status:
             share = "--share"
 
         self.command = "speedtest-cli --json --secure --timeout {} {} {} {} {}".format(
-            self.timeout, dont_upload, dont_download, server, share
+            self.timeout, no_upload, no_download, server, share
         )
 
     def _is_running(self):
@@ -196,8 +196,9 @@ class Py3status:
     def _get_speedtest_data(self):
         return loads(self.py3.command_output(self.command)) or None
 
-    def speedtest_cli(self):
+    def speedtest(self):
         speedtest_data = {}
+        self.url = None
         if self.first_run:
             self.first_run = False
             cached_until = self.py3.CACHE_FOREVER
@@ -210,7 +211,7 @@ class Py3status:
                 previous_data = self.py3.storage_get("speedtest_data")
                 current_data = self._get_speedtest_data()
                 cached_until = self.py3.CACHE_FOREVER
-
+                
                 if current_data and len(current_data) > 1:
                     # create a "total" for know if cnx is better or not
                     # between two run
@@ -219,7 +220,7 @@ class Py3status:
                     )
 
                     # create "quality" #maybe bad name
-                    if "total" in previous_data:
+                    if previous_data and "total" in previous_data:
                         if current_data["total"] >= previous_data["total"]:
                             quality = "faster"
                         else:
@@ -257,14 +258,15 @@ class Py3status:
             self.py3.storage_set("speedtest_data", current_data)
 
             # get speedtest result url
-            if "share" in current_data:
+            if current_data and "share" in current_data:
                 self.url = current_data["share"]
 
             # create placeholders
-            for x in current_data:
-                speedtest_data[x] = current_data[x]
-            for x in previous_data:
-                speedtest_data["previous_" + x] = previous_data[x]
+            speedtest_data.update(current_data)
+            if previous_data:
+                speedtest_data.update(
+                    {"previous_" + k:v for (k,v) in previous_data.items()}
+                )
 
             # # cast
             for x in speedtest_data:
