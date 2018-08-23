@@ -234,18 +234,12 @@ class Py3status:
                     current_data["quality"] = quality
 
             # zero-ing if not fetched, raw version and units convertion
-            for x in ["download", "upload"]:
+            for x in ["download", "upload", "bytes_received", "bytes_sent"]:
+                unit = self.unit_size if 'bytes' in x else self.unit_bitrate
                 current_data[x] = current_data.get(x, 0)
                 current_data[x + "_raw"] = current_data[x]
                 current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                    current_data[x], unit=self.unit_bitrate, si=self.si_units
-                )
-
-            for x in ["bytes_received", "bytes_sent"]:
-                current_data[x] = current_data.get(x, 0)
-                current_data[x + "_raw"] = current_data[x]
-                current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                    current_data[x], unit=self.unit_size, si=self.si_units
+                    current_data[x], unit=unit, si=self.si_units
                 )
 
             # extra data, not sure we want to expose
