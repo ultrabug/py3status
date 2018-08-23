@@ -207,14 +207,14 @@ class Py3status:
         return response
 
     def _toggle_permanant(self):
-        self.is_permanant = not self.is_permanant
+        self.is_permanent = not self.is_permanent
 
     def post_config_hook(self):
         self._init_dbus()
         self.all_devices = {}
         self.data = {}
         self.usbguard_data = {}
-        self.is_permanant = False
+        self.is_permanent = False
 
         # init placeholders
         available_placeholders = [
@@ -270,9 +270,9 @@ class Py3status:
                 )
 
             # apply policy
-            if 'usbguard_id' in self.all_devices[index]:
+            if 'usbguard_id' in self.data and index != 'sep':
                 self.proxy.applyDevicePolicy(
-                    self.all_devices[index]['usbguard_id'], targets[action], self.is_permanant
+                    self.data['usbguard_id'], targets[action], self.is_permanent
                 )
 
     def _manipulate_all_devices(self, data):
@@ -288,7 +288,10 @@ class Py3status:
             device_formatted = self.py3.safe_format(
                 self.format_all_devices, data[device]
             )
-            # self.py3.log(device_formatted)
+
+            # add usbguard_id
+            self.py3.composite_update(device_formatted, {'usbguard_id': data[device]['usbguard_id']})
+
             format_all_devices.append(device_formatted)
 
         for index, device in sorted(enumerate(format_all_devices), reverse=False):
@@ -326,7 +329,6 @@ class Py3status:
 
     def on_click(self, event):
         button = event['button']
-        index = event['index']
 
         self.py3.log('# click event')
         self.py3.log(event)
