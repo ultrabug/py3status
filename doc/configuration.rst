@@ -220,6 +220,79 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
         }
     }
 
+Formater
+--------
+
+All modules allow you to define the format of their output. This is done with the format option.
+You can:
+
+- display static text:
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD:"
+      }
+
+- use a backslash ``\`` to escape a character (``\[`` will show ``[``).
+- display data provided by the module. This is done with "placeholders", which follow the format {placeholder_name}.
+  The following example shows the state of the MPD (play/pause/stop) and the artist and title of the curently playing song.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD: {state} {artist} {title}"
+      }
+
+  - Unknown placeholders act as if they were static text and placeholders that are empty or None will be removed. 
+  - Formating can also be applied to the placeholder eg ``{number:03.2f}``.
+
+- hide invalid (no valid data or undifined) placeholders by enclosing them in ``[]``. The following example will show ``artist - title`` if artist is present and ``title`` if title but no artist is present.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD: {state} [[{artist} - ]{title}]"
+      }
+
+- show the first block with valid output by deviding them with a pipe ``|``. The following exemple will show the filename if niether artist nor title are present.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD: {state} [[{artist} - ]{title}]|{file}"
+      }
+
+- ``\?`` can be used to provide extra commands to the format string. Multiple commands can be given using an ampersand ``&`` as a seperator.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      my_module {
+         format = "\?color=#FF00FF&show blue"
+      }
+
+- change the output with conditions. This is done by following the ``\?`` with a an if statement. Multiple conditions or commands can be combined by using an ampersand ``&`` as a seperator. Here are some examples:
+
+  - ``\?if=online green | red`` checks if the placeholder exists and would display ``green`` in that case. A condition that evaluates to false invalidates a section and the section can be hidden with ``[]`` or skiped with ``|``
+  - ``\?if=!online red | green`` this dose the same as the above condition, the only difference is that the exclamation mark ``!`` negates the condition.
+  - ``\?if=state=play PLAYING! | not playing`` checks if the placeholder contains ``play`` and displays ``PLAYING!`` if not it will display ``not playing``.
+
+A formatstring using nearly all of the above options could look like this:
+
+.. code-block:: py3status
+    :caption: Example
+
+    mpd_status {
+      format = "MPD: {state} [\?if=![stop] [[{artist} - ]{title}]|[{file}]]"
+    }
+
+This will show ``MPD: [state]`` if the state of the MPD is ``[stop]`` or ``MPD: [state] artist - title`` if it is ``[play]`` or ``[pause]`` and artist and title are present, ``MPD: [state] title`` if artist is missing and ``MPD: [state] file`` if artist and title are missing.
+
 Urgent
 ------
 

@@ -770,6 +770,13 @@ class Py3:
         string,  example ``\?color=#FF00FF``. Multiple commands can be given
         using an ampersand ``&`` as a separator, example ``\?color=#FF00FF&show``.
 
+        ``\?if=<placeholder>`` can be used to check if a placeholder exists. An
+        exclamation mark ``!`` after the equals sign ``=`` can be used to negate
+        the condition.
+
+        ``\?if=<placeholder>=<value>`` can be used to determine if {<placeholder>}
+        would be replaced with <value>. ``[]`` in <value> don't need to be escaped.
+
         ``{<placeholder>}`` will be converted, or removed if it is None or empty.
         Formating can also be applied to the placeholder eg
         ``{number:03.2f}``.
