@@ -191,7 +191,7 @@ class Py3status:
         try:
             self.py3.command_output(["pgrep", "speedtest-cli"])
             return True
-        except:
+        except self.py3.CommandError:
             return False
 
     def _get_speedtest_data(self):
