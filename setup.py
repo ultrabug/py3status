@@ -7,7 +7,12 @@ import sys
 from setuptools import find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
-from setuptools.command.easy_install import _to_bytes, ScriptWriter
+from setuptools.command.easy_install import ScriptWriter
+
+try:
+    from setuptools.command.easy_install import _to_ascii as _to_bytes
+except:
+    from setuptools.command.easy_install import _to_bytes
 
 module_path = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'py3status')
