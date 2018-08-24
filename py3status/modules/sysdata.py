@@ -263,7 +263,7 @@ class Py3status:
         if zone:
             try:
                 sensors = self.py3.command_output(command + [zone])
-            except:
+            except self.py3.CommandError:
                 pass
         if not sensors:
             sensors = self.py3.command_output(command)

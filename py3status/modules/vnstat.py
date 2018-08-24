@@ -44,7 +44,6 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division  # python2 compatibility
-STRING_ERROR = 'vnstat: returned wrong'
 STRING_NOT_INSTALLED = 'not installed'
 
 
@@ -95,15 +94,7 @@ class Py3status:
             for x in out:
                 if x.startswith("{};0;".format(self.statistics_type)):
                     return x
-        try:
-            type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(";")
-        except:
-            return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
-            }
-
+        type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(";")
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         up = (int(txm) * 1024 + int(txk)) * 1024

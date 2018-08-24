@@ -20,7 +20,7 @@ Format placeholders:
     {year} year in four digits
 
     For more placeholders, see title formatting 2.0 in 'deadbeef --help'
-    or http://github.com/Alexey-Yakovenko/deadbeef/wiki/Title-formatting-2.0
+    or https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0
     Not all of Foobar2000 remapped metadata fields will work with deadbeef and
     a quick reminder about using {placeholders} here instead of %placeholder%.
 
@@ -101,7 +101,7 @@ class Py3status:
         try:
             self.py3.command_output(['pgrep', 'deadbeef'])
             return True
-        except:
+        except self.py3.CommandError:
             return False
 
     def _get_deadbeef_data(self):

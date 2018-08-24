@@ -180,7 +180,7 @@ class ConfigParser:
         (file, pathname, description) = info
         try:
             py_mod = imp.load_module(name, file, pathname, description)
-        except:
+        except:  # noqa e722
             # We cannot load the module!  We could error out here but then the
             # user gets informed that the problem is with their config.  This
             # is not correct.  Better to say that all is well and then the
@@ -314,11 +314,11 @@ class ConfigParser:
             return value[1:-1].replace("\\'", "'")
         try:
             return int(value)
-        except:
+        except:  # noqa e722
             pass
         try:
             return float(value)
-        except:
+        except:  # noqa e722
             pass
         if value.lower() == 'true':
             return True
@@ -636,6 +636,16 @@ def process_config(config_path, py3_wrapper=None):
         del parser
         return parsed
 
+    def parse_config_error(e, config_path):
+        # There was a problem use our special error config
+        error = e.one_line(config_path)
+        notify_user(error)
+        # to display correctly in i3bar we need to do some substitutions
+        for char in ['"', '{', '|']:
+            error = error.replace(char, '\\' + char)
+        error_config = Template(ERROR_CONFIG).substitute(error=error)
+        return parse_config(error_config)
+
     config = {}
 
     # get the file encoding this is important with multi-byte unicode chars
@@ -647,18 +657,18 @@ def process_config(config_path, py3_wrapper=None):
     except CalledProcessError:
         # bsd does not have the --mime-encoding so assume utf-8
         encoding = 'utf-8'
-    with codecs.open(config_path, 'r', encoding) as f:
-        try:
-            config_info = parse_config(f)
-        except ParseException as e:
-            # There was a problem use our special error config
-            error = e.one_line(config_path)
-            notify_user(error)
-            # to display correctly in i3bar we need to do some substitutions
-            for char in ['"', '{', '|']:
-                error = error.replace(char, '\\' + char)
-            error_config = Template(ERROR_CONFIG).substitute(error=error)
-            config_info = parse_config(error_config)
+    try:
+        with codecs.open(config_path, 'r', encoding) as f:
+            try:
+                config_info = parse_config(f)
+            except ParseException as e:
+                config_info = parse_config_error(e, config_path)
+    except LookupError:
+        with codecs.open(config_path) as f:
+            try:
+                config_info = parse_config(f)
+            except ParseException as e:
+                config_info = parse_config_error(e, config_path)
 
     # update general section with defaults
     general_defaults = GENERAL_DEFAULTS.copy()

@@ -459,7 +459,7 @@ class Py3:
         try:
             if '\n' in message:
                 message = '\n' + message
-        except:
+        except:  # noqa e722
             pass
         message = 'Module `{}`: {}'.format(
             self._module.module_full_name, message)

@@ -82,12 +82,12 @@ class Py3status:
         # get wireless interface
         try:
             data = self.py3.command_output([iw, 'dev'])
-            devices = re.findall('Interface\s*([^\s]+)', data)
+            devices = re.findall(r'Interface\s*([^\s]+)', data)
             if not devices or 'wlan0' in devices:
                 self.device = 'wlan0'
             else:
                 self.device = devices[0]
-        except:
+        except self.py3.CommandError:
             pass
 
         self.iw_dev_id_link = [iw, 'dev', self.device, 'link']
@@ -121,12 +121,12 @@ class Py3status:
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
         try:
             iw = self.py3.command_output(self.iw_dev_id_link)
-        except:
+        except self.py3.CommandError:
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
                     'full_text': STRING_ERROR}
         # bitrate
-        bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
+        bitrate_out = re.search(r'tx bitrate: ([^\s]+) ([^\s]+)', iw)
         if bitrate_out:
             bitrate = float(bitrate_out.group(1))
             if self.round_bitrate:
@@ -139,14 +139,14 @@ class Py3status:
             bitrate_unit = None
 
         # signal
-        signal_out = re.search('signal: ([\-0-9]+)', iw)
+        signal_out = re.search(r'signal: ([\-0-9]+)', iw)
         if signal_out:
             signal_dbm = int(signal_out.group(1))
             signal_percent = min(self._dbm_to_percent(signal_dbm), 100)
         else:
             signal_dbm = None
             signal_percent = None
-        ssid_out = re.search('SSID: (.+)', iw)
+        ssid_out = re.search(r'SSID: (.+)', iw)
         if ssid_out:
             ssid = ssid_out.group(1)
             # `iw` command would prints unicode SSID like `\xe8\x8b\x9f`
@@ -160,7 +160,7 @@ class Py3status:
         # check command
         if self.py3.format_contains(self.format, 'ip'):
             ip_info = self.py3.command_output(self.ip_addr_list_id)
-            ip_match = re.search('inet\s+([0-9.]+)', ip_info)
+            ip_match = re.search(r'inet\s+([0-9.]+)', ip_info)
             if ip_match:
                 ip = ip_match.group(1)
             else:

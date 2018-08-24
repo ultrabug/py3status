@@ -58,7 +58,7 @@ class I3statusModule:
         # be able to restore the correct ones.
         try:
             name, instance = self.module_name.split()
-        except:
+        except:  # noqa e722
             name = self.module_name
             instance = ''
         self.name = name
@@ -190,7 +190,7 @@ class I3statusModule:
         # set the full_text with the correctly formatted date
         try:
             new_value = date.strftime(self.time_format)
-        except:
+        except:  # noqa e722
             # python 2 unicode
             new_value = date.strftime(self.time_format.encode('utf-8'))
             new_value = new_value.decode('utf-8')
@@ -208,7 +208,7 @@ class I3statusModule:
         try:
             # python3 compatibility code
             i3s_time = i3s_time.decode()
-        except:
+        except:  # noqa e722
             pass
 
         # get datetime and time zone info
