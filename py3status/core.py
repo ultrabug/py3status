@@ -57,7 +57,7 @@ class Runner(Thread):
     def run(self):
         try:
             self.module.run()
-        except:
+        except:  # noqa e722
             self.py3_wrapper.report_exception('Runner')
         # the module is no longer running so notify the timeout logic
         if self.module_name:
@@ -85,7 +85,8 @@ class Task:
     """
 
     def run(self):
-        raise NotImplemented()
+        # F901 'raise NotImplemented' should be 'raise NotImplementedError'
+        raise NotImplemented()  # noqa f901
 
 
 class CheckI3StatusThread(Task):
@@ -227,7 +228,7 @@ class Common:
             # all done!  create our message.
             msg = '{} ({}) {} line {}.'.format(
                 msg, exc_type.__name__, filename, line_no)
-        except:
+        except:  # noqa e722
             # something went wrong report what we can.
             msg = '{}.'.format(msg)
         finally:
@@ -575,7 +576,7 @@ class Py3statusWrapper:
             sha = out.split(' ')[1][:7]
             msg = ':'.join(out.strip().split('\t')[-1].split(':')[1:])
             self.log('git commit: {}{}'.format(sha, msg))
-        except:
+        except:  # noqa e722
             pass
 
         if self.config['debug']:
@@ -729,7 +730,7 @@ class Py3statusWrapper:
         # stop the command server
         try:
             self.commands_thread.kill()
-        except:
+        except:  # noqa e722
             pass
 
         try:
@@ -739,7 +740,7 @@ class Py3statusWrapper:
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
-        except:
+        except:  # noqa e722
             pass
 
     def refresh_modules(self, module_string=None, exact=True):

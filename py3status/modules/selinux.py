@@ -61,7 +61,7 @@ class Py3status:
             else:
                 state = self.state_permissive
                 color = self.py3.COLOR_DEGRADED
-        except:
+        except AttributeError:
             state = self.state_disabled
             color = self.py3.COLOR_BAD
 

@@ -88,11 +88,13 @@ class Py3status:
     def spaceapi(self):
         color = self.color_closed
         state = self.state_closed
+        lastchanged = 'unknown'
+
         try:
             data = self.py3.request(self.url).json()
             self._url = data.get('url')
 
-            if(data['state']['open']):
+            if data['state']['open']:
                 color = self.color_open
                 state = self.state_open
 
@@ -100,14 +102,13 @@ class Py3status:
                 try:
                     dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
                     lastchanged = dt.strftime(self.format_lastchanged)
-                except:
-                    lastchanged = 'unknown'
-            else:
-                lastchanged = 'unknown'
+                except TypeError:
+                    pass
 
             full_text = self.py3.safe_format(
                 self.format, {'state': state, 'lastchanged': lastchanged})
-        except:
+
+        except (self.py3.RequestException, KeyError):
             full_text = STRING_UNAVAILABLE
 
         return {

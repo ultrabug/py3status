@@ -116,7 +116,7 @@ class HttpResponse:
             try:
                 self._json = json.loads(self.text)
                 return self._json
-            except:
+            except:  # noqa e722
                 raise RequestInvalidJSON('Invalid JSON received')
 
     @property

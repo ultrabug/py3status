@@ -153,7 +153,7 @@ class Py3status:
                 if self.connection.state is 'SELECTED':
                     self.connection.close()
                 self.connection.logout()
-        except:
+        except:  # noqa e722
             pass
         finally:
             self.connection = None

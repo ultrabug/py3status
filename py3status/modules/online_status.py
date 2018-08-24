@@ -29,11 +29,9 @@ off
 """
 
 try:
-    # python3
-    from urllib.request import urlopen
-except:
-    # python2
-    from urllib2 import urlopen
+    from urllib.request import urlopen, URLError  # py3
+except ImportError:
+    from urllib2 import urlopen, URLError  # py2
 
 
 class Py3status:
@@ -74,13 +72,13 @@ class Py3status:
             try:
                 urlopen(self.url, timeout=self.timeout)
                 return True
-            except:
+            except URLError:
                 return False
         else:
             try:
                 self.py3.command_output(self.ping_command)
                 return True
-            except:
+            except self.py3.CommandError:
                 return False
 
     def online_status(self):

@@ -374,7 +374,7 @@ class Py3status:
         modem_data = {}
         try:
             modem_data = modem_proxy.GetStatus()
-        except:
+        except:  # noqa e722
             pass
         return modem_data
 
@@ -382,7 +382,7 @@ class Py3status:
         bearer = {}
         try:
             bearer = modem_proxy.Bearers[0]
-        except:
+        except:  # noqa e722
             pass
         return bearer
 
@@ -393,7 +393,7 @@ class Py3status:
         message_data = {}
         try:
             message_data = modem_proxy.Messages
-        except:
+        except:  # noqa e722
             pass
         return message_data
 
@@ -415,7 +415,7 @@ class Py3status:
                             'number': sms_proxy.Number,
                             'text': sms_proxy.Text
                         }))
-            except:
+            except:  # noqa e722
                 break
 
         format_message_separator = self.py3.safe_format(
