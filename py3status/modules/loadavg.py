@@ -125,13 +125,36 @@ loadavg {
 SAMPLE OUTPUT
 [
     {'full_text': 'Loadavg '},
-    {'full_text': '2.73 ', 'color': '#00ff00'},
-    {'full_text': '1.84 1.34', 'color': '#9dd7fb'},
+    {'full_text': '2.73 1.84 1.34', 'color': '#9dd7fb'},
+]
+
+detailed
+[
+    {'full_text': '1min ', 'color': '#a9a9a9'},
+    {'full_text': '0.48', 'color': '#9DD7FB'},
+    {'full_text': '|', 'color': '#a9a9a9'},
+    {'full_text': '4.0%', 'color': '#9DD7FB'},
+    {'full_text': ' 5min ', 'color': '#a9a9a9'},
+    {'full_text': '0.51', 'color': '#9DD7FB'},
+    {'full_text': '|', 'color': '#a9a9a9'},
+    {'full_text': '4.2%', 'color': '#9DD7FB'},
+    {'full_text': ' 15min ', 'color': '#a9a9a9'},
+    {'full_text': '0.54', 'color': '#9DD7FB'},
+    {'full_text': '|', 'color': '#a9a9a9'},
+    {'full_text': '4.5%', 'color': '#9DD7FB'}
+]
+
+percentages
+[
+    {'full_text': 'percentages '},
+    {'full_text': '65.1% ', 'color': '#ffa500'},
+    {'full_text': '44.8% ', 'color': '#ffff00'},
+    {'full_text': '25.0%', 'color': '#00ff00'},
 ]
 
 shadesofgrey
 [
-    {'full_text': 'Loadavg '},
+    {'full_text': 'shades_of_grey '},
     {'full_text': '0.49 ', 'color': '#dddddd'},
     {'full_text': '0.70 ', 'color': '#bbbbbb'},
     {'full_text': '0.89', 'color': '#999999'},
@@ -139,7 +162,7 @@ shadesofgrey
 
 shadesofblue
 [
-    {'full_text': 'Loadavg '},
+    {'full_text': 'shades_of_blue '},
     {'full_text': '0.88 ', 'color': '#87cefa'},
     {'full_text': '0.92 ', 'color': '#35adf7'},
     {'full_text': '0.91', 'color': '#0983cf'},
@@ -147,22 +170,14 @@ shadesofblue
 
 monochrome
 [
-    {'full_text': 'Loadavg '},
+    {'full_text': 'monochrome '},
     {'full_text': '0.41 ', 'color': '#9dd7fb'},
     {'full_text': '0.75 0.85'},
 ]
 
-thresholds
-[
-    {'full_text': 'Loadavg '},
-    {'full_text': '65.1% ', 'color': '#ffa500'},
-    {'full_text': '44.8% ', 'color': '#ffff00'},
-    {'full_text': '25.0%', 'color': '#00ff00'},
-]
-
 htop
 [
-    {'full_text': 'Loadavg '},
+    {'full_text': 'htop '},
     {'full_text': '1.64 ', 'color': '#9dd7fb'},
     {'full_text': '1.68 ', 'color': '#00ffff'},
     {'full_text': '1.67', 'color': '#008b8b'},
@@ -170,14 +185,14 @@ htop
 
 black_night
 [
-    {'full_text': 'Loadavg '},
+    {'full_text': 'black_night '},
     {'full_text': '0.51 ', 'color': '#adff2f'},
     {'full_text': '1.01 0.93', 'color': '#32cd32'},
 ]
 
 orange_gold
 [
-    {'full_text': 'Loadavg '},
+    {'full_text': 'orange_gold '},
     {'full_text': '0.51 ', 'color': '#ffa500'},
     {'full_text': '1.01 0.93', 'color': '#ffd700'},
 ]

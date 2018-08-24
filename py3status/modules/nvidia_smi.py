@@ -43,7 +43,7 @@ Requires:
 
 Examples:
 ```
-# add awesome {memory.used_percent} too
+# add {memory.used_percent}
 nvidia_smi {
     format_gpu = '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°] '
     format_gpu += '[\?color=memory.used_percent {memory.used} MiB'
@@ -55,25 +55,26 @@ nvidia_smi {
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'GeForce GTX 1060 '},
+    {'full_text': 'Quadro NVS 295 '},
     {'color': '#00ff00', 'full_text': '51°C'},
 ]
 
 memory
 [
-    {'full_text': 'GeForce GTX 1060 '},
-    {'color': '#ffff00', 'full_text': '65°C '},
-    {'color': '#00ff00', 'full_text': '188 MiB'},
+    {'full_text': 'Quadro NVS 295 '},
+    {'color': '#ffff00', 'full_text': '74°C '},
+    {'color': '#00ff00', 'full_text': '155 MiB'},
     {'color': '#a9a9a9', 'full_text': '|'},
-    {'color': '#00ff00', 'full_text': '3.12%'},
+    {'color': '#00ff00', 'full_text': '60.8%'},
 ]
 
-custom
+percent
 [
-    {'color': '#a9a9a9', 'full_text': 'temperature.gpu '},
-    {'color': '#00ff00', 'full_text': '54°C '},
-    {'color': '#a9a9a9', 'full_text': 'memory.used '},
-    {'color': '#ffff00', 'full_text': '135 MiB'}
+    {'full_text': 'Quadro NVS 295 '},
+    {'full_text': '73° ', 'color': '#fce94f'},
+    {'full_text': '192 MiB', 'color': '#ffa500'},
+    {'full_text': '|', 'color': '#a9a9a9'},
+    {'full_text': '75.3%', 'color': '#ffa500'}
 ]
 """
 
