@@ -19,35 +19,35 @@ class Storage:
         self.config = py3_wrapper.config
         py3_config = self.config.get('py3_config', {})
 
-        # legacy storage cache
-        legacy_path = ''
-        config_path = py3_wrapper.config.get('i3status_config_path')
-        if config_path:
-            legacy_path = os.path.join(
-                os.path.dirname(config_path), 'py3status.data'
+        # check for legacy storage cache
+        legacy_storage_path = self.get_legacy_storage_path()
+
+        # cutting edge storage cache
+        storage_config = py3_config.get('py3status', {}).get('storage')
+        if storage_config:
+            storage_file = os.path.expandvars(
+                os.path.expanduser(storage_config)
             )
-        if os.path.exists(legacy_path):
-            new_path = os.path.expanduser('~/.cache/py3status_cache.data')
-            os.rename(legacy_path, new_path)
-            self.storage_path = legacy_path
-        else:
-            # cutting edge storage cache
-            storage_config = py3_config.get('py3status', {}).get('storage')
-            if storage_config:
-                storage_file = os.path.expandvars(
-                    os.path.expanduser(storage_config)
-                )
-                if '/' in storage_file:
-                    storage_dir = None
-                else:
-                    storage_dir = os.environ.get('XDG_CACHE_HOME')
+            if '/' in storage_file:
+                storage_dir = None
             else:
                 storage_dir = os.environ.get('XDG_CACHE_HOME')
-                storage_file = 'py3status_cache.data'
+        else:
+            storage_dir = os.environ.get('XDG_CACHE_HOME')
+            storage_file = 'py3status_cache.data'
 
-            if not storage_dir:
-                storage_dir = os.path.expanduser('~/.cache')
-            self.storage_path = os.path.join(storage_dir, storage_file)
+        if not storage_dir:
+            storage_dir = os.path.expanduser('~/.cache')
+        self.storage_path = os.path.join(storage_dir, storage_file)
+
+        # move legacy storage cache to new desired / default location
+        if legacy_storage_path:
+            self.py3_wrapper.log(
+                'moving legacy storage_path {} to {}'.format(
+                    legacy_storage_path, self.storage_path
+                )
+            )
+            os.rename(legacy_storage_path, self.storage_path)
 
         try:
             with open(self.storage_path, 'rb') as f:
@@ -64,6 +64,19 @@ class Storage:
         if self.data:
             self.py3_wrapper.log('storage_data: {}'.format(self.data))
         self.initialized = True
+
+    def get_legacy_storage_path(self):
+        """
+        Detect and return existing legacy storage path.
+        """
+        config_dir = os.path.dirname(
+            self.py3_wrapper.config.get('i3status_config_path', '/tmp')
+        )
+        storage_path = os.path.join(config_dir, 'py3status.data')
+        if os.path.exists(storage_path):
+            return storage_path
+        else:
+            return None
 
     def save(self):
         """
