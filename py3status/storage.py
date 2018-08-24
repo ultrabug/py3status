@@ -16,13 +16,41 @@ class Storage:
     def init(self, py3_wrapper, is_python_2):
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
-        config_dir = os.path.dirname(
-            py3_wrapper.config.get('i3status_config_path', '/tmp')
-        )
-        storage_path = os.path.join(config_dir, 'py3status.data')
-        self.storage_path = storage_path
+        self.config = py3_wrapper.config
+        py3_config = self.config.get('py3_config', {})
+
+        # check for legacy storage cache
+        legacy_storage_path = self.get_legacy_storage_path()
+
+        # cutting edge storage cache
+        storage_config = py3_config.get('py3status', {}).get('storage')
+        if storage_config:
+            storage_file = os.path.expandvars(
+                os.path.expanduser(storage_config)
+            )
+            if '/' in storage_file:
+                storage_dir = None
+            else:
+                storage_dir = os.environ.get('XDG_CACHE_HOME')
+        else:
+            storage_dir = os.environ.get('XDG_CACHE_HOME')
+            storage_file = 'py3status_cache.data'
+
+        if not storage_dir:
+            storage_dir = os.path.expanduser('~/.cache')
+        self.storage_path = os.path.join(storage_dir, storage_file)
+
+        # move legacy storage cache to new desired / default location
+        if legacy_storage_path:
+            self.py3_wrapper.log(
+                'moving legacy storage_path {} to {}'.format(
+                    legacy_storage_path, self.storage_path
+                )
+            )
+            os.rename(legacy_storage_path, self.storage_path)
+
         try:
-            with open(storage_path, 'rb') as f:
+            with open(self.storage_path, 'rb') as f:
                 try:
                     # python3
                     self.data = load(f, encoding='bytes')
@@ -31,16 +59,31 @@ class Storage:
                     self.data = load(f)
         except IOError:
             pass
-        self.py3_wrapper.log('stored data:')
-        self.py3_wrapper.log(self.data)
+
+        self.py3_wrapper.log('storage_path: {}'.format(self.storage_path))
+        if self.data:
+            self.py3_wrapper.log('storage_data: {}'.format(self.data))
         self.initialized = True
+
+    def get_legacy_storage_path(self):
+        """
+        Detect and return existing legacy storage path.
+        """
+        config_dir = os.path.dirname(
+            self.py3_wrapper.config.get('i3status_config_path', '/tmp')
+        )
+        storage_path = os.path.join(config_dir, 'py3status.data')
+        if os.path.exists(storage_path):
+            return storage_path
+        else:
+            return None
 
     def save(self):
         """
         Save our data to disk. We want to always have a valid file.
         """
         with NamedTemporaryFile(
-                dir=os.path.dirname(self.storage_path), delete=False
+            dir=os.path.dirname(self.storage_path), delete=False
         ) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)

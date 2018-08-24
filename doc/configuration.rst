@@ -81,6 +81,54 @@ Global options:
         nagbar_font = 'pango:Ubuntu Mono 12'
     }
 
+.. note::
+    New in version 3.12
+
+``storage``: Set storage name or path.
+
+Store cache in $XDG_CACHE_HOME or ~/.cache (default)
+
+.. code-block:: py3status
+    :caption: Example
+
+    # default config
+    py3status {
+        storage =  'py3status_cache.data'
+    }
+
+Store per config cache in $XDG_CACHE_HOME or ~/.cache
+
+.. code-block:: py3status
+
+    # first config
+    py3status {
+        storage = 'py3status_top.data'
+    }
+
+.. code-block:: py3status
+
+    # second config
+    py3status {
+        storage = 'py3status_bottom.data'
+    }
+
+Store per config cache in different directories.
+
+.. code-block:: py3status
+
+    # first config
+    py3status {
+        storage = '~/.config/py3status/cache_top.data'
+    }
+
+.. code-block:: py3status
+
+    # second config
+    py3status {
+        storage = '~/.config/py3status/cache_bottom.data'
+    }
+
+
 Configuration obfuscation
 -------------------------
 
