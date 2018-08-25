@@ -16,45 +16,37 @@ Configuration parameters:
     button_continue: mouse button to stop/continue an interval (default None)
     button_delete: mouse button to delete a specific interval (default None)
     button_stop: mouse button to stop/start an interval (default None)
-    cache_timeout: refresh interval for this module (default 0)
+    cache_timeout: refresh interval for this module, otherwise auto
+        (default None)
     filter: specify interval and/or tag to filter (default None)
     format: display format for this module
-        (default 'timew ({time})[ {format_time}]')
+        (default '[Timew {format_time}]|No Timew')
     format_datetime: specify strftime characters to format (default {})
     format_duration: display format for time duration
         *(default '\?not_zero [{years}y][{months}m][{weeks}w][{days}d]'
         '[\?soft  ][{hours}:]{minutes:02d}:{seconds:02d}')*
-    format_tag: display format for tags (default '{name}')
-    format_tag_separator: show separator if more than one (default ', ')
+    format_tag: display format for tags (default '\?color=state_tag {name}')
+    format_tag_separator: show separator if more than one (default ' ')
     format_time: display format for tracked times
-        *(default '\?color=state [{format_tag}[\?soft  ]'
-        '{format_duration}|\?show --:--]')*
-    format_time_separator: show separator if more than one (default ', ')
-    sleep_timeout: when a timew interval is running, this interval will be used
-        to allow one to refresh constantly with time placeholders and/or
-        to refresh every minute rather than every few seconds (default 20)
+        (default '[\?color=state_time [{format_tag} ]{format_duration}]')
+    format_time_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
-        (default [(0, 'darkgray'), (1, None)])
-
-Control placeholders:
-    {is_tracking} a tracking boolean based on timew data, eg False, True
+        *(default {'state_tag': [(0, 'bad'), (1, 'darkgray')],
+        'state_time': [(0, 'darkgray'), (1, 'good')]})*
 
 Format placeholders:
-    {time} number of tracked times
     {format_time} format for tracked times
+    {tracking} time tracking state, eg False, True
 
 format_time placeholders:
-    {state} state, eg 0, 1
-    {index} index number, eg 1
+    {state} time tracking state, eg False, True
     {format_tag} format for tags
     {format_duration} format for time duration
     {start} start date, eg 20171021T010203Z
     {end} end date, eg 20171021T010203Z
-    {tag} number of tags
 
 format_tag placeholders:
-    {index} index number, eg 1
-    {name} tag name, eg lunch meeting
+    {name} tag name, eg gaming, studying, gardening
 
 format_datetime placeholders:
     key: start, end
@@ -71,13 +63,10 @@ format_duration placeholders:
     {microseconds} microseconds
 
 Color thresholds:
-    format:
-        time:       print color based on number of tracked times
     format_time:
-        time_index: print color based on tracked time index
-        tag:        print color based on number of tags
+        state_time: print color based on the state of time tracking
     format_tag:
-        tag_index:  print color based on tag index
+        state_tag:  print color based on the state of time tracking
 
 Requires:
     timew: feature-rich time tracking utility
@@ -92,9 +81,8 @@ Recommendations:
     |     command timew "$@" && py3-cmd refresh timewarrior
     | }
 
-    With this, you can consider giving `sleep_timeout` a much larger number,
-    eg 3600 (an hour), as this module would no longer need to be updated often
-    since it now gets updated immediately after any issued `timew` command too.
+    With this, you can consider giving `cache_timeout` a much larger number,
+    eg 3600 (an hour), so the module does not need to be updated that often.
 
 Examples:
 ```
@@ -102,51 +90,8 @@ Examples:
 timewarrior {
     filter = ':day'           # filter times not in 24 hours of current day
     filter = '12hours'        # filter times not in 12 hours of current time
-    filter = '12hours'        # filter times not in 12 hours of current time
+    filter = '5min'           # filter times not in 5 minutes of current time
     filter = '5pm to 11:59pm  # filter times not in 5pm to 11:59pm range
-}
-
-# show latest time only
-timewarrior {
-    format = '{format_time}|\?show No time'
-    format_time = '\?if=state&color=state [{format_tag}[\?soft  ]'
-    format_time += '{format_duration}|\?show --:--]'
-
-    # alternative, {time} will print one instead of total tracked times
-    filter = '1min'  # filter everything but current interval
-}
-
-# add rainbow threshold
-timewarrior {
-    thresholds = [
-        (0, '#bababa'),
-        (1, '#ffb3ba'),
-        (2, '#ffdfba'),
-        (3, '#ffffba'),
-        (4, '#baefba'),
-        (5, '#baffc9'),
-        (6, '#bae1ff'),
-        (7, '#bab3ff')
-    ]
-}
-
-# show rainbow times
-timewarrior {
-    format_time = '\?color=time_index [{format_tag}]'
-    format_time += '[\?soft  ][{format_duration}]'
-}
-
-# show rainbow number of tracked times
-timewarrior {
-    format = '\?color=time {time} times'
-}
-
-# replace tags with symbols
-timewarrior {
-    format_time = '{format_tag}'
-    format_tag = '[\?if=name=meeting&color=good M|'
-    format_tag += '[\?if=name=gym&color=degraded G|'
-    format_tag += '\?color=degraded {name}]]'
 }
 
 # add buttons
@@ -157,41 +102,57 @@ timewarrior {
     button_delete = 9    # delete an interval
 }
 
+# cache_timeout
+timewarrior {
+    # auto refresh every 10 seconds when there is no active time tracking
+    # auto refresh every second when there is active time tracking
+    cache_timeout = None
+
+    # refresh every minute when there is no active time tracking
+    # refresh every second when there is active time tracking
+    cache_timeout = 60
+
+    # explicit refresh every 20 seconds when there is no active time tracking
+    # explicit refresh every 5 seconds when there is active time tracking
+    cache_timeout = (20, 5)
+}
+
 # add your snippets here
 timewarrior {
-    format = '...'
+    format = "..."
 }
 ```
 
 @author lasers
 
 SAMPLE OUTPUT
-{'full_text': 'timew (1) 00:33'}
-
-many_times
 [
-    {'full_text': 'timew (5) '}, {'color': '#a9a9a9', 'full_text': '00:04'},
-    {'full_text': ', '}, {'color': '#a9a9a9', 'full_text': '05:07'},
-    {'full_text': ', '}, {'color': '#a9a9a9', 'full_text': '19:03'},
-    {'full_text': ', '}, {'color': '#a9a9a9', 'full_text': '1:15:02'},
-[
-
-start_and_tag
-[
-    {'full_text': 'timew (3) 00:33'}, {'full_text': ', '},
-    {'color': '#a9a9a9', 'full_text': '33:03'}, {'full_text': ', '},
-    {'color': '#a9a9a9', 'full_text': 'lunch meeting 5:50'},
-    {'full_text': ', --:--'},
+    {'full_text': 'Timew '},
+    {'full_text': 'gaming ', 'color': '#ff0000'},
+    {'full_text': '15:02 ', 'color': '#a9a9a9'},
+    {'full_text': 'studying ', 'color': '#a9a9a9'},
+    {'full_text': '03:42', 'color': '#00ff00'}
 ]
+
+no_tag
+[
+    {'full_text': 'Timew '},
+    {'full_text': 'gardening ', 'color': '#a9a9a9'},
+    {'full_text': '20:37', 'color': '#00ff00'}
+]
+
+no_timew
+{'full_text': 'No Timew'}
 """
 
 from pytz import utc
-from json import loads
+from json import loads as json_loads
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 STRING_NOT_INSTALLED = 'not installed'
 DATETIME = '%Y%m%dT%H%M%SZ'
+STRING_INVALID_TIMEOUT = 'invalid cache_timeout'
 
 
 class Py3status:
@@ -201,23 +162,36 @@ class Py3status:
     button_continue = None
     button_delete = None
     button_stop = None
-    cache_timeout = 0
+    cache_timeout = None
     filter = None
-    format = 'timew ({time})[ {format_time}]'
+    format = '[Timew {format_time}]|No Timew'
     format_datetime = {}
     format_duration = ('\?not_zero [{years}y][{months}m][{weeks}w][{days}d]'
                        '[\?soft  ][{hours}:]{minutes:02d}:{seconds:02d}')
-    format_tag = '{name}'
-    format_tag_separator = ', '
-    format_time = ('\?color=state [{format_tag}[\?soft  ]'
-                   '{format_duration}|\?show --:--]')
-    format_time_separator = ', '
-    sleep_timeout = 20
-    thresholds = [(0, 'darkgray'), (1, None)]
+    format_tag = '\?color=state_tag {name}'
+    format_tag_separator = ' '
+    format_time = '[\?color=state_time [{format_tag} ]{format_duration}]'
+    format_time_separator = ' '
+    thresholds = {
+        'state_tag': [(0, 'bad'), (1, 'darkgray')],
+        'state_time': [(0, 'darkgray'), (1, 'good')],
+    }
 
     def post_config_hook(self):
         if not self.py3.check_commands('timew'):
             raise Exception(STRING_NOT_INSTALLED)
+
+        if self.cache_timeout is None:
+            self.sleep_timeout = 10
+            self.cache_timeout = 0
+        elif isinstance(self.cache_timeout, tuple):
+            if len(self.cache_timeout) != 2:
+                raise Exception(STRING_INVALID_TIMEOUT)
+            self.sleep_timeout = self.cache_timeout[0]
+            self.cache_timeout = self.cache_timeout[1]
+        elif isinstance(self.cache_timeout, int):
+            self.sleep_timeout = self.cache_timeout
+            self.cache_timeout = 0
 
         self.timewarrior_command = 'timew export'
         if self.filter:
@@ -228,38 +202,47 @@ class Py3status:
             if (self.py3.format_contains(self.format_time, word)) and (
                     word in self.format_datetime):
                 self.init['datetimes'].append(word)
-        self.is_tracking = None
+
+        self.tracking = None
+        self.thresholds_init = {}
+        for name in ('format', 'format_tag', 'format_time'):
+            self.thresholds_init[name] = self.py3.get_color_names_list(
+                getattr(self, name) or ''
+            )
 
     def _get_timewarrior_data(self):
-        return loads(self.py3.command_output(self.timewarrior_command))
+        return json_loads(self.py3.command_output(self.timewarrior_command))
 
     def _manipulate(self, data):
         new_time = []
-        self.is_tracking = False
+        self.tracking = False
 
         for time_index, time in zip(range(len(data), -1, -1), data):
-            time['time_index'] = time_index
+            time['index'] = time_index
+            time['state_time'] = 'end' not in time
+
+            # tags
             new_tag = []
+            time['tags'] = time.get('tags', [])
+            for tag_name in time['tags']:
+                tag_data = {'name': tag_name, 'state_tag': time['state_time']}
+                for x in self.thresholds_init['format_tag']:
+                    if x in tag_data:
+                        self.py3.threshold_get_color(tag_data[x], x)
+                new_tag.append(self.py3.safe_format(self.format_tag, tag_data))
 
-            if 'tags' in time:
-                for index, x in enumerate(time['tags'], 1):
-                    new_tag.append(self.py3.safe_format(
-                        self.format_tag, {'name': x, 'index': index}))
-                    if self.thresholds:
-                        self.py3.threshold_get_color(index, 'tag_index')
-                del time['tags']
-            time['tag'] = len(new_tag)
-            time['format_tag'] = self.py3.composite_join(
-                self.py3.safe_format(self.format_tag_separator), new_tag)
+            format_tag_separator = self.py3.safe_format(self.format_tag_separator)
+            format_tag = self.py3.composite_join(format_tag_separator, new_tag)
 
-            # duration
-            if 'end' in time:
-                end = datetime.strptime(time['end'], DATETIME)
-                time['state'] = 0
-            else:
-                self.is_tracking = True
+            time['format_tag'] = format_tag
+            del time['tags']
+
+            # duraton
+            if time['state_time']:
+                self.tracking = True
                 end = datetime.now(utc).utcnow()
-                time['state'] = 1
+            else:
+                end = datetime.strptime(time['end'], DATETIME)
 
             start = datetime.strptime(time['start'], DATETIME)
             duration = relativedelta(end, start)
@@ -277,20 +260,20 @@ class Py3status:
                 }
             )
 
+            # datetime
             for word in self.init['datetimes']:
                 if word in time:
                     time[word] = self.py3.safe_format(datetime.strftime(
                         datetime.strptime(time[word], DATETIME),
                         self.format_datetime[word]))
 
-            for k, v in time.items():
-                if isinstance(v, (int, float)):
-                    self.py3.threshold_get_color(v, k)
+            # time
+            for x in self.thresholds_init['format_time']:
+                if x in time:
+                    self.py3.threshold_get_color(time[x], x)
 
             format_time = self.py3.safe_format(self.format_time, time)
-            self.py3.composite_update(
-                format_time, {'index': 'timew/{}'.format(time_index)}
-            )
+            self.py3.composite_update(format_time, {'index': format(time_index)})
             new_time.append(format_time)
 
         format_time_separator = self.py3.safe_format(self.format_time_separator)
@@ -299,39 +282,41 @@ class Py3status:
 
     def timewarrior(self):
         timewarrior_data = self._get_timewarrior_data()
-        cached_until = self.sleep_timeout
-        count_time = len(timewarrior_data)
         format_time = self._manipulate(timewarrior_data)
 
-        if self.is_tracking:
+        if self.tracking:
             cached_until = self.cache_timeout
+        else:
+            cached_until = self.sleep_timeout
 
-        if self.thresholds:
-            self.py3.threshold_get_color(count_time, 'time')
+        timew_data = {
+            'format_time': format_time,
+            'tracking': self.tracking,
+        }
+
+        for x in self.thresholds_init['format']:
+            if x in self.load_data:
+                self.py3.threshold_get_color(timew_data[x], x)
 
         return {
             'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(
-                self.format, {
-                    'format_time': format_time,
-                    'time': count_time,
-                }
-            )
+            'full_text': self.py3.safe_format(self.format, timew_data)
         }
 
     def on_click(self, event):
         button = event['button']
-        action = index = None
-        if 'timew' in format(event['index']):
-            index = event['index'].split('/')[-1]
+        index = event['index']
+        action = None
+        if isinstance(event['index'], int):
+            index = None
         if button == self.button_delete:
             if index:
                 action = 'delete @{}'.format(index)
         elif button == self.button_cancel:
-            if self.is_tracking:
+            if self.tracking:
                 action = 'cancel'
         elif button in [self.button_continue, self.button_stop]:
-            if self.is_tracking:
+            if self.tracking:
                 action = 'stop'
             else:
                 if button == self.button_continue:
@@ -342,8 +327,6 @@ class Py3status:
                     action = 'start'
         if action:
             self.py3.command_run('timew {}'.format(action))
-        elif self.is_tracking:
-            self.py3.prevent_refresh()
 
 
 if __name__ == '__main__':
