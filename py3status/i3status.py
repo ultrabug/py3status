@@ -25,7 +25,12 @@ class Tz(tzinfo):
     This is mainly so we can use %Z in strftime
     """
 
+    MAX_OFFSET = timedelta(hours=23, minutes=59)
+
     def __init__(self, name, offset):
+        # issue 1375 race issue on suspend
+        if abs(offset) > self.MAX_OFFSET:
+            raise ValueError('Invalid offset')
         self._offset = offset
         self._name = name
 
@@ -156,11 +161,14 @@ class I3statusModule:
             # If no timezone or a minute has passed update timezone
             t = time()
             if self.time_zone_check_due < t:
-                self.set_time_zone(item)
                 # If we are late for our timezone update then schedule the next
                 # update to happen when we next get new data from i3status
                 interval = self.i3status.update_interval
-                if (
+                if not self.set_time_zone(item):
+                    # we had an issue with an invalid time zone probably due to
+                    # suspending.  re check the time zone when we next can.
+                    self.time_zone_check_due = 0
+                elif (
                         self.time_zone_check_due and
                         (t - self.time_zone_check_due > 5 + interval)
                 ):
@@ -202,6 +210,9 @@ class I3statusModule:
     def set_time_zone(self, item):
         """
         Work out the time zone and create a shim tzinfo.
+
+        We return True if all is good or False if there was an issue and we
+        need to re check the time zone.  see issue #1375
         """
         # parse i3status date
         i3s_time = item['full_text'].encode('UTF-8', 'replace')
@@ -216,7 +227,7 @@ class I3statusModule:
         i3s_datetime = ' '.join(parts[:2])
         # occassionally we do not get the timezone name
         if len(parts) < 3:
-            return
+            return True
         else:
             i3s_time_tz = parts[2]
 
@@ -228,7 +239,11 @@ class I3statusModule:
             datetime(utcnow.year, utcnow.month, utcnow.day, utcnow.hour,
                      utcnow.minute))
         # create our custom timezone
-        self.tz = Tz(i3s_time_tz, delta)
+        try:
+            self.tz = Tz(i3s_time_tz, delta)
+        except ValueError:
+            return False
+        return True
 
 
 class I3status(Thread):
