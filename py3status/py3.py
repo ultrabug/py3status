@@ -1,4 +1,4 @@
-from __future__ import division
+﻿from __future__ import division
 
 import collections
 import os
@@ -778,7 +778,7 @@ class Py3:
         would be replaced with <value>. ``[]`` in <value> don't need to be escaped.
 
         ``{<placeholder>}`` will be converted, or removed if it is None or empty.
-        Formating can also be applied to the placeholder eg
+        Formatting can also be applied to the placeholder Eg
         ``{number:03.2f}``.
 
         example format_string:
