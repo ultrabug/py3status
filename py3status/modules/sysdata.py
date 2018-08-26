@@ -181,8 +181,7 @@ class Py3status:
         elif not temp_unit == 'K':
             temp_unit = 'unknown unit'
         self.temp_unit = temp_unit
-        self.init = {'meminfo': []}
-        self.init = {'cpuinfo': []}
+        self.init = {'meminfo': [], 'cpuinfo': []}
         names = ['cpu_temp', 'cpu', 'load', 'mem', 'swap']
         placeholders = [
             'cpu_temp', 'cpu_used_*', 'load*', 'mem_*', 'swap_*'
@@ -203,7 +202,7 @@ class Py3status:
                 data[fields[0]] = {
                     'total': sum(map(int, fields[1:])),
                     'idle': int(fields[4]),
-                    }
+                }
                 fields = f.readline().split()
             return data
 
@@ -295,20 +294,18 @@ class Py3status:
         if self.init['cpuinfo']:
             cpui = self._get_stat()
             sys['cpu_used_percent'] = self._calc_cpu_percent(cpui['cpu'],
-                    self.last_cpu.setdefaults('cpu', {}))
-            sys['cpu_used_history'] = self.py3.history_bar_graph(
-                    self.cpu_history,
-                    sys['cpu_used_percent'],
-                    length=self.cpu_history_length)
+                                                             self.last_cpu.setdefault('cpu', {}))
+            sys['cpu_used_history'] = self.py3.history_bar_graph(self.cpu_history,
+                                                                 sys['cpu_used_percent'],
+                                                                 length=self.cpu_history_length)
             self.py3.threshold_get_color(sys['cpu_used_percent'], 'cpu')
             concurrent = []
             for cpu, info in sorted(cpui.items()):
                 if cpu == 'cpu':
                     continue
                 concurrent.append(self._calc_cpu_percent(cpui[cpu],
-                    self.last_cpu.setdefaults(cpu, {})))
-            sys['cpu_used_concurrent'] = self.py3.concurrent_bar_graphs(
-                    concurrent)
+                                  self.last_cpu.setdefault(cpu, {})))
+            sys['cpu_used_concurrent'] = self.py3.concurrent_bar_graphs(concurrent)
 
         if self.init['cpu_temp']:
             sys['cpu_temp'] = self._get_cputemp(self.zone, self.temp_unit)
