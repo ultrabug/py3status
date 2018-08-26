@@ -25,6 +25,7 @@ SAMPLE OUTPUT
 """
 
 STRING_NOT_INSTALLED = "MEGAcmd is not installed"
+STRING_NOT_CONFIGURED = "no sync is configured yet"
 
 
 class Py3status:
@@ -43,8 +44,10 @@ class Py3status:
 
     def mega(self):
         output = self.py3.command_output("mega-sync").splitlines()
-        columns = output[0].split()
+        if len(output) == 0:
+            self.py3.error(STRING_NOT_CONFIGURED)
 
+        columns = output[0].split()
         megasync_data = []
         for line in output[1:]:
             cells = dict(zip(columns, line.split()))
