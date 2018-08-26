@@ -20,6 +20,8 @@ SAMPLE OUTPUT
 {'full_text': 'MEGA: Synced'}
 """
 
+STRING_NOT_INSTALLED = "MEGAcmd is not installed"
+
 
 class Py3status:
     """
@@ -31,7 +33,7 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.py3.check_commands("mega-sync"):
-            raise Exception("MEGAcmd is not installed")
+            raise Exception(STRING_NOT_INSTALLED)
 
     def megasync(self):
         output = self.py3.command_output("mega-sync").splitlines()
