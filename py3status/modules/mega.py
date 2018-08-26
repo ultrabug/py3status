@@ -48,7 +48,7 @@ class Py3status:
         if len(output) == 0:
             self.py3.error(STRING_NOT_CONFIGURED)
 
-        columns = [col.lower() for col in output[0].split()]
+        columns = output[0].lower().split()
         megasync_data = []
         for line in output[1:]:
             cells = dict(zip(columns, line.split()))
