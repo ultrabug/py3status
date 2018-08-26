@@ -2,6 +2,9 @@
 import re
 import sys
 
+from math import ceil
+from numbers import Number
+
 from py3status.composite import Composite
 
 try:
@@ -194,7 +197,7 @@ class Formatter:
                 # get value from attr_getter function
                 try:
                     param = attr_getter(key)
-                except:
+                except:  # noqa e722
                     raise Exception()
             else:
                 raise Exception()
@@ -235,6 +238,7 @@ class Placeholder:
         """
         return the correct value for the placeholder
         """
+        value = '{%s}' % self.key
         try:
             value = value_ = get_params(self.key)
             if self.format.startswith(':'):
@@ -242,15 +246,21 @@ class Placeholder:
                 # type then we see if we can coerce it to be.  This allows
                 # the user to format types that normally would not be
                 # allowed eg '123' it also allows {:d} to be used as a
-                # shorthand for {:.0f}.  If the parameter cannot be
-                # successfully converted then the format is removed.
+                # shorthand for {:.0f}.  Use {:g} to remove insignificant
+                # trailing zeroes and the decimal point too if there are
+                # no remaining digits following it.  If the parameter cannot
+                # be successfully converted then the format will be removed.
                 try:
+                    if 'ceil' in self.format:
+                        value = int(ceil(float(value)))
                     if 'f' in self.format:
+                        value = float(value)
+                    if 'g' in self.format:
                         value = float(value)
                     if 'd' in self.format:
                         value = int(float(value))
-                    output = u'{%s%s}' % (self.key, self.format)
-                    value = output.format(**{self.key: value})
+                    output = u'{[%s]%s}' % (self.key, self.format)
+                    value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
@@ -258,18 +268,19 @@ class Placeholder:
                 output = u'{%s%s}' % (self.key, self.format)
                 value = value_ = output.format(**{self.key: value})
 
-            if block.commands.not_zero:
-                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+            if block.parent is None:
+                valid = True
+            elif block.commands.not_zero:
+                valid = value_ not in ['', 'None', None, False, '0', '0.0', 0, 0.0]
             else:
                 # '', None, and False are ignored
                 # numbers like 0 and 0.0 are not.
-                valid = not (value_ in ['', None] or value_ is False)
+                valid = not (value_ in ['', 'None', None] or value_ is False)
             enough = False
-        except:
+        except:  # noqa e722
             # Exception raised when we don't have the param
             enough = True
             valid = False
-            value = '{%s}' % self.key
 
         return valid, value, enough
 
@@ -297,6 +308,87 @@ class Literal:
 
     def repr(self):
         return self.text
+
+
+class Condition:
+    """
+    This class represents the if condition of a block It allows us to compare
+    the value of a parameter to a chosen value or just to see if it equates to
+    True
+    """
+
+    condition = None
+    value = True
+    variable = None
+
+    def __init__(self, info):
+        # are we negated?
+        self.default = info[0] != '!'
+        if not self.default:
+            info = info[1:]
+
+        if '=' in info:
+            self.variable, self.value = info.split('=')
+            self.condition = '='
+            self.check_valid = self._check_valid_condition
+        elif '>' in info:
+            self.variable, self.value = info.split('>')
+            self.condition = '>'
+            self.check_valid = self._check_valid_condition
+        elif '<' in info:
+            self.variable, self.value = info.split('<')
+            self.condition = '<'
+            self.check_valid = self._check_valid_condition
+        else:
+            self.variable = info
+            self.check_valid = self._check_valid_basic
+
+    def _check_valid_condition(self, get_params):
+        """
+        Check if the condition has been met.
+        We need to make sure that we are of the correct type.
+        """
+        try:
+            variable = get_params(self.variable)
+        except:  # noqa e722
+            variable = None
+        value = self.value
+
+        # if None, return oppositely
+        if variable is None:
+            return not self.default
+
+        # convert the value to a correct type
+        if isinstance(variable, bool):
+            value = bool(self.value)
+        elif isinstance(variable, Number):
+            try:
+                value = int(self.value)
+            except:  # noqa e722
+                try:
+                    value = float(self.value)
+                except:  # noqa e722
+                    # could not parse
+                    return not self.default
+
+        # compare and return the result
+        if self.condition == '=':
+            return (variable == value) == self.default
+        elif self.condition == '>':
+            return (variable > value) == self.default
+        elif self.condition == '<':
+            return (variable < value) == self.default
+
+    def _check_valid_basic(self, get_params):
+        """
+        Simple check that the variable is set
+        """
+        try:
+            if get_params(self.variable):
+                return self.default
+        except:  # noqa e722
+            pass
+        return not self.default
 
 
 class BlockConfig:
@@ -329,8 +421,9 @@ class BlockConfig:
         update with commands from the block
         """
         commands = dict(parse_qsl(commands_str, keep_blank_values=True))
-
-        self._if = commands.get('if', self._if)
+        _if = commands.get('if', self._if)
+        if _if:
+            self._if = Condition(_if)
         self._set_int(commands, 'max_length')
         self._set_int(commands, 'min_length')
         self.color = self._check_color(commands.get('color'))
@@ -421,21 +514,8 @@ class Block:
         """
         see if the if condition for a block is valid
         """
-        _if = self.commands._if
-        if _if and _if.startswith('!'):
-            try:
-                if not get_params(_if[1:]):
-                    return True
-            except:
-                return True
-            return False
-        else:
-            try:
-                if get_params(_if):
-                    return True
-            except:
-                pass
-            return False
+        if self.commands._if:
+            return self.commands._if.check_valid(get_params)
 
     def render(self, get_params, module, _if=None):
         """
@@ -512,8 +592,8 @@ class Block:
                 text += conversion(item)
                 continue
             elif text:
-                if (not first and
-                        (text.strip() == '' or out[-1].get('color') == color)):
+                if (not first and (text == '' or out and
+                   out[-1].get('color') == color)):
                     out[-1]['full_text'] += text
                 else:
                     part = {'full_text': text}

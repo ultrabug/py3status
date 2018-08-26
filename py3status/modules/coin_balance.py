@@ -118,6 +118,9 @@ REQUEST = {
 
 
 class Py3status:
+    """
+    """
+    # available configuration parameters
     cache_timeout = 30
     coin_password = None
     coin_username = None
@@ -202,7 +205,7 @@ class Py3status:
                 return 'Authentication failed'
             else:
                 return 'Request Error'
-        except:
+        except:  # noqa e722
             return 'Connection to \'' + url + '\' failed'
 
 

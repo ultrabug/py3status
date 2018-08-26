@@ -34,14 +34,16 @@ import re
 
 
 class Py3status:
+    """
+    """
     # available configuration parameters
     cache_timeout = 600
     check_security = True
     format = 'DNF: {updates}'
 
-    def __init__(self):
-        self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
-        self._reg_ex_pkg = re.compile(b'^\S+\.', re.M)
+    def post_config_hook(self):
+        self._reg_ex_sec = re.compile(r'\d+(?=\s+Security)')
+        self._reg_ex_pkg = re.compile(r'^\S+\.', re.M)
         self._first = True
         self._updates = 0
         self._security_notice = False
@@ -92,9 +94,6 @@ class Py3status:
 
 
 if __name__ == "__main__":
-    """
-    Test this module by calling it directly.
-    """
     """
     Run module in test mode.
     """

@@ -8,6 +8,8 @@ import sys
 
 from pprint import pformat
 
+import pytest
+
 from py3status.composite import Composite
 from py3status.formatter import Formatter
 from py3status.py3 import NoneColor
@@ -25,6 +27,7 @@ param_dict = {
     'no': False,
     'empty': '',
     'None': None,
+    'None_str': 'None',
     '?bad name': 'evil',
     u'☂ Very bad name ': u'☂ extremely evil',
     'long_str': 'I am a long string though not too long',
@@ -37,6 +40,8 @@ param_dict = {
     'str_int': '123',
     'str_float': '123.456',
     'str_nan': "I'm not a number",
+    'trailing_zeroes_1': '50.000',
+    'trailing_zeroes_2': '5.500',
 
     'composite_basic': Composite([{'full_text': 'red ', 'color': '#FF0000'},
                                   {'full_text': 'green ', 'color': '#00FF00'},
@@ -77,6 +82,8 @@ def attr_getter_fn(attr):
 
 
 def run_formatter(test_dict):
+    __tracebackhide__ = True
+
     if test_dict.get('py3only') and python2:
         return
     if not test_dict.get('pypy', True) and is_pypy:
@@ -92,6 +99,7 @@ def run_formatter(test_dict):
     except Exception as e:
         if test_dict.get('exception') == str(e):
             return
+        print('Format\n{}\n'.format(test_dict['format']))
         raise e
 
     # simplify the composite and convert to text if possible
@@ -108,9 +116,11 @@ def run_formatter(test_dict):
     if python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
     if result != expected:
+        print('Format\n{}\n'.format(test_dict['format']))
         print('Expected\n{}'.format(pformat(expected)))
         print('Got\n{}'.format(pformat(result)))
-    assert (result == expected)
+    if result != expected:
+        pytest.fail('Results not as expected')
 
 
 def test_1():
@@ -286,7 +296,19 @@ def test_26():
 
 
 def test_27():
-    run_formatter({'format': '{None}', 'expected': '', })
+    run_formatter({'format': '{None}', 'expected': 'None', })
+
+
+def test_27a():
+    run_formatter({'format': '{None} {no}', 'expected': 'None False', })
+
+
+def test_27b():
+    run_formatter({'format': '[Hello {None}] {no}', 'expected': ' False', })
+
+
+def test_27c():
+    run_formatter({'format': '[Hi, my name is {None_str}]', 'expected': '', })
 
 
 def test_28():
@@ -298,7 +320,7 @@ def test_29():
 
 
 def test_30():
-    run_formatter({'format': '{no}', 'expected': '', })
+    run_formatter({'format': '{no}', 'expected': 'False', })
 
 
 def test_31():
@@ -1120,7 +1142,7 @@ def test_module_true_value():
 
 
 def test_module_false_value():
-    run_formatter({'format': '{module_false}', 'expected': ''})
+    run_formatter({'format': '{module_false}', 'expected': 'False'})
 
 
 def test_zero_format_1():
@@ -1181,6 +1203,195 @@ def test_inherit_color_2():
     run_formatter({
         'format': '\?color=#F0F [[\?color=good [{number}]]]',
         'expected': [{'color': u'#00FF00', 'full_text': u'42'}]
+    })
+
+
+def test_conditions_1():
+    run_formatter({
+        'format': '\?if=number=42 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_2():
+    run_formatter({
+        'format': '\?if=number=4 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_3():
+    run_formatter({
+        'format': '\?if=!number=42 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_4():
+    run_formatter({
+        'format': '\?if=!number=4 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_5():
+    run_formatter({
+        'format': '\?if=missing=4 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_6():
+    run_formatter({
+        'format': '\?if=name=Björk cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_7():
+    run_formatter({
+        'format': '\?if=name=Jimmy cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_8():
+    run_formatter({
+        'format': '\?if=name= cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_9():
+    run_formatter({
+        'format': '\?if=number= cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_10():
+    run_formatter({
+        'format': '\?if=pi=3.14159265359 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_11():
+    run_formatter({
+        'format': '\?if=pi=3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_12():
+    run_formatter({
+        'format': '\?if=yes=3 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_13():
+    run_formatter({
+        'format': '\?if=no=3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_14():
+    run_formatter({
+        'format': '\?if=number>3 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_15():
+    run_formatter({
+        'format': '\?if=number<50 cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_16():
+    run_formatter({
+        'format': '\?if=number>50 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_17():
+    run_formatter({
+        'format': '\?if=number<3 cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_18():
+    run_formatter({
+        'format': '\?if=name<Andrew cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_19():
+    run_formatter({
+        'format': '\?if=name>Andrew cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_20():
+    run_formatter({
+        'format': '\?if=name<John cool beans',
+        'expected': 'cool beans'
+    })
+
+
+def test_conditions_21():
+    run_formatter({
+        'format': '\?if=name>John cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_22():
+    run_formatter({
+        'format': '\?if=missing>John cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_23():
+    run_formatter({
+        'format': '[\?if=None=None cool] beans',
+        'expected': ' beans'
+    })
+
+
+def test_trailing_zeroes_1():
+    run_formatter({
+        'format': '{trailing_zeroes_1} becomes {trailing_zeroes_1:g}',
+        'expected': '50.000 becomes 50'
+    })
+
+
+def test_trailing_zeroes_2():
+    run_formatter({
+        'format': '{trailing_zeroes_2} becomes {trailing_zeroes_2:g}',
+        'expected': '5.500 becomes 5.5'
+    })
+
+
+def test_ceiling_numbers_1():
+    run_formatter({
+        'format': '{pi} becomes {pi:ceil}',
+        'expected': '3.14159265359 becomes 4'
+    })
+
+
+def test_ceiling_numbers_2():
+    run_formatter({
+        'format': '{zero_almost} becomes {zero_almost:ceil}',
+        'expected': '0.0001 becomes 1'
     })
 
 

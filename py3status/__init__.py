@@ -16,6 +16,18 @@ except NameError:
 
 
 def main():
+    from py3status.cli import parse_cli
+    options = parse_cli()
+    # detect gevent option early because monkey patching should be done before
+    # everything else starts kicking
+    if options.gevent:
+        try:
+            from gevent import monkey
+            monkey.patch_all()
+        except Exception:
+            # user will be notified when we start
+            pass
+
     from py3status.core import Py3statusWrapper
     try:
         locale.setlocale(locale.LC_ALL, '')
@@ -25,7 +37,7 @@ def main():
 
     py3 = None
     try:
-        py3 = Py3statusWrapper()
+        py3 = Py3statusWrapper(options)
         py3.setup()
     except (IOPipeError, KeyboardInterrupt):
         if py3:

@@ -4,11 +4,18 @@ import inspect
 
 from collections import OrderedDict
 from time import time
+from random import randint
 
 from py3status.composite import Composite
 from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
+
+# basestring does not exist in python3
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 class Module:
@@ -31,6 +38,7 @@ class Module:
         self.click_events = False
         self.config = py3_wrapper.config
         self.disabled = False
+        self.enabled = False
         self.error_messages = None
         self.error_hide = False
         self.has_post_config_hook = False
@@ -144,6 +152,7 @@ class Module:
                 msg = 'Exception in `%s` post_config_hook()' % self.module_full_name
                 self._py3_wrapper.report_exception(msg, notify_user=False)
                 self._py3_wrapper.log('terminating module %s' % self.module_full_name)
+        self.enabled = True
 
     def runtime_error(self, msg, method):
         """
@@ -213,16 +222,17 @@ class Module:
         """
         Start the module running.
         """
+        self.prepare_module()
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
             self._py3_wrapper.log('starting module %s' % self.module_full_name)
-            self._py3_wrapper.timeout_queue_add_module(self.module_full_name)
+            self._py3_wrapper.timeout_queue_add(self)
 
     def force_update(self):
         """
         Forces an update of the module.
         """
-        if self.disabled or self.terminated:
+        if self.disabled or self.terminated or not self.enabled:
             return
         # clear cached_until for each method to allow update
         for meth in self.methods:
@@ -230,9 +240,7 @@ class Module:
             if self.config['debug']:
                 self._py3_wrapper.log('clearing cache for method {}'.format(meth))
         # set module to update
-        self._py3_wrapper.timeout_queue_add_module(
-            self.module_full_name, 0
-        )
+        self._py3_wrapper.timeout_queue_add(self)
 
     def sleep(self):
         self.sleeping = True
@@ -256,9 +264,7 @@ class Module:
         if self.cache_time == PY3_CACHE_FOREVER:
             return
         # restart
-        self._py3_wrapper.timeout_queue_add_module(
-            self.module_full_name, self.cache_time
-        )
+        self._py3_wrapper.timeout_queue_add(self, self.cache_time)
 
     def set_updated(self):
         """
@@ -304,11 +310,28 @@ class Module:
         Set universal module options to be interpreted by i3bar
         https://i3wm.org/i3status/manpage.html#_universal_module_options
         """
-        self.module_options = {}
+        self.i3s_module_options = {}
+        self.py3_module_options = {}
         mod_config = self.config['py3_config'].get(module, {})
 
         if 'min_width' in mod_config:
-            self.module_options['min_width'] = mod_config['min_width']
+            min_width = mod_config['min_width']
+            if not isinstance(min_width, int):
+                err = 'invalid "min_width" attribute should be an int'
+                raise TypeError(err)
+
+            self.py3_module_options['min_width'] = min_width
+            self.random_int = randint(0, 1)
+
+            if 'align' in mod_config:
+                align = mod_config['align']
+                if not (isinstance(align, basestring) and
+                        align.lower() in ('left', 'center', 'right')):
+                    err = 'invalid "align" attribute, valid values are:'
+                    err += ' left, center, right'
+                    raise ValueError(err)
+
+                self.py3_module_options['align'] = align
 
         if 'separator' in mod_config:
             separator = mod_config['separator']
@@ -316,7 +339,7 @@ class Module:
                 err = 'invalid "separator" attribute, should be a bool'
                 raise TypeError(err)
 
-            self.module_options['separator'] = separator
+            self.i3s_module_options['separator'] = separator
 
         if 'separator_block_width' in mod_config:
             sep_block_width = mod_config['separator_block_width']
@@ -325,17 +348,7 @@ class Module:
                 err += "should be an int"
                 raise TypeError(err)
 
-            self.module_options['separator_block_width'] = sep_block_width
-
-        if 'align' in mod_config:
-            align = mod_config['align']
-            if not (isinstance(align, str) and
-                    align.lower() in ("left", "center", "right")):
-                err = 'invalid "align" attribute, valid values are:'
-                err += ' left, center, right'
-                raise ValueError(err)
-
-            self.module_options['align'] = align
+            self.i3s_module_options['separator_block_width'] = sep_block_width
 
     def process_composite(self, response):
         """
@@ -363,16 +376,7 @@ class Module:
             err = 'conflicting "full_text" and "composite" in response'
             raise Exception(err)
         # set universal options on last component
-        composite[-1].update(self.module_options)
-        # calculate any min width (we split this across components)
-        min_width = None
-        if 'min_width' in self.module_options:
-            min_width = int(self.module_options['min_width'] / len(composite))
-        # store alignment
-        align = None
-        if 'align' in self.module_options:
-            align = self.module_options['align']
-
+        composite[-1].update(self.i3s_module_options)
         # update all components
         color = response.get('color')
         urgent = response.get('urgent')
@@ -392,12 +396,6 @@ class Module:
                 if 'separator' not in item:
                     item['separator'] = False
                     item['separator_block_width'] = 0
-            # set min width
-            if min_width:
-                item['min_width'] = min_width
-            # set align
-            if align:
-                item['align'] = align
             # If a color was supplied for the composite and a composite
             # part does not supply a color, use the composite color.
             if color and 'color' not in item:
@@ -413,6 +411,41 @@ class Module:
             # if urgent we want to set this to all parts
             elif urgent and 'urgent' not in item:
                 item['urgent'] = urgent
+
+        # set min_width
+        if 'min_width' in self.py3_module_options:
+            min_width = self.py3_module_options['min_width']
+
+            # get width, skip if width exceeds min_width
+            width = sum([len(x['full_text']) for x in response['composite']])
+            if width >= min_width:
+                return
+
+            # sometimes when we go under min_width to pad both side evenly,
+            # we will add extra space on either side to honor min_width
+            padding = int((min_width / 2.0) - (width / 2.0))
+            offset = min_width - ((padding * 2) + width)
+
+            # set align
+            align = self.py3_module_options.get('align', 'center')
+            if align == 'center':
+                left = right = ' ' * padding
+                if self.random_int:
+                    left += ' ' * offset
+                else:
+                    right += ' ' * offset
+            elif align == 'left':
+                left, right = '', ' ' * (padding * 2 + offset)
+            elif align == 'right':
+                right, left = '', ' ' * (padding * 2 + offset)
+
+            # padding
+            if left:
+                response['composite'][0]['full_text'] = (
+                    left + response['composite'][0]['full_text']
+                )
+            if right:
+                response['composite'][-1]['full_text'] += right
 
     def _params_type(self, method_name, instance):
         """
@@ -765,7 +798,7 @@ class Module:
                         if not self.allow_urgent and 'urgent' in result:
                             del result['urgent']
                         # set universal module options in result
-                        result.update(self.module_options)
+                        result.update(self.i3s_module_options)
 
                     result['instance'] = self.module_inst
                     result['name'] = self.module_name
@@ -844,9 +877,7 @@ class Module:
             if not cache_time:
                 cache_time = time() + self.config['minimum_interval']
 
-            self._py3_wrapper.timeout_queue_add_module(
-                self.module_full_name, cache_time
-            )
+            self._py3_wrapper.timeout_queue_add(self, cache_time)
 
     def kill(self):
         # check and execute the 'kill' method if present

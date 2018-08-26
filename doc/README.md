@@ -27,6 +27,7 @@ py3status documentation
 * [Example 5: Using color constants](#example_5)
 * [Module methods](#module_methods)
 * [Py3 module helper](#py3)
+* [Py3 storage](#py3_storage)
 * [Composites](#composites)
 * [Module documentation](#docstring)
 * [Deprecation of configuration parameters](#deprecation)
@@ -158,7 +159,7 @@ __Base64 encoding is very simple and should not be considered secure in any way.
 Since version 3.1 py3status allows greater color configuration.
 Colors can be set in the general section of your `i3status.conf` or in an
 individual modules configuration.  If a color is not in a modules configuration
-the the values from the general section will be used.
+the values from the general section will be used.
 
 If a module does not specify colors but it is in a container, then the colors
 of the container will be used if they are set, before using ones defined in the
@@ -775,11 +776,10 @@ __cached_until__
 The time (in seconds since the epoch) that the output will be classed as no longer valid and the output
 function will be called again.
 
-Since version 3.1, if no `cached_until` value is provided the the
-output will be cached for `cache_timeout` seconds by default this is
-`60` and can be set using the `-t` or `--timeout` option when running
-py3status.  To never expire the `self.py3.CACHE_FOREVER` constant should be
-used.
+Since version 3.1, if no `cached_until` value is provided the output will be
+cached for `cache_timeout` seconds by default this is `60` and can be set
+using the `-t` or `--timeout` option when running py3status.  To never expire
+the `self.py3.CACHE_FOREVER` constant should be used.
 
 `cached_until` should be generated via the `self.py3.time_in()` method.
 
@@ -820,7 +820,7 @@ Called just before a module is destroyed.
 
 __on_click(event)__
 
-Called when an event is recieved by a module.
+Called when an event is received by a module.
 
 __post_config_hook()__
 
@@ -1160,6 +1160,42 @@ general one that will be used.
 
 ***
 
+## <a name="py3_storage"></a>Storage
+
+Py3status allows modules to maintain state through the use of the storage
+functions of the Py3 helper.
+
+Currently bool, int, float, None, unicode, dicts, lists, datetimes etc are
+supported.  Basically anything that can be pickled.  We do our best to ensure
+that the resulting pickles are compatable with both python versions 2 and 3.
+
+The following helper functions are defined in the modules `self.py3`.
+
+These functions may return `None` if storage is not available.
+
+__storage_set(key, value)__
+
+Store a value for the module under the given key.
+
+__storage_get(key)__
+
+Retrieve a value of a key for the module. Or `None` if the key has no value for
+the given key.
+
+__storage_del(key=None)__
+
+Remove the value stored with the key from storage.
+If key is not supplied then all values for the module are removed.
+
+__storage_keys()__
+
+Return a list of the keys for values stored for the module or an empty list.
+
+__storage_items()__
+
+Return key, value pairs of the stored data for the module.
+
+***
 
 ## <a name="composites"></a>Composites
 
@@ -1198,7 +1234,7 @@ The format of a composite is as follows:
 ```
 
 The `index` key in the response is used to identify the individual block and
-when the the modules `on_click()` method is called the event will include this.
+when the modules `on_click()` method is called the event will include this.
 Supplied index values should be strings.  If no index is given then it will
 have an integer value indicating its position in the composite.
 
@@ -1515,7 +1551,7 @@ if __name__ == "__main__":
     module_test(Py3status)
 ```
 
-If a specific config should should be provided for the module test, this
+If a specific config should be provided for the module test, this
 can be done as follows.
 
 ```

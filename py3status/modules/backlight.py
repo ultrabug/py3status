@@ -14,11 +14,18 @@ Configuration parameters:
     button_up: Button to click to increase brightness. Setting to 0 disables.
         (default 4)
     cache_timeout: How often we refresh this module in seconds (default 10)
+    command: The program to use to change the backlight.
+        Currently xbacklight and light are supported. The program needs
+        to be installed and on your path.
+        (default 'xbacklight')
     device: Device name or full path to use, eg, acpi_video0 or
         /sys/class/backlight/acpi_video0, otherwise automatic
         (default None)
     format: Display brightness, see placeholders below
         (default '☼: {level}%')
+    low_tune_threshold: If current brightness value is below this threshold,
+        the value is changed by a minimal value instead of the brightness_delta.
+        (default 0)
 
 Format status string parameters:
     {level} brightness
@@ -48,6 +55,18 @@ def get_device():
                 return path + device
 
 
+commands = {
+    'xbacklight': {
+        'get': lambda: ['xbacklight', '-get'],
+        'set': lambda level: ['xbacklight', '-time', '0', '-set', str(level)]
+    },
+    'light': {
+        'get': lambda: ['light', '-G'],
+        'set': lambda level: ['light', '-S', str(level)]
+    }
+}
+
+
 class Py3status:
     """
     """
@@ -58,8 +77,10 @@ class Py3status:
     button_down = 5
     button_up = 4
     cache_timeout = 10
+    command = 'xbacklight'
     device = None
     format = u'☼: {level}%'
+    low_tune_threshold = 0
 
     class Meta:
         deprecated = {
@@ -80,39 +101,62 @@ class Py3status:
         if self.device is None:
             raise Exception(STRING_NOT_AVAILABLE)
 
-        self.xbacklight = self.py3.check_commands(['xbacklight'])
-        if self.xbacklight and self.brightness_initial:
+        self.format = self.py3.update_placeholder_formats(
+            self.format, {'level': ':d'}
+        )
+        # check for an error code and an output
+        self.command_available = False
+        try:
+            output = self.py3.command_output(self._command_get())
+            try:
+                float(output)
+                self.command_available = True
+            except ValueError:
+                pass
+        except self.py3.CommandError:
+            pass
+
+        if self.command_available and self.brightness_initial:
             self._set_backlight_level(self.brightness_initial)
 
     def on_click(self, event):
-        if not self.xbacklight:
+        if not self.command_available:
             return None
 
         level = self._get_backlight_level()
         button = event['button']
         if button == self.button_up:
-            level += self.brightness_delta
+            delta = self.brightness_delta if level >= self.low_tune_threshold else 1
+            level += delta
             if level > 100:
                 level = 100
             self._set_backlight_level(level)
         elif button == self.button_down:
-            level -= self.brightness_delta
+            delta = self.brightness_delta if level > self.low_tune_threshold else 1
+            level -= delta
             if level < self.brightness_minimal:
                 level = self.brightness_minimal
             self._set_backlight_level(level)
 
     def _set_backlight_level(self, level):
-        self.py3.command_run(['xbacklight', '-time', '0', '-set', str(level)])
+        self.py3.command_run(self._command_set(level))
 
     def _get_backlight_level(self):
-        if self.xbacklight:
-            level = self.py3.command_output(['xbacklight', '-get']).strip()
-            return round(float(level))
+        if self.command_available:
+            return float(self.py3.command_output(self._command_get()))
         for brightness_line in open("%s/brightness" % self.device, 'rb'):
             brightness = int(brightness_line)
         for brightness_max_line in open("%s/max_brightness" % self.device, 'rb'):
             brightness_max = int(brightness_max_line)
-        return brightness * 100 // brightness_max
+        return brightness * 100 / brightness_max
+
+    # Returns the string array for the command to get the current backlight level
+    def _command_get(self):
+        return commands[self.command]['get']()
+
+    # Returns the string array for the command to set the current backlight level
+    def _command_set(self, level):
+        return commands[self.command]['set'](level)
 
     def backlight(self):
         full_text = ""

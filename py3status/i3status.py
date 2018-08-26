@@ -11,6 +11,7 @@ from threading import Thread
 from time import time
 
 from py3status.profiling import profile
+from py3status.py3 import Py3
 from py3status.events import IOPoller
 from py3status.constants import (
     I3S_ALLOWED_COLORS, I3S_COLOR_MODULES,
@@ -46,8 +47,9 @@ class I3statusModule:
     `time` and `tztime`.
     """
 
-    def __init__(self, module_name, py3_wrapper):
+    def __init__(self, module_name, i3status):
         self.module_name = module_name
+        self.module_full_name = module_name
 
         # i3status modules always allow user defined click events in the config
         self.allow_config_clicks = True
@@ -56,16 +58,21 @@ class I3statusModule:
         # be able to restore the correct ones.
         try:
             name, instance = self.module_name.split()
-        except:
+        except:  # noqa e722
             name = self.module_name
             instance = ''
         self.name = name
         self.instance = instance
 
-        self.item = {}
+        # setup our output
+        self.item = {
+            'full_text': '',
+            'name': name,
+            'instance': instance,
+        }
 
-        self.i3status = py3_wrapper.i3status_thread
-        self.py3_wrapper = py3_wrapper
+        self.i3status = i3status
+        py3_wrapper = i3status.py3_wrapper
 
         # color map for if color good/bad etc are set for the module
         color_map = {}
@@ -77,8 +84,39 @@ class I3statusModule:
 
         self.is_time_module = name in TIME_MODULES
         if self.is_time_module:
-            self.tz = None
-            self.set_time_format()
+            self.setup_time_module()
+
+    def setup_time_module(self):
+        self.py3 = Py3()
+        self.tz = None
+        self.set_time_format()
+        # we need to check the timezone this is when the check is next due
+        self.time_zone_check_due = 0
+        self.time_started = False
+
+        time_format = self.time_format
+
+        if '%f' in time_format:
+            # microseconds
+            time_delta = 0
+        elif '%S' in time_format:
+            # seconds
+            time_delta = 1
+        elif '%s' in time_format:
+            # seconds since unix epoch start
+            time_delta = 1
+        elif '%T' in time_format:
+            # seconds included in "%H:%M:%S"
+            time_delta = 1
+        elif '%c' in time_format:
+            # Locale's appropriate date and time representation
+            time_delta = 1
+        elif '%X' in time_format:
+            # Locale's appropriate time representation
+            time_delta = 1
+        else:
+            time_delta = 60
+        self.time_delta = time_delta
 
     def __repr__(self):
         return '<I3statusModule {}>'.format(self.module_name)
@@ -86,28 +124,56 @@ class I3statusModule:
     def get_latest(self):
         return [self.item.copy()]
 
+    def run(self):
+        """
+        updates the modules output.
+        Currently only time and tztime need to do this
+        """
+        if self.update_time_value():
+            self.i3status.py3_wrapper.notify_update(self.module_name)
+        due_time = self.py3.time_in(sync_to=self.time_delta)
+
+        self.i3status.py3_wrapper.timeout_queue_add(self, due_time)
+
     def update_from_item(self, item):
         """
         Update from i3status output. returns if item has changed.
         """
-        # Restore the name/instance.
-        item['name'] = self.name
-        item['instance'] = self.instance
+        if not self.is_time_module:
+            # correct the output
+            # Restore the name/instance.
+            item['name'] = self.name
+            item['instance'] = self.instance
 
-        # change color good/bad is set specifically for module
-        if 'color' in item and item['color'] in self.color_map:
-            item['color'] = self.color_map[item['color']]
+            # change color good/bad is set specifically for module
+            if 'color' in item and item['color'] in self.color_map:
+                item['color'] = self.color_map[item['color']]
 
-        # have we updated?
-        is_updated = self.item != item
-        self.item = item
-        if self.is_time_module:
+            # have we updated?
+            is_updated = self.item != item
+            self.item = item
+        else:
             # If no timezone or a minute has passed update timezone
-            # FIXME we should also check if resuming from suspended
-            if not self.tz or int(time()) % 60 == 0:
-                self.set_time_zone()
+            t = time()
+            if self.time_zone_check_due < t:
+                self.set_time_zone(item)
+                # If we are late for our timezone update then schedule the next
+                # update to happen when we next get new data from i3status
+                interval = self.i3status.update_interval
+                if (
+                        self.time_zone_check_due and
+                        (t - self.time_zone_check_due > 5 + interval)
+                ):
+                    self.time_zone_check_due = 0
+                else:
+                    # Check again in 30 mins.  We do this in case the timezone
+                    # used has switched to/from summer time
+                    self.time_zone_check_due = ((int(t) // 1800) * 1800) + 1800
+                if not self.time_started:
+                    self.time_started = True
+                    self.i3status.py3_wrapper.timeout_queue_add(self)
+            is_updated = False
             # update time to be shown
-            is_updated = self.update_time_value() or is_updated
         return is_updated
 
     def set_time_format(self):
@@ -124,7 +190,7 @@ class I3statusModule:
         # set the full_text with the correctly formatted date
         try:
             new_value = date.strftime(self.time_format)
-        except:
+        except:  # noqa e722
             # python 2 unicode
             new_value = date.strftime(self.time_format.encode('utf-8'))
             new_value = new_value.decode('utf-8')
@@ -133,16 +199,16 @@ class I3statusModule:
             self.item['full_text'] = new_value
         return updated
 
-    def set_time_zone(self):
+    def set_time_zone(self, item):
         """
         Work out the time zone and create a shim tzinfo.
         """
         # parse i3status date
-        i3s_time = self.item['full_text'].encode('UTF-8', 'replace')
+        i3s_time = item['full_text'].encode('UTF-8', 'replace')
         try:
             # python3 compatibility code
             i3s_time = i3s_time.decode()
-        except:
+        except:  # noqa e722
             pass
 
         # get datetime and time zone info
@@ -197,27 +263,22 @@ class I3status(Thread):
         self.tmpfile_path = None
         self.update_due = 0
 
-    def update_times(self):
-        """
-        Update time for any i3status time/tztime items.
-        Returns the time till next update needed.
-        """
-        now = time()
-        if now > self.update_due:
-            updated = []
-            for module in self.i3modules.values():
-                if module.is_time_module:
-                    if module.update_time_value():
-                        updated.append(module.module_name)
-            if updated:
-                # trigger the update so new time is shown
-                self.py3_wrapper.notify_update(updated)
-                # time we next need to do an update
-            self.update_due = int(now) + 1
+        # the update interval is useful to know
+        self.update_interval = self.py3_wrapper.get_config_attribute(
+            'general', 'interval'
+        )
+        # do any initialization
+        self.setup()
 
-        # return time till next update wanted
-        # currently once a second
-        return 1 - (now % 1)
+    def setup(self):
+        """
+        Do any setup work needed to run i3status modules
+        """
+        for conf_name in self.py3_config['i3s_modules']:
+            module = I3statusModule(conf_name, self)
+            self.i3modules[conf_name] = module
+            if module.is_time_module:
+                self.time_modules.append(module)
 
     def valid_config_param(self, param_name, cleanup=False):
         """
@@ -243,10 +304,9 @@ class I3status(Thread):
         updates = []
         for index, item in enumerate(self.json_list):
             conf_name = self.py3_config['i3s_modules'][index]
-            if conf_name not in self.i3modules:
-                self.i3modules[conf_name] = I3statusModule(conf_name,
-                                                           self.py3_wrapper)
-            if self.i3modules[conf_name].update_from_item(item):
+
+            module = self.i3modules[conf_name]
+            if module.update_from_item(item):
                 updates.append(conf_name)
         if updates:
             self.py3_wrapper.notify_update(updates)

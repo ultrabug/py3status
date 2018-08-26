@@ -64,6 +64,9 @@ def markdown_2_rst(lines):
         else:
             if code and line.strip():
                 line = '    ' + line
+            else:
+                # escape any backslashes
+                line = line.replace('\\', '\\\\')
             out.append(line)
     return out
 
@@ -229,7 +232,7 @@ def get_py3_info():
             if isinstance(item(), Exception):
                 exceptions.append((attr, item.__doc__))
                 continue
-        except:
+        except:  # noqa e722
             pass
     return {
         'methods': methods,
@@ -310,7 +313,7 @@ class ScreenshotDirective(Directive):
         image_name = '_%s' % targetid
         try:
             content = ast.literal_eval('\n'.join(self.content))
-        except:
+        except:  # noqa e722
             content = {
                 'color': '#990000',
                 'background': '#FFFF00',

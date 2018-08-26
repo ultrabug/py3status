@@ -18,6 +18,8 @@ For convenience, this module also proposes some added features:
 
 Configuration parameters:
     cache_timeout: how often to (re)detect the outputs (default 10)
+    command: a custom command to be run after display configuration changes
+        (default None)
     fallback: when the current output layout is not available anymore,
         fallback to this layout if available. This is very handy if you
         have a laptop and switched to an external screen for presentation
@@ -42,35 +44,50 @@ Configuration parameters:
         The combinations will be rotated in the exact order as you listed them.
         When an output layout is not available any more, the configurations
         are automatically filtered out.
-        Example:
-        Assuming the default values for `icon_clone` and `icon_extend`
-        are used, and assuming you have two screens 'eDP1' and 'DP1', the
-        following setup will reduce the number of output combinations
-        from four (every possible one) down to two:
-        output_combinations = "eDP1|eDP1+DP1"
         (default None)
 
+        Example:
+            Assuming the default values for `icon_clone` and `icon_extend`
+            are used, and assuming you have two screens 'eDP1' and 'DP1', the
+            following setup will reduce the number of output combinations
+            from four (every possible one) down to two.
+            ```
+            output_combinations = "eDP1|eDP1+DP1"
+            ```
+
 Dynamic configuration parameters:
-    - <OUTPUT>_pos: apply the given position to the OUTPUT
+    <OUTPUT>_pos: apply the given position to the OUTPUT
         Example: DP1_pos = "-2560x0"
         Example: DP1_pos = "above eDP1"
         Example: DP1_pos = "below eDP1"
         Example: DP1_pos = "left-of LVDS1"
         Example: DP1_pos = "right-of eDP1"
-    - <OUTPUT>_workspaces: comma separated list of workspaces to move to
+    <OUTPUT>_workspaces: comma separated list of workspaces to move to
         the given OUTPUT when it is activated
         Example: DP1_workspaces = "1,2,3"
-    - <OUTPUT>_rotate: rotate the output as told
+    <OUTPUT>_rotate: rotate the output as told
         Example: DP1_rotate = "left"
+    <OUTPUT>_mode: define the mode (resolution) for the output
+                   if not specified use --auto : prefered mode
+        Example: eDP1_mode = "2560x1440
 
 Color options:
     color_bad: Displayed layout unavailable
     color_degraded: Using a fallback layout
     color_good: Displayed layout active
 
-Example config:
+Notes:
+    Some days are just bad days. Running `xrandr --query` command can
+    cause unexplainable brief screen freezes due to an overall combination
+    of computer hardware, installed software, your choice of linux distribution,
+    and/or some other unknown factors such as recent system updates.
 
+    Configuring `cache_timeout` with a different number, eg `3600` (an hour)
+    or `-1` (runs once) can be used to remedy this issue. See issue #580.
+
+Examples:
 ```
+# start with a preferable setup
 xrandr {
     force_on_start = "eDP1+DP1"
     DP1_pos = "left-of eDP1"
@@ -105,6 +122,7 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
+    command = None
     fallback = True
     fixed_width = True
     force_on_start = None
@@ -130,8 +148,9 @@ class Py3status:
             ],
         }
 
-    def __init__(self):
+    def post_config_hook(self):
         """
+        Initialization
         """
         self.active_comb = None
         self.active_layout = None
@@ -156,17 +175,20 @@ class Py3status:
         for line in current.splitlines():
             try:
                 s = line.split(' ')
+                infos = line[line.find('('):]
                 if s[1] == 'connected':
-                    output, state = s[0], s[1]
-                    if s[2][0] == '(':
-                        mode, infos = None, ' '.join(s[2:]).strip('\n')
-                    else:
-                        mode, infos = s[2], ' '.join(s[3:]).strip('\n')
-                        active_layout.append(output)
+                    output, state, mode = s[0], s[1], None
+                    for index, x in enumerate(s[2:], 2):
+                        if 'x' in x and '+' in x:
+                            mode = x
+                            active_layout.append(output)
+                            infos = line[line.find(s[index + 1]):]
+                            break
+                        elif '(' in x:
+                            break
                     connected.append(output)
                 elif s[1] == 'disconnected':
-                    output, state = s[0], s[1]
-                    mode, infos = None, ' '.join(s[2:]).strip('\n')
+                    output, state, mode = s[0], s[1], None
                     disconnected.append(output)
                 else:
                     continue
@@ -284,20 +306,25 @@ class Py3status:
             if output in combination:
                 pos = getattr(self, '{}_pos'.format(output), '0x0')
                 rotation = getattr(self, '{}_rotate'.format(output), 'normal')
+                resolution = getattr(self, '{}_mode'.format(output), None)
+                resolution = '--mode {}'.format(resolution) if resolution else '--auto'
                 if rotation not in ['inverted', 'left', 'normal', 'right']:
                     self.py3.log('configured rotation {} is not valid'.format(
                         rotation))
                     rotation = 'normal'
                 #
                 if mode == 'clone' and previous_output is not None:
-                    cmd += ' --auto --same-as {}'.format(previous_output)
+                    cmd += ' {} --same-as {}'.format(resolution,
+                                                     previous_output)
                 else:
                     if ('above' in pos or 'below' in pos or 'left-of' in pos or
                             'right-of' in pos):
-                        cmd += ' --auto --{} --rotate {}'.format(pos, rotation)
+                        cmd += ' {} --{} --rotate {}'.format(resolution, pos,
+                                                             rotation)
                     else:
-                        cmd += ' --auto --pos {} --rotate {}'.format(pos,
-                                                                     rotation)
+                        cmd += ' {} --pos {} --rotate {}'.format(resolution,
+                                                                 pos,
+                                                                 rotation)
                 previous_output = output
             else:
                 cmd += ' --off'
@@ -308,6 +335,9 @@ class Py3status:
             self.active_layout = self.displayed
             self.active_mode = mode
         self.py3.log('command "{}" exit code {}'.format(cmd, code))
+
+        if self.command:
+            self.py3.command_run(self.command)
 
         # move workspaces to outputs as configured
         self._apply_workspaces(combination, mode)
@@ -338,12 +368,6 @@ class Py3status:
                     self.py3.log('moved workspace {} to output {}'.format(
                         workspace, output))
 
-    def _refresh_py3status(self):
-        """
-        Send a SIGUSR1 signal to py3status to force a bar refresh.
-        """
-        self.py3.command_run('killall -s USR1 py3status')
-
     def _fallback_to_available_output(self):
         """
         Fallback to the first available output when the active layout
@@ -356,7 +380,7 @@ class Py3status:
         if len(self.active_comb) == 1:
             self._choose_what_to_display(force_refresh=True)
             self._apply()
-            self._refresh_py3status()
+            self.py3.update()
 
     def _force_force_on_start(self):
         """
@@ -367,7 +391,7 @@ class Py3status:
             self.force_on_start = None
             self._choose_what_to_display(force_refresh=True)
             self._apply(force=True)
-            self._refresh_py3status()
+            self.py3.update()
 
     def _separator(self, mode):
         """

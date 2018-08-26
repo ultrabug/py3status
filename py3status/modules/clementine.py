@@ -15,14 +15,14 @@ Requires:
         (may be part of qt5-tools)
 
 @author Francois LASSERRE <choiz@me.com>
-@license GNU GPL http://www.gnu.org/licenses/gpl.html
+@license GNU GPL https://www.gnu.org/licenses/gpl.html
 
 SAMPLE OUTPUT
 {'full_text': '♫ Music For Programming - Hivemind'}
 """
+
 CMD = 'qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer'
-STRING_UNAVAILABLE = "clementine: isn't installed"
-STRING_ERROR = "clementine: isn't running"
+STRING_NOT_INSTALLED = 'not installed'
 INTERNET_RADIO = 'Internet Radio'
 
 
@@ -33,17 +33,11 @@ class Py3status:
     cache_timeout = 5
     format = u'♫ {current}'
 
-    def clementine(self):
-        """
-        Get current song metadata: "artist - title"
-        """
-        if not self.py3.check_commands(['clementine']):
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
+    def post_config_hook(self):
+        if not self.py3.check_commands('clementine'):
+            raise Exception(STRING_NOT_INSTALLED)
 
+    def clementine(self):
         artist = lines = now_playing = title = ''
         internet_radio = False
 
@@ -51,11 +45,10 @@ class Py3status:
             track_id = self.py3.command_output(CMD + '.GetCurrentTrack')
             metadata = self.py3.command_output(CMD + '.GetMetadata {}'.format(track_id))
             lines = filter(None, metadata.splitlines())
-        except:
+        except self.py3.CommandError:
             return {
                 'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
+                'full_text': ''
             }
 
         for item in lines:

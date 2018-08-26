@@ -78,7 +78,6 @@ discharging
 """
 
 from __future__ import division  # python2 compatibility
-from time import time
 from re import findall
 from glob import iglob
 
@@ -118,9 +117,6 @@ class Py3status:
     threshold_bad = 10
     threshold_degraded = 30
     threshold_full = 100
-
-    def __init__(self):
-        self.last_known_status = ''
 
     class Meta:
         deprecated = {
@@ -163,6 +159,7 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.last_known_status = ''
         # Guess mode if not set
         if self.measurement_mode is None:
             if self.py3.check_commands(["acpi"]):
@@ -282,7 +279,9 @@ class Py3status:
             r = _parse_battery_info(path)
 
             capacity = r.get("POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL"))
-            present_rate = r.get("POWER_SUPPLY_POWER_NOW", r.get("POWER_SUPPLY_CURRENT_NOW"))
+            present_rate = r.get("POWER_SUPPLY_POWER_NOW",
+                                 r.get("POWER_SUPPLY_CURRENT_NOW",
+                                       r.get("POWER_SUPPLY_VOLTAGE_NOW")))
             remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW"))
 
             battery = {}
@@ -451,7 +450,7 @@ class Py3status:
         self.last_known_status = battery_status
 
     def _set_cache_timeout(self):
-        self.response['cached_until'] = time() + self.cache_timeout
+        self.response['cached_until'] = self.py3.time_in(self.cache_timeout)
 
 
 if __name__ == "__main__":

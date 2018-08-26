@@ -42,13 +42,14 @@ class Py3status:
     cache_timeout = 5
     file_length = 4
     push = True
-    save_path = '%s%s' % (os.environ['HOME'], '/Pictures/')
+    save_path = '~/Pictures/'
     screenshot_command = 'gnome-screenshot -f'
     upload_path = "/files"
     upload_server = 'puzzledge.org'
     upload_user = 'erol'
 
-    def __init__(self):
+    def post_config_hook(self):
+        self.save_path = os.path.expanduser(self.save_path)
         self.full_text = ''
 
     def on_click(self, event):

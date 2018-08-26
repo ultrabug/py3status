@@ -22,11 +22,24 @@ Configuration parameters:
 @author Ben Oswald <ben.oswald@root-space.de>
 @license BSD License <https://opensource.org/licenses/BSD-2-Clause>
 @source https://github.com/nazco/i3status-modules
+
+SAMPLE OUTPUT
+{'full_text': 'OK: 0'}
+
+warning
+{'full_text': 'WARNING: 1'}
+
+critical
+{'full_text': 'CRITICAL: 2'}
+
+unknown
+{'full_text': 'UNKNOWN: 3'}
 """
 
 import requests
 
 STATUS_NAMES = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
+STRING_NOT_CONFIGURED = 'not configured'
 
 
 class Py3status:
@@ -43,9 +56,12 @@ class Py3status:
     url_parameters = "?service_state={service_state}&format=json"
     user = ''
 
+    def post_config_hook(self):
+        if not self.base_url:
+            raise Exception(STRING_NOT_CONFIGURED)
+
     def get_status(self):
         response = {
-            'color': self.color,
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
                 self.format,

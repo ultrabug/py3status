@@ -99,7 +99,10 @@ RESPONSE_FIELDS = [
 
 
 class Py3status:
-
+    """
+    """
+    # available configuration parameters
+    cache_timeout = None
     command = None
     format = '{output}'
     instance = ''
@@ -108,7 +111,7 @@ class Py3status:
 
     def post_config_hook(self):
         # set interval.  If cache_timeout is used it takes precedence
-        if hasattr(self, 'cache_timeout'):
+        if self.cache_timeout:
             self.interval = self.cache_timeout
         self.interval = getattr(self, 'interval', None)
         # implement i3block interval rules
@@ -117,10 +120,9 @@ class Py3status:
         if self.interval in ['once', 'persist'] or not self.interval:
             self.cache_forever = True
         if self.interval == 'repeat':
-            self._cache_timeout = 0
+            self.cache_timeout = 1
         else:
-            self._cache_timeout = self.interval
-
+            self.cache_timeout = self.interval
         # no button has been pressed
         self.x = ''
         self.y = ''
@@ -215,7 +217,7 @@ class Py3status:
 
     def _run_command(self, env):
         """
-        Run command(s) and return return output and urgency.
+        Run command(s) and return output and urgency.
         """
         output = ''
         urgent = False
@@ -308,7 +310,7 @@ class Py3status:
         else:
             # we use sync_to to ensure that any time related blocklets update
             # at nice times eg on the second, minute etc
-            cached_until = self.py3.time_in(sync_to=self._cache_timeout)
+            cached_until = self.py3.time_in(sync_to=self.cache_timeout)
 
         block_response = {
             'full_text': '',  # in  case we have no response

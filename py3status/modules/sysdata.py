@@ -6,8 +6,8 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     cpu_history_length: length of the history graph bar (default 8)
     format: output format string
-        *(default '[\?color=cpu CPU: {cpu_usage}%], '
-        '[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]')*
+        *(default '[\?color=cpu CPU: {cpu_used_percent}%], '
+        '[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -20,10 +20,10 @@ Configuration parameters:
         (default None)
 
 Format placeholders:
-    {cpu_concurrent_bar} cpu usage in bar form, with one bar per core
-    {cpu_history_bar} cpu usage in history graph form
+    {cpu_used_concurrent} cpu usage in bar form, with one bar per core
+    {cpu_used_history} cpu usage in history graph form
     {cpu_temp} cpu temperature
-    {cpu_usage} cpu usage percentage
+    {cpu_used_percent} cpu used percentage
     {load1} load average over the last minute
     {load5} load average over the five minutes
     {load15} load average over the fifteen minutes
@@ -38,8 +38,9 @@ Format placeholders:
     {temp_unit} temperature unit
 
 Color thresholds:
-    cpu: change color based on the value of cpu_usage
-    max_cpu_mem: change the color based on the max value of cpu_usage and mem_used_percent
+    cpu: change color based on the value of cpu_used_percent
+    max_cpu_mem: change the color based on the max value
+        of cpu_used_percent and mem_used_percent
     load: change color based on the value of load1
     mem: change color based on the value of mem_used_percent
     swap: change color based on the value of swap_used_percent
@@ -54,174 +55,14 @@ SAMPLE OUTPUT
 [
     {'color': '#00FF00', 'full_text': 'CPU: 9.60%'},
     {'full_text': ', '},
-    {'color': '#FFFF00', 'full_text': 'Mem: 1.91/3.76 GB (50.96%)'}
+    {'color': '#FFFF00', 'full_text': 'Mem: 1.91/3.76 GiB (50.96%)'}
 ]
 """
 
 from __future__ import division
+from os import getloadavg
 
 import re
-
-ONE_KIB = pow(1024, 1)  # 1 KiB in B
-ONE_MIB = pow(1024, 2)  # 1 MiB in B
-ONE_GIB = pow(1024, 3)  # 1 GiB in B
-
-
-class GetData:
-    """
-    Get system status
-    """
-
-    def __init__(self, parent):
-        self.py3 = parent.py3
-
-    def _parse_proc_cpu(self, line):
-        """
-        Get the cpu usage data from /proc/stat :
-          cpu  2255 34 2290 22625563 6290 127 456 0 0
-          - user: normal processes executing in user mode
-          - nice: niced processes executing in user mode
-          - system: processes executing in kernel mode
-          - idle: twiddling thumbs
-          - iowait: waiting for I/O to complete
-          - irq: servicing interrupts
-          - softirq: servicing softirqs
-          - steal: involuntary wait
-          - guest: running a normal guest
-          - guest_nice: running a niced guest
-        These numbers identify the amount of time the CPU has spent performing
-        different kinds of work.  Time units are in USER_HZ
-        (typically hundredths of a second)
-        """
-        cpu_data = line.split()
-        total_cpu_time = sum(map(int, cpu_data[1:]))
-        cpu_idle_time = int(cpu_data[4])
-
-        # return the cpu total&idle time
-        return total_cpu_time, cpu_idle_time
-
-    def cpu(self):
-        with open('/proc/stat', 'r') as fd:
-            line = fd.readline()
-        return self._parse_proc_cpu(line)
-
-    def cpu_cores(self):
-        total_times = []
-        idle_times = []
-        with open('/proc/stat', 'r') as fd:
-            line = fd.readline()
-            line = fd.readline()
-            while line.startswith('cpu'):
-                total, idle = self._parse_proc_cpu(line)
-                total_times.append(total)
-                idle_times.append(idle)
-                line = fd.readline()
-        return total_times, idle_times
-
-    def load(self):
-        """
-        Get the load average from /proc/loadavg :
-        """
-        with open('/proc/loadavg', 'r') as fd:
-            line = fd.readline()
-        load_data = line.split()
-        load1 = float(load_data[0])
-        load5 = float(load_data[1])
-        load15 = float(load_data[2])
-        return load1, load5, load15
-
-    def calc_mem_info(self, unit='GiB', memi=dict, keys=list):
-        """
-        Parse /proc/meminfo, grab the memory capacity and used size
-        then return; Memory size 'total_mem', Used_mem, percentage
-        of used memory, and units of mem (KiB, MiB, GiB).
-        """
-
-        total_mem_kib = memi[keys[0]]
-        mem_free = sum([memi[item] for item in keys[1:]])
-
-        try:
-            used_mem_kib = (total_mem_kib - mem_free)
-            used_mem_p = 100 * used_mem_kib / total_mem_kib
-            multiplier = {
-                'KiB': ONE_KIB / ONE_KIB,
-                'MiB': ONE_KIB / ONE_MIB,
-                'GiB': ONE_KIB / ONE_GIB,
-            }
-            if unit.lower() == 'dynamic':
-                # If less than 1 GiB, use MiB
-                if (multiplier['GiB'] * total_mem_kib) < 1:
-                    unit = 'MiB'
-                else:
-                    unit = 'GiB'
-            if unit in multiplier.keys():
-                total_mem = multiplier[unit] * total_mem_kib
-                used_mem = multiplier[unit] * used_mem_kib
-            else:
-                raise ValueError(
-                    'unit [{0}] must be one of: KiB, MiB, GiB, dynamic.'.format(unit))
-        except:
-            total_mem, used_mem, used_mem_p = [float('nan') for i in range(3)]
-            unit = 'UNKNOWN'
-
-        # If total memory is <1GB, results are in megabytes.
-        # Otherwise, results are in gigabytes.
-        return total_mem, used_mem, used_mem_p, unit
-
-    def mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
-        memi = {}
-        result = {}
-
-        with open('/proc/meminfo', 'r') as fd:
-            for s in fd:
-                tok = s.split()
-                memi[tok[0]] = float(tok[1])
-
-        if mem:
-            result["mem"] = self.calc_mem_info(
-                mem_unit,
-                memi,
-                ["MemTotal:", "MemFree:", "Buffers:", "Cached:"]
-            )
-        if swap:
-            result["swap"] = self.calc_mem_info(
-                swap_unit,
-                memi,
-                ["SwapTotal:", "SwapFree:"]
-            )
-
-        return result
-
-    def cpuTemp(self, zone, unit):
-        """
-        Tries to determine CPU temperature using the 'sensors' command.
-        Searches for the CPU temperature by looking for a value prefixed
-        by either "CPU Temp" or "Core 0" - does not look for or average
-        out temperatures of all codes if more than one.
-        """
-
-        sensors = None
-        command = ['sensors']
-        if unit == u'°F':
-            command.append('-f')
-        elif unit not in [u'°C', 'K']:
-            return 'unknown unit'
-        if zone:
-            try:
-                sensors = self.py3.command_output(command + [zone])
-            except:
-                pass
-        if not sensors:
-            sensors = self.py3.command_output(command)
-        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
-        if m:
-            cpu_temp = float(m.groups()[1].strip()[:-2])
-            if unit == 'K':
-                cpu_temp += 273.15
-        else:
-            cpu_temp = '?'
-
-        return cpu_temp
 
 
 class Py3status:
@@ -230,8 +71,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     cpu_history_length = 8
-    format = "[\?color=cpu CPU: {cpu_usage}%], " \
-             "[\?color=mem Mem: {mem_used}/{mem_total} GB ({mem_used_percent}%)]"
+    format = "[\?color=cpu CPU: {cpu_used_percent}%], " \
+             "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
     mem_unit = 'GiB'
     swap_unit = 'GiB'
     temp_unit = u'°C'
@@ -257,6 +98,7 @@ class Py3status:
                                                            precision=precision)
             return {
                 'cpu_usage': format_vals,
+                'cpu_used_percent': format_vals,
                 'cpu_temp': format_vals,
                 'load1': format_vals,
                 'load5': format_vals,
@@ -272,6 +114,13 @@ class Py3status:
         deprecated = {
             'function': [
                 {'function': deprecate_function},
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'cpu_usage',
+                    'new': 'cpu_used_percent',
+                    'format_strings': ['format'],
+                },
             ],
             'remove': [
                 {
@@ -304,6 +153,7 @@ class Py3status:
                 {
                     'placeholder_formats': {
                         'cpu_usage': ':.2f',
+                        'cpu_used_percent': ':.2f',
                         'cpu_temp': ':.2f',
                         'load1': ':.2f',
                         'load5': ':.2f',
@@ -321,13 +171,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.data = GetData(self)
         self.cpu_history = []
-        self.cpu_total = 0
-        self.cpu_idle = 0
-        self.cpus_total = []
-        self.cpus_idle = []
-        self.n_cores = 0
+        self.last_cpu = {}
         temp_unit = self.temp_unit.upper()
         if temp_unit in ['C', u'°C']:
             temp_unit = u'°C'
@@ -335,100 +180,169 @@ class Py3status:
             temp_unit = u'°F'
         elif not temp_unit == 'K':
             temp_unit = 'unknown unit'
-        self.values = {'temp_unit': temp_unit}
         self.temp_unit = temp_unit
-        self.mem_info = self.py3.format_contains(self.format, 'mem_*')
-        self.swap_info = self.py3.format_contains(self.format, 'swap_*')
+        self.init = {'meminfo': []}
+        self.init = {'cpuinfo': []}
+        names = ['cpu_temp', 'cpu', 'load', 'mem', 'swap']
+        placeholders = [
+            'cpu_temp', 'cpu_used_*', 'load*', 'mem_*', 'swap_*'
+        ]
+        for name, placeholder in zip(names, placeholders):
+            self.init[name] = self.py3.format_contains(self.format, placeholder)
+            if name in ['mem', 'swap'] and self.init[name]:
+                self.init['meminfo'].append(name)
+            if name == 'cpu' and self.init[name]:
+                self.init['cpuinfo'].append(name)
 
-    def sysData(self):
-        # get CPU usage info
-        if self.py3.format_contains(self.format, 'cpu_usage') or \
-           self.py3.format_contains(self.format, 'cpu_history_bar'):
-            cpu_total, cpu_idle = self.data.cpu()
-            cpu_usage = 0
-            if cpu_total != self.cpu_total:
-                cpu_usage = (1 - (
-                    float(cpu_idle - self.cpu_idle) / float(cpu_total - self.cpu_total)
-                )) * 100
-            self.values['cpu_usage'] = cpu_usage
-            self.cpu_total = cpu_total
-            self.cpu_idle = cpu_idle
-            self.py3.threshold_get_color(cpu_usage, 'cpu')
-            self.values['cpu_history_bar'] = \
-                self.py3.history_bar_graph(self.cpu_history, cpu_usage,
-                                           length=self.cpu_history_length)
+    def _get_stat(self):
+        # miscellaneous kernel statistics https://git.io/vn21n
+        with open('/proc/stat') as f:
+            data = {}
+            fields = f.readline().split()
+            while fields[0].startswith('cpu'):
+                data[fields[0]] = {
+                    'total': sum(map(int, fields[1:])),
+                    'idle': int(fields[4]),
+                    }
+                fields = f.readline().split()
+            return data
 
-        if self.py3.format_contains(self.format, 'cpu_concurrent_bar'):
-            cpus_total, cpus_idle = self.data.cpu_cores()
-            cpus_usage = []
-            if self.n_cores == 0:
-                self.n_cores = len(cpus_total)
-                self.cpus_total = [0] * self.n_cores
-                self.cpus_idle = [0] * self.n_cores
-            for old_total, old_idle, total, idle in zip(self.cpus_total,
-                                                        self.cpus_idle,
-                                                        cpus_total,
-                                                        cpus_idle):
-                if old_total != total:
-                    cpus_usage.append((1 - (
-                        float(idle - old_idle) / float(total - old_total)
-                    )) * 100)
-                else:
-                    cpus_usage.append(0)
-            self.cpus_total = cpus_total
-            self.cpus_idle = cpus_idle
-            self.values['cpu_concurrent_bar'] = \
-                self.py3.concurrent_bar_graphs(cpus_usage)
+    def _calc_mem_info(self, unit='GiB', memi=dict, keys=list):
+        """
+        Parse /proc/meminfo, grab the memory capacity and used size
+        then return; Memory size 'total_mem', Used_mem, percentage
+        of used memory, and units of mem (KiB, MiB, GiB).
+        """
 
-        # if specified as a formatting option, also get the CPU temperature
-        if self.py3.format_contains(self.format, 'cpu_temp'):
-            cpu_temp = self.data.cpuTemp(self.zone, self.temp_unit)
-            self.values['cpu_temp'] = cpu_temp
-            self.py3.threshold_get_color(cpu_temp, 'temp')
+        total_mem_kib = memi[keys[0]]
+        mem_free = sum([memi[item] for item in keys[1:]])
+        used_mem_kib = (total_mem_kib - mem_free)
+        used_mem_p = 100 * used_mem_kib / total_mem_kib
+        unit = 'B' if unit == 'dynamic' else unit
+        (total_mem, unit) = self.py3.format_units(total_mem_kib * 1024, unit=unit)
+        (used_mem, _) = self.py3.format_units(used_mem_kib * 1024, unit=unit)
+        return total_mem, used_mem, used_mem_p, unit
 
-        # get RAM/SWAP usage info
-        memi = self.data.mem(self.mem_unit, self.swap_unit, self.mem_info, self.swap_info)
+    def _get_mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
+        memi = {}
+        result = {}
 
-        # set RAM usage info
-        if self.mem_info:
-            mem_total, mem_used, mem_used_percent, mem_unit = memi["mem"]
-            self.values['mem_total'] = mem_total
-            self.values['mem_used'] = mem_used
-            self.values['mem_used_percent'] = mem_used_percent
-            self.values['mem_unit'] = mem_unit
-            self.py3.threshold_get_color(mem_used_percent, 'mem')
+        with open('/proc/meminfo', 'r') as fd:
+            for s in fd:
+                tok = s.split()
+                memi[tok[0]] = float(tok[1])
 
-        # set SWAP usage info
-        if self.swap_info:
-            swap_total, swap_used, swap_used_percent, swap_unit = memi["swap"]
-            self.values['swap_total'] = swap_total
-            self.values['swap_used'] = swap_used
-            self.values['swap_used_percent'] = swap_used_percent
-            self.values['swap_unit'] = swap_unit
-            self.py3.threshold_get_color(swap_used_percent, 'swap')
+        if mem:
+            result["mem"] = self._calc_mem_info(
+                mem_unit,
+                memi,
+                ["MemTotal:", "MemFree:", "Buffers:", "Cached:"]
+            )
+        if swap:
+            result["swap"] = self._calc_mem_info(
+                swap_unit,
+                memi,
+                ["SwapTotal:", "SwapFree:"]
+            )
 
-        # get load average
-        if self.py3.format_contains(self.format, 'load*'):
-            load1, load5, load15 = self.data.load()
-            self.values['load1'] = load1
-            self.values['load5'] = load5
-            self.values['load15'] = load15
-            self.py3.threshold_get_color(load1, 'load')
+        return result
 
-        try:
-            self.py3.threshold_get_color(max(cpu_usage, mem_used_percent), 'max_cpu_mem')
-        except:
+    def _calc_cpu_percent(self, cpu, last_cpu):
+        cpu_used_percent = 0
+        if cpu['total'] != last_cpu.get('total'):
+            cpu_used_percent = (1 - (
+                (cpu['idle'] - last_cpu.get('idle', 0)) /
+                (cpu['total'] - last_cpu.get('total', 0))
+            )) * 100
+
+        last_cpu.update(cpu)
+        return cpu_used_percent
+
+    def _get_cputemp(self, zone, unit):
+        """
+        Tries to determine CPU temperature using the 'sensors' command.
+        Searches for the CPU temperature by looking for a value prefixed
+        by either "CPU Temp" or "Core 0" - does not look for or average
+        out temperatures of all codes if more than one.
+        """
+
+        sensors = None
+        command = ['sensors']
+        if unit == u'°F':
+            command.append('-f')
+        elif unit not in [u'°C', 'K']:
+            return 'unknown unit'
+        if zone:
             try:
-                self.py3.threshold_get_color(cpu_usage, 'max_cpu_mem')
-            except:
-                try:
-                    self.py3.threshold_get_color(mem_used_percent, 'max_cpu_mem')
-                except:
-                    pass
+                sensors = self.py3.command_output(command + [zone])
+            except self.py3.CommandError:
+                pass
+        if not sensors:
+            sensors = self.py3.command_output(command)
+        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        if m:
+            cpu_temp = float(m.groups()[1].strip()[:-2])
+            if unit == 'K':
+                cpu_temp += 273.15
+        else:
+            cpu_temp = '?'
+
+        return cpu_temp
+
+    def sysdata(self):
+        sys = {'max_used_percent': 0, 'temp_unit': self.temp_unit}
+
+        if self.init['cpuinfo']:
+            cpui = self._get_stat()
+            sys['cpu_used_percent'] = self._calc_cpu_percent(cpui['cpu'],
+                    self.last_cpu.setdefaults('cpu', {}))
+            sys['cpu_used_history'] = self.py3.history_bar_graph(
+                    self.cpu_history,
+                    sys['cpu_used_percent'],
+                    length=self.cpu_history_length)
+            self.py3.threshold_get_color(sys['cpu_used_percent'], 'cpu')
+            concurrent = []
+            for cpu, info in sorted(cpui.items()):
+                if cpu == 'cpu':
+                    continue
+                concurrent.append(self._calc_cpu_percent(cpui[cpu],
+                    self.last_cpu.setdefaults(cpu, {})))
+            sys['cpu_used_concurrent'] = self.py3.concurrent_bar_graphs(
+                    concurrent)
+
+        if self.init['cpu_temp']:
+            sys['cpu_temp'] = self._get_cputemp(self.zone, self.temp_unit)
+            self.py3.threshold_get_color(sys['cpu_temp'], 'temp')
+
+        if self.init['meminfo']:
+            memi = self._get_mem(
+                self.mem_unit, self.swap_unit, self.init['mem'], self.init['swap'])
+
+            if self.init['mem']:
+                mem_keys = [
+                    'mem_total', 'mem_used', 'mem_used_percent', 'mem_unit']
+                sys.update(zip(mem_keys, memi['mem']))
+                self.py3.threshold_get_color(sys['mem_used_percent'], 'mem')
+
+            if self.init['swap']:
+                swap_keys = [
+                    'swap_total', 'swap_used', 'swap_used_percent', 'swap_unit']
+                sys.update(zip(swap_keys, memi['swap']))
+                self.py3.threshold_get_color(sys['swap_used_percent'], 'swap')
+
+        if self.init['load']:
+            load_keys = ['load1', 'load5', 'load15']
+            sys.update(zip(load_keys, getloadavg()))
+            self.py3.threshold_get_color(sys['load1'], 'load')
+
+        sys['max_used_percent'] = max(
+            [perc for name, perc in sys.items() if 'used_percent' in name]
+        )
+        self.py3.threshold_get_color(sys['max_used_percent'], 'max_cpu_mem')
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, self.values)
+            'full_text': self.py3.safe_format(self.format, sys)
         }
 
         return response
@@ -439,5 +353,4 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
     module_test(Py3status)

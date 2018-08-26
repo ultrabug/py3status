@@ -23,8 +23,16 @@ Color options:
     color_degraded: Latency exceeded max_latency
 
 Requires:
-    requests: python module from pypi
-        https://pypi.python.org/pypi/requests
+    requests: https://pypi.python.org/pypi/requests
+
+SAMPLE OUTPUT
+{'color': '#00FF00', 'full_text': 'Pingdom: 323ms'}
+
+degraded
+{'color': '#FFFF00', 'full_text': 'Pingdom: 945ms'}
+
+down
+{'color': '#FF0000', 'full_text': 'Pingdom: DOWN'}
 """
 
 import requests
@@ -44,7 +52,10 @@ class Py3status:
     request_timeout = 15
 
     def pingdom_checks(self):
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        response = {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': ''
+        }
         pingdom = None
 
         # parse some configuration parameters

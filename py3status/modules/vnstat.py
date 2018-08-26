@@ -44,8 +44,7 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division  # python2 compatibility
-STRING_ERROR = 'vnstat: returned wrong'
-STRING_UNAVAILABLE = "vnstat: isn't installed"
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -70,6 +69,9 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
+        if not self.py3.check_commands('vnstat'):
+            raise Exception(STRING_NOT_INSTALLED)
+
         self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
         # list of units, first one - value/initial_multi, second - value/1024,
         # third - value/1024^2, etc...
@@ -86,28 +88,13 @@ class Py3status:
         return self.value_format.format(value=value, unit=unit)
 
     def vntstat(self):
-        if not self.py3.check_commands(["vnstat"]):
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
-
         def filter_stat():
             # Get statistics in list of lists of words
-            out = self.py3.command_output(["vnstat", "--dumpdb"]).splitlines()
+            out = self.py3.command_output(["vnstat", "--exportdb"]).splitlines()
             for x in out:
                 if x.startswith("{};0;".format(self.statistics_type)):
                     return x
-        try:
-            type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(";")
-        except:
-            return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
-            }
-
+        type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(";")
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
 
         up = (int(txm) * 1024 + int(txk)) * 1024

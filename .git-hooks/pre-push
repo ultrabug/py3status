@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# run flake8 tests first before pushing
+
+# $ git config core.hooksPath .git-hooks  # (in dir) to add hooks
+# $ git config --unset core.hooksPath  # (in dir) to remove hooks
+
+if command -v pytest &>/dev/null; then
+    pytest --flake8
+else
+    echo 'hooks/pre-push: command "pytest" not found, skipping flake8 tests'
+fi

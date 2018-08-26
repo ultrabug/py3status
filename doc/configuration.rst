@@ -81,6 +81,54 @@ Global options:
         nagbar_font = 'pango:Ubuntu Mono 12'
     }
 
+.. note::
+    New in version 3.12
+
+``storage``: Set storage name or path.
+
+Store cache in $XDG_CACHE_HOME or ~/.cache
+
+.. code-block:: py3status
+    :caption: Example
+
+    # default behavior
+    py3status {
+        storage =  'py3status_cache.data'
+    }
+
+Store per config cache in $XDG_CACHE_HOME or ~/.cache
+
+.. code-block:: py3status
+
+    # first config
+    py3status {
+        storage = 'py3status_top.data'
+    }
+
+.. code-block:: py3status
+
+    # second config
+    py3status {
+        storage = 'py3status_bottom.data'
+    }
+
+Store per config cache in different directories.
+
+.. code-block:: py3status
+
+    # first config
+    py3status {
+        storage = '~/.config/py3status/cache_top.data'
+    }
+
+.. code-block:: py3status
+
+    # second config
+    py3status {
+        storage = '~/.config/py3status/cache_bottom.data'
+    }
+
+
 Configuration obfuscation
 -------------------------
 
@@ -139,6 +187,11 @@ then the values from the general section will be used.
 If a module does not specify colors but it is in a container, then the colors
 of the container will be used if they are set, before using ones defined in the
 general section.
+
+Generally colors can specified using hex values eg ``#FF00FF`` or ``#F0F``.  It
+is also possible to use css3 color names eg ``red``
+``hotpink``.  For a list of available color names see
+`<https://drafts.csswg.org/css-color/#named-colors>`_.
 
 .. code-block:: py3status
     :caption: Example
@@ -361,6 +414,16 @@ As an added feature and in order to get your i3bar more responsive, every
 py3status modules and i3status modules as described in the refresh command
 below.
 
+.. code-block:: shell
+
+    # button numbers
+    1 = left click
+    2 = middle click
+    3 = right click
+    4 = scroll up
+    5 = scroll down
+
+
 .. code-block:: py3status
     :caption: Example
 
@@ -446,3 +509,90 @@ substituted by the modules text output when the command is run.
 
 If the output of a module is a composite then the output of the part clicked on
 can be accessed using ``$OUTPUT_PART``.
+
+Environment Variables
+---------------------
+
+.. note::
+    New in version 3.8
+
+You may use the value of an environment variable in your configuration with
+the ``env(...)`` directive. These values are captured at startup and may be
+converted to the needed datatype (only ``str``, ``int``, ``float``, ``bool``
+and ``auto`` are currently supported).
+
+Note, the ``auto`` conversion will try to guess the type of the contents and
+automatically convert to that type. Without an explicit conversion function,
+it defaults to ``auto``.
+
+This is primarily designed to obfuscate sensitive information when sharing
+your configuration file, such as usernames, passwords, API keys, etc.
+
+The ``env(...)`` expression can be used anywhere a normal constant would be
+used. Note, you cannot use the directive in place of a dictionary key, i.e
+``{..., env(KEY): 'val', ...}``.
+
+See the examples below!
+
+.. code-block:: py3status
+    :caption: Example
+
+    order += "my_module"
+    order += env(ORDER_MODULE)
+
+    module {
+        normal_parameter = 'some value'
+        env_parameter = env(SOME_ENVIRONMENT_PARAM)
+        sensitive_api_key = env(API_KEY)
+
+        complex_parameter = {
+          'key': env(VAL)
+        }
+
+        equivalent1 = env(MY_VAL)
+        equivalent2 = env(MY_VAL, auto)
+
+        list_of_tuples = [
+          (env(APPLE_NUM, int), 'apple'),
+          (2, env(ORANGE))
+        ]
+
+        float_param = env(MY_NUM, float)
+    }
+
+
+Inline Shell Code
+-----------------
+
+.. note::
+    New in version 3.9
+
+You can use the standard output of a shell script in your configuration with
+the ``shell(...)`` directive. These values are captured at startup and may be
+converted to the needed datatype (only ``str``, ``int``, ``float``, ``bool``
+and ``auto`` (the default) are currently supported).
+
+The shell script executed must return a single line of text on stdout and
+then terminate. If the type is explicitly declared ``bool``, the exit status
+of the script is respected (a non-zero exit status being interpreted falsey).
+In any other case if the script exits with a non-zero exit status an error
+will be thrown.
+
+Please be aware that due to the way the parser works, you may not include any
+closing parenthesis ( ``)`` ) in the expression. Wrap your commands in a script
+file and call it instead.
+
+The ``shell(...)`` expression can be used anywhere a constant or an ``env(...)``
+directive can be used (see the section "Environment Variables").
+
+Usage example:
+
+.. code-block:: py3status
+    :caption: Example
+
+    my_module {
+        password = shell(pass show myPasswd | head -n1)
+        some_string = shell(/opt/mydaemon/get_api_key.sh, str)
+        pid = shell(cat /var/run/mydaemon/pidfile, int)
+        my_bool = shell(pgrep thttpd, bool)
+    }

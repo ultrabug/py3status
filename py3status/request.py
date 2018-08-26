@@ -7,14 +7,15 @@ try:
     from urllib.error import URLError, HTTPError
     from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
     from urllib.request import (
-        urlopen, Request
+        urlopen, Request, build_opener, install_opener, HTTPCookieProcessor
     )
     IS_PYTHON_3 = True
 except ImportError:
     # Python 2
     from urllib import urlencode
     from urllib2 import (
-        urlopen, Request, URLError, HTTPError
+        urlopen, Request, URLError, HTTPError,
+        build_opener, install_opener, HTTPCookieProcessor
     )
     from urlparse import urlsplit, urlunsplit, parse_qsl
     IS_PYTHON_3 = False
@@ -31,7 +32,7 @@ class HttpResponse:
     The aim is to support both python 2 and 3 and be a simple as possible
     """
 
-    def __init__(self, url, params, data, headers, timeout, auth):
+    def __init__(self, url, params, data, headers, timeout, auth, cookiejar):
         # fix the url if needed
         url_parts = urlsplit(url)
         if url_parts.query or params:
@@ -45,16 +46,21 @@ class HttpResponse:
             parts[3] = urlencode(url_params)
             # rebuild the url
             url = urlunsplit(parts)
-        request = Request(url, headers=headers)
         if auth:
             # we need to do the encode/decode to keep python 3 happy
             auth_str = base64.b64encode(('%s:%s' % (auth)).encode('utf-8'))
-            request.add_header('Authorization', 'Basic %s' % auth_str.decode('utf-8'))
+            headers['Authorization'] = 'Basic %s' % auth_str.decode('utf-8')
         if data:
-            data = urlencode(data)
+            data = urlencode(data).encode()
+        if cookiejar is not None:
+            self._cookiejar = cookiejar
+            opener = build_opener(HTTPCookieProcessor(cookiejar))
+            install_opener(opener)
+
+        request = Request(url, headers=headers)
 
         try:
-            self._response = urlopen(request, data=None, timeout=timeout)
+            self._response = urlopen(request, data=data, timeout=timeout)
             self._error_message = None
         except URLError as e:
             reason = e.reason
@@ -63,6 +69,11 @@ class HttpResponse:
             elif isinstance(e, HTTPError):
                 self._status_code = e.code
                 self._error_message = reason
+                # we return an HttpResponse but have no response
+                # so create some 'fake' response data.
+                self._text = ''
+                self._json = None
+                self._headers = []
             else:
                 # unknown exception, so just raise it
                 raise RequestURLError(reason)
@@ -100,13 +111,38 @@ class HttpResponse:
         Return an object representing the return json for the request
         """
         try:
-            return json.loads(self.text)
-        except:
-            raise RequestInvalidJSON('Invalid JSON recieved')
+            return self._json
+        except AttributeError:
+            try:
+                self._json = json.loads(self.text)
+                return self._json
+            except:  # noqa e722
+                raise RequestInvalidJSON('Invalid JSON received')
 
     @property
     def headers(self):
         """
         Get the headers from the response.
         """
-        return self._response.headers
+        try:
+            return self._headers
+        except AttributeError:
+            self._headers = self._response.headers
+            return self._headers
+
+    @property
+    def cookiejar(self):
+        """
+        Get the cookie jar
+        """
+        try:
+            return self._cookiejar
+        except AttributeError:
+            return None
+
+    @cookiejar.setter
+    def cookiejar(self, cj):
+        """
+        Set the cookie jar in care we want to change it after object creation
+        """
+        self._cookiejar = cj

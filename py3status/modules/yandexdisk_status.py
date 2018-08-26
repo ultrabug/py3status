@@ -32,8 +32,8 @@ idle
 off
 {'color': '#FF0000', 'full_text': 'Yandex.Disk: Not started'}
 """
-string_error = "Yandex.Disk: isn't configured"
-string_unavailable = "Yandex.Disk: isn't installed"
+
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -46,17 +46,12 @@ class Py3status:
     status_off = 'Not started'
     status_on = 'Idle'
 
+    def post_config_hook(self):
+        if not self.py3.check_commands('yandex-disk'):
+            raise Exception(STRING_NOT_INSTALLED)
+
     def yandexdisk(self):
-        if not self.py3.check_commands(["yandex-disk"]):
-            return {'cached_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_BAD,
-                    'full_text': string_unavailable}
-        try:
-            status = self.py3.command_output('yandex-disk status').splitlines()[0]
-        except:
-            return {'cache_until': self.py3.CACHE_FOREVER,
-                    'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                    'full_text': string_error}
+        status = self.py3.command_output('yandex-disk status').splitlines()[0]
 
         if status == "Error: daemon not started":
             color = self.py3.COLOR_BAD
@@ -69,9 +64,11 @@ class Py3status:
             if self.status_busy is not None:
                 status = self.status_busy
 
-        return {'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': color,
-                'full_text': self.py3.safe_format(self.format, {'status': status})}
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'color': color,
+            'full_text': self.py3.safe_format(self.format, {'status': status})
+        }
 
 
 if __name__ == "__main__":

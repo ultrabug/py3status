@@ -6,7 +6,7 @@ import re
 
 from collections import OrderedDict
 from string import Template
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 
 from py3status.constants import (
     I3S_SINGLE_NAMES,
@@ -35,9 +35,12 @@ class ParseException(Exception):
         self.position = position
         self.token = token.replace('\n', '\\n')
 
-    def one_line(self):
-        return 'CONFIG ERROR: {} saw `{}` at line {} position {}'.format(
-            self.error, self.token, self.line_no, self.position)
+    def one_line(self, config_path):
+        filename = os.path.basename(config_path)
+        notif = 'CONFIG ERROR: {} saw `{}` at line {} position {} in file {}'
+        return notif.format(
+            self.error, self.token, self.line_no, self.position, filename
+        )
 
     def __str__(self):
         marker = ' ' * (self.position - 1) + '^'
@@ -91,6 +94,32 @@ class ConfigParser:
             }
         }
 
+    * environment variable support
+
+        order += env(ORDER_VAR)
+
+        my_module {
+            my_guessed_type = env(MY_VAR)
+            my_str = env(MY_VAR, str)
+            my_int = env(MY_INT_VAR, int)
+            my_bool = env(MY_FLAG, bool)
+            my_complex = {
+                'list' : [1, 2, env(MY_LIST_ENTRY, int)],
+                'dict' : {'x': env(MY_DICT_VAL), 'y': 2}
+            }
+        }
+
+    * execute shell code
+
+        my_module {
+            my_guessed_type = shell(pass show git|head -n1)
+            my_str = shell(pass show git|head -n1, str)
+            my_int = shell(pass show git|head -n1, int)
+            my_bool = shell(pass show git|head -n1, bool)
+        }
+
+        (shell code may not include any parenthesis!)
+
     * quality feedback on parse errors.
         details include error description, line number, position.
 
@@ -98,6 +127,9 @@ class ConfigParser:
 
     TOKENS = [
         '#.*$'  # comments
+        # environment variables
+        '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
+        '|(?P<shell>shell\(.+?(\s*,\s*(int|float|str|bool|auto))?\))'  # shell code
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -148,7 +180,7 @@ class ConfigParser:
         (file, pathname, description) = info
         try:
             py_mod = imp.load_module(name, file, pathname, description)
-        except:
+        except:  # noqa e722
             # We cannot load the module!  We could error out here but then the
             # user gets informed that the problem is with their config.  This
             # is not correct.  Better to say that all is well and then the
@@ -213,6 +245,10 @@ class ConfigParser:
                 t_type = 'literal'
             elif token.group('newline'):
                 t_type = 'newline'
+            elif token.group('env_var'):
+                t_type = 'env_var'
+            elif token.group('shell'):
+                t_type = 'shell'
             elif token.group('unknown'):
                 t_type = 'unknown'
             else:
@@ -278,11 +314,11 @@ class ConfigParser:
             return value[1:-1].replace("\\'", "'")
         try:
             return int(value)
-        except:
+        except:  # noqa e722
             pass
         try:
             return float(value)
-        except:
+        except:  # noqa e722
             pass
         if value.lower() == 'true':
             return True
@@ -291,6 +327,68 @@ class ConfigParser:
         if value.lower() == 'none':
             return None
         return value
+
+    def make_value_from_env(self, value):
+        # Extract the environment variable and type
+        match = re.match(
+            'env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\)', value)
+        env_var, env_type = match.groups()
+        if not env_type:
+            env_type = 'auto'
+        else:
+            # Remove comma and whitespace from match
+            # i.e '   ,  my_conversion' -> 'my_conversion'
+            env_type = env_type.strip()[1:].lstrip()
+
+        conversion_options = {
+            'str': str,
+            'int': int,
+            'float': float,
+
+            # Treat booleans specially
+            'bool': (lambda val: val.lower() in ('true', '1')),
+
+            # Auto-guess the type
+            'auto': self.make_value,
+        }
+        if env_type not in conversion_options:
+            self.error('Invalid env conversion function in env_var')
+
+        # Check the environment variable
+        # TODO: dynamic support, (lambda: os.getenv(env_var))
+        value = os.getenv(env_var)
+        if value is None:
+            self.error('Environment variable \'%s\' undefined' % env_var)
+
+        try:
+            return conversion_options[env_type](value)
+        except ValueError:
+            self.error('Bad conversion')
+
+    def make_value_from_shell(self, value):
+        conversion_options = {
+            'int': int,
+            'float': float,
+            'str': str,
+
+            'bool': (lambda val: val.lower() in ('', 'true', '1')),
+            'auto': self.make_value,
+        }
+
+        match = re.match('shell\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)', value)
+        shell, _, var_type = match.groups()
+        try:
+            shell_stdout = str(check_output(shell, shell=True).rstrip(), encoding='utf-8')
+        except CalledProcessError:
+            if var_type is not None and var_type.lower() == 'bool':
+                return False
+            self.error('shell script exited with an error')
+        if var_type is None:
+            return shell_stdout
+        try:
+            return conversion_options[var_type](shell_stdout)
+        except ValueError:
+            self.error('Bad conversion')
 
     def separator(self, separator=',', end_token=None):
         '''
@@ -370,6 +468,10 @@ class ConfigParser:
                     continue
             if token['type'] == 'literal':
                 return self.make_value(t_value)
+            if token['type'] == 'env_var':
+                return self.make_value_from_env(t_value)
+            if token['type'] == 'shell':
+                return self.make_value_from_shell(t_value)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -458,6 +560,10 @@ class ConfigParser:
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
+            elif t_type == 'env_var':
+                self.error('Name expected')
+            elif t_type == 'shell':
+                self.error('Shell command expected')
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:
@@ -530,23 +636,39 @@ def process_config(config_path, py3_wrapper=None):
         del parser
         return parsed
 
+    def parse_config_error(e, config_path):
+        # There was a problem use our special error config
+        error = e.one_line(config_path)
+        notify_user(error)
+        # to display correctly in i3bar we need to do some substitutions
+        for char in ['"', '{', '|']:
+            error = error.replace(char, '\\' + char)
+        error_config = Template(ERROR_CONFIG).substitute(error=error)
+        return parse_config(error_config)
+
     config = {}
 
     # get the file encoding this is important with multi-byte unicode chars
-    encoding = check_output(['file', '-b', '--mime-encoding', '--dereference', config_path])
-    encoding = encoding.strip().decode('utf-8')
-    with codecs.open(config_path, 'r', encoding) as f:
-        try:
-            config_info = parse_config(f)
-        except ParseException as e:
-            # There was a problem use our special error config
-            error = e.one_line()
-            notify_user(error)
-            # to display correctly in i3bar we need to do some substitutions
-            for char in ['"', '{', '|']:
-                error = error.replace(char, '\\' + char)
-            error_config = Template(ERROR_CONFIG).substitute(error=error)
-            config_info = parse_config(error_config)
+    try:
+        encoding = check_output(
+            ['file', '-b', '--mime-encoding', '--dereference', config_path]
+        )
+        encoding = encoding.strip().decode('utf-8')
+    except CalledProcessError:
+        # bsd does not have the --mime-encoding so assume utf-8
+        encoding = 'utf-8'
+    try:
+        with codecs.open(config_path, 'r', encoding) as f:
+            try:
+                config_info = parse_config(f)
+            except ParseException as e:
+                config_info = parse_config_error(e, config_path)
+    except LookupError:
+        with codecs.open(config_path) as f:
+            try:
+                config_info = parse_config(f)
+            except ParseException as e:
+                config_info = parse_config_error(e, config_path)
 
     # update general section with defaults
     general_defaults = GENERAL_DEFAULTS.copy()
@@ -569,13 +691,13 @@ def process_config(config_path, py3_wrapper=None):
         button = ''
         try:
             button = key.split()[1]
-            if int(button) not in range(1, 6):
+            if int(button) not in range(1, 20):
                 button_error = True
         except (ValueError, IndexError):
-                button_error = True
+            button_error = True
 
         if button_error:
-            err = 'Invalid on_click for `{}` should be 1, 2, 3, 4 or 5 saw `{}`'
+            err = 'Invalid on_click for `{}`. Number not in range 1-20: `{}`.'
             notify_user(err.format(group_name, button))
             return False
         clicks = on_click.setdefault(group_name, {})
@@ -632,19 +754,23 @@ def process_config(config_path, py3_wrapper=None):
                 fixed[k] = v
         return fixed
 
+    def append_modules(item):
+        module_type = get_module_type(item)
+        if module_type == 'i3status':
+            if item not in i3s_modules:
+                i3s_modules.append(item)
+        else:
+            if item not in py3_modules:
+                py3_modules.append(item)
+
     def add_container_items(module_name):
         module = modules.get(module_name, {})
         items = module.get('items', [])
         for item in items:
             if item in config:
                 continue
-            module_type = get_module_type(item)
-            if module_type == 'i3status':
-                if item not in i3s_modules:
-                    i3s_modules.append(item)
-            else:
-                if item not in py3_modules:
-                    py3_modules.append(item)
+
+            append_modules(item)
             module = modules.get(item, {})
             config[item] = remove_any_contained_modules(module)
             # add any children
@@ -653,15 +779,10 @@ def process_config(config_path, py3_wrapper=None):
     # create config for modules in order
     for name in config_info.get('order', []):
         module = modules.get(name, {})
-        module_type = get_module_type(name)
         config['order'].append(name)
         add_container_items(name)
-        if module_type == 'i3status':
-            if name not in i3s_modules:
-                i3s_modules.append(name)
-        else:
-            if name not in py3_modules:
-                py3_modules.append(name)
+        append_modules(name)
+
         config[name] = remove_any_contained_modules(module)
 
     config['on_click'] = on_click

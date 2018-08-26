@@ -9,7 +9,7 @@ Configuration parameters:
     icon_on: show when connection is online (default '●')
     timeout: time to wait for a response, in seconds (default 2)
     url: specify URL to connect when checking for a connection
-        (default 'http://www.google.com')
+        (default 'https://www.google.com')
 
 Format placeholders:
     {icon} connection status
@@ -29,11 +29,9 @@ off
 """
 
 try:
-    # python3
-    from urllib.request import urlopen
-except:
-    # python2
-    from urllib2 import urlopen
+    from urllib.request import urlopen, URLError  # py3
+except ImportError:
+    from urllib2 import urlopen, URLError  # py2
 
 
 class Py3status:
@@ -45,7 +43,7 @@ class Py3status:
     icon_off = u'■'
     icon_on = u'●'
     timeout = 2
-    url = 'http://www.google.com'
+    url = 'https://www.google.com'
 
     class Meta:
         deprecated = {
@@ -66,22 +64,22 @@ class Py3status:
     def post_config_hook(self):
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
+        self.ping_command = [
+            'ping', '-c', '1', '-W', '%s' % self.timeout, self.url]
 
     def _connection_present(self):
         if '://' in self.url:
             try:
                 urlopen(self.url, timeout=self.timeout)
-            except:
-                return False
-            else:
                 return True
+            except URLError:
+                return False
         else:
             try:
-                self.py3.command_output(['ping', '-c', '1', self.url])
-            except:
-                return False
-            else:
+                self.py3.command_output(self.ping_command)
                 return True
+            except self.py3.CommandError:
+                return False
 
     def online_status(self):
         if self._connection_present():

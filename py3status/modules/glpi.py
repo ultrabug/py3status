@@ -24,7 +24,12 @@ Color options:
     color_degraded: Open ticket above warning threshold
 
 Requires:
-    MySQL-python: http://pypi.python.org/pypi/MySQL-python
+    MySQL-python: https://pypi.org/project/MySQL-python/
+
+@author ultrabug
+
+SAMPLE OUTPUT
+{'full_text': '53 tickets'}
 """
 
 import MySQLdb

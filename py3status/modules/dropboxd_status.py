@@ -43,8 +43,7 @@ off
 {'color': '#FF0000', 'full_text': "Dropbox: isn't running"}
 """
 
-STRING_UNAVAILABLE = "Dropbox: isn't installed"
-STRING_ERROR = "Dropbox: command failed"
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
@@ -68,21 +67,12 @@ class Py3status:
             ],
         }
 
+    def post_config_hook(self):
+        if not self.py3.check_commands('dropbox-cli'):
+            raise Exception(STRING_NOT_INSTALLED)
+
     def dropbox(self):
-        if not self.py3.check_commands(['dropbox-cli']):
-            return {
-                'cached_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_BAD,
-                'full_text': STRING_UNAVAILABLE
-            }
-        try:
-            status = self.py3.command_output('dropbox-cli status').splitlines()[0]
-        except:
-            return {
-                'cache_until': self.py3.CACHE_FOREVER,
-                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                'full_text': STRING_ERROR
-            }
+        status = self.py3.command_output('dropbox-cli status').splitlines()[0]
 
         if status == "Dropbox isn't running!":
             color = self.py3.COLOR_BAD
