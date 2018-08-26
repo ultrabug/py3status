@@ -4,11 +4,15 @@ Display status of MEGA sync.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    format: display format for this module (default "MEGA: {SyncState_0}")
+    format: display format for this module (default "MEGA: {format_sync}")
+    format_sync: display format for every sync (default "{SyncState}")
+    format_sync_separator: show separator if more than one sync (default " ")
 
 Format placeholders:
-    <column>_<ID> where <column> is the names returned by 'mega-sync' command.
-    For example: SyncState_0, LOCALPATH_3, ActState_7
+    {format_sync} Format for every sync returned by 'mega-sync' command.
+
+format_sync placeholders:
+    Any column returned by 'mega-sync' command, e.g.: ID, SyncState, LOCALPATH
 
 Requires:
     MEGAcmd: command-line interface for MEGA
@@ -29,7 +33,9 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 10
-    format = "MEGA: {SyncState_0}"
+    format = "MEGA: {format_sync}"
+    format_sync = "{SyncState}"
+    format_sync_separator = " "
 
     def post_config_hook(self):
         if not self.py3.check_commands("mega-sync"):
@@ -38,16 +44,20 @@ class Py3status:
     def megasync(self):
         output = self.py3.command_output("mega-sync").splitlines()
         columns = output[0].split()
-        megasync_data = {}
+
+        megasync_data = []
         for line in output[1:]:
             cells = dict(zip(columns, line.split()))
-            megasync_data.update(
-                {key + "_" + cells["ID"]: value for key, value in cells.items()}
-            )
+            megasync_data.append(self.py3.safe_format(self.format_sync, cells))
+
+        format_sync_separator = self.py3.safe_format(self.format_sync_separator)
+        format_sync = self.py3.composite_join(format_sync_separator, megasync_data)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, megasync_data),
+            "full_text": self.py3.safe_format(
+                self.format, {"format_sync": format_sync}
+            ),
         }
 
 
