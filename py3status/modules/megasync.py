@@ -33,7 +33,7 @@ class Py3status:
         if not self.py3.check_commands("mega-sync"):
             raise Exception("MEGAcmd is not installed")
 
-    def mega_sync(self):
+    def megasync(self):
         output = self.py3.command_output("mega-sync").splitlines()
         columns = output[0].split()
         megasync_data = {}
