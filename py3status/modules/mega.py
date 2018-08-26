@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display status of MEGA sync.
+Display status of MEGAcmd.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
@@ -41,7 +41,7 @@ class Py3status:
         if not self.py3.check_commands("mega-sync"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def megasync(self):
+    def mega(self):
         output = self.py3.command_output("mega-sync").splitlines()
         columns = output[0].split()
 
