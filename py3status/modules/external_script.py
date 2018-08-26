@@ -27,7 +27,7 @@ Format placeholders:
 
 Format notification placeholders:
     {line} number of lines in the output
-    {output} full output of script given by "script_path"
+    {output} first line of the output of script given by "script_path"
 
 i3status.conf example:
 
