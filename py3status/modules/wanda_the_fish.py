@@ -31,7 +31,7 @@ wanda_the_fish {
     format += '{wanda}[\?if=fortune {motion}]'
 }
 
-# no motions, no fortunes, you click
+# no updates, no motions, yes fortunes, you click
 wanda_the_fish {
     format = '[{fortune} ]{wanda}'
     cache_timeout = -1
@@ -74,7 +74,7 @@ py3status
     {'full_text': '\xba', 'color': '#add8e6'},
     {'full_text': ',', 'color': '#ff8c00'},
     {'full_text': '))', 'color': '#ffa500'},
-    {'full_text': '))><', 'color': '#ff8c00'},
+    {'full_text': '))>< ', 'color': '#ff8c00'},
 ]
 """
 

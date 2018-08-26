@@ -178,7 +178,7 @@ from fnmatch import fnmatch
 from json import loads as json_loads
 
 STRING_NOT_INSTALLED = 'not installed'
-STRING_OLD_VERSION = 'install new version 3.4.0+'
+STRING_OLD_VERSION = 'install version 3.4.0+'
 SENSOR_NAMES = [
     'alarm', 'beep', 'crit', 'crit_alarm', 'crit_hyst', 'emergency',
     'emergency_hyst', 'input', 'max', 'min', 'offset' 'type',

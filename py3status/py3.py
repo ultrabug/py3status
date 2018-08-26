@@ -994,13 +994,6 @@ class Py3:
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
-        if error:
-            msg = "Command '{cmd}' had error {error}".format(
-                cmd=pretty_cmd, error=error
-            )
-            raise exceptions.CommandError(
-                msg, error_code=retcode, error=error, output=output
-            )
         return output
 
     def _storage_init(self):
