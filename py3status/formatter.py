@@ -61,6 +61,13 @@ class Formatter:
         for token in self.tokens(format_string):
             if token.group('placeholder'):
                 placeholders.add(token.group('key'))
+            elif token.group('command'):
+                # get any placeholders used in commands
+                commands = dict(parse_qsl(token.group('command')))
+                # placeholders only used in `if`
+                if_ = commands.get('if')
+                if if_:
+                    placeholders.add(Condition(if_).variable)
         return placeholders
 
     def get_placeholder_formats_list(self, format_string):
@@ -90,6 +97,46 @@ class Formatter:
                     token.group('format'))
                 )
                 continue
+            elif token.group('command'):
+                # update any placeholders used in commands
+                commands = dict(
+                    parse_qsl(token.group('command'), keep_blank_values=True)
+                )
+                # placeholders only used in `if`
+                if_ = commands.get('if')
+                if if_:
+                    items = []
+                    for key, value in commands.items():
+                        if key == 'if':
+                            # we have to rebuild from the parts we have
+                            condition = Condition(if_)
+                            variable = condition.variable
+                            if variable in placeholders:
+                                variable = placeholders[variable]
+                                # negation via `!`
+                                not_ = '!' if not condition.default else ''
+                                condition_ = condition.condition or ''
+                                # if there is no condition then there is no
+                                # value
+                                if condition_:
+                                    value_ = condition.value
+                                else:
+                                    value_ = ''
+                                value = '{}{}{}{}'.format(
+                                        not_,
+                                        variable,
+                                        condition_,
+                                        value_,
+                                )
+                        if value:
+                            items.append('{}={}'.format(key, value))
+                        else:
+                            items.append(key)
+
+                    # we cannot use urlencode because it will escape things
+                    # like `!`
+                    output.append('\?{} '.format('&'.join(items)))
+                    continue
             value = token.group(0)
             output.append(value)
         return u''.join(output)
