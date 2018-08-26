@@ -12,7 +12,8 @@ Format placeholders:
     {format_sync} Format for every sync returned by 'mega-sync' command.
 
 format_sync placeholders:
-    Any column returned by 'mega-sync' command, e.g.: ID, SyncState, LOCALPATH
+    Any column returned by 'mega-sync' command - in lower case!
+    For example: id, syncstate, localpath
 
 Requires:
     MEGAcmd: command-line interface for MEGA
@@ -47,7 +48,7 @@ class Py3status:
         if len(output) == 0:
             self.py3.error(STRING_NOT_CONFIGURED)
 
-        columns = output[0].split()
+        columns = [col.lower() for col in output[0].split()]
         megasync_data = []
         for line in output[1:]:
             cells = dict(zip(columns, line.split()))
