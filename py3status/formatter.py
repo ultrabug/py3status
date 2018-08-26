@@ -99,17 +99,16 @@ class Formatter:
                 continue
             elif token.group('command'):
                 # update any placeholders used in commands
-                commands = dict(
-                    parse_qsl(token.group('command'), keep_blank_values=True)
+                commands = parse_qsl(
+                    token.group('command'), keep_blank_values=True
                 )
                 # placeholders only used in `if`
-                if_ = commands.get('if')
-                if if_:
+                if 'if' in [x[0] for x in commands]:
                     items = []
-                    for key, value in commands.items():
+                    for key, value in commands:
                         if key == 'if':
                             # we have to rebuild from the parts we have
-                            condition = Condition(if_)
+                            condition = Condition(value)
                             variable = condition.variable
                             if variable in placeholders:
                                 variable = placeholders[variable]
