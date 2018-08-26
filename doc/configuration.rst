@@ -86,12 +86,12 @@ Global options:
 
 ``storage``: Set storage name or path.
 
-Store cache in $XDG_CACHE_HOME or ~/.cache (default)
+Store cache in $XDG_CACHE_HOME or ~/.cache
 
 .. code-block:: py3status
     :caption: Example
 
-    # default config
+    # default behavior
     py3status {
         storage =  'py3status_cache.data'
     }

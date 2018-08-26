@@ -31,8 +31,8 @@ Configuration parameters:
         (default '[\?color=state_time [{format_tag} ]{format_duration}]')
     format_time_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
-        *(default {'state_tag': [(0, 'bad'), (1, 'darkgray')],
-        'state_time': [(0, 'darkgray'), (1, 'good')]})*
+        *(default {'state_tag': [(0, 'darkgray'), (1, 'darkgray')],
+        'state_time': [(0, 'darkgray'), (1, 'degraded')]})*
 
 Format placeholders:
     {format_time} format for tracked times
@@ -75,11 +75,13 @@ Recommendations:
     We can refresh a module using `py3-cmd` command.
     An excellent example of using this command in a function.
 
-    | ~/.{bash,zsh}{rc,_profile}
-    | ---------------------------
-    | function timew () {
-    |     command timew "$@" && py3-cmd refresh timewarrior
-    | }
+    ```
+    ~/.{bash,zsh}{rc,_profile}
+    ---------------------------
+    function timew () {
+        command timew "$@" && py3-cmd refresh timewarrior
+    }
+    ```
 
     With this, you can consider giving `cache_timeout` a much larger number,
     eg 3600 (an hour), so the module does not need to be updated that often.
@@ -91,7 +93,21 @@ timewarrior {
     filter = ':day'           # filter times not in 24 hours of current day
     filter = '12hours'        # filter times not in 12 hours of current time
     filter = '5min'           # filter times not in 5 minutes of current time
+    filter = '1sec'           # filter times not in 1 second of current time
     filter = '5pm to 11:59pm  # filter times not in 5pm to 11:59pm range
+}
+
+# intervals
+timewarrior {
+    # if you are printing other intervals too with '1day' filter or so,
+    # then you may want to add this too for better bar readability
+    format_time_separator = ', '
+
+    # you also can change the thresholds with different colors
+    thresholds = {
+        'state_tag': [(0, 'darkgray'), (1, 'degraded')],
+        'state_time': [(0, 'darkgray'), (1, 'degraded')],
+    }
 }
 
 # add buttons
@@ -128,17 +144,17 @@ timewarrior {
 SAMPLE OUTPUT
 [
     {'full_text': 'Timew '},
-    {'full_text': 'gaming ', 'color': '#ff0000'},
+    {'full_text': 'gaming ', 'color': '#a9a9a9'},
     {'full_text': '15:02 ', 'color': '#a9a9a9'},
     {'full_text': 'studying ', 'color': '#a9a9a9'},
-    {'full_text': '03:42', 'color': '#00ff00'}
+    {'full_text': '03:42', 'color': '#ffff00'}
 ]
 
 no_tag
 [
     {'full_text': 'Timew '},
     {'full_text': 'gardening ', 'color': '#a9a9a9'},
-    {'full_text': '20:37', 'color': '#00ff00'}
+    {'full_text': '20:37', 'color': '#ffff00'}
 ]
 
 no_timew
@@ -173,8 +189,8 @@ class Py3status:
     format_time = '[\?color=state_time [{format_tag} ]{format_duration}]'
     format_time_separator = ' '
     thresholds = {
-        'state_tag': [(0, 'bad'), (1, 'darkgray')],
-        'state_time': [(0, 'darkgray'), (1, 'good')],
+        'state_tag': [(0, 'darkgray'), (1, 'darkgray')],
+        'state_time': [(0, 'darkgray'), (1, 'degraded')],
     }
 
     def post_config_hook(self):

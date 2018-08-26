@@ -20,9 +20,9 @@ Format placeholders:
     {mmdf}    number of MMDF messages
     {imap}    number of IMAP messages
 
-    We can divide mailbox, eg `{maildir}` into numbered placeholders based on
-    number of mailbox accounts, eg `{maildir_1}` and if we add `name` to a
-    mailbox account, we can use `{name}` placeholder instead, eg `{home}`.
+    We can divide mailbox, eg `{maildir}`, into numbered placeholders based
+    on number of mailbox accounts, eg `{maildir_1}`, and if we add `name` to
+    a mailbox account, we can use `{name}` placeholder instead, eg `{home}`.
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
