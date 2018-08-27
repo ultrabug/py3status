@@ -6,7 +6,9 @@ Configuration parameters:
     button_refresh: button to run the check (default 2)
     button_share: button to open the result link (default None)
     format: display format for this module, {download} and/or {upload} required
-        (default 'Speedtest [Up {upload} {upload_unit}] [Down {download} {download_unit}]')
+        *(default 'Speedtest [\?color=darkgray ping [\?color=ping {ping} ms] '
+                    'up [\?color=upload {upload} {upload_unit}] '
+                    'down [\?color=download {download} {download_unit}]]')*
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
     si_units: use SI units (default False)
     sleep_timeout: when speedtest-cli is allready running, this interval will be used
@@ -113,7 +115,15 @@ speedtest {
 ```
 
 SAMPLE OUTPUT
-{'full_text': u'Speedtest Down 0.247 MB/s Up 0.453 MB/s'}
+[
+    {"full_text": "Speedtest " },
+    {"full_text": "ping ", "color": "#a9a9a9"},
+    {"full_text": "9.498 ms", "color": "#ebdbb2"},
+    {"full_text": " up ", "color": "#a9a9a9"},
+    {"full_text": "78.42 MB/s", "color": "#fb4934"},
+    {"full_text": " down ", "color": "#a9a9a9"},
+    {"full_text": "39.58 MB/s", "color": "#fb4934"}
+]
 """
 
 from json import loads
@@ -131,7 +141,9 @@ class Py3status:
     button_refresh = 2
     button_share = None
     format = (
-        u"Speedtest [Up {upload} {upload_unit}] [Down {download} {download_unit}]"
+        u"Speedtest [\?color=darkgray ping [\?color=ping {ping} ms] "
+        "up [\?color=upload {upload} {upload_unit}] "
+        "down [\?color=download {download} {download_unit}]]"
     )
     server_id = None
     si_units = False
@@ -160,7 +172,7 @@ class Py3status:
         self.first_run = True
         self.placeholders = self.py3.get_placeholders_list(self.format)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
-        self.command = ["speedtest-cli --json --secure"]
+        self.command = "speedtest-cli --json --secure"
 
         self.quality = {
             -1: 'failed',
@@ -178,20 +190,20 @@ class Py3status:
             for key in self.placeholders
         ):
             if not any(key.startswith("upload") for key in self.placeholders):
-                self.command += ["--no-upload"]
+                self.command += " --no-upload"
 
             if not any(key.startswith("download") for key in self.placeholders):
-                self.command += ["--no-download"]
+                self.command += " --no-download"
 
         if self.server_id and int(self.server_id):
-            self.command += ["--server {}".format(self.server_id)]
+            self.command += " --server " + str(self.server_id)
 
         if self.button_share and all(
             x in self.placeholders for x in ["download", "upload"]
         ):
-            self.command += ["--share"]
+            self.command += " --share"
 
-        self.command += ["--timeout {}".format(self.timeout)]
+        self.command += " --timeout " + str(self.timeout)
 
     def _is_running(self):
         try:
