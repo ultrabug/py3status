@@ -14,22 +14,20 @@ Configuration parameters:
     thresholds: specify color thresholds to use *(default {
                 'download': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')],
                 'ping': [(200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')],
-                'quality':
-                    [
-                        ('ok', 'good'), ('bad', 'degraded'),
-                        ('faster', 'good'), ('slower', 'degraded'), ('faster', 'good')
-                    ],
+                'quality': [(-1, "bad"), (0, "darkgrey"), (1, "degraded"),
+                    (2, "good"), (4, "degraded"), (3, "good"),
+                ],
                 'upload': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')]})*
     timeout: timeout when communicating with speedtest.net servers (default 10)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
 
 Format placeholders:
-    {bytes_sent}            bytes sent during test, human readable
+    {bytes_sent}            bytes sent during test, human readable, eg 'TODO'
     {bytes_sent_unit}       unit used for bytes_sent, eg 'MB'
-    {bytes_sent_raw}        bytes sent during test, for format comparation
-    {bytes_received}        bytes received during test, human readable
-    {bytes_received_raw}    bytes received during test, for format comparation, eg
+    {bytes_sent_raw}        bytes sent during test, for format comparation, eg 'TODO'
+    {bytes_received}        bytes received during test, human readable, eg 'TODO'
+    {bytes_received_raw}    bytes received during test, for format comparation, eg 'TODO'
     {bytes_received_unit}   unit used for bytes_received, eg 'MB'
     {client_country}        client country code, eg 'FR'
     {client_ip}             client ip, eg '78.194.13.7'
@@ -45,7 +43,8 @@ Format placeholders:
     {download_raw}          download rate from speedtest server, for format comparation
     {download_unit}         unit used as , eg 'MB/s'
     {ping}                  ping time in ms to speedtest server
-    {quality}               quality of the connection, eg ok, bad, faster, slower
+    {quality}               quality code of the connection, eg 0, 1, 2, 3, 4
+    {quality_name}          quality name of the connection, eg failed, bad, good, slower, faster
     {timestamp}             timestamp of the run, eg 'TODO'
     {server_cc}             server country code, eg 'FR'
     {server_country}        server country, eg 'France'
@@ -84,11 +83,12 @@ speedtest {
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
         "quality": [
-            ("ok", "good"),
-            ("bad", "degraded"),
-            ("faster", "good"),
-            ("slower", "degraded"),
-            ("faster", "good"),
+            (-1, "bad"),
+            (0, "darkgrey"),
+            (1, "degraded"),
+            (2, "good"),
+            (4, "degraded"),
+            (3, "good"),
         ],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
@@ -104,10 +104,10 @@ speedtest {
 
 # compare only download
 speedtest {
-    format = '[[\?if=quality=slower&color=download_raw ↓ {download} {download_unit}]'
-    format += '[\?if=quality=faster&color=download_raw ↑ {download} {download_unit}]'
-    format += '[\?if=quality=ok&color=download_raw -> {download} {download_unit}]'
-    format += '[\?if=quality=bad&color=download_raw x {download} {download_unit}]]'
+    format = '[[\?if=quality_name=slower&color=download_raw ↓ {download} {download_unit}]'
+    format += '[\?if=quality_name=faster&color=download_raw ↑ {download} {download_unit}]'
+    format += '[\?if=quality_name=good&color=download_raw -> {download} {download_unit}]'
+    format += '[\?if=quality_name=bad&color=download_raw x {download} {download_unit}]]'
     format += '|speedtest'
 }
 ```
@@ -140,11 +140,12 @@ class Py3status:
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
         "quality": [
-            ("ok", "good"),
-            ("bad", "degraded"),
-            ("faster", "good"),
-            ("slower", "degraded"),
-            ("faster", "good"),
+            (-1, "bad"),
+            (0, "darkgrey"),
+            (1, "degraded"),
+            (2, "good"),
+            (4, "degraded"),
+            (3, "good"),
         ],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
@@ -157,10 +158,18 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
         self.first_run = True
-
         self.placeholders = self.py3.get_placeholders_list(self.format)
-
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.command = ["speedtest-cli --json --secure"]
+
+        self.quality = {
+            -1: 'failed',
+            0: 'unknow',
+            1: 'bad',
+            2: 'good',
+            3: 'slower',
+            4: 'faster'
+        }
 
         # if download* or upload* missing, run complete test
         if any(
@@ -198,9 +207,10 @@ class Py3status:
     def speedtest(self):
         speedtest_data = {}
         self.url = None
+        cached_until = self.py3.CACHE_FOREVER
+
         if self.first_run:
             self.first_run = False
-            cached_until = self.py3.CACHE_FOREVER
         else:
             current_data = {}
             previous_data = {}
@@ -209,7 +219,6 @@ class Py3status:
             if not self._is_running():
                 previous_data = self.py3.storage_get("speedtest_data")
                 current_data = self._get_speedtest_data()
-                cached_until = self.py3.CACHE_FOREVER
 
                 if current_data and len(current_data) > 1:
                     # create a "total" for know if cnx is better or not
@@ -221,15 +230,16 @@ class Py3status:
                     # create "quality" #maybe bad name
                     if previous_data and "total" in previous_data:
                         if current_data["total"] >= previous_data["total"]:
-                            quality = "faster"
+                            quality_key = 4
                         else:
-                            quality = "slower"
+                            quality_key = 3
                     else:
                         if current_data["total"] <= 0:
-                            quality = "bad"
+                            quality_key = 1
                         else:
-                            quality = "ok"
-                    current_data["quality"] = quality
+                            quality_key = 2
+                    current_data["quality"] = quality_key
+                    current_data["quality_name"] = self.quality[quality_key]
 
             # zero-ing if not fetched, raw version and units convertion
             for x in ["download", "upload", "bytes_received", "bytes_sent"]:
@@ -270,7 +280,7 @@ class Py3status:
             )
 
             # thresholds
-            for x in self.thresholds:
+            for x in self.thresholds_init:
                 if x in speedtest_data:
                     self.py3.threshold_get_color(speedtest_data[x], x)
 
