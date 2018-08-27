@@ -4,7 +4,7 @@ Display status of MEGAcmd.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
-    format: display format for this module (default "MEGA: {format_sync}")
+    format: display format for the module (default "MEGA {format_sync}|No MEGA")
     format_sync: display format for every sync (default "{SyncState}")
     format_sync_separator: show separator if more than one sync (default " ")
 
@@ -22,11 +22,10 @@ Requires:
 @license BSD
 
 SAMPLE OUTPUT
-{'full_text': 'MEGA: Synced'}
+{'full_text': 'MEGA Synced'}
 """
 
 STRING_NOT_INSTALLED = "MEGAcmd is not installed"
-STRING_NOT_CONFIGURED = "no sync is configured yet"
 
 
 class Py3status:
@@ -35,7 +34,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 10
-    format = "MEGA: {format_sync}"
+    format = "MEGA {format_sync}|No MEGA"
     format_sync = "{SyncState}"
     format_sync_separator = " "
 
@@ -45,17 +44,17 @@ class Py3status:
 
     def mega(self):
         output = self.py3.command_output("mega-sync").splitlines()
-        if len(output) == 0:
-            self.py3.error(STRING_NOT_CONFIGURED)
 
-        columns = output[0].lower().split()
-        megasync_data = []
-        for line in output[1:]:
-            cells = dict(zip(columns, line.split()))
-            megasync_data.append(self.py3.safe_format(self.format_sync, cells))
+        format_sync = ""
+        if len(output) > 0:
+            columns = output[0].lower().split()
+            megasync_data = []
+            for line in output[1:]:
+                cells = dict(zip(columns, line.split()))
+                megasync_data.append(self.py3.safe_format(self.format_sync, cells))
 
-        format_sync_separator = self.py3.safe_format(self.format_sync_separator)
-        format_sync = self.py3.composite_join(format_sync_separator, megasync_data)
+            format_sync_separator = self.py3.safe_format(self.format_sync_separator)
+            format_sync = self.py3.composite_join(format_sync_separator, megasync_data)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
