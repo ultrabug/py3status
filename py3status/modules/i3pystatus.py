@@ -263,7 +263,7 @@ class Py3status:
         global status
 
         if status is None:
-            status = i3pystatus.Status()
+            status = i3pystatus.Status(standalone=False)
 
         # create the module and register it
         finder = status.modules.finder
