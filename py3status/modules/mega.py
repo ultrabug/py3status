@@ -45,7 +45,7 @@ class Py3status:
     def mega(self):
         output = self.py3.command_output("mega-sync").splitlines()
 
-        format_sync = ""
+        format_sync = None
         if len(output) > 0:
             columns = output[0].lower().split()
             megasync_data = []
