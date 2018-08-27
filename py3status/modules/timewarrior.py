@@ -292,7 +292,9 @@ class Py3status:
                     self.py3.threshold_get_color(time[x], x)
 
             format_time = self.py3.safe_format(self.format_time, time)
-            self.py3.composite_update(format_time, {'index': format(time_index)})
+            self.py3.composite_update(
+                format_time, {'index': 'time/{}'.format(time_index)}
+            )
             new_time.append(format_time)
 
         format_time_separator = self.py3.safe_format(self.format_time_separator)
@@ -326,7 +328,9 @@ class Py3status:
         button = event['button']
         index = event['index']
         action = None
-        if isinstance(event['index'], int):
+        if 'time' in format(event['index']):
+            index = event['index'].split('/')[-1]
+        else:
             index = None
         if button == self.button_delete:
             if index:
