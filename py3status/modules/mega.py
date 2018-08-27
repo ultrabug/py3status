@@ -5,7 +5,7 @@ Display status of MEGAcmd.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for the module (default "MEGA {format_sync}|No MEGA")
-    format_sync: display format for every sync (default "{SyncState}")
+    format_sync: display format for every sync (default "{syncstate}")
     format_sync_separator: show separator if more than one sync (default " ")
 
 Format placeholders:
@@ -35,7 +35,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "MEGA {format_sync}|No MEGA"
-    format_sync = "{SyncState}"
+    format_sync = "{syncstate}"
     format_sync_separator = " "
 
     def post_config_hook(self):
