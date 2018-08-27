@@ -201,8 +201,7 @@ class Py3status:
             return False
 
     def _get_speedtest_data(self):
-        command = ' '.join(self.command)
-        return loads(self.py3.command_output(command)) or None
+        return loads(self.py3.command_output(self.command)) or None
 
     def speedtest(self):
         speedtest_data = {}
