@@ -28,8 +28,9 @@ class Formatter:
         r'|(\\\?(?P<command>\S*)\s)'
         r'|(?P<escaped>(\\.|\{\{|\}\}))'
         r'|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(?P<format>([^}\\]|\\.)*)?\}))'
+        r'|(?P<lost_brace_left>(\{))'
         r'|(?P<literal>([^\[\]\\\{\}\|])+)'
-        r'|(?P<lost_brace>(\}))'
+        r'|(?P<lost_brace_right>(\}))'
     ]
 
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
@@ -187,9 +188,12 @@ class Formatter:
                 key = token.group('key')
                 format = token.group('format')
                 block.add(Placeholder(key, format))
+            elif token.group('lost_brace_left'):
+                # fix lost left brace, eg 'name' instead of '{name'
+                block.add(Literal('{'))
             elif token.group('literal'):
                 block.add(Literal(value))
-            elif token.group('lost_brace'):
+            elif token.group('lost_brace_right'):
                 # due to how parsing happens we can get a lonesome }
                 # eg in format_string '{{something}' this fixes that issue
                 block.add(Literal('}'))
