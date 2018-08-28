@@ -9,10 +9,17 @@ Configuration parameters:
     button_allow: Button to allow the device. (default 1)
     button_block: Button to block the device (default 3)
     button_reject: Button to reject the device. (default None)
-    format: Display format for the module. (default '[{format_all_devices}]')
-    format_all_devices: format separator for usb devices. (default '{name}')
-    format_device_separator: format separator for usb devices. (default ' \?color=separator \| ')
+    format: Display format for the module. (default '{format_all_devices}')
+    format_all_devices: format separator for usb devices.
+        (default '\?color=rule {name} is {rule}')
+    format_device_separator: format separator for usb devices. (default '\?color=separator  \| ')
     format_notification: format for notification on action (default '{name} is {action}')
+    thresholds: specify color thresholds to use
+        *(default {
+            'action': [
+                ('block', "bad"), ('reject', "degraded"), ('allow', "good")],
+            'rule': [
+                ('block', "bad"), ('reject', "degraded"), ('allow', "good")]})*
 
 Format placeholders:
     {format_all_devices} format device list
@@ -57,10 +64,9 @@ SAMPLE OUTPUT
 
 import threading
 
-from pprint import pprint
 from gi.repository import GLib
 from pydbus import SystemBus
-import re
+# import re
 
 STRING_USBGUARD_DBUS = 'usbguard-dbus service not running'
 
@@ -112,7 +118,6 @@ class UsbguardListener(threading.Thread):
         self.parent.all_devices = self.parent._get_all_devices()
         self.parent.py3.update()
 
-
     def run(self):
         while not self.parent.killed.is_set():
             self.parent._init_dbus()
@@ -141,7 +146,7 @@ class Py3status:
     button_reject = None
     format = u'{format_all_devices}'
     format_all_devices = u'\?color=rule {name} is {rule}'
-    format_device_separator = u'\?color=separator \|'
+    format_device_separator = u'\?color=separator  \| '
     format_notification = u'{name} is {action}'
     thresholds = {
         'action': [('block', "bad"), ('reject', "degraded"), ('allow', "good")],
@@ -155,7 +160,7 @@ class Py3status:
         self.error = None
         try:
             self.proxy = self.dbus.get(self.dbus_interface, self.dbus_devices)
-        except:
+        except:  # noqa e722
             self.error = Exception(STRING_USBGUARD_DBUS)
 
     def _get_all_devices(self):
@@ -173,14 +178,14 @@ class Py3status:
             'via_port',
             'with_interface',
         ]
-        _regex_serial = re.compile(r'\S*serial \"(\S+)\"\S*')
-        _regex_rule = re.compile(r'^(\S+)')
-        _regex_id = re.compile(r'id (\S+)')
-        _regex_name = re.compile(r'name \"(.*)\" hash')
-        _regex_hash = re.compile(r'hash \"(.*)\" parent-hash')
-        _regex_parent_hash = re.compile(r'parent-hash \"(.*)\" via-port')
-        _regex_via_port = re.compile(r'via-port \"(.*)\" with-interface')
-        _regex_with_interface = re.compile(r'with-interface \{ (.*) \}$')
+        # _regex_serial = re.compile(r'\S*serial \"(\S+)\"\S*')
+        # _regex_rule = re.compile(r'^(\S+)')
+        # _regex_id = re.compile(r'id (\S+)')
+        # _regex_name = re.compile(r'name \"(.*)\" hash')
+        # _regex_hash = re.compile(r'hash \"(.*)\" parent-hash')
+        # _regex_parent_hash = re.compile(r'parent-hash \"(.*)\" via-port')
+        # _regex_via_port = re.compile(r'via-port \"(.*)\" with-interface')
+        # _regex_with_interface = re.compile(r'with-interface \{ (.*) \}$')
 
         for usbguard_id, device in devices:
             params = {}
@@ -203,7 +208,7 @@ class Py3status:
 
         # self.py3.log('# response')
         # self.py3.log(response)
-        
+
         return response
 
     def _toggle_permanant(self):
@@ -241,7 +246,7 @@ class Py3status:
 
     def _set_policy(self, action, index):
         if action and index and index != 'sep':
-    
+
             targets = {'allow': 0, 'block': 1, 'reject': 2}
 
             self.py3.log('# data')
@@ -254,7 +259,7 @@ class Py3status:
             self.py3.log(self.usbguard_data)
             self.py3.log('# all devices')
             self.py3.log(self.all_devices)
-            
+
             # notifications
             if self.format_notification:
                 format_notification = self.data[index]
@@ -290,7 +295,9 @@ class Py3status:
             )
 
             # add usbguard_id
-            self.py3.composite_update(device_formatted, {'usbguard_id': data[device]['usbguard_id']})
+            self.py3.composite_update(
+                device_formatted, {'usbguard_id': data[device]['usbguard_id']}
+            )
 
             format_all_devices.append(device_formatted)
 
@@ -329,10 +336,11 @@ class Py3status:
 
     def on_click(self, event):
         button = event['button']
+        index = event['index']
 
         self.py3.log('# click event')
         self.py3.log(event)
-                
+
         if button == self.button_allow:
             self._set_policy('allow', index)
         elif button == self.button_reject:
