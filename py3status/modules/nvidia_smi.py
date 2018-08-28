@@ -9,7 +9,7 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default '{format_gpu}')
     format_gpu: display format for NVIDIA GPUs
-        *(default '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°] '
+        *(default '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
         '[\?color=memory.used_percent {memory.used} MiB]')*
     format_gpu_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
@@ -45,7 +45,7 @@ Examples:
 ```
 # add {memory.used_percent}
 nvidia_smi {
-    format_gpu = '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°] '
+    format_gpu = '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
     format_gpu += '[\?color=memory.used_percent {memory.used} MiB'
     format_gpu += '[\?color=darkgray&show \|]{memory.used_percent:.1f}%]'
 }
@@ -71,7 +71,7 @@ memory
 percent
 [
     {'full_text': 'Quadro NVS 295 '},
-    {'full_text': '73° ', 'color': '#fce94f'},
+    {'full_text': '73°C ', 'color': '#ffff00'},
     {'full_text': '192 MiB', 'color': '#ffa500'},
     {'full_text': '|', 'color': '#a9a9a9'},
     {'full_text': '75.3%', 'color': '#ffa500'}
@@ -87,7 +87,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = '{format_gpu}'
-    format_gpu = (u'{gpu_name} [\?color=temperature.gpu {temperature.gpu}°] '
+    format_gpu = (u'{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
                   '[\?color=memory.used_percent {memory.used} MiB]')
     format_gpu_separator = ' '
     thresholds = [(0, 'good'), (65, 'degraded'), (75, 'orange'), (85, 'bad')]
