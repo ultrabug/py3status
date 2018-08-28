@@ -131,7 +131,7 @@ class Py3status:
         self.thresholds_init = {}
         for name in ('format', 'format_row'):
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name) or ''
+                getattr(self, name, '')
             )
 
     def _get_sql_data(self):
