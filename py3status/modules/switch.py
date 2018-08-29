@@ -293,6 +293,10 @@ class Py3status:
         self.is_action = True
         self.new_list = {}
         for index, (name, cmd) in enumerate(self.list, 1):
+            self.new_list[index] = {
+                'name': name,
+                'command': shlex.split(expanduser(cmd)) if cmd else ''
+            }
             self.new_list[index] = {'name': name, 'command': expanduser(cmd)}
         self.button_list = [self.button_action, self.button_next,
                             self.button_previous, self.button_reset]
@@ -301,12 +305,13 @@ class Py3status:
         if not self.button_action or self.is_action:
             command = self.new_list[self.active_index]['command']
             if command:
-                Popen(shlex.split(command), preexec_fn=setpgrp)
+                Popen(command, preexec_fn=setpgrp)
             self.index = self.active_index
             self.is_action = False
 
         format_list = self.py3.safe_format(
-            self.new_list[self.active_index]['name'], {'index': self.index})
+            self.new_list[self.active_index]['name'], {'index': self.index}
+        )
 
         return {
             'cached_until': self.py3.CACHE_FOREVER,
