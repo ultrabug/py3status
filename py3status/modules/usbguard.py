@@ -11,13 +11,13 @@ Configuration parameters:
     format: display format for this module
         (default '[{format_device} ]{format_button_filter}')
     format_action_allow: display format for allow action filter
-        (default '[\?color=good Allow]')
+        (default '\?color=good \[Allow\]')
     format_action_block: display format for block action filter
-        (default '[\?color=degraded Block]')
+        (default '\?color=degraded \[Block\]')
     format_action_reject: display format for reject action filter
-        (default '[\?color=bad Reject]')
+        (default '\?color=bad \[Reject\]')
     format_button_filter: display format for filter button
-        (default '[{filter}|\?show \|ALL]')
+        (default '[{filter}|\?show ALL]')
     format_button_permanent: display format for permanent button
         (default '[\?if=permanent&color=white \[P\]|\?color=darkgray \[P\]]')
     format_device: display format for USB devices
@@ -163,10 +163,10 @@ class Py3status:
     """
     filters = []
     format = '[{format_device} ]{format_button_filter}'
-    format_action_allow = '[\?color=good Allow]'
-    format_action_block = '[\?color=degraded Block]'
-    format_action_reject = '[\?color=bad Reject]'
-    format_button_filter = '[{filter}|\?show \|ALL]'
+    format_action_allow = '\?color=good \[Allow\]'
+    format_action_block = '\?color=degraded \[Block\]'
+    format_action_reject = '\?color=bad \[Reject\]'
+    format_button_filter = '[{filter}|\?show ALL]'
     format_button_permanent = '[\?if=permanent&color=white \[P\]|\?color=darkgray \[P\]]'
     format_device = ('[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
                      '[ {format_action_allow}][ {format_action_block}]')
