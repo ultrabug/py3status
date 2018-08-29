@@ -349,6 +349,13 @@ class Module:
 
             self.i3s_module_options["separator_block_width"] = sep_block_width
 
+        # if markup is set on the module or globally we add it to the module
+        # output for pango support
+        fn = self._py3_wrapper.get_config_attribute
+        param = fn(self.module_full_name, 'markup')
+        if not hasattr(param, 'none_setting'):
+            self.i3s_module_options['markup'] = param
+
     def process_composite(self, response):
         """
         Process a composite response.
