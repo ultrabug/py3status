@@ -311,7 +311,7 @@ class Py3status:
         }
 
         for x in self.thresholds_init['format']:
-            if x in self.load_data:
+            if x in timew_data:
                 self.py3.threshold_get_color(timew_data[x], x)
 
         return {
