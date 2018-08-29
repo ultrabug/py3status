@@ -64,8 +64,7 @@ Format placeholders:
     {upload_unit}           unit used for upload, eg 'MB/s'
 
 Color thresholds:
-    format:
-        xxx: print a color based on the value of `xxx` placeholder
+    xxx: print a color based on the value of `xxx` placeholder
 
 The module will be triggered on clic only. Not at start.
 
