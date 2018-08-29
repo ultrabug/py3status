@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from py3status import exceptions
 from py3status.constants import COLOR_NAMES
-from py3status.formatter import Formatter, Composite
+from py3status.formatter import Formatter, Composite, fix_color
 from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradiants
@@ -165,13 +165,10 @@ class Py3:
     def _get_color(self, color):
         if not color:
             return
+
         # fix any hex colors so they are #RRGGBB
         if color.startswith('#'):
-            color = color.upper()
-            if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2] +
-                         color[2] + color[3] + color[3])
-            return color
+            return fix_color(color)
 
         name = 'color_%s' % color
         return self._get_config_setting(name)
@@ -675,25 +672,20 @@ class Py3:
 
     def get_color_names_list(self, format_strings):
         """
-        Returns a list of color names in ``format_string``.
+        Returns a list of color names in  a ``format_string``.
+        it does not get defined colors eg ``#FF00FF`` or ``blue``
 
-        :param format_strings: Accepts a format string or a list of format strings.
+        :param format_strings: Accepts a format string or a list of format
+        strings.
         """
+        # FIXME what is this about?
         if not getattr(self._py3status_module, 'thresholds', None):
             return []
         if isinstance(format_strings, basestring):
             format_strings = [format_strings]
         names = set()
         for string in format_strings:
-            for color in string.replace('&', ' ').split('color=')[1::1]:
-                color = color.split()[0]
-                if '#' in color:
-                    continue
-                if color in ['good', 'bad', 'degraded', 'None', 'threshold']:
-                    continue
-                if color in COLOR_NAMES:
-                    continue
-                names.add(color)
+            names.update(self._formatter.get_colors(string))
         return list(names)
 
     def get_placeholders_list(self, format_string, match=None):

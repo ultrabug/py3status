@@ -137,6 +137,21 @@ def get_placeholders(test_dict):
         pytest.fail('Results not as expected')
 
 
+def get_colors(test_dict):
+    __tracebackhide__ = True
+
+    named_only = not test_dict.get('get_all', False)
+    result = f.get_colors(test_dict['format'], named_only=named_only)
+    expected = test_dict.get('expected')
+
+    if result != expected:
+        print('Format\n{}\n'.format(test_dict['format']))
+        print('Expected\n{}'.format(pformat(expected)))
+        print('Got\n{}'.format(pformat(result)))
+    if result != expected:
+        pytest.fail('Results not as expected')
+
+
 def update_placeholders(test_dict):
     __tracebackhide__ = True
 
@@ -1509,6 +1524,81 @@ def test_update_placeholders_5():
             'placeholder': 'new_placeholder',
         },
         'expected': '\{placeholder\}{new_placeholder}[\?if=new_placeholder&color=red something]',
+    })
+
+
+def test_get_colors_1():
+    get_colors({
+        'format': '[\?color=blue { {color=#123}]',
+        'expected': set(),
+    })
+
+
+def test_get_colors_2():
+    get_colors({
+        'format': '[\?color=#abc ][\?color=#123456 ]',
+        'expected': set(),
+    })
+
+
+def test_get_colors_2a():
+    get_colors({
+        'format': '[\?color=#abc ][\?color=#123456 ]',
+        'get_all': True,
+        'expected': {'#AABBCC', '#123456'},
+    })
+
+
+def test_get_colors_3():
+    get_colors({
+        'format': '[\?color= ][\?color=moo ]',
+        'expected': {'moo'},
+    })
+
+
+def test_get_colors_4():
+    get_colors({
+        'format': '[\?color=#aAbBcC ][\?color=#ABC ]',
+        'expected': set(),
+    })
+
+
+def test_get_colors_4a():
+    get_colors({
+        'format': '[\?color=#aAbBcC ][\?color=#ABC ]',
+        'get_all': True,
+        'expected': {'#AABBCC'},
+    })
+
+
+def test_get_colors_5():
+    get_colors({
+        'format': '[\?color=#BADCOL ][\?color=#AC1D ]',
+        'expected': set(),
+    })
+
+
+def test_get_colors_6():
+    get_colors({
+        'format': '[\?color=blue ][\?color=bad ]',
+        'get_all': True,
+        'expected': {'blue', 'bad'},
+    })
+
+
+def test_get_colors_7():
+    get_colors({
+        'format': '[\?color=GreeN ][\?color=Bad ]',
+        'get_all': True,
+        'expected': {'green', 'bad'},
+    })
+
+
+def test_get_colors_8():
+    get_colors({
+        'format': '[\?color=blue ][\?color=#ABC ]',
+        'get_all': True,
+        'expected': {'blue', '#AABBCC'},
     })
 
 

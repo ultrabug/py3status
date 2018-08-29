@@ -6,6 +6,7 @@ from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
+from py3status.constants import COLOR_NAMES, COLOR_SPECIALS
 
 try:
     from urllib.parse import parse_qsl
@@ -14,6 +15,23 @@ except ImportError:
 
 
 python2 = sys.version_info < (3, 0)
+REGEX_COLOR = re.compile('#[0-9A-F]{6}')
+
+
+def fix_color(color, default=None):
+    """
+    Fix any hex colors so they are #RRGGBB
+    named colors eg blue/bad pass through unaltered
+    """
+    if color and color.startswith('#'):
+        color = color.upper()
+        if len(color) == 4:
+            color = ('#' + color[1] + color[1] + color[2] +
+                     color[2] + color[3] + color[3])
+        # check color is valid
+        if not REGEX_COLOR.match(color):
+            return default
+    return color
 
 
 class Formatter:
@@ -51,6 +69,34 @@ class Formatter:
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]
+
+    def get_colors(self, format_string, named_only=True):
+        """
+        Parses the format_string and returns a set of colors.
+        """
+        colors = set()
+        # Tokenize the format string and process them
+        for token in self.tokens(format_string):
+            if token.group('command'):
+                # get any placeholders used in commands
+                commands = dict(parse_qsl(token.group('command')))
+                color = fix_color(commands.get('color'))
+                if not color:
+                    continue
+                if color.startswith('#'):
+                    if not named_only:
+                        colors.add(color)
+                    continue
+
+                if color:
+                    color_l = color.lower()
+                    if color_l in COLOR_NAMES or color_l in COLOR_SPECIALS:
+                            # this is a color name or a special py3status color
+                        if named_only:
+                            continue
+                        color = color_l
+                    colors.add(color)
+        return colors
 
     def get_placeholders(self, format_string):
         """
@@ -442,7 +488,6 @@ class BlockConfig:
     Block commands eg [\?color=bad ...] are stored in this object
     """
 
-    REGEX_COLOR = re.compile('#[0-9A-F]{6}')
     INHERITABLE = ['color', 'not_zero', 'show']
 
     # defaults
@@ -472,7 +517,7 @@ class BlockConfig:
             self._if = Condition(_if)
         self._set_int(commands, 'max_length')
         self._set_int(commands, 'min_length')
-        self.color = self._check_color(commands.get('color'))
+        self.color = fix_color(commands.get('color'), default=self.color)
 
         self.not_zero = 'not_zero' in commands or self.not_zero
         self.show = 'show' in commands or self.show
@@ -488,20 +533,6 @@ class BlockConfig:
                 setattr(self, name, value)
             except ValueError:
                 pass
-
-    def _check_color(self, color):
-        if not color:
-            return self.color
-        # fix any hex colors so they are #RRGGBB
-        if color.startswith('#'):
-            color = color.upper()
-            if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2] +
-                         color[2] + color[3] + color[3])
-            # check color is valid
-            if not self.REGEX_COLOR.match(color):
-                return self.color
-        return color
 
 
 class Block:

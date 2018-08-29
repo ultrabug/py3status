@@ -54,6 +54,12 @@ ERROR_CONFIG = '''
 }
 '''
 
+COLOR_SPECIALS = [
+    'bad',
+    'degraded',
+    'good',
+]
+
 COLOR_NAMES = {
     'aliceblue': '#f0f8ff',
     'antiquewhite': '#faebd7',
