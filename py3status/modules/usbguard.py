@@ -6,6 +6,7 @@ USBGuard is a software framework for implementing USB device authorization
 policies. For best results, don't add Reject option and to use filters too.
 
 Configuration parameters:
+    allow_urgent: display urgency on unread messages (default False)
     filters: specify a list of filters: [None, 'allow', 'block', 'reject']
         (default [])
     format: display format for this module
@@ -161,6 +162,7 @@ class UsbguardListener(threading.Thread):
 class Py3status:
     """
     """
+    allow_urgent = False
     filters = []
     format = '[{format_device} ]{format_button_filter}'
     format_action_allow = '\?color=good \[Allow\]'
@@ -295,10 +297,15 @@ class Py3status:
             'format_device': format_device,
         }
 
-        return {
+        response = {
             'cached_until': self.py3.CACHE_FOREVER,
             'full_text': self.py3.safe_format(self.format, usbguard_data),
         }
+
+        if self.allow_urgent:
+            response['urgent'] = True
+
+        return response
 
     def kill(self):
         self.killed.set()
