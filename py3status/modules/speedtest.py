@@ -168,10 +168,12 @@ class Py3status:
         if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
-        self.first_run = True
+        self.speedtest_data = {}
+        self.cached_until = self.py3.CACHE_FOREVER
         self.placeholders = self.py3.get_placeholders_list(self.format)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.command = "speedtest-cli --json --secure"
+        self.url = None
 
         self.quality = {
             -1: 'failed',
@@ -183,11 +185,7 @@ class Py3status:
         }
 
         # if download* or upload* missing, run complete test
-        if any(
-            key.startswith(x)
-            for x in ["download", "upload"]
-            for key in self.placeholders
-        ):
+        if any(key.startswith(x) for x in ["download", "upload"] for key in self.placeholders):
             if not any(key.startswith("upload") for key in self.placeholders):
                 self.command += " --no-upload"
 
@@ -214,93 +212,88 @@ class Py3status:
     def _get_speedtest_data(self):
         return loads(self.py3.command_output(self.command)) or None
 
-    def speedtest(self):
-        speedtest_data = {}
-        self.url = None
-        cached_until = self.py3.CACHE_FOREVER
+    def _start(self):
+        self.cached_until = self.py3.time_in(self.sleep_timeout)
 
-        if self.first_run:
-            self.first_run = False
-        else:
-            current_data = {}
-            previous_data = {}
-            cached_until = self.py3.time_in(self.sleep_timeout)
+        if not self._is_running():
+            self.cached_until = self.py3.CACHE_FOREVER
+            previous_data = self.py3.storage_get("speedtest_data") or {}
+            current_data = self._get_speedtest_data() or {}
 
-            if not self._is_running():
-                previous_data = self.py3.storage_get("speedtest_data")
-                current_data = self._get_speedtest_data()
+            if current_data and len(current_data) > 1:
+                # create a "total" for know if cnx is better or not
+                # between two run
+                current_data["total"] = int(current_data.get("download", 0)) + int(
+                    current_data.get("upload", 0)
+                )
 
-                if current_data and len(current_data) > 1:
-                    # create a "total" for know if cnx is better or not
-                    # between two run
-                    current_data["total"] = int(current_data.get("download", 0)) + int(
-                        current_data.get("upload", 0)
-                    )
-
-                    # create "quality" #maybe bad name
-                    if previous_data and "total" in previous_data:
-                        if current_data["total"] >= previous_data["total"]:
-                            quality_key = 4
-                        else:
-                            quality_key = 3
+                # create "quality" #maybe bad name
+                if previous_data and "total" in previous_data:
+                    if current_data["total"] >= previous_data["total"]:
+                        quality_key = 4
                     else:
-                        if current_data["total"] <= 0:
-                            quality_key = 1
-                        else:
-                            quality_key = 2
-                    current_data["quality"] = quality_key
-                    current_data["quality_name"] = self.quality[quality_key]
+                        quality_key = 3
+                else:
+                    if current_data["total"] <= 0:
+                        quality_key = 1
+                    else:
+                        quality_key = 2
+                current_data["quality"] = quality_key
+                current_data["quality_name"] = self.quality[quality_key]
 
-            # zero-ing if not fetched, raw version and units convertion
-            for x in ["download", "upload", "bytes_received", "bytes_sent"]:
-                unit = self.unit_size if 'bytes' in x else self.unit_bitrate
-                current_data[x] = current_data.get(x, 0)
-                current_data[x + "_raw"] = current_data[x]
-                current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                    current_data[x], unit=unit, si=self.si_units
-                )
-
-            # extra data, not sure we want to expose
-            for x in ["server", "client"]:
-                if x in current_data:
-                    for y in current_data[x]:
-                        current_data[x + "_" + y] = current_data[x][y]
-                    del current_data[x]
-
-            # store last data fetched
-            self.py3.storage_set("speedtest_data", current_data)
-
-            # get speedtest result url
-            self.url = current_data.get("share")
-
-            # create placeholders
-            speedtest_data.update(current_data)
-            if previous_data:
-                speedtest_data.update(
-                    {"previous_" + k: v for (k, v) in previous_data.items()}
-                )
-
-            # # cast
-            speedtest_data.update(
-                {
-                    k: float(v)
-                    for (k, v) in speedtest_data.items()
-                    if isinstance(v, Number)
-                }
+        # zero-ing if not fetched, raw version and units convertion
+        for x in ["download", "upload", "bytes_received", "bytes_sent"]:
+            unit = self.unit_size if 'bytes' in x else self.unit_bitrate
+            current_data[x] = current_data.get(x, 0)
+            current_data[x + "_raw"] = current_data[x]
+            current_data[x], current_data[x + "_unit"] = self.py3.format_units(
+                current_data[x], unit=unit, si=self.si_units
             )
 
-            # thresholds
-            for x in self.thresholds_init:
-                if x in speedtest_data:
-                    self.py3.threshold_get_color(speedtest_data[x], x)
+        # extra data, not sure we want to expose
+        for x in ["server", "client"]:
+            if x in current_data:
+                for y in current_data[x]:
+                    current_data[x + "_" + y] = current_data[x][y]
+                del current_data[x]
 
+        # store last data fetched
+        self.py3.storage_set("speedtest_data", current_data)
+
+        # get speedtest result url
+        self.url = current_data.get("share")
+
+        # create placeholders
+        self.speedtest_data.update(current_data)
+        if previous_data:
+            self.speedtest_data.update(
+                {"previous_" + k: v for (k, v) in previous_data.items()}
+            )
+
+        # # cast
+        self.speedtest_data.update(
+            {
+                k: float(v)
+                for (k, v) in self.speedtest_data.items()
+                if isinstance(v, Number)
+            }
+        )
+
+        # thresholds
+        for x in self.thresholds_init:
+            if x in self.speedtest_data:
+                self.py3.threshold_get_color(self.speedtest_data[x], x)
+
+    def speedtest(self):
         return {
-            "cached_until": cached_until,
-            "full_text": self.py3.safe_format(self.format, speedtest_data),
+            "cached_until": self.cached_until,
+            "full_text": self.py3.safe_format(self.format, self.speedtest_data),
         }
 
     def on_click(self, event):
         button = event["button"]
+        if button == self.button_refresh:
+            self._start()
         if button == self.button_share and self.url:
             self.py3.command_run("xdg-open %s" % self.url)
         if button != self.button_refresh:
