@@ -29,7 +29,7 @@ class Formatter:
         r'|(?P<escaped>(\\.|\{\{|\}\}))'
         r'|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(?P<format>([^}\\]|\\.)*)?\}))'
         r'|(?P<literal>([^\[\]\\\{\}\|])+)'
-        r'|(?P<lost_brace>(\}))'
+        r'|(?P<lost_brace>([{}]))'
     ]
 
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
@@ -192,7 +192,7 @@ class Formatter:
             elif token.group('lost_brace'):
                 # due to how parsing happens we can get a lonesome }
                 # eg in format_string '{{something}' this fixes that issue
-                block.add(Literal('}'))
+                block.add(Literal(value))
             elif token.group('command'):
                 # a block command has been found
                 block.set_commands(token.group('command'))

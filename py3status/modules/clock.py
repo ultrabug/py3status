@@ -130,9 +130,11 @@ class Py3status:
             self.cycle = 0
         # find any declared timezones eg {Europe/London}
         self._items = {}
-        matches = re.findall(r'\{([^}]*)\}', ''.join(self.format))
-        for match in matches:
-            self._items[match] = self._get_timezone(match)
+        fmts = set()
+        for fmt in self.format:
+            fmts.update(self.py3.get_placeholders_list(fmt))
+        for fmt in fmts:
+            self._items[fmt] = self._get_timezone(fmt)
 
         self.multiple_tz = len(self._items) > 1
 
