@@ -18,15 +18,13 @@ Format placeholders:
     Parameters can be placeholders too, eg {host}, {passd}
 
 Format_row placeholders:
-    {xxx} case-sensitive placeholder name often found in the database
-    {xxx} case-sensitive placeholder name often found in the database
-    {xxx} case-sensitive placeholder name often found in the database
+    {field} placeholders will have the value returned by the query for the field
 
 Color thresholds:
     format:
         row: print a color based on the number of SQL rows
     format_row:
-        xxx: print a color based on the value of `xxx` placeholder
+        field: print a color based on the value of `field` placeholder
 
 Requires:
     mariadb: fast sql database server, drop-in replacement for mysql
@@ -65,8 +63,8 @@ sql {
 # display number of seconds behind master with MySQLdb
 sql {
     database = 'MySQLdb'
-    format_row = '\?color=Seconds_Behind_Master {host} is '
-    format_row += '[{Seconds_Behind_Master}s behind|\?show master]'
+    format_row = '\?color=seconds_behind_master {host} is '
+    format_row += '[{seconds_behind_master}s behind|\?show master]'
     parameters = {
         'host': 'localhost',
         'passwd': '********'
