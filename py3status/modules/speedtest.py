@@ -25,11 +25,11 @@ Configuration parameters:
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
 
 Format placeholders:
-    {bytes_sent}            bytes sent during test, human readable, eg 'TODO'
+    {bytes_sent}            bytes sent during test, human readable, eg '52.45'
     {bytes_sent_unit}       unit used for bytes_sent, eg 'MB'
-    {bytes_sent_raw}        bytes sent during test, for format comparation, eg 'TODO'
-    {bytes_received}        bytes received during test, human readable, eg 'TODO'
-    {bytes_received_raw}    bytes received during test, for format comparation, eg 'TODO'
+    {bytes_sent_raw}        bytes sent during test, for format comparation, eg '52445184.0'
+    {bytes_received}        bytes received during test, human readable, eg '70.23'
+    {bytes_received_raw}    bytes received during test, for format comparation, eg '70229556.0'
     {bytes_received_unit}   unit used for bytes_received, eg 'MB'
     {client_country}        client country code, eg 'FR'
     {client_ip}             client ip, eg '78.194.13.7'
@@ -47,7 +47,7 @@ Format placeholders:
     {ping}                  ping time in ms to speedtest server
     {quality}               quality code of the connection, eg 0, 1, 2, 3, 4
     {quality_name}          quality name of the connection, eg failed, bad, good, slower, faster
-    {timestamp}             timestamp of the run, eg 'TODO'
+    {timestamp}             timestamp of the run, eg '2018-08-30T16:27:25.318212Z'
     {server_cc}             server country code, eg 'FR'
     {server_country}        server country, eg 'France'
     {server_d}              server distance, eg '2.316599376968091'
@@ -176,16 +176,20 @@ class Py3status:
         self.url = None
 
         self.quality = {
-            -1: 'failed',
-            0: 'unknow',
-            1: 'bad',
-            2: 'good',
-            3: 'slower',
-            4: 'faster'
+            -1: "failed",
+            0: "unknow",
+            1: "bad",
+            2: "good",
+            3: "slower",
+            4: "faster",
         }
 
         # if download* or upload* missing, run complete test
-        if any(key.startswith(x) for x in ["download", "upload"] for key in self.placeholders):
+        if any(
+            key.startswith(x)
+            for x in ["download", "upload"]
+            for key in self.placeholders
+        ):
             if not any(key.startswith("upload") for key in self.placeholders):
                 self.command += " --no-upload"
 
@@ -243,7 +247,7 @@ class Py3status:
 
         # zero-ing if not fetched, raw version and units convertion
         for x in ["download", "upload", "bytes_received", "bytes_sent"]:
-            unit = self.unit_size if 'bytes' in x else self.unit_bitrate
+            unit = self.unit_size if "bytes" in x else self.unit_bitrate
             current_data[x] = current_data.get(x, 0)
             current_data[x + "_raw"] = current_data[x]
             current_data[x], current_data[x + "_unit"] = self.py3.format_units(
