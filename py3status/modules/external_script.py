@@ -41,7 +41,9 @@ example
 {'full_text': 'It is now: Wed Feb 22 22:24:13'}
 """
 
+import ast
 import re
+
 STRING_ERROR = 'missing script_path'
 
 
@@ -58,6 +60,13 @@ class Py3status:
     def post_config_hook(self):
         if not self.script_path:
             raise Exception(STRING_ERROR)
+        self.numeric_regex = re.compile(
+            '^\s*('
+            '-?\d+\.\d*|-?\.\d+'  # float
+            '|'
+            '-?\d+'
+            ')\s*$'  # int
+        )
 
     def external_script(self):
         output_lines = None
@@ -76,14 +85,28 @@ class Py3status:
             self.py3.error(output)
 
         if output_lines:
-            output_text = output_lines[0]
+            output = output_lines[0]
             if self.strip_output:
-                output_text = output_text.strip()
+                output = output.strip()
         else:
-            output_text = ''
+            output = ''
+
+        # If we get something that looks numeric then we convert it to a
+        # numeric type because this can be helpful
+        #
+        # for example:
+        #
+        # external_script {
+        #     format = "\?if=output>10 File is big!"
+        #     script_path = "cat my_file|wc -l"
+        # }
+        match = self.numeric_regex.match(output)
+        if match:
+            value = match.group(1)
+            output = ast.literal_eval(value)
 
         response['full_text'] = self.py3.safe_format(
-            self.format, {'output': output_text})
+            self.format, {'output': output})
         return response
 
 
