@@ -313,10 +313,10 @@ class Module:
         """
         self.i3s_module_options = {}
         self.py3_module_options = {}
-        mod_config = self.config['py3_config'].get(module, {})
+        fn = self._py3_wrapper.get_config_attribute
 
-        if 'min_width' in mod_config:
-            min_width = mod_config['min_width']
+        min_width = fn(self.module_full_name, 'min_width')
+        if not hasattr(min_width, 'none_setting'):
             if not isinstance(min_width, int):
                 err = 'invalid "min_width" attribute should be an int'
                 raise TypeError(err)
@@ -324,8 +324,8 @@ class Module:
             self.py3_module_options['min_width'] = min_width
             self.random_int = randint(0, 1)
 
-            if 'align' in mod_config:
-                align = mod_config['align']
+            align = fn(self.module_full_name, 'align')
+            if not hasattr(align, 'none_setting'):
                 if not isinstance(align, basestring) and (
                         align.lower() in ('left', 'center', 'right')):
                     err = 'invalid "align" attribute, valid values are:'
@@ -334,26 +334,9 @@ class Module:
 
                 self.py3_module_options['align'] = align
 
-        if 'separator' in mod_config:
-            separator = mod_config['separator']
-            if not isinstance(separator, bool):
-                err = 'invalid "separator" attribute, should be a bool'
-                raise TypeError(err)
-
-            self.i3s_module_options['separator'] = separator
-
-        if 'separator_block_width' in mod_config:
-            sep_block_width = mod_config['separator_block_width']
-            if not isinstance(sep_block_width, int):
-                err = 'invalid "separator_block_width" attribute, '
-                err += "should be an int"
-                raise TypeError(err)
-
-            self.i3s_module_options['separator_block_width'] = sep_block_width
-
         for name in ('background', 'border'):
-            if name in mod_config:
-                param = mod_config[name]
+            param = fn(self.module_full_name, name)
+            if not hasattr(param, 'none_setting'):
                 if not isinstance(param, basestring):
                     err = 'invalid "{}" attribute, '.format(name)
                     err += 'should be a string'
@@ -365,14 +348,45 @@ class Module:
                     continue
                 borders = ('top', 'bottom', 'left', 'right')
                 for name in ('border_' + x for x in borders):
-                    if name in mod_config:
-                        param = mod_config[name]
+                    param = fn(self.module_full_name, name)
+                    if not hasattr(param, 'none_setting'):
                         if not isinstance(param, int):
                             err = 'invalid "{}" attribute, '.format(name)
                             err += 'should be an int'
                             raise TypeError(err)
                         self.py3_module_options[name] = param
                         self.block_options.append(name)
+
+        markup = fn(self.module_full_name, 'markup')
+        if not hasattr(markup, 'none_setting'):
+            if not isinstance(markup, basestring) and (
+                    markup.lower() in ('pango', 'none')):
+                err = 'invalid "markup" attribute, valid values are:'
+                err += ' pango, none'
+                raise ValueError(err)
+
+            self.i3_module_options['markup'] = markup
+
+        separator = fn(self.module_full_name, 'separator')
+        if not hasattr(separator, 'none_setting'):
+            if not isinstance(separator, bool):
+                err = 'invalid "separator" attribute, should be a bool'
+                raise TypeError(err)
+
+            self.i3s_module_options['separator'] = separator
+
+        separator_block_width = fn(
+            self.module_full_name, 'separator_block_width'
+        )
+        if not hasattr(separator_block_width, 'none_setting'):
+            if not isinstance(separator_block_width, int):
+                err = 'invalid "separator_block_width" attribute, '
+                err += "should be an int"
+                raise TypeError(err)
+
+            self.i3s_module_options['separator_block_width'] = (
+                separator_block_width
+            )
 
     def process_composite(self, response):
         """
