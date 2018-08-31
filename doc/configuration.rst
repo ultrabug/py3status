@@ -71,8 +71,7 @@ overridden by also defining in the individual module.
 
 Global options:
 
-- ``nagbar_font``. It will be used as an argument to
-    ``i3-nagbar -f``, thus setting its font.
+``nagbar_font``. Specify a font for ``i3-nagbar -f <font>``.
 
 .. code-block:: py3status
     :caption: Example
@@ -82,7 +81,7 @@ Global options:
     }
 
 .. note::
-    New in version 3.12
+    New in version 3.13
 
 ``storage``: Set storage name or path.
 
@@ -93,7 +92,7 @@ Store cache in $XDG_CACHE_HOME or ~/.cache
 
     # default behavior
     py3status {
-        storage =  'py3status_cache.data'
+        storage = 'py3status_cache.data'
     }
 
 Store per config cache in $XDG_CACHE_HOME or ~/.cache
@@ -126,6 +125,43 @@ Store per config cache in different directories.
     # second config
     py3status {
         storage = '~/.config/py3status/cache_bottom.data'
+    }
+
+.. note::
+    New in version 3.13
+
+You also can specify the options in module configuration.
+
+``align``: Specify how modules should be aligned.
+``markup``: Specify how modules should be parsed.
+``min_width``: Specify a minimum width for modules.
+``separator``: Specify a separator boolean for modules.
+``separator_block_width``: Specify a separator block width for modules.
+
+The following options will only work on `i3-gaps`.
+
+``background``: Specify a background color for modules.
+``border``: Specify a border color for modules.
+``border_bottom``: Specify a border width for modules
+``border_left``: Specify a border width for modules.
+``border_right``: Specify a border width for modules.
+``border_top``: Specify a border width for modules.
+
+.. code-block:: py3status
+
+    # customize a theme
+    py3status {
+        align = 'left'
+        background = '#285577'
+        border = '#4c7899'
+        border_bottom = 1
+        border_left = 1
+        border_right = 1
+        border_top = 1
+        markup = 'pango'
+        min_width = 20
+        separator = True
+        separator_block_width = 9
     }
 
 
@@ -294,7 +330,7 @@ You can:
          format = "MPD: {state} {artist} {title}"
       }
 
-  - Unknown placeholders act as if they were static text and placeholders that are empty or None will be removed. 
+  - Unknown placeholders act as if they were static text and placeholders that are empty or None will be removed.
   - Formatting can also be applied to the placeholder Eg ``{number:03.2f}``.
 
 - hide invalid (no valid data or undefined) placeholders by enclosing them in ``[]``. The following example will show ``artist - title`` if artist is present and ``title`` if title but no artist is present.
