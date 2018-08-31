@@ -235,6 +235,10 @@ class Py3status:
         return data
 
     def _manipulate_devices(self, devices):
+        # get raw dbus devices list and create format_device composite
+        # with each device/action pair which must be available
+        # return format_device and action
+
         data = []
         try:
             action = self.filters[self.active_index]
