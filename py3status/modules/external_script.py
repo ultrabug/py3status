@@ -76,14 +76,28 @@ class Py3status:
             self.py3.error(output)
 
         if output_lines:
-            output_text = output_lines[0]
+            output = output_lines[0]
             if self.strip_output:
-                output_text = output_text.strip()
+                output = output.strip()
+            # If we get something that looks numeric then we convert it
+            # to a numeric type because this can be helpful. for example:
+            #
+            # external_script {
+            #     format = "file is [\?if=output>10 big|small]"
+            #     script_path = "cat /tmp/my_file | wc -l"
+            # }
+            try:
+                output = int(output)
+            except ValueError:
+                try:
+                    output = float(output)
+                except ValueError:
+                    pass
         else:
-            output_text = ''
+            output = ''
 
         response['full_text'] = self.py3.safe_format(
-            self.format, {'output': output_text})
+            self.format, {'output': output})
         return response
 
 
