@@ -332,9 +332,9 @@ class Py3status:
             if self.init['notifications']:
                 for device in self.devices:
                     if device['id'] == device_id:
+                        device['policy'] = policy_name
+                        self._notify_user(device)
                         break
-                device['policy'] = policy_name
-                self._notify_user(device)
 
             policy = self.init['target'][policy_name]
             self.usbguard_bus.applyDevicePolicy(device_id, policy, self.permanent)
