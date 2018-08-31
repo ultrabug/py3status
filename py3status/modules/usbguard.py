@@ -196,7 +196,7 @@ class Py3status:
         self.length = len(self.filters)
         self.permanent = self.permanent or False
 
-        self.keys = [
+        self.usbguard_fields = [
             ('serial', re.compile(r'\S*serial \"(\S+)\"\S*')),
             ('policy', re.compile(r'^(\S+)')),
             ('usb_id', re.compile(r'id (\S+)')),
@@ -214,33 +214,33 @@ class Py3status:
     def _init_dbus(self):
         self.dbus = SystemBus()
         try:
-            self.proxy = self.dbus.get('org.usbguard', '/org/usbguard/Devices')
+            self.usbguard_bus = self.dbus.get('org.usbguard', '/org/usbguard/Devices')
         except Exception:
             raise Exception(STRING_USBGUARD_DBUS)
 
     def _get_devices(self):
-        devices = self.proxy.listDevices('match')
-        new_device = []
+        devices = self.usbguard_bus.listDevices('match')
+        data = []
         for device_id, string in devices:
             device = {'id': device_id}
-            for name, regex in self.keys:
+            for name, regex in self.usbguard_fields:
                 value = regex.findall(string) or None
                 if value:
                     value = value[0]
                     value = value.encode('latin-1').decode('unicode_escape')
                     value = value.encode('latin-1').decode('utf-8')
                 device[name] = value
-            new_device.append(device)
+            data.append(device)
 
-        return new_device
+        return data
 
-    def _manipulate_devices(self, data):
-        new_device = []
+    def _manipulate_devices(self, devices):
+        data = []
         try:
             action = self.filters[self.active_index]
         except IndexError:
             action = None
-        for device in data:
+        for device in devices:
             if action and device['policy'] not in action:
                 continue
             for x in self.init['format_action']:
@@ -249,13 +249,13 @@ class Py3status:
                     'index': '{}/{}'.format(device['id'], x.split('_')[-1])
                 })
 
-            new_device.append(self.py3.safe_format(self.format_device, device))
+            data.append(self.py3.safe_format(self.format_device, device))
 
         format_device_separator = self.py3.safe_format(
             self.format_device_separator
         )
         format_device = self.py3.composite_join(
-            format_device_separator, new_device
+            format_device_separator, data
         )
 
         return format_device, action
@@ -333,7 +333,7 @@ class Py3status:
                 self._notify_user(device)
 
             policy = self.init['target'][policy_name]
-            self.proxy.applyDevicePolicy(device_id, policy, self.permanent)
+            self.usbguard_bus.applyDevicePolicy(device_id, policy, self.permanent)
 
             if self.init['permanent']:
                 self.permanent = False
