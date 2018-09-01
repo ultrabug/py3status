@@ -213,6 +213,16 @@ class Py3status:
         except self.py3.CommandError:
             return False
 
+    def _cast_number(self, data):
+        try:
+            data = int(data)
+        except ValueError:
+            try:
+                data = float(data)
+            except ValueError:
+                pass
+        return data
+
     def _get_speedtest_data(self):
         return loads(self.py3.command_output(self.command)) or None
 
@@ -224,7 +234,7 @@ class Py3status:
             previous_data = self.py3.storage_get("speedtest_data") or {}
             current_data = self._get_speedtest_data() or {}
 
-            if current_data and len(current_data) > 1:
+            if len(current_data) > 1:
                 # create a "total" for know if cnx is better or not
                 # between two run
                 current_data["total"] = int(current_data.get("download", 0)) + int(
@@ -232,7 +242,7 @@ class Py3status:
                 )
 
                 # create "quality" #maybe bad name
-                if previous_data and "total" in previous_data:
+                if "total" in previous_data:
                     if current_data["total"] >= previous_data["total"]:
                         quality_key = 4
                     else:
@@ -255,11 +265,9 @@ class Py3status:
             )
 
         # extra data, not sure we want to expose
-        for x in ["server", "client"]:
-            if x in current_data:
-                for y in current_data[x]:
-                    current_data[x + "_" + y] = current_data[x][y]
-                del current_data[x]
+        current_data.update(self.py3.flatten_dict(current_data, delimiter='_'))
+        for x in ['client', 'server']:
+            del current_data[x]
 
         # store last data fetched
         self.py3.storage_set("speedtest_data", current_data)
@@ -274,10 +282,10 @@ class Py3status:
                 {"previous_" + k: v for (k, v) in previous_data.items()}
             )
 
-        # # cast
+        # cast number
         self.speedtest_data.update(
             {
-                k: float(v)
+                k: self._cast_number(v)
                 for (k, v) in self.speedtest_data.items()
                 if isinstance(v, Number)
             }
