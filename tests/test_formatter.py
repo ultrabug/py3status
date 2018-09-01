@@ -53,6 +53,7 @@ param_dict = {
     'simple': Composite({'full_text': 'NY 12:34'}),
     'empty_composite': Composite(),
     'comp_bad_color': Composite({'full_text': 'BAD', 'color': NoneColor()}),
+    'composite_looks_empty': Composite([{'color': '#FFF', 'full_text': ''}]),
 }
 
 
@@ -664,6 +665,14 @@ def test_else_false():
         'format': '[\?if=no Hello|Goodbye|Something else]',
         'expected': 'Goodbye',
     })
+
+
+def test_composite_looks_empty():
+    run_formatter({
+        'format': '[ {composite_looks_empty}]',
+        'expected': '',
+    })
+
 
 # block colors
 

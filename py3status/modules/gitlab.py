@@ -11,14 +11,14 @@ Configuration parameters:
     button_refresh: mouse button to refresh this module (default 2)
     cache_timeout: refresh interval for this module (default 900)
     format: display format for this module
-        *(default '{name} [[{open_issues_count}][\?soft /]'
+        *(default '[{name} ][[{open_issues_count}][\?soft /]'
         '[{open_merge_requests_count}]]')*
     project: specify a project to use (default 'gitlab-org/gitlab-ce')
     thresholds: specify color thresholds to use (default [])
 
 Format placeholders:
-    See `sp` below for an explicit list of supported GitLab placeholders to
-    use. Not all of GitLab placeholders will be usable.
+    See `sp` below for a full list of supported GitLab placeholders to use.
+    Not all of GitLab placeholders will be usable.
 
     single_project:
         {name}                      project name, eg py3status
@@ -49,8 +49,8 @@ gitlab {
     auth_token = 'abcdefghijklmnopq-a4'
     project = 'https://gitlab.com/ultrabug/py3status'
 
-    format = '[\?color=orangered&show ] '
-    format += '{name} [[{open_issues_count}][\?soft /]'
+    format = '[\?if=name [\?color=orangered&show ] {name} ]'
+    format += '[[{open_issues_count}][\?soft /]'
     format += '[{open_merge_requests_count}][\?soft /]'
     format += '[{pipelines_status}]]'
 }
@@ -73,7 +73,7 @@ class Py3status:
     button_open = 1
     button_refresh = 2
     cache_timeout = 900
-    format = ('{name} [[{open_issues_count}][\?soft /]'
+    format = ('[{name} ][[{open_issues_count}][\?soft /]'
               '[{open_merge_requests_count}]]')
     project = 'gitlab-org/gitlab-ce'
     thresholds = []

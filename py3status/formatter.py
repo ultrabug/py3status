@@ -248,7 +248,7 @@ class Formatter:
             else:
                 raise Exception()
             if isinstance(param, Composite):
-                if len(param):
+                if param.text():
                     param = param.copy()
                 else:
                     param = u''
