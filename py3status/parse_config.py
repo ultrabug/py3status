@@ -180,7 +180,7 @@ class ConfigParser:
         (file, pathname, description) = info
         try:
             py_mod = imp.load_module(name, file, pathname, description)
-        except:  # noqa e722
+        except Exception:
             # We cannot load the module!  We could error out here but then the
             # user gets informed that the problem is with their config.  This
             # is not correct.  Better to say that all is well and then the
@@ -314,11 +314,11 @@ class ConfigParser:
             return value[1:-1].replace("\\'", "'")
         try:
             return int(value)
-        except:  # noqa e722
+        except ValueError:
             pass
         try:
             return float(value)
-        except:  # noqa e722
+        except ValueError:
             pass
         if value.lower() == 'true':
             return True
