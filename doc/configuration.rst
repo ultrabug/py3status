@@ -268,7 +268,7 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
     }
 
 Formatter
---------
+---------
 
 All modules allow you to define the format of their output. This is done with the format option.
 You can:

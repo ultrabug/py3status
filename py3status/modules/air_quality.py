@@ -31,10 +31,16 @@ Configuration parameters:
             (201, '#660099', 'Very Unhealthy'),
             (301, '#7E0023', 'Hazardous')])*
 
+.. Note::
+
+    Your station may have individual scores for pollutants not listed below.
+    See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+    for an explicit list of valid placeholders to use, eg
+
 Format placeholders:
     {aqi} air quality index
-    {attributions_0_name} attribution name
-    {attributions_0_url} attribution url
+    {attributions_0_name} attribution name, there maybe more, change the 0
+    {attributions_0_url} attribution url, there maybe more, change the 0
     {category} health risk category, eg Good, Moderate, Unhealthy, etc
     {city_geo_0} monitoring station latitude
     {city_geo_1} monitoring station longitude
@@ -45,14 +51,6 @@ Format placeholders:
     {time} epoch timestamp, eg 1510246800
     {time_s} local timestamp, eg 2017-11-09 17:00:00
     {time_tz} local timezone, eg -06:00
-
-    `{attribution_?_name}` can have more than 0.
-    `{attribution_?_url}` can have more than 0.
-
-    Your station may have individual scores for pollutants not listed below.
-    See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
-    for an explicit list of valid placeholders to use, eg
-
     {iaqi_co}   individual score for pollutant carbon monoxide
     {iaqi_h}    individual score for pollutant h (?)
     {iaqi_no2}  individual score for pollutant nitrogen dioxide

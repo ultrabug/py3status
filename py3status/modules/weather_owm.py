@@ -195,7 +195,6 @@ Configuration parameters:
         (default 'mph')
 
 Format placeholders:
-    All:
         {icon} The icon associated with a formatting section
     format_clouds:
         {coverage} Cloud coverage percentage
