@@ -71,8 +71,7 @@ overridden by also defining in the individual module.
 
 Global options:
 
-- ``nagbar_font``. It will be used as an argument to
-    ``i3-nagbar -f``, thus setting its font.
+``nagbar_font``. Specify a font for ``i3-nagbar -f <font>``.
 
 .. code-block:: py3status
     :caption: Example
@@ -81,10 +80,10 @@ Global options:
         nagbar_font = 'pango:Ubuntu Mono 12'
     }
 
-.. note::
-    New in version 3.12
-
 ``storage``: Set storage name or path.
+
+.. note::
+    New in version 3.13
 
 Store cache in $XDG_CACHE_HOME or ~/.cache
 
@@ -93,7 +92,7 @@ Store cache in $XDG_CACHE_HOME or ~/.cache
 
     # default behavior
     py3status {
-        storage =  'py3status_cache.data'
+        storage = 'py3status_cache.data'
     }
 
 Store per config cache in $XDG_CACHE_HOME or ~/.cache
@@ -294,7 +293,7 @@ You can:
          format = "MPD: {state} {artist} {title}"
       }
 
-  - Unknown placeholders act as if they were static text and placeholders that are empty or None will be removed. 
+  - Unknown placeholders act as if they were static text and placeholders that are empty or None will be removed.
   - Formatting can also be applied to the placeholder Eg ``{number:03.2f}``.
 
 - hide invalid (no valid data or undefined) placeholders by enclosing them in ``[]``. The following example will show ``artist - title`` if artist is present and ``title`` if title but no artist is present.
