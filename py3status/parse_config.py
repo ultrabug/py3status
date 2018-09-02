@@ -125,11 +125,15 @@ class ConfigParser:
 
     '''
 
+    CONVERSIONS = '(auto|bool|int|float|str)'
+    FUNCTIONS = '(env|shell)'
+
     TOKENS = [
         '#.*$'  # comments
-        # environment variables
-        '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
-        '|(?P<shell>shell\(.+?(\s*,\s*(int|float|str|bool|auto))?\))'  # shell code
+        '|(?P<function>'  # functions of the form `name(payload[,type])`
+        '' + FUNCTIONS + r'\(\s*(([^)\\]|\\.)*?)'  # nasty '' but flake8
+        '(\s*,\s*' + CONVERSIONS + ')?\s*\))'
+
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -142,7 +146,7 @@ class ConfigParser:
         '|(?P<unknown>\S+)'  # unknown token
     ]
 
-    def __init__(self, config):
+    def __init__(self, config, py3_wrapper):
         self.tokenize(config)
         self.config = {}
         self.level = 0
@@ -151,9 +155,16 @@ class ConfigParser:
         self.current_token = 0
         self.line = 0
         self.line_start = 0
+        self.py3_wrapper = py3_wrapper
         self.raw = config.split('\n')
         self.container_modules = []
         self.anon_count = 0
+
+    def notify_user(self, error):
+        if self.py3_wrapper:
+            self.py3_wrapper.notify_user(error)
+        else:
+            print(error)
 
     class ParseEnd(Exception):
         '''
@@ -245,16 +256,15 @@ class ConfigParser:
                 t_type = 'literal'
             elif token.group('newline'):
                 t_type = 'newline'
-            elif token.group('env_var'):
-                t_type = 'env_var'
-            elif token.group('shell'):
-                t_type = 'shell'
+            elif token.group('function'):
+                t_type = 'function'
             elif token.group('unknown'):
                 t_type = 'unknown'
             else:
                 continue
             tokens.append({'type': t_type,
                            'value': value,
+                           'match': token,
                            'start': token.start()})
         self.tokens = tokens
 
@@ -328,19 +338,30 @@ class ConfigParser:
             return None
         return value
 
-    def make_value_from_env(self, value):
-        # Extract the environment variable and type
-        match = re.match(
-            'env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\)', value)
-        env_var, env_type = match.groups()
-        if not env_type:
-            env_type = 'auto'
-        else:
-            # Remove comma and whitespace from match
-            # i.e '   ,  my_conversion' -> 'my_conversion'
-            env_type = env_type.strip()[1:].lstrip()
+    def config_function(self, token):
+        """
+        Process a config function from a token
+        """
+        match = token['match']
+        function = match.group(2).lower()
+        param = match.group(3) or ''
+        value_type = match.group(6) or 'auto'
 
-        conversion_options = {
+        # fix any escaped closing parenthesis
+        param = param.replace('\)', ')')
+
+        CONFIG_FUNCTIONS = {
+            'env': self.make_value_from_env,
+            'shell': self.make_value_from_shell,
+        }
+
+        return CONFIG_FUNCTIONS[function](param, value_type, function)
+
+    def value_convert(self, value, value_type):
+        """
+        convert string into type used by `config functions`
+        """
+        CONVERSION_OPTIONS = {
             'str': str,
             'int': int,
             'float': float,
@@ -351,44 +372,48 @@ class ConfigParser:
             # Auto-guess the type
             'auto': self.make_value,
         }
-        if env_type not in conversion_options:
-            self.error('Invalid env conversion function in env_var')
 
-        # Check the environment variable
-        # TODO: dynamic support, (lambda: os.getenv(env_var))
-        value = os.getenv(env_var)
+        try:
+            return CONVERSION_OPTIONS[value_type](value)
+        except (TypeError, ValueError):
+            self.notify_user('Bad type conversion')
+            return None
+
+    def make_value_from_env(self, param, value_type, function):
+        """
+        get environment variable
+        """
+        value = os.getenv(param)
         if value is None:
-            self.error('Environment variable \'%s\' undefined' % env_var)
+            self.notify_user('Environment variable `%s` undefined' % param)
+        return self.value_convert(value, value_type)
 
+    def make_value_from_shell(self, param, value_type, function):
+        """
+        run command in the shell
+        """
         try:
-            return conversion_options[env_type](value)
-        except ValueError:
-            self.error('Bad conversion')
-
-    def make_value_from_shell(self, value):
-        conversion_options = {
-            'int': int,
-            'float': float,
-            'str': str,
-
-            'bool': (lambda val: val.lower() in ('', 'true', '1')),
-            'auto': self.make_value,
-        }
-
-        match = re.match('shell\((.+?)(\s*,\s*(int|float|str|bool|auto))?\)', value)
-        shell, _, var_type = match.groups()
-        try:
-            shell_stdout = str(check_output(shell, shell=True).rstrip(), encoding='utf-8')
+            value = check_output(param, shell=True).rstrip()
         except CalledProcessError:
-            if var_type is not None and var_type.lower() == 'bool':
-                return False
-            self.error('shell script exited with an error')
-        if var_type is None:
-            return shell_stdout
-        try:
-            return conversion_options[var_type](shell_stdout)
-        except ValueError:
-            self.error('Bad conversion')
+            # for value_type of 'bool' we return False on error code
+            if value_type == 'bool':
+                value = False
+            else:
+                if self.py3_wrapper:
+                    self.py3_wrapper.report_exception(
+                        msg='shell: called with command `%s`' % param
+                    )
+                self.notify_user('shell script exited with an error')
+                value = None
+        else:
+            # if the value_type is 'bool' then we return True for success
+            if value_type == 'bool':
+                value = True
+            else:
+                # convert bytes to unicode
+                value = value.decode('utf-8')
+                value = self.value_convert(value, value_type)
+        return value
 
     def separator(self, separator=',', end_token=None):
         '''
@@ -468,10 +493,8 @@ class ConfigParser:
                     continue
             if token['type'] == 'literal':
                 return self.make_value(t_value)
-            if token['type'] == 'env_var':
-                return self.make_value_from_env(t_value)
-            if token['type'] == 'shell':
-                return self.make_value_from_shell(t_value)
+            if token['type'] == 'function':
+                return self.config_function(token)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -560,10 +583,8 @@ class ConfigParser:
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
-            elif t_type == 'env_var':
+            elif t_type == 'function':
                 self.error('Name expected')
-            elif t_type == 'shell':
-                self.error('Shell command expected')
             elif t_type == 'operator':
                 name = ' '.join(name)
                 if not name:
@@ -630,7 +651,7 @@ def process_config(config_path, py3_wrapper=None):
 
         if hasattr(config, 'readlines'):
             config = ''.join(config.readlines())
-        parser = ConfigParser(config)
+        parser = ConfigParser(config, py3_wrapper)
         parser.parse()
         parsed = parser.config
         del parser

@@ -651,10 +651,6 @@ of the script is respected (a non-zero exit status being interpreted falsey).
 In any other case if the script exits with a non-zero exit status an error
 will be thrown.
 
-Please be aware that due to the way the parser works, you may not include any
-closing parenthesis ( ``)`` ) in the expression. Wrap your commands in a script
-file and call it instead.
-
 The ``shell(...)`` expression can be used anywhere a constant or an ``env(...)``
 directive can be used (see the section "Environment Variables").
 
@@ -669,3 +665,21 @@ Usage example:
         pid = shell(cat /var/run/mydaemon/pidfile, int)
         my_bool = shell(pgrep thttpd, bool)
     }
+
+Due to the way the config is parsed you need to to escape any
+closing parenthesis ``)`` using a backslash ``\)``.
+
+.. code-block:: py3status
+    :caption: Example
+
+    static_string {
+        # note we need to explicitly cast the result to str
+        # because we are using it as the format which must be a
+        # string
+        format = shell(echo $((6 + 2\)\), str)
+    }
+
+.. Note::
+    Prior to version 3.13 you may not include any closing
+    parenthesis ``)`` in the expression. Wrap your commands in a
+    script file and call it instead.
