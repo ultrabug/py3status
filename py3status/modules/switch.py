@@ -37,6 +37,7 @@ Note:
 Examples:
 ```
 # emulate dpms switching
+order += "switch dpms"
 switch dpms {
     button_action = 1
     list = [
@@ -46,6 +47,7 @@ switch dpms {
 }
 
 # create keyboard_layout switching
+order += "switch keyboard_layout"
 switch keyboard_layout {
     button_next = 4
     button_previous = 5
@@ -57,7 +59,8 @@ switch keyboard_layout {
     ]
 }
 
-# emulate xrandr switching - use arandr to create scripts
+# emulate xrandr* switching - use arandr to create scripts
+order += "switch xrandr"
 switch xrandr {
     button_action = 1
     button_next = 4
@@ -75,130 +78,119 @@ switch xrandr {
     ]
 }
 
-# emulate xrandr_rotate switching - use arandr to create scripts
-switch xrandr_rotate {
-    button_action = 1
-    button_next = 4
-    button_previous = 5
-    loop = True
-    list = [
-        ('\?if=index=1&color=good normal|normal',
-            '~/.screenlayout/arandr-normal-normal.sh'),
-        ('\?if=index=2&color=good left|left',
-            '~/.screenlayout/arandr-left-left.sh'),
-        ('\?if=index=3&color=good inverted|inverted',
-            '~/.screenlayout/arandr-inverted-inverted.sh'),
-        ('\?if=index=4&color=good right|right',
-            '~/.screenlayout/arandr-right-right.sh'),
-    ]
-}
-
 # emulate hueshift switching
+order += "switch hueshift"
 switch hueshift {
     button_next = 4
     button_previous = 5
     button_reset = 3
+    format = 'redshift {list}'
     initial = 7
     list = [
-        ('\?color=#f3c \u263c 1000K', 'redshift -r -O 1000'),
-        ('\?color=#f3c \u263c 2000K', 'redshift -r -O 2000'),
+        ('\?color=#f3c 1000K', 'redshift -r -P -O 1000'),
+        ('\?color=#f3c 2000K', 'redshift -r -P -O 2000'),
         # good stop - my opinion
-        ('\?color=#f3c \u263c 3000K', 'redshift -r -O 3000'),
-        ('\?color=#f3c \u263c 4000K', 'redshift -r -O 4000'),
-        ('\?color=#f3c \u263c 5000K', 'redshift -r -O 5000'),
-        ('\?color=#f3c \u263c 6000K', 'redshift -r -O 6000'),
-        ('\?color=#ff3 \u263c 6500K', 'redshift -r -O 6500'),
-        ('\?color=#3cf \u263c 7000K', 'redshift -r -O 7000'),
-        ('\?color=#3cf \u263c 8000K', 'redshift -r -O 8000'),
-        ('\?color=#3cf \u263c 9000K', 'redshift -r -O 9000'),
-        ('\?color=#3cf \u263c 10000K', 'redshift -r -O 10000'),
+        ('\?color=#f3c 3000K', 'redshift -r -P -O 3000'),
+        ('\?color=#f3c 4000K', 'redshift -r -P -O 4000'),
+        ('\?color=#f3c 5000K', 'redshift -r -P -O 5000'),
+        ('\?color=#f3c 6000K', 'redshift -r -P -O 6000'),
+        ('\?color=#ff3 6500K', 'redshift -r -P -O 6500'),
+        ('\?color=#3cf 7000K', 'redshift -r -P -O 7000'),
+        ('\?color=#3cf 8000K', 'redshift -r -P -O 8000'),
+        ('\?color=#3cf 9000K', 'redshift -r -P -O 9000'),
+        ('\?color=#3cf 10000K', 'redshift -r -P -O 10000'),
         # good stop - my opinion - up to 10000K for sct
-        ('\?color=#3cf \u263c 11000K', 'redshift -r -O 11000'),
-        ('\?color=#3cf \u263c 12000K', 'redshift -r -O 12000'),
-        ('\?color=#3cf \u263c 13000K', 'redshift -r -O 13000'),
-        ('\?color=#3cf \u263c 14000K', 'redshift -r -O 14000'),
-        ('\?color=#3cf \u263c 15000K', 'redshift -r -O 15000'),
+        ('\?color=#3cf 11000K', 'redshift -r -P -O 11000'),
+        ('\?color=#3cf 12000K', 'redshift -r -P -O 12000'),
+        ('\?color=#3cf 13000K', 'redshift -r -P -O 13000'),
+        ('\?color=#3cf 14000K', 'redshift -r -P -O 14000'),
+        ('\?color=#3cf 15000K', 'redshift -r -P -O 15000'),
         # et cetera... up to 25000K for redshift and blueshift
-        ('\?color=#3cf \u263c 16000K', 'redshift -r -O 16000'),
-        ('\?color=#3cf \u263c 17000K', 'redshift -r -O 17000'),
-        ('\?color=#3cf \u263c 18000K', 'redshift -r -O 18000'),
-        ('\?color=#3cf \u263c 19000K', 'redshift -r -O 19000'),
-        ('\?color=#3cf \u263c 20000K', 'redshift -r -O 20000'),
-        ('\?color=#3cf \u263c 21000K', 'redshift -r -O 21000'),
-        ('\?color=#3cf \u263c 22000K', 'redshift -r -O 22000'),
-        ('\?color=#3cf \u263c 23000K', 'redshift -r -O 23000'),
-        ('\?color=#3cf \u263c 24000K', 'redshift -r -O 24000'),
-        ('\?color=#3cf \u263c 25000K', 'redshift -r -O 25000'),
+        ('\?color=#3cf 16000K', 'redshift -r -P -O 16000'),
+        ('\?color=#3cf 17000K', 'redshift -r -P -O 17000'),
+        ('\?color=#3cf 18000K', 'redshift -r -P -O 18000'),
+        ('\?color=#3cf 19000K', 'redshift -r -P -O 19000'),
+        ('\?color=#3cf 20000K', 'redshift -r -P -O 20000'),
+        ('\?color=#3cf 21000K', 'redshift -r -P -O 21000'),
+        ('\?color=#3cf 22000K', 'redshift -r -P -O 22000'),
+        ('\?color=#3cf 23000K', 'redshift -r -P -O 23000'),
+        ('\?color=#3cf 24000K', 'redshift -r -P -O 24000'),
+        ('\?color=#3cf 25000K', 'redshift -r -P -O 25000'),
     ]
 }
 
 # emulate volume_status switching
+order += "switch volume_status"
 switch volume_status {
     button_next = 4
     button_previous = 5
     button_reset = 3
+    format = 'Volume {list}'
     initial = 1
     color_boost = '#11ff99'
     # note: my default sink number is 0
     list = [
-        ('\?color=degraded \[M\]', 'pactl -- set-sink-mute 0 1'),
-        ('\?color=degraded {M}', 'pactl -- set-sink-mute 0 0'),
-        ('\?color=bad  0%', 'pactl -- set-sink-volume 0 0%'),
-        ('\?color=bad  1%', 'pactl -- set-sink-volume 0 1%'),
-        ('\?color=bad  2%', 'pactl -- set-sink-volume 0 2%'),
-        ('\?color=bad  3%', 'pactl -- set-sink-volume 0 3%'),
-        ('\?color=bad  4%', 'pactl -- set-sink-volume 0 4%'),
-        ('\?color=bad  5%', 'pactl -- set-sink-volume 0 5%'),
-        ('\?color=bad  10%', 'pactl -- set-sink-volume 0 10%'),
-        ('\?color=bad  15%', 'pactl -- set-sink-volume 0 15%'),
-        ('\?color=degraded  20%', 'pactl -- set-sink-volume 0 20%'),
-        ('\?color=degraded  25%', 'pactl -- set-sink-volume 0 25%'),
-        ('\?color=degraded  30%', 'pactl -- set-sink-volume 0 30%'),
-        ('\?color=degraded  35%', 'pactl -- set-sink-volume 0 35%'),
-        ('\?color=degraded  40%', 'pactl -- set-sink-volume 0 40%'),
-        ('\?color=degraded  45%', 'pactl -- set-sink-volume 0 45%'),
-        ('\?color=good  50%', 'pactl -- set-sink-volume 0 50%'),
-        ('\?color=good  55%', 'pactl -- set-sink-volume 0 55%'),
-        ('\?color=good  60%', 'pactl -- set-sink-volume 0 60%'),
-        ('\?color=good  65%', 'pactl -- set-sink-volume 0 65%'),
-        ('\?color=good  70%', 'pactl -- set-sink-volume 0 70%'),
-        ('\?color=good  75%', 'pactl -- set-sink-volume 0 75%'),
-        ('\?color=good  80%', 'pactl -- set-sink-volume 0 80%'),
-        ('\?color=good  85%', 'pactl -- set-sink-volume 0 85%'),
-        ('\?color=good  90%', 'pactl -- set-sink-volume 0 90%'),
-        ('\?color=good  95%', 'pactl -- set-sink-volume 0 95%'),
-        ('\?color=good  100%', 'pactl -- set-sink-volume 0 100%'),
-        ('\?color=boost ! 105%', 'pactl -- set-sink-volume 0 105%'),
-        ('\?color=boost ! 110%', 'pactl -- set-sink-volume 0 110%'),
-        ('\?color=boost ! 115%', 'pactl -- set-sink-volume 0 115%'),
-        ('\?color=boost ! 120%', 'pactl -- set-sink-volume 0 120%'),
+        ('\?color=degraded \[Mute\]', 'pactl -- set-sink-mute 0 1'),
+        ('\?color=degraded {Mute}', 'pactl -- set-sink-mute 0 0'),
+        ('\?color=bad 0%', 'pactl -- set-sink-volume 0 0%'),
+        ('\?color=bad 1%', 'pactl -- set-sink-volume 0 1%'),
+        ('\?color=bad 2%', 'pactl -- set-sink-volume 0 2%'),
+        ('\?color=bad 3%', 'pactl -- set-sink-volume 0 3%'),
+        ('\?color=bad 4%', 'pactl -- set-sink-volume 0 4%'),
+        ('\?color=bad 5%', 'pactl -- set-sink-volume 0 5%'),
+        ('\?color=bad 10%', 'pactl -- set-sink-volume 0 10%'),
+        ('\?color=bad 15%', 'pactl -- set-sink-volume 0 15%'),
+        ('\?color=degraded 20%', 'pactl -- set-sink-volume 0 20%'),
+        ('\?color=degraded 25%', 'pactl -- set-sink-volume 0 25%'),
+        ('\?color=degraded 30%', 'pactl -- set-sink-volume 0 30%'),
+        ('\?color=degraded 35%', 'pactl -- set-sink-volume 0 35%'),
+        ('\?color=degraded 40%', 'pactl -- set-sink-volume 0 40%'),
+        ('\?color=degraded 45%', 'pactl -- set-sink-volume 0 45%'),
+        ('\?color=good 50%', 'pactl -- set-sink-volume 0 50%'),
+        ('\?color=good 55%', 'pactl -- set-sink-volume 0 55%'),
+        ('\?color=good 60%', 'pactl -- set-sink-volume 0 60%'),
+        ('\?color=good 65%', 'pactl -- set-sink-volume 0 65%'),
+        ('\?color=good 70%', 'pactl -- set-sink-volume 0 70%'),
+        ('\?color=good 75%', 'pactl -- set-sink-volume 0 75%'),
+        ('\?color=good 80%', 'pactl -- set-sink-volume 0 80%'),
+        ('\?color=good 85%', 'pactl -- set-sink-volume 0 85%'),
+        ('\?color=good 90%', 'pactl -- set-sink-volume 0 90%'),
+        ('\?color=good 95%', 'pactl -- set-sink-volume 0 95%'),
+        ('\?color=good 100%', 'pactl -- set-sink-volume 0 100%'),
+        ('\?color=boost 105%!', 'pactl -- set-sink-volume 0 105%'),
+        ('\?color=boost 110%!', 'pactl -- set-sink-volume 0 110%'),
+        ('\?color=boost 115%!', 'pactl -- set-sink-volume 0 115%'),
+        ('\?color=boost 120%!', 'pactl -- set-sink-volume 0 120%'),
     ]
 }
 
 # create directory_menu switching
+order += "switch directory_menu"
 switch directory_menu {
     button_action = 1
     button_next = 4
     button_previous = 5
-    color_dir = '#00ffff'
+    color_dir = '#90ee90'
     list = [
-        ('\?color=dir Home', 'nautilus /home/lasers'),
-        ('\?color=dir Desktop', 'nautilus /home/lasers/Desktop'),
-        ('\?color=dir Documents', 'nautilus /home/lasers/Documents'),
-        ('\?color=dir Downloads', 'nautilus /home/lasers/Downloads'),
-        ('\?color=dir Music', 'nautilus /home/lasers/Music'),
-        ('\?color=dir Pictures', 'nautilus /home/lasers/Pictures'),
-        ('\?color=dir Videos', 'nautilus /home/lasers/Videos'),
-        ('\?color=dir Trash', 'nautilus trash:///'),
+        ('\?color=dir DIRS', ''),
+        ('\?color=dir Home', 'xdg-open ~/'),
+        ('\?color=dir Desktop', 'xdg-open ~/Desktop'),
+        ('\?color=dir Documents', 'xdg-open ~/Documents'),
+        ('\?color=dir Downloads', 'xdg-open ~/Downloads'),
+        ('\?color=dir Music', 'xdg-open ~/Music'),
+        ('\?color=dir Pictures', 'xdg-open ~/Pictures'),
+        ('\?color=dir Videos', 'xdg-open ~/Videos'),
+        ('\?color=dir Trash', 'xdg-open trash:///'),
     ]
 }
 
 # create favorite_sites switching
+order += "switch favorite_sites"
 switch favorite_sites {
     button_action = 1
     button_next = 4
     button_previous = 5
-    color_site = '#ffccff'
+    color_site = '#ffa550'
     list = [
         ('\?color=site py3status', 'xdg-open https://github.com/ultrabug/py3status'),
         ('\?color=site Amazon', 'xdg-open https://www.amazon.com'),
@@ -214,6 +206,7 @@ switch favorite_sites {
 }
 
 # create favorite_apps switching
+order += "switch favorite_apps"
 switch favorite_apps {
     button_action = 1
     button_next = 4
@@ -244,19 +237,15 @@ switch {
 
 SAMPLE OUTPUT
 index-1
-{'color': '#00FF00', 'full_text': 'first index'}
+{'color': '#00FF00', 'full_text': 'New Index 1'}
 
 index-2
-{'color': '#00FF00', 'full_text': 'second index'}
+{'color': '#FFFF00', 'full_text': 'New Index 2'}
 
 index-3
-{'color': '#0000FF', 'full_text': 'third index'}
+{'color': '#FF0000', 'full_text': 'New Index 3'}
 """
 
-import shlex
-from os import setpgrp
-from os.path import expanduser
-from subprocess import Popen
 STRING_ERROR = 'missing list'
 
 
@@ -295,17 +284,22 @@ class Py3status:
         for index, (name, cmd) in enumerate(self.list, 1):
             self.new_list[index] = {
                 'name': name,
-                'command': shlex.split(expanduser(cmd)) if cmd else ''
+                'command': cmd if cmd else ''
             }
-            self.new_list[index] = {'name': name, 'command': expanduser(cmd)}
-        self.button_list = [self.button_action, self.button_next,
-                            self.button_previous, self.button_reset]
+            self.new_list[index] = {'name': name, 'command': cmd}
+        self.button_list = [
+            self.button_action, self.button_next,
+            self.button_previous, self.button_reset
+        ]
 
     def switch(self):
         if not self.button_action or self.is_action:
             command = self.new_list[self.active_index]['command']
             if command:
-                Popen(command, preexec_fn=setpgrp)
+                try:
+                    self.py3.command_output(command, shell=True)
+                except self.py3.CommandError:
+                    pass
             self.index = self.active_index
             self.is_action = False
 
@@ -333,8 +327,6 @@ class Py3status:
                 self.active_index = 1 if self.loop else self.length
         if button == self.button_reset and self.can_reset:
             self.active_index = self.reset
-        if button not in self.button_list:
-            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
