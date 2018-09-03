@@ -274,16 +274,19 @@ class ConfigParser:
             self.error('Unknown token')
         return token
 
-    def make_name(self, value):
+    def remove_quotes(self, value):
         '''
         Remove any surrounding quotes from a value and unescape any contained
         quotes of that type.
         '''
-        if value.startswith('"'):
+        # beware the empty string
+        if not value:
+            return value
+
+        if value[0] == value[-1] == '"':
             return value[1:-1].replace('\\"', '"')
-        if value.startswith("'"):
+        if value[0] == value[-1] == "'":
             return value[1:-1].replace("\\'", "'")
-        return value
 
     def unicode_escape_sequence_fix(self, value):
         '''
@@ -308,10 +311,9 @@ class ConfigParser:
         # ensure any escape sequences are converted to unicode
         value = self.unicode_escape_sequence_fix(value)
 
-        if value.startswith('"'):
-            return value[1:-1].replace('\\"', '"')
-        if value.startswith("'"):
-            return value[1:-1].replace("\\'", "'")
+        if value and value[0] in ['"', "'"]:
+            return self.remove_quotes(value)
+
         try:
             return int(value)
         except:  # noqa e722
@@ -556,7 +558,7 @@ class ConfigParser:
                 self.level -= 1
                 return
             elif t_type == 'literal':
-                value = self.make_name(t_value)
+                value = self.remove_quotes(t_value)
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
