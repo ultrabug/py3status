@@ -130,6 +130,7 @@ class ConfigParser:
         # environment variables
         '|(?P<env_var>env\(\s*([0-9a-zA-Z_]+)(\s*,\s*[a-zA-Z_]+)?\s*\))'
         '|(?P<shell>shell\(.+?(\s*,\s*(int|float|str|bool|auto))?\))'  # shell code
+        '|(?P<base64>base64\(\s*([^)]+)\s*\))'  # base64 encode
         '|(?P<operator>[()[\]{},:]|\+?=)'  # operators
         '|(?P<literal>'
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
@@ -249,6 +250,8 @@ class ConfigParser:
                 t_type = 'env_var'
             elif token.group('shell'):
                 t_type = 'shell'
+            elif token.group('base64'):
+                t_type = 'base64'
             elif token.group('unknown'):
                 t_type = 'unknown'
             else:
@@ -393,6 +396,31 @@ class ConfigParser:
         except ValueError:
             self.error('Bad conversion')
 
+    def make_value_from_base64(self, value):
+        """
+        We can base 64 encode stuff using base64() in the config
+        """
+        # remove the 'base64(' and ')' that we get
+        value = value[7:-1]
+        # trim whitespace and remove quotes
+        value = value.strip()
+        if value[0] == value[-1] and value[0] in ['"', "'"]:
+            value = value[1:-1]
+
+        # check we are in a module definition etc
+        if not self.current_module:
+            self.error('base64(..) used outside of module or section')
+
+        # check it is valid base64
+        try:
+            import base64
+            base64.b64decode(value)
+        except TypeError as e:
+            self.error('base64(..) error %s' % str(e))
+
+        module_name = self.current_module[-1]
+        return PrivateBase64(value, module_name)
+
     def separator(self, separator=',', end_token=None):
         '''
         Read through tokens till the required separator is found.  We ignore
@@ -475,6 +503,8 @@ class ConfigParser:
                 return self.make_value_from_env(t_value)
             if token['type'] == 'shell':
                 return self.make_value_from_shell(t_value)
+            if token['type'] == 'base64':
+                return self.make_value_from_base64(t_value)
             elif t_value == '[':
                 return self.make_list()
             elif t_value == '{':
@@ -563,6 +593,8 @@ class ConfigParser:
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
+            elif t_type == 'base64':
+                self.error('Name expected')
             elif t_type == 'env_var':
                 self.error('Name expected')
             elif t_type == 'shell':

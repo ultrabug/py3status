@@ -130,17 +130,31 @@ Store per config cache in different directories.
 
 Configuration obfuscation
 -------------------------
-
-.. note::
-    New in version 3.1
-
 Py3status allows you to hide individual configuration parameters so that they
 do not leak into log files, user notifications or to the i3bar. Additionally
 they allow you to obfuscate configuration parameters using base64 encoding.
 
+.. note::
+    New in version 3.13
+
+To base64 encode a value you can use the ``base64()`` configuration function.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # Example of obfuscated configuration
+    imap {
+        imap_server = 'imap.myprovider.com'
+        password = base64('Y29jb251dA==')
+        user = 'mylogin'
+    }
+
+.. note::
+    New in version 3.1
+
 To do this you need to add an obfuscation option to the configuration
-parameter. Obfuscation options are added by adding `:hide` or `:base64` to the
-name of the parameters.
+parameter. Obfuscation options are added by adding ``:hide`` or ``:base64`` to
+the name of the parameters.
 
 
 .. note::
