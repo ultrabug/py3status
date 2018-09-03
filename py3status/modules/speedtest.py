@@ -3,7 +3,6 @@
 Do a bandwidth test with speedtest-cli.
 
 Configuration parameters:
-    button_refresh: button to run the check (default 2)
     button_share: button to open the result link (default None)
     format: display format for this module, {download} and/or {upload} required
         *(default 'Speedtest [\?color=darkgray ping [\?color=ping {ping} ms] '
@@ -11,14 +10,9 @@ Configuration parameters:
                     'down [\?color=download {download} {download_unit}]]')*
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
     si_units: use SI units (default False)
-    sleep_timeout: when speedtest-cli is allready running, this interval will be used
-        to allow faster retry refreshes (default 5)
     thresholds: specify color thresholds to use *(default {
                 'download': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')],
                 'ping': [(200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')],
-                'quality': [(-1, "bad"), (0, "darkgrey"), (1, "degraded"),
-                    (2, "good"), (4, "degraded"), (3, "good"),
-                ],
                 'upload': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')]})*
     timeout: timeout when communicating with speedtest.net servers (default 10)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
@@ -45,8 +39,6 @@ Format placeholders:
     {download_raw}          download rate from speedtest server, for format comparation
     {download_unit}         unit used as , eg 'MB/s'
     {ping}                  ping time in ms to speedtest server
-    {quality}               quality code of the connection, eg 0, 1, 2, 3, 4
-    {quality_name}          quality name of the connection, eg failed, bad, good, slower, faster
     {timestamp}             timestamp of the run, eg '2018-08-30T16:27:25.318212Z'
     {server_cc}             server country code, eg 'FR'
     {server_country}        server country, eg 'France'
@@ -64,7 +56,7 @@ Format placeholders:
     {upload_unit}           unit used for upload, eg 'MB/s'
 
 Color thresholds:
-    xxx: print a color based on the value of `xxx` placeholder
+    field_name: print a color based on the value of `field_name` placeholder
 
 The module will be triggered on clic only. Not at start.
 
@@ -83,14 +75,6 @@ speedtest {
     thresholds = {
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
-        "quality": [
-            (-1, "bad"),
-            (0, "darkgrey"),
-            (1, "degraded"),
-            (2, "good"),
-            (4, "degraded"),
-            (3, "good"),
-        ],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
     format = '[\?color=ping {ping} ms] [\?color=upload Up {upload} {upload_unit}]'
@@ -105,10 +89,9 @@ speedtest {
 
 # compare only download
 speedtest {
-    format = '[[\?if=quality_name=slower&color=download_raw ↓ {download} {download_unit}]'
-    format += '[\?if=quality_name=faster&color=download_raw ↑ {download} {download_unit}]'
-    format += '[\?if=quality_name=good&color=download_raw -> {download} {download_unit}]'
-    format += '[\?if=quality_name=bad&color=download_raw x {download} {download_unit}]]'
+    format = '[[\?if=download_raw<previous_download_raw ↓ {download} {download_unit}]'
+    format += '[\?if=download_raw>previous_download_raw ↑ {download} {download_unit}]'
+    format += '[\?if=download_raw=previous_download_raw -> {download} {download_unit}]'
     format += '|speedtest'
 }
 ```
@@ -137,7 +120,6 @@ class Py3status:
     """
 
     # available configuration parameters
-    button_refresh = 2
     button_share = None
     format = (
         u"Speedtest [\?color=darkgray ping [\?color=ping {ping} ms] "
@@ -146,18 +128,9 @@ class Py3status:
     )
     server_id = None
     si_units = False
-    sleep_timeout = 5
     thresholds = {
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
-        "quality": [
-            (-1, "bad"),
-            (0, "darkgrey"),
-            (1, "degraded"),
-            (2, "good"),
-            (4, "degraded"),
-            (3, "good"),
-        ],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
     timeout = 10
@@ -168,21 +141,14 @@ class Py3status:
         if not self.py3.check_commands("speedtest-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
+        self.button_refresh = 2
+        self.sleep_timeout = 2.5
         self.speedtest_data = {}
         self.cached_until = self.py3.CACHE_FOREVER
         self.placeholders = self.py3.get_placeholders_list(self.format)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.command = "speedtest-cli --json --secure"
         self.url = None
-
-        self.quality = {
-            -1: "failed",
-            0: "unknow",
-            1: "bad",
-            2: "good",
-            3: "slower",
-            4: "faster",
-        }
 
         # if download* or upload* missing, run complete test
         if any(
@@ -213,18 +179,18 @@ class Py3status:
         except self.py3.CommandError:
             return False
 
-    def _cast_number(self, data):
+    def _cast_number(self, value):
         try:
-            data = int(data)
+            value = int(value)
         except ValueError:
             try:
-                data = float(data)
+                value = float(value)
             except ValueError:
                 pass
-        return data
+        return value
 
     def _get_speedtest_data(self):
-        return loads(self.py3.command_output(self.command)) or None
+        return loads(self.py3.command_output(self.command))
 
     def _start(self):
         self.cached_until = self.py3.time_in(self.sleep_timeout)
@@ -241,20 +207,6 @@ class Py3status:
                     current_data.get("upload", 0)
                 )
 
-                # create "quality" #maybe bad name
-                if "total" in previous_data:
-                    if current_data["total"] >= previous_data["total"]:
-                        quality_key = 4
-                    else:
-                        quality_key = 3
-                else:
-                    if current_data["total"] <= 0:
-                        quality_key = 1
-                    else:
-                        quality_key = 2
-                current_data["quality"] = quality_key
-                current_data["quality_name"] = self.quality[quality_key]
-
         # zero-ing if not fetched, raw version and units convertion
         for x in ["download", "upload", "bytes_received", "bytes_sent"]:
             unit = self.unit_size if "bytes" in x else self.unit_bitrate
@@ -265,9 +217,9 @@ class Py3status:
             )
 
         # extra data, not sure we want to expose
-        current_data.update(self.py3.flatten_dict(current_data, delimiter='_'))
-        for x in ['client', 'server']:
-            del current_data[x]
+        current_data = self.py3.flatten_dict(
+            current_data, delimiter='_', intermediates=False
+        )
 
         # store last data fetched
         self.py3.storage_set("speedtest_data", current_data)
@@ -277,17 +229,17 @@ class Py3status:
 
         # create placeholders
         self.speedtest_data.update(current_data)
-        if previous_data:
-            self.speedtest_data.update(
-                {"previous_" + k: v for (k, v) in previous_data.items()}
-            )
+        self.speedtest_data.update(
+            {"previous_" + k: v for (k, v) in previous_data.items()}
+        )
 
         # cast number
         self.speedtest_data.update(
             {
-                k: self._cast_number(v)
-                for (k, v) in self.speedtest_data.items()
-                if isinstance(v, Number)
+                k: self._cast_number(self.speedtest_data[k])
+                for k in self.placeholders if isinstance(
+                    self.speedtest_data[k], Number
+                )
             }
         )
 
@@ -304,12 +256,12 @@ class Py3status:
 
     def on_click(self, event):
         button = event["button"]
-        if button == self.button_refresh:
-            self._start()
         if button == self.button_share and self.url:
             self.py3.command_run("xdg-open %s" % self.url)
         if button != self.button_refresh:
             self.py3.prevent_refresh()
+        if button == self.button_refresh:
+            self._start()
 
 
 if __name__ == "__main__":
