@@ -5,8 +5,16 @@ emerge status if there is an emerge process currently running
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in second (default 0)
-    format: Display format to user (default 'EMRG: {current} / {total}')
-    hide_if_zero: Don't show in bar if there is no emerge running (default False)
+    format: *(default '[[\\?if=!hide_if_stopped {prefix}]|'
+                     '[\\?if=is_running {prefix}]]'
+                     '[[\\?if=is_running [\\?if=!total=0 {current}/{total}'
+                     '[\\?if=show_action {action} ]'
+                     '[\\?if=show_pkg {category}/{pkg}]]]|'
+                     '[\\?if=!hide_if_stopped 0/0]]')*
+    hide_if_stopped: Hide all information if no emerge is running (default False)
+    prefix: prefix in statusbar (default "EMRG: ")
+    show_action: En/Disable showing action (default True)
+    show_pkg: Dis-/Enable showing category and pkg name (default True)
 
 Format placeholders:
     {current} Number of package that is currently emerged
@@ -15,26 +23,52 @@ Format placeholders:
     {pkg} Name of the currently emerged packaged
     {action} Current emerge action
 
-Format examples:
-     {current} / {total}'
-    Result: "3 / 14"
-    '{current} / {total} = {pkg}'
-    Result: "3 / 14 = py3status"
-    '{category} - {pkg}'
-    Result: "x11-misc - py3status"
+Examples:
+```
+emerge_status {
+    hide_if_stopped = True
+    prefix = emerge
+    show_action = False
+    show_pkg = False
+}
+```
+
 
 @author AnwariasEu
 """
 
 import re
+import copy
+
+STRING_NOT_INSTALLED = 'not installed'
 
 
 class Py3status:
     """
     """
     cache_timeout = 0
-    format = u'EMRG: {current} / {total}'
-    hide_if_zero = False
+    format = (
+        # show prefix if either show_stopped or if emerge is running
+        '[[\?if=!hide_if_stopped {prefix}]|[\?if=is_running {prefix}]]'
+        # if emerge is running and total != 0 show
+        '[[\?if=is_running [\?if=!total=0 {current}/{total}'
+        # show action and cat/pkg only if user wants it
+        '[\?if=show_action {action} ][\?if=show_pkg {category}/{pkg}]]]|'
+        # if no emerge is running but show_stopped is set show 0/0
+        '[\?if=!hide_if_stopped 0/0]]')
+    hide_if_stopped = False
+    prefix = "EMRG: "
+    show_action = True
+    show_pkg = True
+
+    def __init__(self):
+        self.ret_default = {
+            'current': 0,
+            'total': 0,
+            'category': "",
+            'pkg': "",
+            'action': "",
+            'is_running': False}
 
     def _emergeRunning(self):
         """
@@ -44,7 +78,7 @@ class Py3status:
         try:
             self.py3.command_output(['pgrep', 'emerge'])
             return True
-        except:
+        except Exception:
             return False
 
     def post_config_hook(self):
@@ -60,11 +94,6 @@ class Py3status:
         emerge_log_file = '/var/log/emerge.log'
 
         ret = {}
-        ret['current'] = None
-        ret['total'] = None
-        ret['category'] = None
-        ret['pkg'] = None
-        ret['action'] = None
 
         input_data = []
 
@@ -85,24 +114,22 @@ class Py3status:
 
         for line in input_data:
             if "*** terminating." in line:
-                ret['current'] = "0"
-                ret['total'] = "0"
+                # Copy content of ret_default no only the references
+                ret = copy.deepcopt(self.ret_default)
                 break
             else:
-                match = re.search(">>> emerge.*", line)
-                if match:
-                    status_re = (
-                        "\((?P<current>[0-9]+) of (?P<total>[0-9]+)\) "
-                        "\((?P<action>[a-zA-Z0-9\/]+( [a-zA-Z0-9]+)?) "
-                        "(?P<category>[a-zA-Z0-9\-]+)\/(?P<pkg>[a-zA-Z0-9\.]+)"
-                    )
-                    res = re.search(status_re, match.group())
-                    if res:
-                        ret['current'] = res.group('current')
-                        ret['total'] = res.group('total')
-                        ret['category'] = res.group('category')
-                        ret['pkg'] = res.group('pkg')
-                        ret['action'] = res.group('action')
+                status_re = re.compile(
+                    "\((?P<cu>[\d]+) of (?P<t>[\d]+)\) "
+                    "(?P<a>[a-zA-Z\/]+( [a-zA-Z]+)?) "
+                    "\((?P<ca>[\w\-]+)\/(?P<p>[\w\.]+)"
+                )
+                res = status_re.search(line)
+                if res is not None:
+                    ret['current'] = res.group('cu')
+                    ret['total'] = res.group('t')
+                    ret['category'] = res.group('ca')
+                    ret['pkg'] = res.group('p')
+                    ret['action'] = res.group('a')
                     break
         return ret
 
@@ -112,22 +139,12 @@ class Py3status:
         """
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
-        if self._emergeRunning():
-            self.ret = self._getProgress()
-            response['full_text'] = self.py3.safe_format(self.format, self.ret)
-        else:
-            if self.hide_if_zero:
-                response['full_text'] = ""
-            else:
-                self.ret = {}
-                self.ret['current'] = "0"
-                self.ret['total'] = "0"
-                self.ret['category'] = ""
-                self.ret['pkg'] = ""
-                self.ret['action'] = "None"
-                response['full_text'] = self.py3.safe_format(
-                    self.format, self.ret)
-
+        response['is_running'] = self._emergeRunning()
+        ret = copy.deepcopy(self.ret_default)
+        if response['is_running']:
+            ret = self._getProgress()
+            ret['is_running'] = True
+        response['full_text'] = self.py3.safe_format(self.format, ret)
         return response
 
 
@@ -135,5 +152,9 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
+    config = {
+        'show_pkg': False,
+        'hide_if_stopped': True
+    }
     from py3status.module_test import module_test
-    module_test(Py3status)
+    module_test(Py3status, config=config)
