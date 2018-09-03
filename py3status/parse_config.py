@@ -181,7 +181,7 @@ class ConfigParser:
         (file, pathname, description) = info
         try:
             py_mod = imp.load_module(name, file, pathname, description)
-        except:  # noqa e722
+        except Exception:
             # We cannot load the module!  We could error out here but then the
             # user gets informed that the problem is with their config.  This
             # is not correct.  Better to say that all is well and then the
@@ -277,23 +277,26 @@ class ConfigParser:
             self.error('Unknown token')
         return token
 
-    def make_name(self, value):
+    def remove_quotes(self, value):
         '''
         Remove any surrounding quotes from a value and unescape any contained
         quotes of that type.
         '''
-        if value.startswith('"'):
+        # beware the empty string
+        if not value:
+            return value
+
+        if value[0] == value[-1] == '"':
             return value[1:-1].replace('\\"', '"')
-        if value.startswith("'"):
+        if value[0] == value[-1] == "'":
             return value[1:-1].replace("\\'", "'")
-        return value
 
     def unicode_escape_sequence_fix(self, value):
         '''
         It is possible to define unicode characters in the config either as the
         actual utf-8 character or using escape sequences the following all will
         show the Greek delta character.
-        Δ \N{GREEK CAPITAL LETTER DELTA} \U00000394  \u0349
+        Δ \N{GREEK CAPITAL LETTER DELTA} \U00000394  \u0394
         '''
         def fix_fn(match):
             # we don't escape an escaped backslash
@@ -301,7 +304,7 @@ class ConfigParser:
                 return r'\\'
             return match.group(0).encode('utf-8').decode('unicode-escape')
         return re.sub(
-            '\\\\\\\\|\\\\u\w{4}|\\\\U\w{8}|\\\\N\{.+\}', fix_fn, value
+            r'\\\\|\\u\w{4}|\\U\w{8}|\\N\{([^}\\]|\\.)+\}', fix_fn, value
         )
 
     def make_value(self, value):
@@ -311,17 +314,16 @@ class ConfigParser:
         # ensure any escape sequences are converted to unicode
         value = self.unicode_escape_sequence_fix(value)
 
-        if value.startswith('"'):
-            return value[1:-1].replace('\\"', '"')
-        if value.startswith("'"):
-            return value[1:-1].replace("\\'", "'")
+        if value and value[0] in ['"', "'"]:
+            return self.remove_quotes(value)
+
         try:
             return int(value)
-        except:  # noqa e722
+        except ValueError:
             pass
         try:
             return float(value)
-        except:  # noqa e722
+        except ValueError:
             pass
         if value.lower() == 'true':
             return True
@@ -586,7 +588,7 @@ class ConfigParser:
                 self.level -= 1
                 return
             elif t_type == 'literal':
-                value = self.make_name(t_value)
+                value = self.remove_quotes(t_value)
                 if not name and not re.match('[a-zA-Z_]', value):
                     self.error('Invalid name')
                 name.append(value)
