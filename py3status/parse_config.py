@@ -287,6 +287,7 @@ class ConfigParser:
             return value[1:-1].replace('\\"', '"')
         if value[0] == value[-1] == "'":
             return value[1:-1].replace("\\'", "'")
+        return value
 
     def unicode_escape_sequence_fix(self, value):
         '''
