@@ -131,6 +131,36 @@ To build the documentation.
 
 The created documentation will be found in ``_build/html``
 
+Profiling py3status
+-------------------
+
+A small tool to measure ``py3status`` performance between changes and
+allows testing of old versions, etc. It's a little clunky but it does
+the job. https://github.com/tobes/py3status-profiler
+
+.. code-block:: none
+
+    # pprofile
+    Running tests for 10 minutes.
+    [██████████] 100.00%  10:00  (22.12)
+    user 21.41s
+    system 0.71s
+    total 22.12s
+
+    # vmprof
+    Running tests for 10 minutes.
+    [██████████] 100.00%  10:00  (2.10)
+    user 1.77s
+    system 0.33s
+    total 2.1s
+
+    # cprofile
+    Running tests for 10 minutes.
+    [██████████] 100.00%  10:00  (0.92)
+    user 0.87s
+    system 0.05s
+    total 0.92
+
 Contributions
 -------------
 

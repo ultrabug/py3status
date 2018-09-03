@@ -13,8 +13,8 @@ Configuration parameters:
     button_stop: mouse button to stop the playback (default 3)
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module
-        (default '\?if=is_started [\?if=is_stopped \[\] moc|
-        [\?if=is_paused \|\|][\?if=is_playing >] {title}]')
+        *(default '\?if=is_started [\?if=is_stopped \[\] moc|'
+        '[\?if=is_paused \|\|][\?if=is_playing >] {title}]')*
     sleep_timeout: when moc is not running, this interval will be used to
         allow one to refresh constantly with time placeholders and/or
         to refresh once every minute rather than every few seconds
@@ -88,8 +88,8 @@ class Py3status:
     button_previous = None
     button_stop = 3
     cache_timeout = 5
-    format = '\?if=is_started [\?if=is_stopped \[\] moc|' +\
-        '[\?if=is_paused \|\|][\?if=is_playing >] {title}]'
+    format = ('\?if=is_started [\?if=is_stopped \[\] moc|'
+              '[\?if=is_paused \|\|][\?if=is_playing >] {title}]')
     sleep_timeout = 20
 
     def post_config_hook(self):
@@ -104,7 +104,7 @@ class Py3status:
         try:
             data = self.py3.command_output('mocp --info')
             is_started = True
-        except:
+        except self.py3.CommandError:
             data = {}
             is_started = False
         return is_started, data

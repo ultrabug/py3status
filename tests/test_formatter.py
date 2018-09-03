@@ -27,6 +27,7 @@ param_dict = {
     'no': False,
     'empty': '',
     'None': None,
+    'None_str': 'None',
     '?bad name': 'evil',
     u'☂ Very bad name ': u'☂ extremely evil',
     'long_str': 'I am a long string though not too long',
@@ -39,6 +40,8 @@ param_dict = {
     'str_int': '123',
     'str_float': '123.456',
     'str_nan': "I'm not a number",
+    'trailing_zeroes_1': '50.000',
+    'trailing_zeroes_2': '5.500',
 
     'composite_basic': Composite([{'full_text': 'red ', 'color': '#FF0000'},
                                   {'full_text': 'green ', 'color': '#00FF00'},
@@ -50,6 +53,7 @@ param_dict = {
     'simple': Composite({'full_text': 'NY 12:34'}),
     'empty_composite': Composite(),
     'comp_bad_color': Composite({'full_text': 'BAD', 'color': NoneColor()}),
+    'composite_looks_empty': Composite([{'color': '#FFF', 'full_text': ''}]),
 }
 
 
@@ -112,6 +116,37 @@ def run_formatter(test_dict):
     expected = test_dict.get('expected')
     if python2 and isinstance(expected, str):
         expected = expected.decode('utf-8')
+    if result != expected:
+        print('Format\n{}\n'.format(test_dict['format']))
+        print('Expected\n{}'.format(pformat(expected)))
+        print('Got\n{}'.format(pformat(result)))
+    if result != expected:
+        pytest.fail('Results not as expected')
+
+
+def get_placeholders(test_dict):
+    __tracebackhide__ = True
+
+    result = f.get_placeholders(test_dict['format'])
+    expected = test_dict.get('expected')
+
+    if result != expected:
+        print('Format\n{}\n'.format(test_dict['format']))
+        print('Expected\n{}'.format(pformat(expected)))
+        print('Got\n{}'.format(pformat(result)))
+    if result != expected:
+        pytest.fail('Results not as expected')
+
+
+def update_placeholders(test_dict):
+    __tracebackhide__ = True
+
+    result = f.update_placeholders(test_dict['format'], test_dict['updates'])
+    expected = test_dict.get('expected')
+
+    if python2 and isinstance(expected, str):
+        expected = expected.decode('utf-8')
+
     if result != expected:
         print('Format\n{}\n'.format(test_dict['format']))
         print('Expected\n{}'.format(pformat(expected)))
@@ -293,7 +328,19 @@ def test_26():
 
 
 def test_27():
-    run_formatter({'format': '{None}', 'expected': '', })
+    run_formatter({'format': '{None}', 'expected': 'None', })
+
+
+def test_27a():
+    run_formatter({'format': '{None} {no}', 'expected': 'None False', })
+
+
+def test_27b():
+    run_formatter({'format': '[Hello {None}] {no}', 'expected': ' False', })
+
+
+def test_27c():
+    run_formatter({'format': '[Hi, my name is {None_str}]', 'expected': '', })
 
 
 def test_28():
@@ -305,7 +352,7 @@ def test_29():
 
 
 def test_30():
-    run_formatter({'format': '{no}', 'expected': '', })
+    run_formatter({'format': '{no}', 'expected': 'False', })
 
 
 def test_31():
@@ -618,6 +665,14 @@ def test_else_false():
         'format': '[\?if=no Hello|Goodbye|Something else]',
         'expected': 'Goodbye',
     })
+
+
+def test_composite_looks_empty():
+    run_formatter({
+        'format': '[ {composite_looks_empty}]',
+        'expected': '',
+    })
+
 
 # block colors
 
@@ -1127,7 +1182,7 @@ def test_module_true_value():
 
 
 def test_module_false_value():
-    run_formatter({'format': '{module_false}', 'expected': ''})
+    run_formatter({'format': '{module_false}', 'expected': 'False'})
 
 
 def test_zero_format_1():
@@ -1335,6 +1390,134 @@ def test_conditions_21():
     run_formatter({
         'format': '\?if=name>John cool beans',
         'expected': ''
+    })
+
+
+def test_conditions_22():
+    run_formatter({
+        'format': '\?if=missing>John cool beans',
+        'expected': ''
+    })
+
+
+def test_conditions_23():
+    run_formatter({
+        'format': '[\?if=None=None cool] beans',
+        'expected': ' beans'
+    })
+
+
+def test_trailing_zeroes_1():
+    run_formatter({
+        'format': '{trailing_zeroes_1} becomes {trailing_zeroes_1:g}',
+        'expected': '50.000 becomes 50'
+    })
+
+
+def test_trailing_zeroes_2():
+    run_formatter({
+        'format': '{trailing_zeroes_2} becomes {trailing_zeroes_2:g}',
+        'expected': '5.500 becomes 5.5'
+    })
+
+
+def test_ceiling_numbers_1():
+    run_formatter({
+        'format': '{pi} becomes {pi:ceil}',
+        'expected': '3.14159265359 becomes 4'
+    })
+
+
+def test_ceiling_numbers_2():
+    run_formatter({
+        'format': '{zero_almost} becomes {zero_almost:ceil}',
+        'expected': '0.0001 becomes 1'
+    })
+
+
+# get placeholder tests
+
+
+def test_placeholders_1():
+    get_placeholders({
+        'format': '{placeholder}',
+        'expected': {'placeholder'}
+    })
+
+
+def test_placeholders_2():
+    get_placeholders({
+        'format': '[{placeholder}]{placeholder2:%d}',
+        'expected': {'placeholder', 'placeholder2'}
+    })
+
+
+def test_placeholders_3():
+    get_placeholders({
+        'format': '{placeholder}[\?if=test something]',
+        'expected': {'placeholder', 'test'}
+    })
+
+
+def test_placeholders_4():
+    get_placeholders({
+        'format': '{placeholder}[\?if=!test=42&color=red something]',
+        'expected': {'placeholder', 'test'}
+    })
+
+
+def test_placeholders_5():
+    get_placeholders({
+        'format': '\{placeholder\}[\?if=test&color=red something]',
+        'expected': {'test'}
+    })
+
+
+# Placeholder update tests
+
+
+def test_update_placeholders_1():
+    update_placeholders({
+        'format': '{placeholder}',
+        'updates': {},
+        'expected': '{placeholder}'
+    })
+
+
+def test_update_placeholders_2():
+    update_placeholders({
+        'format': '[{placeholder}]{placeholder2:%d}',
+        'updates': {
+            'placeholder': 'new_placeholder',
+            'placeholder2': 'new_placeholder2',
+        },
+        'expected': '[{new_placeholder}]{new_placeholder2:%d}',
+    })
+
+
+def test_update_placeholders_3():
+    update_placeholders({
+        'format': '{placeholder}[\?if=test something]',
+        'updates': {'test': 'new_test'},
+        'expected': '{placeholder}[\?if=new_test something]',
+    })
+
+
+def test_update_placeholders_4():
+    update_placeholders({
+        'format': '{placeholder}[\?if=!test=42&color=red something]',
+        'updates': {'red': 'blue'},
+        'expected': '{placeholder}[\?if=!test=42&color=red something]',
+    })
+
+
+def test_update_placeholders_5():
+    update_placeholders({
+        'format': '\{placeholder\}{placeholder}[\?if=placeholder&color=red something]',
+        'updates': {
+            'placeholder': 'new_placeholder',
+        },
+        'expected': '\{placeholder\}{new_placeholder}[\?if=new_placeholder&color=red something]',
     })
 
 

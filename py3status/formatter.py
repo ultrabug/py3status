@@ -2,6 +2,7 @@
 import re
 import sys
 
+from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
@@ -28,7 +29,7 @@ class Formatter:
         r'|(?P<escaped>(\\.|\{\{|\}\}))'
         r'|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(?P<format>([^}\\]|\\.)*)?\}))'
         r'|(?P<literal>([^\[\]\\\{\}\|])+)'
-        r'|(?P<lost_brace>(\}))'
+        r'|(?P<lost_brace>([{}]))'
     ]
 
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
@@ -60,6 +61,13 @@ class Formatter:
         for token in self.tokens(format_string):
             if token.group('placeholder'):
                 placeholders.add(token.group('key'))
+            elif token.group('command'):
+                # get any placeholders used in commands
+                commands = dict(parse_qsl(token.group('command')))
+                # placeholders only used in `if`
+                if_ = commands.get('if')
+                if if_:
+                    placeholders.add(Condition(if_).variable)
         return placeholders
 
     def get_placeholder_formats_list(self, format_string):
@@ -89,6 +97,45 @@ class Formatter:
                     token.group('format'))
                 )
                 continue
+            elif token.group('command'):
+                # update any placeholders used in commands
+                commands = parse_qsl(
+                    token.group('command'), keep_blank_values=True
+                )
+                # placeholders only used in `if`
+                if 'if' in [x[0] for x in commands]:
+                    items = []
+                    for key, value in commands:
+                        if key == 'if':
+                            # we have to rebuild from the parts we have
+                            condition = Condition(value)
+                            variable = condition.variable
+                            if variable in placeholders:
+                                variable = placeholders[variable]
+                                # negation via `!`
+                                not_ = '!' if not condition.default else ''
+                                condition_ = condition.condition or ''
+                                # if there is no condition then there is no
+                                # value
+                                if condition_:
+                                    value_ = condition.value
+                                else:
+                                    value_ = ''
+                                value = '{}{}{}{}'.format(
+                                        not_,
+                                        variable,
+                                        condition_,
+                                        value_,
+                                )
+                        if value:
+                            items.append('{}={}'.format(key, value))
+                        else:
+                            items.append(key)
+
+                    # we cannot use urlencode because it will escape things
+                    # like `!`
+                    output.append('\?{} '.format('&'.join(items)))
+                    continue
             value = token.group(0)
             output.append(value)
         return u''.join(output)
@@ -145,7 +192,7 @@ class Formatter:
             elif token.group('lost_brace'):
                 # due to how parsing happens we can get a lonesome }
                 # eg in format_string '{{something}' this fixes that issue
-                block.add(Literal('}'))
+                block.add(Literal(value))
             elif token.group('command'):
                 # a block command has been found
                 block.set_commands(token.group('command'))
@@ -196,12 +243,12 @@ class Formatter:
                 # get value from attr_getter function
                 try:
                     param = attr_getter(key)
-                except:
+                except:  # noqa e722
                     raise Exception()
             else:
                 raise Exception()
             if isinstance(param, Composite):
-                if len(param):
+                if param.text():
                     param = param.copy()
                 else:
                     param = u''
@@ -237,6 +284,7 @@ class Placeholder:
         """
         return the correct value for the placeholder
         """
+        value = '{%s}' % self.key
         try:
             value = value_ = get_params(self.key)
             if self.format.startswith(':'):
@@ -244,15 +292,21 @@ class Placeholder:
                 # type then we see if we can coerce it to be.  This allows
                 # the user to format types that normally would not be
                 # allowed eg '123' it also allows {:d} to be used as a
-                # shorthand for {:.0f}.  If the parameter cannot be
-                # successfully converted then the format is removed.
+                # shorthand for {:.0f}.  Use {:g} to remove insignificant
+                # trailing zeroes and the decimal point too if there are
+                # no remaining digits following it.  If the parameter cannot
+                # be successfully converted then the format will be removed.
                 try:
+                    if 'ceil' in self.format:
+                        value = int(ceil(float(value)))
                     if 'f' in self.format:
+                        value = float(value)
+                    if 'g' in self.format:
                         value = float(value)
                     if 'd' in self.format:
                         value = int(float(value))
-                    output = u'{%s%s}' % (self.key, self.format)
-                    value = output.format(**{self.key: value})
+                    output = u'{[%s]%s}' % (self.key, self.format)
+                    value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
@@ -260,18 +314,19 @@ class Placeholder:
                 output = u'{%s%s}' % (self.key, self.format)
                 value = value_ = output.format(**{self.key: value})
 
-            if block.commands.not_zero:
-                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+            if block.parent is None:
+                valid = True
+            elif block.commands.not_zero:
+                valid = value_ not in ['', 'None', None, False, '0', '0.0', 0, 0.0]
             else:
                 # '', None, and False are ignored
                 # numbers like 0 and 0.0 are not.
-                valid = not (value_ in ['', None] or value_ is False)
+                valid = not (value_ in ['', 'None', None] or value_ is False)
             enough = False
-        except:
+        except:  # noqa e722
             # Exception raised when we don't have the param
             enough = True
             valid = False
-            value = '{%s}' % self.key
 
         return valid, value, enough
 
@@ -341,9 +396,13 @@ class Condition:
         """
         try:
             variable = get_params(self.variable)
-        except:
+        except:  # noqa e722
             variable = None
         value = self.value
+
+        # if None, return oppositely
+        if variable is None:
+            return not self.default
 
         # convert the value to a correct type
         if isinstance(variable, bool):
@@ -351,10 +410,10 @@ class Condition:
         elif isinstance(variable, Number):
             try:
                 value = int(self.value)
-            except:
+            except:  # noqa e722
                 try:
                     value = float(self.value)
-                except:
+                except:  # noqa e722
                     # could not parse
                     return not self.default
 
@@ -373,7 +432,7 @@ class Condition:
         try:
             if get_params(self.variable):
                 return self.default
-        except:
+        except:  # noqa e722
             pass
         return not self.default
 
@@ -579,8 +638,8 @@ class Block:
                 text += conversion(item)
                 continue
             elif text:
-                if (not first and
-                        (text.strip() == '' or out[-1].get('color') == color)):
+                if (not first and (text == '' or out and
+                   out[-1].get('color') == color)):
                     out[-1]['full_text'] += text
                 else:
                     part = {'full_text': text}

@@ -80,13 +80,6 @@ class Py3status:
         self.timer()
 
     def timer(self):
-
-        def make_2_didget(value):
-            value = str(value)
-            if len(value) == 1:
-                value = '0' + value
-            return value
-
         if self.running or self.done:
             t = int(self.end_time - time())
             if t <= 0:
@@ -97,11 +90,8 @@ class Py3status:
             else:
                 t = self.time
 
-        # Hours
         hours, t = divmod(t, 3600)
-        # Minutes
-        mins, t = divmod(t, 60)
-        # Seconds
+        minutes, t = divmod(t, 60)
         seconds = t
 
         if self.running:
@@ -119,15 +109,15 @@ class Py3status:
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(mins),
+                'full_text': format(minutes, '02d'),
                 'color': self.color,
-                'index': 'mins',
+                'index': 'minutes',
             },
             {
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(seconds),
+                'full_text': format(seconds, '02d'),
                 'color': self.color,
                 'index': 'seconds',
             },
@@ -135,24 +125,30 @@ class Py3status:
 
         timer = self.py3.composite_create(composites)
 
-        return {
+        response = {
             'cached_until': cached_until,
             'full_text': self.py3.safe_format(self.format, {'timer': timer})
         }
+        if self.done:
+            response['urgent'] = True
+        return response
 
     def on_click(self, event):
         deltas = {
             'hours': 3600,
-            'mins': 60,
+            'minutes': 60,
             'seconds': 1
         }
         index = event['index']
         button = event['button']
 
-        # If played an alarm sound then cancel the sound on any putton press
-        if self.alarm:
-            self.py3.stop_sound()
-            self.alarm = False
+        # If played an alarm sound, then cancel the sound and urgent on any
+        # button press... otherwise, we only cancel an urgent
+        if self.done:
+            self.done = False
+            if self.alarm:
+                self.py3.stop_sound()
+                self.alarm = False
             return
 
         if button == 1:

@@ -69,7 +69,7 @@ def get_color_for_name(module_name):
     value = 243.2
     try:
         module_name = module_name.encode('utf-8')
-    except:
+    except:  # noqa e722
         pass
     hue = int(md5(module_name).hexdigest(), 16) / 16**32
     hue *= 6
@@ -98,7 +98,7 @@ def contains_bad_glyph(glyph_data, data):
         try:
             # for python 2
             text = text.decode('utf8')
-        except:
+        except:  # noqa e722
             pass
 
         for char in text:
@@ -200,7 +200,7 @@ def parse_sample_data(sample_data, module_name):
                 try:
                     output = ast.literal_eval(data)
                     samples[name] = output
-                except:
+                except:  # noqa e722
                     samples[name] = {
                         'color': '#990000',
                         'background': '#FFFF00',

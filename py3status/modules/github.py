@@ -4,7 +4,8 @@ Display Github notifications and issue/pull requests for a repo.
 
 To check notifications a Github `username` and `personal access token` are
 required.  You can create a personal access token at
-https://github.com/settings/tokens The only `scope` needed is `notifications`,
+https://github.com/settings/tokens/new?scopes=notifications&description=py3status
+The only `scope` needed is `notifications` is selected automatically for you,
 which provides readonly access to notifications.
 
 The Github API is rate limited so setting `cache_timeout` too small may cause
@@ -23,10 +24,7 @@ Configuration parameters:
         (default 2)
     cache_timeout: How often we refresh this module in seconds
         (default 60)
-    format: Format of output
-        *(default '{repo} {issues}/{pull_requests}{notifications}'
-        if username and auth_token provided else
-        '{repo} {issues}/{pull_requests}')*
+    format: display format for this module, see Examples below (default None)
     format_notifications: Format of `{notification}` status placeholder.
         (default ' N{notifications_count}')
     notifications: Type of notifications can be `all` for all notifications or
@@ -53,6 +51,15 @@ Format placeholders:
 
 Examples:
 ```
+# default formats
+github {
+    # with username and auth_token, this will be used
+    format = '{repo} {issues}/{pull_requests}{notifications}'
+
+    # otherwise, this will be used
+    format '{repo} {issues}/{pull_requests}'
+}
+
 # set github access credentials
 github {
     auth_token = '40_char_hex_access_token'
@@ -99,7 +106,6 @@ class Py3status:
     username = None
 
     def post_config_hook(self):
-        self.first = True
         self.notification_warning = False
         self.repo_warning = False
         self._issues = '?'
@@ -109,7 +115,6 @@ class Py3status:
         self.url_api = self.url_api.strip('/')
         self.url_base = self.url_base.strip('/')
 
-    def _init(self):
         # Set format if user has not configured it.
         if not self.format:
             if self.username and self.auth_token:
@@ -122,8 +127,6 @@ class Py3status:
         """
         Get counts for requests that return 'total_count' in the json response.
         """
-        if self.first:
-            return '?'
         url = self.url_api + url + '&per_page=1'
         # if we have authentication details use them as we get better
         # rate-limiting.
@@ -152,8 +155,6 @@ class Py3status:
                 self.py3.notify_user('Github module needs username and '
                                      'auth_token to check notifications.')
                 self.notification_warning = True
-            return '?'
-        if self.first:
             return '?'
         if self.notifications == 'all' or not self.repo:
             url = self.url_api + '/notifications'
@@ -194,8 +195,6 @@ class Py3status:
                 self.repo_warning = True
 
     def github(self):
-        if self.first:
-            self._init()
         status = {}
         urgent = False
         # issues
@@ -232,11 +231,7 @@ class Py3status:
             status['repo'] = 'Error'
         status['repo_full'] = self.repo
 
-        if self.first:
-            cached_until = 0
-            self.first = False
-        else:
-            cached_until = self.py3.time_in(self.cache_timeout)
+        cached_until = self.py3.time_in(self.cache_timeout)
 
         return {
             'full_text': self.py3.safe_format(self.format, status),

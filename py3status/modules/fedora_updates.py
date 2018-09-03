@@ -42,8 +42,8 @@ class Py3status:
     format = 'DNF: {updates}'
 
     def post_config_hook(self):
-        self._reg_ex_sec = re.compile('\d+(?=\s+Security)')
-        self._reg_ex_pkg = re.compile(b'^\S+\.', re.M)
+        self._reg_ex_sec = re.compile(r'\d+(?=\s+Security)')
+        self._reg_ex_pkg = re.compile(b'^\\S+\\.', re.M)
         self._first = True
         self._updates = 0
         self._security_notice = False
@@ -52,7 +52,7 @@ class Py3status:
         if self._first:
             self._first = False
             response = {
-                'cached_until': self.py3.time_in(),
+                'cached_until': self.py3.time_in(0),
                 'full_text': self.py3.safe_format(self.format, {'updates': '?'})
             }
             return response

@@ -7,7 +7,7 @@ import re
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from pygments.lexer import RegexLexer
+from pygments.lexer import RegexLexer, bygroups
 import pygments.token as pygments_token
 
 from py3status.docstrings import core_module_docstrings
@@ -33,15 +33,74 @@ class Py3statusLexer(RegexLexer):
 
     tokens = {
         'root': [
-            (r'#.*?$', pygments_token.Comment),
-            (r'"(?:[^"\\]|\\.)*"', pygments_token.String.Double),
-            (r"'(?:[^'\\]|\\.)*'", pygments_token.String.Single),
-            (r'([0-9]+)|([0-9]*)\.([0-9]*)', pygments_token.Number),
-            (r'True|False|None', pygments_token.Literal),
-            (r'(\+=)|=', pygments_token.Operator),
-            (r'\s+', pygments_token.Text),
-            (r'[{}\[\](),:]', pygments_token.Text,),
-            (r'\S+', pygments_token.Keyword),
+            (  # comments
+                r'#.*?$', pygments_token.Comment
+            ),
+            (  # double quoted strings
+                r'"(?:[^"\\]|\\.)*"', pygments_token.String.Double
+            ),
+            (  # single quoted strings
+                r"'(?:[^'\\]|\\.)*'", pygments_token.String.Single
+            ),
+            (  # numbers
+                r'([0-9]+)|([0-9]*)\.([0-9]*)', pygments_token.Number
+            ),
+            (  # True, False & None
+                r'[Tt]rue|[Ff]alse|[Nn]one', pygments_token.Literal
+            ),
+            (  # = and +=
+                r'(\+=)|=', pygments_token.Operator
+            ),
+            (  # other things like (){}[],:
+                r'[{}\[\](),:]', pygments_token.Punctuation
+            ),
+            (  # config functions eg env(value, type)
+                r'(\S+)([(])(([^)\\]|\\.)*)((\s*,\s*)(\w+))?([)])',
+                bygroups(
+                    pygments_token.Name.Function,
+                    pygments_token.Punctuation,
+                    pygments_token.Literal,
+                    None,
+                    None,
+                    pygments_token.Punctuation,
+                    pygments_token.Keyword.Type,
+                    pygments_token.Punctuation,
+                )
+            ),
+            (  # module names
+                r'(\S+)(\s*)([^=]*)(\s*)(\{)',
+                bygroups(
+                    pygments_token.Keyword.Reserved,
+                    pygments_token.Whitespace,
+                    pygments_token.Keyword.Reserved,
+                    pygments_token.Whitespace,
+                    pygments_token.Punctuation,
+                )
+            ),
+            (  # order += ....
+                r'^(order)(\s+)(\+=)',
+                bygroups(
+                    pygments_token.Keyword.Reserved,
+                    pygments_token.Whitespace,
+                    pygments_token.Punctuation,
+                )
+            ),
+            (  # on_click x
+                r'on_click\s*\d',
+                pygments_token.Name.Variable,
+            ),
+            (  # module parameters
+                r'(\w+)((:)(\S+))?',
+                bygroups(
+                    pygments_token.Name.Variable,
+                    None,
+                    pygments_token.Punctuation,
+                    pygments_token.Keyword.Type,
+                )
+            ),
+            (  # whitespace
+                r'\s+', pygments_token.Whitespace
+            ),
         ],
     }
 
@@ -232,7 +291,7 @@ def get_py3_info():
             if isinstance(item(), Exception):
                 exceptions.append((attr, item.__doc__))
                 continue
-        except:
+        except:  # noqa e722
             pass
     return {
         'methods': methods,
@@ -313,7 +372,7 @@ class ScreenshotDirective(Directive):
         image_name = '_%s' % targetid
         try:
             content = ast.literal_eval('\n'.join(self.content))
-        except:
+        except:  # noqa e722
             content = {
                 'color': '#990000',
                 'background': '#FFFF00',

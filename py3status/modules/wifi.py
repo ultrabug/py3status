@@ -17,9 +17,10 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
-    use_sudo: Use sudo to run iw, make sure iw requires some root rights
-        without a password by adding a sudoers entry, eg...
-        '<user> ALL=(ALL) NOPASSWD:/usr/bin/iw dev,/usr/bin/iw dev [a-z]* link'
+    use_sudo: Use sudo to run iw and ip. make sure to give some root rights
+        to run without a password by editing the sudoers file, eg...
+        '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
+        '<user> ALL=(ALL) NOPASSWD:/sbin/ip addr list [a-z]*'
         (default False)
 
 Format placeholders:
@@ -77,20 +78,24 @@ class Py3status:
     def post_config_hook(self):
         self._max_bitrate = 0
         self._ssid = ''
-        self.iw_cmd = self.py3.check_commands(['iw', '/sbin/iw'])
-        # Try and guess the wifi interface
-        cmd = [self.iw_cmd, 'dev']
-        if self.use_sudo:
-            cmd.insert(0, 'sudo')
+        iw = self.py3.check_commands(['iw', '/sbin/iw'])
+        # get wireless interface
         try:
-            iw = self.py3.command_output(cmd)
-            devices = re.findall('Interface\s*([^\s]+)', iw)
+            data = self.py3.command_output([iw, 'dev'])
+            devices = re.findall(r'Interface\s*([^\s]+)', data)
             if not devices or 'wlan0' in devices:
                 self.device = 'wlan0'
             else:
                 self.device = devices[0]
-        except:
+        except self.py3.CommandError:
             pass
+
+        self.iw_dev_id_link = [iw, 'dev', self.device, 'link']
+        self.ip_addr_list_id = ['ip', 'addr', 'list', self.device]
+        # use_sudo?
+        if self.use_sudo:
+            for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
+                cmd[0:0] = ['sudo', '-n']
 
         # DEPRECATION WARNING
         format_down = getattr(self, 'format_down', None)
@@ -114,17 +119,14 @@ class Py3status:
         """
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
-        cmd = [self.iw_cmd, 'dev', self.device, 'link']
-        if self.use_sudo:
-            cmd.insert(0, 'sudo')
         try:
-            iw = self.py3.command_output(cmd)
-        except:
+            iw = self.py3.command_output(self.iw_dev_id_link)
+        except self.py3.CommandError:
             return {'cache_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
                     'full_text': STRING_ERROR}
         # bitrate
-        bitrate_out = re.search('tx bitrate: ([^\s]+) ([^\s]+)', iw)
+        bitrate_out = re.search(r'tx bitrate: ([^\s]+) ([^\s]+)', iw)
         if bitrate_out:
             bitrate = float(bitrate_out.group(1))
             if self.round_bitrate:
@@ -137,14 +139,14 @@ class Py3status:
             bitrate_unit = None
 
         # signal
-        signal_out = re.search('signal: ([\-0-9]+)', iw)
+        signal_out = re.search(r'signal: ([\-0-9]+)', iw)
         if signal_out:
             signal_dbm = int(signal_out.group(1))
             signal_percent = min(self._dbm_to_percent(signal_dbm), 100)
         else:
             signal_dbm = None
             signal_percent = None
-        ssid_out = re.search('SSID: (.+)', iw)
+        ssid_out = re.search(r'SSID: (.+)', iw)
         if ssid_out:
             ssid = ssid_out.group(1)
             # `iw` command would prints unicode SSID like `\xe8\x8b\x9f`
@@ -157,11 +159,8 @@ class Py3status:
 
         # check command
         if self.py3.format_contains(self.format, 'ip'):
-            cmd = ['ip', 'addr', 'list', self.device]
-            if self.use_sudo:
-                cmd.insert(0, 'sudo')
-            ip_info = self.py3.command_output(cmd)
-            ip_match = re.search('inet\s+([0-9.]+)', ip_info)
+            ip_info = self.py3.command_output(self.ip_addr_list_id)
+            ip_match = re.search(r'inet\s+([0-9.]+)', ip_info)
             if ip_match:
                 ip = ip_match.group(1)
             else:

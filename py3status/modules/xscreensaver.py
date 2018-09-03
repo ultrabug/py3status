@@ -22,7 +22,7 @@ Color options:
     color_on: Enabled, defaults to color_good
     color_off: Disabled, defaults to color_bad
 
-@author neutronst4r <c7420{at}posteo{dot}net>, lasers
+@author neutronst4r, lasers
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'XSCR'}
@@ -57,10 +57,9 @@ class Py3status:
     def _is_running(self):
         try:
             self.py3.command_output(['pidof', 'xscreensaver'])
-        except:
-            return False
-        else:
             return True
+        except self.py3.CommandError:
+            return False
 
     def xscreensaver(self):
         run = self._is_running()

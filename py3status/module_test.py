@@ -39,7 +39,7 @@ class MockPy3statusWrapper:
     def notify_user(self, *arg, **kw):
         pass
 
-    def timeout_queue_add_module(self, *arg, **kw):
+    def timeout_queue_add(self, *arg, **kw):
         pass
 
     def log(self, *arg, **kw):

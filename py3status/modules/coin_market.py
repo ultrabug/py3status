@@ -1,45 +1,50 @@
 # -*- coding: utf-8 -*-
 """
-Display cryptocurrency data.
+Display cryptocurrency coins.
 
-The site we retrieve cryptocurrency data from offer various types of data such as
-name, symbol, price, volume, percentage change, total supply, et cetera for a wide
-range of cryptocurrencies and the prices can be obtained in a different currency
-along with USD currency, For more information, visit https://coinmarketcap.com
+The site offer various types of data such as name, symbol, price, volume,
+total supply, et cetera for a wide range of cryptocurrencies and the prices
+can be obtained in a different currency along with optional USD currency.
+For more information, visit https://coinmarketcap.com
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module. A message from the site:
-        Please limit requests to no more than 10 per minute. (default 600)
+    cache_timeout: refresh interval for this module. a message from the site:
+        please limit requests to no more than 10 per minute. (default 600)
     format: display format for this module (default '{format_coin}')
     format_coin: display format for coins
         (default '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]')
+    format_datetime: specify strftime characters to format (default {})
     format_separator: show separator if more than one (default ' ')
     markets: number of top-ranked markets or list of user-inputted markets
         (default ['btc'])
-    request_timeout: time to wait for a response, in seconds (default 5)
     thresholds: for percentage changes (default [(-100, 'bad'), (0, 'good')])
 
 Format placeholder:
     {format_coin} format for cryptocurrency coins
 
+format_datetime placeholders:
+    key: epoch_placeholder, eg last_updated
+    value: % strftime characters to be translated, eg '%b %d' ----> 'Nov 29'
+
 format_coin placeholders:
-    {24h_volume_usd}      eg 1435150000.0
-    {available_supply}    eg 16404825.0
-    {id}                  eg bitcoin
-    {last_updated}        eg 1498135152
-    {market_cap_usd}      eg 44119956596.0
-    {name}                eg Bitcoin
-    {percent_change_1h}   eg -0.17
-    {percent_change_24h}  eg -1.93
-    {percent_change_7d}   eg +14.73
-    {price_btc}           eg 1.0
-    {price_usd}           eg 2689.45
-    {rank}                eg 1
-    {symbol}              eg BTC
-    {total_supply}        eg 16404825.0
+    {id}                 eg bitcoin
+    {name}               eg Bitcoin
+    {symbol}             eg BTC
+    {rank}               eg 1
+    {price_usd}          eg 11163.4
+    {price_btc}          eg 1.0
+    {24h_volume_usd}     eg 10156700000.0
+    {market_cap_usd}     eg 186528134260
+    {available_supply}   eg 16708900.0
+    {total_supply}       eg 16708900.0
+    {max_supply}         eg 21000000.0
+    {percent_change_1h}  eg 0.92
+    {percent_change_24h} eg 11.2
+    {percent_change_7d}  eg 35.96
+    {last_updated}       eg 151197295
 
     Placeholders are retrieved directly from the URL.
-    The list was harvested only once and should not represent a full list.
+    The list was harvested once and should not represent a full list.
 
     To print coins in different currency, replace or replicate the placeholders
     below with a valid option (eg '{price_gbp}') to create additional placeholders:
@@ -52,15 +57,27 @@ format_coin placeholders:
     JPY, KRW, MXN, RUB, otherwise USD... and be written in lowercase.
 
 Color thresholds:
-    1h:  print color based on the value of percent_change_1h
-    24h: print color based on the value of percent_change_24h
-    7d:  print color based on the value of percent_change_7d
+    1h:  print a color based on the value of percent_change_1h
+    24h: print a color based on the value of percent_change_24h
+    7d:  print a color based on the value of percent_change_7d
 
-Example:
+Examples:
 ```
 # view coins in GBP and optionally USD
 coin_market {
     format_coin = '{name} £{price_gbp:.2f} ${price_usd:.2f} {percent_change_24h}'
+}
+
+# display top five markets
+coin_market {
+    markets = 5
+}
+
+# show and/or customize last_updated time
+coin_market {
+    format_coin = '{name} ${price_usd:.2f} '
+    format_coin += '[\?color=24h {percent_change_24h}%] {last_updated}'
+    format_datetime = {'last_updated': '\?color=degraded last updated %-I:%M%P'}
 }
 ```
 
@@ -79,6 +96,8 @@ losers
 ]
 """
 
+from datetime import datetime
+
 
 class Py3status:
     """
@@ -87,15 +106,23 @@ class Py3status:
     cache_timeout = 600
     format = '{format_coin}'
     format_coin = '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]'
+    format_datetime = {}
     format_separator = ' '
     markets = ['btc']
-    request_timeout = 5
     thresholds = [(-100, 'bad'), (0, 'good')]
 
     def post_config_hook(self):
-        self.first_run = self.first_use = True
+        self.first_use = True
         self.convert = self.limit = None
         self.url = self.reset_url = 'https://api.coinmarketcap.com/v1/ticker/'
+        self.request_timeout = 10
+
+        # convert the datetime?
+        self.init_datetimes = []
+        for word in self.format_datetime:
+            if (self.py3.format_contains(self.format_coin, word)) and (
+                    word in self.format_datetime):
+                self.init_datetimes.append(word)
 
         # find out if we want top-ranked markets or user-inputted markets
         if isinstance(self.markets, int):
@@ -164,7 +191,7 @@ class Py3status:
 
         # first_use bad? the user entered bad markets. stop here (error).
         # otherwise, make a limit for first time on 1000+ coins.
-        if self.first_use:
+        if data and self.first_use:
             self.first_use = False
             if not is_equal:
                 self.py3.error('bad markets')
@@ -172,9 +199,9 @@ class Py3status:
                 self._update_limit(data)
         elif not is_equal:
             # post first_use bad? the markets fell out of the limit + padding.
-            # reset the url to get 1000+ coins again so we can strip, compare,
-            # make new limit + padding for next loop, but we'll use that new
-            # data. otherwise, we would keep going with that first new_data.
+            # reset the url to get 1000+ coins again to strip, compare, make
+            # new limit and padding for the next one, but we'll use this one.
+            # otherwise, we would have kept going with the first one.
             new_data = self._get_coin_data(reset=True)
             new_data = self._strip_data(new_data)
             self._update_limit(new_data)
@@ -182,15 +209,21 @@ class Py3status:
         return new_data
 
     def _manipulate_data(self, data):
-        # we mess with raw data to get the new results. we fix up percent_change
-        # with color thresholds and prefix all non-negative values wth a plus.
         new_data = []
         for market in data:
             temporary = {}
+            # convert the datetime?
+            for k in self.init_datetimes:
+                if k in market:
+                    market[k] = self.py3.safe_format(datetime.strftime(
+                        datetime.fromtimestamp(float(
+                            market[k])), self.format_datetime[k]))
+            # fix up percent_change with color thresholds
+            # and prefix all non-negative values with a plus.
             for k, v in market.items():
                 if 'percent_change_' in k and v:
                     temporary[k] = '+%s' % v if float(v) > 0 else v
-                    # remove 'percent_change_' for thresholds: 1h, 24h, or 7d
+                    # remove 'percent_change_' for thresholds 1h, 24h, 7d
                     self.py3.threshold_get_color(v, k[15:])
                 else:
                     temporary[k] = v
@@ -200,25 +233,20 @@ class Py3status:
         return new_data
 
     def coin_market(self):
-        data = []
-        if self.first_run:
-            self.first_run = False
-            cached_until = 0
-        else:
-            # first 1000+ coins (then %s coins)
-            cached_until = self.cache_timeout
-            coin_data = self._get_coin_data()
-            if not self.limit:
-                # strip, compare, and maybe update again
-                coin_data = self._organize_data(coin_data)
-            data = self._manipulate_data(coin_data)  # paint coin colors
+        # first 1000+ coins (then %s coins)
+        coin_data = self._get_coin_data()
+        if not self.limit:
+            # strip, compare, and maybe update again
+            coin_data = self._organize_data(coin_data)
+        data = self._manipulate_data(coin_data)
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_coin = self.py3.composite_join(format_separator, data)
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(self.format, {'format_coin': format_coin})
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {'format_coin': format_coin})
         }
 
 
