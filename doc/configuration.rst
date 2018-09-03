@@ -130,21 +130,56 @@ Store per config cache in different directories.
 
 Configuration obfuscation
 -------------------------
-
-.. note::
-    New in version 3.1
-
 Py3status allows you to hide individual configuration parameters so that they
 do not leak into log files, user notifications or to the i3bar. Additionally
 they allow you to obfuscate configuration parameters using base64 encoding.
 
-To do this you need to add an obfuscation option to the configuration
-parameter. Obfuscation options are added by adding `:hide` or `:base64` to the
-name of the parameters.
+.. note::
+    ``hide()`` and ``base64()`` are new in version 3.13
 
+To "hide" a value you can use the ``hide()``
+configuration function. This prevents the module
+displaying the value as a format placeholder and from
+appearing in the logs.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # Example of 'hidden' configuration
+    imap {
+        imap_server = 'imap.myprovider.com'
+        password = hide('hunter22')
+        user = 'mylogin'
+    }
+
+
+To base64 encode a value you can use the ``base64()``
+configuration function. This also  prevents the
+module displaying the value as a format placeholder
+and from appearing in the logs.
+
+
+.. code-block:: py3status
+    :caption: Example
+
+    # Example of obfuscated configuration
+    imap {
+        imap_server = 'imap.myprovider.com'
+        password = base64('Y29jb251dA==')
+        user = 'mylogin'
+    }
+
+Since version 3.1 obfuscation options can also be
+added by the legacy method. Add ``:hide`` or
+``:base64`` to the name of the parameters.  You are
+advised to use the new ``hide()`` and ``base64()``
+configuration functions.
 
 .. note::
-    Obfuscation is only available for string parameters.
+    Legacy obfuscation is only available for string
+    parameters with ``:hide`` or ``:base64``.  If you
+    want other types then be sure to use ``hide()``
+    and ``base64()`` configuration functions.
 
 .. code-block:: py3status
     :caption: Example

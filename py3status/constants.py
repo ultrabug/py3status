@@ -35,6 +35,11 @@ I3S_COLOR_MODULES = [
 
 I3S_MODULE_NAMES = I3S_SINGLE_NAMES + I3S_INSTANCE_MODULES
 
+CONFIG_FILE_SPECIAL_SECTIONS = [
+    'general',
+    'py3status',
+]
+
 ERROR_CONFIG = '''
     general {colors = true interval = 60}
 
