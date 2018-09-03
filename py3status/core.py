@@ -908,7 +908,6 @@ class Py3statusWrapper:
                 output_modules[name]['module'] = self.modules[name]
                 output_modules[name]['type'] = 'py3status'
                 output_modules[name]['color'] = self.mappings_color.get(name)
-                output_modules[name]['short_format'] = self.mappings_short_format.get(name)
         # i3status modules
         for name in i3modules:
             if name not in output_modules:
@@ -917,7 +916,6 @@ class Py3statusWrapper:
                 output_modules[name]['module'] = i3modules[name]
                 output_modules[name]['type'] = 'i3status'
                 output_modules[name]['color'] = self.mappings_color.get(name)
-                output_modules[name]['short_format'] = self.mappings_short_format.get(name)
 
         self.output_modules = output_modules
 
@@ -935,30 +933,23 @@ class Py3statusWrapper:
                 color = None
             mappings[name] = color
 
-            short_format = self.get_config_attribute(name, 'short_format')
-            if hasattr(short_format, 'none_setting'):
-                short_format = None
-            mappings[name] = short_format
-
         # Store mappings for later use.
         self.mappings_color = mappings
-        self.mappings_short_format = mappings
 
     def process_module_output(self, module):
         """
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
-        Shortened text 'short_text' processing occurs here.
         """
         outputs = module['module'].get_latest()
         color = module['color']
-        short_format = module['short_format']
 
         for output in outputs:
             if color:
                 # Color: substitute the config defined color
                 if "color" not in output:
                     output["color"] = color
+
         # Create the json string output.
         return ",".join([dumps(x) for x in outputs])
 
