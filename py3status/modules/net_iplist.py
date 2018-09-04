@@ -1,62 +1,81 @@
 # -*- coding: utf-8 -*-
 """
-Display list of network interfaces and IP addresses.
-
-This module supports both IPv4 and IPv6. There is the possibility to blacklist
-interfaces and IPs, as well as to show interfaces with no IP address. It will
-show an alternate text if no IP are available.
+Display network interfaces and IP addresses.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module in seconds.
-        (default 30)
-    format: format of the output.
-        (default 'Network: {format_iface}')
-    format_iface: format string for the list of IPs of each interface.
-        (default '{iface}:[ {ip4}][ {ip6}]')
-    format_no_ip: string to show if there are no IPs to display.
-        (default 'no connection')
-    iface_blacklist: list of interfaces to ignore. Accepts shell-style wildcards.
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module
+        (default '\?color=interface [{format_interface}|\?show No Interfaces]')
+    format_interface: display format for network interfaces
+        (default '\?if=active {name}:[ {format_ip4}][ {format_ip6}]')
+    format_interface_separator: show separator if more than one (default ' ')
+    format_ip4: display format for IPv4 addresses (default '{ip}')
+    format_ip4_separator: show separator if more than one (default ', ')
+    format_ip6: display format for IPv6 addresses (default '{ip}')
+    format_ip6_separator: show separator if more than one (default ', ')
+    interface_blacklist: specify a list of interfaces to ignore
         (default ['lo'])
-    iface_sep: string to write between interfaces.
-        (default ' ')
-    ip_blacklist: list of IPs to ignore. Accepts shell-style wildcards.
-        (default [])
-    ip_sep: string to write between IP addresses.
-        (default ',')
-    remove_empty: do not show interfaces with no IP.
-        (default True)
+    ip_blacklist: specify a list of IP addresses to ignore
+        (default ['127.*', '::1'])
+    thresholds: specify color thresholds to use
+        (default [(0, 'bad'), (1, 'good')])
+    use_sudo: use sudo to run ip, make sure to allow ip some root rights
+        without a password by adding a sudoers entry, eg...
+        '<user> ALL=(ALL) NOPASSWD:/sbin/ip address show' (default False)
 
 Format placeholders:
-    {format_iface} the format_iface string.
+    {interface} number of network interfaces
+    {format_interface} format for network interfaces
 
-Format placeholders for format_iface:
-    {iface} name of the interface.
-    {ip4} list of IPv4 of the interface.
-    {ip6} list of IPv6 of the interface.
+format_interface placeholders:
+    {name} interface name, eg eno1
+    {active} a boolean based on interface data
+    {format_ip4} format for IPv4 addresses
+    {format_ip6} format for IPv6 addresses
+    {ip4} number of IPv4 addresses
+    {ip6} number of IPv6 addresses
+    {ip} number of IP addresses
 
-Color options:
-    color_bad: no IPs to show
-    color_good: IPs to show
+format_ip4 placeholders:
+    {ip} IPv4 address, eg 192.168.1.103
 
-Example:
+format_ip6 placeholders:
+    {ip} IPv6 address, eg fe80::d625:7ea8:e729:716c/64
 
+Color thresholds:
+    format:
+        interface: print color based on number of network interfaces
+    format_interface:
+        ip: print color based on number of IP addresses
+        ip4: print color based on number of IPv4 addresses
+        ip6: print color based on number of IPv6 addresses
+
+Requires:
+    iproute2: show/manipulate routing, devices, policy routing and tunnels
+
+Examples:
 ```
+# block loopback addresses
 net_iplist {
-    iface_blacklist = []
+    interface_blacklist = []
     ip_blacklist = ['127.*', '::1']
+}
+
+# show colorized ipv4 interfaces
+net_iplist {
+    format = '{format_interface}'
+    format_interface = '[\?color=ip {name}][ {format_ip4}]'
 }
 ```
 
-Requires:
-    ip: utility found in iproute2 package
-
-@author guiniol
+@author guiniol, lasers
 
 SAMPLE OUTPUT
-{'color': '#00FF00',
- 'full_text': u'Network: wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
+[
+    {'color': '#00FF00', 'full_text': u'wls1: 192.168.1.3 '},
+    {'color': '#00FF00', 'full_text': u'fe80::f861:44bd:694a:b99c'},
+]
 """
-
 
 import re
 from fnmatch import fnmatch
@@ -66,97 +85,189 @@ class Py3status:
     """
     """
     # available configuration parameters
-    cache_timeout = 30
-    format = 'Network: {format_iface}'
-    format_iface = '{iface}:[ {ip4}][ {ip6}]'
-    format_no_ip = 'no connection'
-    iface_blacklist = ['lo']
-    iface_sep = ' '
-    ip_blacklist = []
-    ip_sep = ','
-    remove_empty = True
+    cache_timeout = 10
+    format = '\?color=interface [{format_interface}|\?show No Interfaces]'
+    format_interface = '\?if=active {name}:[ {format_ip4}][ {format_ip6}]'
+    format_interface_separator = ' '
+    format_ip4 = '[\?color=good {ip}]'
+    format_ip4_separator = ', '
+    format_ip6 = '[\?color=good {ip}]'
+    format_ip6_separator = ', '
+    interface_blacklist = ['lo']
+    ip_blacklist = ['127.*', '::1']
+    thresholds = [(0, 'bad'), (1, 'good')]
+    use_sudo = False
+
+    # suggestion new format
+    format = '{format_interface}|\?color=bad No Interfaces'
+    # format_interface = '\?if=active {name}:[ {format_ip4}][ {format_ip6}]'
+    # format_interface = '\?if=ip {name} [\?color=darkgray ip4 {format_ip4}] [\?color=darkgray ip6 {format_ip6}]'
+    # format_interface = '\?if=ip {name} [\?color=darkgray ip4 {format_ip4}] [\?color=darkgray ip6 {format_ip6}]'
+
+    format_interface = '{name} [\?if=ip '
+    format_interface += '[\?if=ip4&color=darkgray ip4 ][{format_ip4}][\?soft  ]'
+    format_interface += '[\?if=ip6&color=darkgray ip6 ][{format_ip6}]|\?color=bad X]'
 
     def post_config_hook(self):
-        self.iface_re = re.compile(r'\d+: (?P<iface>\w+):')
-        self.ip_re = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
-        self.ip6_re = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
+        self.re_interface = re.compile(r'\d+: (?P<interface>\w+):')
+        self.re_ip4 = re.compile(r'\s+inet (?P<ip4>[\d\.]+)(?:/| )')
+        self.re_ip6 = re.compile(r'\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )')
+        self.ip_command = ['ip', 'address', 'show']
 
-    def ip_list(self):
-        response = {
-            'cached_until': self.py3.time_in(seconds=self.cache_timeout),
-            'full_text': ''
-        }
+        # use sudo?
+        if self.use_sudo:
+            self.ip_command[0:0] = ['sudo', '-n']
 
-        connection = False
-        data = self._get_data()
-        iface_list = []
-        for iface, ips in data.items():
-            if not self._check_blacklist(iface, self.iface_blacklist):
-                continue
+        self.init = {}
+        for ip in ['ip4', 'ip6']:
+            x = 'count_{}'.format(ip)
+            self.init[x] = self.py3.format_contains(self.format_interface, ip)
+            x = 'format_{}'.format(ip)
+            self.init[x] = (
+                self.py3.format_contains(getattr(self, x), 'ip') and (
+                    self.py3.format_contains(self.format_interface, x)
+                )
+            )
 
-            ip4_list = []
-            ip6_list = []
-            for ip4 in ips.get('ip4', []):
-                if self._check_blacklist(ip4, self.ip_blacklist):
-                    connection = True
-                    ip4_list.append(ip4)
-            for ip6 in ips.get('ip6', []):
-                if self._check_blacklist(ip6, self.ip_blacklist):
-                    connection = True
-                    ip6_list.append(ip6)
-            iface_list.append(self.py3.safe_format(self.format_iface,
-                                                   {'iface': iface,
-                                                    'ip4': self.ip_sep.join(ip4_list),
-                                                    'ip6': self.ip_sep.join(ip6_list)}))
-        if not connection:
-            response['full_text'] = self.py3.safe_format(self.format_no_ip,
-                                                         {'format_iface':
-                                                             self.py3.composite_join(
-                                                                 self.iface_sep, iface_list)})
-            response['color'] = self.py3.COLOR_BAD
-        else:
-            response['full_text'] = self.py3.safe_format(self.format,
-                                                         {'format_iface':
-                                                             self.py3.composite_join(
-                                                                 self.iface_sep, iface_list)})
-            response['color'] = self.py3.COLOR_GOOD
-
-        return response
-
-    def _get_data(self):
-        txt = self.py3.command_output(['ip', 'address', 'show']).splitlines()
-
-        data = {}
-        for line in txt:
-            iface = self.iface_re.match(line)
-            if iface:
-                cur_iface = iface.group('iface')
-                if not self.remove_empty:
-                    data[cur_iface] = {}
-                continue
-
-            ip4 = self.ip_re.match(line)
-            if ip4:
-                data.setdefault(cur_iface, {}).setdefault('ip4', []).append(ip4.group('ip4'))
-                continue
-
-            ip6 = self.ip6_re.match(line)
-            if ip6:
-                data.setdefault(cur_iface, {}).setdefault('ip6', []).append(ip6.group('ip6'))
-                continue
-
-        return data
-
-    def _check_blacklist(self, string, blacklist):
+    def _blacklist(self, string, blacklist):
         for ignore in blacklist:
             if fnmatch(string, ignore):
-                return False
-        return True
+                return True
+        return False
+
+    def _get_ip_data(self):
+        ip_data = self.py3.command_output(self.ip_command)
+
+        new_data = {}
+        for line in ip_data.splitlines():
+            interface = self.re_interface.match(line)
+            if interface:
+                current_interface = interface.group('interface')
+                new_data[current_interface] = {}
+                continue
+
+            ip4 = self.re_ip4.match(line)
+            if ip4:
+                new_data.setdefault(current_interface, {}).setdefault(
+                    'ip4', []).append(ip4.group('ip4'))
+                continue
+
+            ip6 = self.re_ip6.match(line)
+            if ip6:
+                new_data.setdefault(current_interface, {}).setdefault(
+                    'ip6', []).append(ip6.group('ip6'))
+                continue
+
+        return new_data
+
+    def net_iplist(self):
+        new_interface = []
+        count_interface = 0
+
+        ip_data = self._get_ip_data()
+
+        for interface, ips in ip_data.items():
+            if self._blacklist(interface, self.interface_blacklist):
+                continue
+
+            active = False
+
+            # ip4
+            format_ip4 = None
+            new_ip4 = []
+            count_ip4 = 0
+            if self.init['format_ip4'] or self.init['count_ip4']:
+                for ip4 in ips.get('ip4', []):
+                    if not self._blacklist(ip4, self.ip_blacklist):
+                        active = True
+                        count_ip4 += 1
+                        if self.init['format_ip4']:
+                            new_ip4.append(
+                                self.py3.safe_format(
+                                    self.format_ip4, {'ip': ip4}
+                                )
+                            )
+
+            if self.init['format_ip4']:
+                format_ip4_separator = self.py3.safe_format(
+                    self.format_ip4_separator
+                )
+                format_ip4 = self.py3.composite_join(
+                    format_ip4_separator, new_ip4
+                )
+
+            # ip6
+            format_ip6 = None
+            new_ip6 = []
+            count_ip6 = 0
+            if self.init['format_ip6'] or self.init['count_ip6']:
+                for ip6 in ips.get('ip6', []):
+                    if not self._blacklist(ip6, self.ip_blacklist):
+                        active = True
+                        count_ip6 += 1
+                        if self.init['format_ip6']:
+                            new_ip6.append(
+                                self.py3.safe_format(
+                                    self.format_ip6, {'ip': ip6}
+                                )
+                            )
+
+            if self.init['format_ip6']:
+                format_ip6_separator = self.py3.safe_format(
+                    self.format_ip6_separator
+                )
+                format_ip6 = self.py3.composite_join(
+                    format_ip6_separator, new_ip6
+                )
+
+            # end
+            if active:
+                count_interface += 1
+
+            count_ip = count_ip4 + count_ip6
+
+            self.py3.threshold_get_color(count_ip, 'ip')
+            self.py3.threshold_get_color(count_ip4, 'ip4')
+            self.py3.threshold_get_color(count_ip6, 'ip6')
+
+            new_interface.append(
+                self.py3.safe_format(
+                    self.format_interface,
+                    {
+                        'name': interface,
+                        'active': active,
+                        'format_ip4': format_ip4,
+                        'format_ip6': format_ip6,
+                        'ip': count_ip,
+                        'ip4': count_ip4,
+                        'ip6': count_ip6,
+                    }
+                )
+            )
+
+        self.py3.threshold_get_color(count_interface, 'interface')
+
+        format_interface_separator = self.py3.safe_format(
+            self.format_interface_separator
+        )
+        format_interface = self.py3.composite_join(
+            format_interface_separator, new_interface
+        )
+
+        return {
+            'cached_until': self.py3.time_in(self.cache_timeout),
+            'full_text': self.py3.safe_format(
+                self.format, {
+                    'format_interface': format_interface,
+                    'interface': count_interface
+                }
+            )
+        }
 
 
 if __name__ == "__main__":
     """
-    Test this module by calling it directly.
+    Run module in test mode.
     """
     from py3status.module_test import module_test
     module_test(Py3status)
