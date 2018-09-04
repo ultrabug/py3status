@@ -5,7 +5,7 @@ Do a bandwidth test with speedtest-cli.
 Configuration parameters:
     button_share: button to open the result link (default None)
     format: display format for this module, {download} and/or {upload} required
-        *(default 'Speedtest [\?color=darkgray ping [\?color=ping {ping} ms] '
+        *(default 'Speedtest[\?color=darkgray  ping [\?color=ping {ping} ms ]'
                     'up [\?color=upload {upload} {upload_unit}] '
                     'down [\?color=download {download} {download_unit}]]')*
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
@@ -21,9 +21,7 @@ Configuration parameters:
 Format placeholders:
     {bytes_sent}            bytes sent during test, human readable, eg '52.45'
     {bytes_sent_unit}       unit used for bytes_sent, eg 'MB'
-    {bytes_sent_raw}        bytes sent during test, for format comparation, eg '52445184.0'
     {bytes_received}        bytes received during test, human readable, eg '70.23'
-    {bytes_received_raw}    bytes received during test, for format comparation, eg '70229556.0'
     {bytes_received_unit}   unit used for bytes_received, eg 'MB'
     {client_country}        client country code, eg 'FR'
     {client_ip}             client ip, eg '78.194.13.7'
@@ -36,7 +34,6 @@ Format placeholders:
     {client_lon}            client longitude, eg '2.3487999999999998'
     {client_rating}         client rating, eg '0'
     {download}              download rate from speedtest server, human readable
-    {download_raw}          download rate from speedtest server, for format comparation
     {download_unit}         unit used as , eg 'MB/s'
     {ping}                  ping time in ms to speedtest server
     {timestamp}             timestamp of the run, eg '2018-08-30T16:27:25.318212Z'
@@ -52,13 +49,13 @@ Format placeholders:
     {server_sponsor}        server sponsor, eg 'Télécom ParisTech'
     {server_url}            server url, eg 'http://speedtest.telecom-paristech.fr/upload.php'
     {upload}                upload rate to speedtest server, human readable
-    {upload_raw}            upload rate to speedtest server, for format comparation
     {upload_unit}           unit used for upload, eg 'MB/s'
 
-Color thresholds:
-    field_name: print a color based on the value of `field_name` placeholder
 
-The module will be triggered on clic only. Not at start.
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
+
+The module will be triggered on click only. Not at start.
 
 Note that all placeholders have a version prefixed by `previous_`, eg `previous_download`.
 This can be usefull to compare two runs.
@@ -83,15 +80,15 @@ speedtest {
 
 # colored based on comparation between two last runs
 speedtest {
-    format = '[[\?if=download_raw<previous_download_raw&color=degraded Faster]'
-    format += '|[\?color=ok Slower]]'
+    format = '[[\?if=download<previous_download&color=degraded Faster]'
+    format += '|[\?color=good Slower]]'
 }
 
 # compare only download
 speedtest {
-    format = '[[\?if=download_raw<previous_download_raw ↓ {download} {download_unit}]'
-    format += '[\?if=download_raw>previous_download_raw ↑ {download} {download_unit}]'
-    format += '[\?if=download_raw=previous_download_raw -> {download} {download_unit}]'
+    format = '[[\?if=download<previous_download ↓ {download} {download_unit}]'
+    format += '[\?if=download<previous_download ↑ {download} {download_unit}]'
+    format += '[\?if=download=previous_download -> {download} {download_unit}]'
     format += '|speedtest'
 }
 ```
@@ -109,20 +106,17 @@ SAMPLE OUTPUT
 """
 
 from json import loads
-from numbers import Number
 
 STRING_NOT_INSTALLED = "not installed"
-MISSING_PLACEHOLDER = "{download} or {upload} placeholder required"
 
 
 class Py3status:
     """
     """
-
     # available configuration parameters
     button_share = None
     format = (
-        u"Speedtest [\?color=darkgray ping [\?color=ping {ping} ms] "
+        u"Speedtest[\?color=darkgray  ping [\?color=ping {ping} ms ]"
         "up [\?color=upload {upload} {upload_unit}] "
         "down [\?color=download {download} {download_unit}]]"
     )
@@ -147,7 +141,9 @@ class Py3status:
         self.cached_until = self.py3.CACHE_FOREVER
         self.placeholders = self.py3.get_placeholders_list(self.format)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
-        self.command = "speedtest-cli --json --secure"
+        self.command = "speedtest-cli --json --secure --timeout {}".format(
+            self.timeout
+        )
         self.url = None
 
         # if download* or upload* missing, run complete test
@@ -170,8 +166,6 @@ class Py3status:
         ):
             self.command += " --share"
 
-        self.command += " --timeout " + str(self.timeout)
-
     def _is_running(self):
         try:
             self.py3.command_output(["pgrep", "speedtest-cli"])
@@ -190,7 +184,10 @@ class Py3status:
         return value
 
     def _get_speedtest_data(self):
-        return loads(self.py3.command_output(self.command))
+        try:
+            return loads(self.py3.command_output(self.command))
+        except self.py3.CommandError:
+            return None
 
     def _start(self):
         self.cached_until = self.py3.time_in(self.sleep_timeout)
@@ -198,55 +195,45 @@ class Py3status:
         if not self._is_running():
             self.cached_until = self.py3.CACHE_FOREVER
             previous_data = self.py3.storage_get("speedtest_data") or {}
-            current_data = self._get_speedtest_data() or {}
+            current_data = self._get_speedtest_data()
 
-            if len(current_data) > 1:
-                # create a "total" for know if cnx is better or not
-                # between two run
-                current_data["total"] = int(current_data.get("download", 0)) + int(
-                    current_data.get("upload", 0)
+            # zero-ing if not fetched and units convertion
+            for x in ["download", "upload", "bytes_received", "bytes_sent", "ping"]:
+                unit = self.unit_size if "bytes" in x else self.unit_bitrate
+                current_data[x] = current_data.get(x, 0)
+                current_data[x], current_data[x + "_unit"] = self.py3.format_units(
+                    current_data[x], unit=unit, si=self.si_units
                 )
 
-        # zero-ing if not fetched, raw version and units convertion
-        for x in ["download", "upload", "bytes_received", "bytes_sent"]:
-            unit = self.unit_size if "bytes" in x else self.unit_bitrate
-            current_data[x] = current_data.get(x, 0)
-            current_data[x + "_raw"] = current_data[x]
-            current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                current_data[x], unit=unit, si=self.si_units
+            # extra data, not sure we want to expose
+            current_data = self.py3.flatten_dict(
+                current_data, delimiter='_'
             )
 
-        # extra data, not sure we want to expose
-        current_data = self.py3.flatten_dict(
-            current_data, delimiter='_', intermediates=False
-        )
+            # store last data fetched
+            self.py3.storage_set("speedtest_data", current_data)
 
-        # store last data fetched
-        self.py3.storage_set("speedtest_data", current_data)
+            # get speedtest result url
+            self.url = current_data.get("share")
 
-        # get speedtest result url
-        self.url = current_data.get("share")
+            # create placeholders
+            self.speedtest_data.update(current_data)
+            self.speedtest_data.update(
+                {"previous_" + k: v for (k, v) in previous_data.items()}
+            )
 
-        # create placeholders
-        self.speedtest_data.update(current_data)
-        self.speedtest_data.update(
-            {"previous_" + k: v for (k, v) in previous_data.items()}
-        )
+            # cast number
+            self.speedtest_data.update(
+                {
+                    k: self._cast_number(self.speedtest_data[k])
+                    for k in self.placeholders
+                }
+            )
 
-        # cast number
-        self.speedtest_data.update(
-            {
-                k: self._cast_number(self.speedtest_data[k])
-                for k in self.placeholders if isinstance(
-                    self.speedtest_data[k], Number
-                )
-            }
-        )
-
-        # thresholds
-        for x in self.thresholds_init:
-            if x in self.speedtest_data:
-                self.py3.threshold_get_color(self.speedtest_data[x], x)
+            # thresholds
+            for x in self.thresholds_init:
+                if x in self.speedtest_data:
+                    self.py3.threshold_get_color(self.speedtest_data[x], x)
 
     def speedtest(self):
         return {
