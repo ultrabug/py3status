@@ -9,6 +9,7 @@ from string import Template
 from subprocess import check_output, CalledProcessError
 
 from py3status.constants import (
+    CONFIG_FILE_SPECIAL_SECTIONS,
     I3S_SINGLE_NAMES,
     I3S_MODULE_NAMES,
     MAX_NESTING_LEVELS,
@@ -126,7 +127,7 @@ class ConfigParser:
     '''
 
     CONVERSIONS = '(auto|bool|int|float|str)'
-    FUNCTIONS = '(env|shell)'
+    FUNCTIONS = '(base64|env|hide|shell)'
 
     TOKENS = [
         '#.*$'  # comments
@@ -354,7 +355,9 @@ class ConfigParser:
         param = param.replace('\)', ')')
 
         CONFIG_FUNCTIONS = {
+            'base64': self.make_function_value_private,
             'env': self.make_value_from_env,
+            'hide': self.make_function_value_private,
             'shell': self.make_value_from_shell,
         }
 
@@ -417,6 +420,43 @@ class ConfigParser:
                 value = value.decode('utf-8')
                 value = self.value_convert(value, value_type)
         return value
+
+    def make_function_value_private(self, value, value_type, function):
+        """
+        Wraps converted value so that it is hidden in logs etc.
+        Note this is not secure just reduces leaking info
+
+        Allows base 64 encode stuff using base64() or plain hide() in the
+        config
+        """
+        # remove quotes
+        value = self.remove_quotes(value)
+
+        if function == 'base64':
+            try:
+                import base64
+                value = base64.b64decode(value)
+            except TypeError as e:
+                self.notify_user('base64(..) error %s' % str(e))
+
+        # check we are in a module definition etc
+        if not self.current_module:
+            self.notify_user(
+                '%s(..) used outside of module or section' % function
+            )
+            return None
+
+        module = self.current_module[-1].split()[0]
+        if module in CONFIG_FILE_SPECIAL_SECTIONS + I3S_MODULE_NAMES:
+            self.notify_user(
+                '%s(..) cannot be used outside of py3status module '
+                'configuration' % function
+            )
+            return None
+
+        value = self.value_convert(value, value_type)
+        module_name = self.current_module[-1]
+        return PrivateHide(value, module_name)
 
     def separator(self, separator=',', end_token=None):
         '''
