@@ -10,7 +10,7 @@ Configuration parameters:
     format: display format for this module (default '{format_gpu}')
     format_gpu: display format for NVIDIA GPUs
         *(default '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
-        '[\?color=memory.used_percent {memory.used} MiB]')*
+        '[\?color=memory.used_percent {memory.used_percent}%]')*
     format_gpu_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
         (default [(0, 'good'), (65, 'degraded'), (75, 'orange'), (85, 'bad')])
@@ -43,7 +43,7 @@ Requires:
 
 Examples:
 ```
-# add {memory.used_percent}
+# add {memory.used}
 nvidia_smi {
     format_gpu = '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
     format_gpu += '[\?color=memory.used_percent {memory.used} MiB'
@@ -88,7 +88,7 @@ class Py3status:
     cache_timeout = 10
     format = '{format_gpu}'
     format_gpu = (u'{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
-                  '[\?color=memory.used_percent {memory.used} MiB]')
+                  '[\?color=memory.used_percent {memory.used_percent}%]')
     format_gpu_separator = ' '
     thresholds = [(0, 'good'), (65, 'degraded'), (75, 'orange'), (85, 'bad')]
 
@@ -114,10 +114,7 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format_gpu)
 
     def _get_nvidia_data(self):
-        data = self.py3.command_output(self.nvidia_command)
-        if '[Not Supported]' in data:
-            data = data.replace('[Not Supported]', 'None')
-        return data
+        return self.py3.command_output(self.nvidia_command)
 
     def nvidia_smi(self):
         nvidia_data = self._get_nvidia_data()
