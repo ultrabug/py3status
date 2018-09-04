@@ -46,7 +46,7 @@ class Py3statusLexer(RegexLexer):
                 r'([0-9]+)|([0-9]*)\.([0-9]*)', pygments_token.Number
             ),
             (  # True, False & None
-                r'True|False|None', pygments_token.Literal
+                r'[Tt]rue|[Ff]alse|[Nn]one', pygments_token.Literal
             ),
             (  # = and +=
                 r'(\+=)|=', pygments_token.Operator
@@ -55,11 +55,12 @@ class Py3statusLexer(RegexLexer):
                 r'[{}\[\](),:]', pygments_token.Punctuation
             ),
             (  # config functions eg env(value, type)
-                r'(\S+)([(])(.*?)((\s*,\s*)(\w+))?([)])',
+                r'(\S+)([(])(([^)\\]|\\.)*)((\s*,\s*)(\w+))?([)])',
                 bygroups(
                     pygments_token.Name.Function,
                     pygments_token.Punctuation,
                     pygments_token.Literal,
+                    None,
                     None,
                     pygments_token.Punctuation,
                     pygments_token.Keyword.Type,
