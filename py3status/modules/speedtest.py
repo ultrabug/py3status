@@ -5,7 +5,8 @@ Do a bandwidth test with speedtest-cli.
 Configuration parameters:
     button_share: button to open the result link (default None)
     format: display format for this module, {download} and/or {upload} required
-        *(default 'Speedtest[\?color=darkgray  ping [\?color=ping {ping} ms ]'
+        *(default 'Speedtest[\?color=darkgray  {elapsed_time} s ]'
+                    '[\?color=darkgray  ping [\?color=ping {ping} ms ]'
                     'up [\?color=upload {upload} {upload_unit}] '
                     'down [\?color=download {download} {download_unit}]]')*
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
@@ -35,6 +36,7 @@ Format placeholders:
     {client_rating}         client rating, eg '0'
     {download}              download rate from speedtest server, human readable
     {download_unit}         unit used as , eg 'MB/s'
+    {elapsed_time}          elapsed time since speedtest start
     {ping}                  ping time in ms to speedtest server
     {timestamp}             timestamp of the run, eg '2018-08-30T16:27:25.318212Z'
     {server_cc}             server country code, eg 'FR'
@@ -106,8 +108,23 @@ SAMPLE OUTPUT
 """
 
 from json import loads
+import time
+import threading
 
 STRING_NOT_INSTALLED = "not installed"
+
+
+class SpeedtestCli(threading.Thread):
+    """
+    A thread running speedtest-cli
+    """
+
+    def __init__(self, parent):
+        super(SpeedtestCli, self).__init__()
+        self.parent = parent
+
+    def run(self):
+        self.parent._start()
 
 
 class Py3status:
@@ -116,7 +133,8 @@ class Py3status:
     # available configuration parameters
     button_share = None
     format = (
-        u"Speedtest[\?color=darkgray  ping [\?color=ping {ping} ms ]"
+        u"Speedtest[\?color=darkgray  {elapsed_time} s ]"
+        "[\?color=darkgray  ping [\?color=ping {ping} ms ]"
         "up [\?color=upload {upload} {upload_unit}] "
         "down [\?color=download {download} {download_unit}]]"
     )
@@ -136,14 +154,17 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
         self.button_refresh = 2
-        self.sleep_timeout = 2.5
-        self.speedtest_data = {}
         self.cached_until = self.py3.CACHE_FOREVER
-        self.placeholders = self.py3.get_placeholders_list(self.format)
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.command = "speedtest-cli --json --secure --timeout {}".format(
             self.timeout
         )
+        self.elapsed_time = None
+        self.killed = threading.Event()
+        self.placeholders = self.py3.get_placeholders_list(self.format)
+        self.sleep_timeout = 0
+        self.speedtest_data = {}
+        self.start_time = None
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.url = None
 
         # if download* or upload* missing, run complete test
@@ -190,15 +211,16 @@ class Py3status:
             return None
 
     def _start(self):
-        self.cached_until = self.py3.time_in(self.sleep_timeout)
-
         if not self._is_running():
-            self.cached_until = self.py3.CACHE_FOREVER
+            # start timer
+            self.start_time = time.time()
+
+            # get values
             previous_data = self.py3.storage_get("speedtest_data") or {}
             current_data = self._get_speedtest_data()
 
             # zero-ing if not fetched and units convertion
-            for x in ["download", "upload", "bytes_received", "bytes_sent", "ping"]:
+            for x in ["download", "upload", "bytes_received", "bytes_sent"]:
                 unit = self.unit_size if "bytes" in x else self.unit_bitrate
                 current_data[x] = current_data.get(x, 0)
                 current_data[x], current_data[x + "_unit"] = self.py3.format_units(
@@ -222,6 +244,11 @@ class Py3status:
                 {"previous_" + k: v for (k, v) in previous_data.items()}
             )
 
+            # stop timer / stop refreshing
+            self.start_time = None
+            self.elapsed_time = None
+            self.cached_until = self.py3.CACHE_FOREVER
+
             # cast number
             self.speedtest_data.update(
                 {
@@ -236,10 +263,18 @@ class Py3status:
                     self.py3.threshold_get_color(self.speedtest_data[x], x)
 
     def speedtest(self):
+        # calculate elapsed time since start
+        if self.start_time:
+            self.elapsed_time = int(time.time() - self.start_time)
+        self.speedtest_data['elapsed_time'] = self.elapsed_time
+
         return {
             "cached_until": self.cached_until,
             "full_text": self.py3.safe_format(self.format, self.speedtest_data),
         }
+
+    def kill(self):
+        self.killed.set()
 
     def on_click(self, event):
         button = event["button"]
@@ -248,7 +283,10 @@ class Py3status:
         if button != self.button_refresh:
             self.py3.prevent_refresh()
         if button == self.button_refresh:
-            self._start()
+            # start speedtest-cli thread
+            # dont cache while thread working
+            SpeedtestCli(self).start()
+            self.cached_until = self.py3.time_in(0)
 
 
 if __name__ == "__main__":
