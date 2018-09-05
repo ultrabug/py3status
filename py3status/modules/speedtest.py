@@ -12,9 +12,9 @@ Configuration parameters:
     server_id: speedtest server to use, `speedtest-cli --list` to get id (default None)
     si_units: use SI units (default False)
     thresholds: specify color thresholds to use *(default {
-                'download': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')],
-                'ping': [(200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')],
-                'upload': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')]})*
+                'download': [(0, '#6afff3'), (1024, '#6afff3'), (1024 * 1024, '#6afff3')],
+                'ping': [(200, '#6afff3'), (150, '#6afff3'), (100, '#6afff3'), (10, '#6afff3')],
+                'upload': [(0, '#6afff3'), (1024, '#6afff3'), (1024 * 1024, '#6afff3')]})*
     timeout: timeout when communicating with speedtest.net servers (default None)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
@@ -73,7 +73,7 @@ Examples:
 speedtest {
     thresholds = {
         "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
-        "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
+        "ping": [(200, "bad"), (150, "oranged"), (100, "degraded"), (10, "good")],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
     format = '[\?color=ping {ping} ms] [\?color=upload Up {upload} {upload_unit}]'
@@ -98,12 +98,12 @@ speedtest {
 SAMPLE OUTPUT
 [
     {"full_text": "Speedtest " },
-    {"full_text": "ping ", "color": "#a9a9a9"},
-    {"full_text": "9.498 ms", "color": "#ebdbb2"},
-    {"full_text": " up ", "color": "#a9a9a9"},
-    {"full_text": "78.42 MB/s", "color": "#fb4934"},
-    {"full_text": " down ", "color": "#a9a9a9"},
-    {"full_text": "39.58 MB/s", "color": "#fb4934"}
+    {"full_text": "ping ", "color": "#6afff3"},
+    {"full_text": "9.498 ms", "color": "#6afff3"},
+    {"full_text": " up ", "color": "#6afff3"},
+    {"full_text": "78.42 MB/s", "color": "#6afff3"},
+    {"full_text": " down ", "color": "#6afff3"},
+    {"full_text": "39.58 MB/s", "color": "#6afff3"}
 ]
 """
 
@@ -137,12 +137,17 @@ class Py3status:
             'update_placeholder_format': [
                 {
                     'placeholder_formats': {
+                        'bytes_sent': ':.2f',
+                        'bytes_received': ':.2f',
+                        'previous_bytes_sent': ':.2f',
+                        'previous_bytes_received': ':.2f',
                         'download': ':.1f',
                         'previous_download': ':.1f',
                         'upload': ':.1f',
                         'previous_upload': ':.1f',
                         'ping': ':.1f',
                         'elapsed_time': ':.0f',
+                        'server_d': ':.2f'
                     },
                     'format_strings': ['format'],
                 }
@@ -159,9 +164,9 @@ class Py3status:
     server_id = None
     si_units = False
     thresholds = {
-        "download": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
-        "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
-        "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
+        "download": [(0, "#6afff3"), (1024, "#6afff3"), (1024 * 1024, "#6afff3")],
+        "ping": [(200, "#6afff3"), (150, "#6afff3"), (100, "#6afff3"), (10, "#6afff3")],
+        "upload": [(0, "#6afff3"), (1024, "#6afff3"), (1024 * 1024, "#6afff3")],
     }
     timeout = None
     unit_bitrate = "MB/s"
