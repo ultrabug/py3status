@@ -215,7 +215,7 @@ class Py3status:
 
         class SpeedTestCliThread(Thread):
             def run(this):
-                if self.running.wait():
+                while self.running.wait():
                     # start timer
                     self.start_time = time()
 
@@ -233,9 +233,6 @@ class Py3status:
 
                     # extra data, not sure we want to expose
                     current_data = self.py3.flatten_dict(current_data, delimiter='_')
-
-                    # store last data fetched
-                    self.py3.storage_set("speedtest_data", current_data)
 
                     # get speedtest result url
                     self.url = current_data.get("share")
@@ -258,14 +255,16 @@ class Py3status:
                         }
                     )
 
+                    # store last data fetched
+                    self.py3.storage_set("speedtest_data", current_data)
+
                     # thresholds
                     for x in self.thresholds_init:
                         if x in self.speedtest_data:
                             self.py3.threshold_get_color(self.speedtest_data[x], x)
 
                     self.py3.update()
-
-                    self._start_thread()
+                    self.running.clear()
 
         SpeedTestCliThread().start()
 
