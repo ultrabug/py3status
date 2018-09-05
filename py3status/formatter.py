@@ -314,9 +314,7 @@ class Placeholder:
                 output = u'{%s%s}' % (self.key, self.format)
                 value = value_ = output.format(**{self.key: value})
 
-            if block.parent is None:
-                valid = True
-            elif block.commands.not_zero:
+            if block.commands.not_zero:
                 valid = value_ not in ['', 'None', None, False, '0', '0.0', 0, 0.0]
             else:
                 # '', None, and False are ignored
