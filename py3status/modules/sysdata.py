@@ -187,7 +187,7 @@ class Py3status:
                 self.init['meminfo'].append(name)
 
     def _get_stat(self):
-        # miscellaneous kernel statistics https://git.io/vn21n
+        # kernel/system statistics. man -P 'less +//proc/stat' procfs
         with open('/proc/stat') as f:
             fields = f.readline().split()
             return {
@@ -201,17 +201,18 @@ class Py3status:
         then return; Memory size 'total_mem', Used_mem, percentage
         of used memory, and units of mem (KiB, MiB, GiB).
         """
-
         total_mem_kib = memi[keys[0]]
-        mem_free = sum([memi[item] for item in keys[1:]])
-        used_mem_kib = (total_mem_kib - mem_free)
+        total_used_mem_kib = memi[keys[0]] - memi[keys[1]]
+        cached_mem_kib = memi[keys[3]] + memi[keys[5]] - memi[keys[4]]
+        used_mem_kib = total_used_mem_kib - (memi[keys[2]] + cached_mem_kib)
         used_mem_p = 100 * used_mem_kib / total_mem_kib
+
         unit = 'B' if unit == 'dynamic' else unit
         (total_mem, unit) = self.py3.format_units(total_mem_kib * 1024, unit=unit)
         (used_mem, _) = self.py3.format_units(used_mem_kib * 1024, unit=unit)
         return total_mem, used_mem, used_mem_p, unit
 
-    def _get_mem(self, mem_unit='GiB', swap_unit='GiB', mem=True, swap=True):
+    def _get_mem(self, mem_unit, swap_unit, mem, swap):
         memi = {}
         result = {}
 
@@ -221,16 +222,14 @@ class Py3status:
                 memi[tok[0]] = float(tok[1])
 
         if mem:
-            result["mem"] = self._calc_mem_info(
-                mem_unit,
-                memi,
-                ["MemTotal:", "MemFree:", "Buffers:", "Cached:"]
+            result["mem"] = self._calc_mem_info(mem_unit, memi, [
+                "MemTotal:", "MemFree:", "Buffers:",
+                "Cached:", "Shmem:", "SReclaimable:"]
             )
+
         if swap:
-            result["swap"] = self._calc_mem_info(
-                swap_unit,
-                memi,
-                ["SwapTotal:", "SwapFree:"]
+            result["swap"] = self._calc_mem_info(swap_unit, memi, [
+                "SwapTotal:", "SwapFree:"]
             )
 
         return result
@@ -290,7 +289,9 @@ class Py3status:
 
         if self.init['meminfo']:
             memi = self._get_mem(
-                self.mem_unit, self.swap_unit, self.init['mem'], self.init['swap'])
+                self.mem_unit, self.swap_unit,
+                self.init['mem'], self.init['swap']
+            )
 
             if self.init['mem']:
                 mem_keys = [
