@@ -109,7 +109,7 @@ SAMPLE OUTPUT
 
 from json import loads
 from threading import Thread, Event
-from time import time
+from time import time, sleep
 
 
 STRING_NOT_INSTALLED = "not installed"
@@ -215,56 +215,63 @@ class Py3status:
 
         class SpeedTestCliThread(Thread):
             def run(this):
-                while self.running.wait():
-                    # start timer
-                    self.start_time = time()
+                while not self.killed.is_set():
+                    while self.running.wait():
+                        # start timer
+                        self.start_time = time()
 
-                    # get values
-                    previous_data = self.py3.storage_get("speedtest_data") or {}
-                    current_data = self._get_speedtest_data()
+                        # get values
+                        previous_data = self.py3.storage_get("speedtest_data") or {}
+                        current_data = self._get_speedtest_data()
 
-                    # zero-ing if not fetched and units convertion
-                    for x in ["download", "upload", "bytes_received", "bytes_sent"]:
-                        unit = self.unit_size if "bytes" in x else self.unit_bitrate
-                        current_data[x] = current_data.get(x, 0)
-                        current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                            current_data[x], unit=unit, si=self.si_units
+                        # on no internet connection restart the dead thread
+                        if not current_data:
+                            self.start_time = None
+                            self.cached_until = self.py3.CACHE_FOREVER
+                            self.kill()
+                            self._start_thread()
+
+                        # zero-ing if not fetched and units convertion
+                        for x in ["download", "upload", "bytes_received", "bytes_sent"]:
+                            unit = self.unit_size if "bytes" in x else self.unit_bitrate
+                            current_data[x] = current_data.get(x, 0)
+                            current_data[x], current_data[x + "_unit"] = self.py3.format_units(
+                                current_data[x], unit=unit, si=self.si_units
+                            )
+
+                        # extra data, not sure we want to expose
+                        current_data = self.py3.flatten_dict(current_data, delimiter='_')
+
+                        # get speedtest result url
+                        self.url = current_data.get("share")
+
+                        # create placeholders
+                        self.speedtest_data.update(current_data)
+                        self.speedtest_data.update(
+                            {"previous_" + k: v for (k, v) in previous_data.items()}
                         )
 
-                    # extra data, not sure we want to expose
-                    current_data = self.py3.flatten_dict(current_data, delimiter='_')
+                        # stop timer / stop refreshing
+                        self.start_time = None
+                        self.cached_until = self.py3.CACHE_FOREVER
 
-                    # get speedtest result url
-                    self.url = current_data.get("share")
+                        # cast number
+                        self.speedtest_data.update(
+                            {
+                                k: self._cast_number(self.speedtest_data[k])
+                                for k in self.placeholders
+                            }
+                        )
 
-                    # create placeholders
-                    self.speedtest_data.update(current_data)
-                    self.speedtest_data.update(
-                        {"previous_" + k: v for (k, v) in previous_data.items()}
-                    )
+                        # store last data fetched
+                        self.py3.storage_set("speedtest_data", current_data)
 
-                    # stop timer / stop refreshing
-                    self.start_time = None
-                    self.cached_until = self.py3.CACHE_FOREVER
+                        # thresholds
+                        for x in self.thresholds_init:
+                            if x in self.speedtest_data:
+                                self.py3.threshold_get_color(self.speedtest_data[x], x)
 
-                    # cast number
-                    self.speedtest_data.update(
-                        {
-                            k: self._cast_number(self.speedtest_data[k])
-                            for k in self.placeholders
-                        }
-                    )
-
-                    # store last data fetched
-                    self.py3.storage_set("speedtest_data", current_data)
-
-                    # thresholds
-                    for x in self.thresholds_init:
-                        if x in self.speedtest_data:
-                            self.py3.threshold_get_color(self.speedtest_data[x], x)
-
-                    self.py3.update()
-                    self.running.clear()
+                        self.running.clear()
 
         SpeedTestCliThread().start()
 
@@ -273,8 +280,10 @@ class Py3status:
         elapsed_time = None
         if self.start_time:
             elapsed_time = time() - self.start_time
-            self.py3.log(type(elapsed_time))
         self.speedtest_data['elapsed_time'] = elapsed_time
+
+        # prevent crazy refresh
+        sleep(1)
 
         return {
             "cached_until": self.cached_until,
@@ -290,12 +299,13 @@ class Py3status:
             # dont cache while thread working
             self.running.set()
             self.cached_until = self.py3.time_in(0)
+            self.py3.update()
         else:
             self.py3.prevent_refresh()
 
     def kill(self):
         self.killed.set()
-        self.running.set()  # ensure the thread won't hang
+        self.running.set()
 
 
 if __name__ == "__main__":
