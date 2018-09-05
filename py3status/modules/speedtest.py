@@ -5,7 +5,7 @@ Do a bandwidth test with speedtest-cli.
 Configuration parameters:
     button_share: button to open the result link (default None)
     format: display format for this module, {download} and/or {upload} required
-        *(default 'Speedtest[\?color=darkgray  {elapsed_time} s ]'
+        *(default 'Speedtest[\?color=darkgray  time [\?color=degraded {elapsed_time} s]]'
                     '[\?color=darkgray  ping [\?color=ping {ping} ms ]'
                     'up [\?color=upload {upload} {upload_unit}] '
                     'down [\?color=download {download} {download_unit}]]')*
@@ -15,7 +15,7 @@ Configuration parameters:
                 'download': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')],
                 'ping': [(200, 'bad'), (150, 'orange'), (100, 'degraded'), (10, 'good')],
                 'upload': [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')]})*
-    timeout: timeout when communicating with speedtest.net servers (default 10)
+    timeout: timeout when communicating with speedtest.net servers (default None)
     unit_bitrate: unit for download/upload rate (default 'MB/s')
     unit_size: unit for bytes_received/bytes_sent (default 'MB')
 
@@ -133,7 +133,7 @@ class Py3status:
     # available configuration parameters
     button_share = None
     format = (
-        u"Speedtest[\?color=darkgray  {elapsed_time} s ]"
+        u"Speedtest[\?color=darkgray  time [\?color=degraded {elapsed_time} s]]"
         "[\?color=darkgray  ping [\?color=ping {ping} ms ]"
         "up [\?color=upload {upload} {upload_unit}] "
         "down [\?color=download {download} {download_unit}]]"
@@ -145,7 +145,7 @@ class Py3status:
         "ping": [(200, "bad"), (150, "orange"), (100, "degraded"), (10, "good")],
         "upload": [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")],
     }
-    timeout = 10
+    timeout = None
     unit_bitrate = "MB/s"
     unit_size = "MB"
 
@@ -155,13 +155,8 @@ class Py3status:
 
         self.button_refresh = 2
         self.cached_until = self.py3.CACHE_FOREVER
-        self.command = "speedtest-cli --json --secure --timeout {}".format(
-            self.timeout
-        )
-        self.elapsed_time = None
-        self.killed = threading.Event()
+        self.command = "speedtest-cli --json --secure"
         self.placeholders = self.py3.get_placeholders_list(self.format)
-        self.sleep_timeout = 0
         self.speedtest_data = {}
         self.start_time = None
         self.thresholds_init = self.py3.get_color_names_list(self.format)
@@ -179,8 +174,11 @@ class Py3status:
             if not any(key.startswith("download") for key in self.placeholders):
                 self.command += " --no-download"
 
-        if self.server_id and int(self.server_id):
-            self.command += " --server " + str(self.server_id)
+        if self.server_id:
+            self.command += " --server {}".format(self.server_id)
+
+        if self.timeout:
+            self.command += " --timeout {}".format(self.timeout)
 
         if self.button_share and all(
             x in self.placeholders for x in ["download", "upload"]
@@ -211,82 +209,80 @@ class Py3status:
             return None
 
     def _start(self):
-        if not self._is_running():
-            # start timer
-            self.start_time = time.time()
+        # do nothing if allready running
+        if self._is_running():
+            return
 
-            # get values
-            previous_data = self.py3.storage_get("speedtest_data") or {}
-            current_data = self._get_speedtest_data()
+        # start timer
+        self.start_time = time.time()
 
-            # zero-ing if not fetched and units convertion
-            for x in ["download", "upload", "bytes_received", "bytes_sent"]:
-                unit = self.unit_size if "bytes" in x else self.unit_bitrate
-                current_data[x] = current_data.get(x, 0)
-                current_data[x], current_data[x + "_unit"] = self.py3.format_units(
-                    current_data[x], unit=unit, si=self.si_units
-                )
+        # get values
+        previous_data = self.py3.storage_get("speedtest_data") or {}
+        current_data = self._get_speedtest_data()
 
-            # extra data, not sure we want to expose
-            current_data = self.py3.flatten_dict(
-                current_data, delimiter='_'
+        # zero-ing if not fetched and units convertion
+        for x in ["download", "upload", "bytes_received", "bytes_sent"]:
+            unit = self.unit_size if "bytes" in x else self.unit_bitrate
+            current_data[x] = current_data.get(x, 0)
+            current_data[x], current_data[x + "_unit"] = self.py3.format_units(
+                current_data[x], unit=unit, si=self.si_units
             )
 
-            # store last data fetched
-            self.py3.storage_set("speedtest_data", current_data)
+        # extra data, not sure we want to expose
+        current_data = self.py3.flatten_dict(current_data, delimiter='_')
 
-            # get speedtest result url
-            self.url = current_data.get("share")
+        # store last data fetched
+        self.py3.storage_set("speedtest_data", current_data)
 
-            # create placeholders
-            self.speedtest_data.update(current_data)
-            self.speedtest_data.update(
-                {"previous_" + k: v for (k, v) in previous_data.items()}
-            )
+        # get speedtest result url
+        self.url = current_data.get("share")
 
-            # stop timer / stop refreshing
-            self.start_time = None
-            self.elapsed_time = None
-            self.cached_until = self.py3.CACHE_FOREVER
+        # create placeholders
+        self.speedtest_data.update(current_data)
+        self.speedtest_data.update(
+            {"previous_" + k: v for (k, v) in previous_data.items()}
+        )
 
-            # cast number
-            self.speedtest_data.update(
-                {
-                    k: self._cast_number(self.speedtest_data[k])
-                    for k in self.placeholders
-                }
-            )
+        # stop timer / stop refreshing
+        self.start_time = None
+        self.cached_until = self.py3.CACHE_FOREVER
 
-            # thresholds
-            for x in self.thresholds_init:
-                if x in self.speedtest_data:
-                    self.py3.threshold_get_color(self.speedtest_data[x], x)
+        # cast number
+        self.speedtest_data.update(
+            {
+                k: self._cast_number(self.speedtest_data[k])
+                for k in self.placeholders
+            }
+        )
+
+        # thresholds
+        for x in self.thresholds_init:
+            if x in self.speedtest_data:
+                self.py3.threshold_get_color(self.speedtest_data[x], x)
 
     def speedtest(self):
         # calculate elapsed time since start
+        elapsed_time = None
         if self.start_time:
-            self.elapsed_time = int(time.time() - self.start_time)
-        self.speedtest_data['elapsed_time'] = self.elapsed_time
+            elapsed_time = int(time.time() - self.start_time)
+        self.speedtest_data['elapsed_time'] = elapsed_time
 
         return {
             "cached_until": self.cached_until,
             "full_text": self.py3.safe_format(self.format, self.speedtest_data),
         }
 
-    def kill(self):
-        self.killed.set()
-
     def on_click(self, event):
         button = event["button"]
         if button == self.button_share and self.url:
             self.py3.command_run("xdg-open %s" % self.url)
-        if button != self.button_refresh:
-            self.py3.prevent_refresh()
         if button == self.button_refresh:
             # start speedtest-cli thread
             # dont cache while thread working
             SpeedtestCli(self).start()
             self.cached_until = self.py3.time_in(0)
+        else:
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
