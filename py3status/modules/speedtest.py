@@ -109,7 +109,7 @@ SAMPLE OUTPUT
 
 from json import loads
 import threading
-import time
+from time import time
 
 
 STRING_NOT_INSTALLED = "not installed"
@@ -210,16 +210,6 @@ class Py3status:
         except self.py3.CommandError:
             return False
 
-    def _cast_number(self, value):
-        try:
-            value = float(value)
-        except ValueError:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-        return value
-
     def _get_speedtest_data(self):
         try:
             return loads(self.py3.command_output(self.command))
@@ -232,7 +222,7 @@ class Py3status:
             return
 
         # start timer
-        self.start_time = time.time()
+        self.start_time = time()
 
         # get values
         previous_data = self.py3.storage_get("speedtest_data") or {}
@@ -265,14 +255,6 @@ class Py3status:
         self.start_time = None
         self.cached_until = self.py3.CACHE_FOREVER
 
-        # cast number
-        self.speedtest_data.update(
-            {
-                k: self._cast_number(self.speedtest_data[k])
-                for k in self.placeholders
-            }
-        )
-
         # thresholds
         for x in self.thresholds_init:
             if x in self.speedtest_data:
@@ -282,7 +264,7 @@ class Py3status:
         # calculate elapsed time since start
         elapsed_time = None
         if self.start_time:
-            elapsed_time = self._cast_number(time.time() - self.start_time)
+            elapsed_time = time() - self.start_time
             self.py3.log(type(elapsed_time))
         self.speedtest_data['elapsed_time'] = elapsed_time
 
