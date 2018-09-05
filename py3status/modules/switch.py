@@ -7,6 +7,7 @@ Configuration parameters:
     button_next: mouse button to switch next item (default None)
     button_previous: mouse button to switch previous item (default None)
     button_reset: mouse button to reset an index (default None)
+    cache_timeout: refresh interval for this module (default None)
     format: display format for this module (default '{list}')
     initial: specify an index to initialize (default 1)
     list: specify a list of tuples, eg [('name', 'command')],
@@ -257,6 +258,7 @@ class Py3status:
     button_next = None
     button_previous = None
     button_reset = None
+    cache_timeout = None
     format = '{list}'
     initial = 1
     list = []
@@ -266,6 +268,8 @@ class Py3status:
     def post_config_hook(self):
         if not self.list:
             raise Exception(STRING_ERROR)
+        if self.cache_timeout is None:
+            self.cache_timeout = self.py3.CACHE_FOREVER
         self.length = len(self.list)
         if self.initial == -1:
             self.initial = self.length
@@ -308,7 +312,7 @@ class Py3status:
         )
 
         return {
-            'cached_until': self.py3.CACHE_FOREVER,
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
                 self.format, {'list': format_list}),
         }
