@@ -27,7 +27,6 @@ param_dict = {
     'no': False,
     'empty': '',
     'None': None,
-    'None_str': 'None',
     '?bad name': 'evil',
     u'☂ Very bad name ': u'☂ extremely evil',
     'long_str': 'I am a long string though not too long',
@@ -329,10 +328,6 @@ def test_26():
 
 def test_27():
     run_formatter({'format': '{None}', 'expected': '', })
-
-
-def test_27a():
-    run_formatter({'format': '[Hi, my name is {None_str}]', 'expected': '', })
 
 
 def test_28():
