@@ -7,20 +7,24 @@ policies. For best results, don't add Reject option and to use filters too.
 
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
-    filters: specify a list of filters: [None, 'allow', 'block', 'reject']
-        (default [])
+    filters: specify a list of filters to use:
+        (default ['full', 'all', 'allow', 'block'])
     format: display format for this module
-        (default '[{format_device} ]{format_button_filter}')
+       *(default '[[{format_device} ]{format_button_filter}]'
+        '[\?color=darkgray&show \|]{format_button_permanent}')*
     format_action_allow: display format for allow action filter
-        (default '\?color=good \[Allow\]')
+        (default '[\?if=!policy=allow&color=good Allow]')
     format_action_block: display format for block action filter
-        (default '\?color=degraded \[Block\]')
+        (default '[\?if=!policy=block&color=degraded Block]')
     format_action_reject: display format for reject action filter
-        (default '\?color=bad \[Reject\]')
+        (default '[\?if=!policy=reject&color=bad Reject]')
     format_button_filter: display format for filter button
-        (default '[{filter}|\?show ALL]')
+        *(default '[\?color=deepskyblue&show USBGuard ]'
+        '[\?if=filter=allow Allow|[\?if=filter=block '
+        'Block|[\?if=filter=full Full|All]]]')*
     format_button_permanent: display format for permanent button
-        (default '[\?if=permanent&color=white \[P\]|\?color=darkgray \[P\]]')
+        *(default '[\?if=permanent&color=white Permanently'
+        '|\?color=darkgray Permanently]')*
     format_device: display format for USB devices
         *(default '[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
         '[ {format_action_allow}][ {format_action_block}]')*
@@ -55,10 +59,7 @@ format_device:
     {hash}        eg ihYz60+8pxZBi/cm+Q/4Ibrsyyzq/iZ9xtMDAh53sng
     {parent_hash} eg npSDT1xuEIOSLNt2RT2EbFrE8XRZoV29t1n7kg6GxXg
 
-format_notification_message:
-    See `format_device`
-
-format_notification_title:
+format_notification_*:
     See `format_device`
 
 Requires:
@@ -68,12 +69,12 @@ Requires:
 
 Examples:
 ```
-# specify a list of filters - easy copy and paste
+# specify a list of filters: ['full', 'allow', 'block', 'all']
 usbguard {
-    filters = ['block']
-    filters = ['block', None]
-    filters = ['block', 'allow']
-    filters = ['block', 'allow', None]
+    * full: show allow and block regardless
+    * all: show allow and block
+    * allow: show allow
+    * block: show block
 }
 
 # different button filters
@@ -163,13 +164,17 @@ class Py3status:
     """
     """
     allow_urgent = False
-    filters = []
-    format = '[{format_device} ]{format_button_filter}'
-    format_action_allow = '\?color=good \[Allow\]'
-    format_action_block = '\?color=degraded \[Block\]'
-    format_action_reject = '\?color=bad \[Reject\]'
-    format_button_filter = '[{filter}|\?show ALL]'
-    format_button_permanent = '[\?if=permanent&color=white \[P\]|\?color=darkgray \[P\]]'
+    filters = ['full', 'all', 'allow', 'block']
+    format = ('[[{format_device} ]{format_button_filter}]'
+              '[\?color=darkgray&show \|]{format_button_permanent}')
+    format_action_allow = '[\?if=!policy=allow&color=good Allow]'
+    format_action_block = '[\?if=!policy=block&color=degraded Block]'
+    format_action_reject = '[\?if=!policy=reject&color=bad Reject]'
+    format_button_filter = ('[\?color=deepskyblue&show USBGuard ]'
+                            '[\?if=filter=allow Allow|[\?if=filter=block '
+                            'Block|[\?if=filter=full Full|All]]]')
+    format_button_permanent = ('[\?if=permanent&color=white Permanently'
+                               '|\?color=darkgray Permanently]')
     format_device = ('[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
                      '[ {format_action_allow}][ {format_action_block}]')
     format_device_separator = ' '
@@ -242,10 +247,14 @@ class Py3status:
         data = []
         try:
             action = self.filters[self.active_index]
+            if action == 'all':
+                action = None
         except IndexError:
-            action = None
+            pass
         for device in devices:
-            if action and device['policy'] not in action:
+            if action == 'full':
+                device['policy'] = None
+            elif action and device['policy'] not in action:
                 continue
             for x in self.init['format_action']:
                 composite = self.py3.safe_format(getattr(self, x), device)
@@ -337,8 +346,9 @@ class Py3status:
                         break
 
             policy = self.init['target'][policy_name]
-            self.usbguard_bus.applyDevicePolicy(device_id, policy, self.permanent)
-
+            self.usbguard_bus.applyDevicePolicy(
+                device_id, policy, self.permanent
+            )
             if self.init['permanent']:
                 self.permanent = False
 
