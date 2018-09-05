@@ -108,8 +108,9 @@ SAMPLE OUTPUT
 """
 
 from json import loads
-import time
 import threading
+import time
+
 
 STRING_NOT_INSTALLED = "not installed"
 
@@ -130,6 +131,23 @@ class SpeedtestCli(threading.Thread):
 class Py3status:
     """
     """
+
+    class Meta:
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {
+                        'download': ':.1f',
+                        'previous_download': ':.1f',
+                        'upload': ':.1f',
+                        'previous_upload': ':.1f',
+                        'ping': ':.1f',
+                        'elapsed_time': ':.0f',
+                    },
+                    'format_strings': ['format'],
+                }
+            ],
+        }
     # available configuration parameters
     button_share = None
     format = (
@@ -162,16 +180,13 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.url = None
 
+        tests = ["download", "upload"]
         # if download* or upload* missing, run complete test
-        if any(
-            key.startswith(x)
-            for x in ["download", "upload"]
-            for key in self.placeholders
-        ):
-            if not any(key.startswith("upload") for key in self.placeholders):
+        if any(x in tests for x in self.placeholders):
+            if "upload" not in self.placeholders:
                 self.command += " --no-upload"
 
-            if not any(key.startswith("download") for key in self.placeholders):
+            if "download" not in self.placeholders:
                 self.command += " --no-download"
 
         if self.server_id:
@@ -180,9 +195,7 @@ class Py3status:
         if self.timeout:
             self.command += " --timeout {}".format(self.timeout)
 
-        if self.button_share and all(
-            x in self.placeholders for x in ["download", "upload"]
-        ):
+        if self.button_share and all(x in self.placeholders for x in tests):
             self.command += " --share"
 
     def _is_running(self):
@@ -194,10 +207,10 @@ class Py3status:
 
     def _cast_number(self, value):
         try:
-            value = int(value)
+            value = float(value)
         except ValueError:
             try:
-                value = float(value)
+                value = int(value)
             except ValueError:
                 pass
         return value
@@ -264,7 +277,8 @@ class Py3status:
         # calculate elapsed time since start
         elapsed_time = None
         if self.start_time:
-            elapsed_time = int(time.time() - self.start_time)
+            elapsed_time = self._cast_number(time.time() - self.start_time)
+            self.py3.log(type(elapsed_time))
         self.speedtest_data['elapsed_time'] = elapsed_time
 
         return {
