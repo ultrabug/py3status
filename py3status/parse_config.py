@@ -435,7 +435,7 @@ class ConfigParser:
         if function == 'base64':
             try:
                 import base64
-                value = base64.b64decode(value)
+                value = base64.b64decode(value).decode('utf-8')
             except TypeError as e:
                 self.notify_user('base64(..) error %s' % str(e))
 
