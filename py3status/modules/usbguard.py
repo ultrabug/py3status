@@ -119,45 +119,11 @@ unknown
 ]
 """
 
-import threading
-from gi.repository import GLib
+from threading import Thread
 from pydbus import SystemBus
 import re
 
 STRING_USBGUARD_DBUS = 'start usbguard-dbus.service'
-
-
-class UsbguardListener(threading.Thread):
-    """
-    """
-    def __init__(self, parent):
-        super(UsbguardListener, self).__init__()
-        self.parent = parent
-
-    def _on_devices_policy_changed(self, *event):
-        self.parent.py3.update()
-
-    def _on_devices_presence_changed(self, *event):
-        self.parent.py3.update()
-
-    def run(self):
-        while not self.parent.killed.is_set():
-            self.parent._init_dbus()
-
-            self.parent.dbus.subscribe(
-                object='/org/usbguard/Devices',
-                signal='DevicePolicyChanged',
-                signal_fired=self._on_devices_policy_changed,
-            )
-
-            self.parent.dbus.subscribe(
-                object='/org/usbguard/Devices',
-                signal='DevicePresenceChanged',
-                signal_fired=self._on_devices_presence_changed,
-            )
-
-            self.loop = GLib.MainLoop()
-            self.loop.run()
 
 
 class Py3status:
@@ -212,19 +178,26 @@ class Py3status:
             ('interface', re.compile(r'with-interface \{ (.*) \}$')),
         ]
 
-        self._init_dbus()
-        self.killed = threading.Event()
-        UsbguardListener(self).start()
-
-    def _init_dbus(self):
-        self.dbus = SystemBus()
         try:
-            self.usbguard_bus = self.dbus.get('org.usbguard', '/org/usbguard/Devices')
+            self.dbus = SystemBus()
+            self.proxy = self.dbus.get('org.usbguard', '/org/usbguard/Devices')
         except Exception:
             raise Exception(STRING_USBGUARD_DBUS)
 
+        self.thread = Thread(target=self._start_loop)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def _start_loop(self):
+        for signal in ['DevicePolicyChanged', 'DevicePresenceChanged']:
+            self.dbus.subscribe(
+                object='/org/usbguard/Devices',
+                signal=signal,
+                signal_fired=self.py3.update,
+            )
+
     def _get_devices(self):
-        devices = self.usbguard_bus.listDevices('match')
+        devices = self.proxy.listDevices('match')
         data = []
         for device_id, string in devices:
             device = {'id': device_id}
@@ -320,9 +293,6 @@ class Py3status:
 
         return response
 
-    def kill(self):
-        self.killed.set()
-
     def on_click(self, event):
         index = event['index']
         if isinstance(index, int):
@@ -346,9 +316,7 @@ class Py3status:
                         break
 
             policy = self.init['target'][policy_name]
-            self.usbguard_bus.applyDevicePolicy(
-                device_id, policy, self.permanent
-            )
+            self.proxy.applyDevicePolicy(device_id, policy, self.permanent)
             if self.init['permanent']:
                 self.permanent = False
 
