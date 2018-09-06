@@ -166,8 +166,8 @@ class Py3status:
         self.active_index = 0
         self.length = len(self.filters)
         self.permanent = self.permanent or False
-
-        self.usbguard_fields = [
+        self.cache_devices = {}
+        self.device_keys = [
             ('serial', re.compile(r'\S*serial \"(\S+)\"\S*')),
             ('policy', re.compile(r'^(\S+)')),
             ('usb_id', re.compile(r'id (\S+)')),
@@ -197,20 +197,22 @@ class Py3status:
             )
 
     def _get_devices(self):
-        devices = self.proxy.listDevices('match')
-        data = []
-        for device_id, string in devices:
-            device = {'id': device_id}
-            for name, regex in self.usbguard_fields:
-                value = regex.findall(string) or None
-                if value:
-                    value = value[0]
-                    value = value.encode('latin-1').decode('unicode_escape')
-                    value = value.encode('latin-1').decode('utf-8')
-                device[name] = value
-            data.append(device)
+        new_devices = []
+        for device_id, string in self.proxy.listDevices('match'):
+            try:
+                device = self.cache_devices[string]
+            except KeyError:
+                device = {'id': device_id}
+                for name, regex in self.device_keys:
+                    value = regex.findall(string) or None
+                    if value:
+                        value = value[0].encode('latin-1').decode(
+                            'unicode_escape').encode('latin-1').decode()
+                    device[name] = value
+                self.cache_devices[string] = device
+            new_devices.append(device)
 
-        return data
+        return new_devices
 
     def _manipulate_devices(self, devices):
         # get raw dbus devices list and create format_device composite
