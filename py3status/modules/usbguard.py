@@ -3,7 +3,7 @@
 Allow, Block, and Reject USB devices.
 
 USBGuard is a software framework for implementing USB device authorization
-policies. For best results, don't add Reject option and to use filters too.
+policies. For best results, don't add Reject option.
 
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
@@ -12,12 +12,10 @@ Configuration parameters:
     format: display format for this module
        *(default '[[{format_device} ]{format_button_filter}]'
         '[\?color=darkgray&show \|]{format_button_permanent}')*
-    format_action_allow: display format for allow action filter
+    format_button_allow: display format for allow button
         (default '[\?if=!policy=allow&color=good Allow]')
-    format_action_block: display format for block action filter
+    format_button_block: display format for block button
         (default '[\?if=!policy=block&color=degraded Block]')
-    format_action_reject: display format for reject action filter
-        (default '[\?if=!policy=reject&color=bad Reject]')
     format_button_filter: display format for filter button
         *(default '[\?color=deepskyblue&show USBGuard ]'
         '[\?if=filter=allow Allow|[\?if=filter=block '
@@ -25,9 +23,11 @@ Configuration parameters:
     format_button_permanent: display format for permanent button
         *(default '[\?if=permanent&color=white Permanently'
         '|\?color=darkgray Permanently]')*
+    format_button_reject: display format for reject button
+        (default '[\?if=!policy=reject&color=bad Reject]')
     format_device: display format for USB devices
         *(default '[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
-        '[ {format_action_allow}][ {format_action_block}]')*
+        '[ {format_button_allow}][ {format_button_block}]')*
     format_device_separator: show separator if more than one (default ' ')
     format_notification_message: specify notification message to use
         *(default 'USB ID: {usb_id}\nName: {name}\nPort: {port}')*
@@ -43,21 +43,24 @@ Format placeholders:
     {format_device}           format for USB devices
 
 format_button_filter:
-    {filter}      USB device filter, eg None, allow, block, reject
+    {filter}      USB device filter, eg full, all, allow, block
 
 format_button_permanent:
     {permanent}   permanent boolean, eg False, True
 
 format_device:
-    {id}          eg 1, 2, 5, 6, 7, 22, 23, 33
-    {policy}      eg allow, block, reject
-    {usb_id}      eg 054c:0268
-    {name}        eg Poker II, PLAYSTATION(R)3 Controller
-    {serial}      eg 0000:00:00.0
-    {port}        eg usb1, usb2, usb3, 1-1, 4-1.2.1
-    {interface}   eg 00:00:00:00 00:00:00 00:00:00
-    {hash}        eg ihYz60+8pxZBi/cm+Q/4Ibrsyyzq/iZ9xtMDAh53sng
-    {parent_hash} eg npSDT1xuEIOSLNt2RT2EbFrE8XRZoV29t1n7kg6GxXg
+    {id}                   eg 1, 2, 5, 6, 7, 22, 23, 33
+    {policy}               eg allow, block, reject
+    {usb_id}               eg 054c:0268
+    {name}                 eg Poker II, PLAYSTATION(R)3 Controller
+    {serial}               eg 0000:00:00.0
+    {port}                 eg usb1, usb2, usb3, 1-1, 4-1.2.1
+    {interface}            eg 00:00:00:00 00:00:00 00:00:00
+    {hash}                 eg ihYz60+8pxZBi/cm+Q/4Ibrsyyzq/iZ9xtMDAh53sng
+    {parent_hash}          eg npSDT1xuEIOSLNt2RT2EbFrE8XRZoV29t1n7kg6GxXg
+    {format_button_allow}  format for allow button
+    {format_button_block}  format for block button
+    {format_button_reject} format for reject button
 
 format_notification_*:
     See `format_device`
@@ -121,9 +124,11 @@ unknown
 
 from threading import Thread
 from pydbus import SystemBus
+from copy import deepcopy
 import re
 
 STRING_USBGUARD_DBUS = 'start usbguard-dbus.service'
+STRING_INVALID_FILTER = 'invalid filters `{}`'
 
 
 class Py3status:
@@ -133,16 +138,16 @@ class Py3status:
     filters = ['full', 'all', 'allow', 'block']
     format = ('[[{format_device} ]{format_button_filter}]'
               '[\?color=darkgray&show \|]{format_button_permanent}')
-    format_action_allow = '[\?if=!policy=allow&color=good Allow]'
-    format_action_block = '[\?if=!policy=block&color=degraded Block]'
-    format_action_reject = '[\?if=!policy=reject&color=bad Reject]'
+    format_button_allow = '[\?if=!policy=allow&color=good Allow]'
+    format_button_block = '[\?if=!policy=block&color=degraded Block]'
     format_button_filter = ('[\?color=deepskyblue&show USBGuard ]'
                             '[\?if=filter=allow Allow|[\?if=filter=block '
                             'Block|[\?if=filter=full Full|All]]]')
     format_button_permanent = ('[\?if=permanent&color=white Permanently'
                                '|\?color=darkgray Permanently]')
+    format_button_reject = '[\?if=!policy=reject&color=bad Reject]'
     format_device = ('[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
-                     '[ {format_action_allow}][ {format_action_block}]')
+                     '[ {format_button_allow}][ {format_button_block}]')
     format_device_separator = ' '
     format_notification_message = 'USB ID: {usb_id}\nName: {name}\nPort: {port}'
     format_notification_title = ('USB Device [\?if=policy=allow Allowed]'
@@ -151,9 +156,13 @@ class Py3status:
     permanent = None
 
     def post_config_hook(self):
+        for _filter in self.filters:
+            if _filter not in ['full', 'all', 'allow', 'block']:
+                raise Exception(STRING_INVALID_FILTER.format(_filter))
+
         self.init = {
-            'format_action': self.py3.get_placeholders_list(
-                self.format_device, 'format_action_*'
+            'format_button': self.py3.get_placeholders_list(
+                self.format_device, 'format_button_*'
             ),
             'notifications': (
                 self.format_notification_title or
@@ -198,55 +207,51 @@ class Py3status:
 
     def _get_devices(self):
         new_devices = []
-        for device_id, string in self.proxy.listDevices('match'):
+        for device_id, device_string in self.proxy.listDevices('match'):
             try:
-                device = self.cache_devices[string]
+                device = self.cache_devices[device_string]
             except KeyError:
                 device = {'id': device_id}
                 for name, regex in self.device_keys:
-                    value = regex.findall(string) or None
+                    value = regex.findall(device_string) or None
                     if value:
                         value = value[0].encode('latin-1').decode(
                             'unicode_escape').encode('latin-1').decode()
                     device[name] = value
-                self.cache_devices[string] = device
+                self.cache_devices[device_string] = device
             new_devices.append(device)
 
-        return new_devices
+        return deepcopy(new_devices)
 
     def _manipulate_devices(self, devices):
         # get raw dbus devices list and create format_device composite
         # with each device/action pair which must be available
         # return format_device and action
-
-        data = []
-        try:
-            action = self.filters[self.active_index]
-            if action == 'all':
-                action = None
-        except IndexError:
-            pass
+        new_device = []
+        device_filter = self.filters[self.active_index]
         for device in devices:
-            if action == 'full':
+            if device_filter == 'all':
+                pass
+            elif device_filter == 'full':
                 device['policy'] = None
-            elif action and device['policy'] not in action:
+            elif device['policy'] != device_filter:
                 continue
-            for x in self.init['format_action']:
+            for x in self.init['format_button']:
                 composite = self.py3.safe_format(getattr(self, x), device)
                 device[x] = self.py3.composite_update(composite, {
                     'index': '{}/{}'.format(device['id'], x.split('_')[-1])
                 })
 
-            data.append(self.py3.safe_format(self.format_device, device))
+            new_device.append(self.py3.safe_format(self.format_device, device))
 
         format_device_separator = self.py3.safe_format(
             self.format_device_separator
         )
         format_device = self.py3.composite_join(
-            format_device_separator, data
+            format_device_separator, new_device
         )
 
-        return format_device, action
+        return format_device, device_filter
 
     def _notify_user(self, device):
         format_notification_message = self.py3.safe_format(
