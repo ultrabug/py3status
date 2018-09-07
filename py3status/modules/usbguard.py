@@ -66,7 +66,6 @@ format_notification_*:
     See `format_device`
 
 Requires:
-    pydbus: pythonic dbus library
     python-gobject: pythonic binding for gobject
     usbguard: USB device authorization policy framework
 
@@ -122,9 +121,9 @@ unknown
 ]
 """
 
-from threading import Thread
-from pydbus import SystemBus
 from copy import deepcopy
+from threading import Thread
+import dbus
 import re
 
 STRING_USBGUARD_DBUS = 'start usbguard-dbus.service'
@@ -188,8 +187,11 @@ class Py3status:
         ]
 
         try:
-            self.dbus = SystemBus()
-            self.proxy = self.dbus.get('org.usbguard', '/org/usbguard/Devices')
+            self.bus = dbus.SystemBus()
+            self.proxy = dbus.Interface(
+                self.bus.get_object('org.usbguard', '/org/usbguard/Devices'),
+                dbus_interface='org.usbguard.Devices'
+            )
         except Exception:
             raise Exception(STRING_USBGUARD_DBUS)
 
@@ -199,7 +201,7 @@ class Py3status:
 
     def _start_loop(self):
         for signal in ['DevicePolicyChanged', 'DevicePresenceChanged']:
-            self.dbus.subscribe(
+            self.bus.subscribe(
                 object='/org/usbguard/Devices',
                 signal=signal,
                 signal_fired=self.py3.update,
