@@ -66,7 +66,7 @@ format_notification_*:
     See `format_device`
 
 Requires:
-    python-gobject: pythonic binding for gobject
+    python-gobject: Python Bindings for GLib/GObject/GIO/GTK+
     usbguard: USB device authorization policy framework
 
 Examples:
@@ -123,7 +123,7 @@ unknown
 
 from copy import deepcopy
 from threading import Thread
-import dbus
+from gi.repository import Gio
 import re
 
 STRING_USBGUARD_DBUS = 'start usbguard-dbus.service'
@@ -187,11 +187,16 @@ class Py3status:
         ]
 
         try:
-            self.bus = dbus.SystemBus()
-            self.proxy = dbus.Interface(
-                self.bus.get_object('org.usbguard', '/org/usbguard/Devices'),
-                dbus_interface='org.usbguard.Devices'
+            self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+            self.proxy = Gio.DBusProxy.new_sync(
+                self.bus, Gio.DBusProxyFlags.NONE, None, 'org.usbguard',
+                '/org/usbguard/Devices', 'org.usbguard.Devices', None
             )
+            for signal in ['DevicePolicyChanged', 'DevicePresenceChanged']:
+                self.bus.signal_subscribe(
+                    None, 'org.usbguard.Devices', signal,
+                    None, None, 0, self.py3.update,
+                )
         except Exception:
             raise Exception(STRING_USBGUARD_DBUS)
 
@@ -200,16 +205,11 @@ class Py3status:
         self.thread.start()
 
     def _start_loop(self):
-        for signal in ['DevicePolicyChanged', 'DevicePresenceChanged']:
-            self.bus.subscribe(
-                object='/org/usbguard/Devices',
-                signal=signal,
-                signal_fired=self.py3.update,
-            )
+        pass
 
     def _get_devices(self):
         new_devices = []
-        for device_id, device_string in self.proxy.listDevices('match'):
+        for device_id, device_string in self.proxy.listDevices('(s)', 'match'):
             try:
                 device = self.cache_devices[device_string]
             except KeyError:
@@ -325,7 +325,9 @@ class Py3status:
                         break
 
             policy = self.init['target'][policy_name]
-            self.proxy.applyDevicePolicy(device_id, policy, self.permanent)
+            self.proxy.applyDevicePolicy(
+                '(uub)', device_id, policy, self.permanent
+            )
             if self.init['permanent']:
                 self.permanent = False
 
