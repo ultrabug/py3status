@@ -23,8 +23,7 @@ Configuration parameters:
         (default '[Timew {format_time}]|No Timew')
     format_datetime: specify strftime characters to format (default {})
     format_duration: display format for time duration
-        *(default '\?not_zero [{years}y ][{months}m ][{weeks}w ]'
-        '[{days}d ][{hours}:]{minutes:02d}:{seconds:02d}')*
+        (default '\?not_zero [{days}d ][{hours}:]{minutes:02d}:{seconds:02d}')
     format_tag: display format for tags (default '\?color=state_tag {name}')
     format_tag_separator: show separator if more than one (default ' ')
     format_time: display format for tracked times
@@ -182,8 +181,7 @@ class Py3status:
     filter = None
     format = '[Timew {format_time}]|No Timew'
     format_datetime = {}
-    format_duration = ('\?not_zero [{years}y ][{months}m ][{weeks}w ]'
-                       '[{days}d ][{hours}:]{minutes:02d}:{seconds:02d}')
+    format_duration = '\?not_zero [{days}d ][{hours}:]{minutes:02d}:{seconds:02d}'
     format_tag = '\?color=state_tag {name}'
     format_tag_separator = ' '
     format_time = '[\?color=state_time [{format_tag} ]{format_duration}]'
