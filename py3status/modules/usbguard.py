@@ -202,7 +202,7 @@ class Py3status:
 
         self.thread = Thread(target=self._start_loop)
         self.thread.daemon = True
-        self.thread.start()
+        # self.thread.start()
 
     def _start_loop(self):
         pass
@@ -293,7 +293,7 @@ class Py3status:
         }
 
         response = {
-            'cached_until': self.py3.CACHE_FOREVER,
+            'cached_until': self.py3.time_in(10),
             'full_text': self.py3.safe_format(self.format, usbguard_data),
         }
 
