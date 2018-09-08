@@ -163,8 +163,17 @@ class Common:
             param = config["general"].get(attribute, self.none_setting)
         if param and (attribute == "color" or attribute.startswith("color_")):
             if param[0] != "#":
-                # named color
-                param = COLOR_NAMES.get(param.lower(), self.none_setting)
+                # module/general color
+                param = param.lower()
+                if param in ["bad", "good", "degraded", "separator"]:
+                    key = "color_{}".format(param)
+                    for x in [name, "general"]:
+                        param = config[x].get(key, self.none_setting)
+                        if not hasattr(param, "none_setting"):
+                            break
+                else:
+                    # named color
+                    param = COLOR_NAMES.get(param, self.none_setting)
             elif len(param) == 4:
                 # This is a color like #123 convert it to #112233
                 param = (
