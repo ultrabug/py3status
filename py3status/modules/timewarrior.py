@@ -52,14 +52,10 @@ format_datetime placeholders:
     value: strftime characters, eg '%b %d' ----> 'Oct 06'
 
 format_duration placeholders:
-    {years} years
-    {months} months
-    {weeks} weeks
     {days} days
     {hours} hours
     {minutes} minutes
     {seconds} seconds
-    {microseconds} microseconds
 
 Color thresholds:
     format_time:
@@ -276,14 +272,10 @@ class Py3status:
 
             time['format_duration'] = self.py3.safe_format(
                 self.format_duration, {
-                    'years': duration.years,
-                    'months': duration.months,
-                    'weeks': duration.weeks,
                     'days': duration.days,
                     'hours': duration.hours,
                     'minutes': duration.minutes,
                     'seconds': duration.seconds,
-                    'microseconds': duration.microseconds
                 }
             )
 
