@@ -3,7 +3,7 @@
 Allow, Block, and Reject USB devices.
 
 USBGuard is a software framework for implementing USB device authorization
-policies. For best results, don't add Reject option.
+policies. For more information, see https://usbguard.github.io/
 
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
@@ -24,7 +24,7 @@ Configuration parameters:
         *(default '[\?if=permanent&color=white Permanently'
         '|\?color=darkgray Permanently]')*
     format_button_reject: display format for reject button
-        (default '[\?if=!policy=reject&color=bad Reject]')
+        (default '\?color=bad Reject')
     format_device: display format for USB devices
         *(default '[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
         '[ {format_button_allow}][ {format_button_block}]')*
@@ -50,7 +50,7 @@ format_button_permanent:
 
 format_device:
     {id}                   eg 1, 2, 5, 6, 7, 22, 23, 33
-    {policy}               eg allow, block, reject
+    {policy}               eg allow, block
     {usb_id}               eg 054c:0268
     {name}                 eg Poker II, PLAYSTATION(R)3 Controller
     {serial}               eg 0000:00:00.0
@@ -77,14 +77,6 @@ usbguard {
     * any: show any devices
     * allow: show authorized devices
     * block: show unauthorized devices
-}
-
-# different button filters
-usbguard {
-    format_button_filter = '[\?if=filter=allow \[a\]]'
-    format_button_filter += '[\?if=filter=block \[b\]]'
-    format_button_filter += '[\?if=filter=reject \[r\]]'
-    format_button_filter += '[\?if=!filter \[*\]]'
 }
 
 # show block device only, hide button
@@ -144,7 +136,7 @@ class Py3status:
                             'Block|[\?if=filter=all All|Any]]]')
     format_button_permanent = ('[\?if=permanent&color=white Permanently'
                                '|\?color=darkgray Permanently]')
-    format_button_reject = '[\?if=!policy=reject&color=bad Reject]'
+    format_button_reject = '\?color=bad Reject'
     format_device = ('[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
                      '[ {format_button_allow}][ {format_button_block}]')
     format_device_separator = ' '
