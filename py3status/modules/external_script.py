@@ -16,6 +16,8 @@ Configuration parameters:
     format_notification: see placeholders below (default None)
     localize: should script output be localized (if available)
         (default True)
+    notification_state: specify notification state to use: current, click
+        (default 'current')
     script_path: script you want to show output of (compulsory)
         (default None)
     strip_output: shall we strip leading and trailing spaces from output
@@ -24,17 +26,38 @@ Configuration parameters:
 Format placeholders:
     {line} number of lines in the output
     {output} first line of the output of script given by "script_path"
+    {output_full} full output of script given by "script_path"
 
 Format notification placeholders:
     {line} number of lines in the output
     {output} first line of the output of script given by "script_path"
+    {output_full} full output of script given by "script_path"
 
-i3status.conf example:
-
+Examples:
 ```
+# add a script
 external_script {
     format = "my name is {output}"
     script_path = "/usr/bin/whoami"
+}
+
+# always display a notification, no output means no notification
+external_script {
+    format_notification = '{output}
+    script_path = "~/my_python_script.py"
+}
+
+# display a notification only if output have more than 20 lines
+external_script {
+    format_notification = '\?if=line>20 {output}'
+    script_path = "~/my_python_script.py"
+}
+
+# display a notification of last full output on click
+external_script {
+    format_notification = '{output_full}'
+    notification_state = 'click'
+    script_path = "~/my_python_script.py"
 }
 ```
 
@@ -49,6 +72,7 @@ example
 
 import re
 STRING_ERROR = 'missing script_path'
+STRING_STATE_ERROR = 'invalid notification state `{}`'
 
 
 class Py3status:
@@ -59,23 +83,41 @@ class Py3status:
     format = '{output}'
     format_notification = None
     localize = True
+    notification_state = 'current'
     script_path = None
     strip_output = False
 
     def post_config_hook(self):
-        self.button_refresh = 2
         if not self.script_path:
             raise Exception(STRING_ERROR)
+        elif self.notification_state not in ['click', 'current']:
+            raise Exception(STRING_STATE_ERROR.format(self.notification_state))
+
+        self.button_refresh = 2
+        notification_boolean = bool(self.format_notification)
+        self.init = {
+            'notify_click': (
+                notification_boolean and self.notification_state == 'click'
+            ),
+            'notify_current': (
+                notification_boolean and self.notification_state == 'current'
+            ),
+        }
+
+    def _notify_user(self):
+        self.py3.notify_user(
+            self.py3.safe_format(self.format_notification, self.script_data)
+        )
 
     def external_script(self):
         output_lines = None
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
-            output = self.py3.command_output(
+            output_full = self.py3.command_output(
                 self.script_path, shell=True, localized=self.localize
             )
-            output_lines = output.splitlines()
+            output_lines = output_full.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]
                 if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
@@ -109,21 +151,23 @@ class Py3status:
         self.script_data = {
             'line': len(output_lines),
             'output': output,
-            'output_full': ' '.join(output.splitlines())
+            'output_full': ' '.join(output_full.splitlines())
         }
         response['full_text'] = self.py3.safe_format(
             self.format, self.script_data
         )
-        self.script_data['output_full'] = output
+        self.script_data['output_full'] = output_full
+
+        if self.init['notify_current']:
+            self._notify_user()
+
         return response
 
     def on_click(self, event):
         button = event["button"]
         if button != self.button_refresh:
-            if self.format_notification:
-                self.py3.notify_user(self.py3.safe_format(
-                    self.format_notification, self.script_data)
-                )
+            if self.init['notify_click']:
+                self._notify_user()
             self.py3.prevent_refresh()
 
 
