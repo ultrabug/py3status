@@ -8,7 +8,7 @@ policies. For best results, don't add Reject option.
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
     filters: specify a list of filters to use:
-        (default ['full', 'any', 'allow', 'block'])
+        (default ['all', 'any', 'allow', 'block'])
     format: display format for this module
        *(default '[[{format_device} ]{format_button_filter}]'
         '[\?color=darkgray&show \|]{format_button_permanent}')*
@@ -19,7 +19,7 @@ Configuration parameters:
     format_button_filter: display format for filter button
         *(default '[\?color=deepskyblue&show USBGuard ]'
         '[\?if=filter=allow Allow|[\?if=filter=block '
-        'Block|[\?if=filter=full Full|Any]]]')*
+        'Block|[\?if=filter=all All|Any]]]')*
     format_button_permanent: display format for permanent button
         *(default '[\?if=permanent&color=white Permanently'
         '|\?color=darkgray Permanently]')*
@@ -43,7 +43,7 @@ Format placeholders:
     {format_device}           format for USB devices
 
 format_button_filter:
-    {filter}      USB device filter, eg full, any, allow, block
+    {filter}      USB device filter, eg all, any, allow, block
 
 format_button_permanent:
     {permanent}   permanent boolean, eg False, True
@@ -71,9 +71,9 @@ Requires:
 
 Examples:
 ```
-# specify a list of filters: full, any, allow, block
+# specify a list of filters: all, any, allow, block
 usbguard {
-    * full: show any devices with full options
+    * all: show any devices with all options
     * any: show any devices
     * allow: show authorized devices
     * block: show unauthorized devices
@@ -134,14 +134,14 @@ class Py3status:
     """
     """
     allow_urgent = False
-    filters = ['full', 'any', 'allow', 'block']
+    filters = ['all', 'any', 'allow', 'block']
     format = ('[[{format_device} ]{format_button_filter}]'
               '[\?color=darkgray&show \|]{format_button_permanent}')
     format_button_allow = '[\?if=!policy=allow&color=good Allow]'
     format_button_block = '[\?if=!policy=block&color=degraded Block]'
     format_button_filter = ('[\?color=deepskyblue&show USBGuard ]'
                             '[\?if=filter=allow Allow|[\?if=filter=block '
-                            'Block|[\?if=filter=full Full|Any]]]')
+                            'Block|[\?if=filter=all All|Any]]]')
     format_button_permanent = ('[\?if=permanent&color=white Permanently'
                                '|\?color=darkgray Permanently]')
     format_button_reject = '[\?if=!policy=reject&color=bad Reject]'
@@ -156,7 +156,7 @@ class Py3status:
 
     def post_config_hook(self):
         for _filter in self.filters:
-            if _filter not in ['full', 'any', 'allow', 'block']:
+            if _filter not in ['all', 'any', 'allow', 'block']:
                 raise Exception(STRING_INVALID_FILTER.format(_filter))
 
         self.init = {
@@ -208,7 +208,7 @@ class Py3status:
         pass
 
     def _get_devices(self, device_filter):
-        if device_filter in ['any', 'full']:
+        if device_filter in ['any', 'all']:
             device_filter = 'match'
 
         devices = self.proxy.listDevices('(s)', device_filter)
@@ -235,7 +235,7 @@ class Py3status:
         for device in devices:
             if device_filter == 'any':
                 pass
-            elif device_filter == 'full':
+            elif device_filter == 'all':
                 device['policy'] = None
             elif device['policy'] != device_filter:
                 continue
