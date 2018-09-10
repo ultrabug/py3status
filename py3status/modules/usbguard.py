@@ -207,9 +207,14 @@ class Py3status:
     def _start_loop(self):
         pass
 
-    def _get_devices(self):
+    def _get_devices(self, device_filter):
+        if device_filter in ['all', 'full']:
+            device_filter = 'match'
+
+        devices = self.proxy.listDevices('(s)', device_filter)
         new_devices = []
-        for device_id, device_string in self.proxy.listDevices('(s)', 'match'):
+
+        for device_id, device_string in devices:
             try:
                 device = self.cache_devices[device_string]
             except KeyError:
@@ -225,12 +230,8 @@ class Py3status:
 
         return deepcopy(new_devices)
 
-    def _manipulate_devices(self, devices):
-        # get raw dbus devices list and create format_device composite
-        # with each device/action pair which must be available
-        # return format_device and action
+    def _manipulate_devices(self, devices, device_filter):
         new_device = []
-        device_filter = self.filters[self.active_index]
         for device in devices:
             if device_filter == 'all':
                 pass
@@ -253,7 +254,7 @@ class Py3status:
             format_device_separator, new_device
         )
 
-        return format_device, device_filter
+        return format_device
 
     def _notify_user(self, device):
         format_notification_message = self.py3.safe_format(
@@ -269,8 +270,9 @@ class Py3status:
         )
 
     def usbguard(self):
-        self.devices = self._get_devices()
-        format_device, device_filter = self._manipulate_devices(self.devices)
+        device_filter = self.filters[self.active_index]
+        self.devices = self._get_devices(device_filter)
+        format_device = self._manipulate_devices(self.devices, device_filter)
 
         format_button_filter = self.py3.safe_format(
             self.format_button_filter, {'filter': device_filter}
