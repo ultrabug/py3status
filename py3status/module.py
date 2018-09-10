@@ -427,7 +427,7 @@ class Module:
             offset = min_width - ((padding * 2) + width)
 
             # set align
-            align = self.py3_module_options.get('align', 'center')
+            align = self.py3_module_options.get('align', 'left')
             if align == 'center':
                 left = right = ' ' * padding
                 if self.random_int:
