@@ -8,18 +8,21 @@ policies. For more information, see https://usbguard.github.io/
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
     filters: specify a list of filters to use:
-        (default ['all', 'any', 'allow', 'block'])
+        (default ['None', 'any', 'allow', 'block'])
     format: display format for this module
-       *(default '[[{format_device} ]{format_button_filter}]'
-        '[\?color=darkgray&show \|]{format_button_permanent}')*
+        *(default '[{format_device_list} ]{format_button_device} '
+        '{format_button_filter}[\?color=darkgray&show \|]'
+        '{format_button_permanent}')*
     format_button_allow: display format for allow button
         (default '[\?if=!policy=allow&color=good Allow]')
     format_button_block: display format for block button
         (default '[\?if=!policy=block&color=degraded Block]')
+    format_button_device: display format for device button
+        (default '[\?color=deepskyblue&show Device] {device}/{devices}')
     format_button_filter: display format for filter button
-        *(default '[\?color=deepskyblue&show USBGuard ]'
+        *(default '[\?color=deepskyblue&show Filter ]'
         '[\?if=filter=allow Allow|[\?if=filter=block '
-        'Block|[\?if=filter=all All|Any]]]')*
+        'Block|[\?if=filter=None None|Any]]]')*
     format_button_permanent: display format for permanent button
         *(default '[\?if=permanent&color=white Permanently'
         '|\?color=darkgray Permanently]')*
@@ -43,7 +46,7 @@ Format placeholders:
     {format_device}           format for USB devices
 
 format_button_filter:
-    {filter}      USB device filter, eg all, any, allow, block
+    {filter}      USB device filter, eg None, any, allow, block
 
 format_button_permanent:
     {permanent}   permanent boolean, eg False, True
@@ -71,9 +74,9 @@ Requires:
 
 Examples:
 ```
-# specify a list of filters: all, any, allow, block
+# specify a list of filters: None, any, allow, block
 usbguard {
-    * all: show any devices with all options
+    * None: show any devices with any options
     * any: show any devices
     * allow: show authorized devices
     * block: show unauthorized devices
@@ -126,14 +129,16 @@ class Py3status:
     """
     """
     allow_urgent = False
-    filters = ['all', 'any', 'allow', 'block']
-    format = ('[[{format_device} ]{format_button_filter}]'
+    filters = ['None', 'any', 'allow', 'block']
+    format = ('[{format_device_list} ]{format_button_device} {format_button_filter}'
               '[\?color=darkgray&show \|]{format_button_permanent}')
     format_button_allow = '[\?if=!policy=allow&color=good Allow]'
     format_button_block = '[\?if=!policy=block&color=degraded Block]'
-    format_button_filter = ('[\?color=deepskyblue&show USBGuard ]'
+    format_button_device = (
+        '[\?color=deepskyblue&show Device] {device}/{devices}')
+    format_button_filter = ('[\?color=deepskyblue&show Filter ]'
                             '[\?if=filter=allow Allow|[\?if=filter=block '
-                            'Block|[\?if=filter=all All|Any]]]')
+                            'Block|[\?if=filter=None None|Any]]]')
     format_button_permanent = ('[\?if=permanent&color=white Permanently'
                                '|\?color=darkgray Permanently]')
     format_button_reject = '\?color=bad Reject'
@@ -146,9 +151,11 @@ class Py3status:
                                  '[\?if=policy=reject Rejected]')
     permanent = None
 
+    # playground
+
     def post_config_hook(self):
         for _filter in self.filters:
-            if _filter not in ['all', 'any', 'allow', 'block']:
+            if _filter not in ['None', 'any', 'allow', 'block']:
                 raise Exception(STRING_INVALID_FILTER.format(_filter))
 
         self.init = {
@@ -163,8 +170,10 @@ class Py3status:
             'target': {'allow': 0, 'block': 1, 'reject': 2},
         }
 
-        self.active_index = 0
-        self.length = len(self.filters)
+        self.filter_index = 0
+        self.filter_length = len(self.filters) - 1
+        self.device_index = 1
+        self.device_length = 0
         self.permanent = self.permanent or False
         self.cache_devices = {}
         self.device_keys = [
@@ -200,7 +209,7 @@ class Py3status:
         pass
 
     def _get_devices(self, device_filter):
-        if device_filter in ['any', 'all']:
+        if device_filter in ['any', 'None']:
             device_filter = 'match'
 
         devices = self.proxy.listDevices('(s)', device_filter)
@@ -224,10 +233,12 @@ class Py3status:
 
     def _manipulate_devices(self, devices, device_filter):
         new_device = []
-        for device in devices:
+        format_device_list = None
+        self.device_length = len(devices)
+        for index, device in enumerate(devices, 1):
             if device_filter == 'any':
                 pass
-            elif device_filter == 'all':
+            elif device_filter == 'None':
                 device['policy'] = None
             elif device['policy'] != device_filter:
                 continue
@@ -237,7 +248,11 @@ class Py3status:
                     'index': '{}/{}'.format(device['id'], x.split('_')[-1])
                 })
 
-            new_device.append(self.py3.safe_format(self.format_device, device))
+            device_composite = self.py3.safe_format(self.format_device, device)
+            if index == self.device_index:
+                format_device_list = device_composite
+
+            new_device.append(device_composite)
 
         format_device_separator = self.py3.safe_format(
             self.format_device_separator
@@ -246,7 +261,7 @@ class Py3status:
             format_device_separator, new_device
         )
 
-        return format_device
+        return format_device, format_device_list
 
     def _notify_user(self, device):
         format_notification_message = self.py3.safe_format(
@@ -262,12 +277,27 @@ class Py3status:
         )
 
     def usbguard(self):
-        device_filter = self.filters[self.active_index]
-        self.devices = self._get_devices(device_filter)
-        format_device = self._manipulate_devices(self.devices, device_filter)
+        filter_name = self.filters[self.filter_index]
+        device_data = self._get_devices(filter_name)
+        format_device, format_device_list = (
+            self._manipulate_devices(device_data, filter_name)
+        )
+
+        if self.device_index > self.device_length:
+            self.device_index = self.device_length
+
+        format_button_device = self.py3.safe_format(
+            self.format_button_device, {
+                'device': self.device_index, 'devices': self.device_length
+            }
+
+        )
+        self.py3.composite_update(
+            format_button_device, {'index': 'button_device'}
+        )
 
         format_button_filter = self.py3.safe_format(
-            self.format_button_filter, {'filter': device_filter}
+            self.format_button_filter, {'filter': filter_name}
         )
         self.py3.composite_update(
             format_button_filter, {'index': 'button_filter'}
@@ -280,10 +310,12 @@ class Py3status:
         )
 
         usbguard_data = {
-            'device': len(self.devices),
+            'device': len(device_data),
             'format_button_filter': format_button_filter,
             'format_button_permanent': format_button_permanent,
             'format_device': format_device,
+            'format_button_device': format_button_device,
+            'format_device_list': format_device_list,
         }
 
         response = {
@@ -294,17 +326,21 @@ class Py3status:
         if self.allow_urgent:
             response['urgent'] = True
 
+        self.device_data = device_data
         return response
 
     def on_click(self, event):
         index = event['index']
         if isinstance(index, int):
             return
+        elif index == 'button_device':
+            self.device_index += 1
+            if self.device_index > self.device_length:
+                self.device_index = 0
         elif index == 'button_filter':
-            if self.length > 1:
-                self.active_index += 1
-                if self.active_index >= self.length:
-                    self.active_index = 0
+            self.filter_index += 1
+            if self.filter_index > self.filter_length:
+                self.filter_index = 0
         elif index == 'button_permanent':
             self.permanent = not self.permanent
         else:
@@ -312,7 +348,7 @@ class Py3status:
             device_id = int(device_id)
 
             if self.init['notifications']:
-                for device in self.devices:
+                for device in self.device_data:
                     if device['id'] == device_id:
                         device['policy'] = policy_name
                         self._notify_user(device)
