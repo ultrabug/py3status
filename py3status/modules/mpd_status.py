@@ -98,6 +98,26 @@ def song_attr(song, attr):
 class Py3status:
     """
     """
+
+    class Meta:
+
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'state_pause',
+                    'msg': 'Removing for easier if-statements in the formater.'
+                },
+                {
+                    'param': 'state_play',
+                    'msg': 'Removing for easier if-statements in the formater.'
+                },
+                {
+                    'param': 'state_stop',
+                    'msg': 'Removing for easier if-statements in the formater.'
+                }
+            ]
+        }
+
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
