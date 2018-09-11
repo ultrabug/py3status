@@ -115,7 +115,7 @@ class Py3status:
                     'param': 'state_stop',
                     'msg': 'Removing for easier if-statements in the formater.'
                 }
-            ] 
+            ]
         }
 
     # available configuration parameters
