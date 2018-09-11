@@ -7,6 +7,8 @@ policies. For more information, see https://usbguard.github.io/
 
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
+    button_next: mouse button to switch next device (default 4)
+    button_previous: mouse button to switch previous device (default 5)
     filters: specify a list of filters to use:
         (default ['None', 'any', 'allow', 'block'])
     format: display format for this module
@@ -129,6 +131,8 @@ class Py3status:
     """
     """
     allow_urgent = False
+    button_next = 4
+    button_previous = 5
     filters = ['None', 'any', 'allow', 'block']
     format = ('[{format_device_list} ]{format_button_device} {format_button_filter}'
               '[\?color=darkgray&show \|]{format_button_permanent}')
@@ -171,7 +175,7 @@ class Py3status:
         }
 
         self.filter_index = 0
-        self.filter_length = len(self.filters) - 1
+        self.filter_length = len(self.filters)
         self.device_index = 1
         self.device_length = 0
         self.permanent = self.permanent or False
@@ -331,16 +335,23 @@ class Py3status:
 
     def on_click(self, event):
         index = event['index']
+        button = event['button']
         if isinstance(index, int):
             return
         elif index == 'button_device':
-            self.device_index += 1
-            if self.device_index > self.device_length:
-                self.device_index = 0
+            if button == self.button_next:
+                self.device_index += 1
+                self.device_index %= self.device_length + 1
+            elif button == self.button_previous:
+                self.device_index -= 1
+                self.device_index %= self.device_length + 1
         elif index == 'button_filter':
-            self.filter_index += 1
-            if self.filter_index > self.filter_length:
-                self.filter_index = 0
+            if button == self.button_next:
+                self.filter_index += 1
+                self.filter_index %= self.filter_length
+            elif button == self.button_previous:
+                self.filter_index -= 1
+                self.filter_index %= self.filter_length
         elif index == 'button_permanent':
             self.permanent = not self.permanent
         else:
@@ -360,6 +371,7 @@ class Py3status:
             )
             if self.init['permanent']:
                 self.permanent = False
+            self.device_index = 0
 
 
 if __name__ == "__main__":
