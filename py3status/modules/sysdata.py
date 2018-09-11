@@ -195,16 +195,23 @@ class Py3status:
                 'idle': int(fields[4]),
             }
 
-    def _calc_mem_info(self, unit='GiB', memi=dict, keys=list):
+    def _calc_mem_info(self, unit, meminfo, memory):
         """
         Parse /proc/meminfo, grab the memory capacity and used size
         then return; Memory size 'total_mem', Used_mem, percentage
         of used memory, and units of mem (KiB, MiB, GiB).
         """
-        total_mem_kib = memi[keys[0]]
-        total_used_mem_kib = memi[keys[0]] - memi[keys[1]]
-        cached_mem_kib = memi[keys[3]] + memi[keys[5]] - memi[keys[4]]
-        used_mem_kib = total_used_mem_kib - (memi[keys[2]] + cached_mem_kib)
+        if memory:
+            total_mem_kib = meminfo['MemTotal:']
+            used_mem_kib = total_mem_kib - meminfo['MemFree:'] - (
+                meminfo['Buffers:'] + meminfo['Cached:'] + (
+                    meminfo['SReclaimable:'] - meminfo['Shmem:']
+                )
+            )
+        else:
+            total_mem_kib = meminfo['SwapTotal:']
+            used_mem_kib = total_mem_kib - meminfo['SwapFree:']
+
         used_mem_p = 100 * used_mem_kib / total_mem_kib
 
         unit = 'B' if unit == 'dynamic' else unit
@@ -213,24 +220,18 @@ class Py3status:
         return total_mem, used_mem, used_mem_p, unit
 
     def _get_mem(self, mem_unit, swap_unit, mem, swap):
-        memi = {}
+        meminfo = {}
         result = {}
 
-        with open('/proc/meminfo', 'r') as fd:
-            for s in fd:
-                tok = s.split()
-                memi[tok[0]] = float(tok[1])
+        with open('/proc/meminfo') as f:
+            for line in f:
+                fields = line.split()
+                meminfo[fields[0]] = float(fields[1])
 
         if mem:
-            result["mem"] = self._calc_mem_info(mem_unit, memi, [
-                "MemTotal:", "MemFree:", "Buffers:",
-                "Cached:", "Shmem:", "SReclaimable:"]
-            )
-
+            result["mem"] = self._calc_mem_info(mem_unit, meminfo, True)
         if swap:
-            result["swap"] = self._calc_mem_info(swap_unit, memi, [
-                "SwapTotal:", "SwapFree:"]
-            )
+            result["swap"] = self._calc_mem_info(swap_unit, meminfo, False)
 
         return result
 
