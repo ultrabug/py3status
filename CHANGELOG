@@ -35,7 +35,6 @@ standalone fix for thread issue, by @tobes
 prevent creating timezone with to large an offset due to suspending, by @tobes
 fix order for python2, by @tobes
 allow us to get params from formats and also update them, by @tobes
-fixed typos, by Lorenz Steinert
 post-merge qa fixes, by lasers
 timewarrior: make revisions, by lasers
 add new module: timewarrior, by lasers
@@ -44,7 +43,7 @@ add new module: timewarrior, by lasers
 storage: post-review modifications, by lasers
 storage: print storage data nicely, by lasers
 docs: add storage documentation, by lasers
-updated formater doc, by Lorenz Steinert
+* updated formater doc, by Lorenz Steinert
 storage: set novaguevars vaguestorage, by lasers
 storage: implement cache name, by lasers
 storage: implement storage, by lasers
