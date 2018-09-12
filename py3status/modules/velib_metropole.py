@@ -4,10 +4,11 @@ Display Velib shared bike avaibility on our favorite stations.
 Use https://www.velib-metropole.fr/map data.
 
 You only need to set id of stations you want to monitor in station_codes param.
+Then scroll to cycle stations, and middle clic to force a refresh.
 
 Configuration parameters:
-    button_next: Display next station (default 3)
-    button_previous: Display previous station (default 1)
+    button_next: Display next station (default 5)
+    button_previous: Display previous station (default 4)
     button_refresh: refresh stations (default 2)
     cache_timeout: The time between API polling in seconds
         It is recommended to keep this at a higher value to avoid rate
@@ -66,8 +67,8 @@ class Py3status:
     """
 
     # available configuration parameters
-    button_next = 3
-    button_previous = 1
+    button_next = 5
+    button_previous = 4
     button_refresh = 2
     cache_timeout = 60
     format = "Velib Metropole: {index}/{stations} {format_station}"
