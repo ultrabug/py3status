@@ -154,7 +154,7 @@ gitignore: ignore .pytest_cache, by lasers
 sql: last minute tweaks, by lasers
 sql: python2-friendly, threshold efficiency, by lasers
 sql: add support for multiple rows, by lasers
-Added sql module, by Maikel Punie
+* Added sql module, by Maikel Punie
 py3: fix hardcoded soft=True argument, by lasers
 py3: add new helper: get_color_names_list, by lasers
 setup: add fast-entry_points, by lasers
