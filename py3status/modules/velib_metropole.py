@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Display velib available to a station.
+Display Velib shared bike avaibility on our favorite stations.
+Use https://www.velib-metropole.fr/map data.
+
+You only need to set id of stations you want to monitor in station_codes param.
 
 Configuration parameters:
     button_next: Display next station (default 3)
@@ -12,12 +15,45 @@ Configuration parameters:
     format: How to display the velib data.
         (default 'Velib Metropole: {index}/{stations} {format_station}')
     format_station: How to display the velib station data.
-        (default '{station_name}: [\\?color=station_state_code {station_state}]')
-    station_codes: List of velib station to monitor.
-        You can get stations id on map here:
-        https://www.velib-metropole.fr/map  (default [20043, 11014, 20012, 20014, 10042])
+        *(default '{station_name}: [\?color=station_state_code {station_state}]'
+            '[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]'
+            '[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]')*
+    station_codes: List of velib stations to monitor.
+        You can get stations id on map here https://www.velib-metropole.fr/map
+        (default [20043, 11014, 20012, 20014, 10042])
     thresholds: Configure colors of format station.
         (default {'station_state_code': [(0, 'good'), (1, 'bad')]})
+
+Format placeholders:
+    {format_station}            format for station details
+    {index}                     current index of displayed station, eg 1
+    {stations}                  count of stations find in station_codes, eg 12
+
+format_station placeholders:
+    {credit_card}               station take credit card?, eg 'no'
+    {density_level}             density level of the station, eg 1
+    {kiosk_state}               kiosk in working?, eg 'yes'
+    {max_bike_overflow}         max overflow bike, eg 33
+    {nb_bike} current           available bike, eg 3
+    {nb_bike_overflow}          current number of bike in overflow, eg 0
+    {nb_dock}                   number of dock, eg 0
+    {nb_e_bike_overflow}        current overflow bike, eg 0
+    {nb_e_dock}                 number of electric dock, eg 33
+    {nb_ebike}                  current number of electric bike, eg 0
+    {nb_free_dock}              current available bike places, eg 0
+    {nb_free_e_dock}            current available electric bike places, eg 30
+    {overflow}                  station support overflow, eg 'no'
+    {overflow_activation}       current state of overflow support, eg 'no'
+    {station_code}              station code, eg 10042
+    {station_due_date}          station due date timestamp, eg 1527717600 (?)
+    {station_due_date_s}        station due date, eg '2018-05-31T00:00:00' (?)
+    {station_gps_latitude}      station gps latitude, eg 48.87242006305313
+    {station_gps_longitude}     station gps longitude, eg 2.348395236282807
+    {station_name}              station location name, eg 'Enghien - Faubourg Poissonnière'
+    {station_state}             current station state, eg 'Operative'
+    {station_state_code}        current station state code, eg '0'
+    {station_type}              station type, eg 'yes' (?)
+
 """
 from datetime import datetime
 from re import sub
@@ -34,10 +70,10 @@ class Py3status:
     button_previous = 1
     button_refresh = 2
     cache_timeout = 60
-    format = u"Velib Metropole: {index}/{stations} {format_station}"
-    format_station = u"{station_name}: [\?color=station_state_code {station_state}]"
-    format_station += "[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]"
-    format_station += "[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]"
+    format = "Velib Metropole: {index}/{stations} {format_station}"
+    format_station = ("{station_name}: [\?color=station_state_code {station_state}]"
+                      "[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]"
+                      "[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]")
     station_codes = [20043, 11014, 20012, 20014, 10042]
     thresholds = {"station_state_code": [(0, "good"), (1, "bad")]}
 
@@ -69,10 +105,17 @@ class Py3status:
         if not self.station_codes:
             raise Exception("%s" % (STRING_MISSING_STATIONS))
 
+        # string to list if necessary
+        if not isinstance(self.station_codes, list):
+            self.station_codes = [self.station_codes]
+
         self.request_timeout = 10
 
         # take the whole map for first run
-        # zone is shrinked later
+        # default values take all stations
+        # around Paris
+        # Area is then shrink to only get
+        # specified stations
         self.gps_top_right_latitude = 49.0
         self.gps_top_right_longitude = 2.5
         self.gps_bot_left_latitude = 48.6
