@@ -40,8 +40,7 @@ post-merge qa fixes, by lasers
 timewarrior: make revisions, by lasers
 add new module: timewarrior, by lasers
 properly handle and log legacy storage migration, by Ultrabug
-Remove option, never treat text on stderr as command failure, by Maxim Baz
-command_output: allow ignoring stderr, by Maxim Baz
+* command_output: allow ignoring stderr, by Maxim Baz
 storage: post-review modifications, by lasers
 storage: print storage data nicely, by lasers
 docs: add storage documentation, by lasers
