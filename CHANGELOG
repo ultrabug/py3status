@@ -1,167 +1,57 @@
 version 3.13 (2018-09-12)
-sysdata: fix swap indexerror exception, by lasers
-module: default left align instead of center, by lasers
-timewarrior: remove impractical duration placeholders, by lasers
-timewarrior: add :02d for minutes and seconds, by lasers
-timewarrior: remove years, months, and weeks, by lasers
-timewarrior: add spaces to format_duration, by lasers
 * README: update Arch Linux installation instructions, by Alexis Horgix Chotard
-parse_config: decode bytes, by lasers
-sysdata: add htop-like memory usage, by lasers
+* sysdata: add htop-like memory usage, by @lasers
 * lexer fix small glitchs, by @tobes
 * config functions base64() and hide(), by @tobes
 * documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
-docs: make unrelated changes/corrections, by lasers
-parse_config: return value instead of None, by lasers
 * config parser: cleaner functions, by @tobes
 * py3status lexer updates for docs, by @tobes
 * fix BOM related documentation breakage, by @tobes
 * config parser: unify quote removal, by @tobes
 * config parser: improve unicode support, by @tobes
 * config parser: add explicit exceptions, by @tobes
-sql: don't make placeholders case-sensitive, by lasers
-external_script: cast numeric output automatically, by lasers
+* external_script: cast numeric output automatically, by @lasers
 * fix empty seeming composite block issue, by @tobes
-timew: fix future bug caused by copy and paste, by lasers
-exchange_rate: fix issue caused by lack of testing, by lasers
-gitlab: hide {name} placeholder too, by lasers
-nvidia_smi: add missing degree celsius, by lasers
+* exchange_rate: fix issue caused by lack of testing, by @lasers
 * formatter: catch both lonely braces, by @tobes
 * clock: use format parsing to find placeholder, by @tobes
-sql, timewarrior: fix getattr(self, name) or '', by lasers
 * fedora_updates: fix issue caused by lack of testing, by @tobes
 * weather_owm: work without timezoneapi but also if you set city or location, by @tobes
 * i3pystatus: standalone fix for thread issue, by @tobes
 * prevent creating timezone with to large an offset due to suspending, by @tobes
 * allow us to get params from formats and also update them, by @tobes
-post-merge qa fixes, by lasers
-timewarrior: make revisions, by lasers
-add new module: timewarrior, by lasers
-* storage: properly handle and log legacy storage migration, by @Ultrabug
+* add new module: timewarrior, by @lasers
 * command_output: allow ignoring stderr, by Maxim Baz
-storage: post-review modifications, by lasers
-storage: print storage data nicely, by lasers
-docs: add storage documentation, by lasers
 * updated formater doc, by Lorenz Steinert
-storage: set novaguevars vaguestorage, by lasers
-storage: implement cache name, by lasers
-storage: implement storage, by lasers
-storage: use $XDG_CACHE_HOME or ~/.cache, by lasers
-wanda_the_fish: fix the screenshots, by lasers
-wanda_the_fish: remove avoidable configs, by lasers
-add new module: wanda_the_fish, by lasers
-flake8: small changes to pass travis ci, by lasers
-flake8 + arch_updates: remove except, by lasers
-flake8 + fedora_updates: address invalid escape sequences, by lasers
-flake8 + clock: address invalid escape sequences, by lasers
-flake8 + wifi: address invalid escape sequences, by lasers
-flake8 + screenshots: change to inline bare excepts, by lasers
-flake8 + request: change to inline bare excepts, by lasers
-flake8 + py3: change to inline bare excepts, by lasers
-flake8 + parse_config: change to inline bare excepts, by lasers
-flake8 + i3status: change to inline bare excepts, by lasers
-flake8 + formatter: change to inline bare excepts, by lasers
-flake8 + events: change to inline bare excepts, by lasers
-flake8 + core: change to inline bare excepts, by lasers
-flake8 + autodoc: change to inline bare excepts, by lasers
-flake8 + wwan_status: change to inline bare excepts, by lasers
-flake8 + wwan: change to inline bare excepts, by lasers
-flake8 + rss_aggregator: change to inline bare excepts, by lasers
-flake8 + ns_checker: change to inline bare excepts, by lasers
-flake8 + imap: change to inline bare excepts, by lasers
-flake8 + coin_balance: change to inline bare excepts, by lasers
-flake8 + aws_bill: change to inline bare excepts, by lasers
-flake8 + sysdata: except self.py3.CommandError, by lasers
-flake8 + wifi: except self.py3.CommandError twice, by lasers
-flake8 + yubikey: except FileNotFoundError, Exception, by lasers
-flake8 + nvidia_temp: remove try/except, by lasers
-flake8 + spaceapi: except self.py3.RequestException, KeyError, TypeError, by lasers
-flake8 + yandexdisk_status: remove try/except, by lasers
-flake8 + player_control: except 4 Errors, by lasers
-flake8 + online_status: except self.py3.CommandError, URLError, by lasers
-flake8 + backlight: except self.py3.CommandError, by lasers
-flake8 + deadbeef: except self.py3.CommandError, by lasers
-flake8 + clementine: except self.py3.CommandError, by lasers
-flake8 + vnstat: remove try/except, by lasers
-flake8 + rt: except ImportError, ModuleNotFoundError, by lasers
-flake8 + rate_counter: except IOError, FileNotFoundError, by lasers
-flake8 + process_status: except self.py3.CommandError, by lasers
-flake8 + keyboard_layout: except self.py3.CommandError, by lasers
-flake8 + dropboxd_status: remove try/except, by lasers
-flake8 + exchange_rate: except KeyError, by lasers
-flake8 + xscreensaver: except self.py3.CommandError, by lasers
-flake8 + selinux: except AttributeError, by lasers
-flake8 + cmus: except self.py3.CommandError, by lasers
-flake8 + moc: except self.py3.CommandError, by lasers
-flake8 + core: ignore F901 warning, by lasers
-flake8: permit bare excepts on known files and modules, by lasers
-flake8: remove error ignores for sysdata, by lasers
-flake8: ignore W504, W605 warnings, by lasers
-mail: fix the screenshots, by lasers
-add new module: mail, by lasers
-module: align modules with py3status instead of i3bar, by lasers
-spaceapi: prevent button refresh, by lasers
+* storage: properly handle and log legacy storage migration, by @Ultrabug
+* storage: use $XDG_CACHE_HOME or ~/.cache, by @lasers
+* add new module: wanda_the_fish, by @lasers
+* flake8: resolve several warnings and errors, by @lasers
+* add new module: mail, by @lasers
+* module: align modules with py3status instead of i3bar, by @lasers
 * github: update github notifications link with scope, by @su8
-nvidia_smi: remove a trailing whitespace, by lasers
-nvidia_smi: fix SAMPLE_DATA_ERROR, by lasers
-test_module_doc: fix modules to remove all ignore items, by lasers
-timer: replace make_2_digit with format, by lasers
-weather_yahoo: replace http with secure https, by lasers
-weather_owm: replace http with secure https, by lasers
-twitch: replace http with secure https, by lasers
-taskwarrior: replace http with secure https, by lasers
-spaceapi: replace http with secure https, by lasers
-rt: replace http with secure https, by lasers
-online_status: replace http with secure https, by lasers
-gpmdp: replace http with secure https, by lasers
-glpi: replace http with secure https, by lasers
-getjson: replace http with secure https, by lasers
-deadbeef: replace http with secure https, by lasers
-clementine: replace http with secure https, by lasers
-bluetooth: replace http with secure https, by lasers
-bitcoin_price: replace http with secure https, by lasers
-aws_bill: replace http with secure https, by lasers
-air_quality: replace http with secure https, by lasers
-docs: write down the button numbers, by lasers
-module: nest align if statement inside min_width if statement, by lasers
-module: verify whether min_width is an integer, by lasers
-module: fix universal module options for python2, by lasers
-nvidia_smi: add custom helper script, by lasers
-add new module: nvidia_smi, by lasers
-wwan: use py3.get_color_names_list helper, by lasers
-thunderbird_todos: explicitly close objects, by lasers
-lm_sensors: fix the docs, by lasers
-lm_sensors: fix the docs, by lasers
-lm_sensors: new version 3.4.0+ allows json output, by lasers
-add new module: lm_sensors, by lasers
-py3: threshold_get_colors to allow name with different values, by lasers
-formatter: show values instead of faking nonexistent keys, by lasers
+* test_module_doc: fix modules to remove all ignore items, by @lasers
+* replace http with secure https in all modules, by @lasers
+* module: fix universal module options for python2, by @lasers
+* add new module: nvidia_smi, by @lasers
+* add new module: lm_sensors, by @lasers
+* py3: threshold_get_colors to allow name with different values, by @lasers
+* formatter: show values instead of faking nonexistent keys, by @lasers
 * gitlab: add pipelines status placeholder, by Cyril Levis
-formatter: return falsey properly, by lasers
-parse_config: fix lookuperror exception, by lasers
-formatter: hide block on 'None' string too, by lasers
-formatter: don't strip whitespace, by lasers
-formatter: add {:ceil} to return x or x+1, by lasers
-sysdata: make max_used_percent to simplify thresholds, by lasers
-py3: fix drunken typos, by lasers
-git-hooks: run flake8 tests first before pushing, by lasers
-parse_config: print file name too in config error messages, by lasers
-add new module: loadavg, by lasers
-sysdata: rename cpu_usage to cpu_used_percent, by lasers
-gitignore: ignore .pytest_cache, by lasers
-sql: last minute tweaks, by lasers
-sql: python2-friendly, threshold efficiency, by lasers
-sql: add support for multiple rows, by lasers
+* formatter: return falsey properly, by @lasers
+* parse_config: fix lookuperror exception, by @lasers
+* formatter: hide block on 'None' string too, by @lasers
+* formatter: don't strip whitespace, by @lasers
+* formatter: add {:ceil} to return x or x+1, by @lasers
+* git-hooks: run flake8 tests first before pushing, by @lasers
+* parse_config: print file name too in config error messages, by @lasers
+* add new module: loadavg, by @lasers
 * Added sql module, by Maikel Punie
-py3: fix hardcoded soft=True argument, by lasers
-py3: add new helper: get_color_names_list, by lasers
-setup: add fast-entry_points, by lasers
-deadbeef: use py3.command_output helper, by lasers
-deadbeef: make the format a bit more honest, by lasers
-deadbeef: deprecate 7.0, 7.1 support, by lasers
-deadbeef: add button examples, by lasers
-whatismyip: don't fetch requests between toggle states, by lasers
-whatismyip: move down on_click, by lasers
+* py3: add new helper: get_color_names_list, by @lasers
+* setup: add fast-entry_points, by @lasers
+* deadbeef: use py3.command_output helper, by @lasers
+* deadbeef: deprecate 7.0, 7.1 support, by @lasers
+* whatismyip: don't fetch requests between toggle states, by @lasers
 
 
 version 3.12 (2018-08-09)
