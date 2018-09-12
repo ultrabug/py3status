@@ -272,12 +272,11 @@ class Py3status:
     def on_click(self, event):
         button = event["button"]
         if self.stations:
+            self.refresh = False
             if button == self.button_next:
-                self.refresh = False
                 self.station_index += 1
                 self.station_index %= self.number_of_stations + 1
             elif button == self.button_previous:
-                self.refresh = False
                 self.station_index -= 1
                 self.station_index %= self.number_of_stations + 1
         elif button == self.button_refresh:
