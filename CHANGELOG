@@ -5,7 +5,7 @@ timewarrior: remove impractical duration placeholders, by lasers
 timewarrior: add :02d for minutes and seconds, by lasers
 timewarrior: remove years, months, and weeks, by lasers
 timewarrior: add spaces to format_duration, by lasers
-README: update Arch Linux installation instructions, by Alexis Horgix Chotard
+* README: update Arch Linux installation instructions, by Alexis Horgix Chotard
 parse_config: decode bytes, by lasers
 sysdata: add htop-like memory usage, by lasers
 lexer fix small glitchs, by @tobes
