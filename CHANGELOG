@@ -1,49 +1,29 @@
 version 3.13 (2018-09-12)
 sysdata: fix swap indexerror exception, by lasers
-Merge pull request #1485 from ultrabug/align-left, by lasers
 module: default left align instead of center, by lasers
-Merge pull request #1506 from ultrabug/timew-spaces, by lasers
 timewarrior: remove impractical duration placeholders, by lasers
 timewarrior: add :02d for minutes and seconds, by lasers
 timewarrior: remove years, months, and weeks, by lasers
 timewarrior: add spaces to format_duration, by lasers
 README: update Arch Linux installation instructions, by Alexis Horgix Chotard
 parse_config: decode bytes, by lasers
-Merge pull request #1493 from ultrabug/sysdata-add-htop, by Ultrabug
-Merge pull request #1490 from ultrabug/doc-module-doc-fixes, by Ultrabug
-Merge pull request #1497 from ultrabug/py3status-lexer-updates, by Ultrabug
-Merge pull request #1498 from ultrabug/config-base64-v2, by Ultrabug
 sysdata: add htop-like memory usage, by lasers
 lexer fix small glitchs, by Toby Dacre
 config functions base64() and hide(), by Toby Dacre
 documentation: module docstring fixes to remove sphinx errors plus formatting, by Toby Dacre
-Merge pull request #1489 from ultrabug/config-functions, by Ultrabug
 docs: make unrelated changes/corrections, by lasers
 parse_config: return value instead of None, by lasers
-Merge pull request #1482 from ultrabug/config-exceptions, by Ultrabug
-Merge pull request #1484 from ultrabug/config-remove-quotes, by Ultrabug
-Merge pull request #1491 from ultrabug/py3status-lexer-updates, by Ultrabug
-Merge pull request #1483 from ultrabug/config-unicode, by Ultrabug
 config functions, by Toby Dacre
 py3status lexer updates for docs, by Toby Dacre
-Merge pull request #1488 from ultrabug/doc-fix-bom, by lasers
 fix BOM related documentation breakage, by Toby Dacre
 config unify quote removal, by Toby Dacre
 config improve unicode support, by Toby Dacre
 config add explicit exceptions, by Toby Dacre
 sql: don't make placeholders case-sensitive, by lasers
 external_script: cast numeric output automatically, by lasers
-Merge pull request #1463 from ultrabug/qa-fixes-2, by Ultrabug
-Merge pull request #1462 from ultrabug/fix-exchange-rate-grrrrr, by Ultrabug
-Merge pull request #1474 from ultrabug/format-empty-composite, by Ultrabug
 fix empty seeming composite block issue, by Toby Dacre
 timew: fix future bug caused by copy and paste, by lasers
 exchange_rate: fix issue caused by lack of testing, by lasers
-Merge pull request #1460 from ultrabug/weather_owm-relax, by Ultrabug
-Merge pull request #1461 from ultrabug/fix-fedora-updates-grrrrr, by Ultrabug
-Merge pull request #1466 from ultrabug/clock-no-self-parse, by Ultrabug
-Merge pull request #1467 from ultrabug/formatter-braces, by Ultrabug
-Merge branch 'master' into clock-no-self-parse, by tobes
 gitlab: hide {name} placeholder too, by lasers
 nvidia_smi: add missing degree celsius, by lasers
 formatter catch both lonely braces, by Toby Dacre
@@ -51,44 +31,28 @@ use format parsing to find placeholder, by Toby Dacre
 sql, timewarrior: fix getattr(self, name) or '', by lasers
 fix issue caused by lack of testing, by Toby Dacre
 work without api but also if you set city or location, by Toby Dacre
-Merge pull request #1457 from ultrabug/i3pystatus-standalone-fix, by Ultrabug
-Merge pull request #1456 from ultrabug/tz-race, by Ultrabug
-Merge pull request #1453 from L0ric0/doc_formater, by Ultrabug
-Merge pull request #1455 from ultrabug/params-in-format, by Ultrabug
 standalone fix for thread issue, by Toby Dacre
 prevent creating timezone with to large an offset due to suspending, by Toby Dacre
 fix order for python2, by Toby Dacre
 allow us to get params from formats and also update them, by Toby Dacre
-Merge branch 'master' of github.com:ultrabug/py3status into doc_formater, by Lorenz Steinert
 fixed typos, by Lorenz Steinert
-Merge pull request #1454 from ultrabug/qa-fixes, by lasers
 post-merge qa fixes, by lasers
-Merge pull request #1150 from lasers/newmodule-timewarrior, by lasers
 timewarrior: make revisions, by lasers
 add new module: timewarrior, by lasers
-Merge pull request #1411 from ultrabug/storage-xdg_cache_home, by Ultrabug
 properly handle and log legacy storage migration, by Ultrabug
 Remove option, never treat text on stderr as command failure, by Maxim Baz
 command_output: allow ignoring stderr, by Maxim Baz
 storage: post-review modifications, by lasers
 storage: print storage data nicely, by lasers
 docs: add storage documentation, by lasers
-Merge branch 'master' of github.com:ultrabug/py3status into doc_formater, by Lorenz Steinert
 updated formater doc, by Lorenz Steinert
 storage: set novaguevars vaguestorage, by lasers
 storage: implement cache name, by lasers
 storage: implement storage, by lasers
 storage: use $XDG_CACHE_HOME or ~/.cache, by lasers
-Merge pull request #1451 from ultrabug/wanda_the_fish, by lasers
 wanda_the_fish: fix the screenshots, by lasers
-Merge pull request #1450 from ultrabug/flake8, by Ultrabug
-Merge pull request #1447 from ultrabug/newmodule-wanda_the_fish, by Ultrabug
 wanda_the_fish: remove avoidable configs, by lasers
 add new module: wanda_the_fish, by lasers
-Merge pull request #1436 from ultrabug/module-alignment, by Ultrabug
-Merge branch 'master' into module-alignment, by Ultrabug
-Merge pull request #1221 from lasers/formatter-returns-falsey, by Ultrabug
-Merge branch 'master' into formatter-returns-falsey, by Ultrabug
 flake8: small changes to pass travis ci, by lasers
 flake8 + arch_updates: remove except, by lasers
 flake8 + fedora_updates: address invalid escape sequences, by lasers
@@ -136,23 +100,15 @@ flake8 + core: ignore F901 warning, by lasers
 flake8: permit bare excepts on known files and modules, by lasers
 flake8: remove error ignores for sysdata, by lasers
 flake8: ignore W504, W605 warnings, by lasers
-Merge pull request #1449 from ultrabug/mail-docs, by lasers
 mail: fix the screenshots, by lasers
-Merge pull request #1210 from lasers/newmodule-mail, by lasers
 add new module: mail, by lasers
 module: align modules with py3status instead of i3bar, by lasers
-Merge pull request #1448 from ultrabug/spaceapi-prevent-refresh, by lasers
 spaceapi: prevent button refresh, by lasers
-Merge pull request #1446 from su8/master, by lasers
 github.py: Fix the link to github notifications to include the notifications scope automatically for the user, by su8
-Merge pull request #1445 from ultrabug/sample-nvidia, by lasers
 nvidia_smi: remove a trailing whitespace, by lasers
-Merge pull request #1444 from ultrabug/test_module_doc, by lasers
 nvidia_smi: fix SAMPLE_DATA_ERROR, by lasers
 test_module_doc: fix modules to remove all ignore items, by lasers
-Merge pull request #1443 from ultrabug/timer-optimization, by lasers
 timer: replace make_2_digit with format, by lasers
-Merge pull request #1442 from ultrabug/secure-https, by lasers
 weather_yahoo: replace http with secure https, by lasers
 weather_owm: replace http with secure https, by lasers
 twitch: replace http with secure https, by lasers
@@ -169,77 +125,45 @@ bluetooth: replace http with secure https, by lasers
 bitcoin_price: replace http with secure https, by lasers
 aws_bill: replace http with secure https, by lasers
 air_quality: replace http with secure https, by lasers
-Merge pull request #1441 from ultrabug/button-docs, by lasers
 docs: write down the button numbers, by lasers
-Merge pull request #1438 from ultrabug/module-nest, by lasers
 module: nest align if statement inside min_width if statement, by lasers
-Merge pull request #1437 from ultrabug/verify-min_width, by lasers
 module: verify whether min_width is an integer, by lasers
-Merge pull request #1412 from ultrabug/parse_config_error, by Ultrabug
-Merge pull request #1434 from ultrabug/module-alignment, by lasers
 module: fix universal module options for python2, by lasers
-Merge pull request #1134 from lasers/newmodule-nvidia_smi, by lasers
 nvidia_smi: add custom helper script, by lasers
 add new module: nvidia_smi, by lasers
-Merge pull request #1427 from ultrabug/wwan-color-names, by lasers
 wwan: use py3.get_color_names_list helper, by lasers
-Merge pull request #1413 from ultrabug/add-fast-entry_points, by Ultrabug
-Merge branch 'master' into add-fast-entry_points, by Ultrabug
-Merge pull request #1430 from ultrabug/thunderbird_todos_qa, by lasers
 thunderbird_todos: explicitly close objects, by lasers
 lm_sensors: fix the docs, by lasers
-Merge pull request #1429 from ultrabug/lm_sensors-docs, by lasers
 lm_sensors: fix the docs, by lasers
-Merge pull request #1294 from lasers/newmodule-lm_sensors, by lasers
 lm_sensors: new version 3.4.0+ allows json output, by lasers
 add new module: lm_sensors, by lasers
-Merge pull request #1428 from ultrabug/py3-auto-threshold, by Ultrabug
 py3: threshold_get_colors to allow name with different values, by lasers
-Merge pull request #1426 from ultrabug/formatter-nonexistent, by lasers
 formatter: show values instead of faking nonexistent keys, by lasers
-Merge pull request #1425 from cyrinux/addGitlabPipelineStatus, by lasers
 travis fix, by Cyril Levis
 add pipelines status placeholder, by Cyril Levis
 formatter: return falsey properly, by lasers
 parse_config: fix lookuperror exception, by lasers
-Merge pull request #1419 from ultrabug/formatter-none_str, by lasers
 formatter: hide block on 'None' string too, by lasers
-Merge pull request #1420 from ultrabug/formatter-whitespace, by lasers
 formatter: don't strip whitespace, by lasers
-Merge pull request #1424 from ultrabug/formatter-add-ceil, by lasers
 formatter: add {:ceil} to return x or x+1, by lasers
-Merge pull request #1423 from ultrabug/sysdata-max-thresholds, by lasers
 sysdata: make max_used_percent to simplify thresholds, by lasers
-Merge pull request #1422 from ultrabug/py3spell.py, by lasers
 py3: fix drunken typos, by lasers
-Merge pull request #1421 from ultrabug/flake8-hook, by lasers
 git-hooks: run flake8 tests first before pushing, by lasers
-Merge pull request #1418 from ultrabug/parse_config-file, by lasers
 parse_config: print file name too in config error messages, by lasers
-Merge pull request #1417 from ultrabug/newmodule-loadavg, by lasers
 add new module: loadavg, by lasers
-Merge pull request #1305 from lasers/sysdata-cpu_used_percent, by lasers
 sysdata: rename cpu_usage to cpu_used_percent, by lasers
-Merge pull request #1416 from ultrabug/pytest_cache, by lasers
 gitignore: ignore .pytest_cache, by lasers
-Merge pull request #1318 from lasers/sql-support-rows, by lasers
 sql: last minute tweaks, by lasers
 sql: python2-friendly, threshold efficiency, by lasers
 sql: add support for multiple rows, by lasers
 Added sql module, by Maikel Punie
-Merge pull request #1415 from ultrabug/soft-composite, by lasers
 py3: fix hardcoded soft=True argument, by lasers
-Merge pull request #1414 from ultrabug/py3-get_color_names_list, by lasers
 py3: add new helper: get_color_names_list, by lasers
 setup: add fast-entry_points, by lasers
-Merge pull request #1410 from ultrabug/0xDEADBEEF, by lasers
 deadbeef: use py3.command_output helper, by lasers
 deadbeef: make the format a bit more honest, by lasers
-Merge pull request #1324 from lasers/deadbeef-depreciate-old-versions, by lasers
 deadbeef: deprecate 7.0, 7.1 support, by lasers
-Merge pull request #1300 from lasers/deadbeef-add-deadman-switches, by lasers
 deadbeef: add button examples, by lasers
-Merge pull request #1409 from ultrabug/whatismyip-toggle, by lasers
 whatismyip: don't fetch requests between toggle states, by lasers
 whatismyip: move down on_click, by lasers
 Revert black migration, by Ultrabug
