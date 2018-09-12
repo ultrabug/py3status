@@ -103,7 +103,7 @@ mail: fix the screenshots, by lasers
 add new module: mail, by lasers
 module: align modules with py3status instead of i3bar, by lasers
 spaceapi: prevent button refresh, by lasers
-github.py: Fix the link to github notifications to include the notifications scope automatically for the user, by su8
+* github: update github notifications link with scope, by @su8
 nvidia_smi: remove a trailing whitespace, by lasers
 nvidia_smi: fix SAMPLE_DATA_ERROR, by lasers
 test_module_doc: fix modules to remove all ignore items, by lasers
