@@ -39,7 +39,7 @@ fixed typos, by Lorenz Steinert
 post-merge qa fixes, by lasers
 timewarrior: make revisions, by lasers
 add new module: timewarrior, by lasers
-properly handle and log legacy storage migration, by Ultrabug
+* storage: properly handle and log legacy storage migration, by @Ultrabug
 * command_output: allow ignoring stderr, by Maxim Baz
 storage: post-review modifications, by lasers
 storage: print storage data nicely, by lasers
@@ -164,15 +164,6 @@ deadbeef: deprecate 7.0, 7.1 support, by lasers
 deadbeef: add button examples, by lasers
 whatismyip: don't fetch requests between toggle states, by lasers
 whatismyip: move down on_click, by lasers
-Revert black migration, by Ultrabug
-fix travis using tox-travis maybe, by Ultrabug
-make travis and tox play nicer, by Ultrabug
-CI: enforce black validation and update test environments, by Ultrabug
-black migration: setup, by Ultrabug
-black migration: documentation builder, by Ultrabug
-black migration: tests, by Ultrabug
-black migration: modules, by Ultrabug
-black migration: core components, by Ultrabug
 
 
 version 3.12 (2018-08-09)
