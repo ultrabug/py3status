@@ -8,33 +8,32 @@ timewarrior: add spaces to format_duration, by lasers
 * README: update Arch Linux installation instructions, by Alexis Horgix Chotard
 parse_config: decode bytes, by lasers
 sysdata: add htop-like memory usage, by lasers
-lexer fix small glitchs, by @tobes
-config functions base64() and hide(), by @tobes
-documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
+* lexer fix small glitchs, by @tobes
+* config functions base64() and hide(), by @tobes
+* documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
 docs: make unrelated changes/corrections, by lasers
 parse_config: return value instead of None, by lasers
-config functions, by @tobes
-py3status lexer updates for docs, by @tobes
-fix BOM related documentation breakage, by @tobes
-config unify quote removal, by @tobes
-config improve unicode support, by @tobes
-config add explicit exceptions, by @tobes
+* config parser: cleaner functions, by @tobes
+* py3status lexer updates for docs, by @tobes
+* fix BOM related documentation breakage, by @tobes
+* config parser: unify quote removal, by @tobes
+* config parser: improve unicode support, by @tobes
+* config parser: add explicit exceptions, by @tobes
 sql: don't make placeholders case-sensitive, by lasers
 external_script: cast numeric output automatically, by lasers
-fix empty seeming composite block issue, by @tobes
+* fix empty seeming composite block issue, by @tobes
 timew: fix future bug caused by copy and paste, by lasers
 exchange_rate: fix issue caused by lack of testing, by lasers
 gitlab: hide {name} placeholder too, by lasers
 nvidia_smi: add missing degree celsius, by lasers
-formatter catch both lonely braces, by @tobes
-use format parsing to find placeholder, by @tobes
+* formatter: catch both lonely braces, by @tobes
+* clock: use format parsing to find placeholder, by @tobes
 sql, timewarrior: fix getattr(self, name) or '', by lasers
-fix issue caused by lack of testing, by @tobes
-work without api but also if you set city or location, by @tobes
-standalone fix for thread issue, by @tobes
-prevent creating timezone with to large an offset due to suspending, by @tobes
-fix order for python2, by @tobes
-allow us to get params from formats and also update them, by @tobes
+* fedora_updates: fix issue caused by lack of testing, by @tobes
+* weather_owm: work without timezoneapi but also if you set city or location, by @tobes
+* i3pystatus: standalone fix for thread issue, by @tobes
+* prevent creating timezone with to large an offset due to suspending, by @tobes
+* allow us to get params from formats and also update them, by @tobes
 post-merge qa fixes, by lasers
 timewarrior: make revisions, by lasers
 add new module: timewarrior, by lasers
