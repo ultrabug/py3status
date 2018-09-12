@@ -734,7 +734,6 @@ version 1.6 (2014-10-07)
 * Update sysdata.py module, by @fhaun
 * rename the 'examples' folder to 'modules'
 * add an information note in the keyboard module
-* Merge pull request #34 from rayeshman/master
 * normalize the CACHE_TIMEOUT variable name
 * PEP8 and cleanup of scratchpad-counter module
 * PEP8 and normalization of mpd_status module
@@ -758,7 +757,6 @@ version 1.4 (2014-04-16)
 * new ordering mechanism with verbose logging. fixes rare cases where the modules methods were not always loaded in the same order and caused inconsistent ordering between reloads. thx to @guiniol for reporting/debugging and @IotaSpencer and @tasse for testing.
 * debug: dont catch print() on debug mode
 * debug: add position requested by modules
-* Merge pull request #25 from nawadanp/master
 * Add new module ns_checker.py, by @nawadanp
 * move README to markdown, change ordering
 * update the README with the new options from --help
@@ -776,7 +774,6 @@ version 1.2 (2014-01-12)
 * fix delay on first execution of each module which could be equal to py3status interval time before being executed
 * the real i3status thread output json list is passed to all modules as the i3status_output_json parameter, this allows any user module to change any of the i3status output by simply altering the given json on the list, inspired thx to @drestebon on issue #23
 * add validation for the position parameter
-* Merge pull request #21 from patrickshan/master
 * make cpu status cached for 10s and leave the output index to 0, by Patrick Shan
 * add cpu usage info to sysdata script, by Patrick Shan
 
@@ -794,7 +791,6 @@ version 1.1 (2013-12-15)
 * fix i3status time adjustment when format does not contain the necessary items to get an exact datetime wrt issue #18
 * fix respect user's locale for time transformation, thx to @Edholm on issue #18
 * new example module displaying Yahoo Weather forcast
-* Merge pull request #15 from alethiophile/master
 * Float update-time option, by Tom Hunt
 
 version 1.0 (2013-08-30)
@@ -824,11 +820,9 @@ version 0.12 (2013-06-19)
 * dont call private and special methods on Py3status classes
 * handle multiple include paths parameters
 * dont die on IOError upon suspend wrt issue #10 thx to @drahier
-* Merge pull request #9 from shahinism/master
 * Three new method added. (net_speed, traffic, ram_info), by Shahin Azad
 
 version 0.11 (2013-04-30)
-* Merge pull request #8 from edk141/pr-1
 * fix UserModules.clear(), by Ed Kellett
 * fix i3status config reader tztime detection
 
@@ -849,7 +843,6 @@ version 0.9 (2013-04-17)
 * glpi module dont need to be aggressive on timeout anymore, add POSITION parameter
 * enhanced self key binding pomodoro example as discussed with Fandekasp
 * Handle killing of user-written modules nicely by calling their kill method if implemented upon exit of py3status, ignore kill methods execution when running normally
-* Merge pull request #4 from Fandekasp/pomodoro
 * handle case log file does not exists, by Adrien Lemaire
 * plugin now working with keys to start/stop/pause, by Adrien Lemaire
 * reading log file for value. Do I really need watchdog ?, by Adrien Lemaire
