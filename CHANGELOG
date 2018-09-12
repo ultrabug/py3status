@@ -1,56 +1,57 @@
-version 3.13 (2018-09-12)
+version 3.13 (2018-09-28)
+* @lasers has become the second collaborator of the py3status project !
 * README: update Arch Linux installation instructions, by Alexis Horgix Chotard
-* sysdata: add htop-like memory usage, by @lasers
-* lexer fix small glitchs, by @tobes
 * config functions base64() and hide(), by @tobes
-* documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
-* config parser: cleaner functions, by @tobes
-* py3status lexer updates for docs, by @tobes
-* fix BOM related documentation breakage, by @tobes
-* config parser: unify quote removal, by @tobes
-* config parser: improve unicode support, by @tobes
 * config parser: add explicit exceptions, by @tobes
-* external_script: cast numeric output automatically, by @lasers
+* config parser: cleaner functions, by @tobes
+* config parser: improve unicode support, by @tobes
+* config parser: unify quote removal, by @tobes
+* fix BOM related documentation breakage, by @tobes
 * fix empty seeming composite block issue, by @tobes
-* exchange_rate: fix issue caused by lack of testing, by @lasers
+* flake8: resolve several warnings and errors, by @lasers
+* formatter: add {:ceil} to return x or x+1, by @lasers
 * formatter: catch both lonely braces, by @tobes
-* clock: use format parsing to find placeholder, by @tobes
-* fedora_updates: fix issue caused by lack of testing, by @tobes
-* weather_owm: work without timezoneapi but also if you set city or location, by @tobes
-* i3pystatus: standalone fix for thread issue, by @tobes
+* formatter: don't strip whitespace, by @lasers
+* formatter: hide block on 'None' string too, by @lasers
+* formatter: return falsey properly, by @lasers
+* formatter: show values instead of faking nonexistent keys, by @lasers
+* lexer fix small glitchs, by @tobes
+* module: align modules with py3status instead of i3bar, by @lasers
+* module: fix universal module options for python2, by @lasers
+* parse_config: fix lookuperror exception, by @lasers
+* parse_config: print file name too in config error messages, by @lasers
 * prevent creating timezone with to large an offset due to suspending, by @tobes
-* allow us to get params from formats and also update them, by @tobes
+* py3: add new helper: get_color_names_list, by @lasers
+* py3: threshold_get_colors to allow name with different values, by @lasers
+* py3status lexer updates for docs, by @tobes
+* add new module: lm_sensors, by @lasers
+* add new module: loadavg, by @lasers
+* add new module: mail, by @lasers
+* add new module: nvidia_smi, by @lasers
 * add new module: timewarrior, by @lasers
+* add new module: wanda_the_fish, by @lasers
+* Added sql module, by Maikel Punie
+* allow us to get params from formats and also update them, by @tobes
+* clock: use format parsing to find placeholder, by @tobes
 * command_output: allow ignoring stderr, by Maxim Baz
-* updated formater doc, by Lorenz Steinert
+* deadbeef: deprecate 7.0, 7.1 support, by @lasers
+* deadbeef: use py3.command_output helper, by @lasers
+* documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
+* exchange_rate: fix issue caused by lack of testing, by @lasers
+* external_script: cast numeric output automatically, by @lasers
+* fedora_updates: fix issue caused by lack of testing, by @tobes
+* git-hooks: run flake8 tests first before pushing, by @lasers
+* github: update github notifications link with scope, by @su8
+* gitlab: add pipelines status placeholder, by @cyrinux
+* i3pystatus: standalone fix for thread issue, by @tobes
+* replace http with secure https in all modules, by @lasers
+* setup: add fast-entry_points, by @lasers
 * storage: properly handle and log legacy storage migration, by @Ultrabug
 * storage: use $XDG_CACHE_HOME or ~/.cache, by @lasers
-* add new module: wanda_the_fish, by @lasers
-* flake8: resolve several warnings and errors, by @lasers
-* add new module: mail, by @lasers
-* module: align modules with py3status instead of i3bar, by @lasers
-* github: update github notifications link with scope, by @su8
+* sysdata: add htop-like memory usage, by @lasers
 * test_module_doc: fix modules to remove all ignore items, by @lasers
-* replace http with secure https in all modules, by @lasers
-* module: fix universal module options for python2, by @lasers
-* add new module: nvidia_smi, by @lasers
-* add new module: lm_sensors, by @lasers
-* py3: threshold_get_colors to allow name with different values, by @lasers
-* formatter: show values instead of faking nonexistent keys, by @lasers
-* gitlab: add pipelines status placeholder, by @cyrinux
-* formatter: return falsey properly, by @lasers
-* parse_config: fix lookuperror exception, by @lasers
-* formatter: hide block on 'None' string too, by @lasers
-* formatter: don't strip whitespace, by @lasers
-* formatter: add {:ceil} to return x or x+1, by @lasers
-* git-hooks: run flake8 tests first before pushing, by @lasers
-* parse_config: print file name too in config error messages, by @lasers
-* add new module: loadavg, by @lasers
-* Added sql module, by Maikel Punie
-* py3: add new helper: get_color_names_list, by @lasers
-* setup: add fast-entry_points, by @lasers
-* deadbeef: use py3.command_output helper, by @lasers
-* deadbeef: deprecate 7.0, 7.1 support, by @lasers
+* updated formater doc, by Lorenz Steinert
+* weather_owm: work without timezoneapi but also if you set city or location, by @tobes
 * whatismyip: don't fetch requests between toggle states, by @lasers
 
 
@@ -734,7 +735,6 @@ version 1.6 (2014-10-07)
 * Update sysdata.py module, by @fhaun
 * rename the 'examples' folder to 'modules'
 * add an information note in the keyboard module
-* Merge pull request #34 from rayeshman/master
 * normalize the CACHE_TIMEOUT variable name
 * PEP8 and cleanup of scratchpad-counter module
 * PEP8 and normalization of mpd_status module
@@ -758,7 +758,6 @@ version 1.4 (2014-04-16)
 * new ordering mechanism with verbose logging. fixes rare cases where the modules methods were not always loaded in the same order and caused inconsistent ordering between reloads. thx to @guiniol for reporting/debugging and @IotaSpencer and @tasse for testing.
 * debug: dont catch print() on debug mode
 * debug: add position requested by modules
-* Merge pull request #25 from nawadanp/master
 * Add new module ns_checker.py, by @nawadanp
 * move README to markdown, change ordering
 * update the README with the new options from --help
@@ -776,7 +775,6 @@ version 1.2 (2014-01-12)
 * fix delay on first execution of each module which could be equal to py3status interval time before being executed
 * the real i3status thread output json list is passed to all modules as the i3status_output_json parameter, this allows any user module to change any of the i3status output by simply altering the given json on the list, inspired thx to @drestebon on issue #23
 * add validation for the position parameter
-* Merge pull request #21 from patrickshan/master
 * make cpu status cached for 10s and leave the output index to 0, by Patrick Shan
 * add cpu usage info to sysdata script, by Patrick Shan
 
@@ -794,7 +792,6 @@ version 1.1 (2013-12-15)
 * fix i3status time adjustment when format does not contain the necessary items to get an exact datetime wrt issue #18
 * fix respect user's locale for time transformation, thx to @Edholm on issue #18
 * new example module displaying Yahoo Weather forcast
-* Merge pull request #15 from alethiophile/master
 * Float update-time option, by Tom Hunt
 
 version 1.0 (2013-08-30)
@@ -824,11 +821,9 @@ version 0.12 (2013-06-19)
 * dont call private and special methods on Py3status classes
 * handle multiple include paths parameters
 * dont die on IOError upon suspend wrt issue #10 thx to @drahier
-* Merge pull request #9 from shahinism/master
 * Three new method added. (net_speed, traffic, ram_info), by Shahin Azad
 
 version 0.11 (2013-04-30)
-* Merge pull request #8 from edk141/pr-1
 * fix UserModules.clear(), by Ed Kellett
 * fix i3status config reader tztime detection
 
@@ -849,7 +844,6 @@ version 0.9 (2013-04-17)
 * glpi module dont need to be aggressive on timeout anymore, add POSITION parameter
 * enhanced self key binding pomodoro example as discussed with Fandekasp
 * Handle killing of user-written modules nicely by calling their kill method if implemented upon exit of py3status, ignore kill methods execution when running normally
-* Merge pull request #4 from Fandekasp/pomodoro
 * handle case log file does not exists, by Adrien Lemaire
 * plugin now working with keys to start/stop/pause, by Adrien Lemaire
 * reading log file for value. Do I really need watchdog ?, by Adrien Lemaire
