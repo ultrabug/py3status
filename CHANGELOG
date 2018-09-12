@@ -139,8 +139,7 @@ lm_sensors: new version 3.4.0+ allows json output, by lasers
 add new module: lm_sensors, by lasers
 py3: threshold_get_colors to allow name with different values, by lasers
 formatter: show values instead of faking nonexistent keys, by lasers
-travis fix, by Cyril Levis
-add pipelines status placeholder, by Cyril Levis
+* gitlab: add pipelines status placeholder, by Cyril Levis
 formatter: return falsey properly, by lasers
 parse_config: fix lookuperror exception, by lasers
 formatter: hide block on 'None' string too, by lasers
