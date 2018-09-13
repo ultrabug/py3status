@@ -450,6 +450,11 @@ when the modules ``on_click()`` method is called the event will include this.
 Supplied index values should be strings.  If no index is given then it will
 have an integer value indicating its position in the composite.
 
+If you are trying to pass off a number in a string, it will be constructed as
+an integer so you should prefix it with a proper name, e.g., ``task/2``,
+``id/4``, or ``device/3`` to be split up later or to make a dict to track
+keys:values, e.g., ``allow``/``block``/``reject`` to ``0``/``1``/``2``.
+
 
 Module data storage
 -------------------
