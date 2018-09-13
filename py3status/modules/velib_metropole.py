@@ -7,23 +7,22 @@ You only need to set id of stations you want to monitor in station_codes param.
 Then scroll to cycle stations, and middle clic to force a refresh.
 
 Configuration parameters:
-    button_next: Display next station (default 5)
-    button_previous: Display previous station (default 4)
-    button_refresh: refresh stations (default 2)
+    button_next: Display next station (default 4)
+    button_previous: Display previous station (default 5)
     cache_timeout: The time between API polling in seconds
         It is recommended to keep this at a higher value to avoid rate
         limiting with the API's. (default 60)
     format: How to display the velib data.
-        (default 'Velib Metropole: {index}/{stations} {format_station}')
+        (default '{format_station} {index}/{stations}')
     format_station: How to display the velib station data.
         *(default '{station_name}: [\?color=station_state_code {station_state}]'
-            '[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]'
-            '[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]')*
+        '[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]'
+        '[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]')*
     station_codes: List of velib stations to monitor.
         You can get stations id on map here https://www.velib-metropole.fr/map
         (default [20043, 11014, 20012, 20014, 10042])
     thresholds: Configure colors of format station.
-        (default {'station_state_code': [(0, 'good'), (1, 'bad')]})
+        (default [(0, 'good'), (1, 'bad')])
 
 Format placeholders:
     {format_station}            format for station details
@@ -58,6 +57,7 @@ format_station placeholders:
 """
 from datetime import datetime
 from re import sub
+from time import time
 
 STRING_MISSING_STATIONS = "No velib stations set"
 
@@ -67,16 +67,17 @@ class Py3status:
     """
 
     # available configuration parameters
-    button_next = 5
-    button_previous = 4
-    button_refresh = 2
+    button_next = 4
+    button_previous = 5
     cache_timeout = 60
-    format = "Velib Metropole: {index}/{stations} {format_station}"
-    format_station = ("{station_name}: [\?color=station_state_code {station_state}]"
-                      "[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]"
-                      "[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]")
+    format = "{format_station} {index}/{stations}"
+    format_station = (
+        "{station_name}: [\?color=station_state_code {station_state}]"
+        "[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]"
+        "[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]"
+    )
     station_codes = [20043, 11014, 20012, 20014, 10042]
-    thresholds = {"station_state_code": [(0, "good"), (1, "bad")]}
+    thresholds = [(0, "good"), (1, "bad")]
 
     class Meta:
         update_config = {
@@ -104,39 +105,37 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.station_codes:
-            raise Exception("%s" % (STRING_MISSING_STATIONS))
+            raise Exception(STRING_MISSING_STATIONS)
 
         # string to list if necessary
         if not isinstance(self.station_codes, list):
             self.station_codes = [self.station_codes]
-
-        self.request_timeout = 10
 
         # take the whole map for first run
         # default values take all stations
         # around Paris
         # Area is then shrink to only get
         # specified stations
-        self.gps_top_right_latitude = 49.0
-        self.gps_top_right_longitude = 2.5
-        self.gps_bot_left_latitude = 48.6
-        self.gps_bot_left_longitude = 2.2
-        self.gps_zoom_level = 15
-
+        self.gps_dict = {
+            "top_latitude": 49.0,
+            "top_longitude": 2.5,
+            "bottom_latitude": 48.6,
+            "bottom_longitude": 2.2,
+            "zoom_level": 15,
+        }
+        self.idle_time = 0
+        self.request_timeout = 10
         self.station_states = {"Operative": 0, "Close": 1}
-
-        json = self._get_velib_data()
-        if json:
-            self.number_of_stations, self.stations = self._manipulate(json)
-            self._get_usefull_area(self.stations)
+        self.station_index = 1
+        self.stations = {}
+        self.optimal_area = False
+        self.first_start = True
 
         # get placeholders
         self.placeholders = []
-        for x in ["format", "format_station"]:
-            self.placeholders.append(self.py3.get_placeholders_list(x))
-
-        self.refresh = True
-        self.station_index = 1
+        for x in [self.format, self.format_station]:
+            self.placeholders += self.py3.get_placeholders_list(x)
+        self.placeholders += ["station_gps_latitude", "station_gps_longitude"]
 
     def _camel_to_snake_case(self, data):
         if not isinstance(data, (int, float)):
@@ -155,7 +154,7 @@ class Py3status:
                 pass
         return value
 
-    def _get_usefull_area(self, data):
+    def _set_optimal_area(self, data):
         """
         reduce the zone to reduce the size of fetched data on refresh
         """
@@ -165,38 +164,34 @@ class Py3status:
         for x in data:
             latitudes.append(float(data[x]["station_gps_latitude"]))
             longitudes.append(float(data[x]["station_gps_longitude"]))
-        self.gps_top_right_latitude = max(latitudes)
-        self.gps_top_right_longitude = max(longitudes)
-        self.gps_bot_left_latitude = min(latitudes)
-        self.gps_bot_left_longitude = min(longitudes)
+        self.gps_dict.update(
+            {
+                "top_latitude": max(latitudes),
+                "top_longitude": max(longitudes),
+                "bottom_latitude": min(latitudes),
+                "bottom_longitude": min(longitudes),
+            }
+        )
+        self.optimal_area = True
 
     def _get_velib_data(self):
-        url = "".join(
-            [
-                "https://www.velib-metropole.fr/webapi/map/details?",
-                "gpsTopLatitude=%s",
-                "&gpsTopLongitude=%s",
-                "&gpsBotLatitude=%s",
-                "&gpsBotLongitude=%s",
-                "&zoomLevel=%s",
-            ]
-        )
-        url = url % (
-            self.gps_top_right_latitude,
-            self.gps_top_right_longitude,
-            self.gps_bot_left_latitude,
-            self.gps_bot_left_longitude,
-            self.gps_zoom_level,
-        )
+        url = """https://www.velib-metropole.fr/webapi/map/details? \
+            gpsTopLatitude={top_latitude} \
+            &gpsTopLongitude={top_longitude} \
+            &gpsBotLatitude={bottom_latitude} \
+            &gpsBotLongitude={bottom_longitude} \
+            &zoomLevel={zoom_level}"""
 
         try:
-            return self.py3.request(url, timeout=self.request_timeout).json()
+            return self.py3.request(
+                url.format(**self.gps_dict), timeout=self.request_timeout
+            ).json()
         except self.py3.RequestException:
             return None
 
     def _manipulate(self, data):
-        index = 1
-        stations = {}
+        new_data = {}
+        stations = []
 
         for code in self.station_codes:
             new_station = {}
@@ -208,46 +203,71 @@ class Py3status:
             )
 
             # flat, camel to snake and cast...
-            for k, v in self.py3.flatten_dict(station, delimiter="_").items():
-                new_station[self._camel_to_snake_case(k)] = self._cast_number(v)
+            for key, value in self.py3.flatten_dict(station, delimiter="_").items():
+                key = self._camel_to_snake_case(key)
+                if key in self.placeholders:
+                    new_station[key] = self._cast_number(value)
 
             # station_due_date_s: station due date in dateime iso format
+            if all(
+                "station_due_date" in list for list in [new_station, self.placeholders]
+            ):
+                station_due_date = datetime.fromtimestamp(
+                    new_station["station_due_date"]
+                )
+                new_station.update({"station_due_date_s": station_due_date.isoformat()})
+
             # station_state_code: station code for thresholds
-            station_due_date = datetime.fromtimestamp(
-                int(new_station["station_due_date"])
-            )
-            new_station.update(
-                {
-                    "station_due_date_s": station_due_date.isoformat(),
-                    "station_state_code": int(
-                        self.station_states[new_station["station_state"]]
-                    ),
-                }
-            )
+            if all(
+                "station_state" in list for list in [new_station, self.placeholders]
+            ):
+                new_station.update(
+                    {
+                        "station_state_code": int(
+                            self.station_states[new_station["station_state"]]
+                        )
+                    }
+                )
 
-            stations[index] = new_station
-            index += 1
+            stations.append(new_station)
 
-        return len(stations), stations
+        # forge return
+        for index, station in enumerate(stations, 1):
+            new_data[index] = station
+
+        return new_data
 
     def velib_metropole(self):
-        if self.refresh is True:
-            # get number of stations and station list
-            json = self._get_velib_data()
-            if json:
-                self.number_of_stations, self.stations = self._manipulate(json)
+        # refresh
+        current_time = time()
+        refresh = current_time >= self.idle_time
 
-        # reset refresh
-        self.refresh = True
+        # time
+        if refresh:
+            self.idle_time = current_time + self.cache_timeout
+            cached_until = self.cache_timeout
+        else:
+            cached_until = self.idle_time - current_time
+
+        if not refresh or self.first_start:
+            self.velib_metropole_data = self._get_velib_data()
+            if self.velib_metropole_data:
+                self.stations = self._manipulate(self.velib_metropole_data)
+                # not need to try/except i think, first run
+                # will be "slower" like first implem but cleaner?
+                if not self.optimal_area:
+                    self._set_optimal_area(self.stations)
+
+        self.number_of_stations = len(self.stations) or 0
 
         if not self.stations:
-            full_text = None
+            velib_data = {"index": 1, "stations": 0, "format_station": {}}
         else:
             # reset station_index counter
             if self.station_index == 0:
                 self.station_index = 1
 
-            # thresholds
+            # thresholds TODO: FIX ME
             for x in self.thresholds:
                 if x in self.stations[self.station_index]:
                     self.py3.threshold_get_color(
@@ -262,25 +282,27 @@ class Py3status:
                 ),
                 "index": self.station_index,
             }
-            full_text = self.py3.safe_format(self.format, velib_data)
+
+        self.first_start = False
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
+            "cached_until": self.py3.time_in(cached_until),
+            "full_text": self.py3.safe_format(self.format, velib_data),
         }
 
     def on_click(self, event):
         button = event["button"]
         if self.stations:
-            self.refresh = False
             if button == self.button_next:
                 self.station_index += 1
                 self.station_index %= self.number_of_stations + 1
             elif button == self.button_previous:
                 self.station_index -= 1
                 self.station_index %= self.number_of_stations + 1
-        elif button == self.button_refresh:
-            self.refresh = True
+        elif button == 2:
+            self.idle_time = 0
+        else:
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
