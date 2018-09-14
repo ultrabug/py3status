@@ -105,17 +105,13 @@ class Py3status:
             self.url['single_project'] += '/?statistics=true'
 
         # init placeholders
-        self.init = {'thresholds': []}
+        self.init = {'thresholds': self.py3.get_color_names_list(self.format)}
         placeholders = self.py3.get_placeholders_list(self.format)
         for x in ['open_merge_requests_count', 'todos_count', 'pipelines_status']:
             self.init[x] = x in placeholders
             if self.init[x]:
                 placeholders.remove(x)
         self.init['single_project'] = bool(placeholders)
-
-        # partial future helper code
-        for x in self.format.replace('&', ' ').split('color=')[1::1]:
-            self.init['thresholds'].append(x.split()[0])
 
     def _get_data(self, url):
         try:
