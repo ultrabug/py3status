@@ -105,15 +105,12 @@ class Py3status:
         if not self.stations:
             raise Exception(STRING_MISSING_STATIONS)
 
-        # string to list if necessary
+        # int to list if necessary
         if not isinstance(self.stations, list):
             self.stations = [self.stations]
 
-        # take the whole map for first run
-        # default values take all stations
-        # around Paris
-        # Area is then shrink to only get
-        # specified stations
+        # take the whole map for first run default values take all stations
+        # around Paris Area is then shrink to only get specified stations
         self.gps_dict = {
             "gpsTopLatitude": 49.0,
             "gpsTopLongitude": 2.5,
@@ -130,13 +127,17 @@ class Py3status:
         self.optimal_area = False
         self.button_refresh = 2
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
-        # get placeholders
+        # placeholders
         self.placeholders = ["station_gps_latitude", "station_gps_longitude"]
         for x in [self.format, self.format_station]:
-            self.thresholds_init += self.py3.get_color_names_list(x)
             self.placeholders += self.py3.get_placeholders_list(x)
+
+        # thresholds
+        self.thresholds_init = {}
+        for name in ['format', 'format_station']:
+            self.thresholds_init[name] = self.py3.get_color_names_list(
+                getattr(self, name, '')
+            )
 
     def _camel_to_snake_case(self, data):
         if not isinstance(data, (int, float)):
@@ -215,6 +216,10 @@ class Py3status:
                     }
                 )
 
+            for x in self.thresholds_init['format_station']:
+                if x in new_station:
+                    self.py3.threshold_get_color(new_station[x], x)
+
             stations_data.append(new_station)
 
         # forge return
@@ -236,7 +241,7 @@ class Py3status:
             cached_until = self.idle_time - current_time
 
         if self.scrolling and not refresh:
-            self.scrolling = True
+            self.scrolling = False
             data = self.velib_metropole_data
         else:
             data = self.velib_metropole_data = self._get_velib_data()
@@ -264,7 +269,7 @@ class Py3status:
                 "index": self.station_index,
             }
 
-        for x in self.thresholds_init:
+        for x in self.thresholds_init['format']:
             if x in self.stations_data[self.station_index]:
                 self.py3.threshold_get_color(
                     self.stations_data[self.station_index][x], x
@@ -277,15 +282,13 @@ class Py3status:
 
     def on_click(self, event):
         button = event["button"]
-        self.scrolling = True
-        if button == self.button_next:
-            self.station_index += 1
-            self.station_index %= self.number_of_stations + 1
-        elif button == self.button_previous:
-            self.station_index -= 1
-            self.station_index %= self.number_of_stations + 1
+        if button in [self.button_next, self.button_previous]:
+            self.scrolling = True
+            if button == self.button_next:
+                self.station_index += 1
+            elif button == self.button_previous:
+                self.station_index -= 1
         elif button == self.button_refresh:
-            self.scrolling = False
             self.idle_time = 0
         else:
             self.py3.prevent_refresh()
