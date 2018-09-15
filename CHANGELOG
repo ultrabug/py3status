@@ -37,7 +37,7 @@ version 3.13 (2018-09-12)
 * add new module: lm_sensors, by @lasers
 * py3: threshold_get_colors to allow name with different values, by @lasers
 * formatter: show values instead of faking nonexistent keys, by @lasers
-* gitlab: add pipelines status placeholder, by Cyril Levis
+* gitlab: add pipelines status placeholder, by @cyrinux
 * formatter: return falsey properly, by @lasers
 * parse_config: fix lookuperror exception, by @lasers
 * formatter: hide block on 'None' string too, by @lasers
