@@ -60,6 +60,7 @@ from re import sub
 from time import time
 
 STRING_MISSING_STATIONS = "No velib stations set"
+VELIB_ENDPOINT = "https://www.velib-metropole.fr/webapi/map/details"
 
 
 class Py3status:
@@ -117,12 +118,13 @@ class Py3status:
         # Area is then shrink to only get
         # specified stations
         self.gps_dict = {
-            "top_latitude": 49.0,
-            "top_longitude": 2.5,
-            "bottom_latitude": 48.6,
-            "bottom_longitude": 2.2,
-            "zoom_level": 15,
+            "gpsTopLatitude": 49.0,
+            "gpsTopLongitude": 2.5,
+            "gpsBotLatitude": 48.6,
+            "gpsBotLongitude": 2.2,
+            "zoomLevel": 15,
         }
+        self.toggled = False
         self.idle_time = 0
         self.request_timeout = 10
         self.station_states = {"Operative": 0, "Close": 1}
@@ -130,6 +132,7 @@ class Py3status:
         self.stations = {}
         self.optimal_area = False
         self.first_start = True
+        self.button_refresh = 2
 
         # get placeholders
         self.placeholders = []
@@ -161,30 +164,25 @@ class Py3status:
 
         latitudes = []
         longitudes = []
+
         for x in data:
             latitudes.append(float(data[x]["station_gps_latitude"]))
             longitudes.append(float(data[x]["station_gps_longitude"]))
+
         self.gps_dict.update(
             {
-                "top_latitude": max(latitudes),
-                "top_longitude": max(longitudes),
-                "bottom_latitude": min(latitudes),
-                "bottom_longitude": min(longitudes),
+                "gpsTopLatitude": max(latitudes),
+                "gpsTopLongitude": max(longitudes),
+                "gpsBotLatitude": min(latitudes),
+                "gpsBotLongitude": min(longitudes),
             }
         )
         self.optimal_area = True
 
     def _get_velib_data(self):
-        url = """https://www.velib-metropole.fr/webapi/map/details? \
-            gpsTopLatitude={top_latitude} \
-            &gpsTopLongitude={top_longitude} \
-            &gpsBotLatitude={bottom_latitude} \
-            &gpsBotLongitude={bottom_longitude} \
-            &zoomLevel={zoom_level}"""
-
         try:
             return self.py3.request(
-                url.format(**self.gps_dict), timeout=self.request_timeout
+                VELIB_ENDPOINT, params=self.gps_dict, timeout=self.request_timeout
             ).json()
         except self.py3.RequestException:
             return None
@@ -209,18 +207,14 @@ class Py3status:
                     new_station[key] = self._cast_number(value)
 
             # station_due_date_s: station due date in dateime iso format
-            if all(
-                "station_due_date" in list for list in [new_station, self.placeholders]
-            ):
+            if all("station_due_date" in list for list in [new_station, self.placeholders]):
                 station_due_date = datetime.fromtimestamp(
                     new_station["station_due_date"]
                 )
                 new_station.update({"station_due_date_s": station_due_date.isoformat()})
 
             # station_state_code: station code for thresholds
-            if all(
-                "station_state" in list for list in [new_station, self.placeholders]
-            ):
+            if all("station_state" in list for list in [new_station, self.placeholders]):
                 new_station.update(
                     {
                         "station_state_code": int(
@@ -249,14 +243,19 @@ class Py3status:
         else:
             cached_until = self.idle_time - current_time
 
-        if not refresh or self.first_start:
-            self.velib_metropole_data = self._get_velib_data()
-            if self.velib_metropole_data:
-                self.stations = self._manipulate(self.velib_metropole_data)
-                # not need to try/except i think, first run
-                # will be "slower" like first implem but cleaner?
-                if not self.optimal_area:
-                    self._set_optimal_area(self.stations)
+        if not self.toggled and not refresh:
+            self.toggled = False
+            data = self.velib_metropole_data
+        else:
+            data = self.velib_metropole_data = self._get_velib_data()
+
+        if self.first_start:
+            data = self.velib_metropole_data = self._get_velib_data()
+
+        if data:
+            self.stations = self._manipulate(data)
+            if not self.optimal_area:
+                self._set_optimal_area(self.stations)
 
         self.number_of_stations = len(self.stations) or 0
 
@@ -292,14 +291,15 @@ class Py3status:
 
     def on_click(self, event):
         button = event["button"]
-        if self.stations:
-            if button == self.button_next:
-                self.station_index += 1
-                self.station_index %= self.number_of_stations + 1
-            elif button == self.button_previous:
-                self.station_index -= 1
-                self.station_index %= self.number_of_stations + 1
-        elif button == 2:
+        self.toggled = False
+        if button == self.button_next:
+            self.station_index += 1
+            self.station_index %= self.number_of_stations + 1
+        elif button == self.button_previous:
+            self.station_index -= 1
+            self.station_index %= self.number_of_stations + 1
+        elif button == self.button_refresh:
+            self.toggled = True
             self.idle_time = 0
         else:
             self.py3.prevent_refresh()
