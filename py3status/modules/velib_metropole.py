@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Display Velib shared bike avaibility on our favorite stations.
-Use https://www.velib-metropole.fr/map data.
-
-You only need to set id of stations you want to monitor in station_codes param.
-Then scroll to cycle stations, and middle clic to force a refresh.
+Use api from https://www.velib-metropole.fr/map.
 
 Configuration parameters:
     button_next: Display next station (default 4)
@@ -18,7 +15,7 @@ Configuration parameters:
         *(default '{station_name}: [\?color=station_state_code {station_state}]'
         '[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]'
         '[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]')*
-    station_codes: List of velib stations to monitor.
+    stations: List of velib stations to monitor.
         You can get stations id on map here https://www.velib-metropole.fr/map
         (default [20043, 11014, 20012, 20014, 10042])
     thresholds: Configure colors of format station.
@@ -27,7 +24,7 @@ Configuration parameters:
 Format placeholders:
     {format_station}            format for station details
     {index}                     current index of displayed station, eg 1
-    {stations}                  count of stations find in station_codes, eg 12
+    {stations}                  count of stations find in stations, eg 12
 
 format_station placeholders:
     {credit_card}               station take credit card?, eg 'no'
@@ -77,7 +74,7 @@ class Py3status:
         "[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]"
         "[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]"
     )
-    station_codes = [20043, 11014, 20012, 20014, 10042]
+    stations = [20043, 11014, 20012, 20014, 10042]
     thresholds = [(0, "good"), (1, "bad")]
 
     class Meta:
@@ -105,12 +102,12 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        if not self.station_codes:
+        if not self.stations:
             raise Exception(STRING_MISSING_STATIONS)
 
         # string to list if necessary
-        if not isinstance(self.station_codes, list):
-            self.station_codes = [self.station_codes]
+        if not isinstance(self.stations, list):
+            self.stations = [self.stations]
 
         # take the whole map for first run
         # default values take all stations
@@ -124,14 +121,13 @@ class Py3status:
             "gpsBotLongitude": 2.2,
             "zoomLevel": 15,
         }
-        self.toggled = False
+        self.scrolling = False
         self.idle_time = 0
         self.request_timeout = 10
         self.station_states = {"Operative": 0, "Close": 1}
         self.station_index = 1
-        self.stations = {}
+        self.stations_data = {}
         self.optimal_area = False
-        self.first_start = True
         self.button_refresh = 2
 
         # get placeholders
@@ -161,14 +157,8 @@ class Py3status:
         """
         reduce the zone to reduce the size of fetched data on refresh
         """
-
-        latitudes = []
-        longitudes = []
-
-        for x in data:
-            latitudes.append(float(data[x]["station_gps_latitude"]))
-            longitudes.append(float(data[x]["station_gps_longitude"]))
-
+        latitudes = [float(data[x]["station_gps_latitude"]) for x in data]
+        longitudes = [float(data[x]["station_gps_longitude"]) for x in data]
         self.gps_dict.update(
             {
                 "gpsTopLatitude": max(latitudes),
@@ -189,9 +179,9 @@ class Py3status:
 
     def _manipulate(self, data):
         new_data = {}
-        stations = []
+        stations_data = []
 
-        for code in self.station_codes:
+        for code in self.stations:
             new_station = {}
 
             # search station
@@ -223,10 +213,10 @@ class Py3status:
                     }
                 )
 
-            stations.append(new_station)
+            stations_data.append(new_station)
 
         # forge return
-        for index, station in enumerate(stations, 1):
+        for index, station in enumerate(stations_data, 1):
             new_data[index] = station
 
         return new_data
@@ -243,23 +233,20 @@ class Py3status:
         else:
             cached_until = self.idle_time - current_time
 
-        if not self.toggled and not refresh:
-            self.toggled = False
+        if self.scrolling and not refresh:
+            self.scrolling = True
             data = self.velib_metropole_data
         else:
             data = self.velib_metropole_data = self._get_velib_data()
 
-        if self.first_start:
-            data = self.velib_metropole_data = self._get_velib_data()
-
         if data:
-            self.stations = self._manipulate(data)
+            self.stations_data = self._manipulate(data)
             if not self.optimal_area:
-                self._set_optimal_area(self.stations)
+                self._set_optimal_area(self.stations_data)
 
-        self.number_of_stations = len(self.stations) or 0
+        self.number_of_stations = len(self.stations_data)
 
-        if not self.stations:
+        if not self.stations_data:
             velib_data = {"index": 1, "stations": 0, "format_station": {}}
         else:
             # reset station_index counter
@@ -268,21 +255,19 @@ class Py3status:
 
             # thresholds TODO: FIX ME
             for x in self.thresholds:
-                if x in self.stations[self.station_index]:
+                if x in self.stations_data[self.station_index]:
                     self.py3.threshold_get_color(
-                        self.stations[self.station_index][x], x
+                        self.stations_data[self.station_index][x], x
                     )
 
             # forge data output
             velib_data = {
                 "stations": self.number_of_stations,
                 "format_station": self.py3.safe_format(
-                    self.format_station, self.stations[self.station_index]
+                    self.format_station, self.stations_data[self.station_index]
                 ),
                 "index": self.station_index,
             }
-
-        self.first_start = False
 
         return {
             "cached_until": self.py3.time_in(cached_until),
@@ -291,7 +276,7 @@ class Py3status:
 
     def on_click(self, event):
         button = event["button"]
-        self.toggled = False
+        self.scrolling = True
         if button == self.button_next:
             self.station_index += 1
             self.station_index %= self.number_of_stations + 1
@@ -299,7 +284,7 @@ class Py3status:
             self.station_index -= 1
             self.station_index %= self.number_of_stations + 1
         elif button == self.button_refresh:
-            self.toggled = True
+            self.scrolling = False
             self.idle_time = 0
         else:
             self.py3.prevent_refresh()
