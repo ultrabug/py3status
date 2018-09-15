@@ -131,10 +131,9 @@ class Py3status:
         self.button_refresh = 2
 
         # get placeholders
-        self.placeholders = []
+        self.placeholders = ["station_gps_latitude", "station_gps_longitude"]
         for x in [self.format, self.format_station]:
             self.placeholders += self.py3.get_placeholders_list(x)
-        self.placeholders += ["station_gps_latitude", "station_gps_longitude"]
 
     def _camel_to_snake_case(self, data):
         if not isinstance(data, (int, float)):
