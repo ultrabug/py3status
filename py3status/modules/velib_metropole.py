@@ -130,9 +130,12 @@ class Py3status:
         self.optimal_area = False
         self.button_refresh = 2
 
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+
         # get placeholders
         self.placeholders = ["station_gps_latitude", "station_gps_longitude"]
         for x in [self.format, self.format_station]:
+            self.thresholds_init += self.py3.get_color_names_list(x)
             self.placeholders += self.py3.get_placeholders_list(x)
 
     def _camel_to_snake_case(self, data):
@@ -252,13 +255,6 @@ class Py3status:
             if self.station_index == 0:
                 self.station_index = 1
 
-            # thresholds TODO: FIX ME
-            for x in self.thresholds:
-                if x in self.stations_data[self.station_index]:
-                    self.py3.threshold_get_color(
-                        self.stations_data[self.station_index][x], x
-                    )
-
             # forge data output
             velib_data = {
                 "stations": self.number_of_stations,
@@ -267,6 +263,12 @@ class Py3status:
                 ),
                 "index": self.station_index,
             }
+
+        for x in self.thresholds_init:
+            if x in self.stations_data[self.station_index]:
+                self.py3.threshold_get_color(
+                    self.stations_data[self.station_index][x], x
+                )
 
         return {
             "cached_until": self.py3.time_in(cached_until),
