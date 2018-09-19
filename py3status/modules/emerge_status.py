@@ -5,16 +5,9 @@ emerge status if there is an emerge process currently running
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in second (default 0)
-    format: *(default '[[\\?if=!hide_if_stopped {prefix}]|'
-                     '[\\?if=is_running {prefix}]]'
-                     '[[\\?if=is_running [\\?if=!total=0 {current}/{total}'
-                     '[\\?if=show_action {action} ]'
-                     '[\\?if=show_pkg {category}/{pkg}]]]|'
-                     '[\\?if=!hide_if_stopped 0/0]]')*
-    hide_if_stopped: Hide all information if no emerge is running (default False)
+    format: *(default '{prefix} [\\?if=is_running [\\?if=!total=0 [{current}/{total}'
+              ' {action} {category}/{pkg}]| calculating...]| stopped 0/0]')*
     prefix: prefix in statusbar (default "EMRG: ")
-    show_action: En/Disable showing action (default True)
-    show_pkg: Dis-/Enable showing category and pkg name (default True)
 
 Format placeholders:
     {current} Number of package that is currently emerged
@@ -25,11 +18,25 @@ Format placeholders:
 
 Examples:
 ```
+# Hide if not running
 emerge_status {
-    hide_if_stopped = True
-    prefix = emerge
-    show_action = False
-    show_pkg = False
+    format = ('[\?if=is_running {prefix} [\?if=!total=0 {current}/{total} '
+              '{action} {category}/{pkg}]]')
+}
+# Minimalistic
+emerge_status {
+    format = ('[\?if=is_running [\?if=!total=0 {current}/{total}]]')
+}
+
+# Minimalistic II
+emerge_status {
+    format = ('[\?if=is_running {current}/{total}]')
+}
+
+# Hide if not running
+emerge_status {
+    format = ('[\?if=is_running {prefix} [\?if=!total=0 {current}/{total} '
+              '{action} {category}/{pkg}]| calculating...]')
 }
 ```
 
@@ -47,30 +54,12 @@ class Py3status:
     """
     """
     cache_timeout = 0
-    format = (
-        # show prefix if either show_stopped or if emerge is running
-        '[[\?if=!hide_if_stopped {prefix}]|[\?if=is_running {prefix}]]'
-        # if emerge is running and total != 0 show
-        '[[\?if=is_running [\?if=!total=0 {current}/{total}'
-        # show action and cat/pkg only if user wants it
-        '[\?if=show_action {action} ][\?if=show_pkg {category}/{pkg}]]]|'
-        # if no emerge is running but show_stopped is set show 0/0
-        '[\?if=!hide_if_stopped 0/0]]')
-    hide_if_stopped = False
+    format = ('{prefix} [\?if=is_running [\?if=!total=0 [{current}/{total}'
+              ' {action} {category}/{pkg}]| calculating...]| stopped 0/0]')
+
     prefix = "EMRG: "
-    show_action = True
-    show_pkg = True
 
-    def __init__(self):
-        self.ret_default = {
-            'current': 0,
-            'total': 0,
-            'category': "",
-            'pkg': "",
-            'action': "",
-            'is_running': False}
-
-    def _emergeRunning(self):
+    def _emerge_running(self):
         """
         Check if emerge is running.
         Returns true if at least one instance of emerge is running.
@@ -83,9 +72,16 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.py3.check_commands('emerge'):
-            raise Exception("emerge not installed")
+            raise Exception(STRING_NOT_INSTALLED)
+        self.ret_default = {
+            'current': 0,
+            'total': 0,
+            'category': "",
+            'pkg': "",
+            'action': "",
+            'is_running': False}
 
-    def _getProgress(self):
+    def _get_progress(self):
         """
         Get current progress of emerge.
 
@@ -98,13 +94,11 @@ class Py3status:
         input_data = []
 
         """
-        Try to open file, if unable throw error to be catched later
+        Open file, if unable to open it py3status catches the error.
+        No need for explizit error handling here.
         """
-        try:
-            with open(emerge_log_file, 'r') as fp:
-                input_data = fp.readlines()
-        except IOError as err:
-            raise Exception(err)
+        with open(emerge_log_file, 'r') as fp:
+            input_data = fp.readlines()
 
         """
         Traverse emerge.log from bottom up to get latest information
@@ -114,8 +108,8 @@ class Py3status:
 
         for line in input_data:
             if "*** terminating." in line:
-                # Copy content of ret_default no only the references
-                ret = copy.deepcopt(self.ret_default)
+                # Copy content of ret_default, not only the references
+                ret = copy.deepcopy(self.ret_default)
                 break
             else:
                 status_re = re.compile(
@@ -139,10 +133,9 @@ class Py3status:
         """
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
-        response['is_running'] = self._emergeRunning()
         ret = copy.deepcopy(self.ret_default)
-        if response['is_running']:
-            ret = self._getProgress()
+        if self._emerge_running():
+            ret = self._get_progress()
             ret['is_running'] = True
         response['full_text'] = self.py3.safe_format(self.format, ret)
         return response
