@@ -109,6 +109,7 @@ class Py3:
         self._config_setting = {}
         self._english_env = dict(os.environ)
         self._english_env['LC_ALL'] = 'C'
+        self._english_env['LANGUAGE'] = 'C'
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._is_python_2 = sys.version_info < (3, 0)
