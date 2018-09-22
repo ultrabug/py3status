@@ -6,10 +6,19 @@ Timewarrior is a time tracking utility that offers simple stopwatch features
 as well as sophisticated calendar-base backfill, along with flexible reporting.
 See https://taskwarrior.org/docs/timewarrior for more information.
 
+It is also a command line tool. For this reason, the buttons are disabled by
+default as a respect toward those who made and/or mastered timew and as a
+suggestion toward users not familiar with the tool. Learning how to use timew
+commands properly probably will always be the best way to track your time.
+
 Configuration parameters:
+    button_cancel: mouse button to cancel a running interval (default None)
+    button_continue: mouse button to stop/continue an interval (default None)
+    button_delete: mouse button to delete a specific interval (default None)
+    button_stop: mouse button to stop/start an interval (default None)
     cache_timeout: refresh interval for this module, otherwise auto
         (default None)
-    filter: specify interval and/or tag to filter (default '1day')
+    filter: specify interval and/or tag to filter (default None)
     format: display format for this module
         (default '[Timew {format_time}]|No Timew')
     format_datetime: specify strftime characters to format (default {})
@@ -96,6 +105,14 @@ timewarrior {
     }
 }
 
+# add buttons
+timewarrior {
+    button_stop = 1      # stops tracking time
+    button_cancel = 3    # if there is an open interval, it is abandoned
+    button_continue = 8  # resumes tracking of closed intervals
+    button_delete = 9    # delete an interval
+}
+
 # cache_timeout
 timewarrior {
     # auto refresh every 10 seconds when there is no active time tracking
@@ -152,8 +169,12 @@ STRING_INVALID_TIMEOUT = 'invalid cache_timeout'
 class Py3status:
     """
     """
+    button_cancel = None
+    button_continue = None
+    button_delete = None
+    button_stop = None
     cache_timeout = None
-    filter = '1day'
+    filter = None
     format = '[Timew {format_time}]|No Timew'
     format_datetime = {}
     format_duration = '\?not_zero [{days}d ][{hours}:]{minutes}:{seconds}'
@@ -270,7 +291,9 @@ class Py3status:
                 if x in time:
                     self.py3.threshold_get_color(time[x], x)
 
-            new_time.append(self.py3.safe_format(self.format_time, time))
+            format_time = self.py3.safe_format(self.format_time, time)
+            self.py3.composite_update(format_time, {'index': format(time_index)})
+            new_time.append(format_time)
 
         format_time_separator = self.py3.safe_format(self.format_time_separator)
         format_time = self.py3.composite_join(format_time_separator, new_time)
@@ -298,6 +321,31 @@ class Py3status:
             'cached_until': self.py3.time_in(cached_until),
             'full_text': self.py3.safe_format(self.format, timew_data)
         }
+
+    def on_click(self, event):
+        button = event['button']
+        index = event['index']
+        action = None
+        if isinstance(event['index'], int):
+            index = None
+        if button == self.button_delete:
+            if index:
+                action = 'delete @{}'.format(index)
+        elif button == self.button_cancel:
+            if self.tracking:
+                action = 'cancel'
+        elif button in [self.button_continue, self.button_stop]:
+            if self.tracking:
+                action = 'stop'
+            else:
+                if button == self.button_continue:
+                    action = 'continue'
+                    if index:
+                        action += ' @{}'.format(index)
+                elif button == self.button_stop:
+                    action = 'start'
+        if action:
+            self.py3.command_run('timew {}'.format(action))
 
 
 if __name__ == '__main__':
