@@ -9,7 +9,7 @@ See https://taskwarrior.org/docs/timewarrior for more information.
 Configuration parameters:
     cache_timeout: refresh interval for this module, otherwise auto
         (default None)
-    filter: specify interval and/or tag to filter (default None)
+    filter: specify interval and/or tag to filter (default '1day')
     format: display format for this module
         (default '[Timew {format_time}]|No Timew')
     format_datetime: specify strftime characters to format (default {})
@@ -153,7 +153,7 @@ class Py3status:
     """
     """
     cache_timeout = None
-    filter = None
+    filter = '1day'
     format = '[Timew {format_time}]|No Timew'
     format_datetime = {}
     format_duration = '\?not_zero [{days}d ][{hours}:]{minutes}:{seconds}'
