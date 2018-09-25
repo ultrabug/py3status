@@ -178,11 +178,7 @@ from fnmatch import fnmatch
 from json import loads as json_loads
 
 STRING_NOT_INSTALLED = 'not installed'
-STRING_OLD_VERSION = 'install version 3.4.0+'
-SENSOR_NAMES = [
-    'alarm', 'beep', 'crit', 'crit_alarm', 'crit_hyst', 'emergency',
-    'emergency_hyst', 'input', 'max', 'min', 'offset' 'type',
-]
+STRING_GIT_VERSION = 'install 3.4.0+git with JSON support'
 
 
 class Py3status:
@@ -208,7 +204,7 @@ class Py3status:
         try:
             lm_sensors_data = self._get_lm_sensors_data()
         except self.py3.CommandError:
-            raise Exception(STRING_OLD_VERSION)
+            raise Exception(STRING_GIT_VERSION)
 
         self.first_run = True
         if not self.py3.format_contains(self.format_chip, 'adapter'):
@@ -324,7 +320,7 @@ class Py3status:
                     )
 
                 for x in self.sensor_placeholders:
-                    if x not in sensor and x in SENSOR_NAMES:
+                    if x not in sensor:
                         sensor[x] = None
 
                 new_sensor.append(self.py3.safe_format(
