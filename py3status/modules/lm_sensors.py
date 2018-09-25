@@ -178,10 +178,6 @@ from fnmatch import fnmatch
 from collections import OrderedDict
 
 STRING_NOT_INSTALLED = 'not installed'
-SENSOR_NAMES = [
-    'alarm', 'beep', 'crit', 'crit_alarm', 'crit_hyst', 'emergency',
-    'emergency_hyst', 'input', 'max', 'min', 'offset' 'type',
-]
 
 
 class Py3status:
@@ -327,7 +323,7 @@ class Py3status:
                     )
 
                 for x in self.sensor_placeholders:
-                    if x not in sensor and x in SENSOR_NAMES:
+                    if x not in sensor:
                         sensor[x] = None
 
                 new_sensor.append(self.py3.safe_format(
