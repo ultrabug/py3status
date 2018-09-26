@@ -213,8 +213,9 @@ class Py3status:
     format = '{format_chip}'
     format_chip = '{name} {format_sensor}'
     format_chip_separator = ' '
-    format_sensor = ('[\?color=darkgray {name}] '
-                     '[\?color=auto.input&show {input}]')
+    format_sensor = (
+        '[\?color=darkgray {name}] [\?color=auto.input&show {input}]'
+    )
     format_sensor_separator = ' '
     sensors = []
     thresholds = {'auto.input': True}
@@ -250,8 +251,9 @@ class Py3status:
 
         self.thresholds_auto = False
         self.thresholds_man = self.py3.get_color_names_list(self.format_sensor)
-        if 'auto.input' in self.thresholds and 'input' in placeholders and (
-                'auto.input' in self.thresholds_man):
+        if all(
+            'auto.input' in x for x in [self.thresholds, self.thresholds_man]
+        ) and 'input' in placeholders:
             self.color_zero = self.py3.COLOR_ZERO or 'red'
             self.color_input = self.py3.COLOR_INPUT or 'lime'
             self.color_min = self.py3.COLOR_MIN or 'lightgreen'
@@ -353,31 +355,36 @@ class Py3status:
                         sensor[x] = None
 
                 new_sensor.append(self.py3.safe_format(
-                    self.format_sensor, sensor))
+                    self.format_sensor, sensor)
+                )
 
             format_sensor_separator = self.py3.safe_format(
-                self.format_sensor_separator)
+                self.format_sensor_separator
+            )
             format_sensor = self.py3.composite_join(
-                format_sensor_separator, new_sensor)
+                format_sensor_separator, new_sensor
+            )
 
             chip['format_sensor'] = format_sensor
             del chip['sensors']
 
             new_chip.append(self.py3.safe_format(
-                self.format_chip, chip))
+                self.format_chip, chip)
+            )
 
         format_chip_separator = self.py3.safe_format(
-            self.format_chip_separator)
+            self.format_chip_separator
+        )
         format_chip = self.py3.composite_join(
-            format_chip_separator, new_chip)
-
+            format_chip_separator, new_chip
+        )
         self.first_run = False
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
                 self.format, {'format_chip': format_chip}
-            ),
+            )
         }
 
 
