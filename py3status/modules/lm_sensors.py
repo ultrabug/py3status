@@ -49,8 +49,8 @@ Color thresholds:
 
 Requires:
     lm_sensors: a tool to read temperature/voltage/fan sensors
-    sensors-detect: see `man sensors-detect # --auto` to read about accepting
-        defaults and/or to compile a list of kernel modules for the sensors
+    sensors-detect: see `man sensors-detect # --auto` to read about
+        using defaults or to compile a list of kernel modules
 
 Examples:
 ```
@@ -70,22 +70,6 @@ Examples:
       temp3_max: 81.000           #       ├── {max}
       temp3_crit: 91.000          #       ├── {crit}
       temp3_crit_alarm: 0.000     #       └── {crit_alarm}
-                                  # ──────────────────────────────────────
-    nouveau-pci-0100              # chip {name}         # chip: nouveau*
-    Adapter: PCI adapter          #  ├── {adapter} type
-    ----                          #  │------------------------------------
-    GPU core:                     #  ├── sensor {name}  # sensor: gpu_core
-      in0_input: 0.600            #  │    ├── {input}
-      in0_min: 0.600              #  │    ├── {min}
-      in0_max: 1.200              #  │    └── {max}
-    temp1:                        #  └── sensor {name}  # sensor: temp1
-      temp1_input: -0.019         #       ├── {input}
-      temp1_max: 95.000           #       ├── {max}
-      temp1_max_hyst: 3.000       #       ├── {max_hyst}
-      temp1_crit: 105.000         #       ├── {crit}
-      temp1_crit_hyst: 5.000      #       ├── {crit_hyst}
-      temp1_emergency: 135.000    #       ├── {emergency}
-      temp1_emergency_hyst: 5.000 #       └── {emergency_hyst}
                                   # ──────────────────────────────────────
     k10temp-pci-00c3              # chip {name}         # chip: k10temp*
     Adapter: PCI adapter          #  ├── {adapter} type
@@ -111,24 +95,11 @@ lm_sensors {
     chips = ['coretemp*']  # fnmatch
 }
 
-# rearrange the chips
-lm_sensors {
-    chips = ['coretemp-isa-0000', 'nouveau-pci-0500']  # original
-        OR
-    chips = ['nouveau*', 'coretemp*']  # new order
-}
-
 # specify sensors to use
 lm_sensors {
     sensors = ['core_0', 'core_1', 'core_2', 'core_3']  # full
         OR
     sensors = ['core_*']  # fnmatch
-}
-
-# add temperature degree
-lm_sensors {
-    format_sensor = '\?color=auto.input {input}°C'
-    chips = ['coretemp*']
 }
 
 # show name per chip, eg CPU 35°C 36°C 37°C 39°C GPU 52°C
@@ -151,21 +122,17 @@ lm_sensors {
     format_sensor += '[\?color=auto.input {input}°C]'
     sensors = ['core*', 'temp*']
 }
-
-# it is not possible to set a sane default format. if you're done looking at
-# the examples, the examples above may be something you want to use in your
-# config. please modify accordingly to your chips and sensors. thank you.
 ```
 
 @author lasers
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'nouveau-pci-0500 '},
-    {'full_text': 'gpu_core ', 'color': '#a9a9a9'},
-    {'full_text': '1.1 ', 'color': '#ffa500'},
-    {'full_text': 'temp1 ', 'color': '#a9a9a9'},
-    {'full_text': '51', 'color': '#00ff00'}
+    {'full_text': 'coretemp-isa-000 '},
+    {'full_text': 'core_0 ', 'color': '#a9a9a9'},
+    {'full_text': '39 ', 'color': '#00ff00'},
+    {'full_text': 'core_1 ', 'color': '#a9a9a9'},
+    {'full_text': '40', 'color': '#00ff00'},
 ]
 
 chip_names
@@ -185,16 +152,12 @@ sensor_names
     {'full_text': '62°C ', 'color': '#00ff00'},
     {'full_text': 'CPU2 '},
     {'full_text': '76°C ', 'color': '#ffff00'},
-    {'full_text': 'CPU3 '},
-    {'full_text': '83°C ', 'color': '#ffa500'},
-    {'full_text': 'CPU4 '},
-    {'full_text': '92°C', 'color': '#ff0000'},
-]
-
-simple
-[
-    {'full_text': 'CPU '}, {'full_text': '58°C ', 'color': '#00ff00'},
-    {'full_text': 'GPU '}, {'full_text': '72°C', 'color': '#ffff00'},
+    {'full_text': 'TEMP1 '},
+    {'full_text': '30 ', 'color': '#ffa500'},
+    {'full_text': 'TEMP2 '},
+    {'full_text': '27 ', 'color': '#ffa500'},
+    {'full_text': 'GPU '},
+    {'full_text': '52°C', 'color': '#00ff00'},
 ]
 """
 
