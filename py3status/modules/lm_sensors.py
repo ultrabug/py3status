@@ -222,8 +222,7 @@ class Py3status:
                         break
             self.sensors_command += ' {}'.format(' '.join(chips))
 
-        if self.sensors:
-            self.sensors_list = []
+        self.sensors = {'list': [], 'name': {}, 'sensors': self.sensors}
 
         self.thresholds_auto = False
         if 'auto.input' in self.thresholds and (
@@ -270,13 +269,17 @@ class Py3status:
                 elif 'Adapter:' in line:
                     chip['adapter'] = line[9:]
                 else:
-                    sensor_name = line[:-1].lower().replace(' ', '_')
-                    if self.sensors:
+                    try:
+                        sensor_name = self.sensors['name'][line]
+                    except KeyError:
+                        sensor_name = line[:-1].lower().replace(' ', '_')
+                        self.sensors['name'][line] = sensor_name
+                    if self.sensors['sensors']:
                         if self.first_run:
-                            for _filter in self.sensors:
+                            for _filter in self.sensors['sensors']:
                                 if fnmatch(sensor_name, _filter):
-                                    self.sensors_list.append(sensor_name)
-                        if sensor_name not in self.sensors_list:
+                                    self.sensors['list'].append(sensor_name)
+                        if sensor_name not in self.sensors['list']:
                             sensor_name = None
                             continue
                     chip['sensors'][sensor_name] = {}
