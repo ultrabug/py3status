@@ -207,9 +207,9 @@ class Py3status:
         )
 
         self.first_run = True
-        self.sensors_command = 'sensors -u'
+        self.lm_sensors_command = 'sensors -u'
         if not self.py3.format_contains(self.format_chip, 'adapter'):
-            self.sensors_command += 'A'  # don't print adapters
+            self.lm_sensors_command += 'A'  # don't print adapters
 
         if self.chips:
             lm_sensors_data = self._get_lm_sensors_data()
@@ -220,7 +220,7 @@ class Py3status:
                         if fnmatch(line, _filter):
                             chips.append(line)
                         break
-            self.sensors_command += ' {}'.format(' '.join(chips))
+            self.lm_sensors_command += ' {}'.format(' '.join(chips))
 
         self.sensors = {'list': [], 'name': {}, 'sensors': self.sensors}
 
@@ -244,7 +244,7 @@ class Py3status:
             self.thresholds_man.remove('auto.input')
 
     def _get_lm_sensors_data(self):
-        return self.py3.command_output(self.sensors_command)
+        return self.py3.command_output(self.lm_sensors_command)
 
     def lm_sensors(self):
         lm_sensors_data = self._get_lm_sensors_data()
