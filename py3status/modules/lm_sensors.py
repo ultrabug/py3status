@@ -36,7 +36,7 @@ Color options for `auto.input` threshold:
     color_min: minimum value (color lightgreen)
     color_excl_input: input value excluded from threshold (color None)
     color_input: input value (color lime)
-    color_near_max: input value near maximum value (color degraded)
+    color_near_max: input value near maximum value (color yellow)
     color_max: maximum value (color orange)
     color_near_crit: input value near critical value (color lightcoral)
     color_crit: critical value (color red)
@@ -221,10 +221,11 @@ class Py3status:
             self.color_input = self.py3.COLOR_INPUT or 'lime'
             self.color_min = self.py3.COLOR_MIN or 'lightgreen'
             self.color_excl_input = self.py3.COLOR_EXCL_INPUT or None
-            self.color_near_max = self.py3.COLOR_NEAR_MAX or 'degraded'
+            self.color_near_max = self.py3.COLOR_NEAR_MAX or 'yellow'
             self.color_max = self.py3.COLOR_MAX or 'orange'
             self.color_near_crit = self.py3.COLOR_NEAR_CRIT or 'lightcoral'
             self.color_crit = self.py3.COLOR_CRIT or 'red'
+
             self.thresholds_auto = self.thresholds['auto.input']
             del self.thresholds['auto.input']
 
