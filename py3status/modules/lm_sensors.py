@@ -249,9 +249,9 @@ class Py3status:
         self.sensors = {'list': [], 'name': {}, 'sensors': self.sensors}
 
         self.thresholds_auto = False
-        if 'auto.input' in self.thresholds and (
-                'color=auto.input' in self.format_sensor and (
-                    'input' in placeholders)):
+        self.thresholds_man = self.py3.get_color_names_list(self.format_sensor)
+        if 'auto.input' in self.thresholds and 'input' in placeholders and (
+                'auto.input' in self.thresholds_man):
             self.color_zero = self.py3.COLOR_ZERO or 'red'
             self.color_input = self.py3.COLOR_INPUT or 'lime'
             self.color_min = self.py3.COLOR_MIN or 'lightgreen'
@@ -263,7 +263,6 @@ class Py3status:
             self.thresholds_auto = self.thresholds['auto.input']
             del self.thresholds['auto.input']
 
-        self.thresholds_man = self.py3.get_color_names_list(self.format_sensor)
         if 'auto.input' in self.thresholds_man:
             self.thresholds_man.remove('auto.input')
 
