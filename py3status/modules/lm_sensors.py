@@ -102,7 +102,7 @@ Examples:
 
     Solid lines denotes chips. Dashed lines denotes sensors.
     Sensor names are lowercased and its spaces replaced with underscores.
-    The numbered prefixes, eg `temp1_*` are removed to keep things clean.
+    The numbered prefixes, eg `temp1_*` are removed to keep names clean.
 
 # specify chips to use
 lm_sensors {
@@ -131,7 +131,7 @@ lm_sensors {
     chips = ['coretemp*']
 }
 
-# show CPU 35°C 36°C 37°C 39°C GPU 52°C
+# show name per chip, eg CPU 35°C 36°C 37°C 39°C GPU 52°C
 lm_sensors {
     format_chip = '[\?if=name=coretemp-isa-0000 CPU]'
     format_chip += '[\?if=name=nouveau-pci-0500 GPU]'
@@ -140,8 +140,20 @@ lm_sensors {
     sensors = ['core*', 'temp*']
 }
 
-# it is not possible to set a sane default format. if you're done looking
-# at the examples, the one above may be something you want to have in your
+# show name per sensor, eg CPU1 35°C CPU2 36°C CPU3 37°C CPU4 39°C GPU 52°C
+lm_sensors {
+    format_chip = '{format_sensor}'
+    format_sensor = '[\?if=name=core_0 CPU1 ]'
+    format_sensor += '[\?if=name=core_1 CPU2 ]'
+    format_sensor += '[\?if=name=core_2 CPU3 ]'
+    format_sensor += '[\?if=name=core_3 CPU4 ]'
+    format_sensor += '[\?if=name=gpu_core GPU ]'
+    format_sensor += '[\?color=auto.input {input}°C]'
+    sensors = ['core*', 'temp*']
+}
+
+# it is not possible to set a sane default format. if you're done looking at
+# the examples, the examples above may be something you want to use in your
 # config. please modify accordingly to your chips and sensors. thank you.
 ```
 
@@ -156,15 +168,27 @@ SAMPLE OUTPUT
     {'full_text': '51', 'color': '#00ff00'}
 ]
 
-cores
+chip_names
 [
     {'full_text': 'CPU '},
-    {'full_text': '62 ', 'color': '#00ff00'},
-    {'full_text': '76 ', 'color': '#ffff00'},
-    {'full_text': '83 ', 'color': '#ffa500'},
-    {'full_text': '92 ', 'color': '#ff0000'},
+    {'full_text': '62°C ', 'color': '#00ff00'},
+    {'full_text': '76°C ', 'color': '#ffff00'},
+    {'full_text': '83°C ', 'color': '#ffa500'},
+    {'full_text': '92°C ', 'color': '#ff0000'},
     {'full_text': 'GPU '},
-    {'full_text': '52', 'color': '#00ff00'},
+    {'full_text': '52°C', 'color': '#00ff00'},
+]
+
+sensor_names
+[
+    {'full_text': 'CPU1 '},
+    {'full_text': '62°C ', 'color': '#00ff00'},
+    {'full_text': 'CPU2 '},
+    {'full_text': '76°C ', 'color': '#ffff00'},
+    {'full_text': 'CPU3 '},
+    {'full_text': '83°C ', 'color': '#ffa500'},
+    {'full_text': 'CPU4 '},
+    {'full_text': '92°C', 'color': '#ff0000'},
 ]
 
 simple
