@@ -24,6 +24,7 @@ from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
+from py3status.udev_monitor import UdevMonitor
 from py3status.version import version
 
 LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
@@ -643,6 +644,9 @@ class Py3statusWrapper:
         self.commands_thread.start()
         if self.config["debug"]:
             self.log("commands thread started")
+
+        # initialize the udev monitor (lazy)
+        self.udev_monitor = UdevMonitor(self)
 
         # suppress modules' ouput wrt issue #20
         if not self.config["debug"]:

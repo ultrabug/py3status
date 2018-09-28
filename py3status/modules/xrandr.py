@@ -54,6 +54,9 @@ Configuration parameters:
             ```
             output_combinations = "eDP1|eDP1+DP1"
             ```
+    update_on_udev: the udev subsystem we want to monitor for events
+        that will trigger a refresh of this module.
+        (default 'drm')
 
 Dynamic configuration parameters:
     <OUTPUT>_pos: apply the given position to the OUTPUT
@@ -131,6 +134,7 @@ class Py3status:
     icon_clone = '='
     icon_extend = '+'
     output_combinations = None
+    update_on_udev = 'drm'
 
     class Meta:
         deprecated = {
@@ -157,6 +161,7 @@ class Py3status:
         self.active_mode = 'extend'
         self.displayed = None
         self.max_width = 0
+        self.py3.update_on_udev(self.update_on_udev)
 
     def _get_layout(self):
         """

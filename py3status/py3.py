@@ -1238,3 +1238,11 @@ class Py3:
             auth=auth,
             cookiejar=cookiejar,
         )
+
+    def update_on_udev(self, subsystem):
+        """
+        When pyudev (optional) is available and the consumer subscription
+        worked, we disable the automatic refresh of the module.
+        """
+        if self._py3_wrapper.udev_monitor.subscribe(self, subsystem):
+            self._py3status_module.cache_timeout = PY3_CACHE_FOREVER
