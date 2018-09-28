@@ -1017,6 +1017,13 @@ def test_numeric_strings_6():
     })
 
 
+def test_numeric_none():
+    run_formatter({
+        'format': '{None:.2f}',
+        'expected': "None",
+    })
+
+
 def test_not_zero_1():
     run_formatter({
         'format': '[\?not_zero {zero}]',
