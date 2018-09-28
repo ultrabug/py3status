@@ -37,7 +37,7 @@ class IOPoller:
         poll_result = self.poller.poll(timeout)
         if poll_result:
             line = self.io.readline().strip()
-            if self.io == sys.stdin and line == '[':
+            if self.io == sys.stdin and line == "[":
                 # skip first event line wrt issue #19
                 line = self.io.readline().strip()
             try:
@@ -54,6 +54,7 @@ class EventTask:
     """
     A simple task that can be run by the scheduler.
     """
+
     def __init__(self, module_name, event, default_event, events_thread):
         self.events_thread = events_thread
         self.module_full_name = module_name
@@ -70,6 +71,7 @@ class EventClickTask:
     """
     A task to run an external on_click event
     """
+
     def __init__(self, module_name, event, events_thread, command):
         self.events_thread = events_thread
         self.module_name = module_name
@@ -94,9 +96,9 @@ class Events(Thread):
         Thread.__init__(self)
         self.config = py3_wrapper.config
         self.error = None
-        self.py3_config = py3_wrapper.config['py3_config']
+        self.py3_config = py3_wrapper.config["py3_config"]
         self.modules = py3_wrapper.modules
-        self.on_click = self.py3_config['on_click']
+        self.on_click = self.py3_config["on_click"]
         self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
@@ -107,11 +109,11 @@ class Events(Thread):
         module is a composite.  Partial text is the text for just the single
         section of a composite.
         """
-        index = event.get('index')
+        index = event.get("index")
         module_info = self.py3_wrapper.output_modules.get(module_name)
         if module_info:
-            output = module_info['module'].get_latest()
-            full_text = u''.join([out['full_text'] for out in output])
+            output = module_info["module"].get_latest()
+            full_text = u"".join([out["full_text"] for out in output])
 
             partial = None
             if index is not None:
@@ -119,11 +121,11 @@ class Events(Thread):
                     partial = output[index]
                 else:
                     for item in output:
-                        if item.get('index') == index:
+                        if item.get("index") == index:
                             partial = item
                             break
             if partial:
-                partial_text = partial['full_text']
+                partial_text = partial["full_text"]
             else:
                 partial_text = full_text
         return full_text, partial_text
@@ -136,19 +138,17 @@ class Events(Thread):
         """
         if command is None:
             return
-        elif command == 'refresh_all':
+        elif command == "refresh_all":
             self.py3_wrapper.refresh_modules()
-        elif command == 'refresh':
+        elif command == "refresh":
             self.py3_wrapper.refresh_modules(module_name)
         else:
             # In commands we are able to use substitutions for the text output
             # of a module
-            if '$OUTPUT' in command or '$OUTPUT_PART' in command:
-                full_text, partial_text = self.get_module_text(module_name,
-                                                               event)
-                command = command.replace('$OUTPUT_PART',
-                                          shell_quote(partial_text))
-                command = command.replace('$OUTPUT', shell_quote(full_text))
+            if "$OUTPUT" in command or "$OUTPUT_PART" in command:
+                full_text, partial_text = self.get_module_text(module_name, event)
+                command = command.replace("$OUTPUT_PART", shell_quote(partial_text))
+                command = command.replace("$OUTPUT", shell_quote(full_text))
 
             # this is a i3 message
             self.i3_msg(module_name, command)
@@ -160,9 +160,12 @@ class Events(Thread):
         """
         Execute the given i3 message and log its output.
         """
-        i3_msg_pipe = Popen(['i3-msg', command], stdout=PIPE)
-        self.py3_wrapper.log('i3-msg module="{}" command="{}" stdout={}'.format(
-            module_name, command, i3_msg_pipe.stdout.read()))
+        i3_msg_pipe = Popen(["i3-msg", command], stdout=PIPE)
+        self.py3_wrapper.log(
+            'i3-msg module="{}" command="{}" stdout={}'.format(
+                module_name, command, i3_msg_pipe.stdout.read()
+            )
+        )
 
     def process_event(self, module_name, event, default_event=False):
         """
@@ -175,11 +178,11 @@ class Events(Thread):
         module_info = self.output_modules.get(module_name)
 
         # if module is a py3status one call it.
-        if module_info['type'] == 'py3status':
-            module = module_info['module']
+        if module_info["type"] == "py3status":
+            module = module_info["module"]
             module.click_event(event)
-            if self.config['debug']:
-                self.py3_wrapper.log('dispatching event {}'.format(event))
+            if self.config["debug"]:
+                self.py3_wrapper.log("dispatching event {}".format(event))
 
             # to make the bar more responsive to users we refresh the module
             # unless the on_click event called py3.prevent_refresh()
@@ -189,59 +192,60 @@ class Events(Thread):
 
         if default_event:
             # default button 2 action is to clear this method's cache
-            if self.config['debug']:
-                self.py3_wrapper.log(
-                    'dispatching default event {}'.format(event))
+            if self.config["debug"]:
+                self.py3_wrapper.log("dispatching default event {}".format(event))
             self.py3_wrapper.refresh_modules(module_name)
 
         # find container that holds the module and call its onclick
-        module_groups = self.py3_config['.module_groups']
+        module_groups = self.py3_config[".module_groups"]
         containers = module_groups.get(module_name, [])
         for container in containers:
             self.process_event(container, event)
 
     def dispatch_event(self, event):
-        '''
+        """
         Takes an event dict.  Logs the event if needed and cleans up the dict
         such as setting the index needed for composits.
-        '''
-        if self.config['debug']:
-            self.py3_wrapper.log('received event {}'.format(event))
+        """
+        if self.config["debug"]:
+            self.py3_wrapper.log("received event {}".format(event))
         # usage variables
-        instance = event.get('instance', '')
-        name = event.get('name', '')
+        instance = event.get("instance", "")
+        name = event.get("name", "")
 
         # composites have an index which is passed to i3bar with
         # the instance.  We need to separate this out here and
         # clean up the event.  If index
         # is an integer type then cast it as such.
-        if ' ' in instance:
-            instance, index = instance.split(' ', 1)
+        if " " in instance:
+            instance, index = instance.split(" ", 1)
             try:
                 index = int(index)
             except ValueError:
                 pass
-            event['index'] = index
-            event['instance'] = instance
+            event["index"] = index
+            event["instance"] = instance
 
-        if self.config['debug']:
+        if self.config["debug"]:
             self.py3_wrapper.log(
                 'trying to dispatch event to module "{}"'.format(
-                    '{} {}'.format(name, instance).strip()))
+                    "{} {}".format(name, instance).strip()
+                )
+            )
 
         # guess the module config name
-        module_name = '{} {}'.format(name, instance).strip()
+        module_name = "{} {}".format(name, instance).strip()
 
         default_event = False
         module_info = self.output_modules.get(module_name)
         if not module_info:
             return
-        module = module_info['module']
+        module = module_info["module"]
         # execute any configured i3-msg command
         # we do not do this for containers
         # modules that have failed do not execute their config on_click
         if module.allow_config_clicks:
-            button = event.get('button', 0)
+            button = event.get("button", 0)
             on_click = self.on_click.get(module_name, {}).get(str(button))
             if on_click:
                 task = EventClickTask(module_name, event, self, on_click)
@@ -274,13 +278,13 @@ class Events(Thread):
                     continue
                 try:
                     # remove leading comma if present
-                    if event_str[0] == ',':
+                    if event_str[0] == ",":
                         event_str = event_str[1:]
                     event = loads(event_str)
                     self.dispatch_event(event)
                 except Exception:
-                    self.py3_wrapper.report_exception('Event failed')
+                    self.py3_wrapper.report_exception("Event failed")
         except:  # noqa e722
-            err = 'Events thread died, click events are disabled.'
+            err = "Events thread died, click events are disabled."
             self.py3_wrapper.report_exception(err, notify_user=False)
-            self.py3_wrapper.notify_user(err, level='warning')
+            self.py3_wrapper.notify_user(err, level="warning")

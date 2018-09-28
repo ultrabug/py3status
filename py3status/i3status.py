@@ -14,8 +14,11 @@ from py3status.profiling import profile
 from py3status.py3 import Py3
 from py3status.events import IOPoller
 from py3status.constants import (
-    I3S_ALLOWED_COLORS, I3S_COLOR_MODULES,
-    TIME_FORMAT, TIME_MODULES, TZTIME_FORMAT,
+    I3S_ALLOWED_COLORS,
+    I3S_COLOR_MODULES,
+    TIME_FORMAT,
+    TIME_MODULES,
+    TZTIME_FORMAT,
 )
 
 
@@ -30,7 +33,7 @@ class Tz(tzinfo):
     def __init__(self, name, offset):
         # issue 1375 race issue on suspend
         if abs(offset) > self.MAX_OFFSET:
-            raise ValueError('Invalid offset')
+            raise ValueError("Invalid offset")
         self._offset = offset
         self._name = name
 
@@ -65,26 +68,22 @@ class I3statusModule:
             name, instance = self.module_name.split()
         except:  # noqa e722
             name = self.module_name
-            instance = ''
+            instance = ""
         self.name = name
         self.instance = instance
 
         # setup our output
-        self.item = {
-            'full_text': '',
-            'name': name,
-            'instance': instance,
-        }
+        self.item = {"full_text": "", "name": name, "instance": instance}
 
         self.i3status = i3status
         py3_wrapper = i3status.py3_wrapper
 
         # color map for if color good/bad etc are set for the module
         color_map = {}
-        py3_config = py3_wrapper.config['py3_config']
+        py3_config = py3_wrapper.config["py3_config"]
         for key, value in py3_config[module_name].items():
             if key in I3S_ALLOWED_COLORS:
-                color_map[py3_config['general'][key]] = value
+                color_map[py3_config["general"][key]] = value
         self.color_map = color_map
 
         self.is_time_module = name in TIME_MODULES
@@ -101,22 +100,22 @@ class I3statusModule:
 
         time_format = self.time_format
 
-        if '%f' in time_format:
+        if "%f" in time_format:
             # microseconds
             time_delta = 0
-        elif '%S' in time_format:
+        elif "%S" in time_format:
             # seconds
             time_delta = 1
-        elif '%s' in time_format:
+        elif "%s" in time_format:
             # seconds since unix epoch start
             time_delta = 1
-        elif '%T' in time_format:
+        elif "%T" in time_format:
             # seconds included in "%H:%M:%S"
             time_delta = 1
-        elif '%c' in time_format:
+        elif "%c" in time_format:
             # Locale's appropriate date and time representation
             time_delta = 1
-        elif '%X' in time_format:
+        elif "%X" in time_format:
             # Locale's appropriate time representation
             time_delta = 1
         else:
@@ -124,7 +123,7 @@ class I3statusModule:
         self.time_delta = time_delta
 
     def __repr__(self):
-        return '<I3statusModule {}>'.format(self.module_name)
+        return "<I3statusModule {}>".format(self.module_name)
 
     def get_latest(self):
         return [self.item.copy()]
@@ -147,12 +146,12 @@ class I3statusModule:
         if not self.is_time_module:
             # correct the output
             # Restore the name/instance.
-            item['name'] = self.name
-            item['instance'] = self.instance
+            item["name"] = self.name
+            item["instance"] = self.instance
 
             # change color good/bad is set specifically for module
-            if 'color' in item and item['color'] in self.color_map:
-                item['color'] = self.color_map[item['color']]
+            if "color" in item and item["color"] in self.color_map:
+                item["color"] = self.color_map[item["color"]]
 
             # have we updated?
             is_updated = self.item != item
@@ -168,9 +167,8 @@ class I3statusModule:
                     # we had an issue with an invalid time zone probably due to
                     # suspending.  re check the time zone when we next can.
                     self.time_zone_check_due = 0
-                elif (
-                        self.time_zone_check_due and
-                        (t - self.time_zone_check_due > 5 + interval)
+                elif self.time_zone_check_due and (
+                    t - self.time_zone_check_due > 5 + interval
                 ):
                     self.time_zone_check_due = 0
                 else:
@@ -186,11 +184,11 @@ class I3statusModule:
 
     def set_time_format(self):
         config = self.i3status.py3_config.get(self.module_name, {})
-        time_format = config.get('format', TIME_FORMAT)
+        time_format = config.get("format", TIME_FORMAT)
         # Handle format_time parameter if exists
         # Not sure if i3status supports this but docs say it does
-        if 'format_time' in config:
-            time_format = time_format.replace('%time', config['format_time'])
+        if "format_time" in config:
+            time_format = time_format.replace("%time", config["format_time"])
         self.time_format = time_format
 
     def update_time_value(self):
@@ -200,11 +198,11 @@ class I3statusModule:
             new_value = date.strftime(self.time_format)
         except:  # noqa e722
             # python 2 unicode
-            new_value = date.strftime(self.time_format.encode('utf-8'))
-            new_value = new_value.decode('utf-8')
-        updated = self.item['full_text'] != new_value
+            new_value = date.strftime(self.time_format.encode("utf-8"))
+            new_value = new_value.decode("utf-8")
+        updated = self.item["full_text"] != new_value
         if updated:
-            self.item['full_text'] = new_value
+            self.item["full_text"] = new_value
         return updated
 
     def set_time_zone(self, item):
@@ -215,7 +213,7 @@ class I3statusModule:
         need to re check the time zone.  see issue #1375
         """
         # parse i3status date
-        i3s_time = item['full_text'].encode('UTF-8', 'replace')
+        i3s_time = item["full_text"].encode("UTF-8", "replace")
         try:
             # python3 compatibility code
             i3s_time = i3s_time.decode()
@@ -224,7 +222,7 @@ class I3statusModule:
 
         # get datetime and time zone info
         parts = i3s_time.split()
-        i3s_datetime = ' '.join(parts[:2])
+        i3s_datetime = " ".join(parts[:2])
         # occassionally we do not get the timezone name
         if len(parts) < 3:
             return True
@@ -234,10 +232,9 @@ class I3statusModule:
         date = datetime.strptime(i3s_datetime, TIME_FORMAT)
         # calculate the time delta
         utcnow = datetime.utcnow()
-        delta = (
-            datetime(date.year, date.month, date.day, date.hour, date.minute) -
-            datetime(utcnow.year, utcnow.month, utcnow.day, utcnow.hour,
-                     utcnow.minute))
+        delta = datetime(
+            date.year, date.month, date.day, date.hour, date.minute
+        ) - datetime(utcnow.year, utcnow.month, utcnow.day, utcnow.hour, utcnow.minute)
         # create our custom timezone
         try:
             self.tz = Tz(i3s_time_tz, delta)
@@ -259,9 +256,20 @@ class I3status(Thread):
         self.error = None
         self.i3modules = {}
         self.i3status_module_names = [
-            'battery', 'cpu_temperature', 'cpu_usage', 'ddate', 'disk',
-            'ethernet', 'ipv6', 'load', 'path_exists', 'run_watch', 'time',
-            'tztime', 'volume', 'wireless'
+            "battery",
+            "cpu_temperature",
+            "cpu_usage",
+            "ddate",
+            "disk",
+            "ethernet",
+            "ipv6",
+            "load",
+            "path_exists",
+            "run_watch",
+            "time",
+            "tztime",
+            "volume",
+            "wireless",
         ]
         self.i3status_pipe = None
         self.json_list = None
@@ -270,17 +278,17 @@ class I3status(Thread):
         self.last_refresh_ts = time()
         self.lock = py3_wrapper.lock
         self.new_update = False
-        self.py3_config = py3_wrapper.config['py3_config']
+        self.py3_config = py3_wrapper.config["py3_config"]
         self.py3_wrapper = py3_wrapper
         self.ready = False
-        self.standalone = py3_wrapper.config['standalone']
+        self.standalone = py3_wrapper.config["standalone"]
         self.time_modules = []
         self.tmpfile_path = None
         self.update_due = 0
 
         # the update interval is useful to know
         self.update_interval = self.py3_wrapper.get_config_attribute(
-            'general', 'interval'
+            "general", "interval"
         )
         # do any initialization
         self.setup()
@@ -289,7 +297,7 @@ class I3status(Thread):
         """
         Do any setup work needed to run i3status modules
         """
-        for conf_name in self.py3_config['i3s_modules']:
+        for conf_name in self.py3_config["i3s_modules"]:
             module = I3statusModule(conf_name, self)
             self.i3modules[conf_name] = module
             if module.is_time_module:
@@ -303,13 +311,11 @@ class I3status(Thread):
             valid_config_params = [
                 _
                 for _ in self.i3status_module_names
-                if _ not in ['cpu_usage', 'ddate', 'ipv6', 'load', 'time']
+                if _ not in ["cpu_usage", "ddate", "ipv6", "load", "time"]
             ]
         else:
-            valid_config_params = self.i3status_module_names + [
-                'general', 'order'
-            ]
-        return param_name.split(' ')[0] in valid_config_params
+            valid_config_params = self.i3status_module_names + ["general", "order"]
+        return param_name.split(" ")[0] in valid_config_params
 
     def set_responses(self, json_list):
         """
@@ -318,7 +324,7 @@ class I3status(Thread):
         self.update_json_list()
         updates = []
         for index, item in enumerate(self.json_list):
-            conf_name = self.py3_config['i3s_modules'][index]
+            conf_name = self.py3_config["i3s_modules"][index]
 
             module = self.i3modules[conf_name]
             if module.update_from_item(item):
@@ -345,7 +351,7 @@ class I3status(Thread):
         except TypeError:
             tmpfile.write(str.encode(text))
         except UnicodeEncodeError:
-            tmpfile.write(text.encode('utf-8'))
+            tmpfile.write(text.encode("utf-8"))
 
     def write_tmp_i3status_config(self, tmpfile):
         """
@@ -353,31 +359,32 @@ class I3status(Thread):
         based on the parsed one from 'i3status_config_path'.
         """
         # order += ...
-        for module in self.py3_config['i3s_modules']:
+        for module in self.py3_config["i3s_modules"]:
             self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
-        self.write_in_tmpfile('\n', tmpfile)
+        self.write_in_tmpfile("\n", tmpfile)
         # config params for general section and each module
-        for section_name in ['general'] + self.py3_config['i3s_modules']:
+        for section_name in ["general"] + self.py3_config["i3s_modules"]:
             section = self.py3_config[section_name]
-            self.write_in_tmpfile('%s {\n' % section_name, tmpfile)
+            self.write_in_tmpfile("%s {\n" % section_name, tmpfile)
             for key, value in section.items():
                 # don't include color values except in the general section
-                if key.startswith('color'):
-                    if (section_name.split(' ')[0] not in I3S_COLOR_MODULES or
-                            key not in I3S_ALLOWED_COLORS):
+                if key.startswith("color"):
+                    if (
+                        section_name.split(" ")[0] not in I3S_COLOR_MODULES
+                        or key not in I3S_ALLOWED_COLORS
+                    ):
                         continue
                 # Set known fixed format for time and tztime so we can work
                 # out the timezone
                 if section_name.split()[0] in TIME_MODULES:
-                    if key == 'format':
+                    if key == "format":
                         value = TZTIME_FORMAT
-                    if key == 'format_time':
+                    if key == "format_time":
                         continue
                 if isinstance(value, bool):
-                    value = '{}'.format(value).lower()
-                self.write_in_tmpfile('    %s = "%s"\n' % (key, value),
-                                      tmpfile)
-            self.write_in_tmpfile('}\n\n', tmpfile)
+                    value = "{}".format(value).lower()
+                self.write_in_tmpfile('    %s = "%s"\n' % (key, value), tmpfile)
+            self.write_in_tmpfile("}\n\n", tmpfile)
         tmpfile.flush()
 
     def suspend_i3status(self):
@@ -388,8 +395,8 @@ class I3status(Thread):
     def refresh_i3status(self):
         # refresh i3status.  This is rate limited
         if time() > (self.last_refresh_ts + 0.1):
-            if self.py3_wrapper.config['debug']:
-                self.py3_wrapper.log('refreshing i3status')
+            if self.py3_wrapper.config["debug"]:
+                self.py3_wrapper.log("refreshing i3status")
             if self.i3status_pipe:
                 self.i3status_pipe.send_signal(SIGUSR1)
             self.last_refresh_ts = time()
@@ -413,20 +420,20 @@ class I3status(Thread):
         Spawn i3status using a self generated config file and poll its output.
         """
         try:
-            with NamedTemporaryFile(prefix='py3status_') as tmpfile:
+            with NamedTemporaryFile(prefix="py3status_") as tmpfile:
                 self.write_tmp_i3status_config(tmpfile)
 
                 i3status_pipe = Popen(
-                    ['i3status', '-c', tmpfile.name],
+                    ["i3status", "-c", tmpfile.name],
                     stdout=PIPE,
                     stderr=PIPE,
                     # Ignore the SIGTSTP signal for this subprocess
-                    preexec_fn=lambda: signal(SIGTSTP, SIG_IGN)
+                    preexec_fn=lambda: signal(SIGTSTP, SIG_IGN),
                 )
 
                 self.py3_wrapper.log(
-                    'i3status spawned using config file {}'.format(
-                        tmpfile.name))
+                    "i3status spawned using config file {}".format(tmpfile.name)
+                )
 
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
@@ -441,9 +448,9 @@ class I3status(Thread):
                         line = self.poller_inp.readline()
                         if line:
                             # remove leading comma if present
-                            if line[0] == ',':
+                            if line[0] == ",":
                                 line = line[1:]
-                            if line.startswith('[{'):
+                            if line.startswith("[{"):
                                 json_list = loads(line)
                                 self.last_output = json_list
                                 self.set_responses(json_list)
@@ -452,20 +459,20 @@ class I3status(Thread):
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
                             if code is not None:
-                                msg = 'i3status died'
+                                msg = "i3status died"
                                 if err:
-                                    msg += ' and said: {}'.format(err)
+                                    msg += " and said: {}".format(err)
                                 else:
-                                    msg += ' with code {}'.format(code)
+                                    msg += " with code {}".format(code)
                                 raise IOError(msg)
                 except IOError:
                     err = sys.exc_info()[1]
                     self.error = err
-                    self.py3_wrapper.log(err, 'error')
+                    self.py3_wrapper.log(err, "error")
         except OSError:
-            self.error = 'Problem starting i3status maybe it is not installed'
+            self.error = "Problem starting i3status maybe it is not installed"
         except Exception:
-            self.py3_wrapper.report_exception('', notify_user=True)
+            self.py3_wrapper.report_exception("", notify_user=True)
         self.i3status_pipe = None
 
     def mock(self):
