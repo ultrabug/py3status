@@ -1,4 +1,5 @@
 version 3.13 (2018-09-28)
+* WARNING: after this release, py3status coding style CI will enforce the 'black' formatter: https://pypi.org/project/black/
 * @lasers has become the second collaborator of the py3status project !
 * README: update Arch Linux installation instructions, by Alexis Horgix Chotard
 * config functions base64() and hide(), by @tobes
@@ -6,8 +7,11 @@ version 3.13 (2018-09-28)
 * config parser: cleaner functions, by @tobes
 * config parser: improve unicode support, by @tobes
 * config parser: unify quote removal, by @tobes
+* documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
+* documentation: update formater and configuration docs, by @L0ric0
 * fix BOM related documentation breakage, by @tobes
 * fix empty seeming composite block issue, by @tobes
+* fix LANGUAGE environment variable for english output, by @wojtex
 * flake8: resolve several warnings and errors, by @lasers
 * formatter: add {:ceil} to return x or x+1, by @lasers
 * formatter: catch both lonely braces, by @tobes
@@ -28,6 +32,7 @@ version 3.13 (2018-09-28)
 * add new module: loadavg, by @lasers
 * add new module: mail, by @lasers
 * add new module: nvidia_smi, by @lasers
+* add new module: sql, by @Cereal2nd and @lasers
 * add new module: timewarrior, by @lasers
 * add new module: wanda_the_fish, by @lasers
 * Added sql module, by Maikel Punie
@@ -36,7 +41,6 @@ version 3.13 (2018-09-28)
 * command_output: allow ignoring stderr, by Maxim Baz
 * deadbeef: deprecate 7.0, 7.1 support, by @lasers
 * deadbeef: use py3.command_output helper, by @lasers
-* documentation: module docstring fixes to remove sphinx errors plus formatting, by @tobes
 * exchange_rate: fix issue caused by lack of testing, by @lasers
 * external_script: cast numeric output automatically, by @lasers
 * fedora_updates: fix issue caused by lack of testing, by @tobes
@@ -56,7 +60,6 @@ version 3.13 (2018-09-28)
 
 
 version 3.12 (2018-08-09)
-* WARNING: after this release, py3status coding style CI will enforce the 'black' formatter: https://pypi.org/project/black/
 * it looks like some i3 freezes that affected py3status (see #941) have been fixed https://github.com/i3/i3/issues/2539, next i3 release (>4.15) should contain the fix
 * py3.request adds a default User-Agent header when none is provided
 * py3-cmd: refactoring to add more options for click and refresh commands, add frame click support for #1349, by @lasers
