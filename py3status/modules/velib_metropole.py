@@ -1,62 +1,87 @@
 # -*- coding: utf-8 -*-
 """
-Display Velib shared bike avaibility on our favorite stations.
-Use api from https://www.velib-metropole.fr/map.
+Display information about Velib Métropole stations.
+
+Vélib' Métropole, https://en.wikipedia.org/wiki/Vélib'_Métropole, is a large-
+scale public bicycle sharing system in Paris, France and surrounding cities.
 
 Configuration parameters:
-    button_next: Display next station (default 4)
-    button_previous: Display previous station (default 5)
-    cache_timeout: The time between API polling in seconds
-        It is recommended to keep this at a higher value to avoid rate
-        limiting with the API's. (default 60)
-    format: How to display the velib data.
-        (default '{format_station} {index}/{stations}')
-    format_station: How to display the velib station data.
-        *(default '{station_name}: [\?color=station_state_code {station_state}]'
-        '[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]'
-        '[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]')*
-    stations: List of velib stations to monitor.
-        You can get stations id on map here https://www.velib-metropole.fr/map
+    button_next: mouse button to display next station (default 4)
+    button_previous: mouse button to display previous station (default 5)
+    cache_timeout: refresh interval for this module (default 60)
+    format: display format for this module
+        (default '{format_station}|No Velib')
+    format_station: display format for stations
+        *(default "{name} [\?if=state=Closed&color=state {state} ]"
+        "[\?color=greenyellow {bike}/{free_edock} ]"
+        "[\?color=deepskyblue {ebike}/{free_edock}]")*
+    stations: specify a list of station codes to use, find your
+        station code at https://www.velib-metropole.fr/map
         (default [20043, 11014, 20012, 20014, 10042])
-    thresholds: Configure colors of format station.
-        (default [(0, 'good'), (1, 'bad')])
+    thresholds: specify color thresholds to use
+        (default [("Operative", "good"), ("Closed", "bad")])
 
 Format placeholders:
-    {format_station}            format for station details
-    {index}                     current index of displayed station, eg 1
-    {stations}                  count of stations find in stations, eg 12
+    {format_station}      format for stations
+    {station}             total number of stations, eg 12
 
 format_station placeholders:
-    {credit_card}               station take credit card?, eg 'no'
-    {density_level}             density level of the station, eg 1
-    {kiosk_state}               kiosk in working?, eg 'yes'
-    {max_bike_overflow}         max overflow bike, eg 33
-    {nb_bike} current           available bike, eg 3
-    {nb_bike_overflow}          current number of bike in overflow, eg 0
-    {nb_dock}                   number of dock, eg 0
-    {nb_e_bike_overflow}        current overflow bike, eg 0
-    {nb_e_dock}                 number of electric dock, eg 33
-    {nb_ebike}                  current number of electric bike, eg 0
-    {nb_free_dock}              current available bike places, eg 0
-    {nb_free_e_dock}            current available electric bike places, eg 30
-    {overflow}                  station support overflow, eg 'no'
-    {overflow_activation}       current state of overflow support, eg 'no'
-    {station_code}              station code, eg 10042
-    {station_due_date}          station due date timestamp, eg 1527717600 (?)
-    {station_due_date_s}        station due date, eg '2018-05-31T00:00:00' (?)
-    {station_gps_latitude}      station gps latitude, eg 48.87242006305313
-    {station_gps_longitude}     station gps longitude, eg 2.348395236282807
-    {station_name}              station location name, eg 'Enghien - Faubourg Poissonnière'
-    {station_state}             current station state, eg 'Operative'
-    {station_state_code}        current station state code, eg '0'
-    {station_type}              station type, eg 'yes' (?)
+    {index}               index number, eg 1
+    {bike}                number of available bike, eg 3
+    {bike_overflow}       number of bike in overflow, eg 0
+    {code}                code, eg 10042
+    {credit_card}         credit card, eg no, yes
+    {density_level}       density level, eg 1
+    {dock}                number of dock, eg 0
+    {due_date}            due date, eg 1527717600
+    {ebike}               number of electric bike, eg 0
+    {ebike_overflow}      overflow bike, eg 0
+    {edock}               number of electric dock, eg 33
+    {free_dock}           available bike places, eg 0
+    {free_edock}          available electric bike places, eg 30
+    {kiosk_state}         kiosk in working, eg no, yes
+    {latitude}            latitude, eg 48.87242006305313
+    {longitude}           longitude, eg 2.348395236282807
+    {max_bike_overflow}   max overflow bike, eg 33
+    {name}                name, eg Enghien - Faubourg Poissonnière
+    {overflow}            support overflow, eg no, yes
+    {overflow_activation} state of overflow support, eg no, yes
+    {state}               state, eg Closed, Operative
+    {type}                type, eg no, yes
 
+Color thresholds:
+    format:
+        xxx: print a color based on the value of `xxx` placeholder
+    format_station:
+        xxx: print a color based on the value of `xxx` placeholder
+
+@author Cyril Levis (@cyrinux)
+
+SAMPLE OUTPUT
+[
+    {'full_text': 'Charonne - Avron '},
+    {'full_text': '10/0 ', 'color': '#adff2f'},
+    {'full_text': '0/0 ', 'color': '#00bfff'},
+    {'full_text': '1/5'}
+]
+
+second
+[
+    {'full_text': 'Buzenval - Vignoles '},
+    {'full_text': 'Closed ', 'color': '#ff0000'},
+    {'full_text': '13/1 ', 'color': '#adff2f'},
+    {'full_text': '3/1 ', 'color': '#00bfff'},
+    {'full_text': '2/5'}
+]
+
+no_velib
+{'full_text': 'No Velib'}
 """
-from datetime import datetime
+
 from re import sub
 from time import time
 
-STRING_MISSING_STATIONS = "No velib stations set"
+STRING_MISSING_STATIONS = "missing stations"
 VELIB_ENDPOINT = "https://www.velib-metropole.fr/webapi/map/details"
 
 
@@ -68,33 +93,33 @@ class Py3status:
     button_next = 4
     button_previous = 5
     cache_timeout = 60
-    format = "{format_station} {index}/{stations}"
+    format = "{format_station}|No Velib"
     format_station = (
-        "{station_name}: [\?color=station_state_code {station_state}]"
-        "[\?soft  ][\?color=greenyellow {nb_bike}/{nb_free_e_dock}]"
-        "[\?soft  ][\?color=deepskyblue {nb_ebike}/{nb_free_e_dock}]"
+        "{name} [\?if=state=Closed&color=state {state} ]"
+        "[\?color=greenyellow {bike}/{free_edock} ]"
+        "[\?color=deepskyblue {ebike}/{free_edock}]"
     )
     stations = [20043, 11014, 20012, 20014, 10042]
-    thresholds = [(0, "good"), (1, "bad")]
+    thresholds = [("Operative", "good"), ("Closed", "bad")]
 
     class Meta:
         update_config = {
             "update_placeholder_format": [
                 {
                     "placeholder_formats": {
+                        "bike": ":.0f",
+                        "bike_overflow": ":.0f",
                         "density_level": ":.0f",
+                        "dock": ":.0f",
+                        "due_date": ".0f",
+                        "ebike": ":.0f",
+                        "ebike_overflow": ":.0f",
+                        "edock": ":.0f",
+                        "free_dock": ":.0f",
+                        "free_edock": ":.0f",
+                        "latitude": ":.3f",
+                        "longitude": ".3f",
                         "max_bike_overflow": ":.0f",
-                        "nb_bike": ":.0f",
-                        "nb_bike_overflow": ":.0f",
-                        "nb_dock": ":.0f",
-                        "nb_e_bike_overflow": ":.0f",
-                        "nb_e_dock": ":.0f",
-                        "nb_ebike": ":.0f",
-                        "nb_free_dock": ":.0f",
-                        "nb_free_e_dock": ":.0f",
-                        "station_gps_latitude": ":.3f",
-                        "station_gps_longitude": ".3f",
-                        "station_due_date": ".0f",
                     },
                     "format_strings": ["format_station"],
                 }
@@ -105,126 +130,100 @@ class Py3status:
         if not self.stations:
             raise Exception(STRING_MISSING_STATIONS)
 
-        # int to list if necessary
         if not isinstance(self.stations, list):
             self.stations = [self.stations]
+        self.station_codes = [format(x) for x in self.stations]
 
-        # take the whole map for first run default values take all stations
-        # around Paris Area is then shrink to only get specified stations
-        self.gps_dict = {
+        self.empty_defaults = {
+            x: "" for x in self.py3.get_placeholders_list(self.format)
+        }
+        self.gps = {
             "gpsTopLatitude": 49.0,
             "gpsTopLongitude": 2.5,
             "gpsBotLatitude": 48.6,
             "gpsBotLongitude": 2.2,
             "zoomLevel": 15,
         }
-        self.scrolling = False
+        self.active_index = 0
+        self.button_refresh = 2
+        self.cache_station_keys = {}
+        self.first_request = True
         self.idle_time = 0
         self.request_timeout = 10
-        self.station_states = {"Operative": 0, "Close": 1}
-        self.station_index = 1
-        self.stations_data = {}
-        self.optimal_area = False
-        self.button_refresh = 2
+        self.scrolling = False
+        self.station_data = {}
 
-        # placeholders
-        self.placeholders = ["station_gps_latitude", "station_gps_longitude"]
-        for x in [self.format, self.format_station]:
-            self.placeholders += self.py3.get_placeholders_list(x)
+        self.wow = 0
 
-        # thresholds
         self.thresholds_init = {}
-        for name in ['format', 'format_station']:
+        for name in ["format", "format_station"]:
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name, '')
+                getattr(self, name, None) or ""
             )
-
-    def _camel_to_snake_case(self, data):
-        if not isinstance(data, (int, float)):
-            s1 = sub("(.)([A-Z][a-z]+)", r"\1_\2", data)
-            return sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
-        else:
-            return data
-
-    def _cast_number(self, value):
-        try:
-            value = float(value)
-        except ValueError:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-        return value
 
     def _set_optimal_area(self, data):
         """
-        reduce the zone to reduce the size of fetched data on refresh
+        Reduce the zone to reduce the size of fetched data on refresh
         """
-        latitudes = [float(data[x]["station_gps_latitude"]) for x in data]
-        longitudes = [float(data[x]["station_gps_longitude"]) for x in data]
-        self.gps_dict.update(
+        lats = [station["latitude"] for station in data.values()]
+        longs = [station["longitude"] for station in data.values()]
+        self.gps.update(
             {
-                "gpsTopLatitude": max(latitudes),
-                "gpsTopLongitude": max(longitudes),
-                "gpsBotLatitude": min(latitudes),
-                "gpsBotLongitude": min(longitudes),
+                "gpsTopLatitude": max(lats),
+                "gpsTopLongitude": max(longs),
+                "gpsBotLatitude": min(lats),
+                "gpsBotLongitude": min(longs),
             }
         )
-        self.optimal_area = True
 
     def _get_velib_data(self):
         try:
             return self.py3.request(
-                VELIB_ENDPOINT, params=self.gps_dict, timeout=self.request_timeout
+                VELIB_ENDPOINT, params=self.gps, timeout=self.request_timeout
             ).json()
         except self.py3.RequestException:
             return None
 
     def _manipulate(self, data):
         new_data = {}
-        stations_data = []
+        index = 0
 
-        for code in self.stations:
-            new_station = {}
+        for code in self.station_codes:
+            for station in data:
+                if station["station"]["code"] == code:
+                    temporary = station.copy()
+                    break
+            else:
+                continue
 
-            # search station
-            station = next(
-                (item for item in data if int(item["station"]["code"]) == int(code)),
-                None,
-            )
+            for x in ["station", "gps"]:
+                temporary.update(temporary.pop(x, {}))
+            temporary = self.py3.flatten_dict(temporary, delimiter="_")
 
-            # flat, camel to snake and cast...
-            for key, value in self.py3.flatten_dict(station, delimiter="_").items():
-                key = self._camel_to_snake_case(key)
-                if key in self.placeholders:
-                    new_station[key] = self._cast_number(value)
+            station = {'index': index + 1}
+            for original, value in temporary.items():
+                try:
+                    new_key = self.cache_station_keys[original]
+                except KeyError:
+                    # camel to snake_case
+                    key = sub("(.)([A-Z][a-z]+)", r"\1_\2", original)
+                    key = sub("([a-z0-9])([A-Z])", r"\1_\2", key).lower()
+                    # change some keys
+                    if key.startswith("nb_"):
+                        key = key[3:]
+                    if key.startswith("e_"):
+                        key = key[0] + key[2:]
+                    if "_e_" in key:
+                        key = key.replace("_e_", "_e")
+                    self.cache_station_keys[original] = new_key = key
+                station[new_key] = value
 
-            # station_due_date_s: station due date in dateime iso format
-            if all("station_due_date" in list for list in [new_station, self.placeholders]):
-                station_due_date = datetime.fromtimestamp(
-                    new_station["station_due_date"]
-                )
-                new_station.update({"station_due_date_s": station_due_date.isoformat()})
+            for x in self.thresholds_init["format_station"]:
+                if x in temporary:
+                    self.py3.threshold_get_color(station[x], x)
 
-            # station_state_code: station code for thresholds
-            if all("station_state" in list for list in [new_station, self.placeholders]):
-                new_station.update(
-                    {
-                        "station_state_code": int(
-                            self.station_states[new_station["station_state"]]
-                        )
-                    }
-                )
-
-            for x in self.thresholds_init['format_station']:
-                if x in new_station:
-                    self.py3.threshold_get_color(new_station[x], x)
-
-            stations_data.append(new_station)
-
-        # forge return
-        for index, station in enumerate(stations_data, 1):
             new_data[index] = station
+            index += 1
 
         return new_data
 
@@ -240,40 +239,33 @@ class Py3status:
         else:
             cached_until = self.idle_time - current_time
 
+        # button
         if self.scrolling and not refresh:
             self.scrolling = False
-            data = self.velib_metropole_data
+            data = self.station_data
         else:
-            data = self.velib_metropole_data = self._get_velib_data()
+            data = self._manipulate(self._get_velib_data() or {})
+            self.station_data = data
+
+            if self.first_request and data:
+                self.first_request = False
+                self._set_optimal_area(data)
 
         if data:
-            self.stations_data = self._manipulate(data)
-            if not self.optimal_area:
-                self._set_optimal_area(self.stations_data)
+            self.count_stations = len(data)
+            station = data[self.active_index]
+            format_station = self.py3.safe_format(self.format_station, station)
 
-        self.number_of_stations = len(self.stations_data)
-
-        if not self.stations_data:
-            velib_data = {"index": 1, "stations": 0, "format_station": {}}
-        else:
-            # reset station_index counter
-            if self.station_index == 0:
-                self.station_index = 1
-
-            # forge data output
             velib_data = {
-                "stations": self.number_of_stations,
-                "format_station": self.py3.safe_format(
-                    self.format_station, self.stations_data[self.station_index]
-                ),
-                "index": self.station_index,
+                "format_station": format_station,
+                "station": self.count_stations,
             }
 
-        for x in self.thresholds_init['format']:
-            if x in self.stations_data[self.station_index]:
-                self.py3.threshold_get_color(
-                    self.stations_data[self.station_index][x], x
-                )
+            for x in self.thresholds_init["format"]:
+                if x in velib_data:
+                    self.py3.threshold_get_color(velib_data, x)
+        else:
+            velib_data = self.empty_defaults
 
         return {
             "cached_until": self.py3.time_in(cached_until),
@@ -283,11 +275,15 @@ class Py3status:
     def on_click(self, event):
         button = event["button"]
         if button in [self.button_next, self.button_previous]:
-            self.scrolling = True
-            if button == self.button_next:
-                self.station_index += 1
-            elif button == self.button_previous:
-                self.station_index -= 1
+            if self.station_data:
+                self.scrolling = True
+                if button == self.button_next:
+                    self.active_index += 1
+                elif button == self.button_previous:
+                    self.active_index -= 1
+                self.active_index %= self.count_stations
+            else:
+                self.py3.prevent_refresh()
         elif button == self.button_refresh:
             self.idle_time = 0
         else:
