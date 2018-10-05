@@ -1,3 +1,4 @@
+from sys import argv
 from threading import Event
 from time import sleep, time
 
@@ -79,9 +80,22 @@ def module_test(module_class, config=None):
                     del item["instance"]
                 if "name" in item:
                     del item["name"]
-            if len(output) == 1:
-                output = output[0]
-            print(output)
+
+            if '--term' in argv:
+                line = ''
+                for item in output:
+                    color = item.get('color')
+                    if color:
+                        line += '\033[38;2;{};{};{}m'.format(
+                            *[int(color[1:][i:i + 2], 16) for i in (0, 2, 4)]
+                        )
+                    line += item['full_text'] + '\033[0m'
+                print(line)
+            else:
+                if len(output) == 1:
+                    output = output[0]
+                print(output)
+
             sleep(1)
         except KeyboardInterrupt:
             m.kill()
