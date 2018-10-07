@@ -212,7 +212,7 @@ class Py3status:
                     if self.check_imap_subfolders:
                         count_mail = 0
                         for mbox in inbox.list()[1]:
-                            # Don't remove the quots from the return string as
+                            # Don't remove the quotes from the return string as
                             # that would make the script unable to access all
                             # mailfolders with special characters.
                             mbox = mbox.decode('utf-8').split(' "." ')[1]
