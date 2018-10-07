@@ -22,7 +22,8 @@ Format placeholders:
 
     We can divide mailbox, eg `{maildir}`, into numbered placeholders based
     on number of mailbox accounts, eg `{maildir_1}`, and if we add `name` to
-    a mailbox account, we can use `{acc_'name'}` placeholder instead, eg `{acc_home}`.
+    a mailbox account, we can use `{acc_'name'}` placeholder instead,
+    eg `{acc_home}`.
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
