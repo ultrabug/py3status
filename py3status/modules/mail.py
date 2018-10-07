@@ -7,6 +7,8 @@ Configuration parameters:
     accounts: specify a dict consisting of mailbox types and a list of dicts
         consisting of mailbox settings and/or paths to use (default {})
     cache_timeout: refresh interval for this module (default 60)
+    check_imap_subfolders: should imap subfolders be checked
+        (default False)
     format: display format for this module
         (default '\?not_zero Mail {mail}|No Mail')
     thresholds: specify color thresholds to use (default [])
@@ -149,6 +151,7 @@ class Py3status:
     # available configuration parameters
     accounts = {}
     cache_timeout = 60
+    check_imap_subfolders = False
     format = '\?not_zero Mail {mail}|No Mail'
     thresholds = []
 
@@ -206,9 +209,20 @@ class Py3status:
                 if k == 'imap':
                     inbox = IMAP4_SSL(account['server'], account['port'])
                     inbox.login(account['user'], account['password'])
-                    inbox.select(readonly=True)
-                    imap_data = inbox.search(None, '(UNSEEN)')
-                    count_mail = len(imap_data[1][0].split())
+                    if self.check_imap_subfolders:
+                        count_mail = 0
+                        for mbox in inbox.list()[1]:
+                            # Don't remove the quots from the return string as
+                            # that would make the script unable to access all
+                            # mailfolders with special characters.
+                            mbox = mbox.decode('utf-8').split(' "." ')[1]
+                            if inbox.select(mbox, readonly=True)[0] == 'OK':
+                                imap_data = inbox.search(None, '(UNSEEN)')
+                                count_mail += len(imap_data[1][0].split())
+                    else:
+                        inbox.select(readonly=True)
+                        imap_data = inbox.search(None, '(UNSEEN)')
+                        count_mail = len(imap_data[1][0].split())
                     inbox.close()
                     inbox.logout()
                 else:
