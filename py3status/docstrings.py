@@ -68,7 +68,11 @@ def core_module_docstrings(
     for name in paths:
         path, module_type = paths[name]
         with open(path) as f:
-            module = ast.parse(f.read())
+            try:
+                module = ast.parse(f.read())
+            except SyntaxError:
+                # there is a syntax error so ignore module
+                continue
             raw_docstring = ast.get_docstring(module)
 
             # prevent issue when no docstring exists
