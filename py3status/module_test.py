@@ -81,15 +81,15 @@ def module_test(module_class, config=None):
                 if "name" in item:
                     del item["name"]
 
-            if '--term' in argv:
-                line = ''
+            if "--term" in argv:
+                line = ""
                 for item in output:
-                    color = item.get('color')
+                    color = item.get("color")
                     if color:
-                        line += '\033[38;2;{};{};{}m'.format(
-                            *[int(color[1:][i:i + 2], 16) for i in (0, 2, 4)]
+                        line += "\033[38;2;{};{};{}m".format(
+                            *[int(color[1:][i : i + 2], 16) for i in (0, 2, 4)]
                         )
-                    line += item['full_text'] + '\033[0m'
+                    line += item["full_text"] + "\033[0m"
                 print(line)
             else:
                 if len(output) == 1:
