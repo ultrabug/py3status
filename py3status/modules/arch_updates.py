@@ -11,7 +11,7 @@ Configuration parameters:
     format: display format for this module, see Examples below (default None)
     hide_if_zero: Don't show on bar if True
         (default False)
-    include_aur: Set to True to use 'cower' to check for AUR updates
+    include_aur: Set to True to use 'cower' or 'yay' to check for AUR updates
         (default False)
 
 Format placeholders:
@@ -21,7 +21,7 @@ Format placeholders:
 
 Requires:
     pacman-contrib: Needed for 'checkupdates' command line utility
-    cower: Needed to display pending 'aur' updates
+    cower or yay: Needed to display pending 'aur' updates
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -71,10 +71,14 @@ class Py3status:
             self.include_aur = True
             self.include_pacman = True
 
-        # check cower installed
-        if self.include_aur and not self.py3.check_commands(['cower']):
-            self.py3.notify_user('cower is not installed cannot check aur')
-            self.include_aur = False
+        if self.include_aur:
+            if self.py3.check_commands(['cower']):
+                self._check_aur_updates = self._check_aur_updates_cower
+            elif self.py3.check_commands(['yay']):
+                self._check_aur_updates = self._check_aur_updates_yay
+            else:
+                self.include_aur = False
+                self.py3.notify_user('cower/yay is not installed cannot check aur')
 
     def check_updates(self):
         pacman_updates = aur_updates = total = None
@@ -117,7 +121,7 @@ class Py3status:
             return None
         return pending_updates.count(LINE_SEPARATOR)
 
-    def _check_aur_updates(self):
+    def _check_aur_updates_cower(self):
         """
         This method will use the 'cower' command line utility
         to determine how many updates are waiting to be installed
@@ -134,6 +138,20 @@ class Py3status:
             pending_updates = cp_error.output
             return str(pending_updates).count(LINE_SEPARATOR)
         return None
+
+    def _check_aur_updates_yay(self):
+        """
+        This method will use the 'yay' command line utility
+        to determine how many updates are waiting to be installed
+        from the AUR.
+        Returns: None if unable to determine number of pending updates
+        """
+        try:
+            pending_updates = str(subprocess.check_output(
+                ["yay", "--query", "--upgrades", "--aur"]))
+        except subprocess.CalledProcessError:
+            return None
+        return pending_updates.count(LINE_SEPARATOR)
 
 
 if __name__ == "__main__":
