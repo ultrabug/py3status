@@ -657,6 +657,16 @@ class Module:
             if not hasattr(self.module_class, "py3"):
                 setattr(self.module_class, "py3", Py3(self))
 
+            # Subscribe to udev events if on_udev_* dynamic variables are
+            # configured on the module
+            on_udev_vars = [
+                i for i in dir(self.module_class) if i.startswith("on_udev_")
+            ]
+            for on_udev_var in on_udev_vars:
+                on, udev, subsystem = on_udev_var.split("_")
+                trigger_action = getattr(self.module_class, on_udev_var)
+                self.module_class.py3.on_udev_handler(trigger_action, subsystem)
+
             # allow_urgent
             # get the value form the config or use the module default if
             # supplied.
