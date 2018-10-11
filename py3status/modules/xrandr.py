@@ -44,8 +44,6 @@ Configuration parameters:
         The combinations will be rotated in the exact order as you listed them.
         When an output layout is not available any more, the configurations
         are automatically filtered out.
-        (default None)
-
         Example:
             Assuming the default values for `icon_clone` and `icon_extend`
             are used, and assuming you have two screens 'eDP1' and 'DP1', the
@@ -54,6 +52,7 @@ Configuration parameters:
             ```
             output_combinations = "eDP1|eDP1+DP1"
             ```
+        (default None)
     update_on_udev: the udev subsystem we want to monitor for events
         that will trigger a refresh of this module.
         (default 'drm')
