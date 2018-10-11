@@ -170,6 +170,8 @@ class Py3status:
         self.py3.log("Measurement mode: " + self.measurement_mode)
         if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
             raise NameError("Invalid measurement mode")
+        # subscribe to dbus power notifications
+        self.py3.dbus_subscribe(".UPower", 'update')
 
     def battery_level(self):
         if not os.listdir(self.sys_battery_path):

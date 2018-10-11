@@ -14,6 +14,7 @@ from time import time
 from uuid import uuid4
 
 from py3status import exceptions
+from py3status.dbus_helper import DBus
 from py3status.constants import COLOR_NAMES
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
@@ -92,6 +93,7 @@ class Py3:
     """Show as Warning"""
 
     # Shared by all Py3 Instances
+    _dbus = None
     _formatter = None
     _gradients = Gradiants()
     _none_color = NoneColor()
@@ -130,6 +132,9 @@ class Py3:
             # that we can do logging etc.
             if not self._formatter:
                 self.__class__._formatter = Formatter(module._py3_wrapper)
+
+            if not self._dbus:
+                self.__class__._dbus = DBus(module._py3_wrapper)
 
     def __getattr__(self, name):
         """
@@ -249,6 +254,17 @@ class Py3:
         self._py3_wrapper.report_exception(
             msg, notify_user=False, error_frame=error_frame
         )
+
+    def dbus_subscribe(
+        self, path, callback, event="onPropertiesChanged", bus="system"
+    ):
+        """
+        subscribe to dbus
+        """
+        if callback == "update":
+            callback = self._dbus.module_update(self._module)
+            self.log(callback)
+        self._dbus.subscribe(path, callback, event=event, bus=bus)
 
     def error(self, msg, timeout=None):
         """
