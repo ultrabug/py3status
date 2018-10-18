@@ -665,7 +665,7 @@ class Module:
             for on_udev_var in on_udev_vars:
                 on, udev, subsystem = on_udev_var.split("_")
                 trigger_action = getattr(self.module_class, on_udev_var)
-                self.module_class.py3.on_udev_handler(trigger_action, subsystem)
+                self.add_udev_trigger(trigger_action, subsystem)
 
             # allow_urgent
             # get the value form the config or use the module default if
@@ -918,3 +918,12 @@ class Module:
             except Exception:
                 # this would be stupid to die on exit
                 pass
+
+    def add_udev_trigger(self, trigger_action, subsystem):
+        """
+        Subscribe to the requested udev subsystem and apply the given action.
+        """
+        if self._py3_wrapper.udev_monitor.subscribe(self, trigger_action, subsystem):
+            if trigger_action == "refresh_and_freeze":
+                # FIXME: we may want to disable refresh instead of using cache_timeout
+                self.module_class.cache_timeout = PY3_CACHE_FOREVER
