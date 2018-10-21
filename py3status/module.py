@@ -311,14 +311,34 @@ class Module:
         self.py3_module_options = {}
         mod_config = self.config["py3_config"].get(module, {})
 
+        if "min_length" in mod_config:
+            min_length = mod_config["min_length"]
+            if not isinstance(min_length, int):
+                err = 'invalid "min_length" attribute should be an int'
+                raise TypeError(err)
+
+            self.py3_module_options["min_length"] = min_length
+            self.random_int = randint(0, 1)
+
+            if "position" in mod_config:
+                position = mod_config["position"]
+                if not (
+                    isinstance(position, basestring)
+                    and position.lower() in ("left", "center", "right")
+                ):
+                    err = 'invalid "position" attribute, valid values are:'
+                    err += " left, center, right"
+                    raise ValueError(err)
+
+                self.py3_module_options["position"] = position
+
         if "min_width" in mod_config:
             min_width = mod_config["min_width"]
             if not isinstance(min_width, int):
                 err = 'invalid "min_width" attribute should be an int'
                 raise TypeError(err)
 
-            self.py3_module_options["min_width"] = min_width
-            self.random_int = randint(0, 1)
+            self.i3s_module_options["min_width"] = min_width
 
             if "align" in mod_config:
                 align = mod_config["align"]
@@ -330,7 +350,7 @@ class Module:
                     err += " left, center, right"
                     raise ValueError(err)
 
-                self.py3_module_options["align"] = align
+                self.i3s_module_options["align"] = align
 
         if "separator" in mod_config:
             separator = mod_config["separator"]
@@ -416,31 +436,31 @@ class Module:
             elif urgent and "urgent" not in item:
                 item["urgent"] = urgent
 
-        # set min_width
-        if "min_width" in self.py3_module_options:
-            min_width = self.py3_module_options["min_width"]
+        # set min_length
+        if "min_length" in self.py3_module_options:
+            min_length = self.py3_module_options["min_length"]
 
-            # get width, skip if width exceeds min_width
-            width = sum([len(x["full_text"]) for x in response["composite"]])
-            if width >= min_width:
+            # get length, skip if length exceeds min_length
+            length = sum([len(x["full_text"]) for x in response["composite"]])
+            if length >= min_length:
                 return
 
-            # sometimes when we go under min_width to pad both side evenly,
-            # we will add extra space on either side to honor min_width
-            padding = int((min_width / 2.0) - (width / 2.0))
-            offset = min_width - ((padding * 2) + width)
+            # sometimes we go under min_length to pad both side evenly,
+            # we will add extra space on either side to honor min_length
+            padding = int((min_length / 2.0) - (length / 2.0))
+            offset = min_length - ((padding * 2) + length)
 
-            # set align
-            align = self.py3_module_options.get("align", "left")
-            if align == "center":
+            # set position
+            position = self.py3_module_options.get("position", "left")
+            if position == "center":
                 left = right = " " * padding
                 if self.random_int:
                     left += " " * offset
                 else:
                     right += " " * offset
-            elif align == "left":
+            elif position == "left":
                 left, right = "", " " * (padding * 2 + offset)
-            elif align == "right":
+            elif position == "right":
                 right, left = "", " " * (padding * 2 + offset)
 
             # padding

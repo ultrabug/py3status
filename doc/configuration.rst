@@ -127,6 +127,13 @@ Store per config cache in different directories.
         storage = '~/.config/py3status/cache_bottom.data'
     }
 
+.. note::
+    New in version 3.14
+
+You can specify the following options in module configuration.
+
+ ``min_length``: Specify a minimum length for modules.
+ ``position``: Specify how modules should be positioned.
 
 Configuration obfuscation
 -------------------------
