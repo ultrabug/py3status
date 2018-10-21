@@ -644,6 +644,8 @@ class ConfigParser:
                 value = self.assignment(token)
                 # order is treated specially to create a list
                 if self.level == 1 and name == "order":
+                    if not value:
+                        self.error("Invalid module")
                     self.check_module_name(value, offset=1)
                     dictionary.setdefault(name, []).append(value)
                 # assignment of  module definition
