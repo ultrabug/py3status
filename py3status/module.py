@@ -659,13 +659,10 @@ class Module:
 
             # Subscribe to udev events if on_udev_* dynamic variables are
             # configured on the module
-            on_udev_vars = [
-                i for i in dir(self.module_class) if i.startswith("on_udev_")
-            ]
-            for on_udev_var in on_udev_vars:
-                on, udev, subsystem = on_udev_var.split("_")
-                trigger_action = getattr(self.module_class, on_udev_var)
-                self.add_udev_trigger(trigger_action, subsystem)
+            for param in dir(self.module_class):
+                if param.startswith("on_udev_"):
+                    trigger_action = getattr(self.module_class, param)
+                    self.add_udev_trigger(trigger_action, param[8:])
 
             # allow_urgent
             # get the value form the config or use the module default if
