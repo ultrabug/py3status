@@ -433,6 +433,7 @@ class Py3statusWrapper:
         # include path to search for user modules
         config["include_paths"] = [
             "{}/.i3/py3status/".format(home_path),
+            "{}/.config/i3/py3status/".format(home_path),
             "{}/i3status/py3status".format(
                 os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
             ),
