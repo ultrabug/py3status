@@ -7,6 +7,7 @@ from time import time
 from random import randint
 
 from py3status.composite import Composite
+from py3status.constants import POSITIONS
 from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
@@ -324,10 +325,10 @@ class Module:
                 position = mod_config["position"]
                 if not (
                     isinstance(position, basestring)
-                    and position.lower() in ("left", "center", "right")
+                    and position.lower() in POSITIONS
                 ):
-                    err = 'invalid "position" attribute, valid values are:'
-                    err += " left, center, right"
+                    err = 'invalid "position" attribute, valid values are: '
+                    err += ", ".join(POSITIONS)
                     raise ValueError(err)
 
                 self.py3_module_options["position"] = position
@@ -344,10 +345,10 @@ class Module:
                 align = mod_config["align"]
                 if not (
                     isinstance(align, basestring)
-                    and align.lower() in ("left", "center", "right")
+                    and align.lower() in POSITIONS
                 ):
-                    err = 'invalid "align" attribute, valid values are:'
-                    err += " left, center, right"
+                    err = 'invalid "align" attribute, valid values are: '
+                    err += ", ".join(POSITIONS)
                     raise ValueError(err)
 
                 self.i3s_module_options["align"] = align

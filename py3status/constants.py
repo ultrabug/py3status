@@ -213,3 +213,5 @@ COLOR_NAMES = {
 }
 
 ON_TRIGGER_ACTIONS = ["refresh", "refresh_and_freeze"]
+
+POSITIONS = ["left", "center", "right"]

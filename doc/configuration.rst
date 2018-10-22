@@ -132,8 +132,16 @@ Store per config cache in different directories.
 
 You can specify the following options in module configuration.
 
- ``min_length``: Specify a minimum length for modules.
- ``position``: Specify how modules should be positioned.
+ ``min_length``: Specify a minimum length (of characters) for modules.
+ ``position``: Specify how modules should be positioned when the ``min_length``
+ is not reached. Either ``left`` (default), ``center``, or ``right``.
+
+.. code-block:: py3status
+     # example
+    static_string {
+        min_length = 15
+        position = 'center'
+    }
 
 Configuration obfuscation
 -------------------------
