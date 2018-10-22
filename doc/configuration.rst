@@ -717,3 +717,32 @@ closing parenthesis ``)`` using a backslash ``\)``.
     Prior to version 3.13 you may not include any closing
     parenthesis ``)`` in the expression. Wrap your commands in a
     script file and call it instead.
+
+
+Refreshing modules on udev events with on_udev dynamic options
+--------------------------------------------------------------
+
+.. note::
+    New in version 3.14
+
+Refreshing of modules can be triggered when an udev event is detected on a
+specific subsystem using the ``on_udev_<subsystem>`` configuration parameter
+and an associated action.
+
+Possible actions:
+- ``refresh``: immediately refresh the module and keep on updating it as usual
+- ``refresh_and_freeze``: module is ONLY refreshed when said udev subsystem emits
+an event
+
+.. code-block:: py3status
+    :caption: Example
+
+    # refresh xrandr only when udev 'drm' events are triggered
+    xrandr {
+        on_udev_drm = "refresh_and_freeze"
+    }
+
+.. note::
+    This feature will only activate when ``pyudev`` is installed on the system.
+    This is an optional dependency of py3status and is therefore not enforced
+    by all package managers.

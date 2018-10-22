@@ -657,6 +657,13 @@ class Module:
             if not hasattr(self.module_class, "py3"):
                 setattr(self.module_class, "py3", Py3(self))
 
+            # Subscribe to udev events if on_udev_* dynamic variables are
+            # configured on the module
+            for param in dir(self.module_class):
+                if param.startswith("on_udev_"):
+                    trigger_action = getattr(self.module_class, param)
+                    self.add_udev_trigger(trigger_action, param[8:])
+
             # allow_urgent
             # get the value form the config or use the module default if
             # supplied.
@@ -908,3 +915,12 @@ class Module:
             except Exception:
                 # this would be stupid to die on exit
                 pass
+
+    def add_udev_trigger(self, trigger_action, subsystem):
+        """
+        Subscribe to the requested udev subsystem and apply the given action.
+        """
+        if self._py3_wrapper.udev_monitor.subscribe(self, trigger_action, subsystem):
+            if trigger_action == "refresh_and_freeze":
+                # FIXME: we may want to disable refresh instead of using cache_timeout
+                self.module_class.cache_timeout = PY3_CACHE_FOREVER
