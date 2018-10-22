@@ -78,4 +78,4 @@ class UdevMonitor:
                     "%s udev event, refresh consumer %s"
                     % (subsystem, py3_module.module_full_name)
                 )
-                py3_module.update()
+                py3_module.force_update()
