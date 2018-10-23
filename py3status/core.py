@@ -456,7 +456,7 @@ class Py3statusWrapper:
         config["log_file"] = options.log_file
         config["standalone"] = options.standalone
         config["i3status_config_path"] = options.i3status_conf
-        config["disable_click_events"] = options.disable_click_events
+        config["click_events"] = options.click_events
         if options.cli_command:
             config["cli_command"] = options.cli_command
         return config
@@ -1014,7 +1014,7 @@ class Py3statusWrapper:
         # start our output
         header = {
             "version": 1,
-            "click_events": not self.config["disable_click_events"],
+            "click_events": self.config["click_events"],
             "stop_signal": SIGTSTP,
         }
         write(dumps(header))

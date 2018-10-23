@@ -33,33 +33,35 @@ def parse_cli():
         i3status_config_file_default = "{}/.i3/i3status.conf".format(home_path)
 
     # command line options
-    parser = argparse.ArgumentParser(
-        description="The agile, python-powered, i3status wrapper"
-    )
-    parser = argparse.ArgumentParser(add_help=True)
+    class HelpFormatter(argparse.HelpFormatter):
+        def _format_action_invocation(self, action):
+            metavar = self._format_args(action, action.dest.upper())
+            return "{} {}".format(", ".join(action.option_strings), metavar)
+
+    parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
     parser.add_argument(
         "-b",
         "--dbus-notify",
         action="store_true",
         default=False,
         dest="dbus_notify",
-        help=(
-            "use notify-send to send user notifications "
-            "rather than i3-nagbar, "
-            "requires a notification daemon eg dunst"
-        ),
+        help="send notifications via dbus instead of i3-nagbar",
     )
     parser.add_argument(
         "-c",
         "--config",
+        metavar="FILE",
         action="store",
         dest="i3status_conf",
         type=str,
         default=i3status_config_file_default,
-        help="path to i3status config file",
+        help="load config (default %(default)s)",
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="be verbose in syslog"
+        "-d",
+        "--debug",
+        action="store_true",
+        help="enable debug logging in syslog and --log-file",
     )
     parser.add_argument(
         "-g",
@@ -67,75 +69,75 @@ def parse_cli():
         action="store_true",
         default=False,
         dest="gevent",
-        help="enable gevent monkey patching (default False)",
+        help="enable gevent monkey patching",
     )
     parser.add_argument(
         "-i",
         "--include",
+        metavar="PATH",
         action="append",
         dest="include_paths",
-        help=(
-            "include user-written modules from those "
-            "directories (default ~/.i3/py3status)"
-        ),
+        help="append additional module paths",
     )
     parser.add_argument(
         "-l",
         "--log-file",
+        metavar="FILE",
         action="store",
         dest="log_file",
         type=str,
+        help="enable logging to FILE",
         default=None,
-        help="path to py3status log file",
+    )
+    parser.add_argument(
+        "-m",
+        "--disable-click-events",
+        action="store_false",
+        dest="click_events",
+        help="disable i3bar click events",
     )
     parser.add_argument(
         "-n",
         "--interval",
+        metavar="INT",
         action="store",
         dest="interval",
         type=float,
+        help="refresh interval for py3status (default %(default)s)",
         default=1,
-        help="update interval in seconds (default 1 sec)",
     )
     parser.add_argument(
         "-s",
         "--standalone",
         action="store_true",
-        help="standalone mode, do not use i3status",
+        help="run py3status without i3status",
     )
     parser.add_argument(
         "-t",
         "--timeout",
+        metavar="INT",
         action="store",
         dest="cache_timeout",
         type=int,
+        help="injection cache timeout (default %(default)s)",
         default=60,
-        help="default injection cache timeout in seconds (default 60 sec)",
     )
     parser.add_argument(
-        "-m",
-        "--disable-click-events",
+        "-v",
+        "--version",
         action="store_true",
-        dest="disable_click_events",
-        default=False,
-        help="disable all click events",
+        help="show py3status version and exit",
     )
-    parser.add_argument(
-        "-v", "--version", action="store_true", help="show py3status version and exit"
-    )
+
     # FIXME we should make all of these explicit so they self document etc
     parser.add_argument("cli_command", nargs="*", help=argparse.SUPPRESS)
-
     options = parser.parse_args()
 
-    # only asked for version
     if options.version:
-        import sys
         from platform import python_version
         from py3status.version import version
 
-        print("py3status version {} (python {})".format(version, python_version()))
-        sys.exit(0)
+        print("py3status {} (python {})".format(version, python_version()))
+        parser.exit()
 
-    # all done
     return options
