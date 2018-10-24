@@ -102,7 +102,7 @@ def parse_cli():
         metavar="INT",
         action="store",
         dest="interval",
-        type=float,
+        type=int,
         help="refresh interval for py3status (default %(default)s)",
         default=1,
     )
