@@ -20,7 +20,7 @@ def parse_readme():
     returns a dict of {<module_name>: <documentation>}
     """
     name = None
-    re_mod = re.compile('^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
+    re_mod = re.compile(r'^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
     readme_file = os.path.join(modules_directory(), "README.md")
     modules_dict = {}
     with open(readme_file) as f:
@@ -118,23 +118,23 @@ def create_readme(data):
     return "".join(out)
 
 
-re_listing = re.compile("^\w.*:$")
+re_listing = re.compile(r"^\w.*:$")
 
 # match in README.md
-re_to_param = re.compile("^  - `([a-z]\S+)`($|[ \t])")
-re_to_status = re.compile("^  - `({\S+})`($|[ \t])")
-re_to_item = re.compile("^\s+-")
-re_to_data = re.compile("^\*\*(author|license|source)\*\*($|[ \t])")
+re_to_param = re.compile(r"^  - `([a-z]\S+)`($|[ \t])")
+re_to_status = re.compile(r"^  - `({\S+})`($|[ \t])")
+re_to_item = re.compile(r"^\s+-")
+re_to_data = re.compile(r"^\*\*(author|license|source)\*\*($|[ \t])")
 re_to_tag = re.compile("&lt;([^.]*)&gt;")
-re_to_defaults = re.compile("\*(\(default.*\))\*")
+re_to_defaults = re.compile(r"\*(\(default.*\))\*")
 
 # match in module docstring
-re_from_param = re.compile("^    ([a-z<]\S+):($|[ \t])(.*)$")
-re_from_status = re.compile("^\s+({\S+})($|[ \t])(.*)$")
-re_from_item = re.compile("^\s+-(?=\s)")
+re_from_param = re.compile(r"^    ([a-z<]\S+):($|[ \t])(.*)$")
+re_from_status = re.compile(r"^\s+({\S+})($|[ \t])(.*)$")
+re_from_item = re.compile(r"^\s+-(?=\s)")
 re_from_data = re.compile("^@(author|license|source)($|[ \t])")
 re_from_tag = re.compile("((`[^`]*`)|[<>&])")
-re_from_defaults = re.compile("(\(default.*\))\s*$")
+re_from_defaults = re.compile(r"(\(default.*\))\s*$")
 
 # for rst
 re_lone_backtick = re.compile("(?<!`)`(?!`)")
