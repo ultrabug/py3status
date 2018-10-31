@@ -769,7 +769,7 @@ class Py3:
     def safe_format(
         self, format_string, param_dict=None, force_composite=False, attr_getter=None
     ):
-        """
+        r"""
         Parser for advanced formatting.
 
         Unknown placeholders will be shown in the output eg ``{foo}``.

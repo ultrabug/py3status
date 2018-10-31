@@ -135,17 +135,17 @@ class ConfigParser:
         "#.*$"  # comments
         "|(?P<function>"  # functions of the form `name(payload[,type])`
         "" + FUNCTIONS + r"\(\s*(([^)\\]|\\.)*?)"  # nasty '' but flake8
-        "(\s*,\s*" + CONVERSIONS + ")?\s*\))"
-        "|(?P<operator>[()[\]{},:]|\+?=)"  # operators
+        r"(\s*,\s*" + CONVERSIONS + r")?\s*\))"
+        r"|(?P<operator>[()[\]{},:]|\+?=)"  # operators
         "|(?P<literal>"
         r'("(?:[^"\\]|\\.)*")'  # double quoted string
         r"|('(?:[^'\\]|\\.)*')"  # single quoted string
-        "|([a-z_][a-z0-9_\-]*(:[a-z0-9_]+)?)"  # token
-        "|(-?\d+\.\d*)|(-?\.\d+)"  # float
-        "|(-?\d+)"  # int
+        r"|([a-z_][a-z0-9_\-]*(:[a-z0-9_]+)?)"  # token
+        r"|(-?\d+\.\d*)|(-?\.\d+)"  # float
+        r"|(-?\d+)"  # int
         ")"
         r"|(?P<newline>\n)"  # newline
-        "|(?P<unknown>\S+)"  # unknown token
+        r"|(?P<unknown>\S+)"  # unknown token
     ]
 
     def __init__(self, config, py3_wrapper):
@@ -353,7 +353,7 @@ class ConfigParser:
         value_type = match.group(6) or "auto"
 
         # fix any escaped closing parenthesis
-        param = param.replace("\)", ")")
+        param = param.replace(r"\)", ")")
 
         CONFIG_FUNCTIONS = {
             "base64": self.make_function_value_private,
