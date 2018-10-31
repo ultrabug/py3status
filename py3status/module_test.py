@@ -6,8 +6,14 @@ from py3status.core import Common, Module
 
 
 class MockPy3statusWrapper:
+    """
+    """
     class EventThread:
         def process_event(self, *arg, **kw):
+            pass
+
+    class UdevMonitor:
+        def subscribe(self, *arg):
             pass
 
     def __init__(self, config):
@@ -21,6 +27,7 @@ class MockPy3statusWrapper:
             "log_file": True,
         }
         self.events_thread = self.EventThread()
+        self.udev_monitor = self.UdevMonitor()
         self.i3status_thread = None
         self.lock = Event()
         self.output_modules = {}
