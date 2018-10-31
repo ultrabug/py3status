@@ -522,9 +522,7 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(
-        self, msg, level="info", rate_limit=5, title=None, icon=None
-    ):
+    def notify_user(self, msg, level="info", rate_limit=5, title=None, icon=None):
         """
         Send a notification to the user.
         level must be 'info', 'error' or 'warning'.
@@ -536,7 +534,7 @@ class Py3:
         if isinstance(msg, Composite):
             msg = msg.text()
         if title is None:
-            title = 'py3status: {}'.format(module_name)
+            title = "py3status: {}".format(module_name)
         elif isinstance(title, Composite):
             title = title.text()
         # force unicode for python2 str

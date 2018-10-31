@@ -324,8 +324,7 @@ class Module:
             if "position" in mod_config:
                 position = mod_config["position"]
                 if not (
-                    isinstance(position, basestring)
-                    and position.lower() in POSITIONS
+                    isinstance(position, basestring) and position.lower() in POSITIONS
                 ):
                     err = 'invalid "position" attribute, valid values are: '
                     err += ", ".join(POSITIONS)
@@ -343,10 +342,7 @@ class Module:
 
             if "align" in mod_config:
                 align = mod_config["align"]
-                if not (
-                    isinstance(align, basestring)
-                    and align.lower() in POSITIONS
-                ):
+                if not (isinstance(align, basestring) and align.lower() in POSITIONS):
                     err = 'invalid "align" attribute, valid values are: '
                     err += ", ".join(POSITIONS)
                     raise ValueError(err)
