@@ -523,7 +523,7 @@ class Py3:
         self._module.prevent_refresh = True
 
     def notify_user(
-        self, msg, level="info", rate_limit=5, title="py3status", icon=None
+        self, msg, level="info", rate_limit=5, title=None, icon=None
     ):
         """
         Send a notification to the user.
@@ -532,9 +532,12 @@ class Py3:
         should not be repeated.
         icon must be an icon path or icon name.
         """
+        module_name = self._module.module_full_name
         if isinstance(msg, Composite):
             msg = msg.text()
-        if isinstance(title, Composite):
+        if title is None:
+            title = 'py3status: {}'.format(module_name)
+        elif isinstance(title, Composite):
             title = title.text()
         # force unicode for python2 str
         if self._is_python_2:
@@ -543,7 +546,6 @@ class Py3:
             if isinstance(title, str):
                 title = title.decode("utf-8")
         if msg:
-            module_name = self._module.module_full_name
             self._py3_wrapper.notify_user(
                 msg=msg,
                 level=level,
