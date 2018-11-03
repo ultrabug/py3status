@@ -168,7 +168,7 @@ class Module:
             return
 
         # only show first line of error
-        msg = msg.splitlines()[0]
+        msg = msg.splitlines()[0] if msg else "('', None)"
 
         errors = [self.module_nice_name, u"{}: {}".format(self.module_nice_name, msg)]
 
