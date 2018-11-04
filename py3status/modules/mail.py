@@ -156,7 +156,7 @@ no_mail
 import mailbox
 from imaplib import IMAP4_SSL
 from os.path import exists, expanduser, expandvars
-
+from csv import reader
 STRING_MISSING = 'missing {} {}'
 STRING_INVALID_NAME = 'invalid name `{}`'
 STRING_INVALID_BOX = 'invalid mailbox `{}`'
@@ -231,11 +231,13 @@ class Py3status:
                     if account['check_subfolders'] or \
                             account['folder_whitelist']:
                         count_mail = 0
-                        for mbox in inbox.list()[1]:
-                            # Don't remove the quotes from the return string as
+                        mlist = [x.decode('utf-8') for x in inbox.list()[1]]
+                        mlist = [x[-1][:] for x in reader(mlist, delimiter=' ')]  # noqa: E501
+                        for mbox in mlist:
+                            mbox = '"' + mbox + '"'
+                            # Don't remove the quotes from the string as
                             # that would make the script unable to access all
                             # mailfolders with special characters.
-                            mbox = mbox.decode('utf-8').split(' "." ')[1]
                             if mbox[1:-1] in account['folder_blacklist'] or \
                                     (not account['check_subfolders'] and
                                      not mbox[1:-1] in account['folder_whitelist']):  # noqa: E501
