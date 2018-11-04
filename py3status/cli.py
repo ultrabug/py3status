@@ -19,6 +19,7 @@ def parse_cli():
         "{}/i3status/config".format(
             os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
         ),
+        "{}/.config/i3/".format(home_path),
         "/etc/i3status.conf",
         "{}/i3status/config".format(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")),
     ]

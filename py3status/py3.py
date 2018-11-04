@@ -192,13 +192,19 @@ class Py3:
         thresholds = getattr(self._py3status_module, "thresholds", [])
         self._thresholds = {}
         if isinstance(thresholds, list):
-            thresholds.sort()
+            try:
+                thresholds.sort()
+            except TypeError:
+                pass
             self._thresholds[None] = [(x[0], self._get_color(x[1])) for x in thresholds]
             return
         elif isinstance(thresholds, dict):
             for key, value in thresholds.items():
                 if isinstance(value, list):
-                    value.sort()
+                    try:
+                        value.sort()
+                    except TypeError:
+                        pass
                     self._thresholds[key] = [
                         (x[0], self._get_color(x[1])) for x in value
                     ]
@@ -516,9 +522,7 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(
-        self, msg, level="info", rate_limit=5, title="py3status", icon=None
-    ):
+    def notify_user(self, msg, level="info", rate_limit=5, title=None, icon=None):
         """
         Send a notification to the user.
         level must be 'info', 'error' or 'warning'.
@@ -526,9 +530,12 @@ class Py3:
         should not be repeated.
         icon must be an icon path or icon name.
         """
+        module_name = self._module.module_full_name
         if isinstance(msg, Composite):
             msg = msg.text()
-        if isinstance(title, Composite):
+        if title is None:
+            title = "py3status: {}".format(module_name)
+        elif isinstance(title, Composite):
             title = title.text()
         # force unicode for python2 str
         if self._is_python_2:
@@ -537,7 +544,6 @@ class Py3:
             if isinstance(title, str):
                 title = title.decode("utf-8")
         if msg:
-            module_name = self._module.module_full_name
             self._py3_wrapper.notify_user(
                 msg=msg,
                 level=level,
@@ -763,7 +769,7 @@ class Py3:
     def safe_format(
         self, format_string, param_dict=None, force_composite=False, attr_getter=None
     ):
-        """
+        r"""
         Parser for advanced formatting.
 
         Unknown placeholders will be shown in the output eg ``{foo}``.
@@ -1124,14 +1130,6 @@ class Py3:
         if self._thresholds is None:
             self._thresholds_init()
 
-        color = None
-        # if value is None, pass it along. otherwise try it.
-        if value is not None:
-            try:
-                value = float(value)
-            except ValueError:
-                color = self._get_color("error") or self._get_color("bad")
-
         # allow name with different values
         if isinstance(name, tuple):
             name_used = "{}/{}".format(name[0], name[1])
@@ -1146,35 +1144,60 @@ class Py3:
             if name_used not in self._thresholds:
                 name_used = None
 
+        # convert value to int/float
         thresholds = self._thresholds.get(name_used)
-        # if value is None, pass it along. otherwise try it.
-        if value is not None and color is None and thresholds:
-            # if gradients are enabled then we use them
-            if self._get_config_setting("gradients"):
-                try:
-                    colors, minimum, maximum = self._threshold_gradients[name_used]
-                except KeyError:
-                    colors = self._gradients.make_threshold_gradient(self, thresholds)
-                    minimum = min(thresholds)[0]
-                    maximum = max(thresholds)[0]
-                    self._threshold_gradients[name_used] = (colors, minimum, maximum)
+        color = None
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            pass
 
-                if value < minimum:
-                    color = colors[0]
-                elif value > maximum:
-                    color = colors[-1]
-                else:
-                    value -= minimum
-                    col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
-                    color = colors[col_index]
+        # skip on empty thresholds/values
+        if not thresholds or value in [None, ""]:
+            pass
+        elif isinstance(value, basestring):
+            # string
+            for threshold in thresholds:
+                if value == threshold[0]:
+                    color = threshold[1]
+                    break
+        else:
+            # int/float
+            try:
+                if self._get_config_setting("gradients"):
+                    try:
+                        colors, minimum, maximum = self._threshold_gradients[name_used]
+                    except KeyError:
+                        colors = self._gradients.make_threshold_gradient(
+                            self, thresholds
+                        )
+                        minimum = min(thresholds)[0]
+                        maximum = max(thresholds)[0]
+                        self._threshold_gradients[name_used] = (
+                            colors,
+                            minimum,
+                            maximum,
+                        )
 
-            elif color is None:
-                color = thresholds[0][1]
-                for threshold in thresholds:
-                    if value >= threshold[0]:
-                        color = threshold[1]
+                    if value < minimum:
+                        color = colors[0]
+                    elif value > maximum:
+                        color = colors[-1]
                     else:
-                        break
+                        value -= minimum
+                        col_index = int(
+                            ((len(colors) - 1) / (maximum - minimum)) * value
+                        )
+                        color = colors[col_index]
+                else:
+                    color = thresholds[0][1]
+                    for threshold in thresholds:
+                        if value >= threshold[0]:
+                            color = threshold[1]
+                        else:
+                            break
+            except TypeError:
+                pass
 
         # save color so it can be accessed via safe_format()
         if name:

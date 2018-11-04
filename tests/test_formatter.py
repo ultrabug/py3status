@@ -436,65 +436,65 @@ def test_55():
 def test_56():
     run_formatter(
         # commands
-        {"format": "{missing}|\?show Anon", "expected": "Anon"}
+        {"format": r"{missing}|\?show Anon", "expected": "Anon"}
     )
 
 
 def test_57():
     run_formatter(
-        {"format": "Hello [{missing}|[\?show Anon]]!", "expected": "Hello Anon!"}
+        {"format": r"Hello [{missing}|[\?show Anon]]!", "expected": "Hello Anon!"}
     )
 
 
 def test_58():
-    run_formatter({"format": "[\?if=yes Hello]", "expected": "Hello"})
+    run_formatter({"format": r"[\?if=yes Hello]", "expected": "Hello"})
 
 
 def test_58a():
-    run_formatter({"format": "\?if=yes Hello", "expected": "Hello"})
+    run_formatter({"format": r"\?if=yes Hello", "expected": "Hello"})
 
 
 def test_59():
-    run_formatter({"format": "[\?if=no Hello]", "expected": ""})
+    run_formatter({"format": r"[\?if=no Hello]", "expected": ""})
 
 
 def test_59a():
-    run_formatter({"format": "\?if=no Hello", "expected": ""})
+    run_formatter({"format": r"\?if=no Hello", "expected": ""})
 
 
 def test_60():
-    run_formatter({"format": "[\?if=missing Hello]", "expected": ""})
+    run_formatter({"format": r"[\?if=missing Hello]", "expected": ""})
 
 
 def test_61():
-    run_formatter({"format": "[\?if=!yes Hello]", "expected": ""})
+    run_formatter({"format": r"[\?if=!yes Hello]", "expected": ""})
 
 
 def test_62():
-    run_formatter({"format": "[\?if=!no Hello]", "expected": "Hello"})
+    run_formatter({"format": r"[\?if=!no Hello]", "expected": "Hello"})
 
 
 def test_63():
-    run_formatter({"format": "[\?if=!missing Hello]", "expected": "Hello"})
+    run_formatter({"format": r"[\?if=!missing Hello]", "expected": "Hello"})
 
 
 def test_64():
-    run_formatter({"format": "[\?if=yes Hello[ {name}]]", "expected": "Hello Björk"})
+    run_formatter({"format": r"[\?if=yes Hello[ {name}]]", "expected": "Hello Björk"})
 
 
 def test_65():
-    run_formatter({"format": "[\?if=no Hello[ {name}]]", "expected": ""})
+    run_formatter({"format": r"[\?if=no Hello[ {name}]]", "expected": ""})
 
 
 def test_66():
     run_formatter(
-        {"format": "[\?max_length=10 Hello {name} {number}]", "expected": "Hello Björ"}
+        {"format": r"[\?max_length=10 Hello {name} {number}]", "expected": "Hello Björ"}
     )
 
 
 def test_67():
     run_formatter(
-        {"format": "\?max_length=9 Hello {name} {number}", "expected": "Hello Bjö"}
+        {"format": r"\?max_length=9 Hello {name} {number}", "expected": "Hello Bjö"}
     )
 
 
@@ -598,12 +598,12 @@ def test_78():
 
 
 def test_else_true():
-    run_formatter({"format": "[\?if=yes Hello|Goodbye]", "expected": "Hello"})
+    run_formatter({"format": r"[\?if=yes Hello|Goodbye]", "expected": "Hello"})
 
 
 def test_else_false():
     run_formatter(
-        {"format": "[\?if=no Hello|Goodbye|Something else]", "expected": "Goodbye"}
+        {"format": r"[\?if=no Hello|Goodbye|Something else]", "expected": "Goodbye"}
     )
 
 
@@ -617,20 +617,20 @@ def test_composite_looks_empty():
 def test_color_name_1():
     run_formatter(
         {
-            "format": "\?color=bad color",
+            "format": r"\?color=bad color",
             "expected": [{"full_text": "color", "color": "#FF0000"}],
         }
     )
 
 
 def test_color_name_2():
-    run_formatter({"format": "\?color=no_name color", "expected": "color"})
+    run_formatter({"format": r"\?color=no_name color", "expected": "color"})
 
 
 def test_color_name_3():
     run_formatter(
         {
-            "format": "\?color=#FF00FF color",
+            "format": r"\?color=#FF00FF color",
             "expected": [{"full_text": "color", "color": "#FF00FF"}],
         }
     )
@@ -639,7 +639,7 @@ def test_color_name_3():
 def test_color_name_4():
     run_formatter(
         {
-            "format": "\?color=#ff00ff color",
+            "format": r"\?color=#ff00ff color",
             "expected": [{"full_text": "color", "color": "#FF00FF"}],
         }
     )
@@ -648,7 +648,7 @@ def test_color_name_4():
 def test_color_name_4a():
     run_formatter(
         {
-            "format": "[\?color=#ff00ff&show color]",
+            "format": r"[\?color=#ff00ff&show color]",
             "expected": [{"full_text": "color", "color": "#FF00FF"}],
         }
     )
@@ -657,7 +657,7 @@ def test_color_name_4a():
 def test_color_name_5():
     run_formatter(
         {
-            "format": "\?color=#F0F color",
+            "format": r"\?color=#F0F color",
             "expected": [{"full_text": "color", "color": "#FF00FF"}],
         }
     )
@@ -666,7 +666,7 @@ def test_color_name_5():
 def test_color_name_5a():
     run_formatter(
         {
-            "format": "[\?color=#F0F&show color]",
+            "format": r"[\?color=#F0F&show color]",
             "expected": [{"full_text": "color", "color": "#FF00FF"}],
         }
     )
@@ -675,24 +675,24 @@ def test_color_name_5a():
 def test_color_name_6():
     run_formatter(
         {
-            "format": "\?color=#f0f color",
+            "format": r"\?color=#f0f color",
             "expected": [{"full_text": "color", "color": "#FF00FF"}],
         }
     )
 
 
 def test_color_name_7():
-    run_formatter({"format": "\?color=#BADHEX color", "expected": "color"})
+    run_formatter({"format": r"\?color=#BADHEX color", "expected": "color"})
 
 
 def test_color_name_7a():
-    run_formatter({"format": "[\?color=#BADHEX&show color]", "expected": "color"})
+    run_formatter({"format": r"[\?color=#BADHEX&show color]", "expected": "color"})
 
 
 def test_color_1():
     run_formatter(
         {
-            "format": "[\?color=bad {name}]",
+            "format": r"[\?color=bad {name}]",
             "expected": [{"full_text": u"Björk", "color": "#FF0000"}],
         }
     )
@@ -701,7 +701,7 @@ def test_color_1():
 def test_color_1a():
     run_formatter(
         {
-            "format": "\?color=bad {name}",
+            "format": r"\?color=bad {name}",
             "expected": [{"full_text": u"Björk", "color": "#FF0000"}],
         }
     )
@@ -710,7 +710,7 @@ def test_color_1a():
 def test_color_2():
     run_formatter(
         {
-            "format": "[\?color=good Name [\?color=bad {name}] hello]",
+            "format": r"[\?color=good Name [\?color=bad {name}] hello]",
             "expected": [
                 {"full_text": "Name ", "color": "#00FF00"},
                 {"full_text": u"Björk", "color": "#FF0000"},
@@ -723,7 +723,7 @@ def test_color_2():
 def test_color_3():
     run_formatter(
         {
-            "format": "[\?max_length=20&color=good Name [\?color=bad {name}] hello]",
+            "format": r"[\?max_length=20&color=good Name [\?color=bad {name}] hello]",
             "expected": [
                 {"full_text": "Name ", "color": "#00FF00"},
                 {"full_text": u"Björk", "color": "#FF0000"},
@@ -736,7 +736,7 @@ def test_color_3():
 def test_color_4():
     run_formatter(
         {
-            "format": "[\?max_length=8&color=good Name [\?color=bad {name}] hello]",
+            "format": r"[\?max_length=8&color=good Name [\?color=bad {name}] hello]",
             "expected": [
                 {"full_text": "Name ", "color": "#00FF00"},
                 {"full_text": u"Bjö", "color": "#FF0000"},
@@ -748,7 +748,7 @@ def test_color_4():
 def test_color_5():
     run_formatter(
         {
-            "format": "[\?color=bad {name}][\?color=good {name}]",
+            "format": r"[\?color=bad {name}][\?color=good {name}]",
             "expected": [
                 {"full_text": u"Björk", "color": "#FF0000"},
                 {"full_text": u"Björk", "color": "#00FF00"},
@@ -760,7 +760,7 @@ def test_color_5():
 def test_color_6():
     run_formatter(
         {
-            "format": "[\?color=bad {name}] [\?color=good {name}]",
+            "format": r"[\?color=bad {name}] [\?color=good {name}]",
             "expected": [
                 {"full_text": u"Björk ", "color": "#FF0000"},
                 {"full_text": u"Björk", "color": "#00FF00"},
@@ -772,7 +772,7 @@ def test_color_6():
 def test_color_7():
     run_formatter(
         {
-            "format": "\?color=bad {simple}",
+            "format": r"\?color=bad {simple}",
             "expected": [{"full_text": "NY 12:34", "color": "#FF0000"}],
         }
     )
@@ -781,7 +781,7 @@ def test_color_7():
 def test_color_7a():
     run_formatter(
         {
-            "format": "[\?color=bad {simple}]",
+            "format": r"[\?color=bad {simple}]",
             "expected": [{"full_text": "NY 12:34", "color": "#FF0000"}],
         }
     )
@@ -790,7 +790,7 @@ def test_color_7a():
 def test_color_8():
     run_formatter(
         {
-            "format": "\?color=bad {complex}",
+            "format": r"\?color=bad {complex}",
             "expected": [{"full_text": "LA 09:34NY 12:34", "color": "#FF0000"}],
         }
     )
@@ -799,7 +799,7 @@ def test_color_8():
 def test_color_8a():
     run_formatter(
         {
-            "format": "[\?color=#FF00FF {complex}]",
+            "format": r"[\?color=#FF00FF {complex}]",
             "expected": [{"full_text": "LA 09:34NY 12:34", "color": "#FF00FF"}],
         }
     )
@@ -808,7 +808,7 @@ def test_color_8a():
 def test_color_9():
     run_formatter(
         {
-            "format": "\?color=good {complex2}",
+            "format": r"\?color=good {complex2}",
             "expected": [
                 {"color": "#FF0000", "full_text": "LA 09:34"},
                 {"color": "#00FF00", "full_text": "NY 12:34"},
@@ -820,7 +820,7 @@ def test_color_9():
 def test_color_9a():
     run_formatter(
         {
-            "format": "[\?color=good {complex2}]",
+            "format": r"[\?color=good {complex2}]",
             "expected": [
                 {"color": "#FF0000", "full_text": "LA 09:34"},
                 {"color": "#00FF00", "full_text": "NY 12:34"},
@@ -876,7 +876,7 @@ def test_composite_3():
 def test_composite_4():
     run_formatter(
         {
-            "format": "\?color=good {simple} {composite_basic} {complex}",
+            "format": r"\?color=good {simple} {composite_basic} {complex}",
             "expected": [
                 {"full_text": "NY 12:34 ", "color": "#00FF00"},
                 {"color": "#FF0000", "full_text": "red "},
@@ -892,7 +892,7 @@ def test_composite_4():
 def test_composite_5():
     run_formatter(
         {
-            "format": "[\?color=#FF00FF {simple} {composite_basic} {complex2}]",
+            "format": r"[\?color=#FF00FF {simple} {composite_basic} {complex2}]",
             "expected": [
                 {"full_text": "NY 12:34 ", "color": "#FF00FF"},
                 {"color": "#FF0000", "full_text": "red "},
@@ -923,21 +923,21 @@ def test_attr_getter():
 
 
 def test_min_length_1():
-    run_formatter({"format": "\?min_length=9 Hello", "expected": "    Hello"})
+    run_formatter({"format": r"\?min_length=9 Hello", "expected": "    Hello"})
 
 
 def test_min_length_2():
-    run_formatter({"format": "[\?min_length=9&show Hello]", "expected": "    Hello"})
+    run_formatter({"format": r"[\?min_length=9&show Hello]", "expected": "    Hello"})
 
 
 def test_min_length_3():
-    run_formatter({"format": "[\?min_length=9 [{name}]]", "expected": u"    Björk"})
+    run_formatter({"format": r"[\?min_length=9 [{name}]]", "expected": u"    Björk"})
 
 
 def test_min_length_4():
     run_formatter(
         {
-            "format": "[\?min_length=9 [\?color=good {name}]]",
+            "format": r"[\?min_length=9 [\?color=good {name}]]",
             "expected": [{"color": "#00FF00", "full_text": u"    Björk"}],
         }
     )
@@ -946,7 +946,7 @@ def test_min_length_4():
 def test_min_length_5():
     run_formatter(
         {
-            "format": "\?min_length=9 [\?color=bad {number}][\?color=good {name}]",
+            "format": r"\?min_length=9 [\?color=bad {number}][\?color=good {name}]",
             "expected": [
                 {"full_text": "  42", "color": "#FF0000"},
                 {"full_text": u"Björk", "color": "#00FF00"},
@@ -958,7 +958,7 @@ def test_min_length_5():
 def test_min_length_6():
     run_formatter(
         {
-            "format": "[\?min_length=9 [\?color=bad {number}][\?color=good {name}]]",
+            "format": r"[\?min_length=9 [\?color=bad {number}][\?color=good {name}]]",
             "expected": [
                 {"full_text": "  42", "color": "#FF0000"},
                 {"full_text": u"Björk", "color": "#00FF00"},
@@ -992,49 +992,49 @@ def test_numeric_strings_6():
 
 
 def test_not_zero_1():
-    run_formatter({"format": "[\?not_zero {zero}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {zero}]", "expected": ""})
 
 
 def test_not_zero_2():
-    run_formatter({"format": "[\?not_zero {zero_str}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {zero_str}]", "expected": ""})
 
 
 def test_not_zero_3():
-    run_formatter({"format": "[\?not_zero {zero_float}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {zero_float}]", "expected": ""})
 
 
 def test_not_zero_4():
-    run_formatter({"format": "[\?not_zero {yes}]", "expected": "True"})
+    run_formatter({"format": r"[\?not_zero {yes}]", "expected": "True"})
 
 
 def test_not_zero_5():
-    run_formatter({"format": "[\?not_zero {no}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {no}]", "expected": ""})
 
 
 def test_not_zero_6():
-    run_formatter({"format": "[\?not_zero {number}]", "expected": "42"})
+    run_formatter({"format": r"[\?not_zero {number}]", "expected": "42"})
 
 
 def test_not_zero_7():
-    run_formatter({"format": "[\?not_zero {pi}]", "expected": "3.14159265359"})
+    run_formatter({"format": r"[\?not_zero {pi}]", "expected": "3.14159265359"})
 
 
 def test_not_zero_8():
-    run_formatter({"format": "[\?not_zero {name}]", "expected": u"Björk"})
+    run_formatter({"format": r"[\?not_zero {name}]", "expected": u"Björk"})
 
 
 def test_not_zero_9():
-    run_formatter({"format": "[\?not_zero {str_nan}]", "expected": "I'm not a number"})
+    run_formatter({"format": r"[\?not_zero {str_nan}]", "expected": "I'm not a number"})
 
 
 def test_not_zero_10():
     run_formatter(
-        {"format": "[\?not_zero {zero} {str_nan}]", "expected": "0 I'm not a number"}
+        {"format": r"[\?not_zero {zero} {str_nan}]", "expected": "0 I'm not a number"}
     )
 
 
 def test_not_zero_11():
-    run_formatter({"format": "[\?not_zero {zero_str} {zero}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {zero_str} {zero}]", "expected": ""})
 
 
 def test_bad_composite_color():
@@ -1042,41 +1042,41 @@ def test_bad_composite_color():
 
 
 def test_soft_1():
-    run_formatter({"format": "{name}[\?soft  ]{name}", "expected": "Björk Björk"})
+    run_formatter({"format": r"{name}[\?soft  ]{name}", "expected": "Björk Björk"})
 
 
 def test_soft_2():
-    run_formatter({"format": "{name}[\?soft  ]{empty}", "expected": "Björk"})
+    run_formatter({"format": r"{name}[\?soft  ]{empty}", "expected": "Björk"})
 
 
 def test_soft_3():
-    run_formatter({"format": "{empty}[\?soft  ]{empty}", "expected": ""})
+    run_formatter({"format": r"{empty}[\?soft  ]{empty}", "expected": ""})
 
 
 def test_soft_4():
-    run_formatter({"format": "[\?soft  ]", "expected": ""})
+    run_formatter({"format": r"[\?soft  ]", "expected": ""})
 
 
 def test_soft_5():
     run_formatter(
-        {"format": "{number}[\?soft  {name} ]{number}", "expected": "42 Björk 42"}
+        {"format": r"{number}[\?soft  {name} ]{number}", "expected": "42 Björk 42"}
     )
 
 
 def test_soft_6():
-    run_formatter({"format": "{number}[\?soft  {name} ]{empty}", "expected": "42"})
+    run_formatter({"format": r"{number}[\?soft  {name} ]{empty}", "expected": "42"})
 
 
 def test_soft_7():
-    run_formatter({"format": "\?soft {number}", "expected": "42"})
+    run_formatter({"format": r"\?soft {number}", "expected": "42"})
 
 
 def test_module_true():
-    run_formatter({"format": "[\?if=module_true something]", "expected": "something"})
+    run_formatter({"format": r"[\?if=module_true something]", "expected": "something"})
 
 
 def test_module_false():
-    run_formatter({"format": "[\?if=module_false something]", "expected": ""})
+    run_formatter({"format": r"[\?if=module_false something]", "expected": ""})
 
 
 def test_module_true_value():
@@ -1088,41 +1088,41 @@ def test_module_false_value():
 
 
 def test_zero_format_1():
-    run_formatter({"format": "[\?not_zero {zero_almost}]", "expected": "0.0001"})
+    run_formatter({"format": r"[\?not_zero {zero_almost}]", "expected": "0.0001"})
 
 
 def test_zero_format_2():
-    run_formatter({"format": "[\?not_zero {zero_almost:d}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {zero_almost:d}]", "expected": ""})
 
 
 def test_zero_format_3():
-    run_formatter({"format": "[\?not_zero {zero_almost:.3f}]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero {zero_almost:.3f}]", "expected": ""})
 
 
 def test_zero_format_4():
-    run_formatter({"format": "[\?not_zero {zero_almost:.4f}]", "expected": "0.0001"})
+    run_formatter({"format": r"[\?not_zero {zero_almost:.4f}]", "expected": "0.0001"})
 
 
 def test_inherit_not_zero_1():
-    run_formatter({"format": "\?not_zero [{zero}]", "expected": ""})
+    run_formatter({"format": r"\?not_zero [{zero}]", "expected": ""})
 
 
 def test_inherit_not_zero_2():
-    run_formatter({"format": "[\?not_zero [{zero}]]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero [{zero}]]", "expected": ""})
 
 
 def test_inherit_not_zero_3():
-    run_formatter({"format": "[\?not_zero [[[{zero}]]]]", "expected": ""})
+    run_formatter({"format": r"[\?not_zero [[[{zero}]]]]", "expected": ""})
 
 
 def test_inherit_show_1():
-    run_formatter({"format": "\?show [[[hello]]]", "expected": "hello"})
+    run_formatter({"format": r"\?show [[[hello]]]", "expected": "hello"})
 
 
 def test_inherit_color_1():
     run_formatter(
         {
-            "format": "\?color=#F0F [[[{number}]]]",
+            "format": r"\?color=#F0F [[[{number}]]]",
             "expected": [{"color": u"#FF00FF", "full_text": u"42"}],
         }
     )
@@ -1131,104 +1131,104 @@ def test_inherit_color_1():
 def test_inherit_color_2():
     run_formatter(
         {
-            "format": "\?color=#F0F [[\?color=good [{number}]]]",
+            "format": r"\?color=#F0F [[\?color=good [{number}]]]",
             "expected": [{"color": u"#00FF00", "full_text": u"42"}],
         }
     )
 
 
 def test_conditions_1():
-    run_formatter({"format": "\?if=number=42 cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=number=42 cool beans", "expected": "cool beans"})
 
 
 def test_conditions_2():
-    run_formatter({"format": "\?if=number=4 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=number=4 cool beans", "expected": ""})
 
 
 def test_conditions_3():
-    run_formatter({"format": "\?if=!number=42 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=!number=42 cool beans", "expected": ""})
 
 
 def test_conditions_4():
-    run_formatter({"format": "\?if=!number=4 cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=!number=4 cool beans", "expected": "cool beans"})
 
 
 def test_conditions_5():
-    run_formatter({"format": "\?if=missing=4 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=missing=4 cool beans", "expected": ""})
 
 
 def test_conditions_6():
-    run_formatter({"format": "\?if=name=Björk cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=name=Björk cool beans", "expected": "cool beans"})
 
 
 def test_conditions_7():
-    run_formatter({"format": "\?if=name=Jimmy cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=name=Jimmy cool beans", "expected": ""})
 
 
 def test_conditions_8():
-    run_formatter({"format": "\?if=name= cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=name= cool beans", "expected": ""})
 
 
 def test_conditions_9():
-    run_formatter({"format": "\?if=number= cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=number= cool beans", "expected": ""})
 
 
 def test_conditions_10():
     run_formatter(
-        {"format": "\?if=pi=3.14159265359 cool beans", "expected": "cool beans"}
+        {"format": r"\?if=pi=3.14159265359 cool beans", "expected": "cool beans"}
     )
 
 
 def test_conditions_11():
-    run_formatter({"format": "\?if=pi=3 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=pi=3 cool beans", "expected": ""})
 
 
 def test_conditions_12():
-    run_formatter({"format": "\?if=yes=3 cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=yes=3 cool beans", "expected": "cool beans"})
 
 
 def test_conditions_13():
-    run_formatter({"format": "\?if=no=3 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=no=3 cool beans", "expected": ""})
 
 
 def test_conditions_14():
-    run_formatter({"format": "\?if=number>3 cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=number>3 cool beans", "expected": "cool beans"})
 
 
 def test_conditions_15():
-    run_formatter({"format": "\?if=number<50 cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=number<50 cool beans", "expected": "cool beans"})
 
 
 def test_conditions_16():
-    run_formatter({"format": "\?if=number>50 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=number>50 cool beans", "expected": ""})
 
 
 def test_conditions_17():
-    run_formatter({"format": "\?if=number<3 cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=number<3 cool beans", "expected": ""})
 
 
 def test_conditions_18():
-    run_formatter({"format": "\?if=name<Andrew cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=name<Andrew cool beans", "expected": ""})
 
 
 def test_conditions_19():
-    run_formatter({"format": "\?if=name>Andrew cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=name>Andrew cool beans", "expected": "cool beans"})
 
 
 def test_conditions_20():
-    run_formatter({"format": "\?if=name<John cool beans", "expected": "cool beans"})
+    run_formatter({"format": r"\?if=name<John cool beans", "expected": "cool beans"})
 
 
 def test_conditions_21():
-    run_formatter({"format": "\?if=name>John cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=name>John cool beans", "expected": ""})
 
 
 def test_conditions_22():
-    run_formatter({"format": "\?if=missing>John cool beans", "expected": ""})
+    run_formatter({"format": r"\?if=missing>John cool beans", "expected": ""})
 
 
 def test_conditions_23():
-    run_formatter({"format": "[\?if=None=None cool] beans", "expected": " beans"})
+    run_formatter({"format": r"[\?if=None=None cool] beans", "expected": " beans"})
 
 
 def test_trailing_zeroes_1():
@@ -1283,7 +1283,7 @@ def test_placeholders_2():
 def test_placeholders_3():
     get_placeholders(
         {
-            "format": "{placeholder}[\?if=test something]",
+            "format": r"{placeholder}[\?if=test something]",
             "expected": {"placeholder", "test"},
         }
     )
@@ -1292,7 +1292,7 @@ def test_placeholders_3():
 def test_placeholders_4():
     get_placeholders(
         {
-            "format": "{placeholder}[\?if=!test=42&color=red something]",
+            "format": r"{placeholder}[\?if=!test=42&color=red something]",
             "expected": {"placeholder", "test"},
         }
     )
@@ -1301,7 +1301,7 @@ def test_placeholders_4():
 def test_placeholders_5():
     get_placeholders(
         {
-            "format": "\{placeholder\}[\?if=test&color=red something]",
+            "format": r"\{placeholder\}[\?if=test&color=red something]",
             "expected": {"test"},
         }
     )
@@ -1332,9 +1332,9 @@ def test_update_placeholders_2():
 def test_update_placeholders_3():
     update_placeholders(
         {
-            "format": "{placeholder}[\?if=test something]",
+            "format": r"{placeholder}[\?if=test something]",
             "updates": {"test": "new_test"},
-            "expected": "{placeholder}[\?if=new_test something]",
+            "expected": r"{placeholder}[\?if=new_test something]",
         }
     )
 
@@ -1342,9 +1342,9 @@ def test_update_placeholders_3():
 def test_update_placeholders_4():
     update_placeholders(
         {
-            "format": "{placeholder}[\?if=!test=42&color=red something]",
+            "format": r"{placeholder}[\?if=!test=42&color=red something]",
             "updates": {"red": "blue"},
-            "expected": "{placeholder}[\?if=!test=42&color=red something]",
+            "expected": r"{placeholder}[\?if=!test=42&color=red something]",
         }
     )
 
@@ -1352,9 +1352,9 @@ def test_update_placeholders_4():
 def test_update_placeholders_5():
     update_placeholders(
         {
-            "format": "\{placeholder\}{placeholder}[\?if=placeholder&color=red something]",
+            "format": r"\{placeholder\}{placeholder}[\?if=placeholder&color=red something]",
             "updates": {"placeholder": "new_placeholder"},
-            "expected": "\{placeholder\}{new_placeholder}[\?if=new_placeholder&color=red something]",
+            "expected": r"\{placeholder\}{new_placeholder}[\?if=new_placeholder&color=red something]",
         }
     )
 
