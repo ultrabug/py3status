@@ -151,7 +151,6 @@ class Py3status:
     # available configuration parameters
     accounts = {}
     cache_timeout = 60
-    check_imap_subfolders = False
     format = '\?not_zero Mail {mail}|No Mail'
     thresholds = []
 
@@ -180,6 +179,9 @@ class Py3status:
                         if v not in account:
                             raise Exception(STRING_MISSING.format(mail, v))
                     account.setdefault('port', 993)
+                    account.setdefault('folder_whitelist', [])
+                    account.setdefault('folder_blacklist', [])
+                    account.setdefault('check_subfolders', False)
                     self.mailboxes[mail].append(account)
                 else:
                     for box in mailboxes[:-1]:
@@ -209,13 +211,18 @@ class Py3status:
                 if k == 'imap':
                     inbox = IMAP4_SSL(account['server'], account['port'])
                     inbox.login(account['user'], account['password'])
-                    if self.check_imap_subfolders:
+                    if account['check_subfolders'] or \
+                            account['folder_whitelist']:
                         count_mail = 0
                         for mbox in inbox.list()[1]:
                             # Don't remove the quotes from the return string as
                             # that would make the script unable to access all
                             # mailfolders with special characters.
                             mbox = mbox.decode('utf-8').split(' "." ')[1]
+                            if mbox[1:-1] in account['folder_blacklist'] or \
+                                    (not account['check_subfolders'] and
+                                     not mbox[1:-1] in account['folder_whitelist']):  # noqa: E501
+                                continue
                             if inbox.select(mbox, readonly=True)[0] == 'OK':
                                 imap_data = inbox.search(None, '(UNSEEN)')
                                 count_mail += len(imap_data[1][0].split())
