@@ -7,8 +7,6 @@ Configuration parameters:
     accounts: specify a dict consisting of mailbox types and a list of dicts
         consisting of mailbox settings and/or paths to use (default {})
     cache_timeout: refresh interval for this module (default 60)
-    check_imap_subfolders: should imap subfolders be checked
-        (default False)
     format: display format for this module
         (default '\?not_zero Mail {mail}|No Mail')
     thresholds: specify color thresholds to use (default [])
@@ -74,6 +72,25 @@ mail {                                       #
                 'server': 'imap.yahoo.com',  #
                                              # <---- no port, use port 993
                 'urgent': False,             # <---- disable urgent
+            }                                #
+            {                                #      │    └── {imap_3}
+                'name': 'subfolder',         # <----│---------└── {subfolder}
+                'user': 'tobes',             #      │
+                'password': 'i_love_python', #
+                'server': 'imap.yahoo.com',  #
+                                             # <---- no port, use port 993
+                'urgent': False,             # <---- disable urgent
+                'folder_whitelist': ['py3']  # <---- check only py3 folder for new mail
+            }                                #
+            {                                #      │    └── {imap_4}
+                'name': 'subfolder2',              # <----│---------└── {subfolder2}
+                'user': 'tobes',             #      │
+                'password': 'i_love_python', #
+                'server': 'imap.yahoo.com',  #
+                                             # <---- no port, use port 993
+                'urgent': False,             # <---- disable urgent
+                'check_subfolders': True     # <---- check subfolders for this account
+                'folder_blacklist': ['py3']  #    └── but not py3 folder
             }                                #
         ]
     }
