@@ -22,8 +22,7 @@ Format placeholders:
 
     We can divide mailbox, eg `{maildir}`, into numbered placeholders based
     on number of mailbox accounts, eg `{maildir_1}`, and if we add `name` to
-    a mailbox account, we can use `{acc_'name'}` placeholder instead,
-    eg `{acc_home}`.
+    a mailbox account, we can use `{name}` placeholder instead, eg `{home}`.
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
@@ -139,6 +138,8 @@ import mailbox
 from imaplib import IMAP4_SSL
 from os.path import exists, expanduser, expandvars
 STRING_MISSING = 'missing {} {}'
+STRING_WRONG_NAME = 'Accountname ({}) collides with "Maildir", "mbox", "mh", \
+"Babyl", "MMDF", "mail" or "IMAP".'
 
 
 class Py3status:
@@ -161,6 +162,8 @@ class Py3status:
                 continue
             self.mailboxes[mail] = []
             for account in accounts:
+                if account['name'] in [x.lower() for x in mailboxes]:
+                    raise Exception(STRING_WRONG_NAME.format(account['name']))
                 account.setdefault('urgent', True)
                 if mail == 'imap':
                     for v in ['user', 'password', 'server']:
@@ -207,7 +210,7 @@ class Py3status:
                     count_mail = len(inbox)
                     inbox.close()
                 if 'name' in account:
-                    mail_data['acc' + account['name']] = count_mail
+                    mail_data[account['name']] = count_mail
                 if account['urgent'] and count_mail:
                     mail_data['urgent'] = True
                 mail_data['%s_%s' % (k, i)] = count_mail
