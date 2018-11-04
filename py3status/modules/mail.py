@@ -72,7 +72,7 @@ mail {                                       #
                 'server': 'imap.yahoo.com',  #
                                              # <---- no port, use port 993
                 'urgent': False,             # <---- disable urgent
-            }                                #
+            },                               #
             {                                #      │    └── {imap_3}
                 'name': 'subfolder',         # <----│---------└── {subfolder}
                 'user': 'tobes',             #      │
@@ -80,16 +80,16 @@ mail {                                       #
                 'server': 'imap.yahoo.com',  #
                                              # <---- no port, use port 993
                 'urgent': False,             # <---- disable urgent
-                'folder_whitelist': ['py3']  # <---- check only py3 folder for new mail
-            }                                #
+                'folder_whitelist': ['py3']  # <---- check only py3 folder for new mail  # noqa: E501
+            },                               #
             {                                #      │    └── {imap_4}
-                'name': 'subfolder2',              # <----│---------└── {subfolder2}
+                'name': 'subfolder2'         # <----│---------└── {subfolder2}
                 'user': 'tobes',             #      │
                 'password': 'i_love_python', #
                 'server': 'imap.yahoo.com',  #
                                              # <---- no port, use port 993
                 'urgent': False,             # <---- disable urgent
-                'check_subfolders': True     # <---- check subfolders for this account
+                'check_subfolders': True     # <---- check subfolders for this account  # noqa: E501
                 'folder_blacklist': ['py3']  #    └── but not py3 folder
             }                                #
         ]
