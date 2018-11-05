@@ -425,9 +425,9 @@ def show_modules(config, params):
                 user_mods = False
                 core_mods = True
     if details:
-        print_stderr("Module details:")
+        print("Module details:")
     else:
-        print_stderr("Available modules:")
+        print("Available modules:")
     modules = core_module_docstrings(
         include_core=core_mods, include_user=user_mods, config=config
     )
@@ -438,10 +438,10 @@ def show_modules(config, params):
         desc = module[0][:-1]
         if details:
             dash_len = len(name)
-            print_stderr("=" * dash_len)
-            print_stderr(name)
-            print_stderr("=" * dash_len)
+            print("=" * dash_len)
+            print(name)
+            print("=" * dash_len)
             for description in module:
-                print_stderr(description[:-1])
+                print(description[:-1])
         else:
-            print_stderr("  %-22s %s" % (name, desc))
+            print("  %-22s %s" % (name, desc))

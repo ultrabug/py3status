@@ -162,10 +162,10 @@ class Py3status:
         self.last_known_status = ''
         # Guess mode if not set
         if self.measurement_mode is None:
-            if self.py3.check_commands(["acpi"]):
-                self.measurement_mode = "acpi"
-            elif os.path.isdir(self.sys_battery_path):
+            if os.path.isdir(self.sys_battery_path):
                 self.measurement_mode = "sys"
+            elif self.py3.check_commands(["acpi"]):
+                self.measurement_mode = "acpi"
 
         self.py3.log("Measurement mode: " + self.measurement_mode)
         if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
