@@ -40,10 +40,10 @@ def parse_cli():
 
     # command line options
     parser = argparse.ArgumentParser(
-        description="The agile, python-powered, i3status wrapper"
+        add_help=True,
+        description="The agile, python-powered, i3status wrapper",
+        formatter_class=HelpFormatter,
     )
-    parser = argparse.ArgumentParser(add_help=True)
-    parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
     parser.add_argument(
         "-b",
         "--dbus-notify",
@@ -56,11 +56,11 @@ def parse_cli():
         "-c",
         "--config",
         action="store",
+        default=i3status_config_file_default,
         dest="i3status_conf",
+        help="load config (default %(default)s)",
         metavar="FILE",
         type=str,
-        default=i3status_config_file_default,
-        help="load config (default %(default)s)",
     )
     parser.add_argument(
         "-d",
@@ -88,21 +88,21 @@ def parse_cli():
         "-l",
         "--log-file",
         action="store",
-        dest="log_file",
-        type=str,
         default=None,
-        metavar="FILE",
+        dest="log_file",
         help="enable logging to FILE",
+        metavar="FILE",
+        type=str,
     )
     parser.add_argument(
         "-n",
         "--interval",
         action="store",
+        default=1,
         dest="interval",
+        help="refresh interval in seconds for py3status",
         metavar="INT",
         type=float,
-        default=1,
-        help="refresh interval in seconds for py3status",
     )
     parser.add_argument(
         "-s", "--standalone", action="store_true", help="run py3status without i3status"
@@ -111,18 +111,18 @@ def parse_cli():
         "-t",
         "--timeout",
         action="store",
-        dest="cache_timeout",
-        type=int,
         default=60,
-        metavar="INT",
+        dest="cache_timeout",
         help="default module cache timeout in seconds",
+        metavar="INT",
+        type=int,
     )
     parser.add_argument(
         "-m",
         "--disable-click-events",
         action="store_true",
-        dest="disable_click_events",
         default=False,
+        dest="disable_click_events",
         help="disable all click events",
     )
     parser.add_argument(
