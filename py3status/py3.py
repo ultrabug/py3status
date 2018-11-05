@@ -40,7 +40,7 @@ class ModuleErrorException(Exception):
     """
 
     def __init__(self, msg, timeout):
-        self.msg = msg
+        self.msg = msg if msg else "unknown error"
         self.timeout = timeout
 
 
