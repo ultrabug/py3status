@@ -14,7 +14,6 @@ Format placeholders:
     {apt}     number of updates, eg 0 .. Debian, Ubuntu
     {auracle} number of updates, eg 0 .. Arch Linux (AUR)
     {cower}   number of updates, eg 0 .. Arch Linux (AUR)
-    {dnf}     number of updates, eg 0 .. Fedora           .. NOT TESTED
     {eopkg}   number of updates, eg 0 .. Solus
     {pacman}  number of updates, eg 0 .. Arch Linux
     {xbps}    number of updates, eg 0 .. Void Linux       .. NOT TESTED
@@ -103,12 +102,6 @@ class Cower(Update):
             return ce.output
 
 
-class Dnf(Update):
-    def count_updates(self, output):
-        lines = output.splitlines()[2:]
-        return len([x for x in lines if 'Security:' not in x])
-
-
 class Eopkg(Update):
     def get_output(self):
         output = self.parent.py3.command_output(self.command)
@@ -151,7 +144,6 @@ class Py3status:
             ("yay", ["yay", "--query", "--upgrades", "--aur"]),
             ("apk", ["apk", "version", "-l", '"<"']),
             ("apt", ["apt", "list", "--upgradeable"]),
-            ("dnf", ["dnf", "check-upgrades"]),
             ("eopkg", ["eopkg", "list-upgrades"]),
             ("pkg", ["pkg", "upgrade", "--dry-run", "--quiet"]),
             ("xbps", ["xbps-install", "--update", "--dry-run"]),
