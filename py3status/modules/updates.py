@@ -22,7 +22,9 @@ Format placeholders:
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
-@author lasers
+@author Iain Tatch <iain.tatch@gmail.com> (arch_updates)
+@author Joshua Pratt <jp10010101010000@gmail.com> (apt_updates)
+@license BSD (arch_updates), BSD (apt_updates)
 
 Examples:
 ```
@@ -57,6 +59,8 @@ SAMPLE OUTPUT
 no_updates
 {'full_text': 'No Updates'}
 """
+
+STRING_INVALID = 'invalid manager'
 
 
 class Update:
@@ -95,7 +99,7 @@ class Eopkg(Update):
     def get_output(self):
         output = self.parent.py3.command_output(self.command)
         if "No packages to upgrade." in output:
-            return ''
+            return ""
         return output
 
 
@@ -111,8 +115,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 600
     format = None
-    thresholds = [(0, 'darkgray'), (10, 'degraded'),
-                  (20, 'orange'), (30, 'bad')]
+    thresholds = [
+        (0, 'darkgray'), (10, 'degraded'), (20, 'orange'), (30, 'bad')]
 
     class Meta:
         deprecated = {
@@ -126,44 +130,61 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        managers = [
-            ("pacman", ["checkupdates"]),
-            ("auracle", ["auracle", "sync"]),
-            ("yay", ["yay", "--query", "--upgrades", "--aur"]),
-            ("apk", ["apk", "version", "-l", '"<"']),
-            ("apt", ["apt", "list", "--upgradeable"]),
-            ("eopkg", ["eopkg", "list-upgrades"]),
-            ("pkg", ["pkg", "upgrade", "--dry-run", "--quiet"]),
-            ("xbps", ["xbps-install", "--update", "--dry-run"]),
-            ("zypper", ["zypper", "list-updates"]),
+        managers = update_managers = [
+            ("Pacman", "checkupdates"),
+            ("Auracle", "auracle sync --color=never"),
+            ("Yay", "yay --query --upgrades --aur"),
+            ("Apk", "apk version -l '<'"),
+            ("Apt", "apt list --upgradeable"),
+            ("Eopkg", "eopkg list-upgrades"),
+            ("Pkg", "pkg upgrade --dry-run --quiet"),
+            ("Xbps", "xbps-install --update --dry-run"),
+            ("Zypper", "zypper list-updates"),
         ]
 
-        managed = getattr(self, 'managers', [])
-        if not managed:
-            placeholders = self.py3.get_placeholders_list(self.format or '')
-            managed = [x for x in placeholders if x != 'update']
+        managed = getattr(self, 'managers', None)
+        if managed:
+            new_managers = []
+            for custom in managed:
+                if isinstance(custom, tuple):
+                    if len(custom) != 2 or custom[0].lower() == 'update':
+                        raise Exception(STRING_INVALID)
+                    new_managers.append(custom)
+                else:
+                    name = custom.lower()
+                    if name == 'update':
+                        raise Exception(STRING_INVALID)
+                    for manager in update_managers:
+                        if manager[0].lower() == name:
+                            new_managers.append(manager)
+                            break
+            managers = new_managers
 
-        names = []
+        placeholders = self.py3.get_placeholders_list(self.format or '')
+        placeholders = [x for x in placeholders if x != 'update']
+
+        formats = []
         self.backends = []
         for name, command in managers:
-            if managed:
-                for manager in managed:
-                    if manager == name:
+            name_lowercased = name.lower()
+            if placeholders:
+                for placeholder in placeholders:
+                    if placeholder == name_lowercased:
                         break
                 else:
                     continue
-            if self.py3.check_commands(command[0]):
-                names.append(name)
+            if self.py3.check_commands(command.split()[0]):
                 try:
                     backend = globals()[name.capitalize()]
                 except KeyError:
                     backend = Update
-                self.backends.append(backend(self, name, command))
+                formats.append((name, name_lowercased))
+                self.backends.append(backend(self, name_lowercased, command))
 
         if not self.format:
-            auto = "[\?not_zero {Name} [\?color={name} {{{name}}}]]"
+            auto = "[\?not_zero {name} [\?color={manager} {{{manager}}}]]"
             self.format = "[{}|\?show No Updates]".format("[\?soft  ]".join(
-                auto.format(Name=x.capitalize(), name=x) for x in names
+                auto.format(name=n, manager=m) for n, m in formats
             ))
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
