@@ -13,7 +13,6 @@ Format placeholders:
     {apk}     number of updates, eg 0 .. Alpine Linux     .. NOT TESTED
     {apt}     number of updates, eg 0 .. Debian, Ubuntu
     {auracle} number of updates, eg 0 .. Arch Linux (AUR)
-    {cower}   number of updates, eg 0 .. Arch Linux (AUR)
     {eopkg}   number of updates, eg 0 .. Solus
     {pacman}  number of updates, eg 0 .. Arch Linux
     {xbps}    number of updates, eg 0 .. Void Linux       .. NOT TESTED
@@ -34,8 +33,7 @@ updates {
 
 # Arch Linux
 updates {
-    format = 'Updates [\?color=pacman {pacman}]/[\?color=cower {cower}]'
-    # format = 'Updates [\?color=pacman {pacman}]/[\?color=auracle {auracle}]'
+    format = 'Updates [\?color=pacman {pacman}]/[\?color=auracle {auracle}]'
     # format = 'Updates [\?color=pacman {pacman}]/[\?color=yay {yay}]'
 }
 ```
@@ -48,7 +46,7 @@ SAMPLE OUTPUT
 
 29and5pkgs
 [{'full_text': 'Pacman '}, {'full_text': '29 ', 'color': '#FFFF00'},
-{'full_text': 'Cower '}, {'full_text': '5', 'color': '#a9a9a9'}]
+{'full_text': 'Auracle '}, {'full_text': '5', 'color': '#a9a9a9'}]
 
 35pkgs
 [{'full_text': 'Zypper '}, {'full_text': '34', 'color': '#ffa500'}]
@@ -93,15 +91,6 @@ class Apk(Update):
         return len(output.splitlines()[1:])
 
 
-class Cower(Update):
-    def get_output(self):
-        try:
-            self.parent.py3.command_output(self.command)
-            return None
-        except self.parent.py3.CommandError as ce:
-            return ce.output
-
-
 class Eopkg(Update):
     def get_output(self):
         output = self.parent.py3.command_output(self.command)
@@ -130,7 +119,7 @@ class Py3status:
             "rename_placeholder": [
                 {
                     "placeholder": "aur",
-                    "new": "cower",
+                    "new": "auracle",
                     "format_strings": ["format"],
                 }
             ]
@@ -140,7 +129,6 @@ class Py3status:
         managers = [
             ("pacman", ["checkupdates"]),
             ("auracle", ["auracle", "sync"]),
-            ("cower", ["cower", "-u"]),
             ("yay", ["yay", "--query", "--upgrades", "--aur"]),
             ("apk", ["apk", "version", "-l", '"<"']),
             ("apt", ["apt", "list", "--upgradeable"]),
