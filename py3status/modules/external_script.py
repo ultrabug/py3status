@@ -108,7 +108,7 @@ class Py3status:
             raise Exception(STRING_ERROR)
 
         self.button_refresh = 2
-        self.notification = {'normal': []}
+        self.notification = {'normal': [], 'click': False}
         if self.notifications:
             for x in ['changed', 'click', 'current']:
                 self.notification[x] = self.notifications.get(x, False)
