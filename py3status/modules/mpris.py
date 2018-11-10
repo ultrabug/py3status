@@ -11,6 +11,7 @@ Configuration parameters:
     button_previous: mouse button to play the previous entry (default 5)
     button_stop: mouse button to stop the player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
+    debug: enable verbose logging (bool) (default False)
     format: see placeholders below
         (default '{previous}{toggle}{next} {state} [{artist} - ][{title}]')
     format_none: define output if no player is running
@@ -27,6 +28,9 @@ Configuration parameters:
     state_pause: text for placeholder {state} when song is paused (default '▮')
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')
+    state_quiet_enabled: flag to quiet down volume on ads (radio streaming) (default False)
+    state_quiet_vol: volume level when quiet (default -1)
+    state_quiet_keywords: a list of keywords in song title identifying ads (default [])
 
 Format of status string placeholders:
     {album} album name
@@ -89,11 +93,22 @@ mpris {
 }
 ```
 
+```
+mpris {
+    state_quiet_enabled = True
+    state_quiet_vol = 25
+    state_quiet_keywords = [
+        'no track', 'deltaradio',  # deltaradio.de
+        'advert'  # chronix radio
+    ]
+}
+```
 Tested players:
     bomi
     Cantata
     mpDris2 (mpris extension for mpd)
     vlc
+    audacious
 
 @author Moritz Lüdecke, tobes, valdur55
 
@@ -148,6 +163,7 @@ class Py3status:
     button_previous = 5
     button_stop = None
     button_toggle = 1
+    debug = False
     format = '{previous}{toggle}{next} {state} [{artist} - ][{title}]'
     format_none = 'no player running'
     icon_next = u'»'
@@ -159,6 +175,16 @@ class Py3status:
     state_pause = u'▮'
     state_play = u'▶'
     state_stop = u'◾'
+
+    # Ads control
+    state_quiet_enabled = False
+    state_quiet_vol = 20
+    state_quiet_keywords = []
+    ads_vol_cmd = "/usr/bin/pactl set-sink-volume {sink} '{volume}%'"
+    audio_perc = -1
+
+    # PulseAudio device (configurable?)
+    device = 0
 
     def post_config_hook(self):
         self._dbus = None
@@ -540,6 +566,9 @@ class Py3status:
             buttons = self._get_response_buttons()
             composite = self.py3.safe_format(self.format, dict(text, **buttons))
 
+        # store audio levels
+        self._maybe_save_audio()
+
         if (self._data.get('error_occurred') or
                 current_player_id != self._player_details.get('id')):
             # Something went wrong or the player changed during our processing
@@ -562,9 +591,71 @@ class Py3status:
             'composite': composite
         }
 
-        # we are outputing so reset tries
+        # mute and restore audio on ads
+        if self.state_quiet_enabled:
+            _title = self._data.get('title', None)
+            if _title is not None:
+                if self.debug:
+                    self.py3.log(u'[{}] title: "{}"'.format(self.audio_perc, _title))
+                self._maybe_save_audio()
+                _curr_vol, _ = self._get_volume()
+                if _title == '' or any(k in _title.lower() for k in self.state_quiet_keywords):
+                    if _curr_vol > self.state_quiet_vol:
+                        self._set_audio(self.state_quiet_vol)
+                else:
+                    # restore audio after ads
+                    if _curr_vol == self.state_quiet_vol:
+                        self._set_audio(self.audio_perc)
+
+        # we are outputting so reset tries
         self._tries = 0
         return response
+
+    def _get_audio_sink(self):
+        # TODO: should retrieve this
+        # see modules/volume_status.py
+        if self.device is None:
+            cmd = ['/usr/bin/pactl', 'list', 'short', 'sinks', '|', 'grep', 'RUNNING', '|', 'cut', '-f1']
+            self.device = self.py3.command_output(cmd)
+        return self.device
+
+    def _set_audio(self, value):
+        if self._get_audio_sink() is None:
+            self.py3.log('Ouch, no PulseAudio device found', level=self.py3.LOG_ERROR)
+            self._data['error_occurred'] = True
+        else:
+            cmd = self.ads_vol_cmd.format(sink=self._get_audio_sink(), volume=value)
+            if self.debug:
+                self.py3.log('Running cmd: {}'.format(cmd))
+            self.py3.command_run(cmd)
+
+    # from modules/volume_status.py
+    def _get_volume(self):
+        output = self.py3.command_output(['/usr/bin/pactl', 'list', 'sinks']).strip()
+        re_volume = re.compile(
+            r'{} \#{}.*?State: (\w+).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%'.format(
+                'Sink', 0
+            ), re.M | re.DOTALL
+        )
+        try:
+            _, muted, perc = re_volume.search(output).groups()
+        except AttributeError:
+            muted, perc = False, 0
+
+        # muted should be 'on' or 'off'
+        if muted in ['yes', 'no']:
+            muted = (muted == 'yes')
+        else:
+            muted = False
+        return int(perc), muted
+
+    def _maybe_save_audio(self):
+        """Save audio only if not already done before"""
+        _vol, _ = self._get_volume()
+        if (_vol > self.state_quiet_vol and _vol != self.audio_perc):
+            self.audio_perc = _vol
+            if self.debug:
+                self.py3.log('Stored volume {}'.format(self.audio_perc))
 
     def on_click(self, event):
         """
