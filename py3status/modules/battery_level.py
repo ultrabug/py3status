@@ -36,7 +36,7 @@ Configuration parameters:
     notify_low_level: display notification when battery is running low (when
         the battery level is less than 'threshold_degraded')
         (default False)
-    on_udev_power_supply: dynamic variable to watch for `power_supply` udev subsystem 
+    on_udev_power_supply: dynamic variable to watch for `power_supply` udev subsystem
         events to trigger specified action.
         (default "refresh")
     sys_battery_path: set the path to your battery(ies), without including its
