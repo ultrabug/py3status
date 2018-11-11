@@ -126,7 +126,7 @@ class Formatter:
 
                     # we cannot use urlencode because it will escape things
                     # like `!`
-                    output.append("\?{} ".format("&".join(items)))
+                    output.append(r"\?{} ".format("&".join(items)))
                     continue
             value = token.group(0)
             output.append(value)
@@ -436,7 +436,7 @@ class Condition:
 
 
 class BlockConfig:
-    """
+    r"""
     Block commands eg [\?color=bad ...] are stored in this object
     """
 

@@ -20,7 +20,7 @@ def parse_readme():
     returns a dict of {<module_name>: <documentation>}
     """
     name = None
-    re_mod = re.compile('^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
+    re_mod = re.compile(r'^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
     readme_file = os.path.join(modules_directory(), "README.md")
     modules_dict = {}
     with open(readme_file) as f:
@@ -118,23 +118,23 @@ def create_readme(data):
     return "".join(out)
 
 
-re_listing = re.compile("^\w.*:$")
+re_listing = re.compile(r"^\w.*:$")
 
 # match in README.md
-re_to_param = re.compile("^  - `([a-z]\S+)`($|[ \t])")
-re_to_status = re.compile("^  - `({\S+})`($|[ \t])")
-re_to_item = re.compile("^\s+-")
-re_to_data = re.compile("^\*\*(author|license|source)\*\*($|[ \t])")
+re_to_param = re.compile(r"^  - `([a-z]\S+)`($|[ \t])")
+re_to_status = re.compile(r"^  - `({\S+})`($|[ \t])")
+re_to_item = re.compile(r"^\s+-")
+re_to_data = re.compile(r"^\*\*(author|license|source)\*\*($|[ \t])")
 re_to_tag = re.compile("&lt;([^.]*)&gt;")
-re_to_defaults = re.compile("\*(\(default.*\))\*")
+re_to_defaults = re.compile(r"\*(\(default.*\))\*")
 
 # match in module docstring
-re_from_param = re.compile("^    ([a-z<]\S+):($|[ \t])(.*)$")
-re_from_status = re.compile("^\s+({\S+})($|[ \t])(.*)$")
-re_from_item = re.compile("^\s+-(?=\s)")
+re_from_param = re.compile(r"^    ([a-z<]\S+):($|[ \t])(.*)$")
+re_from_status = re.compile(r"^\s+({\S+})($|[ \t])(.*)$")
+re_from_item = re.compile(r"^\s+-(?=\s)")
 re_from_data = re.compile("^@(author|license|source)($|[ \t])")
 re_from_tag = re.compile("((`[^`]*`)|[<>&])")
-re_from_defaults = re.compile("(\(default.*\))\s*$")
+re_from_defaults = re.compile(r"(\(default.*\))\s*$")
 
 # for rst
 re_lone_backtick = re.compile("(?<!`)`(?!`)")
@@ -425,9 +425,9 @@ def show_modules(config, params):
                 user_mods = False
                 core_mods = True
     if details:
-        print_stderr("Module details:")
+        print("Module details:")
     else:
-        print_stderr("Available modules:")
+        print("Available modules:")
     modules = core_module_docstrings(
         include_core=core_mods, include_user=user_mods, config=config
     )
@@ -438,10 +438,10 @@ def show_modules(config, params):
         desc = module[0][:-1]
         if details:
             dash_len = len(name)
-            print_stderr("=" * dash_len)
-            print_stderr(name)
-            print_stderr("=" * dash_len)
+            print("=" * dash_len)
+            print(name)
+            print("=" * dash_len)
             for description in module:
-                print_stderr(description[:-1])
+                print(description[:-1])
         else:
-            print_stderr("  %-22s %s" % (name, desc))
+            print("  %-22s %s" % (name, desc))

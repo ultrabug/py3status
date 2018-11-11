@@ -54,9 +54,17 @@ Installation
 +-------------------+-------------------------------+-------------------------------------+
 |**Fedora**         |``$ dnf install py3status``    |                                     |
 +-------------------+-------------------------------+-------------------------------------+
-|**Gentoo Linux**   |``$ emerge -a py3status``      |                                     |
+|**Gentoo Linux**   |``$ emerge -a py3status``      |Check available USE flags!           |
 +-------------------+-------------------------------+-------------------------------------+
-|**Pypi**           |``$ pip install py3status``    |                                     |
+|**Pypi**           |``$ pip install py3status``    |There are optional requirements that |
+|                   |                               |you could find useful:               |
+|                   |                               |                                     |
+|                   |                               |py3status[gevent] for gevent support.|
+|                   |                               |py3status[udev] for udev support.    |
+|                   |                               |                                     |
+|                   |                               |Or if you want everything:           |
+|                   |                               |py3status[all] to install all core   |
+|                   |                               |extra requirements and features.     |
 +-------------------+-------------------------------+-------------------------------------+
 |**Void Linux**     |``$ xbps-install -S py3status``|                                     |
 +-------------------+-------------------------------+-------------------------------------+
@@ -131,6 +139,7 @@ You can see the help of py3status by issuing ``py3status --help``:
     -c I3STATUS_CONF, --config I3STATUS_CONF
                           path to i3status config file
     -d, --debug           be verbose in syslog
+    -g, --gevent          enable gevent monkey patching (default False)
     -i INCLUDE_PATHS, --include INCLUDE_PATHS
                           include user-written modules from those directories
                           (default ~/.i3/py3status)
@@ -142,6 +151,8 @@ You can see the help of py3status by issuing ``py3status --help``:
     -t CACHE_TIMEOUT, --timeout CACHE_TIMEOUT
                           default injection cache timeout in seconds (default 60
                           sec)
+    -m, --disable-click-events
+                          disable all click events
     -v, --version         show py3status version and exit
 
 Control

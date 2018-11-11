@@ -31,9 +31,7 @@ IGNORE_ITEM = []
 # Obsolete parameters will not have alphabetical order checked
 OBSOLETE_PARAM = []
 
-RE_PARAM = re.compile(
-    "^  - `(?P<name>[^`]*)`.*?(" "\*\(default (?P<value>(" ".*" "))\)\*)?$"
-)
+RE_PARAM = re.compile(r"^  - `(?P<name>[^`]*)`.*?(\*\(default (?P<value>(.*))\)\*)?$")
 
 AST_LITERAL_TYPES = {"Num": "n", "Str": "s", "NameConstant": "value"}
 
