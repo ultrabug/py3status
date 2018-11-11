@@ -5,26 +5,28 @@ Display numbers of updates for various linux distributions.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 600)
     format: display format for this module, otherwise auto (default None)
+    managers: specify a list and/or 2-tuples of managers to use (default [])
     thresholds: specify color thresholds to use *(default [(0, 'darkgray'),
         (10, 'degraded'), (20, 'orange'), (30, 'bad')])*
 
 Format placeholders:
     {update}  number of updates, eg 0
-    {apk}     number of updates, eg 0 .. Alpine Linux     .. NOT TESTED
+    {apk}     number of updates, eg 0 .. Alpine Linux     [NOT TESTED]
     {apt}     number of updates, eg 0 .. Debian, Ubuntu
     {auracle} number of updates, eg 0 .. Arch Linux (AUR)
     {eopkg}   number of updates, eg 0 .. Solus
     {pacman}  number of updates, eg 0 .. Arch Linux
-    {xbps}    number of updates, eg 0 .. Void Linux       .. NOT TESTED
+    {xbps}    number of updates, eg 0 .. Void Linux       [NOT TESTED]
     {yay}     number of updates, eg 0 .. Arch Linux (AUR)
-    {zypper}  number of updates, eg 0 .. openSUSE         .. NOT TESTED
+    {zypper}  number of updates, eg 0 .. openSUSE         [NOT TESTED]
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
-@author Iain Tatch <iain.tatch@gmail.com> (arch_updates)
-@author Joshua Pratt <jp10010101010000@gmail.com> (apt_updates)
-@license BSD (arch_updates), BSD (apt_updates)
+@author Iain Tatch <iain.tatch@gmail.com> (arch)
+@author Joshua Pratt <jp10010101010000@gmail.com> (apt)
+@author lasers (apk, auracle, eopkg, xbps, yay, zypper)
+@license BSD (apt, arch)
 
 Examples:
 ```
@@ -37,6 +39,24 @@ updates {
 updates {
     format = 'Updates [\?color=pacman {pacman}]/[\?color=auracle {auracle}]'
     # format = 'Updates [\?color=pacman {pacman}]/[\?color=yay {yay}]'
+}
+
+# specify a list of managers (aka supported placeholders)
+updates {
+    managers = ['pacman', 'yay']
+    # Similar to 'Pacman {pacman} Yay {yay}'
+}
+
+# specify a list of 2-tuples managers (aka custom commands)
+updates {
+    managers = [('PAC', 'checkupdates'), ('AUR', 'auracle sync')]
+    # Similar to 'PAC {pac} AUR {aur}'
+}
+
+# specify a list of managers and/or 2-tuples (aka mixed options)
+updates {
+    managers = ['pacman', ('AUR', 'auracle sync')]
+    # Similiar to 'Pacman {pacman} AUR {aur}'
 }
 ```
 
@@ -60,7 +80,7 @@ no_updates
 {'full_text': 'No Updates'}
 """
 
-STRING_INVALID = 'invalid manager'
+STRING_INVALID_MANAGERS = 'invalid managers'
 
 
 class Update:
@@ -115,6 +135,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 600
     format = None
+    managers = []
     thresholds = [
         (0, 'darkgray'), (10, 'degraded'), (20, 'orange'), (30, 'bad')]
 
@@ -125,12 +146,17 @@ class Py3status:
                     "placeholder": "aur",
                     "new": "auracle",
                     "format_strings": ["format"],
+                },
+                {
+                    "placeholder": "total",
+                    "new": "update",
+                    "format_strings": ["format"],
                 }
             ]
         }
 
     def post_config_hook(self):
-        managers = update_managers = [
+        managers = [
             ("Pacman", "checkupdates"),
             ("Auracle", "auracle sync --color=never"),
             ("Yay", "yay --query --upgrades --aur"),
@@ -142,19 +168,18 @@ class Py3status:
             ("Zypper", "zypper list-updates"),
         ]
 
-        managed = getattr(self, 'managers', None)
-        if managed:
+        if self.managers:
             new_managers = []
-            for custom in managed:
-                if isinstance(custom, tuple):
-                    if len(custom) != 2 or custom[0].lower() == 'update':
-                        raise Exception(STRING_INVALID)
-                    new_managers.append(custom)
+            for entry in self.managers:
+                if isinstance(entry, tuple):
+                    if len(entry) != 2 or entry[0].lower() == 'update':
+                        raise Exception(STRING_INVALID_MANAGERS)
+                    new_managers.append(entry)
                 else:
-                    name = custom.lower()
+                    name = entry.lower()
                     if name == 'update':
-                        raise Exception(STRING_INVALID)
-                    for manager in update_managers:
+                        raise Exception(STRING_INVALID_MANAGERS)
+                    for manager in managers:
                         if manager[0].lower() == name:
                             new_managers.append(manager)
                             break
@@ -167,12 +192,8 @@ class Py3status:
         self.backends = []
         for name, command in managers:
             name_lowercased = name.lower()
-            if placeholders:
-                for placeholder in placeholders:
-                    if placeholder == name_lowercased:
-                        break
-                else:
-                    continue
+            if placeholders and name_lowercased not in placeholders:
+                continue
             if self.py3.check_commands(command.split()[0]):
                 try:
                     backend = globals()[name.capitalize()]
@@ -182,9 +203,9 @@ class Py3status:
                 self.backends.append(backend(self, name_lowercased, command))
 
         if not self.format:
-            auto = "[\?not_zero {name} [\?color={manager} {{{manager}}}]]"
+            auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
             self.format = "[{}|\?show No Updates]".format("[\?soft  ]".join(
-                auto.format(name=n, manager=m) for n, m in formats
+                auto.format(name=n, lower=l) for n, l in formats
             ))
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
