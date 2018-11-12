@@ -26,6 +26,8 @@ Configuration parameters:
 Format placeholders:
     {bitrate} Display bit rate
     {device} Display device name
+    {freq_mhz} Network frequency in Mhz
+    {freq_ghz} Network frequency in Ghz
     {icon} Character representing the quality based on bitrate,
         as defined by the 'blocks'
     {ip} Display IP address
@@ -157,6 +159,15 @@ class Py3status:
         else:
             ssid = None
 
+        # frequency
+        freq_out = re.search(r'freq: ([\-0-9]+)', iw)
+        if freq_out:
+            freq_mhz = int(freq_out.group(1))
+            freq_ghz = freq_mhz / 1000.
+        else:
+            freq_mhz = None
+            freq_ghz = None
+
         # check command
         if self.py3.format_contains(self.format, 'ip'):
             ip_info = self.py3.command_output(self.ip_addr_list_id)
@@ -211,6 +222,8 @@ class Py3status:
                 dict(
                     bitrate=bitrate,
                     device=self.device,
+                    freq_mhz=freq_mhz,
+                    freq_ghz=freq_ghz,
                     icon=icon,
                     ip=ip,
                     signal_dbm=signal_dbm,
