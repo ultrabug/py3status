@@ -163,7 +163,7 @@ class Py3status:
         freq_out = re.search(r'freq: ([\-0-9]+)', iw)
         if freq_out:
             freq_mhz = int(freq_out.group(1))
-            freq_ghz = freq_mhz / 1000.
+            freq_ghz = freq_mhz / 1000.0
         else:
             freq_mhz = None
             freq_ghz = None
