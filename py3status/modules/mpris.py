@@ -562,7 +562,7 @@ class Py3status:
             'composite': composite
         }
 
-        # we are outputting so reset tries
+        # we are outputing so reset tries
         self._tries = 0
         return response
 

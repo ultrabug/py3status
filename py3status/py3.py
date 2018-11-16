@@ -482,6 +482,7 @@ class Py3:
                 message = "\n" + message
         except:  # noqa e722
             pass
+        message = message.decode('utf-8')
         message = "Module `{}`: {}".format(self._module.module_full_name, message)
         self._py3_wrapper.log(message, level)
 
