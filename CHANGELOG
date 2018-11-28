@@ -1,3 +1,31 @@
+version 3.14 (2018-11-10)
+* IMPORTANT: this version adds an optional dependency with pyudev that is recommended to use
+* core & modules: add helpers to allow modules to react to udev events (#1546)
+* black: py3status core uses black formatter
+* fix default i3status.conf detection
+* add ~/.config/i3 as a default config directory, closes #1548
+* add .config/i3/py3status in default user modules include directories
+* add markup (pango) support for modules (#1408), by @MikaYuoadas
+* add missing documentation on gevent option
+* setup.py, travis.yml: add python 3.7 support, by lasers
+* module_test: print modules in terminal, by lasers
+* clean and improve screenshots generation (#1535), by @tobes
+* py3: add threshold string support (#1480), by @lasers
+* py3: notify_user module name in the title (#1556), by @lasers, by lasers
+* parse_config: raise error on invalid modules (fixes #1523), by @lasers
+* fix flake8 W605 errors in core and disable test for modules (#1560), by @tobes
+* module: rename min_width,align to min_length,position (#1551), by @lasers
+* allow test_modules to use udev_monitor (#1558), by @lasers
+* refactor and document extra requirements
+* print module information to sdtout instead of stderr (#1565), by @robertnf
+* battery_level: Default to using sys instead of acpi (#1562), by @eddie-dunn
+* enhanced help message thx to @lasers #1555
+* reduce flake8 checks on errors to concentrate on functional errors
+* fix errors on empty module error message, fixes #1567
+* imap module: fix output formatting issue (#1559), by @girst
+* xrandr module: now only updates on a "drm" udev event if pyudev is installed
+
+
 version 3.13 (2018-09-28)
 * WARNING: after this release, py3status coding style CI will enforce the 'black' formatter: https://pypi.org/project/black/
 * @lasers has become the second collaborator of the py3status project !

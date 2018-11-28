@@ -105,8 +105,14 @@ class Py3status:
             return False
 
     def _get_deadbeef_data(self):
+        # Deadbeef can generate lot of startup noises with or without error
+        # codes. Running command sometimes change how things behaves onscreen
+        # too. We used subprocess in the past to ignore error codes. We also
+        # use pgrep and hidden placeholders to dictate how status output and
+        # color should look... mainly to stay consistency in multiple versions
+        # (e.g., Python2.7 to Python3+ and nonstop deadbeef-git commits).
         try:
-            self.py3.command_output(self.deadbeef_command)
+            return self.py3.command_output(self.deadbeef_command)
         except self.py3.CommandError as ce:
             return ce.output
 
