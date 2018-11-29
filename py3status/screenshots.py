@@ -242,7 +242,9 @@ def process(name, data, module=True):
     If module is True the screenshot will include the name and py3status.
     """
 
-    path = "../doc/screenshots"
+    path = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.realpath(__file__))), "doc/screenshots"
+    )
     # create dir if not exists
     try:
         os.makedirs(path)
