@@ -10,7 +10,8 @@ code such as #FF0000 for red).
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
-    button_refresh: button to refresh the module (default 2)
+    button_show_notification: button to show notification with full output
+        (default None)
     cache_timeout: how often we refresh this module in seconds
         (default 15)
     format: see placeholders below (default '{output}')
@@ -51,7 +52,7 @@ class Py3status:
     """
     """
     # available configuration parameters
-    button_refresh = 2
+    button_show_notification = None
     cache_timeout = 15
     format = '{output}'
     localize = True
@@ -105,7 +106,7 @@ class Py3status:
 
     def on_click(self, event):
         button = event["button"]
-        if button != self.button_refresh:
+        if button == self.button_show_notification:
             self.py3.notify_user(self.output)
             self.py3.prevent_refresh()
 
