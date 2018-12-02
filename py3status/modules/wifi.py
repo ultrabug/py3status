@@ -81,6 +81,8 @@ class Py3status:
         self._max_bitrate = 0
         self._ssid = ''
         iw = self.py3.check_commands(['iw', '/sbin/iw'])
+        if iw is None:
+            raise Exception('iw is not installed')
         # get wireless interface
         try:
             data = self.py3.command_output([iw, 'dev'])
