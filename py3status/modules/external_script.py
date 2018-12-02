@@ -23,7 +23,7 @@ Configuration parameters:
         (default False)
 
 Format placeholders:
-    {line} number of lines in the output
+    {lines} number of lines in the output
     {output} output of script given by "script_path"
 
 i3status.conf example:
@@ -101,7 +101,7 @@ class Py3status:
             output = ''
 
         response['full_text'] = self.py3.safe_format(
-            self.format, {'output': output, 'line': len(output_lines)})
+            self.format, {'output': output, 'lines': len(output_lines)})
         return response
 
     def on_click(self, event):
