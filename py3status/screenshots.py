@@ -51,6 +51,10 @@ COLOR_URGENT_BG = "#900000"
 FONT_SIZE = BAR_HEIGHT - (PADDING * 2)
 HEIGHT = TOP_BAR_HEIGHT + BAR_HEIGHT
 
+SAMPLE_DATA_ERROR = dict(
+    color="#990000", background="#FFFF00", full_text=" SAMPLE DATA ERROR "
+)
+
 # font, glyph_data want caching for performance
 font = None
 glyph_data = None
@@ -195,35 +199,12 @@ def parse_sample_data(sample_data, module_name):
     {screenshot_name: sample_output}
     """
     samples = {}
-    name = None
-    data = ""
-    count = 0
-    for line in sample_data.splitlines():
-        line = line.strip()
-        if line == "":
-            # blank lines separate screenshots so process the data we have
-            if data:
-                if name:
-                    name = u"%s-%s-%s" % (module_name, count, name)
-                else:
-                    name = module_name
-                try:
-                    output = ast.literal_eval(data)
-                    samples[name] = output
-                except SyntaxError:
-                    samples[name] = {
-                        "color": "#990000",
-                        "background": "#FFFF00",
-                        "full_text": " SAMPLE DATA ERROR ",
-                    }
-                count += 1
-            # clear any data
-            name = None
-            data = ""
-        elif name is None and data == "" and not line[0] in ["[", "{"] and count:
-            name = line
-        else:
-            data += line
+    for index, chunk in enumerate(sample_data.split("\n\n")):
+        name, sample = re.split("-?\n", f"{module_name}-{index}-{chunk}", 1)
+        try:
+            samples[name] = ast.literal_eval(sample)
+        except SyntaxError:
+            samples[name] = SAMPLE_DATA_ERROR
     return samples
 
 
@@ -261,7 +242,9 @@ def process(name, data, module=True):
     If module is True the screenshot will include the name and py3status.
     """
 
-    path = "../doc/screenshots"
+    path = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.realpath(__file__))), "doc/screenshots"
+    )
     # create dir if not exists
     try:
         os.makedirs(path)
