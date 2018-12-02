@@ -82,7 +82,7 @@ class Py3:
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
     """
-    Special constant that when returned for ``cache_until`` will cause the
+    Special constant that when returned for ``cached_until`` will cause the
     module to not update unless externally triggered.
     """
 

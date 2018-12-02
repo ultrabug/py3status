@@ -122,7 +122,7 @@ class Py3status:
         try:
             iw = self.py3.command_output(self.iw_dev_id_link)
         except self.py3.CommandError:
-            return {'cache_until': self.py3.CACHE_FOREVER,
+            return {'cached_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
                     'full_text': STRING_ERROR}
         # bitrate
@@ -219,7 +219,7 @@ class Py3status:
                 ))
 
         return {
-            'cache_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
             'color': color,
         }
