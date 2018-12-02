@@ -200,7 +200,8 @@ def parse_sample_data(sample_data, module_name):
     """
     samples = {}
     for index, chunk in enumerate(sample_data.split("\n\n")):
-        name, sample = re.split("-?\n", f"{module_name}-{index}-{chunk}", 1)
+        chunk = "{}-{}-{}".format(module_name, index, chunk)
+        name, sample = re.split("-?\n", chunk, 1)
         try:
             samples[name] = ast.literal_eval(sample)
         except SyntaxError:
