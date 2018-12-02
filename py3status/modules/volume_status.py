@@ -118,7 +118,7 @@ class AmixerBackend(AudioBackend):
             self.device = 'default'
         self.cmd = ['amixer', '-q', '-D', self.device,
                     '-c', self.card, 'sset', self.channel]
-        self.get_volume_cmd = ['amixer', '-D', self.device,
+        self.get_volume_cmd = ['amixer', '-M', '-D', self.device,
                                '-c', self.card, 'sget', self.channel]
 
     def get_volume(self):
