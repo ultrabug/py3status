@@ -26,8 +26,8 @@ Configuration parameters:
 Format placeholders:
     {bitrate} Display bit rate
     {device} Display device name
-    {freq_mhz} Network frequency in Mhz
     {freq_ghz} Network frequency in Ghz
+    {freq_mhz} Network frequency in Mhz
     {icon} Character representing the quality based on bitrate,
         as defined by the 'blocks'
     {ip} Display IP address
@@ -222,8 +222,8 @@ class Py3status:
                 dict(
                     bitrate=bitrate,
                     device=self.device,
-                    freq_mhz=freq_mhz,
                     freq_ghz=freq_ghz,
+                    freq_mhz=freq_mhz,
                     icon=icon,
                     ip=ip,
                     signal_dbm=signal_dbm,
