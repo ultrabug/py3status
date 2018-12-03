@@ -244,7 +244,7 @@ def process(name, data, module=True):
     """
 
     path = os.path.join(os.path.dirname(os.path.dirname(
-        os.path.realpath(__file__))), "doc/screenshots"
+        os.path.abspath(__file__))), "doc/screenshots"
     )
     # create dir if not exists
     try:
