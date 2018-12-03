@@ -137,9 +137,10 @@ no_mail
 import mailbox
 from imaplib import IMAP4_SSL
 from os.path import exists, expanduser, expandvars
+
 STRING_MISSING = 'missing {} {}'
-STRING_WRONG_NAME = 'Accountname ({}) collides with "Maildir", "mbox", "mh", \
-"Babyl", "MMDF", "mail" or "IMAP".'
+STRING_INVALID_NAME = 'invalid name `{}`'
+STRING_INVALID_BOX = 'invalid mailbox `{}`'
 
 
 class Py3status:
@@ -157,14 +158,19 @@ class Py3status:
 
         self.mailboxes = {}
         mailboxes = ['Maildir', 'mbox', 'mh', 'Babyl', 'MMDF', 'IMAP']
+        lowercased_names = [x.lower() for x in mailboxes]
+        reserved_names = lowercased_names + ['mail']
         for mail, accounts in self.accounts.items():
-            if mail not in [x.lower() for x in mailboxes]:
-                continue
+            if mail not in lowercased_names:
+                raise Exception(STRING_INVALID_BOX.format(mail))
             self.mailboxes[mail] = []
             for account in accounts:
-                if account['name'] in [x.lower() for x in mailboxes] \
-                        + ['mail']:
-                    raise Exception(STRING_WRONG_NAME.format(account['name']))
+                if 'name' in account:
+                    name = account['name']
+                    strip = name.rstrip('_0123456789')
+                    if any(x in [name, strip] for x in reserved_names):
+                        raise Exception(STRING_INVALID_NAME.format(name))
+                    reserved_names.append(name)
                 account.setdefault('urgent', True)
                 if mail == 'imap':
                     for v in ['user', 'password', 'server']:
