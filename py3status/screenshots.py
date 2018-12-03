@@ -236,16 +236,12 @@ def get_samples():
     return samples
 
 
-def process(name, data, module=True):
+def process(name, path, data, module=True):
     """
     Process data to create a screenshot which will be saved in
     docs/screenshots/<name>.png
     If module is True the screenshot will include the name and py3status.
     """
-
-    path = os.path.join(os.path.dirname(os.path.dirname(
-        os.path.abspath(__file__))), "doc/screenshots"
-    )
     # create dir if not exists
     try:
         os.makedirs(path)
@@ -274,11 +270,17 @@ def create_screenshots(quiet=False):
     The screenshots directory will have all .png files deleted before new shots
     are created.
     """
+    if os.environ.get('READTHEDOCS') == 'True':
+        path = "../doc/screenshots"
+    else:
+        path = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "doc/screenshots"
+        )
 
     print("Creating screenshots...")
     samples = get_samples()
     for name, data in sorted(samples.items()):
-        process(name, data)
+        process(name, path, data)
 
 
 if __name__ == "__main__":
