@@ -32,13 +32,14 @@ Examples:
 ```
 # multiple distributions, same format
 updates {
-    format = '[\?not_zero Updates [\?color=update {update}]]'
+    format = '[\?not_zero UPD [\?color=update {update}]]'
 }
 
 # Arch Linux
 updates {
-    format = 'Updates [\?color=pacman {pacman}]/[\?color=auracle {auracle}]'
-    # format = 'Updates [\?color=pacman {pacman}]/[\?color=yay {yay}]'
+    format = 'UPD [\?color=pacman {pacman}]/[\?color=auracle {auracle}]'
+    # format = 'UPD [\?color=pacman {pacman}]/[\?color=pikaur {pikaur}]'
+    # format = 'UPD [\?color=pacman {pacman}]/[\?color=yay {yay}]'
 }
 
 # specify a list of managers (aka supported placeholders)
@@ -75,9 +76,6 @@ SAMPLE OUTPUT
 
 45pkgs
 [{'full_text': 'Xbps '}, {'full_text': '45', 'color': '#FF0000'}]
-
-no_updates
-{'full_text': 'No Updates'}
 """
 
 STRING_INVALID_MANAGERS = 'invalid managers'
@@ -203,8 +201,21 @@ class Py3status:
                 self.backends.append(backend(self, name_lowercased, command))
 
         if not self.format:
-            auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
-            self.format = "[{}|\?show No Updates]".format("[\?soft  ]".join(
+            if getattr(self, 'verbose', False):
+                if getattr(self, 'not_zero', False):
+                    auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
+                else:
+                    auto = "[{name} [\?color={lower} {{{lower}}}]]"
+                format_string = "{}"
+                separator = "[\?soft  ]"
+            else:
+                if getattr(self, 'not_zero', False):
+                    auto = "[\?not_zero [\?color={lower} {{{lower}}}]]"
+                else:
+                    auto = "[\?color={lower} {{{lower}}}]"
+                format_string = "[\?if=update UPD {}]"
+                separator = "[\?soft /]"
+            self.format = format_string.format(separator.join(
                 auto.format(name=n, lower=l) for n, l in formats
             ))
 
@@ -233,4 +244,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    module_test(Py3status)
+    module_test(Py3status, config={'verbose': True})
