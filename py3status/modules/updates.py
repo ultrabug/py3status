@@ -17,6 +17,7 @@ Format placeholders:
     {eopkg}   number of updates, eg 0 .. Solus
     {pacman}  number of updates, eg 0 .. Arch Linux
     {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
+    {trizen}  number of updates, eg 0 .. Arch Linux (AUR)
     {xbps}    number of updates, eg 0 .. Void Linux       [NOT TESTED]
     {yay}     number of updates, eg 0 .. Arch Linux (AUR)
     {zypper}  number of updates, eg 0 .. openSUSE         [NOT TESTED]
@@ -26,7 +27,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, pikaur, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, pikaur, trizen, xbps, yay, zypper)
 @license BSD (apt, arch)
 
 Examples:
@@ -122,6 +123,14 @@ class Eopkg(Update):
         return output
 
 
+class Trizen(Update):
+    def get_output(self):
+        try:
+            return self.parent.py3.command_output(self.command)
+        except self.parent.py3.CommandError as ce:
+            return ce.output
+
+
 class Zypper(Update):
     def count_updates(self, output):
         return len([x for x in output.splitlines() if x][4:])
@@ -160,6 +169,7 @@ class Py3status:
             ("Auracle", "auracle sync --color=never"),
             ("Yay", "yay --query --upgrades --aur"),
             ("Pikaur", "pikaur -Quaq"),
+            ("Trizen", "trizen -Quaq"),
             ("Apk", "apk version -l '<'"),
             ("Apt", "apt list --upgradeable"),
             ("Eopkg", "eopkg list-upgrades"),
