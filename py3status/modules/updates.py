@@ -38,11 +38,35 @@ updates {
     format = '[\?not_zero UPD [\?color=update {update}]]'
 }
 
-# Arch Linux
+# total updates with single or multiple managers
 updates {
-    format = 'UPD [\?color=pacman {pacman}]/[\?color=auracle {auracle}]'
-    # format = 'UPD [\?color=pacman {pacman}]/[\?color=pikaur {pikaur}]'
-    # format = 'UPD [\?color=pacman {pacman}]/[\?color=yay {yay}]'
+    # total
+    format = "UPD [\?color=update {update}]"
+
+    # single managers like apt, xbps, etc will always be same as total.
+    format = "UPD [\?color=apt {apt}]"
+
+    # archlinux have several aur helpers. querying more than one would give
+    # a wrong total so users should keep only one or to specify managers.
+    format = "UPD [\?color=update {update}]"
+    managers = ['pacman', 'yay']
+}
+
+# verbose and/or hide zeroes
+updates {
+    # default is non-verbose, show if updates
+
+    # non-verbose, show if updates, hide zeroes
+    format "[\?if=update UPD [\?color=pacman {pacman}]"
+    format += "[\?soft /][\?color=pikaur {pikaur}]]'
+
+    # verbose, show if updates, show zeroes
+    format "[Pacman [\?color=pacman {pacman}]][\?soft  ]"
+    format += "[Trizen [\?color=trizen {trizen}]]"
+
+    # verbose, hide zeroes
+    format "[\?not_zero Pacman [\?color=pacman {pacman}]][\?soft  ]"
+    format += "[\?not_zero Yay [\?color=yay {yay}]]"
 }
 
 # specify a list of managers (aka supported placeholders)
