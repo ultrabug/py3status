@@ -17,6 +17,7 @@ Format placeholders:
     {eopkg}   number of updates, eg 0 .. Solus
     {pacman}  number of updates, eg 0 .. Arch Linux
     {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
+    {pkg}     number of updates, eg 0 .. FreeBSD          [NOT TESTED]
     {trizen}  number of updates, eg 0 .. Arch Linux (AUR)
     {xbps}    number of updates, eg 0 .. Void Linux       [NOT TESTED]
     {yay}     number of updates, eg 0 .. Arch Linux (AUR)
@@ -27,7 +28,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, pikaur, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, pikaur, pkg, trizen, xbps, yay, zypper)
 @license BSD (apt, arch)
 
 Examples:
