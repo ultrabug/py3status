@@ -164,19 +164,25 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        managers = [
-            ("Pacman", "checkupdates"),
-            ("Auracle", "auracle sync --color=never"),
-            ("Yay", "yay --query --upgrades --aur"),
-            ("Pikaur", "pikaur -Quaq"),
-            ("Trizen", "trizen -Quaq"),
-            ("Apk", "apk version -l '<'"),
-            ("Apt", "apt list --upgradeable"),
-            ("Eopkg", "eopkg list-upgrades"),
-            ("Pkg", "pkg upgrade --dry-run --quiet"),
-            ("Xbps", "xbps-install --update --dry-run"),
-            ("Zypper", "zypper list-updates"),
-        ]
+        with open("/etc/os-release") as f:
+            multiple = "archlinux" in f.read()
+            if multiple:
+                managers = [
+                    ("Pacman", "checkupdates"),  # must be first
+                    ("Auracle", "auracle sync --color=never"),
+                    ("Pikaur", "pikaur -Quaq --color=never"),
+                    ("Trizen", "trizen -Quaq --color=never"),
+                    ("Yay", "yay -Quaq --color=never")
+                ]
+            else:
+                managers = [
+                    ("Apk", "apk version -l '<'"),
+                    ("Apt", "apt list --upgradeable"),
+                    ("Eopkg", "eopkg list-upgrades"),
+                    ("Pkg", "pkg upgrade --dry-run --quiet"),
+                    ("Xbps", "xbps-install --update --dry-run"),
+                    ("Zypper", "zypper list-updates"),
+                ]
 
         if self.managers:
             new_managers = []
@@ -211,6 +217,8 @@ class Py3status:
                     backend = Update
                 formats.append((name, name_lowercased))
                 self.backends.append(backend(self, name_lowercased, command))
+                if not multiple:
+                    break
 
         if not self.format:
             if getattr(self, 'verbose', False):
