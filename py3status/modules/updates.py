@@ -53,7 +53,7 @@ updates {
     managers = ['pacman', 'yay']
 }
 
-# verbose and/or hide zeroes
+# specify format - verbose and/or hide zeroes
 updates {
     # default is non-verbose, show if updates
 
@@ -90,23 +90,23 @@ updates {
 ```
 
 SAMPLE OUTPUT
-[{'full_text': 'Apk '}, {'full_text': '3', 'color': '#a9a9a9'}]
+[{'full_text': 'UPD '}, {'full_text': '8', 'color': '#a9a9a9'}]
 
-14pkgs
-[{'full_text': 'Apt '}, {'full_text': '14', 'color': '#00FF00'}]
+degraded
+[{'full_text': 'UPD '}, {'full_text': '15', 'color': '#ffff00'}]
 
-29and5pkgs
-[{'full_text': 'Pacman '}, {'full_text': '29 ', 'color': '#FFFF00'},
-{'full_text': 'Auracle '}, {'full_text': '5', 'color': '#a9a9a9'}]
+orange
+[{'full_text': 'UPD '}, {'full_text': '34', 'color': '#ffa500'}]
 
-35pkgs
-[{'full_text': 'Zypper '}, {'full_text': '34', 'color': '#ffa500'}]
+bad
+[{'full_text': 'UPD '}, {'full_text': '45', 'color': '#ff0000'}]
 
-45pkgs
-[{'full_text': 'Xbps '}, {'full_text': '45', 'color': '#FF0000'}]
+arch
+[{'full_text': 'UPD '}, {'full_text': '14', 'color': '#ffff00'},
+{'full_text': '/'}, {'full_text': '2', 'color': '#a9a9a9'}]
 """
 
-STRING_INVALID_MANAGERS = 'invalid managers'
+STRING_INVALID_MANAGERS = "invalid managers"
 
 
 class Update:
@@ -182,7 +182,11 @@ class Py3status:
     format = None
     managers = []
     thresholds = [
-        (0, 'darkgray'), (10, 'degraded'), (20, 'orange'), (30, 'bad')]
+        (0, "darkgray"),
+        (10, "degraded"),
+        (20, "orange"),
+        (30, "bad"),
+    ]
 
     class Meta:
         deprecated = {
@@ -196,7 +200,7 @@ class Py3status:
                     "placeholder": "total",
                     "new": "update",
                     "format_strings": ["format"],
-                }
+                },
             ]
         }
 
@@ -206,11 +210,11 @@ class Py3status:
             if multiple:
                 managers = [
                     ("Pacman", "checkupdates"),  # must be first
-                    ("Auracle", "auracle sync --color=never"),
-                    ("Pakku", "pakku -Su --print-format '%r' --color=never"),
+                    ("Auracle", "auracle sync -q --color=never"),
+                    ("Pakku", "pakku -Suq --print-format '%r' --color=never"),
                     ("Pikaur", "pikaur -Quaq --color=never"),
                     ("Trizen", "trizen -Quaq --color=never"),
-                    ("Yay", "yay -Quaq --color=never")
+                    ("Yay", "yay -Quaq --color=never"),
                 ]
             else:
                 managers = [
@@ -226,12 +230,12 @@ class Py3status:
             new_managers = []
             for entry in self.managers:
                 if isinstance(entry, tuple):
-                    if len(entry) != 2 or entry[0].lower() == 'update':
+                    if len(entry) != 2 or entry[0].lower() == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
                     new_managers.append(entry)
                 else:
                     name = entry.lower()
-                    if name == 'update':
+                    if name == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
                     for manager in managers:
                         if manager[0].lower() == name:
@@ -239,8 +243,8 @@ class Py3status:
                             break
             managers = new_managers
 
-        placeholders = self.py3.get_placeholders_list(self.format or '')
-        placeholders = [x for x in placeholders if x != 'update']
+        placeholders = self.py3.get_placeholders_list(self.format or "")
+        placeholders = [x for x in placeholders if x != "update"]
 
         formats = []
         self.backends = []
@@ -259,31 +263,33 @@ class Py3status:
                     break
 
         if not self.format:
-            if getattr(self, 'verbose', False):
-                if getattr(self, 'not_zero', False):
+            if getattr(self, "verbose", False):
+                if getattr(self, "not_zero", False):
                     auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
                 else:
                     auto = "[{name} [\?color={lower} {{{lower}}}]]"
                 format_string = "{}"
                 separator = "[\?soft  ]"
             else:
-                if getattr(self, 'not_zero', False):
+                if getattr(self, "not_zero", False):
                     auto = "[\?not_zero [\?color={lower} {{{lower}}}]]"
                 else:
                     auto = "[\?color={lower} {{{lower}}}]"
                 format_string = "[\?if=update UPD {}]"
                 separator = "[\?soft /]"
-            self.format = format_string.format(separator.join(
-                auto.format(name=n, lower=l) for n, l in formats
-            ))
+            self.format = format_string.format(
+                separator.join(
+                    auto.format(name=n, lower=l) for n, l in formats
+                )
+            )
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def updates(self):
-        update_data = {'update': 0}
+        update_data = {"update": 0}
         for backend in self.backends:
             update = backend.get_updates()
-            update_data['update'] += update[backend.name] or 0
+            update_data["update"] += update[backend.name] or 0
             update_data.update(update)
 
         for x in self.thresholds_init:
@@ -302,4 +308,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    module_test(Py3status, config={'verbose': True})
+    module_test(Py3status, config={"verbose": True})
