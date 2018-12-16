@@ -243,8 +243,11 @@ class Py3status:
                             break
             managers = new_managers
 
-        placeholders = self.py3.get_placeholders_list(self.format or "")
-        placeholders = [x for x in placeholders if x != "update"]
+        if self.format:
+            placeholders = self.py3.get_placeholders_list(self.format)
+            placeholders = [x for x in placeholders if x != "update"]
+        else:
+            placeholders = []
 
         formats = []
         self.backends = []
