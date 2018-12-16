@@ -34,17 +34,12 @@ Color thresholds:
 
 Examples:
 ```
-# multiple distributions, same format
-updates {
-    format = '[\?not_zero UPD [\?color=update {update}]]'
-}
-
-# total updates with single or multiple managers
+# show total updates
 updates {
     # total
     format = "UPD [\?color=update {update}]"
 
-    # single managers like apt, xbps, etc will always be same as total.
+    # single managers (eg apt, xbps, etc) would be same as total.
     format = "UPD [\?color=apt {apt}]"
 
     # archlinux have several aur helpers. querying more than one would give
@@ -53,39 +48,17 @@ updates {
     managers = ['pacman', 'yay']
 }
 
-# specify format - verbose and/or hide zeroes
+# specify a list and/or 2-tuples of managers
 updates {
-    # default is non-verbose, show if updates
-
-    # non-verbose, show if updates, hide zeroes
-    format "[\?if=update UPD [\?color=pacman {pacman}]"
-    format += "[\?soft /][\?color=pikaur {pikaur}]]'
-
-    # verbose, show if updates, show zeroes
-    format "[Pacman [\?color=pacman {pacman}]][\?soft  ]"
-    format += "[Trizen [\?color=trizen {trizen}]]"
-
-    # verbose, hide zeroes
-    format "[\?not_zero Pacman [\?color=pacman {pacman}]][\?soft  ]"
-    format += "[\?not_zero Yay [\?color=yay {yay}]]"
-}
-
-# specify a list of managers (aka supported placeholders)
-updates {
+    # supported placeholders            # UPD {pacman}/{yay}
     managers = ['pacman', 'yay']
-    # Similar to 'Pacman {pacman} Yay {yay}'
-}
 
-# specify a list of 2-tuples managers (aka custom commands)
-updates {
-    managers = [('PAC', 'checkupdates'), ('AUR', 'auracle sync')]
-    # Similar to 'PAC {pac} AUR {aur}'
-}
-
-# specify a list of managers and/or 2-tuples (aka mixed options)
-updates {
-    managers = ['pacman', ('AUR', 'auracle sync')]
-    # Similiar to 'Pacman {pacman} AUR {aur}'
+    # custom/mixed commands             # UPD {pacman}/{aur}/{custom}
+    managers = [
+        'pacman',
+        ('aur', 'auracle sync'),
+        ('custom', 'command querying a list of updates'),
+    ]
 }
 ```
 
