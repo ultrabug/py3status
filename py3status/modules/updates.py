@@ -14,6 +14,7 @@ Format placeholders:
     {apk}     number of updates, eg 0 .. Alpine Linux     [NOT TESTED]
     {apt}     number of updates, eg 0 .. Debian, Ubuntu
     {auracle} number of updates, eg 0 .. Arch Linux (AUR)
+    {dnf}     number of updates, eg 0 .. Fedora
     {eopkg}   number of updates, eg 0 .. Solus
     {pacman}  number of updates, eg 0 .. Arch Linux
     {pakku}   number of updates, eg 0 .. Arch Linux (AUR)
@@ -30,7 +31,8 @@ Color thresholds:
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
 @author lasers (apk, auracle, eopkg, pakku, pikaur, pkg, trizen, xbps, yay, zypper)
-@license BSD (apt, arch)
+@author tobes (dnf)
+@license BSD (apt, arch, dnf)
 
 Examples:
 ```
@@ -114,6 +116,11 @@ class Apk(Update):
         return len(output.splitlines()[1:])
 
 
+class Dnf(Update):
+    def count_updates(self, output):
+        return len(output.splitlines()[1:])
+
+
 class Eopkg(Update):
     def get_output(self):
         output = self.parent.py3.command_output(self.command)
@@ -174,6 +181,11 @@ class Py3status:
                     "new": "update",
                     "format_strings": ["format"],
                 },
+                {
+                    "placeholder": "updates",
+                    "new": "update",
+                    "format_strings": ["format"],
+                },
             ]
         }
 
@@ -197,6 +209,7 @@ class Py3status:
                         "apt-get dist-upgrade --dry-run -qq "
                         "-o APT::Get::Show-User-Simulation-Note=no",
                     ),
+                    ("Dnf", "dnf list --refresh --upgrades --quiet"),
                     ("Eopkg", "eopkg list-upgrades"),
                     ("Pkg", "pkg upgrade --dry-run --quiet"),
                     ("Xbps", "xbps-install --update --dry-run"),
