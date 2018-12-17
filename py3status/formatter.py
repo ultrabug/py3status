@@ -639,7 +639,11 @@ class Block:
             convertables = (str, bool, int, float, bytes)
 
         first = True
+        last_block = None
         for index, item in enumerate(output):
+            is_block = isinstance(item, Block)
+            if not is_block and item:
+                last_block = None
             if isinstance(item, convertables) or item is None:
                 text += conversion(item)
                 continue
@@ -656,14 +660,15 @@ class Block:
                 if color:
                     item.composite_update(item, {"color": color}, soft=True)
                 out.extend(item.get_content())
-            elif isinstance(item, Block):
+            elif is_block:
                 # if this is a block then likely it is soft.
                 if not out:
                     continue
                 for x in range(index + 1, len(output)):
                     if output[x] and not isinstance(output[x], Block):
                         valid, _output = item.render(get_params, module, _if=True)
-                        if _output:
+                        if _output and _output != last_block:
+                            last_block = _output
                             out.extend(_output)
                         break
             else:
