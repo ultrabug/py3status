@@ -91,12 +91,13 @@ class Py3status:
         sleep(0.3)
         # Check if any active connections are a VPN
         bus = SystemBus()
+        ids = []
         for name in self.active:
             conn = bus.get(".NetworkManager", name)
             if conn.Vpn:
-                return conn.Id
+                ids.append(conn.Id)
         # No active VPN
-        return None
+        return ids
 
     def _check_pid(self):
         """Returns True if pidfile exists, False otherwise."""
@@ -124,7 +125,7 @@ class Py3status:
         else:
             vpn = self._get_vpn_status()
             if vpn:
-                name = vpn
+                name = ', '.join(vpn)
                 color = self.py3.COLOR_GOOD
 
         # Format and create the response dict
