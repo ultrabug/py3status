@@ -106,7 +106,7 @@ class Update:
 
 class Apt(Update):
     def count_updates(self, output):
-        return len(output.splitlines()[1:])
+        return len([x for x in output.splitlines() if x[:4] == "Inst"])
 
 
 class Apk(Update):
@@ -192,7 +192,11 @@ class Py3status:
             else:
                 managers = [
                     ("Apk", "apk version -l '<'"),
-                    ("Apt", "apt list --upgradeable"),
+                    (
+                        "Apt",
+                        "apt-get dist-upgrade --dry-run -qq "
+                        "-o APT::Get::Show-User-Simulation-Note=no",
+                    ),
                     ("Eopkg", "eopkg list-upgrades"),
                     ("Pkg", "pkg upgrade --dry-run --quiet"),
                     ("Xbps", "xbps-install --update --dry-run"),
