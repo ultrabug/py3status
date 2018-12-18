@@ -262,24 +262,9 @@ class Py3status:
                     break
 
         if not self.format:
-            if getattr(self, "verbose", False):
-                if getattr(self, "not_zero", False):
-                    auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
-                else:
-                    auto = "[{name} [\?color={lower} {{{lower}}}]]"
-                format_string = "{}"
-                separator = "[\?soft  ]"
-            else:
-                if getattr(self, "not_zero", False):
-                    auto = "[\?not_zero [\?color={lower} {{{lower}}}]]"
-                else:
-                    auto = "[\?color={lower} {{{lower}}}]"
-                format_string = "[\?if=update UPD {}]"
-                separator = "[\?soft /]"
-            self.format = format_string.format(
-                separator.join(
-                    auto.format(name=n, lower=l) for n, l in formats
-                )
+            auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
+            self.format = "[\?soft  ]".join(
+                auto.format(name=n, lower=l) for n, l in formats
             )
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
@@ -307,4 +292,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    module_test(Py3status, config={"verbose": True})
+    module_test(Py3status)
