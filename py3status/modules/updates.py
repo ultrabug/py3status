@@ -217,7 +217,7 @@ class Py3status:
                     ("Xbps", "xbps-install --update --dry-run"),
                     ("Zypper", "zypper list-updates"),
                 ]
-            managers += [
+            others = [
                 ("Flatpak", "flatpak remote-ls --updates --all"),
                 ("Snappy", "snap refresh --list --color=never"),
             ]
@@ -247,19 +247,22 @@ class Py3status:
 
         formats = []
         self.backends = []
-        for name, command in managers:
-            name_lowercased = name.lower()
-            if placeholders and name_lowercased not in placeholders:
-                continue
-            if self.py3.check_commands(command.split()[0]):
-                try:
-                    backend = globals()[name.capitalize()]
-                except KeyError:
-                    backend = Update
-                formats.append((name, name_lowercased))
-                self.backends.append(backend(self, name_lowercased, command))
-                if not multiple:
-                    break
+        for index, managers in enumerate((managers, others)):
+            for name, command in managers:
+                name_lowercased = name.lower()
+                if placeholders and name_lowercased not in placeholders:
+                    continue
+                if self.py3.check_commands(command.split()[0]):
+                    try:
+                        backend = globals()[name.capitalize()]
+                    except KeyError:
+                        backend = Update
+                    formats.append((name, name_lowercased))
+                    self.backends.append(
+                        backend(self, name_lowercased, command)
+                    )
+                    if not index and not multiple:
+                        break
 
         if not self.format:
             auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
