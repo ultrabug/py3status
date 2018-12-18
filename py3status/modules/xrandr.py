@@ -159,6 +159,7 @@ class Py3status:
         self.active_layout = None
         self.active_mode = 'extend'
         self.displayed = None
+        self.initialized = False
         self.max_width = 0
 
     def _get_layout(self):
@@ -457,7 +458,7 @@ class Py3status:
             response['color'] = self.py3.COLOR_BAD
 
         # force default layout setup
-        if self.force_on_start is not None:
+        if not self.initialized and self.force_on_start is not None:
             sleep(1)
             self._force_force_on_start()
 
@@ -466,6 +467,9 @@ class Py3status:
             response['color'] = self.py3.COLOR_DEGRADED
             if self.fallback is True:
                 self._fallback_to_available_output()
+
+        # startup is done
+        self.initialized = True
 
         return response
 
