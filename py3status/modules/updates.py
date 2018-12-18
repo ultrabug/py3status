@@ -21,6 +21,7 @@ Format placeholders:
     {pakku}   number of updates, eg 0 .. Arch Linux (AUR)
     {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
     {pkg}     number of updates, eg 0 .. FreeBSD          [NOT TESTED]
+    {snappy}  number of updates, eg 0 .. Snappy
     {trizen}  number of updates, eg 0 .. Arch Linux (AUR)
     {xbps}    number of updates, eg 0 .. Void Linux       [NOT TESTED]
     {yay}     number of updates, eg 0 .. Arch Linux (AUR)
@@ -31,7 +32,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, pakku, pikaur, pkg, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, flatpak, pakku, pikaur, pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -218,6 +219,7 @@ class Py3status:
                 ]
             managers += [
                 ("Flatpak", "flatpak remote-ls --updates --all"),
+                ("Snappy", "snap refresh --list --color=never"),
             ]
 
         if self.managers:
