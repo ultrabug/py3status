@@ -212,7 +212,7 @@ class Py3status:
                         "-o APT::Get::Show-User-Simulation-Note=no",
                     ),
                     ("Dnf", "dnf list --refresh --upgrades --quiet"),
-                    ("Eopkg", "eopkg list-upgrades"),
+                    ("Eopkg", "eopkg list-upgrades --no-color"),
                     ("Pkg", "pkg upgrade --dry-run --quiet"),
                     ("Xbps", "xbps-install --update --dry-run"),
                     ("Zypper", "zypper list-updates"),
