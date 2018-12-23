@@ -1,22 +1,49 @@
 # -*- coding: utf-8 -*-
 """
-Display if a file or directory exists.
+Display if files or directories exists.
 
 Configuration parameters:
-    cache_timeout: how often to run the check (default 10)
-    format: format of the output. (default '{icon}')
-    icon_available: icon to display when available (default '●')
-    icon_unavailable: icon to display when unavailable (default '■')
-    path: the path to a file or dir to check if it exists (default None)
-
-Color options:
-    color_bad: Error or file/directory does not exist
-    color_good: File or directory exists
+    cache_timeout: refresh interval for this module (default 10)
+    format: display format for this module
+        (default '\?color=path [\?if=path ●|■]')
+    format_path: format for paths (default '{basename}')
+    format_path_separator: show separator if more than one (default ' ')
+    paths: specify a string or a list of paths to check (default None)
+    thresholds: specify color thresholds to use
+        (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
-    {icon} icon for the current availability
+    {format_path} format for paths
+    {path} number of paths, eg 1, 2, 3
 
-@author obb, Moritz Lüdecke
+format_path placeholders:
+    {basename} basename of pathname
+    {pathname} pathname
+
+Color options:
+    color_bad: files or directories does not exist
+    color_good: files or directories exists
+
+Color thresholds:
+    format:
+        path: print a color based on the number of paths
+
+Examples:
+# add multiple paths with wildcard or with pathnames
+```
+file_status {
+    paths = ['/tmp/test*', '~user/test1', '~/Videos/*.mp4']
+}
+
+# colorize basenames
+file_status {
+    paths = ['~/.config/i3/modules/*.py']
+    format = '{format_path}'
+    format_path = '\?color=good {basename}'
+    format_path_separator = ', '
+}
+```
+@author obb, Moritz Lüdecke, Cyril Levis (@cyrinux)
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'\u25cf'}
@@ -25,9 +52,10 @@ missing
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-from os.path import expanduser, exists
+from glob import glob
+from os.path import basename, expanduser
 
-ERR_NO_PATH = 'no path given'
+STRING_NO_PATHS = 'missing paths'
 
 
 class Py3status:
@@ -35,10 +63,11 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 10
-    format = '{icon}'
-    icon_available = u'●'
-    icon_unavailable = u'■'
-    path = None
+    format = u'\?color=path [\?if=path \u25cf|\u25a0]'
+    format_path = u'{basename}'
+    format_path_separator = u' '
+    paths = None
+    thresholds = [(0, 'bad'), (1, 'good')]
 
     class Meta:
         deprecated = {
@@ -53,35 +82,87 @@ class Py3status:
                     'new': 'icon_unavailable',
                     'msg': 'obsolete parameter use `icon_unavailable`'
                 },
+                {
+                    'param': 'path',
+                    'new': 'paths',
+                    'msg': 'obsolete parameter use `paths`'
+                },
+            ],
+            'rename_placeholder': [
+                {
+                    'placeholder': 'paths',
+                    'new': 'path',
+                    'format_strings': ['format'],
+                },
             ],
         }
 
     def post_config_hook(self):
-        if self.path:
-            self.path = expanduser(self.path)
+        if not self.paths:
+            raise Exception(STRING_NO_PATHS)
+
+        # icon deprecation
+        on = getattr(self, 'icon_available', u'\u25cf')
+        off = getattr(self, 'icon_unavailable', u'\u25a0')
+        new_icon = u'\?color=path [\?if=path {}|{}]'.format(on, off)
+        self.format = self.format.replace('{icon}', new_icon)
+
+        # convert str to list + expand path
+        if not isinstance(self.paths, list):
+            self.paths = [self.paths]
+        self.paths = list(map(expanduser, self.paths))
+
+        self.init = {'format_path': []}
+        if self.py3.format_contains(self.format, 'format_path'):
+            self.init['format_path'] = self.py3.get_placeholders_list(
+                self.format_path
+            )
 
     def file_status(self):
-        if self.path is None:
-            return {
-                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                'full_text': ERR_NO_PATH,
-                'cached_until': self.py3.CACHE_FOREVER,
-            }
+        # init datas
+        paths = sorted([files for path in self.paths for files in glob(path)])
+        count_path = len(paths)
+        format_path = None
 
-        if exists(self.path):
-            icon = self.icon_available
-            color = self.py3.COLOR_GOOD
-        else:
-            icon = self.icon_unavailable
-            color = self.py3.COLOR_BAD
+        # format paths
+        if self.init['format_path']:
+            new_data = []
+            format_path_separator = self.py3.safe_format(
+                self.format_path_separator
+            )
 
-        response = {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
-            'color': color
+            for pathname in paths:
+                path = {}
+                for key in self.init['format_path']:
+                    if key == 'basename':
+                        value = basename(pathname)
+                    elif key == 'pathname':
+                        value = pathname
+                    else:
+                        continue
+                    path[key] = self.py3.safe_format(value)
+                new_data.append(self.py3.safe_format(self.format_path, path))
+
+            format_path = self.py3.composite_join(
+                format_path_separator, new_data
+            )
+
+        if self.thresholds:
+            self.py3.threshold_get_color(count_path, 'path')
+            self.py3.threshold_get_color(count_path, 'paths')
+
+        return {
+            'cached_until':
+            self.py3.time_in(self.cache_timeout),
+            'full_text':
+            self.py3.safe_format(
+                self.format, {
+                    'path': count_path,
+                    'paths': count_path,
+                    'format_path': format_path
+                }
+            )
         }
-
-        return response
 
 
 if __name__ == "__main__":

@@ -70,7 +70,7 @@ class Py3status:
         try:
             self.py3.command_output(self.pgrep_command)
             return True
-        except:
+        except self.py3.CommandError:
             return False
 
     def process_status(self):

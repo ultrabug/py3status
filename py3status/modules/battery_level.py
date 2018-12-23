@@ -10,7 +10,7 @@ Configuration parameters:
         especially useful when using icon fonts (e.g. FontAwesome)
         (default "_▁▂▃▄▅▆▇█")
     cache_timeout: a timeout to refresh the battery state
-        (default 30)
+        (default 60)
     charging_character: a character to represent charging battery
         especially useful when using icon fonts (e.g. FontAwesome)
         (default "⚡")
@@ -36,6 +36,9 @@ Configuration parameters:
     notify_low_level: display notification when battery is running low (when
         the battery level is less than 'threshold_degraded')
         (default False)
+    on_udev_power_supply: dynamic variable to watch for `power_supply` udev subsystem
+        events to trigger specified action.
+        (default "refresh")
     sys_battery_path: set the path to your battery(ies), without including its
         number
         (default "/sys/class/power_supply/")
@@ -103,7 +106,7 @@ class Py3status:
     # available configuration parameters
     battery_id = 0
     blocks = BLOCKS
-    cache_timeout = 30
+    cache_timeout = 60
     charging_character = CHARGING_CHARACTER
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
@@ -113,6 +116,7 @@ class Py3status:
     measurement_mode = MEASUREMENT_MODE
     notification = False
     notify_low_level = False
+    on_udev_power_supply = "refresh"
     sys_battery_path = SYS_BATTERY_PATH
     threshold_bad = 10
     threshold_degraded = 30
@@ -162,10 +166,10 @@ class Py3status:
         self.last_known_status = ''
         # Guess mode if not set
         if self.measurement_mode is None:
-            if self.py3.check_commands(["acpi"]):
-                self.measurement_mode = "acpi"
-            elif os.path.isdir(self.sys_battery_path):
+            if os.path.isdir(self.sys_battery_path):
                 self.measurement_mode = "sys"
+            elif self.py3.check_commands(["acpi"]):
+                self.measurement_mode = "acpi"
 
         self.py3.log("Measurement mode: " + self.measurement_mode)
         if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
@@ -279,7 +283,9 @@ class Py3status:
             r = _parse_battery_info(path)
 
             capacity = r.get("POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL"))
-            present_rate = r.get("POWER_SUPPLY_POWER_NOW", r.get("POWER_SUPPLY_CURRENT_NOW"))
+            present_rate = r.get("POWER_SUPPLY_POWER_NOW",
+                                 r.get("POWER_SUPPLY_CURRENT_NOW",
+                                       r.get("POWER_SUPPLY_VOLTAGE_NOW")))
             remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW"))
 
             battery = {}

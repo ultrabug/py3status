@@ -11,6 +11,7 @@ from math import log10
 from pprint import pformat
 from subprocess import Popen, PIPE, STDOUT
 from time import time
+from uuid import uuid4
 
 from py3status import exceptions
 from py3status.constants import COLOR_NAMES
@@ -18,12 +19,13 @@ from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradiants
+from py3status.version import version
 
 
 PY3_CACHE_FOREVER = -1
-PY3_LOG_ERROR = 'error'
-PY3_LOG_INFO = 'info'
-PY3_LOG_WARNING = 'warning'
+PY3_LOG_ERROR = "error"
+PY3_LOG_INFO = "info"
+PY3_LOG_WARNING = "warning"
 
 # basestring does not exist in python3
 try:
@@ -38,7 +40,7 @@ class ModuleErrorException(Exception):
     """
 
     def __init__(self, msg, timeout):
-        self.msg = msg
+        self.msg = msg if msg else "unknown error"
         self.timeout = timeout
 
 
@@ -52,12 +54,13 @@ class NoneColor:
     Py3 provides a helper function is_color() that will treat a NoneColor as
     False, whereas a simple if would show True
     """
+
     # this attribute is used to identify that this is a none color
     none_setting = True
 
     def __repr__(self):
         # this is for output via module_test
-        return 'None'
+        return "None"
 
 
 class Py3:
@@ -77,7 +80,7 @@ class Py3:
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
     """
-    Special constant that when returned for ``cache_until`` will cause the
+    Special constant that when returned for ``cached_until`` will cause the
     module to not update unless externally triggered.
     """
 
@@ -105,6 +108,9 @@ class Py3:
     def __init__(self, module=None):
         self._audio = None
         self._config_setting = {}
+        self._english_env = dict(os.environ)
+        self._english_env["LC_ALL"] = "C"
+        self._english_env["LANGUAGE"] = "C"
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._is_python_2 = sys.version_info < (3, 0)
@@ -112,9 +118,10 @@ class Py3:
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
+        self._uid = uuid4()
 
         if module:
-            self._i3s_config = module._py3_wrapper.config['py3_config']['general']
+            self._i3s_config = module._py3_wrapper.config["py3_config"]["general"]
             self._module_full_name = module.module_full_name
             self._output_modules = module._py3_wrapper.output_modules
             self._py3status_module = module.module_class
@@ -131,8 +138,8 @@ class Py3:
         but also any constant COLOR_XXX we find this color in the config
         if it exists
         """
-        if not name.startswith('COLOR_'):
-            raise AttributeError('Attribute `%s` not in Py3' % name)
+        if not name.startswith("COLOR_"):
+            raise AttributeError("Attribute `%s` not in Py3" % name)
         return self._get_config_setting(name.lower())
 
     def _get_config_setting(self, name, default=None):
@@ -145,14 +152,14 @@ class Py3:
             # colors are special we want to make sure that we treat a color
             # that was explicitly set to None as a True value.  Ones that are
             # not set should be treated as None
-            if name.startswith('color_'):
-                if hasattr(param, 'none_setting'):
+            if name.startswith("color_"):
+                if hasattr(param, "none_setting"):
                     # see if named color and use if it is
                     param = COLOR_NAMES.get(name[6:].lower())
                 elif param is None:
                     param = self._none_color
             # if a non-color parameter and was not set then set to default
-            elif hasattr(param, 'none_setting'):
+            elif hasattr(param, "none_setting"):
                 param = default
             self._config_setting[name] = param
         return self._config_setting[name]
@@ -161,33 +168,46 @@ class Py3:
         if not color:
             return
         # fix any hex colors so they are #RRGGBB
-        if color.startswith('#'):
+        if color.startswith("#"):
             color = color.upper()
             if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2] +
-                         color[2] + color[3] + color[3])
+                color = (
+                    "#"
+                    + color[1]
+                    + color[1]
+                    + color[2]
+                    + color[2]
+                    + color[3]
+                    + color[3]
+                )
             return color
 
-        name = 'color_%s' % color
+        name = "color_%s" % color
         return self._get_config_setting(name)
 
     def _thresholds_init(self):
         """
         Initiate and check any thresholds set
         """
-        thresholds = getattr(self._py3status_module, 'thresholds', [])
+        thresholds = getattr(self._py3status_module, "thresholds", [])
         self._thresholds = {}
         if isinstance(thresholds, list):
-            thresholds.sort()
-            self._thresholds[None] = [(x[0], self._get_color(x[1]))
-                                      for x in thresholds]
+            try:
+                thresholds.sort()
+            except TypeError:
+                pass
+            self._thresholds[None] = [(x[0], self._get_color(x[1])) for x in thresholds]
             return
         elif isinstance(thresholds, dict):
             for key, value in thresholds.items():
                 if isinstance(value, list):
-                    value.sort()
-                    self._thresholds[key] = [(x[0], self._get_color(x[1]))
-                                             for x in value]
+                    try:
+                        value.sort()
+                    except TypeError:
+                        pass
+                    self._thresholds[key] = [
+                        (x[0], self._get_color(x[1])) for x in value
+                    ]
 
     def _get_module_info(self, module_name):
         """
@@ -241,7 +261,7 @@ class Py3:
         """
         raise ModuleErrorException(msg, timeout)
 
-    def flatten_dict(self, d, delimiter='-', intermediates=False, parent_key=None):
+    def flatten_dict(self, d, delimiter="-", intermediates=False, parent_key=None):
         """
         Flatten a dictionary.
 
@@ -297,18 +317,20 @@ class Py3:
             d = dict(enumerate(d))
         for k, v in d.items():
             if parent_key:
-                k = u'{}{}{}'.format(parent_key, delimiter, k)
+                k = u"{}{}{}".format(parent_key, delimiter, k)
             if intermediates:
                 items.append((k, v))
             if isinstance(v, list):
                 v = dict(enumerate(v))
             if isinstance(v, collections.Mapping):
-                items.extend(self.flatten_dict(v, delimiter, intermediates, str(k)).items())
+                items.extend(
+                    self.flatten_dict(v, delimiter, intermediates, str(k)).items()
+                )
             else:
                 items.append((str(k), v))
         return dict(items)
 
-    def format_units(self, value, unit='B', optimal=5, auto=True, si=False):
+    def format_units(self, value, unit="B", optimal=5, auto=True, si=False):
         """
         Takes a value and formats it for user output, we can choose the unit to
         use eg B, MiB, kbits/second.  This is mainly for use with bytes/bits it
@@ -334,7 +356,7 @@ class Py3:
         the output may be more than this number of characters.
         """
 
-        UNITS = 'KMGTPEZY'
+        UNITS = "KMGTPEZY"
         DECIMAL_SIZE = 1000
         BINARY_SIZE = 1024
         CUTOFF = 1000
@@ -346,7 +368,7 @@ class Py3:
             if unit[0].upper() in UNITS:
                 index = UNITS.index(unit[0].upper()) + 1
                 post = unit[1:]
-                si = len(unit) > 1 and unit[1] != 'i'
+                si = len(unit) > 1 and unit[1] != "i"
                 if si:
                     post = post[1:]
                 auto = False
@@ -370,10 +392,10 @@ class Py3:
                     value /= size
                 if si:
                     # si kilo is lowercase
-                    if prefix == 'K':
-                        prefix = 'k'
+                    if prefix == "K":
+                        prefix = "k"
                 else:
-                    post = 'i' + post
+                    post = "i" + post
 
                 unit_out = prefix + post
                 can_round = True
@@ -408,7 +430,7 @@ class Py3:
         has a value set in which case the color should count as False.  This
         function is a helper for this second case.
         """
-        return not (color is None or hasattr(color, 'none_setting'))
+        return not (color is None or hasattr(color, "none_setting"))
 
     def i3s_config(self):
         """
@@ -419,14 +441,14 @@ class Py3:
     def is_python_2(self):
         """
         True if the version of python being used is 2.x
-        Can be helpful for fixing python 2 compatability issues
+        Can be helpful for fixing python 2 compatibility issues
         """
         return self._is_python_2
 
     def is_my_event(self, event):
         """
-        Checks if an event triggered belongs to the module recieving it.  This
-        is mainly for containers who will also recieve events from any children
+        Checks if an event triggered belongs to the module receiving it.  This
+        is mainly for containers who will also receive events from any children
         they have.
 
         Returns True if the event name and instance match that of the module
@@ -434,8 +456,8 @@ class Py3:
         """
 
         return (
-            event.get('name') == self._module.module_name and
-            event.get('instance') == self._module.module_inst
+            event.get("name") == self._module.module_name
+            and event.get("instance") == self._module.module_inst
         )
 
     def log(self, message, level=LOG_INFO):
@@ -444,20 +466,21 @@ class Py3:
         The level must be one of LOG_ERROR, LOG_INFO or LOG_WARNING
         """
         assert level in [
-            self.LOG_ERROR, self.LOG_INFO, self.LOG_WARNING
-        ], 'level must be LOG_ERROR, LOG_INFO or LOG_WARNING'
+            self.LOG_ERROR,
+            self.LOG_INFO,
+            self.LOG_WARNING,
+        ], "level must be LOG_ERROR, LOG_INFO or LOG_WARNING"
 
         # nicely format logs if we can using pretty print
         if isinstance(message, (dict, list, set, tuple)):
             message = pformat(message)
         # start on new line if multi-line output
         try:
-            if '\n' in message:
-                message = '\n' + message
-        except:
+            if "\n" in message:
+                message = "\n" + message
+        except:  # noqa e722
             pass
-        message = 'Module `{}`: {}'.format(
-            self._module.module_full_name, message)
+        message = "Module `{}`: {}".format(self._module.module_full_name, message)
         self._py3_wrapper.log(message, level)
 
     def update(self, module_name=None):
@@ -470,7 +493,7 @@ class Py3:
         else:
             module_info = self._get_module_info(module_name)
             if module_info:
-                module_info['module'].force_update()
+                module_info["module"].force_update()
 
     def get_output(self, module_name):
         """
@@ -479,7 +502,7 @@ class Py3:
         output = []
         module_info = self._get_module_info(module_name)
         if module_info:
-            output = module_info['module'].get_latest()
+            output = module_info["module"].get_latest()
         # we do a deep copy so that any user does not change the actual output
         # of the module.
         return deepcopy(output)
@@ -489,8 +512,7 @@ class Py3:
         Trigger an event on a named module.
         """
         if module_name:
-            self._py3_wrapper.events_thread.process_event(
-                module_name, event)
+            self._py3_wrapper.events_thread.process_event(module_name, event)
 
     def prevent_refresh(self):
         """
@@ -500,21 +522,36 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(self, msg, level='info', rate_limit=5):
+    def notify_user(self, msg, level="info", rate_limit=5, title=None, icon=None):
         """
         Send a notification to the user.
         level must be 'info', 'error' or 'warning'.
         rate_limit is the time period in seconds during which this message
         should not be repeated.
+        icon must be an icon path or icon name.
         """
+        module_name = self._module.module_full_name
         if isinstance(msg, Composite):
             msg = msg.text()
+        if title is None:
+            title = "py3status: {}".format(module_name)
+        elif isinstance(title, Composite):
+            title = title.text()
         # force unicode for python2 str
-        if self._is_python_2 and isinstance(msg, str):
-            msg = msg.decode('utf-8')
-        module_name = self._module.module_full_name
-        self._py3_wrapper.notify_user(
-            msg, level=level, rate_limit=rate_limit, module_name=module_name)
+        if self._is_python_2:
+            if isinstance(msg, str):
+                msg = msg.decode("utf-8")
+            if isinstance(title, str):
+                title = title.decode("utf-8")
+        if msg:
+            self._py3_wrapper.notify_user(
+                msg=msg,
+                level=level,
+                rate_limit=rate_limit,
+                module_name=module_name,
+                title=title,
+                icon=icon,
+            )
 
     def register_function(self, function_name, function):
         """
@@ -562,17 +599,22 @@ class Py3:
             ``cached_until`` in their response unless they wish to directly control
             it.
 
-        seconds specifies the number of seconds that should occure before the
-        update is required.
+        :param seconds: specifies the number of seconds that should occur before the
+            update is required.  Passing a value of ``CACHE_FOREVER`` returns
+            ``CACHE_FOREVER`` which can be useful for some modules.
 
-        sync_to causes the update to be syncronised to a time period.  1 would
-        cause the update on the second, 60 to the nearest minute. By defalt we
-        syncronise to the nearest second. 0 will disable this feature.
+        :param sync_to: causes the update to be synchronized to a time period.  1 would
+            cause the update on the second, 60 to the nearest minute. By default we
+            synchronize to the nearest second. 0 will disable this feature.
 
-        offset is used to alter the base time used. A timer that started at a
-        certain time could set that as the offset and any syncronisation would
-        then be relative to that time.
+        :param offset: is used to alter the base time used. A timer that started at a
+            certain time could set that as the offset and any synchronization would
+            then be relative to that time.
         """
+
+        # if called with CACHE_FOREVER we just return this
+        if seconds is self.CACHE_FOREVER:
+            return self.CACHE_FOREVER
 
         if seconds is None:
             # If we have a sync_to then seconds can be 0
@@ -584,7 +626,7 @@ class Py3:
                     seconds = self._py3status_module.cache_timeout
                 except AttributeError:
                     # use default cache_timeout
-                    seconds = self._module.config['cache_timeout']
+                    seconds = self._module.config["cache_timeout"]
 
         # Unless explicitly set we sync to the nearest second
         # Unless the requested update is in less than a second
@@ -650,6 +692,29 @@ class Py3:
         self._format_placeholders_cache[format_string][key] = False
         return False
 
+    def get_color_names_list(self, format_strings):
+        """
+        Returns a list of color names in ``format_string``.
+
+        :param format_strings: Accepts a format string or a list of format strings.
+        """
+        if not getattr(self._py3status_module, "thresholds", None):
+            return []
+        if isinstance(format_strings, basestring):
+            format_strings = [format_strings]
+        names = set()
+        for string in format_strings:
+            for color in string.replace("&", " ").split("color=")[1::1]:
+                color = color.split()[0]
+                if "#" in color:
+                    continue
+                if color in ["good", "bad", "degraded", "None", "threshold"]:
+                    continue
+                if color in COLOR_NAMES:
+                    continue
+                names.add(color)
+        return list(names)
+
     def get_placeholders_list(self, format_string, match=None):
         """
         Returns a list of placeholders in ``format_string``.
@@ -699,13 +764,12 @@ class Py3:
         value but by default we only want to show it to a certain precision.
         """
 
-        return self._formatter.update_placeholder_formats(
-            format_string, formats
-        )
+        return self._formatter.update_placeholder_formats(format_string, formats)
 
-    def safe_format(self, format_string, param_dict=None,
-                    force_composite=False, attr_getter=None):
-        """
+    def safe_format(
+        self, format_string, param_dict=None, force_composite=False, attr_getter=None
+    ):
+        r"""
         Parser for advanced formatting.
 
         Unknown placeholders will be shown in the output eg ``{foo}``.
@@ -724,8 +788,15 @@ class Py3:
         string,  example ``\?color=#FF00FF``. Multiple commands can be given
         using an ampersand ``&`` as a separator, example ``\?color=#FF00FF&show``.
 
+        ``\?if=<placeholder>`` can be used to check if a placeholder exists. An
+        exclamation mark ``!`` after the equals sign ``=`` can be used to negate
+        the condition.
+
+        ``\?if=<placeholder>=<value>`` can be used to determine if {<placeholder>}
+        would be replaced with <value>. ``[]`` in <value> don't need to be escaped.
+
         ``{<placeholder>}`` will be converted, or removed if it is None or empty.
-        Formating can also be applied to the placeholder eg
+        Formatting can also be applied to the placeholder Eg
         ``{number:03.2f}``.
 
         example format_string:
@@ -735,7 +806,7 @@ class Py3:
         ``title`` if title but no artist,
         and ``file`` if file is present but not artist or title.
 
-        param_dict is a dictionary of palceholders that will be substituted.
+        param_dict is a dictionary of placeholders that will be substituted.
         If a placeholder is not in the dictionary then if the py3status module
         has an attribute with the same name then it will be used.
 
@@ -763,13 +834,12 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
-            self._report_exception(
-                u'Invalid format `{}`'.format(format_string)
-            )
-            return 'invalid format'
+            self._report_exception(u"Invalid format `{}`".format(format_string))
+            return "invalid format"
 
-    def build_composite(self, format_string, param_dict=None, composites=None,
-                        attr_getter=None):
+    def build_composite(
+        self, format_string, param_dict=None, composites=None, attr_getter=None
+    ):
         """
         .. note::
             deprecated in 3.3 use safe_format().
@@ -800,10 +870,8 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
-            self._report_exception(
-                u'Invalid format `{}`'.format(format_string)
-            )
-            return [{'full_text': 'invalid format'}]
+            self._report_exception(u"Invalid format `{}`".format(format_string))
+            return [{"full_text": "invalid format"}]
 
     def composite_update(self, item, update_dict, soft=False):
         """
@@ -814,7 +882,7 @@ class Py3:
 
         A Composite object will be returned.
         """
-        return Composite.composite_update(item, update_dict, soft=False)
+        return Composite.composite_update(item, update_dict, soft)
 
     def composite_join(self, separator, items):
         """
@@ -839,6 +907,14 @@ class Py3:
         """
         return isinstance(item, Composite)
 
+    def get_composite_string(self, format_string):
+        """
+        Return a string from a Composite.
+        """
+        if not isinstance(format_string, Composite):
+            return ""
+        return format_string.text()
+
     def check_commands(self, cmd_list):
         """
         Checks to see if commands in list are available using ``which``.
@@ -853,7 +929,7 @@ class Py3:
             cmd_list = [cmd_list]
 
         for cmd in cmd_list:
-            if self.command_run('which {}'.format(cmd)) == 0:
+            if self.command_run("which {}".format(cmd)) == 0:
                 return cmd
 
     def command_run(self, command):
@@ -867,19 +943,19 @@ class Py3:
         if isinstance(command, basestring):
             command = shlex.split(command)
         try:
-            return Popen(
-                command, stdout=PIPE, stderr=PIPE, close_fds=True
-            ).wait()
+            return Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True).wait()
         except Exception as e:
             # make a pretty command for error loggings and...
             if isinstance(command, basestring):
                 pretty_cmd = command
             else:
-                pretty_cmd = ' '.join(command)
-            msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e.errno)
+                pretty_cmd = " ".join(command)
+            msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e.errno)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(self, command, shell=False, capture_stderr=False):
+    def command_output(
+        self, command, shell=False, capture_stderr=False, localized=False
+    ):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -887,6 +963,7 @@ class Py3:
         :param command: command to run can be a str or list
         :param shell: if `True` then command is run through the shell
         :param capture_stderr: if `True` then STDERR is piped to STDOUT
+        :param localized: if `False` then command is forced to use its default (English) locale
 
         A CommandError is raised if an error occurs
         """
@@ -894,24 +971,32 @@ class Py3:
         if isinstance(command, basestring):
             pretty_cmd = command
         else:
-            pretty_cmd = ' '.join(command)
+            pretty_cmd = " ".join(command)
         # convert the non-shell command to sequence if it is a string
         if not shell and isinstance(command, basestring):
             command = shlex.split(command)
 
         stderr = STDOUT if capture_stderr else PIPE
+        env = self._english_env if not localized else None
 
         try:
-            process = Popen(command, stdout=PIPE, stderr=stderr, close_fds=True,
-                            universal_newlines=True, shell=shell)
+            process = Popen(
+                command,
+                stdout=PIPE,
+                stderr=stderr,
+                close_fds=True,
+                universal_newlines=True,
+                shell=shell,
+                env=env,
+            )
         except Exception as e:
-            msg = 'Command `{cmd}` {error}'.format(cmd=pretty_cmd, error=e)
+            msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
         if self._is_python_2 and isinstance(output, str):
-            output = output.decode('utf-8')
-            error = error.decode('utf-8')
+            output = output.decode("utf-8")
+            error = error.decode("utf-8")
         retcode = process.poll()
         if retcode:
             # under certain conditions a successfully run command may get a
@@ -919,24 +1004,17 @@ class Py3:
             # #664.  This issue seems to be related to arch linux but the
             # reason is not entirely clear.
             if retcode == -15:
-                msg = 'Command `{cmd}` returned SIGTERM (ignoring)'
+                msg = "Command `{cmd}` returned SIGTERM (ignoring)"
                 self.log(msg.format(cmd=pretty_cmd))
             else:
-                msg = 'Command `{cmd}` returned non-zero exit status {error}'
-                output_oneline = output.replace('\n', ' ')
+                msg = "Command `{cmd}` returned non-zero exit status {error}"
+                output_oneline = output.replace("\n", " ")
                 if output_oneline:
-                    msg += ' ({output})'
+                    msg += " ({output})"
                 msg = msg.format(cmd=pretty_cmd, error=retcode, output=output_oneline)
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
-        if error:
-            msg = "Command '{cmd}' had error {error}".format(
-                cmd=pretty_cmd, error=error
-            )
-            raise exceptions.CommandError(
-                msg, error_code=retcode, error=error, output=output
-            )
         return output
 
     def _storage_init(self):
@@ -1014,10 +1092,12 @@ class Py3:
         Plays sound_file if possible.
         """
         self.stop_sound()
-        cmd = self.check_commands(['paplay', 'play'])
+        cmd = self.check_commands(["ffplay", "paplay", "play"])
         if cmd:
+            if cmd == "ffplay":
+                cmd = "ffplay -autoexit -nodisp -loglevel 0"
             sound_file = os.path.expanduser(sound_file)
-            c = shlex.split('{} {}'.format(cmd, sound_file))
+            c = shlex.split("{} {}".format(cmd, sound_file))
             self._audio = Popen(c)
 
     def stop_sound(self):
@@ -1040,62 +1120,111 @@ class Py3:
 
         If the gradients config parameter is True then rather than sharp
         thresholds we will use a gradient between the color values.
+
+        :param value: numerical value to be graded
+        :param name: accepts a string, otherwise 'threshold'
+            accepts 3-tuples to allow name with different
+            values eg ('name', 'key', 'thresholds')
         """
         # If first run then process the threshold data.
         if self._thresholds is None:
             self._thresholds_init()
 
+        # allow name with different values
+        if isinstance(name, tuple):
+            name_used = "{}/{}".format(name[0], name[1])
+            if name[2]:
+                self._thresholds[name_used] = [
+                    (x[0], self._get_color(x[1])) for x in name[2]
+                ]
+            name = name[0]
+        else:
+            # if name not in thresholds info then use defaults
+            name_used = name
+            if name_used not in self._thresholds:
+                name_used = None
+
+        # convert value to int/float
+        thresholds = self._thresholds.get(name_used)
         color = None
         try:
             value = float(value)
-        except ValueError:
-            color = self._get_color('error') or self._get_color('bad')
+        except (TypeError, ValueError):
+            pass
 
-        # if name not in thresholds info then use defaults
-        name_used = name
-        if name_used not in self._thresholds:
-            name_used = None
-        thresholds = self._thresholds.get(name_used)
-        if color is None and thresholds:
-            # if gradients are enabled then we use them
-            if self._get_config_setting('gradients'):
-                try:
-                    colors, minimum, maximum = self._threshold_gradients[name_used]
-                except KeyError:
-                    colors = self._gradients.make_threshold_gradient(self, thresholds)
-                    minimum = min(thresholds)[0]
-                    maximum = max(thresholds)[0]
-                    self._threshold_gradients[name_used] = (colors, minimum, maximum)
+        # skip on empty thresholds/values
+        if not thresholds or value in [None, ""]:
+            pass
+        elif isinstance(value, basestring):
+            # string
+            for threshold in thresholds:
+                if value == threshold[0]:
+                    color = threshold[1]
+                    break
+        else:
+            # int/float
+            try:
+                if self._get_config_setting("gradients"):
+                    try:
+                        colors, minimum, maximum = self._threshold_gradients[name_used]
+                    except KeyError:
+                        colors = self._gradients.make_threshold_gradient(
+                            self, thresholds
+                        )
+                        minimum = min(thresholds)[0]
+                        maximum = max(thresholds)[0]
+                        self._threshold_gradients[name_used] = (
+                            colors,
+                            minimum,
+                            maximum,
+                        )
 
-                if value < minimum:
-                    return colors[0]
-                if value > maximum:
-                    return colors[-1]
-                value -= minimum
-                col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
-                color = colors[col_index]
-
-            elif color is None:
-                color = thresholds[0][1]
-                for threshold in thresholds:
-                    if value >= threshold[0]:
-                        color = threshold[1]
+                    if value < minimum:
+                        color = colors[0]
+                    elif value > maximum:
+                        color = colors[-1]
                     else:
-                        break
+                        value -= minimum
+                        col_index = int(
+                            ((len(colors) - 1) / (maximum - minimum)) * value
+                        )
+                        color = colors[col_index]
+                else:
+                    color = thresholds[0][1]
+                    for threshold in thresholds:
+                        if value >= threshold[0]:
+                            color = threshold[1]
+                        else:
+                            break
+            except TypeError:
+                pass
 
         # save color so it can be accessed via safe_format()
         if name:
-            color_name = 'color_threshold_%s' % name
+            color_name = "color_threshold_%s" % name
         else:
-            color_name = 'color_threshold'
+            color_name = "color_threshold"
         setattr(self._py3status_module, color_name, color)
 
         return color
 
-    def request(self, url, params=None, data=None, headers=None,
-                timeout=None, auth=None, cookiejar=None):
+    def request(
+        self,
+        url,
+        params=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        auth=None,
+        cookiejar=None,
+    ):
         """
         Make a request to a url and retrieve the results.
+
+        If the headers parameter does not provide an 'User-Agent' key, one will
+        be added automatically following the convention:
+
+            py3status/<version> <per session random uuid>
 
         :param url: url to request eg `http://example.com`
         :param params: extra query string parameters as a dict
@@ -1120,10 +1249,15 @@ class Py3:
         if headers is None:
             headers = {}
 
-        return HttpResponse(url,
-                            params=params,
-                            data=data,
-                            headers=headers,
-                            timeout=timeout,
-                            auth=auth,
-                            cookiejar=cookiejar)
+        if "User-Agent" not in headers:
+            headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
+
+        return HttpResponse(
+            url,
+            params=params,
+            data=data,
+            headers=headers,
+            timeout=timeout,
+            auth=auth,
+            cookiejar=cookiejar,
+        )

@@ -99,14 +99,10 @@ Using emerge:
 
 Arch Linux
 ----------
-Thanks to @Horgix, py3status is present in the Arch User Repository:
+Using pacman:
+::
 
-- `py3status <https://aur.archlinux.org/packages/py3status>`_, which is a
-  stable version updated at each release
-- `py3status-git <https://aur.archlinux.org/packages/py3status-git/>`_, which
-  builds directly against the upstream master branch
-
-Thanks to @waaaaargh and @carstene1ns for initially creating the packages.
+   $ pacman -S py3status
 
 Fedora
 ------
@@ -114,6 +110,31 @@ Using dnf:
 ::
 
     $ dnf install py3status
+
+NixOS
+----------
+Installing in local environment using nix-env:
+::
+    $ nix-env -i python3.6-py3status-3.7
+
+To have it globally persistent add to your NixOS configuration file py3status as a Python 3.6 package with
+::
+    (python36.withPackages(ps: with ps; [ py3status ]))
+
+If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
+::
+    services.xserver.windowManager.i3 = {
+      enable = true;
+      extraPackages = with pkgs; [
+        dmenu
+        i3status
+        i3lock
+        (python36.withPackages(ps: with ps; [ py3status pytz tzlocal ]))
+      ];
+    };
+
+In this example I included the python packages **pytz** and **tzlocal** which are necessary for the py3status module **clock**.
+The default packages that come with i3 (dmenu, i3status, i3lock) have to be mentioned if they should still be there.
 
 Debian/Ubuntu
 -------------
@@ -160,3 +181,8 @@ Note that this will also send a SIGUSR1 signal to i3status.
 ::
 
     killall -USR1 py3status
+
+To refresh individual modules, the `py3-cmd <http://py3status.readthedocs.io/en/latest/py3-cmd.html>`_ utility can be used, e.g.:
+::
+
+   py3-cmd refresh wifi

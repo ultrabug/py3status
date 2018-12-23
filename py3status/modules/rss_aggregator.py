@@ -118,7 +118,7 @@ class Py3status:
 
             return rss_count
 
-        except:
+        except:  # noqa e722
             return None
 
     def _get_count_ttrss(self):
@@ -163,7 +163,7 @@ class Py3status:
 
             return rss_count
 
-        except:
+        except:  # noqa e722
             return None
 
 

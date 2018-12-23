@@ -113,7 +113,7 @@ class Py3status:
                 n = ser.inWaiting()
                 modem_response = ser.read(n)
                 ser.close()
-            except:
+            except:  # noqa e722
                 # This will happen...
                 # 1) in the short timespan between the creation of the device
                 # node and udev changing the permissions. If this message

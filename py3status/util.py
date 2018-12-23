@@ -11,7 +11,7 @@ class Gradiants:
     Create color gradients
     """
 
-    RE_HEX = re.compile('#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})')
+    RE_HEX = re.compile("#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})")
 
     _gradients_cache = {}
 
@@ -20,18 +20,16 @@ class Gradiants:
         convert a hex color to rgb
         """
         if not self.RE_HEX.match(color):
-            color = '#FFF'
+            color = "#FFF"
         if len(color) == 7:
-            return (int(color[i:i + 2], 16) / 255 for i in [1, 3, 5])
+            return (int(color[i : i + 2], 16) / 255 for i in [1, 3, 5])
         return (int(c, 16) / 15 for c in color)
 
     def rgb_2_hex(self, r, g, b):
         """
         convert a rgb color to hex
         """
-        return '#{:02X}{:02X}{:02X}'.format(
-            int(r * 255), int(g * 255), int(b * 255)
-        )
+        return "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
 
     def hex_2_hsv(self, color):
         """
@@ -58,9 +56,10 @@ class Gradiants:
         the color wheel if True we go the long way, through as many colors as
         we can, if False we go through the minimum number
         """
+
         def fade(a, b):
-            x = (b * distance)
-            x += (a * (1 - distance))
+            x = b * distance
+            x += a * (1 - distance)
             return x
 
         h1, s1, v1 = color1
@@ -101,9 +100,9 @@ class Gradiants:
 
             steps = end - start
             for j in range(steps):
-                data.append(self.hsv_2_hex(*self.make_mid_color(color1,
-                                                                color2,
-                                                                j / (steps))))
+                data.append(
+                    self.hsv_2_hex(*self.make_mid_color(color1, color2, j / (steps)))
+                )
         data.append(self.hsv_2_hex(*color2))
         return data
 
@@ -117,7 +116,7 @@ class Gradiants:
         gradient cannot be guaranteed.
         """
         thresholds = sorted(thresholds)
-        key = '{}|{}'.format(thresholds, size)
+        key = "{}|{}".format(thresholds, size)
         try:
             return self._gradients_cache[key]
         except KeyError:

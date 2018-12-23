@@ -20,13 +20,13 @@ class Composite:
         elif isinstance(content, dict):
             content = [content]
         elif isinstance(content, basestring):
-            content = [{'full_text': content}]
+            content = [{"full_text": content}]
 
-        assert(isinstance(content, list))
+        assert isinstance(content, list)
         self._content = content
 
     def __repr__(self):
-        return u'<Composite {}>'.format(self._content)
+        return u"<Composite {}>".format(self._content)
 
     def __len__(self):
         return len(self._content)
@@ -66,9 +66,9 @@ class Composite:
         elif isinstance(item, dict):
             self._content.append(item)
         elif isinstance(item, basestring):
-            self._content.append({'full_text': item})
+            self._content.append({"full_text": item})
         else:
-            msg = '{!r} not suitable to append to Composite'
+            msg = "{!r} not suitable to append to Composite"
             raise Exception(msg.format(item))
 
     def get_content(self):
@@ -81,7 +81,7 @@ class Composite:
         """
         Return the text only component of the composite.
         """
-        return ''.join([x.get('full_text', '') for x in self._content])
+        return "".join([x.get("full_text", "") for x in self._content])
 
     def simplify(self):
         """
@@ -93,17 +93,17 @@ class Composite:
         item_last = None
         for item in self._content:
             # remove any undefined colors
-            if hasattr(item.get('color'), 'none_setting'):
-                del item['color']
+            if hasattr(item.get("color"), "none_setting"):
+                del item["color"]
             # ignore empty items
-            if not item.get('full_text') and not item.get('separator'):
+            if not item.get("full_text") and not item.get("separator"):
                 continue
             # merge items if we can
             diff = item.copy()
-            del diff['full_text']
+            del diff["full_text"]
 
-            if diff == diff_last or (item['full_text'].strip() == '' and item_last):
-                item_last['full_text'] += item['full_text']
+            if diff == diff_last or (item["full_text"].strip() == "" and item_last):
+                item_last["full_text"] += item["full_text"]
             else:
                 diff_last = diff
                 item_last = item.copy()  # copy item as we may change it

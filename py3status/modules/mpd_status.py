@@ -6,6 +6,7 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
         (default '{state} [[[{artist}] - {title}]|[{file}]]')
+    hide_on_error: hide the status if an error has occurred (default False)
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
     host: mpd host (default 'localhost')
@@ -100,6 +101,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = '{state} [[[{artist}] - {title}]|[{file}]]'
+    hide_on_error = False
     hide_when_paused = False
     hide_when_stopped = True
     host = 'localhost'
@@ -180,6 +182,10 @@ class Py3status:
 
                 text = self.py3.safe_format(self.format, attr_getter=attr_getter)
 
+        except ValueError:
+            # when status.get(...) returns None; e.g. during reversal of playlist
+            text = "No song information!"
+            state = None
         except socket.error:
             text = "Failed to connect to mpd!"
             state = None
@@ -197,7 +203,7 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': text,
+            'full_text': text if state or not self.hide_on_error else "",
         }
 
         if state:

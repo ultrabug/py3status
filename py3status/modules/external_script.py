@@ -10,15 +10,20 @@ code such as #FF0000 for red).
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
+    button_show_notification: button to show notification with full output
+        (default None)
     cache_timeout: how often we refresh this module in seconds
         (default 15)
     format: see placeholders below (default '{output}')
+    localize: should script output be localized (if available)
+        (default True)
     script_path: script you want to show output of (compulsory)
         (default None)
     strip_output: shall we strip leading and trailing spaces from output
         (default False)
 
 Format placeholders:
+    {lines} number of lines in the output
     {output} output of script given by "script_path"
 
 i3status.conf example:
@@ -47,8 +52,10 @@ class Py3status:
     """
     """
     # available configuration parameters
+    button_show_notification = None
     cache_timeout = 15
     format = '{output}'
+    localize = True
     script_path = None
     strip_output = False
 
@@ -61,8 +68,8 @@ class Py3status:
         response = {}
         response['cached_until'] = self.py3.time_in(self.cache_timeout)
         try:
-            output = self.py3.command_output(self.script_path, shell=True)
-            output_lines = output.splitlines()
+            self.output = self.py3.command_output(self.script_path, shell=True, localized=self.localize)
+            output_lines = self.output.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]
                 if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
@@ -73,15 +80,35 @@ class Py3status:
             self.py3.error(output)
 
         if output_lines:
-            output_text = output_lines[0]
+            output = output_lines[0]
             if self.strip_output:
-                output_text = output_text.strip()
+                output = output.strip()
+            # If we get something that looks numeric then we convert it
+            # to a numeric type because this can be helpful. for example:
+            #
+            # external_script {
+            #     format = "file is [\?if=output>10 big|small]"
+            #     script_path = "cat /tmp/my_file | wc -l"
+            # }
+            try:
+                output = int(output)
+            except ValueError:
+                try:
+                    output = float(output)
+                except ValueError:
+                    pass
         else:
-            output_text = ''
+            output = ''
 
         response['full_text'] = self.py3.safe_format(
-            self.format, {'output': output_text})
+            self.format, {'output': output, 'lines': len(output_lines)})
         return response
+
+    def on_click(self, event):
+        button = event["button"]
+        if button == self.button_show_notification:
+            self.py3.notify_user(self.output)
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":

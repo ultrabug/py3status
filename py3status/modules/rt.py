@@ -21,9 +21,9 @@ Color options:
     color_degraded: Exceeded threshold_warning
 
 Requires:
-    PyMySQL: https://pypi.python.org/pypi/PyMySQL
+    PyMySQL: https://pypi.org/project/PyMySQL/
         or
-    MySQL-python: http://pypi.python.org/pypi/MySQL-python
+    MySQL-python: https://pypi.org/project/MySQL-python/
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
@@ -36,7 +36,7 @@ SAMPLE OUTPUT
 
 try:
     import pymysql as mysql
-except:
+except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # py2/py3
     import MySQLdb as mysql
 
 

@@ -2,6 +2,7 @@
 import re
 import sys
 
+from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
@@ -21,14 +22,14 @@ class Formatter:
     """
 
     TOKENS = [
-        r'(?P<block_start>\[)'
-        r'|(?P<block_end>\])'
-        r'|(?P<switch>\|)'
-        r'|(\\\?(?P<command>\S*)\s)'
-        r'|(?P<escaped>(\\.|\{\{|\}\}))'
-        r'|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(?P<format>([^}\\]|\\.)*)?\}))'
-        r'|(?P<literal>([^\[\]\\\{\}\|])+)'
-        r'|(?P<lost_brace>(\}))'
+        r"(?P<block_start>\[)"
+        r"|(?P<block_end>\])"
+        r"|(?P<switch>\|)"
+        r"|(\\\?(?P<command>\S*)\s)"
+        r"|(?P<escaped>(\\.|\{\{|\}\}))"
+        r"|(?P<placeholder>(\{(?P<key>([^}\\\:\!]|\\.)*)(?P<format>([^}\\]|\\.)*)?\}))"
+        r"|(?P<literal>([^\[\]\\\{\}\|])+)"
+        r"|(?P<lost_brace>([{}]))"
     ]
 
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
@@ -46,7 +47,7 @@ class Formatter:
         """
         if format_string not in self.format_string_cache:
             if python2 and isinstance(format_string, str):
-                format_string = format_string.decode('utf-8')
+                format_string = format_string.decode("utf-8")
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]
@@ -58,8 +59,15 @@ class Formatter:
         placeholders = set()
         # Tokenize the format string and process them
         for token in self.tokens(format_string):
-            if token.group('placeholder'):
-                placeholders.add(token.group('key'))
+            if token.group("placeholder"):
+                placeholders.add(token.group("key"))
+            elif token.group("command"):
+                # get any placeholders used in commands
+                commands = dict(parse_qsl(token.group("command")))
+                # placeholders only used in `if`
+                if_ = commands.get("if")
+                if if_:
+                    placeholders.add(Condition(if_).variable)
         return placeholders
 
     def get_placeholder_formats_list(self, format_string):
@@ -70,10 +78,8 @@ class Formatter:
         placeholders = []
         # Tokenize the format string and process them
         for token in self.tokens(format_string):
-            if token.group('placeholder'):
-                placeholders.append(
-                    (token.group('key'), token.group('format'))
-                )
+            if token.group("placeholder"):
+                placeholders.append((token.group("key"), token.group("format")))
         return placeholders
 
     def update_placeholders(self, format_string, placeholders):
@@ -83,15 +89,48 @@ class Formatter:
         # Tokenize the format string and process them
         output = []
         for token in self.tokens(format_string):
-            if token.group('key') in placeholders:
-                output.append('{%s%s}' % (
-                    placeholders[token.group('key')],
-                    token.group('format'))
+            if token.group("key") in placeholders:
+                output.append(
+                    "{%s%s}" % (placeholders[token.group("key")], token.group("format"))
                 )
                 continue
+            elif token.group("command"):
+                # update any placeholders used in commands
+                commands = parse_qsl(token.group("command"), keep_blank_values=True)
+                # placeholders only used in `if`
+                if "if" in [x[0] for x in commands]:
+                    items = []
+                    for key, value in commands:
+                        if key == "if":
+                            # we have to rebuild from the parts we have
+                            condition = Condition(value)
+                            variable = condition.variable
+                            if variable in placeholders:
+                                variable = placeholders[variable]
+                                # negation via `!`
+                                not_ = "!" if not condition.default else ""
+                                condition_ = condition.condition or ""
+                                # if there is no condition then there is no
+                                # value
+                                if condition_:
+                                    value_ = condition.value
+                                else:
+                                    value_ = ""
+                                value = "{}{}{}{}".format(
+                                    not_, variable, condition_, value_
+                                )
+                        if value:
+                            items.append("{}={}".format(key, value))
+                        else:
+                            items.append(key)
+
+                    # we cannot use urlencode because it will escape things
+                    # like `!`
+                    output.append(r"\?{} ".format("&".join(items)))
+                    continue
             value = token.group(0)
             output.append(value)
-        return u''.join(output)
+        return u"".join(output)
 
     def update_placeholder_formats(self, format_string, placeholder_formats):
         """
@@ -100,17 +139,19 @@ class Formatter:
         # Tokenize the format string and process them
         output = []
         for token in self.tokens(format_string):
-            if (token.group('placeholder') and
-                    (not token.group('format')) and
-                    token.group('key') in placeholder_formats):
-                output.append('{%s%s}' % (
-                    token.group('key'),
-                    placeholder_formats[token.group('key')])
+            if (
+                token.group("placeholder")
+                and (not token.group("format"))
+                and token.group("key") in placeholder_formats
+            ):
+                output.append(
+                    "{%s%s}"
+                    % (token.group("key"), placeholder_formats[token.group("key")])
                 )
                 continue
             value = token.group(0)
             output.append(value)
-        return u''.join(output)
+        return u"".join(output)
 
     def build_block(self, format_string):
         """
@@ -123,45 +164,51 @@ class Formatter:
         # Tokenize the format string and process them
         for token in self.tokens(format_string):
             value = token.group(0)
-            if token.group('block_start'):
+            if token.group("block_start"):
                 # Create new block
                 block = block.new_block()
-            elif token.group('block_end'):
+            elif token.group("block_end"):
                 # Close block setting any valid state as needed
                 # and return to parent block to continue
                 if not block.parent:
-                    raise Exception('Too many `]`')
+                    raise Exception("Too many `]`")
                 block = block.parent
-            elif token.group('switch'):
+            elif token.group("switch"):
                 # a new option has been created
                 block = block.switch()
-            elif token.group('placeholder'):
+            elif token.group("placeholder"):
                 # Found a {placeholder}
-                key = token.group('key')
-                format = token.group('format')
+                key = token.group("key")
+                format = token.group("format")
                 block.add(Placeholder(key, format))
-            elif token.group('literal'):
+            elif token.group("literal"):
                 block.add(Literal(value))
-            elif token.group('lost_brace'):
+            elif token.group("lost_brace"):
                 # due to how parsing happens we can get a lonesome }
                 # eg in format_string '{{something}' this fixes that issue
-                block.add(Literal('}'))
-            elif token.group('command'):
+                block.add(Literal(value))
+            elif token.group("command"):
                 # a block command has been found
-                block.set_commands(token.group('command'))
-            elif token.group('escaped'):
+                block.set_commands(token.group("command"))
+            elif token.group("escaped"):
                 # escaped characters add unescaped values
-                if value[0] in ['\\', '{', '}']:
+                if value[0] in ["\\", "{", "}"]:
                     value = value[1:]
                 block.add(Literal(value))
 
         if block.parent:
-            raise Exception('Block not closed')
+            raise Exception("Block not closed")
         # add to the cache
         self.block_cache[format_string] = first_block
 
-    def format(self, format_string, module=None, param_dict=None,
-               force_composite=False, attr_getter=None):
+    def format(
+        self,
+        format_string,
+        module=None,
+        param_dict=None,
+        force_composite=False,
+        attr_getter=None,
+    ):
         """
         Format a string, substituting place holders which can be found in
         param_dict, attributes of the supplied module, or provided via calls to
@@ -169,7 +216,7 @@ class Formatter:
         """
         # fix python 2 unicode issues
         if python2 and isinstance(format_string, str):
-            format_string = format_string.decode('utf-8')
+            format_string = format_string.decode("utf-8")
 
         if param_dict is None:
             param_dict = {}
@@ -189,24 +236,24 @@ class Formatter:
                 param = param_dict.get(key)
             elif module and hasattr(module, key):
                 param = getattr(module, key)
-                if hasattr(param, '__call__'):
+                if hasattr(param, "__call__"):
                     # we don't allow module methods
                     raise Exception()
             elif attr_getter:
                 # get value from attr_getter function
                 try:
                     param = attr_getter(key)
-                except:
+                except:  # noqa e722
                     raise Exception()
             else:
                 raise Exception()
             if isinstance(param, Composite):
-                if len(param):
+                if param.text():
                     param = param.copy()
                 else:
-                    param = u''
+                    param = u""
             elif python2 and isinstance(param, str):
-                param = param.decode('utf-8')
+                param = param.decode("utf-8")
             return param
 
         # render our processed format
@@ -219,7 +266,7 @@ class Formatter:
             if force_composite:
                 output = Composite()
             else:
-                output = ''
+                output = ""
 
         return output
 
@@ -237,53 +284,59 @@ class Placeholder:
         """
         return the correct value for the placeholder
         """
+        value = "{%s}" % self.key
         try:
             value = value_ = get_params(self.key)
-            if self.format.startswith(':'):
+            if self.format.startswith(":"):
                 # if a parameter has been set to be formatted as a numeric
                 # type then we see if we can coerce it to be.  This allows
                 # the user to format types that normally would not be
                 # allowed eg '123' it also allows {:d} to be used as a
-                # shorthand for {:.0f}.  If the parameter cannot be
-                # successfully converted then the format is removed.
+                # shorthand for {:.0f}.  Use {:g} to remove insignificant
+                # trailing zeroes and the decimal point too if there are
+                # no remaining digits following it.  If the parameter cannot
+                # be successfully converted then the format will be removed.
                 try:
-                    if 'f' in self.format:
+                    if "ceil" in self.format:
+                        value = int(ceil(float(value)))
+                    if "f" in self.format:
                         value = float(value)
-                    if 'd' in self.format:
+                    if "g" in self.format:
+                        value = float(value)
+                    if "d" in self.format:
                         value = int(float(value))
-                    output = u'{%s%s}' % (self.key, self.format)
-                    value = output.format(**{self.key: value})
+                    output = u"{[%s]%s}" % (self.key, self.format)
+                    value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
-            elif self.format.startswith('!'):
-                output = u'{%s%s}' % (self.key, self.format)
+            elif self.format.startswith("!"):
+                output = u"{%s%s}" % (self.key, self.format)
                 value = value_ = output.format(**{self.key: value})
 
             if block.commands.not_zero:
-                valid = value_ not in ['', None, False, '0', '0.0', 0, 0.0]
+                valid = value_ not in ["", None, False, "0", "0.0", 0, 0.0]
             else:
                 # '', None, and False are ignored
                 # numbers like 0 and 0.0 are not.
-                valid = not (value_ in ['', None] or value_ is False)
+                valid = not (value_ in ["", None] or value_ is False)
             enough = False
-        except:
+        except:  # noqa e722
             # Exception raised when we don't have the param
             enough = True
             valid = False
-            value = '{%s}' % self.key
 
         return valid, value, enough
 
     def __repr__(self):
-        return '<Placeholder {%s}>' % self.repr()
+        return "<Placeholder {%s}>" % self.repr()
 
     def repr(self):
         if self.format:
-            value = '%s%s' % (self.key, self.format)
+            value = "%s%s" % (self.key, self.format)
         else:
             value = self.key
-        return '{%s}' % value
+        return "{%s}" % value
 
 
 class Literal:
@@ -295,7 +348,7 @@ class Literal:
         self.text = text
 
     def __repr__(self):
-        return '<Literal %s>' % self.text
+        return "<Literal %s>" % self.text
 
     def repr(self):
         return self.text
@@ -314,21 +367,21 @@ class Condition:
 
     def __init__(self, info):
         # are we negated?
-        self.default = info[0] != '!'
+        self.default = info[0] != "!"
         if not self.default:
             info = info[1:]
 
-        if '=' in info:
-            self.variable, self.value = info.split('=')
-            self.condition = '='
+        if "=" in info:
+            self.variable, self.value = info.split("=")
+            self.condition = "="
             self.check_valid = self._check_valid_condition
-        elif '>' in info:
-            self.variable, self.value = info.split('>')
-            self.condition = '>'
+        elif ">" in info:
+            self.variable, self.value = info.split(">")
+            self.condition = ">"
             self.check_valid = self._check_valid_condition
-        elif '<' in info:
-            self.variable, self.value = info.split('<')
-            self.condition = '<'
+        elif "<" in info:
+            self.variable, self.value = info.split("<")
+            self.condition = "<"
             self.check_valid = self._check_valid_condition
         else:
             self.variable = info
@@ -341,9 +394,13 @@ class Condition:
         """
         try:
             variable = get_params(self.variable)
-        except:
+        except:  # noqa e722
             variable = None
         value = self.value
+
+        # if None, return oppositely
+        if variable is None:
+            return not self.default
 
         # convert the value to a correct type
         if isinstance(variable, bool):
@@ -351,19 +408,19 @@ class Condition:
         elif isinstance(variable, Number):
             try:
                 value = int(self.value)
-            except:
+            except:  # noqa e722
                 try:
                     value = float(self.value)
-                except:
+                except:  # noqa e722
                     # could not parse
                     return not self.default
 
         # compare and return the result
-        if self.condition == '=':
+        if self.condition == "=":
             return (variable == value) == self.default
-        elif self.condition == '>':
+        elif self.condition == ">":
             return (variable > value) == self.default
-        elif self.condition == '<':
+        elif self.condition == "<":
             return (variable < value) == self.default
 
     def _check_valid_basic(self, get_params):
@@ -373,18 +430,18 @@ class Condition:
         try:
             if get_params(self.variable):
                 return self.default
-        except:
+        except:  # noqa e722
             pass
         return not self.default
 
 
 class BlockConfig:
-    """
+    r"""
     Block commands eg [\?color=bad ...] are stored in this object
     """
 
-    REGEX_COLOR = re.compile('#[0-9A-F]{6}')
-    INHERITABLE = ['color', 'not_zero', 'show']
+    REGEX_COLOR = re.compile("#[0-9A-F]{6}")
+    INHERITABLE = ["color", "not_zero", "show"]
 
     # defaults
     _if = None
@@ -408,16 +465,16 @@ class BlockConfig:
         update with commands from the block
         """
         commands = dict(parse_qsl(commands_str, keep_blank_values=True))
-        _if = commands.get('if', self._if)
+        _if = commands.get("if", self._if)
         if _if:
             self._if = Condition(_if)
-        self._set_int(commands, 'max_length')
-        self._set_int(commands, 'min_length')
-        self.color = self._check_color(commands.get('color'))
+        self._set_int(commands, "max_length")
+        self._set_int(commands, "min_length")
+        self.color = self._check_color(commands.get("color"))
 
-        self.not_zero = 'not_zero' in commands or self.not_zero
-        self.show = 'show' in commands or self.show
-        self.soft = 'soft' in commands or self.soft
+        self.not_zero = "not_zero" in commands or self.not_zero
+        self.show = "show" in commands or self.show
+        self.soft = "soft" in commands or self.soft
 
     def _set_int(self, commands, name):
         """
@@ -434,11 +491,18 @@ class BlockConfig:
         if not color:
             return self.color
         # fix any hex colors so they are #RRGGBB
-        if color.startswith('#'):
+        if color.startswith("#"):
             color = color.upper()
             if len(color) == 4:
-                color = ('#' + color[1] + color[1] + color[2] +
-                         color[2] + color[3] + color[3])
+                color = (
+                    "#"
+                    + color[1]
+                    + color[1]
+                    + color[2]
+                    + color[2]
+                    + color[3]
+                    + color[3]
+                )
             # check color is valid
             if not self.REGEX_COLOR.match(color):
                 return self.color
@@ -483,18 +547,18 @@ class Block:
         option and return it to the user.
         """
         base_block = self.base_block or self
-        self.next_block = Block(self.parent,
-                                base_block=base_block,
-                                py3_wrapper=self.py3_wrapper)
+        self.next_block = Block(
+            self.parent, base_block=base_block, py3_wrapper=self.py3_wrapper
+        )
         return self.next_block
 
     def __repr__(self):
-        return '<Block %s>' % self.repr()
+        return "<Block %s>" % self.repr()
 
     def repr(self):
         my_repr = [x.repr() for x in self.content]
         if self.next_block:
-            my_repr.extend(['|'] + self.next_block.repr())
+            my_repr.extend(["|"] + self.next_block.repr())
         return my_repr
 
     def check_valid(self, get_params):
@@ -538,28 +602,29 @@ class Block:
                 valid = valid or sub_valid
         if not valid:
             if self.next_block:
-                valid, output = self.next_block.render(get_params,
-                                                       module,
-                                                       _if=self.commands._if)
-            elif (self.parent is None and
-                    ((not self.next_block and enough)or self.base_block)):
+                valid, output = self.next_block.render(
+                    get_params, module, _if=self.commands._if
+                )
+            elif self.parent is None and (
+                (not self.next_block and enough) or self.base_block
+            ):
                 valid = True
             else:
                 output = []
 
         # clean
         color = self.commands.color
-        if color and color[0] != '#':
-            color_name = 'color_%s' % color
-            threshold_color_name = 'color_threshold_%s' % color
+        if color and color[0] != "#":
+            color_name = "color_%s" % color
+            threshold_color_name = "color_threshold_%s" % color
             # substitute color
             color = (
-                getattr(module, color_name, None) or
-                getattr(module, threshold_color_name, None) or
-                getattr(module.py3, color_name.upper(), None)
+                getattr(module, color_name, None)
+                or getattr(module, threshold_color_name, None)
+                or getattr(module.py3, color_name.upper(), None)
             )
 
-        text = u''
+        text = u""
         out = []
         if isinstance(output, str):
             output = [output]
@@ -574,32 +639,36 @@ class Block:
             convertables = (str, bool, int, float, bytes)
 
         first = True
+        last_block = None
         for index, item in enumerate(output):
+            is_block = isinstance(item, Block)
+            if not is_block and item:
+                last_block = None
             if isinstance(item, convertables) or item is None:
                 text += conversion(item)
                 continue
             elif text:
-                if (not first and
-                        (text.strip() == '' or out[-1].get('color') == color)):
-                    out[-1]['full_text'] += text
+                if not first and (text == "" or out and out[-1].get("color") == color):
+                    out[-1]["full_text"] += text
                 else:
-                    part = {'full_text': text}
+                    part = {"full_text": text}
                     if color:
-                        part['color'] = color
+                        part["color"] = color
                     out.append(part)
-                text = u''
+                text = u""
             if isinstance(item, Composite):
                 if color:
-                    item.composite_update(item, {'color': color}, soft=True)
+                    item.composite_update(item, {"color": color}, soft=True)
                 out.extend(item.get_content())
-            elif isinstance(item, Block):
+            elif is_block:
                 # if this is a block then likely it is soft.
                 if not out:
                     continue
                 for x in range(index + 1, len(output)):
                     if output[x] and not isinstance(output[x], Block):
                         valid, _output = item.render(get_params, module, _if=True)
-                        if _output:
+                        if _output and _output != last_block:
+                            last_block = _output
                             out.extend(_output)
                         break
             else:
@@ -609,9 +678,9 @@ class Block:
 
         # add any left over text
         if text:
-            part = {'full_text': text}
+            part = {"full_text": text}
             if color:
-                part['color'] = color
+                part["color"] = color
             out.append(part)
 
         # process any min/max length commands
@@ -621,12 +690,12 @@ class Block:
         if max_length or min_length:
             for item in out:
                 if max_length is not None:
-                    item['full_text'] = item['full_text'][:max_length]
-                    max_length -= len(item['full_text'])
+                    item["full_text"] = item["full_text"][:max_length]
+                    max_length -= len(item["full_text"])
                 if min_length:
-                    min_length -= len(item['full_text'])
+                    min_length -= len(item["full_text"])
             if min_length > 0:
-                out[0]['full_text'] = u' ' * min_length + out[0]['full_text']
+                out[0]["full_text"] = u" " * min_length + out[0]["full_text"]
                 min_length = 0
 
         return valid, out

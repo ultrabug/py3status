@@ -9,10 +9,18 @@ Button 3 resets timer.
 Configuration parameters:
     display_bar: display time in bars when True, otherwise in seconds
         (default False)
-    format: define custom display format. See placeholders below (default '{ss}')
+    format: define custom time format. See placeholders below (default '{ss}')
+    format_active: format to display when timer is active
+        (default 'Pomodoro [{format}]')
+    format_break: format to display during break
+        (default 'Break #{breakno} [{format}]')
+    format_break_stopped: format to display during a break that is stopped
+        (default 'Break #{breakno} ({format})')
     format_separator: separator between minutes:seconds (default ':')
-    max_breaks: maximum number of breaks (default 4)
+    format_stopped: format to display when timer is stopped
+        (default 'Pomodoro ({format})')
     num_progress_bars: number of progress bars (default 5)
+    pomodoros: specify a number of pomodoros (intervals) (default 4)
     sound_break_end: break end sound (file path) (requires pyglet
         or pygame) (default None)
     sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet
@@ -25,6 +33,7 @@ Configuration parameters:
 
 Format placeholders:
     {bar} display time in bars
+    {breakno} current break number
     {ss} display time in total seconds (1500)
     {mm} display time in total minutes (25)
     {mmss} display time in (hh-)mm-ss (25:00)
@@ -41,7 +50,7 @@ pomodoro {
 }
 ```
 
-@author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch
+@author Fandekasp (Adrien Lemaire), rixx, FedericoCeratto, schober-ch, ricci
 
 SAMPLE OUTPUT
 {'color': '#FF0000', 'full_text': u'Pomodoro (1500)'}
@@ -112,15 +121,30 @@ class Py3status:
     # available configuration parameters
     display_bar = False
     format = u'{ss}'
+    format_active = u'Pomodoro [{format}]'
+    format_break = u'Break #{breakno} [{format}]'
+    format_break_stopped = u'Break #{breakno} ({format})'
     format_separator = u":"
-    max_breaks = 4
+    format_stopped = u'Pomodoro ({format})'
     num_progress_bars = 5
+    pomodoros = 4
     sound_break_end = None
     sound_pomodoro_end = None
     sound_pomodoro_start = None
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
+
+    class Meta:
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'max_breaks',
+                    'new': 'pomodoros',
+                    'msg': 'obsolete parameter use `pomodoros`',
+                },
+            ]
+        }
 
     def post_config_hook(self):
         self._initialized = False
@@ -131,18 +155,19 @@ class Py3status:
         self._running = False
         self._time_left = self.timer_pomodoro
         self._section_time = self.timer_pomodoro
-        self._prefix = 'Pomodoro'
         self._timer = None
         self._end_time = None
         self._player = Player()
-        self._format = 'Pomodoro {time}'
         self._alert = False
         if self.display_bar is True:
             self.format = u'{bar}'
         self._initialized = True
 
     def _time_up(self):
-        self.py3.notify_user('{} time is up !'.format(self._prefix))
+        if self._active:
+            self.py3.notify_user('Pomodoro time is up !')
+        else:
+            self.py3.notify_user('Break #{} time is up !'.format(self._break_number))
         self._alert = True
         self._advance()
 
@@ -155,9 +180,7 @@ class Py3status:
             self._time_left = self.timer_break
             self._section_time = self.timer_break
             self._break_number += 1
-            self._format = 'Break #{} {{time}}'.format(self._break_number)
-            self._prefix = 'Break #{}'.format(self._break_number)
-            if self._break_number > self.max_breaks:
+            if self._break_number >= self.pomodoros:
                 self._time_left = self.timer_long_break
                 self._section_time = self.timer_long_break
                 self._break_number = 0
@@ -167,8 +190,6 @@ class Py3status:
                 self._play_sound(self.sound_break_end)
             self._time_left = self.timer_pomodoro
             self._section_time = self.timer_pomodoro
-            self._format = 'Pomodoro {time}'
-            self._prefix = 'Pomodoro'
             self._active = True
 
     def kill(self):
@@ -268,14 +289,22 @@ class Py3status:
         if self.py3.format_contains(self.format, 'bar'):
             vals['bar'] = self._setup_bar()
 
+        formatted = self.format.format(**vals)
+
         if self._running:
-            format = u'{{prefix}} [{}]'.format(self.format)
+            if self._active:
+                format = self.format_active
+            else:
+                format = self.format_break
         else:
-            format = u'{{prefix}} ({})'.format(self.format)
+            if self._active:
+                format = self.format_stopped
+            else:
+                format = self.format_break_stopped
             cached_until = self.py3.CACHE_FOREVER
 
         response = {
-            'full_text': format.format(prefix=self._prefix, **vals),
+            'full_text': format.format(breakno=self._break_number, format=formatted, **vals),
             'cached_until': cached_until,
         }
 

@@ -5,8 +5,8 @@ Display network speed and bandwidth usage.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 2)
     format: display format for this module
-        *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑]
-        [\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
+        *(default '{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] '
+        '[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')*
     nic: specify a network interface to use (default None)
     thresholds: specify color thresholds to use
         *(default {'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],
@@ -40,8 +40,8 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 2
-    format = u'{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] ' + \
-        u'[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]'
+    format = (u'{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] '
+              u'[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]')
     nic = None
     thresholds = {
         'down': [(0, 'bad'), (30, 'degraded'), (60, 'good')],

@@ -54,6 +54,7 @@ us
 import re
 LAYOUTS_RE = re.compile(r".*layout:\s*((\w+,?)+).*", flags=re.DOTALL)
 LEDMASK_RE = re.compile(r".*LED\smask:\s*\d{4}([01])\d{3}.*", flags=re.DOTALL)
+VARIANTS_RE = re.compile(r".*variant:\s*(([\w-]+,?)+).*", flags=re.DOTALL)
 
 
 class Py3status:
@@ -71,7 +72,7 @@ class Py3status:
         try:
             self._xkblayout()
             self._command = self._xkblayout
-        except:
+        except self.py3.CommandError:
             self._command = self._setxkbmap
 
         if not self.layouts:
@@ -91,7 +92,7 @@ class Py3status:
         }
 
     def keyboard_layout(self):
-        layout = self._command() or '??'
+        layout, variant = self._command()
         # If the current layout is not in our layouts list we need to add it
         if layout not in self._layouts:
             self._layouts = [layout] + self.layouts
@@ -104,14 +105,21 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'layout': lang})
+            'full_text': self.py3.safe_format(
+                self.format, {'layout': lang, 'variant': variant})
         }
 
         if self.colors and not self.colors_dict:
             self.colors_dict = dict((k.strip(), v.strip()) for k, v in (
                 layout.split('=') for layout in self.colors.split(',')))
 
-        lang_color = getattr(self.py3, 'COLOR_%s' % lang.upper())
+        # colorize languages containing spaces and/or dashes too
+        language = lang.upper()
+        for character in ' -':
+            if character in language:
+                language = language.replace(character, '_')
+
+        lang_color = getattr(self.py3, 'COLOR_%s' % language)
         if not lang_color:
             lang_color = self.colors_dict.get(lang)
         if not lang_color:  # old compatibility: try default value
@@ -122,26 +130,34 @@ class Py3status:
         return response
 
     def _xkblayout(self):
-        return self.py3.command_output(
-            ["xkblayout-state", "print", "%s"]
-        ).strip()
+        layout, variant = [
+            x.strip() for x in self.py3.command_output(
+                ["xkblayout-state", "print", "%s|SEPARATOR|%v"]
+            ).split('|SEPARATOR|')
+        ]
+        return layout, variant
 
     def _setxkbmap(self):
         # this method works only for the first two predefined layouts.
         out = self.py3.command_output(["setxkbmap", "-query"])
         layouts = re.match(LAYOUTS_RE, out).group(1).split(",")
         if len(layouts) == 1:
-            return layouts[0]
+            variant = re.match(VARIANTS_RE, out)
+            if variant:
+                variant = variant.group(1)
+                return '{} {}'.format(layouts[0], variant), variant
+            else:
+                return layouts[0], ''
 
         xset_output = self.py3.command_output(["xset", "-q"])
         led_mask = re.match(LEDMASK_RE, xset_output).groups(0)[0]
-        return layouts[int(led_mask)]
+        return layouts[int(led_mask)], ''
 
     def _set_active(self, delta):
         self._active += delta
         self._active = self._active % len(self._layouts)
         layout = self._layouts[self._active]
-        self.py3.command_run(['setxkbmap', '-layout', layout])
+        self.py3.command_run('setxkbmap -layout {}'.format(layout))
 
     def on_click(self, event):
         button = event['button']
