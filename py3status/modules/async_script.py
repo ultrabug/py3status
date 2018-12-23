@@ -93,8 +93,9 @@ class Py3status:
                 if re.search(r'^#[0-9a-fA-F]{6}$', output) and not self.force_nocolor:
                     self.command_color = output
                 else:
-                    self.command_output = output
-                    self.py3.update()
+                    if output != self.command_output:
+                        self.command_output = output
+                        self.py3.update()
         except Exception as e:
             self.command_error = str(e)
             self.py3.update()
