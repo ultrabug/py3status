@@ -17,7 +17,8 @@ class CommandError(Py3Exception):
 
     ``error``: Any error output returned by the call
     """
-    def __init__(self, msg=None, error_code=0, output='', error=''):
+
+    def __init__(self, msg=None, error_code=0, output="", error=""):
         Py3Exception.__init__(self, msg)
         self.error_code = error_code
         self.output = output

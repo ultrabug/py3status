@@ -10,7 +10,7 @@ Configuration parameters:
     state_closed: show when hackerspace is closed (default 'closed')
     state_open: show when hackerspace is open (default 'open')
     url: specify JSON URL of a hackerspace to retrieve from
-        (default 'http://status.chaospott.de/status.json')
+        (default 'https://status.chaospott.de/status.json')
 
 Format placeholders:
     {state} Hackerspace state
@@ -47,7 +47,7 @@ class Py3status:
     format_lastchanged = 'since %H:%M'
     state_closed = 'closed'
     state_open = 'open'
-    url = 'http://status.chaospott.de/status.json'
+    url = 'https://status.chaospott.de/status.json'
 
     class Meta:
         deprecated = {
@@ -81,17 +81,20 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.button_refresh = 2
         self.color_open = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD
         self.color_closed = self.py3.COLOR_CLOSED or self.py3.COLOR_BAD
 
     def spaceapi(self):
         color = self.color_closed
         state = self.state_closed
+        lastchanged = 'unknown'
+
         try:
             data = self.py3.request(self.url).json()
             self._url = data.get('url')
 
-            if(data['state']['open']):
+            if data['state']['open']:
                 color = self.color_open
                 state = self.state_open
 
@@ -99,15 +102,15 @@ class Py3status:
                 try:
                     dt = datetime.datetime.fromtimestamp(data['state']['lastchange'])
                     lastchanged = dt.strftime(self.format_lastchanged)
-                except:
-                    lastchanged = 'unknown'
-            else:
-                lastchanged = 'unknown'
+                except TypeError:
+                    pass
 
             full_text = self.py3.safe_format(
                 self.format, {'state': state, 'lastchanged': lastchanged})
-        except:
+
+        except (self.py3.RequestException, KeyError):
             full_text = STRING_UNAVAILABLE
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
@@ -118,6 +121,8 @@ class Py3status:
         button = event['button']
         if self._url and self.button_url == button:
             self.py3.command_run('xdg-open {}'.format(self._url))
+            self.py3.prevent_refresh()
+        elif button != self.button_refresh:
             self.py3.prevent_refresh()
 
 

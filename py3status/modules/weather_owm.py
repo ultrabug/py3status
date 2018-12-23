@@ -10,6 +10,9 @@ as it gets.
 This module uses Timezone API (https://timezoneapi.io) and
 OpenWeatherMap API (https://openweathermap.org).
 
+setting `location` or `city` allows you to specify the location for the weather
+you want displaying.
+
 Requires an API key for OpenWeatherMap (OWM), but the free tier allows you
 enough requests/sec to get accurate weather even up to the minute.
 
@@ -192,7 +195,6 @@ Configuration parameters:
         (default 'mph')
 
 Format placeholders:
-    All:
         {icon} The icon associated with a formatting section
     format_clouds:
         {coverage} Cloud coverage percentage
@@ -237,10 +239,23 @@ Examples:
 ```
 # change icons
 weather_owm {
+  api_key = <my api key>
   icons = {
     '200': "☔"
     '230_232': "🌧"
   }
+}
+
+# set a city
+weather_owm {
+  api_key = <my api key>
+  city = 'London'
+}
+
+# set a location
+weather_owm {
+  api_key = <my api key>
+  location = (2.3548, 48.9342)  # Saint-Denis
 }
 ```
 
@@ -258,11 +273,8 @@ import datetime
 
 
 # API information
-OWM_API = '2.5'
-OWM_CURR_ENDPOINT = 'http://api.openweathermap.org/data/%s/weather?' \
-    'APPID=%s&lat=%f&lon=%f&lang=%s'
-OWM_FUTURE_ENDPOINT = 'http://api.openweathermap.org/data/%s/forecast?' \
-    'APPID=%s&lat=%f&lon=%f&lang=%s&cnt=%%d'
+OWM_CURR_ENDPOINT = 'https://api.openweathermap.org/data/2.5/weather?'
+OWM_FUTURE_ENDPOINT = 'https://api.openweathermap.org/data/2.5/forecast?'
 IP_ENDPOINT = 'https://timezoneapi.io/api/ip'
 
 # Paths of information to extract from JSON
@@ -300,12 +312,9 @@ THRESHOLDS_ALL = 'all'
 THRESHOLDS_NAMES = set([THRESHOLDS_ALL, 'current', 'min', 'max'])
 
 # Thresholds defaults
-THRESHOLDS = dict([(THRESHOLDS_ALL, [
-    (-100, '#0FF'),
-    (0, '#00F'),
-    (50, '#0F0'),
-    (150, '#FF0')
-])])
+THRESHOLDS = {
+    'all': [(-100, '#0FF'), (0, '#00F'), (50, '#0F0'), (150, '#FF0')]
+}
 
 
 class OWMException(Exception):
@@ -400,7 +409,7 @@ class Py3status:
         # Verify the API key
         if self.api_key is None:
             raise OWMException('API Key for OpenWeatherMap cannot be empty!'
-                               ' Go to http://openweathermap.org/appid to'
+                               ' Go to https://openweathermap.org/appid to'
                                ' get an API Key.')
 
         # Generate our icon array
@@ -426,17 +435,12 @@ class Py3status:
                 if name not in self.thresholds:
                     self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
-    def _get_req_url(self, base, coords):
-        # Construct the url from the pattern
-        params = [OWM_API, self.api_key] + list(coords) + [self.lang]
-        return base % tuple(params)
-
-    def _make_req(self, url):
+    def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
-        req = self.py3.request(url, timeout=self.request_timeout)
+        req = self.py3.request(url, params=params, timeout=self.request_timeout)
         if req.status_code != 200:
             data = req.json()
-            raise OWMException(data['message'] if ('message' in data)
+            raise OWMException(data['message'] if (data and 'message' in data)
                                else 'API Error')
 
         return req.json()
@@ -480,19 +484,22 @@ class Py3status:
             return (self.location, self.city, self.country,
                     _parse_offset(self.offset_gmt))
 
+        data = {}
+        lat_lng = None
         # Contact the Timezone API
-        try:
-            data = self._make_req(IP_ENDPOINT)
-        except (self.py3.RequestException):
-            return None
-        except (self.py3.RequestURLError):
-            return None
+        if not (self.location or self.city):
+            try:
+                data = self._make_req(IP_ENDPOINT)
+            except (self.py3.RequestException, self.py3.RequestURLError):
+                pass
 
-        # Extract location data
-        lat_lng = self.location
-        if self.location is None:
-            location = self._jpath(data, IP_LOC, '0,0')
-            lat_lng = tuple(map(float, location.split(',')))
+            # Extract location data
+            if self.location is None:
+                location = self._jpath(data, IP_LOC, '0,0')
+                lat_lng = tuple(map(float, location.split(',')))
+
+        if self.location:
+            lat_lng = self.location
 
         # Extract city
         city = self.city
@@ -514,21 +521,27 @@ class Py3status:
 
         return (lat_lng, city, country, tz_offset)
 
-    def _get_weather(self, coords):
+    def _get_weather(self, extras):
         # Get and process the current weather
-        url = self._get_req_url(OWM_CURR_ENDPOINT, coords)
-        return self._make_req(url)
+        params = {
+            'APPID': self.api_key,
+            'lang': self.lang,
+        }
+        extras.update(params)
+        return self._make_req(OWM_CURR_ENDPOINT, extras)
 
-    def _get_forecast(self, coords):
+    def _get_forecast(self, extras):
         # Get the next few days
         if self.forecast_days == 0:
             return []
-
         # Get raw data
-        url = (self._get_req_url(OWM_FUTURE_ENDPOINT, coords)
-               % (self.forecast_days + 1))
-        data = self._make_req(url)
-
+        params = {
+            'APPID': self.api_key,
+            'lang': self.lang,
+            'cnt': self.forecast_days + 1,
+        }
+        extras.update(params)
+        data = self._make_req(OWM_FUTURE_ENDPOINT, extras)
         # Extract forecast
         weathers = data['list']
         return weathers[:-1] if (self.forecast_include_today) else weathers[1:]
@@ -751,9 +764,19 @@ class Py3status:
         text = ''
         if loc_tz_info is not None:
             (coords, city, country, tz_offset) = loc_tz_info
+            if coords:
+                extras = {'lon': coords[0], 'lat': coords[1]}
+            elif city:
+                extras = {'q': city}
+            wthr = self._get_weather(extras)
+            fcsts = self._get_forecast(extras)
 
-            wthr = self._get_weather(coords)
-            fcsts = self._get_forecast(coords)
+            # try to get a nice city name
+            city = wthr.get('name') or city or 'unknown'
+            # get the best country we can
+            if not country:
+                sys = wthr.get('sys', {})
+                country = sys.get('country', 'unknown')
 
             text = self._format(wthr, fcsts, city, country, tz_offset)
 

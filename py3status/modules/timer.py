@@ -80,13 +80,6 @@ class Py3status:
         self.timer()
 
     def timer(self):
-
-        def make_2_didget(value):
-            value = str(value)
-            if len(value) == 1:
-                value = '0' + value
-            return value
-
         if self.running or self.done:
             t = int(self.end_time - time())
             if t <= 0:
@@ -97,11 +90,8 @@ class Py3status:
             else:
                 t = self.time
 
-        # Hours
         hours, t = divmod(t, 3600)
-        # Minutes
-        mins, t = divmod(t, 60)
-        # Seconds
+        minutes, t = divmod(t, 60)
         seconds = t
 
         if self.running:
@@ -119,15 +109,15 @@ class Py3status:
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(mins),
+                'full_text': format(minutes, '02d'),
                 'color': self.color,
-                'index': 'mins',
+                'index': 'minutes',
             },
             {
                 'full_text': ':',
             },
             {
-                'full_text': make_2_didget(seconds),
+                'full_text': format(seconds, '02d'),
                 'color': self.color,
                 'index': 'seconds',
             },
@@ -146,7 +136,7 @@ class Py3status:
     def on_click(self, event):
         deltas = {
             'hours': 3600,
-            'mins': 60,
+            'minutes': 60,
             'seconds': 1
         }
         index = event['index']

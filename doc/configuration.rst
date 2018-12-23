@@ -1,4 +1,4 @@
-.. _using_modules:
+﻿.. _using_modules:
 
 Using modules
 =============
@@ -71,8 +71,7 @@ overridden by also defining in the individual module.
 
 Global options:
 
-- ``nagbar_font``. It will be used as an argument to
-    ``i3-nagbar -f``, thus setting its font.
+``nagbar_font``. Specify a font for ``i3-nagbar -f <font>``.
 
 .. code-block:: py3status
     :caption: Example
@@ -81,23 +80,121 @@ Global options:
         nagbar_font = 'pango:Ubuntu Mono 12'
     }
 
-Configuration obfuscation
--------------------------
+``storage``: Set storage name or path.
 
 .. note::
-    New in version 3.1
+    New in version 3.13
 
+Store cache in $XDG_CACHE_HOME or ~/.cache
+
+.. code-block:: py3status
+    :caption: Example
+
+    # default behavior
+    py3status {
+        storage = 'py3status_cache.data'
+    }
+
+Store per config cache in $XDG_CACHE_HOME or ~/.cache
+
+.. code-block:: py3status
+
+    # first config
+    py3status {
+        storage = 'py3status_top.data'
+    }
+
+.. code-block:: py3status
+
+    # second config
+    py3status {
+        storage = 'py3status_bottom.data'
+    }
+
+Store per config cache in different directories.
+
+.. code-block:: py3status
+
+    # first config
+    py3status {
+        storage = '~/.config/py3status/cache_top.data'
+    }
+
+.. code-block:: py3status
+
+    # second config
+    py3status {
+        storage = '~/.config/py3status/cache_bottom.data'
+    }
+
+.. note::
+    New in version 3.14
+
+You can specify the following options in module configuration.
+
+ ``min_length``: Specify a minimum length (of characters) for modules.
+ ``position``: Specify how modules should be positioned when the ``min_length``
+ is not reached. Either ``left`` (default), ``center``, or ``right``.
+
+.. code-block:: py3status
+     # example
+    static_string {
+        min_length = 15
+        position = 'center'
+    }
+
+Configuration obfuscation
+-------------------------
 Py3status allows you to hide individual configuration parameters so that they
 do not leak into log files, user notifications or to the i3bar. Additionally
 they allow you to obfuscate configuration parameters using base64 encoding.
 
-To do this you need to add an obfuscation option to the configuration
-parameter. Obfuscation options are added by adding `:hide` or `:base64` to the
-name of the parameters.
+.. note::
+    ``hide()`` and ``base64()`` are new in version 3.13
 
+To "hide" a value you can use the ``hide()``
+configuration function. This prevents the module
+displaying the value as a format placeholder and from
+appearing in the logs.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # Example of 'hidden' configuration
+    imap {
+        imap_server = 'imap.myprovider.com'
+        password = hide('hunter22')
+        user = 'mylogin'
+    }
+
+
+To base64 encode a value you can use the ``base64()``
+configuration function. This also  prevents the
+module displaying the value as a format placeholder
+and from appearing in the logs.
+
+
+.. code-block:: py3status
+    :caption: Example
+
+    # Example of obfuscated configuration
+    imap {
+        imap_server = 'imap.myprovider.com'
+        password = base64('Y29jb251dA==')
+        user = 'mylogin'
+    }
+
+Since version 3.1 obfuscation options can also be
+added by the legacy method. Add ``:hide`` or
+``:base64`` to the name of the parameters.  You are
+advised to use the new ``hide()`` and ``base64()``
+configuration functions.
 
 .. note::
-    Obfuscation is only available for string parameters.
+    Legacy obfuscation is only available for string
+    parameters with ``:hide`` or ``:base64``.  If you
+    want other types then be sure to use ``hide()``
+    and ``base64()`` configuration functions.
 
 .. code-block:: py3status
     :caption: Example
@@ -219,6 +316,79 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
             ],
         }
     }
+
+Formatter
+---------
+
+All modules allow you to define the format of their output. This is done with the format option.
+You can:
+
+- display static text:
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD:"
+      }
+
+- use a backslash ``\`` to escape a character (``\[`` will show ``[``).
+- display data provided by the module. This is done with "placeholders", which follow the format {placeholder_name}.
+  The following example shows the state of the MPD (play/pause/stop) and the artist and title of the currently playing song.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD: {state} {artist} {title}"
+      }
+
+  - Unknown placeholders act as if they were static text and placeholders that are empty or None will be removed.
+  - Formatting can also be applied to the placeholder Eg ``{number:03.2f}``.
+
+- hide invalid (no valid data or undefined) placeholders by enclosing them in ``[]``. The following example will show ``artist - title`` if artist is present and ``title`` if title but no artist is present.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD: {state} [[{artist} - ]{title}]"
+      }
+
+- show the first block with valid output by dividing them with a pipe ``|``. The following example will show the filename if neither artist nor title are present.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      mpd_status {
+         format = "MPD: {state} [[{artist} - ]{title}]|{file}"
+      }
+
+- ``\?`` can be used to provide extra commands to the format string. Multiple commands can be given using an ampersand ``&`` as a separator.
+
+  .. code-block:: py3status
+      :caption: Example
+
+      my_module {
+         format = "\?color=#FF00FF&show blue"
+      }
+
+- change the output with conditions. This is done by following the ``\?`` with a an if statement. Multiple conditions or commands can be combined by using an ampersand ``&`` as a separator. Here are some examples:
+
+  - ``\?if=online green | red`` checks if the placeholder exists and would display ``green`` in that case. A condition that evaluates to false invalidates a section and the section can be hidden with ``[]`` or skipped with ``|``
+  - ``\?if=!online red | green`` this dose the same as the above condition, the only difference is that the exclamation mark ``!`` negates the condition.
+  - ``\?if=state=play PLAYING! | not playing`` checks if the placeholder contains ``play`` and displays ``PLAYING!`` if not it will display ``not playing``.
+
+A format string using nearly all of the above options could look like this:
+
+.. code-block:: py3status
+    :caption: Example
+
+    mpd_status {
+      format = "MPD: {state} [\?if=![stop] [[{artist} - ]{title}]|[{file}]]"
+    }
+
+This will show ``MPD: [state]`` if the state of the MPD is ``[stop]`` or ``MPD: [state] artist - title`` if it is ``[play]`` or ``[pause]`` and artist and title are present, ``MPD: [state] title`` if artist is missing and ``MPD: [state] file`` if artist and title are missing.
 
 Urgent
 ------
@@ -365,6 +535,16 @@ As an added feature and in order to get your i3bar more responsive, every
 ``on_click`` command will also trigger a module refresh. This works for both
 py3status modules and i3status modules as described in the refresh command
 below.
+
+.. code-block:: shell
+
+    # button numbers
+    1 = left click
+    2 = middle click
+    3 = right click
+    4 = scroll up
+    5 = scroll down
+
 
 .. code-block:: py3status
     :caption: Example
@@ -520,10 +700,6 @@ of the script is respected (a non-zero exit status being interpreted falsey).
 In any other case if the script exits with a non-zero exit status an error
 will be thrown.
 
-Please be aware that due to the way the parser works, you may not include any
-closing parenthesis ( ``)`` ) in the expression. Wrap your commands in a script
-file and call it instead.
-
 The ``shell(...)`` expression can be used anywhere a constant or an ``env(...)``
 directive can be used (see the section "Environment Variables").
 
@@ -538,3 +714,50 @@ Usage example:
         pid = shell(cat /var/run/mydaemon/pidfile, int)
         my_bool = shell(pgrep thttpd, bool)
     }
+
+Due to the way the config is parsed you need to to escape any
+closing parenthesis ``)`` using a backslash ``\)``.
+
+.. code-block:: py3status
+    :caption: Example
+
+    static_string {
+        # note we need to explicitly cast the result to str
+        # because we are using it as the format which must be a
+        # string
+        format = shell(echo $((6 + 2\)\), str)
+    }
+
+.. Note::
+    Prior to version 3.13 you may not include any closing
+    parenthesis ``)`` in the expression. Wrap your commands in a
+    script file and call it instead.
+
+
+Refreshing modules on udev events with on_udev dynamic options
+--------------------------------------------------------------
+
+.. note::
+    New in version 3.14
+
+Refreshing of modules can be triggered when an udev event is detected on a
+specific subsystem using the ``on_udev_<subsystem>`` configuration parameter
+and an associated action.
+
+Possible actions:
+- ``refresh``: immediately refresh the module and keep on updating it as usual
+- ``refresh_and_freeze``: module is ONLY refreshed when said udev subsystem emits
+an event
+
+.. code-block:: py3status
+    :caption: Example
+
+    # refresh xrandr only when udev 'drm' events are triggered
+    xrandr {
+        on_udev_drm = "refresh_and_freeze"
+    }
+
+.. note::
+    This feature will only activate when ``pyudev`` is installed on the system.
+    This is an optional dependency of py3status and is therefore not enforced
+    by all package managers.

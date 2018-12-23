@@ -57,10 +57,9 @@ class Py3status:
     def _is_running(self):
         try:
             self.py3.command_output(['pidof', 'xscreensaver'])
-        except:
-            return False
-        else:
             return True
+        except self.py3.CommandError:
+            return False
 
     def xscreensaver(self):
         run = self._is_running()

@@ -83,15 +83,16 @@ hddtemp {
 SAMPLE OUTPUT
 [
     {'full_text': u'ADATA SP550 '},
-    {'full_text': u'32°C ', 'color': '#00FF00'},
+    {'full_text': u'25°C ', 'color': '#00FF00'},
     {'full_text': u'SanDisk SDSSDA240 '},
-    {'full_text': u'44°C', 'color': '#FFFF00'},
+    {'full_text': u'41°C', 'color': '#FFFF00'},
 ]
 
 path
 [
-    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '22°C '},
-    {'full_text': '/dev/sdb '}, {'color': '#FFA500', u'full_text': '44°C'},
+    {'full_text': '/dev/sda '}, {'color': '#00BFFF', u'full_text': '24°C '},
+    {'full_text': '/dev/sdb '}, {'color': '#00FF00', u'full_text': '25°C '},
+    {'full_text': '/dev/sdc '}, {'color': '#FF0000', u'full_text': '51°C'},
 ]
 
 compact
@@ -99,15 +100,16 @@ compact
     {'full_text': 'HDD '},
     {'color': '#87CEEB', u'full_text': '19°C '},
     {'color': '#00BFFF', u'full_text': '24°C '},
-    {'color': '#00FF00', u'full_text': '32°C '},
-    {'color': '#FFFF00', u'full_text': '44°C '},
-    {'color': '#FFA500', u'full_text': '51°C '},
-    {'color': '#FF0000', u'full_text': '53°C '},
+    {'color': '#00FF00', u'full_text': '25°C '},
+    {'color': '#FFFF00', u'full_text': '41°C '},
+    {'color': '#FFA500', u'full_text': '46°C '},
+    {'color': '#FF0000', u'full_text': '51°C '},
     {'color': '#FF6347', u'full_text': '56°C'},
 ]
 """
 
 from telnetlib import Telnet
+from string import printable
 
 
 class Py3status:
@@ -123,13 +125,24 @@ class Py3status:
 
     def post_config_hook(self):
         self.keys = ['path', 'name', 'temperature', 'unit']
+        self.cache_names = {}
 
     def hddtemp(self):
-        line = Telnet('localhost', 7634).read_all().decode()[1:-1]
+        line = Telnet('localhost', 7634).read_all().decode('utf-8', 'ignore')
         new_data = []
 
-        for chunk in line.split('||'):
+        for chunk in line[1:-1].split('||'):
             hdd = dict(zip(self.keys, chunk.split('|')))
+            # workaround for hddtemp byte bug
+            try:
+                hdd['name'] = self.cache_names[hdd['name']]
+            except KeyError:
+                key = ''.join(
+                    [x for x in hdd['name'] if x in printable]).strip()
+                if key.endswith('G B') and key[-4].isdigit():
+                    key = 'GB'.join(key.rsplit('G B', 1))
+                hdd['name'] = self.cache_names[hdd['name']] = key
+
             self.py3.threshold_get_color(hdd['temperature'], 'temperature')
             new_data.append(self.py3.safe_format(self.format_hdd, hdd))
 

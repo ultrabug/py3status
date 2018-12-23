@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Display song currently playing in deadbeef.
+Display songs currently playing in DeaDBeeF.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '[{artist} - ][{title}]')
     sleep_timeout: when deadbeef is not running, this interval will be used
-        to allow one to refresh constantly with time placeholders and/or
-        to refresh once every minute rather than every few seconds
+        to allow faster refreshes with time-related placeholders and/or
+        to refresh few times per minute rather than every few seconds
         (default 20)
 
 Format placeholders:
@@ -20,7 +20,7 @@ Format placeholders:
     {year} year in four digits
 
     For more placeholders, see title formatting 2.0 in 'deadbeef --help'
-    or http://github.com/Alexey-Yakovenko/deadbeef/wiki/Title-formatting-2.0
+    or https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0
     Not all of Foobar2000 remapped metadata fields will work with deadbeef and
     a quick reminder about using {placeholders} here instead of %placeholder%.
 
@@ -32,6 +32,14 @@ Color options:
 Requires:
     deadbeef: a GTK+ audio player for GNU/Linux
 
+Examples:
+```
+# see 'deadbeef --help' for more buttons
+deadbeef {
+    on_click 1 = 'exec deadbeef --play-pause'
+    on_click 8 = 'exec deadbeef --random'
+}
+
 @author mrt-prodz, tobes, lasers
 
 SAMPLE OUTPUT
@@ -41,10 +49,6 @@ paused
 {'color': '#ffff00', 'full_text': 'Music For Programming - Lackluster'}
 """
 
-from subprocess import check_output
-
-FMT_PARAMETER = ['isplaying']
-FMT_SEPARATOR = u'\u001e'
 STRING_NOT_INSTALLED = 'not installed'
 
 
@@ -81,56 +85,55 @@ class Py3status:
     def post_config_hook(self):
         if not self.py3.check_commands('deadbeef'):
             raise Exception(STRING_NOT_INSTALLED)
+
+        self.separator = '|SEPARATOR|'
+        self.placeholders = list(
+            set(self.py3.get_placeholders_list(self.format) + ['isplaying'])
+        )
+        self.deadbeef_command = 'deadbeef --nowplaying-tf "{}"'.format(
+            self.separator.join(['%{}%'.format(x) for x in self.placeholders])
+        )
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
-
-        # mix format and necessary placeholders with separator...
-        # then we merge together to run deadbeef command only once
-        self.placeholders = list(
-            set(self.py3.get_placeholders_list(self.format)) |
-            set(FMT_PARAMETER))
-        self.empty_status = {x: '' for x in self.placeholders}
-        fmt = FMT_SEPARATOR.join(['%{}%'.format(x) for x in self.placeholders])
-        self.cmd = 'deadbeef --nowplaying-tf "%s"' % fmt
 
     def _is_running(self):
         try:
             self.py3.command_output(['pgrep', 'deadbeef'])
             return True
-        except:
+        except self.py3.CommandError:
             return False
 
+    def _get_deadbeef_data(self):
+        # Deadbeef can generate lot of startup noises with or without error
+        # codes. Running command sometimes change how things behaves onscreen
+        # too. We used subprocess in the past to ignore error codes. We also
+        # use pgrep and hidden placeholders to dictate how status output and
+        # color should look... mainly to stay consistency in multiple versions
+        # (e.g., Python2.7 to Python3+ and nonstop deadbeef-git commits).
+        try:
+            return self.py3.command_output(self.deadbeef_command)
+        except self.py3.CommandError as ce:
+            return ce.output
+
     def deadbeef(self):
-        color = self.color_stopped
-        status = self.empty_status
+        beef_data = {}
         cached_until = self.sleep_timeout
+        color = self.color_stopped
 
         if self._is_running():
+            line = self._get_deadbeef_data()
+            beef_data = dict(zip(self.placeholders, line.split(self.separator)))
             cached_until = self.cache_timeout
-            # Starting deadbeef may generate lot of startup noises either
-            # with or without error codes. Running command below may sometimes
-            # change how things behaves onscreen. We use subprocess to ignore
-            # error codes. We use pgrep and hidden placeholders to dictate
-            # how status output and color should look... mainly to stay
-            # consistency between versions.
-            out = check_output(self.cmd, shell=True).decode('utf-8')
 
-            # We know 7.0 and 7.1 returns a literal 'nothing' string.
-            # Deadbeef stopped doing that in 7.2 so we adds a quick check
-            # here to skip status if it contains 'nothing' or FMT_SEPARATOR.
-            if out not in ['nothing', FMT_SEPARATOR]:
+            if beef_data['isplaying']:
+                color = self.color_playing
+            else:
+                color = self.color_paused
 
-                # split placeholders results
-                status = dict(zip(self.placeholders, out.split(FMT_SEPARATOR)))
-
-                if status['isplaying'] == '1':
-                    color = self.color_playing
-                else:
-                    color = self.color_paused
         return {
             'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(self.format, status),
+            'full_text': self.py3.safe_format(self.format, beef_data),
             'color': color,
         }
 

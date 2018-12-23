@@ -99,14 +99,10 @@ Using emerge:
 
 Arch Linux
 ----------
-Thanks to @Horgix, py3status is present in the Arch User Repository:
+Using pacman:
+::
 
-- `py3status <https://aur.archlinux.org/packages/py3status>`_, which is a
-  stable version updated at each release
-- `py3status-git <https://aur.archlinux.org/packages/py3status-git/>`_, which
-  builds directly against the upstream master branch
-
-Thanks to @waaaaargh and @carstene1ns for initially creating the packages.
+   $ pacman -S py3status
 
 Fedora
 ------

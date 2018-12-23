@@ -33,7 +33,6 @@ off
 {'color': '#FF0000', 'full_text': 'Yandex.Disk: Not started'}
 """
 
-STRING_ERROR = 'not configured'
 STRING_NOT_INSTALLED = 'not installed'
 
 
@@ -52,10 +51,7 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
     def yandexdisk(self):
-        try:
-            status = self.py3.command_output('yandex-disk status').splitlines()[0]
-        except:
-            self.py3.error(STRING_ERROR)
+        status = self.py3.command_output('yandex-disk status').splitlines()[0]
 
         if status == "Error: daemon not started":
             color = self.py3.COLOR_BAD

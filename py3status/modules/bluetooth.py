@@ -20,7 +20,7 @@ Color options:
     color_good: Active connection
 
 @author jmdana <https://github.com/jmdana>
-@license GPLv3 <http://www.gnu.org/licenses/gpl-3.0.txt>
+@license GPLv3 <https://www.gnu.org/licenses/gpl-3.0.txt>
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'BT: Microsoft Bluetooth Notebook Mouse 5000'}

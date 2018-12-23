@@ -17,7 +17,7 @@ Configuration parameters:
         (default '{bill_amount}$')
     s3_bucket_name: The bucket where billing files are sent by AWS.
         Follow this article to activate this feature:
-        http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/detailed-billing-reports.html
+        https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-reports.html
         (default '')
 
 Format placeholders:
@@ -67,13 +67,13 @@ class Py3status:
         try:
             conn = boto.connect_s3(self.aws_access_key_id,
                                    self.aws_secret_access_key)
-        except:
+        except:  # noqa e722
             return 'conn_error'
 
         # Connection to the bucket
         try:
             bucket = conn.get_bucket(self.s3_bucket_name)
-        except:
+        except:  # noqa e722
             return 'bucket_error'
 
         # Fetch the objects keys and get the billing file
@@ -82,7 +82,7 @@ class Py3status:
             k.key = s3_file_key
             k.get_contents_to_filename(self.billing_file)
             k.close
-        except:
+        except:  # noqa e722
             return 'key_error'
 
         # Parse the file and get the InvoiceTotal amount
@@ -94,7 +94,7 @@ class Py3status:
                         continue
                     i = i + 1
                     return row[-1]
-        except:
+        except:  # noqa e722
             return 'csv_error'
 
         return False

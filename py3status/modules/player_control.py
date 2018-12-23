@@ -42,7 +42,7 @@ import os
 try:
     import dbus
     dbus_available = True
-except:
+except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # (py2, assumed py3)
     dbus_available = False
 
 
@@ -152,8 +152,8 @@ class Py3status:
             try:
                 with open(fn, 'rb') as f:
                     player_name = f.read().decode().rstrip()
-
-            except:
+            except:  # noqa e722
+                # (IOError, FileNotFoundError):  # (assumed py2, assumed py3)
                 continue
 
             if player_name in supported_players:

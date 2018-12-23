@@ -15,7 +15,7 @@ def profile(thread_run_fn):
         try:
             return profiler.runcall(thread_run_fn, self)
         finally:
-            thread_id = getattr(self, 'ident', 'core')
+            thread_id = getattr(self, "ident", "core")
             profiler.dump_stats("py3status-%s.profile" % thread_id)
 
     return wrapper_run

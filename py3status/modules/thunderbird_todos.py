@@ -199,11 +199,14 @@ class Py3status:
                 self.init_datetimes.append(word)
 
     def _get_thunderbird_todos_data(self):
-        x = connect(self.path).cursor().execute('SELECT * FROM cal_todos')
-        titles = [todo_tuple[0] for todo_tuple in x.description]
-        todos = x.fetchall()
-        x.close()
-        return [dict(zip(titles, todo)) for todo in todos]
+        connection = connect(self.path)
+        cursor = connection.cursor()
+        cursor.execute('SELECT * FROM cal_todos')
+        keys = [desc[0] for desc in cursor.description]
+        todos_data = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return [dict(zip(keys, values)) for values in todos_data]
 
     def _organize(self, data):
         # sort?

@@ -205,7 +205,7 @@ class Py3status:
                 return 'Authentication failed'
             else:
                 return 'Request Error'
-        except:
+        except:  # noqa e722
             return 'Connection to \'' + url + '\' failed'
 
 
