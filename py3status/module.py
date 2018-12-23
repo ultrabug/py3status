@@ -7,7 +7,7 @@ from time import time
 from random import randint
 
 from py3status.composite import Composite
-from py3status.constants import POSITIONS, COLOR_NAMES
+from py3status.constants import POSITIONS
 from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
@@ -69,8 +69,6 @@ class Module:
         # py3wrapper this is private and any modules accessing their instance
         # should only use it on the understanding that it is not supported.
         self._py3_wrapper = py3_wrapper
-        #
-        self.set_module_options(module)
 
         try:
             self.load_methods(module, user_modules)
@@ -94,6 +92,8 @@ class Module:
                 # be imported
                 self._py3_wrapper.log(msg)
                 self._py3_wrapper.log(str(e))
+
+        self.set_module_options(module)
 
     def __repr__(self):
         return "<Module {}>".format(self.module_full_name)
@@ -303,24 +303,6 @@ class Module:
         """
         return self.last_output
 
-    def get_color(self, color):
-        """
-        TODO: Replace this with generic _get_color(color).
-        """
-        if color.startswith("#"):
-            color = color[1:]
-            try:
-                int(color, 16)
-            except ValueError:
-                return
-            length = len(color)
-            if length == 3:
-                color = "".join(color[x] * 2 for x in range(3))
-            elif length != 6:
-                return
-            return "#" + color
-        return COLOR_NAMES.get(color)
-
     def set_module_options(self, module):
         """
         Set universal module options to be interpreted by i3bar
@@ -387,7 +369,7 @@ class Module:
 
         if "background" in mod_config:
             background = mod_config["background"]
-            color = self.get_color(background)
+            color = self.module_class.py3._get_color(background)
             if not color:
                 raise TypeError(
                     "Invalid attribute `background`, "
@@ -398,7 +380,7 @@ class Module:
 
         if "border" in mod_config:
             border = mod_config["border"]
-            color = self.get_color(border)
+            color = self.module_class.py3._get_color(border)
             if not color:
                 raise TypeError(
                     "Invalid attribute `border`, "
