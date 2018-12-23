@@ -8,29 +8,29 @@ from py3status.helpers import print_stderr
 
 
 def modules_directory():
-    '''
+    """
     Get the core modules directory.
-    '''
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules')
+    """
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
 
 
 def parse_readme():
-    '''
+    """
     Crude parsing of modules/README.md
     returns a dict of {<module_name>: <documentation>}
-    '''
+    """
     name = None
-    re_mod = re.compile('^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
-    readme_file = os.path.join(modules_directory(), 'README.md')
+    re_mod = re.compile(r'^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
+    readme_file = os.path.join(modules_directory(), "README.md")
     modules_dict = {}
     with open(readme_file) as f:
         for row in f.readlines():
             match = re_mod.match(row)
             if match:
-                name = match.group('name')
+                name = match.group("name")
                 modules_dict[name] = []
                 continue
-            if row.startswith('---'):
+            if row.startswith("---"):
                 name = None
                 continue
             if name:
@@ -38,37 +38,41 @@ def parse_readme():
     return modules_dict
 
 
-def core_module_docstrings(include_core=True, include_user=False, config=None,
-                           format='md'):
-    '''
+def core_module_docstrings(
+    include_core=True, include_user=False, config=None, format="md"
+):
+    """
     Get docstrings for all core modules and user ones if requested
     returns a dict of {<module_name>: <docstring>}
-    '''
+    """
     paths = {}
     docstrings = {}
     if include_core:
         for file in os.listdir(modules_directory()):
             if file.endswith(".py"):
                 name = file[:-3]
-                if name != '__init__':
-                    paths[name] = (os.path.join(modules_directory(), file),
-                                   'core')
+                if name != "__init__":
+                    paths[name] = (os.path.join(modules_directory(), file), "core")
 
     if include_user:
         # include user modules
-        for include_path in sorted(config['include_paths']):
-            include_path = os.path.abspath(include_path) + '/'
+        for include_path in sorted(config["include_paths"]):
+            include_path = os.path.abspath(include_path) + "/"
             if not os.path.isdir(include_path):
                 continue
             for file in sorted(os.listdir(include_path)):
-                if not file.endswith('.py'):
+                if not file.endswith(".py"):
                     continue
                 name = file[:-3]
-                paths[name] = (os.path.join(include_path, file), 'user')
+                paths[name] = (os.path.join(include_path, file), "user")
     for name in paths:
         path, module_type = paths[name]
         with open(path) as f:
-            module = ast.parse(f.read())
+            try:
+                module = ast.parse(f.read())
+            except SyntaxError:
+                # there is a syntax error so ignore module
+                continue
             raw_docstring = ast.get_docstring(module)
 
             # prevent issue when no docstring exists
@@ -76,138 +80,137 @@ def core_module_docstrings(include_core=True, include_user=False, config=None,
                 continue
 
             # remove any sample outputs
-            parts = re.split('^SAMPLE OUTPUT$', raw_docstring, flags=re.M)
+            parts = re.split("^SAMPLE OUTPUT$", raw_docstring, flags=re.M)
             docstring = parts[0]
 
-            if format == 'md':
+            if format == "md":
                 docstring = [
-                    d for d in _from_docstring_md(str(docstring).strip().split('\n'))
+                    d for d in _from_docstring_md(str(docstring).strip().split("\n"))
                 ]
-            elif format == 'rst':
+            elif format == "rst":
                 docstring = [
-                    d for d in _from_docstring_rst(str(docstring).strip().split('\n'))
+                    d for d in _from_docstring_rst(str(docstring).strip().split("\n"))
                 ]
             else:
-                raise Exception('`md` and `rst` format supported only')
+                raise Exception("`md` and `rst` format supported only")
 
-            docstrings[name] = docstring + ['\n']
+            docstrings[name] = docstring + ["\n"]
     return docstrings
 
 
 def create_readme(data):
-    '''
+    """
     Create README.md text for the given module data.
-    '''
+    """
     out = ['<a name="top"></a>Modules\n========\n\n']
     # Links
     for module in sorted(data.keys()):
-        desc = ''.join(data[module]).strip().split('\n')[0]
-        format_str = '\n**[{name}](#{name})** — {desc}\n'
+        desc = "".join(data[module]).strip().split("\n")[0]
+        format_str = "\n**[{name}](#{name})** — {desc}\n"
         out.append(format_str.format(name=module, desc=desc))
     # details
     for module in sorted(data.keys()):
         out.append(
             '\n---\n\n### <a name="{name}"></a>{name}\n\n{details}\n'.format(
-                name=module,
-                details=''.join(data[module]).strip()))
-    return ''.join(out)
+                name=module, details="".join(data[module]).strip()
+            )
+        )
+    return "".join(out)
 
 
-re_listing = re.compile('^\w.*:$')
+re_listing = re.compile(r"^\w.*:$")
 
 # match in README.md
-re_to_param = re.compile('^  - `([a-z]\S+)`($|[ \t])')
-re_to_status = re.compile('^  - `({\S+})`($|[ \t])')
-re_to_item = re.compile('^\s+-')
-re_to_data = re.compile('^\*\*(author|license|source)\*\*($|[ \t])')
-re_to_tag = re.compile('&lt;([^.]*)&gt;')
-re_to_defaults = re.compile('\*(\(default.*\))\*')
+re_to_param = re.compile(r"^  - `([a-z]\S+)`($|[ \t])")
+re_to_status = re.compile(r"^  - `({\S+})`($|[ \t])")
+re_to_item = re.compile(r"^\s+-")
+re_to_data = re.compile(r"^\*\*(author|license|source)\*\*($|[ \t])")
+re_to_tag = re.compile("&lt;([^.]*)&gt;")
+re_to_defaults = re.compile(r"\*(\(default.*\))\*")
 
 # match in module docstring
-re_from_param = re.compile('^    ([a-z<]\S+):($|[ \t])(.*)$')
-re_from_status = re.compile('^\s+({\S+})($|[ \t])(.*)$')
-re_from_item = re.compile('^\s+-(?=\s)')
-re_from_data = re.compile('^@(author|license|source)($|[ \t])')
-re_from_tag = re.compile('((`[^`]*`)|[<>&])')
-re_from_defaults = re.compile('(\(default.*\))\s*$')
+re_from_param = re.compile(r"^    ([a-z<]\S+):($|[ \t])(.*)$")
+re_from_status = re.compile(r"^\s+({\S+})($|[ \t])(.*)$")
+re_from_item = re.compile(r"^\s+-(?=\s)")
+re_from_data = re.compile("^@(author|license|source)($|[ \t])")
+re_from_tag = re.compile("((`[^`]*`)|[<>&])")
+re_from_defaults = re.compile(r"(\(default.*\))\s*$")
 
 # for rst
-re_lone_backtick = re.compile('(?<!`)`(?!`)')
+re_lone_backtick = re.compile("(?<!`)`(?!`)")
 
 
-def _reformat_docstring(doc, format_fn, code_newline=''):
-    '''
+def _reformat_docstring(doc, format_fn, code_newline=""):
+    """
     Go through lines of file and reformat using format_fn
-    '''
+    """
     out = []
-    status = {
-        'listing': False,
-        'add_line': False,
-        'eat_line': False,
-    }
+    status = {"listing": False, "add_line": False, "eat_line": False}
     code = False
     for line in doc:
-        if status['add_line']:
-            out.append('\n')
-        status['add_line'] = False
-        if status['eat_line']:
-            status['eat_line'] = False
-            if line.strip() == '':
+        if status["add_line"]:
+            out.append("\n")
+        status["add_line"] = False
+        if status["eat_line"]:
+            status["eat_line"] = False
+            if line.strip() == "":
                 continue
         # check for start/end of code block
-        if line.strip() == '```':
+        if line.strip() == "```":
             code = not code
             out.append(line + code_newline)
             continue
         if not code:
             # if we are in a block listing a blank line ends it
-            if line.rstrip() == '':
-                status['listing'] = False
+            if line.rstrip() == "":
+                status["listing"] = False
             # format the line
             line = format_fn(line, status)
             # see if block start
             if re_listing.match(line):
-                status['listing'] = True
-        out.append(line.rstrip() + '\n')
+                status["listing"] = True
+        out.append(line.rstrip() + "\n")
     return out
 
 
 def _to_docstring(doc):
-    '''
+    """
     format from Markdown to docstring
-    '''
+    """
+
     def format_fn(line, status):
-        ''' format function '''
+        """ format function """
         # swap &lt; &gt; to < >
-        line = re_to_tag.sub(r'<\1>', line)
+        line = re_to_tag.sub(r"<\1>", line)
         if re_to_data.match(line):
-            line = re_to_data.sub(r'@\1 ', line)
-            status['eat_line'] = True
-        line = re_to_defaults.sub(r'\1', line)
-        if status['listing']:
+            line = re_to_data.sub(r"@\1 ", line)
+            status["eat_line"] = True
+        line = re_to_defaults.sub(r"\1", line)
+        if status["listing"]:
             # parameters
             if re_to_param.match(line):
-                line = re_to_param.sub(r'    \1: ', line)
+                line = re_to_param.sub(r"    \1: ", line)
             # status items
             elif re_to_status.match(line):
-                line = re_to_status.sub(r'    \1 ', line)
+                line = re_to_status.sub(r"    \1 ", line)
             # bullets
             elif re_to_item.match(line):
-                line = re_to_item.sub(r'    -', line)
+                line = re_to_item.sub(r"    -", line)
             # is continuation line
             else:
-                line = ' ' * 8 + line.lstrip()
+                line = " " * 8 + line.lstrip()
         return line
 
     return _reformat_docstring(doc, format_fn)
 
 
 def _from_docstring_md(doc):
-    '''
+    """
     format from docstring to Markdown
-    '''
+    """
+
     def format_fn(line, status):
-        ''' format function '''
+        """ format function """
 
         def fix_tags(line):
             # In markdown we need to escape < > and & for display
@@ -217,86 +220,88 @@ def _from_docstring_md(doc):
             def fn(match):
                 # swap matched chars
                 found = match.group(1)
-                if found == '<':
-                    return '&lt;'
-                if found == '>':
-                    return '&gt;'
-                if found == '&':
-                    return '&amp;'
+                if found == "<":
+                    return "&lt;"
+                if found == ">":
+                    return "&gt;"
+                if found == "&":
+                    return "&amp;"
                 return match.group(0)
+
             return re_from_tag.sub(fn, line)
 
         if re_from_data.match(line):
-            line = re_from_data.sub(r'**\1** ', line)
-            status['add_line'] = True
-        line = re_from_defaults.sub(r'*\1*', line)
-        if status['listing']:
+            line = re_from_data.sub(r"**\1** ", line)
+            status["add_line"] = True
+        line = re_from_defaults.sub(r"*\1*", line)
+        if status["listing"]:
             # parameters
             if re_from_param.match(line):
                 m = re_from_param.match(line)
-                line = '  - `{}` {}'.format(m.group(1), fix_tags(m.group(3)))
+                line = "  - `{}` {}".format(m.group(1), fix_tags(m.group(3)))
             # status items
             elif re_from_status.match(line):
                 m = re_from_status.match(line)
-                line = '  - `{}` {}'.format(m.group(1), fix_tags(m.group(3)))
+                line = "  - `{}` {}".format(m.group(1), fix_tags(m.group(3)))
             # bullets
             elif re_from_item.match(line):
-                line = re_from_item.sub(r'  -', fix_tags(line))
+                line = re_from_item.sub(r"  -", fix_tags(line))
             # is continuation line
             else:
                 line = fix_tags(line)
-                line = ' ' * 4 + line.lstrip()
+                line = " " * 4 + line.lstrip()
         else:
             line = fix_tags(line)
         return line
 
-    return _reformat_docstring(doc, format_fn, code_newline='\n')
+    return _reformat_docstring(doc, format_fn, code_newline="\n")
 
 
 def _from_docstring_rst(doc):
-    '''
+    """
     format from docstring to ReStructured Text
-    '''
+    """
+
     def format_fn(line, status):
-        ''' format function '''
+        """ format function """
 
         if re_from_data.match(line):
-            line = re_from_data.sub(r'**\1** ', line)
-            status['add_line'] = True
-        line = re_from_defaults.sub(r'*\1*', line)
-        if status['listing']:
+            line = re_from_data.sub(r"**\1** ", line)
+            status["add_line"] = True
+        line = re_from_defaults.sub(r"*\1*", line)
+        if status["listing"]:
             # parameters
             if re_from_param.match(line):
                 m = re_from_param.match(line)
-                line = '  - ``{}`` {}'.format(m.group(1), m.group(3))
+                line = "  - ``{}`` {}".format(m.group(1), m.group(3))
             # status items
             elif re_from_status.match(line):
                 m = re_from_status.match(line)
-                line = '  - ``{}`` {}'.format(m.group(1), m.group(3))
+                line = "  - ``{}`` {}".format(m.group(1), m.group(3))
             # bullets
             elif re_from_item.match(line):
-                line = re_from_item.sub(r'  -', line)
+                line = re_from_item.sub(r"  -", line)
             # is continuation line
             else:
-                line = ' ' * 4 + line.lstrip()
+                line = " " * 4 + line.lstrip()
         # in .rst format code samples use double backticks vs single ones for
         # .md This converts them.
-        line = re_lone_backtick.sub('``', line)
+        line = re_lone_backtick.sub("``", line)
         return line
 
-    return _reformat_docstring(doc, format_fn, code_newline='\n')
+    return _reformat_docstring(doc, format_fn, code_newline="\n")
 
 
 def update_docstrings():
-    '''
+    """
     update the docstring of each module using info in the
     modules/README.md file
-    '''
+    """
     modules_dict = parse_readme()
     files = {}
     # update modules
     for mod in modules_dict:
-        mod_file = os.path.join(modules_directory(), mod + '.py')
+        mod_file = os.path.join(modules_directory(), mod + ".py")
         with open(mod_file) as f:
             files[mod] = f.readlines()
 
@@ -317,8 +322,7 @@ def update_docstrings():
                 out.append(row)
                 if not replaced:
                     out = out + [
-                        ''.join(_to_docstring(modules_dict[mod])).strip() +
-                        '\n'
+                        "".join(_to_docstring(modules_dict[mod])).strip() + "\n"
                     ]
                     replaced = True
                 if lines:
@@ -328,37 +332,35 @@ def update_docstrings():
                 continue
             if not lines or done:
                 out.append(row)
-        mod_file = os.path.join(modules_directory(), mod + '.py')
-        with open(mod_file, 'w') as f:
+        mod_file = os.path.join(modules_directory(), mod + ".py")
+        with open(mod_file, "w") as f:
             f.writelines(out)
-    print_stderr('Modules updated from README.md')
+    print_stderr("Modules updated from README.md")
 
 
 def check_docstrings(show_diff=False, config=None, mods=None):
-    '''
+    """
     Check docstrings in module match the README.md
-    '''
+    """
 
     readme = parse_readme()
     modules_readme = core_module_docstrings(config=config)
     warned = False
-    if (create_readme(readme) != create_readme(modules_readme)):
+    if create_readme(readme) != create_readme(modules_readme):
         for module in sorted(readme):
             if mods and module not in mods:
                 continue
             err = None
             if module not in modules_readme:
-                err = '\tModule {} in README but not in /modules'.format(
-                    module
-                )
-            elif ''.join(readme[module]).strip() != ''.join(modules_readme[
-                    module]).strip():
-                err = '\tModule {} docstring does not match README'.format(
-                    module
-                )
+                err = "\tModule {} in README but not in /modules".format(module)
+            elif (
+                "".join(readme[module]).strip()
+                != "".join(modules_readme[module]).strip()
+            ):
+                err = "\tModule {} docstring does not match README".format(module)
             if err:
                 if not warned:
-                    print_stderr('Documentation does not match!\n')
+                    print_stderr("Documentation does not match!\n")
                     warned = True
                 print_stderr(err)
 
@@ -366,45 +368,47 @@ def check_docstrings(show_diff=False, config=None, mods=None):
             if mods and module not in mods:
                 continue
             if module not in readme:
-                print_stderr(
-                    '\tModule {} in /modules but not in README'.format(module))
+                print_stderr("\tModule {} in /modules but not in README".format(module))
         if show_diff:
-            print_stderr('\n'.join(difflib.unified_diff(
-                create_readme(readme).split('\n'), create_readme(
-                    modules_readme).split('\n'))))
+            print_stderr(
+                "\n".join(
+                    difflib.unified_diff(
+                        create_readme(readme).split("\n"),
+                        create_readme(modules_readme).split("\n"),
+                    )
+                )
+            )
         else:
             if warned:
-                print_stderr(
-                    '\nUse `py3status docstring check diff` to view diff.'
-                )
+                print_stderr("\nUse `py3status docstring check diff` to view diff.")
 
 
 def update_readme_for_modules(modules):
-    '''
+    """
     Update README.md updating the sections for the module names listed.
-    '''
+    """
     readme = parse_readme()
     module_docstrings = core_module_docstrings()
-    if modules == ['__all__']:
+    if modules == ["__all__"]:
         modules = core_module_docstrings().keys()
     for module in modules:
         if module in module_docstrings:
-            print_stderr('Updating README.md for module {}'.format(module))
+            print_stderr("Updating README.md for module {}".format(module))
             readme[module] = module_docstrings[module]
         else:
-            print_stderr('Module {} not in core modules'.format(module))
+            print_stderr("Module {} not in core modules".format(module))
 
     # write the file
-    readme_file = os.path.join(modules_directory(), 'README.md')
-    with open(readme_file, 'w') as f:
+    readme_file = os.path.join(modules_directory(), "README.md")
+    with open(readme_file, "w") as f:
         f.write(create_readme(readme))
 
 
 def show_modules(config, params):
-    '''
+    """
     List modules available optionally with details.
-    '''
-    details = params[0] == 'details'
+    """
+    details = params[0] == "details"
     if details:
         modules_list = params[1:]
         core_mods = True
@@ -414,19 +418,19 @@ def show_modules(config, params):
         core_mods = True
         modules_list = []
         if len(params) == 2:
-            if params[1] == 'user':
+            if params[1] == "user":
                 user_mods = True
                 core_mods = False
-            elif params[1] == 'core':
+            elif params[1] == "core":
                 user_mods = False
                 core_mods = True
     if details:
-        print_stderr('Module details:')
+        print("Module details:")
     else:
-        print_stderr('Available modules:')
-    modules = core_module_docstrings(include_core=core_mods,
-                                     include_user=user_mods,
-                                     config=config)
+        print("Available modules:")
+    modules = core_module_docstrings(
+        include_core=core_mods, include_user=user_mods, config=config
+    )
     for name in sorted(modules.keys()):
         if modules_list and name not in modules_list:
             continue
@@ -434,10 +438,10 @@ def show_modules(config, params):
         desc = module[0][:-1]
         if details:
             dash_len = len(name)
-            print_stderr('=' * dash_len)
-            print_stderr(name)
-            print_stderr('=' * dash_len)
+            print("=" * dash_len)
+            print(name)
+            print("=" * dash_len)
             for description in module:
-                print_stderr(description[:-1])
+                print(description[:-1])
         else:
-            print_stderr('  %-22s %s' % (name, desc))
+            print("  %-22s %s" % (name, desc))

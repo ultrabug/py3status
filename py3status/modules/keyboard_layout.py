@@ -72,7 +72,7 @@ class Py3status:
         try:
             self._xkblayout()
             self._command = self._xkblayout
-        except:
+        except self.py3.CommandError:
             self._command = self._setxkbmap
 
         if not self.layouts:
@@ -92,7 +92,7 @@ class Py3status:
         }
 
     def keyboard_layout(self):
-        layout = self._command() or '??'
+        layout, variant = self._command()
         # If the current layout is not in our layouts list we need to add it
         if layout not in self._layouts:
             self._layouts = [layout] + self.layouts
@@ -105,7 +105,8 @@ class Py3status:
 
         response = {
             'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'layout': lang})
+            'full_text': self.py3.safe_format(
+                self.format, {'layout': lang, 'variant': variant})
         }
 
         if self.colors and not self.colors_dict:
@@ -129,9 +130,12 @@ class Py3status:
         return response
 
     def _xkblayout(self):
-        return self.py3.command_output(
-            ["xkblayout-state", "print", "%s"]
-        ).strip()
+        layout, variant = [
+            x.strip() for x in self.py3.command_output(
+                ["xkblayout-state", "print", "%s|SEPARATOR|%v"]
+            ).split('|SEPARATOR|')
+        ]
+        return layout, variant
 
     def _setxkbmap(self):
         # this method works only for the first two predefined layouts.
@@ -140,13 +144,14 @@ class Py3status:
         if len(layouts) == 1:
             variant = re.match(VARIANTS_RE, out)
             if variant:
-                return layouts[0] + ' ' + variant.group(1)
+                variant = variant.group(1)
+                return '{} {}'.format(layouts[0], variant), variant
             else:
-                return layouts[0]
+                return layouts[0], ''
 
         xset_output = self.py3.command_output(["xset", "-q"])
         led_mask = re.match(LEDMASK_RE, xset_output).groups(0)[0]
-        return layouts[int(led_mask)]
+        return layouts[int(led_mask)], ''
 
     def _set_active(self, delta):
         self._active += delta

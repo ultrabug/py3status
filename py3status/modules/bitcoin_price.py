@@ -11,12 +11,12 @@ Configuration parameters:
         -1 means no coloration, except when only one market is selected
         (default -1)
     field: Field that is displayed per market,
-        see http://bitcoincharts.com/about/markets-api/ (default 'close')
+        see https://bitcoincharts.com/about/markets-api/ (default 'close')
     format: display format for this module (default '{format_bitcoin}')
     format_bitcoin: display format for bitcoin (default '{market}: {price}{symbol}')
     format_separator: show separator if more than one (default ', ')
     hide_on_error: show error message (default False)
-    markets: list of supported markets http://bitcoincharts.com/markets/list/
+    markets: list of supported markets https://bitcoincharts.com/markets/list/
         (default 'btceUSD, btcdeEUR')
     symbols: if possible, convert currency abbreviations to symbols
         e.g. USD -> $, EUR -> € and so on (default True)
