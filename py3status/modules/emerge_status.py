@@ -4,39 +4,38 @@ Emerge_status provides a short information on the current
 emerge status if there is an emerge process currently running
 
 Configuration parameters:
-    cache_timeout: how often we refresh this module in second (default 0)
-    format: *(default '{prefix} [\\?if=is_running [\\?if=!total=0 [{current}/{total}'
-              ' {action} {category}/{pkg}]| calculating...]| stopped 0/0]')*
-    prefix: prefix in statusbar (default "EMRG: ")
+    cache_timeout: how often we refresh this module in second.
+        NOTE: when emerge is running, we will refresh this module every second.
+        (default 30)
+    emerge_log_file: path to the emerge log file.
+        (default '/var/log/emerge.log')
+    format: display format for this module
+        (default '{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total} {action} {category}/{pkg}]|calculating...]|: stopped 0/0]')
+    prefix: prefix in statusbar
+        (default "emrg")
 
 Format placeholders:
-    {current} Number of package that is currently emerged
-    {total} Total number of packages that will be emerged
-    {category} Category of the currently emerged package
-    {pkg} Name of the currently emerged packaged
-    {action} Current emerge action
+    {action} current emerge action
+    {category} category of the currently emerged package
+    {current} number of package that is currently emerged
+    {pkg} name of the currently emerged packaged
+    {total} total number of packages that will be emerged
 
 Examples:
 ```
 # Hide if not running
 emerge_status {
-    format = ('[\?if=is_running {prefix} [\?if=!total=0 {current}/{total} '
-              '{action} {category}/{pkg}]]')
+    format = "[\?if=is_running {prefix}: [\?if=!total=0 {current}/{total} {action} {category}/{pkg}|calculating...]]"
 }
+
 # Minimalistic
 emerge_status {
-    format = ('[\?if=is_running [\?if=!total=0 {current}/{total}]]')
+    format = "[\?if=is_running [\?if=!total=0 {current}/{total}]]"
 }
 
 # Minimalistic II
 emerge_status {
-    format = ('[\?if=is_running {current}/{total}]')
-}
-
-# Hide if not running
-emerge_status {
-    format = ('[\?if=is_running {prefix} [\?if=!total=0 {current}/{total} '
-              '{action} {category}/{pkg}]| calculating...]')
+    format = "[\?if=is_running {current}/{total}]"
 }
 ```
 
@@ -53,11 +52,11 @@ STRING_NOT_INSTALLED = 'not installed'
 class Py3status:
     """
     """
-    cache_timeout = 0
-    format = ('{prefix} [\?if=is_running [\?if=!total=0 [{current}/{total}'
-              ' {action} {category}/{pkg}]| calculating...]| stopped 0/0]')
-
-    prefix = "EMRG: "
+    cache_timeout = 30
+    emerge_log_file = '/var/log/emerge.log'
+    format = ('{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total}'
+              ' {action} {category}/{pkg}]|calculating...]|: stopped 0/0]')
+    prefix = "emrg"
 
     def _emerge_running(self):
         """
@@ -74,41 +73,32 @@ class Py3status:
         if not self.py3.check_commands('emerge'):
             raise Exception(STRING_NOT_INSTALLED)
         self.ret_default = {
-            'current': 0,
-            'total': 0,
-            'category': "",
-            'pkg': "",
             'action': "",
-            'is_running': False}
+            'category': "",
+            'current': 0,
+            'is_running': False,
+            'pkg': "",
+            'total': 0,
+        }
 
     def _get_progress(self):
         """
         Get current progress of emerge.
-
-        returns a dict containing current and total value.
+        Returns a dict containing current and total value.
         """
-        emerge_log_file = '/var/log/emerge.log'
-
+        input_data = []
         ret = {}
 
-        input_data = []
-
-        """
-        Open file, if unable to open it py3status catches the error.
-        No need for explizit error handling here.
-        """
-        with open(emerge_log_file, 'r') as fp:
-            input_data = fp.readlines()
-
-        """
-        Traverse emerge.log from bottom up to get latest information
-        """
-
+        # traverse emerge.log from bottom up to get latest information
+        last_lines = self.py3.command_output(
+            ['tail', '-50', self.emerge_log_file]
+        )
+        input_data = last_lines.split('\n')
         input_data.reverse()
 
         for line in input_data:
             if "*** terminating." in line:
-                # Copy content of ret_default, not only the references
+                # copy content of ret_default, not only the references
                 ret = copy.deepcopy(self.ret_default)
                 break
             else:
@@ -119,24 +109,25 @@ class Py3status:
                 )
                 res = status_re.search(line)
                 if res is not None:
-                    ret['current'] = res.group('cu')
-                    ret['total'] = res.group('t')
+                    ret['action'] = res.group('a').lower()
                     ret['category'] = res.group('ca')
+                    ret['current'] = res.group('cu')
                     ret['pkg'] = res.group('p')
-                    ret['action'] = res.group('a')
+                    ret['total'] = res.group('t')
                     break
         return ret
 
     def emerge_status(self):
         """
-        Emerge Status main routine
         """
         response = {}
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
         ret = copy.deepcopy(self.ret_default)
         if self._emerge_running():
             ret = self._get_progress()
             ret['is_running'] = True
+            response['cached_until'] = self.py3.time_in(0)
+        else:
+            response['cached_until'] = self.py3.time_in(self.cache_timeout)
         response['full_text'] = self.py3.safe_format(self.format, ret)
         return response
 
@@ -145,9 +136,5 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {
-        'show_pkg': False,
-        'hide_if_stopped': True
-    }
     from py3status.module_test import module_test
-    module_test(Py3status, config=config)
+    module_test(Py3status)
