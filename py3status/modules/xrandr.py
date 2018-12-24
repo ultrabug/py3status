@@ -26,6 +26,28 @@ Configuration parameters:
         and want to automatically fallback to your laptop screen when you
         disconnect the external screen. (default True)
     fixed_width: show output as fixed width (default True)
+    force_on_change: switch display layout to the leftmost combination mode
+        of the given list whenever it is available. The combination modes are
+        checked from left (high priority) to right (less priority) until
+        one matches.
+        Example:
+            We have a laptop with internal screen and we are often moving from
+            our desk where another screen is available. We want the layout to
+            follow our changes so that we do not have to switch manually.
+            So whenever we plug at our desk, we want the second monitor to be
+            used, and whenever we go away we want everything back on the laptop
+            screen automatically:
+            ```
+            force_on_change = ["eDP1+DP1", "eDP1"]
+            ```
+        NOTES:
+            Click controls will override `force_on_change` until the layout
+            changes in the background so you can still manually control your
+            layout changes on the bar.
+            Use the `force_on_start` to handle initial layout setup on module
+            startup along with this feature to benefit from fully dynamic and
+            automated changes of screen layouts.
+        (default [])
     force_on_start: switch to the given combination mode if available
         when the module starts (saves you from having to configure xorg)
         (default None)
@@ -127,6 +149,7 @@ class Py3status:
     command = None
     fallback = True
     fixed_width = True
+    force_on_change = []
     force_on_start = None
     format = '{output}'
     hide_if_single_combination = False
@@ -155,11 +178,11 @@ class Py3status:
         """
         Initialization
         """
+        self._no_force_on_change = True
         self.active_comb = None
         self.active_layout = None
         self.active_mode = 'extend'
         self.displayed = None
-        self.initialized = False
         self.max_width = 0
 
     def _get_layout(self):
@@ -392,10 +415,10 @@ class Py3status:
         """
         if self.force_on_start in self.available_combinations:
             self.displayed = self.force_on_start
-            self.force_on_start = None
             self._choose_what_to_display(force_refresh=True)
             self._apply(force=True)
             self.py3.update()
+        self.force_on_start = None
 
     def _separator(self, mode):
         """
@@ -410,6 +433,20 @@ class Py3status:
         self.available_combinations.rotate(direction)
         self.displayed = self.available_combinations[0]
 
+    def _force_on_change(self):
+        """
+        Handle force_on_change feature.
+        """
+        for layout in self.force_on_change:
+            if layout in self.available_combinations:
+                if self.active_layout != layout:
+                    self.displayed = layout
+                    self._apply(force=True)
+                    self.py3.update()
+                    break
+                else:
+                    break
+
     def on_click(self, event):
         """
         Click events
@@ -417,6 +454,7 @@ class Py3status:
             - right click: apply selected mode
             - middle click: force refresh of available modes
         """
+        self._no_force_on_change = True
         button = event['button']
         if button == 4:
             self._switch_selection(-1)
@@ -457,19 +495,24 @@ class Py3status:
         elif self.displayed not in self.available_combinations:
             response['color'] = self.py3.COLOR_BAD
 
-        # force default layout setup
-        if not self.initialized and self.force_on_start is not None:
+        # force default layout setup at module startup
+        if self.force_on_start is not None:
             sleep(1)
             self._force_force_on_start()
+
+        # follow on change
+        if not self._no_force_on_change and self.force_on_change:
+            self._force_on_change()
+
+        # this was a click event triggered update
+        if self._no_force_on_change:
+            self._no_force_on_change = False
 
         # fallback detection
         if self.active_layout not in self.available_combinations:
             response['color'] = self.py3.COLOR_DEGRADED
             if self.fallback is True:
                 self._fallback_to_available_output()
-
-        # startup is done
-        self.initialized = True
 
         return response
 
