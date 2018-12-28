@@ -502,8 +502,10 @@ class Py3status:
                 self.button_states[button_index] = \
                     not self.button_states[button_index]
             elif button == self.button_open:
-                self.py3.command_run('xdg-open ' + self.event_urls[
-                    button_index])
+                if self.event_urls:
+                    self.py3.command_run(
+                        'xdg-open {}'.format(self.event_urls[button_index])
+                    )
                 self.py3.prevent_refresh()
             else:
                 self.py3.prevent_refresh()
