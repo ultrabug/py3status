@@ -326,6 +326,11 @@ def command_parser():
                 options.index = int(options.index)
             except ValueError:
                 pass
+        # specify modifiers, optionally joined by plus signs
+        if options.modifiers:
+            options.modifiers = options.modifiers.split("+")
+        else:
+            options.modifiers = []
     elif options.command == "refresh":
         # refresh all
         # ALL_DEPRECATION
@@ -352,12 +357,6 @@ def command_parser():
         parser.exit()
     elif not options.command:
         parser.error("too few arguments")
-
-    # specify modifiers, optionally joined by plus signs
-    if options.modifiers:
-        options.modifiers = options.modifiers.split("+")
-    else:
-        options.modifiers = []
 
     # ALIAS_DEPRECATION
     alias = options.command in buttons
