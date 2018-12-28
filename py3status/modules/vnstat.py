@@ -45,6 +45,7 @@ SAMPLE OUTPUT
 
 from __future__ import division  # python2 compatibility
 STRING_NOT_INSTALLED = 'not installed'
+STRING_INVALID_TYPE = "invalid statistics_type"
 
 
 class Py3status:
@@ -71,7 +72,9 @@ class Py3status:
         """
         if not self.py3.check_commands('vnstat'):
             raise Exception(STRING_NOT_INSTALLED)
-
+        elif self.statistics_type not in ["d", "m"]:
+            raise Exception(STRING_INVALID_TYPE)
+        self.slice = slice(*(3, 6) if self.statistics_type == "d" else (8, 11))
         self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
         # list of units, first one - value/initial_multi, second - value/1024,
         # third - value/1024^2, etc...
@@ -87,19 +90,11 @@ class Py3status:
                 break
         return self.value_format.format(value=value, unit=unit)
 
-    def vntstat(self):
-        def filter_stat():
-            # Get statistics in list of lists of words
-            out = self.py3.command_output(["vnstat", "--exportdb"]).splitlines()
-            for x in out:
-                if x.startswith("{};0;".format(self.statistics_type)):
-                    return x
-        type, number, ts, rxm, txm, rxk, txk, fill = filter_stat().split(";")
+    def vnstat(self):
+        vnstat_data = self.py3.command_output("vnstat --oneline b")
+        values = vnstat_data.splitlines()[0].split(';')[self.slice]
+        stat = dict(zip(["down", "up", "total"], map(int, values)))
         response = {'cached_until': self.py3.time_in(self.cache_timeout)}
-
-        up = (int(txm) * 1024 + int(txk)) * 1024
-        down = (int(rxm) * 1024 + int(rxk)) * 1024
-        stat = {"up": up, "down": down, "total": up + down}
 
         keys = list(self.coloring.keys())
         keys.sort()

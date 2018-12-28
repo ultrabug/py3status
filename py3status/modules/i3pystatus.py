@@ -2,22 +2,28 @@
 """
 Support i3pystatus modules in py3status.
 
-[i3pystatus](https://github.com/enkore/i3pystatus) is an alternative to
-py3status and provides a variety of modules.  This py3status module allows
+i3pystatus, https://github.com/enkore/i3pystatus, is an alternative to
+py3status and provides a variety of modules. This py3status module allows
 these modules to run and be display inside py3status.
 
-The modules parameters are provided as such
+Configuration parameters:
+    module: specifiy i3pystatus module to use (default None)
+
+Requires:
+    i3pystatus: i3status replacement written in python
+
+@author tobes
+
+Examples:
 ```
+# the modules parameters are provided as such
 i3pystatus clock {
     module = 'clock'
     format = [ ('%a %b %-d %b %X', 'America/New_York'), ('%X', 'Etc/GMT+9') ]
 }
-```
 
-if backend(s) are provided they should be given as a dict with the key being
-the backend name and the value being a dict of the backend settings
-
-```
+# if backend(s) are provided they should be given as a dict with the key being
+# the backend name and the value being a dict of the backend settings
 i3pystatus weather {
     module = 'weather'
     format = '{condition} {current_temp}{temp_unit}[ {icon}]'
@@ -29,26 +35,16 @@ i3pystatus weather {
         }
     }
 }
-```
 
-backends that have no configuration should be defined as shown here
-
-```
+# backends that have no configuration should be defined as shown here
 i3pystatus updates{
     module = 'updates'
     backends = {'dnf.Dnf': {}}
 }
 ```
 
-Configuration parameters:
-    module: name of the i3pystatus module (default None)
-
-    (additional parameters as per the i3pystatus module)
-
-Requires:
-    i3pystatus: i3status replacement written in python
-
-@author tobes
+SAMPLE OUTPUT
+{'full_text': 'i3pystatus module'}
 """
 
 import os
@@ -208,7 +204,7 @@ SKIP_ATTRS = [
 class Py3status:
     """
     """
-
+    # available configuration parameters
     module = None
 
     def post_config_hook(self):

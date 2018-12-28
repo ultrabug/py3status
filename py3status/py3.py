@@ -40,7 +40,7 @@ class ModuleErrorException(Exception):
     """
 
     def __init__(self, msg, timeout):
-        self.msg = msg
+        self.msg = msg if msg else "unknown error"
         self.timeout = timeout
 
 
@@ -80,7 +80,7 @@ class Py3:
 
     CACHE_FOREVER = PY3_CACHE_FOREVER
     """
-    Special constant that when returned for ``cache_until`` will cause the
+    Special constant that when returned for ``cached_until`` will cause the
     module to not update unless externally triggered.
     """
 
@@ -522,9 +522,7 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(
-        self, msg, level="info", rate_limit=5, title="py3status", icon=None
-    ):
+    def notify_user(self, msg, level="info", rate_limit=5, title=None, icon=None):
         """
         Send a notification to the user.
         level must be 'info', 'error' or 'warning'.
@@ -532,9 +530,12 @@ class Py3:
         should not be repeated.
         icon must be an icon path or icon name.
         """
+        module_name = self._module.module_full_name
         if isinstance(msg, Composite):
             msg = msg.text()
-        if isinstance(title, Composite):
+        if title is None:
+            title = "py3status: {}".format(module_name)
+        elif isinstance(title, Composite):
             title = title.text()
         # force unicode for python2 str
         if self._is_python_2:
@@ -543,7 +544,6 @@ class Py3:
             if isinstance(title, str):
                 title = title.decode("utf-8")
         if msg:
-            module_name = self._module.module_full_name
             self._py3_wrapper.notify_user(
                 msg=msg,
                 level=level,
@@ -769,7 +769,7 @@ class Py3:
     def safe_format(
         self, format_string, param_dict=None, force_composite=False, attr_getter=None
     ):
-        """
+        r"""
         Parser for advanced formatting.
 
         Unknown placeholders will be shown in the output eg ``{foo}``.

@@ -4,11 +4,19 @@ Display status of a service on your system.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
-    format: display format for this module (default '{unit}: {status}')
+    format: display format for this module (default '\?if=!hide {unit}: {status}')
+    hide_extension: suppress extension of the systemd unit (default False)
+    hide_if_default: suppress the output if the systemd unit is in default state
+        'off' the output is never suppressed
+        'on' the output is suppressed if the unit is (enabled and active)
+                                                  or (disabled and inactive)
+        'active' the output is suppressed if the unit is active
+        'inactive' the output is suppressed if the unit is inactive
+        (default 'off')
     unit: specify the systemd unit to use (default 'dbus.service')
 
 Format of status string placeholders:
-    {unit} unit name, eg sshd
+    {unit} unit name, eg sshd.service
     {status} unit status, eg active, inactive, not-found
 
 Color options:
@@ -51,7 +59,9 @@ class Py3status:
     """
     # available configuration parameters
     cache_timeout = 5
-    format = '{unit}: {status}'
+    format = '\?if=!hide {unit}: {status}'
+    hide_extension = False
+    hide_if_default = 'off'
     unit = 'dbus.service'
 
     def post_config_hook(self):
@@ -62,6 +72,7 @@ class Py3status:
     def systemd(self):
         status = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')
         exists = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'LoadState')
+        state = self.systemd_unit.Get('org.freedesktop.systemd1.Unit', 'UnitFileState')
 
         if exists == 'not-found':
             color = self.py3.COLOR_DEGRADED
@@ -73,11 +84,22 @@ class Py3status:
         else:
             color = self.py3.COLOR_DEGRADED
 
+        if self.hide_if_default == 'on':
+            hide = (status == 'active' and state == 'enabled') or \
+                   (status == 'inactive' and state == 'disabled')
+        else:
+            hide = status == self.hide_if_default
+
+        if self.hide_extension and self.unit.endswith('.service'):
+            unitPrintName = self.unit[:-8]
+        else:
+            unitPrintName = self.unit
+
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'color': color,
             'full_text': self.py3.safe_format(
-                self.format, {'unit': self.unit, 'status': status})
+                self.format, {'hide': hide, 'unit': unitPrintName, 'status': status})
         }
 
 

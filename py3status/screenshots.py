@@ -36,9 +36,9 @@ SEP_BORDER = 4
 
 FONT = "DejaVuSansMono.ttf"
 
-# Pillow does poor font rendering so we are best of creating huge text and then
-# shrinking with anti-aliasing.  SCALE is how many times bigger we render the
-# test
+# Pillow does poor font rendering so we are best off creating huge text and
+# then shrinking with anti-aliasing.  SCALE is how many times bigger we render
+# the text
 SCALE = 8
 
 COLOR = "#FFFFFF"
@@ -51,6 +51,10 @@ COLOR_URGENT_BG = "#900000"
 FONT_SIZE = BAR_HEIGHT - (PADDING * 2)
 HEIGHT = TOP_BAR_HEIGHT + BAR_HEIGHT
 
+SAMPLE_DATA_ERROR = dict(
+    color="#990000", background="#FFFF00", full_text=" SAMPLE DATA ERROR "
+)
+
 # font, glyph_data want caching for performance
 font = None
 glyph_data = None
@@ -59,8 +63,8 @@ glyph_data = None
 def get_color_for_name(module_name):
     """
     Create a custom color for a given string.
-    This allows the screenshots to each have a unique color but for that color
-    to be consistent.
+    This allows the screenshots to each have a unique color but also for that
+    color to be consistent.
     """
     # all screenshots of the same module should be a uniform color
     module_name = module_name.split("-")[0]
@@ -68,8 +72,9 @@ def get_color_for_name(module_name):
     saturation = 0.5
     value = 243.2
     try:
+        # we must be bytes to allow the md5 hash to be calculated
         module_name = module_name.encode("utf-8")
-    except:  # noqa e722
+    except AttributeError:
         pass
     hue = int(md5(module_name).hexdigest(), 16) / 16 ** 32
     hue *= 6
@@ -104,7 +109,7 @@ def contains_bad_glyph(glyph_data, data):
         try:
             # for python 2
             text = text.decode("utf8")
-        except:  # noqa e722
+        except AttributeError:
             pass
 
         for char in text:
@@ -115,14 +120,14 @@ def contains_bad_glyph(glyph_data, data):
     return False
 
 
-def create_screenshot(name, data, path, font, module):
+def create_screenshot(name, data, path, font, is_module):
     """
     Create screenshot of py3status output and save to path
     """
     desktop_color = get_color_for_name(name)
 
     # if this screenshot is for a module then add modules name etc
-    if module:
+    if is_module:
         data.append(
             {"full_text": name.split("-")[0], "color": desktop_color, "separator": True}
         )
@@ -194,34 +199,13 @@ def parse_sample_data(sample_data, module_name):
     {screenshot_name: sample_output}
     """
     samples = {}
-    name = None
-    data = ""
-    count = 0
-    for line in sample_data.splitlines() + [""]:
-        if line == "":
-            if data:
-                if name:
-                    name = u"%s-%s-%s" % (module_name, count, name)
-                else:
-                    name = module_name
-                try:
-                    output = ast.literal_eval(data)
-                    samples[name] = output
-                except:  # noqa e722
-                    samples[name] = {
-                        "color": "#990000",
-                        "background": "#FFFF00",
-                        "full_text": " SAMPLE DATA ERROR ",
-                    }
-                name = None
-                data = ""
-                count += 1
-            continue
-        if name is None and data == "" and not line[0] in ["[", "{"]:
-            name = line
-            continue
-        else:
-            data += line
+    for index, chunk in enumerate(sample_data.split("\n\n")):
+        chunk = "{}-{}-{}".format(module_name, index, chunk)
+        name, sample = re.split("-?\n", chunk, 1)
+        try:
+            samples[name] = ast.literal_eval(sample)
+        except SyntaxError:
+            samples[name] = SAMPLE_DATA_ERROR
     return samples
 
 
@@ -234,9 +218,13 @@ def get_samples():
     module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
     for file in sorted(os.listdir(module_dir)):
         if file.endswith(".py") and file != "__init__.py":
+            #  remove .py
             module_name = file[:-3]
             with open(os.path.join(module_dir, file), "r") as f:
-                module = ast.parse(f.read())
+                try:
+                    module = ast.parse(f.read())
+                except SyntaxError:
+                    continue
                 raw_docstring = ast.get_docstring(module)
                 if raw_docstring is None:
                     continue
@@ -248,14 +236,12 @@ def get_samples():
     return samples
 
 
-def process(name, data, module=True):
+def process(name, path, data, module=True):
     """
     Process data to create a screenshot which will be saved in
     docs/screenshots/<name>.png
     If module is True the screenshot will include the name and py3status.
     """
-
-    path = "../doc/screenshots"
     # create dir if not exists
     try:
         os.makedirs(path)
@@ -275,7 +261,7 @@ def process(name, data, module=True):
     if contains_bad_glyph(glyph_data, data):
         print("** %s has characters not in %s **" % (name, font.getname()[0]))
     else:
-        create_screenshot(name, data, path, font=font, module=module)
+        create_screenshot(name, data, path, font=font, is_module=module)
 
 
 def create_screenshots(quiet=False):
@@ -284,11 +270,17 @@ def create_screenshots(quiet=False):
     The screenshots directory will have all .png files deleted before new shots
     are created.
     """
+    if os.environ.get('READTHEDOCS') == 'True':
+        path = "../doc/screenshots"
+    else:
+        path = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "doc/screenshots"
+        )
 
     print("Creating screenshots...")
     samples = get_samples()
     for name, data in sorted(samples.items()):
-        process(name, data)
+        process(name, path, data)
 
 
 if __name__ == "__main__":

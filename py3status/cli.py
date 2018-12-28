@@ -19,8 +19,10 @@ def parse_cli():
         "{}/i3status/config".format(
             os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
         ),
-        "/etc/i3status.conf",
+        "{}/.config/i3/i3status.conf".format(home_path),
+        "{}/.i3/i3status.conf".format(home_path),
         "{}/i3status/config".format(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")),
+        "/etc/i3status.conf",
     ]
     for fn in i3status_config_file_candidates:
         if os.path.isfile(fn):
@@ -31,34 +33,40 @@ def parse_cli():
         # to ~/.i3/i3status.conf
         i3status_config_file_default = "{}/.i3/i3status.conf".format(home_path)
 
+    class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+        def _format_action_invocation(self, action):
+            metavar = self._format_args(action, action.dest.upper())
+            return "{} {}".format(", ".join(action.option_strings), metavar)
+
     # command line options
     parser = argparse.ArgumentParser(
-        description="The agile, python-powered, i3status wrapper"
+        add_help=True,
+        description="The agile, python-powered, i3status wrapper",
+        formatter_class=HelpFormatter,
     )
-    parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument(
         "-b",
         "--dbus-notify",
         action="store_true",
         default=False,
         dest="dbus_notify",
-        help=(
-            "use notify-send to send user notifications "
-            "rather than i3-nagbar, "
-            "requires a notification daemon eg dunst"
-        ),
+        help="send notifications via dbus instead of i3-nagbar",
     )
     parser.add_argument(
         "-c",
         "--config",
         action="store",
-        dest="i3status_conf",
-        type=str,
         default=i3status_config_file_default,
-        help="path to i3status config file",
+        dest="i3status_conf",
+        help="load config (default %(default)s)",
+        metavar="FILE",
+        type=str,
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="be verbose in syslog"
+        "-d",
+        "--debug",
+        action="store_true",
+        help="enable debug logging in syslog and --log-file",
     )
     parser.add_argument(
         "-g",
@@ -66,57 +74,55 @@ def parse_cli():
         action="store_true",
         default=False,
         dest="gevent",
-        help="enable gevent monkey patching (default False)",
+        help="enable gevent monkey patching",
     )
     parser.add_argument(
         "-i",
         "--include",
         action="append",
         dest="include_paths",
-        help=(
-            "include user-written modules from those "
-            "directories (default ~/.i3/py3status)"
-        ),
+        help="append additional user-defined module paths",
+        metavar="PATH",
     )
     parser.add_argument(
         "-l",
         "--log-file",
         action="store",
-        dest="log_file",
-        type=str,
         default=None,
-        help="path to py3status log file",
+        dest="log_file",
+        help="enable logging to FILE",
+        metavar="FILE",
+        type=str,
     )
     parser.add_argument(
         "-n",
         "--interval",
         action="store",
-        dest="interval",
-        type=float,
         default=1,
-        help="update interval in seconds (default 1 sec)",
+        dest="interval",
+        help="refresh interval in seconds for py3status",
+        metavar="INT",
+        type=float,
     )
     parser.add_argument(
-        "-s",
-        "--standalone",
-        action="store_true",
-        help="standalone mode, do not use i3status",
+        "-s", "--standalone", action="store_true", help="run py3status without i3status"
     )
     parser.add_argument(
         "-t",
         "--timeout",
         action="store",
-        dest="cache_timeout",
-        type=int,
         default=60,
-        help="default injection cache timeout in seconds (default 60 sec)",
+        dest="cache_timeout",
+        help="default module cache timeout in seconds",
+        metavar="INT",
+        type=int,
     )
     parser.add_argument(
         "-m",
         "--disable-click-events",
         action="store_true",
-        dest="disable_click_events",
         default=False,
+        dest="disable_click_events",
         help="disable all click events",
     )
     parser.add_argument(

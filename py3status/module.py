@@ -7,6 +7,7 @@ from time import time
 from random import randint
 
 from py3status.composite import Composite
+from py3status.constants import POSITIONS
 from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
@@ -311,26 +312,42 @@ class Module:
         self.py3_module_options = {}
         mod_config = self.config["py3_config"].get(module, {})
 
+        if "min_length" in mod_config:
+            min_length = mod_config["min_length"]
+            if not isinstance(min_length, int):
+                err = 'invalid "min_length" attribute should be an int'
+                raise TypeError(err)
+
+            self.py3_module_options["min_length"] = min_length
+            self.random_int = randint(0, 1)
+
+            if "position" in mod_config:
+                position = mod_config["position"]
+                if not (
+                    isinstance(position, basestring) and position.lower() in POSITIONS
+                ):
+                    err = 'invalid "position" attribute, valid values are: '
+                    err += ", ".join(POSITIONS)
+                    raise ValueError(err)
+
+                self.py3_module_options["position"] = position
+
         if "min_width" in mod_config:
             min_width = mod_config["min_width"]
             if not isinstance(min_width, int):
                 err = 'invalid "min_width" attribute should be an int'
                 raise TypeError(err)
 
-            self.py3_module_options["min_width"] = min_width
-            self.random_int = randint(0, 1)
+            self.i3s_module_options["min_width"] = min_width
 
             if "align" in mod_config:
                 align = mod_config["align"]
-                if not (
-                    isinstance(align, basestring)
-                    and align.lower() in ("left", "center", "right")
-                ):
-                    err = 'invalid "align" attribute, valid values are:'
-                    err += " left, center, right"
+                if not (isinstance(align, basestring) and align.lower() in POSITIONS):
+                    err = 'invalid "align" attribute, valid values are: '
+                    err += ", ".join(POSITIONS)
                     raise ValueError(err)
 
-                self.py3_module_options["align"] = align
+                self.i3s_module_options["align"] = align
 
         if "separator" in mod_config:
             separator = mod_config["separator"]
@@ -348,6 +365,13 @@ class Module:
                 raise TypeError(err)
 
             self.i3s_module_options["separator_block_width"] = sep_block_width
+
+        # if markup is set on the module or globally we add it to the module
+        # output for pango support
+        fn = self._py3_wrapper.get_config_attribute
+        param = fn(self.module_full_name, "markup")
+        if not hasattr(param, "none_setting"):
+            self.i3s_module_options["markup"] = param
 
     def process_composite(self, response):
         """
@@ -409,31 +433,31 @@ class Module:
             elif urgent and "urgent" not in item:
                 item["urgent"] = urgent
 
-        # set min_width
-        if "min_width" in self.py3_module_options:
-            min_width = self.py3_module_options["min_width"]
+        # set min_length
+        if "min_length" in self.py3_module_options:
+            min_length = self.py3_module_options["min_length"]
 
-            # get width, skip if width exceeds min_width
-            width = sum([len(x["full_text"]) for x in response["composite"]])
-            if width >= min_width:
+            # get length, skip if length exceeds min_length
+            length = sum([len(x["full_text"]) for x in response["composite"]])
+            if length >= min_length:
                 return
 
-            # sometimes when we go under min_width to pad both side evenly,
-            # we will add extra space on either side to honor min_width
-            padding = int((min_width / 2.0) - (width / 2.0))
-            offset = min_width - ((padding * 2) + width)
+            # sometimes we go under min_length to pad both side evenly,
+            # we will add extra space on either side to honor min_length
+            padding = int((min_length / 2.0) - (length / 2.0))
+            offset = min_length - ((padding * 2) + length)
 
-            # set align
-            align = self.py3_module_options.get("align", "left")
-            if align == "center":
+            # set position
+            position = self.py3_module_options.get("position", "left")
+            if position == "center":
                 left = right = " " * padding
                 if self.random_int:
                     left += " " * offset
                 else:
                     right += " " * offset
-            elif align == "left":
+            elif position == "left":
                 left, right = "", " " * (padding * 2 + offset)
-            elif align == "right":
+            elif position == "right":
                 right, left = "", " " * (padding * 2 + offset)
 
             # padding
@@ -649,6 +673,13 @@ class Module:
             # Add the py3 module helper if modules self.py3 is not defined
             if not hasattr(self.module_class, "py3"):
                 setattr(self.module_class, "py3", Py3(self))
+
+            # Subscribe to udev events if on_udev_* dynamic variables are
+            # configured on the module
+            for param in dir(self.module_class):
+                if param.startswith("on_udev_"):
+                    trigger_action = getattr(self.module_class, param)
+                    self.add_udev_trigger(trigger_action, param[8:])
 
             # allow_urgent
             # get the value form the config or use the module default if
@@ -901,3 +932,12 @@ class Module:
             except Exception:
                 # this would be stupid to die on exit
                 pass
+
+    def add_udev_trigger(self, trigger_action, subsystem):
+        """
+        Subscribe to the requested udev subsystem and apply the given action.
+        """
+        if self._py3_wrapper.udev_monitor.subscribe(self, trigger_action, subsystem):
+            if trigger_action == "refresh_and_freeze":
+                # FIXME: we may want to disable refresh instead of using cache_timeout
+                self.module_class.cache_timeout = PY3_CACHE_FOREVER
