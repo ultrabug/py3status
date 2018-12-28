@@ -38,6 +38,7 @@ from time import sleep
 from ssl import create_default_context
 from socket import error as socket_error
 STRING_UNAVAILABLE = 'N/A'
+NO_DATA_YET = -1
 
 
 class Py3status:
@@ -77,7 +78,7 @@ class Py3status:
 
     def post_config_hook(self):
         # class variables:
-        self.mail_count = None
+        self.mail_count = NO_DATA_YET
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
         self.command_tag = 0  # IMAPcommands are tagged, so responses can be matched up to requests
@@ -103,19 +104,19 @@ class Py3status:
             self.mail_error = None
 
         # II -- format response
+        response['full_text'] = self.py3.safe_format(self.format, {'unseen': self.mail_count})
+
         if self.mail_count is None:
             response['color'] = self.py3.COLOR_BAD,
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': STRING_UNAVAILABLE})
+        elif self.mail_count == NO_DATA_YET:
+            response['full_text'] = ''
+        elif self.mail_count == 0 and self.hide_if_zero:
+            response['full_text'] = ''
         elif self.mail_count > 0:
             response['color'] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
-            if self.allow_urgent:
-                response['urgent'] = True
-
-        if self.mail_count == 0 and self.hide_if_zero:
-            response['full_text'] = ''
-        else:
-            response['full_text'] = self.py3.safe_format(self.format, {'unseen': self.mail_count})
+            response['urgent'] = self.allow_urgent
 
         return response
 

@@ -22,6 +22,11 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+# extra requirements
+req_gevent = ["gevent >= 1.1"]
+req_udev = ["pyudev >= 0.21.0"]
+req_all = req_gevent + req_udev
+
 setup(
     name="py3status",
     version=version,
@@ -29,7 +34,7 @@ setup(
     author_email="ultrabug@ultrabug.net",
     description="py3status: an extensible i3status wrapper written in python",
     long_description=read("README.rst"),
-    extras_require={"gevent": ["gevent >= 1.1"]},
+    extras_require={"all": req_all, "gevent": req_gevent, "udev": req_udev},
     url="https://github.com/ultrabug/py3status",
     download_url="https://github.com/ultrabug/py3status/tags",
     license="BSD",
@@ -55,6 +60,7 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )

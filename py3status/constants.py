@@ -211,3 +211,7 @@ COLOR_NAMES = {
     "yellow": "#ffff00",
     "yellowgreen": "#9acd32",
 }
+
+ON_TRIGGER_ACTIONS = ["refresh", "refresh_and_freeze"]
+
+POSITIONS = ["left", "center", "right"]

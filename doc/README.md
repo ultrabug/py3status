@@ -726,7 +726,7 @@ class Py3status:
         return {
             'full_text': full_text,
             'color': color,
-            'cache_until': self.py3.CACHE_FOREVER
+            'cached_until': self.py3.CACHE_FOREVER
         }
 
     def on_click(self, event):
