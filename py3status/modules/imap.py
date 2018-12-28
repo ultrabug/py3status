@@ -8,7 +8,6 @@ Configuration parameters:
     criterion: status of emails to check for (default 'UNSEEN')
     debug: log warnings (default False)
     format: display format for this module (default 'Mail: {unseen}')
-    hide_if_zero: hide this module when no new mail (default False)
     mailbox: name of the mailbox to check (default 'INBOX')
     password: login password (default None)
     port: number to use (default '993')
@@ -49,8 +48,7 @@ class Py3status:
     cache_timeout = 60
     criterion = 'UNSEEN'
     debug = False
-    format = 'Mail: {unseen}'
-    hide_if_zero = False
+    format = '[\?not_zero Mail: {unseen}]'
     mailbox = 'INBOX'
     password = None
     port = '993'
@@ -111,8 +109,6 @@ class Py3status:
             response['full_text'] = self.py3.safe_format(
                 self.format, {'unseen': STRING_UNAVAILABLE})
         elif self.mail_count == NO_DATA_YET:
-            response['full_text'] = ''
-        elif self.mail_count == 0 and self.hide_if_zero:
             response['full_text'] = ''
         elif self.mail_count > 0:
             response['color'] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
