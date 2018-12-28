@@ -5,9 +5,9 @@ Perform a bandwidth test with speedtest-cli.
 Configuration parameters:
     button_share: mouse button to share an URL (default None)
     format: display format for this module
-        *(default "Speedtest[\?if=elapsed&color=elapsed_time  "
-        "{elapsed_time} s][ [\?color=download {download} Mbps] "
-        "[\?color=upload {upload} Mbps]]")*
+        *(default "speedtest[\?if=elapsed&color=elapsed_time  "
+        "{elapsed_time} s][ [\?color=download {download}Mbps] "
+        "[\?color=upload {upload}Mbps]]")*
     thresholds: specify color thresholds to use
         *(default {"upload": [(0, "violet")], "ping": [(0, "#fff381")],
         "download": [(0, "cyan")], "elapsed_time": [(0, "#1cbfff")]})*
@@ -58,25 +58,25 @@ Examples:
 ```
 # show detailed elapsed_time|download/upload
 speedtest {
-    format = "Speedtest[\?soft  ][\?if=elapsed [\?color=darkgray [time "
+    format = "speedtest[\?soft  ][\?if=elapsed [\?color=darkgray [time "
     format += "[\?color=elapsed_time {elapsed_time} s]]]|[\?color=darkgray "
     # format += "ping [\?color=ping {ping} ms] "
-    format += "download [\?color=download {download} Mbps] "
-    format += "upload [\?color=upload {upload} Mbps]]]"
+    format += "download [\?color=download {download}Mbps] "
+    format += "upload [\?color=upload {upload}Mbps]]]"
 }
 
 # show everything
 speedtest {
-    format = "Speedtest[\?soft  ][\?color=darkgray "
+    format = "speedtest[\?soft  ][\?color=darkgray "
     format += "[time [\?color=elapsed_time {elapsed_time} s]][\?soft  ]"
     format += "[ping [\?color=ping {ping} ms] "
-    format += "download [\?color=download {download} Mbps] "
-    format += "upload [\?color=upload {upload} Mbps]]]"
+    format += "download [\?color=download {download}Mbps] "
+    format += "upload [\?color=upload {upload}Mbps]]]"
 }
 
 # minimal
 speedtest {
-    format = "Speedtest[\?soft  ][\?if=elapsed "
+    format = "speedtest[\?soft  ][\?if=elapsed "
     format += "[\?color=elapsed_time {elapsed_time}]|"
     # format += "[\?color=ping {ping}] "
     format += "[[\?color=download {download}] [\?color=upload {upload}]]]"
@@ -84,16 +84,16 @@ speedtest {
 
 # don't hide data on reset
 speedtest {
-    format = "Speedtest[\?soft  ][\?color=darkgray time "
+    format = "speedtest[\?soft  ][\?color=darkgray time "
     format += "[\?color=elapsed_time {elapsed_time} s] "
     # format += "ping [\?color=ping {ping} ms] "
-    format += "download [\?color=download {download} Mbps] "
-    format += "upload [\?color=upload {upload} Mbps]]"
+    format += "download [\?color=download {download}Mbps] "
+    format += "upload [\?color=upload {upload}Mbps]]"
 }
 
 # don't hide data on reset, minimal
 speedtest {
-    format = "Speedtest[\?soft  ][[\?color=elapsed_time {elapsed_time}] "
+    format = "speedtest[\?soft  ][[\?color=elapsed_time {elapsed_time}] "
     # format += "[\?color=ping {ping}] "
     format += "[\?color=download {download}] [\?color=upload {upload}]]"
 }
@@ -101,14 +101,14 @@ speedtest {
 SAMPLE OUTPUT
 bandwidth
 [
-    {"full_text": "Speedtest "},
-    {"full_text": "19.76 Mbps ", "color": "#00ffff"},
-    {"full_text": "3.86 Mbps", "color": "#ee82ee"},
+    {"full_text": "speedtest "},
+    {"full_text": "19.76Mbps ", "color": "#00ffff"},
+    {"full_text": "3.86Mbps", "color": "#ee82ee"},
 ]
 
 time+ping
 [
-    {"full_text": "Speedtest "},
+    {"full_text": "speedtest "},
     {"full_text": "time ", "color": "#a9a9a9"},
     {"full_text": "24.65 s ", "color": "#1cbfff"},
     {"full_text": "ping ", "color": "#a9a9a9"},
@@ -117,11 +117,11 @@ time+ping
 
 details
 [
-    {"full_text": "Speedtest "},
+    {"full_text": "speedtest "},
     {"full_text": "download ", "color": "#a9a9a9"},
-    {"full_text": "18.2 Mbps ", "color": "#00ffff"},
+    {"full_text": "18.2Mbps ", "color": "#00ffff"},
     {"full_text": "upload ", "color": "#a9a9a9"},
-    {"full_text": "19.2 Mbps", "color": "#ee82ee"},
+    {"full_text": "19.2Mbps", "color": "#ee82ee"},
 ]
 """
 
@@ -139,31 +139,31 @@ class Py3status:
     # available configuration parameters
     button_share = None
     format = (
-        "Speedtest[\?if=elapsed&color=elapsed_time  "
-        "{elapsed_time} s][ [\?color=download {download} Mbps] "
-        "[\?color=upload {upload} Mbps]]"
+        "speedtest[\?if=elapsed&color=elapsed_time  "
+        "{elapsed_time}s][ [\?color=download ↓{download}Mbps] "
+        "[\?color=upload ↑{upload}Mbps]]"
     )
     thresholds = {
-        "upload": [(0, "violet")],
-        "ping": [(0, "#fff381")],
         "download": [(0, "cyan")],
         "elapsed_time": [(0, "#1cbfff")],
+        "ping": [(0, "#fff381")],
+        "upload": [(0, "violet")],
     }
 
     class Meta:
         update_config = {
             "update_placeholder_format": [
                 {
-                    "placeholder_formats": {
-                        "bytes_sent": ":.2f",
-                        "bytes_received": ":.2f",
-                        "download": ":.2f",
-                        "upload": ":.2f",
-                        "ping": ":.2f",
-                        "elapsed_time": ":.2f",
-                        "server_d": ":.2f",
-                    },
                     "format_strings": ["format"],
+                    "placeholder_formats": {
+                        "bytes_received": ":.2f",
+                        "bytes_sent": ":.2f",
+                        "download": ":.2f",
+                        "elapsed_time": ":.2f",
+                        "ping": ":.2f",
+                        "server_d": ":.2f",
+                        "upload": ":.2f",
+                    },
                 }
             ]
         }
@@ -202,8 +202,7 @@ class Py3status:
 
         try:
             self.speedtest_data = self.py3.flatten_dict(
-                loads(self.py3.command_output(self.speedtest_command)),
-                delimiter="_"
+                loads(self.py3.command_output(self.speedtest_command)), delimiter="_"
             )
             for x in ["download", "upload", "bytes_received", "bytes_sent"]:
                 if x not in self.placeholders or x not in self.speedtest_data:
@@ -234,9 +233,7 @@ class Py3status:
 
         return {
             "cached_until": self.py3.time_in(cached_until),
-            "full_text": self.py3.safe_format(
-                self.format, self.speedtest_data
-            )
+            "full_text": self.py3.safe_format(self.format, self.speedtest_data),
         }
 
     def on_click(self, event):
