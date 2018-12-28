@@ -27,6 +27,24 @@ Format placeholders:
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
+IMAP Subscriptions:
+    You can specify a list of filters to decide what to subscribe.
+    By default, we subscribe only to INBOX folder (ie: `'filter': ['INBOX']`).
+    It is also possible to use regular expressions to subscribe to folders.
+    If you use multiple regular expressions they are combined by a logical `or`.
+    So if you use `.*` to subscribe to all folders you won't be able to remove one.
+
+    `'pattern'` will match a folder `pattern`.
+    `[Pp]attern` will match folders `pattern` and `Pattern`.
+    `.*` will match all folders.
+    `^pattern` will match folders beginning with `pattern`.
+    `pattern$` will match folders ending with `pattern`.
+    `^((?![Ss][Pp][Aa][Mm]).)*$` will exclude every possible case of folders
+        with spam in name and subscribe to all other folders.
+
+    For more documentation, see https://docs.python.org/3/library/re.html
+    and/or any regex builder on the web.
+
 Examples:
 ```
 # add multiple accounts
