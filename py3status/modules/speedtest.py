@@ -6,8 +6,8 @@ Configuration parameters:
     button_share: mouse button to share an URL (default None)
     format: display format for this module
         *(default "speedtest[\?if=elapsed&color=elapsed_time  "
-        "{elapsed_time} s][ [\?color=download {download}Mbps] "
-        "[\?color=upload {upload}Mbps]]")*
+        "{elapsed_time}s][ [\?color=download ↓{download}Mbps] "
+        "[\?color=upload ↑{upload}Mbps]]")*
     thresholds: specify color thresholds to use
         *(default {"upload": [(0, "violet")], "ping": [(0, "#fff381")],
         "download": [(0, "cyan")], "elapsed_time": [(0, "#1cbfff")]})*
@@ -139,9 +139,9 @@ class Py3status:
     # available configuration parameters
     button_share = None
     format = (
-        "speedtest[\?if=elapsed&color=elapsed_time  "
-        "{elapsed_time}s][ [\?color=download ↓{download}Mbps] "
-        "[\?color=upload ↑{upload}Mbps]]"
+        u"speedtest[\?if=elapsed&color=elapsed_time  "
+        u"{elapsed_time}s][ [\?color=download ↓{download}Mbps] "
+        u"[\?color=upload ↑{upload}Mbps]]"
     )
     thresholds = {
         "download": [(0, "cyan")],
