@@ -26,7 +26,9 @@ IGNORE_ILLEGAL_CONFIG_OPTIONS = [("group", "align")]
 
 # Ignored items will not have their default values checked or be included for
 # alphabetical order purposes
-IGNORE_ITEM = []
+IGNORE_ITEM = [
+    ('usbguard', 'format_notification_message')  # newlines breaks docstring
+]
 
 # Obsolete parameters will not have alphabetical order checked
 OBSOLETE_PARAM = []
