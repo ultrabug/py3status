@@ -17,6 +17,7 @@ Format placeholders:
     {dnf}     number of updates, eg 0 .. Fedora
     {eopkg}   number of updates, eg 0 .. Solus
     {flatpak} number of updates, eg 0 .. Flatpak
+    {gem}     number of updates, eg 0 .. Ruby Programs and Libaries
     {pacman}  number of updates, eg 0 .. Arch Linux
     {pakku}   number of updates, eg 0 .. Arch Linux (AUR)
     {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
@@ -32,7 +33,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, pakku, pikaur, pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, flatpak, gem, pakku, pikaur, pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -219,6 +220,7 @@ class Py3status:
                 ]
             others = [
                 ("Flatpak", "flatpak remote-ls --updates --all"),
+                ("Gem", "gem outdated --quiet"),
                 ("Snappy", "snap refresh --list --color=never"),
             ]
 
