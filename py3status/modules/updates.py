@@ -24,6 +24,7 @@ Format placeholders:
     {pakku}    number of updates, eg 0 .. Arch Linux (AUR)
     {pikaur}   number of updates, eg 0 .. Arch Linux (AUR)
     {pip}      number of updates, eg 0 .. Pip Installs Packages (Python)
+    {pkcon}    number of updates, eg 0 .. PackageKit
     {pkg}      number of updates, eg 0 .. FreeBSD          [NOT TESTED]
     {snappy}   number of updates, eg 0 .. Snappy
     {trizen}   number of updates, eg 0 .. Arch Linux (AUR)
@@ -36,7 +37,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkcon pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -156,6 +157,15 @@ class Pip(Update):
         return len(output.splitlines()[2:])
 
 
+class Pkcon(Update):
+    def get_output(self):
+        try:
+            output = self.parent.py3.command_output(self.command)
+        except self.parent.py3.CommandError:
+            return ""
+        return output.partition("Results:\n")[-1]
+
+
 class Trizen(Update):
     def get_output(self):
         try:
@@ -237,6 +247,7 @@ class Py3status:
                 ("LuaRocks", "luarocks list --outdated --porcelain"),
                 ("Npm", "npm outdated"),
                 ("Pip", "pip list --outdated --no-color"),
+                ("Pkcon", "pkcon get-updates --plain"),
                 ("Snappy", "snap refresh --list --color=never"),
             ]
 
