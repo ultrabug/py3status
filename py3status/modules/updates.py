@@ -10,32 +10,33 @@ Configuration parameters:
         (10, 'degraded'), (20, 'orange'), (30, 'bad')])*
 
 Format placeholders:
-    {update}  number of updates, eg 0
-    {apk}     number of updates, eg 0 .. Alpine Linux     [NOT TESTED]
-    {apt}     number of updates, eg 0 .. Debian, Ubuntu
-    {auracle} number of updates, eg 0 .. Arch Linux (AUR)
-    {dnf}     number of updates, eg 0 .. Fedora
-    {eopkg}   number of updates, eg 0 .. Solus
-    {flatpak} number of updates, eg 0 .. Flatpak
-    {gem}     number of updates, eg 0 .. Ruby Programs and Libaries
-    {npm}     number of updates, eg 0 .. Node.js Package Manager (JavaScript)
-    {pacman}  number of updates, eg 0 .. Arch Linux
-    {pakku}   number of updates, eg 0 .. Arch Linux (AUR)
-    {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
-    {pip}     number of updates, eg 0 .. Pip Installs Packages (Python)
-    {pkg}     number of updates, eg 0 .. FreeBSD          [NOT TESTED]
-    {snappy}  number of updates, eg 0 .. Snappy
-    {trizen}  number of updates, eg 0 .. Arch Linux (AUR)
-    {xbps}    number of updates, eg 0 .. Void Linux       [NOT TESTED]
-    {yay}     number of updates, eg 0 .. Arch Linux (AUR)
-    {zypper}  number of updates, eg 0 .. openSUSE         [NOT TESTED]
+    {update}   number of updates, eg 0
+    {apk}      number of updates, eg 0 .. Alpine Linux     [NOT TESTED]
+    {apt}      number of updates, eg 0 .. Debian, Ubuntu
+    {auracle}  number of updates, eg 0 .. Arch Linux (AUR)
+    {dnf}      number of updates, eg 0 .. Fedora
+    {eopkg}    number of updates, eg 0 .. Solus
+    {flatpak}  number of updates, eg 0 .. Flatpak
+    {gem}      number of updates, eg 0 .. Ruby Programs and Libaries
+    {luarocks} number of updates, eg 0 .. Lua Package Manager
+    {npm}      number of updates, eg 0 .. Node.js Package Manager (JavaScript)
+    {pacman}   number of updates, eg 0 .. Arch Linux
+    {pakku}    number of updates, eg 0 .. Arch Linux (AUR)
+    {pikaur}   number of updates, eg 0 .. Arch Linux (AUR)
+    {pip}      number of updates, eg 0 .. Pip Installs Packages (Python)
+    {pkg}      number of updates, eg 0 .. FreeBSD          [NOT TESTED]
+    {snappy}   number of updates, eg 0 .. Snappy
+    {trizen}   number of updates, eg 0 .. Arch Linux (AUR)
+    {xbps}     number of updates, eg 0 .. Void Linux       [NOT TESTED]
+    {yay}      number of updates, eg 0 .. Arch Linux (AUR)
+    {zypper}   number of updates, eg 0 .. openSUSE         [NOT TESTED]
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, gem, npm, pakku, pikaur, pip, pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -233,6 +234,7 @@ class Py3status:
             others = [
                 ("Flatpak", "flatpak remote-ls --updates --all"),
                 ("Gem", "gem outdated --quiet"),
+                ("LuaRocks", "luarocks list --outdated --porcelain"),
                 ("Npm", "npm outdated"),
                 ("Pip", "pip list --outdated --no-color"),
                 ("Snappy", "snap refresh --list --color=never"),
