@@ -21,6 +21,7 @@ Format placeholders:
     {pacman}  number of updates, eg 0 .. Arch Linux
     {pakku}   number of updates, eg 0 .. Arch Linux (AUR)
     {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
+    {pip}     number of updates, eg 0 .. Pip Installs Packages (Python)
     {pkg}     number of updates, eg 0 .. FreeBSD          [NOT TESTED]
     {snappy}  number of updates, eg 0 .. Snappy
     {trizen}  number of updates, eg 0 .. Arch Linux (AUR)
@@ -33,7 +34,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, gem, pakku, pikaur, pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, flatpak, gem, pakku, pikaur, pip, pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -143,6 +144,11 @@ class Pakku(Update):
         return len([x for x in output.splitlines() if x == "aur"])
 
 
+class Pip(Update):
+    def count_updates(self, output):
+        return len(output.splitlines()[2:])
+
+
 class Trizen(Update):
     def get_output(self):
         try:
@@ -221,6 +227,7 @@ class Py3status:
             others = [
                 ("Flatpak", "flatpak remote-ls --updates --all"),
                 ("Gem", "gem outdated --quiet"),
+                ("Pip", "pip list --outdated --no-color"),
                 ("Snappy", "snap refresh --list --color=never"),
             ]
 
