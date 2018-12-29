@@ -36,7 +36,7 @@ Color options for `auto.input` threshold:
     color_min: minimum value (color lightgreen)
     color_excl_input: input value excluded from threshold (color None)
     color_input: input value (color lime)
-    color_near_max: input value near maximum value (color degraded)
+    color_near_max: input value near maximum value (color yellow)
     color_max: maximum value (color orange)
     color_near_crit: input value near critical value (color lightcoral)
     color_crit: critical value (color red)
@@ -49,8 +49,8 @@ Color thresholds:
 
 Requires:
     lm_sensors: a tool to read temperature/voltage/fan sensors
-    sensors-detect: see `man sensors-detect # --auto` to read about accepting
-        defaults and/or to compile a list of kernel modules for the sensors
+    sensors-detect: see `man sensors-detect # --auto` to read about
+        using defaults or to compile a list of kernel modules
 
 Examples:
 ```
@@ -71,22 +71,6 @@ Examples:
       temp3_crit: 91.000          #       ├── {crit}
       temp3_crit_alarm: 0.000     #       └── {crit_alarm}
                                   # ──────────────────────────────────────
-    nouveau-pci-0100              # chip {name}         # chip: nouveau*
-    Adapter: PCI adapter          #  ├── {adapter} type
-    ----                          #  │------------------------------------
-    GPU core:                     #  ├── sensor {name}  # sensor: gpu_core
-      in0_input: 0.600            #  │    ├── {input}
-      in0_min: 0.600              #  │    ├── {min}
-      in0_max: 1.200              #  │    └── {max}
-    temp1:                        #  └── sensor {name}  # sensor: temp1
-      temp1_input: -0.019         #       ├── {input}
-      temp1_max: 95.000           #       ├── {max}
-      temp1_max_hyst: 3.000       #       ├── {max_hyst}
-      temp1_crit: 105.000         #       ├── {crit}
-      temp1_crit_hyst: 5.000      #       ├── {crit_hyst}
-      temp1_emergency: 135.000    #       ├── {emergency}
-      temp1_emergency_hyst: 5.000 #       └── {emergency_hyst}
-                                  # ──────────────────────────────────────
     k10temp-pci-00c3              # chip {name}         # chip: k10temp*
     Adapter: PCI adapter          #  ├── {adapter} type
     ----                          #  │------------------------------------
@@ -102,20 +86,13 @@ Examples:
 
     Solid lines denotes chips. Dashed lines denotes sensors.
     Sensor names are lowercased and its spaces replaced with underscores.
-    The numbered prefixes, eg `temp1_*` are removed to keep things clean.
+    The numbered prefixes, eg `temp1_*` are removed to keep names clean.
 
 # specify chips to use
 lm_sensors {
     chips = ['coretemp-isa-0000']  # full
         OR
     chips = ['coretemp*']  # fnmatch
-}
-
-# rearrange the chips
-lm_sensors {
-    chips = ['coretemp-isa-0000', 'nouveau-pci-0500']  # original
-        OR
-    chips = ['nouveau*', 'coretemp*']  # new order
 }
 
 # specify sensors to use
@@ -125,13 +102,7 @@ lm_sensors {
     sensors = ['core_*']  # fnmatch
 }
 
-# add temperature degree
-lm_sensors {
-    format_sensor = '\?color=auto.input {input}°C'
-    chips = ['coretemp*']
-}
-
-# show CPU 35°C 36°C 37°C 39°C GPU 52°C
+# show name per chip, eg CPU 35°C 36°C 37°C 39°C GPU 52°C
 lm_sensors {
     format_chip = '[\?if=name=coretemp-isa-0000 CPU]'
     format_chip += '[\?if=name=nouveau-pci-0500 GPU]'
@@ -140,49 +111,60 @@ lm_sensors {
     sensors = ['core*', 'temp*']
 }
 
-# it is not possible to set a sane default format. if you're done looking
-# at the examples, the one above may be something you want to have in your
-# config. please modify accordingly to your chips and sensors. thank you.
+# show name per sensor, eg CPU1 35°C CPU2 36°C CPU3 37°C CPU4 39°C GPU 52°C
+lm_sensors {
+    format_chip = '{format_sensor}'
+    format_sensor = '[\?if=name=core_0 CPU1 ]'
+    format_sensor += '[\?if=name=core_1 CPU2 ]'
+    format_sensor += '[\?if=name=core_2 CPU3 ]'
+    format_sensor += '[\?if=name=core_3 CPU4 ]'
+    format_sensor += '[\?if=name=gpu_core GPU ]'
+    format_sensor += '[\?color=auto.input {input}°C]'
+    sensors = ['core*', 'temp*']
+}
 ```
 
 @author lasers
 
 SAMPLE OUTPUT
 [
-    {'full_text': 'nouveau-pci-0500 '},
-    {'full_text': 'gpu_core ', 'color': '#a9a9a9'},
-    {'full_text': '1.1 ', 'color': '#ffa500'},
-    {'full_text': 'temp1 ', 'color': '#a9a9a9'},
-    {'full_text': '51', 'color': '#00ff00'}
+    {'full_text': 'coretemp-isa-000 '},
+    {'full_text': 'core_0 ', 'color': '#a9a9a9'},
+    {'full_text': '39 ', 'color': '#00ff00'},
+    {'full_text': 'core_1 ', 'color': '#a9a9a9'},
+    {'full_text': '40', 'color': '#00ff00'},
 ]
 
-cores
+chip_names
 [
     {'full_text': 'CPU '},
-    {'full_text': '62 ', 'color': '#00ff00'},
-    {'full_text': '76 ', 'color': '#ffff00'},
-    {'full_text': '83 ', 'color': '#ffa500'},
-    {'full_text': '92 ', 'color': '#ff0000'},
+    {'full_text': '62°C ', 'color': '#00ff00'},
+    {'full_text': '76°C ', 'color': '#ffff00'},
+    {'full_text': '83°C ', 'color': '#ffa500'},
+    {'full_text': '92°C ', 'color': '#ff0000'},
     {'full_text': 'GPU '},
-    {'full_text': '52', 'color': '#00ff00'},
+    {'full_text': '52°C', 'color': '#00ff00'},
 ]
 
-simple
+sensor_names
 [
-    {'full_text': 'CPU '}, {'full_text': '58°C ', 'color': '#00ff00'},
-    {'full_text': 'GPU '}, {'full_text': '72°C', 'color': '#ffff00'},
+    {'full_text': 'CPU1 '},
+    {'full_text': '62°C ', 'color': '#00ff00'},
+    {'full_text': 'CPU2 '},
+    {'full_text': '76°C ', 'color': '#ffff00'},
+    {'full_text': 'TEMP1 '},
+    {'full_text': '30 ', 'color': '#ffa500'},
+    {'full_text': 'TEMP2 '},
+    {'full_text': '27 ', 'color': '#ffa500'},
+    {'full_text': 'GPU '},
+    {'full_text': '52°C', 'color': '#00ff00'},
 ]
 """
 
 from fnmatch import fnmatch
-from json import loads as json_loads
+from collections import OrderedDict
 
 STRING_NOT_INSTALLED = 'not installed'
-STRING_OLD_VERSION = 'install version 3.4.0+'
-SENSOR_NAMES = [
-    'alarm', 'beep', 'crit', 'crit_alarm', 'crit_hyst', 'emergency',
-    'emergency_hyst', 'input', 'max', 'min', 'offset' 'type',
-]
 
 
 class Py3status:
@@ -194,25 +176,16 @@ class Py3status:
     format = '{format_chip}'
     format_chip = '{name} {format_sensor}'
     format_chip_separator = ' '
-    format_sensor = ('[\?color=darkgray {name}] '
-                     '[\?color=auto.input&show {input}]')
+    format_sensor = (
+        '[\?color=darkgray {name}] [\?color=auto.input&show {input}]'
+    )
     format_sensor_separator = ' '
     sensors = []
     thresholds = {'auto.input': True}
 
     def post_config_hook(self):
-        self.sensors_command = 'sensors -j'
-        if not self.py3.check_commands(self.sensors_command.split()[0]):
+        if not self.py3.check_commands('sensors'):
             raise Exception(STRING_NOT_INSTALLED)
-
-        try:
-            lm_sensors_data = self._get_lm_sensors_data()
-        except self.py3.CommandError:
-            raise Exception(STRING_OLD_VERSION)
-
-        self.first_run = True
-        if not self.py3.format_contains(self.format_chip, 'adapter'):
-            self.sensors_command += 'A'  # don't print adapters
 
         placeholders = self.py3.get_placeholders_list(self.format_sensor)
         format_sensor = {x: ':g' for x in placeholders if x != 'name'}
@@ -221,70 +194,88 @@ class Py3status:
             self.format_sensor, format_sensor
         )
 
+        self.first_run = True
+        self.lm_sensors_command = 'sensors -u'
+        if not self.py3.format_contains(self.format_chip, 'adapter'):
+            self.lm_sensors_command += 'A'  # don't print adapters
+
         if self.chips:
+            lm_sensors_data = self._get_lm_sensors_data()
             chips = []
             for _filter in self.chips:
-                for chip_name in lm_sensors_data.keys():
-                    if fnmatch(chip_name, _filter):
-                        chips.append(chip_name)
+                for chunk in lm_sensors_data.split('\n\n')[:-1]:
+                    for line in chunk.splitlines():
+                        if fnmatch(line, _filter):
+                            chips.append(line)
                         break
-            self.sensors_command += ' {}'.format(' '.join(chips))
+            self.lm_sensors_command += ' {}'.format(' '.join(chips))
 
-        if self.sensors:
-            self.sensors_list = []
+        self.sensors = {'list': [], 'name': {}, 'sensors': self.sensors}
 
         self.thresholds_auto = False
-        if 'auto.input' in self.thresholds and (
-                'color=auto.input' in self.format_sensor and (
-                    'input' in placeholders)):
+        self.thresholds_man = self.py3.get_color_names_list(self.format_sensor)
+        if all(
+            'auto.input' in x for x in [self.thresholds, self.thresholds_man]
+        ) and 'input' in placeholders:
             self.color_zero = self.py3.COLOR_ZERO or 'red'
             self.color_input = self.py3.COLOR_INPUT or 'lime'
             self.color_min = self.py3.COLOR_MIN or 'lightgreen'
             self.color_excl_input = self.py3.COLOR_EXCL_INPUT or None
-            self.color_near_max = self.py3.COLOR_NEAR_MAX or 'degraded'
+            self.color_near_max = self.py3.COLOR_NEAR_MAX or 'yellow'
             self.color_max = self.py3.COLOR_MAX or 'orange'
             self.color_near_crit = self.py3.COLOR_NEAR_CRIT or 'lightcoral'
             self.color_crit = self.py3.COLOR_CRIT or 'red'
+
             self.thresholds_auto = self.thresholds['auto.input']
             del self.thresholds['auto.input']
 
-        self.thresholds_man = self.py3.get_color_names_list(self.format_sensor)
         if 'auto.input' in self.thresholds_man:
             self.thresholds_man.remove('auto.input')
 
     def _get_lm_sensors_data(self):
-        return json_loads(self.py3.command_output(self.sensors_command))
+        return self.py3.command_output(self.lm_sensors_command)
 
     def lm_sensors(self):
         lm_sensors_data = self._get_lm_sensors_data()
         new_chip = []
 
-        for chip_name, sensors in lm_sensors_data.items():
-            # chips
-            chip = {
-                'name': chip_name,
-                'adapter': sensors.pop('Adapter', None),
-                'sensors': {},
-            }
-
-            # sensors
+        for chunk in lm_sensors_data.split('\n\n')[:-1]:
+            chip = {'sensors': OrderedDict()}
+            first_line = True
+            sensor_name = None
             new_sensor = []
-            for sensor_name, sensor in sensors.items():
-                sensor_name = sensor_name.lower().replace(' ', '_')
-                if self.sensors:
-                    if self.first_run:
-                        for _filter in self.sensors:
-                            if fnmatch(sensor_name, _filter):
-                                self.sensors_list.append(sensor_name)
-                    if sensor_name not in self.sensors_list:
-                        continue
-                chip['sensors'][sensor_name] = {'name': sensor_name}
-                for key, value in sensor.items():
-                    temp, key = key.split('_', 1)
-                    chip['sensors'][sensor_name][key] = value
 
-            # thresholds
-            for sensor_name, sensor in chip['sensors'].items():
+            for line in chunk.splitlines():
+                if line.startswith('  '):
+                    if not sensor_name:
+                        continue
+                    key, value = line.split(': ')
+                    prefix, key = key.split('_', 1)
+                    chip['sensors'][sensor_name][key] = value
+                elif first_line:
+                    chip['name'] = line
+                    first_line = False
+                elif 'Adapter:' in line:
+                    chip['adapter'] = line[9:]
+                else:
+                    try:
+                        sensor_name = self.sensors['name'][line]
+                    except KeyError:
+                        sensor_name = line[:-1].lower().replace(' ', '_')
+                        self.sensors['name'][line] = sensor_name
+                    if self.sensors['sensors']:
+                        if self.first_run:
+                            for _filter in self.sensors['sensors']:
+                                if fnmatch(sensor_name, _filter):
+                                    self.sensors['list'].append(sensor_name)
+                        if sensor_name not in self.sensors['list']:
+                            sensor_name = None
+                            continue
+                    chip['sensors'][sensor_name] = {}
+
+            for name, sensor in chip['sensors'].items():
+                sensor['name'] = name
+
                 for x in self.thresholds_man:
                     if x in sensor:
                         self.py3.threshold_get_color(sensor[x], x)
@@ -324,35 +315,40 @@ class Py3status:
                     )
 
                 for x in self.sensor_placeholders:
-                    if x not in sensor and x in SENSOR_NAMES:
+                    if x not in sensor:
                         sensor[x] = None
 
                 new_sensor.append(self.py3.safe_format(
-                    self.format_sensor, sensor))
+                    self.format_sensor, sensor)
+                )
 
             format_sensor_separator = self.py3.safe_format(
-                self.format_sensor_separator)
+                self.format_sensor_separator
+            )
             format_sensor = self.py3.composite_join(
-                format_sensor_separator, new_sensor)
+                format_sensor_separator, new_sensor
+            )
 
             chip['format_sensor'] = format_sensor
             del chip['sensors']
 
             new_chip.append(self.py3.safe_format(
-                self.format_chip, chip))
+                self.format_chip, chip)
+            )
 
         format_chip_separator = self.py3.safe_format(
-            self.format_chip_separator)
+            self.format_chip_separator
+        )
         format_chip = self.py3.composite_join(
-            format_chip_separator, new_chip)
-
+            format_chip_separator, new_chip
+        )
         self.first_run = False
 
         return {
             'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': self.py3.safe_format(
                 self.format, {'format_chip': format_chip}
-            ),
+            )
         }
 
 

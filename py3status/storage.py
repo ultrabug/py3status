@@ -17,52 +17,50 @@ class Storage:
         self.is_python_2 = is_python_2
         self.py3_wrapper = py3_wrapper
         self.config = py3_wrapper.config
-        py3_config = self.config.get('py3_config', {})
+        py3_config = self.config.get("py3_config", {})
 
         # check for legacy storage cache
         legacy_storage_path = self.get_legacy_storage_path()
 
         # cutting edge storage cache
-        storage_config = py3_config.get('py3status', {}).get('storage')
+        storage_config = py3_config.get("py3status", {}).get("storage")
         if storage_config:
-            storage_file = os.path.expandvars(
-                os.path.expanduser(storage_config)
-            )
-            if '/' in storage_file:
+            storage_file = os.path.expandvars(os.path.expanduser(storage_config))
+            if "/" in storage_file:
                 storage_dir = None
             else:
-                storage_dir = os.environ.get('XDG_CACHE_HOME')
+                storage_dir = os.environ.get("XDG_CACHE_HOME")
         else:
-            storage_dir = os.environ.get('XDG_CACHE_HOME')
-            storage_file = 'py3status_cache.data'
+            storage_dir = os.environ.get("XDG_CACHE_HOME")
+            storage_file = "py3status_cache.data"
 
         if not storage_dir:
-            storage_dir = os.path.expanduser('~/.cache')
+            storage_dir = os.path.expanduser("~/.cache")
         self.storage_path = os.path.join(storage_dir, storage_file)
 
         # move legacy storage cache to new desired / default location
         if legacy_storage_path:
             self.py3_wrapper.log(
-                'moving legacy storage_path {} to {}'.format(
+                "moving legacy storage_path {} to {}".format(
                     legacy_storage_path, self.storage_path
                 )
             )
             os.rename(legacy_storage_path, self.storage_path)
 
         try:
-            with open(self.storage_path, 'rb') as f:
+            with open(self.storage_path, "rb") as f:
                 try:
                     # python3
-                    self.data = load(f, encoding='bytes')
+                    self.data = load(f, encoding="bytes")
                 except TypeError:
                     # python2
                     self.data = load(f)
         except IOError:
             pass
 
-        self.py3_wrapper.log('storage_path: {}'.format(self.storage_path))
+        self.py3_wrapper.log("storage_path: {}".format(self.storage_path))
         if self.data:
-            self.py3_wrapper.log('storage_data: {}'.format(self.data))
+            self.py3_wrapper.log("storage_data: {}".format(self.data))
         self.initialized = True
 
     def get_legacy_storage_path(self):
@@ -70,9 +68,9 @@ class Storage:
         Detect and return existing legacy storage path.
         """
         config_dir = os.path.dirname(
-            self.py3_wrapper.config.get('i3status_config_path', '/tmp')
+            self.py3_wrapper.config.get("i3status_config_path", "/tmp")
         )
-        storage_path = os.path.join(config_dir, 'py3status.data')
+        storage_path = os.path.join(config_dir, "py3status.data")
         if os.path.exists(storage_path):
             return storage_path
         else:
@@ -99,7 +97,7 @@ class Storage:
         if not self.is_python_2:
             return item
         if isinstance(item, str):
-            return item.decode('utf-8')
+            return item.decode("utf-8")
         if isinstance(item, unicode):  # noqa <-- python3 has no unicode
             return item
         if isinstance(item, Mapping):
@@ -110,7 +108,7 @@ class Storage:
         return item
 
     def storage_set(self, module_name, key, value):
-        if key.startswith('_'):
+        if key.startswith("_"):
             raise ValueError('cannot set keys starting with an underscore "_"')
 
         key = self.fix(key)
@@ -122,9 +120,9 @@ class Storage:
             self.data[module_name] = {}
         self.data[module_name][key] = value
         ts = time()
-        if '_ctime' not in self.data[module_name]:
-            self.data[module_name]['_ctime'] = ts
-        self.data[module_name]['_mtime'] = ts
+        if "_ctime" not in self.data[module_name]:
+            self.data[module_name]["_ctime"] = ts
+        self.data[module_name]["_mtime"] = ts
         self.save()
 
     def storage_get(self, module_name, key):

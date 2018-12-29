@@ -37,6 +37,9 @@ Configuration parameters:
         (default '=')
     icon_extend: icon used to display a 'extend' combination
         (default '+')
+    on_udev_drm: dynamic variable to watch for `drm` udev subsystem events to
+        trigger specified action.
+        (default 'refresh_and_freeze')
     output_combinations: string used to define your own subset of output
         combinations to use, instead of generating every possible combination
         automatically. Provide the values in the format that this module uses,
@@ -44,8 +47,6 @@ Configuration parameters:
         The combinations will be rotated in the exact order as you listed them.
         When an output layout is not available any more, the configurations
         are automatically filtered out.
-        (default None)
-
         Example:
             Assuming the default values for `icon_clone` and `icon_extend`
             are used, and assuming you have two screens 'eDP1' and 'DP1', the
@@ -54,6 +55,7 @@ Configuration parameters:
             ```
             output_combinations = "eDP1|eDP1+DP1"
             ```
+        (default None)
 
 Dynamic configuration parameters:
     <OUTPUT>_pos: apply the given position to the OUTPUT
@@ -130,6 +132,7 @@ class Py3status:
     hide_if_single_combination = False
     icon_clone = '='
     icon_extend = '+'
+    on_udev_drm = 'refresh_and_freeze'
     output_combinations = None
 
     class Meta:
@@ -156,6 +159,7 @@ class Py3status:
         self.active_layout = None
         self.active_mode = 'extend'
         self.displayed = None
+        self.initialized = False
         self.max_width = 0
 
     def _get_layout(self):
@@ -454,7 +458,7 @@ class Py3status:
             response['color'] = self.py3.COLOR_BAD
 
         # force default layout setup
-        if self.force_on_start is not None:
+        if not self.initialized and self.force_on_start is not None:
             sleep(1)
             self._force_force_on_start()
 
@@ -463,6 +467,9 @@ class Py3status:
             response['color'] = self.py3.COLOR_DEGRADED
             if self.fallback is True:
                 self._fallback_to_available_output()
+
+        # startup is done
+        self.initialized = True
 
         return response
 

@@ -26,6 +26,8 @@ Configuration parameters:
 Format placeholders:
     {bitrate} Display bit rate
     {device} Display device name
+    {freq_ghz} Network frequency in Ghz
+    {freq_mhz} Network frequency in Mhz
     {icon} Character representing the quality based on bitrate,
         as defined by the 'blocks'
     {ip} Display IP address
@@ -79,6 +81,8 @@ class Py3status:
         self._max_bitrate = 0
         self._ssid = ''
         iw = self.py3.check_commands(['iw', '/sbin/iw'])
+        if iw is None:
+            raise Exception('iw is not installed')
         # get wireless interface
         try:
             data = self.py3.command_output([iw, 'dev'])
@@ -122,7 +126,7 @@ class Py3status:
         try:
             iw = self.py3.command_output(self.iw_dev_id_link)
         except self.py3.CommandError:
-            return {'cache_until': self.py3.CACHE_FOREVER,
+            return {'cached_until': self.py3.CACHE_FOREVER,
                     'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
                     'full_text': STRING_ERROR}
         # bitrate
@@ -156,6 +160,15 @@ class Py3status:
             ssid = ssid.encode('latin-1').decode('utf-8')
         else:
             ssid = None
+
+        # frequency
+        freq_out = re.search(r'freq: ([\-0-9]+)', iw)
+        if freq_out:
+            freq_mhz = int(freq_out.group(1))
+            freq_ghz = freq_mhz / 1000.0
+        else:
+            freq_mhz = None
+            freq_ghz = None
 
         # check command
         if self.py3.format_contains(self.format, 'ip'):
@@ -211,6 +224,8 @@ class Py3status:
                 dict(
                     bitrate=bitrate,
                     device=self.device,
+                    freq_ghz=freq_ghz,
+                    freq_mhz=freq_mhz,
                     icon=icon,
                     ip=ip,
                     signal_dbm=signal_dbm,
@@ -219,7 +234,7 @@ class Py3status:
                 ))
 
         return {
-            'cache_until': self.py3.time_in(self.cache_timeout),
+            'cached_until': self.py3.time_in(self.cache_timeout),
             'full_text': full_text,
             'color': color,
         }

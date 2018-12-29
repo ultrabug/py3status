@@ -34,22 +34,26 @@ SEP_PADDING_RIGHT = SEP_PADDING_LEFT + 1
 
 SEP_BORDER = 4
 
-FONT = 'DejaVuSansMono.ttf'
+FONT = "DejaVuSansMono.ttf"
 
-# Pillow does poor font rendering so we are best of creating huge text and then
-# shrinking with anti-aliasing.  SCALE is how many times bigger we render the
-# test
+# Pillow does poor font rendering so we are best off creating huge text and
+# then shrinking with anti-aliasing.  SCALE is how many times bigger we render
+# the text
 SCALE = 8
 
-COLOR = '#FFFFFF'
-COLOR_BG = '#000000'
-COLOR_PY3STATUS = '#FFFFFF'
-COLOR_SEP = '#666666'
-COLOR_URGENT = '#FFFFFF'
-COLOR_URGENT_BG = '#900000'
+COLOR = "#FFFFFF"
+COLOR_BG = "#000000"
+COLOR_PY3STATUS = "#FFFFFF"
+COLOR_SEP = "#666666"
+COLOR_URGENT = "#FFFFFF"
+COLOR_URGENT_BG = "#900000"
 
 FONT_SIZE = BAR_HEIGHT - (PADDING * 2)
 HEIGHT = TOP_BAR_HEIGHT + BAR_HEIGHT
+
+SAMPLE_DATA_ERROR = dict(
+    color="#990000", background="#FFFF00", full_text=" SAMPLE DATA ERROR "
+)
 
 # font, glyph_data want caching for performance
 font = None
@@ -59,25 +63,31 @@ glyph_data = None
 def get_color_for_name(module_name):
     """
     Create a custom color for a given string.
-    This allows the screenshots to each have a unique color but for that color
-    to be consistent.
+    This allows the screenshots to each have a unique color but also for that
+    color to be consistent.
     """
     # all screenshots of the same module should be a uniform color
-    module_name = module_name.split('-')[0]
+    module_name = module_name.split("-")[0]
 
     saturation = 0.5
     value = 243.2
     try:
-        module_name = module_name.encode('utf-8')
-    except:  # noqa e722
+        # we must be bytes to allow the md5 hash to be calculated
+        module_name = module_name.encode("utf-8")
+    except AttributeError:
         pass
-    hue = int(md5(module_name).hexdigest(), 16) / 16**32
+    hue = int(md5(module_name).hexdigest(), 16) / 16 ** 32
     hue *= 6
     hue += 3.708
     r, g, b = (
-        (value, value - value * saturation * abs(1 - hue % 2), value - value *
-         saturation) * 3)[5**int(hue) // 3 % 3::int(hue) % 2 + 1][:3]
-    return '#' + '%02x' * 3 % (int(r), int(g), int(b))
+        (
+            value,
+            value - value * saturation * abs(1 - hue % 2),
+            value - value * saturation,
+        )
+        * 3
+    )[5 ** int(hue) // 3 % 3 :: int(hue) % 2 + 1][:3]
+    return "#" + "%02x" * 3 % (int(r), int(g), int(b))
 
 
 def contains_bad_glyph(glyph_data, data):
@@ -86,53 +96,46 @@ def contains_bad_glyph(glyph_data, data):
     font has the glygh.  Although we could substitute a glyph from another font
     eg symbola but this adds more complexity and is of limited value.
     """
+
     def check_glyph(char):
-        for cmap in glyph_data['cmap'].tables:
+        for cmap in glyph_data["cmap"].tables:
             if cmap.isUnicode():
                 if char in cmap.cmap:
                     return True
         return False
 
     for part in data:
-        text = part.get('full_text', '')
+        text = part.get("full_text", "")
         try:
             # for python 2
-            text = text.decode('utf8')
-        except:  # noqa e722
+            text = text.decode("utf8")
+        except AttributeError:
             pass
 
         for char in text:
             if not check_glyph(ord(char)):
                 # we have not found a character in the font
-                print(u'%s (%s) missing' % (char, ord(char)))
+                print(u"%s (%s) missing" % (char, ord(char)))
                 return True
     return False
 
 
-def create_screenshot(name, data, path, font, module):
+def create_screenshot(name, data, path, font, is_module):
     """
     Create screenshot of py3status output and save to path
     """
     desktop_color = get_color_for_name(name)
 
     # if this screenshot is for a module then add modules name etc
-    if module:
+    if is_module:
         data.append(
-            {
-                'full_text': name.split('-')[0],
-                'color': desktop_color,
-                'separator': True,
-            }
+            {"full_text": name.split("-")[0], "color": desktop_color, "separator": True}
         )
         data.append(
-            {
-                'full_text': 'py3status',
-                'color': COLOR_PY3STATUS,
-                'separator': True,
-            }
+            {"full_text": "py3status", "color": COLOR_PY3STATUS, "separator": True}
         )
 
-    img = Image.new('RGB', (WIDTH, HEIGHT), COLOR_BG)
+    img = Image.new("RGB", (WIDTH, HEIGHT), COLOR_BG)
     d = ImageDraw.Draw(img)
 
     # top bar
@@ -141,11 +144,11 @@ def create_screenshot(name, data, path, font, module):
 
     # add text and separators
     for part in reversed(data):
-        text = part.get('full_text')
-        color = part.get('color', COLOR)
-        background = part.get('background')
-        separator = part.get('separator')
-        urgent = part.get('urgent')
+        text = part.get("full_text")
+        color = part.get("color", COLOR)
+        background = part.get("background")
+        separator = part.get("separator")
+        urgent = part.get("urgent")
 
         # urgent background
         if urgent:
@@ -155,15 +158,19 @@ def create_screenshot(name, data, path, font, module):
         size = font.getsize(text)
 
         if background:
-            d.rectangle((WIDTH - x - (size[0] // SCALE),
-                         TOP_BAR_HEIGHT + PADDING,
-                         WIDTH - x - 1,
-                         HEIGHT - PADDING,
-                         ), fill=background)
+            d.rectangle(
+                (
+                    WIDTH - x - (size[0] // SCALE),
+                    TOP_BAR_HEIGHT + PADDING,
+                    WIDTH - x - 1,
+                    HEIGHT - PADDING,
+                ),
+                fill=background,
+            )
 
         x += size[0] // SCALE
 
-        txt = Image.new('RGB', size, background or COLOR_BG)
+        txt = Image.new("RGB", size, background or COLOR_BG)
         d_text = ImageDraw.Draw(txt)
         d_text.text((0, 0), text, font=font, fill=color)
         # resize to actual size wanted and add to image
@@ -172,13 +179,18 @@ def create_screenshot(name, data, path, font, module):
 
         if separator:
             x += SEP_PADDING_RIGHT
-            d.line(((WIDTH - x, TOP_BAR_HEIGHT + PADDING),
-                    (WIDTH - x, TOP_BAR_HEIGHT + 1 + PADDING + FONT_SIZE)),
-                   fill=COLOR_SEP, width=1)
+            d.line(
+                (
+                    (WIDTH - x, TOP_BAR_HEIGHT + PADDING),
+                    (WIDTH - x, TOP_BAR_HEIGHT + 1 + PADDING + FONT_SIZE),
+                ),
+                fill=COLOR_SEP,
+                width=1,
+            )
             x += SEP_PADDING_LEFT
 
-    img.save(os.path.join(path, '%s.png' % name))
-    print(' %s.png' % name)
+    img.save(os.path.join(path, "%s.png" % name))
+    print(" %s.png" % name)
 
 
 def parse_sample_data(sample_data, module_name):
@@ -187,54 +199,36 @@ def parse_sample_data(sample_data, module_name):
     {screenshot_name: sample_output}
     """
     samples = {}
-    name = None
-    data = ''
-    count = 0
-    for line in sample_data.splitlines() + ['']:
-        if line == '':
-            if data:
-                if name:
-                    name = u'%s-%s-%s' % (module_name, count, name)
-                else:
-                    name = module_name
-                try:
-                    output = ast.literal_eval(data)
-                    samples[name] = output
-                except:  # noqa e722
-                    samples[name] = {
-                        'color': '#990000',
-                        'background': '#FFFF00',
-                        'full_text': ' SAMPLE DATA ERROR ',
-                    }
-                name = None
-                data = ''
-                count += 1
-            continue
-        if name is None and data == '' and not line[0] in ['[', '{']:
-            name = line
-            continue
-        else:
-            data += line
+    for index, chunk in enumerate(sample_data.split("\n\n")):
+        chunk = "{}-{}-{}".format(module_name, index, chunk)
+        name, sample = re.split("-?\n", chunk, 1)
+        try:
+            samples[name] = ast.literal_eval(sample)
+        except SyntaxError:
+            samples[name] = SAMPLE_DATA_ERROR
     return samples
 
 
 def get_samples():
-    '''
+    """
     Look in all core modules and get any samples from the docstrings.
     return a dict {screenshot_name: sample_output}
-    '''
+    """
     samples = {}
-    module_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'modules')
+    module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
     for file in sorted(os.listdir(module_dir)):
-        if file.endswith('.py') and file != '__init__.py':
+        if file.endswith(".py") and file != "__init__.py":
+            #  remove .py
             module_name = file[:-3]
-            with open(os.path.join(module_dir, file), 'r') as f:
-                module = ast.parse(f.read())
+            with open(os.path.join(module_dir, file), "r") as f:
+                try:
+                    module = ast.parse(f.read())
+                except SyntaxError:
+                    continue
                 raw_docstring = ast.get_docstring(module)
                 if raw_docstring is None:
                     continue
-                parts = re.split('^SAMPLE OUTPUT$', raw_docstring, flags=re.M)
+                parts = re.split("^SAMPLE OUTPUT$", raw_docstring, flags=re.M)
                 if len(parts) == 1:
                     continue
                 sample_data = parts[1]
@@ -242,14 +236,12 @@ def get_samples():
     return samples
 
 
-def process(name, data, module=True):
+def process(name, path, data, module=True):
     """
     Process data to create a screenshot which will be saved in
     docs/screenshots/<name>.png
     If module is True the screenshot will include the name and py3status.
     """
-
-    path = '../doc/screenshots'
     # create dir if not exists
     try:
         os.makedirs(path)
@@ -267,9 +259,9 @@ def process(name, data, module=True):
         data = [data]
 
     if contains_bad_glyph(glyph_data, data):
-        print('** %s has characters not in %s **' % (name, font.getname()[0]))
+        print("** %s has characters not in %s **" % (name, font.getname()[0]))
     else:
-        create_screenshot(name, data, path, font=font, module=module)
+        create_screenshot(name, data, path, font=font, is_module=module)
 
 
 def create_screenshots(quiet=False):
@@ -278,12 +270,18 @@ def create_screenshots(quiet=False):
     The screenshots directory will have all .png files deleted before new shots
     are created.
     """
+    if os.environ.get('READTHEDOCS') == 'True':
+        path = "../doc/screenshots"
+    else:
+        path = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "doc/screenshots"
+        )
 
-    print('Creating screenshots...')
+    print("Creating screenshots...")
     samples = get_samples()
     for name, data in sorted(samples.items()):
-        process(name, data)
+        process(name, path, data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     create_screenshots()

@@ -24,21 +24,22 @@ from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
+from py3status.udev_monitor import UdevMonitor
 from py3status.version import version
 
-LOG_LEVELS = {'error': LOG_ERR, 'warning': LOG_WARNING, 'info': LOG_INFO, }
+LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
 
-DBUS_LEVELS = {'error': 'critical', 'warning': 'normal', 'info': 'low', }
+DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
 
 CONFIG_SPECIAL_SECTIONS = [
-    '.group_extras',
-    '.module_groups',
-    'general',
-    'i3s_modules',
-    'on_click',
-    'order',
-    'py3_modules',
-    'py3status',
+    ".group_extras",
+    ".module_groups",
+    "general",
+    "i3s_modules",
+    "on_click",
+    "order",
+    "py3_modules",
+    "py3status",
 ]
 
 
@@ -46,6 +47,7 @@ class Runner(Thread):
     """
     A Simple helper to run a module in a Thread so it is non-locking.
     """
+
     def __init__(self, module, py3_wrapper, module_name):
         Thread.__init__(self)
         self.daemon = True
@@ -58,7 +60,7 @@ class Runner(Thread):
         try:
             self.module.run()
         except:  # noqa e722
-            self.py3_wrapper.report_exception('Runner')
+            self.py3_wrapper.report_exception("Runner")
         # the module is no longer running so notify the timeout logic
         if self.module_name:
             self.py3_wrapper.timeout_finished.append(self.module_name)
@@ -68,6 +70,7 @@ class NoneSetting:
     """
     This class represents no setting in the config.
     """
+
     # this attribute is used to identify that this is a none setting
     none_setting = True
 
@@ -76,7 +79,7 @@ class NoneSetting:
 
     def __repr__(self):
         # this is for output via module_test
-        return 'None'
+        return "None"
 
 
 class Task:
@@ -104,7 +107,7 @@ class CheckI3StatusThread(Task):
         if not self.i3status_thread.is_alive():
             err = self.i3status_thread.error
             if not err:
-                err = 'I3status died horribly.'
+                err = "I3status died horribly."
             self.notify_user(err)
         else:
             # check again in 5 seconds
@@ -146,33 +149,37 @@ class Common:
         # being used.  This is important when modules do something like
         #
         # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-        config = self.config['py3_config']
+        config = self.config["py3_config"]
         param = config[name].get(attribute, self.none_setting)
-        if hasattr(param, 'none_setting') and name in config['.module_groups']:
-            for module in config['.module_groups'][name]:
+        if hasattr(param, "none_setting") and name in config[".module_groups"]:
+            for module in config[".module_groups"][name]:
                 if attribute in config.get(module, {}):
                     param = config[module].get(attribute)
                     break
-        if hasattr(param, 'none_setting'):
+        if hasattr(param, "none_setting"):
             # check py3status config section
-            param = config['py3status'].get(attribute, self.none_setting)
-        if hasattr(param, 'none_setting'):
+            param = config["py3status"].get(attribute, self.none_setting)
+        if hasattr(param, "none_setting"):
             # check py3status general section
-            param = config['general'].get(attribute, self.none_setting)
-        if param and (attribute == 'color' or attribute.startswith('color_')):
-            if param[0] != '#':
+            param = config["general"].get(attribute, self.none_setting)
+        if param and (attribute == "color" or attribute.startswith("color_")):
+            if param[0] != "#":
                 # named color
                 param = COLOR_NAMES.get(param.lower(), self.none_setting)
             elif len(param) == 4:
                 # This is a color like #123 convert it to #112233
                 param = (
-                    '#' + param[1] + param[1] + param[2] +
-                    param[2] + param[3] + param[3]
+                    "#"
+                    + param[1]
+                    + param[1]
+                    + param[2]
+                    + param[2]
+                    + param[3]
+                    + param[3]
                 )
         return param
 
-    def report_exception(self, msg, notify_user=True, level='error',
-                         error_frame=None):
+    def report_exception(self, msg, notify_user=True, level="error", error_frame=None):
         """
         Report details of an exception to the user.
         This should only be called within an except: block Details of the
@@ -190,15 +197,15 @@ class Common:
         """
         # Get list of paths that our stack trace should be found in.
         py3_paths = [os.path.dirname(__file__)]
-        user_paths = self.config.get('include_paths', [])
-        py3_paths += [os.path.abspath(path) + '/' for path in user_paths]
+        user_paths = self.config.get("include_paths", [])
+        py3_paths += [os.path.abspath(path) + "/" for path in user_paths]
         traceback = None
 
         try:
             # We need to make sure to delete tb even if things go wrong.
             exc_type, exc_obj, tb = sys.exc_info()
             stack = extract_tb(tb)
-            error_str = '{}: {}\n'.format(exc_type.__name__, exc_obj)
+            error_str = "{}: {}\n".format(exc_type.__name__, exc_obj)
             traceback = [error_str]
 
             if error_frame:
@@ -226,24 +233,25 @@ class Common:
                     if found:
                         break
             # all done!  create our message.
-            msg = '{} ({}) {} line {}.'.format(
-                msg, exc_type.__name__, filename, line_no)
+            msg = "{} ({}) {} line {}.".format(
+                msg, exc_type.__name__, filename, line_no
+            )
         except:  # noqa e722
             # something went wrong report what we can.
-            msg = '{}.'.format(msg)
+            msg = "{}.".format(msg)
         finally:
             # delete tb!
             del tb
         # log the exception and notify user
-        self.py3_wrapper.log(msg, 'warning')
+        self.py3_wrapper.log(msg, "warning")
         if traceback:
             # if debug is not in the config  then we are at an early stage of
             # running py3status and logging is not yet available so output the
             # error to STDERR so it can be seen
-            if 'debug' not in self.config:
-                print_stderr('\n'.join(traceback))
-            elif self.config.get('log_file'):
-                self.py3_wrapper.log(''.join(['Traceback\n'] + traceback))
+            if "debug" not in self.config:
+                print_stderr("\n".join(traceback))
+            elif self.config.get("log_file"):
+                self.py3_wrapper.log("".join(["Traceback\n"] + traceback))
         if notify_user:
             self.py3_wrapper.notify_user(msg, level=level)
 
@@ -399,7 +407,7 @@ class Py3statusWrapper:
         # run any modules that are due
         while self.timeout_update_due:
             module = self.timeout_update_due.popleft()
-            module_name = getattr(module, 'module_full_name', None)
+            module_name = getattr(module, "module_full_name", None)
             # if the module is running then we do not want to trigger it but
             # instead wait till it has finished running and then trigger
             if module_name and module_name in self.timeout_running:
@@ -417,39 +425,40 @@ class Py3statusWrapper:
         Create the py3status based on command line options we received.
         """
         # get home path
-        home_path = os.path.expanduser('~')
+        home_path = os.path.expanduser("~")
 
         # defaults
-        config = {
-            'minimum_interval': 0.1,  # minimum module update interval
-        }
+        config = {"minimum_interval": 0.1}  # minimum module update interval
 
         # include path to search for user modules
-        config['include_paths'] = [
-            '{}/.i3/py3status/'.format(home_path),
-            '{}/i3status/py3status'.format(os.environ.get(
-                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
-            '{}/i3/py3status'.format(os.environ.get(
-                'XDG_CONFIG_HOME', '{}/.config'.format(home_path))),
+        config["include_paths"] = [
+            "{}/.i3/py3status/".format(home_path),
+            "{}/.config/i3/py3status/".format(home_path),
+            "{}/i3status/py3status".format(
+                os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
+            ),
+            "{}/i3/py3status".format(
+                os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
+            ),
         ]
-        config['version'] = version
+        config["version"] = version
 
         # override configuration and helper variables
         options = self.options
-        config['cache_timeout'] = options.cache_timeout
-        config['debug'] = options.debug
-        config['dbus_notify'] = options.dbus_notify
-        config['gevent'] = options.gevent
+        config["cache_timeout"] = options.cache_timeout
+        config["debug"] = options.debug
+        config["dbus_notify"] = options.dbus_notify
+        config["gevent"] = options.gevent
         if options.include_paths:
-            config['include_paths'] = options.include_paths
+            config["include_paths"] = options.include_paths
         # FIXME we allow giving interval as a float and then make it an int!
-        config['interval'] = int(options.interval)
-        config['log_file'] = options.log_file
-        config['standalone'] = options.standalone
-        config['i3status_config_path'] = options.i3status_conf
-        config['disable_click_events'] = options.disable_click_events
+        config["interval"] = int(options.interval)
+        config["log_file"] = options.log_file
+        config["standalone"] = options.standalone
+        config["i3status_config_path"] = options.i3status_conf
+        config["disable_click_events"] = options.disable_click_events
         if options.cli_command:
-            config['cli_command'] = options.cli_command
+            config["cli_command"] = options.cli_command
         return config
 
     def gevent_monkey_patch_report(self):
@@ -459,13 +468,13 @@ class Py3statusWrapper:
         try:
             import gevent.socket
             import socket
+
             if gevent.socket.socket is socket.socket:
-                self.log('gevent monkey patching is active')
+                self.log("gevent monkey patching is active")
             else:
-                self.notify_user('gevent monkey patching failed.')
+                self.notify_user("gevent monkey patching failed.")
         except ImportError:
-            self.notify_user(
-                'gevent is not installed, monkey patching failed.')
+            self.notify_user("gevent is not installed, monkey patching failed.")
 
     def get_user_modules(self):
         """
@@ -476,12 +485,12 @@ class Py3statusWrapper:
         }
         """
         user_modules = {}
-        for include_path in self.config['include_paths']:
-            include_path = os.path.abspath(include_path) + '/'
+        for include_path in self.config["include_paths"]:
+            include_path = os.path.abspath(include_path) + "/"
             if not os.path.isdir(include_path):
                 continue
             for f_name in sorted(os.listdir(include_path)):
-                if not f_name.endswith('.py'):
+                if not f_name.endswith(".py"):
                     continue
                 module_name = f_name[:-3]
                 # do not overwrite modules if already found
@@ -500,7 +509,7 @@ class Py3statusWrapper:
             return user_modules
         for module_name, module_info in self.get_user_modules().items():
             for module in self.py3_modules:
-                if module_name == module.split(' ')[0]:
+                if module_name == module.split(" ")[0]:
                     include_path, f_name = module_info
                     user_modules[module_name] = (include_path, f_name)
         return user_modules
@@ -524,14 +533,12 @@ class Py3statusWrapper:
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
-                elif self.config['debug']:
-                    self.log(
-                        'ignoring module "{}" (no methods found)'.format(
-                            module))
+                elif self.config["debug"]:
+                    self.log('ignoring module "{}" (no methods found)'.format(module))
             except Exception:
                 err = sys.exc_info()[1]
                 msg = 'Loading module "{}" failed ({}).'.format(module, err)
-                self.report_exception(msg, level='warning')
+                self.report_exception(msg, level="warning")
 
     def setup(self):
         """
@@ -549,58 +556,59 @@ class Py3statusWrapper:
         # update configuration
         self.config.update(self.get_config())
 
-        if self.config.get('cli_command'):
+        if self.config.get("cli_command"):
             self.handle_cli_command(self.config)
             sys.exit()
 
         # logging functionality now available
         # log py3status and python versions
-        self.log('=' * 8)
-        self.log('Starting py3status version {} python {}'.format(
-            self.config['version'], python_version())
+        self.log("=" * 8)
+        self.log(
+            "Starting py3status version {} python {}".format(
+                self.config["version"], python_version()
+            )
         )
 
         try:
             # if running from git then log the branch and last commit
             # we do this by looking in the .git directory
-            git_path = os.path.join(os.path.dirname(__file__), '..', '.git')
+            git_path = os.path.join(os.path.dirname(__file__), "..", ".git")
             # branch
-            with open(os.path.join(git_path, 'HEAD'), 'r') as f:
+            with open(os.path.join(git_path, "HEAD"), "r") as f:
                 out = f.readline()
-            branch = '/'.join(out.strip().split('/')[2:])
-            self.log('git branch: {}'.format(branch))
+            branch = "/".join(out.strip().split("/")[2:])
+            self.log("git branch: {}".format(branch))
             # last commit
-            log_path = os.path.join(git_path, 'logs', 'refs', 'heads', branch)
-            with open(log_path, 'r') as f:
+            log_path = os.path.join(git_path, "logs", "refs", "heads", branch)
+            with open(log_path, "r") as f:
                 out = f.readlines()[-1]
-            sha = out.split(' ')[1][:7]
-            msg = ':'.join(out.strip().split('\t')[-1].split(':')[1:])
-            self.log('git commit: {}{}'.format(sha, msg))
+            sha = out.split(" ")[1][:7]
+            msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
+            self.log("git commit: {}{}".format(sha, msg))
         except:  # noqa e722
             pass
 
-        if self.config['debug']:
-            self.log(
-                'py3status started with config {}'.format(self.config))
+        if self.config["debug"]:
+            self.log("py3status started with config {}".format(self.config))
 
-        if self.config['gevent']:
+        if self.config["gevent"]:
             self.gevent_monkey_patch_report()
 
         # read i3status.conf
-        config_path = self.config['i3status_config_path']
-        self.config['py3_config'] = process_config(config_path, self)
+        config_path = self.config["i3status_config_path"]
+        self.config["py3_config"] = process_config(config_path, self)
 
         # setup i3status thread
         self.i3status_thread = I3status(self)
 
         # If standalone or no i3status modules then use the mock i3status
         # else start i3status thread.
-        i3s_modules = self.config['py3_config']['i3s_modules']
-        if self.config['standalone'] or not i3s_modules:
+        i3s_modules = self.config["py3_config"]["i3s_modules"]
+        if self.config["standalone"] or not i3s_modules:
             self.i3status_thread.mock()
-            i3s_mode = 'mocked'
+            i3s_mode = "mocked"
         else:
-            i3s_mode = 'started'
+            i3s_mode = "started"
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
                 if not self.i3status_thread.is_alive():
@@ -609,15 +617,18 @@ class Py3statusWrapper:
                     err = self.i3status_thread.error
                     self.notify_user(err)
                     self.i3status_thread.mock()
-                    i3s_mode = 'mocked'
+                    i3s_mode = "mocked"
                     break
                 time.sleep(0.1)
-        if self.config['debug']:
-            self.log('i3status thread {} with config {}'.format(
-                i3s_mode, self.config['py3_config']))
+        if self.config["debug"]:
+            self.log(
+                "i3status thread {} with config {}".format(
+                    i3s_mode, self.config["py3_config"]
+                )
+            )
 
         # add i3status thread monitoring task
-        if i3s_mode == 'started':
+        if i3s_mode == "started":
             task = CheckI3StatusThread(self.i3status_thread, self)
             self.timeout_queue_add(task)
 
@@ -625,52 +636,62 @@ class Py3statusWrapper:
         self.events_thread = Events(self)
         self.events_thread.daemon = True
         self.events_thread.start()
-        if self.config['debug']:
-            self.log('events thread started')
+        if self.config["debug"]:
+            self.log("events thread started")
 
         # initialise the command server
         self.commands_thread = CommandServer(self)
         self.commands_thread.daemon = True
         self.commands_thread.start()
-        if self.config['debug']:
-            self.log('commands thread started')
+        if self.config["debug"]:
+            self.log("commands thread started")
+
+        # initialize the udev monitor (lazy)
+        self.udev_monitor = UdevMonitor(self)
 
         # suppress modules' ouput wrt issue #20
-        if not self.config['debug']:
-            sys.stdout = open('/dev/null', 'w')
-            sys.stderr = open('/dev/null', 'w')
+        if not self.config["debug"]:
+            sys.stdout = open("/dev/null", "w")
+            sys.stderr = open("/dev/null", "w")
 
         # get the list of py3status configured modules
-        self.py3_modules = self.config['py3_config']['py3_modules']
+        self.py3_modules = self.config["py3_config"]["py3_modules"]
 
         # get a dict of all user provided modules
         user_modules = self.get_user_configured_modules()
-        if self.config['debug']:
-            self.log('user_modules={}'.format(user_modules))
+        if self.config["debug"]:
+            self.log("user_modules={}".format(user_modules))
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-    def notify_user(self, msg, level='error', rate_limit=None, module_name='',
-                    icon=None, title='py3status'):
+    def notify_user(
+        self,
+        msg,
+        level="error",
+        rate_limit=None,
+        module_name="",
+        icon=None,
+        title="py3status",
+    ):
         """
         Display notification to user via i3-nagbar or send-notify
         We also make sure to log anything to keep trace of it.
 
         NOTE: Message should end with a '.' for consistency.
         """
-        dbus = self.config.get('dbus_notify')
+        dbus = self.config.get("dbus_notify")
         if dbus:
             # force msg, icon, title to be a string
-            title = u'{}'.format(title)
-            msg = u'{}'.format(msg)
+            title = u"{}".format(title)
+            msg = u"{}".format(msg)
             if icon:
-                icon = u'{}'.format(icon)
+                icon = u"{}".format(icon)
         else:
-            msg = u'py3status: {}'.format(msg)
-        if level != 'info' and module_name == '':
-            fix_msg = u'{} Please try to fix this and reload i3wm (Mod+Shift+R)'
+            msg = u"py3status: {}".format(msg)
+        if level != "info" and module_name == "":
+            fix_msg = u"{} Please try to fix this and reload i3wm (Mod+Shift+R)"
             msg = fix_msg.format(msg)
         # Rate limiting. If rate limiting then we need to calculate the time
         # period for which the message should not be repeated.  We just use
@@ -678,7 +699,7 @@ class Py3statusWrapper:
         # given time period. Messages can be repeated more frequently but must
         # be in different time periods.
 
-        limit_key = ''
+        limit_key = ""
         if rate_limit:
             try:
                 limit_key = time.time() // rate_limit
@@ -686,12 +707,14 @@ class Py3statusWrapper:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash(u'{}#{}#{}#{}'.format(module_name, limit_key, msg, title))
+        msg_hash = hash(u"{}#{}#{}#{}".format(module_name, limit_key, msg, title))
         if msg_hash in self.notified_messages:
             return
         elif module_name:
             log_msg = 'Module `%s` sent a notification. "%s: %s"' % (
-                module_name, title, msg
+                module_name,
+                title,
+                msg,
             )
             self.log(log_msg, level)
         else:
@@ -701,26 +724,24 @@ class Py3statusWrapper:
         try:
             if dbus:
                 # fix any html entities
-                msg = msg.replace('&', '&amp;')
-                msg = msg.replace('<', '&lt;')
-                msg = msg.replace('>', '&gt;')
-                cmd = ['notify-send']
+                msg = msg.replace("&", "&amp;")
+                msg = msg.replace("<", "&lt;")
+                msg = msg.replace(">", "&gt;")
+                cmd = ["notify-send"]
                 if icon:
-                    cmd += ['-i', icon]
-                cmd += ['-u', DBUS_LEVELS.get(level, 'normal'), '-t', '10000']
+                    cmd += ["-i", icon]
+                cmd += ["-u", DBUS_LEVELS.get(level, "normal"), "-t", "10000"]
                 cmd += [title, msg]
             else:
-                py3_config = self.config.get('py3_config', {})
-                nagbar_font = py3_config.get('py3status', {}).get('nagbar_font')
+                py3_config = self.config.get("py3_config", {})
+                nagbar_font = py3_config.get("py3status", {}).get("nagbar_font")
                 if nagbar_font:
-                    cmd = ['i3-nagbar', '-f', nagbar_font, '-m', msg, '-t', level]
+                    cmd = ["i3-nagbar", "-f", nagbar_font, "-m", msg, "-t", level]
                 else:
-                    cmd = ['i3-nagbar', '-m', msg, '-t', level]
-            Popen(cmd,
-                  stdout=open('/dev/null', 'w'),
-                  stderr=open('/dev/null', 'w'))
+                    cmd = ["i3-nagbar", "-m", msg, "-t", level]
+            Popen(cmd, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
         except Exception as err:
-            self.log('notify_user error: %s' % err)
+            self.log("notify_user error: %s" % err)
 
     def stop(self):
         """
@@ -735,8 +756,8 @@ class Py3statusWrapper:
 
         try:
             self.lock.set()
-            if self.config['debug']:
-                self.log('lock set, exiting')
+            if self.config["debug"]:
+                self.log("lock set, exiting")
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
@@ -761,15 +782,18 @@ class Py3statusWrapper:
                 return
         update_i3status = False
         for name, module in self.output_modules.items():
-            if (module_string is None or (exact and name == module_string) or
-                    (not exact and name.startswith(module_string))):
-                if module['type'] == 'py3status':
-                    if self.config['debug']:
-                        self.log('refresh py3status module {}'.format(name))
-                    module['module'].force_update()
+            if (
+                module_string is None
+                or (exact and name == module_string)
+                or (not exact and name.startswith(module_string))
+            ):
+                if module["type"] == "py3status":
+                    if self.config["debug"]:
+                        self.log("refresh py3status module {}".format(name))
+                    module["module"].force_update()
                 else:
-                    if self.config['debug']:
-                        self.log('refresh i3status module {}'.format(name))
+                    if self.config["debug"]:
+                        self.log("refresh i3status module {}".format(name))
                     update_i3status = True
         if update_i3status:
             self.i3status_thread.refresh_i3status()
@@ -778,7 +802,7 @@ class Py3statusWrapper:
         """
         SIGUSR1 was received, the user asks for an immediate refresh of the bar
         """
-        self.log('received USR1')
+        self.log("received USR1")
         self.refresh_modules()
 
     def terminate(self, signum, frame):
@@ -792,7 +816,7 @@ class Py3statusWrapper:
         A module has been removed e.g. a module that had an error.
         We need to find any containers and remove the module from them.
         """
-        containers = self.config['py3_config']['.module_groups']
+        containers = self.config["py3_config"][".module_groups"]
         containers_to_update = set()
         if module_name in containers:
             containers_to_update.update(set(containers[module_name]))
@@ -811,7 +835,7 @@ class Py3statusWrapper:
         self.update_queue.extend(update)
 
         # find containers that use the modules that updated
-        containers = self.config['py3_config']['.module_groups']
+        containers = self.config["py3_config"][".module_groups"]
         containers_to_update = set()
         for item in update:
             if item in containers:
@@ -822,46 +846,46 @@ class Py3statusWrapper:
             if container_module:
                 # If the container registered a urgent_function then call it
                 # if this update is urgent.
-                if urgent and container_module.get('urgent_function'):
-                    container_module['urgent_function'](update)
+                if urgent and container_module.get("urgent_function"):
+                    container_module["urgent_function"](update)
                 # If a container has registered a content_function we use that
                 # to see if the container needs to be updated.
                 # We only need to update containers if their active content has
                 # changed.
-                if container_module.get('content_function'):
-                    if set(update) & container_module['content_function']():
-                        container_module['module'].force_update()
+                if container_module.get("content_function"):
+                    if set(update) & container_module["content_function"]():
+                        container_module["module"].force_update()
                 else:
                     # we don't know so just update.
-                    container_module['module'].force_update()
+                    container_module["module"].force_update()
 
         # we need to update the output
         if self.update_queue:
             self.update_request.set()
 
-    def log(self, msg, level='info'):
+    def log(self, msg, level="info"):
         """
         log this information to syslog or user provided logfile.
         """
-        if not self.config.get('log_file'):
+        if not self.config.get("log_file"):
             # If level was given as a str then convert to actual level
             level = LOG_LEVELS.get(level, level)
-            syslog(level, u'{}'.format(msg))
+            syslog(level, u"{}".format(msg))
         else:
             # Binary mode so fs encoding setting is not an issue
-            with open(self.config['log_file'], 'ab') as f:
+            with open(self.config["log_file"], "ab") as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
                 # nice formating of data structures using pretty print
                 if isinstance(msg, (dict, list, set, tuple)):
                     msg = pformat(msg)
                     # if multiline then start the data output on a fresh line
                     # to aid readability.
-                    if '\n' in msg:
-                        msg = u'\n' + msg
-                out = u'{} {} {}\n'.format(log_time, level.upper(), msg)
+                    if "\n" in msg:
+                        msg = u"\n" + msg
+                out = u"{} {} {}\n".format(log_time, level.upper(), msg)
                 try:
                     # Encode unicode strings to bytes
-                    f.write(out.encode('utf-8'))
+                    f.write(out.encode("utf-8"))
                 except (AttributeError, UnicodeDecodeError):
                     # Write any byte strings straight to log
                     f.write(out)
@@ -871,12 +895,12 @@ class Py3statusWrapper:
         Setup our output modules to allow easy updating of py3modules and
         i3status modules allows the same module to be used multiple times.
         """
-        py3_config = self.config['py3_config']
+        py3_config = self.config["py3_config"]
         i3modules = self.i3status_thread.i3modules
         output_modules = self.output_modules
         # position in the bar of the modules
         positions = {}
-        for index, name in enumerate(py3_config['order']):
+        for index, name in enumerate(py3_config["order"]):
             if name not in positions:
                 positions[name] = []
             positions[name].append(index)
@@ -885,18 +909,18 @@ class Py3statusWrapper:
         for name in self.modules:
             if name not in output_modules:
                 output_modules[name] = {}
-                output_modules[name]['position'] = positions.get(name, [])
-                output_modules[name]['module'] = self.modules[name]
-                output_modules[name]['type'] = 'py3status'
-                output_modules[name]['color'] = self.mappings_color.get(name)
+                output_modules[name]["position"] = positions.get(name, [])
+                output_modules[name]["module"] = self.modules[name]
+                output_modules[name]["type"] = "py3status"
+                output_modules[name]["color"] = self.mappings_color.get(name)
         # i3status modules
         for name in i3modules:
             if name not in output_modules:
                 output_modules[name] = {}
-                output_modules[name]['position'] = positions.get(name, [])
-                output_modules[name]['module'] = i3modules[name]
-                output_modules[name]['type'] = 'i3status'
-                output_modules[name]['color'] = self.mappings_color.get(name)
+                output_modules[name]["position"] = positions.get(name, [])
+                output_modules[name]["module"] = i3modules[name]
+                output_modules[name]["type"] = "i3status"
+                output_modules[name]["color"] = self.mappings_color.get(name)
 
         self.output_modules = output_modules
 
@@ -909,8 +933,8 @@ class Py3statusWrapper:
             # Ignore special config sections.
             if name in CONFIG_SPECIAL_SECTIONS:
                 continue
-            color = self.get_config_attribute(name, 'color')
-            if hasattr(color, 'none_setting'):
+            color = self.get_config_attribute(name, "color")
+            if hasattr(color, "none_setting"):
                 color = None
             mappings[name] = color
         # Store mappings for later use.
@@ -921,15 +945,15 @@ class Py3statusWrapper:
         Process the output for a module and return a json string representing it.
         Color processing occurs here.
         """
-        outputs = module['module'].get_latest()
-        color = module['color']
+        outputs = module["module"].get_latest()
+        color = module["color"]
         if color:
             for output in outputs:
                 # Color: substitute the config defined color
-                if 'color' not in output:
-                    output['color'] = color
+                if "color" not in output:
+                    output["color"] = color
         # Create the json string output.
-        return ','.join([dumps(x) for x in outputs])
+        return ",".join([dumps(x) for x in outputs])
 
     def i3bar_stop(self, signum, frame):
         self.i3bar_running = False
@@ -944,14 +968,14 @@ class Py3statusWrapper:
     def sleep_modules(self):
         # Put all py3modules to sleep so they stop updating
         for module in self.output_modules.values():
-            if module['type'] == 'py3status':
-                module['module'].sleep()
+            if module["type"] == "py3status":
+                module["module"].sleep()
 
     def wake_modules(self):
         # Wake up all py3modules.
         for module in self.output_modules.values():
-            if module['type'] == 'py3status':
-                module['module'].wake()
+            if module["type"] == "py3status":
+                module["module"].wake()
 
     @profile
     def run(self):
@@ -965,7 +989,7 @@ class Py3statusWrapper:
         signal(SIGTERM, self.terminate)
 
         # initialize usage variables
-        py3_config = self.config['py3_config']
+        py3_config = self.config["py3_config"]
 
         # prepare the color mappings
         self.create_mappings(py3_config)
@@ -982,19 +1006,19 @@ class Py3statusWrapper:
 
         # this will be our output set to the correct length for the number of
         # items in the bar
-        output = [None] * len(py3_config['order'])
+        output = [None] * len(py3_config["order"])
 
         write = sys.__stdout__.write
         flush = sys.__stdout__.flush
 
         # start our output
         header = {
-            'version': 1,
-            'click_events': not self.config['disable_click_events'],
-            'stop_signal': SIGTSTP
+            "version": 1,
+            "click_events": not self.config["disable_click_events"],
+            "stop_signal": SIGTSTP,
         }
         write(dumps(header))
-        write('\n[[]\n')
+        write("\n[[]\n")
 
         update_due = None
         # main loop
@@ -1012,53 +1036,53 @@ class Py3statusWrapper:
 
             # check if an update is needed
             if self.update_queue:
-                while (len(self.update_queue)):
+                while len(self.update_queue):
                     module_name = self.update_queue.popleft()
                     module = self.output_modules[module_name]
                     out = self.process_module_output(module)
 
-                    for index in module['position']:
+                    for index in module["position"]:
                         # store the output as json
                         output[index] = out
 
                 # build output string
-                out = ','.join([x for x in output if x])
+                out = ",".join([x for x in output if x])
                 # dump the line to stdout
-                write(',[{}]\n'.format(out))
+                write(",[{}]\n".format(out))
                 flush()
 
     def handle_cli_command(self, config):
         """Handle a command from the CLI.
         """
-        cmd = config['cli_command']
+        cmd = config["cli_command"]
         # aliases
-        if cmd[0] in ['mod', 'module', 'modules']:
-            cmd[0] = 'modules'
+        if cmd[0] in ["mod", "module", "modules"]:
+            cmd[0] = "modules"
 
         # allowed cli commands
-        if cmd[:2] in (['modules', 'list'], ['modules', 'details']):
+        if cmd[:2] in (["modules", "list"], ["modules", "details"]):
             docstrings.show_modules(config, cmd[1:])
         # docstring formatting and checking
-        elif cmd[:2] in (['docstring', 'check'], ['docstring', 'update']):
-            if cmd[1] == 'check':
-                show_diff = len(cmd) > 2 and cmd[2] == 'diff'
+        elif cmd[:2] in (["docstring", "check"], ["docstring", "update"]):
+            if cmd[1] == "check":
+                show_diff = len(cmd) > 2 and cmd[2] == "diff"
                 if show_diff:
                     mods = cmd[3:]
                 else:
                     mods = cmd[2:]
                 docstrings.check_docstrings(show_diff, config, mods)
-            if cmd[1] == 'update':
+            if cmd[1] == "update":
                 if len(cmd) < 3:
-                    print_stderr('Error: you must specify what to update')
+                    print_stderr("Error: you must specify what to update")
                     sys.exit(1)
 
-                if cmd[2] == 'modules':
+                if cmd[2] == "modules":
                     docstrings.update_docstrings()
                 else:
                     docstrings.update_readme_for_modules(cmd[2:])
-        elif cmd[:2] in (['modules', 'enable'], ['modules', 'disable']):
+        elif cmd[:2] in (["modules", "enable"], ["modules", "disable"]):
             # TODO: to be implemented
             pass
         else:
-            print_stderr('Error: unknown command')
+            print_stderr("Error: unknown command")
             sys.exit(1)

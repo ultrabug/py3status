@@ -7,6 +7,7 @@ from time import time
 from random import randint
 
 from py3status.composite import Composite
+from py3status.constants import POSITIONS
 from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
@@ -25,8 +26,8 @@ class Module:
     caching its output based on user will.
     """
 
-    PARAMS_NEW = 'new'
-    PARAMS_LEGACY = 'legacy'
+    PARAMS_NEW = "new"
+    PARAMS_LEGACY = "legacy"
 
     def __init__(self, module, user_modules, py3_wrapper, instance=None):
         """
@@ -48,19 +49,19 @@ class Module:
         self.methods = OrderedDict()
         self.module_class = instance
         self.module_full_name = module
-        self.module_inst = ''.join(module.split(' ')[1:])
-        self.module_name = module.split(' ')[0]
+        self.module_inst = "".join(module.split(" ")[1:])
+        self.module_name = module.split(" ")[0]
         self.new_update = False
         self.nagged = False
         self.prevent_refresh = False
         self.sleeping = False
         self.terminated = False
-        self.testing = self.config.get('testing')
+        self.testing = self.config.get("testing")
         self.urgent = False
 
         # create a nice name for the module that matches what the module is
         # called in the user config
-        if self.module_inst.startswith('_anon_module_'):
+        if self.module_inst.startswith("_anon_module_"):
             self.module_nice_name = self.module_name
         else:
             self.module_nice_name = self.module_full_name
@@ -76,17 +77,15 @@ class Module:
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
-            self.methods['error'] = {}
+            self.methods["error"] = {}
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
-                u'{}: Import Error, {}'.format(self.module_nice_name, str(e)),
+                u"{}: Import Error, {}".format(self.module_nice_name, str(e)),
             ]
             self.error_output(self.error_messages[0])
             # log the error
-            msg = 'Module `{}` could not be loaded'.format(
-                self.module_full_name
-            )
+            msg = "Module `{}` could not be loaded".format(self.module_full_name)
             if isinstance(e, SyntaxError):
                 # provide full traceback
                 self._py3_wrapper.report_exception(msg, notify_user=False)
@@ -97,7 +96,7 @@ class Module:
                 self._py3_wrapper.log(str(e))
 
     def __repr__(self):
-        return '<Module {}>'.format(self.module_full_name)
+        return "<Module {}>".format(self.module_full_name)
 
     @staticmethod
     def load_from_file(filepath):
@@ -105,9 +104,9 @@ class Module:
         Return user-written class object from given path.
         """
         class_inst = None
-        expected_class = 'Py3status'
+        expected_class = "Py3status"
         module_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
-        if file_ext.lower() == '.py':
+        if file_ext.lower() == ".py":
             py_mod = imp.load_source(module_name, filepath)
             if hasattr(py_mod, expected_class):
                 class_inst = py_mod.Py3status()
@@ -119,9 +118,9 @@ class Module:
         Load a py3status bundled module.
         """
         class_inst = None
-        name = 'py3status.modules.{}'.format(module_name)
+        name = "py3status.modules.{}".format(module_name)
         py_mod = __import__(name)
-        components = name.split('.')
+        components = name.split(".")
         for comp in components[1:]:
             py_mod = getattr(py_mod, comp)
         class_inst = py_mod.Py3status()
@@ -146,12 +145,14 @@ class Module:
 
                 self.error_messages = [
                     self.module_nice_name,
-                    u'{}: {}'.format(self.module_nice_name, str(e) or e.__class__.__name__),
+                    u"{}: {}".format(
+                        self.module_nice_name, str(e) or e.__class__.__name__
+                    ),
                 ]
                 self.error_output(self.error_messages[0])
-                msg = 'Exception in `%s` post_config_hook()' % self.module_full_name
+                msg = "Exception in `%s` post_config_hook()" % self.module_full_name
                 self._py3_wrapper.report_exception(msg, notify_user=False)
-                self._py3_wrapper.log('terminating module %s' % self.module_full_name)
+                self._py3_wrapper.log("terminating module %s" % self.module_full_name)
         self.enabled = True
 
     def runtime_error(self, msg, method):
@@ -169,10 +170,7 @@ class Module:
         # only show first line of error
         msg = msg.splitlines()[0]
 
-        errors = [
-            self.module_nice_name,
-            u'{}: {}'.format(self.module_nice_name, msg),
-        ]
+        errors = [self.module_nice_name, u"{}: {}".format(self.module_nice_name, msg)]
 
         # if we have shown this error then keep in the same state
         if self.error_messages != errors:
@@ -186,23 +184,23 @@ class Module:
         the i3bar
         """
         color_fn = self._py3_wrapper.get_config_attribute
-        color = color_fn(self.module_full_name, 'color_error')
-        if hasattr(color, 'none_setting'):
-            color = color_fn(self.module_full_name, 'color_bad')
-        if hasattr(color, 'none_setting'):
+        color = color_fn(self.module_full_name, "color_error")
+        if hasattr(color, "none_setting"):
+            color = color_fn(self.module_full_name, "color_bad")
+        if hasattr(color, "none_setting"):
             color = None
 
         error = {
-            'full_text': message,
-            'color': color,
-            'instance': self.module_inst,
-            'name': self.module_name,
+            "full_text": message,
+            "color": color,
+            "instance": self.module_inst,
+            "name": self.module_name,
         }
         for method in self.methods.values():
-            if method_affected and method['method'] != method_affected:
+            if method_affected and method["method"] != method_affected:
                 continue
 
-            method['last_output'] = [error]
+            method["last_output"] = [error]
 
         self.allow_config_clicks = False
         self.set_updated()
@@ -212,7 +210,7 @@ class Module:
         hide the module in the i3bar
         """
         for method in self.methods.values():
-            method['last_output'] = {}
+            method["last_output"] = {}
 
         self.allow_config_clicks = False
         self.error_hide = True
@@ -225,7 +223,7 @@ class Module:
         self.prepare_module()
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
-            self._py3_wrapper.log('starting module %s' % self.module_full_name)
+            self._py3_wrapper.log("starting module %s" % self.module_full_name)
             self._py3_wrapper.timeout_queue_add(self)
 
     def force_update(self):
@@ -236,9 +234,9 @@ class Module:
             return
         # clear cached_until for each method to allow update
         for meth in self.methods:
-            self.methods[meth]['cached_until'] = time()
-            if self.config['debug']:
-                self._py3_wrapper.log('clearing cache for method {}'.format(meth))
+            self.methods[meth]["cached_until"] = time()
+            if self.config["debug"]:
+                self._py3_wrapper.log("clearing cache for method {}".format(meth))
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
@@ -250,8 +248,8 @@ class Module:
         self.disabled = True
         # purge from any container modules
         self._py3_wrapper.purge_module(self.module_full_name)
-        self.error_output(u'')
-        self._py3_wrapper.log('disabling module `%s`' % self.module_full_name)
+        self.error_output(u"")
+        self._py3_wrapper.log("disabling module `%s`" % self.module_full_name)
 
     def wake(self):
         self.sleeping = False
@@ -275,23 +273,23 @@ class Module:
         # get latest output
         output = []
         for method in self.methods.values():
-            data = method['last_output']
+            data = method["last_output"]
             if isinstance(data, list):
                 if self.testing:
-                    data[0]['cached_until'] = method.get('cached_until')
+                    data[0]["cached_until"] = method.get("cached_until")
                 output.extend(data)
             else:
                 # if the output is not 'valid' then don't add it.
-                if data.get('full_text') or 'separator' in data:
+                if data.get("full_text") or "separator" in data:
                     if self.testing:
-                        data['cached_until'] = method.get('cached_until')
+                        data["cached_until"] = method.get("cached_until")
                     output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
             # has the modules output become urgent?
             # we only care the update that this happens
             # not any after then.
-            urgent = True in [x.get('urgent') for x in output]
+            urgent = True in [x.get("urgent") for x in output]
             if urgent != self.urgent:
                 self.urgent = urgent
             else:
@@ -312,43 +310,68 @@ class Module:
         """
         self.i3s_module_options = {}
         self.py3_module_options = {}
-        mod_config = self.config['py3_config'].get(module, {})
+        mod_config = self.config["py3_config"].get(module, {})
 
-        if 'min_width' in mod_config:
-            min_width = mod_config['min_width']
+        if "min_length" in mod_config:
+            min_length = mod_config["min_length"]
+            if not isinstance(min_length, int):
+                err = 'invalid "min_length" attribute should be an int'
+                raise TypeError(err)
+
+            self.py3_module_options["min_length"] = min_length
+            self.random_int = randint(0, 1)
+
+            if "position" in mod_config:
+                position = mod_config["position"]
+                if not (
+                    isinstance(position, basestring) and position.lower() in POSITIONS
+                ):
+                    err = 'invalid "position" attribute, valid values are: '
+                    err += ", ".join(POSITIONS)
+                    raise ValueError(err)
+
+                self.py3_module_options["position"] = position
+
+        if "min_width" in mod_config:
+            min_width = mod_config["min_width"]
             if not isinstance(min_width, int):
                 err = 'invalid "min_width" attribute should be an int'
                 raise TypeError(err)
 
-            self.py3_module_options['min_width'] = min_width
-            self.random_int = randint(0, 1)
+            self.i3s_module_options["min_width"] = min_width
 
-            if 'align' in mod_config:
-                align = mod_config['align']
-                if not (isinstance(align, basestring) and
-                        align.lower() in ('left', 'center', 'right')):
-                    err = 'invalid "align" attribute, valid values are:'
-                    err += ' left, center, right'
+            if "align" in mod_config:
+                align = mod_config["align"]
+                if not (isinstance(align, basestring) and align.lower() in POSITIONS):
+                    err = 'invalid "align" attribute, valid values are: '
+                    err += ", ".join(POSITIONS)
                     raise ValueError(err)
 
-                self.py3_module_options['align'] = align
+                self.i3s_module_options["align"] = align
 
-        if 'separator' in mod_config:
-            separator = mod_config['separator']
+        if "separator" in mod_config:
+            separator = mod_config["separator"]
             if not isinstance(separator, bool):
                 err = 'invalid "separator" attribute, should be a bool'
                 raise TypeError(err)
 
-            self.i3s_module_options['separator'] = separator
+            self.i3s_module_options["separator"] = separator
 
-        if 'separator_block_width' in mod_config:
-            sep_block_width = mod_config['separator_block_width']
+        if "separator_block_width" in mod_config:
+            sep_block_width = mod_config["separator_block_width"]
             if not isinstance(sep_block_width, int):
                 err = 'invalid "separator_block_width" attribute, '
                 err += "should be an int"
                 raise TypeError(err)
 
-            self.i3s_module_options['separator_block_width'] = sep_block_width
+            self.i3s_module_options["separator_block_width"] = sep_block_width
+
+        # if markup is set on the module or globally we add it to the module
+        # output for pango support
+        fn = self._py3_wrapper.get_config_attribute
+        param = fn(self.module_full_name, "markup")
+        if not hasattr(param, "none_setting"):
+            self.i3s_module_options["markup"] = param
 
     def process_composite(self, response):
         """
@@ -356,7 +379,7 @@ class Module:
         composites do not have inter item separators as they appear joined.
         We need to respect the universal options too.
         """
-        composite = response['composite']
+        composite = response["composite"]
 
         # if the composite is of not Composite make it one so we can simplify
         # it.
@@ -365,87 +388,85 @@ class Module:
 
         # simplify and get underlying list.
         composite = composite.simplify().get_content()
-        response['composite'] = composite
+        response["composite"] = composite
 
         if not isinstance(composite, list):
             raise Exception('expecting "composite" key in response')
         # if list is empty nothing to do
         if not len(composite):
             return
-        if 'full_text' in response:
+        if "full_text" in response:
             err = 'conflicting "full_text" and "composite" in response'
             raise Exception(err)
         # set universal options on last component
         composite[-1].update(self.i3s_module_options)
         # update all components
-        color = response.get('color')
-        urgent = response.get('urgent')
-        for index, item in enumerate(response['composite']):
+        color = response.get("color")
+        urgent = response.get("urgent")
+        for index, item in enumerate(response["composite"]):
             # validate the response
-            if 'full_text' not in item:
+            if "full_text" not in item:
                 raise KeyError('missing "full_text" key in response')
             # make sure all components have a name
-            if 'name' not in item:
-                instance_index = item.get('index', index)
-                item['instance'] = '{} {}'.format(
-                    self.module_inst, instance_index
-                )
-                item['name'] = self.module_name
+            if "name" not in item:
+                instance_index = item.get("index", index)
+                item["instance"] = "{} {}".format(self.module_inst, instance_index)
+                item["name"] = self.module_name
             # hide separator for all inner components unless existing
-            if index != len(response['composite']) - 1:
-                if 'separator' not in item:
-                    item['separator'] = False
-                    item['separator_block_width'] = 0
+            if index != len(response["composite"]) - 1:
+                if "separator" not in item:
+                    item["separator"] = False
+                    item["separator_block_width"] = 0
             # If a color was supplied for the composite and a composite
             # part does not supply a color, use the composite color.
-            if color and 'color' not in item:
-                item['color'] = color
+            if color and "color" not in item:
+                item["color"] = color
             # Remove any none color from our output
-            if hasattr(item.get('color'), 'none_setting'):
-                del item['color']
+            if hasattr(item.get("color"), "none_setting"):
+                del item["color"]
 
             # remove urgent if not allowed
             if not self.allow_urgent:
-                if 'urgent' in item:
-                    del item['urgent']
+                if "urgent" in item:
+                    del item["urgent"]
             # if urgent we want to set this to all parts
-            elif urgent and 'urgent' not in item:
-                item['urgent'] = urgent
+            elif urgent and "urgent" not in item:
+                item["urgent"] = urgent
 
-        # set min_width
-        if 'min_width' in self.py3_module_options:
-            min_width = self.py3_module_options['min_width']
+        # set min_length
+        if "min_length" in self.py3_module_options:
+            min_length = self.py3_module_options["min_length"]
 
-            # get width, skip if width exceeds min_width
-            width = sum([len(x['full_text']) for x in response['composite']])
-            if width >= min_width:
+            # get length, skip if length exceeds min_length
+            length = sum([len(x["full_text"]) for x in response["composite"]])
+            if length >= min_length:
                 return
 
-            # sometimes when we go under min_width to pad both side evenly,
-            # we will add extra space on either side to honor min_width
-            padding = int((min_width / 2.0) - (width / 2.0))
-            offset = min_width - ((padding * 2) + width)
+            # sometimes we go under min_length to pad both side evenly,
+            # we will add extra space on either side to honor min_length
+            padding = int((min_length / 2.0) - (length / 2.0))
+            offset = min_length - ((padding * 2) + length)
 
-            # set align
-            align = self.py3_module_options.get('align', 'left')
-            if align == 'center':
-                left = right = ' ' * padding
+            # set position
+            position = self.py3_module_options.get("position", "left")
+            if position == "center":
+                left = right = " " * padding
                 if self.random_int:
-                    left += ' ' * offset
+                    left += " " * offset
                 else:
-                    right += ' ' * offset
-            elif align == 'left':
-                left, right = '', ' ' * (padding * 2 + offset)
-            elif align == 'right':
-                right, left = '', ' ' * (padding * 2 + offset)
+                    right += " " * offset
+            elif position == "left":
+                left, right = "", " " * (padding * 2 + offset)
+            elif position == "right":
+                right, left = "", " " * (padding * 2 + offset)
 
             # padding
             if left:
-                response['composite'][0]['full_text'] = (
-                    left + response['composite'][0]['full_text']
+                response["composite"][0]["full_text"] = (
+                    left + response["composite"][0]["full_text"]
                 )
             if right:
-                response['composite'][-1]['full_text'] += right
+                response["composite"][-1]["full_text"] += right
 
     def _params_type(self, method_name, instance):
         """
@@ -471,7 +492,7 @@ class Module:
         # allow any extras like keywords.
         arg_count = 1
         # on_click method has extra events parameter
-        if method_name == 'on_click':
+        if method_name == "on_click":
             arg_count = 2
         args, vargs, kw, defaults = inspect.getargspec(method)
         if len(args) == arg_count and not vargs and not kw:
@@ -493,14 +514,16 @@ class Module:
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
                 self._py3_wrapper.log(
-                    'loading module "{}" from {}{}'.format(module, include_path,
-                                                           f_name))
+                    'loading module "{}" from {}{}'.format(module, include_path, f_name)
+                )
                 self.module_class = self.load_from_file(include_path + f_name)
             # load from py3status provided modules
             else:
                 self._py3_wrapper.log(
                     'loading module "{}" from py3status.modules.{}'.format(
-                        module, self.module_name))
+                        module, self.module_name
+                    )
+                )
                 self.module_class = self.load_from_namespace(self.module_name)
 
         class_inst = self.module_class
@@ -516,7 +539,7 @@ class Module:
                 pass
 
             # module configuration
-            mod_config = self.config['py3_config'].get(module, {})
+            mod_config = self.config["py3_config"].get(module, {})
 
             # process any deprecated configuration settings
             try:
@@ -530,43 +553,43 @@ class Module:
                     # log the deprecation
                     # currently this is just done to the log file as the user
                     # does not need to take any action.
-                    if 'msg' in item:
-                        msg = item['msg']
-                        param = item.get('param')
+                    if "msg" in item:
+                        msg = item["msg"]
+                        param = item.get("param")
                         if param:
-                            msg = '`{}` {}'.format(param, msg)
-                        msg = 'DEPRECATION WARNING: {} {}'.format(
+                            msg = "`{}` {}".format(param, msg)
+                        msg = "DEPRECATION WARNING: {} {}".format(
                             self.module_full_name, msg
                         )
                         self._py3_wrapper.log(msg)
 
-                if 'rename' in deprecated:
+                if "rename" in deprecated:
                     # renamed parameters
-                    for item in deprecated['rename']:
-                        param = item['param']
-                        new_name = item['new']
+                    for item in deprecated["rename"]:
+                        param = item["param"]
+                        new_name = item["new"]
                         if param in mod_config:
                             if new_name not in mod_config:
                                 mod_config[new_name] = mod_config[param]
                                 # remove from config
                                 del mod_config[param]
                             deprecation_log(item)
-                if 'format_fix_unnamed_param' in deprecated:
+                if "format_fix_unnamed_param" in deprecated:
                     # format update where {} was previously allowed
-                    for item in deprecated['format_fix_unnamed_param']:
-                        param = item['param']
-                        placeholder = item['placeholder']
-                        if '{}' in mod_config.get(param, ''):
+                    for item in deprecated["format_fix_unnamed_param"]:
+                        param = item["param"]
+                        placeholder = item["placeholder"]
+                        if "{}" in mod_config.get(param, ""):
                             mod_config[param] = mod_config[param].replace(
-                                '{}', '{%s}' % placeholder
+                                "{}", "{%s}" % placeholder
                             )
                             deprecation_log(item)
-                if 'rename_placeholder' in deprecated:
+                if "rename_placeholder" in deprecated:
                     # rename placeholders
                     placeholders = {}
-                    for item in deprecated['rename_placeholder']:
-                        placeholders[item['placeholder']] = item['new']
-                        format_strings = item['format_strings']
+                    for item in deprecated["rename_placeholder"]:
+                        placeholders[item["placeholder"]] = item["new"]
+                        format_strings = item["format_strings"]
                         for format_param in format_strings:
                             format_string = mod_config.get(format_param)
                             if not format_string:
@@ -576,13 +599,13 @@ class Module:
                             )
                             mod_config[format_param] = format
 
-                if 'update_placeholder_format' in deprecated:
+                if "update_placeholder_format" in deprecated:
                     # update formats for placeholders if a format is not set
-                    for item in deprecated['update_placeholder_format']:
-                        placeholder_formats = item.get('placeholder_formats', {})
-                        if 'function' in item:
-                            placeholder_formats.update(item['function'](mod_config))
-                        format_strings = item['format_strings']
+                    for item in deprecated["update_placeholder_format"]:
+                        placeholder_formats = item.get("placeholder_formats", {})
+                        if "function" in item:
+                            placeholder_formats.update(item["function"](mod_config))
+                        format_strings = item["format_strings"]
                         for format_param in format_strings:
                             format_string = mod_config.get(format_param)
                             if not format_string:
@@ -591,29 +614,31 @@ class Module:
                                 format_string, placeholder_formats
                             )
                             mod_config[format_param] = format
-                if 'substitute_by_value' in deprecated:
+                if "substitute_by_value" in deprecated:
                     # one parameter sets the value of another
-                    for item in deprecated['substitute_by_value']:
-                        param = item['param']
-                        value = item['value']
-                        substitute = item['substitute']
-                        substitute_param = substitute['param']
-                        substitute_value = substitute['value']
-                        if (mod_config.get(param) == value and
-                                substitute_param not in mod_config):
+                    for item in deprecated["substitute_by_value"]:
+                        param = item["param"]
+                        value = item["value"]
+                        substitute = item["substitute"]
+                        substitute_param = substitute["param"]
+                        substitute_value = substitute["value"]
+                        if (
+                            mod_config.get(param) == value
+                            and substitute_param not in mod_config
+                        ):
                             mod_config[substitute_param] = substitute_value
                             deprecation_log(item)
-                if 'function' in deprecated:
+                if "function" in deprecated:
                     # parameter set by function
-                    for item in deprecated['function']:
-                        updates = item['function'](mod_config)
+                    for item in deprecated["function"]:
+                        updates = item["function"](mod_config)
                         for name, value in updates.items():
                             if name not in mod_config:
                                 mod_config[name] = value
-                if 'remove' in deprecated:
+                if "remove" in deprecated:
                     # obsolete parameters forcibly removed
-                    for item in deprecated['remove']:
-                        param = item['param']
+                    for item in deprecated["remove"]:
+                        param = item["param"]
                         if param in mod_config:
                             del mod_config[param]
                             deprecation_log(item)
@@ -621,7 +646,7 @@ class Module:
             # apply module configuration
             for config, value in mod_config.items():
                 # names starting with '.' are private
-                if not config.startswith('.'):
+                if not config.startswith("."):
                     setattr(self.module_class, config, value)
 
             # process any update_config settings
@@ -631,11 +656,11 @@ class Module:
                 update_config = None
 
             if update_config:
-                if 'update_placeholder_format' in update_config:
+                if "update_placeholder_format" in update_config:
                     # update formats for placeholders if a format is not set
-                    for item in update_config['update_placeholder_format']:
-                        placeholder_formats = item.get('placeholder_formats', {})
-                        format_strings = item['format_strings']
+                    for item in update_config["update_placeholder_format"]:
+                        placeholder_formats = item.get("placeholder_formats", {})
+                        format_strings = item["format_strings"]
                         for format_param in format_strings:
                             format_string = getattr(class_inst, format_param, None)
                             if not format_string:
@@ -646,54 +671,59 @@ class Module:
                             setattr(class_inst, format_param, format)
 
             # Add the py3 module helper if modules self.py3 is not defined
-            if not hasattr(self.module_class, 'py3'):
-                setattr(self.module_class, 'py3', Py3(self))
+            if not hasattr(self.module_class, "py3"):
+                setattr(self.module_class, "py3", Py3(self))
+
+            # Subscribe to udev events if on_udev_* dynamic variables are
+            # configured on the module
+            for param in dir(self.module_class):
+                if param.startswith("on_udev_"):
+                    trigger_action = getattr(self.module_class, param)
+                    self.add_udev_trigger(trigger_action, param[8:])
 
             # allow_urgent
             # get the value form the config or use the module default if
             # supplied.
             fn = self._py3_wrapper.get_config_attribute
-            param = fn(self.module_full_name, 'allow_urgent')
-            if hasattr(param, 'none_setting'):
+            param = fn(self.module_full_name, "allow_urgent")
+            if hasattr(param, "none_setting"):
                 param = True
             self.allow_urgent = param
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
-                if method.startswith('_'):
+                if method.startswith("_"):
                     continue
                 else:
                     m_type = type(getattr(class_inst, method))
-                    if 'method' in str(m_type):
+                    if "method" in str(m_type):
                         params_type = self._params_type(method, class_inst)
-                        if method == 'on_click':
+                        if method == "on_click":
                             self.click_events = params_type
-                        elif method == 'kill':
+                        elif method == "kill":
                             self.has_kill = params_type
-                        elif method == 'post_config_hook':
+                        elif method == "post_config_hook":
                             self.has_post_config_hook = True
                         else:
                             # the method_obj stores infos about each method
                             # of this module.
                             method_obj = {
-                                'cached_until': time(),
-                                'call_type': params_type,
-                                'instance': None,
-                                'last_output': {
-                                    'name': method,
-                                    'full_text': ''
-                                },
-                                'method': method,
-                                'name': None
+                                "cached_until": time(),
+                                "call_type": params_type,
+                                "instance": None,
+                                "last_output": {"name": method, "full_text": ""},
+                                "method": method,
+                                "name": None,
                             }
                             self.methods[method] = method_obj
 
         # done, log some debug info
-        if self.config['debug']:
+        if self.config["debug"]:
             self._py3_wrapper.log(
                 'module "{}" click_events={} has_kill={} methods={}'.format(
-                    module, self.click_events, self.has_kill,
-                    self.methods.keys()))
+                    module, self.click_events, self.has_kill, self.methods.keys()
+                )
+            )
 
     def click_event(self, event):
         """
@@ -706,7 +736,7 @@ class Module:
         try:
             if self.error_messages:
                 # we have error messages
-                button = event['button']
+                button = event["button"]
                 if button == 1:
                     # cycle through to next message
                     self.error_index = (self.error_index + 1) % len(self.error_messages)
@@ -718,20 +748,23 @@ class Module:
                     self.prevent_refresh = True
 
             elif self.click_events:
-                click_method = getattr(self.module_class, 'on_click')
+                click_method = getattr(self.module_class, "on_click")
                 if self.click_events == self.PARAMS_NEW:
                     # new style modules
                     click_method(event)
                 else:
                     # legacy modules had extra parameters passed
-                    click_method(self.i3status_thread.json_list,
-                                 self.config['py3_config']['general'], event)
+                    click_method(
+                        self.i3status_thread.json_list,
+                        self.config["py3_config"]["general"],
+                        event,
+                    )
                 self.set_updated()
             else:
                 # nothing has happened so no need for refresh
                 self.prevent_refresh = True
         except Exception:
-            msg = 'on_click event in `{}` failed'.format(self.module_full_name)
+            msg = "on_click event in `{}` failed".format(self.module_full_name)
             self._py3_wrapper.report_exception(msg)
 
     @profile
@@ -753,22 +786,23 @@ class Module:
                     break
 
                 # respect the cache set for this method
-                if time() < obj['cached_until']:
-                    if not cache_time or obj['cached_until'] < cache_time:
-                        cache_time = obj['cached_until']
+                if time() < obj["cached_until"]:
+                    if not cache_time or obj["cached_until"] < cache_time:
+                        cache_time = obj["cached_until"]
                     continue
 
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    if my_method['call_type'] == self.PARAMS_NEW:
+                    if my_method["call_type"] == self.PARAMS_NEW:
                         # new style modules
                         response = method()
                     else:
                         # legacy modules had parameters passed
                         response = method(
                             self.i3status_thread.json_list,
-                            self.config['py3_config']['general'])
+                            self.config["py3_config"]["general"],
+                        )
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -777,62 +811,63 @@ class Module:
                         # this is an old school module reporting its position
                         position, result = response
                         if not isinstance(result, dict):
-                            raise TypeError('response should be a dict')
+                            raise TypeError("response should be a dict")
                     else:
-                        raise TypeError('response should be a dict')
+                        raise TypeError("response should be a dict")
 
-                    if isinstance(response.get('full_text'), (list, Composite)):
-                        response['composite'] = response['full_text']
-                        del response['full_text']
-                    if 'composite' in response:
+                    if isinstance(response.get("full_text"), (list, Composite)):
+                        response["composite"] = response["full_text"]
+                        del response["full_text"]
+                    if "composite" in response:
                         self.process_composite(response)
                     else:
                         # validate the response
-                        if 'full_text' not in result:
+                        if "full_text" not in result:
                             err = 'missing "full_text" key in response'
                             raise KeyError(err)
                         # Remove any none color from our output
-                        if hasattr(result.get('color'), 'none_setting'):
-                            del result['color']
+                        if hasattr(result.get("color"), "none_setting"):
+                            del result["color"]
                         # remove urgent if not allowed
-                        if not self.allow_urgent and 'urgent' in result:
-                            del result['urgent']
+                        if not self.allow_urgent and "urgent" in result:
+                            del result["urgent"]
                         # set universal module options in result
                         result.update(self.i3s_module_options)
 
-                    result['instance'] = self.module_inst
-                    result['name'] = self.module_name
+                    result["instance"] = self.module_inst
+                    result["name"] = self.module_name
 
                     # initialize method object
-                    if my_method['name'] is None:
-                        my_method['name'] = result['name']
-                        if 'instance' in result:
-                            my_method['instance'] = result['instance']
+                    if my_method["name"] is None:
+                        my_method["name"] = result["name"]
+                        if "instance" in result:
+                            my_method["instance"] = result["instance"]
                         else:
-                            my_method['instance'] = result['name']
+                            my_method["instance"] = result["name"]
 
                     # update method object cache
-                    if 'cached_until' in result:
-                        cached_until = result['cached_until']
+                    if "cached_until" in result:
+                        cached_until = result["cached_until"]
                         # remove this so we can check later for output changes
-                        del result['cached_until']
+                        del result["cached_until"]
                     else:
                         # get module default cached_until
                         cached_until = self.module_class.py3.time_in()
-                    my_method['cached_until'] = cached_until
+                    my_method["cached_until"] = cached_until
                     if not cache_time or cached_until < cache_time:
                         cache_time = cached_until
 
                     # update method object output
-                    if 'composite' in response:
-                        my_method['last_output'] = result['composite']
+                    if "composite" in response:
+                        my_method["last_output"] = result["composite"]
                     else:
-                        my_method['last_output'] = result
+                        my_method["last_output"] = result
 
                     # debug info
-                    if self.config['debug']:
+                    if self.config["debug"]:
                         self._py3_wrapper.log(
-                            'method {} returned {} '.format(meth, result))
+                            "method {} returned {} ".format(meth, result)
+                        )
                     # module working correctly so ensure module works as
                     # expected
                     self.allow_config_clicks = True
@@ -851,23 +886,25 @@ class Module:
                         else:
                             cache_time = time() + e.timeout
                     else:
-                        cache_time = time() + getattr(self.module_class,
-                                                      'cache_timeout',
-                                                      self.config['cache_timeout'])
+                        cache_time = time() + getattr(
+                            self.module_class,
+                            "cache_timeout",
+                            self.config["cache_timeout"],
+                        )
 
                 except Exception as e:
-                    msg = 'Instance `{}`, user method `{}` failed'
+                    msg = "Instance `{}`, user method `{}` failed"
                     msg = msg.format(self.module_full_name, meth)
                     if not self.testing:
                         self._py3_wrapper.report_exception(msg, notify_user=False)
                     # added error
                     self.runtime_error(str(e) or e.__class__.__name__, meth)
-                    cache_time = time() + getattr(self.module_class,
-                                                  'cache_timeout',
-                                                  self.config['cache_timeout'])
+                    cache_time = time() + getattr(
+                        self.module_class, "cache_timeout", self.config["cache_timeout"]
+                    )
 
             if cache_time is None:
-                cache_time = time() + self.config['cache_timeout']
+                cache_time = time() + self.config["cache_timeout"]
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
             if cache_time == PY3_CACHE_FOREVER:
@@ -875,7 +912,7 @@ class Module:
             # don't be hasty mate
             # set timeout to do update next time one is needed
             if not cache_time:
-                cache_time = time() + self.config['minimum_interval']
+                cache_time = time() + self.config["minimum_interval"]
 
             self._py3_wrapper.timeout_queue_add(self, cache_time)
 
@@ -883,13 +920,24 @@ class Module:
         # check and execute the 'kill' method if present
         if self.has_kill:
             try:
-                kill_method = getattr(self.module_class, 'kill')
+                kill_method = getattr(self.module_class, "kill")
                 if self.has_kill == self.PARAMS_NEW:
                     kill_method()
                 else:
                     # legacy call parameters
-                    kill_method(self.i3status_thread.json_list,
-                                self.config['py3_config']['general'])
+                    kill_method(
+                        self.i3status_thread.json_list,
+                        self.config["py3_config"]["general"],
+                    )
             except Exception:
                 # this would be stupid to die on exit
                 pass
+
+    def add_udev_trigger(self, trigger_action, subsystem):
+        """
+        Subscribe to the requested udev subsystem and apply the given action.
+        """
+        if self._py3_wrapper.udev_monitor.subscribe(self, trigger_action, subsystem):
+            if trigger_action == "refresh_and_freeze":
+                # FIXME: we may want to disable refresh instead of using cache_timeout
+                self.module_class.cache_timeout = PY3_CACHE_FOREVER
