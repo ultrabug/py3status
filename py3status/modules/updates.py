@@ -18,6 +18,7 @@ Format placeholders:
     {eopkg}   number of updates, eg 0 .. Solus
     {flatpak} number of updates, eg 0 .. Flatpak
     {gem}     number of updates, eg 0 .. Ruby Programs and Libaries
+    {npm}     number of updates, eg 0 .. Node.js Package Manager (JavaScript)
     {pacman}  number of updates, eg 0 .. Arch Linux
     {pakku}   number of updates, eg 0 .. Arch Linux (AUR)
     {pikaur}  number of updates, eg 0 .. Arch Linux (AUR)
@@ -34,7 +35,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, gem, pakku, pikaur, pip, pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, eopkg, flatpak, gem, npm, pakku, pikaur, pip, pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -133,6 +134,11 @@ class Eopkg(Update):
         return output
 
 
+class Npm(Update):
+    def count_updates(self, output):
+        return len(output.splitlines()[1:])
+
+
 class Pakku(Update):
     def get_output(self):
         try:
@@ -227,6 +233,7 @@ class Py3status:
             others = [
                 ("Flatpak", "flatpak remote-ls --updates --all"),
                 ("Gem", "gem outdated --quiet"),
+                ("Npm", "npm outdated"),
                 ("Pip", "pip list --outdated --no-color"),
                 ("Snappy", "snap refresh --list --color=never"),
             ]
