@@ -13,7 +13,7 @@ Configuration parameters:
         (default '{format_station}|No Velib')
     format_station: display format for stations
         *(default "{name} [\?if=state=Closed&color=state {state} ]"
-        "[\?color=greenyellow {bike}/{free_edock} ]"
+        "[\?color=greenyellow {bike}/{free_dock} ]"
         "[\?color=deepskyblue {ebike}/{free_edock}]")*
     stations: specify a list of station codes to use, find your
         station code at https://www.velib-metropole.fr/map
@@ -96,7 +96,7 @@ class Py3status:
     format = "{format_station}|No Velib"
     format_station = (
         "{name} [\?if=state=Closed&color=state {state} ]"
-        "[\?color=greenyellow {bike}/{free_edock} ]"
+        "[\?color=greenyellow {bike}/{free_dock} ]"
         "[\?color=deepskyblue {ebike}/{free_edock}]"
     )
     stations = [20043, 11014, 20012, 20014, 10042]
@@ -200,7 +200,7 @@ class Py3status:
                 temporary.update(temporary.pop(x, {}))
             temporary = self.py3.flatten_dict(temporary, delimiter="_")
 
-            station = {'index': index + 1}
+            station = {"index": index + 1}
             for original, value in temporary.items():
                 try:
                     new_key = self.cache_station_keys[original]
