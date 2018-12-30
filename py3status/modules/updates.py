@@ -196,10 +196,7 @@ class Py3status:
     format = None
     managers = []
     thresholds = [
-        (0, "darkgray"),
-        (10, "degraded"),
-        (20, "orange"),
-        (30, "bad"),
+        (0, "darkgray"), (10, "degraded"), (20, "orange"), (30, "bad"),
     ]
 
     class Meta:
@@ -296,11 +293,13 @@ class Py3status:
         if placeholders:
             log += '== Placeholders: '.format(", ".join(placeholders))
         if custom:
-            log += '== Custom\n-{}\n'.format(custom)
-                "- '{}', '{}'\n".join(*x for x in custom
+            log += '== Custom Managers\n{}'.format(''.join(
+                ["- {:10}{}\n".format(*x) for x in custom])
             )
         else:
-            log += '== Managers\n- {}\n'.format(managers, indent=2)
+            log += '== Supported Managers\n{}'.format(''.join(
+                ["- {:10}{}\n".format(*x) for x in managers])
+            )
 
         self._init_managers([], custom, placeholders, False)
         self._init_managers(custom, managers, placeholders, multiple)
@@ -312,9 +311,11 @@ class Py3status:
             self.format = "[\?soft  ]".join(
                 auto.format(name=x, lower=x.lower()) for x in self.names
             )
-
         self.thresholds_init = self.py3.get_color_names_list(self.format)
-        log += '== Running... ' + ', '.join(self.names)
+
+        log += '== Running Managers\n{}'.format(''.join(
+            ["- {}\n".format(x) for x in self.names])
+        )[:-1]
         self.py3.log(log)
 
     def _init_managers(self, custom, managers, placeholders, multiple):
