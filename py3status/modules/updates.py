@@ -216,6 +216,7 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        log = ""
         with open("/etc/os-release") as f:
             multiple = "archlinux" in f.read()
             if multiple:
@@ -251,8 +252,13 @@ class Py3status:
                 ("Snappy", "snap refresh --list --color=never"),
             ]
 
+        self.py3.log(managers)
+        self.py3.log(others)
+        self.py3.log('===============')
+
         if self.managers:
             new_managers = []
+            new_others = []
             for entry in self.managers:
                 if isinstance(entry, tuple):
                     if len(entry) != 2 or entry[0].lower() == "update":
@@ -262,48 +268,86 @@ class Py3status:
                     name = entry.lower()
                     if name == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
-                    for _managers in (managers, others):
-                        for manager in _managers:
-                            if manager[0].lower() == name:
-                                new_managers.append(manager)
+                    for _manager in managers:
+                        if _manager[0].lower() == name:
+                            self.py3.log(_manager)
+                            new_managers.append(_manager)
+                            break
+                    for _other in others:
+                        if _other[0].lower() == name:
+                            self.py3.log(_other)
+                            new_others.append(_other)
+                            break
+
+            self.py3.log(new_managers)
+            self.py3.log(new_others)
+            self.py3.log('===============')
             managers = new_managers
+            others = new_others
+
+            self.py3.log(managers)
+            self.py3.log(others)
+            self.py3.log('===============')
+
+            if managers:
+                log += "== User-defined managers:\n{}\n".format(
+                    '\n'.join(["- {:10} {}".format(*x) for x in managers])
+                )
+            if others:
+                log += "== User-defined others:\n{}\n".format(
+                    '\n'.join(["- {:10} {}".format(*x) for x in others])
+                )
 
         if self.format:
             placeholders = self.py3.get_placeholders_list(self.format)
             placeholders = [x for x in placeholders if x != "update"]
+            if placeholders:
+                log += '== User-defined placeholders:\n{}\n'.format(
+                    '\n'.join(["- {}".format(x) for x in placeholders])
+                )
         else:
             placeholders = []
 
-        formats = []
+        if log:
+            self.py3.log(log[:-1])
+
+        self.formats = []
         self.backends = []
-        for index, _managers in enumerate((managers, others)):
-            for name, command in _managers:
-                name_lowercased = name.lower()
-                if not index:
-                    if placeholders and name_lowercased not in placeholders:
-                        continue
-                elif name_lowercased not in placeholders:
-                    continue
-                if self.py3.check_commands(command.split()[0]):
-                    try:
-                        backend = globals()[name.capitalize()]
-                    except KeyError:
-                        backend = Update
-                    formats.append((name, name_lowercased))
-                    self.backends.append(
-                        backend(self, name_lowercased, command)
-                    )
-                    if not index and not multiple:
-                        break
+
+        self.py3.log(managers)
+        self.py3.log(others)
+        self.py3.log('===============')
+
+        self._init_managers(managers, placeholders, multiple)
+        self._init_managers(others, placeholders)
 
         if not self.format:
             auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
             self.format = "[\?soft  ]".join(
-                auto.format(name=n, lower=l) for n, l in formats
+                auto.format(name=n, lower=l) for n, l in self.formats
             )
 
-        self.py3.log('Updating: ' + ', '.join([x[0] for x in formats]))
+        self.py3.log('Running: ' + ', '.join([x[0] for x in self.formats]))
         self.thresholds_init = self.py3.get_color_names_list(self.format)
+
+    def _init_managers(self, managers, placeholders, multiple=False):
+        for name, command in managers:
+            name_lowercased = name.lower()
+            self.py3.log(name_lowercased)
+            self.py3.log(placeholders)
+            if placeholders and name_lowercased not in placeholders:
+                continue
+            if self.py3.check_commands(command.split()[0]):
+                try:
+                    backend = globals()[name.capitalize()]
+                except KeyError:
+                    backend = Update
+                self.formats.append((name, name_lowercased))
+                self.backends.append(
+                    backend(self, name_lowercased, command)
+                )
+                if not multiple:
+                    break
 
     def updates(self):
         update_data = {"update": 0}
@@ -328,4 +372,17 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    module_test(Py3status)
+    config = {}
+    # config = {'managers': ['pkcon', 'yay', 'pacman']}
+    config = {'format': '{yay}'}
+
+    config = {
+        'managers': ['pkcon', 'yay', 'pacman'],
+        'format': '{yay}',
+    }
+
+    config = {'managers': ['pkcon']}
+
+    config = {'managers': ['pkcon', 'yay', 'pacman']}
+
+    module_test(Py3status, config=config)
