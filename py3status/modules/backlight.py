@@ -23,6 +23,8 @@ Configuration parameters:
         (default None)
     format: Display brightness, see placeholders below
         (default '☼: {level}%')
+    hide_when_unavailable: Hide if no backlight is found
+        (default False)
     low_tune_threshold: If current brightness value is below this threshold,
         the value is changed by a minimal value instead of the brightness_delta.
         (default 0)
@@ -80,6 +82,7 @@ class Py3status:
     command = 'xbacklight'
     device = None
     format = u'☼: {level}%'
+    hide_when_unavailable = False
     low_tune_threshold = 0
 
     class Meta:
@@ -99,7 +102,10 @@ class Py3status:
         elif '/' not in self.device:
             self.device = "/sys/class/backlight/%s" % self.device
         if self.device is None:
-            raise Exception(STRING_NOT_AVAILABLE)
+            if self.hide_when_unavailable:
+                return
+            else:
+                raise Exception(STRING_NOT_AVAILABLE)
 
         self.format = self.py3.update_placeholder_formats(
             self.format, {'level': ':d'}
