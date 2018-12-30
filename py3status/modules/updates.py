@@ -14,6 +14,7 @@ Format placeholders:
     {apk}      number of updates, eg 0 .. Alpine Linux     [NOT TESTED]
     {apt}      number of updates, eg 0 .. Debian, Ubuntu
     {auracle}  number of updates, eg 0 .. Arch Linux (AUR)
+    {cargo}    number of updates, eg 0 .. Rust package manager [NOT TESTED]
     {dnf}      number of updates, eg 0 .. Fedora
     {eopkg}    number of updates, eg 0 .. Solus
     {flatpak}  number of updates, eg 0 .. Flatpak
@@ -37,7 +38,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkcon pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, cargo, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkcon pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -122,6 +123,11 @@ class Apt(Update):
 class Apk(Update):
     def count_updates(self, output):
         return len(output.splitlines()[1:])
+
+
+class Cargo(Update):
+    def count_updates(self, output):
+        return len(output.splitlines()[2:])
 
 
 class Dnf(Update):
@@ -243,6 +249,7 @@ class Py3status:
                     ("Zypper", "zypper list-updates"),
                 ]
             others = [
+                ("Cargo", "cargo outdated --color=never"),
                 ("Flatpak", "flatpak remote-ls --updates --all"),
                 ("Gem", "gem outdated --quiet"),
                 ("LuaRocks", "luarocks list --outdated --porcelain"),
@@ -325,7 +332,10 @@ class Py3status:
                 continue
             if any([name_lowercased in x[1] for x in self.formats]):
                 continue
-            if self.py3.check_commands(command.split()[0]):
+            check_command = command.split()[0]
+            if check_command == 'cargo':
+                check_command = 'cargo-outdated'
+            if self.py3.check_commands(check_command):
                 try:
                     backend = globals()[name.capitalize()]
                 except KeyError:
