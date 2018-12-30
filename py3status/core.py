@@ -809,6 +809,7 @@ class Py3statusWrapper:
         """
         Received request to terminate (SIGTERM), exit nicely.
         """
+        self.log("received SIGTERM")
         raise KeyboardInterrupt()
 
     def purge_module(self, module_name):
@@ -956,12 +957,14 @@ class Py3statusWrapper:
         return ",".join([dumps(x) for x in outputs])
 
     def i3bar_stop(self, signum, frame):
+        self.log("received SIGTSTP")
         self.i3bar_running = False
         # i3status should be stopped
         self.i3status_thread.suspend_i3status()
         self.sleep_modules()
 
     def i3bar_start(self, signum, frame):
+        self.log("received SIGCONT")
         self.i3bar_running = True
         self.wake_modules()
 
