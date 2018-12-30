@@ -69,8 +69,6 @@ class Module:
         # py3wrapper this is private and any modules accessing their instance
         # should only use it on the understanding that it is not supported.
         self._py3_wrapper = py3_wrapper
-        #
-        self.set_module_options(module)
 
         try:
             self.load_methods(module, user_modules)
@@ -94,6 +92,8 @@ class Module:
                 # be imported
                 self._py3_wrapper.log(msg)
                 self._py3_wrapper.log(str(e))
+
+        self.set_module_options(module)
 
     def __repr__(self):
         return "<Module {}>".format(self.module_full_name)
@@ -308,8 +308,9 @@ class Module:
         Set universal module options to be interpreted by i3bar
         https://i3wm.org/i3status/manpage.html#_universal_module_options
         """
-        self.i3s_module_options = {}
-        self.py3_module_options = {}
+        self.i3bar_module_options = {}
+        self.i3bar_gaps_module_options = {}
+        self.py3status_module_options = {}
         mod_config = self.config["py3_config"].get(module, {})
 
         if "min_length" in mod_config:
@@ -318,7 +319,7 @@ class Module:
                 err = 'invalid "min_length" attribute should be an int'
                 raise TypeError(err)
 
-            self.py3_module_options["min_length"] = min_length
+            self.py3status_module_options["min_length"] = min_length
             self.random_int = randint(0, 1)
 
             if "position" in mod_config:
@@ -330,7 +331,7 @@ class Module:
                     err += ", ".join(POSITIONS)
                     raise ValueError(err)
 
-                self.py3_module_options["position"] = position
+                self.py3status_module_options["position"] = position
 
         if "min_width" in mod_config:
             min_width = mod_config["min_width"]
@@ -338,7 +339,7 @@ class Module:
                 err = 'invalid "min_width" attribute should be an int'
                 raise TypeError(err)
 
-            self.i3s_module_options["min_width"] = min_width
+            self.i3bar_module_options["min_width"] = min_width
 
             if "align" in mod_config:
                 align = mod_config["align"]
@@ -347,7 +348,7 @@ class Module:
                     err += ", ".join(POSITIONS)
                     raise ValueError(err)
 
-                self.i3s_module_options["align"] = align
+                self.i3bar_module_options["align"] = align
 
         if "separator" in mod_config:
             separator = mod_config["separator"]
@@ -355,23 +356,57 @@ class Module:
                 err = 'invalid "separator" attribute, should be a bool'
                 raise TypeError(err)
 
-            self.i3s_module_options["separator"] = separator
+            self.i3bar_module_options["separator"] = separator
 
         if "separator_block_width" in mod_config:
-            sep_block_width = mod_config["separator_block_width"]
-            if not isinstance(sep_block_width, int):
+            separator_block_width = mod_config["separator_block_width"]
+            if not isinstance(separator_block_width, int):
                 err = 'invalid "separator_block_width" attribute, '
                 err += "should be an int"
                 raise TypeError(err)
 
-            self.i3s_module_options["separator_block_width"] = sep_block_width
+            self.i3bar_module_options["separator_block_width"] = separator_block_width
+
+        if "background" in mod_config:
+            background = mod_config["background"]
+            color = self.module_class.py3._get_color(background)
+            if not color:
+                raise TypeError(
+                    "Invalid attribute `background`, "
+                    "should be a color. Got `{}`".format(background)
+                )
+
+            self.i3bar_gaps_module_options["background"] = color
+
+        if "border" in mod_config:
+            border = mod_config["border"]
+            color = self.module_class.py3._get_color(border)
+            if not color:
+                raise TypeError(
+                    "Invalid attribute `border`, "
+                    "should be a color. Got `{}`".format(border)
+                )
+
+            self.i3bar_gaps_module_options["border"] = color
+
+            borders = ["top", "right", "bottom", "left"]
+            for name in ["border_" + x for x in borders]:
+                param = 1
+                if name in mod_config:
+                    param = mod_config[name]
+                    if not isinstance(param, int):
+                        raise TypeError(
+                            "Invalid attribute `{}`, "
+                            "should be an int. Got `{}`".format(name, param)
+                        )
+                self.i3bar_gaps_module_options[name] = param
 
         # if markup is set on the module or globally we add it to the module
         # output for pango support
         fn = self._py3_wrapper.get_config_attribute
         param = fn(self.module_full_name, "markup")
         if not hasattr(param, "none_setting"):
-            self.i3s_module_options["markup"] = param
+            self.i3bar_module_options["markup"] = param
 
     def process_composite(self, response):
         """
@@ -399,10 +434,11 @@ class Module:
             err = 'conflicting "full_text" and "composite" in response'
             raise Exception(err)
         # set universal options on last component
-        composite[-1].update(self.i3s_module_options)
+        composite[-1].update(self.i3bar_module_options)
         # update all components
         color = response.get("color")
         urgent = response.get("urgent")
+        composite_length = len(response["composite"]) - 1
         for index, item in enumerate(response["composite"]):
             # validate the response
             if "full_text" not in item:
@@ -413,7 +449,7 @@ class Module:
                 item["instance"] = "{} {}".format(self.module_inst, instance_index)
                 item["name"] = self.module_name
             # hide separator for all inner components unless existing
-            if index != len(response["composite"]) - 1:
+            if index != composite_length:
                 if "separator" not in item:
                     item["separator"] = False
                     item["separator_block_width"] = 0
@@ -433,9 +469,20 @@ class Module:
             elif urgent and "urgent" not in item:
                 item["urgent"] = urgent
 
+            # set background and border colors. set left/right border widths
+            # only on first/last composites and no border width for inner
+            # composites or we will see border lines between composites.
+            for key, value in self.i3bar_gaps_module_options.items():
+                if (key == "border_left" and index != 0) or (
+                    key == "border_right" and index != composite_length
+                ):
+                    item[key] = 0
+                else:
+                    item[key] = value
+
         # set min_length
-        if "min_length" in self.py3_module_options:
-            min_length = self.py3_module_options["min_length"]
+        if "min_length" in self.py3status_module_options:
+            min_length = self.py3status_module_options["min_length"]
 
             # get length, skip if length exceeds min_length
             length = sum([len(x["full_text"]) for x in response["composite"]])
@@ -448,7 +495,7 @@ class Module:
             offset = min_length - ((padding * 2) + length)
 
             # set position
-            position = self.py3_module_options.get("position", "left")
+            position = self.py3status_module_options.get("position", "left")
             if position == "center":
                 left = right = " " * padding
                 if self.random_int:
@@ -832,7 +879,7 @@ class Module:
                         if not self.allow_urgent and "urgent" in result:
                             del result["urgent"]
                         # set universal module options in result
-                        result.update(self.i3s_module_options)
+                        result.update(self.i3bar_module_options)
 
                     result["instance"] = self.module_inst
                     result["name"] = self.module_name
