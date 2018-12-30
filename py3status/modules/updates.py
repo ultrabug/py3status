@@ -88,6 +88,7 @@ arch
 {'full_text': '/'}, {'full_text': '2', 'color': '#a9a9a9'}]
 """
 
+from pprint import pformat
 STRING_INVALID_MANAGERS = "invalid managers"
 
 
@@ -216,7 +217,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        log = ""
         with open("/etc/os-release") as f:
             multiple = "archlinux" in f.read()
             if multiple:
@@ -256,6 +256,7 @@ class Py3status:
         self.py3.log(others)
         self.py3.log('===============')
         custom = []
+        log = ""
 
         if self.managers:
             for entry in self.managers:
@@ -267,37 +268,45 @@ class Py3status:
                     name = entry.lower()
                     if name == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
-                    for supported_manager in managers + others:
-                        if supported_manager[0].lower() == name:
-                            custom.append(supported_manager)
+                    for supported in managers + others:
+                        if supported[0].lower() == name:
+                            custom.append(supported)
                             break
             managers = custom
 
-            if managers:
-                log += "== User-defined managers:\n{}\n".format(
-                    '\n'.join(["- {:10} {}".format(*x) for x in managers])
-                )
+            # if managers:
+            #     log += "== User-defined managers:\n{}\n".format(
+            #         '\n'.join(["- {:10} {}".format(*x) for x in managers])
+            #     )
 
         if self.format:
             placeholders = self.py3.get_placeholders_list(self.format)
             placeholders = [x for x in placeholders if x != "update"]
-            if placeholders:
-                log += '== User-defined placeholders:\n{}\n'.format(
-                    '\n'.join(["- {}".format(x) for x in placeholders])
-                )
+            # if placeholders:
+            #     log += '== User-defined placeholders:\n{}\n'.format(
+            #         '\n'.join(["- {}".format(x) for x in placeholders])
+            #     )
         else:
             placeholders = []
 
         self.formats = []
         self.backends = []
-        import pprint
-        log += '== Managers/Placeholders\n'
-        log += '- {}\n'.format(pprint.pformat(managers, indent=2))
-        log += '- {}\n'.format(pprint.pformat(placeholders, indent=2))
+        if placeholders:
+            log += '== Placeholders\n'
+            log += '- {}\n'.format(pformat(placeholders, indent=2))
+        if custom:
+            log += '== Custom\n'
+            log += '- {}\n'.format(pformat(custom, indent=2))
+        else:
+            log += '== Managers\n'
+            log += '- {}\n'.format(pformat(managers, indent=2))
+        # log += '== Others\n'
+        # log += '- {}\n'.format(pformat(others, indent=2))
 
-        self._init_managers(custom, custom, placeholders, False)
+        self._init_managers([], custom, placeholders, False)
         self._init_managers(custom, managers, placeholders, multiple)
-        self._init_managers(custom, others, placeholders, True)
+        if not custom:
+            self._init_managers(custom, others, placeholders, True)
 
         if not self.format:
             auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
@@ -306,17 +315,15 @@ class Py3status:
             )
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
-        log += '== Running... ' + ', '.join([x[0] for x in self.formats])
+        log += '== Running... \n- ' + ', '.join([x[0] for x in self.formats])
         self.py3.log(log)
 
     def _init_managers(self, custom, managers, placeholders, multiple):
-        if custom == managers:
-            return
         for name, command in managers:
             name_lowercased = name.lower()
-            if any([name_lowercased in x[1] for x in custom]):
-                continue
             if placeholders and name_lowercased not in placeholders:
+                continue
+            if any([name_lowercased in x[1] for x in self.formats]):
                 continue
             if self.py3.check_commands(command.split()[0]):
                 try:
