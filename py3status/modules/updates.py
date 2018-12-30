@@ -37,11 +37,12 @@ Format placeholders:
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
-@author Iain Tatch <iain.tatch@gmail.com> (arch)
+@author Iain Tatch <iain.tatch@gmail.com> (pacman)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, cargo, cpan, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkcon pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, cargo, cpan, eopkg, flatpak, gem, luarocks,
+    npm, pakku, pikaur, pip, pkcon, pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
-@license BSD (apt, arch, dnf)
+@license BSD (apt, pacman, dnf)
 
 Examples:
 ```
@@ -296,8 +297,6 @@ class Py3status:
                             break
             managers = custom
 
-        if placeholders:
-            log += "== Placeholders: ".format(", ".join(placeholders))
         if custom:
             log += "== Custom Managers\n{}".format(
                 "".join(["- {:10}{}\n".format(*x) for x in custom])
@@ -306,6 +305,8 @@ class Py3status:
             log += "== Supported Managers\n{}".format(
                 "".join(["- {:10}{}\n".format(*x) for x in managers])
             )
+        if placeholders:
+            log += "== Placeholders:\n- {}\n".format(", ".join(placeholders))
 
         self._init_managers([], custom, placeholders, False)
         self._init_managers(custom, managers, placeholders, multiple)
@@ -319,7 +320,7 @@ class Py3status:
             )
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-        log += "== Running Managers\n{}".format(
+        log += "== Running Managers:\n{}".format(
             "".join(["- {}\n".format(x) for x in self.names])
         )[:-1]
         self.py3.log(log)
@@ -367,22 +368,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    config = {}
-    # config = {'managers': ['pkcon', 'yay', 'pacman']}
-    # config = {'format': '{yay}'}
-
-    # config = {
-    #     'managers': ['pkcon', 'yay', 'pacman'],
-    #     'format': '{yay}',
-    # }
-
-    # config = {'managers': ['pkcon']}
-
-    # config = {'managers': ['pkcon', 'yay', 'pacman']}
-
-    # config = {
-    #     'managers': ['pkcon', 'yay', 'pacman', 'gem', 'pikaur'],
-    #     'format': '{pkcon}'
-    # }
-
-    module_test(Py3status, config=config)
+    module_test(Py3status)
