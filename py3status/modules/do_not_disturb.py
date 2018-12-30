@@ -1,104 +1,186 @@
 # -*- coding: utf-8 -*-
 """
-Turn on and off dbus notifications.
-
-A left mouse click will toggle the state of this module.
+Turn on and off desktop notifications.
 
 Configuration parameters:
-    dunst_signal_off: Signal to send to the dunst process to disable "Do Not Disturb."
-        (default 'SIGTERM')
-    dunst_signal_on: Signal to send to the dunst process to enable "Do Not Disturb."
-        (default 'SIGUSR1')
-    format: Display format for the "Do Not Disturb" module.
-        (default '{state}')
-    notification_manager: The process name of your notification manager.
-        (default 'dunst')
-    refresh_interval: Refresh interval to use for killing notification manager process.
-        (default 0.25)
-    state_off: Message when the "Do Not Disturb" mode is disabled.
-        (default 'OFF')
-    state_on: Message when the "Do Not Disturb" mode is enabled.
-        (default 'ON')
+    cache_timeout: refresh interval for this module; for xfce4-notifyd
+        (default 10)
+    format: display format for this module
+        (default '{name} [\?color=state&show DND]')
+    pause: specify whether to pause or kill processes; for dunst
+        see `Dunst Miscellaneous` section for more information
+        (default False)
+    server: specify server to use, eg dunst or xfce4-notifyd, otherwise auto
+        (default None)
+    state: specify state to use on startup, otherwise last
+        False: disable Do Not Disturb on startup
+        True: enable Do Not Disturb on startup
+        last: toggle last known state on startup
+        None: don't toggle anything on startup
+        (default 'last')
+    thresholds: specify color thresholds to use
+        (default [(0, 'bad'), (1, 'good')])
 
-Color options:
-    color_bad: "Do Not Disturb" mode is enabled.
-    color_good: "Do Not Disturb" mode is disabled.
+Format placeholders:
+    {name} name, eg Dunst, Xfce4-notifyd
+    {state} do not disturb state, eg 0, 1
 
-@author Maxim Baz (https://github.com/maximbaz)
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
+
+Dunst Miscellaneous:
+    When paused, dunst will not display any notifications but keep all
+    notifications in a queue. This can for example be wrapped around a screen
+    locker (i3lock, slock) to prevent flickering of notifications through the
+    lock and to read all missed notifications after returning to the computer.
+
+Examples:
+```
+# display ON/OFF
+do_not_disturb {
+    format = '{name} [\?color=state [\?if=state  ON|OFF]]'
+}
+
+# display 1/0
+do_not_disturb {
+    format = '{name} [\?color=state {state}]'
+}
+
+# display DO NOT DISTURB/DISTURB
+do_not_disturb {
+    format = '[\?color=state [\?if=state DO NOT DISTURB|DISTURB]]'
+    thresholds = [(0, 'darkgray'), (1, 'good')]
+}
+```
+
+@author Maxim Baz https://github.com/maximbaz (dunst)
+@author Robert Ricci https://github.com/ricci (xfce4-notifyd)
 @license BSD
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': 'OFF'}
+[{'full_text': 'dunst '}, {'color': '#00FF00', 'full_text': 'DND'}]
 
 off
-{'color': '#FF0000', 'full_text': 'ON'}
+[{'full_text': 'dunst '}, {'color': '#FF0000', 'full_text': 'DND'}]
 """
 
-from time import sleep
-from os import system
-from threading import Thread, Event
+STRING_NOT_INSTALLED = "server `{}` not installed"
+STRING_INVALID_SERVER = "invalid server `{}`"
+STRING_INVALID_STATE = "invalid state `{}`"
+
+
+class Notification:
+    def __init__(self, parent):
+        self.parent = parent
+        self.setup(parent)
+
+    def setup(self, parent):
+        pass
+
+    def get_state(self):
+        return self.parent.state
+
+
+class Dunst(Notification):
+    """
+    Dunst Notification.
+    """
+
+    def toggle(self, state):
+        self.parent.py3.command_run(
+            "killall --signal {} dunst".format(self.parent.signals[state])
+        )
+
+
+class Xfce4_notifyd(Notification):
+    """
+    XFCE4 Notification.
+    """
+
+    def setup(self, parent):
+        from dbus import Interface, SessionBus
+
+        self.iface = Interface(
+            SessionBus().get_object("org.xfce.Xfconf", "/org/xfce/Xfconf"),
+            "org.xfce.Xfconf",
+        )
+
+    def get_state(self):
+        return self.iface.GetProperty("xfce4-notifyd", "/do-not-disturb")
+
+    def toggle(self, state):
+        self.iface.SetProperty("xfce4-notifyd", "/do-not-disturb", state)
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
-    dunst_signal_off = 'SIGTERM'
-    dunst_signal_on = 'SIGUSR1'
-    format = '{state}'
-    notification_manager = 'dunst'
-    refresh_interval = 0.25
-    state_off = 'OFF'
-    state_on = 'ON'
+    cache_timeout = 10
+    format = "{name} [\?color=state&show DND]"
+    pause = False
+    server = None
+    state = "last"
+    thresholds = [(0, "bad"), (1, "good")]
 
     def post_config_hook(self):
-        self.is_on = False
+        servers = ["xfce4-notifyd", "dunst", None]
+        if not self.server:
+            for server in servers:
+                if server:
+                    try:
+                        if self.py3.command_output(["pgrep", "-f", server]):
+                            self.server = server
+                            break
+                    except self.py3.CommandError:
+                        pass
+            else:
+                self.server = self.py3.check_commands(servers[:-1]) or "dunst"
+        elif self.server not in servers:
+            raise Exception(STRING_INVALID_SERVER.format(self.server))
+        else:
+            command = self.server.replace("notifyd", "notifyd-config")
+            if not self.py3.check_commands(command):
+                raise Exception(STRING_NOT_INSTALLED.format(command))
 
-        if not self._is_dunst():
-            self._init_periodic_notifications_killer()
+        if self.server == "dunst":
+            if self.pause:
+                self.signals = ("SIGUSR2", "SIGUSR1")  # pause/resume
+            else:
+                self.signals = ("SIGTERM", "SIGUSR1")  # kill/resume
+            self.backend = Dunst(self)
+        elif self.server == "xfce4-notifyd":
+            self.backend = Xfce4_notifyd(self)
 
-    def _is_dunst(self):
-        return self.notification_manager == 'dunst'
+        if self.state is not None:
+            if self.state == "last":
+                self.state = self.py3.storage_get("state") or 0
+            if self.state in [False, True]:
+                self.backend.toggle(self.state)
+            else:
+                raise Exception(STRING_INVALID_STATE.format(self.state))
 
-    def _init_periodic_notifications_killer(self):
-        self.running = Event()
-        self.killed = Event()
-
-        class MyThread(Thread):
-            def run(this):
-                while not self.killed.is_set():
-                    if self.running.wait():
-                        system("killall '{}'".format(self.notification_manager))
-                        sleep(self.refresh_interval)
-
-        MyThread().start()
+        self.name = self.server.capitalize()
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def do_not_disturb(self):
-        state = self.state_on if self.is_on else self.state_off
-        response = {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, {'state': state}),
-            'color': self.py3.COLOR_BAD if self.is_on else self.py3.COLOR_GOOD
+        self.state = self.backend.get_state()
+        dnd_data = {"state": int(self.state), "name": self.name}
+
+        for x in self.thresholds_init:
+            if x in dnd_data:
+                self.py3.threshold_get_color(dnd_data[x], x)
+
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, dnd_data),
         }
-        return response
 
     def on_click(self, event):
-        if event['button'] == 1:
-            self.is_on = not self.is_on
-            if self._is_dunst():
-                new_flag = "--signal {}".format(self.dunst_signal_on
-                                                if self.is_on else self.dunst_signal_off)
-                system("killall {} dunst".format(new_flag))
-            else:
-                if self.is_on:
-                    self.running.set()
-                else:
-                    self.running.clear()
-
-    def kill(self):
-        if not self._is_dunst():
-            self.killed.set()
-            self.running.set()  # ensure the thread won't hang
+        self.state = not self.state
+        self.py3.storage_set("state", self.state)
+        self.backend.toggle(self.state)
 
 
 if __name__ == "__main__":
@@ -106,4 +188,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
