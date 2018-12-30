@@ -161,11 +161,11 @@ class Py3status:
     thresholds = []
 
     def post_config_hook(self):
-        self.command = 'transmission-remote'
+        self.command = 'transmission-remote --list'
         if not self.py3.check_commands(self.command):
             raise Exception(STRING_NOT_INSTALLED)
         if self.arguments:
-            self.command = '%s %s %s' % (self.command, self.arguments, '--list')
+            self.command = '%s %s' % (self.command, self.arguments)
         self.init_summary = self.py3.format_contains(
             self.format, ['up', 'down', 'have'])
         self.id = 0
