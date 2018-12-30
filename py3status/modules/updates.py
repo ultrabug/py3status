@@ -15,6 +15,7 @@ Format placeholders:
     {apt}      number of updates, eg 0 .. Debian, Ubuntu
     {auracle}  number of updates, eg 0 .. Arch Linux (AUR)
     {cargo}    number of updates, eg 0 .. Rust package manager [NOT TESTED]
+    {cpan}     number of updates, eg 0 .. CPAN modules (Perl)
     {dnf}      number of updates, eg 0 .. Fedora
     {eopkg}    number of updates, eg 0 .. Solus
     {flatpak}  number of updates, eg 0 .. Flatpak
@@ -38,7 +39,7 @@ Color thresholds:
 
 @author Iain Tatch <iain.tatch@gmail.com> (arch)
 @author Joshua Pratt <jp10010101010000@gmail.com> (apt)
-@author lasers (apk, auracle, cargo, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkcon pkg, snappy, trizen, xbps, yay, zypper)
+@author lasers (apk, auracle, cargo, cpan, eopkg, flatpak, gem, luarocks, npm, pakku, pikaur, pip, pkcon pkg, snappy, trizen, xbps, yay, zypper)
 @author tobes (dnf)
 @license BSD (apt, arch, dnf)
 
@@ -250,6 +251,7 @@ class Py3status:
                 ]
             others = [
                 ("Cargo", "cargo outdated --color=never"),
+                ("Cpan", "cpan-outdated"),
                 ("Flatpak", "flatpak remote-ls --updates --all"),
                 ("Gem", "gem outdated --quiet"),
                 ("LuaRocks", "luarocks list --outdated --porcelain"),
