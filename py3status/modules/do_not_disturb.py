@@ -4,7 +4,7 @@ Turn on and off desktop notifications.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module; for xfce4-notifyd
-        (default 10)
+        (default 30)
     format: display format for this module
         (default '{name} [\?color=state&show DND]')
     pause: specify whether to pause or kill processes; for dunst
