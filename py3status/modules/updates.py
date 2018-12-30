@@ -90,7 +90,6 @@ arch
 {'full_text': '/'}, {'full_text': '2', 'color': '#a9a9a9'}]
 """
 
-from pprint import pformat
 STRING_INVALID_MANAGERS = "invalid managers"
 STRING_UNKNOWN_LINUX_DISTRIBUTION = "unknown linux distribution"
 
@@ -295,11 +294,13 @@ class Py3status:
             managers = custom
 
         if placeholders:
-            log += '== Placeholders\n-{}\n'.format(placeholders)
+            log += '== Placeholders: '.format(", ".join(placeholders))
         if custom:
-            log += '== Custom\n-{}\n'.format(pformat(custom, indent=4))
+            log += '== Custom\n-{}\n'.format(custom)
+                "- '{}', '{}'\n".join(*x for x in custom
+            )
         else:
-            log += '== Managers\n- {}\n'.format(pformat(managers, indent=4))
+            log += '== Managers\n- {}\n'.format(managers, indent=2)
 
         self._init_managers([], custom, placeholders, False)
         self._init_managers(custom, managers, placeholders, multiple)
