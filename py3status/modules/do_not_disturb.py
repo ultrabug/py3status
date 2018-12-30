@@ -117,7 +117,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 10
+    cache_timeout = 30
     format = "{name} [\?color=state&show DND]"
     pause = False
     server = None
