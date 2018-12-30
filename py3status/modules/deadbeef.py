@@ -49,49 +49,45 @@ paused
 {'color': '#ffff00', 'full_text': 'Music For Programming - Lackluster'}
 """
 
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 5
-    format = '[{artist} - ][{title}]'
+    format = "[{artist} - ][{title}]"
     sleep_timeout = 20
 
     class Meta:
         deprecated = {
-            'remove': [
+            "remove": [{"param": "delimiter", "msg": "obsolete parameter"}],
+            "rename_placeholder": [
                 {
-                    'param': 'delimiter',
-                    'msg': 'obsolete parameter',
-                },
-            ],
-            'rename_placeholder': [
-                {
-                    'placeholder': 'elapsed',
-                    'new': 'playback_time',
-                    'format_strings': ['format'],
+                    "placeholder": "elapsed",
+                    "new": "playback_time",
+                    "format_strings": ["format"],
                 },
                 {
-                    'placeholder': 'tracknum',
-                    'new': 'tracknumber',
-                    'format_strings': ['format'],
+                    "placeholder": "tracknum",
+                    "new": "tracknumber",
+                    "format_strings": ["format"],
                 },
             ],
         }
 
     def post_config_hook(self):
-        if not self.py3.check_commands('deadbeef'):
+        if not self.py3.check_commands("deadbeef"):
             raise Exception(STRING_NOT_INSTALLED)
 
-        self.separator = '|SEPARATOR|'
+        self.separator = "|SEPARATOR|"
         self.placeholders = list(
-            set(self.py3.get_placeholders_list(self.format) + ['isplaying'])
+            set(self.py3.get_placeholders_list(self.format) + ["isplaying"])
         )
         self.deadbeef_command = 'deadbeef --nowplaying-tf "{}"'.format(
-            self.separator.join(['%{}%'.format(x) for x in self.placeholders])
+            self.separator.join(["%{}%".format(x) for x in self.placeholders])
         )
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
@@ -99,7 +95,7 @@ class Py3status:
 
     def _is_running(self):
         try:
-            self.py3.command_output(['pgrep', 'deadbeef'])
+            self.py3.command_output(["pgrep", "deadbeef"])
             return True
         except self.py3.CommandError:
             return False
@@ -126,15 +122,15 @@ class Py3status:
             beef_data = dict(zip(self.placeholders, line.split(self.separator)))
             cached_until = self.cache_timeout
 
-            if beef_data['isplaying']:
+            if beef_data["isplaying"]:
                 color = self.color_playing
             else:
                 color = self.color_paused
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(self.format, beef_data),
-            'color': color,
+            "cached_until": self.py3.time_in(cached_until),
+            "full_text": self.py3.safe_format(self.format, beef_data),
+            "color": color,
         }
 
 
@@ -143,4 +139,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

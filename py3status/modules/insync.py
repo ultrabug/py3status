@@ -39,51 +39,54 @@ offline
 """
 
 STRING_ERROR = "Insync: isn't running"
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
 STRING_UNEXPECTED = "Insync: N/A"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = '{status} {queued}'
-    status_offline = 'OFFLINE'
-    status_paused = 'PAUSED'
-    status_share = 'SHARE'
-    status_synced = 'SYNCED'
-    status_syncing = 'SYNCING'
+    format = "{status} {queued}"
+    status_offline = "OFFLINE"
+    status_paused = "PAUSED"
+    status_share = "SHARE"
+    status_synced = "SYNCED"
+    status_syncing = "SYNCING"
 
     def post_config_hook(self):
-        if not self.py3.check_commands('insync'):
+        if not self.py3.check_commands("insync"):
             raise Exception(STRING_NOT_INSTALLED)
 
     def insync(self):
         # sync progress
         try:
-            queued = self.py3.command_output(["insync", "get_sync_progress"]).splitlines()
+            queued = self.py3.command_output(
+                ["insync", "get_sync_progress"]
+            ).splitlines()
         except Exception:
             return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                'full_text': STRING_UNEXPECTED
+                "cached_until": self.py3.time_in(self.cache_timeout),
+                "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                "full_text": STRING_UNEXPECTED,
             }
-        queued = [q for q in queued if q != '']
+        queued = [q for q in queued if q != ""]
         if len(queued) > 0 and "queued" in queued[-1]:
             queued = queued[-1]
             queued = queued.split(" ")[0]
         else:
-            queued = ''
+            queued = ""
 
         # status
         try:
             status = self.py3.command_output(["insync", "get_status"]).strip()
         except Exception:
             return {
-                'cached_until': self.py3.time_in(self.cache_timeout),
-                'color': self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                'full_text': STRING_UNEXPECTED
+                "cached_until": self.py3.time_in(self.cache_timeout),
+                "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                "full_text": STRING_UNEXPECTED,
             }
 
         color = self.py3.COLOR_DEGRADED
@@ -104,10 +107,11 @@ class Py3status:
             status = self.status_syncing
 
         return {
-            'color': color,
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                format, {'status': status, 'queued': queued})
+            "color": color,
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(
+                format, {"status": status, "queued": queued}
+            ),
         }
 
 
@@ -116,4 +120,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

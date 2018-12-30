@@ -37,38 +37,38 @@ except ImportError:
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = '{icon}'
-    icon_off = u'■'
-    icon_on = u'●'
+    format = "{icon}"
+    icon_off = u"■"
+    icon_on = u"●"
     timeout = 2
-    url = 'https://www.google.com'
+    url = "https://www.google.com"
 
     class Meta:
         deprecated = {
-            'rename': [
+            "rename": [
                 {
-                    'param': 'format_online',
-                    'new': 'icon_on',
-                    'msg': 'obsolete parameter use `icon_on`',
+                    "param": "format_online",
+                    "new": "icon_on",
+                    "msg": "obsolete parameter use `icon_on`",
                 },
                 {
-                    'param': 'format_offline',
-                    'new': 'icon_off',
-                    'msg': 'obsolete parameter use `icon_off`',
+                    "param": "format_offline",
+                    "new": "icon_off",
+                    "msg": "obsolete parameter use `icon_off`",
                 },
-            ],
+            ]
         }
 
     def post_config_hook(self):
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
-        self.ping_command = [
-            'ping', '-c', '1', '-W', '%s' % self.timeout, self.url]
+        self.ping_command = ["ping", "-c", "1", "-W", "%s" % self.timeout, self.url]
 
     def _connection_present(self):
-        if '://' in self.url:
+        if "://" in self.url:
             try:
                 urlopen(self.url, timeout=self.timeout)
                 return True
@@ -90,9 +90,9 @@ class Py3status:
             icon = self.icon_off
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
-            'color': color
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"icon": icon}),
+            "color": color,
         }
 
 
@@ -101,4 +101,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

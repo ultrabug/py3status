@@ -54,12 +54,13 @@ off
 {'color': '#FF0000', 'full_text': "Dropbox: isn't running"}
 """
 
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
     format = "Dropbox: {status}"
@@ -69,21 +70,23 @@ class Py3status:
 
     class Meta:
         deprecated = {
-            'format_fix_unnamed_param': [
+            "format_fix_unnamed_param": [
                 {
-                    'param': 'format',
-                    'placeholder': 'status',
-                    'msg': '{} should not be used in format use `{status}`',
-                },
-            ],
+                    "param": "format",
+                    "placeholder": "status",
+                    "msg": "{} should not be used in format use `{status}`",
+                }
+            ]
         }
 
     def post_config_hook(self):
-        if not self.py3.check_commands('dropbox-cli'):
+        if not self.py3.check_commands("dropbox-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
     def dropbox(self):
-        status = self.py3.command_output('dropbox-cli status', localized=True).splitlines()[0]
+        status = self.py3.command_output(
+            "dropbox-cli status", localized=True
+        ).splitlines()[0]
 
         if status == "Dropbox isn't running!":
             color = self.py3.COLOR_BAD
@@ -97,9 +100,9 @@ class Py3status:
                 status = self.status_busy
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'color': color,
-            'full_text': self.py3.safe_format(self.format, {'status': status})
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": color,
+            "full_text": self.py3.safe_format(self.format, {"status": status}),
         }
 
 
@@ -108,4 +111,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

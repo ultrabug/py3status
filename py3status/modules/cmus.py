@@ -93,19 +93,22 @@ STRING_NOT_INSTALLED = "not installed"
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_next = None
     button_pause = 1
     button_previous = None
     button_stop = 3
     cache_timeout = 5
-    format = ('[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]'
-              '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]'
-              '|\?show cmus: waiting for user input]]')
+    format = (
+        "[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]"
+        "[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]"
+        "|\?show cmus: waiting for user input]]"
+    )
     sleep_timeout = 20
 
     def post_config_hook(self):
-        if not self.py3.check_commands('cmus-remote'):
+        if not self.py3.check_commands("cmus-remote"):
             raise Exception(STRING_NOT_INSTALLED)
 
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
@@ -115,12 +118,12 @@ class Py3status:
     def _seconds_to_time(self, value):
         m, s = divmod(int(value), 60)
         h, m = divmod(m, 60)
-        time = '%d:%02d:%02d' % (h, m, s)
-        return time.lstrip('0').lstrip(':')
+        time = "%d:%02d:%02d" % (h, m, s)
+        return time.lstrip("0").lstrip(":")
 
     def _get_cmus_data(self):
         try:
-            data = self.py3.command_output(['cmus-remote', '--query'])
+            data = self.py3.command_output(["cmus-remote", "--query"])
             is_started = True
         except self.py3.CommandError:
             data = {}
@@ -130,9 +133,9 @@ class Py3status:
     def _organize_data(self, data):
         temporary = {}
         for line in data.splitlines():
-            category, _, value = line.partition(' ')
-            if category in ('set', 'tag'):
-                key, _, value = value.partition(' ')
+            category, _, value = line.partition(" ")
+            if category in ("set", "tag"):
+                key, _, value = value.partition(" ")
                 temporary[key] = value
             else:
                 temporary[category] = value
@@ -142,22 +145,22 @@ class Py3status:
         temporary = {}
         for key, value in data.items():
             # seconds to time
-            if key in ('duration', 'position'):
-                new_key = '%s%s' % (key, 'time')
+            if key in ("duration", "position"):
+                new_key = "%s%s" % (key, "time")
                 temporary[new_key] = self._seconds_to_time(value)
                 temporary[key] = value
             # values to boolean
-            elif value in ('true', 'enabled'):
+            elif value in ("true", "enabled"):
                 temporary[key] = True
-            elif value in ('false', 'disabled'):
+            elif value in ("false", "disabled"):
                 temporary[key] = False
             # string not modified
             else:
                 temporary[key] = value
 
         # stream to boolean
-        if 'stream' in data:
-            temporary['stream'] = True
+        if "stream" in data:
+            temporary["stream"] = True
 
         return temporary
 
@@ -175,43 +178,45 @@ class Py3status:
             data = self._organize_data(data)
             data = self._manipulate_data(data)
 
-            status = data.get('status')
-            if status == 'playing':
+            status = data.get("status")
+            if status == "playing":
                 is_playing = True
                 color = self.color_playing
-            elif status == 'paused':
+            elif status == "paused":
                 is_paused = True
                 color = self.color_paused
-            elif status == 'stopped':
+            elif status == "stopped":
                 is_stopped = True
                 color = self.color_stopped
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
-            'color': color,
-            'full_text': self.py3.safe_format(self.format,
-                                              dict(
-                                                  is_paused=is_paused,
-                                                  is_playing=is_playing,
-                                                  is_started=is_started,
-                                                  is_stopped=is_stopped,
-                                                  **data
-                                              ))
+            "cached_until": self.py3.time_in(cached_until),
+            "color": color,
+            "full_text": self.py3.safe_format(
+                self.format,
+                dict(
+                    is_paused=is_paused,
+                    is_playing=is_playing,
+                    is_started=is_started,
+                    is_stopped=is_stopped,
+                    **data
+                ),
+            ),
         }
 
     def on_click(self, event):
         """
         Control cmus with mouse clicks.
         """
-        button = event['button']
+        button = event["button"]
         if button == self.button_pause:
-            self.py3.command_run('cmus-remote --pause')
+            self.py3.command_run("cmus-remote --pause")
         elif button == self.button_stop:
-            self.py3.command_run('cmus-remote --stop')
+            self.py3.command_run("cmus-remote --stop")
         elif button == self.button_next:
-            self.py3.command_run('cmus-remote --next')
+            self.py3.command_run("cmus-remote --next")
         elif button == self.button_previous:
-            self.py3.command_run('cmus-remote --prev')
+            self.py3.command_run("cmus-remote --prev")
         else:
             self.py3.prevent_refresh()
 
@@ -221,4 +226,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

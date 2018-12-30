@@ -44,13 +44,15 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division  # python2 compatibility
-STRING_NOT_INSTALLED = 'not installed'
+
+STRING_NOT_INSTALLED = "not installed"
 STRING_INVALID_TYPE = "invalid statistics_type"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 180
     coloring = {}
@@ -70,7 +72,7 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
-        if not self.py3.check_commands('vnstat'):
+        if not self.py3.check_commands("vnstat"):
             raise Exception(STRING_NOT_INSTALLED)
         elif self.statistics_type not in ["d", "m"]:
             raise Exception(STRING_INVALID_TYPE)
@@ -78,7 +80,7 @@ class Py3status:
         self.value_format = "{value:%s.%sf} {unit}" % (self.left_align, self.precision)
         # list of units, first one - value/initial_multi, second - value/1024,
         # third - value/1024^2, etc...
-        self.units = ["kb", "mb", "gb", "tb", ]
+        self.units = ["kb", "mb", "gb", "tb"]
 
     def _divide_and_format(self, value):
         # Divide a value and return formatted string
@@ -92,9 +94,9 @@ class Py3status:
 
     def vnstat(self):
         vnstat_data = self.py3.command_output("vnstat --oneline b")
-        values = vnstat_data.splitlines()[0].split(';')[self.slice]
+        values = vnstat_data.splitlines()[0].split(";")[self.slice]
         stat = dict(zip(["down", "up", "total"], map(int, values)))
-        response = {'cached_until': self.py3.time_in(self.cache_timeout)}
+        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
 
         keys = list(self.coloring.keys())
         keys.sort()
@@ -102,13 +104,16 @@ class Py3status:
             if stat["total"] < k * 1024 * 1024:
                 break
             else:
-                response['color'] = self.coloring[k]
+                response["color"] = self.coloring[k]
 
-        response['full_text'] = self.py3.safe_format(
+        response["full_text"] = self.py3.safe_format(
             self.format,
-            dict(total=self._divide_and_format(stat['total']),
-                 up=self._divide_and_format(stat['up']),
-                 down=self._divide_and_format(stat['down'])))
+            dict(
+                total=self._divide_and_format(stat["total"]),
+                up=self._divide_and_format(stat["up"]),
+                down=self._divide_and_format(stat["down"]),
+            ),
+        )
         return response
 
 
@@ -117,4 +122,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

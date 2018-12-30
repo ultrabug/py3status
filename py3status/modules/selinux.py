@@ -46,12 +46,13 @@ import selinux
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = 'SELinux: {state}'
-    state_disabled = 'disabled'
-    state_enforcing = 'enforcing'
-    state_permissive = 'permissive'
+    format = "SELinux: {state}"
+    state_disabled = "disabled"
+    state_enforcing = "enforcing"
+    state_permissive = "permissive"
 
     def selinux(self):
         try:
@@ -66,15 +67,16 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'state': state}),
-            'color': color
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"state": state}),
+            "color": color,
         }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

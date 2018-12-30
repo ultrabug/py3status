@@ -15,13 +15,14 @@ SAMPLE OUTPUT
 class Py3status:
     """
     """
+
     # available configuration parameters
-    format = 'Hello, world!'
+    format = "Hello, world!"
 
     def static_string(self):
         return {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format),
+            "cached_until": self.py3.CACHE_FOREVER,
+            "full_text": self.py3.safe_format(self.format),
         }
 
 
@@ -30,4 +31,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

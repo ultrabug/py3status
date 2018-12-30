@@ -164,73 +164,73 @@ sensor_names
 from fnmatch import fnmatch
 from collections import OrderedDict
 
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
     chips = []
-    format = '{format_chip}'
-    format_chip = '{name} {format_sensor}'
-    format_chip_separator = ' '
-    format_sensor = (
-        '[\?color=darkgray {name}] [\?color=auto.input&show {input}]'
-    )
-    format_sensor_separator = ' '
+    format = "{format_chip}"
+    format_chip = "{name} {format_sensor}"
+    format_chip_separator = " "
+    format_sensor = "[\?color=darkgray {name}] [\?color=auto.input&show {input}]"
+    format_sensor_separator = " "
     sensors = []
-    thresholds = {'auto.input': True}
+    thresholds = {"auto.input": True}
 
     def post_config_hook(self):
-        if not self.py3.check_commands('sensors'):
+        if not self.py3.check_commands("sensors"):
             raise Exception(STRING_NOT_INSTALLED)
 
         placeholders = self.py3.get_placeholders_list(self.format_sensor)
-        format_sensor = {x: ':g' for x in placeholders if x != 'name'}
-        self.sensor_placeholders = [x for x in placeholders if x != 'name']
+        format_sensor = {x: ":g" for x in placeholders if x != "name"}
+        self.sensor_placeholders = [x for x in placeholders if x != "name"]
         self.format_sensor = self.py3.update_placeholder_formats(
             self.format_sensor, format_sensor
         )
 
         self.first_run = True
-        self.lm_sensors_command = 'sensors -u'
-        if not self.py3.format_contains(self.format_chip, 'adapter'):
-            self.lm_sensors_command += 'A'  # don't print adapters
+        self.lm_sensors_command = "sensors -u"
+        if not self.py3.format_contains(self.format_chip, "adapter"):
+            self.lm_sensors_command += "A"  # don't print adapters
 
         if self.chips:
             lm_sensors_data = self._get_lm_sensors_data()
             chips = []
             for _filter in self.chips:
-                for chunk in lm_sensors_data.split('\n\n')[:-1]:
+                for chunk in lm_sensors_data.split("\n\n")[:-1]:
                     for line in chunk.splitlines():
                         if fnmatch(line, _filter):
                             chips.append(line)
                         break
-            self.lm_sensors_command += ' {}'.format(' '.join(chips))
+            self.lm_sensors_command += " {}".format(" ".join(chips))
 
-        self.sensors = {'list': [], 'name': {}, 'sensors': self.sensors}
+        self.sensors = {"list": [], "name": {}, "sensors": self.sensors}
 
         self.thresholds_auto = False
         self.thresholds_man = self.py3.get_color_names_list(self.format_sensor)
-        if all(
-            'auto.input' in x for x in [self.thresholds, self.thresholds_man]
-        ) and 'input' in placeholders:
-            self.color_zero = self.py3.COLOR_ZERO or 'red'
-            self.color_input = self.py3.COLOR_INPUT or 'lime'
-            self.color_min = self.py3.COLOR_MIN or 'lightgreen'
+        if (
+            all("auto.input" in x for x in [self.thresholds, self.thresholds_man])
+            and "input" in placeholders
+        ):
+            self.color_zero = self.py3.COLOR_ZERO or "red"
+            self.color_input = self.py3.COLOR_INPUT or "lime"
+            self.color_min = self.py3.COLOR_MIN or "lightgreen"
             self.color_excl_input = self.py3.COLOR_EXCL_INPUT or None
-            self.color_near_max = self.py3.COLOR_NEAR_MAX or 'yellow'
-            self.color_max = self.py3.COLOR_MAX or 'orange'
-            self.color_near_crit = self.py3.COLOR_NEAR_CRIT or 'lightcoral'
-            self.color_crit = self.py3.COLOR_CRIT or 'red'
+            self.color_near_max = self.py3.COLOR_NEAR_MAX or "yellow"
+            self.color_max = self.py3.COLOR_MAX or "orange"
+            self.color_near_crit = self.py3.COLOR_NEAR_CRIT or "lightcoral"
+            self.color_crit = self.py3.COLOR_CRIT or "red"
 
-            self.thresholds_auto = self.thresholds['auto.input']
-            del self.thresholds['auto.input']
+            self.thresholds_auto = self.thresholds["auto.input"]
+            del self.thresholds["auto.input"]
 
-        if 'auto.input' in self.thresholds_man:
-            self.thresholds_man.remove('auto.input')
+        if "auto.input" in self.thresholds_man:
+            self.thresholds_man.remove("auto.input")
 
     def _get_lm_sensors_data(self):
         return self.py3.command_output(self.lm_sensors_command)
@@ -239,42 +239,42 @@ class Py3status:
         lm_sensors_data = self._get_lm_sensors_data()
         new_chip = []
 
-        for chunk in lm_sensors_data.split('\n\n')[:-1]:
-            chip = {'sensors': OrderedDict()}
+        for chunk in lm_sensors_data.split("\n\n")[:-1]:
+            chip = {"sensors": OrderedDict()}
             first_line = True
             sensor_name = None
             new_sensor = []
 
             for line in chunk.splitlines():
-                if line.startswith('  '):
+                if line.startswith("  "):
                     if not sensor_name:
                         continue
-                    key, value = line.split(': ')
-                    prefix, key = key.split('_', 1)
-                    chip['sensors'][sensor_name][key] = value
+                    key, value = line.split(": ")
+                    prefix, key = key.split("_", 1)
+                    chip["sensors"][sensor_name][key] = value
                 elif first_line:
-                    chip['name'] = line
+                    chip["name"] = line
                     first_line = False
-                elif 'Adapter:' in line:
-                    chip['adapter'] = line[9:]
+                elif "Adapter:" in line:
+                    chip["adapter"] = line[9:]
                 else:
                     try:
-                        sensor_name = self.sensors['name'][line]
+                        sensor_name = self.sensors["name"][line]
                     except KeyError:
-                        sensor_name = line[:-1].lower().replace(' ', '_')
-                        self.sensors['name'][line] = sensor_name
-                    if self.sensors['sensors']:
+                        sensor_name = line[:-1].lower().replace(" ", "_")
+                        self.sensors["name"][line] = sensor_name
+                    if self.sensors["sensors"]:
                         if self.first_run:
-                            for _filter in self.sensors['sensors']:
+                            for _filter in self.sensors["sensors"]:
                                 if fnmatch(sensor_name, _filter):
-                                    self.sensors['list'].append(sensor_name)
-                        if sensor_name not in self.sensors['list']:
+                                    self.sensors["list"].append(sensor_name)
+                        if sensor_name not in self.sensors["list"]:
                             sensor_name = None
                             continue
-                    chip['sensors'][sensor_name] = {}
+                    chip["sensors"][sensor_name] = {}
 
-            for name, sensor in chip['sensors'].items():
-                sensor['name'] = name
+            for name, sensor in chip["sensors"].items():
+                sensor["name"] = name
 
                 for x in self.thresholds_man:
                     if x in sensor:
@@ -282,12 +282,12 @@ class Py3status:
 
                 if self.thresholds_auto:
                     auto_input = []
-                    _input = sensor.get('input')
+                    _input = sensor.get("input")
                     if self.first_run and _input is not None:
                         _input = float(_input)
-                        _min = float(sensor.get('min', 0))
-                        _max = float(sensor.get('max', 0))
-                        _crit = float(sensor.get('crit', 0))
+                        _min = float(sensor.get("min", 0))
+                        _max = float(sensor.get("max", 0))
+                        _crit = float(sensor.get("crit", 0))
                         auto_input.append((0, self.color_zero))
                         if _min or _max or _crit:
                             _color_input = self.color_input
@@ -298,57 +298,41 @@ class Py3status:
                             auto_input.append((_min, self.color_min))
                         if _max:
                             _near_max = _max - _max / 100.0 * 10.0
-                            auto_input.append(
-                                (_near_max, self.color_near_max)
-                            )
+                            auto_input.append((_near_max, self.color_near_max))
                             auto_input.append((_max, self.color_max))
                         if _crit:
                             _near_crit = _crit - _crit / 100.0 * 10.0
-                            auto_input.append(
-                                (_near_crit, self.color_near_crit)
-                            )
+                            auto_input.append((_near_crit, self.color_near_crit))
                             auto_input.append((_crit, self.color_crit))
 
-                    key = '{}/{}'.format(chip['name'], sensor['name'])
+                    key = "{}/{}".format(chip["name"], sensor["name"])
                     self.py3.threshold_get_color(
-                        _input, ('auto.input', key, auto_input)
+                        _input, ("auto.input", key, auto_input)
                     )
 
                 for x in self.sensor_placeholders:
                     if x not in sensor:
                         sensor[x] = None
 
-                new_sensor.append(self.py3.safe_format(
-                    self.format_sensor, sensor)
-                )
+                new_sensor.append(self.py3.safe_format(self.format_sensor, sensor))
 
-            format_sensor_separator = self.py3.safe_format(
-                self.format_sensor_separator
-            )
-            format_sensor = self.py3.composite_join(
-                format_sensor_separator, new_sensor
-            )
+            format_sensor_separator = self.py3.safe_format(self.format_sensor_separator)
+            format_sensor = self.py3.composite_join(format_sensor_separator, new_sensor)
 
-            chip['format_sensor'] = format_sensor
-            del chip['sensors']
+            chip["format_sensor"] = format_sensor
+            del chip["sensors"]
 
-            new_chip.append(self.py3.safe_format(
-                self.format_chip, chip)
-            )
+            new_chip.append(self.py3.safe_format(self.format_chip, chip))
 
-        format_chip_separator = self.py3.safe_format(
-            self.format_chip_separator
-        )
-        format_chip = self.py3.composite_join(
-            format_chip_separator, new_chip
-        )
+        format_chip_separator = self.py3.safe_format(self.format_chip_separator)
+        format_chip = self.py3.composite_join(format_chip_separator, new_chip)
         self.first_run = False
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, {'format_chip': format_chip}
-            )
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(
+                self.format, {"format_chip": format_chip}
+            ),
         }
 
 
@@ -357,4 +341,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

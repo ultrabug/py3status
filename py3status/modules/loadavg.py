@@ -205,25 +205,35 @@ from multiprocessing import cpu_count
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 5
-    format = ('Loadavg [\?color=1avg {1min}] '
-              '[\?color=5avg {5min}] [\?color=15avg {15min}]')
+    format = (
+        "Loadavg [\?color=1avg {1min}] " "[\?color=5avg {5min}] [\?color=15avg {15min}]"
+    )
     thresholds = [
-        (0, '#9dd7fb'), (20, 'good'),
-        (40, 'degraded'), (60, '#ffa500'), (80, 'bad')]
+        (0, "#9dd7fb"),
+        (20, "good"),
+        (40, "degraded"),
+        (60, "#ffa500"),
+        (80, "bad"),
+    ]
 
     class Meta:
         update_config = {
-            'update_placeholder_format': [
+            "update_placeholder_format": [
                 {
-                    'placeholder_formats': {
-                        '1min': ':.2f', '5min': ':.2f', '15min': ':.2f',
-                        '1avg': ':.1f', '5avg': ':.1f', '15avg': ':.1f',
+                    "placeholder_formats": {
+                        "1min": ":.2f",
+                        "5min": ":.2f",
+                        "15min": ":.2f",
+                        "1avg": ":.1f",
+                        "5avg": ":.1f",
+                        "15avg": ":.1f",
                     },
-                    'format_strings': ['format'],
+                    "format_strings": ["format"],
                 }
-            ],
+            ]
         }
 
     def post_config_hook(self):
@@ -233,17 +243,17 @@ class Py3status:
     def loadavg(self):
         cpu = float(cpu_count())
 
-        for key, value in zip(['1', '5', '15'], getloadavg()):
-            self.load_data[key + 'min'] = value
-            self.load_data[key + 'avg'] = value / cpu * 100
+        for key, value in zip(["1", "5", "15"], getloadavg()):
+            self.load_data[key + "min"] = value
+            self.load_data[key + "avg"] = value / cpu * 100
 
         for x in self.thresholds_init:
             if x in self.load_data:
                 self.py3.threshold_get_color(self.load_data[x], x)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, self.load_data),
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, self.load_data),
         }
 
 
@@ -252,4 +262,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

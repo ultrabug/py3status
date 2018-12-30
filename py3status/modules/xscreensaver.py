@@ -40,23 +40,24 @@ STRING_UNAVAILABLE = "not installed"
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_activate = 3
     button_toggle = 1
     cache_timeout = 15
-    format = '{icon}'
-    icon_off = 'XSCR'
-    icon_on = 'XSCR'
+    format = "{icon}"
+    icon_off = "XSCR"
+    icon_on = "XSCR"
 
     def post_config_hook(self):
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
-        if not self.py3.check_commands(['xscreensaver']):
+        if not self.py3.check_commands(["xscreensaver"]):
             raise Exception(STRING_UNAVAILABLE)
 
     def _is_running(self):
         try:
-            self.py3.command_output(['pidof', 'xscreensaver'])
+            self.py3.command_output(["pidof", "xscreensaver"])
             return True
         except self.py3.CommandError:
             return False
@@ -71,24 +72,28 @@ class Py3status:
             color = self.color_off
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
-            'color': color
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"icon": icon}),
+            "color": color,
         }
 
     def on_click(self, event):
         run = self._is_running()
-        if event['button'] == self.button_activate:
-            self.py3.command_run(['xscreensaver-command', '-activate'])
+        if event["button"] == self.button_activate:
+            self.py3.command_run(["xscreensaver-command", "-activate"])
 
-        if event['button'] == self.button_toggle:
+        if event["button"] == self.button_toggle:
             if run:
-                self.py3.command_run(['xscreensaver-command', '-exit'])
+                self.py3.command_run(["xscreensaver-command", "-exit"])
             else:
                 # Because we want xscreensaver to continue running after
                 # exit, we instead use preexec_fn=setpgrp here.
-                Popen(['xscreensaver', '-no-splash', '-no-capture-stderr'],
-                      stdout=PIPE, stderr=PIPE, preexec_fn=setpgrp)
+                Popen(
+                    ["xscreensaver", "-no-splash", "-no-capture-stderr"],
+                    stdout=PIPE,
+                    stderr=PIPE,
+                    preexec_fn=setpgrp,
+                )
 
 
 if __name__ == "__main__":
@@ -96,4 +101,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

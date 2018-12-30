@@ -51,15 +51,16 @@ SAMPLE OUTPUT
 {'full_text': 'Github: Everything operating normally'}
 """
 
-STRING_ERROR = 'missing url'
+STRING_ERROR = "missing url"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 30
-    delimiter = '-'
+    delimiter = "-"
     format = None
     timeout = 5
     url = None
@@ -80,11 +81,11 @@ class Py3status:
         if json_data:
             full_text = self.py3.safe_format(self.format, json_data)
         else:
-            full_text = ''
+            full_text = ""
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": full_text,
         }
 
 
@@ -93,4 +94,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

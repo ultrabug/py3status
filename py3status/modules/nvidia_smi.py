@@ -78,38 +78,41 @@ percent
 ]
 """
 
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = '{format_gpu}'
-    format_gpu = (u'{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
-                  '[\?color=memory.used_percent {memory.used_percent}%]')
-    format_gpu_separator = ' '
-    thresholds = [(0, 'good'), (65, 'degraded'), (75, 'orange'), (85, 'bad')]
+    format = "{format_gpu}"
+    format_gpu = (
+        u"{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] "
+        "[\?color=memory.used_percent {memory.used_percent}%]"
+    )
+    format_gpu_separator = " "
+    thresholds = [(0, "good"), (65, "degraded"), (75, "orange"), (85, "bad")]
 
     def post_config_hook(self):
-        command = 'nvidia-smi --format=csv,noheader,nounits --query-gpu='
+        command = "nvidia-smi --format=csv,noheader,nounits --query-gpu="
         if not self.py3.check_commands(command.split()[0]):
             raise Exception(STRING_NOT_INSTALLED)
         self.properties = self.py3.get_placeholders_list(self.format_gpu)
 
-        format_gpu = {x: ':.1f' for x in self.properties if 'used_percent' in x}
+        format_gpu = {x: ":.1f" for x in self.properties if "used_percent" in x}
         self.format_gpu = self.py3.update_placeholder_formats(
             self.format_gpu, format_gpu
         )
 
-        for name in ['memory.used_percent']:
+        for name in ["memory.used_percent"]:
             if name in self.properties:
                 self.properties.remove(name)
-        for name in ['memory.used', 'memory.total']:
+        for name in ["memory.used", "memory.total"]:
             if name not in self.properties:
                 self.properties.append(name)
-        self.nvidia_command = command + ','.join(self.properties)
+        self.nvidia_command = command + ",".join(self.properties)
 
         self.thresholds_init = self.py3.get_color_names_list(self.format_gpu)
 
@@ -121,9 +124,9 @@ class Py3status:
         new_gpu = []
 
         for line in nvidia_data.splitlines():
-            gpu = dict(zip(self.properties, line.split(', ')))
-            gpu['memory.used_percent'] = (
-                float(gpu['memory.used']) / float(gpu['memory.total']) * 100.0
+            gpu = dict(zip(self.properties, line.split(", ")))
+            gpu["memory.used_percent"] = (
+                float(gpu["memory.used"]) / float(gpu["memory.total"]) * 100.0
             )
             for x in self.thresholds_init:
                 if x in gpu:
@@ -135,25 +138,24 @@ class Py3status:
         format_gpu = self.py3.composite_join(format_gpu_separator, new_gpu)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, {'format_gpu': format_gpu}
-            )
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"format_gpu": format_gpu}),
         }
 
 
 if __name__ == "__main__":
     from sys import argv
-    if '--list-properties' in argv:
+
+    if "--list-properties" in argv:
         from sys import exit
         from json import dumps
         from subprocess import check_output
 
-        help_cmd = 'nvidia-smi --help-query-gpu'
+        help_cmd = "nvidia-smi --help-query-gpu"
         help_data = check_output(help_cmd.split()).decode()
 
         new_properties = []
-        e = ['Default', 'Exclusive_Thread', 'Exclusive_Process', 'Prohibited']
+        e = ["Default", "Exclusive_Thread", "Exclusive_Process", "Prohibited"]
         for line in help_data.splitlines():
             if line.startswith('"'):
                 properties = line.split('"')[1::2]
@@ -161,17 +163,17 @@ if __name__ == "__main__":
                     if name not in e:
                         new_properties.append(name)
 
-        properties = ','.join(new_properties)
-        gpu_cmd = 'nvidia-smi --format=csv,noheader,nounits --query-gpu='
+        properties = ",".join(new_properties)
+        gpu_cmd = "nvidia-smi --format=csv,noheader,nounits --query-gpu="
         gpu_data = check_output((gpu_cmd + properties).split()).decode()
 
         new_gpus = []
-        msg = 'This GPU contains {} supported properties.'
+        msg = "This GPU contains {} supported properties."
         for line in gpu_data.splitlines():
-            gpu = dict(zip(new_properties, line.split(', ')))
-            gpu = {k: v for k, v in gpu.items() if '[Not Supported]' not in v}
-            gpu['= ' + msg.format(len(gpu))] = ''
-            gpu['=' * (len(msg) + 2)] = ''
+            gpu = dict(zip(new_properties, line.split(", ")))
+            gpu = {k: v for k, v in gpu.items() if "[Not Supported]" not in v}
+            gpu["= " + msg.format(len(gpu))] = ""
+            gpu["=" * (len(msg) + 2)] = ""
             new_gpus.append(gpu)
 
         print(dumps(new_gpus, sort_keys=True, indent=4))
@@ -180,4 +182,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

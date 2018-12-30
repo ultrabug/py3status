@@ -99,37 +99,38 @@ from os.path import expanduser
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
     database = None
-    format = '{format_row}'
+    format = "{format_row}"
     format_row = None
-    format_separator = ' '
+    format_separator = " "
     parameters = None
     query = None
     thresholds = []
 
     def post_config_hook(self):
-        names = ['database', 'format', 'format_row', 'parameters', 'query']
+        names = ["database", "format", "format_row", "parameters", "query"]
         for config_name in names:
-            if config_name == 'format_row':
+            if config_name == "format_row":
                 if not self.py3.format_contains(self.format, config_name):
                     continue
             if not getattr(self, config_name, None):
-                raise Exception('missing %s' % config_name)
+                raise Exception("missing %s" % config_name)
 
-        self.connect = getattr(import_module(self.database), 'connect')
+        self.connect = getattr(import_module(self.database), "connect")
         self.operational_error = getattr(
-            import_module(self.database), 'OperationalError'
+            import_module(self.database), "OperationalError"
         )
         self.is_parameters_a_dict = isinstance(self.parameters, dict)
         if not self.is_parameters_a_dict:
             self.parameters = expanduser(self.parameters)
 
         self.thresholds_init = {}
-        for name in ('format', 'format_row'):
+        for name in ("format", "format_row"):
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name, '')
+                getattr(self, name, "")
             )
 
     def _get_sql_data(self):
@@ -158,7 +159,7 @@ class Py3status:
             new_data = []
             count_row = len(data)
             for row in data:
-                for x in self.thresholds_init['format_row']:
+                for x in self.thresholds_init["format_row"]:
                     if x in row:
                         self.py3.threshold_get_color(row[x], x)
 
@@ -166,21 +167,22 @@ class Py3status:
 
             format_separator = self.py3.safe_format(self.format_separator)
             format_row = self.py3.composite_join(format_separator, new_data)
-            sql_data.update({'row': count_row, 'format_row': format_row})
+            sql_data.update({"row": count_row, "format_row": format_row})
 
-            for x in self.thresholds_init['format']:
+            for x in self.thresholds_init["format"]:
                 if x in sql_data:
                     self.py3.threshold_get_color(sql_data[x], x)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, sql_data),
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, sql_data),
         }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

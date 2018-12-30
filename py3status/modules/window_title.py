@@ -40,15 +40,17 @@ from json import loads
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 0.5
-    format = '{title}'
+    format = "{title}"
     max_width = 120
 
     def post_config_hook(self):
         # empty defaults to replace window properties
         self.empty_defaults = {
-            x: '' for x in self.py3.get_placeholders_list(self.format)}
+            x: "" for x in self.py3.get_placeholders_list(self.format)
+        }
 
     def _find_focused(self, tree):
         if isinstance(tree, list):
@@ -57,23 +59,25 @@ class Py3status:
                 if res:
                     return res
         elif isinstance(tree, dict):
-            if tree['focused']:
+            if tree["focused"]:
                 return tree
-            return self._find_focused(tree['nodes'] + tree['floating_nodes'])
+            return self._find_focused(tree["nodes"] + tree["floating_nodes"])
         return {}
 
     def window_title(self):
-        tree = loads(self.py3.command_output('i3-msg -t get_tree'))
+        tree = loads(self.py3.command_output("i3-msg -t get_tree"))
         window_properties = self._find_focused(tree).get(
-            'window_properties', self.empty_defaults)
+            "window_properties", self.empty_defaults
+        )
 
-        if len(window_properties.get('title', '')) > self.max_width:
-            window_properties['title'] = u"...{}".format(
-                window_properties['title'][-(self.max_width - 3):])
+        if len(window_properties.get("title", "")) > self.max_width:
+            window_properties["title"] = u"...{}".format(
+                window_properties["title"][-(self.max_width - 3) :]
+            )
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, window_properties)
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, window_properties),
         }
 
 
@@ -82,4 +86,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

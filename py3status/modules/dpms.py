@@ -34,6 +34,7 @@ off
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_off = None
     button_toggle = 1
@@ -44,18 +45,18 @@ class Py3status:
 
     class Meta:
         deprecated = {
-            'rename': [
+            "rename": [
                 {
-                    'param': 'format_on',
-                    'new': 'icon_on',
-                    'msg': 'obsolete parameter use `icon_on`',
+                    "param": "format_on",
+                    "new": "icon_on",
+                    "msg": "obsolete parameter use `icon_on`",
                 },
                 {
-                    'param': 'format_off',
-                    'new': 'icon_off',
-                    'msg': 'obsolete parameter use `icon_off`',
+                    "param": "format_off",
+                    "new": "icon_off",
+                    "msg": "obsolete parameter use `icon_off`",
                 },
-            ],
+            ]
         }
 
     def post_config_hook(self):
@@ -66,7 +67,7 @@ class Py3status:
         """
         Display a colorful state of DPMS.
         """
-        if 'DPMS is Enabled' in self.py3.command_output('xset -q'):
+        if "DPMS is Enabled" in self.py3.command_output("xset -q"):
             _format = self.icon_on
             color = self.color_on
         else:
@@ -76,23 +77,23 @@ class Py3status:
         icon = self.py3.safe_format(_format)
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(self.format, {'icon': icon}),
-            'color': color
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"icon": icon}),
+            "color": color,
         }
 
     def on_click(self, event):
         """
         Control DPMS with mouse clicks.
         """
-        if event['button'] == self.button_toggle:
-            if 'DPMS is Enabled' in self.py3.command_output('xset -q'):
+        if event["button"] == self.button_toggle:
+            if "DPMS is Enabled" in self.py3.command_output("xset -q"):
                 self.py3.command_run("xset -dpms s off")
             else:
                 self.py3.command_run("xset +dpms s on")
 
-        if event['button'] == self.button_off:
-                self.py3.command_run("xset dpms force off")
+        if event["button"] == self.button_off:
+            self.py3.command_run("xset dpms force off")
 
 
 if __name__ == "__main__":
@@ -100,4 +101,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

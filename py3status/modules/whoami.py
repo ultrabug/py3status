@@ -23,24 +23,19 @@ from getpass import getuser
 class Py3status:
     """
     """
+
     # available configuration parameters
-    format = '{username}'
+    format = "{username}"
 
     class Meta:
         deprecated = {
-            'remove': [
-                {
-                    'param': 'cache_timeout',
-                    'msg': 'obsolete parameter',
-                },
-            ],
+            "remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]
         }
 
     def whoami(self):
         return {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(
-                self.format, {'username': getuser()})
+            "cached_until": self.py3.CACHE_FOREVER,
+            "full_text": self.py3.safe_format(self.format, {"username": getuser()}),
         }
 
 
@@ -49,4 +44,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

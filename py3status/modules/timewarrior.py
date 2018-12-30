@@ -144,43 +144,41 @@ from json import loads as json_loads
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-STRING_NOT_INSTALLED = 'not installed'
-DATETIME = '%Y%m%dT%H%M%SZ'
-STRING_INVALID_TIMEOUT = 'invalid cache_timeout'
+STRING_NOT_INSTALLED = "not installed"
+DATETIME = "%Y%m%dT%H%M%SZ"
+STRING_INVALID_TIMEOUT = "invalid cache_timeout"
 
 
 class Py3status:
     """
     """
+
     cache_timeout = None
-    filter = '1day'
-    format = '[Timew {format_time}]|No Timew'
+    filter = "1day"
+    format = "[Timew {format_time}]|No Timew"
     format_datetime = {}
-    format_duration = '\?not_zero [{days}d ][{hours}:]{minutes}:{seconds}'
-    format_tag = '\?color=state_tag {name}'
-    format_tag_separator = ' '
-    format_time = '[\?color=state_time [{format_tag} ]{format_duration}]'
-    format_time_separator = ' '
+    format_duration = "\?not_zero [{days}d ][{hours}:]{minutes}:{seconds}"
+    format_tag = "\?color=state_tag {name}"
+    format_tag_separator = " "
+    format_time = "[\?color=state_time [{format_tag} ]{format_duration}]"
+    format_time_separator = " "
     thresholds = {
-        'state_tag': [(0, 'darkgray'), (1, 'darkgray')],
-        'state_time': [(0, 'darkgray'), (1, 'degraded')],
+        "state_tag": [(0, "darkgray"), (1, "darkgray")],
+        "state_time": [(0, "darkgray"), (1, "degraded")],
     }
 
     class Meta:
         update_config = {
-            'update_placeholder_format': [
+            "update_placeholder_format": [
                 {
-                    'placeholder_formats': {
-                        'minutes': ':02d',
-                        'seconds': ':02d',
-                    },
-                    'format_strings': ['format_duration'],
+                    "placeholder_formats": {"minutes": ":02d", "seconds": ":02d"},
+                    "format_strings": ["format_duration"],
                 }
-            ],
+            ]
         }
 
     def post_config_hook(self):
-        if not self.py3.check_commands('timew'):
+        if not self.py3.check_commands("timew"):
             raise Exception(STRING_NOT_INSTALLED)
 
         if self.cache_timeout is None:
@@ -195,21 +193,22 @@ class Py3status:
             self.sleep_timeout = self.cache_timeout
             self.cache_timeout = 0
 
-        self.timewarrior_command = 'timew export'
+        self.timewarrior_command = "timew export"
         if self.filter:
-            self.timewarrior_command += ' {}'.format(self.filter)
+            self.timewarrior_command += " {}".format(self.filter)
 
-        self.init = {'datetimes': []}
-        for word in ['start', 'end']:
+        self.init = {"datetimes": []}
+        for word in ["start", "end"]:
             if (self.py3.format_contains(self.format_time, word)) and (
-                    word in self.format_datetime):
-                self.init['datetimes'].append(word)
+                word in self.format_datetime
+            ):
+                self.init["datetimes"].append(word)
 
         self.tracking = None
         self.thresholds_init = {}
-        for name in ('format', 'format_tag', 'format_time'):
+        for name in ("format", "format_tag", "format_time"):
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name, '')
+                getattr(self, name, "")
             )
 
     def _get_timewarrior_data(self):
@@ -220,15 +219,15 @@ class Py3status:
         self.tracking = False
 
         for time_index, time in zip(range(len(data), -1, -1), data):
-            time['index'] = time_index
-            time['state_time'] = 'end' not in time
+            time["index"] = time_index
+            time["state_time"] = "end" not in time
 
             # tags
             new_tag = []
-            time['tags'] = time.get('tags', [])
-            for tag_name in time['tags']:
-                tag_data = {'name': tag_name, 'state_tag': time['state_time']}
-                for x in self.thresholds_init['format_tag']:
+            time["tags"] = time.get("tags", [])
+            for tag_name in time["tags"]:
+                tag_data = {"name": tag_name, "state_tag": time["state_time"]}
+                for x in self.thresholds_init["format_tag"]:
                     if x in tag_data:
                         self.py3.threshold_get_color(tag_data[x], x)
                 new_tag.append(self.py3.safe_format(self.format_tag, tag_data))
@@ -236,37 +235,41 @@ class Py3status:
             format_tag_separator = self.py3.safe_format(self.format_tag_separator)
             format_tag = self.py3.composite_join(format_tag_separator, new_tag)
 
-            time['format_tag'] = format_tag
-            del time['tags']
+            time["format_tag"] = format_tag
+            del time["tags"]
 
             # duraton
-            if time['state_time']:
+            if time["state_time"]:
                 self.tracking = True
                 end = datetime.now(utc).utcnow()
             else:
-                end = datetime.strptime(time['end'], DATETIME)
+                end = datetime.strptime(time["end"], DATETIME)
 
-            start = datetime.strptime(time['start'], DATETIME)
+            start = datetime.strptime(time["start"], DATETIME)
             duration = relativedelta(end, start)
 
-            time['format_duration'] = self.py3.safe_format(
-                self.format_duration, {
-                    'days': duration.days,
-                    'hours': duration.hours,
-                    'minutes': duration.minutes,
-                    'seconds': duration.seconds,
-                }
+            time["format_duration"] = self.py3.safe_format(
+                self.format_duration,
+                {
+                    "days": duration.days,
+                    "hours": duration.hours,
+                    "minutes": duration.minutes,
+                    "seconds": duration.seconds,
+                },
             )
 
             # datetime
-            for word in self.init['datetimes']:
+            for word in self.init["datetimes"]:
                 if word in time:
-                    time[word] = self.py3.safe_format(datetime.strftime(
-                        datetime.strptime(time[word], DATETIME),
-                        self.format_datetime[word]))
+                    time[word] = self.py3.safe_format(
+                        datetime.strftime(
+                            datetime.strptime(time[word], DATETIME),
+                            self.format_datetime[word],
+                        )
+                    )
 
             # time
-            for x in self.thresholds_init['format_time']:
+            for x in self.thresholds_init["format_time"]:
                 if x in time:
                     self.py3.threshold_get_color(time[x], x)
 
@@ -285,21 +288,19 @@ class Py3status:
         else:
             cached_until = self.sleep_timeout
 
-        timew_data = {
-            'format_time': format_time,
-            'tracking': self.tracking,
-        }
+        timew_data = {"format_time": format_time, "tracking": self.tracking}
 
-        for x in self.thresholds_init['format']:
+        for x in self.thresholds_init["format"]:
             if x in timew_data:
                 self.py3.threshold_get_color(timew_data[x], x)
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
-            'full_text': self.py3.safe_format(self.format, timew_data)
+            "cached_until": self.py3.time_in(cached_until),
+            "full_text": self.py3.safe_format(self.format, timew_data),
         }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from py3status.module_test import module_test
+
     module_test(Py3status)

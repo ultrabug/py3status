@@ -46,16 +46,19 @@ emerge_status {
 import re
 import copy
 
-STRING_NOT_INSTALLED = 'not installed'
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
     """
     """
+
     cache_timeout = 30
-    emerge_log_file = '/var/log/emerge.log'
-    format = ('{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total}'
-              ' {action} {category}/{pkg}]|calculating...]|: stopped 0/0]')
+    emerge_log_file = "/var/log/emerge.log"
+    format = (
+        "{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total}"
+        " {action} {category}/{pkg}]|calculating...]|: stopped 0/0]"
+    )
     prefix = "emrg"
 
     def _emerge_running(self):
@@ -64,21 +67,21 @@ class Py3status:
         Returns true if at least one instance of emerge is running.
         """
         try:
-            self.py3.command_output(['pgrep', 'emerge'])
+            self.py3.command_output(["pgrep", "emerge"])
             return True
         except Exception:
             return False
 
     def post_config_hook(self):
-        if not self.py3.check_commands('emerge'):
+        if not self.py3.check_commands("emerge"):
             raise Exception(STRING_NOT_INSTALLED)
         self.ret_default = {
-            'action': "",
-            'category': "",
-            'current': 0,
-            'is_running': False,
-            'pkg': "",
-            'total': 0,
+            "action": "",
+            "category": "",
+            "current": 0,
+            "is_running": False,
+            "pkg": "",
+            "total": 0,
         }
 
     def _get_progress(self):
@@ -90,10 +93,8 @@ class Py3status:
         ret = {}
 
         # traverse emerge.log from bottom up to get latest information
-        last_lines = self.py3.command_output(
-            ['tail', '-50', self.emerge_log_file]
-        )
-        input_data = last_lines.split('\n')
+        last_lines = self.py3.command_output(["tail", "-50", self.emerge_log_file])
+        input_data = last_lines.split("\n")
         input_data.reverse()
 
         for line in input_data:
@@ -109,11 +110,11 @@ class Py3status:
                 )
                 res = status_re.search(line)
                 if res is not None:
-                    ret['action'] = res.group('a').lower()
-                    ret['category'] = res.group('ca')
-                    ret['current'] = res.group('cu')
-                    ret['pkg'] = res.group('p')
-                    ret['total'] = res.group('t')
+                    ret["action"] = res.group("a").lower()
+                    ret["category"] = res.group("ca")
+                    ret["current"] = res.group("cu")
+                    ret["pkg"] = res.group("p")
+                    ret["total"] = res.group("t")
                     break
         return ret
 
@@ -124,11 +125,11 @@ class Py3status:
         ret = copy.deepcopy(self.ret_default)
         if self._emerge_running():
             ret = self._get_progress()
-            ret['is_running'] = True
-            response['cached_until'] = self.py3.time_in(0)
+            ret["is_running"] = True
+            response["cached_until"] = self.py3.time_in(0)
         else:
-            response['cached_until'] = self.py3.time_in(self.cache_timeout)
-        response['full_text'] = self.py3.safe_format(self.format, ret)
+            response["cached_until"] = self.py3.time_in(self.cache_timeout)
+        response["full_text"] = self.py3.safe_format(self.format, ret)
         return response
 
 
@@ -137,4 +138,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

@@ -84,34 +84,36 @@ from time import time
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 0
-    format = '{nomotion}[{fortune} ]{wanda}{motion}'
+    format = "{nomotion}[{fortune} ]{wanda}{motion}"
     fortune_timeout = 60
 
     def post_config_hook(self):
-        body = ('[\?color=orange&show <'
-                '[\?color=lightblue&show º]'
-                '[\?color=darkorange&show ,]))'
-                '[\?color=darkorange&show ))>%s]]')
-        wanda = [body % fin for fin in ('<', '>', '<', '3')]
+        body = (
+            "[\?color=orange&show <"
+            "[\?color=lightblue&show º]"
+            "[\?color=darkorange&show ,]))"
+            "[\?color=darkorange&show ))>%s]]"
+        )
+        wanda = [body % fin for fin in ("<", ">", "<", "3")]
         self.wanda = [self.py3.safe_format(x) for x in wanda]
         self.wanda_length = len(self.wanda)
         self.index = 0
 
-        self.fortune_command = ['fortune', '-as']
-        self.fortune = self.py3.storage_get('fortune') or None
-        self.toggled = self.py3.storage_get('toggled') or False
-        self.motions = {'motion': ' ', 'nomotion': ''}
+        self.fortune_command = ["fortune", "-as"]
+        self.fortune = self.py3.storage_get("fortune") or None
+        self.toggled = self.py3.storage_get("toggled") or False
+        self.motions = {"motion": " ", "nomotion": ""}
 
         # deal with {new,old} timeout between storage
-        fortune_timeout = self.py3.storage_get('fortune_timeout')
+        fortune_timeout = self.py3.storage_get("fortune_timeout")
         timeout = None
         if self.fortune_timeout != fortune_timeout:
             timeout = time() + self.fortune_timeout
         self.time = (
-            timeout or self.py3.storage_get('time') or (
-                time() + self.fortune_timeout)
+            timeout or self.py3.storage_get("time") or (time() + self.fortune_timeout)
         )
 
     def _set_fortune(self, state=None, new=False):
@@ -121,10 +123,10 @@ class Py3status:
             try:
                 fortune_data = self.py3.command_output(self.fortune_command)
             except self.py3.CommandError:
-                self.fortune = ''
+                self.fortune = ""
                 self.fortune_command = None
             else:
-                self.fortune = ' '.join(fortune_data.split())
+                self.fortune = " ".join(fortune_data.split())
                 self.time = time() + self.fortune_timeout
         elif state is None:
             if self.toggled and time() >= self.time:
@@ -138,7 +140,7 @@ class Py3status:
 
     def _set_motion(self):
         for k in self.motions:
-            self.motions[k] = '' if self.motions[k] else ' '
+            self.motions[k] = "" if self.motions[k] else " "
 
     def _set_wanda(self):
         self.index += 1
@@ -151,22 +153,23 @@ class Py3status:
         self._set_wanda()
 
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': self.py3.safe_format(
-                self.format, {
-                    'fortune': self.fortune,
-                    'motion': self.motions['motion'],
-                    'nomotion': self.motions['nomotion'],
-                    'wanda': self.wanda[self.index],
-                }
-            )
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(
+                self.format,
+                {
+                    "fortune": self.fortune,
+                    "motion": self.motions["motion"],
+                    "nomotion": self.motions["nomotion"],
+                    "wanda": self.wanda[self.index],
+                },
+            ),
         }
 
     def kill(self):
-        self.py3.storage_set('toggled', self.toggled)
-        self.py3.storage_set('fortune', self.fortune)
-        self.py3.storage_set('fortune_timeout', self.fortune_timeout)
-        self.py3.storage_set('time', self.time)
+        self.py3.storage_set("toggled", self.toggled)
+        self.py3.storage_set("fortune", self.fortune)
+        self.py3.storage_set("fortune_timeout", self.fortune_timeout)
+        self.py3.storage_set("time", self.time)
 
     def on_click(self, event):
         if not self.fortune_command:
@@ -179,4 +182,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

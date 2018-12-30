@@ -82,18 +82,21 @@ STRING_NOT_INSTALLED = "not installed"
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_next = None
     button_pause = 1
     button_previous = None
     button_stop = 3
     cache_timeout = 5
-    format = ('\?if=is_started [\?if=is_stopped \[\] moc|'
-              '[\?if=is_paused \|\|][\?if=is_playing >] {title}]')
+    format = (
+        "\?if=is_started [\?if=is_stopped \[\] moc|"
+        "[\?if=is_paused \|\|][\?if=is_playing >] {title}]"
+    )
     sleep_timeout = 20
 
     def post_config_hook(self):
-        if not self.py3.check_commands('mocp'):
+        if not self.py3.check_commands("mocp"):
             raise Exception(STRING_NOT_INSTALLED)
 
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
@@ -102,7 +105,7 @@ class Py3status:
 
     def _get_moc_data(self):
         try:
-            data = self.py3.command_output('mocp --info')
+            data = self.py3.command_output("mocp --info")
             is_started = True
         except self.py3.CommandError:
             data = {}
@@ -121,24 +124,24 @@ class Py3status:
             cached_until = self.cache_timeout
 
             for line in moc_data.splitlines():
-                category, value = line.split(': ', 1)
+                category, value = line.split(": ", 1)
                 data[category.lower()] = value
 
-            self.state = data['state']
-            if self.state == 'PLAY':
+            self.state = data["state"]
+            if self.state == "PLAY":
                 is_playing = True
                 color = self.color_playing
-            elif self.state == 'PAUSE':
+            elif self.state == "PAUSE":
                 is_paused = True
                 color = self.color_paused
-            elif self.state == 'STOP':
+            elif self.state == "STOP":
                 is_stopped = True
                 color = self.color_stopped
 
         return {
-            'cached_until': self.py3.time_in(cached_until),
-            'color': color,
-            'full_text': self.py3.safe_format(
+            "cached_until": self.py3.time_in(cached_until),
+            "color": color,
+            "full_text": self.py3.safe_format(
                 self.format,
                 dict(
                     is_paused=is_paused,
@@ -146,26 +149,26 @@ class Py3status:
                     is_started=is_started,
                     is_stopped=is_stopped,
                     **data
-                )
-            )
+                ),
+            ),
         }
 
     def on_click(self, event):
         """
         Control moc with mouse clicks.
         """
-        button = event['button']
+        button = event["button"]
         if button == self.button_pause:
-            if self.state == 'STOP':
-                self.py3.command_run('mocp --play')
+            if self.state == "STOP":
+                self.py3.command_run("mocp --play")
             else:
-                self.py3.command_run('mocp --toggle-pause')
+                self.py3.command_run("mocp --toggle-pause")
         elif button == self.button_stop:
-            self.py3.command_run('mocp --stop')
+            self.py3.command_run("mocp --stop")
         elif button == self.button_next:
-            self.py3.command_run('mocp --next')
+            self.py3.command_run("mocp --next")
         elif button == self.button_previous:
-            self.py3.command_run('mocp --prev')
+            self.py3.command_run("mocp --prev")
         else:
             self.py3.prevent_refresh()
 
@@ -175,4 +178,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

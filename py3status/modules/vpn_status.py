@@ -44,11 +44,12 @@ from time import sleep
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
     check_pid = False
     format = "VPN: {name}|VPN: no"
-    pidfile = '/sys/class/net/vpn0/dev_id'
+    pidfile = "/sys/class/net/vpn0/dev_id"
 
     def post_config_hook(self):
         self.thread_started = False
@@ -125,15 +126,15 @@ class Py3status:
         else:
             vpn = self._get_vpn_status()
             if vpn:
-                name = ', '.join(vpn)
+                name = ", ".join(vpn)
                 color = self.py3.COLOR_GOOD
 
         # Format and create the response dict
-        full_text = self.py3.safe_format(self.format, {'name': name})
+        full_text = self.py3.safe_format(self.format, {"name": name})
         response = {
-            'full_text': full_text,
-            'color': color,
-            'cached_until': self.py3.CACHE_FOREVER
+            "full_text": full_text,
+            "color": color,
+            "cached_until": self.py3.CACHE_FOREVER,
         }
 
         # Cache forever unless in check_pid mode
@@ -147,4 +148,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

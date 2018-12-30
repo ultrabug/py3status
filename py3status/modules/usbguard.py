@@ -123,55 +123,63 @@ from threading import Thread
 from gi.repository import Gio
 import re
 
-STRING_USBGUARD_DBUS = 'start usbguard-dbus.service'
-STRING_INVALID_FILTER = 'invalid filters `{}`'
+STRING_USBGUARD_DBUS = "start usbguard-dbus.service"
+STRING_INVALID_FILTER = "invalid filters `{}`"
 
 
 class Py3status:
     """
     """
+
     allow_urgent = False
     button_next = 4
     button_previous = 5
-    filters = ['None', 'any', 'allow', 'block']
-    format = ('[{format_device_list} ]{format_button_device} {format_button_filter}'
-              '[\?color=darkgray&show \|]{format_button_permanent}')
-    format_button_allow = '[\?if=!policy=allow&color=good Allow]'
-    format_button_block = '[\?if=!policy=block&color=degraded Block]'
-    format_button_device = (
-        '[\?color=deepskyblue&show Device] {device}/{devices}')
-    format_button_filter = ('[\?color=deepskyblue&show Filter ]'
-                            '[\?if=filter=allow Allow|[\?if=filter=block '
-                            'Block|[\?if=filter=None None|Any]]]')
-    format_button_permanent = ('[\?if=permanent&color=white Permanently'
-                               '|\?color=darkgray Permanently]')
-    format_button_reject = '\?color=bad Reject'
-    format_device = ('[{name}|Unknown {id} [\?color=darkgray {usb_id}]]'
-                     '[ {format_button_allow}][ {format_button_block}]')
-    format_device_separator = ' '
-    format_notification_message = 'USB ID: {usb_id}\nName: {name}\nPort: {port}'
-    format_notification_title = ('USB Device [\?if=policy=allow Allowed]'
-                                 '[\?if=policy=block Blocked]'
-                                 '[\?if=policy=reject Rejected]')
+    filters = ["None", "any", "allow", "block"]
+    format = (
+        "[{format_device_list} ]{format_button_device} {format_button_filter}"
+        "[\?color=darkgray&show \|]{format_button_permanent}"
+    )
+    format_button_allow = "[\?if=!policy=allow&color=good Allow]"
+    format_button_block = "[\?if=!policy=block&color=degraded Block]"
+    format_button_device = "[\?color=deepskyblue&show Device] {device}/{devices}"
+    format_button_filter = (
+        "[\?color=deepskyblue&show Filter ]"
+        "[\?if=filter=allow Allow|[\?if=filter=block "
+        "Block|[\?if=filter=None None|Any]]]"
+    )
+    format_button_permanent = (
+        "[\?if=permanent&color=white Permanently" "|\?color=darkgray Permanently]"
+    )
+    format_button_reject = "\?color=bad Reject"
+    format_device = (
+        "[{name}|Unknown {id} [\?color=darkgray {usb_id}]]"
+        "[ {format_button_allow}][ {format_button_block}]"
+    )
+    format_device_separator = " "
+    format_notification_message = "USB ID: {usb_id}\nName: {name}\nPort: {port}"
+    format_notification_title = (
+        "USB Device [\?if=policy=allow Allowed]"
+        "[\?if=policy=block Blocked]"
+        "[\?if=policy=reject Rejected]"
+    )
     permanent = None
 
     # playground
 
     def post_config_hook(self):
         for _filter in self.filters:
-            if _filter not in ['None', 'any', 'allow', 'block']:
+            if _filter not in ["None", "any", "allow", "block"]:
                 raise Exception(STRING_INVALID_FILTER.format(_filter))
 
         self.init = {
-            'format_button': self.py3.get_placeholders_list(
-                self.format_device, 'format_button_*'
+            "format_button": self.py3.get_placeholders_list(
+                self.format_device, "format_button_*"
             ),
-            'notifications': (
-                self.format_notification_title or
-                self.format_notification_message
+            "notifications": (
+                self.format_notification_title or self.format_notification_message
             ),
-            'permanent': self.permanent is None,
-            'target': {'allow': 0, 'block': 1, 'reject': 2},
+            "permanent": self.permanent is None,
+            "target": {"allow": 0, "block": 1, "reject": 2},
         }
 
         self.filter_index = 0
@@ -181,26 +189,30 @@ class Py3status:
         self.permanent = self.permanent or False
         self.cache_devices = {}
         self.device_keys = [
-            ('serial', re.compile(r'\S*serial \"(\S+)\"\S*')),
-            ('policy', re.compile(r'^(\S+)')),
-            ('usb_id', re.compile(r'id (\S+)')),
-            ('name', re.compile(r'name \"(.*)\" hash')),
-            ('hash', re.compile(r'hash \"(.*)\" parent-hash')),
-            ('parent_hash', re.compile(r'parent-hash \"(.*)\" via-port')),
-            ('port', re.compile(r'via-port \"(.*)\" with-interface')),
-            ('interface', re.compile(r'with-interface \{ (.*) \}$')),
+            ("serial", re.compile(r"\S*serial \"(\S+)\"\S*")),
+            ("policy", re.compile(r"^(\S+)")),
+            ("usb_id", re.compile(r"id (\S+)")),
+            ("name", re.compile(r"name \"(.*)\" hash")),
+            ("hash", re.compile(r"hash \"(.*)\" parent-hash")),
+            ("parent_hash", re.compile(r"parent-hash \"(.*)\" via-port")),
+            ("port", re.compile(r"via-port \"(.*)\" with-interface")),
+            ("interface", re.compile(r"with-interface \{ (.*) \}$")),
         ]
 
         try:
             self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
             self.proxy = Gio.DBusProxy.new_sync(
-                self.bus, Gio.DBusProxyFlags.NONE, None, 'org.usbguard',
-                '/org/usbguard/Devices', 'org.usbguard.Devices', None
+                self.bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                "org.usbguard",
+                "/org/usbguard/Devices",
+                "org.usbguard.Devices",
+                None,
             )
-            for signal in ['DevicePolicyChanged', 'DevicePresenceChanged']:
+            for signal in ["DevicePolicyChanged", "DevicePresenceChanged"]:
                 self.bus.signal_subscribe(
-                    None, 'org.usbguard.Devices', signal,
-                    None, None, 0, self.py3.update,
+                    None, "org.usbguard.Devices", signal, None, None, 0, self.py3.update
                 )
         except Exception:
             raise Exception(STRING_USBGUARD_DBUS)
@@ -213,22 +225,27 @@ class Py3status:
         pass
 
     def _get_devices(self, device_filter):
-        if device_filter in ['any', 'None']:
-            device_filter = 'match'
+        if device_filter in ["any", "None"]:
+            device_filter = "match"
 
-        devices = self.proxy.listDevices('(s)', device_filter)
+        devices = self.proxy.listDevices("(s)", device_filter)
         new_devices = []
 
         for device_id, device_string in devices:
             try:
                 device = self.cache_devices[device_string]
             except KeyError:
-                device = {'id': device_id}
+                device = {"id": device_id}
                 for name, regex in self.device_keys:
                     value = regex.findall(device_string) or None
                     if value:
-                        value = value[0].encode('latin-1').decode(
-                            'unicode_escape').encode('latin-1').decode()
+                        value = (
+                            value[0]
+                            .encode("latin-1")
+                            .decode("unicode_escape")
+                            .encode("latin-1")
+                            .decode()
+                        )
                     device[name] = value
                 self.cache_devices[device_string] = device
             new_devices.append(device)
@@ -240,17 +257,17 @@ class Py3status:
         format_device_list = None
         self.device_length = len(devices)
         for index, device in enumerate(devices, 1):
-            if device_filter == 'any':
+            if device_filter == "any":
                 pass
-            elif device_filter == 'None':
-                device['policy'] = None
-            elif device['policy'] != device_filter:
+            elif device_filter == "None":
+                device["policy"] = None
+            elif device["policy"] != device_filter:
                 continue
-            for x in self.init['format_button']:
+            for x in self.init["format_button"]:
                 composite = self.py3.safe_format(getattr(self, x), device)
-                device[x] = self.py3.composite_update(composite, {
-                    'index': '{}/{}'.format(device['id'], x.split('_')[-1])
-                })
+                device[x] = self.py3.composite_update(
+                    composite, {"index": "{}/{}".format(device["id"], x.split("_")[-1])}
+                )
 
             device_composite = self.py3.safe_format(self.format_device, device)
             if index == self.device_index:
@@ -258,12 +275,8 @@ class Py3status:
 
             new_device.append(device_composite)
 
-        format_device_separator = self.py3.safe_format(
-            self.format_device_separator
-        )
-        format_device = self.py3.composite_join(
-            format_device_separator, new_device
-        )
+        format_device_separator = self.py3.safe_format(self.format_device_separator)
+        format_device = self.py3.composite_join(format_device_separator, new_device)
 
         return format_device, format_device_list
 
@@ -277,99 +290,89 @@ class Py3status:
         self.py3.notify_user(
             msg=format_notification_message,
             title=format_notification_title,
-            icon='/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg'
+            icon="/usr/share/icons/hicolor/scalable/apps/usbguard-icon.svg",
         )
 
     def usbguard(self):
         filter_name = self.filters[self.filter_index]
         device_data = self._get_devices(filter_name)
-        format_device, format_device_list = (
-            self._manipulate_devices(device_data, filter_name)
+        format_device, format_device_list = self._manipulate_devices(
+            device_data, filter_name
         )
 
         if self.device_index > self.device_length:
             self.device_index = self.device_length
 
         format_button_device = self.py3.safe_format(
-            self.format_button_device, {
-                'device': self.device_index, 'devices': self.device_length
-            }
-
+            self.format_button_device,
+            {"device": self.device_index, "devices": self.device_length},
         )
-        self.py3.composite_update(
-            format_button_device, {'index': 'button_device'}
-        )
+        self.py3.composite_update(format_button_device, {"index": "button_device"})
 
         format_button_filter = self.py3.safe_format(
-            self.format_button_filter, {'filter': filter_name}
+            self.format_button_filter, {"filter": filter_name}
         )
+        self.py3.composite_update(format_button_filter, {"index": "button_filter"})
+        format_button_permanent = self.py3.safe_format(self.format_button_permanent)
         self.py3.composite_update(
-            format_button_filter, {'index': 'button_filter'}
-        )
-        format_button_permanent = self.py3.safe_format(
-            self.format_button_permanent
-        )
-        self.py3.composite_update(
-            format_button_permanent, {'index': 'button_permanent'}
+            format_button_permanent, {"index": "button_permanent"}
         )
 
         usbguard_data = {
-            'device': len(device_data),
-            'format_button_filter': format_button_filter,
-            'format_button_permanent': format_button_permanent,
-            'format_device': format_device,
-            'format_button_device': format_button_device,
-            'format_device_list': format_device_list,
+            "device": len(device_data),
+            "format_button_filter": format_button_filter,
+            "format_button_permanent": format_button_permanent,
+            "format_device": format_device,
+            "format_button_device": format_button_device,
+            "format_device_list": format_device_list,
         }
 
         response = {
-            'cached_until': self.py3.time_in(10),
-            'full_text': self.py3.safe_format(self.format, usbguard_data),
+            "cached_until": self.py3.time_in(10),
+            "full_text": self.py3.safe_format(self.format, usbguard_data),
         }
 
         if self.allow_urgent:
-            response['urgent'] = True
+            response["urgent"] = True
 
         self.device_data = device_data
         return response
 
     def on_click(self, event):
-        index = event['index']
-        button = event['button']
+        index = event["index"]
+        button = event["button"]
         if isinstance(index, int):
             return
-        elif index == 'button_device':
+        elif index == "button_device":
             if button == self.button_next:
                 self.device_index += 1
                 self.device_index %= self.device_length + 1
             elif button == self.button_previous:
                 self.device_index -= 1
                 self.device_index %= self.device_length + 1
-        elif index == 'button_filter':
+        elif index == "button_filter":
             if button == self.button_next:
                 self.filter_index += 1
                 self.filter_index %= self.filter_length
             elif button == self.button_previous:
                 self.filter_index -= 1
                 self.filter_index %= self.filter_length
-        elif index == 'button_permanent':
+        elif index == "button_permanent":
             self.permanent = not self.permanent
         else:
-            device_id, policy_name = index.split('/')
+            device_id, policy_name = index.split("/")
             device_id = int(device_id)
 
-            if self.init['notifications']:
+            if self.init["notifications"]:
                 for device in self.device_data:
-                    if device['id'] == device_id:
-                        device['policy'] = policy_name
+                    if device["id"] == device_id:
+                        device["policy"] = policy_name
                         self._notify_user(device)
                         break
 
-            policy = self.init['target'][policy_name]
-            self.proxy.applyDevicePolicy(
-                '(uub)', device_id, policy, self.permanent
-            )
-            if self.init['permanent']:
+            policy = self.init["target"][policy_name]
+            self.proxy.applyDevicePolicy("(uub)", device_id, policy, self.permanent)
+            if self.init["permanent"]:
                 self.permanent = False
             self.device_index = 0
 
@@ -379,4 +382,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

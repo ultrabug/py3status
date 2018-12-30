@@ -41,6 +41,7 @@ import os
 
 try:
     import dbus
+
     dbus_available = True
 except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # (py2, assumed py3)
     dbus_available = False
@@ -49,85 +50,86 @@ except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # (py2, assumed py3
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 10
     debug = False
-    format = '{icon}'
-    pause_icon = u'❚❚'
-    play_icon = u'▶'
-    stop_icon = u'◼'
-    supported_players = 'audacious,vlc'
+    format = "{icon}"
+    pause_icon = u"❚❚"
+    play_icon = u"▶"
+    stop_icon = u"◼"
+    supported_players = "audacious,vlc"
     volume_tick = 1
 
     def post_config_hook(self):
-        self.status = 'stop'
+        self.status = "stop"
         self.icon = self.play_icon
 
     def on_click(self, event):
         """
         """
-        buttons = (None, 'left', 'middle', 'right', 'up', 'down')
+        buttons = (None, "left", "middle", "right", "up", "down")
         try:
-            button = buttons[event['button']]
+            button = buttons[event["button"]]
         except IndexError:
             return
 
-        if button in ('up', 'down'):
+        if button in ("up", "down"):
             if self.volume_tick is None:
                 return
 
-            self._change_volume(button == 'up')
+            self._change_volume(button == "up")
             return
 
-        if self.status == 'play':
-            if button == 'left':
+        if self.status == "play":
+            if button == "left":
                 self._stop()
 
-            elif button == 'middle':
+            elif button == "middle":
                 self._pause()
 
-        elif self.status == 'stop':
-            if button == 'left':
+        elif self.status == "stop":
+            if button == "left":
                 self._play()
 
-        elif self.status == 'pause':
-            if button in ('left', 'right'):
+        elif self.status == "pause":
+            if button in ("left", "right"):
                 self._play()
 
     def _run(self, command):
         if self.debug:
-            self.py3.log('running %s' % command)
+            self.py3.log("running %s" % command)
         self.py3.command_run(command)
 
     def _play(self):
-        self.status = 'play'
+        self.status = "play"
         self.icon = self.stop_icon
         player_name = self._detect_running_player()
-        if player_name == 'audacious':
-            self._run(['audacious', '-p'])
-        elif player_name == 'vlc':
+        if player_name == "audacious":
+            self._run(["audacious", "-p"])
+        elif player_name == "vlc":
             player = self._get_vlc()
             if player:
                 player.Play()
 
     def _stop(self):
-        self.status = 'stop'
+        self.status = "stop"
         self.icon = self.play_icon
         player_name = self._detect_running_player()
-        if player_name == 'audacious':
-            self._run(['audacious', '-s'])
-        elif player_name == 'vlc':
+        if player_name == "audacious":
+            self._run(["audacious", "-s"])
+        elif player_name == "vlc":
             player = self._get_vlc()
             if player:
                 player.Stop()
 
     def _pause(self):
-        self.status = 'pause'
+        self.status = "pause"
         self.icon = self.pause_icon
         player_name = self._detect_running_player()
-        if player_name == 'audacious':
-            self._run(['audacious', '-u'])
-        elif player_name == 'vlc':
+        if player_name == "audacious":
+            self._run(["audacious", "-u"])
+        elif player_name == "vlc":
             player = self._get_vlc()
             if player:
                 player.Pause()
@@ -135,22 +137,22 @@ class Py3status:
     def _change_volume(self, increase):
         """Change volume using amixer
         """
-        sign = '+' if increase else '-'
+        sign = "+" if increase else "-"
         delta = "%d%%%s" % (self.volume_tick, sign)
-        self._run(['amixer', '-q', 'sset', 'Master', delta])
+        self._run(["amixer", "-q", "sset", "Master", delta])
 
     def _detect_running_player(self):
         """Detect running player process, if any
         """
-        supported_players = self.supported_players.split(',')
+        supported_players = self.supported_players.split(",")
         running_players = []
-        for pid in os.listdir('/proc'):
+        for pid in os.listdir("/proc"):
             if not pid.isdigit():
                 continue
 
-            fn = os.path.join('/proc', pid, 'comm')
+            fn = os.path.join("/proc", pid, "comm")
             try:
-                with open(fn, 'rb') as f:
+                with open(fn, "rb") as f:
                     player_name = f.read().decode().rstrip()
             except:  # noqa e722
                 # (IOError, FileNotFoundError):  # (assumed py2, assumed py3)
@@ -163,11 +165,11 @@ class Py3status:
         for player_name in supported_players:
             if player_name in running_players:
                 if self.debug:
-                    self.py3.log('found player: %s' % player_name)
+                    self.py3.log("found player: %s" % player_name)
 
                 # those players need the dbus module
-                if player_name in ('vlc') and not dbus_available:
-                    self.py3.log('%s requires the dbus python module' % player_name)
+                if player_name in ("vlc") and not dbus_available:
+                    self.py3.log("%s requires the dbus python module" % player_name)
                     return None
 
                 return player_name
@@ -175,15 +177,15 @@ class Py3status:
         return None
 
     def _get_vlc(self):
-        mpris = 'org.mpris.MediaPlayer2'
-        mpris_slash = '/' + mpris.replace('.', '/')
+        mpris = "org.mpris.MediaPlayer2"
+        mpris_slash = "/" + mpris.replace(".", "/")
         bus = dbus.SessionBus()
-        proxy = bus.get_object(mpris + '.vlc', mpris_slash)
-        return dbus.Interface(proxy, dbus_interface=mpris + '.Player')
+        proxy = bus.get_object(mpris + ".vlc", mpris_slash)
+        return dbus.Interface(proxy, dbus_interface=mpris + ".Player")
 
     def player_control(self):
         return dict(
-            full_text=self.py3.safe_format(self.format, {'icon': self.icon}),
+            full_text=self.py3.safe_format(self.format, {"icon": self.icon}),
             cached_until=self.py3.time_in(self.cache_timeout),
         )
 
@@ -193,4 +195,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

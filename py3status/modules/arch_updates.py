@@ -45,14 +45,15 @@ arch_updates_aur
 import subprocess
 import sys
 
-FORMAT_PACMAN_ONLY = 'UPD: {pacman}'
-FORMAT_PACMAN_AND_AUR = 'UPD: {pacman}/{aur}'
+FORMAT_PACMAN_ONLY = "UPD: {pacman}"
+FORMAT_PACMAN_AND_AUR = "UPD: {pacman}/{aur}"
 LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 600
     format = None
@@ -65,20 +66,20 @@ class Py3status:
                 self.format = FORMAT_PACMAN_ONLY
             else:
                 self.format = FORMAT_PACMAN_AND_AUR
-        self.include_aur = self.py3.format_contains(self.format, 'aur')
-        self.include_pacman = self.py3.format_contains(self.format, 'pacman')
-        if self.py3.format_contains(self.format, 'total'):
+        self.include_aur = self.py3.format_contains(self.format, "aur")
+        self.include_pacman = self.py3.format_contains(self.format, "pacman")
+        if self.py3.format_contains(self.format, "total"):
             self.include_aur = True
             self.include_pacman = True
 
         if self.include_aur:
-            if self.py3.check_commands(['cower']):
+            if self.py3.check_commands(["cower"]):
                 self._check_aur_updates = self._check_aur_updates_cower
-            elif self.py3.check_commands(['yay']):
+            elif self.py3.check_commands(["yay"]):
                 self._check_aur_updates = self._check_aur_updates_yay
             else:
                 self.include_aur = False
-                self.py3.notify_user('cower/yay is not installed cannot check aur')
+                self.py3.notify_user("cower/yay is not installed cannot check aur")
 
     def check_updates(self):
         pacman_updates = aur_updates = total = None
@@ -93,19 +94,15 @@ class Py3status:
             total = (pacman_updates or 0) + (aur_updates or 0)
 
         if self.hide_if_zero and total == 0:
-            full_text = ''
+            full_text = ""
         else:
             full_text = self.py3.safe_format(
                 self.format,
-                {
-                    'aur': aur_updates,
-                    'pacman': pacman_updates,
-                    'total': total,
-                }
+                {"aur": aur_updates, "pacman": pacman_updates, "total": total},
             )
         return {
-            'cached_until': self.py3.time_in(self.cache_timeout),
-            'full_text': full_text,
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": full_text,
         }
 
     def _check_pacman_updates(self):
@@ -147,8 +144,9 @@ class Py3status:
         Returns: None if unable to determine number of pending updates
         """
         try:
-            pending_updates = str(subprocess.check_output(
-                ["yay", "--query", "--upgrades", "--aur"]))
+            pending_updates = str(
+                subprocess.check_output(["yay", "--query", "--upgrades", "--aur"])
+            )
         except subprocess.CalledProcessError:
             return None
         return pending_updates.count(LINE_SEPARATOR)
@@ -159,4 +157,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

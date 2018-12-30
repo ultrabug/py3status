@@ -45,16 +45,18 @@ example
 """
 
 import re
-STRING_ERROR = 'missing script_path'
+
+STRING_ERROR = "missing script_path"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_show_notification = None
     cache_timeout = 15
-    format = '{output}'
+    format = "{output}"
     localize = True
     script_path = None
     strip_output = False
@@ -66,14 +68,16 @@ class Py3status:
     def external_script(self):
         output_lines = None
         response = {}
-        response['cached_until'] = self.py3.time_in(self.cache_timeout)
+        response["cached_until"] = self.py3.time_in(self.cache_timeout)
         try:
-            self.output = self.py3.command_output(self.script_path, shell=True, localized=self.localize)
+            self.output = self.py3.command_output(
+                self.script_path, shell=True, localized=self.localize
+            )
             output_lines = self.output.splitlines()
             if len(output_lines) > 1:
                 output_color = output_lines[1]
-                if re.search(r'^#[0-9a-fA-F]{6}$', output_color):
-                    response['color'] = output_color
+                if re.search(r"^#[0-9a-fA-F]{6}$", output_color):
+                    response["color"] = output_color
         except self.py3.CommandError as e:
             # something went wrong show error to user
             output = e.output or e.error
@@ -98,10 +102,11 @@ class Py3status:
                 except ValueError:
                     pass
         else:
-            output = ''
+            output = ""
 
-        response['full_text'] = self.py3.safe_format(
-            self.format, {'output': output, 'lines': len(output_lines)})
+        response["full_text"] = self.py3.safe_format(
+            self.format, {"output": output, "lines": len(output_lines)}
+        )
         return response
 
     def on_click(self, event):
@@ -116,4 +121,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)

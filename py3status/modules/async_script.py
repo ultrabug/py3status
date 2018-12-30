@@ -47,9 +47,10 @@ from threading import Thread
 class Py3status:
     """
     """
+
     # available configuration parameters
     force_nocolor = False
-    format = '{output}'
+    format = "{output}"
     script_path = None
     strip_output = False
 
@@ -65,7 +66,7 @@ class Py3status:
 
     def external_script(self):
         response = {}
-        response['cached_until'] = self.py3.CACHE_FOREVER
+        response["cached_until"] = self.py3.CACHE_FOREVER
 
         if self.command_error is not None:
             self.py3.log(self.command_error, level=self.py3.LOG_ERROR)
@@ -76,9 +77,11 @@ class Py3status:
             self.command_thread.start()
 
         if self.command_color is not None:
-            response['color'] = self.command_color
+            response["color"] = self.command_color
 
-        response['full_text'] = self.py3.safe_format(self.format, {'output': self.command_output})
+        response["full_text"] = self.py3.safe_format(
+            self.format, {"output": self.command_output}
+        )
         return response
 
     def _command_start(self):
@@ -90,7 +93,7 @@ class Py3status:
 
                 output = command.stdout.readline().decode().strip()
 
-                if re.search(r'^#[0-9a-fA-F]{6}$', output) and not self.force_nocolor:
+                if re.search(r"^#[0-9a-fA-F]{6}$", output) and not self.force_nocolor:
                     self.command_color = output
                 else:
                     if output != self.command_output:
@@ -106,4 +109,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-    module_test(Py3status, config={'script_path': 'ping 127.0.0.1'})
+
+    module_test(Py3status, config={"script_path": "ping 127.0.0.1"})
