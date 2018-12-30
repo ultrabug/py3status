@@ -5,14 +5,19 @@ Display status of Dropbox daemon.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default "Dropbox: {status}")
-    status_busy: text for placeholder {status} when Dropbox is busy (default None)
-    status_off: text for placeholder {status} when Dropbox isn't running (default "isn't running")
-    status_on: text for placeholder {status} when Dropbox is up to date (default "Up to date")
+    status_busy: text for placeholder {status} when Dropbox is busy
+        (default None)
+    status_off: text for placeholder {status} when Dropbox isn't running
+        (default "isn't running")
+    status_on: text for placeholder {status} when Dropbox is up to date
+        (default "Up to date")
 
 Value for `status_off` if not set:
     - Dropbox isn't running!
+
 Value for `status_on` if not set:
     - Up to date
+
 Values for `status_busy` if not set:
     - Connecting...
     - Starting...
@@ -29,6 +34,13 @@ Color options:
 
 Requires:
     dropbox-cli: command line interface for dropbox
+
+Notes:
+    Some distributions offer an option to install dropbox-cli. If you don't see
+    one for your distribution, then you need to download CLI Python script,
+    https://www.dropbox.com/help/desktop-web/linux-commands#commands, rename
+    it to `dropbox-cli`, make the script executable and available in your PATH.
+
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
