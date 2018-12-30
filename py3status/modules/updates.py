@@ -92,6 +92,7 @@ arch
 
 from pprint import pformat
 STRING_INVALID_MANAGERS = "invalid managers"
+STRING_UNKNOWN_LINUX_DISTRIBUTION = "unknown linux distribution"
 
 
 class Update:
@@ -224,42 +225,47 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        distributions = {
+            'archlinux': [
+                ("Pacman", "checkupdates"),  # must be first
+                ("Auracle", "auracle sync -q --color=never"),
+                ("Pakku", "pakku -Suq --print-format '%r' --color=never"),
+                ("Pikaur", "pikaur -Quaq --color=never"),
+                ("Trizen", "trizen -Quaq --color=never"),
+                ("Yay", "yay -Quaq --color=never"),
+            ],
+            'alpine': [("Apk", "apk version -l '<'")],
+            'debian': [(
+                "Apt", "apt-get dist-upgrade --dry-run -qq "
+                "-o APT::Get::Show-User-Simulation-Note=no",
+            )],
+            'fedora': [("Dnf", "dnf list --refresh --upgrades --quiet")],
+            'opensuse': [("Zypper", "zypper list-updates")],
+            'solus': [("Eopkg", "eopkg list-upgrades --no-color")],
+            'freebsd': [("Pkg", "pkg upgrade --dry-run --quiet")],
+            'voidlinux': [("Xbps", "xbps-install --update --dry-run")]
+        }
+        others = [
+            ("Cargo", "cargo outdated --color=never"),
+            ("Cpan", "cpan-outdated"),
+            ("Flatpak", "flatpak remote-ls --updates --all"),
+            ("Gem", "gem outdated --quiet"),
+            ("LuaRocks", "luarocks list --outdated --porcelain"),
+            ("Npm", "npm outdated"),
+            ("Pip", "pip list --outdated --no-color"),
+            ("Pkcon", "pkcon get-updates --plain"),
+            ("Snappy", "snap refresh --list --color=never"),
+        ]
+
         with open("/etc/os-release") as f:
-            multiple = "archlinux" in f.read()
-            if multiple:
-                managers = [
-                    ("Pacman", "checkupdates"),  # must be first
-                    ("Auracle", "auracle sync -q --color=never"),
-                    ("Pakku", "pakku -Suq --print-format '%r' --color=never"),
-                    ("Pikaur", "pikaur -Quaq --color=never"),
-                    ("Trizen", "trizen -Quaq --color=never"),
-                    ("Yay", "yay -Quaq --color=never"),
-                ]
+            release = f.read()
+            multiple = "archlinux" in release
+            for name in distributions:
+                if name in release:
+                    managers = distributions[name]
+                    break
             else:
-                managers = [
-                    ("Apk", "apk version -l '<'"),
-                    (
-                        "Apt",
-                        "apt-get dist-upgrade --dry-run -qq "
-                        "-o APT::Get::Show-User-Simulation-Note=no",
-                    ),
-                    ("Dnf", "dnf list --refresh --upgrades --quiet"),
-                    ("Eopkg", "eopkg list-upgrades --no-color"),
-                    ("Pkg", "pkg upgrade --dry-run --quiet"),
-                    ("Xbps", "xbps-install --update --dry-run"),
-                    ("Zypper", "zypper list-updates"),
-                ]
-            others = [
-                ("Cargo", "cargo outdated --color=never"),
-                ("Cpan", "cpan-outdated"),
-                ("Flatpak", "flatpak remote-ls --updates --all"),
-                ("Gem", "gem outdated --quiet"),
-                ("LuaRocks", "luarocks list --outdated --porcelain"),
-                ("Npm", "npm outdated"),
-                ("Pip", "pip list --outdated --no-color"),
-                ("Pkcon", "pkcon get-updates --plain"),
-                ("Snappy", "snap refresh --list --color=never"),
-            ]
+                raise Exception(STRING_UNKNOWN_LINUX_DISTRIBUTION)
 
         self.py3.log(managers)
         self.py3.log(others)
