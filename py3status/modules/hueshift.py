@@ -71,29 +71,32 @@ disabled
 [{'full_text': 'Redshift '}, {'full_text': 'disabled', 'color': #a9a9a9}
 """
 
-STRING_BAD_COMMAND = 'invalid command `%s`'
-STRING_NOT_INSTALLED = 'command `%s` not installed'
-STRING_NOT_AVAILABLE = 'no available command'
+STRING_BAD_COMMAND = "invalid command `%s`"
+STRING_NOT_INSTALLED = "command `%s` not installed"
+STRING_NOT_AVAILABLE = "no available command"
 
 
 class Py3status:
     """
     """
+
     # available configuration parameters
     button_down = 5
     button_toggle = 1
     button_up = 4
     command = None
     delta = 100
-    format = ('{name} [\?if=enabled&color=darkgray disabled'
-              '|[\?color=color_temperature {color_temperature}K]]')
+    format = (
+        "{name} [\?if=enabled&color=darkgray disabled"
+        "|[\?color=color_temperature {color_temperature}K]]"
+    )
     maximum = 25000
     minimum = 1000
-    thresholds = [(6499, '#f6c'), (6500, '#ff6'), (6501, '#6cf')]
+    thresholds = [(6499, "#f6c"), (6500, "#ff6"), (6501, "#6cf")]
 
     def post_config_hook(self):
-        hueshift_commands = ['sct', 'blueshift', 'redshift']
-        self.pgrep_command = ['pgrep', '-x', '|'.join(hueshift_commands)]
+        hueshift_commands = ["sct", "blueshift", "redshift"]
+        self.pgrep_command = ["pgrep", "-x", "|".join(hueshift_commands)]
         if not self.command:
             self.command = self.py3.check_commands(hueshift_commands)
         elif self.command not in hueshift_commands:
@@ -104,19 +107,20 @@ class Py3status:
             raise Exception(STRING_NOT_AVAILABLE)
 
         self.hue = {
-            'blueshift': lambda v: ['blueshift', '-p', '-t', format(v)],
-            'redshift': lambda v: ['redshift', '-r', '-P', '-O', format(v)],
-            'sct': lambda v: ['sct', format(v)]
+            "blueshift": lambda v: ["blueshift", "-p", "-t", format(v)],
+            "redshift": lambda v: ["redshift", "-r", "-P", "-O", format(v)],
+            "sct": lambda v: ["sct", format(v)],
         }
         self.name = self.command.capitalize()
         self.default = 6500
         self.maximum = min(self.maximum, 25000)
         self.minimum = max(self.minimum, 1000)
-        if self.command == 'sct':
+        if self.command == "sct":
             self.maximum = min(self.maximum, 10000)
 
-        self.color_temperature = self.last_value = self.py3.storage_get(
-            'color_temperature') or self.default
+        self.color_temperature = self.last_value = (
+            self.py3.storage_get("color_temperature") or self.default
+        )
         self.last_command = None
         self._set_color_setter_boolean()
         if not self.is_color_setter_running:
@@ -157,9 +161,9 @@ class Py3status:
 
     def hueshift(self):
         hue_data = {
-            'name': self.name,
-            'color_temperature': self.color_temperature,
-            'enabled': self.is_color_setter_running,
+            "name": self.name,
+            "color_temperature": self.color_temperature,
+            "enabled": self.is_color_setter_running,
         }
 
         for x in self.thresholds_init:
@@ -167,18 +171,18 @@ class Py3status:
                 self.py3.threshold_get_color(hue_data[x], x)
 
         return {
-            'cached_until': self.py3.CACHE_FOREVER,
-            'full_text': self.py3.safe_format(self.format, hue_data)
+            "cached_until": self.py3.CACHE_FOREVER,
+            "full_text": self.py3.safe_format(self.format, hue_data),
         }
 
     def kill(self):
-        self.py3.storage_set('color_temperature', self.color_temperature)
+        self.py3.storage_set("color_temperature", self.color_temperature)
 
     def on_click(self, event):
         self._set_color_setter_boolean()
         if self.is_color_setter_running:
             return
-        button = event['button']
+        button = event["button"]
         if button == self.button_up:
             self._set_color_temperature(+1)
         elif button == self.button_down:
@@ -194,4 +198,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
