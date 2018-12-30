@@ -41,7 +41,6 @@ Notes:
     https://www.dropbox.com/help/desktop-web/linux-commands#commands, rename
     it to `dropbox-cli`, make the script executable and available in your PATH.
 
-
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
 
