@@ -72,6 +72,7 @@ class Module:
 
         try:
             self.load_methods(module, user_modules)
+            self.set_module_options(module)
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
@@ -93,7 +94,6 @@ class Module:
                 self._py3_wrapper.log(msg)
                 self._py3_wrapper.log(str(e))
 
-        self.set_module_options(module)
 
     def __repr__(self):
         return "<Module {}>".format(self.module_full_name)
