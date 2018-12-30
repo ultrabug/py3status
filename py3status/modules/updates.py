@@ -255,47 +255,27 @@ class Py3status:
         self.py3.log(managers)
         self.py3.log(others)
         self.py3.log('===============')
+        custom = []
 
         if self.managers:
-            new_managers = []
-            new_others = []
             for entry in self.managers:
                 if isinstance(entry, tuple):
                     if len(entry) != 2 or entry[0].lower() == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
-                    new_managers.append(entry)
+                    custom.append(entry)
                 else:
                     name = entry.lower()
                     if name == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
-                    for _manager in managers:
-                        if _manager[0].lower() == name:
-                            self.py3.log(_manager)
-                            new_managers.append(_manager)
+                    for supported_manager in managers + others:
+                        if supported_manager[0].lower() == name:
+                            custom.append(supported_manager)
                             break
-                    for _other in others:
-                        if _other[0].lower() == name:
-                            self.py3.log(_other)
-                            new_others.append(_other)
-                            break
-
-            self.py3.log(new_managers)
-            self.py3.log(new_others)
-            self.py3.log('===============')
-            managers = new_managers
-            others = new_others
-
-            self.py3.log(managers)
-            self.py3.log(others)
-            self.py3.log('===============')
+            managers = custom
 
             if managers:
                 log += "== User-defined managers:\n{}\n".format(
                     '\n'.join(["- {:10} {}".format(*x) for x in managers])
-                )
-            if others:
-                log += "== User-defined others:\n{}\n".format(
-                    '\n'.join(["- {:10} {}".format(*x) for x in others])
                 )
 
         if self.format:
@@ -308,18 +288,16 @@ class Py3status:
         else:
             placeholders = []
 
-        if log:
-            self.py3.log(log[:-1])
-
         self.formats = []
         self.backends = []
+        import pprint
+        log += '== Managers/Placeholders\n'
+        log += '- {}\n'.format(pprint.pformat(managers, indent=2))
+        log += '- {}\n'.format(pprint.pformat(placeholders, indent=2))
 
-        self.py3.log(managers)
-        self.py3.log(others)
-        self.py3.log('===============')
-
+        self._init_managers(custom, placeholders, False)
         self._init_managers(managers, placeholders, multiple)
-        self._init_managers(others, placeholders)
+        self._init_managers(others, placeholders, True)
 
         if not self.format:
             auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
@@ -327,15 +305,16 @@ class Py3status:
                 auto.format(name=n, lower=l) for n, l in self.formats
             )
 
-        self.py3.log('Running: ' + ', '.join([x[0] for x in self.formats]))
         self.thresholds_init = self.py3.get_color_names_list(self.format)
+        log += '== Running... ' + ', '.join([x[0] for x in self.formats])
+        self.py3.log(log)
 
-    def _init_managers(self, managers, placeholders, multiple=False):
+    def _init_managers(self, managers, placeholders, multiple):
         for name, command in managers:
             name_lowercased = name.lower()
-            self.py3.log(name_lowercased)
-            self.py3.log(placeholders)
             if placeholders and name_lowercased not in placeholders:
+                continue
+            if any([name_lowercased in x[1] for x in self.formats]):
                 continue
             if self.py3.check_commands(command.split()[0]):
                 try:
@@ -374,15 +353,20 @@ if __name__ == "__main__":
 
     config = {}
     # config = {'managers': ['pkcon', 'yay', 'pacman']}
-    config = {'format': '{yay}'}
+    # config = {'format': '{yay}'}
 
-    config = {
-        'managers': ['pkcon', 'yay', 'pacman'],
-        'format': '{yay}',
-    }
+    # config = {
+    #     'managers': ['pkcon', 'yay', 'pacman'],
+    #     'format': '{yay}',
+    # }
 
-    config = {'managers': ['pkcon']}
+    # config = {'managers': ['pkcon']}
 
-    config = {'managers': ['pkcon', 'yay', 'pacman']}
+    # config = {'managers': ['pkcon', 'yay', 'pacman']}
+
+    # config = {
+    #     'managers': ['pkcon', 'yay', 'pacman', 'gem', 'pikaur'],
+    #     'format': '{pkcon}'
+    # }
 
     module_test(Py3status, config=config)
