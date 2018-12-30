@@ -267,11 +267,16 @@ class Py3status:
             else:
                 raise Exception(STRING_UNKNOWN_LINUX_DISTRIBUTION)
 
-        self.py3.log(managers)
-        self.py3.log(others)
-        self.py3.log('===============')
-        custom = []
         log = ""
+        custom = []
+        self.names = []
+        self.backends = []
+
+        if self.format:
+            placeholders = self.py3.get_placeholders_list(self.format)
+            placeholders = [x for x in placeholders if x != "update"]
+        else:
+            placeholders = []
 
         if self.managers:
             for entry in self.managers:
@@ -289,34 +294,12 @@ class Py3status:
                             break
             managers = custom
 
-            # if managers:
-            #     log += "== User-defined managers:\n{}\n".format(
-            #         '\n'.join(["- {:10} {}".format(*x) for x in managers])
-            #     )
-
-        if self.format:
-            placeholders = self.py3.get_placeholders_list(self.format)
-            placeholders = [x for x in placeholders if x != "update"]
-            # if placeholders:
-            #     log += '== User-defined placeholders:\n{}\n'.format(
-            #         '\n'.join(["- {}".format(x) for x in placeholders])
-            #     )
-        else:
-            placeholders = []
-
-        self.formats = []
-        self.backends = []
         if placeholders:
-            log += '== Placeholders\n'
-            log += '- {}\n'.format(pformat(placeholders, indent=2))
+            log += '== Placeholders\n-{}\n'.format(placeholders)
         if custom:
-            log += '== Custom\n'
-            log += '- {}\n'.format(pformat(custom, indent=2))
+            log += '== Custom\n-{}\n'.format(pformat(custom, indent=4))
         else:
-            log += '== Managers\n'
-            log += '- {}\n'.format(pformat(managers, indent=2))
-        # log += '== Others\n'
-        # log += '- {}\n'.format(pformat(others, indent=2))
+            log += '== Managers\n- {}\n'.format(pformat(managers, indent=4))
 
         self._init_managers([], custom, placeholders, False)
         self._init_managers(custom, managers, placeholders, multiple)
@@ -326,11 +309,11 @@ class Py3status:
         if not self.format:
             auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
             self.format = "[\?soft  ]".join(
-                auto.format(name=n, lower=l) for n, l in self.formats
+                auto.format(name=x, lower=x.lower()) for x in self.names
             )
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
-        log += '== Running... \n- ' + ', '.join([x[0] for x in self.formats])
+        log += '== Running... ' + ', '.join(self.names)
         self.py3.log(log)
 
     def _init_managers(self, custom, managers, placeholders, multiple):
@@ -338,7 +321,7 @@ class Py3status:
             name_lowercased = name.lower()
             if placeholders and name_lowercased not in placeholders:
                 continue
-            if any([name_lowercased in x[1] for x in self.formats]):
+            if any([name_lowercased in x.lower() for x in self.names]):
                 continue
             check_command = command.split()[0]
             if check_command == 'cargo':
@@ -348,7 +331,7 @@ class Py3status:
                     backend = globals()[name.capitalize()]
                 except KeyError:
                     backend = Update
-                self.formats.append((name, name_lowercased))
+                self.names.append(name)
                 self.backends.append(
                     backend(self, name_lowercased, command)
                 )
