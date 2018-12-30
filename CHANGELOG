@@ -1,3 +1,44 @@
+version 3.15 (2018-12-30)
+* CI now checks for black format on modules
+* add support for background and border (i3-gaps) colors (#1486), by lasers
+* py3-cmd: allow sending click events with modifiers (#1589), by lasers
+* dont log every udev event per default
+* fix check for modifiers at click events (#1601), by L0ric0
+* formatter: avoid duplicate soft blocks (#1595), by @lasers, by lasers
+* log signals for easier debugging
+* arch_updates module: alternatively use yay for AUR check (#1545), by Simon Legner
+* backlight module: added "hide_when_unavailable" option (#1607), by Thiago Kenji Okada
+* battery_level module: refresh with udev, increase default cache_timeout (#1573), by Maxim Baz
+* deadbeef module: return deadbeef data without error codes (#1581), by lasers
+* do_not_disturb module: major refactoring (#1471), by lasers
+* dropbox_status module: add support for unicode character output from dropbox-cli (#1578), by Keith Hughitt
+* dropboxd_status module: add documentation about dropbox-cli (#1598), by sridhars
+* external_script module: allow display full output as notification on click (#1585), by Maxim Baz
+* gitlab module: use py3.get_color_names_list helper (#1522), by lasers
+* google_calendar module: fix url indexerror exception (#1603), by lasers
+* i3pystatus module: add sample output, fix docstrings (#1587), by lasers
+* keyboard_layout module: add variant placeholder (#1492), by lasers
+* mail module: report account name collision with folder names (#1544), by L0ric0
+* mail module: add imap subscriptions to filter mailbox folders (#1606), by lasers
+* mail module: validate mailboxes, names to avoid collisions (#1593), by lasers
+* new module async_script: allow for background scripts output to update the bar themselves (#1265), by girst
+* new module emerge_status: display information about running gentoo emerge (#1275), by AnwariasEu
+* new module hueshift: change your screen color temperature (#1142), by lasers
+* new module mega_sync: to check for MEGA service synchronization (#1458), by Maxim Baz
+* new module speedtest: to check your internet bandwidth (#1435), by cyrinux
+* new module usbguard: control usbguard from your bar (#1376), by cyrinux
+* new module velib_metropole: display velib metropole stations and (e)bikes (#1515), by cyrinux
+* screenshots module: don't use f-strings (#1590), by lasers
+* screenshots module: fix parsing missing last screenshots (#1586), by lasers
+* systemd module:  add option to suppress output if unit is in default state (#1382), by flyingapfopenguin
+* systemd module: add config parameter to hide service extension (#1381), by flyingapfopenguin
+* transmission module: use --list when no aditional arguments are given (#1604), by L0ric0
+* vnstat module: replace deprecated --exportdb with --oneline (#1570), by lasers
+* volume_status module: use human-scale volume percentages like alsamixer (#1579), by justin j lin
+* vpn_status module: handle multiple vpns (#1596), by @oceyral, by oceyral
+* wifi module: add mhz and ghz frequency placeholders (#1574), by Till Backhaus
+* xrandr module: new force_on_change feature to follow screens automatically (#1597)
+
 version 3.14 (2018-11-10)
 * IMPORTANT: this version adds an optional dependency with pyudev that is recommended to use
 * core & modules: add helpers to allow modules to react to udev events (#1546)
