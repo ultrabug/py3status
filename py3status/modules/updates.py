@@ -295,9 +295,9 @@ class Py3status:
         log += '- {}\n'.format(pprint.pformat(managers, indent=2))
         log += '- {}\n'.format(pprint.pformat(placeholders, indent=2))
 
-        self._init_managers(custom, placeholders, False)
-        self._init_managers(managers, placeholders, multiple)
-        self._init_managers(others, placeholders, True)
+        self._init_managers(custom, custom, placeholders, False)
+        self._init_managers(custom, managers, placeholders, multiple)
+        self._init_managers(custom, others, placeholders, True)
 
         if not self.format:
             auto = "[\?not_zero {name} [\?color={lower} {{{lower}}}]]"
@@ -309,12 +309,14 @@ class Py3status:
         log += '== Running... ' + ', '.join([x[0] for x in self.formats])
         self.py3.log(log)
 
-    def _init_managers(self, managers, placeholders, multiple):
+    def _init_managers(self, custom, managers, placeholders, multiple):
+        if custom == managers:
+            return
         for name, command in managers:
             name_lowercased = name.lower()
-            if placeholders and name_lowercased not in placeholders:
+            if any([name_lowercased in x[1] for x in custom]):
                 continue
-            if any([name_lowercased in x[1] for x in self.formats]):
+            if placeholders and name_lowercased not in placeholders:
                 continue
             if self.py3.check_commands(command.split()[0]):
                 try:
