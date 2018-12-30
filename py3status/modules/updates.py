@@ -262,10 +262,10 @@ class Py3status:
                     name = entry.lower()
                     if name == "update":
                         raise Exception(STRING_INVALID_MANAGERS)
-                    for manager in managers:
-                        if manager[0].lower() == name:
-                            new_managers.append(manager)
-                            break
+                    for _managers in (managers, others):
+                        for manager in _managers:
+                            if manager[0].lower() == name:
+                                new_managers.append(manager)
             managers = new_managers
 
         if self.format:
@@ -276,10 +276,13 @@ class Py3status:
 
         formats = []
         self.backends = []
-        for index, managers in enumerate((managers, others)):
-            for name, command in managers:
+        for index, _managers in enumerate((managers, others)):
+            for name, command in _managers:
                 name_lowercased = name.lower()
-                if placeholders and name_lowercased not in placeholders:
+                if not index:
+                    if placeholders and name_lowercased not in placeholders:
+                        continue
+                elif name_lowercased not in placeholders:
                     continue
                 if self.py3.check_commands(command.split()[0]):
                     try:
@@ -299,6 +302,7 @@ class Py3status:
                 auto.format(name=n, lower=l) for n, l in formats
             )
 
+        self.py3.log('Updating: ' + ', '.join([x[0] for x in formats]))
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def updates(self):
