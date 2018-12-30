@@ -196,7 +196,10 @@ class Py3status:
     format = None
     managers = []
     thresholds = [
-        (0, "darkgray"), (10, "degraded"), (20, "orange"), (30, "bad"),
+        (0, "darkgray"),
+        (10, "degraded"),
+        (20, "orange"),
+        (30, "bad"),
     ]
 
     class Meta:
@@ -222,7 +225,8 @@ class Py3status:
 
     def post_config_hook(self):
         distributions = {
-            'archlinux': [
+            "alpine": [("Apk", "apk version -l '<'")],
+            "archlinux": [
                 ("Pacman", "checkupdates"),  # must be first
                 ("Auracle", "auracle sync -q --color=never"),
                 ("Pakku", "pakku -Suq --print-format '%r' --color=never"),
@@ -230,16 +234,18 @@ class Py3status:
                 ("Trizen", "trizen -Quaq --color=never"),
                 ("Yay", "yay -Quaq --color=never"),
             ],
-            'alpine': [("Apk", "apk version -l '<'")],
-            'debian': [(
-                "Apt", "apt-get dist-upgrade --dry-run -qq "
-                "-o APT::Get::Show-User-Simulation-Note=no",
-            )],
-            'fedora': [("Dnf", "dnf list --refresh --upgrades --quiet")],
-            'opensuse': [("Zypper", "zypper list-updates")],
-            'solus': [("Eopkg", "eopkg list-upgrades --no-color")],
-            'freebsd': [("Pkg", "pkg upgrade --dry-run --quiet")],
-            'voidlinux': [("Xbps", "xbps-install --update --dry-run")]
+            "debian": [
+                (
+                    "Apt",
+                    "apt-get dist-upgrade --dry-run -qq "
+                    "-o APT::Get::Show-User-Simulation-Note=no",
+                )
+            ],
+            "fedora": [("Dnf", "dnf list --refresh --upgrades --quiet")],
+            "freebsd": [("Pkg", "pkg upgrade --dry-run --quiet")],
+            "opensuse": [("Zypper", "zypper list-updates")],
+            "solus": [("Eopkg", "eopkg list-upgrades --no-color")],
+            "voidlinux": [("Xbps", "xbps-install --update --dry-run")],
         }
         others = [
             ("Cargo", "cargo outdated --color=never"),
@@ -291,14 +297,14 @@ class Py3status:
             managers = custom
 
         if placeholders:
-            log += '== Placeholders: '.format(", ".join(placeholders))
+            log += "== Placeholders: ".format(", ".join(placeholders))
         if custom:
-            log += '== Custom Managers\n{}'.format(''.join(
-                ["- {:10}{}\n".format(*x) for x in custom])
+            log += "== Custom Managers\n{}".format(
+                "".join(["- {:10}{}\n".format(*x) for x in custom])
             )
         else:
-            log += '== Supported Managers\n{}'.format(''.join(
-                ["- {:10}{}\n".format(*x) for x in managers])
+            log += "== Supported Managers\n{}".format(
+                "".join(["- {:10}{}\n".format(*x) for x in managers])
             )
 
         self._init_managers([], custom, placeholders, False)
@@ -313,8 +319,8 @@ class Py3status:
             )
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-        log += '== Running Managers\n{}'.format(''.join(
-            ["- {}\n".format(x) for x in self.names])
+        log += "== Running Managers\n{}".format(
+            "".join(["- {}\n".format(x) for x in self.names])
         )[:-1]
         self.py3.log(log)
 
@@ -326,17 +332,15 @@ class Py3status:
             if any([name_lowercased in x.lower() for x in self.names]):
                 continue
             check_command = command.split()[0]
-            if check_command == 'cargo':
-                check_command = 'cargo-outdated'
+            if check_command == "cargo":
+                check_command = "cargo-outdated"
             if self.py3.check_commands(check_command):
                 try:
                     backend = globals()[name.capitalize()]
                 except KeyError:
                     backend = Update
                 self.names.append(name)
-                self.backends.append(
-                    backend(self, name_lowercased, command)
-                )
+                self.backends.append(backend(self, name_lowercased, command))
                 if not multiple:
                     break
 
