@@ -270,11 +270,12 @@ def create_screenshots(quiet=False):
     The screenshots directory will have all .png files deleted before new shots
     are created.
     """
-    if os.environ.get('READTHEDOCS') == 'True':
+    if os.environ.get("READTHEDOCS") == "True":
         path = "../doc/screenshots"
     else:
-        path = os.path.join(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))), "doc/screenshots"
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "doc/screenshots",
         )
 
     print("Creating screenshots...")

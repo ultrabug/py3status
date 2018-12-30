@@ -68,7 +68,10 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 10
-    format = "[\?color=cpu CPU: {cpu_used_percent}%], " "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
+    format = (
+        "[\?color=cpu CPU: {cpu_used_percent}%], "
+        "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
+    )
     mem_unit = "GiB"
     swap_unit = "GiB"
     temp_unit = u"°C"

@@ -94,7 +94,6 @@ class Module:
                 self._py3_wrapper.log(msg)
                 self._py3_wrapper.log(str(e))
 
-
     def __repr__(self):
         return "<Module {}>".format(self.module_full_name)
 
