@@ -37,8 +37,7 @@ class Py3status:
         "{avg} GHz, {max} GHz"
     )
 
-    # perhaps this could be a parameter one day?
-    cmd = "cat /proc/cpuinfo | grep MHz | cut -d : -f 2"
+
 
     class Meta:
         update_config = {
@@ -60,7 +59,10 @@ class Py3status:
         return val
 
     def _get_all_core_freqs(self):
-        out = self.py3.command_output(self.cmd, True)  # run in shell
+        # perhaps this could be a parameter one day?
+        # right now it's pretty tightly coupled to this function
+        cmd = "cat /proc/cpuinfo | grep MHz | cut -d : -f 2"
+        out = self.py3.command_output(cmd, True)  # run in shell
         cores_str = out.split('\n', 256)
         del cores_str[-1]  # remove trailing newline
         cores = list(map(lambda x: self._process_core_str(x), cores_str))
