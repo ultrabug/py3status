@@ -1,11 +1,75 @@
+.. _contributing:
+
 Developing and Contributing
 ===========================
 
 Contributions to py3status including documentation, the core code, or for
 new or existing modules are very welcome.
 
+Please read carefully the :ref:`zen` describing the minimal things
+to keep in mind when contributing or participating to this project.
+
 Feel free to open an issue to propose your ideas as request for comments [RFC]
 and to join us on IRC Freenode #py3status channel for a live chat.
+
+.. _zen:
+
+Zen of py3status
+----------------
+
+efficient and simple defaults
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    We like py3status because it's a drop-in replacement of i3status.
+    i3 users don't expect fancy and magical things, they use i3 because it's
+    simple and efficient.
+    Keep configuration options and default formats as simple as possible
+
+it's not because you can that you should
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    On modules, expose things that you WILL use, not things that you COULD use.
+    On core, make features and options as seamless as possible (lazy loading)
+    with sane defaults and no mandatory requirements.
+
+good enough is good enough
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Strive for and accept "good enough" features / proposals.
+    We shall refrain from refining indefinitely.
+
+one feature/idea at a time
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Trust and foster iteration with your peers by refraining from digressions.
+    Keep discussions focused on the initial topic and easy to get into.
+    Proposals should not contain multiple features or corrections at once.
+
+modules are responsible for user information and interactions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    That is what's written in the bar and its behavior on clicks etc.
+
+core is responsible for user experience
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Core features and configuration options should focus on user experience.
+    Things that are related to the general output of the bar are handled by core.
+    Smart things overlaying modules (such as standardized options) should also
+    end up in the core.
+
+rely on i3status color scheme
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    No fancy colors by default, only i3status good/degraded/bad.
+    If we want to provide enhanced coloring, this should be through a core
+    feature such as thresholds.
+
+rely on the i3bar protocol
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    what's possible with it, we should support and offer.
+
 
 What you will need
 ------------------
