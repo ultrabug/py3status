@@ -38,6 +38,8 @@ Philosophy
   modules output
 * support python 2.7 and python 3.x
 
+We apply the :ref:`zen` to improve this project and encourage everyone to read it!
+
 Installation
 ------------
 
@@ -169,3 +171,10 @@ Note that this will also send a SIGUSR1 signal to i3status.
 
     Since version 3.6 py3status can be controlled via the
     :ref:`py3-cmd` which is **recommended**.
+
+
+Contributing
+------------
+
+We value very much any kind of feedback/contribution, see :ref:`contributing` to
+read more about how to help!
