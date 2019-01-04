@@ -2,18 +2,25 @@ Developing and Contributing
 ===========================
 
 Contributions to py3status including documentation, the core code, or for
-new or existing modules are welcome.
+new or existing modules are very welcome.
+
+Feel free to open an issue to propose your ideas as request for comments [RFC]
+and to join us on IRC Freenode #py3status channel for a live chat.
 
 What you will need
 ------------------
 
 - python3/python2
 - i3status
-    - http://i3wm.org/i3status/
+    - https://i3wm.org/i3status/
     - https://github.com/i3/i3status
 - pytest pytest-flake8
     - https://pypi.python.org/pypi/pytest
     - https://pypi.python.org/pypi/pytest-flake8
+- black
+    - https://pypi.org/project/black/
+- tox
+    - https://pypi.org/project/tox/
 
 .. _setup:
 
@@ -40,7 +47,8 @@ Run setup.py to install
     # install you may need to use sudo to have required permissions
     python setup.py develop
 
-you can now run py3status and any changes to the code you make will active.
+you can now run py3status and any changes to the code you make will be available
+after a reload.
 
 
 .. note::
@@ -58,18 +66,22 @@ Python versions
 
 py3status code, including modules, should run under both python 2 and python 3.
 
-Pytest
-------
+Starting with version 4.0, py3status will only run using python 3.
 
-Py3status uses pytest and the pytest-flake8 plugin for testing. All submissions
-to the project must pass testing. To install these via pip use
+Tox
+---
+
+Py3status uses Tox for testing. All submissions to the project must pass testing.
+To install these via pip use
 
 .. code-block:: shell
 
     pip install pytest
     pip install pytest-flake8
+    pip install tox
+    pip install black  # needs python 3.6+
 
-The tests can be run by using ``py.test --flake8`` in the py3status root directory.
+The tests can be run by using ``tox`` in the py3status root directory.
 
 Tests are kept in the ``tests`` directory.
 
