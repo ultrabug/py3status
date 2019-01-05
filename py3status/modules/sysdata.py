@@ -270,8 +270,6 @@ class Py3status:
         return cpu_temp
 
     def _get_cputemp(self, zone, unit):
-        # if unit not in [u"°F", u"°C", "K"]:
-        #     return "unknown unit"
         if zone is not None:
             try:
                 with open(zone) as f:
@@ -288,7 +286,7 @@ class Py3status:
 
         if cpu_temp is float:
             if unit == u"°F":
-                cpu_temp = cpu_temp * (9 / 5) + 32
+                cpu_temp = cpu_temp * (9.0 / 5.0) + 32
             elif unit == "K":
                 cpu_temp += 273.15
 
