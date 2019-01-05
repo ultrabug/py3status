@@ -21,8 +21,6 @@ Configuration parameters:
         (default None)
 
 Format placeholders:
-    {cpu_freq_avg} average CPU frequency across all cores
-    {cpu_freq_max} highest CPU clock frequency
     {cpu_temp} cpu temperature
     {cpu_used_percent} cpu used percentage
     {load1} load average over the last minute
@@ -101,8 +99,6 @@ class Py3status:
                 padding=padding, precision=precision
             )
             return {
-                "cpu_freq_avg": format_vals,
-                "cpu_freq_max": format_vals,
                 "cpu_usage": format_vals,
                 "cpu_used_percent": format_vals,
                 "cpu_temp": format_vals,
@@ -150,8 +146,6 @@ class Py3status:
             "update_placeholder_format": [
                 {
                     "placeholder_formats": {
-                        "cpu_freq_avg": ":.2f",
-                        "cpu_freq_max": ":.2f",
                         "cpu_usage": ":.2f",
                         "cpu_used_percent": ":.2f",
                         "cpu_temp": ":.2f",
@@ -181,22 +175,12 @@ class Py3status:
             temp_unit = "unknown unit"
         self.temp_unit = temp_unit
         self.init = {"meminfo": []}
-        names = ["cpu_freq_avg", "cpu_freq_max", "cpu_temp", "cpu_percent", "load", "mem", "swap"]
-        placeholders = ["cpu_freq_avg", "cpu_freq_max", "cpu_temp", "cpu_used_percent", "load*", "mem_*", "swap_*"]
+        names = ["cpu_temp", "cpu_percent", "load", "mem", "swap"]
+        placeholders = ["cpu_temp", "cpu_used_percent", "load*", "mem_*", "swap_*"]
         for name, placeholder in zip(names, placeholders):
             self.init[name] = self.py3.format_contains(self.format, placeholder)
             if name in ["mem", "swap"] and self.init[name]:
                 self.init["meminfo"].append(name)
-
-    @staticmethod
-    def _get_cpuinfo():
-        freqs = []
-        with open("/proc/cpuinfo") as f:
-            for line in f:
-                if "cpu MHz" in line:
-                    freq = float(line.split(":")[-1].strip())
-                    freqs.append(freq)  # convert to GHz
-        return freqs
 
     def _get_stat(self):
         # kernel/system statistics. man -P 'less +//proc/stat' procfs
@@ -213,13 +197,13 @@ class Py3status:
         if memory:
             total_mem_kib = meminfo["MemTotal:"]
             used_mem_kib = (
-                    total_mem_kib
-                    - meminfo["MemFree:"]
-                    - (
-                            meminfo["Buffers:"]
-                            + meminfo["Cached:"]
-                            + (meminfo["SReclaimable:"] - meminfo["Shmem:"])
-                    )
+                total_mem_kib
+                - meminfo["MemFree:"]
+                - (
+                    meminfo["Buffers:"]
+                    + meminfo["Cached:"]
+                    + (meminfo["SReclaimable:"] - meminfo["Shmem:"])
+                )
             )
         else:
             total_mem_kib = meminfo["SwapTotal:"]
@@ -252,17 +236,17 @@ class Py3status:
         cpu_used_percent = 0
         if cpu["total"] != self.last_cpu.get("total"):
             cpu_used_percent = (
-                                       1
-                                       - (
-                                               (cpu["idle"] - self.last_cpu.get("idle", 0))
-                                               / (cpu["total"] - self.last_cpu.get("total", 0))
-                                       )
-                               ) * 100
+               1
+               - (
+                   (cpu["idle"] - self.last_cpu.get("idle", 0))
+                   / (cpu["total"] - self.last_cpu.get("total", 0))
+               )
+           ) * 100
 
         self.last_cpu.update(cpu)
         return cpu_used_percent
 
-    def _get_cputemp_with_lmsensors(self, zone, unit):
+    def _get_cputemp_with_lmsensors(self, zone):
 
         """
         Tries to determine CPU temperature using the 'sensors' command.
@@ -290,8 +274,6 @@ class Py3status:
 
     def _get_cputemp(self, zone, zone_path, unit):
 
-        cpu_temp = None
-
         if unit not in [u"°F", u"°C", "K"]:
             return "unknown unit"
 
@@ -306,7 +288,7 @@ class Py3status:
                 cpu_temp = "?"
 
         else:
-            cpu_temp = self._get_cputemp_with_lmsensors(zone, unit)
+            cpu_temp = self._get_cputemp_with_lmsensors(zone)
 
         if cpu_temp is float:
             if unit == u"°F":
@@ -318,16 +300,6 @@ class Py3status:
 
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
-
-        cores = None
-        if self.init["cpu_freq_max"]:
-            cores = self._get_cpuinfo()
-            sys["cpu_freq_max"] = max(cores) / 1000  # convert to GHz
-
-        if self.init["cpu_freq_avg"]:
-            if cores is None:
-                cores = self._get_cpuinfo()
-            sys["cpu_freq_avg"] = (sum(cores) / len(cores)) / 1000
 
         if self.init["cpu_percent"]:
             sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
