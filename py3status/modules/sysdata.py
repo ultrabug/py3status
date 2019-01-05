@@ -78,7 +78,6 @@ class Py3status:
         "[\?color=cpu CPU: {cpu_used_percent}%], "
         "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
     )
-    cpu_freq_unit = "GHz"
     mem_unit = "GiB"
     swap_unit = "GiB"
     temp_unit = u"°C"
