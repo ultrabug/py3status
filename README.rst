@@ -73,7 +73,9 @@ Usually you have your own i3status configuration, just point to it:
 Available modules
 =================
 
-`All modules <https://py3status.readthedocs.io/en/latest/modules.html>`_ shipped with py3status are `configurable directly from your current i3status.conf <https://py3status.readthedocs.io/en/latest/configuration.html#using-modules>`_, `check them out <https://py3status.readthedocs.io/en/latest/modules.html>`_ to see all the configuration options.
+`All modules <https://py3status.readthedocs.io/en/latest/modules.html>`_ shipped with py3status are `configurable directly from your current i3status.conf <https://py3status.readthedocs.io/en/latest/configuration.html#using-modules>`_!
+
+`Check them out <https://py3status.readthedocs.io/en/latest/modules.html>`_ to see all the configuration options.
 
 Installation
 ============
