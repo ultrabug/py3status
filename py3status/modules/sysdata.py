@@ -191,7 +191,7 @@ class Py3status:
         with open("/proc/cpuinfo") as f:
             for line in f:
                 if "cpu MHz" in line:
-                    freq = float(line.split(":")[-1].strip())
+                    freq = float(line.split(":")[-1])
                     freqs.append(freq)  # convert to GHz
         return freqs
 
