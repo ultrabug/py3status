@@ -178,8 +178,24 @@ class Py3status:
             temp_unit = "unknown unit"
         self.temp_unit = temp_unit
         self.init = {"meminfo": []}
-        names = ["cpu_freq_avg", "cpu_freq_max", "cpu_temp", "cpu_percent", "load", "mem", "swap"]
-        placeholders = ["cpu_freq_avg", "cpu_freq_max", "cpu_temp", "cpu_used_percent", "load*", "mem_*", "swap_*"]
+        names = [
+            "cpu_freq_avg",
+            "cpu_freq_max",
+            "cpu_temp",
+            "cpu_percent",
+            "load",
+            "mem",
+            "swap",
+        ]
+        placeholders = [
+            "cpu_freq_avg",
+            "cpu_freq_max",
+            "cpu_temp",
+            "cpu_used_percent",
+            "load*",
+            "mem_*",
+            "swap_*",
+        ]
         for name, placeholder in zip(names, placeholders):
             self.init[name] = self.py3.format_contains(self.format, placeholder)
             if name in ["mem", "swap"] and self.init[name]:
@@ -250,11 +266,11 @@ class Py3status:
         cpu_used_percent = 0
         if cpu["total"] != self.last_cpu.get("total"):
             cpu_used_percent = (
-               1
-               - (
-                   (cpu["idle"] - self.last_cpu.get("idle", 0))
-                   / (cpu["total"] - self.last_cpu.get("total", 0))
-               )
+                1
+                - (
+                    (cpu["idle"] - self.last_cpu.get("idle", 0))
+                    / (cpu["total"] - self.last_cpu.get("total", 0))
+                )
             ) * 100
 
         self.last_cpu.update(cpu)
@@ -291,7 +307,6 @@ class Py3status:
             cpu_temp = "?"
 
         return cpu_temp
-
 
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
