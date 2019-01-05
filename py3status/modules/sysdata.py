@@ -16,6 +16,7 @@ Configuration parameters:
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: thermal zone to use. If None try to guess CPU temperature
+        (default None)
 
 Format placeholders:
     {cpu_freq_avg} average CPU frequency across all cores
