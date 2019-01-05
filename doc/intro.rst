@@ -38,6 +38,8 @@ Philosophy
   modules output
 * support python 2.7 and python 3.x
 
+We apply the :ref:`zen` to improve this project and encourage everyone to read it!
+
 Installation
 ------------
 
@@ -68,9 +70,43 @@ Installation
 +-------------------+-------------------------------+-------------------------------------+
 |**Void Linux**     |``$ xbps-install -S py3status``|                                     |
 +-------------------+-------------------------------+-------------------------------------+
-|**NixOS**          |``$ nix-env -i``               |Not a global install. See README.rst |
+|**NixOS**          |``$ nix-env -i``               |Not a global install. See below.     |
 |                   |  ``python3.6-py3status-3.7``  |                                     |
 +-------------------+-------------------------------+-------------------------------------+
+
+
+Debian/Ubuntu
+^^^^^^^^^^^^^
+
+.. note::
+
+  If you want to use pip, you should consider using *pypi-install*
+  from the *python-stdeb* package (which will create a .deb out from a
+  python package) instead of directly calling pip.
+
+
+NixOS
+^^^^^
+
+To have it globally persistent add to your NixOS configuration file py3status as a Python 3.6 package with
+::
+    (python36.withPackages(ps: with ps; [ py3status ]))
+
+If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
+::
+    services.xserver.windowManager.i3 = {
+      enable = true;
+      extraPackages = with pkgs; [
+        dmenu
+        i3status
+        i3lock
+        (python36.withPackages(ps: with ps; [ py3status pytz tzlocal ]))
+      ];
+    };
+
+In this example I included the python packages **pytz** and **tzlocal** which are necessary for the py3status module **clock**.
+The default packages that come with i3 (dmenu, i3status, i3lock) have to be mentioned if they should still be there.
+
 
 Support
 -------
@@ -169,3 +205,10 @@ Note that this will also send a SIGUSR1 signal to i3status.
 
     Since version 3.6 py3status can be controlled via the
     :ref:`py3-cmd` which is **recommended**.
+
+
+Contributing
+------------
+
+We value very much any kind of feedback/contribution, see :ref:`contributing` to
+read more about how to help!
