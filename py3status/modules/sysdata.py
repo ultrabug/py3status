@@ -4,6 +4,8 @@ Display system RAM, SWAP and CPU utilization.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
+    cpu_freq_unit: the unit of CPU frequency to use in report, case insensitive.
+        ['kHz', 'MHz', 'GHz'] (default 'GHz')
     format: output format string
         *(default '[\?color=cpu CPU: {cpu_used_percent}%], '
         '[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]')*
@@ -21,6 +23,7 @@ Configuration parameters:
 Format placeholders:
     {cpu_freq_avg} average CPU frequency across all cores
     {cpu_freq_max} highest CPU clock frequency
+    {cpu_freq_unit} unit for frequency
     {cpu_temp} cpu temperature
     {cpu_used_percent} cpu used percentage
     {load1} load average over the last minute
@@ -74,6 +77,7 @@ class Py3status:
         "[\?color=cpu CPU: {cpu_used_percent}%], "
         "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
     )
+    cpu_freq_unit = "GHz"
     mem_unit = "GiB"
     swap_unit = "GiB"
     temp_unit = u"°C"
@@ -211,6 +215,18 @@ class Py3status:
                     freqs.append(freq)
         return freqs
 
+    def _calc_cpu_freqs(self, unit):
+        cpu_freqs = self._get_cpu_freqs()
+
+        freq_avg = sum(cpu_freqs) / len(cpu_freqs)
+        freq_max = max(cpu_freqs)
+
+        # multiply both by 1e6 to convert to Hz to pass to format_units
+        (freq_max, _) = self.py3.format_units(freq_max * 1e6, unit=unit, si=True)
+        (freq_avg, _) = self.py3.format_units(freq_avg * 1e6, unit=unit, si=True)
+
+        return {"avg": freq_avg, "max": freq_max}
+
     @staticmethod
     def _get_stat():
         # kernel/system statistics. man -P 'less +//proc/stat' procfs
@@ -311,15 +327,15 @@ class Py3status:
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
 
-        cpu_freqs = None
-        if self.init["cpu_freq_max"]:
-            cpu_freqs = self._get_cpu_freqs()
-            sys["cpu_freq_max"] = max(cpu_freqs) / 1000  # convert to GHz
+        if self.init["cpu_freq_max"] or self.init["cpu_freq_avg"]:
+            cpu_freqs = self._calc_cpu_freqs(self.cpu_freq_unit)
+            if self.init["cpu_freq_max"]:
+                sys["cpu_freq_max"] = cpu_freqs["max"]
+                self.py3.threshold_get_color(sys["cpu_freq_max"], "cpu")
 
-        if self.init["cpu_freq_avg"]:
-            if cpu_freqs is None:
-                cpu_freqs = self._get_cpu_freqs()
-            sys["cpu_freq_avg"] = (sum(cpu_freqs) / len(cpu_freqs)) / 1000
+            if self.init["cpu_freq_avg"]:
+                sys["cpu_freq_avg"] = cpu_freqs["avg"]
+                self.py3.threshold_get_color(sys["cpu_freq_avg"], "cpu")
 
         if self.init["cpu_percent"]:
             sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
