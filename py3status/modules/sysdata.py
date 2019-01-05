@@ -15,9 +15,8 @@ Configuration parameters:
         (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
-    zone: thermal zone to use. If None try to use zone_path
-        (default None)
-    zone_path: path in sysfs to CPU temperature sensor. If None try to guess CPU temperature
+    zone: Either a path in sysfs to CPU temperature sensor, or an lm_sensors thermal zone to use.
+        If None try to guess CPU temperature
         (default None)
 
 Format placeholders:
@@ -79,7 +78,6 @@ class Py3status:
     temp_unit = u"°C"
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
-    zone_path = None
 
     class Meta:
         def deprecate_function(config):
@@ -236,18 +234,17 @@ class Py3status:
         cpu_used_percent = 0
         if cpu["total"] != self.last_cpu.get("total"):
             cpu_used_percent = (
-               1
-               - (
-                   (cpu["idle"] - self.last_cpu.get("idle", 0))
-                   / (cpu["total"] - self.last_cpu.get("total", 0))
-               )
-           ) * 100
+                1
+                - (
+                    (cpu["idle"] - self.last_cpu.get("idle", 0))
+                    / (cpu["total"] - self.last_cpu.get("total", 0))
+                )
+            ) * 100
 
         self.last_cpu.update(cpu)
         return cpu_used_percent
 
-    def _get_cputemp_with_lmsensors(self, zone):
-
+    def _get_cputemp_with_lmsensors(self, zone=None):
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
@@ -272,27 +269,26 @@ class Py3status:
 
         return cpu_temp
 
-    def _get_cputemp(self, zone, zone_path, unit):
-
-        if unit not in [u"°F", u"°C", "K"]:
-            return "unknown unit"
-
-        if zone_path is not None:
+    def _get_cputemp(self, zone, unit):
+        # if unit not in [u"°F", u"°C", "K"]:
+        #     return "unknown unit"
+        if zone is not None:
             try:
-                with open(zone_path) as f:
+                with open(zone) as f:
                     cpu_temp = f.readline()
-                cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
-            except IOError:
-                cpu_temp = "zone_path does not exist"
-            except ValueError:
-                cpu_temp = "?"
+                    cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
+            except (OSError, IOError, ValueError):
+                # FileNotFoundError does not exist on Python < 3.3, so we catch OSError instead
+                # ValueError can be thrown if zone was a file that didn't have a float
+                # if zone was not a file, it might be a sensor!
+                cpu_temp = self._get_cputemp_with_lmsensors(zone=zone)
 
         else:
-            cpu_temp = self._get_cputemp_with_lmsensors(zone)
+            cpu_temp = self._get_cputemp_with_lmsensors()
 
         if cpu_temp is float:
             if unit == u"°F":
-                cpu_temp = cpu_temp * (9/5) + 32
+                cpu_temp = cpu_temp * (9 / 5) + 32
             elif unit == "K":
                 cpu_temp += 273.15
 
@@ -306,7 +302,7 @@ class Py3status:
             self.py3.threshold_get_color(sys["cpu_used_percent"], "cpu")
 
         if self.init["cpu_temp"]:
-            sys["cpu_temp"] = self._get_cputemp(self.zone, self.zone_path, self.temp_unit)
+            sys["cpu_temp"] = self._get_cputemp(self.zone, self.temp_unit)
             self.py3.threshold_get_color(sys["cpu_temp"], "temp")
 
         if self.init["meminfo"]:
