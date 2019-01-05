@@ -332,11 +332,11 @@ class Py3status:
             cpu_freqs = self._calc_cpu_freqs(self.cpu_freq_unit)
             if self.init["cpu_freq_max"]:
                 sys["cpu_freq_max"] = cpu_freqs["max"]
-                self.py3.threshold_get_color(sys["cpu_freq_max"], "cpu")
+                self.py3.threshold_get_color(sys["cpu_freq_max"], "cpu_freq")
 
             if self.init["cpu_freq_avg"]:
                 sys["cpu_freq_avg"] = cpu_freqs["avg"]
-                self.py3.threshold_get_color(sys["cpu_freq_avg"], "cpu")
+                self.py3.threshold_get_color(sys["cpu_freq_avg"], "cpu_freq")
 
         if self.init["cpu_percent"]:
             sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
