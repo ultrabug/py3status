@@ -15,10 +15,7 @@ Configuration parameters:
         (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
-    zone: thermal zone to use. If None try to use zone_path
-        (default None)
-    zone_path: path in sysfs to CPU temperature sensor. If None try to guess CPU temperature
-        (default None)
+    zone: thermal zone to use. If None try to guess CPU temperature
 
 Format placeholders:
     {cpu_freq_avg} average CPU frequency across all cores
@@ -81,7 +78,6 @@ class Py3status:
     temp_unit = u"°C"
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
-    zone_path = None
 
     class Meta:
         def deprecate_function(config):
@@ -213,13 +209,13 @@ class Py3status:
         if memory:
             total_mem_kib = meminfo["MemTotal:"]
             used_mem_kib = (
-                    total_mem_kib
-                    - meminfo["MemFree:"]
-                    - (
-                            meminfo["Buffers:"]
-                            + meminfo["Cached:"]
-                            + (meminfo["SReclaimable:"] - meminfo["Shmem:"])
-                    )
+                total_mem_kib
+                - meminfo["MemFree:"]
+                - (
+                    meminfo["Buffers:"]
+                    + meminfo["Cached:"]
+                    + (meminfo["SReclaimable:"] - meminfo["Shmem:"])
+                )
             )
         else:
             total_mem_kib = meminfo["SwapTotal:"]
@@ -252,17 +248,17 @@ class Py3status:
         cpu_used_percent = 0
         if cpu["total"] != self.last_cpu.get("total"):
             cpu_used_percent = (
-                                       1
-                                       - (
-                                               (cpu["idle"] - self.last_cpu.get("idle", 0))
-                                               / (cpu["total"] - self.last_cpu.get("total", 0))
-                                       )
-                               ) * 100
+                   1
+                   - (
+                       (cpu["idle"] - self.last_cpu.get("idle", 0))
+                       / (cpu["total"] - self.last_cpu.get("total", 0))
+                   )
+               ) * 100
 
         self.last_cpu.update(cpu)
         return cpu_used_percent
 
-    def _get_cputemp_with_lmsensors(self, zone, unit):
+    def _get_cputemp(self, zone, unit):
 
         """
         Tries to determine CPU temperature using the 'sensors' command.
@@ -273,6 +269,11 @@ class Py3status:
 
         sensors = None
         command = ["sensors"]
+        if unit == u"°F":
+            command.append("-f")
+        elif unit not in [u"°C", "K"]:
+            return "unknown unit"
+
         if zone:
             try:
                 sensors = self.py3.command_output(command + [zone])
@@ -283,38 +284,13 @@ class Py3status:
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
             cpu_temp = float(m.groups()[1].strip()[:-2])
+            if unit == "K":
+                cpu_temp += 273.15
         else:
             cpu_temp = "?"
 
         return cpu_temp
 
-    def _get_cputemp(self, zone, zone_path, unit):
-
-        cpu_temp = None
-
-        if unit not in [u"°F", u"°C", "K"]:
-            return "unknown unit"
-
-        if zone_path is not None:
-            try:
-                with open(zone_path) as f:
-                    cpu_temp = f.readline()
-                cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
-            except IOError:
-                cpu_temp = "zone_path does not exist"
-            except ValueError:
-                cpu_temp = "?"
-
-        else:
-            cpu_temp = self._get_cputemp_with_lmsensors(zone, unit)
-
-        if cpu_temp is float:
-            if unit == u"°F":
-                cpu_temp = cpu_temp * (9/5) + 32
-            elif unit == "K":
-                cpu_temp += 273.15
-
-        return cpu_temp
 
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
@@ -334,7 +310,7 @@ class Py3status:
             self.py3.threshold_get_color(sys["cpu_used_percent"], "cpu")
 
         if self.init["cpu_temp"]:
-            sys["cpu_temp"] = self._get_cputemp(self.zone, self.zone_path, self.temp_unit)
+            sys["cpu_temp"] = self._get_cputemp(self.zone, self.temp_unit)
             self.py3.threshold_get_color(sys["cpu_temp"], "temp")
 
         if self.init["meminfo"]:
