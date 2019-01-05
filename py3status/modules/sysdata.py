@@ -186,16 +186,17 @@ class Py3status:
                 self.init["meminfo"].append(name)
 
     @staticmethod
-    def _get_cpuinfo():
+    def _get_cpu_freqs():
         freqs = []
         with open("/proc/cpuinfo") as f:
             for line in f:
                 if "cpu MHz" in line:
                     freq = float(line.split(":")[-1])
-                    freqs.append(freq)  # convert to GHz
+                    freqs.append(freq)
         return freqs
 
-    def _get_stat(self):
+    @staticmethod
+    def _get_stat():
         # kernel/system statistics. man -P 'less +//proc/stat' procfs
         with open("/proc/stat") as f:
             fields = f.readline().split()
@@ -249,18 +250,17 @@ class Py3status:
         cpu_used_percent = 0
         if cpu["total"] != self.last_cpu.get("total"):
             cpu_used_percent = (
-                   1
-                   - (
-                       (cpu["idle"] - self.last_cpu.get("idle", 0))
-                       / (cpu["total"] - self.last_cpu.get("total", 0))
-                   )
-               ) * 100
+               1
+               - (
+                   (cpu["idle"] - self.last_cpu.get("idle", 0))
+                   / (cpu["total"] - self.last_cpu.get("total", 0))
+               )
+            ) * 100
 
         self.last_cpu.update(cpu)
         return cpu_used_percent
 
     def _get_cputemp(self, zone, unit):
-
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
@@ -296,15 +296,15 @@ class Py3status:
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
 
-        cores = None
+        cpu_freqs = None
         if self.init["cpu_freq_max"]:
-            cores = self._get_cpuinfo()
-            sys["cpu_freq_max"] = max(cores) / 1000  # convert to GHz
+            cpu_freqs = self._get_cpu_freqs()
+            sys["cpu_freq_max"] = max(cpu_freqs) / 1000  # convert to GHz
 
         if self.init["cpu_freq_avg"]:
-            if cores is None:
-                cores = self._get_cpuinfo()
-            sys["cpu_freq_avg"] = (sum(cores) / len(cores)) / 1000
+            if cpu_freqs is None:
+                cpu_freqs = self._get_cpu_freqs()
+            sys["cpu_freq_avg"] = (sum(cpu_freqs) / len(cpu_freqs)) / 1000
 
         if self.init["cpu_percent"]:
             sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
