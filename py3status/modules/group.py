@@ -95,6 +95,7 @@ from time import time
 
 # maximum wait for initial content at startup
 MAX_NO_CONTENT_WAIT = 5
+STRING_ERROR = "missing modules"
 
 
 class Py3status:
@@ -119,9 +120,8 @@ class Py3status:
         container = True
 
     def post_config_hook(self):
-        # if no items don't cycle
         if not self.items:
-            self.cycle = 0
+            raise Exception(STRING_ERROR)
 
         self._first_run = True
         self.active = 0
@@ -205,14 +205,6 @@ class Py3status:
         self.last_active = self.active
 
     def group(self):
-        """
-        Display a output of current module
-        """
-
-        # hide if no contents
-        if not self.items:
-            return {"cached_until": self.py3.CACHE_FOREVER, "full_text": ""}
-
         if self.open:
             urgent = False
             if self.cycle and time() >= self._cycle_time:
@@ -267,9 +259,6 @@ class Py3status:
         """
         Switch the displayed module or pass the event on to the active module
         """
-        if not self.items:
-            return
-
         # if click_mode is button then we only action clicks that are
         # directly on the group not its contents.
         if self.click_mode == "button":
