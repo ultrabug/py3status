@@ -190,11 +190,6 @@ class Py3status:
                 current[-1]["full_text"] += padding
         return current
 
-    def _get_current_module_name(self):
-        if not self.items:
-            return
-        return self.items[self.active]
-
     def _change_active(self, delta):
         # we want to ignore any empty outputs
         # to prevent endless cycling we limit ourselves to only going through
