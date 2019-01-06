@@ -66,6 +66,7 @@ stopped
 import datetime
 import re
 import socket
+from py3status.composite import Composite
 from mpd import MPDClient, CommandError, ConnectionError
 
 
@@ -182,6 +183,8 @@ class Py3status:
                     return song_attr(song, attr)
 
                 text = self.py3.safe_format(self.format, attr_getter=attr_getter)
+                if isinstance(text, Composite):
+                    text = text.text()
 
         except ValueError:
             # when status.get(...) returns None; e.g. during reversal of playlist
