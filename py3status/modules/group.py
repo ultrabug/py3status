@@ -18,9 +18,9 @@ Configuration parameters:
     align: Text alignment when fixed_width is set
         can be 'left', 'center' or 'right' (default 'center')
     button_next: Button that when clicked will switch to display next module.
-        Setting to `0` will disable this action. (default 5)
+        Setting to `0` will disable this action. (default 4)
     button_prev: Button that when clicked will switch to display previous
-        module.  Setting to `0` will disable this action. (default 4)
+        module.  Setting to `0` will disable this action. (default 5)
     button_toggle: Button that when clicked toggles the group content being
         displayed between open and closed.
         This action is ignored if `{button}` is not in the format.
@@ -104,8 +104,8 @@ class Py3status:
 
     # available configuration parameters
     align = "center"
-    button_next = 5
-    button_prev = 4
+    button_next = 4
+    button_prev = 5
     button_toggle = 1
     click_mode = "all"
     cycle = 0
