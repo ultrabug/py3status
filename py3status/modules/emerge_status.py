@@ -39,8 +39,10 @@ emerge_status {
 }
 ```
 
-
 @author AnwariasEu
+
+SAMPLE OUTPUT
+{'full_text': 'emrg : 0/0'}
 """
 
 import re

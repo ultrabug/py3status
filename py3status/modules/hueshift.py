@@ -66,9 +66,6 @@ neutral
 
 cool
 [{'full_text': 'Blueshift '}, {'full_text': '10000K', 'color': '#33ccff'}]
-
-disabled
-[{'full_text': 'Redshift '}, {'full_text': 'disabled', 'color': #a9a9a9}
 """
 
 STRING_BAD_COMMAND = "invalid command `%s`"

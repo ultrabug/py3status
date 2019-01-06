@@ -58,10 +58,10 @@ do_not_disturb {
 @license BSD
 
 SAMPLE OUTPUT
-[{'full_text': 'dunst '}, {'color': '#00FF00', 'full_text': 'DND'}]
+[{'full_text': 'Dunst '}, {'color': '#00FF00', 'full_text': 'DND'}]
 
 off
-[{'full_text': 'dunst '}, {'color': '#FF0000', 'full_text': 'DND'}]
+[{'full_text': 'Dunst '}, {'color': '#FF0000', 'full_text': 'DND'}]
 """
 
 STRING_NOT_INSTALLED = "server `{}` not installed"

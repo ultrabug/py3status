@@ -38,10 +38,10 @@ Color options:
 @license BSD
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'V'}
-
-h
 {'color': '#00FF00', 'full_text': u'H'}
+
+vertical
+{'full_text': u'V'}
 """
 
 
