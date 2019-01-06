@@ -254,23 +254,35 @@ class Py3status:
         """
         Switch the displayed module or pass the event on to the active module
         """
-        # if click_mode is button then we only action clicks that are
-        # directly on the group not its contents.
+        button = event["button"]
+        index = event["index"]
+
+        # if click_mode is button, prevent the contents from changing when
+        # if the events are not registered on the button index. this allow
+        # the users to interact with the modules via scrolling or clicking
+        # without group getting in the way of the contents.
         if self.click_mode == "button":
-            if not self.py3.is_my_event(event) or event.get("index") != "button":
+            if not self.py3.is_my_event(event) or index != "button":
                 return
 
-        # reset cycle time
-        self._cycle_time = time() + self.cycle
-        if self.button_next and event["button"] == self.button_next:
-            self._change_active(1)
-        if self.button_prev and event["button"] == self.button_prev:
-            self._change_active(-1)
-        if self.button_toggle and event["button"] == self.button_toggle:
-            # we only toggle if button was used
-            if event.get("index") == "button":
-                self.urgent = False
+        self.cycle = self.cycle_timeout
+        self.cycle_time = time() + self.cycle
+        refresh = False
+
+        if button == self.button_next:
+            if self.open:
+                self._change_active(+1)
+                refresh = True
+        elif button == self.button_prev:
+            if self.open:
+                self._change_active(-1)
+                refresh = True
+        elif button == self.button_toggle:
+            if index == "button":
                 self.open = not self.open
+                refresh = True
+        if not refresh:
+            self.py3.prevent_refresh()
 
 
 if __name__ == "__main__":
