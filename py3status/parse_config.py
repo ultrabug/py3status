@@ -15,6 +15,7 @@ from py3status.constants import (
     MAX_NESTING_LEVELS,
     ERROR_CONFIG,
     GENERAL_DEFAULTS,
+    RETIRED_MODULES,
     TIME_MODULES,
     TIME_FORMAT,
     TZTIME_FORMAT,
@@ -845,6 +846,15 @@ def process_config(config_path, py3_wrapper=None):
 
     # create config for modules in order
     for name in config_info.get("order", []):
+        module_name = name.split(" ")[0]
+        if module_name in RETIRED_MODULES:
+            notify_user(
+                "Module `{}` is no longer available".format(module_name)
+                + ". Alternative modules are: {}.".format(
+                    ", ".join("`{}`".format(x) for x in RETIRED_MODULES[module_name])
+                )
+            )
+            continue
         module = modules.get(name, {})
         config["order"].append(name)
         add_container_items(name)
