@@ -56,21 +56,13 @@ nvidia_smi {
 SAMPLE OUTPUT
 [
     {'full_text': 'Quadro NVS 295 '},
-    {'color': '#00ff00', 'full_text': '51°C'},
-]
-
-memory
-[
-    {'full_text': 'Quadro NVS 295 '},
-    {'color': '#ffff00', 'full_text': '74°C '},
-    {'color': '#00ff00', 'full_text': '155 MiB'},
-    {'color': '#a9a9a9', 'full_text': '|'},
+    {'color': '#00ff00', 'full_text': '51°C '},
     {'color': '#00ff00', 'full_text': '60.8%'},
 ]
 
 percent
 [
-    {'full_text': 'Quadro NVS 295 '},
+    {'full_text': 'GPU '},
     {'full_text': '73°C ', 'color': '#ffff00'},
     {'full_text': '192 MiB', 'color': '#ffa500'},
     {'full_text': '|', 'color': '#a9a9a9'},

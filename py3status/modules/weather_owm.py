@@ -263,10 +263,10 @@ weather_owm {
 @licence MIT
 
 SAMPLE OUTPUT
-{'full_text': 'New York 🌫 ○ 30°F, mist ☁ ☁ ☁'}
+{'full_text': 'New York ○ 30°F, mist ☁ ☁ ☁'}
 
-diff_weather
-{'full_text': '🌫 ○ 59°F, foggy ⛅ ☼ 🌧'}
+diff
+{'full_text': '○ 59°F, foggy  ☼ '}
 """
 
 import datetime
