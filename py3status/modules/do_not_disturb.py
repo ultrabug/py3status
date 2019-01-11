@@ -33,6 +33,9 @@ Dunst Miscellaneous:
     notifications in a queue. This can for example be wrapped around a screen
     locker (i3lock, slock) to prevent flickering of notifications through the
     lock and to read all missed notifications after returning to the computer.
+    This means that by default (pause = False), all notifications sent while
+    DND is active will NOT be queued and displayed when DND is deactivated.
+
 
 Examples:
 ```
@@ -87,6 +90,10 @@ class Dunst(Notification):
     """
 
     def toggle(self, state):
+        # if not in pause mode we delete all pending notifications in the queue
+        # before resuming
+        if self.parent.pause is False and state is False:
+            self.parent.py3.command_run("killall --signal SIGTERM dunst")
         self.parent.py3.command_run(
             "killall --signal {} dunst".format(self.parent.signals[state])
         )
@@ -145,10 +152,9 @@ class Py3status:
                 raise Exception(STRING_NOT_INSTALLED.format(command))
 
         if self.server == "dunst":
-            if self.pause:
-                self.signals = ("SIGUSR2", "SIGUSR1")  # pause/resume
-            else:
-                self.signals = ("SIGTERM", "SIGUSR1")  # kill/resume
+            # killall -SIGUSR1 dunst # pause = DND True
+            # killall -SIGUSR2 dunst # resume = DND False
+            self.signals = ("SIGUSR2", "SIGUSR1")
             self.backend = Dunst(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)
@@ -156,7 +162,7 @@ class Py3status:
         if self.state is not None:
             if self.state == "last":
                 self.state = self.py3.storage_get("state") or 0
-            elif self.state in [False, True]:
+            if self.state in [False, True]:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
