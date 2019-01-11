@@ -242,3 +242,9 @@ Contributions
 
 To make a contribution please create a
 `pull request <https://github.com/ultrabug/py3status/pulls>`_.
+
+Any functional change should be done via pull requests,
+even by people with push access.
+
+Each PR requires at least one approval from project maintainers
+before a PR can be merged.
