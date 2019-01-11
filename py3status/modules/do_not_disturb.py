@@ -156,7 +156,7 @@ class Py3status:
         if self.state is not None:
             if self.state == "last":
                 self.state = self.py3.storage_get("state") or 0
-            if self.state in [False, True]:
+            elif self.state in [False, True]:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
