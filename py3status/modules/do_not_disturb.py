@@ -19,7 +19,7 @@ Configuration parameters:
         None: don't toggle anything on startup
         (default 'last')
     thresholds: specify color thresholds to use
-        (default [(0, 'bad'), (1, 'good')])
+        (default [(-1, 'degraded'), (0, 'bad'), (1, 'good')])
 
 Format placeholders:
     {name} name, eg Dunst, Xfce4-notifyd
@@ -52,7 +52,7 @@ do_not_disturb {
 # display DO NOT DISTURB/DISTURB
 do_not_disturb {
     format = '[\?color=state [\?if=state DO NOT DISTURB|DISTURB]]'
-    thresholds = [(0, 'darkgray'), (1, 'good')]
+    thresholds = [(-1, "degraded"), (0, "darkgray"), (1, "good")]
 }
 ```
 
@@ -129,7 +129,7 @@ class Py3status:
     pause = False
     server = None
     state = "last"
-    thresholds = [(0, "bad"), (1, "good")]
+    thresholds = [(-1, "degraded"), (0, "bad"), (1, "good")]
 
     def post_config_hook(self):
         servers = ["xfce4-notifyd", "dunst", None]
@@ -166,6 +166,8 @@ class Py3status:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
+        else:
+            self.state = -1
 
         self.name = self.server.capitalize()
         self.thresholds_init = self.py3.get_color_names_list(self.format)
