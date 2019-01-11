@@ -7,9 +7,6 @@ Configuration parameters:
         (default 30)
     format: display format for this module
         (default '{name} [\?color=state&show DND]')
-    pause: specify whether to pause or kill processes; for dunst
-        see `Dunst Miscellaneous` section for more information
-        (default False)
     server: specify server to use, eg dunst or xfce4-notifyd, otherwise auto
         (default None)
     state: specify state to use on startup, otherwise last
@@ -112,6 +109,10 @@ class Xfce4_notifyd(Notification):
         self.iface.SetProperty("xfce4-notifyd", "/do-not-disturb", state)
 
 
+class Meta:
+    deprecated = {"remove": [{"param": "pause", "msg": "obsolete parameter"}]}
+
+
 class Py3status:
     """
     """
@@ -119,7 +120,6 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = "{name} [\?color=state&show DND]"
-    pause = False
     server = None
     state = "last"
     thresholds = [(0, "bad"), (1, "good")]
@@ -145,10 +145,9 @@ class Py3status:
                 raise Exception(STRING_NOT_INSTALLED.format(command))
 
         if self.server == "dunst":
-            if self.pause:
-                self.signals = ("SIGUSR2", "SIGUSR1")  # pause/resume
-            else:
-                self.signals = ("SIGTERM", "SIGUSR1")  # kill/resume
+            # killall -SIGUSR1 dunst # pause = DND True
+            # killall -SIGUSR2 dunst # resume = DND False
+            self.signals = ("SIGUSR2", "SIGUSR1")
             self.backend = Dunst(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)
@@ -156,7 +155,7 @@ class Py3status:
         if self.state is not None:
             if self.state == "last":
                 self.state = self.py3.storage_get("state") or 0
-            elif self.state in [False, True]:
+            if self.state in [False, True]:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
