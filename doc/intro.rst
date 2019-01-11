@@ -46,7 +46,7 @@ Installation
 +-------------------+-------------------------------+-------------------------------------+
 |Distro             |Helpful Command                |Useful Note                          |
 +===================+===============================+=====================================+
-|**Arch Linux**     |``$ pacaur -S py3status``      |Stable updates. Official releases.   |
+|**Arch Linux**     |``$ pacman -S py3status``      |Stable updates. Official releases.   |
 +                   +-------------------------------+-------------------------------------+
 |                   |``$ pacaur -S py3status-git``  |Real-time updates from master branch.|
 +-------------------+-------------------------------+-------------------------------------+
