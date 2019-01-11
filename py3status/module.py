@@ -58,6 +58,7 @@ class Module:
         self.terminated = False
         self.testing = self.config.get("testing")
         self.urgent = False
+        self.urgent_background = None
 
         # create a nice name for the module that matches what the module is
         # called in the user config
@@ -468,14 +469,6 @@ class Module:
             if hasattr(item.get("color"), "none_setting"):
                 del item["color"]
 
-            # remove urgent if not allowed
-            if not self.allow_urgent:
-                if "urgent" in item:
-                    del item["urgent"]
-            # if urgent we want to set this to all parts
-            elif urgent and "urgent" not in item:
-                item["urgent"] = urgent
-
             # set background and border colors. set left/right border widths
             # only on first/last composites and no border width for inner
             # composites or we will see border lines between composites.
@@ -486,6 +479,20 @@ class Module:
                     item[key] = 0
                 else:
                     item[key] = value
+
+            # remove urgent if not allowed
+            if not self.allow_urgent:
+                if "urgent" in item:
+                    del item["urgent"]
+            # if urgent we want to set this to all parts
+            elif urgent:
+                if self.urgent_background:
+                    item["background"] = self.urgent_background
+                    item["color"] = "#FFFFFF"
+                    if "urgent" in item:
+                        del item["urgent"]
+                else:
+                    item["urgent"] = urgent
 
         # set min_length
         if "min_length" in self.py3status_module_options:
@@ -743,6 +750,16 @@ class Module:
             if hasattr(param, "none_setting"):
                 param = True
             self.allow_urgent = param
+
+            # urgent background
+            urgent_background = fn(self.module_full_name, "urgent_background")
+            if not hasattr(urgent_background, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_background)
+                if not color:
+                    err = "Invalid `urgent_background` attribute, should be "
+                    err += "a color. Got `{}`.".format(urgent_background)
+                    raise ValueError(err)
+                self.urgent_background = color
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):

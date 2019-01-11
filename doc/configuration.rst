@@ -193,6 +193,13 @@ is not reached. Either ``left`` (default), ``center``, or ``right``.
       position = 'right'
    }
 
+The following options requires ``i3bar-gaps`` and ``py3status``.
+
+``urgent_background``: Specify urgent background color for modules.
+You lose urgent functionality too that can be sometimes utilized by
+container modules, e.g., frame and group.
+
+
 Configuration obfuscation
 -------------------------
 Py3status allows you to hide individual configuration parameters so that they
