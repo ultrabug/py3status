@@ -92,11 +92,14 @@ def module_test(module_class, config=None):
             if "--term" in argv:
                 line = ""
                 for item in output:
-                    color = item.get("color")
-                    if color:
-                        line += "\033[38;2;{};{};{}m".format(
-                            *[int(color[1:][i : i + 2], 16) for i in (0, 2, 4)]
-                        )
+                    if item.get("urgent"):
+                        line += "\033[41m"
+                    else:
+                        color = item.get("color")
+                        if color:
+                            line += "\033[38;2;{};{};{}m".format(
+                                *[int(color[1:][i : i + 2], 16) for i in (0, 2, 4)]
+                            )
                     line += item["full_text"] + "\033[0m"
                 print(line)
             else:
