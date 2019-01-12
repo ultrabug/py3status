@@ -33,6 +33,9 @@ Dunst Miscellaneous:
     notifications in a queue. This can for example be wrapped around a screen
     locker (i3lock, slock) to prevent flickering of notifications through the
     lock and to read all missed notifications after returning to the computer.
+    This means that by default (pause = False), all notifications sent while
+    DND is active will NOT be queued and displayed when DND is deactivated.
+
 
 Examples:
 ```
@@ -58,10 +61,10 @@ do_not_disturb {
 @license BSD
 
 SAMPLE OUTPUT
-[{'full_text': 'dunst '}, {'color': '#00FF00', 'full_text': 'DND'}]
+[{'full_text': 'Dunst '}, {'color': '#00FF00', 'full_text': 'DND'}]
 
 off
-[{'full_text': 'dunst '}, {'color': '#FF0000', 'full_text': 'DND'}]
+[{'full_text': 'Dunst '}, {'color': '#FF0000', 'full_text': 'DND'}]
 """
 
 STRING_NOT_INSTALLED = "server `{}` not installed"
@@ -87,6 +90,10 @@ class Dunst(Notification):
     """
 
     def toggle(self, state):
+        # if not in pause mode we delete all pending notifications in the queue
+        # before resuming
+        if self.parent.pause is False and state is False:
+            self.parent.py3.command_run("killall --signal SIGTERM dunst")
         self.parent.py3.command_run(
             "killall --signal {} dunst".format(self.parent.signals[state])
         )
@@ -145,10 +152,9 @@ class Py3status:
                 raise Exception(STRING_NOT_INSTALLED.format(command))
 
         if self.server == "dunst":
-            if self.pause:
-                self.signals = ("SIGUSR2", "SIGUSR1")  # pause/resume
-            else:
-                self.signals = ("SIGTERM", "SIGUSR1")  # kill/resume
+            # killall -SIGUSR1 dunst # pause = DND True
+            # killall -SIGUSR2 dunst # resume = DND False
+            self.signals = ("SIGUSR2", "SIGUSR1")
             self.backend = Dunst(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)

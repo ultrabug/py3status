@@ -99,7 +99,6 @@ speedtest {
 }
 ```
 SAMPLE OUTPUT
-bandwidth
 [
     {"full_text": "speedtest "},
     {"full_text": "19.76Mbps ", "color": "#00ffff"},
