@@ -59,6 +59,8 @@ class Module:
         self.testing = self.config.get("testing")
         self.urgent = False
         self.urgent_background = None
+        self.urgent_foreground = None
+        self.urgent_customized = None
 
         # create a nice name for the module that matches what the module is
         # called in the user config
@@ -486,9 +488,13 @@ class Module:
                     del item["urgent"]
             # if urgent we want to set this to all parts
             elif urgent:
-                if self.urgent_background:
-                    item["background"] = self.urgent_background
-                    item["color"] = "#FFFFFF"
+                if self.urgent_customized:
+                    if self.urgent_background:
+                        item["background"] = self.urgent_background
+                    if self.urgent_foreground:
+                        item["color"] = self.urgent_foreground
+                    else:
+                        item["color"] = "#FFFFFF"
                     if "urgent" in item:
                         del item["urgent"]
                 else:
@@ -760,6 +766,21 @@ class Module:
                     err += "a color. Got `{}`.".format(urgent_background)
                     raise ValueError(err)
                 self.urgent_background = color
+
+            # urgent foreground
+            urgent_foreground = fn(self.module_full_name, "urgent_foreground")
+            if not hasattr(urgent_foreground, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_foreground)
+                if not color:
+                    err = "Invalid `urgent_foreground` attribute, should be "
+                    err += "a color. Got `{}`.".format(urgent_foreground)
+                    raise ValueError(err)
+                self.urgent_foreground = color
+
+            # urgent customized
+            self.urgent_customized = any(
+                [self.urgent_foreground, self.urgent_background]
+            )
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
