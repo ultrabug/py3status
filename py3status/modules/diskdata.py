@@ -18,7 +18,8 @@ Configuration parameters:
         (default False)
     thresholds: thresholds to use for color changes
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
-        'total': [(0, "good"), (1024, 'degraded'), (1024 * 1024, 'bad')]})*
+        'total': [(0, 'good'), (1024, 'degraded'), (1024 * 1024, 'bad')],
+        'used_percent': [(0, 'good'), (40, 'degraded'), (75, 'bad')]})*
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
         (default "B/s")
@@ -42,7 +43,8 @@ format_space placeholders:
 
 Color thresholds:
     {free} Change color based on the value of free
-    {used} Change color based on the value of used_percent
+    {used} Change color based on the value of used
+    {used_percent} Change color based on the value of used_percent
     {read} Change color based on the value of read
     {total} Change color based on the value of total
     {write} Change color based on the value of write
@@ -73,6 +75,7 @@ class Py3status:
     thresholds = {
         "free": [(0, "bad"), (10, "degraded"), (100, "good")],
         "total": [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")],
+        "used_percent": [(0, "good"), (40, "degraded"), (75, "bad")],
     }
     unit = "B/s"
 
@@ -132,6 +135,7 @@ class Py3status:
             )
             self.py3.threshold_get_color(free, "free")
             self.py3.threshold_get_color(used, "used")
+            self.py3.threshold_get_color(used_percent, "used_percent")
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
