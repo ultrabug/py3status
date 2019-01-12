@@ -17,7 +17,8 @@ Configuration parameters:
         (default '°C')
     thresholds: thresholds to use for color changes
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
-    zone: thermal zone to use. If None try to guess CPU temperature
+    zone: Either a path in sysfs to CPU temperature sensor, or an lm_sensors thermal zone to use.
+        If None try to guess CPU temperature
         (default None)
 
 Format placeholders:
@@ -292,7 +293,7 @@ class Py3status:
         self.last_cpu.update(cpu)
         return cpu_used_percent
 
-    def _get_cputemp(self, zone, unit):
+    def _get_cputemp_with_lmsensors(self, zone=None):
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
@@ -302,11 +303,6 @@ class Py3status:
 
         sensors = None
         command = ["sensors"]
-        if unit == u"°F":
-            command.append("-f")
-        elif unit not in [u"°C", "K"]:
-            return "unknown unit"
-
         if zone:
             try:
                 sensors = self.py3.command_output(command + [zone])
@@ -317,10 +313,31 @@ class Py3status:
         m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
             cpu_temp = float(m.groups()[1].strip()[:-2])
-            if unit == "K":
-                cpu_temp += 273.15
         else:
             cpu_temp = "?"
+
+        return cpu_temp
+
+    def _get_cputemp(self, zone, unit):
+        if zone is not None:
+            try:
+                with open(zone) as f:
+                    cpu_temp = f.readline()
+                    cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
+            except (OSError, IOError, ValueError):
+                # FileNotFoundError does not exist on Python < 3.3, so we catch OSError instead
+                # ValueError can be thrown if zone was a file that didn't have a float
+                # if zone was not a file, it might be a sensor!
+                cpu_temp = self._get_cputemp_with_lmsensors(zone=zone)
+
+        else:
+            cpu_temp = self._get_cputemp_with_lmsensors()
+
+        if cpu_temp is float:
+            if unit == u"°F":
+                cpu_temp = cpu_temp * (9.0 / 5.0) + 32
+            elif unit == "K":
+                cpu_temp += 273.15
 
         return cpu_temp
 
