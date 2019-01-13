@@ -698,6 +698,8 @@ class Py3:
 
         :param format_strings: Accepts a format string or a list of format strings.
         """
+        if not format_strings:
+            return []
         if not getattr(self._py3status_module, "thresholds", None):
             return []
         if isinstance(format_strings, basestring):
