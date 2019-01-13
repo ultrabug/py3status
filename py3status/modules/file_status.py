@@ -113,6 +113,8 @@ class Py3status:
         if self.py3.format_contains(self.format, "format_path"):
             self.init["format_path"] = self.py3.get_placeholders_list(self.format_path)
 
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+
     def file_status(self):
         # init datas
         paths = sorted([files for path in self.paths for files in glob(path)])
@@ -138,9 +140,9 @@ class Py3status:
 
             format_path = self.py3.composite_join(format_path_separator, new_data)
 
-        if self.thresholds:
-            self.py3.threshold_get_color(count_path, "path")
-            self.py3.threshold_get_color(count_path, "paths")
+        for x in self.thresholds_init:
+            if x in ["path", "paths"]:
+                self.py3.threshold_get_color(count_path, x)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
