@@ -1199,7 +1199,7 @@ class Py3:
                         else:
                             break
             except TypeError:
-                pass
+                color = None
 
         # save color so it can be accessed via safe_format()
         if name:
