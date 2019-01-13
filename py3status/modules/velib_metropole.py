@@ -263,7 +263,7 @@ class Py3status:
 
             for x in self.thresholds_init["format"]:
                 if x in velib_data:
-                    self.py3.threshold_get_color(velib_data, x)
+                    self.py3.threshold_get_color(velib_data[x], x)
         else:
             velib_data = self.empty_defaults
 
