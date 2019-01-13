@@ -71,7 +71,7 @@ Installation
 |**Void Linux**     |``$ xbps-install -S py3status``|                                     |
 +-------------------+-------------------------------+-------------------------------------+
 |**NixOS**          |``$ nix-env -i``               |Not a global install. See below.     |
-|                   |  ``python3.6-py3status-3.7``  |                                     |
+|                   |  ``python3.6-py3status``      |                                     |
 +-------------------+-------------------------------+-------------------------------------+
 
 
@@ -88,15 +88,17 @@ Debian/Ubuntu
 NixOS
 ^^^^^
 
-To have it globally persistent add to your NixOS configuration file py3status as a Python 3.6 package with
+To have it globally persistent add to your NixOS configuration file py3status as a Python 3 package with
 
-.. code-block:: shell
+.. code-block:: nix
 
-    (python36.withPackages(ps: with ps; [ py3status ]))
+    (python3Packages.py3status.overrideAttrs (oldAttrs: {
+      propagatedBuildInputs = [ python3Packages.pytz python3Packages.tzlocal ];
+    }))
 
 If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
 
-.. code-block:: shell
+.. code-block:: nix
 
     services.xserver.windowManager.i3 = {
       enable = true;
@@ -104,7 +106,9 @@ If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want
         dmenu
         i3status
         i3lock
-        (python36.withPackages(ps: with ps; [ py3status pytz tzlocal ]))
+        (python3Packages.py3status.overrideAttrs (oldAttrs: {
+          propagatedBuildInputs = [ python3Packages.pytz python3Packages.tzlocal ];
+        }))
       ];
     };
 
