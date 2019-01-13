@@ -87,12 +87,14 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
-        self.last_interface = None
         self.last_stat = self._get_io_stats(self.disk)
         self.last_time = time()
 
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+
     def space_and_io(self):
         self.values = {"disk": self.disk if self.disk else "all"}
+        threshold_data = {}
 
         if self.py3.format_contains(self.format, ["read", "write", "total"]):
             # time from previous check
@@ -114,9 +116,7 @@ class Py3status:
             self.values["read"] = self._format_rate(read)
             self.values["total"] = self._format_rate(total)
             self.values["write"] = self._format_rate(write)
-            self.py3.threshold_get_color(read, "read")
-            self.py3.threshold_get_color(total, "total")
-            self.py3.threshold_get_color(write, "write")
+            threshold_data.update({"read": read, "write": write, "total": total})
 
         if self.py3.format_contains(self.format, ["free", "used*", "total_space"]):
             free, used, used_percent, total_space = self._get_free_space(self.disk)
@@ -133,9 +133,13 @@ class Py3status:
             self.values["total_space"] = self.py3.safe_format(
                 self.format_space, {"value": total_space}
             )
-            self.py3.threshold_get_color(free, "free")
-            self.py3.threshold_get_color(used, "used")
-            self.py3.threshold_get_color(used_percent, "used_percent")
+            threshold_data.update(
+                {"free": free, "used": used, "used_percent": used_percent}
+            )
+
+        for x in self.thresholds_init:
+            if x in threshold_data:
+                self.py3.threshold_get_color(threshold_data[x], x)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
