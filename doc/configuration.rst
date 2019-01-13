@@ -137,7 +137,7 @@ You can specify the following options in module configuration.
  is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
-     # example
+
     static_string {
         min_length = 15
         position = 'center'
