@@ -90,13 +90,14 @@ class Dunst(Notification):
     """
 
     def toggle(self, state):
-        # if not in pause mode we delete all pending notifications in the queue
-        # before resuming
-        if self.parent.pause is False and state is False:
-            self.parent.py3.command_run("killall --signal SIGTERM dunst")
-        self.parent.py3.command_run(
-            "killall --signal {} dunst".format(self.parent.signals[state])
-        )
+        if state:
+            self.parent.py3.command_run("pkill -SIGUSR1 dunst")  # pause
+        else:
+            if not self.parent.pause:
+                # if not in pause mode we delete all pending notifications in
+                # the queue before resuming
+                self.parent.py3.command_run("pkill -SIGTERM dunst")
+            self.parent.py3.command_run("pkill -SIGUSR2 dunst")  # resume
 
 
 class Xfce4_notifyd(Notification):
@@ -152,9 +153,6 @@ class Py3status:
                 raise Exception(STRING_NOT_INSTALLED.format(command))
 
         if self.server == "dunst":
-            # killall -SIGUSR1 dunst # pause = DND True
-            # killall -SIGUSR2 dunst # resume = DND False
-            self.signals = ("SIGUSR2", "SIGUSR1")
             self.backend = Dunst(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)
