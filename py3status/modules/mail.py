@@ -37,8 +37,8 @@ IMAP Subscriptions:
     `'pattern'` will match folders containing `pattern`.
     `'^pattern'` will match folders beginning with `pattern`.
     `'pattern$'` will match folders ending with `pattern`.
-    `'^((?![Ss][Pp][Aa][Mm]).)*$'` will match all folders except
-        for every possible case of `spam` folders.
+    `'^((?![Ss][Pp][Aa][Mm]).)*$'` will match all folders
+    except for every possible case of `spam` folders.
 
     For more documentation, see https://docs.python.org/3/library/re.html
     and/or any regex builder on the web. Don't forget to escape characters.

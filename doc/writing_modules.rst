@@ -808,6 +808,7 @@ Such modules can then be tested independently by running
 ``python /path/to/module.py``.
 
 .. code-block:: bash
+
     $ python loadavg.py
     [{'full_text': 'Loadavg ', 'separator': False,
     'separator_block_width': 0, 'cached_until': 1538755796.0},
@@ -818,6 +819,7 @@ We also can produce an output similar to i3bar output in terminal with
 ``python /path/to/module.py --term``.
 
 .. code-block:: bash
+
     $ python loadavg.py --term
     Loadavg 1.41 1.61 1.82
     Loadavg 1.41 1.61 1.82

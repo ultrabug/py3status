@@ -89,11 +89,15 @@ NixOS
 ^^^^^
 
 To have it globally persistent add to your NixOS configuration file py3status as a Python 3.6 package with
-::
+
+.. code-block:: shell
+
     (python36.withPackages(ps: with ps; [ py3status ]))
 
 If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
-::
+
+.. code-block:: shell
+
     services.xserver.windowManager.i3 = {
       enable = true;
       extraPackages = with pkgs; [
