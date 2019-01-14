@@ -9,6 +9,7 @@ Configuration parameters:
 
 Format placeholders:
     {task} active tasks
+    {num_tasks} number of active tasks
 
 Requires
     task: https://taskwarrior.org/download/
@@ -47,10 +48,11 @@ class Py3status:
             return str(taskObj["id"]) + " " + taskObj["description"]
 
         task_json = json.loads(self.py3.command_output(self.task_command))
+        num_tasks = len(task_json)
         task_result = ", ".join(map(describeTask, task_json))
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, {"task": task_result}),
+            "full_text": self.py3.safe_format(self.format, {"task": task_result, "num_tasks": num_tasks}),
         }
 
 
