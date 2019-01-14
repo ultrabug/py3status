@@ -58,7 +58,7 @@ def parse_cli():
         action="store",
         default=i3status_config_file_default,
         dest="i3status_conf",
-        help="load config (default %(default)s)",
+        help="load config",
         metavar="FILE",
         type=str,
     )
@@ -100,9 +100,9 @@ def parse_cli():
         action="store",
         default=1,
         dest="interval",
-        help="refresh interval in seconds for py3status",
+        help="refresh interval for py3status",
         metavar="INT",
-        type=float,
+        type=int,
     )
     parser.add_argument(
         "-s", "--standalone", action="store_true", help="run py3status without i3status"
