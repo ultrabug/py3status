@@ -1,7 +1,7 @@
 import os
 
-MODULE_PATH = os.path.join(os.path.dirname(
-    os.path.abspath(__file__)), "..", "py3status", "modules"
+MODULE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "py3status", "modules"
 )
 SKIP_FILES = ["__init__.py", "i3pystatus.py"]
 
