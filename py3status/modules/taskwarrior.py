@@ -52,7 +52,9 @@ class Py3status:
         task_result = ", ".join(map(describeTask, task_json))
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, {"task": task_result, "num_tasks": num_tasks}),
+            "full_text": self.py3.safe_format(
+                self.format, {"task": task_result, "num_tasks": num_tasks}
+            ),
         }
 
 
