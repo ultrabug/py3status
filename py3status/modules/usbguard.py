@@ -35,7 +35,7 @@ Configuration parameters:
         '[ {format_button_allow}][ {format_button_block}]')*
     format_device_separator: show separator if more than one (default ' ')
     format_notification_message: specify notification message to use
-        *(default 'USB ID: {usb_id}\nName: {name}\nPort: {port}')*
+        (default 'USB ID: {usb_id}\\nName: {name}\\nPort: {port}')
     format_notification_title: specify notification title to use
         *(default 'USB Device [\?if=policy=allow Allowed]'
         '[\?if=policy=block Blocked][\?if=policy=reject Rejected]')*
