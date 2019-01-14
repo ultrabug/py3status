@@ -16,7 +16,7 @@ Configuration parameters:
         False: disable Do Not Disturb on startup
         True: enable Do Not Disturb on startup
         last: toggle last known state on startup
-        None: don't toggle anything on startup
+        None: query current state from notification manager (doesn't work on dunst)
         (default 'last')
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (1, 'good')])
@@ -52,7 +52,7 @@ do_not_disturb {
 # display DO NOT DISTURB/DISTURB
 do_not_disturb {
     format = '[\?color=state [\?if=state DO NOT DISTURB|DISTURB]]'
-    thresholds = [(0, 'darkgray'), (1, 'good')]
+    thresholds = [(0, "darkgray"), (1, "good")]
 }
 ```
 
@@ -166,6 +166,8 @@ class Py3status:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
+        elif self.server == "dunst":
+            raise Exception(STRING_INVALID_STATE.format(self.state))
 
         self.name = self.server.capitalize()
         self.thresholds_init = self.py3.get_color_names_list(self.format)
