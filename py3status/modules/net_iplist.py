@@ -82,7 +82,7 @@ class Py3status:
         self.ip_re = re.compile(r"\s+inet (?P<ip4>[\d\.]+)(?:/| )")
         self.ip6_re = re.compile(r"\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )")
 
-    def ip_list(self):
+    def net_iplist(self):
         response = {
             "cached_until": self.py3.time_in(seconds=self.cache_timeout),
             "full_text": "",

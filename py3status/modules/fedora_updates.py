@@ -49,7 +49,7 @@ class Py3status:
         self._updates = 0
         self._security_notice = False
 
-    def check_updates(self):
+    def fedora_updates(self):
         if self._first:
             self._first = False
             response = {

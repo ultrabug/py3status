@@ -61,7 +61,7 @@ class Py3status:
         if not self.base_url:
             raise Exception(STRING_NOT_CONFIGURED)
 
-    def get_status(self):
+    def icinga2(self):
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(

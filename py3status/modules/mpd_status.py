@@ -151,7 +151,7 @@ class Py3status:
             return self.state_stop
         return "?"
 
-    def current_track(self):
+    def mpd_status(self):
         try:
             status = self._get_mpd().status()
             song = int(status.get("song", 0))

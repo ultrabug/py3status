@@ -55,7 +55,7 @@ class Py3status:
     timeout = 5
     user = ""
 
-    def rt_tickets(self):
+    def rt(self):
         has_one_queue_formatted = False
         response = {"full_text": ""}
         tickets = {}

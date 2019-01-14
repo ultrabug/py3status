@@ -387,7 +387,7 @@ class Py3status:
         text = self.py3.safe_format(format, {"percentage": percentage})
         return text
 
-    def current_volume(self):
+    def volume_status(self):
         # call backend
         perc, muted = self.backend.get_volume()
 

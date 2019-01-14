@@ -42,7 +42,7 @@ class Py3status:
         else:
             self.task_command = "task export"
 
-    def taskWarrior(self):
+    def taskwarrior(self):
         def describeTask(taskObj):
             return str(taskObj["id"]) + " " + taskObj["description"]
 

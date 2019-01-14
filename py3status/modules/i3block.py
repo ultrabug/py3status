@@ -273,7 +273,7 @@ class Py3status:
                 urgent = _urgent
         return output, urgent
 
-    def block(self):
+    def i3block(self):
         # no command
         if not self.command:
             return {"cached_until": self.py3.CACHE_FOREVER, "full_text": ""}

@@ -64,7 +64,7 @@ class Py3status:
         if not self.script_path:
             self.py3.error("script_path is mandatory")
 
-    def external_script(self):
+    def async_script(self):
         response = {}
         response["cached_until"] = self.py3.CACHE_FOREVER
 

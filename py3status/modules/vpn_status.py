@@ -105,7 +105,7 @@ class Py3status:
         return path.isfile(self.pidfile)
 
     # Method run by py3status
-    def return_status(self):
+    def vpn_status(self):
         """Returns response dict"""
 
         # Start signal handler thread if it should be running
