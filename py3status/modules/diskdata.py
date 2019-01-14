@@ -87,7 +87,7 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
-        self.last_stat = self._get_io_stats(self.disk)
+        self.last_diskstats = self._get_diskstats(self.disk)
         self.last_time = time()
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
@@ -97,21 +97,16 @@ class Py3status:
         threshold_data = {}
 
         if self.py3.format_contains(self.format, ["read", "write", "total"]):
-            # time from previous check
-            ios = self._get_io_stats(self.disk)
-            timedelta = time() - self.last_time
+            diskstats = self._get_diskstats(self.disk)
+            current_time = time()
 
-            read = ios[0] - self.last_stat[0]
-            write = ios[1] - self.last_stat[1]
-
-            # update last_ info
-            self.last_stat = self._get_io_stats(self.disk)
-            self.last_time = time()
-
-            read /= timedelta
-            write /= timedelta
-
+            timedelta = current_time - self.last_time
+            read = (diskstats[0] - self.last_diskstats[0]) / timedelta
+            write = (diskstats[1] - self.last_diskstats[1]) / timedelta
             total = read + write
+
+            self.last_diskstats = diskstats
+            self.last_time = current_time
 
             self.values["read"] = self._format_rate(read)
             self.values["total"] = self._format_rate(total)
@@ -175,7 +170,7 @@ class Py3status:
 
         return free, used, 100 * used / total, total
 
-    def _get_io_stats(self, disk):
+    def _get_diskstats(self, disk):
         if disk and disk.startswith("/dev/"):
             disk = disk[5:]
         read = 0
