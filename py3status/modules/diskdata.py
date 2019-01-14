@@ -92,7 +92,7 @@ class Py3status:
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-    def space_and_io(self):
+    def diskdata(self):
         self.values = {"disk": self.disk if self.disk else "all"}
         threshold_data = {}
 

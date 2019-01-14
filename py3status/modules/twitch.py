@@ -67,7 +67,7 @@ class Py3status:
         display_name_request = requests.get(url, headers={"Client-ID": self.client_id})
         self._display_name = display_name_request.json().get("display_name")
 
-    def is_streaming(self):
+    def twitch(self):
         if self.stream_name is None:
             return {
                 "full_text": "stream_name missing",

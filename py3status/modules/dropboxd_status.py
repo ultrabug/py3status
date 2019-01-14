@@ -83,7 +83,7 @@ class Py3status:
         if not self.py3.check_commands("dropbox-cli"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def dropbox(self):
+    def dropboxd_status(self):
         status = self.py3.command_output(
             "dropbox-cli status", localized=True
         ).splitlines()[0]

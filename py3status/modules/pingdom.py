@@ -52,7 +52,7 @@ class Py3status:
     password = ""
     request_timeout = 15
 
-    def pingdom_checks(self):
+    def pingdom(self):
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": "",

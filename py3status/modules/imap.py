@@ -91,7 +91,7 @@ class Py3status:
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
 
-    def check_mail(self):
+    def imap(self):
         # I -- acquire mail_count
         if self.use_idle is not False:
             if not self.idle_thread.is_alive():

@@ -116,7 +116,7 @@ class Py3status:
             if m["symbol"] == market:
                 return m[field]
 
-    def get_rate(self):
+    def bitcoin_price(self):
         # get the data from bitcoincharts api
         try:
             data = self.py3.request(self.url, timeout=self.request_timeout).json()

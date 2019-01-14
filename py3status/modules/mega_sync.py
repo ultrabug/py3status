@@ -42,7 +42,7 @@ class Py3status:
         if not self.py3.check_commands("mega-sync"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def mega(self):
+    def mega_sync(self):
         output = self.py3.command_output("mega-sync").splitlines()
 
         format_sync = None

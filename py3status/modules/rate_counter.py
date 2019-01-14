@@ -129,7 +129,7 @@ class Py3status:
             with open(self.config_file, "w") as f:
                 f.write("0")
 
-    def counter(self):
+    def rate_counter(self):
         running_time = 0.0
         if self.running:
             color = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD

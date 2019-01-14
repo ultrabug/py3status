@@ -81,7 +81,7 @@ class Py3status:
                 self.include_aur = False
                 self.py3.notify_user("cower/yay is not installed cannot check aur")
 
-    def check_updates(self):
+    def arch_updates(self):
         pacman_updates = aur_updates = total = None
 
         if self.include_pacman:

@@ -82,7 +82,7 @@ class Py3status:
         if self.user is None or self.password is None:
             raise ValueError("user and password must be provided")
 
-    def check_news(self):
+    def rss_aggregator(self):
         if self.aggregator == "owncloud":
             rss_count = self._get_count_owncloud()
         elif self.aggregator == "ttrss":
