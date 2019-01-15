@@ -116,7 +116,6 @@ class Py3status:
         self.first_use = True
         self.convert = self.limit = None
         self.url = self.reset_url = "https://api.coinmarketcap.com/v1/ticker/"
-        self.request_timeout = 10
 
         # convert the datetime?
         self.init_datetimes = []
@@ -151,7 +150,7 @@ class Py3status:
         if reset:
             self.url = self.reset_url
         try:
-            data = self.py3.request(self.url, timeout=self.request_timeout).json()
+            data = self.py3.request(self.url).json()
         except self.py3.RequestException:
             data = {}
         return data

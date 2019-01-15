@@ -135,7 +135,6 @@ class Py3status:
 
     def post_config_hook(self):
         self.auth_token = {"token": self.auth_token}
-        self.request_timeout = 10
         self.url = "https://api.waqi.info/feed/%s/" % self.location
         self.init_datetimes = []
         for word in self.format_datetime:
@@ -150,9 +149,7 @@ class Py3status:
 
     def _get_aqi_data(self):
         try:
-            return self.py3.request(
-                self.url, params=self.auth_token, timeout=self.request_timeout
-            ).json()
+            return self.py3.request(self.url, params=self.auth_token).json()
         except self.py3.RequestException:
             return None
 

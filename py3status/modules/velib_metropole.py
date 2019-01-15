@@ -149,7 +149,6 @@ class Py3status:
         self.cache_station_keys = {}
         self.first_request = True
         self.idle_time = 0
-        self.request_timeout = 10
         self.scrolling = False
         self.station_data = {}
 
@@ -178,9 +177,7 @@ class Py3status:
 
     def _get_velib_data(self):
         try:
-            return self.py3.request(
-                VELIB_ENDPOINT, params=self.gps, timeout=self.request_timeout
-            ).json()
+            return self.py3.request(VELIB_ENDPOINT, params=self.gps).json()
         except self.py3.RequestException:
             return None
 
