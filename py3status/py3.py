@@ -632,9 +632,14 @@ class Py3:
         # Unless the requested update is in less than a second
         if sync_to is None:
             if seconds and seconds < 1:
-                sync_to = 0
+                if 1 % seconds == 0:
+                    sync_to = seconds
+                else:
+                    sync_to = 0
             else:
                 sync_to = 1
+                if seconds:
+                    seconds -= 0.1
 
         requested = time() + seconds - offset
 
