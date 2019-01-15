@@ -455,6 +455,7 @@ class Py3statusWrapper:
         config["interval"] = int(options.interval)
         config["log_file"] = options.log_file
         config["standalone"] = options.standalone
+        config["i3status_path"] = options.i3status_path
         config["i3status_config_path"] = options.i3status_conf
         config["disable_click_events"] = options.disable_click_events
         if options.cli_command:
