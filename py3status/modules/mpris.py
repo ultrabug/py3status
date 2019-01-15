@@ -432,7 +432,12 @@ class Py3status:
         state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
-        subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
+        try:
+            subscription = player.PropertiesChanged.connect(
+                self._player_monitor(player_id)
+            )
+        except AttributeError:
+            subscription = {}
 
         self._mpris_players[player_id] = {
             "_dbus_player": player,

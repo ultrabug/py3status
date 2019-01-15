@@ -25,6 +25,8 @@ Color options:
 Requires:
     requests: https://pypi.python.org/pypi/requests
 
+@author ultrabug
+
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'Pingdom: 323ms'}
 
