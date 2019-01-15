@@ -46,23 +46,6 @@ class Py3status:
             ]
         }
 
-    class Format:
-        """
-        Implementation of each format specifier
-        is defined here
-        """
-
-        @staticmethod
-        def descriptions(tasks_json):
-            def _describeTask(taskObj):
-                return str(taskObj["id"]) + " " + taskObj["description"]
-
-            return ", ".join(map(_describeTask, tasks_json))
-
-        @staticmethod
-        def tasks(tasks_json):
-            return str(len(tasks_json))
-
     def post_config_hook(self):
         if not self.py3.check_commands("task"):
             raise Exception(STRING_NOT_INSTALLED)
@@ -72,12 +55,24 @@ class Py3status:
         else:
             self.taskwarrior_command = "task export"
 
+    @staticmethod
+    def descriptions(tasks_json):
+        def _describeTask(taskObj):
+            return str(taskObj["id"]) + " " + taskObj["description"]
+
+        return ", ".join(map(_describeTask, tasks_json))
+
+    @staticmethod
+    def tasks(tasks_json):
+        return len(tasks_json)
+
     def taskwarrior(self):
         tasks_json = json.loads(self.py3.command_output(self.taskwarrior_command))
-        taskwarrior_output = [
-            getattr(self.Format, ph)(tasks_json) for ph in self.placeholders
-        ]
-        taskwarrior_data = dict(zip(self.placeholders, taskwarrior_output))
+        taskwarrior_data = {}
+        for ph in self.placeholders:
+            if hasattr(self, ph):
+                ph_func = getattr(self, ph)
+                taskwarrior_data[ph] = ph_func(tasks_json)
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(self.format, taskwarrior_data),
