@@ -5,11 +5,11 @@ Display tasks currently running in taskwarrior.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     filter: specify one or more criteria to use (default 'status:pending')
-    format: display format for this module (default '{task}')
+    format: display format for this module (default '{descriptions}')
 
 Format placeholders:
-    {task} active tasks
-    {num_tasks} number of active tasks
+    {descriptions} descriptions of active tasks
+    {tasks} number of active tasks
 
 Requires
     task: https://taskwarrior.org/download/
@@ -33,28 +33,54 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     filter = "status:pending"
-    format = "{task}"
+    format = "{descriptions}"
+
+    class Meta:
+        deprecated = {
+            "rename_placeholder": [
+                {
+                    "placeholder": "task",
+                    "new": "descriptions",
+                    "format_strings": ["format"],
+                }
+            ]
+        }
+
+    class Format:
+        """
+        Implementation of each format specifier
+        is defined here
+        """
+
+        @staticmethod
+        def descriptions(tasks_json):
+            def _describeTask(taskObj):
+                return str(taskObj["id"]) + " " + taskObj["description"]
+
+            return ", ".join(map(_describeTask, tasks_json))
+
+        @staticmethod
+        def tasks(tasks_json):
+            return str(len(tasks_json))
 
     def post_config_hook(self):
         if not self.py3.check_commands("task"):
             raise Exception(STRING_NOT_INSTALLED)
+        self.placeholders = self.py3.get_placeholders_list(self.format)
         if self.filter:
-            self.task_command = "task %s export" % self.filter
+            self.taskwarrior_command = "task %s export" % self.filter
         else:
-            self.task_command = "task export"
+            self.taskwarrior_command = "task export"
 
     def taskwarrior(self):
-        def describeTask(taskObj):
-            return str(taskObj["id"]) + " " + taskObj["description"]
-
-        task_json = json.loads(self.py3.command_output(self.task_command))
-        num_tasks = len(task_json)
-        task_result = ", ".join(map(describeTask, task_json))
+        tasks_json = json.loads(self.py3.command_output(self.taskwarrior_command))
+        taskwarrior_output = [
+            getattr(self.Format, ph)(tasks_json) for ph in self.placeholders
+        ]
+        taskwarrior_data = dict(zip(self.placeholders, taskwarrior_output))
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"task": task_result, "num_tasks": num_tasks}
-            ),
+            "full_text": self.py3.safe_format(self.format, taskwarrior_data),
         }
 
 
