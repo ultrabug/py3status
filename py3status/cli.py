@@ -1,5 +1,6 @@
 import argparse
 import os
+import subprocess
 
 
 def parse_cli():
@@ -11,6 +12,13 @@ def parse_cli():
 
     # get home path
     home_path = os.path.expanduser("~")
+
+    # get i3status path
+    try:
+        command = ["which", "i3status"]
+        i3status_path = subprocess.check_output(command).decode().strip()
+    except subprocess.CalledProcessError:
+        i3status_path = None
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
@@ -124,6 +132,16 @@ def parse_cli():
         default=False,
         dest="disable_click_events",
         help="disable all click events",
+    )
+    parser.add_argument(
+        "-u",
+        "--i3status",
+        action="store",
+        default=i3status_path,
+        dest="i3status_path",
+        help="specify i3status path",
+        metavar="PATH",
+        type=str,
     )
     parser.add_argument(
         "-v", "--version", action="store_true", help="show py3status version and exit"
