@@ -87,15 +87,17 @@ class Py3status:
                     "new": "icon_off",
                     "msg": "obsolete parameter, use `icon_off` instead",
                 },
+                {
+                    "param": "timeout",
+                    "new": "request_timeout",
+                    "msg": "obsolete parameter use `request_timeout`",
+                },
             ],
         }
 
     def post_config_hook(self):
         if self.expected is None:
             self.expected = {}
-
-        # Get request timeout
-        self.request_timeout = getattr(self, "timeout", 10)
 
         # Backwards compatibility
         self.substitutions = {}
@@ -110,7 +112,7 @@ class Py3status:
 
     def _get_my_ip_info(self):
         try:
-            info = self.py3.request(self.url_geo, timeout=self.request_timeout).json()
+            info = self.py3.request(self.url_geo).json()
             for old, new in self.substitutions.items():
                 info[old] = info.get(new)
             return info

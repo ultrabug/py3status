@@ -410,9 +410,6 @@ class Py3status:
                 " get an API Key."
             )
 
-        # Get request timeout
-        self.request_timeout = getattr(self, "request_timeout", 10)
-
         # Generate our icon array
         self.icons = self._get_icons()
 
@@ -438,7 +435,7 @@ class Py3status:
 
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
-        req = self.py3.request(url, params=params, timeout=self.request_timeout)
+        req = self.py3.request(url, params=params)
         if req.status_code != 200:
             data = req.json()
             raise OWMException(

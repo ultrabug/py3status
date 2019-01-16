@@ -1216,7 +1216,7 @@ class Py3:
         params=None,
         data=None,
         headers=None,
-        timeout=10,
+        timeout=None,
         auth=None,
         cookiejar=None,
     ):
@@ -1250,6 +1250,9 @@ class Py3:
 
         if headers is None:
             headers = {}
+
+        if timeout is None:
+            timeout = getattr(self._py3status_module, "request_timeout", 10)
 
         if "User-Agent" not in headers:
             headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
