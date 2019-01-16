@@ -761,3 +761,22 @@ an event
     This feature will only activate when ``pyudev`` is installed on the system.
     This is an optional dependency of py3status and is therefore not enforced
     by all package managers.
+
+
+Request Timeout
+--------------------------------------------------------------
+
+.. note::
+    New in version 3.16
+
+Request Timeout for URL request based modules can be specified in the
+module configuration. To find out if your module supports that, look for
+``self.py3.request`` in the code. Otherwise, we will use ``10``.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # stop waiting for a response after 10 seconds
+    exchange_rate {
+        request_timeout = 10
+    }
