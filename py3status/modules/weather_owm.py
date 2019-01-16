@@ -410,9 +410,6 @@ class Py3status:
                 " get an API Key."
             )
 
-        # Get request timeout
-        self.request_timeout = getattr(self, "request_timeout", 10)
-
         # Generate our icon array
         self.icons = self._get_icons()
 

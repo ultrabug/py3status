@@ -99,9 +99,6 @@ class Py3status:
         if self.expected is None:
             self.expected = {}
 
-        # Get request timeout
-        self.request_timeout = getattr(self, "timeout", 10)
-
         # Backwards compatibility
         self.substitutions = {}
         if self.url_geo == URL_GEO_NEW_DEFAULT:
@@ -115,7 +112,7 @@ class Py3status:
 
     def _get_my_ip_info(self):
         try:
-            info = self.py3.request(self.url_geo, timeout=self.request_timeout).json()
+            info = self.py3.request(self.url_geo).json()
             for old, new in self.substitutions.items():
                 info[old] = info.get(new)
             return info

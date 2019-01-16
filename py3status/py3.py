@@ -1216,7 +1216,7 @@ class Py3:
         params=None,
         data=None,
         headers=None,
-        timeout=10,
+        timeout=None,
         auth=None,
         cookiejar=None,
     ):
