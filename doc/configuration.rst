@@ -193,14 +193,37 @@ is not reached. Either ``left`` (default), ``center``, or ``right``.
       position = 'right'
    }
 
-The following options requires ``i3bar-gaps`` and ``py3status``.
+.. note::
+    New in version 3.16
+
+The following options will work on ``i3bar`` and ``py3status``.
 
 ``urgent_background``: Specify urgent background color for modules.
-You lose urgent functionality too that can be sometimes utilized by
-container modules, e.g., frame and group.
 ``urgent_foreground``: Specify urgent foreground color for modules.
+``urgent_border``: Specify urgent border color for modules.
+
+The following options will work on ``i3bar-gaps`` and ``py3status``.
+
+``urgent_border_bottom``: Specify urgent border width for modules
+``urgent_border_left``: Specify urgent border width for modules.
+``urgent_border_right``: Specify urgent border width for modules.
+``urgent_border_top``: Specify urgent border width for modules.
+
 You lose urgent functionality too that can be sometimes utilized by
 container modules, e.g., frame and group.
+
+.. code-block:: py3status
+
+   # customize urgent
+   py3status {
+      urgent_background  = 'blue'
+      urgent_foreground = 'white'
+      urgent_border = 'red'
+      urgent_border_bottom = 1
+      urgent_border_left = 1
+      urgent_border_right = 1
+      urgent_border_top = 1
+   }
 
 
 Configuration obfuscation
