@@ -763,19 +763,15 @@ an event
     by all package managers.
 
 
-HTTP request timeout
---------------------
+Request Timeout
+--------------------------------------------------------------
 
 .. note::
     New in version 3.16
 
-You can configure the HTTP request timeout of all modules relying on HTTP
-requests (and using the ``self.py3.request`` helper) using the generic
-`request_timeout` option (defaults to ``10`` seconds).
-
-All modules are encouraged to use the ``self.py3.request`` helper, so if the
-module you use does not document a specific timeout option it means that it is
-eligible to be tuned using the `request_timeout` option.
+Request Timeout for URL request based modules can be specified in the
+module configuration. To find out if your module supports that, look for
+``self.py3.request`` in the code. Otherwise, we will use ``10``.
 
 .. code-block:: py3status
     :caption: Example
