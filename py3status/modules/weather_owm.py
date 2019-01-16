@@ -152,8 +152,6 @@ Configuration parameters:
         then the offset in minutes. If this is set, it disables the
         automatic timezone detection from the Timezone API.
         (default None)
-    request_timeout: The timeout in seconds for contacting the API's.
-        (default 10)
     thresholds: Configure temperature colors based on limits
         The numbers specified inherit the unit of the temperature as configured.
         The default below is intended for Fahrenheit. If the set value is empty
@@ -358,7 +356,6 @@ class Py3status:
     lang = "en"
     location = None
     offset_gmt = None
-    request_timeout = 10
     thresholds = THRESHOLDS
     unit_rain = "in"
     unit_snow = "in"
@@ -438,7 +435,7 @@ class Py3status:
 
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
-        req = self.py3.request(url, params=params, timeout=self.request_timeout)
+        req = self.py3.request(url, params=params)
         if req.status_code != 200:
             data = req.json()
             raise OWMException(

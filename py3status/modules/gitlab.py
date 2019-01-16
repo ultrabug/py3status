@@ -95,7 +95,6 @@ class Py3status:
         pipelines = "/pipelines"
         # url stuffs. header, timeout, dict, etc
         self.headers = {"PRIVATE-TOKEN": self.auth_token}
-        self.request_timeout = 10
         self.url = {
             "single_project": single_project,
             "merge_requests": single_project + merge_requests,
@@ -117,9 +116,7 @@ class Py3status:
 
     def _get_data(self, url):
         try:
-            return self.py3.request(
-                url, timeout=self.request_timeout, headers=self.headers
-            )
+            return self.py3.request(url, headers=self.headers)
         except self.py3.RequestException:
             return {}
 

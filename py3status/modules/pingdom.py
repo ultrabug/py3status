@@ -13,7 +13,7 @@ Configuration parameters:
     login: pingdom login (default '')
     max_latency: maximal latency before coloring the output (default 500)
     password: pingdom password (default '')
-    request_timeout: pindgom API request timeout (default 15)
+    request_timeout: pindgom API request timeout (default 10)
 
 Format placeholders:
     {pingdom} pingdom response times
@@ -52,7 +52,7 @@ class Py3status:
     login = ""
     max_latency = 500
     password = ""
-    request_timeout = 15
+    request_timeout = 10
 
     def pingdom(self):
         response = {

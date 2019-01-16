@@ -104,7 +104,6 @@ class Py3status:
             "YEN": "¥",
         }
         self.last_price = 0
-        self.request_timeout = 10
         self.url = "https://api.bitcoincharts.com/v1/markets.json"
 
     def _get_price(self, data, market, field):
@@ -119,7 +118,7 @@ class Py3status:
     def bitcoin_price(self):
         # get the data from bitcoincharts api
         try:
-            data = self.py3.request(self.url, timeout=self.request_timeout).json()
+            data = self.py3.request(self.url).json()
         except self.py3.RequestException:
             return {
                 "cached_until": self.py3.time_in(self.cache_timeout),
