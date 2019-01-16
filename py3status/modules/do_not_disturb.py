@@ -91,13 +91,15 @@ class Dunst(Notification):
 
     def toggle(self, state):
         if state:
-            self.parent.py3.command_run("pkill -SIGUSR1 dunst")  # pause
+            # pause
+            self.parent.py3.command_run("pkill -SIGUSR1 dunst")
         else:
-            if not self.parent.pause:
-                # if not in pause mode we delete all pending notifications in
-                # the queue before resuming
+            if self.parent.pause:
+                # resume
+                self.parent.py3.command_run("pkill -SIGUSR2 dunst")
+            else:
+                # delete all pending notifications and resume
                 self.parent.py3.command_run("pkill -SIGTERM dunst")
-            self.parent.py3.command_run("pkill -SIGUSR2 dunst")  # resume
 
 
 class Xfce4_notifyd(Notification):
