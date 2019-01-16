@@ -1,12 +1,20 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-# run flake8 tests first before pushing
+# run all tests first before pushing
 
 # $ git config core.hooksPath .git-hooks  # (in dir) to add hooks
 # $ git config --unset core.hooksPath  # (in dir) to remove hooks
 
+if command -v black &>/dev/null; then
+    black --diff --check --quiet py3status/ || exit 1
+    black --diff --check --quiet setup.py fastentrypoints.py || exit 1
+    black --diff --check --quiet tests/ || exit 1
+else
+    echo 'hooks/pre-push: command "black" not found, skipping black tests'
+fi
+
 if command -v pytest &>/dev/null; then
-    pytest --flake8
+    pytest --flake8 || exit 1
 else
     echo 'hooks/pre-push: command "pytest" not found, skipping flake8 tests'
 fi
