@@ -2,19 +2,15 @@
 """
 Display foreign exchange rates.
 
-The exchange rate data comes from https://www.mycurrency.net/service/rates
-
-For a list of three letter currency codes please see
-https://en.wikipedia.org/wiki/ISO_4217 NOTE: Not all listed currencies may be
-available
-
 Configuration parameters:
-    base: Base currency used for exchange rates (default 'EUR')
-    cache_timeout: How often we refresh this module in seconds (default 600)
-    format: Format of the output.  This is also where requested currencies are
-        configured. Add the currency code surrounded by curly braces and it
-        will be replaced by the current exchange rate.
-        (default '${USD} £{GBP} ¥{JPY}')
+    base: specify base currency to use for exchange rates (default 'EUR')
+    cache_timeout: refresh interval for this module (default 600)
+    format: display format for this module (default '${USD} £{GBP} ¥{JPY}')
+
+Format placeholders:
+    See https://api.exchangeratesapi.io/latest for a full list of foreign
+    exchange rates published by the European Central Bank. Not all of exchange
+    rates will be available. Also, see https://en.wikipedia.org/wiki/ISO_4217
 
 @author tobes
 @license BSD
@@ -22,8 +18,6 @@ Configuration parameters:
 SAMPLE OUTPUT
 {'full_text': u'$1.061 \xa30.884 \xa5121.538'}
 """
-
-URL = "https://www.mycurrency.net/service/rates"
 
 
 class Py3status:
@@ -36,32 +30,32 @@ class Py3status:
     format = u"${USD} £{GBP} ¥{JPY}"
 
     def post_config_hook(self):
-        self.request_timeout = 20
-        self.currencies = self.py3.get_placeholders_list(self.format)
-        # set the default precision
-        default_formats = {x: ":.3f" for x in self.currencies}
-        self.format = self.py3.update_placeholder_formats(self.format, default_formats)
-        self.rates_data = {currency: "?" for currency in self.currencies}
+        self.url = "https://api.exchangeratesapi.io/latest?base=" + self.base
+        placeholders = self.py3.get_placeholders_list(self.format)
+        formats = dict.fromkeys(placeholders, ":.3f")
+        self.format = self.py3.update_placeholder_formats(self.format, formats)
+        self.rate_data = dict.fromkeys(placeholders, "?")
+
+    def _get_exchange_rates(self):
+        try:
+            response = self.py3.request(self.url)
+        except self.py3.RequestException:
+            return {}
+        data = response.json()
+        if data:
+            data = data.get("rates", {})
+        else:
+            data = vars(response)
+            error = data.get("_error_message")
+            if error:
+                self.py3.error("{} {}".format(error, data["_status_code"]))
+        return data
 
     def exchange_rate(self):
-        try:
-            data = self.py3.request(URL, timeout=self.request_timeout).json()
-        except self.py3.RequestException:
-            data = None
-        if data:
-            rates = {}
-            for item in data:
-                rates[item["currency_code"]] = item["rate"]
-            base_rate = 1.0 / rates.get(self.base)
-            for currency in self.currencies:
-                try:
-                    rate = rates[currency] * base_rate
-                except KeyError:
-                    rate = "?"
-                self.rates_data[currency] = rate
+        self.rate_data.update(self._get_exchange_rates())
 
         return {
-            "full_text": self.py3.safe_format(self.format, self.rates_data),
+            "full_text": self.py3.safe_format(self.format, self.rate_data),
             "cached_until": self.py3.time_in(self.cache_timeout),
         }
 
