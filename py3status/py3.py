@@ -18,7 +18,7 @@ from py3status.constants import COLOR_NAMES
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
-from py3status.util import Gradiants
+from py3status.util import Gradients
 from py3status.version import version
 
 
@@ -93,7 +93,7 @@ class Py3:
 
     # Shared by all Py3 Instances
     _formatter = None
-    _gradients = Gradiants()
+    _gradients = Gradients()
     _none_color = NoneColor()
     _storage = Storage()
 
