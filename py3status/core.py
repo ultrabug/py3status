@@ -451,8 +451,6 @@ class Py3statusWrapper:
         config["gevent"] = options.gevent
         if options.include_paths:
             config["include_paths"] = options.include_paths
-        # FIXME we allow giving interval as a float and then make it an int!
-        config["interval"] = int(options.interval)
         config["log_file"] = options.log_file
         config["standalone"] = options.standalone
         config["i3status_path"] = options.i3status_path
