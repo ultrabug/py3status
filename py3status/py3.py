@@ -105,7 +105,6 @@ class Py3:
         self._english_env["LANGUAGE"] = "C"
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
-        self._is_python_2 = sys.version_info < (3, 0)
         self._module = module
         self._report_exception_cache = set()
         self._thresholds = None
@@ -430,13 +429,6 @@ class Py3:
         """
         return self._i3s_config
 
-    def is_python_2(self):
-        """
-        True if the version of python being used is 2.x
-        Can be helpful for fixing python 2 compatibility issues
-        """
-        return self._is_python_2
-
     def is_my_event(self, event):
         """
         Checks if an event triggered belongs to the module receiving it.  This
@@ -529,12 +521,6 @@ class Py3:
             title = "py3status: {}".format(module_name)
         elif isinstance(title, Composite):
             title = title.text()
-        # force unicode for python2 str
-        if self._is_python_2:
-            if isinstance(msg, str):
-                msg = msg.decode("utf-8")
-            if isinstance(title, str):
-                title = title.decode("utf-8")
         if msg:
             self._py3_wrapper.notify_user(
                 msg=msg,
@@ -993,9 +979,6 @@ class Py3:
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
-        if self._is_python_2 and isinstance(output, str):
-            output = output.decode("utf-8")
-            error = error.decode("utf-8")
         retcode = process.poll()
         if retcode:
             # under certain conditions a successfully run command may get a
@@ -1021,7 +1004,7 @@ class Py3:
         Ensure that storage is initialized.
         """
         if not self._storage.initialized:
-            self._storage.init(self._module._py3_wrapper, self._is_python_2)
+            self._storage.init(self._module._py3_wrapper)
 
     def storage_set(self, key, value):
         """

@@ -208,9 +208,6 @@ class Py3status:
         if i3pystatus is None:
             raise Exception("i3pystatus is not installed")
 
-        if self.py3.is_python_2():
-            raise Exception("Python 2 not supported by i3pystatus :(")
-
         if not self.module:
             raise Exception("No module selected")
 

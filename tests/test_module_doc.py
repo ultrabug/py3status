@@ -72,12 +72,6 @@ def docstring_params(docstring):
                 if match.group("value"):
                     try:
                         value = eval(match.group("value"))
-                        if isinstance(value, str):
-                            try:
-                                value = value.decode("utf-8")
-                            except AttributeError:
-                                # python3
-                                pass
                         try:
                             value = value.replace("&amp;", "&")
                             value = value.replace("&lt;", "<")
@@ -106,7 +100,6 @@ def get_module_attributes(path):
     """
     names = {}
     attributes = OrderedDict()
-    python2_names = {"True": True, "False": False, "None": None}
 
     def get_values(source, dest, extra=None):
         """
@@ -133,10 +126,7 @@ def get_module_attributes(path):
                 elif class_name == "List":
                     attr_value = list(map(get_value, value.elts))
                 elif class_name == "Name":
-                    # in python 2 True, False, None are Names rather than
-                    # NameConstant so we use them for the default
-                    default = python2_names.get(value.id)
-                    attr_value = extra.get(value.id, default)
+                    attr_value = extra.get(value.id)
                 elif class_name == "Tuple":
                     attr_value = tuple(map(get_value, value.elts))
                 elif class_name == "UnaryOp":

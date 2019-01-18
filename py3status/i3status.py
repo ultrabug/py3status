@@ -194,12 +194,7 @@ class I3statusModule:
     def update_time_value(self):
         date = datetime.now(self.tz)
         # set the full_text with the correctly formatted date
-        try:
-            new_value = date.strftime(self.time_format)
-        except:  # noqa e722
-            # python 2 unicode
-            new_value = date.strftime(self.time_format.encode("utf-8"))
-            new_value = new_value.decode("utf-8")
+        new_value = date.strftime(self.time_format)
         updated = self.item["full_text"] != new_value
         if updated:
             self.item["full_text"] = new_value
@@ -345,14 +340,12 @@ class I3status(Thread):
     @staticmethod
     def write_in_tmpfile(text, tmpfile):
         """
-        Write the given text in the given tmpfile in python2 and python3.
+        Write the given text in the given tmpfile in python3.
         """
         try:
             tmpfile.write(text)
         except TypeError:
             tmpfile.write(str.encode(text))
-        except UnicodeEncodeError:
-            tmpfile.write(text.encode("utf-8"))
 
     def write_tmp_i3status_config(self, tmpfile):
         """

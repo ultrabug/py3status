@@ -17,8 +17,6 @@ from py3status.py3 import NoneColor
 is_pypy = platform.python_implementation() == "PyPy"
 f = Formatter()
 
-python2 = sys.version_info < (3, 0)
-
 param_dict = {
     "name": u"Björk",
     "number": 42,
@@ -30,8 +28,8 @@ param_dict = {
     "?bad name": "evil",
     u"☂ Very bad name ": u"☂ extremely evil",
     "long_str": "I am a long string though not too long",
-    "python2_unicode": u"Björk",
-    "python2_str": "Björk",
+    "unicode": u"Björk",
+    "str": "Björk",
     "zero": 0,
     "zero_str": "0",
     "zero_float": 0.0,
@@ -87,8 +85,6 @@ def attr_getter_fn(attr):
 def run_formatter(test_dict):
     __tracebackhide__ = True
 
-    if test_dict.get("py3only") and python2:
-        return
     if not test_dict.get("pypy", True) and is_pypy:
         return
     if test_dict.get("attr_getter"):
@@ -124,8 +120,6 @@ def run_formatter(test_dict):
         result = result.get_content()
 
     expected = test_dict.get("expected")
-    if python2 and isinstance(expected, str):
-        expected = expected.decode("utf-8")
     if result != expected:
         print("Format\n{}\n".format(test_dict["format"]))
         print("Expected\n{}".format(pformat(expected)))
@@ -153,9 +147,6 @@ def update_placeholders(test_dict):
 
     result = f.update_placeholders(test_dict["format"], test_dict["updates"])
     expected = test_dict.get("expected")
-
-    if python2 and isinstance(expected, str):
-        expected = expected.decode("utf-8")
 
     if result != expected:
         print("Format\n{}\n".format(test_dict["format"]))
@@ -355,24 +346,19 @@ def test_38():
 
 
 def test_39():
-    run_formatter(
-        # python 2 unicode
-        {"format": "Hello {python2_unicode}! ☂", "expected": "Hello Björk! ☂"}
-    )
+    run_formatter({"format": "Hello {unicode}! ☂", "expected": "Hello Björk! ☂"})
 
 
 def test_40():
-    run_formatter(
-        {"format": u"Hello {python2_unicode}! ☂", "expected": "Hello Björk! ☂"}
-    )
+    run_formatter({"format": u"Hello {unicode}! ☂", "expected": "Hello Björk! ☂"})
 
 
 def test_41():
-    run_formatter({"format": "Hello {python2_str}! ☂", "expected": "Hello Björk! ☂"})
+    run_formatter({"format": "Hello {str}! ☂", "expected": "Hello Björk! ☂"})
 
 
 def test_42():
-    run_formatter({"format": u"Hello {python2_str}! ☂", "expected": "Hello Björk! ☂"})
+    run_formatter({"format": u"Hello {str}! ☂", "expected": "Hello Björk! ☂"})
 
 
 def test_43():

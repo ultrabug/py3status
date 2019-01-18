@@ -225,10 +225,7 @@ class Py3status:
             try:
                 flow = client.flow_from_clientsecrets(self.client_secret, SCOPES)
                 flow.user_agent = APPLICATION_NAME
-                if flags:
-                    credentials = tools.run_flow(flow, store, flags)
-                else:  # Needed only for compatibility with Python 2.6
-                    credentials = tools.run(flow, store)
+                credentials = tools.run_flow(flow, store, flags)
             except clientsecrets.InvalidClientSecretsError:
                 raise Exception("missing client_secret")
             """

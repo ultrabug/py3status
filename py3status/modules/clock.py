@@ -183,21 +183,8 @@ class Py3status:
         # reset the cycle time
         self._cycle_time = time() + self.cycle
 
-        # set our _fmt_strftime function depending on python version
-        if self.py3.is_python_2():
-            self._fmt_strftime = self._fmt_strftime_py2
-        else:
-            self._fmt_strftime = self._fmt_strftime_py3
-
     @staticmethod
-    def _fmt_strftime_py2(fmt, t):
-        """
-        strftime for python 2
-        """
-        return t.strftime(fmt.encode("utf-8"))
-
-    @staticmethod
-    def _fmt_strftime_py3(fmt, t):
+    def _fmt_strftime(fmt, t):
         """
         strftime for python 3
         """
