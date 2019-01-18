@@ -15,8 +15,11 @@ def parse_cli():
 
     # get i3status path
     try:
-        command = ["which", "i3status"]
-        i3status_path = subprocess.check_output(command).decode().strip()
+        with open(os.devnull, "w") as devnull:
+            command = ["which", "i3status"]
+            i3status_path = (
+                subprocess.check_output(command, stderr=devnull).decode().strip()
+            )
     except subprocess.CalledProcessError:
         i3status_path = None
 
@@ -154,6 +157,10 @@ def parse_cli():
 
         print("py3status version {} (python {})".format(version, python_version()))
         sys.exit(0)
+
+    # make it i3status if None
+    if not options.i3status_path:
+        options.i3status_path = "i3status"
 
     # all done
     return options
