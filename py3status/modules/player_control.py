@@ -42,7 +42,7 @@ try:
     import dbus
 
     dbus_available = True
-except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # (py2, assumed py3)
+except ImportError:
     dbus_available = False
 
 

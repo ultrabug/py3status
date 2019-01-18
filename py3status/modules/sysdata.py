@@ -315,8 +315,7 @@ class Py3status:
                 with open(zone) as f:
                     cpu_temp = f.readline()
                     cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
-            except (OSError, IOError, ValueError):
-                # FileNotFoundError does not exist on Python < 3.3, so we catch OSError instead
+            except (FileNotFoundError, IOError, ValueError):
                 # ValueError can be thrown if zone was a file that didn't have a float
                 # if zone was not a file, it might be a sensor!
                 cpu_temp = self._get_cputemp_with_lmsensors(zone=zone)
