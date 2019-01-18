@@ -74,7 +74,7 @@ rely on the i3bar protocol
 What you will need
 ------------------
 
-- python3/python2
+- python3
 - i3status
     - https://i3wm.org/i3status/
     - https://github.com/i3/i3status
@@ -118,7 +118,7 @@ after a reload.
 .. note::
     py3status will only be installed for the version of python that you used
     to run ``setup.py``.  To run against a different version of python
-    You should repeat the above step eg ``python2.7 setup.py develop``.
+    You should repeat the above step eg ``python3.7 setup.py develop``.
 
     If you wish to have multiple versions available. First run ``setup.py
     develop`` using the required python versions. Next copy the
@@ -127,8 +127,6 @@ after a reload.
 
 Python versions
 ---------------
-
-py3status code, including modules, should run under both python 2 and python 3.
 
 Starting with version 4.0, py3status will only run using python 3.
 
