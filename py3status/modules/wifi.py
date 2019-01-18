@@ -72,7 +72,7 @@ class Py3status:
     # available configuration parameters
     bitrate_bad = 26
     bitrate_degraded = 53
-    blocks = u"_▁▂▃▄▅▆▇█"
+    blocks = "_▁▂▃▄▅▆▇█"
     cache_timeout = 10
     device = None
     down_color = "bad"

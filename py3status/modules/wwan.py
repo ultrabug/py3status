@@ -184,12 +184,12 @@ class Py3status:
         "[{format_ipv4}[\?soft  ]{format_ipv6}]"
         "|{state_name}][ SMS {messages} [{format_message}]]"
     )
-    format_ipv4 = u"[{address}]"
-    format_ipv6 = u"[{address}]"
-    format_message = u"\?if=index<2 {number} [\?max_length=10 {text}...]"
-    format_message_separator = u" "
+    format_ipv4 = "[{address}]"
+    format_ipv6 = "[{address}]"
+    format_message = "\?if=index<2 {number} [\?max_length=10 {text}...]"
+    format_message_separator = " "
     format_notification = None
-    format_stats = u"{duration_hms}"
+    format_stats = "{duration_hms}"
     modem = None
     thresholds = [(0, "bad"), (11, "good")]
 

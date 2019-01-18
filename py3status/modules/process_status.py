@@ -38,8 +38,8 @@ class Py3status:
     cache_timeout = 10
     format = "{icon}"
     full = False
-    icon_off = u"■"
-    icon_on = u"●"
+    icon_off = "■"
+    icon_on = "●"
     process = None
 
     class Meta:

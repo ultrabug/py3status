@@ -82,7 +82,7 @@ class Py3status:
     cache_timeout = 10
     command = "xbacklight"
     device = None
-    format = u"☼: {level}%"
+    format = "☼: {level}%"
     hide_when_unavailable = False
     low_tune_threshold = 0
 

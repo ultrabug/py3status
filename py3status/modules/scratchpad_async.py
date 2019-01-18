@@ -30,7 +30,7 @@ class Py3status:
 
     # available configuration parameters
     always_show = False
-    format = u"{counter} ⌫"
+    format = "{counter} ⌫"
 
     class Meta:
         deprecated = {

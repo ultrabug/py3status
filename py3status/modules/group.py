@@ -106,9 +106,9 @@ class Py3status:
     cycle = 0
     fixed_width = False
     format = None
-    format_button_closed = u"+"
-    format_button_open = u"-"
-    format_closed = u"{button}"
+    format_button_closed = "+"
+    format_button_open = "-"
+    format_closed = "{button}"
     open = True
 
     class Meta:
@@ -129,9 +129,9 @@ class Py3status:
         # set default format etc based on click_mode
         if self.format is None:
             if self.click_mode == "button":
-                self.format = u"{output} {button}"
+                self.format = "{output} {button}"
             else:
-                self.format = u"{output}"
+                self.format = "{output}"
         # if no button then force open
         if not self.py3.format_contains(self.format, "button"):
             self.open = True

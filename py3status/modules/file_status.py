@@ -65,9 +65,9 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 10
-    format = u"\?color=path [\?if=path \u25cf|\u25a0]"
-    format_path = u"{basename}"
-    format_path_separator = u" "
+    format = "\?color=path [\?if=path \u25cf|\u25a0]"
+    format_path = "{basename}"
+    format_path_separator = " "
     paths = None
     thresholds = [(0, "bad"), (1, "good")]
 
@@ -100,9 +100,9 @@ class Py3status:
             raise Exception(STRING_NO_PATHS)
 
         # icon deprecation
-        on = getattr(self, "icon_available", u"\u25cf")
-        off = getattr(self, "icon_unavailable", u"\u25a0")
-        new_icon = u"\?color=path [\?if=path {}|{}]".format(on, off)
+        on = getattr(self, "icon_available", "\u25cf")
+        off = getattr(self, "icon_unavailable", "\u25a0")
+        new_icon = "\?color=path [\?if=path {}|{}]".format(on, off)
         self.format = self.format.replace("{icon}", new_icon)
 
         # convert str to list + expand path

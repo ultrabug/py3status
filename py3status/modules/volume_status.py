@@ -313,8 +313,8 @@ class Py3status:
     channel = None
     command = None
     device = None
-    format = u"[\?if=is_input 😮|♪]: {percentage}%"
-    format_muted = u"[\?if=is_input 😶|♪]: muted"
+    format = "[\?if=is_input 😮|♪]: {percentage}%"
+    format_muted = "[\?if=is_input 😶|♪]: muted"
     is_input = False
     max_volume = 120
     thresholds = [(0, "bad"), (20, "degraded"), (50, "good")]

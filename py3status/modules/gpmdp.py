@@ -38,7 +38,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 5
-    format = u"♫ {info}"
+    format = "♫ {info}"
 
     def gpmdp(self):
         def _run_cmd(cmd):

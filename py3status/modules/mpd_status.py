@@ -197,7 +197,7 @@ class Py3status:
             self._get_mpd(disconnect=True)
 
         if len(text) > self.max_width:
-            text = u"{}...".format(text[: self.max_width - 3])
+            text = "{}...".format(text[: self.max_width - 3])
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),

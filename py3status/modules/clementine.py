@@ -32,7 +32,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 5
-    format = u"♫ {current}"
+    format = "♫ {current}"
 
     def post_config_hook(self):
         if not self.py3.check_commands("clementine"):
@@ -65,7 +65,7 @@ class Py3status:
             internet_radio = True
 
         if artist and title:
-            now_playing = u"{} - {}".format(artist, title)
+            now_playing = "{} - {}".format(artist, title)
         elif artist:
             now_playing = artist
         elif title:

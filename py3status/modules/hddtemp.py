@@ -119,7 +119,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "{format_hdd}"
-    format_hdd = u"{name} [\?color=temperature {temperature}°{unit}]"
+    format_hdd = "{name} [\?color=temperature {temperature}°{unit}]"
     format_separator = " "
     thresholds = [
         (19, "skyblue"),

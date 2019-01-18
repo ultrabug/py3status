@@ -69,7 +69,7 @@ class Py3status:
     control_address = "127.0.0.1"
     control_password = None
     control_port = 9051
-    format = u"↑ {up} ↓ {down}"
+    format = "↑ {up} ↓ {down}"
     format_value = "[\?min_length=12 {rate:.1f} {unit}]"
     hide_socket_errors = False
     rate_unit = "B/s"

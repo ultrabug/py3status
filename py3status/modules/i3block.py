@@ -327,11 +327,11 @@ class Py3status:
 
         # blocklet label gets prepended
         if self.label:
-            block_response["full_text"] = u"{}{}".format(
+            block_response["full_text"] = "{}{}".format(
                 self.label, block_response["full_text"]
             )
             if "short_text" in block_response:
-                block_response["short_text"] = u"{}{}".format(
+                block_response["short_text"] = "{}{}".format(
                     self.label, block_response["short_text"]
                 )
 

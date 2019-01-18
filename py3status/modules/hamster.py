@@ -43,7 +43,7 @@ class Py3status:
             activity = activity.split()
             time_elapsed = activity[-1]
             activity = activity[2:-1]
-            activity = u"%s (%s)" % (" ".join(activity), time_elapsed)
+            activity = "%s (%s)" % (" ".join(activity), time_elapsed)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

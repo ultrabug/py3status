@@ -19,7 +19,7 @@ class Composite:
         self._content = content
 
     def __repr__(self):
-        return u"<Composite {}>".format(self._content)
+        return "<Composite {}>".format(self._content)
 
     def __len__(self):
         return len(self._content)

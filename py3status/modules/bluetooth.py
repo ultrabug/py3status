@@ -109,7 +109,7 @@ class Py3status:
 
         if format_prefix or format_no_conn_prefix or format_no_conn:
             # create a format that will give the expected output
-            self.format = u"[\?if=format_device {}{{format_device}}|{}{}]".format(
+            self.format = "[\?if=format_device {}{{format_device}}|{}{}]".format(
                 format_prefix or "BT: ",
                 format_no_conn_prefix or "BT: ",
                 format_no_conn or "OFF",

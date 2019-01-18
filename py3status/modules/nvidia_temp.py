@@ -42,16 +42,16 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "GPU: {format_temp}"
-    format_temp = u"{temp}°C"
+    format_temp = "{temp}°C"
     temp_separator = "|"
 
     class Meta:
         def deprecate_function(config):
             out = {}
             if "format_units" in config:
-                out["format_temp"] = u"{{temp}}{}".format(config["format_units"])
+                out["format_temp"] = "{{temp}}{}".format(config["format_units"])
             if "format_prefix" in config:
-                out["format"] = u"{}{{format_temp}}".format(config["format_prefix"])
+                out["format"] = "{}{{format_temp}}".format(config["format_prefix"])
             return out
 
         deprecated = {"function": [{"function": deprecate_function}]}

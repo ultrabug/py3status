@@ -41,8 +41,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = (
-        u"{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] "
-        u"[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]"
+        "{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] "
+        "[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]"
     )
     nic = None
     thresholds = {

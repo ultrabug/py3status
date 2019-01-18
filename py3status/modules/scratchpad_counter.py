@@ -37,7 +37,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 5
-    format = u"{counter} ⌫"
+    format = "{counter} ⌫"
     hide_when_none = False
 
     class Meta:

@@ -141,15 +141,15 @@ class Py3status:
     button_toggle = 1
     format = "{previous}{toggle}{next} {state} [{artist} - ][{title}]"
     format_none = "no player running"
-    icon_next = u"»"
-    icon_pause = u"▮"
-    icon_play = u"▶"
-    icon_previous = u"«"
-    icon_stop = u"◾"
+    icon_next = "»"
+    icon_pause = "▮"
+    icon_play = "▶"
+    icon_previous = "«"
+    icon_stop = "◾"
     player_priority = []
-    state_pause = u"▮"
-    state_play = u"▶"
-    state_stop = u"◾"
+    state_pause = "▮"
+    state_play = "▶"
+    state_stop = "◾"
 
     def post_config_hook(self):
         self._dbus = None
@@ -404,7 +404,7 @@ class Py3status:
             for p in self._mpris_players.values():
                 if not p["name"] and p["identity"] in self._mpris_names:
                     p["name"] = self._mpris_names[p["identity"]]
-                    p["full_name"] = u"{} {}".format(p["name"], p["index"])
+                    p["full_name"] = "{} {}".format(p["name"], p["index"])
 
         identity = player.Identity
         name = self._mpris_names.get(identity)
@@ -436,7 +436,7 @@ class Py3status:
             "index": index,
             "identity": identity,
             "name": name,
-            "full_name": u"{} {}".format(name, index),
+            "full_name": "{} {}".format(name, index),
             "status": status,
             "subscription": subscription,
         }

@@ -55,9 +55,9 @@ class Py3status:
     cache_timeout = 10
     debug = False
     format = "{icon}"
-    pause_icon = u"❚❚"
-    play_icon = u"▶"
-    stop_icon = u"◼"
+    pause_icon = "❚❚"
+    play_icon = "▶"
+    stop_icon = "◼"
     supported_players = "audacious,vlc"
     volume_tick = 1
 

@@ -81,7 +81,7 @@ class Py3status:
     cache_timeout = 10
     format = "{format_gpu}"
     format_gpu = (
-        u"{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] "
+        "{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] "
         "[\?color=memory.used_percent {memory.used_percent}%]"
     )
     format_gpu_separator = " "

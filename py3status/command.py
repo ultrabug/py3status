@@ -230,7 +230,7 @@ class CommandServer(threading.Thread):
                     if data:
                         data = json.loads(data.decode("utf-8"))
                         if self.debug:
-                            self.py3_wrapper.log(u"received %s" % data)
+                            self.py3_wrapper.log("received %s" % data)
                         self.command_runner.run_command(data)
                 finally:
                     # Clean up the connection
