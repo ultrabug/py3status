@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Take screenshots and upload them to a given server.
 

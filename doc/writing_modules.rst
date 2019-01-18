@@ -17,7 +17,6 @@ the status bar.
 
 .. code-block:: python
 
-    # -*- coding: utf-8 -*-
     """
     Example module that says 'Hello World!'
 

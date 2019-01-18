@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Perform a bandwidth test with speedtest-cli.
 

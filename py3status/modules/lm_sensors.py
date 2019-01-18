@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display temperatures, voltages, fans, and more from hardware sensors.
 

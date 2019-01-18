@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display output of a given script asynchronously.
 

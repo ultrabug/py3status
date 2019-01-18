@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display transfer rates of a tor instance.
 

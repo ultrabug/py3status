@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Support i3blocks blocklets in py3status.
 

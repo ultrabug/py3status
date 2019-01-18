@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display foreign exchange rates.
 

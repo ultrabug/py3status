@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display air quality polluting in a given location.
 

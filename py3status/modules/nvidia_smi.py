@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display NVIDIA properties currently exhibiting in the NVIDIA GPUs.
 

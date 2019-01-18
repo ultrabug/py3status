@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display public IP address and online status.
 

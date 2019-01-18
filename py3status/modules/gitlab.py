@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display number of issues, requests and more from a GitLab project.
 

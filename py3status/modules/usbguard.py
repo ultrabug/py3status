@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Allow or Reject newly plugged USB devices using USBGuard.
 

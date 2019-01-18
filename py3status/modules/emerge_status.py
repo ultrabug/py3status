@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display information about the currently running emerge process.
 

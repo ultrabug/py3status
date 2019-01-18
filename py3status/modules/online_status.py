@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Determine if you have an Internet Connection.
 

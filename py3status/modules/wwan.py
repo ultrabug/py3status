@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display WWANs, IP addresses, signals, properties and sms.
 

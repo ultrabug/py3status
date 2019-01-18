@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 import re
 from colorsys import rgb_to_hsv, hsv_to_rgb
 from math import modf

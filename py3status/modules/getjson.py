@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display JSON data fetched from a URL.
 

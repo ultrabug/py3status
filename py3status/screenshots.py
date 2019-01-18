@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This file is used for the generation of screenshots for py3status
 documentation.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display number of messages in various mailbox formats.
 This module supports Maildir, mbox, MH, Babyl, MMDF, and IMAP.

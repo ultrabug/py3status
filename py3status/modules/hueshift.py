@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Shift color temperature on the screen.
 

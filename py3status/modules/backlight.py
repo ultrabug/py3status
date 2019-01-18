@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Adjust screen backlight brightness.
 

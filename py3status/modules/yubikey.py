@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Show an indicator when YubiKey is waiting for a touch.
 

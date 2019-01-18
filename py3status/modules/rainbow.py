@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Add color cycling fun to your i3bar.
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display number of open tickets from GLPI.
 

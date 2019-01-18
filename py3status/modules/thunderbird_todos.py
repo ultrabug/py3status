@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display number of todos and more for Thunderbird.
 

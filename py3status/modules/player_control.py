@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Control Audacious or VLC media player.
 

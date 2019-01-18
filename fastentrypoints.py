@@ -40,7 +40,6 @@ from setuptools.command import easy_install
 import re
 
 TEMPLATE = r"""\
-# -*- coding: utf-8 -*-
 # EASY-INSTALL-ENTRY-SCRIPT: '{3}','{4}','{5}'
 __requires__ = '{3}'
 import re

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display average system load over a period of time.
 

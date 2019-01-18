@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display information about Velib Métropole stations.
 

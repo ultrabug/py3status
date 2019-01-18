@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display information about your smartphone with KDEConnector.
 

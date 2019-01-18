@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Use Pomodoro technique to get things done easily.
 

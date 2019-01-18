@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display WiFi bit rate, quality, signal and SSID using iw.
 

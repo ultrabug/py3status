@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display time spent and calculate the price of your service.
 

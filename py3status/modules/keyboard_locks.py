@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display NumLock, CapsLock, and ScrLock keys.
 

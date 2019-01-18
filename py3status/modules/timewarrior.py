@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Track your time with Timewarrior.
 

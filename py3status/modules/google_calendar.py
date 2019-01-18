@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display upcoming Google Calendar events.
 

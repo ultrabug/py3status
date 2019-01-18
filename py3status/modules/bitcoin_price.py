@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # FIXME color_index param
 """
 Display bitcoin using bitcoincharts.com.

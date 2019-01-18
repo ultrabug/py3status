@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display system RAM, SWAP and CPU utilization.
 

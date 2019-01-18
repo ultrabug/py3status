@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display if files or directories exists.
 

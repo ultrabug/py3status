@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display Github notifications and issue/pull requests for a repo.
 

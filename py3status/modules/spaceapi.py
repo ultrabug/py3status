@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display status of a given hackerspace.
 

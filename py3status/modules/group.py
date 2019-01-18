@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Group modules and switch between them.
 

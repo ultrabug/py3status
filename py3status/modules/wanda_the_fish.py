@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display a fortune-telling, swimming fish.
 

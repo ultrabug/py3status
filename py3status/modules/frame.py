@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Group modules and treat them as a single one.
 

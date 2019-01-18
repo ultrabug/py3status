@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Support i3pystatus modules in py3status.
 
