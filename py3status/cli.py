@@ -103,16 +103,6 @@ def parse_cli():
         type=str,
     )
     parser.add_argument(
-        "-n",
-        "--interval",
-        action="store",
-        default=1,
-        dest="interval",
-        help="refresh interval in seconds for py3status",
-        metavar="INT",
-        type=float,
-    )
-    parser.add_argument(
         "-s", "--standalone", action="store_true", help="run py3status without i3status"
     )
     parser.add_argument(
@@ -146,10 +136,15 @@ def parse_cli():
     parser.add_argument(
         "-v", "--version", action="store_true", help="show py3status version and exit"
     )
-    # FIXME we should make all of these explicit so they self document etc
-    parser.add_argument("cli_command", nargs="*", help=argparse.SUPPRESS)
 
-    options = parser.parse_args()
+    options, command = parser.parse_known_args()
+
+    # handle possible obsolete interval option
+    for obsolete_arg in ["-n", "--interval"]:
+        if obsolete_arg in command:
+            command.pop(command.index(obsolete_arg) + 1)
+            command.pop(command.index(obsolete_arg))
+    options.cli_command = command
 
     # only asked for version
     if options.version:
