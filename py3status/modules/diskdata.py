@@ -56,7 +56,6 @@ SAMPLE OUTPUT
 {'full_text': 'all:  34.4% ( 82.0 KiB/s)'}
 """
 
-from __future__ import division  # python2 compatibility
 from time import time
 
 

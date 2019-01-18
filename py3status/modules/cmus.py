@@ -84,8 +84,6 @@ waiting
 {'color': '#FF0000', 'full_text': '.. cmus: waiting for user input'}
 """
 
-from __future__ import division
-
 
 STRING_NOT_INSTALLED = "not installed"
 

@@ -2,34 +2,15 @@ import base64
 import json
 import socket
 
-try:
-    # Python 3
-    from urllib.error import URLError, HTTPError
-    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
-    from urllib.request import (
-        urlopen,
-        Request,
-        build_opener,
-        install_opener,
-        HTTPCookieProcessor,
-    )
-
-    IS_PYTHON_3 = True
-except ImportError:
-    # Python 2
-    from urllib import urlencode
-    from urllib2 import (
-        urlopen,
-        Request,
-        URLError,
-        HTTPError,
-        build_opener,
-        install_opener,
-        HTTPCookieProcessor,
-    )
-    from urlparse import urlsplit, urlunsplit, parse_qsl
-
-    IS_PYTHON_3 = False
+from urllib.error import URLError, HTTPError
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+from urllib.request import (
+    urlopen,
+    Request,
+    build_opener,
+    install_opener,
+    HTTPCookieProcessor,
+)
 
 from py3status.exceptions import RequestTimeout, RequestURLError, RequestInvalidJSON
 
@@ -38,7 +19,7 @@ class HttpResponse:
     """
     Simple encapsulation of a http response for a url
 
-    The aim is to support both python 2 and 3 and be a simple as possible
+    The aim is to be a simple as possible
     """
 
     def __init__(self, url, params, data, headers, timeout, auth, cookiejar):
@@ -108,10 +89,7 @@ class HttpResponse:
         try:
             return self._text
         except AttributeError:
-            if IS_PYTHON_3:
-                encoding = self._response.headers.get_content_charset("utf-8")
-            else:
-                encoding = self._response.headers.getparam("charset")
+            encoding = self._response.headers.get_content_charset("utf-8")
             self._text = self._response.read().decode(encoding or "utf-8")
         return self._text
 

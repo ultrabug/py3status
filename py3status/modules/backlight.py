@@ -43,7 +43,6 @@ SAMPLE OUTPUT
 {'full_text': u'\u263c: 100%'}
 """
 
-from __future__ import division
 import os
 
 STRING_NOT_AVAILABLE = "no available device"

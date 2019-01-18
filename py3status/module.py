@@ -12,12 +12,6 @@ from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
 
-# basestring does not exist in python3
-try:
-    basestring
-except NameError:
-    basestring = str
-
 
 class Module:
     """

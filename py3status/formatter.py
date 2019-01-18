@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 import re
-import sys
 
 from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
 
-try:
-    from urllib.parse import parse_qsl
-except ImportError:
-    from urlparse import parse_qsl
-
-
-python2 = sys.version_info < (3, 0)
+from urllib.parse import parse_qsl
 
 
 class Formatter:
@@ -46,8 +39,6 @@ class Formatter:
         Tokenizing is resource intensive so we only do it once and cache it
         """
         if format_string not in self.format_string_cache:
-            if python2 and isinstance(format_string, str):
-                format_string = format_string.decode("utf-8")
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]
@@ -214,10 +205,6 @@ class Formatter:
         param_dict, attributes of the supplied module, or provided via calls to
         the attr_getter function.
         """
-        # fix python 2 unicode issues
-        if python2 and isinstance(format_string, str):
-            format_string = format_string.decode("utf-8")
-
         if param_dict is None:
             param_dict = {}
 
@@ -251,9 +238,7 @@ class Formatter:
                 if param.text():
                     param = param.copy()
                 else:
-                    param = u""
-            elif python2 and isinstance(param, str):
-                param = param.decode("utf-8")
+                    param = ""
             return param
 
         # render our processed format
@@ -624,20 +609,14 @@ class Block:
                 or getattr(module.py3, color_name.upper(), None)
             )
 
-        text = u""
+        text = ""
         out = []
         if isinstance(output, str):
             output = [output]
 
         # merge as much output as we can.
         # we need to convert values to unicode for concatination.
-        if python2:
-            conversion = unicode  # noqa
-            convertables = (str, bool, int, float, unicode)  # noqa
-        else:
-            conversion = str
-            convertables = (str, bool, int, float, bytes)
-
+        convertables = (str, bool, int, float, bytes)
         first = True
         last_block = None
         for index, item in enumerate(output):
@@ -645,7 +624,7 @@ class Block:
             if not is_block and item:
                 last_block = None
             if isinstance(item, convertables) or item is None:
-                text += conversion(item)
+                text += str(item)
                 continue
             elif text:
                 if not first and (text == "" or out and out[-1].get("color") == color):

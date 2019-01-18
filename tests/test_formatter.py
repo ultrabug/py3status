@@ -1360,9 +1360,6 @@ def test_update_placeholders_5():
 
 
 if __name__ == "__main__":
-    # run tests
-    import sys
-
     this_module = sys.modules[__name__]
     for x in range(10):
         for name in dir(this_module):

@@ -56,7 +56,7 @@ SAMPLE OUTPUT
 ]
 """
 
-from __future__ import division
+
 from os import getloadavg
 
 import re

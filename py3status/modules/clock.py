@@ -87,7 +87,7 @@ SAMPLE OUTPUT
 london
 {'full_text': 'Thursday Feb 23 1:42 AM London'}
 """
-from __future__ import division
+
 
 import re
 from datetime import datetime

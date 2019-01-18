@@ -1,8 +1,5 @@
-from __future__ import with_statement
-
 import os
 
-from collections import Iterable, Mapping
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
 from time import time

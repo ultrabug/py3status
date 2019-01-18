@@ -7,12 +7,7 @@ from json import loads
 
 from py3status.profiling import profile
 
-try:
-    # Python 3
-    from shlex import quote as shell_quote
-except ImportError:
-    # Python 2
-    from pipes import quote as shell_quote
+from shlex import quote as shell_quote
 
 
 class IOPoller:
@@ -113,7 +108,7 @@ class Events(Thread):
         module_info = self.py3_wrapper.output_modules.get(module_name)
         if module_info:
             output = module_info["module"].get_latest()
-            full_text = u"".join([out["full_text"] for out in output])
+            full_text = "".join([out["full_text"] for out in output])
 
             partial = None
             if index is not None:

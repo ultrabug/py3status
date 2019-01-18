@@ -1,5 +1,3 @@
-from __future__ import division
-
 import collections
 import os
 import sys
@@ -26,12 +24,6 @@ PY3_CACHE_FOREVER = -1
 PY3_LOG_ERROR = "error"
 PY3_LOG_INFO = "info"
 PY3_LOG_WARNING = "warning"
-
-# basestring does not exist in python3
-try:
-    basestring
-except NameError:
-    basestring = str
 
 
 class ModuleErrorException(Exception):
@@ -707,7 +699,7 @@ class Py3:
             return []
         if not getattr(self._py3status_module, "thresholds", None):
             return []
-        if isinstance(format_strings, basestring):
+        if isinstance(format_strings, str):
             format_strings = [format_strings]
         names = set()
         for string in format_strings:
@@ -932,7 +924,7 @@ class Py3:
         """
         # if a string is passed then convert it to a list.  This prevents an
         # easy mistake that could be made
-        if isinstance(cmd_list, basestring):
+        if isinstance(cmd_list, str):
             cmd_list = [cmd_list]
 
         for cmd in cmd_list:
@@ -947,13 +939,13 @@ class Py3:
         An Exception is raised if an error occurs
         """
         # convert the command to sequence if a string
-        if isinstance(command, basestring):
+        if isinstance(command, str):
             command = shlex.split(command)
         try:
             return Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True).wait()
         except Exception as e:
             # make a pretty command for error loggings and...
-            if isinstance(command, basestring):
+            if isinstance(command, str):
                 pretty_cmd = command
             else:
                 pretty_cmd = " ".join(command)
@@ -975,12 +967,12 @@ class Py3:
         A CommandError is raised if an error occurs
         """
         # make a pretty command for error loggings and...
-        if isinstance(command, basestring):
+        if isinstance(command, str):
             pretty_cmd = command
         else:
             pretty_cmd = " ".join(command)
         # convert the non-shell command to sequence if it is a string
-        if not shell and isinstance(command, basestring):
+        if not shell and isinstance(command, str):
             command = shlex.split(command)
 
         stderr = STDOUT if capture_stderr else PIPE
@@ -1162,7 +1154,7 @@ class Py3:
         # skip on empty thresholds/values
         if not thresholds or value in [None, ""]:
             pass
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             # string
             for threshold in thresholds:
                 if value == threshold[0]:

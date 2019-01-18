@@ -11,7 +11,6 @@ outside of pythons standard library there are the following requirements:
 PIL may work if installed but is not supported.
 """
 
-from __future__ import division
 
 import ast
 import os

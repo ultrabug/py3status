@@ -46,8 +46,6 @@ SAMPLE OUTPUT
 {'full_text': '826.4 mb'}
 """
 
-from __future__ import division  # python2 compatibility
-
 STRING_NOT_INSTALLED = "not installed"
 STRING_INVALID_TYPE = "invalid statistics_type"
 
