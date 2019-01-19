@@ -21,8 +21,6 @@ Color options:
 
 Requires:
     PyMySQL: https://pypi.org/project/PyMySQL/
-        or
-    MySQL-python: https://pypi.org/project/MySQL-python/
 
 It features thresholds to colorize the output and forces a low timeout to
 limit the impact of a server connectivity problem on your i3bar freshness.
@@ -33,10 +31,7 @@ SAMPLE OUTPUT
 {'full_text': 'general: 24'}
 """
 
-try:
-    import pymysql as mysql
-except ImportError:
-    import MySQLdb as mysql
+import pymysql as mysql
 
 
 class Py3status:

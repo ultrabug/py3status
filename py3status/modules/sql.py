@@ -27,7 +27,7 @@ Color thresholds:
 
 Requires:
     mariadb: fast sql database server, drop-in replacement for mysql
-    mysql-python: mysql support for python
+    pymysql: mysql support for python
     sqlite: a c library that implements an sql database engine
 
 Examples:
@@ -35,15 +35,15 @@ Examples:
 # specify database name to import
 sql {
     database = 'sqlite3'  # from sqlite3 import connect
-    database = 'MySQLdb'  # from MySQLdb import connect
+    database = 'pymysql'  # from pymysql import connect
     database = '...'      # from ... import connect
 }
 
 # specify connection parameters to use
-http://mysql-python.sourceforge.net/MySQLdb.html#functions-and-attributes
+https://pymysql.readthedocs.io/en/latest/modules/connections.html
 https://docs.python.org/3/library/sqlite3.html#module-functions-and-constants
 sql {
-    name = 'MySQLdb'
+    name = 'pymysql'
     format = '{host} {passd} ...'
     parameters = {
         'host': 'host',
@@ -59,9 +59,9 @@ sql {
     query = '...'
 }
 
-# display number of seconds behind master with MySQLdb
+# display number of seconds behind master with pymysql
 sql {
-    database = 'MySQLdb'
+    database = 'pymysql'
     format_row = '\?color=seconds_behind_master {host} is '
     format_row += '[{seconds_behind_master}s behind|\?show master]'
     parameters = {

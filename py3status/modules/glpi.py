@@ -23,7 +23,7 @@ Color options:
     color_degraded: Open ticket above warning threshold
 
 Requires:
-    MySQL-python: https://pypi.org/project/MySQL-python/
+    PyMySQL: https://pypi.org/project/PyMySQL/
 
 @author ultrabug
 
@@ -31,7 +31,7 @@ SAMPLE OUTPUT
 {'full_text': '53 tickets'}
 """
 
-import MySQLdb
+import pymysql as mysql
 
 
 class Py3status:
@@ -52,7 +52,7 @@ class Py3status:
     def glpi(self):
         response = {"full_text": ""}
 
-        mydb = MySQLdb.connect(
+        mydb = mysql.connect(
             host=self.host,
             user=self.user,
             passwd=self.password,
