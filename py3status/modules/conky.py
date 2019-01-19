@@ -16,7 +16,7 @@ Format placeholders:
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
-         Replace delimiters (i.e. spaces) with periods.
+         Replace spaces with periods.
 
 Examples:
 ```
@@ -349,14 +349,13 @@ class Py3status:
             raise Exception(STRING_MISSING_FORMAT)
 
         # placeholders
-        self.delimiter = getattr(self, "delimiter", ".")
         placeholders = self.py3.get_placeholders_list(self.format)
-        _placeholders = [x.replace(self.delimiter, " ") for x in placeholders]
+        _placeholders = [x.replace(".", " ") for x in placeholders]
         colors = self.py3.get_color_names_list(self.format)
         _colors = []
         for color in colors:
             if not getattr(self, "color_{}".format(color), None):
-                _colors.append(color.replace(self.delimiter, " "))
+                _colors.append(color.replace(".", " "))
         self.placeholders = placeholders + colors
         conky_placeholders = _placeholders + _colors
 
@@ -366,19 +365,17 @@ class Py3status:
         self.config.update({"out_to_x": False, "out_to_console": True})
         self.separator = "|SEPARATOR|"  # must be upper
 
-        # make an output. TODO: make a better lua->python conversion
+        # make an output.
         config = dumps(self.config, separators=(",", "=")).replace('"', "")
         text = self.separator.join(["${%s}" % x for x in conky_placeholders])
         tmp = "conky.config = {}\nconky.text = [[{}]]".format(config, text)
 
-        # write tmp output to '/tmp/py3status-conky_*'
+        # write tmp output to '/tmp/py3status-conky_*', make a command
         self.tmpfile = NamedTemporaryFile(
             prefix="py3status_conky-", suffix=".conf", delete=False
         )
         self.tmpfile.write(tmp if self.py3.is_python_2() else str.encode(tmp))
         self.tmpfile.close()
-
-        # make a command
         self.conky_command = "conky -c {}".format(self.tmpfile.name).split()
 
         # thread
@@ -391,8 +388,7 @@ class Py3status:
 
     def _cleanup(self):
         self.process.kill()
-        if getattr(self, "cleanup", True):
-            os_remove(self.tmpfile.name)
+        os_remove(self.tmpfile.name)
         self.py3.update()
 
     def _start_loop(self):
@@ -400,7 +396,6 @@ class Py3status:
             self.process = Popen(self.conky_command, stdout=PIPE, stderr=STDOUT)
             while True:
                 line = self.process.stdout.readline().decode()
-                # TODO: optional pipe separator?
                 if self.process.poll() is not None or "conky:" in line:
                     raise Exception(line)
                 if self.line != line:
@@ -423,7 +418,7 @@ class Py3status:
                 try:
                     conky_data[self.cache_names[k]] = conky_data[k]
                 except KeyError:
-                    self.cache_names[k] = k.replace(" ", self.delimiter)
+                    self.cache_names[k] = k.replace(" ", ".")
                     conky_data[self.cache_names[k]] = conky_data[k]
 
             for x in self.thresholds_init:
