@@ -2,6 +2,7 @@ import collections
 import os
 import sys
 import shlex
+import shutil
 
 from copy import deepcopy
 from fnmatch import fnmatch
@@ -914,7 +915,7 @@ class Py3:
             cmd_list = [cmd_list]
 
         for cmd in cmd_list:
-            if self.command_run("which {}".format(cmd)) == 0:
+            if shutil.which(cmd):
                 return cmd
 
     def command_run(self, command):
