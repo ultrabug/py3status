@@ -58,6 +58,7 @@ class Module:
         self.terminated = False
         self.testing = self.config.get("testing")
         self.urgent = False
+        self.i3bar_gaps_urgent_options = {}
 
         # create a nice name for the module that matches what the module is
         # called in the user config
@@ -468,14 +469,6 @@ class Module:
             if hasattr(item.get("color"), "none_setting"):
                 del item["color"]
 
-            # remove urgent if not allowed
-            if not self.allow_urgent:
-                if "urgent" in item:
-                    del item["urgent"]
-            # if urgent we want to set this to all parts
-            elif urgent and "urgent" not in item:
-                item["urgent"] = urgent
-
             # set background and border colors. set left/right border widths
             # only on first/last composites and no border width for inner
             # composites or we will see border lines between composites.
@@ -486,6 +479,29 @@ class Module:
                     item[key] = 0
                 else:
                     item[key] = value
+
+            # set urgent based on available user-defined settings
+            if not self.allow_urgent:
+                if "urgent" in item:
+                    del item["urgent"]
+            elif urgent:
+                if self.i3bar_gaps_urgent_options:
+                    # set background and border colors. set left/right border widths
+                    # only on first/last composites and no border width for inner
+                    # composites or we will see border lines between composites.
+                    for key, value in self.i3bar_gaps_urgent_options.items():
+                        if (key == "border_left" and index != 0) or (
+                            key == "border_right" and index != composite_length
+                        ):
+                            item[key] = 0
+                        elif key == "foreground":
+                            item["color"] = value
+                        else:
+                            item[key] = value
+                    if "urgent" in item:
+                        del item["urgent"]
+                else:
+                    item["urgent"] = urgent
 
         # set min_length
         if "min_length" in self.py3status_module_options:
@@ -743,6 +759,48 @@ class Module:
             if hasattr(param, "none_setting"):
                 param = True
             self.allow_urgent = param
+
+            # urgent background
+            urgent_background = fn(self.module_full_name, "urgent_background")
+            if not hasattr(urgent_background, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_background)
+                if not color:
+                    err = "Invalid `urgent_background` attribute, should be "
+                    err += "a color. Got `{}`.".format(urgent_background)
+                    raise ValueError(err)
+                self.i3bar_gaps_urgent_options["background"] = color
+
+            # urgent foreground
+            urgent_foreground = fn(self.module_full_name, "urgent_foreground")
+            if not hasattr(urgent_foreground, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_foreground)
+                if not color:
+                    err = "Invalid `urgent_foreground` attribute, should be "
+                    err += "a color. Got `{}`.".format(urgent_foreground)
+                    raise ValueError(err)
+                self.i3bar_gaps_urgent_options["foreground"] = color
+
+            # urgent urgent_borders
+            urgent_border = fn(self.module_full_name, "urgent_border")
+            if not hasattr(urgent_border, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_border)
+                if not color:
+                    err = "Invalid `urgent_border` attribute, should be a color. "
+                    err += "Got `{}`.".format(urgent_border)
+                    raise ValueError(err)
+                self.i3bar_gaps_urgent_options["border"] = color
+
+                urgent_borders = ["top", "right", "bottom", "left"]
+                for name in ["urgent_border_" + x for x in urgent_borders]:
+                    param = fn(self.module_full_name, name)
+                    if hasattr(param, "none_setting"):
+                        param = 1
+                    elif not isinstance(param, int):
+                        err = "Invalid `{}` attribute, ".format(name)
+                        err += "should be an int. "
+                        err += "Got `{}`.".format(param)
+                        raise TypeError(err)
+                    self.i3bar_gaps_urgent_options[name[7:]] = param
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):
