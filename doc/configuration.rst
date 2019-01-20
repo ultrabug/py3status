@@ -41,7 +41,6 @@ For example you could insert and load the ``imap`` module like this:
     order += "time"
 
 
-
 Configuring a py3status module
 ------------------------------
 
@@ -61,6 +60,7 @@ Your py3status modules are configured the exact same way as i3status modules, di
         user = 'mylogin'
         on_click 1 = "exec thunderbird"
     }
+
 
 py3status configuration section
 -------------------------------
@@ -132,9 +132,9 @@ Store per config cache in different directories.
 
 You can specify the following options in module configuration.
 
- ``min_length``: Specify a minimum length (of characters) for modules.
- ``position``: Specify how modules should be positioned when the ``min_length``
- is not reached. Either ``left`` (default), ``center``, or ``right``.
+``min_length``: Specify a minimum length of characters for modules.
+``position``: Specify how modules should be positioned when the ``min_length``
+is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
 
@@ -142,6 +142,56 @@ You can specify the following options in module configuration.
         min_length = 15
         position = 'center'
     }
+
+.. note::
+    New in version 3.16
+
+You can specify the options in module or py3status configuration section.
+
+The following options will work on ``i3``.
+
+``align``: Specify how modules should be aligned when the ``min_width``
+is not reached. Either ``left`` (default), ``center``, or ``right``.
+``background``: Specify a background color for py3status modules.
+``markup``: Specify how modules should be parsed.
+``min_width``: Specify a minimum width of pixels for modules.
+``separator``: Specify a separator boolean for modules.
+``separator_block_width``: Specify a separator block width for modules.
+
+The following options will work on ``i3-gaps``.
+
+``border``: Specify a border color for modules.
+``border_bottom``: Specify a border width for modules
+``border_left``: Specify a border width for modules.
+``border_right``: Specify a border width for modules.
+``border_top``: Specify a border width for modules.
+
+The following options will work on ``py3status``.
+
+``min_length``: Specify a minimum length of characters for modules.
+``position``: Specify how modules should be positioned when the ``min_length``
+is not reached. Either ``left`` (default), ``center``, or ``right``.
+
+.. code-block:: py3status
+
+   # customize a theme
+   py3status {
+      align = 'left'
+      markup = 'pango'
+      min_width = 20
+      separator = True
+      separator_block_width = 9
+
+      background = '#285577'
+      border = '#4c7899'
+      border_bottom = 1
+      border_left = 1
+      border_right = 1
+      border_top = 1
+
+      min_length = 15
+      position = 'right'
+   }
 
 Configuration obfuscation
 -------------------------
