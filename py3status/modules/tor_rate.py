@@ -15,6 +15,7 @@ Configuration parameters:
         (default "↑ {up} ↓ {down}")
     format_value: A string describing how to format the transfer rates
         (default "[\?min_length=12 {rate:.1f} {unit}]")
+    hide_if_not_running: Hide socket error if not running (default False)
     rate_unit: The unit to use for the transfer rates
         (default "B/s")
     si_units: A boolean value selecting whether or not to use SI units
@@ -72,6 +73,7 @@ class Py3status:
     control_port = 9051
     format = u"↑ {up} ↓ {down}"
     format_value = "[\?min_length=12 {rate:.1f} {unit}]"
+    hide_if_not_running = False
     rate_unit = "B/s"
     si_units = False
 
@@ -89,7 +91,8 @@ class Py3status:
             except ProtocolError:
                 text = ERROR_PROTOCOL
             except SocketError:
-                text = ERROR_CONNECTION
+                if not self.hide_if_not_running:
+                    text = ERROR_CONNECTION
             except AuthenticationFailure:
                 text = ERROR_AUTHENTICATION
                 self._auth_failure = True
@@ -99,6 +102,13 @@ class Py3status:
             text = self.py3.safe_format(self.format, self._get_rates())
 
         return {"cached_until": self.py3.time_in(self.cache_timeout), "full_text": text}
+
+    def _is_running(self):
+        try:
+            self.py3.command_output(["pgrep", "tor"])
+            return True
+        except self.py3.CommandError:
+            return False
 
     def _get_rates(self):
         up, up_unit = self.py3.format_units(
