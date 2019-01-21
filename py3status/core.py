@@ -7,7 +7,6 @@ import time
 
 from collections import deque
 from json import dumps
-from platform import python_version
 from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
@@ -25,7 +24,6 @@ from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
-from py3status.version import version
 
 LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
 
@@ -265,7 +263,7 @@ class Py3statusWrapper:
         """
         Useful variables we'll need.
         """
-        self.config = {}
+        self.config = vars(options)
         self.i3bar_running = True
         self.last_refresh_ts = time.time()
         self.lock = Event()
@@ -420,46 +418,6 @@ class Py3statusWrapper:
         if self.timeout_due is not None:
             return self.timeout_due - time.time()
 
-    def get_config(self):
-        """
-        Create the py3status based on command line options we received.
-        """
-        # get home path
-        home_path = os.path.expanduser("~")
-
-        # defaults
-        config = {"minimum_interval": 0.1}  # minimum module update interval
-
-        # include path to search for user modules
-        config["include_paths"] = [
-            "{}/.i3/py3status/".format(home_path),
-            "{}/.config/i3/py3status/".format(home_path),
-            "{}/i3status/py3status".format(
-                os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
-            ),
-            "{}/i3/py3status".format(
-                os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
-            ),
-        ]
-        config["version"] = version
-
-        # override configuration and helper variables
-        options = self.options
-        config["cache_timeout"] = options.cache_timeout
-        config["debug"] = options.debug
-        config["dbus_notify"] = options.dbus_notify
-        config["gevent"] = options.gevent
-        if options.include_paths:
-            config["include_paths"] = options.include_paths
-        config["log_file"] = options.log_file
-        config["standalone"] = options.standalone
-        config["i3status_path"] = options.i3status_path
-        config["i3status_config_path"] = options.i3status_conf
-        config["disable_click_events"] = options.disable_click_events
-        if options.cli_command:
-            config["cli_command"] = options.cli_command
-        return config
-
     def gevent_monkey_patch_report(self):
         """
         Report effective gevent monkey patching on the logs.
@@ -552,21 +510,15 @@ class Py3statusWrapper:
         # SIGCONT indicates output should be resumed.
         signal(SIGCONT, self.i3bar_start)
 
-        # update configuration
-        self.config.update(self.get_config())
-
+        # handle cli command
         if self.config.get("cli_command"):
             self.handle_cli_command(self.config)
             sys.exit()
 
-        # logging functionality now available
         # log py3status and python versions
         self.log("=" * 8)
-        self.log(
-            "Starting py3status version {} python {}".format(
-                self.config["version"], python_version()
-            )
-        )
+        msg = "Starting py3status version {version} python {python_version}"
+        self.log(msg.format(**self.config))
 
         try:
             # if running from git then log the branch and last commit
@@ -1016,7 +968,7 @@ class Py3statusWrapper:
         # start our output
         header = {
             "version": 1,
-            "click_events": not self.config["disable_click_events"],
+            "click_events": self.config["click_events"],
             "stop_signal": SIGTSTP,
         }
         write(dumps(header))

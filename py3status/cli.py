@@ -2,16 +2,18 @@ import argparse
 import os
 import subprocess
 
+from platform import python_version
+from py3status.version import version
+
 
 def parse_cli():
     """
     Parse the command line arguments
     """
-
-    # FIXME do we really want to do this here?
-
-    # get home path
+    # get config paths
     home_path = os.path.expanduser("~")
+    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
+    xdg_dirs_path = os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")
 
     # get i3status path
     try:
@@ -27,12 +29,10 @@ def parse_cli():
     # respect i3status' file detection order wrt issue #43
     i3status_config_file_candidates = [
         "{}/.i3status.conf".format(home_path),
-        "{}/i3status/config".format(
-            os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
-        ),
+        "{}/i3status/config".format(xdg_home_path),
         "{}/.config/i3/i3status.conf".format(home_path),
         "{}/.i3/i3status.conf".format(home_path),
-        "{}/i3status/config".format(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")),
+        "{}/i3status/config".format(xdg_dirs_path),
         "/etc/i3status.conf",
     ]
     for fn in i3status_config_file_candidates:
@@ -40,9 +40,8 @@ def parse_cli():
             i3status_config_file_default = fn
             break
     else:
-        # if none of the default files exists, we will default
-        # to ~/.i3/i3status.conf
-        i3status_config_file_default = "{}/.i3/i3status.conf".format(home_path)
+        # if files does not exists, defaults to ~/.i3/i3status.conf
+        i3status_config_file_default = i3status_config_file_candidates[3]
 
     class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         def _format_action_invocation(self, action):
@@ -59,7 +58,6 @@ def parse_cli():
         "-b",
         "--dbus-notify",
         action="store_true",
-        default=False,
         dest="dbus_notify",
         help="send notifications via dbus instead of i3-nagbar",
     )
@@ -68,7 +66,7 @@ def parse_cli():
         "--config",
         action="store",
         default=i3status_config_file_default,
-        dest="i3status_conf",
+        dest="i3status_config_path",
         help="load config (default %(default)s)",
         metavar="FILE",
         type=str,
@@ -83,7 +81,6 @@ def parse_cli():
         "-g",
         "--gevent",
         action="store_true",
-        default=False,
         dest="gevent",
         help="enable gevent monkey patching",
     )
@@ -99,14 +96,17 @@ def parse_cli():
         "-l",
         "--log-file",
         action="store",
-        default=None,
         dest="log_file",
         help="enable logging to FILE",
         metavar="FILE",
         type=str,
     )
     parser.add_argument(
-        "-s", "--standalone", action="store_true", help="run py3status without i3status"
+        "-s",
+        "--standalone",
+        action="store_true",
+        dest="standalone",
+        help="run py3status without i3status",
     )
     parser.add_argument(
         "-t",
@@ -122,7 +122,6 @@ def parse_cli():
         "-m",
         "--disable-click-events",
         action="store_true",
-        default=False,
         dest="disable_click_events",
         help="disable all click events",
     )
@@ -137,10 +136,23 @@ def parse_cli():
         type=str,
     )
     parser.add_argument(
-        "-v", "--version", action="store_true", help="show py3status version and exit"
+        "-v",
+        "--version",
+        action="store_true",
+        dest="print_version",
+        help="show py3status version and exit",
     )
 
+    # parse options, command, etc
     options, command = parser.parse_known_args()
+
+    # make versions
+    options.python_version = python_version()
+    options.version = version
+    if options.print_version:
+        msg = "py3status version {version} (python {python_version})"
+        print(msg.format(**vars(options)))
+        parser.exit()
 
     # handle possible obsolete interval option
     for obsolete_arg in ["-n", "--interval"]:
@@ -149,18 +161,23 @@ def parse_cli():
             command.pop(command.index(obsolete_arg))
     options.cli_command = command
 
-    # only asked for version
-    if options.version:
-        import sys
-        from platform import python_version
-        from py3status.version import version
-
-        print("py3status version {} (python {})".format(version, python_version()))
-        sys.exit(0)
+    # defaults
+    del options.print_version
+    options.minimum_interval = 0.1  # minimum module update interval
+    options.click_events = not options.__dict__.pop("disable_click_events")
 
     # make it i3status if None
     if not options.i3status_path:
         options.i3status_path = "i3status"
+
+    # make include path to search for user modules if None
+    if not options.include_paths:
+        options.include_paths = [
+            "{}/.i3/py3status/".format(home_path),
+            "{}/.config/i3/py3status/".format(home_path),
+            "{}/i3status/py3status".format(xdg_home_path),
+            "{}/i3/py3status".format(xdg_home_path),
+        ]
 
     # all done
     return options
