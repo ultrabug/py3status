@@ -15,7 +15,8 @@ Configuration parameters:
         (default "↑ {up} ↓ {down}")
     format_value: A string describing how to format the transfer rates
         (default "[\?min_length=12 {rate:.1f} {unit}]")
-    hide_if_not_running: Hide socket error if not running (default False)
+    hide_socket_errors: Hide errors connecting to Tor control socket
+        (default False)
     rate_unit: The unit to use for the transfer rates
         (default "B/s")
     si_units: A boolean value selecting whether or not to use SI units
@@ -73,7 +74,7 @@ class Py3status:
     control_port = 9051
     format = u"↑ {up} ↓ {down}"
     format_value = "[\?min_length=12 {rate:.1f} {unit}]"
-    hide_if_not_running = False
+    hide_socket_errors = False
     rate_unit = "B/s"
     si_units = False
 
@@ -91,7 +92,7 @@ class Py3status:
             except ProtocolError:
                 text = ERROR_PROTOCOL
             except SocketError:
-                if not self.hide_if_not_running:
+                if not self.hide_socket_errors:
                     text = ERROR_CONNECTION
             except AuthenticationFailure:
                 text = ERROR_AUTHENTICATION
@@ -101,29 +102,27 @@ class Py3status:
         else:
             text = self.py3.safe_format(self.format, self._get_rates())
 
-        return {"cached_until": self.py3.time_in(self.cache_timeout), "full_text": text}
-
-    def _is_running(self):
-        try:
-            self.py3.command_output(["pgrep", "tor"])
-            return True
-        except self.py3.CommandError:
-            return False
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": text
+        }
 
     def _get_rates(self):
         up, up_unit = self.py3.format_units(
-            self._up, unit=self.rate_unit, si=self.si_units
-        )
+            self._up, unit=self.rate_unit, si=self.si_units)
         down, down_unit = self.py3.format_units(
-            self._down, unit=self.rate_unit, si=self.si_units
-        )
+            self._down, unit=self.rate_unit, si=self.si_units)
         return {
-            "up": self.py3.safe_format(
-                self.format_value, {"rate": up, "unit": up_unit}
-            ),
-            "down": self.py3.safe_format(
-                self.format_value, {"rate": down, "unit": down_unit}
-            ),
+            "up":
+            self.py3.safe_format(self.format_value, {
+                "rate": up,
+                "unit": up_unit
+            }),
+            "down":
+            self.py3.safe_format(self.format_value, {
+                "rate": down,
+                "unit": down_unit
+            }),
         }
 
     def _handle_event(self, event):
@@ -132,11 +131,11 @@ class Py3status:
 
     def _register_event_handler(self):
         self._control = Controller.from_port(
-            address=self.control_address, port=self.control_port
-        )
+            address=self.control_address, port=self.control_port)
         if self.control_password:
             self._control.authenticate(password=self.control_password)
-        self._control.add_event_listener(lambda e: self._handle_event(e), EventType.BW)
+        self._control.add_event_listener(lambda e: self._handle_event(e),
+                                         EventType.BW)
         self._handler_active = True
 
 
