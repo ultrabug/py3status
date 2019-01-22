@@ -208,6 +208,8 @@ is not reached. Either ``left`` (default), ``center``, or ``right``.
 .. note::
     New in version 3.16
 
+You can specify the options in module or py3status configuration section.
+
 The following options will work on ``i3bar`` and ``py3status``.
 
 - ``urgent_background``: Specify urgent background color for modules.
@@ -237,6 +239,54 @@ container modules, e.g., frame and group.
       urgent_border_top = 1
    }
 
+.. note::
+    New in version 3.20
+
+You can specify the options in module or py3status configuration section.
+
+``resources``: Specify a list of 3-tuples, e.g., ``[(option, resource, fallback)]``,
+to import resources.
+
+.. code-block:: py3status
+
+   # import resources
+   py3status {
+      resources = [
+          ('color_bad', '*color9', 'lightcoral'),
+          ('color_good', '*color10', 'lightgreen'),
+          ('color_degraded', '*color11', 'khaki'),
+          ('nagbar_font', 'py3status.font', 'pango:Ubuntu Mono 12'),
+      ]
+   }
+
+.. code-block:: py3status
+
+   # import 16 colors
+   py3status {
+      resources = [
+          ('color_color0', '*color0', 'black'),
+          ('color_color1', '*color1', 'black'),
+          ('color_color2', '*color2', 'black'),
+          ('color_color3', '*color3', 'black'),
+          ('color_color4', '*color4', 'black'),
+          ('color_color5', '*color5', 'black'),
+          ('color_color6', '*color6', 'black'),
+          ('color_color7', '*color7', 'black'),
+          ('color_color8', '*color8', 'black'),
+          ('color_color9', '*color9', 'black'),
+          ('color_color10', '*color10', 'black'),
+          ('color_color11', '*color11', 'black'),
+          ('color_color12', '*color12', 'black'),
+          ('color_color13', '*color13', 'black'),
+          ('color_color14', '*color14', 'black'),
+          ('color_color15', '*color15', 'black'),
+      ]
+   }
+
+   # apply colors
+   coin_market {
+       thresholds = [(-100, "color9"), (0, "color10")]
+   }
 
 Configuration obfuscation
 -------------------------
