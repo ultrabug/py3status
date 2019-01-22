@@ -15,6 +15,8 @@ Configuration parameters:
         (default "↑ {up} ↓ {down}")
     format_value: A string describing how to format the transfer rates
         (default "[\?min_length=12 {rate:.1f} {unit}]")
+    hide_socket_errors: Hide errors connecting to Tor control socket
+        (default False)
     rate_unit: The unit to use for the transfer rates
         (default "B/s")
     si_units: A boolean value selecting whether or not to use SI units
@@ -72,6 +74,7 @@ class Py3status:
     control_port = 9051
     format = u"↑ {up} ↓ {down}"
     format_value = "[\?min_length=12 {rate:.1f} {unit}]"
+    hide_socket_errors = False
     rate_unit = "B/s"
     si_units = False
 
@@ -89,7 +92,8 @@ class Py3status:
             except ProtocolError:
                 text = ERROR_PROTOCOL
             except SocketError:
-                text = ERROR_CONNECTION
+                if not self.hide_socket_errors:
+                    text = ERROR_CONNECTION
             except AuthenticationFailure:
                 text = ERROR_AUTHENTICATION
                 self._auth_failure = True
