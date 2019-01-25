@@ -160,7 +160,7 @@ class Py3status:
     def _disconnect(self):
         try:
             if self.connection is not None:
-                if self.connection.state is "SELECTED":
+                if self.connection.state == "SELECTED":
                     self.connection.close()
                 self.connection.logout()
         except:  # noqa e722
@@ -235,7 +235,7 @@ class Py3status:
             while True:
                 if self.connection is None:
                     self._connect()
-                if self.connection.state is "NONAUTH":
+                if self.connection.state == "NONAUTH":
                     self.connection.login(self.user, self.password)
 
                 tmp_mail_count = 0
