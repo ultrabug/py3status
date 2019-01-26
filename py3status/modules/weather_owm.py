@@ -313,10 +313,6 @@ THRESHOLDS_NAMES = set([THRESHOLDS_ALL, "current", "min", "max"])
 THRESHOLDS = {"all": [(-100, "#0FF"), (0, "#00F"), (50, "#0F0"), (150, "#FF0")]}
 
 
-class OWMException(Exception):
-    pass
-
-
 class Py3status:
     """
     """
@@ -404,7 +400,7 @@ class Py3status:
     def post_config_hook(self):
         # Verify the API key
         if self.api_key is None:
-            raise OWMException(
+            raise Exception(
                 "API Key for OpenWeatherMap cannot be empty!"
                 " Go to https://openweathermap.org/appid to"
                 " get an API Key."
@@ -438,9 +434,11 @@ class Py3status:
         req = self.py3.request(url, params=params)
         if req.status_code != 200:
             data = req.json()
-            raise OWMException(
-                data["message"] if (data and "message" in data) else "API Error"
-            )
+            if data and "message" in data:
+                msg = data["message"]
+            else:
+                msg = "{_error_message} {_status_code}".format(**vars(req))
+            self.py3.error(msg)
 
         return req.json()
 
