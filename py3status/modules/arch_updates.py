@@ -128,9 +128,7 @@ class Py3status:
         Returns: None if unable to determine number of pending updates
         """
         try:
-            pending_updates = str(
-                subprocess.check_output(["auracle", "sync"])
-            )
+            pending_updates = str(subprocess.check_output(["auracle", "sync"]))
         except subprocess.CalledProcessError:
             return None
         return pending_updates.count(LINE_SEPARATOR)
