@@ -73,9 +73,9 @@ class Py3status:
             self.include_pacman = True
 
         if self.include_aur:
-            elif self.py3.check_commands(["auracle"]):
+            if self.py3.check_commands(["auracle"]):
                 self._check_aur_updates = self._check_aur_updates_auracle
-            if self.py3.check_commands(["cower"]):
+            elif self.py3.check_commands(["cower"]):
                 self._check_aur_updates = self._check_aur_updates_cower
             elif self.py3.check_commands(["yay"]):
                 self._check_aur_updates = self._check_aur_updates_yay
