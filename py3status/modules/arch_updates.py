@@ -21,7 +21,7 @@ Format placeholders:
 
 Requires:
     pacman-contrib: Needed for 'checkupdates' command line utility
-    cower or yay: Needed to display pending 'aur' updates
+    cower, yay or auracle: Needed to display pending 'aur' updates
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -73,7 +73,9 @@ class Py3status:
             self.include_pacman = True
 
         if self.include_aur:
-            if self.py3.check_commands(["cower"]):
+            if self.py3.check_commands(["auracle"]):
+                self._check_aur_updates = self._check_aur_updates_auracle
+            elif self.py3.check_commands(["cower"]):
                 self._check_aur_updates = self._check_aur_updates_cower
             elif self.py3.check_commands(["yay"]):
                 self._check_aur_updates = self._check_aur_updates_yay
@@ -118,11 +120,26 @@ class Py3status:
             return None
         return pending_updates.count(LINE_SEPARATOR)
 
+    def _check_aur_updates_auracle(self):
+        """
+        This method will use the 'auracle' command line utility
+        to determine how many updates are waiting to be installed
+        from the AUR.
+        Returns: None if unable to determine number of pending updates
+        """
+        try:
+            pending_updates = str(subprocess.check_output(["auracle", "sync"]))
+        except subprocess.CalledProcessError:
+            return None
+        return pending_updates.count(LINE_SEPARATOR)
+
     def _check_aur_updates_cower(self):
         """
         This method will use the 'cower' command line utility
         to determine how many updates are waiting to be installed
         from the AUR.
+        NOTE: was obsoleted and replaced with auracle by author.
+        https://github.com/falconindy/auracle
         Returns: None if unable to determine number of pending updates
         """
         # For reasons best known to its author, 'cower' returns a non-zero
