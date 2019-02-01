@@ -154,12 +154,6 @@ from datetime import datetime
 
 STRING_NO_PROFILE = "missing profile"
 STRING_NOT_INSTALLED = "not installed"
-SUPPORTED_FORMAT_TODO_THRESHOLDS = [
-    "index_total",
-    "index_completed",
-    "index_incompleted",
-    "priority",
-]
 
 
 class Py3status:
@@ -197,13 +191,18 @@ class Py3status:
         self.profile = path.expanduser(self.profile)
         self.path = self.profile + "/calendar-data/local.sqlite"
 
-        # convert the datetime?
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format_todo, word)) and (
                 word in self.format_datetime
             ):
                 self.init_datetimes.append(word)
+
+        self.thresholds_init = {}
+        for name in ["format", "format_todo"]:
+            self.thresholds_init[name] = self.py3.get_color_names_list(
+                getattr(self, name)
+            )
 
     def _get_thunderbird_todos_data(self):
         connection = connect(self.path)
@@ -237,7 +236,7 @@ class Py3status:
     def _manipulate(self, data, count):
         new_data = []
         for todo in data:
-            # datetimes?
+            # datetimes
             for k in self.init_datetimes:
                 if k in todo:
                     todo[k] = self.py3.safe_format(
@@ -246,17 +245,16 @@ class Py3status:
                             self.format_datetime[k],
                         )
                     )
-            # use thresholds?
-            if self.thresholds:
-                for x in SUPPORTED_FORMAT_TODO_THRESHOLDS:
-                    if todo[x] is not None:
-                        self.py3.threshold_get_color(todo[x], x)
+            # thresholds
+            for x in self.thresholds_init["format_todo"]:
+                if x in todo:
+                    self.py3.threshold_get_color(todo[x], x)
 
             new_data.append(self.py3.safe_format(self.format_todo, todo))
 
-        if self.thresholds:
-            for k, v in count.items():
-                self.py3.threshold_get_color(v, k)
+        for x in self.thresholds_init["format"]:
+            if x in count:
+                self.py3.threshold_get_color(count[x], x)
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_todo = self.py3.composite_join(format_separator, new_data)
