@@ -21,8 +21,7 @@ Format placeholders:
     {total}    number of total usage
 
 Color thresholds:
-    {down}     color threshold of download speed
-    {total}    color threshold of total usage
+    xxx: print a color based on the value of `xxx` placeholder
 
 @author Shahin Azad <ishahinism at Gmail>
 
@@ -120,6 +119,8 @@ class Py3status:
                 self.nic = "lo"
             self.py3.log("selected nic: %s" % self.nic)
 
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+
     def _get_bytes(self):
         with open("/proc/net/dev") as fh:
             net_data = fh.read().split()
@@ -140,23 +141,23 @@ class Py3status:
         download = received_bytes / 1024 / 1024.0
         upload = transmitted_bytes / 1024 / 1024.0
         total = download + upload
-        # threshold
-        self.py3.threshold_get_color(down, "down")
-        self.py3.threshold_get_color(total, "total")
+
+        net_data = {
+            "down": down,
+            "up": up,
+            "download": download,
+            "upload": upload,
+            "total": total,
+            "nic": self.nic,
+        }
+
+        for x in self.thresholds_init:
+            if x in net_data:
+                self.py3.threshold_get_color(net_data[x], x)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format,
-                {
-                    "down": down,
-                    "up": up,
-                    "download": download,
-                    "upload": upload,
-                    "total": total,
-                    "nic": self.nic,
-                },
-            ),
+            "full_text": self.py3.safe_format(self.format, net_data),
         }
 
 
