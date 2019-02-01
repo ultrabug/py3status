@@ -118,7 +118,7 @@ transmission {
     format_torrent = '[\?if=is_focused&color=bad X ]'
     format_torrent += '{status} [\?color=index {name}] [\?color=done {done}%]'
     thresholds = {
-        'done': [(0, '#ffb3ba'), (1, '#ffffba'), (100, '#baefba')]
+        'done': [(0, '#ffb3ba'), (1, '#ffffba'), (100, '#baefba')],
         'index': [
             (1, '#ffb3ba'), (2, '#ffdfba'), (3, '#ffffba'),
             (4, '#baefba'), (5, '#baffc9'), (6, '#bae1ff'),
@@ -178,6 +178,12 @@ class Py3status:
         self.is_scrolling = False
         self.count_torrent = 0
         self.summary_data = {}
+
+        self.thresholds_init = {}
+        for name in ["format", "format_torrent"]:
+            self.thresholds_init[name] = self.py3.get_color_names_list(
+                getattr(self, name)
+            )
 
     def _scroll(self, direction=0):
         self.is_scrolling = True
@@ -243,9 +249,10 @@ class Py3status:
             t["index"] = index
             if not self.is_scrolling:
                 t["is_focused"] = False
-            if self.thresholds:
-                self.py3.threshold_get_color(t["done"], "done")
-                self.py3.threshold_get_color(t["index"], "index")
+            for x in self.thresholds_init["format_torrent"]:
+                if x in t:
+                    self.py3.threshold_get_color(t[x], x)
+
             new_data.append(self.py3.safe_format(self.format_torrent, t))
         return new_data
 
@@ -268,20 +275,18 @@ class Py3status:
         format_separator = self.py3.safe_format(self.format_separator)
         format_torrent = self.py3.composite_join(format_separator, data)
 
-        if self.thresholds:
-            self.py3.threshold_get_color(self.count_torrent, "torrent")
+        summary_data.update(
+            {"torrent": self.count_torrent, "format_torrent": format_torrent}
+        )
+
+        for x in self.thresholds_init["format"]:
+            if x in summary_data:
+                self.py3.threshold_get_color(summary_data[x], x)
 
         self.is_scrolling = False
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format,
-                dict(
-                    torrent=self.count_torrent,
-                    format_torrent=format_torrent,
-                    **summary_data
-                ),
-            ),
+            "full_text": self.py3.safe_format(self.format, summary_data),
         }
 
     def on_click(self, event):
