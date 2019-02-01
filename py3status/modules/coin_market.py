@@ -12,7 +12,8 @@ Configuration parameters:
         please limit requests to no more than 10 per minute. (default 600)
     format: display format for this module (default '{format_coin}')
     format_coin: display format for coins
-        (default '{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]')
+        *(default '{name} ${price_usd:.2f} '
+        '[\?color=percent_change_24h {percent_change_24h}%]')*
     format_datetime: specify strftime characters to format (default {})
     format_separator: show separator if more than one (default ' ')
     markets: number of top-ranked markets or list of user-inputted markets
@@ -57,9 +58,7 @@ format_coin placeholders:
     JPY, KRW, MXN, RUB, otherwise USD... and be written in lowercase.
 
 Color thresholds:
-    1h:  print a color based on the value of percent_change_1h
-    24h: print a color based on the value of percent_change_24h
-    7d:  print a color based on the value of percent_change_7d
+    xxx: print a color based on the value of `xxx` placeholder
 
 Examples:
 ```
@@ -73,10 +72,26 @@ coin_market {
     markets = 5
 }
 
+# colorize market names
+coin_market {
+    format_coin = "[\?color=name {name}] ${price_usd:.2f} "
+    format_coin += "[\?color=percent_change_24h {percent_change_24h}%]"
+    markets = ["btc", "eth", "ltc", "doge"]
+    thresholds = {
+        "name": [
+            ("Bitcoin", "greenyellow"),
+            ("Ethereum", "deepskyblue"),
+            ("Litecoin", "crimson"),
+            ("Dogecoin", "orange"),
+        ],
+        "percent_change_24": [(-100, "bad"), (0, "good")],
+    }
+}
+
 # show and/or customize last_updated time
 coin_market {
     format_coin = '{name} ${price_usd:.2f} '
-    format_coin += '[\?color=24h {percent_change_24h}%] {last_updated}'
+    format_coin += '[\?color=percent_change_24h {percent_change_24h}%] {last_updated}'
     format_datetime = {'last_updated': '\?color=degraded last updated %-I:%M%P'}
 }
 ```
@@ -106,7 +121,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 600
     format = "{format_coin}"
-    format_coin = "{name} ${price_usd:.2f} [\?color=24h {percent_change_24h}%]"
+    format_coin = (
+        "{name} ${price_usd:.2f} [\?color=percent_change_24h {percent_change_24h}%]"
+    )
     format_datetime = {}
     format_separator = " "
     markets = ["btc"]
@@ -132,7 +149,8 @@ class Py3status:
             self.markets = [x.upper().strip() for x in self.markets]
 
         # create '?convert'
-        for item in self.py3.get_placeholders_list(self.format_coin):
+        placeholders = self.py3.get_placeholders_list(self.format_coin)
+        for item in placeholders:
             if (
                 ("price" in item and "price_btc" not in item)
                 or "24h_volume" in item
@@ -145,6 +163,14 @@ class Py3status:
         # create '(?|&)limit'
         if self.limit:
             self._update_limit(None)
+
+        # thresholds
+        percents = {x: "percent_change_" + x for x in ["1h", "24h", "7d"]}
+        self.thresholds_init = {
+            "percents": percents,
+            "format_coin": self.py3.get_color_names_list(self.format_coin),
+            "plus": [x for x in placeholders if x in percents.values()],
+        }
 
     def _get_coin_data(self, reset=False):
         if reset:
@@ -215,8 +241,7 @@ class Py3status:
     def _manipulate_data(self, data):
         new_data = []
         for market in data:
-            temporary = {}
-            # convert the datetime?
+            # datetimes
             for k in self.init_datetimes:
                 if k in market:
                     market[k] = self.py3.safe_format(
@@ -225,17 +250,20 @@ class Py3status:
                             self.format_datetime[k],
                         )
                     )
-            # fix up percent_change with color thresholds
-            # and prefix all non-negative values with a plus.
-            for k, v in market.items():
-                if "percent_change_" in k and v:
-                    temporary[k] = "+%s" % v if float(v) > 0 else v
-                    # remove 'percent_change_' for thresholds 1h, 24h, 7d
-                    self.py3.threshold_get_color(v, k[15:])
-                else:
-                    temporary[k] = v
+            # thresholds
+            for x in self.thresholds_init["format_coin"]:
+                if x in market:
+                    self.py3.threshold_get_color(market[x], x)
+                elif x in self.thresholds_init["percents"]:
+                    y = self.thresholds_init["percents"][x]
+                    self.py3.threshold_get_color(market[y], x)
 
-            new_data.append(self.py3.safe_format(self.format_coin, temporary))
+            # prefix non-negative percents with a plus.
+            for x in self.thresholds_init["plus"]:
+                if float(market[x]) > 0:
+                    market[x] = "+{}".format(market[x])
+
+            new_data.append(self.py3.safe_format(self.format_coin, market))
 
         return new_data
 
