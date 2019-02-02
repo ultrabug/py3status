@@ -179,26 +179,16 @@ class Py3status:
             temp_unit = "unknown unit"
         self.temp_unit = temp_unit
         self.init = {"meminfo": []}
-        names = [
-            "cpu_freq_avg",
-            "cpu_freq_max",
-            "cpu_temp",
-            "cpu_percent",
-            "load",
-            "mem",
-            "swap",
+        names_and_matches = [
+            ("cpu_freq", "cpu_freq_*"),
+            ("cpu_temp", "cpu_temp"),
+            ("cpu_percent", "cpu_used_percent"),
+            ("load", "load*"),
+            ("mem", "mem_*"),
+            ("swap", "swap_*"),
         ]
-        placeholders = [
-            "cpu_freq_avg",
-            "cpu_freq_max",
-            "cpu_temp",
-            "cpu_used_percent",
-            "load*",
-            "mem_*",
-            "swap_*",
-        ]
-        for name, placeholder in zip(names, placeholders):
-            self.init[name] = self.py3.format_contains(self.format, placeholder)
+        for name, match in names_and_matches:
+            self.init[name] = self.py3.get_placeholders_list(self.format, match)
             if name in ["mem", "swap"] and self.init[name]:
                 self.init["meminfo"].append(name)
 
@@ -211,31 +201,26 @@ class Py3status:
             "load": "load1",
             "max_cpu_mem": "max_used_percent",
         }
-        cpu_freqs = self.py3.get_placeholders_list(self.format, "cpu_freq*")
-        if cpu_freqs:
-            self.thresholds_legacy["cpu_freq"] = sorted(cpu_freqs)[0]
+        if "cpu_freq_unit" in self.init["cpu_freq"]:
+            self.init["cpu_freq"].remove("cpu_freq_unit")
+        if self.init["cpu_freq"]:
+            self.thresholds_legacy["cpu_freq"] = sorted(self.init["cpu_freq"])[0]
 
     @staticmethod
-    def _get_cpu_freqs():
-        freqs = []
+    def _get_cpuinfo():
         with open("/proc/cpuinfo") as f:
-            for line in f:
-                if "cpu MHz" in line:
-                    freq = float(line.split(":")[-1])
-                    freqs.append(freq)
-        return freqs
+            return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
 
-    def _calc_cpu_freqs(self, unit):
-        cpu_freqs = self._get_cpu_freqs()
-
-        freq_avg = sum(cpu_freqs) / len(cpu_freqs)
-        freq_max = max(cpu_freqs)
-
-        # multiply both by 1e6 to convert to Hz to pass to format_units
-        (freq_max, _) = self.py3.format_units(freq_max * 1e6, unit=unit, si=True)
-        (freq_avg, _) = self.py3.format_units(freq_avg * 1e6, unit=unit, si=True)
-
-        return {"avg": freq_avg, "max": freq_max}
+    def _calc_cpu_freqs(self, cpu_freqs, unit, keys):
+        freq_avg, freq_max = None, None
+        for key in keys:
+            if key == "cpu_freq_avg":
+                value = sum(cpu_freqs) / len(cpu_freqs) * 1e6
+                freq_avg, _ = self.py3.format_units(value, unit, si=True)
+            elif key == "cpu_freq_max":
+                value = max(cpu_freqs) * 1e6
+                freq_max, _ = self.py3.format_units(value, unit, si=True)
+        return freq_avg, freq_max
 
     @staticmethod
     def _get_stat():
@@ -353,13 +338,12 @@ class Py3status:
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
 
-        if self.init["cpu_freq_max"] or self.init["cpu_freq_avg"]:
-            cpu_freqs = self._calc_cpu_freqs(self.cpu_freq_unit)
-            if self.init["cpu_freq_max"]:
-                sys["cpu_freq_max"] = cpu_freqs["max"]
-
-            if self.init["cpu_freq_avg"]:
-                sys["cpu_freq_avg"] = cpu_freqs["avg"]
+        if self.init["cpu_freq"]:
+            cpu_freqs = self._calc_cpu_freqs(
+                self._get_cpuinfo(), self.cpu_freq_unit, self.init["cpu_freq"]
+            )
+            cpu_freq_keys = ["cpu_freq_avg", "cpu_freq_max"]
+            sys.update(zip(cpu_freq_keys, cpu_freqs))
 
         if self.init["cpu_percent"]:
             sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
