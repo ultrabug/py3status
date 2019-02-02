@@ -8,25 +8,21 @@ Configuration parameters:
     format: see placeholders below (default 'general: {General}')
     host: database host to connect to (default '')
     password: login password (default '')
-    threshold_critical: set bad color above this threshold (default 20)
-    threshold_warning: set degraded color above this threshold (default 10)
+    thresholds: specify color thresholds to use
+        (default [(0, None), (10, "degraded"), (20, "bad")])
     timeout: timeout for database connection (default 5)
     user: login user (default '')
 
 Format placeholders:
     {YOUR_QUEUE_NAME} number of ongoing RT tickets (open+new+stalled)
 
-Color options:
-    color_bad: Exceeded threshold_critical
-    color_degraded: Exceeded threshold_warning
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     PyMySQL: https://pypi.org/project/PyMySQL/
         or
     MySQL-python: https://pypi.org/project/MySQL-python/
-
-It features thresholds to colorize the output and forces a low timeout to
-limit the impact of a server connectivity problem on your i3bar freshness.
 
 @author ultrabug
 
@@ -50,13 +46,22 @@ class Py3status:
     format = "general: {General}"
     host = ""
     password = ""
-    threshold_critical = 20
-    threshold_warning = 10
+    thresholds = [(0, None), (10, "degraded"), (20, "bad")]
     timeout = 5
     user = ""
 
+    def post_config_hook(self):
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+        # deprecate threshold configs
+        if not self.thresholds_init:
+            if self.thresholds == [(0, None), (10, "degraded"), (20, "bad")]:
+                self.thresholds = [
+                    (0, None),
+                    (getattr(self, "threshold_warning", 10), "degraded"),
+                    (getattr(self, "threshold_critical", 20), "bad"),
+                ]
+
     def rt(self):
-        has_one_queue_formatted = False
         response = {"full_text": ""}
         tickets = {}
 
@@ -79,18 +84,22 @@ class Py3status:
             as s on s.Queue = q.id
             group by q.Name;"""
         )
+        queued = []
         for row in mycr.fetchall():
             queue, nb_tickets = row
             if queue == "___Approvals":
                 continue
             tickets[queue] = nb_tickets
             if queue in self.format:
-                has_one_queue_formatted = True
-                if nb_tickets > self.threshold_critical:
-                    response.update({"color": self.py3.COLOR_BAD})
-                elif nb_tickets > self.threshold_warning and "color" not in response:
-                    response.update({"color": self.py3.COLOR_DEGRADED})
-        if has_one_queue_formatted:
+                queued.append(nb_tickets)
+
+        for x in self.thresholds_init:
+            if x in tickets:
+                self.py3.threshold_get_color(tickets[x], x)
+        if not self.thresholds_init:
+            response["color"] = self.py3.threshold_get_color(max(queued))
+
+        if queued:
             response["full_text"] = self.py3.safe_format(self.format, tickets)
         else:
             response["full_text"] = "queue(s) not found ({})".format(self.format)
