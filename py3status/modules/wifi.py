@@ -17,6 +17,7 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
+    thresholds: specify color thresholds to use (default [])
     use_sudo: Use sudo to run iw and ip. make sure to give some root rights
         to run without a password by editing the sudoers file, eg...
         '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
@@ -39,6 +40,9 @@ Color options:
     color_bad: Signal strength signal_bad or lower
     color_degraded: Signal strength signal_degraded or lower
     color_good: Signal strength above signal_degraded
+
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     iw: cli configuration utility for wireless devices
@@ -76,6 +80,7 @@ class Py3status:
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
+    thresholds = []
     use_sudo = False
 
     def post_config_hook(self):
@@ -101,6 +106,8 @@ class Py3status:
         if self.use_sudo:
             for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
                 cmd[0:0] = ["sudo", "-n"]
+
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
         # DEPRECATION WARNING
         format_down = getattr(self, "format_down", None)
@@ -194,14 +201,14 @@ class Py3status:
             quality = int((bitrate / self._max_bitrate) * 100)
         else:
             quality = 0
-        icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
 
         # wifi down
         if ssid is None:
             color = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
-            full_text = self.py3.safe_format(self.format)
+            icon = None
         # wifi up
         else:
+            icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
             color = self.py3.COLOR_GOOD
             if bitrate:
                 if bitrate <= self.bitrate_bad:
@@ -222,26 +229,29 @@ class Py3status:
                 signal_dbm = "? dBm"
                 signal_percent = "?%"
 
-            full_text = self.py3.safe_format(
-                self.format,
-                dict(
-                    bitrate=bitrate,
-                    device=self.device,
-                    freq_ghz=freq_ghz,
-                    freq_mhz=freq_mhz,
-                    icon=icon,
-                    ip=ip,
-                    signal_dbm=signal_dbm,
-                    signal_percent=signal_percent,
-                    ssid=ssid,
-                ),
-            )
-
-        return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
-            "color": color,
+        wifi_data = {
+            "bitrate": bitrate,
+            "device": self.device,
+            "freq_ghz": freq_ghz,
+            "freq_mhz": freq_mhz,
+            "icon": icon,
+            "ip": ip,
+            "signal_dbm": signal_dbm,
+            "signal_percent": signal_percent,
+            "ssid": ssid,
         }
+
+        for x in self.thresholds_init:
+            if x in wifi_data:
+                self.py3.threshold_get_color(wifi_data[x], x)
+
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, wifi_data),
+        }
+        if not self.thresholds_init:
+            response["color"] = color
+        return response
 
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)
