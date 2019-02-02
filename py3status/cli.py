@@ -204,10 +204,14 @@ def parse_cli():
         formatter_class=argparse.RawTextHelpFormatter,
         help="list modules",
     )
-    sps["list"].add_argument("--all", action="store_true", help="show all modules")
     sps["list"].add_argument(
         "-f", "--full", action="store_true", help="show full (i.e. docstrings)"
     )
+    list_group = sps["list"].add_mutually_exclusive_group()
+    for name in ["all", "core", "user"]:
+        list_group.add_argument(
+            "--%s" % name, action="store_true", help="show %s modules" % name
+        )
 
     # docstring subparser and its args
     sps["docstring"] = subparsers.add_parser(
@@ -219,7 +223,7 @@ def parse_cli():
     docstring_group = sps["docstring"].add_mutually_exclusive_group()
     for name in ["check", "diff", "update"]:
         docstring_group.add_argument(
-            "--{}".format(name), action="store_true", help="{} docstrings".format(name)
+            "--%s" % name, action="store_true", help="%s docstrings" % name
         )
 
     # modules not required
@@ -260,13 +264,11 @@ def parse_cli():
         modules = [x.rsplit(".py", 1)[0] for x in config["module"]]
         # list module names and details
         if config["command"] == "list":
-            param = "details" if config["full"] else "list"
-            if config["all"]:
-                modules = []
-            if not modules and not config["all"]:
+            tests = [not config[x] for x in ["all", "user", "core"]]
+            if all([not modules] + tests):
                 msg = "missing positional or optional arguments"
                 sps["list"].error(msg)
-            docstrings.show_modules(config, [param] + modules)
+            docstrings.show_modules(config, modules)
         # docstring formatting and checking
         elif config["command"] == "docstring":
             if config["check"]:

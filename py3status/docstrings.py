@@ -404,25 +404,14 @@ def update_readme_for_modules(modules):
         f.write(create_readme(readme))
 
 
-def show_modules(config, params):
+def show_modules(config, modules_list):
     """
     List modules available optionally with details.
     """
-    details = params[0] == "details"
-    modules_list = params[1:]
-    if details:
-        core_mods = True
-        user_mods = True
-    else:
-        user_mods = True
-        core_mods = True
-        if len(params) == 2:
-            if params[1] == "user":
-                user_mods = True
-                core_mods = False
-            elif params[1] == "core":
-                user_mods = False
-                core_mods = True
+    details = config["full"]
+    core_mods = not config["user"]
+    user_mods = not config["core"]
+
     modules = core_module_docstrings(
         include_core=core_mods, include_user=user_mods, config=config
     )
