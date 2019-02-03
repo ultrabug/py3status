@@ -41,7 +41,7 @@ deadbeef {
 }
 ```
 
-@author mrt-prodz, tobes, lasers
+@author mrt-prodz
 
 SAMPLE OUTPUT
 {'color': '#00ff00', 'full_text': 'Music For Programming - Lackluster'}

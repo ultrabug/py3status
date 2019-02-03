@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Display output of a given script, updating the display when new lines
-come in.
+Display output of a given script asynchronously.
 
 Always displays the last line of output from a given script, set by
-`script_path`. If a line contains only a color (/^#[0-F]{6}$/), it is
-used as such (set force_nocolor to disable).
-The script may have parameters.
+`script_path`. If a line contains only a color (/^#[0-F]{6}$/), it is used
+as such (set force_nocolor to disable). The script may have parameters.
 
 Configuration parameters:
     force_nocolor: if true, won't check if a line contains color

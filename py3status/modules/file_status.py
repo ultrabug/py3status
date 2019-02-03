@@ -29,8 +29,8 @@ Color thresholds:
         path: print a color based on the number of paths
 
 Examples:
-# add multiple paths with wildcard or with pathnames
 ```
+# add multiple paths with wildcard or with pathnames
 file_status {
     paths = ['/tmp/test*', '~user/test1', '~/Videos/*.mp4']
 }
@@ -43,6 +43,7 @@ file_status {
     format_path_separator = ', '
 }
 ```
+
 @author obb, Moritz Lüdecke, Cyril Levis (@cyrinux)
 
 SAMPLE OUTPUT

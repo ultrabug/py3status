@@ -65,13 +65,11 @@ clock {
     format_time = "{name} %H:%M"
 }
 
-
 # Show the time and date in New York
 clock {
    format = "Big Apple {America/New_York}"
    format_time = "%Y-%m-%d %H:%M:%S"
 }
-
 
 # wall clocks
 clock {

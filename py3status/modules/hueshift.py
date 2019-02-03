@@ -17,10 +17,10 @@ Configuration parameters:
     thresholds: specify color thresholds to use
         (default [(6499, '#f6c'), (6500, '#ff6'), (6501, '#6cf')])
 
-Control placeholder:
+Control placeholders:
     {enabled} a boolean based on pgrep processing data, eg False, True
 
-Format placeholder:
+Format placeholders:
     {color_temperature} color temperature, eg 6500
     {name} name, eg Blueshift, Redshift, Sct
 

@@ -17,7 +17,7 @@ Examples:
 # the modules parameters are provided as such
 i3pystatus clock {
     module = 'clock'
-    format = [ ('%a %b %-d %b %X', 'America/New_York'), ('%X', 'Etc/GMT+9') ]
+    format = [('%a %b %-d %b %X', 'America/New_York'), ('%X', 'Etc/GMT+9')]
 }
 
 # if backend(s) are provided they should be given as a dict with the key being

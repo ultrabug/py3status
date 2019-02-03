@@ -40,9 +40,7 @@ Notes:
     as in i3blocks configuration. Currently blocklets must provide responses
     in the standard i3blocks manner of one line per value (not as json).
 
-@author tobes
-
-Examples
+Examples:
 ```
 # i3blocks config
 [time]
@@ -71,6 +69,8 @@ i3block wifi {
     interval = 5
 }
 ```
+
+@author tobes
 
 SAMPLE OUTPUT
 {'full_text': 'wifi:100%', 'color': '#00FF00'}

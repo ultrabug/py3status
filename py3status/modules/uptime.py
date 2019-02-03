@@ -45,7 +45,7 @@ group uptime {
 }
 ```
 
-@author Alexis "Horgix" Chotard <alexis.horgix.chotard@gmail.com>, tobes, lasers
+@author Alexis "Horgix" Chotard <alexis.horgix.chotard@gmail.com>
 @license BSD
 
 SAMPLE OUTPUT

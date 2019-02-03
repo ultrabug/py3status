@@ -2,10 +2,6 @@
 """
 Turn on and off DPMS and screen saver blanking.
 
-This module allows activation and deactivation
-of DPMS (Display Power Management Signaling)
-by clicking on 'DPMS' in the status bar.
-
 Configuration parameters:
     button_off: mouse button to turn off screen (default None)
     button_toggle: mouse button to toggle DPMS (default 1)

@@ -44,9 +44,6 @@ Format placeholders:
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
-NOTE: If using the `{cpu_temp}` option, the `sensors` command should
-be available, provided by the `lm-sensors` or `lm_sensors` package.
-
 @author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol, JackDoan <me at jackdoan dot com>
 
 SAMPLE OUTPUT

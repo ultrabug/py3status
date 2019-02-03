@@ -17,11 +17,6 @@ Configuration parameters:
     state_play: label to display for "playing" state (default '[play]')
     state_stop: label to display for "stopped" state (default '[stop]')
 
-Color options:
-    color_pause: Paused, default color_degraded
-    color_play: Playing, default color_good
-    color_stop: Stopped, default color_bad
-
 Format placeholders:
     {state} state (paused, playing. stopped) can be defined via `state_..`
         configuration parameters
@@ -32,16 +27,15 @@ Format placeholders:
     `next_` to retrieve the data for the song following the one currently
     playing.
 
+Color options:
+    color_pause: Paused, default color_degraded
+    color_play: Playing, default color_good
+    color_stop: Stopped, default color_bad
+
 Requires:
     python-mpd2: (NOT python2-mpd2)
-```
-# pip install python-mpd2
-```
 
-Note: previously formats using %field% where allowed for this module, but
-standard placeholders should be used.
-
-Examples of `format`
+Examples:
 ```
 # Show state and (artist -) title, if no title fallback to file:
 {state} [[[{artist} - ]{title}]|[{file}]]

@@ -3,8 +3,7 @@
 Display number of pending updates for Fedora Linux.
 
 This will display a count of how many `dnf` updates are waiting
-to be installed.
-Additionally check if any update security notices.
+to be installed. Additionally check for update security notices.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds

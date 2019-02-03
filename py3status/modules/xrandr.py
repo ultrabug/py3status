@@ -97,6 +97,9 @@ Dynamic configuration parameters:
     <OUTPUT>_primary: apply the primary to the OUTPUT
         Example: DP1_primary = True
 
+Format placeholders:
+    {output} xrandr output
+
 Color options:
     color_bad: Displayed layout unavailable
     color_degraded: Using a fallback layout

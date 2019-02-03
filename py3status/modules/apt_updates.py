@@ -3,7 +3,6 @@
 Display number of pending updates for Debian based Distros.
 
 Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
-
 This will display a count of how many 'apt' updates are waiting to be installed.
 
 Configuration parameters:

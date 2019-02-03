@@ -28,7 +28,7 @@ Configuration parameters:
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')
 
-Format of status string placeholders:
+Format placeholders:
     {album} album name
     {artist} artiste name (first one)
     {length} time duration of the song
@@ -37,7 +37,7 @@ Format of status string placeholders:
     {time} played time of the song
     {title} name of the song
 
-Format of button placeholders:
+Button placeholders:
     {next} play the next title
     {pause} pause the player
     {play} play the player

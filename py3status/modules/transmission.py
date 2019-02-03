@@ -38,9 +38,7 @@ Color options:
     color_bad: current torrent
 
 Color thresholds:
-    done: a color based on torrent percent
-    index: a color based on torrent index
-    torrent: a color based on number of torrents
+    xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     transmission-cli:
