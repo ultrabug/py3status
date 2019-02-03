@@ -90,7 +90,7 @@ def module_test(module_class, config=None):
                     del item["name"]
 
             if "--term" in argv:
-                line = ""
+                line = "\033[0m"
                 for item in output:
                     if item.get("urgent"):
                         line += "\033[41m"

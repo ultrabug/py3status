@@ -104,7 +104,7 @@ Requires:
     https://developers.google.com/google-apps/calendar/quickstart/python
 
     Download the client_secret.json file which contains your client ID and
-    client secret. In your i3status config file, set configuration parameter
+    client secret. In your config file, set configuration parameter
     client_secret to the path to your client_secret.json file.
 
     The first time you run the module, a browser window will open asking you

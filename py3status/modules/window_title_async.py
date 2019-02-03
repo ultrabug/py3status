@@ -17,7 +17,7 @@ Configuration parameters:
         first symbols with ellipsis appended. (default 120)
 
 Requires:
-    i3ipc: (https://github.com/acrisci/i3ipc-python)
+    i3ipc: an improved python library to control i3wm
 
 @author Anon1234 https://github.com/Anon1234
 @license BSD

@@ -53,8 +53,8 @@ Format placeholders:
         but is empty if only one timezone is provided
 
 Requires:
-    pytz: python library
-    tzlocal: python library
+    pytz: cross platform time zone library for python
+    tzlocal: tzinfo object for the local timezone
 
 Examples:
 ```

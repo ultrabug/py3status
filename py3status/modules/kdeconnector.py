@@ -34,8 +34,8 @@ Color options:
     color_good: Connected and battery charging
 
 Requires:
-    pydbus
-    kdeconnect
+    pydbus: pythonic d-bus library
+    kdeconnect: adds communication between kde and your smartphone
 
 Examples:
 ```

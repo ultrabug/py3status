@@ -43,8 +43,8 @@ Color options:
         if set to `None` then the threshold color will be used.
 
 Requires:
-    alsa-utils: alsa backend (tested with alsa-utils 1.0.29-1)
-    pamixer: pulseaudio backend
+    alsa-utils: an alternative implementation of linux sound support
+    pamixer: pulseaudio command-line mixer like amixer
 
 Notes:
     If you are changing volume state by external scripts etc and

@@ -12,7 +12,7 @@ Configuration parameters:
         (default False)
     format: Format of the output.
         (default 'VPN: {name}|VPN: no')
-    pidfile: Same as i3status.conf pidfile, checked when check_pid is True.
+    pidfile: Same as i3status pidfile, checked when check_pid is True.
         (default '/sys/class/net/vpn0/dev_id')
 
 Format placeholders:

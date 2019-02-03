@@ -35,7 +35,7 @@ Notes:
 Examples:
 ```
 # show load averages with static colors
-conky {
+loadavg {
     format = 'Loadavg [\?color=orange {1min} ][\?color=gold {5min} {15min}]'
 }
 

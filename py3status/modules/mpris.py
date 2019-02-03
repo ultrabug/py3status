@@ -4,7 +4,7 @@ Display song/video and control MPRIS compatible players.
 
 There are two ways to control the media player. Either by clicking with a mouse
 button in the text information or by using buttons. For former you have
-to define the button parameters in the i3status config.
+to define the button parameters in your config.
 
 Configuration parameters:
     button_next: mouse button to play the next entry (default 4)
@@ -53,7 +53,13 @@ Color options:
     color_stopped: song is stopped, defaults to color_bad
 
 Requires:
-    pydbus: python library module
+    pydbus: pythonic d-bus library
+
+Tested players:
+    bomi: powerful and easy-to-use gui multimedia player based on mpv
+    Cantata: qt5 client for the music player daemon (mpd)
+    mpdris2: mpris2 support for mpd
+    vlc: multi-platform mpeg, vcd/dvd, and divx player
 
 Examples:
 ```
@@ -62,37 +68,22 @@ mpris {
     format_none = "no player"
     player_priority = "[mpd, cantata, vlc, bomi, *]"
 }
-```
 
 only show information from mpd and vlc, but mpd has a higher priority:
-
-```
 mpris {
     player_priority = "[mpd, vlc]"
 }
-```
 
 show information of all players, but mpd and vlc have the highest priority:
-
-```
 mpris {
     player_priority = "[mpd, vlc, *]"
 }
-```
 
 vlc has the lowest priority:
-
-```
 mpris {
     player_priority = "[*, vlc]"
 }
 ```
-
-Tested players:
-    bomi
-    Cantata
-    mpDris2 (mpris extension for mpd)
-    vlc
 
 @author Moritz Lüdecke, tobes, valdur55
 
