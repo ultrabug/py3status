@@ -55,6 +55,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     cache_timeout = 30
     emerge_log_file = "/var/log/emerge.log"
     format = (

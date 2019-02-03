@@ -52,8 +52,6 @@ Color thresholds:
 Requires:
     speedtest-cli: Command line interface for testing Internet bandwidth
 
-@author Cyril Levis (@cyrinux)
-
 Examples:
 ```
 # show detailed elapsed_time|download/upload
@@ -98,6 +96,9 @@ speedtest {
     format += "[\?color=download {download}] [\?color=upload {upload}]]"
 }
 ```
+
+@author Cyril Levis (@cyrinux)
+
 SAMPLE OUTPUT
 [
     {"full_text": "speedtest "},

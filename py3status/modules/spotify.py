@@ -29,8 +29,10 @@ Color options:
     color_paused: Song is stopped or paused, defaults to color_degraded
     color_playing: Song is playing, defaults to color_good
 
-i3status.conf example:
+Requires:
+    spotify: a proprietary music streaming service
 
+Examples:
 ```
 spotify {
     button_next = 4
@@ -40,9 +42,6 @@ spotify {
     format_down = "no Spotify"
 }
 ```
-
-Requires:
-    spotify (>=1.0.27.71.g0a26e3b2)
 
 @author Pierre Guilbert, Jimmy Garpehäll, sondrele, Andrwe
 

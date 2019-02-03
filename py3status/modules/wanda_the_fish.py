@@ -21,8 +21,6 @@ Format placeholders:
 Optional:
     fortune-mod: the fortune cookie program from bsd games
 
-@author lasers
-
 Examples:
 ```
 # disable motions when not in use
@@ -47,6 +45,8 @@ wanda_the_fish {
     cache_timeout = 2
 }
 ```
+
+@author lasers
 
 SAMPLE OUTPUT
 [

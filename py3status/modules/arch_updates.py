@@ -23,9 +23,6 @@ Requires:
     pacman-contrib: Needed for 'checkupdates' command line utility
     cower, yay or auracle: Needed to display pending 'aur' updates
 
-@author Iain Tatch <iain.tatch@gmail.com>
-@license BSD
-
 Examples:
 ```
 # default formats
@@ -34,6 +31,9 @@ arch_updates {
     format = 'UPD: {pacman}/{aur}'  # if include_aur is True
 }
 ```
+
+@author Iain Tatch <iain.tatch@gmail.com>
+@license BSD
 
 SAMPLE OUTPUT
 {'full_text': 'UPD: 5'}

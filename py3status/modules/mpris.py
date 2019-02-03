@@ -55,8 +55,7 @@ Color options:
 Requires:
     pydbus: python library module
 
-i3status.conf example:
-
+Examples:
 ```
 mpris {
     format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]]"

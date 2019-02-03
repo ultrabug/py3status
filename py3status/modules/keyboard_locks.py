@@ -18,8 +18,6 @@ Color options:
     color_good: Lock on
     color_bad: Lock off
 
-@author lasers
-
 Examples:
 ```
 # hide NUM, CAPS, SCR
@@ -28,6 +26,8 @@ keyboard_locks {
     format += '[\?if=caps_lock CAPS][\?soft  ][\?if=scroll_lock SCR]'
 }
 ```
+
+@author lasers
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'NUM CAPS SCR'}

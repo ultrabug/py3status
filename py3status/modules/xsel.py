@@ -17,16 +17,18 @@ Format placeholders:
 Requires:
     xsel: a command-line program to retrieve/set the X selection
 
-@author Sublim3 umbsublime@gamil.com
-@license BSD
-
-Example:
+Examples:
+```
 xsel {
   max_size = 50
   command = "xsel --clipboard --output"
   on_click 1 = "exec xsel --clear --clipboard"
   log_file = "~/.local/share/xsel/clipboard_log"
 }
+```
+
+@author Sublim3 umbsublime@gamil.com
+@license BSD
 
 SAMPLE OUTPUT
 {'full_text': 'selected text'}

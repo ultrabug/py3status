@@ -157,6 +157,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     auth_token = "~/.config/py3status/google_calendar.auth_token"
     blacklist_events = []
     button_open = 3

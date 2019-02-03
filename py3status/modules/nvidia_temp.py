@@ -39,7 +39,7 @@ class Py3status:
     """
     """
 
-    # configuration parameters
+    # available configuration parameters
     cache_timeout = 10
     format = "GPU: {format_temp}"
     format_temp = u"{temp}°C"

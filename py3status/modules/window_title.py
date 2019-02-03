@@ -26,6 +26,7 @@ window_title {
 window_title {
     format = '[\?max_length=55 {title}]'
 }
+```
 
 @author shadowprince
 @license Eclipse Public License

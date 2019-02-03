@@ -153,6 +153,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     cache_timeout = None
     filter = "1day"
     format = "[Timew {format_time}]|No Timew"

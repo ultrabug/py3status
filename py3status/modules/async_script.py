@@ -20,8 +20,7 @@ Configuration parameters:
 Format placeholders:
     {output} output of script given by "script_path"
 
-i3status.conf example:
-
+Examples:
 ```
 external_script {
     format = "{output}"

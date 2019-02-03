@@ -317,6 +317,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     api_key = None
     cache_timeout = 600
     city = None
