@@ -49,8 +49,7 @@ Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests
         At least version 2.4.2 is required.
 
-Example:
-
+Examples:
 ```
 # Get your Bitcoin balance using automatic credential detection
 coin_balance {

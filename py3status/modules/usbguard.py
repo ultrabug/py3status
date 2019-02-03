@@ -131,6 +131,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     allow_urgent = False
     button_next = 4
     button_previous = 5

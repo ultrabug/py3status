@@ -33,8 +33,7 @@ format_value placeholders:
 Requires:
     stem: python module from pypi https://pypi.python.org/pypi/stem
 
-Example:
-
+Examples:
 ```
 tor_rate {
     cache_timeout = 10
@@ -43,8 +42,6 @@ tor_rate {
     control_password = "TertiaryAdjunctOfUnimatrix01"
     si_units = True
 }
-
-order += "tor_rate"
 ```
 
 @author Felix Morgner <felix.morgner@gmail.com>

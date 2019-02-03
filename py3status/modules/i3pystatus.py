@@ -12,8 +12,6 @@ Configuration parameters:
 Requires:
     i3pystatus: i3status replacement written in python
 
-@author tobes
-
 Examples:
 ```
 # the modules parameters are provided as such
@@ -42,6 +40,8 @@ i3pystatus updates{
     backends = {'dnf.Dnf': {}}
 }
 ```
+
+@author tobes
 
 SAMPLE OUTPUT
 {'full_text': 'i3pystatus module'}

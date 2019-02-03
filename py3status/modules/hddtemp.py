@@ -59,8 +59,6 @@ Backblaze:
     cooler doesn’t matter.
     https://www.backblaze.com/blog/hard-drive-temperature-does-it-matter/
 
-@author lasers
-
 Examples:
 ```
 # compact the format
@@ -79,6 +77,8 @@ hddtemp {
     gradients = True
 }
 ```
+
+@author lasers
 
 SAMPLE OUTPUT
 [

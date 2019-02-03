@@ -39,6 +39,7 @@ deadbeef {
     on_click 1 = 'exec deadbeef --play-pause'
     on_click 8 = 'exec deadbeef --random'
 }
+```
 
 @author mrt-prodz, tobes, lasers
 

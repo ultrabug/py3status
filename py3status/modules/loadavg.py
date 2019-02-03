@@ -119,6 +119,7 @@ loadavg {
 loadavg {
     format = "..."
 }
+```
 
 @author lasers
 

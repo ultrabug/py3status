@@ -56,8 +56,7 @@ Requires:
     pytz: python library
     tzlocal: python library
 
-i3status.conf example:
-
+Examples:
 ```
 # cycling through London, Warsaw, Tokyo
 clock {

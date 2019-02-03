@@ -33,8 +33,11 @@ Color options:
     color_degraded: Connected and battery not charging
     color_good: Connected and battery charging
 
-i3status.conf example:
+Requires:
+    pydbus
+    kdeconnect
 
+Examples:
 ```
 kdeconnector {
     device_id = "aa0844d33ac6ca03"
@@ -42,10 +45,6 @@ kdeconnector {
     low_battery = "10"
 }
 ```
-
-Requires:
-    pydbus
-    kdeconnect
 
 @author Moritz Lüdecke
 

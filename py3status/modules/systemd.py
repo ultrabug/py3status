@@ -25,6 +25,9 @@ Color options:
     color_bad: unit inactive
     color_degraded: unit not-found
 
+Requires:
+    pydbus: pythonic dbus library
+
 Examples:
 ```
 # show the status of vpn service
@@ -35,9 +38,6 @@ systemd vpn {
     on_click 3 = 'exec sudo systemctl stop vpn'
 }
 ```
-
-Requires:
-    pydbus: pythonic dbus library
 
 @author Adrian Lopez <adrianlzt@gmail.com>
 @license BSD

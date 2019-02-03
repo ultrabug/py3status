@@ -57,6 +57,12 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
+    cache_timeout = 30
+    delimiter = "-"
+    format = None
+    url = None
+
     class Meta:
         deprecated = {
             "rename": [
@@ -67,12 +73,6 @@ class Py3status:
                 }
             ]
         }
-
-    # available configuration parameters
-    cache_timeout = 30
-    delimiter = "-"
-    format = None
-    url = None
 
     def post_config_hook(self):
         if not self.url:

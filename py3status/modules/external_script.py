@@ -26,8 +26,7 @@ Format placeholders:
     {lines} number of lines in the output
     {output} output of script given by "script_path"
 
-i3status.conf example:
-
+Examples:
 ```
 external_script {
     format = "my name is {output}"

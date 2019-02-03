@@ -46,8 +46,6 @@ Requires:
     transmission-cli:
         fast, easy, and free bittorrent client (cli tools, daemon, web client)
 
-@author lasers
-
 Examples:
 ```
 # add arguments
@@ -127,6 +125,8 @@ transmission {
     }
 }
 ```
+
+@author lasers
 
 SAMPLE OUTPUT
 {'full_text': 'Downloading py3status-3.8.tar.gz 89%'}
