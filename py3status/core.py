@@ -14,7 +14,6 @@ from threading import Event, Thread
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
-import py3status.docstrings as docstrings
 from py3status.command import CommandServer
 from py3status.constants import COLOR_NAMES
 from py3status.events import Events
@@ -510,11 +509,6 @@ class Py3statusWrapper:
         # SIGCONT indicates output should be resumed.
         signal(SIGCONT, self.i3bar_start)
 
-        # handle cli command
-        if self.config.get("cli_command"):
-            self.handle_cli_command(self.config)
-            sys.exit()
-
         # log py3status and python versions
         self.log("=" * 8)
         msg = "Starting py3status version {version} python {python_version}"
@@ -1004,39 +998,3 @@ class Py3statusWrapper:
                 # dump the line to stdout
                 write(",[{}]\n".format(out))
                 flush()
-
-    def handle_cli_command(self, config):
-        """Handle a command from the CLI.
-        """
-        cmd = config["cli_command"]
-        # aliases
-        if cmd[0] in ["mod", "module", "modules"]:
-            cmd[0] = "modules"
-
-        # allowed cli commands
-        if cmd[:2] in (["modules", "list"], ["modules", "details"]):
-            docstrings.show_modules(config, cmd[1:])
-        # docstring formatting and checking
-        elif cmd[:2] in (["docstring", "check"], ["docstring", "update"]):
-            if cmd[1] == "check":
-                show_diff = len(cmd) > 2 and cmd[2] == "diff"
-                if show_diff:
-                    mods = cmd[3:]
-                else:
-                    mods = cmd[2:]
-                docstrings.check_docstrings(show_diff, config, mods)
-            if cmd[1] == "update":
-                if len(cmd) < 3:
-                    print_stderr("Error: you must specify what to update")
-                    sys.exit(1)
-
-                if cmd[2] == "modules":
-                    docstrings.update_docstrings()
-                else:
-                    docstrings.update_readme_for_modules(cmd[2:])
-        elif cmd[:2] in (["modules", "enable"], ["modules", "disable"]):
-            # TODO: to be implemented
-            pass
-        else:
-            print_stderr("Error: unknown command")
-            sys.exit(1)

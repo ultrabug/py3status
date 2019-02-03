@@ -280,7 +280,6 @@ def command_parser():
             name,
             epilog=eval("{}_EPILOG".format(name.upper())),
             formatter_class=argparse.RawTextHelpFormatter,
-            add_help=False,
             help=msg,
         )
         sps[name].add_argument(nargs=nargs, dest="module", help="module name")

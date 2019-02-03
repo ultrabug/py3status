@@ -48,7 +48,7 @@ def main():
             py3.notify_user("Setup interrupted")
         sys.exit(0)
     except Exception:
-        if py3 and not py3.config.get("cli_command"):
+        if py3:
             py3.report_exception("Setup error")
         else:
             # we cannot report this Exception
