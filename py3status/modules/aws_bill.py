@@ -28,7 +28,7 @@ Color options:
     color_bad: An error has occured
 
 Requires:
-    boto:
+    boto: a python interface to amazon web services (aws)
 
 @author nawadanp
 

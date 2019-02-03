@@ -31,7 +31,7 @@ format_value placeholders:
     {unit} The current transfer-rate's unit
 
 Requires:
-    stem: python module from pypi https://pypi.python.org/pypi/stem
+    stem: python controller library for tor https://pypi.org/project/stem
 
 Examples:
 ```

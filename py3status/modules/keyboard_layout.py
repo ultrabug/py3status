@@ -3,14 +3,11 @@
 Display keyboard layout.
 
 Configuration parameters:
-    button_next: Button to click to cycle up through available layouts
-        (default 4)
-    button_prev: Button to click to cycle down through available layouts
-        (default 5)
+    button_next: mouse button to cycle next layout (default 4)
+    button_prev: mouse button to cycle previous layout (default 5)
     cache_timeout: refresh interval for this module (default 10)
-    colors: deprecated. see color options below (default None)
     format: display format for this module (default '{layout}')
-    layouts: a list of layout that the user can select (default None)
+    layouts: specify a list of layouts to use (default None)
 
 Format placeholders:
     {layout} keyboard layout
@@ -66,11 +63,11 @@ class Py3status:
     button_next = 4
     button_prev = 5
     cache_timeout = 10
-    colors = None
     format = "{layout}"
     layouts = None
 
     def post_config_hook(self):
+        self.colors = getattr(self, "colors", None)  # old config
         try:
             self._xkblayout()
             self._command = self._xkblayout

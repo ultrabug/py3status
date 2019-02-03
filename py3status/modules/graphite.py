@@ -110,15 +110,7 @@ class Py3status:
     def post_config_hook(self):
         self._validate_config()
 
-    def _reset_notifications(self):
-        """
-        """
-        self.notification_level = "info"
-        self.notifications = []
-
     def _validate_config(self):
-        """
-        """
         if not self.format:
             raise ValueError('missing "format" configuration')
         if not self.graphite_url:
@@ -131,8 +123,6 @@ class Py3status:
             raise ValueError('invalid "value_comparator" configuration')
 
     def _render_graphite_json(self):
-        """
-        """
         params = [("format", "json"), ("from", self.timespan)]
         for target in self.targets.split(";"):
             params.append(("target", target))
@@ -195,9 +185,11 @@ class Py3status:
                 r_json[target] = displayed_value
             return color_key, r_json
 
+    def _reset_notifications(self):
+        self.notification_level = "info"
+        self.notifications = []
+
     def _store_notification(self, target, threshold, value):
-        """
-        """
         if self.value_comparator == "max":
             msg = "{}: {} > {}".format(target, value, threshold)
         elif self.value_comparator == "min":
@@ -205,16 +197,12 @@ class Py3status:
         self.notifications.append(msg)
 
     def _notify_user(self):
-        """
-        """
         if self.notifications:
             self.py3.notify_user(
                 "\n".join(self.notifications), level=self.notification_level
             )
 
     def _check_threshold_and_get_color(self, displayed_value, target, value):
-        """
-        """
         if self.threshold_bad:
             if eval(
                 "{}(self.threshold_bad, value) == value".format(self.value_comparator)
@@ -235,8 +223,6 @@ class Py3status:
         return "good"
 
     def graphite(self):
-        """
-        """
         self._reset_notifications()
 
         color_key, r_json = self._render_graphite_json()

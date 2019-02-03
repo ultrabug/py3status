@@ -18,7 +18,8 @@ Configuration parameters:
     format_separator: show separator if more than one (default ' ')
     markets: number of top-ranked markets or list of user-inputted markets
         (default ['btc'])
-    thresholds: for percentage changes (default [(-100, 'bad'), (0, 'good')])
+    thresholds: specify color thresholds to use
+        (default [(-100, 'bad'), (0, 'good')])
 
 Format placeholder:
     {format_coin} format for cryptocurrency coins

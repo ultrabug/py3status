@@ -152,12 +152,10 @@ class Py3status:
         self.scrolling = False
         self.station_data = {}
 
-        self.wow = 0
-
         self.thresholds_init = {}
         for name in ["format", "format_station"]:
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name, None) or ""
+                getattr(self, name)
             )
 
     def _set_optimal_area(self, data):

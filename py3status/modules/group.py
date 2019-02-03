@@ -2,7 +2,7 @@
 """
 Group modules and switch between them.
 
-In `i3status.conf` groups can be configured. The active one of these groups is
+Groups can be configured in your config. The active one of these groups is
 shown in the i3bar.  The active group can be changed by a user click.  If the
 click is not used by the group module then it will be passed down to the
 displayed module.

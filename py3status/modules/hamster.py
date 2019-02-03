@@ -10,7 +10,7 @@ Format placeholders:
     {current} current activity
 
 Requires:
-    hamster:
+    hamster: time tracking application
 
 @author Aaron Fields (spirotot [at] gmail.com)
 @license BSD

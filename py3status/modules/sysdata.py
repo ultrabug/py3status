@@ -16,7 +16,7 @@ Configuration parameters:
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
         (default '°C')
-    thresholds: thresholds to use for color changes
+    thresholds: specify color thresholds to use
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: Either a path in sysfs to CPU temperature sensor, or an lm_sensors thermal zone to use.
         If None try to guess CPU temperature
@@ -351,6 +351,10 @@ class Py3status:
         if self.init["cpu_temp"]:
             sys["cpu_temp"] = self._get_cputemp(self.zone, self.temp_unit)
 
+        if self.init["load"]:
+            load_keys = ["load1", "load5", "load15"]
+            sys.update(zip(load_keys, getloadavg()))
+
         if self.init["meminfo"]:
             memi = self._get_mem(
                 self.mem_unit, self.swap_unit, self.init["mem"], self.init["swap"]
@@ -368,10 +372,6 @@ class Py3status:
                     "swap_unit",
                 ]
                 sys.update(zip(swap_keys, memi["swap"]))
-
-        if self.init["load"]:
-            load_keys = ["load1", "load5", "load15"]
-            sys.update(zip(load_keys, getloadavg()))
 
         sys["max_used_percent"] = max(
             [perc for name, perc in sys.items() if "used_percent" in name]

@@ -16,7 +16,7 @@ Configuration parameters:
         (default 512)
     si_units: use SI units
         (default False)
-    thresholds: thresholds to use for color changes
+    thresholds: specify color thresholds to use
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
         'total': [(0, 'good'), (1024, 'degraded'), (1024 * 1024, 'bad')],
         'used_percent': [(0, 'good'), (40, 'degraded'), (75, 'bad')]})*
