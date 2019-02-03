@@ -30,9 +30,9 @@ Configuration parameters:
             (151, '#CC0033', 'Unhealthy'),
             (201, '#660099', 'Very Unhealthy'),
             (301, '#7E0023', 'Hazardous')])*
+    thresholds: specify color thresholds to use (default {'aqi': True})
 
-.. Note::
-
+Notes:
     Your station may have individual scores for pollutants not listed below.
     See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
     for an explicit list of valid placeholders to use, eg
@@ -78,7 +78,7 @@ Color options:
     color_bad: print a color for error (if any) from the site
 
 Color thresholds:
-    aqi: print a color based on the value of aqi
+    xxx: print a color based on the value of `xxx` placeholder
 
 Examples:
 ```
@@ -132,6 +132,7 @@ class Py3status:
         (201, "#660099", "Very Unhealthy"),
         (301, "#7E0023", "Hazardous"),
     ]
+    thresholds = {"aqi": True}
 
     def post_config_hook(self):
         self.auth_token = {"token": self.auth_token}
@@ -143,9 +144,12 @@ class Py3status:
             ):
                 self.init_datetimes.append(word)
 
-        self.thresholds = []
-        for index_aqi, index_color, index_category in self.quality_thresholds:
-            self.thresholds.append((index_aqi, index_color))
+        if isinstance(self.thresholds, dict):
+            if self.thresholds.get("aqi") is True:
+                aqi = [(x[0], x[1]) for x in self.quality_thresholds]
+                self.thresholds["aqi"] = aqi
+
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def _get_aqi_data(self):
         try:
@@ -164,8 +168,9 @@ class Py3status:
             if data["aqi"] >= index_aqi:
                 data["category"] = index_category
 
-        if self.thresholds:
-            self.py3.threshold_get_color(data["aqi"], "aqi")
+        for x in self.thresholds_init:
+            if x in data:
+                self.py3.threshold_get_color(data[x], x)
 
         for k in self.init_datetimes:
             if k in data:
