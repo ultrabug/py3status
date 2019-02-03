@@ -61,8 +61,8 @@ SAMPLE OUTPUT
 import re
 import math
 
-STRING_ERROR = "iw: command failed"
 DEFAULT_FORMAT = "W: {bitrate} {signal_percent} {ssid}|W: down"
+STRING_NOT_INSTALLED = "iw not installed"
 
 
 class Py3status:
@@ -84,11 +84,10 @@ class Py3status:
     use_sudo = False
 
     def post_config_hook(self):
-        self._max_bitrate = 0
-        self._ssid = ""
         iw = self.py3.check_commands(["iw", "/sbin/iw"])
-        if iw is None:
-            raise Exception("iw is not installed")
+        if not iw:
+            raise Exception(STRING_NOT_INSTALLED)
+
         # get wireless interface
         try:
             data = self.py3.command_output([iw, "dev"])
@@ -100,8 +99,14 @@ class Py3status:
         except self.py3.CommandError:
             pass
 
-        self.iw_dev_id_link = [iw, "dev", self.device, "link"]
+        self._max_bitrate = 0
+        self._ssid = ""
+        self.color_down = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
         self.ip_addr_list_id = ["ip", "addr", "list", self.device]
+        self.iw_dev_id_link = [iw, "dev", self.device, "link"]
+        self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
+        self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
+
         # use_sudo?
         if self.use_sudo:
             for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
@@ -125,20 +130,30 @@ class Py3status:
             msg += "parameters you should update to use the new format."
             self.py3.log(msg)
 
+    def _dbm_to_percent(self, dbm):
+        return 2.0 * (dbm + 100)
+
+    def _percent_to_dbm(self, percent):
+        return (percent / 2.0) - 100
+
     def wifi(self):
-        """
-        Get WiFi status using iw.
-        """
-        self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
-        self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
         try:
             iw = self.py3.command_output(self.iw_dev_id_link)
-        except self.py3.CommandError:
-            return {
-                "cached_until": self.py3.CACHE_FOREVER,
-                "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                "full_text": STRING_ERROR,
-            }
+        except self.py3.CommandError as ce:
+            self.py3.error(ce.error, self.py3.CACHE_FOREVER)
+
+        bitrate = None
+        bitrate_unit = None
+        freq_ghz = None
+        freq_mhz = None
+        icon = None
+        ip = None
+        signal_dbm = None
+        signal_percent = None
+        ssid = None
+        color = self.color_down
+        quality = 0
+
         # bitrate
         bitrate_out = re.search(r"tx bitrate: ([^\s]+) ([^\s]+)", iw)
         if bitrate_out:
@@ -148,18 +163,14 @@ class Py3status:
             bitrate_unit = bitrate_out.group(2)
             if bitrate_unit == "Gbit/s":
                 bitrate *= 1000
-        else:
-            bitrate = None
-            bitrate_unit = None
 
         # signal
         signal_out = re.search(r"signal: ([\-0-9]+)", iw)
         if signal_out:
             signal_dbm = int(signal_out.group(1))
             signal_percent = min(self._dbm_to_percent(signal_dbm), 100)
-        else:
-            signal_dbm = None
-            signal_percent = None
+
+        # ssid
         ssid_out = re.search(r"SSID: (.+)", iw)
         if ssid_out:
             ssid = ssid_out.group(1)
@@ -168,28 +179,19 @@ class Py3status:
             # it needs to be decoded using 'unicode_escape', to '苟'
             ssid = ssid.encode("latin-1").decode("unicode_escape")
             ssid = ssid.encode("latin-1").decode("utf-8")
-        else:
-            ssid = None
 
         # frequency
         freq_out = re.search(r"freq: ([\-0-9]+)", iw)
         if freq_out:
             freq_mhz = int(freq_out.group(1))
             freq_ghz = freq_mhz / 1000.0
-        else:
-            freq_mhz = None
-            freq_ghz = None
 
-        # check command
+        # ip
         if self.py3.format_contains(self.format, "ip"):
             ip_info = self.py3.command_output(self.ip_addr_list_id)
             ip_match = re.search(r"inet\s+([0-9.]+)", ip_info)
             if ip_match:
                 ip = ip_match.group(1)
-            else:
-                ip = None
-        else:
-            ip = ""
 
         # reset _max_bitrate if we have changed network
         if self._ssid != ssid:
@@ -199,15 +201,9 @@ class Py3status:
             if bitrate > self._max_bitrate:
                 self._max_bitrate = bitrate
             quality = int((bitrate / self._max_bitrate) * 100)
-        else:
-            quality = 0
 
-        # wifi down
-        if ssid is None:
-            color = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
-            icon = None
-        # wifi up
-        else:
+        # wifi
+        if ssid is not None:
             icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
             color = self.py3.COLOR_GOOD
             if bitrate:
@@ -252,12 +248,6 @@ class Py3status:
         if not self.thresholds_init:
             response["color"] = color
         return response
-
-    def _dbm_to_percent(self, dbm):
-        return 2 * (dbm + 100)
-
-    def _percent_to_dbm(self, percent):
-        return (percent / 2) - 100
 
 
 if __name__ == "__main__":
