@@ -8,21 +8,6 @@ import threading
 SERVER_ADDRESS = "/tmp/py3status_uds"
 MAX_SIZE = 1024
 
-REFRESH_EPILOG = """
-examples:
-    refresh:
-        # refresh all instances of the wifi module
-        py3-cmd refresh wifi
-
-        # refresh multiple modules
-        py3-cmd refresh coin_market github weather_yahoo
-
-        # refresh a module with instance name
-        py3-cmd refresh "weather_yahoo chicago"
-
-        # refresh all modules
-        py3-cmd refresh --all
-"""
 CLICK_EPILOG = """
 examples:
     button:
@@ -52,13 +37,69 @@ examples:
         # more options. however, there are no modules that
         # uses the aforementioned options.
 """
-# EXEC_EPILOG = ''
+DOCSTRING_EPILOG = """
+examples:
+    check:
+        # check one or more docstrings
+        py3-cmd docstring --check clock loadavg xrandr
+
+        # check all docstrings
+        py3-cmd docstring --check
+
+    diff:
+        # show diff docstrings
+        py3-cmd docstring --diff
+
+    update:
+        # update one or more docstrings
+        py3-cmd docstring --update clock loadavg xrandr
+
+        # update modules according to README.md
+        py3-cmd docstring --update modules
+"""
+LIST_EPILOG = """
+examples:
+    list:
+        # list one or more modules
+        py3-cmd list clock loadavg xrandr  # full
+        py3-cmd list coin* git* window*    # fnmatch
+        py3-cmd list [a-e]*                # abcde
+
+        # list all modules
+        py3-cmd list --all
+
+        # show full (i.e. docstrings)
+        py3-cmd list vnstat uname -f
+"""
+REFRESH_EPILOG = """
+examples:
+    refresh:
+        # refresh all instances of the wifi module
+        py3-cmd refresh wifi
+
+        # refresh multiple modules
+        py3-cmd refresh coin_market github weather_yahoo
+
+        # refresh a module with instance name
+        py3-cmd refresh "weather_yahoo chicago"
+
+        # refresh all modules
+        py3-cmd refresh --all
+"""
+EPILOGS = {
+    "refresh": REFRESH_EPILOG,
+    "list": LIST_EPILOG,
+    "docstring": DOCSTRING_EPILOG,
+    "click": CLICK_EPILOG,
+}
 INFORMATION = [
     ("V", "version", "show version number and exit"),
     ("v", "verbose", "enable verbose mode"),
 ]
 SUBPARSERS = [
     ("click", "click modules", "+"),
+    ("docstring", "docstring utility", "*"),
+    ("list", "list modules", "*"),
     ("refresh", "refresh modules", "*"),
     # ('exec', 'execute methods', '+'),
 ]
@@ -72,6 +113,17 @@ CLICK_OPTIONS = [
     ("width", "specify a width of the block, in pixel"),
     ("x", "specify absolute X on the bar, from the top left"),
     ("y", "specify absolute Y on the bar, from the top left"),
+]
+LIST_OPTIONS = [
+    ("", "all", "show all modules"),
+    ("", "core", "show core modules"),
+    ("", "user", "show user modules"),
+    ("f", "full", "show full (i.e. docstrings)"),
+]
+DOCSTRING_OPTIONS = [
+    ("check", "check docstrings"),
+    ("diff", "diff docstrings"),
+    ("update", "update docstrings"),
 ]
 REFRESH_OPTIONS = [("all", "refresh all modules")]
 
@@ -254,7 +306,7 @@ def command_parser():
             self.print_help()
             self.exit(1)
 
-        # hide aliases on errors
+        # hide choices on errors
         def _check_value(self, action, value):
             if action.choices is not None and value not in action.choices:
                 raise argparse.ArgumentError(
@@ -271,17 +323,18 @@ def command_parser():
         parser.add_argument(short, arg, action="store_true", help=msg)
 
     # make subparsers // ALIAS_DEPRECATION: remove metavar later
-    subparsers = parser.add_subparsers(dest="command", metavar="{click,refresh}")
+    metavar = "{click,list,refresh}"
+    subparsers = parser.add_subparsers(dest="command", metavar=metavar)
     sps = {}
 
-    # subparsers: add refresh, click
+    # subparsers: add click, list, refresh... hide docstring
+    data = {"formatter_class": argparse.RawTextHelpFormatter}
     for name, msg, nargs in SUBPARSERS:
-        sps[name] = subparsers.add_parser(
-            name,
-            epilog=eval("{}_EPILOG".format(name.upper())),
-            formatter_class=argparse.RawTextHelpFormatter,
-            help=msg,
-        )
+        data.update({"epilog": EPILOGS[name], "help": msg})
+        # don't show docstring in py3-cmd --help
+        if name in ["docstring"]:
+            del data["help"]
+        sps[name] = subparsers.add_parser(name, **data)
         sps[name].add_argument(nargs=nargs, dest="module", help="module name")
 
     # ALIAS_DEPRECATION: subparsers: add click (aliases)
@@ -309,11 +362,27 @@ def command_parser():
         else:
             sp.add_argument(arg, metavar="INT", type=int, help=msg)
 
+    # docstring subparser: add check, diff, update
+    sp = sps["docstring"]
+    for name, msg in DOCSTRING_OPTIONS:
+        arg = "--{}".format(name)
+        sp.add_argument(arg, action="store_true", help=msg)
+
     # refresh subparser: add all
     sp = sps["refresh"]
     for name, msg in REFRESH_OPTIONS:
         arg = "--{}".format(name)
         sp.add_argument(arg, action="store_true", help=msg)
+
+    # list subparser: add all, core, user, full
+    sp = sps["list"]
+    for short, name, msg in LIST_OPTIONS:
+        name = "--{}".format(name)
+        if short:
+            short = "-{}".format(short)
+            sp.add_argument(short, name, action="store_true", help=msg)
+        else:
+            sp.add_argument(name, action="store_true", help=msg)
 
     # parse args, post-processing
     options = parser.parse_args()
@@ -347,6 +416,9 @@ def command_parser():
             valid = True
         if not options.module and not valid:
             sps["refresh"].error("missing positional or optional arguments")
+    elif options.command in ["list", "docstring"]:
+        parse_list_or_docstring(options, sps)
+        parser.exit()
     elif options.version:
         # print version
         from platform import python_version
@@ -381,6 +453,59 @@ def command_parser():
     options.module = new_modules
 
     return options
+
+
+def parse_list_or_docstring(options, sps):
+    """
+    Handle py3-cmd list and docstring options.
+    """
+    import py3status.docstrings as docstrings
+
+    # HARDCODE: make include path to search for user modules
+    home_path = os.path.expanduser("~")
+    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
+    options.include_paths = [
+        "{}/.i3/py3status/".format(home_path),
+        "{}/.config/i3/py3status/".format(home_path),
+        "{}/i3status/py3status".format(xdg_home_path),
+        "{}/i3/py3status".format(xdg_home_path),
+    ]
+    include_paths = []
+    for path in options.include_paths:
+        path = os.path.abspath(path)
+        if os.path.isdir(path) and os.listdir(path):
+            include_paths.append(path)
+    options.include_paths = include_paths
+
+    # init
+    config = vars(options)
+    modules = [x.rsplit(".py", 1)[0] for x in config["module"]]
+
+    # list module names and details
+    if config["command"] == "list":
+        tests = [not config[x] for x in ["all", "user", "core"]]
+        if all([not modules] + tests):
+            msg = "missing positional or optional arguments"
+            sps["list"].error(msg)
+        docstrings.show_modules(config, modules)
+
+    # docstring formatting and checking
+    elif config["command"] == "docstring":
+        if config["check"]:
+            docstrings.check_docstrings(False, config, modules)
+        elif config["diff"]:
+            docstrings.check_docstrings(True, config, None)
+        elif config["update"]:
+            if not modules:
+                msg = "missing positional arguments or `modules`"
+                sps["docstring"].error(msg)
+            if "modules" in modules:
+                docstrings.update_docstrings()
+            else:
+                docstrings.update_readme_for_modules(modules)
+        else:
+            msg = "missing positional or optional arguments"
+            sps["docstring"].error(msg)
 
 
 def send_command():
