@@ -193,9 +193,7 @@ class Common:
         NOTE: msg should not end in a '.' for consistency.
         """
         # Get list of paths that our stack trace should be found in.
-        py3_paths = [os.path.dirname(__file__)]
-        user_paths = self.config.get("include_paths", [])
-        py3_paths += [os.path.abspath(path) + "/" for path in user_paths]
+        py3_paths = [os.path.dirname(__file__)] + self.config["include_paths"]
         traceback = None
 
         try:
@@ -442,9 +440,6 @@ class Py3statusWrapper:
         """
         user_modules = {}
         for include_path in self.config["include_paths"]:
-            include_path = os.path.abspath(include_path) + "/"
-            if not os.path.isdir(include_path):
-                continue
             for f_name in sorted(os.listdir(include_path)):
                 if not f_name.endswith(".py"):
                     continue
