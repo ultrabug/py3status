@@ -17,9 +17,9 @@ except NameError:
 
 
 def main():
-    from py3status.cli import parse_cli
+    from py3status.argparsers import parse_cli_args
 
-    options = parse_cli()
+    options = parse_cli_args()
     # detect gevent option early because monkey patching should be done before
     # everything else starts kicking
     if options.gevent:
