@@ -203,19 +203,16 @@ class Py3status:
             )
 
     def _check_threshold_and_get_color(self, displayed_value, target, value):
+        func = {"max": max, "min": min}
         if self.threshold_bad:
-            if eval(
-                "{}(self.threshold_bad, value) == value".format(self.value_comparator)
-            ):
+            test = func[self.value_comparator](self.threshold_bad, value)
+            if test == value:
                 self._store_notification(target, self.threshold_bad, displayed_value)
                 self.notification_level = "error"
                 return "bad"
         if self.threshold_degraded:
-            if eval(
-                "{}(self.threshold_degraded, value) == value".format(
-                    self.value_comparator
-                )
-            ):
+            test = func[self.value_comparator](self.threshold_degraded, value)
+            if test == value:
                 self._store_notification(
                     target, self.threshold_degraded, displayed_value
                 )
