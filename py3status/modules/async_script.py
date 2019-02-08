@@ -22,7 +22,7 @@ Format placeholders:
 
 Examples:
 ```
-external_script {
+async_script {
     format = "{output}"
     script_path = "ping 127.0.0.1"
 }
