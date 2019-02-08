@@ -8,7 +8,7 @@ Configuration parameters:
     blocks: a string, where each character represents quality level
         (default "_▁▂▃▄▅▆▇█")
     cache_timeout: Update interval in seconds (default 10)
-    device: Wireless device name (default "wlan0")
+    device: specify device name to use, otherwise auto (default None)
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
     format: Display format for this module
@@ -74,7 +74,7 @@ class Py3status:
     bitrate_degraded = 53
     blocks = u"_▁▂▃▄▅▆▇█"
     cache_timeout = 10
-    device = "wlan0"
+    device = None
     down_color = "bad"
     format = DEFAULT_FORMAT
     round_bitrate = True
@@ -89,19 +89,17 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
         # get wireless interface
-        try:
+        if not self.device:
             data = self.py3.command_output([iw, "dev"])
-            devices = re.findall(r"Interface\s*([^\s]+)", data)
-            if not devices or "wlan0" in devices:
-                self.device = "wlan0"
-            else:
-                self.device = devices[0]
-        except self.py3.CommandError:
-            pass
+            for line in data.splitlines()[1:]:
+                if "Interface" in line:
+                    self.device = line.split()[-1]
+                    break
 
         self._max_bitrate = 0
         self._ssid = ""
         self.color_down = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
+        self.device = str(self.device)
         self.ip_addr_list_id = ["ip", "addr", "list", self.device]
         self.iw_dev_id_link = [iw, "dev", self.device, "link"]
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
