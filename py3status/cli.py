@@ -1,6 +1,6 @@
 import argparse
 import os
-import subprocess
+import shutil
 
 from platform import python_version
 from py3status.version import version
@@ -51,14 +51,7 @@ def parse_cli():
     xdg_dirs_path = os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")
 
     # get i3status path
-    try:
-        with open(os.devnull, "w") as devnull:
-            command = ["which", "i3status"]
-            i3status_path = (
-                subprocess.check_output(command, stderr=devnull).decode().strip()
-            )
-    except subprocess.CalledProcessError:
-        i3status_path = None
+    i3status_path = shutil.which("i3status")
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
