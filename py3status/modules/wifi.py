@@ -18,11 +18,6 @@ Configuration parameters:
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
     thresholds: specify color thresholds to use (default [])
-    use_sudo: Use sudo to run iw and ip. make sure to give some root rights
-        to run without a password by editing the sudoers file, eg...
-        '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
-        '<user> ALL=(ALL) NOPASSWD:/sbin/ip addr list [a-z]*'
-        (default False)
 
 Format placeholders:
     {bitrate} Display bit rate
@@ -48,8 +43,12 @@ Requires:
     iw: cli configuration utility for wireless devices
     ip: only for {ip}. may be part of iproute2: ip routing utilities
 
-__Note: Some distributions eg Debian require `iw` to be run with privileges.
-In this case you will need to use the `use_sudo` configuration parameter.__
+Notes:
+    Some distributions require commands to be run with privileges. You can
+    give commands some root rights to run without a password by editing
+    sudoers file, i.e., `sudo visudo`, and add a line that requires sudo.
+    '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
+    '<user> ALL=(ALL) NOPASSWD:/sbin/ip addr list [a-z]*'
 
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
@@ -81,7 +80,9 @@ class Py3status:
     signal_bad = 29
     signal_degraded = 49
     thresholds = []
-    use_sudo = False
+
+    class Meta:
+        deprecated = {"remove": [{"param": "use_sudo", "msg": "obsolete"}]}
 
     def post_config_hook(self):
         iw = self.py3.check_commands(["iw", "/sbin/iw"])
@@ -90,7 +91,10 @@ class Py3status:
 
         # get wireless interface
         if not self.device:
-            data = self.py3.command_output([iw, "dev"])
+            try:
+                data = self.py3.command_output([iw, "dev"])
+            except self.py3.CommandError as ce:
+                raise Exception(ce.error.strip())
             for line in data.splitlines()[1:]:
                 if "Interface" in line:
                     self.device = line.split()[-1]
@@ -99,17 +103,12 @@ class Py3status:
         self._max_bitrate = 0
         self._ssid = ""
         self.color_down = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
+        self.commands = set()
         self.device = str(self.device)
         self.ip_addr_list_id = ["ip", "addr", "list", self.device]
         self.iw_dev_id_link = [iw, "dev", self.device, "link"]
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
-
-        # use_sudo?
-        if self.use_sudo:
-            for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
-                cmd[0:0] = ["sudo", "-n"]
-
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
         # DEPRECATION WARNING
@@ -134,11 +133,21 @@ class Py3status:
     def _percent_to_dbm(self, percent):
         return (percent / 2.0) - 100
 
+    def _get_wifi_data(self, command):
+        for time in range(2):
+            try:
+                return self.py3.command_output(command)
+            except self.py3.CommandError as ce:
+                if str(command) not in self.commands:
+                    command[0:0] = ["sudo", "-n"]
+                    continue
+                msg = ce.error.strip().replace("sudo", " ".join(command[2:]))
+                self.py3.error(msg, self.py3.CACHE_FOREVER)
+            finally:
+                self.commands.add(str(command))
+
     def wifi(self):
-        try:
-            iw = self.py3.command_output(self.iw_dev_id_link)
-        except self.py3.CommandError as ce:
-            self.py3.error(ce.error, self.py3.CACHE_FOREVER)
+        iw = self._get_wifi_data(self.iw_dev_id_link)
 
         bitrate = None
         bitrate_unit = None
@@ -186,7 +195,7 @@ class Py3status:
 
         # ip
         if self.py3.format_contains(self.format, "ip"):
-            ip_info = self.py3.command_output(self.ip_addr_list_id)
+            ip_info = self._get_wifi_data(self.ip_addr_list_id)
             ip_match = re.search(r"inet\s+([0-9.]+)", ip_info)
             if ip_match:
                 ip = ip_match.group(1)
