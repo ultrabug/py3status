@@ -3,7 +3,6 @@
 Allow or Reject newly plugged USB devices using USBGuard.
 
 Configuration parameters:
-    allow_urgent: display urgency (default True)
     format: display format for this module
         (default '[{format_device}]')
     format_button_allow: display format for allow button filter
@@ -58,7 +57,6 @@ class Py3status:
     """
 
     # available configuration parameters
-    allow_urgent = True
     format = "[{format_device}]"
     format_button_allow = "\[Allow\]"
     format_button_reject = "\[Reject\]"
@@ -161,7 +159,7 @@ class Py3status:
         return {
             "cached_until": self.py3.CACHE_FOREVER,
             "full_text": self.py3.safe_format(self.format, usbguard_data),
-            "urgent": self.allow_urgent,
+            "urgent": True,
         }
 
     def on_click(self, event):
