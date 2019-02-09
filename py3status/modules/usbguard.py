@@ -3,6 +3,7 @@
 Allow or Reject newly plugged USB devices using USBGuard.
 
 Configuration parameters:
+    allow_urgent: display urgency (default True)
     format: display format for this module
         (default '[{format_device}]')
     format_button_allow: display format for allow button filter
@@ -10,7 +11,7 @@ Configuration parameters:
     format_button_reject: display format for reject button filter
         (default '\[Reject\]')
     format_device: display format for USB devices
-        (default '{format_button_reject} [{name}|{usb_id}] {format_button_allow}'
+        (default '{format_button_reject} [{name}|{usb_id}] {format_button_allow}')
     format_device_separator: show separator if more than one (default ' ')
 
 Format placeholders:
@@ -56,6 +57,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     allow_urgent = True
     format = "[{format_device}]"
     format_button_allow = "\[Allow\]"
