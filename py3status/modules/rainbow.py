@@ -31,30 +31,25 @@ Configuration parameters:
     steps: Number of steps between each color in the gradient
         (default 10)
 
-Example config:
+Format placeholders:
+    {output} rainbow output
 
+Examples:
 ```
-order += "rainbow time"
-
 # show time colorfully
+order += "rainbow time"
 rainbow time {
     time {}
 }
-```
-
-Example blinking config:
-
-```
-order += "rainbow blink_time"
 
 # blinking text black/white
-rainbow blink_time{
+order += "rainbow blink_time"
+rainbow blink_time {
     gradient = [
         '#FFFFFF',
         '#000000',
     ]
     steps = 1
-
     time {}
 }
 ```

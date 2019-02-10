@@ -54,16 +54,7 @@ format_datetime placeholders:
     SEE EXAMPLE BELOW: "show incompleted titles with last modified time"
 
 Color thresholds:
-    format:
-        todo_total: print a color based on number of total todos
-        todo_completed: print a color based on number of completed todos
-        todo_incompleted: print a color based on number of incompleted todos
-    format_todo:
-        index_total: print a color based on total todo index
-        index_completed: print a color based on completed todo index
-        index_incompleted: print a color based on incompleted todo index
-        flags: print a color based on flags # DISABLED. What is flags?
-        priority: print a color based on number of todo priority
+    xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     thunderbird: standalone mail and news reader

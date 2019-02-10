@@ -35,7 +35,7 @@ Configuration parameters:
 Notes:
     Your station may have individual scores for pollutants not listed below.
     See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
-    for an explicit list of valid placeholders to use, eg
+    for a full list of placeholders to use.
 
 Format placeholders:
     {aqi} air quality index

@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display status on a given Twitch streamer.
-
-Checks if a streamer is online using the Twitch Kraken API to see
-if a channel is currently streaming or not.
+Display if a Twitch channel is currently streaming or not.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds

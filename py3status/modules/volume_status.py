@@ -2,11 +2,6 @@
 """
 Volume control.
 
-Expands on the standard i3status volume module by adding color
-and percentage threshold settings.
-Volume up/down and Toggle mute via mouse clicks can be easily added see
-example.
-
 Configuration parameters:
     button_down: button to decrease volume (default 5)
     button_mute: button to toggle mute (default 1)

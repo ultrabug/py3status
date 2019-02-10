@@ -21,7 +21,7 @@ Configuration parameters:
     thresholds: specify color thresholds to use
         (default [(-100, 'bad'), (0, 'good')])
 
-Format placeholder:
+Format placeholders:
     {format_coin} format for cryptocurrency coins
 
 format_datetime placeholders:
@@ -85,7 +85,7 @@ coin_market {
             ("Litecoin", "crimson"),
             ("Dogecoin", "orange"),
         ],
-        "percent_change_24": [(-100, "bad"), (0, "good")],
+        "percent_change_24h": [(-100, "bad"), (0, "good")],
     }
 }
 

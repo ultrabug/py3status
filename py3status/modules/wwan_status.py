@@ -3,7 +3,7 @@
 Display network and IP address for newer Huwei modems.
 
 It is tested for Huawei E3276 (usb-id 12d1:1506) aka Telekom Speed
-Stick LTE III but may work on other devices, too.
+Stick LTE III but may work on other devices too.
 
 Configuration parameters:
     baudrate: There should be no need to configure this, but

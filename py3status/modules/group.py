@@ -60,10 +60,7 @@ group {
 
 # Create a disks group that will show space on '/' and '/home'
 # Change between disk modules every 30 seconds
-...
 order += "group disks"
-...
-
 group disks {
     cycle = 30
     format = "Disks: {output} {button}"
@@ -72,7 +69,6 @@ group disks {
     disk "/" {
         format = "/ %avail"
     }
-
     disk "/home" {
         format = "/home %avail"
     }

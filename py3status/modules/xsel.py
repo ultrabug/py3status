@@ -20,10 +20,10 @@ Requires:
 Examples:
 ```
 xsel {
-  max_size = 50
-  command = "xsel --clipboard --output"
-  on_click 1 = "exec xsel --clear --clipboard"
-  log_file = "~/.local/share/xsel/clipboard_log"
+    max_size = 50
+    command = "xsel --clipboard --output"
+    on_click 1 = "exec xsel --clear --clipboard"
+    log_file = "~/.local/share/xsel/clipboard_log"
 }
 ```
 

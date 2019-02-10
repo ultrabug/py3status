@@ -16,7 +16,7 @@ Configuration parameters:
     unit: specify the systemd unit to use (default 'dbus.service')
     user: specify if this is a user service (default False)
 
-Format of status string placeholders:
+Format placeholders:
     {unit} unit name, eg sshd.service
     {status} unit status, eg active, inactive, not-found
 

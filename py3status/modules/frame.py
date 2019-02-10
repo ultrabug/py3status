@@ -20,17 +20,15 @@ Configuration parameters:
     open: If button then the frame can be set to be open or close
         (default True)
 
-Format of status string parameters:
+Format placeholders:
     {button} If used a button will be used that can be clicked to hide/show
         the contents of the frame.
     {output} The output of the modules in the frame
 
-Example config:
-
+Examples:
 ```
 # A frame showing times in different cities.
 # We also have a button to hide/show the content
-
 frame time {
     format = '{output}{button}'
     format_separator = ' '  # have space instead of usual i3bar separator
@@ -39,28 +37,24 @@ frame time {
         format = "LA %H:%M"
         timezone = "America/Los_Angeles"
     }
-
     tztime ny {
         format = "NY %H:%M"
         timezone = "America/New_York"
     }
-
     tztime du {
         format = "DU %H:%M"
         timezone = "Asia/Dubai"
     }
 }
 
-# Define a group which shows volume and battery info
-# or the current time.
-# The frame, volume_status and battery_level modules are named
-# to prevent them clashing with any other defined modules of the same type.
+# Define a group which shows volume and battery info or the current time.
+# The frame, volume_status and battery_level modules are named to prevent
+# them clashing with any other defined modules of the same type.
 group {
     frame {
         volume_status {}
         battery_level {}
     }
-
     time {}
 }
 ```

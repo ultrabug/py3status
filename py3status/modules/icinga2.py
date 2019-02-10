@@ -19,6 +19,10 @@ Configuration parameters:
     user: username to authenticate against the icinga-web2 interface
         (default '')
 
+Format placeholders:
+    {status_name} status name, eg OK, WARNING, CRITICAL
+    {count} count, eg 0, 1, 2
+
 @author Ben Oswald <ben.oswald@root-space.de>
 @license BSD License <https://opensource.org/licenses/BSD-2-Clause>
 @source https://github.com/nazco/i3status-modules

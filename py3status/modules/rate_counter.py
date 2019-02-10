@@ -25,7 +25,7 @@ Format placeholders:
     {total_hours} The total number of whole hours in running timer
     {total_mins} The total number of whole minutes in running timer
 
-Money placeholders:
+format_money placeholders:
     {price} numeric value of money
 
 Color options:
