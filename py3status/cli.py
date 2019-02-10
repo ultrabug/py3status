@@ -248,18 +248,23 @@ def parse_cli():
     # make include path to search for user modules if None
     if not options.include_paths:
         options.include_paths = [
-            "{}/.i3/py3status/".format(home_path),
-            "{}/.config/i3/py3status/".format(home_path),
+            "{}/.i3/py3status".format(home_path),
+            "{}/.config/i3/py3status".format(home_path),
             "{}/i3status/py3status".format(xdg_home_path),
             "{}/i3/py3status".format(xdg_home_path),
         ]
+
+    include_paths = []
+    for path in options.include_paths:
+        path = os.path.abspath(path)
+        if os.path.isdir(path) and os.listdir(path):
+            include_paths.append(path)
+    options.include_paths = include_paths
 
     # handle py3status list and docstring options
     if options.command:
         import py3status.docstrings as docstrings
 
-        # init
-        options.include_paths = options.include_paths or []
         config = vars(options)
         modules = [x.rsplit(".py", 1)[0] for x in config["module"]]
         # list module names and details

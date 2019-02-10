@@ -254,21 +254,10 @@ class Py3status:
         (used_mem, _) = self.py3.format_units(used_mem_kib * 1024, unit=unit)
         return total_mem, used_mem, used_mem_p, unit
 
-    def _get_mem(self, mem_unit, swap_unit, mem, swap):
-        meminfo = {}
-        result = {}
-
+    def _get_meminfo(self, head=24):
         with open("/proc/meminfo") as f:
-            for line in f:
-                fields = line.split()
-                meminfo[fields[0]] = float(fields[1])
-
-        if mem:
-            result["mem"] = self._calc_mem_info(mem_unit, meminfo, True)
-        if swap:
-            result["swap"] = self._calc_mem_info(swap_unit, meminfo, False)
-
-        return result
+            info = [line.split() for line in (next(f) for x in range(head))]
+            return {fields[0]: float(fields[1]) for fields in info}
 
     def _calc_cpu_percent(self, cpu):
         cpu_used_percent = 0
@@ -353,22 +342,22 @@ class Py3status:
             sys.update(zip(load_keys, getloadavg()))
 
         if self.init["meminfo"]:
-            memi = self._get_mem(
-                self.mem_unit, self.swap_unit, self.init["mem"], self.init["swap"]
-            )
+            meminfo = self._get_meminfo()
 
             if self.init["mem"]:
+                mem = self._calc_mem_info(self.mem_unit, meminfo, True)
                 mem_keys = ["mem_total", "mem_used", "mem_used_percent", "mem_unit"]
-                sys.update(zip(mem_keys, memi["mem"]))
+                sys.update(zip(mem_keys, mem))
 
             if self.init["swap"]:
+                swap = self._calc_mem_info(self.swap_unit, meminfo, False)
                 swap_keys = [
                     "swap_total",
                     "swap_used",
                     "swap_used_percent",
                     "swap_unit",
                 ]
-                sys.update(zip(swap_keys, memi["swap"]))
+                sys.update(zip(swap_keys, swap))
 
         sys["max_used_percent"] = max(
             [perc for name, perc in sys.items() if "used_percent" in name]
