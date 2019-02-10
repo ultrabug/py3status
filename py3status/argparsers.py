@@ -41,7 +41,7 @@ examples:
 """
 
 
-def parse_cli():
+def parse_cli_args():
     """
     Parse the command line arguments
     """
