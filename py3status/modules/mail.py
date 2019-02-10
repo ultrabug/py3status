@@ -29,7 +29,7 @@ Color thresholds:
 
 IMAP Subscriptions:
     You can specify a list of filters to decide which folders to search.
-    By default, we search only the INBOX folder (ie: ['^INBOX$']`). We
+    By default, we search only the INBOX folder (ie: `['^INBOX$']`). We
     can use regular expressions, so if you use more than one, it would
     be joined by a logical operator `or`.
 
@@ -92,7 +92,9 @@ mail {                                       #
                 'urgent': False,             # <---- disable urgent
                                              #       for this account
                 'filters': ['^INBOX$']       # <---- specify a list of filters
-            }                                #       to search folders
+                                             #       to search folders
+                'log': True,                 # <---- print a list of folders
+            }                                #       to filter in the log
         ]
     }
     allow_urgent = False             <---- disable urgent for all accounts
@@ -237,30 +239,31 @@ class Py3status:
                     if self.first_run:
                         import re
 
-                        filters = account.pop("filters")
-                        folders = [
-                            x[-1]
-                            for x in reader(
-                                map(bytes.decode, inbox.list()[1]), delimiter=" "
-                            )
-                        ]
-                        line = "===== IMAP {} =====\n".format(i)
+                        filters = "|".join(account.pop("filters"))
+                        objs = [x.decode() for x in inbox.list()[1]]
+                        folders = [x[-1] for x in reader(objs, delimiter=" ")]
+                        lines = ["===== IMAP {} =====".format(i)]
                         for name in folders:
                             subscribed = " "
-                            for _filter in filters:
-                                if re.search(_filter, name):
+                            try:
+                                if re.search(filters, name):
                                     subscribed = "x"
                                     folder = name.replace("\\", "\\\\")
                                     folder = folder.replace('"', '\\"')
                                     folder = '"{}"'.format(folder)
-                                    if folder not in account["folders"]:
-                                        account["folders"].append(folder)
-                                    break
-                            line += "- [{}] {}\n".format(subscribed, name)
-                        if account["folders"]:
-                            self.py3.log(line[:-1])
-                        else:
-                            self.py3.error(STRING_INVALID_FILTER.format(filters))
+                                    account["folders"].append(folder)
+                            except re.error:
+                                account["folders"] = []
+                                break
+                            lines.append("[{}] {}".format(subscribed, name))
+                        if not account["folders"]:
+                            self.py3.error(
+                                STRING_INVALID_FILTER.format(filters),
+                                self.py3.CACHE_FOREVER,
+                            )
+                        if account.get("log") is True:
+                            for line in lines:
+                                self.py3.log(line)
 
                     count_mail = 0
                     for folder in account["folders"]:
