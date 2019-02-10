@@ -57,9 +57,6 @@ def core_module_docstrings(
     if include_user:
         # include user modules
         for include_path in sorted(config["include_paths"]):
-            include_path = os.path.abspath(include_path) + "/"
-            if not os.path.isdir(include_path):
-                continue
             for file in sorted(os.listdir(include_path)):
                 if not file.endswith(".py"):
                     continue
