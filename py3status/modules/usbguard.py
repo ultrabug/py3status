@@ -4,7 +4,7 @@ Allow or Reject newly plugged USB devices using USBGuard.
 
 Configuration parameters:
     format: display format for this module
-        (default '[{format_device}]')
+        (default '{format_device}')
     format_button_allow: display format for allow button filter
         (default '\[Allow\]')
     format_button_reject: display format for reject button filter
@@ -39,9 +39,9 @@ Requires:
 
 SAMPLE OUTPUT
 [
-    {'full_text': '[Reject] ', 'index': '22/reject', 'separator': False, 'separator_block_width': 0, 'urgent': True, 'cached_until': -1},
-    {'full_text': 'USB Flash Drive ', 'separator': False, 'separator_block_width': 0, 'urgent': True},
-    {'full_text': '[Allow]', 'index': '22/allow', 'urgent': True}
+    {'full_text': '[Reject] ', 'urgent': True, 'cached_until': -1},
+    {'full_text': 'USB Flash Drive ', 'urgent': True},
+    {'full_text': '[Allow]', 'urgent': True}
 ]
 """
 
@@ -57,7 +57,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    format = "[{format_device}]"
+    format = "{format_device}"
     format_button_allow = "\[Allow\]"
     format_button_reject = "\[Reject\]"
     format_device = "{format_button_reject} [{name}|{usb_id}] {format_button_allow}"
@@ -112,22 +112,21 @@ class Py3status:
 
     def _get_devices(self):
         try:
-            raw_devices = self.proxy.listDevices("(s)", "match")
+            raw_devices = self.proxy.listDevices("(s)", "block")
         except Exception:
             raise Exception(STRING_USBGUARD_DBUS)
 
         devices = []
         for device_id, string in raw_devices:
             device = {"id": device_id}
+            string = string.encode("latin-1").decode("unicode_escape")
+            string = string.encode("latin-1").decode("utf-8")
             for name, regex in self.keys:
                 value = regex.findall(string) or None
                 if value:
                     value = value[0]
-                    value = value.encode("latin-1").decode("unicode_escape")
-                    value = value.encode("latin-1").decode("utf-8")
                 device[name] = value
-            if device["policy"] == "block":
-                devices.append(device)
+            devices.append(device)
 
         return devices
 
@@ -149,11 +148,11 @@ class Py3status:
         return format_device
 
     def usbguard(self):
-        self.devices = self._get_devices()
+        devices = self._get_devices()
 
         usbguard_data = {
-            "device": len(self.devices),
-            "format_device": self._format_device(self.devices),
+            "device": len(devices),
+            "format_device": self._format_device(devices),
         }
 
         return {
@@ -167,9 +166,8 @@ class Py3status:
             return
 
         device_id, policy_name = event["index"].split("/")
-        device_id = int(device_id)
         policy = self.init["target"][policy_name]
-        self.proxy.applyDevicePolicy("(uub)", device_id, policy, False)
+        self.proxy.applyDevicePolicy("(uub)", int(device_id), policy, False)
 
 
 if __name__ == "__main__":
