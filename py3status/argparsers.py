@@ -258,7 +258,7 @@ def parse_cli_args():
     for path in options.include_paths:
         path = os.path.abspath(path)
         if os.path.isdir(path) and os.listdir(path):
-            include_paths.append(path)
+            include_paths.append(path + "/")
     options.include_paths = include_paths
 
     # handle py3status list and docstring options
