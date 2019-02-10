@@ -162,7 +162,7 @@ class Py3status:
         }
 
     def on_click(self, event):
-        if not isinstance(event["index"], str):
+        if isinstance(event["index"], int):
             return
 
         device_id, policy_name = event["index"].split("/")
