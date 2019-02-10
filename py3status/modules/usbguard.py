@@ -34,12 +34,12 @@ Requires:
     python-gobject: Python Bindings for GLib/GObject/GIO/GTK+
     usbguard: USB device authorization policy framework
 
-@author @cyrinux, @lasers, @maximbaz
+@author @cyrinux, @maximbaz
 @license BSD
 
 SAMPLE OUTPUT
 [
-    {'full_text': '[Reject] ', 'urgent': True, 'cached_until': -1},
+    {'full_text': '[Reject] ', 'urgent': True},
     {'full_text': 'USB Flash Drive ', 'urgent': True},
     {'full_text': '[Allow]', 'urgent': True}
 ]
