@@ -4,7 +4,8 @@ Display disk information.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module. (default 10)
-    disk: show stats for disk or partition, i.e. `sda1`. None for all disks.
+    disk: show stats for mountpoint, disk or partition, i.e. `sda1`.
+        None for all disks, filtered by `type` parameter.
         (default None)
     format: display format for this module.
         (default "{disk}: {used_percent}% ({total})")
@@ -12,14 +13,18 @@ Configuration parameters:
         (default "[\?min_length=11 {value:.1f} {unit}]")
     format_space: display format for disk space values
         (default "[\?min_length=5 {value:.1f}]")
-    sector_size: size of the disk's sectors.
-        (default 512)
+    sector_size: size of the disk's sectors (normally taken from sysfs).
+        (default None)
     si_units: use SI units
         (default False)
     thresholds: specify color thresholds to use
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
         'total': [(0, 'good'), (1024, 'degraded'), (1024 * 1024, 'bad')],
         'used_percent': [(0, 'good'), (40, 'degraded'), (75, 'bad')]})*
+    types: space-separated list of device types to include in "all disks mode".
+        Supported values: `disks` for PATA/SATA disks, `raid` for raid devices,
+        `cdrom` for cdroms, `mmc` for memory cards.
+        (default 'disks')
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
         (default "B/s")
@@ -58,6 +63,7 @@ SAMPLE OUTPUT
 
 from __future__ import division  # python2 compatibility
 from time import time
+import os
 
 
 class Py3status:
@@ -70,14 +76,26 @@ class Py3status:
     format = "{disk}: {used_percent}% ({total})"
     format_rate = "[\?min_length=11 {value:.1f} {unit}]"
     format_space = "[\?min_length=5 {value:.1f}]"
-    sector_size = 512
+    sector_size = None
     si_units = False
     thresholds = {
         "free": [(0, "bad"), (10, "degraded"), (100, "good")],
         "total": [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")],
         "used_percent": [(0, "good"), (40, "degraded"), (75, "bad")],
     }
+    types = "disks"
     unit = "B/s"
+
+    def _resolve_disk_name(self, path):
+        disk_path = os.path.realpath(path)
+        return os.path.basename(disk_path)
+
+    def _add_monitored_disk(self, path):
+        basename = self._resolve_disk_name(path)
+        if not self.sector_size:
+            with open("/sys/block/{}/queue/hw_sector_size".format(basename)) as ss:
+                sector_size = int(ss.read().strip())
+        self._disks[basename] = sector_size
 
     def post_config_hook(self):
         """
@@ -87,17 +105,73 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
-        self.last_diskstats = self._get_diskstats(self.disk)
+        types_info = {
+            "disks": {"major": [3, 8, 22]},
+            "raid": {"major": [9]},
+            "cdrom": {
+                "major": [
+                    11,
+                    15,
+                    16,
+                    17,
+                    18,
+                    20,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    32,
+                    33,
+                    34,
+                ]
+            },
+            "mmc": {"major": [31]},
+        }
+
+        self._disks = {}
+
+        if not self.disk:
+            allowed_types = []
+            for _type in self.types.split():
+                allowed_types.extend(types_info[_type]["major"])
+            with open("/proc/diskstats") as ds:
+                for stat in ds:
+                    line = stat.split()
+                    if int(line[0]) in allowed_types and int(line[1]) == 0:
+                        self._add_monitored_disk("/dev/" + line[2])
+        else:
+            for disk in self.disk.split():
+                # mountpoint or fully qualified device path
+                if disk.startswith("/"):
+                    # mountpoint
+                    if not disk.startswith("/dev/"):
+                        with open("/proc/mounts") as mounts:
+                            for entry in mounts:
+                                mount = entry.split()
+                                if mount[1] == disk:
+                                    self._add_monitored_disk(mount[0])
+                    else:
+                        self._add_monitored_disk(disk)
+
+                # non fully qualified device path
+                else:
+                    self._add_monitored_disk("/dev/" + disk)
+
+        self.last_diskstats = self._get_diskstats()
         self.last_time = time()
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def diskdata(self):
-        self.values = {"disk": self.disk if self.disk else "all"}
+        self.values = {"disk": ",".join(self._disks.keys())}
         threshold_data = {}
 
         if self.py3.format_contains(self.format, ["read", "write", "total"]):
-            diskstats = self._get_diskstats(self.disk)
+            diskstats = self._get_diskstats()
             current_time = time()
 
             timedelta = current_time - self.last_time
@@ -114,7 +188,7 @@ class Py3status:
             threshold_data.update({"read": read, "write": write, "total": total})
 
         if self.py3.format_contains(self.format, ["free", "used*", "total_space"]):
-            free, used, used_percent, total_space = self._get_free_space(self.disk)
+            free, used, used_percent, total_space = self._get_free_space()
 
             self.values["free"] = self.py3.safe_format(
                 self.format_space, {"value": free}
@@ -141,9 +215,7 @@ class Py3status:
             "full_text": self.py3.safe_format(self.format, self.values),
         }
 
-    def _get_free_space(self, disk):
-        if disk and not disk.startswith("/dev/"):
-            disk = "/dev/" + disk
+    def _get_free_space(self):
 
         total = 0
         used = 0
@@ -152,10 +224,10 @@ class Py3status:
 
         df = self.py3.command_output("df")
         for line in df.splitlines():
-            if (disk and line.startswith(disk)) or (
-                disk is None and line.startswith("/dev/")
+            data = line.split()
+            if self._resolve_disk_name(data[0]) in self._disks or any(
+                data[0].startswith("/dev/" + x) for x in self._disks
             ):
-                data = line.split()
                 if data[0] in devs:
                     # Make sure to count each block device only one time
                     # some filesystems eg btrfs have multiple entries
@@ -170,22 +242,15 @@ class Py3status:
 
         return free, used, 100 * used / total, total
 
-    def _get_diskstats(self, disk):
-        if disk and disk.startswith("/dev/"):
-            disk = disk[5:]
+    def _get_diskstats(self):
         read = 0
         write = 0
         with open("/proc/diskstats", "r") as fd:
             for line in fd:
                 data = line.split()
-                if disk:
-                    if data[2] == disk:
-                        read += int(data[5]) * self.sector_size
-                        write += int(data[9]) * self.sector_size
-                else:
-                    if data[1] == "0":
-                        read += int(data[5]) * self.sector_size
-                        write += int(data[9]) * self.sector_size
+                if data[2] in self._disks:
+                    read += int(data[5]) * self._disks[data[2]]
+                    write += int(data[9]) * self._disks[data[2]]
         return read, write
 
     def _format_rate(self, value):
