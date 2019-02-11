@@ -207,8 +207,8 @@ class Py3status:
             if button == self.button_open:
                 index = event["index"]
                 if not isinstance(index, int):
-                    url = "https://www.twitch.tv/{}".format(index)
-                    self.py3.command_run("xdg-open {}".format(url))
+                    command = "twitchy --non-interactive kickstart {name}"
+                    self.py3.command_run(command.format(name=index))
             self.py3.prevent_refresh()
 
 
