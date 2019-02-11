@@ -127,10 +127,8 @@ class Py3status:
     def _get_twitchy_data(self):
         try:
             return self.py3.command_output(self.twitchy_command).strip()
-        except self.py3.CommandError as ce:
-            if "Unable to connect" in ce.output:
-                return ""
-            self.py3.error(ce.error)
+        except self.py3.CommandError:
+            return ""
 
     def _manipulate(self, data):
         new_data = {}
