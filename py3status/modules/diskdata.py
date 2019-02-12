@@ -118,7 +118,7 @@ class Py3status:
                         sector_size=int(ss.read().strip()),
                     )
                 )
-        except FileNotFoundError:
+        except:
             pass
 
     def _get_all_disks(self):
