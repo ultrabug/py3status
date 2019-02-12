@@ -153,7 +153,7 @@ class Py3status:
         with open("/proc/diskstats") as ds:
             for stat in ds:
                 line = stat.split()
-                if int(line[0]) in allowed_types and int(line[1]) == 0:
+                if int(line[0]) in allowed_types:
                     self._add_monitored_disk("/dev/" + line[2])
 
     def post_config_hook(self):
@@ -300,6 +300,7 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
+    config = {"disks": ["/nope"]}
     from py3status.module_test import module_test
 
-    module_test(Py3status)
+    module_test(Py3status, config=config)
