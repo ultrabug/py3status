@@ -4,10 +4,10 @@ Display disk information.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module. (default 10)
-    disk: mountpoints, disks or partitions list to show stats
+    disks: mountpoints, disks or partitions list to show stats
         for, i.e. `["sda1", "/home", "/dev/sdd"]`.
         None for all disks, filtered by `type` parameter.
-        (default None)
+        (default [])
     format: display format for this module.
         (default "{disk}: {used_percent}% ({total})")
     format_rate: display format for rates value
@@ -71,7 +71,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 10
-    disk = None
+    disks = []
     format = "{disk}: {used_percent}% ({total})"
     format_rate = "[\?min_length=11 {value:.1f} {unit}]"
     format_space = "[\?min_length=5 {value:.1f}]"
@@ -85,7 +85,12 @@ class Py3status:
     unit = "B/s"
 
     class Meta:
-        deprecated = {"remove": [{"param": "sector_size", "msg": "obsolete parameter"}]}
+        deprecated = {
+            "remove": [{"param": "sector_size", "msg": "obsolete parameter"}],
+            "rename": [
+                {"param": "disk", "new": "disks", "msg": "rename parameter to `disks`"}
+            ],
+        }
 
     def _resolve_disk_name(self, path):
         disk_path = os.path.realpath(path)
@@ -105,10 +110,10 @@ class Py3status:
             unit - unit (string)
         """
         # deprecation
-        if self.disk is None:
-            self.disk = []
-        elif not isinstance(self.disk, list):
-            self.disk = [self.disk]
+        if self.disks is None:
+            self.disks = []
+        elif not isinstance(self.disks, list):
+            self.disks = [self.disks]
         types_info = {
             "disks": {"major": [3, 8, 22]},
             "raid": {"major": [9]},
@@ -138,7 +143,7 @@ class Py3status:
 
         self._disks = {}
 
-        if not self.disk:
+        if not self.disks:
             allowed_types = set()
             for _type in self.types:
                 allowed_types.update(types_info[_type]["major"])
@@ -148,7 +153,7 @@ class Py3status:
                     if int(line[0]) in allowed_types and int(line[1]) == 0:
                         self._add_monitored_disk("/dev/" + line[2])
         else:
-            for disk in self.disk:
+            for disk in self.disks:
                 # mountpoint or fully qualified device path
                 if disk.startswith("/"):
                     # mountpoint
