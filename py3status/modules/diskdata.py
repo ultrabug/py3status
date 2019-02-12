@@ -14,8 +14,6 @@ Configuration parameters:
         (default "[\?min_length=11 {value:.1f} {unit}]")
     format_space: display format for disk space values
         (default "[\?min_length=5 {value:.1f}]")
-    sector_size: size of the disk's sectors (normally taken from sysfs).
-        (default None)
     si_units: use SI units
         (default False)
     thresholds: specify color thresholds to use
@@ -77,7 +75,6 @@ class Py3status:
     format = "{disk}: {used_percent}% ({total})"
     format_rate = "[\?min_length=11 {value:.1f} {unit}]"
     format_space = "[\?min_length=5 {value:.1f}]"
-    sector_size = None
     si_units = False
     thresholds = {
         "free": [(0, "bad"), (10, "degraded"), (100, "good")],
@@ -87,16 +84,17 @@ class Py3status:
     types = ["disks"]
     unit = "B/s"
 
+    class Meta:
+        deprecated = {"remove": [{"param": "sector_size", "msg": "obsolete parameter"}]}
+
     def _resolve_disk_name(self, path):
         disk_path = os.path.realpath(path)
         return os.path.basename(disk_path)
 
     def _add_monitored_disk(self, path):
         basename = self._resolve_disk_name(path)
-        if not self.sector_size:
-            with open("/sys/block/{}/queue/hw_sector_size".format(basename)) as ss:
-                sector_size = int(ss.read().strip())
-        self._disks[basename] = sector_size
+        with open("/sys/block/{}/queue/hw_sector_size".format(basename)) as ss:
+            self._disks[basename] = int(ss.read().strip())
 
     def post_config_hook(self):
         """
