@@ -118,19 +118,8 @@ class Py3status:
                 )
             )
 
-    def post_config_hook(self):
-        """
-        Format of total, up and down placeholders under self.format.
-        As default, substitutes self.left_align and self.precision as %s and %s
-        Placeholders:
-            value - value (float)
-            unit - unit (string)
-        """
-        # deprecation
-        if self.disks is None:
-            self.disks = []
-        elif not isinstance(self.disks, list):
-            self.disks = [self.disks]
+    def _get_all_disks(self):
+
         types_info = {
             "disks": {"major": [3, 8, 22]},
             "raid": {"major": [9]},
@@ -158,17 +147,33 @@ class Py3status:
             "mmc": {"major": [31]},
         }
 
+        allowed_types = set()
+        for _type in self.types:
+            allowed_types.update(types_info[_type]["major"])
+        with open("/proc/diskstats") as ds:
+            for stat in ds:
+                line = stat.split()
+                if int(line[0]) in allowed_types and int(line[1]) == 0:
+                    self._add_monitored_disk("/dev/" + line[2])
+
+    def post_config_hook(self):
+        """
+        Format of total, up and down placeholders under self.format.
+        As default, substitutes self.left_align and self.precision as %s and %s
+        Placeholders:
+            value - value (float)
+            unit - unit (string)
+        """
+        # deprecation
+        if self.disks is None:
+            self.disks = []
+        elif not isinstance(self.disks, list):
+            self.disks = [self.disks]
+
         self._disks = set()
 
         if not self.disks:
-            allowed_types = set()
-            for _type in self.types:
-                allowed_types.update(types_info[_type]["major"])
-            with open("/proc/diskstats") as ds:
-                for stat in ds:
-                    line = stat.split()
-                    if int(line[0]) in allowed_types and int(line[1]) == 0:
-                        self._add_monitored_disk("/dev/" + line[2])
+            self._get_all_disks()
         else:
             with open("/proc/mounts") as mounts:
                 mounts = [Mount(*x.split()[:2]) for x in mounts.readlines()]
@@ -186,6 +191,8 @@ class Py3status:
                 # non fully qualified device path
                 else:
                     self._add_monitored_disk("/dev/" + item)
+            if not self._disks:
+                self._get_all_disks()
 
         self.last_diskstats = self._get_diskstats()
         self.last_time = time()
