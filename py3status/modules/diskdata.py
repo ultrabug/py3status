@@ -249,9 +249,9 @@ class Py3status:
         devs = []
 
         disk_names = [d.name for d in self._disks]
-        df = self.py3.command_output("df")
+        _df = self.py3.command_output("df")
         # loop on df output minus header line
-        for line in df.splitlines()[1:]:
+        for line in _df.splitlines()[1:]:
             df = Df(*line.split())
             if self._resolve_disk_name(df.device) in disk_names:
                 if df.device in devs:
