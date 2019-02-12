@@ -109,14 +109,17 @@ class Py3status:
         block_device = os.path.realpath("/sys/class/block/" + basename)
         if not block_device.endswith("block/" + basename):
             block_device = os.path.dirname(block_device)
-        with open("{}/queue/hw_sector_size".format(block_device)) as ss:
-            self._disks.add(
-                Disk(
-                    device="/dev/" + basename,
-                    name=basename,
-                    sector_size=int(ss.read().strip()),
+        try:
+            with open("{}/queue/hw_sector_size".format(block_device)) as ss:
+                self._disks.add(
+                    Disk(
+                        device="/dev/" + basename,
+                        name=basename,
+                        sector_size=int(ss.read().strip()),
+                    )
                 )
-            )
+        except FileNotFoundError:
+            pass
 
     def _get_all_disks(self):
 
@@ -300,7 +303,7 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {"disks": ["/nope"]}
+    config = {"disks": ["sdd"]}
     from py3status.module_test import module_test
 
     module_test(Py3status, config=config)
