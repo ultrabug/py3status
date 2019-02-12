@@ -4,7 +4,8 @@ Display disk information.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module. (default 10)
-    disk: show stats for mountpoint, disk or partition, i.e. `sda1`.
+    disk: show stats for space-separated list of mountpoints,
+        disks or partitions, i.e. `sda1 /home /dev/sdd`.
         None for all disks, filtered by `type` parameter.
         (default None)
     format: display format for this module.
@@ -21,10 +22,10 @@ Configuration parameters:
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
         'total': [(0, 'good'), (1024, 'degraded'), (1024 * 1024, 'bad')],
         'used_percent': [(0, 'good'), (40, 'degraded'), (75, 'bad')]})*
-    types: space-separated list of device types to include in "all disks mode".
+    types: list of device types to include in "all disks mode".
         Supported values: `disks` for PATA/SATA disks, `raid` for raid devices,
         `cdrom` for cdroms, `mmc` for memory cards.
-        (default 'disks')
+        (default ['disks'])
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
         (default "B/s")
@@ -83,7 +84,7 @@ class Py3status:
         "total": [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")],
         "used_percent": [(0, "good"), (40, "degraded"), (75, "bad")],
     }
-    types = "disks"
+    types = ["disks"]
     unit = "B/s"
 
     def _resolve_disk_name(self, path):
@@ -135,9 +136,9 @@ class Py3status:
         self._disks = {}
 
         if not self.disk:
-            allowed_types = []
-            for _type in self.types.split():
-                allowed_types.extend(types_info[_type]["major"])
+            allowed_types = set()
+            for _type in self.types:
+                allowed_types.update(types_info[_type]["major"])
             with open("/proc/diskstats") as ds:
                 for stat in ds:
                     line = stat.split()
@@ -226,7 +227,7 @@ class Py3status:
         for line in df.splitlines():
             data = line.split()
             if self._resolve_disk_name(data[0]) in self._disks or any(
-                data[0].startswith("/dev/" + x) for x in self._disks
+                data[0] == "/dev/" + x for x in self._disks
             ):
                 if data[0] in devs:
                     # Make sure to count each block device only one time
