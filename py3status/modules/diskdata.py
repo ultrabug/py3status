@@ -148,7 +148,7 @@ class Py3status:
                     if int(line[0]) in allowed_types and int(line[1]) == 0:
                         self._add_monitored_disk("/dev/" + line[2])
         else:
-            for disk in self.disk.split():
+            for disk in self.disk:
                 # mountpoint or fully qualified device path
                 if disk.startswith("/"):
                     # mountpoint
