@@ -4,8 +4,8 @@ Display disk information.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module. (default 10)
-    disk: show stats for space-separated list of mountpoints,
-        disks or partitions, i.e. `sda1 /home /dev/sdd`.
+    disk: mountpoints, disks or partitions list to show stats
+        for, i.e. `["sda1", "/home", "/dev/sdd"]`.
         None for all disks, filtered by `type` parameter.
         (default None)
     format: display format for this module.
@@ -106,6 +106,11 @@ class Py3status:
             value - value (float)
             unit - unit (string)
         """
+        # deprecation
+        if self.disk is None:
+            self.disk = []
+        elif not isinstance(self.disk, list):
+            self.disk = [self.disk]
         types_info = {
             "disks": {"major": [3, 8, 22]},
             "raid": {"major": [9]},
