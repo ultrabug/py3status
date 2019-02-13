@@ -4,6 +4,8 @@ Take screenshots and upload them to a given server.
 
 Configuration parameters:
     file_length: generated file_name length (default 4)
+    format: display format for this module
+        (default '\?color=good [{basename}|\?show SHOT]')
     save_path: Directory where to store your screenshots (default '~/Pictures')
     screenshot_command: the command used to generate the screenshot
         (default 'gnome-screenshot -f')
@@ -11,8 +13,8 @@ Configuration parameters:
     upload_server: your server address (default None)
     upload_user: your ssh user (default None)
 
-Color options:
-    color_good: Displayed color
+Format placeholders:
+    {basename} generated basename, eg qs60.jpg
 
 Examples:
 ```
@@ -47,6 +49,7 @@ class Py3status:
 
     # available configuration parameters
     file_length = 4
+    format = "\?color=good [{basename}|\?show SHOT]"
     save_path = "~/Pictures"
     screenshot_command = "gnome-screenshot -f"
     upload_path = None
@@ -62,8 +65,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.shot_data = {}
         self.save_path = os.path.expanduser(self.save_path)
-        self.full_text = "SHOT"
         self.chars = string.ascii_lowercase + string.digits
 
     def _generator(self, size=6):
@@ -72,8 +75,7 @@ class Py3status:
     def screenshot(self):
         return {
             "cached_until": self.py3.time_in(self.py3.CACHE_FOREVER),
-            "color": self.py3.COLOR_GOOD,
-            "full_text": self.full_text,
+            "full_text": self.py3.safe_format(self.format, self.shot_data),
         }
 
     def on_click(self, event):
