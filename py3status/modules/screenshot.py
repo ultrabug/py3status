@@ -40,10 +40,10 @@ screenshot {
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': 'SHOT'}
 """
+
 import os
 import random
 import string
-import subprocess
 
 
 class Py3status:
@@ -85,14 +85,14 @@ class Py3status:
         file_path = os.path.join(self.save_path, file_name)
         self.full_text = file_name
 
-        command = "{} {}".format(self.screenshot_command, file_path)
-        subprocess.Popen(command.split())
+        self.py3.command_run(" ".join([self.screenshot_command, file_path]))
 
         if self.upload_server and self.upload_user and self.upload_path:
-            command = "scp {} {}@{}:{}".format(
-                file_path, self.upload_user, self.upload_server, self.upload_path
+            self.py3.command_run(
+                "scp {} {}@{}:{}".format(
+                    file_path, self.upload_user, self.upload_server, self.upload_path
+                )
             )
-            subprocess.Popen(command.split())
 
 
 if __name__ == "__main__":
