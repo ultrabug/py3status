@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: refresh interval for this module. (default 10)
     disks: mountpoints, disks or partitions list to show stats
         for, i.e. `["sda1", "/home", "/dev/sdd"]`.
-        None for all disks, filtered by `type` parameter.
+        None for all disks.
         (default [])
     format: display format for this module.
         (default "{disk}: {used_percent}% ({total})")
@@ -20,10 +20,6 @@ Configuration parameters:
         *(default {'free': [(0, 'bad'), (10, 'degraded'), (100, 'good')],
         'total': [(0, 'good'), (1024, 'degraded'), (1024 * 1024, 'bad')],
         'used_percent': [(0, 'good'), (40, 'degraded'), (75, 'bad')]})*
-    types: list of device types to include in "all disks mode".
-        Supported values: `disks` for PATA/SATA disks, `raid` for raid devices,
-        `cdrom` for cdroms, `mmc` for memory cards.
-        (default ['disks'])
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
         (default "B/s")
@@ -68,9 +64,9 @@ from time import time
 
 
 Mount = namedtuple("Mount", ["device", "mountpoint"])
-Disk = namedtuple("Disk", ["device", "name", "sector_size"])
+Disk = namedtuple("Disk", ["device", "name"])
 Df = namedtuple("Df", ["device", "blocks", "used", "free", "perc", "mountpoint"])
-Diskstat = namedtuple("Diskstat", ["device", "read", "written"])
+Diskstat = namedtuple("Diskstat", ["minor", "device", "read", "written"])
 
 
 class Py3status:
@@ -89,7 +85,6 @@ class Py3status:
         "total": [(0, "good"), (1024, "degraded"), (1024 * 1024, "bad")],
         "used_percent": [(0, "good"), (40, "degraded"), (75, "bad")],
     }
-    types = ["disks"]
     unit = "B/s"
 
     class Meta:
@@ -104,59 +99,25 @@ class Py3status:
         disk_path = os.path.realpath(path)
         return os.path.basename(disk_path)
 
-    def _add_monitored_disk(self, path):
-        basename = self._resolve_disk_name(path)
+    def _get_sector_size(self, drive):
+        basename = self._resolve_disk_name(drive)
         block_device = os.path.realpath("/sys/class/block/" + basename)
         if not block_device.endswith("block/" + basename):
             block_device = os.path.dirname(block_device)
-        try:
-            with open("{}/queue/hw_sector_size".format(block_device)) as ss:
-                self._disks.add(
-                    Disk(
-                        device="/dev/" + basename,
-                        name=basename,
-                        sector_size=int(ss.read().strip()),
-                    )
-                )
-        except:
-            pass
+        with open("{}/queue/hw_sector_size".format(block_device)) as ss:
+            out = int(ss.read().strip())
+        return out
+
+    def _add_monitored_disk(self, path):
+        basename = self._resolve_disk_name(path)
+        if os.path.exists("/dev/" + basename):
+            self._disks.add(Disk(device="/dev/" + basename, name=basename))
 
     def _get_all_disks(self):
-
-        types_info = {
-            "disks": {"major": [3, 8, 22]},
-            "raid": {"major": [9]},
-            "cdrom": {
-                "major": [
-                    11,
-                    15,
-                    16,
-                    17,
-                    18,
-                    20,
-                    23,
-                    24,
-                    25,
-                    26,
-                    27,
-                    28,
-                    29,
-                    30,
-                    32,
-                    33,
-                    34,
-                ]
-            },
-            "mmc": {"major": [31]},
-        }
-
-        allowed_types = set()
-        for _type in self.types:
-            allowed_types.update(types_info[_type]["major"])
         with open("/proc/diskstats") as ds:
             for stat in ds:
                 line = stat.split()
-                if int(line[0]) in allowed_types:
+                if int(line[1]) == 0:
                     self._add_monitored_disk("/dev/" + line[2])
 
     def post_config_hook(self):
@@ -176,6 +137,7 @@ class Py3status:
         self._disks = set()
 
         if not self.disks:
+            self._all = True
             self._get_all_disks()
         else:
             with open("/proc/mounts") as mounts:
@@ -195,7 +157,10 @@ class Py3status:
                 else:
                     self._add_monitored_disk("/dev/" + item)
             if not self._disks:
+                self._all = True
                 self._get_all_disks()
+            else:
+                self._all = False
 
         self.last_diskstats = self._get_diskstats()
         self.last_time = time()
@@ -203,7 +168,9 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def diskdata(self):
-        self.values = {"disk": ",".join(d.name for d in self._disks)}
+        self.values = {
+            "disk": ",".join(d.name for d in self._disks) if not self._all else "all"
+        }
         threshold_data = {}
 
         if self.py3.format_contains(self.format, ["read", "write", "total"]):
@@ -263,7 +230,9 @@ class Py3status:
         # loop on df output minus header line
         for line in _df.splitlines()[1:]:
             df = Df(*line.split())
-            if self._resolve_disk_name(df.device) in disk_names:
+            if (not self._all and self._resolve_disk_name(df.device) in disk_names) or (
+                self._all and df.device.startswith("/dev/")
+            ):
                 if df.device in devs:
                     # Make sure to count each block device only one time
                     # some filesystems eg btrfs have multiple entries
@@ -281,14 +250,19 @@ class Py3status:
     def _get_diskstats(self):
         read = 0
         write = 0
-        disks_sector_size = {disk.name: disk.sector_size for disk in self._disks}
+        disk_names = [d.name for d in self._disks]
         with open("/proc/diskstats", "r") as fd:
             for line in fd:
                 data = line.split()
-                stat = Diskstat(data[2], data[5], data[9])
-                if stat.device in disks_sector_size:
-                    read += int(stat.read) * disks_sector_size[stat.device]
-                    write += int(stat.written) * disks_sector_size[stat.device]
+                stat = Diskstat(data[1], data[2], data[5], data[9])
+                if not self._all:
+                    if stat.device in disk_names:
+                        read += int(stat.read) * self._get_sector_size(stat.device)
+                        write += int(stat.written) * self._get_sector_size(stat.device)
+                elif stat.minor == "0":
+                    read += int(stat.read) * self._get_sector_size(stat.device)
+                    write += int(stat.written) * self._get_sector_size(stat.device)
+
         return read, write
 
     def _format_rate(self, value):
@@ -303,7 +277,6 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {"disks": ["sdd"]}
     from py3status.module_test import module_test
 
-    module_test(Py3status, config=config)
+    module_test(Py3status)
