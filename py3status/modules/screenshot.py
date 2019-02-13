@@ -12,17 +12,28 @@ but this can be configured with the `screenshot_command` configuration parameter
 Configuration parameters:
     cache_timeout: how often to update in seconds (default 5)
     file_length: generated file_name length (default 4)
-    push: True/False if you want to push your screenshot to your server
-        (default True)
     save_path: Directory where to store your screenshots. (default '~/Pictures/')
     screenshot_command: the command used to generate the screenshot
         (default 'gnome-screenshot -f')
-    upload_path: the remote path where to push the screenshot (default '/files')
-    upload_server: your server address (default 'puzzledge.org')
-    upload_user: your ssh user (default 'erol')
+    upload_path: the remote path where to push the screenshot (default None)
+    upload_server: your server address (default None)
+    upload_user: your ssh user (default None)
 
 Color options:
     color_good: Displayed color
+
+Examples:
+```
+# push screenshots to a server
+screenshot {
+    save_path = "~/Pictures/"
+    upload_user = "erol"
+    upload_server = "puzzledge.org"
+    upload_path = "/files"
+
+    # scp $HOME/Pictures/$UUID.jpg erol@puzzledge.org:/files
+}
+```
 
 @author Amaury Brisou <py3status AT puzzledge.org>
 
@@ -42,12 +53,14 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     file_length = 4
-    push = True
     save_path = "~/Pictures/"
     screenshot_command = "gnome-screenshot -f"
-    upload_path = "/files"
-    upload_server = "puzzledge.org"
-    upload_user = "erol"
+    upload_path = None
+    upload_server = None
+    upload_user = None
+
+    class Meta:
+        deprecated = {"remove": [{"param": "push", "msg": "obsolete"}]}
 
     def post_config_hook(self):
         self.save_path = os.path.expanduser(self.save_path)
@@ -68,27 +81,16 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        file_name = self._filename_generator(self.file_length)
+        file_name = self._filename_generator(self.file_length) + ".jpg"
+        file_path = os.path.join(self.save_path, file_name)
+        self.full_text = file_name
 
-        command = "%s %s/%s%s" % (
-            self.screenshot_command,
-            self.save_path,
-            file_name,
-            ".jpg",
-        )
-
+        command = "{} {}".format(self.screenshot_command, file_path)
         subprocess.Popen(command.split())
 
-        self.full_text = "%s%s" % (file_name, ".jpg")
-
-        if self.push and self.upload_server and self.upload_user and self.upload_path:
-            command = "scp %s/%s%s %s@%s:%s" % (
-                self.save_path,
-                file_name,
-                ".jpg",
-                self.upload_user,
-                self.upload_server,
-                self.upload_path,
+        if self.upload_server and self.upload_user and self.upload_path:
+            command = "scp {} {}@{}:{}".format(
+                file_path, self.upload_user, self.upload_server, self.upload_path
             )
             subprocess.Popen(command.split())
 
