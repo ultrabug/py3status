@@ -53,8 +53,21 @@ class Py3status:
         self.save_path = os.path.expanduser(self.save_path)
         self.full_text = ""
 
-    def on_click(self, event):
+    def _filename_generator(self, size=6, chars=string.ascii_lowercase + string.digits):
+        return "".join(random.choice(chars) for _ in range(size))
 
+    def screenshot(self):
+        if self.full_text == "":
+            self.full_text = "SHOT"
+
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": self.py3.COLOR_GOOD,
+            "full_text": self.full_text,
+        }
+        return response
+
+    def on_click(self, event):
         file_name = self._filename_generator(self.file_length)
 
         command = "%s %s/%s%s" % (
@@ -78,20 +91,6 @@ class Py3status:
                 self.upload_path,
             )
             subprocess.Popen(command.split())
-
-    def _filename_generator(self, size=6, chars=string.ascii_lowercase + string.digits):
-        return "".join(random.choice(chars) for _ in range(size))
-
-    def screenshot(self):
-        if self.full_text == "":
-            self.full_text = "SHOT"
-
-        response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "color": self.py3.COLOR_GOOD,
-            "full_text": self.full_text,
-        }
-        return response
 
 
 if __name__ == "__main__":
