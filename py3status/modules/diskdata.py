@@ -225,14 +225,18 @@ class Py3status:
         free = 0
         devs = []
 
-        disk_names = [d.name for d in self._disks]
+        disk_names = {d.name: d.device for d in self._disks}
         _df = self.py3.command_output("df")
         # loop on df output minus header line
         for line in _df.splitlines()[1:]:
             df = Df(*line.split())
-            if (not self._all and self._resolve_disk_name(df.device) in disk_names) or (
-                self._all and df.device.startswith("/dev/")
-            ):
+            if (
+                not self._all
+                and (
+                    self._resolve_disk_name(df.device) in disk_names
+                    or any(df.device.startswith(x) for x in disk_names.values())
+                )
+            ) or (self._all and df.device.startswith("/dev/")):
                 if df.device in devs:
                     # Make sure to count each block device only one time
                     # some filesystems eg btrfs have multiple entries
@@ -277,6 +281,7 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
+    config = {"disks": "sda"}
     from py3status.module_test import module_test
 
-    module_test(Py3status)
+    module_test(Py3status, config=config)
