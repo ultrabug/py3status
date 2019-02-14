@@ -123,7 +123,7 @@ class Py3status:
 
         if not self.disks:
             self._all = True
-            self._get_all_disks()
+            self._set_all_disks()
         else:
             with open("/proc/mounts") as mounts:
                 mounts = [Mount(*x.split()[:2]) for x in mounts.readlines()]
@@ -143,7 +143,7 @@ class Py3status:
                     self._add_monitored_disk("/dev/" + item)
             if not self._disks:
                 self._all = True
-                self._get_all_disks()
+                self._set_all_disks()
             else:
                 self._all = False
 
@@ -229,7 +229,7 @@ class Py3status:
         if os.path.exists("/dev/" + basename):
             self._disks.add(Disk(device="/dev/" + basename, name=basename))
 
-    def _get_all_disks(self):
+    def _set_all_disks(self):
         with open("/proc/diskstats") as ds:
             for stat in ds:
                 line = stat.split()
