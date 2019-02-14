@@ -152,57 +152,6 @@ class Py3status:
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-    def diskdata(self):
-        self.values = {
-            "disk": ",".join(d.name for d in self._disks) if not self._all else "all"
-        }
-        threshold_data = {}
-
-        if self.py3.format_contains(self.format, ["read", "write", "total"]):
-            diskstats = self._get_diskstats()
-            current_time = time()
-
-            timedelta = current_time - self.last_time
-            read = (diskstats[0] - self.last_diskstats[0]) / timedelta
-            write = (diskstats[1] - self.last_diskstats[1]) / timedelta
-            total = read + write
-
-            self.last_diskstats = diskstats
-            self.last_time = current_time
-
-            self.values["read"] = self._format_rate(read)
-            self.values["total"] = self._format_rate(total)
-            self.values["write"] = self._format_rate(write)
-            threshold_data.update({"read": read, "write": write, "total": total})
-
-        if self.py3.format_contains(self.format, ["free", "used*", "total_space"]):
-            free, used, used_percent, total_space = self._get_free_space()
-
-            self.values["free"] = self.py3.safe_format(
-                self.format_space, {"value": free}
-            )
-            self.values["used"] = self.py3.safe_format(
-                self.format_space, {"value": used}
-            )
-            self.values["used_percent"] = self.py3.safe_format(
-                self.format_space, {"value": used_percent}
-            )
-            self.values["total_space"] = self.py3.safe_format(
-                self.format_space, {"value": total_space}
-            )
-            threshold_data.update(
-                {"free": free, "used": used, "used_percent": used_percent}
-            )
-
-        for x in self.thresholds_init:
-            if x in threshold_data:
-                self.py3.threshold_get_color(threshold_data[x], x)
-
-        return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, self.values),
-        }
-
     def _get_free_space(self):
 
         total = 0
@@ -286,6 +235,57 @@ class Py3status:
                 line = stat.split()
                 if int(line[1]) == 0:
                     self._add_monitored_disk("/dev/" + line[2])
+
+    def diskdata(self):
+        self.values = {
+            "disk": ",".join(d.name for d in self._disks) if not self._all else "all"
+        }
+        threshold_data = {}
+
+        if self.py3.format_contains(self.format, ["read", "write", "total"]):
+            diskstats = self._get_diskstats()
+            current_time = time()
+
+            timedelta = current_time - self.last_time
+            read = (diskstats[0] - self.last_diskstats[0]) / timedelta
+            write = (diskstats[1] - self.last_diskstats[1]) / timedelta
+            total = read + write
+
+            self.last_diskstats = diskstats
+            self.last_time = current_time
+
+            self.values["read"] = self._format_rate(read)
+            self.values["total"] = self._format_rate(total)
+            self.values["write"] = self._format_rate(write)
+            threshold_data.update({"read": read, "write": write, "total": total})
+
+        if self.py3.format_contains(self.format, ["free", "used*", "total_space"]):
+            free, used, used_percent, total_space = self._get_free_space()
+
+            self.values["free"] = self.py3.safe_format(
+                self.format_space, {"value": free}
+            )
+            self.values["used"] = self.py3.safe_format(
+                self.format_space, {"value": used}
+            )
+            self.values["used_percent"] = self.py3.safe_format(
+                self.format_space, {"value": used_percent}
+            )
+            self.values["total_space"] = self.py3.safe_format(
+                self.format_space, {"value": total_space}
+            )
+            threshold_data.update(
+                {"free": free, "used": used, "used_percent": used_percent}
+            )
+
+        for x in self.thresholds_init:
+            if x in threshold_data:
+                self.py3.threshold_get_color(threshold_data[x], x)
+
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, self.values),
+        }
 
 
 if __name__ == "__main__":
