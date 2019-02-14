@@ -6,7 +6,6 @@ Configuration parameters:
     cache_timeout: refresh interval for this module. (default 10)
     disks: mountpoints, disks or partitions list to show stats
         for, i.e. `["sda1", "/home", "/dev/sdd"]`.
-        None for all disks.
         (default [])
     format: display format for this module.
         (default "{disk}: {used_percent}% ({total})")
@@ -69,6 +68,17 @@ Df = namedtuple("Df", ["device", "blocks", "used", "free", "perc", "mountpoint"]
 Diskstat = namedtuple("Diskstat", ["minor", "device", "read", "written"])
 
 
+def _memoize(f):
+    memo = {}
+
+    def helper(cls, x):
+        if x not in memo:
+            memo[x] = f(cls, x)
+        return memo[x]
+
+    return helper
+
+
 class Py3status:
     """
     """
@@ -94,31 +104,6 @@ class Py3status:
                 {"param": "disk", "new": "disks", "msg": "rename parameter to `disks`"}
             ],
         }
-
-    def _resolve_disk_name(self, path):
-        disk_path = os.path.realpath(path)
-        return os.path.basename(disk_path)
-
-    def _get_sector_size(self, drive):
-        basename = self._resolve_disk_name(drive)
-        block_device = os.path.realpath("/sys/class/block/" + basename)
-        if not block_device.endswith("block/" + basename):
-            block_device = os.path.dirname(block_device)
-        with open("{}/queue/hw_sector_size".format(block_device)) as ss:
-            out = int(ss.read().strip())
-        return out
-
-    def _add_monitored_disk(self, path):
-        basename = self._resolve_disk_name(path)
-        if os.path.exists("/dev/" + basename):
-            self._disks.add(Disk(device="/dev/" + basename, name=basename))
-
-    def _get_all_disks(self):
-        with open("/proc/diskstats") as ds:
-            for stat in ds:
-                line = stat.split()
-                if int(line[1]) == 0:
-                    self._add_monitored_disk("/dev/" + line[2])
 
     def post_config_hook(self):
         """
@@ -276,12 +261,37 @@ class Py3status:
         value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
         return self.py3.safe_format(self.format_rate, {"value": value, "unit": unit})
 
+    def _resolve_disk_name(self, path):
+        disk_path = os.path.realpath(path)
+        return os.path.basename(disk_path)
+
+    @_memoize
+    def _get_sector_size(self, drive):
+        basename = self._resolve_disk_name(drive)
+        block_device = os.path.realpath("/sys/class/block/" + basename)
+        if not block_device.endswith("block/" + basename):
+            block_device = os.path.dirname(block_device)
+        with open("{}/queue/hw_sector_size".format(block_device)) as ss:
+            out = int(ss.read().strip())
+        return out
+
+    def _add_monitored_disk(self, path):
+        basename = self._resolve_disk_name(path)
+        if os.path.exists("/dev/" + basename):
+            self._disks.add(Disk(device="/dev/" + basename, name=basename))
+
+    def _get_all_disks(self):
+        with open("/proc/diskstats") as ds:
+            for stat in ds:
+                line = stat.split()
+                if int(line[1]) == 0:
+                    self._add_monitored_disk("/dev/" + line[2])
+
 
 if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {"disks": "sda"}
     from py3status.module_test import module_test
 
-    module_test(Py3status, config=config)
+    module_test(Py3status)
