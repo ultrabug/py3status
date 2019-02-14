@@ -9,7 +9,7 @@ Configuration parameters:
     format: output format string
         *(default '[\?color=cpu_used_percent CPU: {cpu_used_percent}%], '
         '[\?color=mem_used_percent Mem: {mem_used}/{mem_total} '
-        '{mem_unit} ({mem_used_percent}%)]')*
+        '{mem_total_unit} ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -32,12 +32,14 @@ Format placeholders:
     {load5} load average over the five minutes
     {load15} load average over the fifteen minutes
     {mem_total} total memory
-    {mem_unit} unit for memory
+    {mem_total_unit} memory total unit, eg GiB
     {mem_used} used memory
+    {mem_used_unit} memory used unit, eg GiB
     {mem_used_percent} used memory percentage
     {swap_total} total swap
-    {swap_unit} unit for swap
+    {swap_total_unit} swap total memory unit, eg GiB
     {swap_used} used swap
+    {swap_used_unit} swap used memory unit, eg GiB
     {swap_used_percent} used swap percentage
     {temp_unit} temperature unit
 
@@ -70,7 +72,7 @@ class Py3status:
     format = (
         "[\?color=cpu_used_percent CPU: {cpu_used_percent}%], "
         "[\?color=mem_used_percent Mem: {mem_used}/{mem_total} "
-        "{mem_unit} ({mem_used_percent}%)]"
+        "{mem_total_unit} ({mem_used_percent}%)]"
     )
     mem_unit = "GiB"
     swap_unit = "GiB"
@@ -119,7 +121,17 @@ class Py3status:
                     "placeholder": "cpu_usage",
                     "new": "cpu_used_percent",
                     "format_strings": ["format"],
-                }
+                },
+                {
+                    "placeholder": "mem_unit",
+                    "new": "mem_total_unit",
+                    "format_strings": ["format"],
+                },
+                {
+                    "placeholder": "swap_unit",
+                    "new": "swap_total_unit",
+                    "format_strings": ["format"],
+                },
             ],
             "remove": [
                 {
@@ -247,12 +259,12 @@ class Py3status:
             total_mem_kib = meminfo["SwapTotal:"]
             used_mem_kib = total_mem_kib - meminfo["SwapFree:"]
 
-        used_mem_p = 100 * used_mem_kib / total_mem_kib
+        used_percent = 100 * used_mem_kib / total_mem_kib
 
         unit = "B" if unit == "dynamic" else unit
-        (total_mem, unit) = self.py3.format_units(total_mem_kib * 1024, unit=unit)
-        (used_mem, _) = self.py3.format_units(used_mem_kib * 1024, unit=unit)
-        return total_mem, used_mem, used_mem_p, unit
+        (total, total_unit) = self.py3.format_units(total_mem_kib * 1024, unit)
+        (used, used_unit) = self.py3.format_units(used_mem_kib * 1024, unit)
+        return total, total_unit, used, used_unit, used_percent
 
     def _get_meminfo(self, head=24):
         with open("/proc/meminfo") as f:
@@ -346,16 +358,23 @@ class Py3status:
 
             if self.init["mem"]:
                 mem = self._calc_mem_info(self.mem_unit, meminfo, True)
-                mem_keys = ["mem_total", "mem_used", "mem_used_percent", "mem_unit"]
+                mem_keys = [
+                    "mem_total",
+                    "mem_total_unit",
+                    "mem_used",
+                    "mem_used_unit",
+                    "mem_used_percent",
+                ]
                 sys.update(zip(mem_keys, mem))
 
             if self.init["swap"]:
                 swap = self._calc_mem_info(self.swap_unit, meminfo, False)
                 swap_keys = [
                     "swap_total",
+                    "swap_total_unit",
                     "swap_used",
+                    "swap_used_unit",
                     "swap_used_percent",
-                    "swap_unit",
                 ]
                 sys.update(zip(swap_keys, swap))
 
