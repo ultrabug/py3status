@@ -189,6 +189,7 @@ class Py3status:
         self.active_mode = "extend"
         self.displayed = None
         self.max_width = 0
+        self.wm_msg = self.py3.get_wm()["msg"]
 
     def _get_layout(self):
         """
@@ -393,10 +394,10 @@ class Py3status:
                     if not workspace:
                         continue
                     # switch to workspace
-                    cmd = 'i3-msg workspace "{}"'.format(workspace)
+                    cmd = '{} workspace "{}"'.format(self.wm_msg, workspace)
                     self.py3.command_run(cmd)
                     # move it to output
-                    cmd = 'i3-msg move workspace to output "{}"'.format(output)
+                    cmd = '{} move workspace to output "{}"'.format(self.wm_msg, output)
                     self.py3.command_run(cmd)
                     # log this
                     self.py3.log(

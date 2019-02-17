@@ -60,6 +60,13 @@ def parse_cli_args():
     except subprocess.CalledProcessError:
         i3status_path = None
 
+    # get swaymsg or i3-msg
+    with open(os.devnull, "w") as devnull:
+        if subprocess.call(["pgrep", "-x", "sway"], stdout=devnull) == 0:
+            wm = "sway"
+        else:
+            wm = "i3"
+
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
     i3status_config_file_candidates = [
@@ -190,6 +197,14 @@ def parse_cli_args():
         dest="print_version",
         help="show py3status version and exit",
     )
+    parser.add_argument(
+        "--wm",
+        action="store",  # add comment to preserve formatting
+        dest="wm",
+        default=wm,
+        choices=["i3", "sway"],
+        help=argparse.SUPPRESS,
+    )
     # deprecations
     parser.add_argument("-n", "--interval", help=argparse.SUPPRESS)
 
@@ -240,6 +255,12 @@ def parse_cli_args():
         msg = "py3status version {version} (python {python_version})"
         print(msg.format(**vars(options)))
         parser.exit()
+
+    # get wm
+    options.wm = {
+        "i3": {"msg": "i3-msg", "nag": "i3-nagbar"},
+        "sway": {"msg": "swaymsg", "nag": "swaynag"},
+    }[options.wm]
 
     # make it i3status if None
     if not options.i3status_path:

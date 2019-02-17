@@ -495,6 +495,13 @@ class Py3:
             if module_info:
                 module_info["module"].force_update()
 
+    def get_wm(self):
+        """
+        If i3, return {"msg": "i3-msg", "nag": "i3-nagbar"}.
+        If sway, return {"msg": "swaymsg", "nag": "swaynag"}.
+        """
+        return self._py3_wrapper.config["wm"]
+
     def get_output(self, module_name):
         """
         Return the output of the named module.  This will be a list.

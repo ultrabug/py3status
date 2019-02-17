@@ -48,6 +48,7 @@ class Py3status:
     max_width = 120
 
     def post_config_hook(self):
+        self.tree_command = "{} -t get_tree".format(self.py3.get_wm()["msg"])
         # empty defaults to replace window properties
         self.empty_defaults = {
             x: "" for x in self.py3.get_placeholders_list(self.format)
@@ -66,7 +67,7 @@ class Py3status:
         return {}
 
     def window_title(self):
-        tree = loads(self.py3.command_output("i3-msg -t get_tree"))
+        tree = loads(self.py3.command_output(self.tree_command))
         window_properties = self._find_focused(tree).get(
             "window_properties", self.empty_defaults
         )
