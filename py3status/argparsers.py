@@ -60,12 +60,12 @@ def parse_cli_args():
     except subprocess.CalledProcessError:
         i3status_path = None
 
-    # get swaymsg or i3-msg
+    # get window manager
     with open(os.devnull, "w") as devnull:
-        if subprocess.call(["pgrep", "-x", "sway"], stdout=devnull) == 0:
-            wm = "sway"
-        else:
+        if subprocess.call(["pgrep", "i3"], stdout=devnull) == 0:
             wm = "i3"
+        else:
+            wm = "sway"
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
@@ -201,10 +201,12 @@ def parse_cli_args():
         "--wm",
         action="store",  # add comment to preserve formatting
         dest="wm",
+        metavar="WINDOW_MANAGER",
         default=wm,
         choices=["i3", "sway"],
-        help=argparse.SUPPRESS,
+        help="specify window manager i3 or sway",
     )
+
     # deprecations
     parser.add_argument("-n", "--interval", help=argparse.SUPPRESS)
 
