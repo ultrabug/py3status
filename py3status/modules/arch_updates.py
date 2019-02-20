@@ -5,10 +5,8 @@ Display number of pending updates for Arch Linux.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
     format: display format for this module, see Examples below (default None)
-    hide_if_zero: Don't show on bar if True
-        (default False)
-    include_aur: Set to True to use auracle or yay to check for AUR updates
-        (default False)
+    hide_if_zero: Don't show on bar if True (default False)
+    include_aur: Check for AUR updates with auracle or yay (default False)
 
 Format placeholders:
     {aur} Number of pending aur updates
@@ -39,12 +37,8 @@ arch_updates_aur
 {'full_text': 'UPD: 15/4'}
 """
 
-import subprocess
-import sys
-
 FORMAT_PACMAN_ONLY = "UPD: {pacman}"
 FORMAT_PACMAN_AND_AUR = "UPD: {pacman}/{aur}"
-LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
 STRING_NOT_INSTALLED = "{} not installed"
 
 
@@ -106,65 +100,32 @@ class Py3status:
         }
 
     def _check_pacman_updates(self):
-        """
-        This method will use the 'checkupdates' command line utility
-        to determine how many updates are waiting to be installed via
-        'pacman -Syu'.
-        Returns: None if unable to determine number of pending updates
-        """
         try:
-            pending_updates = str(subprocess.check_output(["checkupdates"]))
-        except subprocess.CalledProcessError:
+            updates = self.py3.command_output(["checkupdates"])
+            return len(updates.splitlines())
+        except self.py3.CommandError:
             return None
-        return pending_updates.count(LINE_SEPARATOR)
 
     def _check_aur_updates_auracle(self):
-        """
-        This method will use the 'auracle' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
-        Returns: None if unable to determine number of pending updates
-        """
         try:
-            pending_updates = str(subprocess.check_output(["auracle", "sync"]))
-        except subprocess.CalledProcessError:
+            updates = self.py3.command_output(["auracle", "sync"])
+            return len(updates.splitlines())
+        except self.py3.CommandError:
             return None
-        return pending_updates.count(LINE_SEPARATOR)
 
     def _check_aur_updates_cower(self):
-        """
-        This method will use the 'cower' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
-        NOTE: was obsoleted and replaced with auracle by author.
-        https://github.com/falconindy/auracle
-        Returns: None if unable to determine number of pending updates
-        """
-        # For reasons best known to its author, 'cower' returns a non-zero
-        # status code upon successful execution, if there is any output.
-        # See https://github.com/falconindy/cower/blob/master/cower.c#L2596
-        pending_updates = b""
         try:
-            subprocess.check_output(["cower", "--update"])
-        except subprocess.CalledProcessError as cp_error:
-            pending_updates = cp_error.output
-            return str(pending_updates).count(LINE_SEPARATOR)
+            self.py3.command_output(["cower", "-u"])
+        except self.py3.CommandError as ce:
+            return len(ce.output.splitlines())
         return None
 
     def _check_aur_updates_yay(self):
-        """
-        This method will use the 'yay' command line utility
-        to determine how many updates are waiting to be installed
-        from the AUR.
-        Returns: None if unable to determine number of pending updates
-        """
         try:
-            pending_updates = str(
-                subprocess.check_output(["yay", "--query", "--upgrades", "--aur"])
-            )
-        except subprocess.CalledProcessError:
+            updates = self.py3.command_output(["yay", "-Qua"])
+            return len(updates.splitlines())
+        except self.py3.CommandError:
             return None
-        return pending_updates.count(LINE_SEPARATOR)
 
 
 if __name__ == "__main__":
