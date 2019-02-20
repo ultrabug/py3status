@@ -2,16 +2,12 @@
 """
 Display number of pending updates for Arch Linux.
 
-This will display a count of how many 'pacman' updates are waiting
-to be installed and optionally a count of how many 'aur' updates are
-also waiting.
-
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 600)
     format: display format for this module, see Examples below (default None)
     hide_if_zero: Don't show on bar if True
         (default False)
-    include_aur: Set to True to use 'cower' or 'yay' to check for AUR updates
+    include_aur: Set to True to use auracle or yay to check for AUR updates
         (default False)
 
 Format placeholders:
@@ -20,8 +16,9 @@ Format placeholders:
     {total} Total updates pending
 
 Requires:
-    pacman-contrib: Needed for 'checkupdates' command line utility
-    cower, yay or auracle: Needed to display pending 'aur' updates
+    pacman-contrib: contributed scripts and tools for pacman systems
+    auracle: a flexible command line client for arch linux's user repository
+    yay: yet another yogurt. pacman wrapper and aur helper written in go
 
 Examples:
 ```
@@ -48,6 +45,7 @@ import sys
 FORMAT_PACMAN_ONLY = "UPD: {pacman}"
 FORMAT_PACMAN_AND_AUR = "UPD: {pacman}/{aur}"
 LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
+STRING_NOT_INSTALLED = "{} not installed"
 
 
 class Py3status:
@@ -73,15 +71,15 @@ class Py3status:
             self.include_pacman = True
 
         if self.include_aur:
-            if self.py3.check_commands(["auracle"]):
-                self._check_aur_updates = self._check_aur_updates_auracle
-            elif self.py3.check_commands(["cower"]):
-                self._check_aur_updates = self._check_aur_updates_cower
-            elif self.py3.check_commands(["yay"]):
-                self._check_aur_updates = self._check_aur_updates_yay
+            aurs = ["auracle", "yay", "cower"]
+            command = self.py3.check_commands(aurs)
+            if command:
+                self._check_aur_updates = getattr(
+                    self, "_check_aur_updates_{}".format(command)
+                )
             else:
                 self.include_aur = False
-                self.py3.notify_user("cower/yay is not installed cannot check aur")
+                self.py3.notify_user(STRING_NOT_INSTALLED.format(", ".join(aurs)))
 
     def arch_updates(self):
         pacman_updates = aur_updates = total = None
