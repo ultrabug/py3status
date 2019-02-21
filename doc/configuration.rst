@@ -348,7 +348,6 @@ is also possible to use css3 color names eg ``red``
         color_charging = '#FFFF00'
     }
 
-
 Configuring thresholds
 ----------------------
 
@@ -398,6 +397,26 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
                 (30, "bad"),
             ],
         }
+    }
+
+.. note::
+    New in version 3.17
+
+You can specify ``hidden`` color to hide a block.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # hide a block when ``1avg`` (i.e., 12.4) is less than 20 percent
+    format = "[\?color=1avg [\?color=darkgray&show 1min] {1min}]"
+    loadavg {
+       thresholds = [
+            (0, "hidden"),
+           (20, "good"),
+           (40, "degraded"),
+           (60, "#ffa500"),
+           (80, "bad"),
+       ]
     }
 
 Formatter

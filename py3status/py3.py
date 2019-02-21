@@ -153,9 +153,13 @@ class Py3:
             # that was explicitly set to None as a True value.  Ones that are
             # not set should be treated as None
             if name.startswith("color_"):
-                if hasattr(param, "none_setting"):
+                _name = name[6:].lower()
+                # use color "hidden" to hide blocks
+                if _name == "hidden":
+                    param = "hidden"
+                elif hasattr(param, "none_setting"):
                     # see if named color and use if it is
-                    param = COLOR_NAMES.get(name[6:].lower())
+                    param = COLOR_NAMES.get(_name)
                 elif param is None:
                     param = self._none_color
             # if a non-color parameter and was not set then set to default
