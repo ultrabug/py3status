@@ -372,7 +372,6 @@ def test_44():
 
 
 def test_45():
-    # the repesentation is different in python2 "u'Björk'"
     run_formatter({"format": "{name!r}", "expected": "'Björk'", "py3only": True})
 
 

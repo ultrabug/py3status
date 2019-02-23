@@ -32,7 +32,14 @@ Color options:
     color_stop: Stopped, default color_bad
 
 Requires:
-    python-mpd2: (NOT python2-mpd2)
+    python-mpd2: provides a client interface for the Music Player Daemon
+```
+# pip install python-mpd2
+```
+
+Note: previously formats using %field% where allowed for this module, but
+standard placeholders should be used.
+>>>>>>> Remove unnecessary references to python2
 
 Examples:
 ```
