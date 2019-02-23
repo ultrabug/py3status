@@ -1,3 +1,9 @@
+version 4.0 (XXXX-XX-XX)
+* remove Python 2.x support, by Thiago Kenji Okada
+* glpi: drop support to MySQLdb due to lack of Python 3 support, please use PyMySQL instead
+* rt: drop support to MySQLdb due to lack of Python 3 support, please use PyMySQL instead
+* sql: drop support to MySQLdb due to lack of Python 3 support, please use PyMySQL instead
+
 version 3.16 (2019-01-20)
 * @maximbaz has become the third collaborator of the py3status project !
 * add -u, --i3status to specify or override i3status path (#1649), by lasers
