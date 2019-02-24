@@ -3,6 +3,7 @@ import codecs
 import imp
 import os
 import re
+import ast
 
 from collections import OrderedDict
 from string import Template
@@ -130,7 +131,7 @@ class ConfigParser:
     """
 
     CONVERSIONS = "(auto|bool|int|float|str)"
-    FUNCTIONS = "(base64|env|hide|shell)"
+    FUNCTIONS = "(base64|env|hide|secret|shell)"
 
     TOKENS = [
         "#.*$"  # comments
@@ -360,6 +361,7 @@ class ConfigParser:
             "base64": self.make_function_value_private,
             "env": self.make_value_from_env,
             "hide": self.make_function_value_private,
+            "secret": self.make_value_from_secret,
             "shell": self.make_value_from_shell,
         }
 
@@ -393,6 +395,31 @@ class ConfigParser:
         if value is None:
             self.notify_user("Environment variable `%s` undefined" % param)
         return self.value_convert(value, value_type)
+
+    def make_value_from_secret(self, param, value_type, function):
+        """
+        get parameter from secret-tool
+        """
+        param, value = self.remove_quotes(param), ""
+        module_name = self.current_module[-1].split()[0]
+        parameter = ".".join(["py3status", module_name, param])
+        command = "secret-tool lookup parameter {}".format(parameter)
+        try:
+            value = check_output(command.split())
+            try:
+                value = value.decode()
+            except AttributeError:
+                pass
+            try:
+                value = ast.literal_eval(value)
+            except (SyntaxError, ValueError):
+                pass
+        except CalledProcessError:
+            self.notify_user("Invalid secret parameter `{}`.".format(parameter))
+        # if it is a password, be nice and make this private too
+        if "password" in param:
+            return self.make_function_value_private(value, value_type, function)
+        return value
 
     def make_value_from_shell(self, param, value_type, function):
         """

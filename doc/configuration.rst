@@ -904,3 +904,65 @@ module configuration. To find out if your module supports that, look for
     exchange_rate {
         request_timeout = 10
     }
+
+
+Secrets
+-------------------------
+
+.. note::
+    New in version 3.19
+
+Store your parameters using this style: ``py3status``, ``<module_name>``,
+and ``<unique_identifiable_name>`` joined by periods.
+
+You can use this on passwords, usernames, email addresses, locations,
+access tokens, et cetera... especially when you want to make your config
+publicly available. Additionally, you can use ``seahorse`` (GNOME Passwords
+and Keys) to review and/or delete parameters.
+
+Store a parameter
+
+.. code-block:: bash
+    :caption: Example
+
+    $ DESC="py3status.github.auth_token" && \
+        secret-tool store --label=$DESC parameter $DESC
+
+    $ DESC="py3status.mail.gmail_password" && \
+        secret-tool store --label=$DESC parameter $DESC
+
+    $ DESC="py3status.weather_owm.api_key" && \
+        secret-tool store --label=$DESC parameter $DESC
+
+Retrieve a parameter
+
+.. code-block:: py3status
+    :caption: Example
+
+    github {
+       auth_token = secret("auth_token")
+       username = secret("username")
+    }
+
+    mail {
+       accounts = {
+          "imap": [
+             {
+                "user": secret("gmail_user"),
+                "password": secret("gmail_password"),
+                "server": "imap.gmail.com",
+             },
+             {
+                "user": secret("yahoo_user"),
+                "password": secret("yahoo_password"),
+                "server": "imap.yahoo.com",
+             },
+          ],
+       },
+    }
+
+    weather_owm {
+       api_key = secret("api_key")
+       location = secret("location")
+    }
+
