@@ -6,7 +6,6 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 600)
     format: display format for this module, otherwise auto (default None)
     hide_if_zero: don't show on bar if True (default False)
-    include_aur: Check for AUR updates with auracle or yay (default False)
 
 Format placeholders:
     {aur} Number of pending aur updates
@@ -17,14 +16,6 @@ Requires:
     pacman-contrib: contributed scripts and tools for pacman systems
     auracle: a flexible command line client for arch linux's user repository
     yay: yet another yogurt. pacman wrapper and aur helper written in go
-
-Examples:
-```
-# default formats
-arch_updates {
-    format = 'UPD: {pacman}'        # if include_aur is False
-    format = 'UPD: {pacman}/{aur}'  # if include_aur is True
-}
 ```
 
 @author Iain Tatch <iain.tatch@gmail.com>
@@ -37,8 +28,6 @@ aur
 {'full_text': 'UPD: 15/4'}
 """
 
-FORMAT_PACMAN_ONLY = "UPD: {pacman}"
-FORMAT_PACMAN_AND_AUR = "UPD: {pacman}/{aur}"
 STRING_NOT_INSTALLED = "{} not installed"
 
 
@@ -50,53 +39,65 @@ class Py3status:
     cache_timeout = 600
     format = None
     hide_if_zero = False
-    include_aur = False
+
+    class Meta:
+        deprecated = {"remove": [{"param": "include_aur", "msg": "obsolete"}]}
 
     def post_config_hook(self):
-        if not self.format:
-            if not self.include_aur:
-                self.format = FORMAT_PACMAN_ONLY
+        helper = {
+            "pacman": self.py3.check_commands(["checkupdates"]),
+            "aur": self.py3.check_commands(["auracle", "yay", "cower"]),
+        }
+        if self.format:
+            placeholders = self.py3.get_placeholders_list(self.format)
+            if "total" in placeholders:
+                pass
+            elif not any(helper.values()):
+                raise Exception(STRING_NOT_INSTALLED.format("pacman, aur"))
             else:
-                self.format = FORMAT_PACMAN_AND_AUR
-        self.include_aur = self.py3.format_contains(self.format, "aur")
-        self.include_pacman = self.py3.format_contains(self.format, "pacman")
-        if self.py3.format_contains(self.format, "total"):
-            self.include_aur = True
-            self.include_pacman = True
+                for name in helper:
+                    if name not in placeholders:
+                        helper[name] = None
+                    elif not helper[name]:
+                        raise Exception(STRING_NOT_INSTALLED.format(name))
+        elif all(helper.values()):
+            self.format = "UPD: {pacman}/{aur}"
+        elif helper["pacman"]:
+            self.format = "UPD: {pacman}"
+        elif helper["aur"]:
+            self.format = "UPD: ?/{aur}"
+        else:
+            raise Exception(STRING_NOT_INSTALLED.format("pacman, aur"))
 
-        if self.include_aur:
-            aurs = ["auracle", "yay", "cower"]
-            command = self.py3.check_commands(aurs)
-            if command:
-                self._check_aur_updates = getattr(
-                    self, "_get_aur_updates_{}".format(command)
-                )
-            else:
-                self.include_aur = False
-                self.py3.notify_user(STRING_NOT_INSTALLED.format(", ".join(aurs)))
+        m = "_get_{}_updates"
+        self._get_pacman_updates = getattr(self, m.format(helper["pacman"]))
+        self._get_aur_updates = getattr(self, m.format(helper["aur"]))
 
-    def _get_pacman_updates(self):
+    def _get_None_updates(self):
+        pass
+
+    def _get_checkupdates_updates(self):
         try:
             updates = self.py3.command_output(["checkupdates"])
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
 
-    def _get_aur_updates_auracle(self):
+    def _get_auracle_updates(self):
         try:
             updates = self.py3.command_output(["auracle", "sync"])
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
 
-    def _get_aur_updates_cower(self):
+    def _get_cower_updates(self):
         try:
             self.py3.command_output(["cower", "-u"])
+            return None
         except self.py3.CommandError as ce:
             return len(ce.output.splitlines())
-        return None
 
-    def _get_aur_updates_yay(self):
+    def _get_yay_updates(self):
         try:
             updates = self.py3.command_output(["yay", "-Qua"])
             return len(updates.splitlines())
@@ -104,24 +105,17 @@ class Py3status:
             return None
 
     def arch_updates(self):
-        pacman_updates = aur_updates = total = None
+        pacman = self._get_pacman_updates()
+        aur = self._get_aur_updates()
+        total, full_text = None, None
 
-        if self.include_pacman:
-            pacman_updates = self._get_pacman_updates()
+        if pacman is not None or aur is not None:
+            total = (pacman or 0) + (aur or 0)
 
-        if self.include_aur:
-            aur_updates = self._get_aur_updates()
+        if not (self.hide_if_zero and not total):
+            arch_data = {"aur": aur, "pacman": pacman, "total": total}
+            full_text = self.py3.safe_format(self.format, arch_data)
 
-        if pacman_updates is not None or aur_updates is not None:
-            total = (pacman_updates or 0) + (aur_updates or 0)
-
-        if self.hide_if_zero and total == 0:
-            full_text = ""
-        else:
-            full_text = self.py3.safe_format(
-                self.format,
-                {"aur": aur_updates, "pacman": pacman_updates, "total": total},
-            )
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": full_text,
