@@ -75,30 +75,6 @@ class Py3status:
                 self.include_aur = False
                 self.py3.notify_user(STRING_NOT_INSTALLED.format(", ".join(aurs)))
 
-    def arch_updates(self):
-        pacman_updates = aur_updates = total = None
-
-        if self.include_pacman:
-            pacman_updates = self._check_pacman_updates()
-
-        if self.include_aur:
-            aur_updates = self._check_aur_updates()
-
-        if pacman_updates is not None or aur_updates is not None:
-            total = (pacman_updates or 0) + (aur_updates or 0)
-
-        if self.hide_if_zero and total == 0:
-            full_text = ""
-        else:
-            full_text = self.py3.safe_format(
-                self.format,
-                {"aur": aur_updates, "pacman": pacman_updates, "total": total},
-            )
-        return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
-        }
-
     def _check_pacman_updates(self):
         try:
             updates = self.py3.command_output(["checkupdates"])
@@ -126,6 +102,30 @@ class Py3status:
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
+
+    def arch_updates(self):
+        pacman_updates = aur_updates = total = None
+
+        if self.include_pacman:
+            pacman_updates = self._check_pacman_updates()
+
+        if self.include_aur:
+            aur_updates = self._check_aur_updates()
+
+        if pacman_updates is not None or aur_updates is not None:
+            total = (pacman_updates or 0) + (aur_updates or 0)
+
+        if self.hide_if_zero and total == 0:
+            full_text = ""
+        else:
+            full_text = self.py3.safe_format(
+                self.format,
+                {"aur": aur_updates, "pacman": pacman_updates, "total": total},
+            )
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": full_text,
+        }
 
 
 if __name__ == "__main__":
