@@ -3,9 +3,9 @@
 Display number of pending updates for Arch Linux.
 
 Configuration parameters:
-    cache_timeout: How often we refresh this module in seconds (default 600)
-    format: display format for this module, see Examples below (default None)
-    hide_if_zero: Don't show on bar if True (default False)
+    cache_timeout: refresh interval for this module (default 600)
+    format: display format for this module, otherwise auto (default None)
+    hide_if_zero: don't show on bar if True (default False)
     include_aur: Check for AUR updates with auracle or yay (default False)
 
 Format placeholders:
@@ -33,7 +33,7 @@ arch_updates {
 SAMPLE OUTPUT
 {'full_text': 'UPD: 5'}
 
-arch_updates_aur
+aur
 {'full_text': 'UPD: 15/4'}
 """
 
@@ -69,34 +69,34 @@ class Py3status:
             command = self.py3.check_commands(aurs)
             if command:
                 self._check_aur_updates = getattr(
-                    self, "_check_aur_updates_{}".format(command)
+                    self, "_get_aur_updates_{}".format(command)
                 )
             else:
                 self.include_aur = False
                 self.py3.notify_user(STRING_NOT_INSTALLED.format(", ".join(aurs)))
 
-    def _check_pacman_updates(self):
+    def _get_pacman_updates(self):
         try:
             updates = self.py3.command_output(["checkupdates"])
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
 
-    def _check_aur_updates_auracle(self):
+    def _get_aur_updates_auracle(self):
         try:
             updates = self.py3.command_output(["auracle", "sync"])
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
 
-    def _check_aur_updates_cower(self):
+    def _get_aur_updates_cower(self):
         try:
             self.py3.command_output(["cower", "-u"])
         except self.py3.CommandError as ce:
             return len(ce.output.splitlines())
         return None
 
-    def _check_aur_updates_yay(self):
+    def _get_aur_updates_yay(self):
         try:
             updates = self.py3.command_output(["yay", "-Qua"])
             return len(updates.splitlines())
@@ -107,10 +107,10 @@ class Py3status:
         pacman_updates = aur_updates = total = None
 
         if self.include_pacman:
-            pacman_updates = self._check_pacman_updates()
+            pacman_updates = self._get_pacman_updates()
 
         if self.include_aur:
-            aur_updates = self._check_aur_updates()
+            aur_updates = self._get_aur_updates()
 
         if pacman_updates is not None or aur_updates is not None:
             total = (pacman_updates or 0) + (aur_updates or 0)
