@@ -340,15 +340,6 @@ class Module:
                     raise ValueError(err)
                 self.i3bar_module_options["align"] = align
 
-        markup = fn(self.module_full_name, "markup")
-        if not hasattr(markup, "none_setting"):
-            if markup not in MARKUP_LANGUAGES:
-                err = "Invalid `markup` attribute, should be "
-                err += make_quotes(MARKUP_LANGUAGES)
-                err += ". Got `{}`.".format(markup)
-                raise ValueError(err)
-            self.i3bar_module_options["markup"] = markup
-
         separator = fn(self.module_full_name, "separator")
         if not hasattr(separator, "none_setting"):
             if not isinstance(separator, bool):
@@ -415,6 +406,15 @@ class Module:
                     err += ". Got `{}`.".format(position)
                     raise ValueError(err)
                 self.py3status_module_options["position"] = position
+
+        markup = fn(self.module_full_name, "markup")
+        if not hasattr(markup, "none_setting"):
+            if markup not in MARKUP_LANGUAGES:
+                err = "Invalid `markup` attribute, should be "
+                err += make_quotes(MARKUP_LANGUAGES)
+                err += ". Got `{}`.".format(markup)
+                raise ValueError(err)
+            self.py3status_module_options["markup"] = markup
 
     def process_composite(self, response):
         """
@@ -537,6 +537,21 @@ class Module:
                 )
             if right:
                 response["composite"][-1]["full_text"] += right
+
+        # set markup
+        if "markup" in self.py3status_module_options:
+            markup = self.py3status_module_options["markup"]
+            line, span = "", "<span fgcolor='{}'>{}</span>"
+            for item in response["composite"]:
+                color = item.get("color")
+                if color:
+                    line += span.format(color, item["full_text"])
+                else:
+                    line += item["full_text"]
+
+            composite = response["composite"][0]
+            composite.update({"full_text": line, "markup": markup})
+            response["composite"] = composite
 
     def _params_type(self, method_name, instance):
         """
