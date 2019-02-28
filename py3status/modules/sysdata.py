@@ -81,16 +81,6 @@ class Py3status:
     zone = None
 
     class Meta:
-        def deprecate_function(config):
-            # support old thresholds
-            return {
-                "thresholds": [
-                    (0, "good"),
-                    (config.get("med_threshold", 40), "degraded"),
-                    (config.get("high_threshold", 75), "bad"),
-                ]
-            }
-
         def update_deprecated_placeholder_format(config):
             padding = config.get("padding", 0)
             precision = config.get("precision", 2)
@@ -115,7 +105,6 @@ class Py3status:
             }
 
         deprecated = {
-            "function": [{"function": deprecate_function}],
             "rename_placeholder": [
                 {
                     "placeholder": "cpu_usage",
@@ -134,14 +123,6 @@ class Py3status:
                 },
             ],
             "remove": [
-                {
-                    "param": "high_threshold",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
-                {
-                    "param": "med_threshold",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
                 {"param": "padding", "msg": "obsolete, use the format_* parameters"},
                 {"param": "precision", "msg": "obsolete, use the format_* parameters"},
             ],
