@@ -441,6 +441,25 @@ class Module:
         if "full_text" in response:
             err = 'conflicting "full_text" and "composite" in response'
             raise Exception(err)
+
+        # set markup
+        if "markup" in self.py3status_module_options:
+            markup = self.py3status_module_options["markup"]
+            line = ""
+            for item in composite:
+                # validate the response
+                if "full_text" not in item:
+                    raise KeyError('missing "full_text" key in response')
+                color = item.get("color")
+                if color:
+                    span = u"<span fgcolor='{}'>{}</span>"
+                    line += span.format(color, item["full_text"])
+                else:
+                    line += item["full_text"]
+
+            composite = [{"full_text": line, "markup": markup}]
+            response["composite"] = composite
+
         # set universal options on last component
         composite[-1].update(self.i3bar_module_options)
         # update all components
@@ -537,21 +556,6 @@ class Module:
                 )
             if right:
                 response["composite"][-1]["full_text"] += right
-
-        # set markup
-        if "markup" in self.py3status_module_options:
-            markup = self.py3status_module_options["markup"]
-            line, span = "", "<span fgcolor='{}'>{}</span>"
-            for item in response["composite"]:
-                color = item.get("color")
-                if color:
-                    line += span.format(color, item["full_text"])
-                else:
-                    line += item["full_text"]
-
-            composite = response["composite"][0]
-            composite.update({"full_text": line, "markup": markup})
-            response["composite"] = composite
 
     def _params_type(self, method_name, instance):
         """
