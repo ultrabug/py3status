@@ -419,6 +419,15 @@ You can specify ``hidden`` color to hide a block.
        ]
     }
 
+    # hide cpu block when ``cpu_used_percent`` is less than 50 percent
+    # hide mem block when ``mem_used_percent`` is less than 50 percent
+    sysdata {
+        thresholds = [
+            (50, "hidden"),
+            (75, "bad"),
+        ]
+    }
+
 Formatter
 ---------
 
