@@ -110,9 +110,7 @@ class Py3status:
     def post_config_hook(self):
         self.last_transmitted_bytes = 0
         self.last_received_bytes = 0
-
         self.last_time = time()
-
         # Get default gateway from /proc.
         if self.nic is None:
             with open("/proc/net/route") as fh:
@@ -137,19 +135,15 @@ class Py3status:
 
     def netdata(self):
         received_bytes, transmitted_bytes = self._get_bytes()
-
         # speed
         current_time = time()
         timedelta = current_time - self.last_time
         self.last_time = current_time
-
         down = (received_bytes - self.last_received_bytes) / 1024 / timedelta
         up = (transmitted_bytes - self.last_transmitted_bytes) / 1024 / timedelta
-
         # history
         self.last_received_bytes = received_bytes
         self.last_transmitted_bytes = transmitted_bytes
-
         # traffic
         download = received_bytes / 1024 / 1024
         upload = transmitted_bytes / 1024 / 1024
