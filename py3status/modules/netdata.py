@@ -132,8 +132,8 @@ class Py3status:
     def netdata(self):
         received_bytes, transmitted_bytes = self._get_bytes()
         # speed
-        down = (received_bytes - self.last_received_bytes) / 1024.0
-        up = (transmitted_bytes - self.last_transmitted_bytes) / 1024.0
+        down = (received_bytes - self.last_received_bytes) / 1024.0 / self.cache_timeout
+        up = (transmitted_bytes - self.last_transmitted_bytes) / 1024.0 / self.cache_timeout
         # history
         self.last_received_bytes = received_bytes
         self.last_transmitted_bytes = transmitted_bytes
