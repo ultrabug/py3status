@@ -110,7 +110,7 @@ class Py3status:
     def post_config_hook(self):
         self.last_transmitted_bytes = 0
         self.last_received_bytes = 0
-        
+
         self.last_time = time()
 
         # Get default gateway from /proc.
@@ -145,11 +145,11 @@ class Py3status:
 
         down = (received_bytes - self.last_received_bytes) / 1024 / timedelta
         up = (transmitted_bytes - self.last_transmitted_bytes) / 1024 / timedelta
-        
+
         # history
         self.last_received_bytes = received_bytes
         self.last_transmitted_bytes = transmitted_bytes
-        
+
         # traffic
         download = received_bytes / 1024 / 1024
         upload = transmitted_bytes / 1024 / 1024
