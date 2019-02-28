@@ -5,41 +5,6 @@ import subprocess
 from platform import python_version
 from py3status.version import version
 
-LIST_EPILOG = """
-examples:
-    list:
-        # list one or more modules
-        py3status list clock loadavg xrandr  # full
-        py3status list coin* git* w*         # fnmatch
-
-        # list all modules
-        py3status list --all
-
-        # show full (i.e. docstrings)
-        py3status list -f static_string
-"""
-
-DOCSTRING_EPILOG = """
-examples:
-    check:
-        # check one or more docstrings
-        py3status docstring --check clock loadavg xrandr
-
-        # check all docstrings
-        py3status docstring --check
-
-    diff:
-        # show diff docstrings
-        py3status docstring --diff
-
-    update:
-        # update one or more docstrings
-        py3status docstring --update clock loadavg xrandr
-
-        # update modules according to README.md
-        py3status docstring --update modules
-"""
-
 
 def parse_cli_args():
     """
@@ -85,7 +50,7 @@ def parse_cli_args():
             self.print_help()
             self.exit(1)
 
-        # hide docstring on errors
+        # hide choices on errors
         def _check_value(self, action, value):
             if action.choices is not None and value not in action.choices:
                 raise argparse.ArgumentError(
@@ -193,43 +158,6 @@ def parse_cli_args():
     # deprecations
     parser.add_argument("-n", "--interval", help=argparse.SUPPRESS)
 
-    # make subparsers
-    subparsers = parser.add_subparsers(dest="command", metavar="{list}")
-    sps = {}
-
-    # list subparser and its args
-    sps["list"] = subparsers.add_parser(
-        "list",
-        epilog=LIST_EPILOG,
-        formatter_class=argparse.RawTextHelpFormatter,
-        help="list modules",
-    )
-    sps["list"].add_argument(
-        "-f", "--full", action="store_true", help="show full (i.e. docstrings)"
-    )
-    list_group = sps["list"].add_mutually_exclusive_group()
-    for name in ["all", "core", "user"]:
-        list_group.add_argument(
-            "--%s" % name, action="store_true", help="show %s modules" % name
-        )
-
-    # docstring subparser and its args
-    sps["docstring"] = subparsers.add_parser(
-        "docstring",
-        epilog=DOCSTRING_EPILOG,
-        formatter_class=argparse.RawTextHelpFormatter,
-        # help="docstring utility",
-    )
-    docstring_group = sps["docstring"].add_mutually_exclusive_group()
-    for name in ["check", "diff", "update"]:
-        docstring_group.add_argument(
-            "--%s" % name, action="store_true", help="%s docstrings" % name
-        )
-
-    # modules not required
-    for name in ["list", "docstring"]:
-        sps[name].add_argument(nargs="*", dest="module", help="module name")
-
     # parse options, command, etc
     options = parser.parse_args()
 
@@ -258,43 +186,10 @@ def parse_cli_args():
     for path in options.include_paths:
         path = os.path.abspath(path)
         if os.path.isdir(path) and os.listdir(path):
-            include_paths.append(path + "/")
+            include_paths.append(path)
     options.include_paths = include_paths
 
-    # handle py3status list and docstring options
-    if options.command:
-        import py3status.docstrings as docstrings
-
-        config = vars(options)
-        modules = [x.rsplit(".py", 1)[0] for x in config["module"]]
-        # list module names and details
-        if config["command"] == "list":
-            tests = [not config[x] for x in ["all", "user", "core"]]
-            if all([not modules] + tests):
-                msg = "missing positional or optional arguments"
-                sps["list"].error(msg)
-            docstrings.show_modules(config, modules)
-        # docstring formatting and checking
-        elif config["command"] == "docstring":
-            if config["check"]:
-                docstrings.check_docstrings(False, config, modules)
-            elif config["diff"]:
-                docstrings.check_docstrings(True, config, None)
-            elif config["update"]:
-                if not modules:
-                    msg = "missing positional arguments or `modules`"
-                    sps["docstring"].error(msg)
-                if "modules" in modules:
-                    docstrings.update_docstrings()
-                else:
-                    docstrings.update_readme_for_modules(modules)
-            else:
-                msg = "missing positional or optional arguments"
-                sps["docstring"].error(msg)
-        parser.exit()
-
     # defaults
-    del options.command
     del options.interval
     del options.print_version
     options.minimum_interval = 0.1  # minimum module update interval

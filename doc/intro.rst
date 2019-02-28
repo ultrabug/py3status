@@ -157,14 +157,14 @@ You can get a list with short descriptions of all available modules by using the
 
 .. code-block:: shell
 
-    $ py3status list --all
+    $ py3-cmd list --all
 
 
 To get more details about all available modules and their configuration, use:
 
 .. code-block:: shell
 
-    $ py3status list --all --full
+    $ py3-cmd list --all --full
 
 All modules shipped with py3status are present as the Python source files in
 the ``py3status/modules`` directory.

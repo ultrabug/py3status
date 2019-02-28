@@ -598,10 +598,11 @@ class Module:
             # user provided modules take precedence over py3status provided modules
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
+                module_path = os.path.join(include_path, f_name)
                 self._py3_wrapper.log(
-                    'loading module "{}" from {}{}'.format(module, include_path, f_name)
+                    'loading module "{}" from {}'.format(module, module_path)
                 )
-                self.module_class = self.load_from_file(include_path + f_name)
+                self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules
             else:
                 self._py3_wrapper.log(
