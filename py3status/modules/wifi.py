@@ -62,6 +62,7 @@ import math
 
 DEFAULT_FORMAT = "W: {bitrate} {signal_percent} {ssid}|W: down"
 STRING_NOT_INSTALLED = "iw not installed"
+STRING_NO_DEVICE = "no available device"
 
 
 class Py3status:
@@ -90,21 +91,24 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
         # get wireless interface
-        if not self.device:
-            try:
-                data = self.py3.command_output([iw, "dev"])
-            except self.py3.CommandError as ce:
-                raise Exception(ce.error.strip())
-            for line in data.splitlines()[1:]:
-                if "Interface" in line:
-                    self.device = line.split()[-1]
+        try:
+            data = self.py3.command_output([iw, "dev"])
+        except self.py3.CommandError as ce:
+            raise Exception(ce.error.strip())
+        for line in data.splitlines()[1:]:
+            if "Interface" in line:
+                device = line.split()[-1]
+                if not self.device or device == self.device:
+                    self.device = device
                     break
+        else:
+            device = " `{}`".format(self.device) if self.device else ""
+            raise Exception(STRING_NO_DEVICE + device)
 
         self._max_bitrate = 0
         self._ssid = ""
         self.color_down = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
         self.commands = set()
-        self.device = str(self.device)
         self.ip_addr_list_id = ["ip", "addr", "list", self.device]
         self.iw_dev_id_link = [iw, "dev", self.device, "link"]
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
