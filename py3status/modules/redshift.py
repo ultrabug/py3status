@@ -79,7 +79,7 @@ class Py3status:
             self.transition = False
 
     def _toggle(self):
-        if (self.enabled):
+        if self.enabled:
             self.py3.command_run("killall redshift")
         else:
             DEVNULL = open(os.devnull, "w")
@@ -93,12 +93,12 @@ class Py3status:
             "period": self.period,
             "temperature": self.temperature,
             "brightness": self.brightness,
-            "transition": self.transition
+            "transition": self.transition,
         }
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, redshift_data)
+            "full_text": self.py3.safe_format(self.format, redshift_data),
         }
 
     def on_click(self, event):
@@ -113,4 +113,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
