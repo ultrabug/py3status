@@ -7,10 +7,10 @@ module). Can display current parameters like color temperature, period of day
 and screen brightness.
 
 Configuration parameters:
-    cache_timeout: How often this module is refreshed.
-        (default 10)
     button_toggle: Mouse button to toggle redshift.
         (default 1)
+    cache_timeout: How often this module is refreshed.
+        (default 10)
     format: Display format to use.
         (default 'Redshift: [\?if=enabled {period} {temperature}K|off]')
 
@@ -18,9 +18,9 @@ Control placeholders:
     {enabled} boolean value set based on pgrep, eg False, True
 
 Format placeholders:
+    {brightness} brightness of the screen
     {period} period of the day
     {temperature} color temperature
-    {brightness} brightness of the screen
     {transition} progress of the day-night transition
 
 Requires:
