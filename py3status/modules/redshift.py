@@ -46,8 +46,8 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 10
     button_toggle = 1
+    cache_timeout = 10
     format = "Redshift: [\?if=enabled {period} {temperature}K|off]"
 
     def post_config_hook(self):
