@@ -3,7 +3,7 @@
 Control redshift in continuous mode.
 
 Allows to toggle redshift running in continuous mode (as opposed to hueshift
-module). Can display current parameters like color temperature, period of day 
+module). Can display current parameters like color temperature, period of day
 and screen brightness.
 
 Configuration parameters:
@@ -41,6 +41,7 @@ import re
 
 STRING_NOT_INSTALLED = "redshift is not installed"
 
+
 class Py3status:
     """
     """
@@ -58,7 +59,7 @@ class Py3status:
         self.temperature_re = "Color temperature: (\d*)K"
         self.brightness_re = "Brightness: ([\d.]*)"
         self.transition_re = "Transition \(([\d.]*)%"
-    
+
     def _check_status(self):
         try:
             self.py3.command_output("pgrep -x redshift")
@@ -69,14 +70,14 @@ class Py3status:
         details = self.py3.command_output("redshift -p")
         self.period = re.search(self.period_re, details).group(1).lower()
         self.temperature = re.search(self.temperature_re, details).group(1)
-        self.brightness = re.search(self.brightness_re, details).group(1) 
+        self.brightness = re.search(self.brightness_re, details).group(1)
         self.brightness = int(float(self.brightness) * 100)
-        
+
         if self.period == "transition":
             self.transition = re.search(self.transition_re, details).group(1)
         else:
             self.transition = False
-        
+
     def _toggle(self):
         if (self.enabled):
             self.py3.command_run("killall redshift")
@@ -87,7 +88,7 @@ class Py3status:
     def redshift(self):
         self._check_status()
 
-        redshift_data = { 
+        redshift_data = {
             "enabled": self.enabled,
             "period": self.period,
             "temperature": self.temperature,
@@ -113,4 +114,3 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
     module_test(Py3status)
-
