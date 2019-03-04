@@ -69,12 +69,9 @@ class Py3status:
         else:
             raise Exception(STRING_NOT_INSTALLED.format("pacman, aur"))
 
-        m = "_get_{}_updates"
-        self._get_pacman_updates = getattr(self, m.format(helper["pacman"]))
-        self._get_aur_updates = getattr(self, m.format(helper["aur"]))
-
-    def _get_None_updates(self):
-        pass
+        for key in helper:
+            value = getattr(self, "_get_{}_updates".format(helper[key]), None)
+            setattr(self, "_get_{}_updates".format(key), value)
 
     def _get_checkupdates_updates(self):
         try:
@@ -105,9 +102,11 @@ class Py3status:
             return None
 
     def arch_updates(self):
-        pacman = self._get_pacman_updates()
-        aur = self._get_aur_updates()
-        total, full_text = None, None
+        pacman, aur, total, full_text = None, None, None, None
+        if self._get_pacman_updates:
+            pacman = self._get_pacman_updates()
+        if self._get_aur_updates:
+            aur = self._get_aur_updates()
 
         if pacman is not None or aur is not None:
             total = (pacman or 0) + (aur or 0)
