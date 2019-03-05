@@ -179,13 +179,8 @@ You can see the help of py3status by issuing ``py3status --help``:
 
     usage: py3status [-h] [-b] [-c FILE] [-d] [-g] [-i PATH] [-l FILE] [-s]
                      [-t INT] [-m] [-u PATH] [-v] [--wm WINDOW_MANAGER]
-                     {list} ...
 
     The agile, python-powered, i3status wrapper
-
-    positional arguments:
-       {list} ...
-         list               list modules
 
     optional arguments:
       -h, --help            show this help message and exit
