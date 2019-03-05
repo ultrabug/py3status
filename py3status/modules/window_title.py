@@ -48,7 +48,7 @@ class Py3status:
     max_width = 120
 
     def post_config_hook(self):
-        self.tree_command = "{} -t get_tree".format(self.py3.get_wm()["msg"])
+        self.tree_command = "{} -t get_tree".format(self.py3.wm_msg)
         # empty defaults to replace window properties
         self.empty_defaults = {
             x: "" for x in self.py3.get_placeholders_list(self.format)

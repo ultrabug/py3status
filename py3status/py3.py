@@ -495,12 +495,13 @@ class Py3:
             if module_info:
                 module_info["module"].force_update()
 
-    def get_wm(self):
+    @property
+    def wm_msg(self):
         """
-        If i3, return {"msg": "i3-msg", "nag": "i3-nagbar"}.
-        If sway, return {"msg": "swaymsg", "nag": "swaynag"}.
+        On i3, will return "i3-msg"
+        On sway, will return "swaymsg"
         """
-        return self._py3_wrapper.config["wm"]
+        return self._py3_wrapper.config["wm"]["msg"]
 
     def get_output(self, module_name):
         """
