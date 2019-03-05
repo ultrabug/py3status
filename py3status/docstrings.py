@@ -377,7 +377,7 @@ def check_docstrings(show_diff=False, config=None, mods=None):
             )
         else:
             if warned:
-                print_stderr("\nUse `py3status docstring --diff` to view diff.")
+                print_stderr("\nUse `py3-cmd docstring --diff` to view diff.")
 
 
 def update_readme_for_modules(modules):

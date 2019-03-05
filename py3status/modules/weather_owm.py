@@ -237,23 +237,23 @@ Examples:
 ```
 # change icons
 weather_owm {
-  api_key = <my api key>
-  icons = {
-    '200': "☔"
-    '230_232': "🌧"
-  }
+    api_key = <my api key>
+    icons = {
+        '200': "☔"
+        '230_232': "🌧"
+    }
 }
 
 # set a city
 weather_owm {
-  api_key = <my api key>
-  city = 'London'
+    api_key = <my api key>
+    city = 'London'
 }
 
 # set a location
 weather_owm {
-  api_key = <my api key>
-  location = (2.3548, 48.9342)  # Saint-Denis
+    api_key = <my api key>
+    location = (48.9342, 2.3548)  # Saint-Denis
 }
 ```
 
@@ -771,7 +771,7 @@ class Py3status:
         if loc_tz_info is not None:
             (coords, city, country, tz_offset) = loc_tz_info
             if coords:
-                extras = {"lon": coords[0], "lat": coords[1]}
+                extras = {"lat": coords[0], "lon": coords[1]}
             elif city:
                 extras = {"q": city}
             wthr = self._get_weather(extras)

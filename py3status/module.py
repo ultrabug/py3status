@@ -340,15 +340,6 @@ class Module:
                     raise ValueError(err)
                 self.i3bar_module_options["align"] = align
 
-        markup = fn(self.module_full_name, "markup")
-        if not hasattr(markup, "none_setting"):
-            if markup not in MARKUP_LANGUAGES:
-                err = "Invalid `markup` attribute, should be "
-                err += make_quotes(MARKUP_LANGUAGES)
-                err += ". Got `{}`.".format(markup)
-                raise ValueError(err)
-            self.i3bar_module_options["markup"] = markup
-
         separator = fn(self.module_full_name, "separator")
         if not hasattr(separator, "none_setting"):
             if not isinstance(separator, bool):
@@ -416,6 +407,15 @@ class Module:
                     raise ValueError(err)
                 self.py3status_module_options["position"] = position
 
+        markup = fn(self.module_full_name, "markup")
+        if not hasattr(markup, "none_setting"):
+            if markup not in MARKUP_LANGUAGES:
+                err = "Invalid `markup` attribute, should be "
+                err += make_quotes(MARKUP_LANGUAGES)
+                err += ". Got `{}`.".format(markup)
+                raise ValueError(err)
+            self.py3status_module_options["markup"] = markup
+
     def process_composite(self, response):
         """
         Process a composite response.
@@ -441,6 +441,25 @@ class Module:
         if "full_text" in response:
             err = 'conflicting "full_text" and "composite" in response'
             raise Exception(err)
+
+        # set markup
+        if "markup" in self.py3status_module_options:
+            markup = self.py3status_module_options["markup"]
+            line = ""
+            for item in composite:
+                # validate the response
+                if "full_text" not in item:
+                    raise KeyError('missing "full_text" key in response')
+                color = item.get("color")
+                if color:
+                    span = u"<span fgcolor='{}'>{}</span>"
+                    line += span.format(color, item["full_text"])
+                else:
+                    line += item["full_text"]
+
+            composite = [{"full_text": line, "markup": markup}]
+            response["composite"] = composite
+
         # set universal options on last component
         composite[-1].update(self.i3bar_module_options)
         # update all components
@@ -583,10 +602,11 @@ class Module:
             # user provided modules take precedence over py3status provided modules
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
+                module_path = os.path.join(include_path, f_name)
                 self._py3_wrapper.log(
-                    'loading module "{}" from {}{}'.format(module, include_path, f_name)
+                    'loading module "{}" from {}'.format(module, module_path)
                 )
-                self.module_class = self.load_from_file(include_path + f_name)
+                self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules
             else:
                 self._py3_wrapper.log(
