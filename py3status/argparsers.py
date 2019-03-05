@@ -254,11 +254,12 @@ def parse_cli_args():
     options.python_version = python_version()
     options.version = version
     if options.print_version:
-        msg = "py3status version {version} (python {python_version})"
+        msg = "py3status version {version} (python {python_version}) on {wm}"
         print(msg.format(**vars(options)))
         parser.exit()
 
     # get wm
+    options.wm_name = options.wm
     options.wm = {
         "i3": {"msg": "i3-msg", "nag": "i3-nagbar"},
         "sway": {"msg": "swaymsg", "nag": "swaynag"},

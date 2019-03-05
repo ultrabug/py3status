@@ -528,6 +528,8 @@ class Py3statusWrapper:
         except:  # noqa e722
             pass
 
+        self.log("window manager: {}".format(self.config["wm_name"]))
+
         if self.config["debug"]:
             self.log("py3status started with config {}".format(self.config))
 
