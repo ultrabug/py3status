@@ -22,7 +22,7 @@ Using py3status, you can take control of your i3bar easily by:
 
 About
 =====
-You will love `py3status` if you're using `i3wm <http://i3wm.org>`_ and are frustrated by the i3status `limitations <https://faq.i3wm.org/question/459/external-scriptsprograms-in-i3status-without-loosing-colors/>`_ on your i3bar such as:
+You will love `py3status` if you're using `i3wm <https://i3wm.org>`_ (or `sway <https://swaywm.org>`_) and are frustrated by the i3status `limitations <https://faq.i3wm.org/question/459/external-scriptsprograms-in-i3status-without-loosing-colors/>`_ on your i3bar such as:
 
 * you cannot hack into it easily
 * you want more than the built-in modules and their limited configuration
@@ -87,24 +87,34 @@ Options
 You can see the help of py3status by issuing `py3status -h`:
 ::
 
-    -h, --help            show this help message and exit
-    -b, --dbus-notify     use notify-send to send user notifications rather than
-                          i3-nagbar, requires a notification daemon eg dunst
-    -c I3STATUS_CONF, --config I3STATUS_CONF
-                          path to i3status config file
-    -d, --debug           be verbose in syslog
-    -i INCLUDE_PATHS, --include INCLUDE_PATHS
-                          include user-written modules from those directories
-                          (default ~/.i3/py3status)
-    -l LOG_FILE, --log-file LOG_FILE
-                          path to py3status log file
-    -n INTERVAL, --interval INTERVAL
-                          update interval in seconds (default 1 sec)
-    -s, --standalone      standalone mode, do not use i3status
-    -t CACHE_TIMEOUT, --timeout CACHE_TIMEOUT
-                          default injection cache timeout in seconds (default 60
-                          sec)
-    -v, --version         show py3status version and exit
+    usage: py3status [-h] [-b] [-c FILE] [-d] [-g] [-i PATH] [-l FILE] [-s]
+                     [-t INT] [-m] [-u PATH] [-v] [--wm WINDOW_MANAGER]
+                     {list} ...
+
+    The agile, python-powered, i3status wrapper
+
+    positional arguments:
+       {list} ...
+         list               list modules
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -b, --dbus-notify     send notifications via dbus instead of i3-nagbar
+                            (default: False)
+      -c, --config FILE     load config (default: /home/alexys/.i3/i3status.conf)
+      -d, --debug           enable debug logging in syslog and --log-file
+                            (default: False)
+      -g, --gevent          enable gevent monkey patching (default: False)
+      -i, --include PATH    append additional user-defined module paths (default:
+                            None)
+      -l, --log-file FILE   enable logging to FILE (default: None)
+      -s, --standalone      run py3status without i3status (default: False)
+      -t, --timeout INT     default module cache timeout in seconds (default: 60)
+      -m, --disable-click-events
+                            disable all click events (default: False)
+      -u, --i3status PATH   specify i3status path (default: /usr/bin/i3status)
+      -v, --version         show py3status version and exit (default: False)
+      --wm WINDOW_MANAGER   specify window manager i3 or sway (default: i3)
 
 Control
 =======
