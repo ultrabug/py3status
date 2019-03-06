@@ -528,6 +528,8 @@ class Py3statusWrapper:
         except:  # noqa e722
             pass
 
+        self.log("window manager: {}".format(self.config["wm_name"]))
+
         if self.config["debug"]:
             self.log("py3status started with config {}".format(self.config))
 
@@ -675,10 +677,10 @@ class Py3statusWrapper:
             else:
                 py3_config = self.config.get("py3_config", {})
                 nagbar_font = py3_config.get("py3status", {}).get("nagbar_font")
+                wm_nag = self.config["wm"]["nag"]
+                cmd = [wm_nag, "-m", msg, "-t", level]
                 if nagbar_font:
-                    cmd = ["i3-nagbar", "-f", nagbar_font, "-m", msg, "-t", level]
-                else:
-                    cmd = ["i3-nagbar", "-m", msg, "-t", level]
+                    cmd += ["-f", nagbar_font]
             Popen(cmd, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
         except Exception as err:
             self.log("notify_user error: %s" % err)

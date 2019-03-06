@@ -393,10 +393,12 @@ class Py3status:
                     if not workspace:
                         continue
                     # switch to workspace
-                    cmd = 'i3-msg workspace "{}"'.format(workspace)
+                    cmd = '{} workspace "{}"'.format(self.py3.wm_msg, workspace)
                     self.py3.command_run(cmd)
                     # move it to output
-                    cmd = 'i3-msg move workspace to output "{}"'.format(output)
+                    cmd = '{} move workspace to output "{}"'.format(
+                        self.py3.wm_msg, output
+                    )
                     self.py3.command_run(cmd)
                     # log this
                     self.py3.log(

@@ -151,19 +151,20 @@ class Events(Thread):
                 command = command.replace("$OUTPUT", shell_quote(full_text))
 
             # this is a i3 message
-            self.i3_msg(module_name, command)
+            self.wm_msg(module_name, command)
             # to make the bar more responsive to users we ask for a refresh
             # of the module or of i3status if the module is an i3status one
             self.py3_wrapper.refresh_modules(module_name)
 
-    def i3_msg(self, module_name, command):
+    def wm_msg(self, module_name, command):
         """
-        Execute the given i3 message and log its output.
+        Execute the message with i3-msg or swaymsg and log its output.
         """
-        i3_msg_pipe = Popen(["i3-msg", command], stdout=PIPE)
+        wm_msg = self.config["wm"]["msg"]
+        pipe = Popen([wm_msg, command], stdout=PIPE)
         self.py3_wrapper.log(
-            'i3-msg module="{}" command="{}" stdout={}'.format(
-                module_name, command, i3_msg_pipe.stdout.read()
+            '{} module="{}" command="{}" stdout={}'.format(
+                wm_msg, module_name, command, pipe.stdout.read()
             )
         )
 

@@ -51,8 +51,11 @@ class Py3status:
             ]
         }
 
+    def post_config_hook(self):
+        self.tree_command = "{} -t get_tree".format(self.py3.wm_msg)
+
     def scratchpad_counter(self):
-        tree = loads(self.py3.command_output("i3-msg -t get_tree"))
+        tree = loads(self.py3.command_output(self.tree_command))
         count = len(find_scratch(tree).get("floating_nodes", []))
 
         response = {"cached_until": self.py3.time_in(self.cache_timeout)}
