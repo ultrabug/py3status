@@ -102,12 +102,12 @@ class Py3status:
             return None
 
     def arch_updates(self):
-        pacman, aur, total, full_text = None, None, None, None
+        pacman, aur, total, full_text = None, None, None, ""
+
         if self._get_pacman_updates:
             pacman = self._get_pacman_updates()
         if self._get_aur_updates:
             aur = self._get_aur_updates()
-
         if pacman is not None or aur is not None:
             total = (pacman or 0) + (aur or 0)
 
