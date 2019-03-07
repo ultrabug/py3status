@@ -15,11 +15,11 @@ Configuration parameters:
         (default '{previous}{toggle}{next} {state} [{artist} - ][{title}]')
     format_none: define output if no player is running
         (default 'no player running')
-    icon_next: text for the next button in the button control panel (default '»')
-    icon_pause: text for the pause button in the button control panel (default '▮')
-    icon_play: text for the play button in the button control panel (default '▶')
-    icon_previous: text for the previous button in the button control panel (default '«')
-    icon_stop: text for the stop button in the button control panel (default '◾')
+    icon_next: specify icon for next button (default ' » ')
+    icon_pause: specify icon for pause button (default ' ▮ ')
+    icon_play: specify icon for play button (default ' ▶ ')
+    icon_previous: specify icon for previous button (default ' « ')
+    icon_stop: specify icon for stop button (default ' ◾ ')
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
@@ -57,7 +57,7 @@ Requires:
 
 Tested players:
     bomi: powerful and easy-to-use gui multimedia player based on mpv
-    Cantata: qt5 client for the music player daemon (mpd)
+    cantata: qt5 client for the music player daemon (mpd)
     mpdris2: mpris2 support for mpd
     vlc: multi-platform mpeg, vcd/dvd, and divx player
 
@@ -89,13 +89,8 @@ mpris {
 
 SAMPLE OUTPUT
 [
-    {'color': '#00FF00', 'index': 'previous', 'min_width': 20,
-     'align': 'center', 'full_text': u'\xab'},
-    {'color': '#00FF00', 'index': 'toggle', 'min_width': 20,
-     'align': 'center', 'full_text': u'\u25ae'},
-    {'color': '#00FF00', 'index': 'next', 'min_width': 20,
-     'align': 'center', 'full_text': u'\xbb '},
-    {'full_text': u'\u25b6 Happy Mondays - Fat Lady Wrestlers'}
+    {'color': '#00FF00', 'full_text': u'\xab \u25ae \xbb \u25b6 '},
+    {'color': '#00FF00', 'full_text': u'Happy Mondays - Fat Lady Wrestlers'}
 ]
 """
 
@@ -141,11 +136,11 @@ class Py3status:
     button_toggle = 1
     format = "{previous}{toggle}{next} {state} [{artist} - ][{title}]"
     format_none = "no player running"
-    icon_next = u"»"
-    icon_pause = u"▮"
-    icon_play = u"▶"
-    icon_previous = u"«"
-    icon_stop = u"◾"
+    icon_next = u" » "
+    icon_pause = u" ▮ "
+    icon_play = u" ▶ "
+    icon_previous = u" « "
+    icon_stop = u" ◾ "
     player_priority = []
     state_pause = u"▮"
     state_play = u"▶"
@@ -303,8 +298,6 @@ class Py3status:
                 "color": color,
                 "full_text": control_state["icon"],
                 "index": button,
-                "min_width": 20,
-                "align": "center",
             }
 
         return response
