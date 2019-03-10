@@ -3,8 +3,8 @@
 Displays upcoming khal events.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 30)
-    config_path: Path to khal configuration file (default None; tries to open /home/$USER/.config/khal/config)
+    cache_timeout: refresh interval for this module (default 60)
+    config_path: Path to khal configuration file (default 'None'; tries to open /home/$USER/.config/khal/config)
     date_end: Until which datetime the module searches for events (default 'eod')
     format: display format for this module (default '{appointments}')
     output_format: khal conform format for displaying event output (default '{start-time} {title}')
@@ -34,11 +34,11 @@ class Py3status:
     """
 
     # available configuration parameters
-    format = "{appointments}"
+    cache_timeout = 60
     config_path = None
     date_end = "eod"
+    format = "{appointments}"
     output_format = "{start-time} {title}"
-    cache_timeout = 60
 
     def _format_output(self, output):
         ansi_escape = re_compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
