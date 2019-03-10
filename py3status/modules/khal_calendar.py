@@ -4,7 +4,7 @@ Displays upcoming khal events.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 60)
-    config_path: Path to khal configuration file. The default None resolves to /home/$USER/.config/khal/config (default 'None')
+    config_path: Path to khal configuration file. The default None resolves to /home/$USER/.config/khal/config (default None)
     date_end: Until which datetime the module searches for events (default 'eod')
     format: display format for this module (default '{appointments}')
     output_format: khal conform format for displaying event output (default '{start-time} {title}')
