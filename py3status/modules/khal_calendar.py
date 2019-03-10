@@ -33,6 +33,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     format = "{appointments}"
     config_path = None
     date_end = "eod"
