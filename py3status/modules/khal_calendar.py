@@ -2,18 +2,21 @@
 """
 Displays upcoming khal events.
 
-Configuration parameter:
+Configuration parameters:
+    cache_timeout: refresh interval for this module (default 30)
     config_path: Path to khal configuration file (default None; tries to open /home/$USER/.config/khal/config)
     date_end: Until which datetime the module searches for events (default 'eod')
-    output_format: khal conform format for displaying event output (default '{start-time} {title}')
-    cache_timeout: refresh interval for this module (default 30)
     format: display format for this module (default '{appointments}')
+    output_format: khal conform format for displaying event output (default '{start-time} {title}')
 
 Format placeholders:
     {appointments} list of events in time range
 
 Requires:
     khal: https://github.com/pimutils/khal
+
+@author @xenrox
+@license BSD
 
 SAMPLE OUTPUT
 {'full_text': '13:00 Eat lunch'}
@@ -45,7 +48,7 @@ class Py3status:
         self.collection = build_collection(self.config, None)
         self.datetimeformat = self.config["locale"]["datetimeformat"]
 
-    def khal(self):
+    def khal_calendar(self):
         self._init_config()
         daterange = (
             str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
