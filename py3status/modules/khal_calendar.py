@@ -29,15 +29,16 @@ from khal.controllers import khal_list
 class Py3status:
     """
     """
+
     format = "{appointments}"
     config_path = None
     date_end = "eod"
     output_format = "{start-time} {title}"
-    cache_timeout = 30
+    cache_timeout = 60
 
     def _format_output(self, output):
-        ansi_escape = re_compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
-        return ansi_escape.sub('', output)
+        ansi_escape = re_compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+        return ansi_escape.sub("", output)
 
     def _init_config(self):
         self.config = get_config(self.config_path)
@@ -46,19 +47,17 @@ class Py3status:
 
     def khal(self):
         self._init_config()
-        daterange = str(datetime.now().strftime(
-            self.datetimeformat)) + " " + self.date_end
-        output = khal_list(self.collection, daterange,
-                           self.config, self.output_format)
+        daterange = (
+            str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
+        )
+        output = khal_list(self.collection, daterange, self.config, self.output_format)
         output = list(map(lambda x: self._format_output(x), output[1:]))
 
         output = " ".join(output)
-        khal_data = {
-            "appointments": output,
-        }
+        khal_data = {"appointments": output}
         return {
-            'full_text': self.py3.safe_format(self.format, khal_data),
-            'cached_until': self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, khal_data),
+            "cached_until": self.py3.time_in(self.cache_timeout),
         }
 
 
@@ -66,8 +65,7 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {
-        'always_show': True,
-    }
+    config = {"always_show": True}
     from py3status.module_test import module_test
+
     module_test(Py3status, config=config)
