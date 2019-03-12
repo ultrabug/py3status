@@ -38,17 +38,16 @@ Color options:
     color_bad: no IPs to show
     color_good: IPs to show
 
-Example:
+Requires:
+    ip: utility found in iproute2 package
 
+Examples:
 ```
 net_iplist {
     iface_blacklist = []
     ip_blacklist = ['127.*', '::1']
 }
 ```
-
-Requires:
-    ip: utility found in iproute2 package
 
 @author guiniol
 
@@ -82,7 +81,7 @@ class Py3status:
         self.ip_re = re.compile(r"\s+inet (?P<ip4>[\d\.]+)(?:/| )")
         self.ip6_re = re.compile(r"\s+inet6 (?P<ip6>[\da-f:]+)(?:/| )")
 
-    def ip_list(self):
+    def net_iplist(self):
         response = {
             "cached_until": self.py3.time_in(seconds=self.cache_timeout),
             "full_text": "",

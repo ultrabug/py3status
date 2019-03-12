@@ -2,11 +2,10 @@
 """
 Display output of a given script.
 
-Display output of any executable script set by `script_path`.
-Only the first two lines of output will be used. The first line is used
-as the displayed text. If the output has two or more lines, the second
-line is set as the text color (and should hence be a valid hex color
-code such as #FF0000 for red).
+Display output of any executable script set by `script_path`. Only the first
+two lines of output will be used. The first line is used as the displayed
+text. If the output has two or more lines, the second line is set as the text
+color (and should hence be a valid hex color code such as #FF0000 for red).
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
@@ -26,8 +25,7 @@ Format placeholders:
     {lines} number of lines in the output
     {output} output of script given by "script_path"
 
-i3status.conf example:
-
+Examples:
 ```
 external_script {
     format = "my name is {output}"

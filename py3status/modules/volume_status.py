@@ -2,11 +2,6 @@
 """
 Volume control.
 
-Expands on the standard i3status volume module by adding color
-and percentage threshold settings.
-Volume up/down and Toggle mute via mouse clicks can be easily added see
-example.
-
 Configuration parameters:
     button_down: button to decrease volume (default 5)
     button_mute: button to toggle mute (default 1)
@@ -42,6 +37,16 @@ Color options:
     color_muted: Volume is muted, if not supplied color_bad is used
         if set to `None` then the threshold color will be used.
 
+Requires:
+    alsa-utils: an alternative implementation of linux sound support
+    pamixer: pulseaudio command-line mixer like amixer
+
+Notes:
+    If you are changing volume state by external scripts etc and
+    want to refresh the module quicker than the i3status interval,
+    send a USR1 signal to py3status in the keybinding.
+    Example: killall -s USR1 py3status
+
 Examples:
 ```
 # Set thresholds to rainbow colors
@@ -60,16 +65,6 @@ volume_status {
     ]
 }
 ```
-
-Requires:
-    alsa-utils: alsa backend (tested with alsa-utils 1.0.29-1)
-    pamixer: pulseaudio backend
-
-NOTE:
-    If you are changing volume state by external scripts etc and
-    want to refresh the module quicker than the i3status interval,
-    send a USR1 signal to py3status in the keybinding.
-    Example: killall -s USR1 py3status
 
 @author <Jan T> <jans.tuomi@gmail.com>
 @license BSD
@@ -387,7 +382,7 @@ class Py3status:
         text = self.py3.safe_format(format, {"percentage": percentage})
         return text
 
-    def current_volume(self):
+    def volume_status(self):
         # call backend
         perc, muted = self.backend.get_volume()
 

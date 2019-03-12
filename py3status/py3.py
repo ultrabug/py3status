@@ -18,7 +18,7 @@ from py3status.constants import COLOR_NAMES
 from py3status.formatter import Formatter, Composite
 from py3status.request import HttpResponse
 from py3status.storage import Storage
-from py3status.util import Gradiants
+from py3status.util import Gradients
 from py3status.version import version
 
 
@@ -93,7 +93,7 @@ class Py3:
 
     # Shared by all Py3 Instances
     _formatter = None
-    _gradients = Gradiants()
+    _gradients = Gradients()
     _none_color = NoneColor()
     _storage = Storage()
 
@@ -153,9 +153,13 @@ class Py3:
             # that was explicitly set to None as a True value.  Ones that are
             # not set should be treated as None
             if name.startswith("color_"):
-                if hasattr(param, "none_setting"):
+                _name = name[6:].lower()
+                # use color "hidden" to hide blocks
+                if _name == "hidden":
+                    param = "hidden"
+                elif hasattr(param, "none_setting"):
                     # see if named color and use if it is
-                    param = COLOR_NAMES.get(name[6:].lower())
+                    param = COLOR_NAMES.get(_name)
                 elif param is None:
                     param = self._none_color
             # if a non-color parameter and was not set then set to default
@@ -495,6 +499,15 @@ class Py3:
             if module_info:
                 module_info["module"].force_update()
 
+    def get_wm_msg(self):
+        """
+        Return the control program of the current window manager.
+
+        On i3, will return "i3-msg"
+        On sway, will return "swaymsg"
+        """
+        return self._py3_wrapper.config["wm"]["msg"]
+
     def get_output(self, module_name):
         """
         Return the output of the named module.  This will be a list.
@@ -632,9 +645,14 @@ class Py3:
         # Unless the requested update is in less than a second
         if sync_to is None:
             if seconds and seconds < 1:
-                sync_to = 0
+                if 1 % seconds == 0:
+                    sync_to = seconds
+                else:
+                    sync_to = 0
             else:
                 sync_to = 1
+                if seconds:
+                    seconds -= 0.1
 
         requested = time() + seconds - offset
 
@@ -698,6 +716,8 @@ class Py3:
 
         :param format_strings: Accepts a format string or a list of format strings.
         """
+        if not format_strings:
+            return []
         if not getattr(self._py3status_module, "thresholds", None):
             return []
         if isinstance(format_strings, basestring):
@@ -1197,7 +1217,7 @@ class Py3:
                         else:
                             break
             except TypeError:
-                pass
+                color = None
 
         # save color so it can be accessed via safe_format()
         if name:
@@ -1248,6 +1268,9 @@ class Py3:
 
         if headers is None:
             headers = {}
+
+        if timeout is None:
+            timeout = getattr(self._py3status_module, "request_timeout", 10)
 
         if "User-Agent" not in headers:
             headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)

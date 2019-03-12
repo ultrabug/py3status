@@ -25,7 +25,7 @@ Configuration parameters:
         (default False)
     sum_values: sum values of each interface instead of taking the top one
         (default False)
-    thresholds: thresholds to use for colors
+    thresholds: specify color thresholds to use
         (default [(0, 'bad'), (1024, 'degraded'), (1024 * 1024, 'good')])
     unit: unit to use. If the unit contains a multiplier prefix, only this
         exact unit will ever be used
@@ -107,7 +107,9 @@ class Py3status:
         self.last_stat = self._get_stat()
         self.last_time = time()
 
-    def currentSpeed(self):
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+
+    def net_rate(self):
         ns = self._get_stat()
         deltas = {}
         try:
@@ -160,7 +162,7 @@ class Py3status:
             # get the deltas into variable
             delta = deltas[interface] if interface else None
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, KeyError):
             delta = None
             interface = None
             hide = self.hide_if_zero
@@ -172,9 +174,10 @@ class Py3status:
         elif not interface:
             response["full_text"] = self.format_no_connection
         else:
-            self.py3.threshold_get_color(delta["down"], "down")
-            self.py3.threshold_get_color(delta["total"], "total")
-            self.py3.threshold_get_color(delta["up"], "up")
+            for x in self.thresholds_init:
+                if x in delta:
+                    self.py3.threshold_get_color(delta[x], x)
+
             response["full_text"] = self.py3.safe_format(
                 self.format,
                 {

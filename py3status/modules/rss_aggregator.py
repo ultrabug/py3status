@@ -2,33 +2,6 @@
 """
 Display unread feeds in your favorite RSS aggregator.
 
-For now, supported aggregators are:
-    * OwnCloud/NextCloud with News application
-    * Tiny Tiny RSS 1.6 or newer
-
-You can also decide to check only for specific feeds or folders of feeds. To use this
-feature, you have to first get the IDs of those feeds or folders. You can get those IDs
-by clicking on the desired feed or folder and watching the URL.
-
-For OwnCloud/NextCloud:
-```
-https://yourcloudinstance.com/index.php/apps/news/#/items/feeds/FEED_ID
-https://yourcloudinstance.com/index.php/apps/news/#/items/folders/FOLDER_ID
-
-```
-For Tiny Tiny RSS:
-
-```
-https://yourttrssinstance.com/index.php#f=FEED_ID&c=0
-https://yourttrssinstance.com/index.php#f=FOLDER_ID&c=1
-```
-
-If both feeds list and folders list are left empty, all unread feed items will be counted.
-You may use both feeds list and folders list, but given feeds shouldn't be included in
-given folders, else unread count number behavior is unpredictable. Same warning when
-aggregator allows subfolders: the folders list shouldn't include a folder and one of its
-subfolder.
-
 Configuration parameters:
     aggregator: feed aggregator used. Supported values are `owncloud` and `ttrss`.
         Other aggregators might be supported in future releases. Contributions are
@@ -50,6 +23,26 @@ Color options:
 
 Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests
+
+Notes:
+    You can also decide to check only for specific feeds or folders of feeds.
+    To use this feature, you have to first get the IDs of those feeds or
+    folders. You can get those IDs by clicking on the desired feed or folder
+    and watching the URL.
+
+    For OwnCloud/NextCloud with News application:
+    https://yourcloudinstance.com/index.php/apps/news/#/items/feeds/FEED_ID
+    https://yourcloudinstance.com/index.php/apps/news/#/items/folders/FOLDER_ID
+
+    For Tiny Tiny RSS 1.6 or newer:
+    https://yourttrssinstance.com/index.php#f=FEED_ID&c=0
+    https://yourttrssinstance.com/index.php#f=FOLDER_ID&c=1
+
+    If both feeds list and folders list are left empty, all unread feed items
+    will be counted. You may use both feeds list and folders list, but given
+    feeds shouldn't be included in given folders, else unread count number
+    behavior is unpredictable. Same warning when aggregator allows subfolders:
+    the folders list shouldn't include a folder and one of its subfolder.
 
 @author raspbeguy
 
@@ -82,7 +75,7 @@ class Py3status:
         if self.user is None or self.password is None:
             raise ValueError("user and password must be provided")
 
-    def check_news(self):
+    def rss_aggregator(self):
         if self.aggregator == "owncloud":
             rss_count = self._get_count_owncloud()
         elif self.aggregator == "ttrss":

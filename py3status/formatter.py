@@ -623,6 +623,8 @@ class Block:
                 or getattr(module, threshold_color_name, None)
                 or getattr(module.py3, color_name.upper(), None)
             )
+            if color == "hidden":
+                return False, []
 
         text = u""
         out = []

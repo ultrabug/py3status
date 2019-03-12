@@ -41,7 +41,6 @@ For example you could insert and load the ``imap`` module like this:
     order += "time"
 
 
-
 Configuring a py3status module
 ------------------------------
 
@@ -61,6 +60,7 @@ Your py3status modules are configured the exact same way as i3status modules, di
         user = 'mylogin'
         on_click 1 = "exec thunderbird"
     }
+
 
 py3status configuration section
 -------------------------------
@@ -132,16 +132,99 @@ Store per config cache in different directories.
 
 You can specify the following options in module configuration.
 
- ``min_length``: Specify a minimum length (of characters) for modules.
- ``position``: Specify how modules should be positioned when the ``min_length``
- is not reached. Either ``left`` (default), ``center``, or ``right``.
+``min_length``: Specify a minimum length of characters for modules.
+``position``: Specify how modules should be positioned when the ``min_length``
+is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
-     # example
+
     static_string {
         min_length = 15
         position = 'center'
     }
+
+.. note::
+    New in version 3.16
+
+You can specify the options in module or py3status configuration section.
+
+The following options will work on ``i3``.
+
+``align``: Specify how modules should be aligned when the ``min_width``
+is not reached. Either ``left`` (default), ``center``, or ``right``.
+``background``: Specify a background color for py3status modules.
+``markup``: Specify how modules should be parsed.
+``min_width``: Specify a minimum width of pixels for modules.
+``separator``: Specify a separator boolean for modules.
+``separator_block_width``: Specify a separator block width for modules.
+
+The following options will work on ``i3-gaps``.
+
+``border``: Specify a border color for modules.
+``border_bottom``: Specify a border width for modules
+``border_left``: Specify a border width for modules.
+``border_right``: Specify a border width for modules.
+``border_top``: Specify a border width for modules.
+
+The following options will work on ``py3status``.
+
+``min_length``: Specify a minimum length of characters for modules.
+``position``: Specify how modules should be positioned when the ``min_length``
+is not reached. Either ``left`` (default), ``center``, or ``right``.
+
+.. code-block:: py3status
+
+   # customize a theme
+   py3status {
+      align = 'left'
+      markup = 'pango'
+      min_width = 20
+      separator = True
+      separator_block_width = 9
+
+      background = '#285577'
+      border = '#4c7899'
+      border_bottom = 1
+      border_left = 1
+      border_right = 1
+      border_top = 1
+
+      min_length = 15
+      position = 'right'
+   }
+
+.. note::
+    New in version 3.16
+
+The following options will work on ``i3bar`` and ``py3status``.
+
+``urgent_background``: Specify urgent background color for modules.
+``urgent_foreground``: Specify urgent foreground color for modules.
+``urgent_border``: Specify urgent border color for modules.
+
+The following options will work on ``i3bar-gaps`` and ``py3status``.
+
+``urgent_border_bottom``: Specify urgent border width for modules
+``urgent_border_left``: Specify urgent border width for modules.
+``urgent_border_right``: Specify urgent border width for modules.
+``urgent_border_top``: Specify urgent border width for modules.
+
+You lose urgent functionality too that can be sometimes utilized by
+container modules, e.g., frame and group.
+
+.. code-block:: py3status
+
+   # customize urgent
+   py3status {
+      urgent_background  = 'blue'
+      urgent_foreground = 'white'
+      urgent_border = 'red'
+      urgent_border_bottom = 1
+      urgent_border_left = 1
+      urgent_border_right = 1
+      urgent_border_top = 1
+   }
+
 
 Configuration obfuscation
 -------------------------
@@ -265,7 +348,6 @@ is also possible to use css3 color names eg ``red``
         color_charging = '#FFFF00'
     }
 
-
 Configuring thresholds
 ----------------------
 
@@ -315,6 +397,35 @@ Some modules may allow more than one threshold to be defined.  If all the thresh
                 (30, "bad"),
             ],
         }
+    }
+
+.. note::
+    New in version 3.17
+
+You can specify ``hidden`` color to hide a block.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # hide a block when ``1avg`` (i.e., 12.4) is less than 20 percent
+    format = "[\?color=1avg [\?color=darkgray&show 1min] {1min}]"
+    loadavg {
+       thresholds = [
+            (0, "hidden"),
+           (20, "good"),
+           (40, "degraded"),
+           (60, "#ffa500"),
+           (80, "bad"),
+       ]
+    }
+
+    # hide cpu block when ``cpu_used_percent`` is less than 50 percent
+    # hide mem block when ``mem_used_percent`` is less than 50 percent
+    sysdata {
+        thresholds = [
+            (50, "hidden"),
+            (75, "bad"),
+        ]
     }
 
 Formatter
@@ -761,3 +872,22 @@ an event
     This feature will only activate when ``pyudev`` is installed on the system.
     This is an optional dependency of py3status and is therefore not enforced
     by all package managers.
+
+
+Request Timeout
+--------------------------------------------------------------
+
+.. note::
+    New in version 3.16
+
+Request Timeout for URL request based modules can be specified in the
+module configuration. To find out if your module supports that, look for
+``self.py3.request`` in the code. Otherwise, we will use ``10``.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # stop waiting for a response after 10 seconds
+    exchange_rate {
+        request_timeout = 10
+    }

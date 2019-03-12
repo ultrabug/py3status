@@ -12,7 +12,6 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 30)
     delimiter: the delimiter between parent and child objects (default '-')
     format: display format for this module (default None)
-    timeout: time to wait for a response, in seconds (default 5)
     url: specify URL to fetch JSON from (default None)
 
 Format placeholders:
@@ -62,8 +61,18 @@ class Py3status:
     cache_timeout = 30
     delimiter = "-"
     format = None
-    timeout = 5
     url = None
+
+    class Meta:
+        deprecated = {
+            "rename": [
+                {
+                    "param": "timeout",
+                    "new": "request_timeout",
+                    "msg": "obsolete parameter use `request_timeout`",
+                }
+            ]
+        }
 
     def post_config_hook(self):
         if not self.url:
@@ -73,7 +82,7 @@ class Py3status:
         """
         """
         try:
-            json_data = self.py3.request(self.url, timeout=self.timeout).json()
+            json_data = self.py3.request(self.url).json()
             json_data = self.py3.flatten_dict(json_data, self.delimiter, True)
         except self.py3.RequestException:
             json_data = None

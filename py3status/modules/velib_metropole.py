@@ -149,16 +149,13 @@ class Py3status:
         self.cache_station_keys = {}
         self.first_request = True
         self.idle_time = 0
-        self.request_timeout = 10
         self.scrolling = False
         self.station_data = {}
-
-        self.wow = 0
 
         self.thresholds_init = {}
         for name in ["format", "format_station"]:
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name, None) or ""
+                getattr(self, name)
             )
 
     def _set_optimal_area(self, data):
@@ -178,9 +175,7 @@ class Py3status:
 
     def _get_velib_data(self):
         try:
-            return self.py3.request(
-                VELIB_ENDPOINT, params=self.gps, timeout=self.request_timeout
-            ).json()
+            return self.py3.request(VELIB_ENDPOINT, params=self.gps).json()
         except self.py3.RequestException:
             return None
 
@@ -263,7 +258,7 @@ class Py3status:
 
             for x in self.thresholds_init["format"]:
                 if x in velib_data:
-                    self.py3.threshold_get_color(velib_data, x)
+                    self.py3.threshold_get_color(velib_data[x], x)
         else:
             velib_data = self.empty_defaults
 

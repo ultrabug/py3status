@@ -50,7 +50,7 @@ class Py3status:
     user = ""
     warning = 15
 
-    def count_glpi_open_tickets(self):
+    def glpi(self):
         response = {"full_text": ""}
 
         mydb = MySQLdb.connect(

@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Display output of a given script, updating the display when new lines
-come in.
+Display output of a given script asynchronously.
 
 Always displays the last line of output from a given script, set by
-`script_path`. If a line contains only a color (/^#[0-F]{6}$/), it is
-used as such (set force_nocolor to disable).
-The script may have parameters.
+`script_path`. If a line contains only a color (/^#[0-F]{6}$/), it is used
+as such (set force_nocolor to disable). The script may have parameters.
 
 Configuration parameters:
     force_nocolor: if true, won't check if a line contains color
@@ -20,10 +18,9 @@ Configuration parameters:
 Format placeholders:
     {output} output of script given by "script_path"
 
-i3status.conf example:
-
+Examples:
 ```
-external_script {
+async_script {
     format = "{output}"
     script_path = "ping 127.0.0.1"
 }
@@ -64,7 +61,7 @@ class Py3status:
         if not self.script_path:
             self.py3.error("script_path is mandatory")
 
-    def external_script(self):
+    def async_script(self):
         response = {}
         response["cached_until"] = self.py3.CACHE_FOREVER
 

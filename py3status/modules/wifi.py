@@ -8,7 +8,7 @@ Configuration parameters:
     blocks: a string, where each character represents quality level
         (default "_▁▂▃▄▅▆▇█")
     cache_timeout: Update interval in seconds (default 10)
-    device: Wireless device name (default "wlan0")
+    device: specify device name to use, otherwise auto (default None)
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
     format: Display format for this module
@@ -17,11 +17,7 @@ Configuration parameters:
         (default True)
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
-    use_sudo: Use sudo to run iw and ip. make sure to give some root rights
-        to run without a password by editing the sudoers file, eg...
-        '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
-        '<user> ALL=(ALL) NOPASSWD:/sbin/ip addr list [a-z]*'
-        (default False)
+    thresholds: specify color thresholds to use (default [])
 
 Format placeholders:
     {bitrate} Display bit rate
@@ -40,12 +36,19 @@ Color options:
     color_degraded: Signal strength signal_degraded or lower
     color_good: Signal strength above signal_degraded
 
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
+
 Requires:
     iw: cli configuration utility for wireless devices
     ip: only for {ip}. may be part of iproute2: ip routing utilities
 
-__Note: Some distributions eg Debian require `iw` to be run with privileges.
-In this case you will need to use the `use_sudo` configuration parameter.__
+Notes:
+    Some distributions require commands to be run with privileges. You can
+    give commands some root rights to run without a password by editing
+    sudoers file, i.e., `sudo visudo`, and add a line that requires sudo.
+    '<user> ALL=(ALL) NOPASSWD:/sbin/iw dev,/sbin/iw dev [a-z]* link'
+    '<user> ALL=(ALL) NOPASSWD:/sbin/ip addr list [a-z]*'
 
 @author Markus Weimar <mail@markusweimar.de>
 @license BSD
@@ -57,8 +60,9 @@ SAMPLE OUTPUT
 import re
 import math
 
-STRING_ERROR = "iw: command failed"
 DEFAULT_FORMAT = "W: {bitrate} {signal_percent} {ssid}|W: down"
+STRING_NOT_INSTALLED = "iw not installed"
+STRING_NO_DEVICE = "no available device"
 
 
 class Py3status:
@@ -70,37 +74,46 @@ class Py3status:
     bitrate_degraded = 53
     blocks = u"_▁▂▃▄▅▆▇█"
     cache_timeout = 10
-    device = "wlan0"
+    device = None
     down_color = "bad"
     format = DEFAULT_FORMAT
     round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
-    use_sudo = False
+    thresholds = []
+
+    class Meta:
+        deprecated = {"remove": [{"param": "use_sudo", "msg": "obsolete"}]}
 
     def post_config_hook(self):
-        self._max_bitrate = 0
-        self._ssid = ""
         iw = self.py3.check_commands(["iw", "/sbin/iw"])
-        if iw is None:
-            raise Exception("iw is not installed")
+        if not iw:
+            raise Exception(STRING_NOT_INSTALLED)
+
         # get wireless interface
         try:
             data = self.py3.command_output([iw, "dev"])
-            devices = re.findall(r"Interface\s*([^\s]+)", data)
-            if not devices or "wlan0" in devices:
-                self.device = "wlan0"
-            else:
-                self.device = devices[0]
-        except self.py3.CommandError:
-            pass
+        except self.py3.CommandError as ce:
+            raise Exception(ce.error.strip())
+        for line in data.splitlines()[1:]:
+            if "Interface" in line:
+                device = line.split()[-1]
+                if not self.device or device == self.device:
+                    self.device = device
+                    break
+        else:
+            device = " `{}`".format(self.device) if self.device else ""
+            raise Exception(STRING_NO_DEVICE + device)
 
-        self.iw_dev_id_link = [iw, "dev", self.device, "link"]
+        self._max_bitrate = 0
+        self._ssid = ""
+        self.color_down = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
+        self.commands = set()
         self.ip_addr_list_id = ["ip", "addr", "list", self.device]
-        # use_sudo?
-        if self.use_sudo:
-            for cmd in [self.iw_dev_id_link, self.ip_addr_list_id]:
-                cmd[0:0] = ["sudo", "-n"]
+        self.iw_dev_id_link = [iw, "dev", self.device, "link"]
+        self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
+        self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
         # DEPRECATION WARNING
         format_down = getattr(self, "format_down", None)
@@ -118,20 +131,40 @@ class Py3status:
             msg += "parameters you should update to use the new format."
             self.py3.log(msg)
 
+    def _dbm_to_percent(self, dbm):
+        return 2.0 * (dbm + 100)
+
+    def _percent_to_dbm(self, percent):
+        return (percent / 2.0) - 100
+
+    def _get_wifi_data(self, command):
+        for time in range(2):
+            try:
+                return self.py3.command_output(command)
+            except self.py3.CommandError as ce:
+                if str(command) not in self.commands:
+                    command[0:0] = ["sudo", "-n"]
+                    continue
+                msg = ce.error.strip().replace("sudo", " ".join(command[2:]))
+                self.py3.error(msg, self.py3.CACHE_FOREVER)
+            finally:
+                self.commands.add(str(command))
+
     def wifi(self):
-        """
-        Get WiFi status using iw.
-        """
-        self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
-        self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
-        try:
-            iw = self.py3.command_output(self.iw_dev_id_link)
-        except self.py3.CommandError:
-            return {
-                "cached_until": self.py3.CACHE_FOREVER,
-                "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                "full_text": STRING_ERROR,
-            }
+        iw = self._get_wifi_data(self.iw_dev_id_link)
+
+        bitrate = None
+        bitrate_unit = None
+        freq_ghz = None
+        freq_mhz = None
+        icon = None
+        ip = None
+        signal_dbm = None
+        signal_percent = None
+        ssid = None
+        color = self.color_down
+        quality = 0
+
         # bitrate
         bitrate_out = re.search(r"tx bitrate: ([^\s]+) ([^\s]+)", iw)
         if bitrate_out:
@@ -141,18 +174,14 @@ class Py3status:
             bitrate_unit = bitrate_out.group(2)
             if bitrate_unit == "Gbit/s":
                 bitrate *= 1000
-        else:
-            bitrate = None
-            bitrate_unit = None
 
         # signal
         signal_out = re.search(r"signal: ([\-0-9]+)", iw)
         if signal_out:
             signal_dbm = int(signal_out.group(1))
             signal_percent = min(self._dbm_to_percent(signal_dbm), 100)
-        else:
-            signal_dbm = None
-            signal_percent = None
+
+        # ssid
         ssid_out = re.search(r"SSID: (.+)", iw)
         if ssid_out:
             ssid = ssid_out.group(1)
@@ -161,28 +190,19 @@ class Py3status:
             # it needs to be decoded using 'unicode_escape', to '苟'
             ssid = ssid.encode("latin-1").decode("unicode_escape")
             ssid = ssid.encode("latin-1").decode("utf-8")
-        else:
-            ssid = None
 
         # frequency
         freq_out = re.search(r"freq: ([\-0-9]+)", iw)
         if freq_out:
             freq_mhz = int(freq_out.group(1))
             freq_ghz = freq_mhz / 1000.0
-        else:
-            freq_mhz = None
-            freq_ghz = None
 
-        # check command
+        # ip
         if self.py3.format_contains(self.format, "ip"):
-            ip_info = self.py3.command_output(self.ip_addr_list_id)
+            ip_info = self._get_wifi_data(self.ip_addr_list_id)
             ip_match = re.search(r"inet\s+([0-9.]+)", ip_info)
             if ip_match:
                 ip = ip_match.group(1)
-            else:
-                ip = None
-        else:
-            ip = ""
 
         # reset _max_bitrate if we have changed network
         if self._ssid != ssid:
@@ -192,16 +212,10 @@ class Py3status:
             if bitrate > self._max_bitrate:
                 self._max_bitrate = bitrate
             quality = int((bitrate / self._max_bitrate) * 100)
-        else:
-            quality = 0
-        icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
 
-        # wifi down
-        if ssid is None:
-            color = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
-            full_text = self.py3.safe_format(self.format)
-        # wifi up
-        else:
+        # wifi
+        if ssid is not None:
+            icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
             color = self.py3.COLOR_GOOD
             if bitrate:
                 if bitrate <= self.bitrate_bad:
@@ -222,32 +236,29 @@ class Py3status:
                 signal_dbm = "? dBm"
                 signal_percent = "?%"
 
-            full_text = self.py3.safe_format(
-                self.format,
-                dict(
-                    bitrate=bitrate,
-                    device=self.device,
-                    freq_ghz=freq_ghz,
-                    freq_mhz=freq_mhz,
-                    icon=icon,
-                    ip=ip,
-                    signal_dbm=signal_dbm,
-                    signal_percent=signal_percent,
-                    ssid=ssid,
-                ),
-            )
-
-        return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
-            "color": color,
+        wifi_data = {
+            "bitrate": bitrate,
+            "device": self.device,
+            "freq_ghz": freq_ghz,
+            "freq_mhz": freq_mhz,
+            "icon": icon,
+            "ip": ip,
+            "signal_dbm": signal_dbm,
+            "signal_percent": signal_percent,
+            "ssid": ssid,
         }
 
-    def _dbm_to_percent(self, dbm):
-        return 2 * (dbm + 100)
+        for x in self.thresholds_init:
+            if x in wifi_data:
+                self.py3.threshold_get_color(wifi_data[x], x)
 
-    def _percent_to_dbm(self, percent):
-        return (percent / 2) - 100
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, wifi_data),
+        }
+        if not self.thresholds_init:
+            response["color"] = color
+        return response
 
 
 if __name__ == "__main__":

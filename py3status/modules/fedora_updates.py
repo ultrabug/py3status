@@ -3,8 +3,7 @@
 Display number of pending updates for Fedora Linux.
 
 This will display a count of how many `dnf` updates are waiting
-to be installed.
-Additionally check if any update security notices.
+to be installed. Additionally check for update security notices.
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds
@@ -49,7 +48,7 @@ class Py3status:
         self._updates = 0
         self._security_notice = False
 
-    def check_updates(self):
+    def fedora_updates(self):
         if self._first:
             self._first = False
             response = {

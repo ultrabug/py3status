@@ -2,23 +2,47 @@
 """
 Support i3blocks blocklets in py3status.
 
-[i3blocks](https://github.com/vivien/i3blocks) is a project to allow simple
-scripts to provide output to the i3bar.  This module allows these blocklets to
-run under py3status.  The configuration of the blocklets is similar to how they
+i3blocks, https://github.com/vivien/i3blocks, is a project to allow simple
+scripts to provide output to the i3bar. This module allows these blocklets to
+run under py3status. The configuration of the blocklets is similar to how they
 are configured in i3blocks.
 
-Note: i3blocks and i3blocklets are subject to their respective licenses.
+Configuration parameters:
+    cache_timeout: How often the blocklet should be called (in seconds).
+        This is similar to cache_timeout used by standard modules. However it
+        can also take the following values; `once` the blocklet will be called
+        once, `repeat` the blocklet will be called constantly, or `persist`
+        where the command will be expected to keep providing new data. If this
+        is not set or is `None` then the blocklet will not be called unless
+        clicked on. To simplify i3block compatability, this configuration
+        parameter can also be provided as `interval`.
+        (default None)
+    command: Path to blocklet or command (default None)
+    format: What to display on the bar (default '{output}')
+    instance: Will be provided to the blocklet as $BLOCK_INSTANCE (default '')
+    label: Will be prepended to the blocklets output (default '')
+    name: Name of the blocklet - passed as $BLOCK_NAME (default '')
 
-Note: This support is experimental and done for convenience to users so they
-can benefit from both worlds, issues or PRs regarding i3blocks related
-blocklets should not be raised.
+Format placeholders:
+    {output} The output of the blocklet
 
-Some blocklets may return pango markup eg `<span ...` if so set
-`markup = pango` in the config for that module.
+Notes:
+    i3blocks and i3blocklets are subject to their respective licenses.
 
+    This support is experimental and done for convenience to users so they
+    can benefit from both worlds, issues or PRs regarding i3blocks related
+    blocklets should not be raised.
+
+    Some blocklets may return pango markup eg `<span ...` if so set
+    `markup = pango` in the config for that module.
+
+    `format` configuration parameter is used as is standard in py3status, not
+    as in i3blocks configuration. Currently blocklets must provide responses
+    in the standard i3blocks manner of one line per value (not as json).
+
+Examples:
 ```
 # i3blocks config
-
 [time]
 command=date '+%D %T'
 interval=5
@@ -30,16 +54,14 @@ command=~/i3blocks/wifi.sh
 interval=5
 
 # py3status config
-
 order += 'i3block time'
-
 i3block time {
     command = "date '+%D %T'"
     interval = 5
 }
 
+# different py3status config
 order += 'i3block wifi'
-
 i3block wifi {
     instance = wls1
     label = 'wifi:'
@@ -47,31 +69,6 @@ i3block wifi {
     interval = 5
 }
 ```
-
-Note: `format` configuration parameter is used as is standard in py3status, not
-as in i3blocks configuration.  Currently blocklets must provide responses in
-the standard i3blocks manner of one line per value (not as json).
-
-
-Configuration parameters:
-    cache_timeout: How often the blocklet should be called (in seconds).
-        This is similar to cache_timeout used by standard modules.  However it
-        can also take the following values; `once` the blocklet will be called
-        once, `repeat` the blocklet will be called constantly, or `persist`
-        where the command will be expected to keep providing new data.  If this
-        is not set or is `None` then the blocklet will not be called unless
-        clicked on.
-        Note: To simplify i3block compatability this configuration parameter
-        can also be provided as `interval`.
-        (default None)
-    command: Path to blocklet or command (default None)
-    format: What to display on the bar (default '{output}')
-    instance: Will be provided to the blocklet as $BLOCK_INSTANCE (default '')
-    label: Will be prepended to the blocklets output (default '')
-    name: Name of the blocklet - passed as $BLOCK_NAME (default '')
-
-Format placeholders:
-    {output} The output of the blocklet
 
 @author tobes
 
@@ -81,7 +78,6 @@ SAMPLE OUTPUT
 bandwidth
 {'full_text': 'bandwidth: 334 / 113 kB/s'}
 """
-
 
 import fcntl
 import os
@@ -277,7 +273,7 @@ class Py3status:
                 urgent = _urgent
         return output, urgent
 
-    def block(self):
+    def i3block(self):
         # no command
         if not self.command:
             return {"cached_until": self.py3.CACHE_FOREVER, "full_text": ""}

@@ -21,8 +21,7 @@ Format placeholders:
     {total}    number of total usage
 
 Color thresholds:
-    {down}     color threshold of download speed
-    {total}    color threshold of total usage
+    xxx: print a color based on the value of `xxx` placeholder
 
 @author Shahin Azad <ishahinism at Gmail>
 
@@ -33,6 +32,9 @@ SAMPLE OUTPUT
     {'full_text': 'T(Mb): 394↓  45↑ 438↕', 'color': '#FFFF00'},
 ]
 """
+
+from __future__ import division  # python2 compatibility
+from time import time
 
 
 class Py3status:
@@ -108,6 +110,7 @@ class Py3status:
     def post_config_hook(self):
         self.last_transmitted_bytes = 0
         self.last_received_bytes = 0
+        self.last_time = time()
         # Get default gateway from /proc.
         if self.nic is None:
             with open("/proc/net/route") as fh:
@@ -120,6 +123,8 @@ class Py3status:
                 self.nic = "lo"
             self.py3.log("selected nic: %s" % self.nic)
 
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+
     def _get_bytes(self):
         with open("/proc/net/dev") as fh:
             net_data = fh.read().split()
@@ -131,32 +136,35 @@ class Py3status:
     def netdata(self):
         received_bytes, transmitted_bytes = self._get_bytes()
         # speed
-        down = (received_bytes - self.last_received_bytes) / 1024.0
-        up = (transmitted_bytes - self.last_transmitted_bytes) / 1024.0
+        current_time = time()
+        timedelta = current_time - self.last_time
+        self.last_time = current_time
+        down = (received_bytes - self.last_received_bytes) / 1024 / timedelta
+        up = (transmitted_bytes - self.last_transmitted_bytes) / 1024 / timedelta
         # history
         self.last_received_bytes = received_bytes
         self.last_transmitted_bytes = transmitted_bytes
         # traffic
-        download = received_bytes / 1024 / 1024.0
-        upload = transmitted_bytes / 1024 / 1024.0
+        download = received_bytes / 1024 / 1024
+        upload = transmitted_bytes / 1024 / 1024
         total = download + upload
-        # threshold
-        self.py3.threshold_get_color(down, "down")
-        self.py3.threshold_get_color(total, "total")
+
+        net_data = {
+            "down": down,
+            "up": up,
+            "download": download,
+            "upload": upload,
+            "total": total,
+            "nic": self.nic,
+        }
+
+        for x in self.thresholds_init:
+            if x in net_data:
+                self.py3.threshold_get_color(net_data[x], x)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format,
-                {
-                    "down": down,
-                    "up": up,
-                    "download": download,
-                    "upload": upload,
-                    "total": total,
-                    "nic": self.nic,
-                },
-            ),
+            "full_text": self.py3.safe_format(self.format, net_data),
         }
 
 

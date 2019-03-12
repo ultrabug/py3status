@@ -91,7 +91,7 @@ class Py3status:
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
 
-    def check_mail(self):
+    def imap(self):
         # I -- acquire mail_count
         if self.use_idle is not False:
             if not self.idle_thread.is_alive():
@@ -160,7 +160,7 @@ class Py3status:
     def _disconnect(self):
         try:
             if self.connection is not None:
-                if self.connection.state is "SELECTED":
+                if self.connection.state == "SELECTED":
                     self.connection.close()
                 self.connection.logout()
         except:  # noqa e722
@@ -235,7 +235,7 @@ class Py3status:
             while True:
                 if self.connection is None:
                     self._connect()
-                if self.connection.state is "NONAUTH":
+                if self.connection.state == "NONAUTH":
                     self.connection.login(self.user, self.password)
 
                 tmp_mail_count = 0

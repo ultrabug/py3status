@@ -19,6 +19,10 @@ Configuration parameters:
     user: username to authenticate against the icinga-web2 interface
         (default '')
 
+Format placeholders:
+    {status_name} status name, eg OK, WARNING, CRITICAL
+    {count} count, eg 0, 1, 2
+
 @author Ben Oswald <ben.oswald@root-space.de>
 @license BSD License <https://opensource.org/licenses/BSD-2-Clause>
 @source https://github.com/nazco/i3status-modules
@@ -61,7 +65,7 @@ class Py3status:
         if not self.base_url:
             raise Exception(STRING_NOT_CONFIGURED)
 
-    def get_status(self):
+    def icinga2(self):
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(

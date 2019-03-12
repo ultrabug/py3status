@@ -272,6 +272,7 @@ class I3status(Thread):
             "wireless",
         ]
         self.i3status_pipe = None
+        self.i3status_path = py3_wrapper.config["i3status_path"]
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
@@ -424,7 +425,7 @@ class I3status(Thread):
                 self.write_tmp_i3status_config(tmpfile)
 
                 i3status_pipe = Popen(
-                    ["i3status", "-c", tmpfile.name],
+                    [self.i3status_path, "-c", tmpfile.name],
                     stdout=PIPE,
                     stderr=PIPE,
                     # Ignore the SIGTSTP signal for this subprocess

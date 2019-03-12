@@ -153,7 +153,7 @@ wwan {
 }
 ```
 
-@author Cyril Levis (@cyrinux), girst (https://gir.st/), lasers
+@author Cyril Levis (@cyrinux), girst (https://gir.st/)
 
 SAMPLE OUTPUT
 {'color': '#00ff00', 'full_text': 'WW: (88% at Py3status Telcom) 12.69.169.32'}

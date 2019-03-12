@@ -53,11 +53,10 @@ Format placeholders:
         but is empty if only one timezone is provided
 
 Requires:
-    pytz: python library
-    tzlocal: python library
+    pytz: cross platform time zone library for python
+    tzlocal: tzinfo object for the local timezone
 
-i3status.conf example:
-
+Examples:
 ```
 # cycling through London, Warsaw, Tokyo
 clock {
@@ -66,13 +65,11 @@ clock {
     format_time = "{name} %H:%M"
 }
 
-
 # Show the time and date in New York
 clock {
    format = "Big Apple {America/New_York}"
    format_time = "%Y-%m-%d %H:%M:%S"
 }
-
 
 # wall clocks
 clock {

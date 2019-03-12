@@ -7,7 +7,7 @@ from time import time
 from random import randint
 
 from py3status.composite import Composite
-from py3status.constants import POSITIONS
+from py3status.constants import MARKUP_LANGUAGES, POSITIONS
 from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
@@ -58,6 +58,7 @@ class Module:
         self.terminated = False
         self.testing = self.config.get("testing")
         self.urgent = False
+        self.i3bar_gaps_urgent_options = {}
 
         # create a nice name for the module that matches what the module is
         # called in the user config
@@ -72,7 +73,6 @@ class Module:
 
         try:
             self.load_methods(module, user_modules)
-            self.set_module_options(module)
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
@@ -93,6 +93,10 @@ class Module:
                 # be imported
                 self._py3_wrapper.log(msg)
                 self._py3_wrapper.log(str(e))
+
+        # check module/py3status config section
+        if not self.disabled:
+            self.set_module_options(module)
 
     def __repr__(self):
         return "<Module {}>".format(self.module_full_name)
@@ -310,102 +314,107 @@ class Module:
         self.i3bar_module_options = {}
         self.i3bar_gaps_module_options = {}
         self.py3status_module_options = {}
-        mod_config = self.config["py3_config"].get(module, {})
+        fn = self._py3_wrapper.get_config_attribute
 
-        if "min_length" in mod_config:
-            min_length = mod_config["min_length"]
-            if not isinstance(min_length, int):
-                err = 'invalid "min_length" attribute should be an int'
-                raise TypeError(err)
+        def make_quotes(options):
+            x = ["`{}`".format(x) for x in options]
+            if len(x) > 2:
+                x = [", ".join(x[:-1]), x[-1]]
+            return " or ".join(x)
 
-            self.py3status_module_options["min_length"] = min_length
-            self.random_int = randint(0, 1)
-
-            if "position" in mod_config:
-                position = mod_config["position"]
-                if not (
-                    isinstance(position, basestring) and position.lower() in POSITIONS
-                ):
-                    err = 'invalid "position" attribute, valid values are: '
-                    err += ", ".join(POSITIONS)
-                    raise ValueError(err)
-
-                self.py3status_module_options["position"] = position
-
-        if "min_width" in mod_config:
-            min_width = mod_config["min_width"]
+        # i3bar
+        min_width = fn(self.module_full_name, "min_width")
+        if not hasattr(min_width, "none_setting"):
             if not isinstance(min_width, int):
-                err = 'invalid "min_width" attribute should be an int'
+                err = "Invalid `min_width` attribute, should be an int. "
+                err += "Got `{}`.".format(min_width)
                 raise TypeError(err)
-
             self.i3bar_module_options["min_width"] = min_width
 
-            if "align" in mod_config:
-                align = mod_config["align"]
-                if not (isinstance(align, basestring) and align.lower() in POSITIONS):
-                    err = 'invalid "align" attribute, valid values are: '
-                    err += ", ".join(POSITIONS)
+            align = fn(self.module_full_name, "align")
+            if not hasattr(align, "none_setting"):
+                if align not in POSITIONS:
+                    err = "Invalid `align` attribute, should be "
+                    err += make_quotes(POSITIONS)
+                    err += ". Got `{}`.".format(align)
                     raise ValueError(err)
-
                 self.i3bar_module_options["align"] = align
 
-        if "separator" in mod_config:
-            separator = mod_config["separator"]
+        separator = fn(self.module_full_name, "separator")
+        if not hasattr(separator, "none_setting"):
             if not isinstance(separator, bool):
-                err = 'invalid "separator" attribute, should be a bool'
+                err = "Invalid `separator` attribute, should be a boolean. "
+                err += "Got `{}`.".format(separator)
                 raise TypeError(err)
-
             self.i3bar_module_options["separator"] = separator
 
-        if "separator_block_width" in mod_config:
-            separator_block_width = mod_config["separator_block_width"]
+        separator_block_width = fn(self.module_full_name, "separator_block_width")
+        if not hasattr(separator_block_width, "none_setting"):
             if not isinstance(separator_block_width, int):
-                err = 'invalid "separator_block_width" attribute, '
-                err += "should be an int"
+                err = "Invalid `separator_block_width` attribute, "
+                err += "should be an int. "
+                err += "Got `{}`.".format(separator_block_width)
                 raise TypeError(err)
-
             self.i3bar_module_options["separator_block_width"] = separator_block_width
 
-        if "background" in mod_config:
-            background = mod_config["background"]
+        # i3bar_gaps
+        background = fn(self.module_full_name, "background")
+        if not hasattr(background, "none_setting"):
             color = self.module_class.py3._get_color(background)
             if not color:
-                raise TypeError(
-                    "Invalid attribute `background`, "
-                    "should be a color. Got `{}`".format(background)
-                )
-
+                err = "Invalid `background` attribute should be a color. "
+                err += "Got `{}`.".format(background)
+                raise ValueError(err)
             self.i3bar_gaps_module_options["background"] = color
 
-        if "border" in mod_config:
-            border = mod_config["border"]
+        border = fn(self.module_full_name, "border")
+        if not hasattr(border, "none_setting"):
             color = self.module_class.py3._get_color(border)
             if not color:
-                raise TypeError(
-                    "Invalid attribute `border`, "
-                    "should be a color. Got `{}`".format(border)
-                )
-
+                err = "Invalid `border` attribute, should be a color. "
+                err += "Got `{}`.".format(border)
+                raise ValueError(err)
             self.i3bar_gaps_module_options["border"] = color
 
             borders = ["top", "right", "bottom", "left"]
             for name in ["border_" + x for x in borders]:
-                param = 1
-                if name in mod_config:
-                    param = mod_config[name]
-                    if not isinstance(param, int):
-                        raise TypeError(
-                            "Invalid attribute `{}`, "
-                            "should be an int. Got `{}`".format(name, param)
-                        )
+                param = fn(self.module_full_name, name)
+                if hasattr(param, "none_setting"):
+                    param = 1
+                elif not isinstance(param, int):
+                    err = "Invalid `{}` attribute, ".format(name)
+                    err += "should be an int. "
+                    err += "Got `{}`.".format(param)
+                    raise TypeError(err)
                 self.i3bar_gaps_module_options[name] = param
 
-        # if markup is set on the module or globally we add it to the module
-        # output for pango support
-        fn = self._py3_wrapper.get_config_attribute
-        param = fn(self.module_full_name, "markup")
-        if not hasattr(param, "none_setting"):
-            self.i3bar_module_options["markup"] = param
+        # py3status
+        min_length = fn(self.module_full_name, "min_length")
+        if not hasattr(min_length, "none_setting"):
+            if not isinstance(min_length, int):
+                err = "Invalid `min_length` attribute, should be an int. "
+                err += "Got `{}`.".format(min_length)
+                raise TypeError(err)
+            self.py3status_module_options["min_length"] = min_length
+            self.random_int = randint(0, 1)
+
+            position = fn(self.module_full_name, "position")
+            if not hasattr(position, "none_setting"):
+                if position not in POSITIONS:
+                    err = "Invalid `position` attribute, should be "
+                    err += make_quotes(POSITIONS)
+                    err += ". Got `{}`.".format(position)
+                    raise ValueError(err)
+                self.py3status_module_options["position"] = position
+
+        markup = fn(self.module_full_name, "markup")
+        if not hasattr(markup, "none_setting"):
+            if markup not in MARKUP_LANGUAGES:
+                err = "Invalid `markup` attribute, should be "
+                err += make_quotes(MARKUP_LANGUAGES)
+                err += ". Got `{}`.".format(markup)
+                raise ValueError(err)
+            self.py3status_module_options["markup"] = markup
 
     def process_composite(self, response):
         """
@@ -432,6 +441,25 @@ class Module:
         if "full_text" in response:
             err = 'conflicting "full_text" and "composite" in response'
             raise Exception(err)
+
+        # set markup
+        if "markup" in self.py3status_module_options and self.module_name != "frame":
+            markup = self.py3status_module_options["markup"]
+            line = ""
+            for item in composite:
+                # validate the response
+                if "full_text" not in item:
+                    raise KeyError('missing "full_text" key in response')
+                color = item.get("color")
+                if color:
+                    span = u"<span fgcolor='{}'>{}</span>"
+                    line += span.format(color, item["full_text"])
+                else:
+                    line += item["full_text"]
+
+            composite = [{"full_text": line, "markup": markup}]
+            response["composite"] = composite
+
         # set universal options on last component
         composite[-1].update(self.i3bar_module_options)
         # update all components
@@ -460,14 +488,6 @@ class Module:
             if hasattr(item.get("color"), "none_setting"):
                 del item["color"]
 
-            # remove urgent if not allowed
-            if not self.allow_urgent:
-                if "urgent" in item:
-                    del item["urgent"]
-            # if urgent we want to set this to all parts
-            elif urgent and "urgent" not in item:
-                item["urgent"] = urgent
-
             # set background and border colors. set left/right border widths
             # only on first/last composites and no border width for inner
             # composites or we will see border lines between composites.
@@ -478,6 +498,29 @@ class Module:
                     item[key] = 0
                 else:
                     item[key] = value
+
+            # set urgent based on available user-defined settings
+            if not self.allow_urgent:
+                if "urgent" in item:
+                    del item["urgent"]
+            elif urgent:
+                if self.i3bar_gaps_urgent_options:
+                    # set background and border colors. set left/right border widths
+                    # only on first/last composites and no border width for inner
+                    # composites or we will see border lines between composites.
+                    for key, value in self.i3bar_gaps_urgent_options.items():
+                        if (key == "border_left" and index != 0) or (
+                            key == "border_right" and index != composite_length
+                        ):
+                            item[key] = 0
+                        elif key == "foreground":
+                            item["color"] = value
+                        else:
+                            item[key] = value
+                    if "urgent" in item:
+                        del item["urgent"]
+                else:
+                    item["urgent"] = urgent
 
         # set min_length
         if "min_length" in self.py3status_module_options:
@@ -559,10 +602,11 @@ class Module:
             # user provided modules take precedence over py3status provided modules
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
+                module_path = os.path.join(include_path, f_name)
                 self._py3_wrapper.log(
-                    'loading module "{}" from {}{}'.format(module, include_path, f_name)
+                    'loading module "{}" from {}'.format(module, module_path)
                 )
-                self.module_class = self.load_from_file(include_path + f_name)
+                self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules
             else:
                 self._py3_wrapper.log(
@@ -735,6 +779,48 @@ class Module:
             if hasattr(param, "none_setting"):
                 param = True
             self.allow_urgent = param
+
+            # urgent background
+            urgent_background = fn(self.module_full_name, "urgent_background")
+            if not hasattr(urgent_background, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_background)
+                if not color:
+                    err = "Invalid `urgent_background` attribute, should be "
+                    err += "a color. Got `{}`.".format(urgent_background)
+                    raise ValueError(err)
+                self.i3bar_gaps_urgent_options["background"] = color
+
+            # urgent foreground
+            urgent_foreground = fn(self.module_full_name, "urgent_foreground")
+            if not hasattr(urgent_foreground, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_foreground)
+                if not color:
+                    err = "Invalid `urgent_foreground` attribute, should be "
+                    err += "a color. Got `{}`.".format(urgent_foreground)
+                    raise ValueError(err)
+                self.i3bar_gaps_urgent_options["foreground"] = color
+
+            # urgent urgent_borders
+            urgent_border = fn(self.module_full_name, "urgent_border")
+            if not hasattr(urgent_border, "none_setting"):
+                color = self.module_class.py3._get_color(urgent_border)
+                if not color:
+                    err = "Invalid `urgent_border` attribute, should be a color. "
+                    err += "Got `{}`.".format(urgent_border)
+                    raise ValueError(err)
+                self.i3bar_gaps_urgent_options["border"] = color
+
+                urgent_borders = ["top", "right", "bottom", "left"]
+                for name in ["urgent_border_" + x for x in urgent_borders]:
+                    param = fn(self.module_full_name, name)
+                    if hasattr(param, "none_setting"):
+                        param = 1
+                    elif not isinstance(param, int):
+                        err = "Invalid `{}` attribute, ".format(name)
+                        err += "should be an int. "
+                        err += "Got `{}`.".format(param)
+                        raise TypeError(err)
+                    self.i3bar_gaps_urgent_options[name[7:]] = param
 
             # get the available methods for execution
             for method in sorted(dir(class_inst)):

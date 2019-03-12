@@ -152,8 +152,6 @@ Configuration parameters:
         then the offset in minutes. If this is set, it disables the
         automatic timezone detection from the Timezone API.
         (default None)
-    request_timeout: The timeout in seconds for contacting the API's.
-        (default 10)
     thresholds: Configure temperature colors based on limits
         The numbers specified inherit the unit of the temperature as configured.
         The default below is intended for Fahrenheit. If the set value is empty
@@ -239,23 +237,23 @@ Examples:
 ```
 # change icons
 weather_owm {
-  api_key = <my api key>
-  icons = {
-    '200': "☔"
-    '230_232': "🌧"
-  }
+    api_key = <my api key>
+    icons = {
+        '200': "☔"
+        '230_232': "🌧"
+    }
 }
 
 # set a city
 weather_owm {
-  api_key = <my api key>
-  city = 'London'
+    api_key = <my api key>
+    city = 'London'
 }
 
 # set a location
 weather_owm {
-  api_key = <my api key>
-  location = (2.3548, 48.9342)  # Saint-Denis
+    api_key = <my api key>
+    location = (48.9342, 2.3548)  # Saint-Denis
 }
 ```
 
@@ -315,14 +313,11 @@ THRESHOLDS_NAMES = set([THRESHOLDS_ALL, "current", "min", "max"])
 THRESHOLDS = {"all": [(-100, "#0FF"), (0, "#00F"), (50, "#0F0"), (150, "#FF0")]}
 
 
-class OWMException(Exception):
-    pass
-
-
 class Py3status:
     """
     """
 
+    # available configuration parameters
     api_key = None
     cache_timeout = 600
     city = None
@@ -358,7 +353,6 @@ class Py3status:
     lang = "en"
     location = None
     offset_gmt = None
-    request_timeout = 10
     thresholds = THRESHOLDS
     unit_rain = "in"
     unit_snow = "in"
@@ -407,7 +401,7 @@ class Py3status:
     def post_config_hook(self):
         # Verify the API key
         if self.api_key is None:
-            raise OWMException(
+            raise Exception(
                 "API Key for OpenWeatherMap cannot be empty!"
                 " Go to https://openweathermap.org/appid to"
                 " get an API Key."
@@ -438,12 +432,14 @@ class Py3status:
 
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
-        req = self.py3.request(url, params=params, timeout=self.request_timeout)
+        req = self.py3.request(url, params=params)
         if req.status_code != 200:
             data = req.json()
-            raise OWMException(
-                data["message"] if (data and "message" in data) else "API Error"
-            )
+            if data and "message" in data:
+                msg = data["message"]
+            else:
+                msg = "{_error_message} {_status_code}".format(**vars(req))
+            self.py3.error(msg)
 
         return req.json()
 
@@ -775,7 +771,7 @@ class Py3status:
         if loc_tz_info is not None:
             (coords, city, country, tz_offset) = loc_tz_info
             if coords:
-                extras = {"lon": coords[0], "lat": coords[1]}
+                extras = {"lat": coords[0], "lon": coords[1]}
             elif city:
                 extras = {"q": city}
             wthr = self._get_weather(extras)

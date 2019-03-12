@@ -51,7 +51,7 @@ class Py3status:
         if not self.py3.check_commands("yandex-disk"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def yandexdisk(self):
+    def yandexdisk_status(self):
         status = self.py3.command_output("yandex-disk status").splitlines()[0]
 
         if status == "Error: daemon not started":

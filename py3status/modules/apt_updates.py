@@ -3,7 +3,6 @@
 Display number of pending updates for Debian based Distros.
 
 Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
-
 This will display a count of how many 'apt' updates are waiting to be installed.
 
 Configuration parameters:
@@ -43,7 +42,7 @@ class Py3status:
         if not self.py3.check_commands("apt"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def check_updates(self):
+    def apt_updates(self):
         apt_updates = self._check_apt_updates()
 
         color = self.py3.COLOR_DEGRADED

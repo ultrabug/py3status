@@ -94,6 +94,11 @@ Dynamic configuration parameters:
     <OUTPUT>_mode: define the mode (resolution) for the output
                    if not specified use --auto : prefered mode
         Example: eDP1_mode = "2560x1440
+    <OUTPUT>_primary: apply the primary to the OUTPUT
+        Example: DP1_primary = True
+
+Format placeholders:
+    {output} xrandr output
 
 Color options:
     color_bad: Displayed layout unavailable
@@ -322,18 +327,23 @@ class Py3status:
         outputs = list(self.layout["connected"].keys())
         outputs += list(self.layout["disconnected"].keys())
         previous_output = None
+        primary_added = False
         for output in outputs:
             cmd += " --output {}".format(output)
             #
             if output in combination:
                 pos = getattr(self, "{}_pos".format(output), "0x0")
-                rotation = getattr(self, "{}_rotate".format(output), "normal")
+                primary = getattr(self, "{}_primary".format(output), None)
                 resolution = getattr(self, "{}_mode".format(output), None)
                 resolution = "--mode {}".format(resolution) if resolution else "--auto"
+                rotation = getattr(self, "{}_rotate".format(output), "normal")
                 if rotation not in ["inverted", "left", "normal", "right"]:
                     self.py3.log("configured rotation {} is not valid".format(rotation))
                     rotation = "normal"
                 #
+                if primary is True and not primary_added:
+                    primary_added = True
+                    cmd += " --primary"
                 if mode == "clone" and previous_output is not None:
                     cmd += " {} --same-as {}".format(resolution, previous_output)
                 else:
@@ -383,10 +393,12 @@ class Py3status:
                     if not workspace:
                         continue
                     # switch to workspace
-                    cmd = 'i3-msg workspace "{}"'.format(workspace)
+                    cmd = '{} workspace "{}"'.format(self.py3.get_wm_msg(), workspace)
                     self.py3.command_run(cmd)
                     # move it to output
-                    cmd = 'i3-msg move workspace to output "{}"'.format(output)
+                    cmd = '{} move workspace to output "{}"'.format(
+                        self.py3.get_wm_msg(), output
+                    )
                     self.py3.command_run(cmd)
                     # log this
                     self.py3.log(

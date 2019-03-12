@@ -16,8 +16,11 @@ Configuration parameters:
         the title will be truncated to `max_width - 1`
         first symbols with ellipsis appended. (default 120)
 
+Format placeholders:
+    {title} window title
+
 Requires:
-    i3ipc: (https://github.com/acrisci/i3ipc-python)
+    i3ipc: an improved python library to control i3wm
 
 @author Anon1234 https://github.com/Anon1234
 @license BSD

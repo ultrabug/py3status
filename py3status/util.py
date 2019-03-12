@@ -6,7 +6,7 @@ from colorsys import rgb_to_hsv, hsv_to_rgb
 from math import modf
 
 
-class Gradiants:
+class Gradients:
     """
     Create color gradients
     """

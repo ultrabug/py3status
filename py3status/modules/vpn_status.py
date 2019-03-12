@@ -12,7 +12,7 @@ Configuration parameters:
         (default False)
     format: Format of the output.
         (default 'VPN: {name}|VPN: no')
-    pidfile: Same as i3status.conf pidfile, checked when check_pid is True.
+    pidfile: Same as i3status pidfile, checked when check_pid is True.
         (default '/sys/class/net/vpn0/dev_id')
 
 Format placeholders:
@@ -105,7 +105,7 @@ class Py3status:
         return path.isfile(self.pidfile)
 
     # Method run by py3status
-    def return_status(self):
+    def vpn_status(self):
         """Returns response dict"""
 
         # Start signal handler thread if it should be running

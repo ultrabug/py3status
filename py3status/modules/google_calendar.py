@@ -104,7 +104,7 @@ Requires:
     https://developers.google.com/google-apps/calendar/quickstart/python
 
     Download the client_secret.json file which contains your client ID and
-    client secret. In your i3status config file, set configuration parameter
+    client secret. In your config file, set configuration parameter
     client_secret to the path to your client_secret.json file.
 
     The first time you run the module, a browser window will open asking you
@@ -157,6 +157,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     auth_token = "~/.config/py3status/google_calendar.auth_token"
     blacklist_events = []
     button_open = 3
@@ -234,7 +235,7 @@ class Py3status:
             Have to restart i3 after getting credentials to prevent bad output.
             This only has to be done once on the first run of the module.
             """
-            self.py3.command_run("i3-msg restart")
+            self.py3.command_run("{} restart".format(self.py3.get_wm_msg()))
 
         return credentials
 

@@ -7,7 +7,6 @@ import time
 
 from collections import deque
 from json import dumps
-from platform import python_version
 from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
@@ -15,7 +14,6 @@ from threading import Event, Thread
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
-import py3status.docstrings as docstrings
 from py3status.command import CommandServer
 from py3status.constants import COLOR_NAMES
 from py3status.events import Events
@@ -25,7 +23,6 @@ from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
-from py3status.version import version
 
 LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
 
@@ -196,9 +193,7 @@ class Common:
         NOTE: msg should not end in a '.' for consistency.
         """
         # Get list of paths that our stack trace should be found in.
-        py3_paths = [os.path.dirname(__file__)]
-        user_paths = self.config.get("include_paths", [])
-        py3_paths += [os.path.abspath(path) + "/" for path in user_paths]
+        py3_paths = [os.path.dirname(__file__)] + self.config["include_paths"]
         traceback = None
 
         try:
@@ -265,7 +260,7 @@ class Py3statusWrapper:
         """
         Useful variables we'll need.
         """
-        self.config = {}
+        self.config = vars(options)
         self.i3bar_running = True
         self.last_refresh_ts = time.time()
         self.lock = Event()
@@ -420,47 +415,6 @@ class Py3statusWrapper:
         if self.timeout_due is not None:
             return self.timeout_due - time.time()
 
-    def get_config(self):
-        """
-        Create the py3status based on command line options we received.
-        """
-        # get home path
-        home_path = os.path.expanduser("~")
-
-        # defaults
-        config = {"minimum_interval": 0.1}  # minimum module update interval
-
-        # include path to search for user modules
-        config["include_paths"] = [
-            "{}/.i3/py3status/".format(home_path),
-            "{}/.config/i3/py3status/".format(home_path),
-            "{}/i3status/py3status".format(
-                os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
-            ),
-            "{}/i3/py3status".format(
-                os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
-            ),
-        ]
-        config["version"] = version
-
-        # override configuration and helper variables
-        options = self.options
-        config["cache_timeout"] = options.cache_timeout
-        config["debug"] = options.debug
-        config["dbus_notify"] = options.dbus_notify
-        config["gevent"] = options.gevent
-        if options.include_paths:
-            config["include_paths"] = options.include_paths
-        # FIXME we allow giving interval as a float and then make it an int!
-        config["interval"] = int(options.interval)
-        config["log_file"] = options.log_file
-        config["standalone"] = options.standalone
-        config["i3status_config_path"] = options.i3status_conf
-        config["disable_click_events"] = options.disable_click_events
-        if options.cli_command:
-            config["cli_command"] = options.cli_command
-        return config
-
     def gevent_monkey_patch_report(self):
         """
         Report effective gevent monkey patching on the logs.
@@ -486,9 +440,6 @@ class Py3statusWrapper:
         """
         user_modules = {}
         for include_path in self.config["include_paths"]:
-            include_path = os.path.abspath(include_path) + "/"
-            if not os.path.isdir(include_path):
-                continue
             for f_name in sorted(os.listdir(include_path)):
                 if not f_name.endswith(".py"):
                     continue
@@ -553,21 +504,10 @@ class Py3statusWrapper:
         # SIGCONT indicates output should be resumed.
         signal(SIGCONT, self.i3bar_start)
 
-        # update configuration
-        self.config.update(self.get_config())
-
-        if self.config.get("cli_command"):
-            self.handle_cli_command(self.config)
-            sys.exit()
-
-        # logging functionality now available
         # log py3status and python versions
         self.log("=" * 8)
-        self.log(
-            "Starting py3status version {} python {}".format(
-                self.config["version"], python_version()
-            )
-        )
+        msg = "Starting py3status version {version} python {python_version}"
+        self.log(msg.format(**self.config))
 
         try:
             # if running from git then log the branch and last commit
@@ -587,6 +527,8 @@ class Py3statusWrapper:
             self.log("git commit: {}{}".format(sha, msg))
         except:  # noqa e722
             pass
+
+        self.log("window manager: {}".format(self.config["wm_name"]))
 
         if self.config["debug"]:
             self.log("py3status started with config {}".format(self.config))
@@ -735,10 +677,10 @@ class Py3statusWrapper:
             else:
                 py3_config = self.config.get("py3_config", {})
                 nagbar_font = py3_config.get("py3status", {}).get("nagbar_font")
+                wm_nag = self.config["wm"]["nag"]
+                cmd = [wm_nag, "-m", msg, "-t", level]
                 if nagbar_font:
-                    cmd = ["i3-nagbar", "-f", nagbar_font, "-m", msg, "-t", level]
-                else:
-                    cmd = ["i3-nagbar", "-m", msg, "-t", level]
+                    cmd += ["-f", nagbar_font]
             Popen(cmd, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
         except Exception as err:
             self.log("notify_user error: %s" % err)
@@ -1017,7 +959,7 @@ class Py3statusWrapper:
         # start our output
         header = {
             "version": 1,
-            "click_events": not self.config["disable_click_events"],
+            "click_events": self.config["click_events"],
             "stop_signal": SIGTSTP,
         }
         write(dumps(header))
@@ -1053,39 +995,3 @@ class Py3statusWrapper:
                 # dump the line to stdout
                 write(",[{}]\n".format(out))
                 flush()
-
-    def handle_cli_command(self, config):
-        """Handle a command from the CLI.
-        """
-        cmd = config["cli_command"]
-        # aliases
-        if cmd[0] in ["mod", "module", "modules"]:
-            cmd[0] = "modules"
-
-        # allowed cli commands
-        if cmd[:2] in (["modules", "list"], ["modules", "details"]):
-            docstrings.show_modules(config, cmd[1:])
-        # docstring formatting and checking
-        elif cmd[:2] in (["docstring", "check"], ["docstring", "update"]):
-            if cmd[1] == "check":
-                show_diff = len(cmd) > 2 and cmd[2] == "diff"
-                if show_diff:
-                    mods = cmd[3:]
-                else:
-                    mods = cmd[2:]
-                docstrings.check_docstrings(show_diff, config, mods)
-            if cmd[1] == "update":
-                if len(cmd) < 3:
-                    print_stderr("Error: you must specify what to update")
-                    sys.exit(1)
-
-                if cmd[2] == "modules":
-                    docstrings.update_docstrings()
-                else:
-                    docstrings.update_readme_for_modules(cmd[2:])
-        elif cmd[:2] in (["modules", "enable"], ["modules", "disable"]):
-            # TODO: to be implemented
-            pass
-        else:
-            print_stderr("Error: unknown command")
-            sys.exit(1)

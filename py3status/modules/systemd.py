@@ -14,8 +14,9 @@ Configuration parameters:
         'inactive' the output is suppressed if the unit is inactive
         (default 'off')
     unit: specify the systemd unit to use (default 'dbus.service')
+    user: specify if this is a user service (default False)
 
-Format of status string placeholders:
+Format placeholders:
     {unit} unit name, eg sshd.service
     {status} unit status, eg active, inactive, not-found
 
@@ -23,6 +24,9 @@ Color options:
     color_good: unit active
     color_bad: unit inactive
     color_degraded: unit not-found
+
+Requires:
+    pydbus: pythonic dbus library
 
 Examples:
 ```
@@ -34,9 +38,6 @@ systemd vpn {
     on_click 3 = 'exec sudo systemctl stop vpn'
 }
 ```
-
-Requires:
-    pydbus: pythonic dbus library
 
 @author Adrian Lopez <adrianlzt@gmail.com>
 @license BSD
@@ -51,7 +52,7 @@ not-found
 {'color': '#FFFF00', 'full_text': 'sshd.service: not-found'}
 """
 
-from pydbus import SystemBus
+from pydbus import SessionBus, SystemBus
 
 
 class Py3status:
@@ -64,9 +65,13 @@ class Py3status:
     hide_extension = False
     hide_if_default = "off"
     unit = "dbus.service"
+    user = False
 
     def post_config_hook(self):
-        bus = SystemBus()
+        if self.user:
+            bus = SessionBus()
+        else:
+            bus = SystemBus()
         systemd = bus.get("org.freedesktop.systemd1")
         self.systemd_unit = bus.get(".systemd1", systemd.LoadUnit(self.unit))
 

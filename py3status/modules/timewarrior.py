@@ -153,6 +153,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     cache_timeout = None
     filter = "1day"
     format = "[Timew {format_time}]|No Timew"
@@ -208,7 +209,7 @@ class Py3status:
         self.thresholds_init = {}
         for name in ("format", "format_tag", "format_time"):
             self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name, "")
+                getattr(self, name)
             )
 
     def _get_timewarrior_data(self):

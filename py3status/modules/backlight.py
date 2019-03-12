@@ -29,11 +29,12 @@ Configuration parameters:
         the value is changed by a minimal value instead of the brightness_delta.
         (default 0)
 
-Format status string parameters:
+Format placeholders:
     {level} brightness
 
 Requires:
     xbacklight: need for changing brightness, not detection
+    light: program to easily change brightness on backlight-controllers
 
 @author Tjaart van der Walt (github:tjaartvdwalt)
 @license BSD
@@ -43,7 +44,6 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division
-
 import os
 
 STRING_NOT_AVAILABLE = "no available device"

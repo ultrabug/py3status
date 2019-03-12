@@ -16,7 +16,7 @@ About
 -----
 
 You will love py3status if you're using `i3wm
-<http://i3wm.org>`_ and are frustrated by the i3status
+<https://i3wm.org>`_ (or `sway <https://swaywm.org>`_) and are frustrated by the i3status
 limitations on your i3bar such as:
 
 * you cannot hack into it easily
@@ -71,7 +71,7 @@ Installation
 |**Void Linux**     |``$ xbps-install -S py3status``|                                     |
 +-------------------+-------------------------------+-------------------------------------+
 |**NixOS**          |``$ nix-env -i``               |Not a global install. See below.     |
-|                   |  ``python3.6-py3status-3.7``  |                                     |
+|                   |  ``python3.6-py3status``      |                                     |
 +-------------------+-------------------------------+-------------------------------------+
 
 
@@ -88,19 +88,27 @@ Debian/Ubuntu
 NixOS
 ^^^^^
 
-To have it globally persistent add to your NixOS configuration file py3status as a Python 3.6 package with
-::
-    (python36.withPackages(ps: with ps; [ py3status ]))
+To have it globally persistent add to your NixOS configuration file py3status as a Python 3 package with
+
+.. code-block:: nix
+
+    (python3Packages.py3status.overrideAttrs (oldAttrs: {
+      propagatedBuildInputs = [ python3Packages.pytz python3Packages.tzlocal ];
+    }))
 
 If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
-::
+
+.. code-block:: nix
+
     services.xserver.windowManager.i3 = {
       enable = true;
       extraPackages = with pkgs; [
         dmenu
         i3status
         i3lock
-        (python36.withPackages(ps: with ps; [ py3status pytz tzlocal ]))
+        (python3Packages.py3status.overrideAttrs (oldAttrs: {
+          propagatedBuildInputs = [ python3Packages.pytz python3Packages.tzlocal ];
+        }))
       ];
     };
 
@@ -149,14 +157,14 @@ You can get a list with short descriptions of all available modules by using the
 
 .. code-block:: shell
 
-    $ py3status modules list
+    $ py3-cmd list --all
 
 
 To get more details about all available modules and their configuration, use:
 
 .. code-block:: shell
 
-    $ py3status modules details
+    $ py3-cmd list --all --full
 
 All modules shipped with py3status are present as the Python source files in
 the ``py3status/modules`` directory.
@@ -169,27 +177,29 @@ You can see the help of py3status by issuing ``py3status --help``:
 
 .. code-block:: shell
 
-    -h, --help            show this help message and exit
-    -b, --dbus-notify     use notify-send to send user notifications rather than
-                          i3-nagbar, requires a notification daemon eg dunst
-    -c I3STATUS_CONF, --config I3STATUS_CONF
-                          path to i3status config file
-    -d, --debug           be verbose in syslog
-    -g, --gevent          enable gevent monkey patching (default False)
-    -i INCLUDE_PATHS, --include INCLUDE_PATHS
-                          include user-written modules from those directories
-                          (default ~/.i3/py3status)
-    -l LOG_FILE, --log-file LOG_FILE
-                          path to py3status log file
-    -n INTERVAL, --interval INTERVAL
-                          update interval in seconds (default 1 sec)
-    -s, --standalone      standalone mode, do not use i3status
-    -t CACHE_TIMEOUT, --timeout CACHE_TIMEOUT
-                          default injection cache timeout in seconds (default 60
-                          sec)
-    -m, --disable-click-events
-                          disable all click events
-    -v, --version         show py3status version and exit
+    usage: py3status [-h] [-b] [-c FILE] [-d] [-g] [-i PATH] [-l FILE] [-s]
+                     [-t INT] [-m] [-u PATH] [-v] [--wm WINDOW_MANAGER]
+
+    The agile, python-powered, i3status wrapper
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -b, --dbus-notify     send notifications via dbus instead of i3-nagbar
+                            (default: False)
+      -c, --config FILE     load config (default: /home/alexys/.i3/i3status.conf)
+      -d, --debug           enable debug logging in syslog and --log-file
+                            (default: False)
+      -g, --gevent          enable gevent monkey patching (default: False)
+      -i, --include PATH    append additional user-defined module paths (default:
+                            None)
+      -l, --log-file FILE   enable logging to FILE (default: None)
+      -s, --standalone      run py3status without i3status (default: False)
+      -t, --timeout INT     default module cache timeout in seconds (default: 60)
+      -m, --disable-click-events
+                            disable all click events (default: False)
+      -u, --i3status PATH   specify i3status path (default: /usr/bin/i3status)
+      -v, --version         show py3status version and exit (default: False)
+      --wm WINDOW_MANAGER   specify window manager i3 or sway (default: i3)
 
 Control
 ^^^^^^^

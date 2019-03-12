@@ -28,7 +28,7 @@ Color options:
     color_good: All lookups have succeeded
 
 Requires:
-    dnspython: python module
+    dnspython: a dns toolkit for python
 
 @author nawadanp
 

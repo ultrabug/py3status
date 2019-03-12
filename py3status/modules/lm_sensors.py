@@ -104,9 +104,9 @@ lm_sensors {
 
 # show name per chip, eg CPU 35°C 36°C 37°C 39°C GPU 52°C
 lm_sensors {
-    format_chip = '[\?if=name=coretemp-isa-0000 CPU]'
-    format_chip += '[\?if=name=nouveau-pci-0500 GPU]'
-    format_chip += ' {format_sensor}'
+    format_chip = '[\?if=name=coretemp-isa-0000 CPU ]'
+    format_chip += '[\?if=name=nouveau-pci-0500 GPU ]'
+    format_chip += '{format_sensor}'
     format_sensor = '\?color=auto.input {input}°C'
     sensors = ['core*', 'temp*']
 }

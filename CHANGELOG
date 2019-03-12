@@ -1,3 +1,50 @@
+version 3.16 (2019-01-20)
+* @maximbaz has become the third collaborator of the py3status project !
+* add -u, --i3status to specify or override i3status path (#1649), by lasers
+* add more module and global options, see documentation (#1620), by lasers
+* added zen of py3status
+* notify users of obsolete module and their alternatives (#1618)
+* module_test: add urgent support in --term (#1626), by lasers
+* modules: deprecate timeout parameter and honor request_timeout everywhere
+* modules: don't set module options on disabled modules (#1637), by lasers
+* modules: normalize main methods and add tests (#1641), by lasers
+* doc: Update NixOS docs (#1639), by Thiago Kenji Okada
+* doc: write documentation about request_timeout, by lasers
+* doc: fix doc generation warnings (#1636), by lasers
+* py3: adjust cache_timeout intervals to the right second (#1650), by lasers
+* py3: get_color_names_list to return an empty list on false value (#1631), by lasers
+* py3: threshold_get_color to set color=None on exception (#1634), by lasers
+* fix i3status path detection and setting on startup (#1662), by lasers
+* fixed typo in naming ('gradiant' -> 'gradient') (#1658), by Thomas F. Duellmann
+* remove obsolete cli interval argument (#1661)
+* git-hooks: add black tests to run first before pushing (#1653), by lasers
+* update arch installation instructions (#1622), by Maxim Baz
+* update contribution guidelines (#1623), by Maxim Baz
+* update screenshots (#1616), by lasers
+* new conky module: display conky system monitoring (#1664), by lasers
+* diskdata module: call functions once instead of twice (#1640), by lasers
+* diskdata module: optimize thresholds (#1629), by lasers
+* diskdata: Added used_percent threshold (#1628), by Thiago Kenji Okada
+* do_not_disturb module: dunst with state=None is invalid (#1625), by lasers
+* do_not_disturb module: fix pause logic hiding startup notifications (#1624)
+* do_not_disturb: simplify dunst logic (#1654), by Maxim Baz
+* do_not_disturb: use pkill instead of killall to support NixOS (#1638), by Thiago Kenji Okada
+* exchange_rate module: change feed to exchangeratesapi.io (#1655), by lasers
+* file_status module: optimize thresholds (#1632), by lasers
+* i3block module: normalize docstrings (#1635), by lasers
+* mpd_status module: max_width was not working because of composite fixes #1613 (#1615)
+* mpris module: fix clementine attributeerror exception (#1648), by lasers
+* net_rate module: optimize thresholds (#1630), by lasers
+* net_rate module: prevent errors after resuming from sleep (#1659), by cyrinux
+* pingdom module: add author ultrabug (#1651), by lasers
+* sysdata module: added cpu frequency placeholders (#1609), by Jack Doan
+* sysdata module: support sysfs paths to temp sensors (#1614), by Jack Doan
+* systemd module: support user systemd units (#1657), by cyrinux
+* taskwarrior module: add tasks placeholder (#1647), by ecks
+* velib_metropole module: fix format thresholds (#1633), by lasers
+* weather_yahoo module: removed due to full API change by Yahoo/Oath
+* xrandr module: add dynamic primary configuration (#1665), by lasers
+
 version 3.15 (2018-12-30)
 * CI now checks for black format on modules
 * add support for background and border (i3-gaps) colors (#1486), by lasers

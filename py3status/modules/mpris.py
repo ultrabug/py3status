@@ -4,7 +4,7 @@ Display song/video and control MPRIS compatible players.
 
 There are two ways to control the media player. Either by clicking with a mouse
 button in the text information or by using buttons. For former you have
-to define the button parameters in the i3status config.
+to define the button parameters in your config.
 
 Configuration parameters:
     button_next: mouse button to play the next entry (default 4)
@@ -28,7 +28,7 @@ Configuration parameters:
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')
 
-Format of status string placeholders:
+Format placeholders:
     {album} album name
     {artist} artiste name (first one)
     {length} time duration of the song
@@ -37,7 +37,7 @@ Format of status string placeholders:
     {time} played time of the song
     {title} name of the song
 
-Format of button placeholders:
+Button placeholders:
     {next} play the next title
     {pause} pause the player
     {play} play the player
@@ -53,47 +53,37 @@ Color options:
     color_stopped: song is stopped, defaults to color_bad
 
 Requires:
-    pydbus: python library module
+    pydbus: pythonic d-bus library
 
-i3status.conf example:
+Tested players:
+    bomi: powerful and easy-to-use gui multimedia player based on mpv
+    Cantata: qt5 client for the music player daemon (mpd)
+    mpdris2: mpris2 support for mpd
+    vlc: multi-platform mpeg, vcd/dvd, and divx player
 
+Examples:
 ```
 mpris {
     format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]]"
     format_none = "no player"
     player_priority = "[mpd, cantata, vlc, bomi, *]"
 }
-```
 
 only show information from mpd and vlc, but mpd has a higher priority:
-
-```
 mpris {
     player_priority = "[mpd, vlc]"
 }
-```
 
 show information of all players, but mpd and vlc have the highest priority:
-
-```
 mpris {
     player_priority = "[mpd, vlc, *]"
 }
-```
 
 vlc has the lowest priority:
-
-```
 mpris {
     player_priority = "[*, vlc]"
 }
 ```
-
-Tested players:
-    bomi
-    Cantata
-    mpDris2 (mpris extension for mpd)
-    vlc
 
 @author Moritz Lüdecke, tobes, valdur55
 
@@ -432,7 +422,12 @@ class Py3status:
         state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
-        subscription = player.PropertiesChanged.connect(self._player_monitor(player_id))
+        try:
+            subscription = player.PropertiesChanged.connect(
+                self._player_monitor(player_id)
+            )
+        except AttributeError:
+            subscription = {}
 
         self._mpris_players[player_id] = {
             "_dbus_player": player,

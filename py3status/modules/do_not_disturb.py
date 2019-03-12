@@ -16,7 +16,7 @@ Configuration parameters:
         False: disable Do Not Disturb on startup
         True: enable Do Not Disturb on startup
         last: toggle last known state on startup
-        None: don't toggle anything on startup
+        None: query current state from notification manager (doesn't work on dunst)
         (default 'last')
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (1, 'good')])
@@ -52,7 +52,7 @@ do_not_disturb {
 # display DO NOT DISTURB/DISTURB
 do_not_disturb {
     format = '[\?color=state [\?if=state DO NOT DISTURB|DISTURB]]'
-    thresholds = [(0, 'darkgray'), (1, 'good')]
+    thresholds = [(0, "darkgray"), (1, "good")]
 }
 ```
 
@@ -90,13 +90,16 @@ class Dunst(Notification):
     """
 
     def toggle(self, state):
-        # if not in pause mode we delete all pending notifications in the queue
-        # before resuming
-        if self.parent.pause is False and state is False:
-            self.parent.py3.command_run("killall --signal SIGTERM dunst")
-        self.parent.py3.command_run(
-            "killall --signal {} dunst".format(self.parent.signals[state])
-        )
+        if state:
+            # pause
+            self.parent.py3.command_run("pkill -SIGUSR1 dunst")
+        else:
+            if self.parent.pause:
+                # resume
+                self.parent.py3.command_run("pkill -SIGUSR2 dunst")
+            else:
+                # delete all pending notifications and resume
+                self.parent.py3.command_run("pkill -SIGTERM dunst")
 
 
 class Xfce4_notifyd(Notification):
@@ -152,9 +155,6 @@ class Py3status:
                 raise Exception(STRING_NOT_INSTALLED.format(command))
 
         if self.server == "dunst":
-            # killall -SIGUSR1 dunst # pause = DND True
-            # killall -SIGUSR2 dunst # resume = DND False
-            self.signals = ("SIGUSR2", "SIGUSR1")
             self.backend = Dunst(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)
@@ -166,6 +166,8 @@ class Py3status:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
+        elif self.server == "dunst":
+            raise Exception(STRING_INVALID_STATE.format(self.state))
 
         self.name = self.server.capitalize()
         self.thresholds_init = self.py3.get_color_names_list(self.format)

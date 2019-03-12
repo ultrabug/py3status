@@ -39,8 +39,9 @@ deadbeef {
     on_click 1 = 'exec deadbeef --play-pause'
     on_click 8 = 'exec deadbeef --random'
 }
+```
 
-@author mrt-prodz, tobes, lasers
+@author mrt-prodz
 
 SAMPLE OUTPUT
 {'color': '#00ff00', 'full_text': 'Music For Programming - Lackluster'}

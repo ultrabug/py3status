@@ -217,3 +217,5 @@ ON_TRIGGER_ACTIONS = ["refresh", "refresh_and_freeze"]
 POSITIONS = ["left", "center", "right"]
 
 RETIRED_MODULES = {"weather_yahoo": ["weather_owm"]}
+
+MARKUP_LANGUAGES = ["pango", "none"]

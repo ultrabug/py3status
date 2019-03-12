@@ -7,15 +7,16 @@ Configuration parameters:
     cpu_freq_unit: the unit of CPU frequency to use in report, case insensitive.
         ['kHz', 'MHz', 'GHz'] (default 'GHz')
     format: output format string
-        *(default '[\?color=cpu CPU: {cpu_used_percent}%], '
-        '[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]')*
+        *(default '[\?color=cpu_used_percent CPU: {cpu_used_percent}%], '
+        '[\?color=mem_used_percent Mem: {mem_used}/{mem_total} '
+        '{mem_total_unit} ({mem_used_percent}%)]')*
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     temp_unit: unit used for measuring the temperature ('C', 'F' or 'K')
         (default '°C')
-    thresholds: thresholds to use for color changes
+    thresholds: specify color thresholds to use
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
     zone: Either a path in sysfs to CPU temperature sensor, or an lm_sensors thermal zone to use.
         If None try to guess CPU temperature
@@ -31,26 +32,19 @@ Format placeholders:
     {load5} load average over the five minutes
     {load15} load average over the fifteen minutes
     {mem_total} total memory
-    {mem_unit} unit for memory
+    {mem_total_unit} memory total unit, eg GiB
     {mem_used} used memory
+    {mem_used_unit} memory used unit, eg GiB
     {mem_used_percent} used memory percentage
     {swap_total} total swap
-    {swap_unit} unit for swap
+    {swap_total_unit} swap total memory unit, eg GiB
     {swap_used} used swap
+    {swap_used_unit} swap used memory unit, eg GiB
     {swap_used_percent} used swap percentage
     {temp_unit} temperature unit
 
 Color thresholds:
-    cpu: change color based on the value of cpu_used_percent
-    max_cpu_mem: change the color based on the max value
-        of cpu_used_percent and mem_used_percent
-    load: change color based on the value of load1
-    mem: change color based on the value of mem_used_percent
-    swap: change color based on the value of swap_used_percent
-    temp: change color based on the value of cpu_temp
-
-NOTE: If using the `{cpu_temp}` option, the `sensors` command should
-be available, provided by the `lm-sensors` or `lm_sensors` package.
+    xxx: print a color based on the value of `xxx` placeholder
 
 @author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol, JackDoan <me at jackdoan dot com>
 
@@ -76,8 +70,9 @@ class Py3status:
     cache_timeout = 10
     cpu_freq_unit = "GHz"
     format = (
-        "[\?color=cpu CPU: {cpu_used_percent}%], "
-        "[\?color=mem Mem: {mem_used}/{mem_total} {mem_unit} ({mem_used_percent}%)]"
+        "[\?color=cpu_used_percent CPU: {cpu_used_percent}%], "
+        "[\?color=mem_used_percent Mem: {mem_used}/{mem_total} "
+        "{mem_total_unit} ({mem_used_percent}%)]"
     )
     mem_unit = "GiB"
     swap_unit = "GiB"
@@ -86,16 +81,6 @@ class Py3status:
     zone = None
 
     class Meta:
-        def deprecate_function(config):
-            # support old thresholds
-            return {
-                "thresholds": [
-                    (0, "good"),
-                    (config.get("med_threshold", 40), "degraded"),
-                    (config.get("high_threshold", 75), "bad"),
-                ]
-            }
-
         def update_deprecated_placeholder_format(config):
             padding = config.get("padding", 0)
             precision = config.get("precision", 2)
@@ -120,23 +105,24 @@ class Py3status:
             }
 
         deprecated = {
-            "function": [{"function": deprecate_function}],
             "rename_placeholder": [
                 {
                     "placeholder": "cpu_usage",
                     "new": "cpu_used_percent",
                     "format_strings": ["format"],
-                }
+                },
+                {
+                    "placeholder": "mem_unit",
+                    "new": "mem_total_unit",
+                    "format_strings": ["format"],
+                },
+                {
+                    "placeholder": "swap_unit",
+                    "new": "swap_total_unit",
+                    "format_strings": ["format"],
+                },
             ],
             "remove": [
-                {
-                    "param": "high_threshold",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
-                {
-                    "param": "med_threshold",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
                 {"param": "padding", "msg": "obsolete, use the format_* parameters"},
                 {"param": "precision", "msg": "obsolete, use the format_* parameters"},
             ],
@@ -183,50 +169,48 @@ class Py3status:
             temp_unit = "unknown unit"
         self.temp_unit = temp_unit
         self.init = {"meminfo": []}
-        names = [
-            "cpu_freq_avg",
-            "cpu_freq_max",
-            "cpu_temp",
-            "cpu_percent",
-            "load",
-            "mem",
-            "swap",
+        names_and_matches = [
+            ("cpu_freq", "cpu_freq_*"),
+            ("cpu_temp", "cpu_temp"),
+            ("cpu_percent", "cpu_used_percent"),
+            ("load", "load*"),
+            ("mem", "mem_*"),
+            ("swap", "swap_*"),
         ]
-        placeholders = [
-            "cpu_freq_avg",
-            "cpu_freq_max",
-            "cpu_temp",
-            "cpu_used_percent",
-            "load*",
-            "mem_*",
-            "swap_*",
-        ]
-        for name, placeholder in zip(names, placeholders):
-            self.init[name] = self.py3.format_contains(self.format, placeholder)
+        for name, match in names_and_matches:
+            self.init[name] = self.py3.get_placeholders_list(self.format, match)
             if name in ["mem", "swap"] and self.init[name]:
                 self.init["meminfo"].append(name)
 
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
+        self.thresholds_legacy = {
+            "cpu": "cpu_used_percent",
+            "temp": "cpu_temp",
+            "mem": "mem_used_percent",
+            "swap": "swap_used_percent",
+            "load": "load1",
+            "max_cpu_mem": "max_used_percent",
+        }
+        if "cpu_freq_unit" in self.init["cpu_freq"]:
+            self.init["cpu_freq"].remove("cpu_freq_unit")
+        if self.init["cpu_freq"]:
+            self.thresholds_legacy["cpu_freq"] = sorted(self.init["cpu_freq"])[0]
+
     @staticmethod
-    def _get_cpu_freqs():
-        freqs = []
+    def _get_cpuinfo():
         with open("/proc/cpuinfo") as f:
-            for line in f:
-                if "cpu MHz" in line:
-                    freq = float(line.split(":")[-1])
-                    freqs.append(freq)
-        return freqs
+            return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
 
-    def _calc_cpu_freqs(self, unit):
-        cpu_freqs = self._get_cpu_freqs()
-
-        freq_avg = sum(cpu_freqs) / len(cpu_freqs)
-        freq_max = max(cpu_freqs)
-
-        # multiply both by 1e6 to convert to Hz to pass to format_units
-        (freq_max, _) = self.py3.format_units(freq_max * 1e6, unit=unit, si=True)
-        (freq_avg, _) = self.py3.format_units(freq_avg * 1e6, unit=unit, si=True)
-
-        return {"avg": freq_avg, "max": freq_max}
+    def _calc_cpu_freqs(self, cpu_freqs, unit, keys):
+        freq_avg, freq_max = None, None
+        for key in keys:
+            if key == "cpu_freq_avg":
+                value = sum(cpu_freqs) / len(cpu_freqs) * 1e6
+                freq_avg, _ = self.py3.format_units(value, unit, si=True)
+            elif key == "cpu_freq_max":
+                value = max(cpu_freqs) * 1e6
+                freq_max, _ = self.py3.format_units(value, unit, si=True)
+        return freq_avg, freq_max
 
     @staticmethod
     def _get_stat():
@@ -256,28 +240,17 @@ class Py3status:
             total_mem_kib = meminfo["SwapTotal:"]
             used_mem_kib = total_mem_kib - meminfo["SwapFree:"]
 
-        used_mem_p = 100 * used_mem_kib / total_mem_kib
+        used_percent = 100 * used_mem_kib / total_mem_kib
 
         unit = "B" if unit == "dynamic" else unit
-        (total_mem, unit) = self.py3.format_units(total_mem_kib * 1024, unit=unit)
-        (used_mem, _) = self.py3.format_units(used_mem_kib * 1024, unit=unit)
-        return total_mem, used_mem, used_mem_p, unit
+        (total, total_unit) = self.py3.format_units(total_mem_kib * 1024, unit)
+        (used, used_unit) = self.py3.format_units(used_mem_kib * 1024, unit)
+        return total, total_unit, used, used_unit, used_percent
 
-    def _get_mem(self, mem_unit, swap_unit, mem, swap):
-        meminfo = {}
-        result = {}
-
+    def _get_meminfo(self, head=24):
         with open("/proc/meminfo") as f:
-            for line in f:
-                fields = line.split()
-                meminfo[fields[0]] = float(fields[1])
-
-        if mem:
-            result["mem"] = self._calc_mem_info(mem_unit, meminfo, True)
-        if swap:
-            result["swap"] = self._calc_mem_info(swap_unit, meminfo, False)
-
-        return result
+            info = [line.split() for line in (next(f) for x in range(head))]
+            return {fields[0]: float(fields[1]) for fields in info}
 
     def _calc_cpu_percent(self, cpu):
         cpu_used_percent = 0
@@ -344,60 +317,64 @@ class Py3status:
     def sysdata(self):
         sys = {"max_used_percent": 0, "temp_unit": self.temp_unit}
 
-        if self.init["cpu_freq_max"] or self.init["cpu_freq_avg"]:
-            cpu_freqs = self._calc_cpu_freqs(self.cpu_freq_unit)
-            if self.init["cpu_freq_max"]:
-                sys["cpu_freq_max"] = cpu_freqs["max"]
-                self.py3.threshold_get_color(sys["cpu_freq_max"], "cpu_freq")
-
-            if self.init["cpu_freq_avg"]:
-                sys["cpu_freq_avg"] = cpu_freqs["avg"]
-                self.py3.threshold_get_color(sys["cpu_freq_avg"], "cpu_freq")
+        if self.init["cpu_freq"]:
+            cpu_freqs = self._calc_cpu_freqs(
+                self._get_cpuinfo(), self.cpu_freq_unit, self.init["cpu_freq"]
+            )
+            cpu_freq_keys = ["cpu_freq_avg", "cpu_freq_max"]
+            sys.update(zip(cpu_freq_keys, cpu_freqs))
 
         if self.init["cpu_percent"]:
             sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
-            self.py3.threshold_get_color(sys["cpu_used_percent"], "cpu")
 
         if self.init["cpu_temp"]:
             sys["cpu_temp"] = self._get_cputemp(self.zone, self.temp_unit)
-            self.py3.threshold_get_color(sys["cpu_temp"], "temp")
-
-        if self.init["meminfo"]:
-            memi = self._get_mem(
-                self.mem_unit, self.swap_unit, self.init["mem"], self.init["swap"]
-            )
-
-            if self.init["mem"]:
-                mem_keys = ["mem_total", "mem_used", "mem_used_percent", "mem_unit"]
-                sys.update(zip(mem_keys, memi["mem"]))
-                self.py3.threshold_get_color(sys["mem_used_percent"], "mem")
-
-            if self.init["swap"]:
-                swap_keys = [
-                    "swap_total",
-                    "swap_used",
-                    "swap_used_percent",
-                    "swap_unit",
-                ]
-                sys.update(zip(swap_keys, memi["swap"]))
-                self.py3.threshold_get_color(sys["swap_used_percent"], "swap")
 
         if self.init["load"]:
             load_keys = ["load1", "load5", "load15"]
             sys.update(zip(load_keys, getloadavg()))
-            self.py3.threshold_get_color(sys["load1"], "load")
+
+        if self.init["meminfo"]:
+            meminfo = self._get_meminfo()
+
+            if self.init["mem"]:
+                mem = self._calc_mem_info(self.mem_unit, meminfo, True)
+                mem_keys = [
+                    "mem_total",
+                    "mem_total_unit",
+                    "mem_used",
+                    "mem_used_unit",
+                    "mem_used_percent",
+                ]
+                sys.update(zip(mem_keys, mem))
+
+            if self.init["swap"]:
+                swap = self._calc_mem_info(self.swap_unit, meminfo, False)
+                swap_keys = [
+                    "swap_total",
+                    "swap_total_unit",
+                    "swap_used",
+                    "swap_used_unit",
+                    "swap_used_percent",
+                ]
+                sys.update(zip(swap_keys, swap))
 
         sys["max_used_percent"] = max(
             [perc for name, perc in sys.items() if "used_percent" in name]
         )
-        self.py3.threshold_get_color(sys["max_used_percent"], "max_cpu_mem")
 
-        response = {
+        for x in self.thresholds_init:
+            if x in sys:
+                self.py3.threshold_get_color(sys[x], x)
+            elif x in self.thresholds_legacy:
+                y = self.thresholds_legacy[x]
+                if y in sys:
+                    self.py3.threshold_get_color(sys[y], x)
+
+        return {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(self.format, sys),
         }
-
-        return response
 
 
 if __name__ == "__main__":

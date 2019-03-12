@@ -19,7 +19,6 @@ Configuration parameters:
     icon_on: what to display when online (default '●')
     mode: default mode to display is 'ip' or 'status' (click to toggle)
         (default 'ip')
-    timeout: how long before deciding we're offline (default 5)
     url_geo: IP to check for geo location (must output json)
         (default 'https://ifconfig.co/json')
 
@@ -69,7 +68,6 @@ class Py3status:
     icon_off = u"■"
     icon_on = u"●"
     mode = "ip"
-    timeout = 5
     url_geo = URL_GEO_NEW_DEFAULT
 
     class Meta:
@@ -88,6 +86,11 @@ class Py3status:
                     "param": "format_offline",
                     "new": "icon_off",
                     "msg": "obsolete parameter, use `icon_off` instead",
+                },
+                {
+                    "param": "timeout",
+                    "new": "request_timeout",
+                    "msg": "obsolete parameter use `request_timeout`",
                 },
             ],
         }
@@ -109,7 +112,7 @@ class Py3status:
 
     def _get_my_ip_info(self):
         try:
-            info = self.py3.request(self.url_geo, timeout=self.timeout).json()
+            info = self.py3.request(self.url_geo).json()
             for old, new in self.substitutions.items():
                 info[old] = info.get(new)
             return info

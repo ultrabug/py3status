@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Emerge_status provides a short information on the current
-emerge status if there is an emerge process currently running
+Display information about the currently running emerge process.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in second.
@@ -10,7 +9,9 @@ Configuration parameters:
     emerge_log_file: path to the emerge log file.
         (default '/var/log/emerge.log')
     format: display format for this module
-        (default '{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total} {action} {category}/{pkg}]|calculating...]|: stopped 0/0]')
+        *(default '{prefix}[\?if=is_running : [\?if=!total=0 '
+        '[{current}/{total} {action} {category}/{pkg}]'
+        '|calculating...]|: stopped 0/0]')*
     prefix: prefix in statusbar
         (default "emrg")
 
@@ -25,7 +26,9 @@ Examples:
 ```
 # Hide if not running
 emerge_status {
-    format = "[\?if=is_running {prefix}: [\?if=!total=0 {current}/{total} {action} {category}/{pkg}|calculating...]]"
+    format = "[\?if=is_running {prefix}: [\?if=!total=0 "
+    format += "{current}/{total} {action} {category}/{pkg}"
+    format += "|calculating...]]"
 }
 
 # Minimalistic
@@ -55,6 +58,7 @@ class Py3status:
     """
     """
 
+    # available configuration parameters
     cache_timeout = 30
     emerge_log_file = "/var/log/emerge.log"
     format = (

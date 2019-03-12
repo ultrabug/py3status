@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Display status on a given Twitch streamer.
-
-Checks if a streamer is online using the Twitch Kraken API to see
-if a channel is currently streaming or not.
+Display if a Twitch channel is currently streaming or not.
 
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds
-        (default 10)
+        (default 60)
     client_id: Your client id. Create your own key at https://dev.twitch.tv
         (default None)
     format: Display format when online
-        (default "{stream_name} is live!")
-    format_invalid: Display format when streamer does not exist
-        (default "{stream_name} does not exist!")
+        (default "{display_name} is live!")
     format_offline: Display format when offline
-        (default "{stream_name} is offline.")
+        (default "{display_name} is offline.")
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
 
 Format placeholders:
-    {stream_name} name of the streamer
+    {display_name} streamer display name, eg Ultrabug
 
 Color options:
-    color_bad: Stream offline or error
+    color_bad: Stream offline
     color_good: Stream is live
 
 Client ID:
@@ -44,7 +39,7 @@ offline
 {'color': '#FF0000', 'full_text': 'exotic_bug is offline!'}
 """
 
-import requests
+STRING_MISSING = "missing {}"
 
 
 class Py3status:
@@ -52,58 +47,75 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 10
+    cache_timeout = 60
     client_id = None
-    format = "{stream_name} is live!"
-    format_invalid = "{stream_name} does not exist!"
-    format_offline = "{stream_name} is offline."
+    format = "{display_name} is live!"
+    format_offline = "{display_name} is offline."
     stream_name = None
 
+    class Meta:
+        deprecated = {
+            "remove": [{"param": "format_invalid", "msg": "obsolete"}],
+            "rename_placeholder": [
+                {
+                    "placeholder": "stream_name",
+                    "new": "display_name",
+                    "format_strings": ["format"],
+                }
+            ],
+        }
+
     def post_config_hook(self):
-        self._display_name = None
+        for config_name in ["client_id", "stream_name"]:
+            if not getattr(self, config_name, None):
+                raise Exception(STRING_MISSING.format(config_name))
 
-    def _get_display_name(self):
-        url = "https://api.twitch.tv/kraken/users/" + self.stream_name
-        display_name_request = requests.get(url, headers={"Client-ID": self.client_id})
-        self._display_name = display_name_request.json().get("display_name")
+        self.headers = {"Client-ID": self.client_id}
+        base_api = "https://api.twitch.tv/kraken/"
+        self.url = {
+            "users": base_api + "users/{}".format(self.stream_name),
+            "streams": base_api + "streams/{}".format(self.stream_name),
+        }
+        self.users = {}
 
-    def is_streaming(self):
-        if self.stream_name is None:
-            return {
-                "full_text": "stream_name missing",
-                "cached_until": self.py3.CACHE_FOREVER,
-            }
+    def _get_twitch_data(self, url):
+        try:
+            response = self.py3.request(url, headers=self.headers)
+        except self.py3.RequestException:
+            return {}
+        data = response.json()
+        if not data:
+            data = vars(response)
+            error = data.get("_error_message")
+            if error:
+                self.py3.error("{} {}".format(error, data["_status_code"]))
+        return data
 
-        r = requests.get(
-            "https://api.twitch.tv/kraken/streams/" + self.stream_name,
-            headers={"Client-ID": self.client_id},
-        )
-        if not self._display_name:
-            self._get_display_name()
-        if "error" in r.json():
-            colour = self.py3.COLOR_BAD
-            format = self.format_invalid
-            stream_name = self.stream_name
-        elif r.json().get("stream") is None:
-            colour = self.py3.COLOR_BAD
-            format = self.format_offline
-            stream_name = self._display_name
-        elif r.json().get("stream") is not None:
-            colour = self.py3.COLOR_GOOD
-            format = self.format
-            stream_name = self._display_name
-        else:
-            colour = self.py3.COLOR_BAD
-            format = "An unknown error has occurred."
-            stream_name = None
+    def twitch(self):
+        twitch_data = self.users
+        current_format = ""
+        color = None
 
-        full_text = self.py3.safe_format(format, {"stream_name": stream_name})
+        if not twitch_data:
+            self.users = self._get_twitch_data(self.url["users"])
+            twitch_data.update(self.users)
+
+        streams = self._get_twitch_data(self.url["streams"])
+        if streams:
+            twitch_data.update(streams)
+            if twitch_data["stream"]:
+                color = self.py3.COLOR_GOOD
+                current_format = self.format
+            else:
+                color = self.py3.COLOR_BAD
+                current_format = self.format_offline
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
-            "color": colour,
+            "full_text": self.py3.safe_format(current_format, twitch_data),
         }
+        if color:
+            response["color"] = color
         return response
 
 
@@ -111,7 +123,6 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    config = {"stream_name": "moo"}
     from py3status.module_test import module_test
 
-    module_test(Py3status, config=config)
+    module_test(Py3status)

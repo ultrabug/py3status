@@ -33,7 +33,7 @@ Temperatures:
     More than 50°C: Too hot      (color bad)
 
 Color thresholds:
-    temperature: print a color based on the value of hard drive temperature
+    xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     hddtemp: utility to monitor hard drive temperatures
@@ -59,8 +59,6 @@ Backblaze:
     cooler doesn’t matter.
     https://www.backblaze.com/blog/hard-drive-temperature-does-it-matter/
 
-@author lasers
-
 Examples:
 ```
 # compact the format
@@ -79,6 +77,8 @@ hddtemp {
     gradients = True
 }
 ```
+
+@author lasers
 
 SAMPLE OUTPUT
 [
@@ -134,6 +134,7 @@ class Py3status:
     def post_config_hook(self):
         self.keys = ["path", "name", "temperature", "unit"]
         self.cache_names = {}
+        self.thresholds_init = self.py3.get_color_names_list(self.format_hdd)
 
     def hddtemp(self):
         line = Telnet("localhost", 7634).read_all().decode("utf-8", "ignore")
@@ -150,7 +151,10 @@ class Py3status:
                     key = "GB".join(key.rsplit("G B", 1))
                 hdd["name"] = self.cache_names[hdd["name"]] = key
 
-            self.py3.threshold_get_color(hdd["temperature"], "temperature")
+            for x in self.thresholds_init:
+                if x in hdd:
+                    self.py3.threshold_get_color(hdd[x], x)
+
             new_data.append(self.py3.safe_format(self.format_hdd, hdd))
 
         format_separator = self.py3.safe_format(self.format_separator)

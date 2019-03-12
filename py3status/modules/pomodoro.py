@@ -43,7 +43,7 @@ Color options:
     color_degraded: Pomodoro break
     color_good: Pomodoro active
 
-i3status.conf example:
+Examples:
 ```
 pomodoro {
     format = "{mmss} {bar}"

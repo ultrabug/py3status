@@ -136,7 +136,7 @@ class Py3status:
         else:
             auth = None
         try:
-            info = self.py3.request(url, timeout=10, auth=auth)
+            info = self.py3.request(url, auth=auth)
         except (self.py3.RequestException):
             return
         if info and info.status_code == 200:
@@ -165,9 +165,7 @@ class Py3status:
             url = self.url_api + "/repos/" + self.repo + "/notifications"
         url += "?per_page=100"
         try:
-            info = self.py3.request(
-                url, timeout=10, auth=(self.username, self.auth_token)
-            )
+            info = self.py3.request(url, auth=(self.username, self.auth_token))
         except (self.py3.RequestException):
             return
         if info.status_code == 200:
@@ -187,7 +185,7 @@ class Py3status:
                 return len(info.json())
             try:
                 last_page_info = self.py3.request(
-                    last_url, timeout=10, auth=(self.username, self.auth_token)
+                    last_url, auth=(self.username, self.auth_token)
                 )
             except self.py3.RequestException:
                 return

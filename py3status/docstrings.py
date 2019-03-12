@@ -57,9 +57,6 @@ def core_module_docstrings(
     if include_user:
         # include user modules
         for include_path in sorted(config["include_paths"]):
-            include_path = os.path.abspath(include_path) + "/"
-            if not os.path.isdir(include_path):
-                continue
             for file in sorted(os.listdir(include_path)):
                 if not file.endswith(".py"):
                     continue
@@ -352,12 +349,12 @@ def check_docstrings(show_diff=False, config=None, mods=None):
                 continue
             err = None
             if module not in modules_readme:
-                err = "\tModule {} in README but not in /modules".format(module)
+                err = "Module {} in README but not in /modules".format(module)
             elif (
                 "".join(readme[module]).strip()
                 != "".join(modules_readme[module]).strip()
             ):
-                err = "\tModule {} docstring does not match README".format(module)
+                err = "Module {} docstring does not match README".format(module)
             if err:
                 if not warned:
                     print_stderr("Documentation does not match!\n")
@@ -368,7 +365,7 @@ def check_docstrings(show_diff=False, config=None, mods=None):
             if mods and module not in mods:
                 continue
             if module not in readme:
-                print_stderr("\tModule {} in /modules but not in README".format(module))
+                print_stderr("Module {} in /modules but not in README".format(module))
         if show_diff:
             print_stderr(
                 "\n".join(
@@ -380,7 +377,7 @@ def check_docstrings(show_diff=False, config=None, mods=None):
             )
         else:
             if warned:
-                print_stderr("\nUse `py3status docstring check diff` to view diff.")
+                print_stderr("\nUse `py3-cmd docstring --diff` to view diff.")
 
 
 def update_readme_for_modules(modules):
@@ -404,44 +401,39 @@ def update_readme_for_modules(modules):
         f.write(create_readme(readme))
 
 
-def show_modules(config, params):
+def show_modules(config, modules_list):
     """
     List modules available optionally with details.
     """
-    details = params[0] == "details"
-    if details:
-        modules_list = params[1:]
-        core_mods = True
-        user_mods = True
-    else:
-        user_mods = True
-        core_mods = True
-        modules_list = []
-        if len(params) == 2:
-            if params[1] == "user":
-                user_mods = True
-                core_mods = False
-            elif params[1] == "core":
-                user_mods = False
-                core_mods = True
-    if details:
-        print("Module details:")
-    else:
-        print("Available modules:")
+    details = config["full"]
+    core_mods = not config["user"]
+    user_mods = not config["core"]
+
     modules = core_module_docstrings(
         include_core=core_mods, include_user=user_mods, config=config
     )
-    for name in sorted(modules.keys()):
-        if modules_list and name not in modules_list:
-            continue
+
+    new_modules = []
+    if modules_list:
+        from fnmatch import fnmatch
+
+        for _filter in modules_list:
+            for name in modules.keys():
+                if fnmatch(name, _filter):
+                    if name not in new_modules:
+                        new_modules.append(name)
+    else:
+        new_modules = modules.keys()
+
+    for name in sorted(new_modules):
         module = _to_docstring(modules[name])
         desc = module[0][:-1]
         if details:
-            dash_len = len(name)
-            print("=" * dash_len)
-            print(name)
-            print("=" * dash_len)
+            dash_len = len(name) + 4
+            print("#" * dash_len)
+            print("# {} #".format(name))
+            print("#" * dash_len)
             for description in module:
                 print(description[:-1])
         else:
-            print("  %-22s %s" % (name, desc))
+            print("%-22s %s" % (name, desc))
