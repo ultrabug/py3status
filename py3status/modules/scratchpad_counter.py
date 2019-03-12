@@ -52,7 +52,7 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.tree_command = "{} -t get_tree".format(self.py3.wm_msg)
+        self.tree_command = "{} -t get_tree".format(self.py3.get_wm_msg())
 
     def scratchpad_counter(self):
         tree = loads(self.py3.command_output(self.tree_command))
