@@ -846,6 +846,10 @@ def process_config(config_path, py3_wrapper=None):
 
     # create config for modules in order
     for name in config_info.get("order", []):
+        if name in module_groups:
+            msg = "Module `{}` shouldn't be in the order directive."
+            notify_user(msg.format(name))
+            continue
         module_name = name.split(" ")[0]
         if module_name in RETIRED_MODULES:
             notify_user(
