@@ -499,9 +499,10 @@ class Py3:
             if module_info:
                 module_info["module"].force_update()
 
-    @property
-    def wm_msg(self):
+    def get_wm_msg(self):
         """
+        Return the control program of the current window manager.
+
         On i3, will return "i3-msg"
         On sway, will return "swaymsg"
         """
