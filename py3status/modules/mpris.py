@@ -7,8 +7,8 @@ button in the text information or by using buttons. For former you have
 to define the button parameters in your config.
 
 Configuration parameters:
-    button_next: mouse button to play the next entry (default 4)
-    button_previous: mouse button to play the previous entry (default 5)
+    button_next: mouse button to play the next entry (default None)
+    button_previous: mouse button to play the previous entry (default None)
     button_stop: mouse button to stop the player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
     format: see placeholders below
@@ -131,8 +131,8 @@ class Py3status:
     """
 
     # available configuration parameters
-    button_next = 4
-    button_previous = 5
+    button_next = None
+    button_previous = None
     button_stop = None
     button_toggle = 1
     format = "{previous}{toggle}{next} {state} [{artist} - ][{title}]"
