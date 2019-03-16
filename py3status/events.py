@@ -111,23 +111,22 @@ class Events(Thread):
         """
         index = event.get("index")
         module_info = self.py3_wrapper.output_modules.get(module_name)
-        if module_info:
-            output = module_info["module"].get_latest()
-            full_text = u"".join([out["full_text"] for out in output])
+        output = module_info["module"].get_latest()
+        full_text = u"".join([out["full_text"] for out in output])
 
-            partial = None
-            if index is not None:
-                if isinstance(index, int):
-                    partial = output[index]
-                else:
-                    for item in output:
-                        if item.get("index") == index:
-                            partial = item
-                            break
-            if partial:
-                partial_text = partial["full_text"]
+        partial = None
+        if index is not None:
+            if isinstance(index, int):
+                partial = output[index]
             else:
-                partial_text = full_text
+                for item in output:
+                    if item.get("index") == index:
+                        partial = item
+                        break
+        if partial:
+            partial_text = partial["full_text"]
+        else:
+            partial_text = full_text
         return full_text, partial_text
 
     def on_click_dispatcher(self, module_name, event, command):
