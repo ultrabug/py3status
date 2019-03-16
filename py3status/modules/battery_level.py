@@ -163,18 +163,24 @@ class Py3status:
             elif self.py3.check_commands(["acpi"]):
                 self.measurement_mode = "acpi"
 
-        self.py3.log("Measurement mode: " + self.measurement_mode)
-        if self.measurement_mode != "acpi" and self.measurement_mode != "sys":
-            raise NameError("Invalid measurement mode")
+        msg = "measurement_mode `{}`".format(self.measurement_mode)
+        if self.measurement_mode == "sys":
+            self.get_battery_info = self._extract_battery_info_from_sys
+        elif self.measurement_mode == "acpi":
+            self.get_battery_info = self._extract_battery_info_from_acpi
+        else:
+            raise NameError("invalid {}".format(msg))
+        self.py3.log("selected {}".format(msg))
 
     def battery_level(self):
-        if not os.listdir(self.sys_battery_path):
+        battery_list = self.get_battery_info()
+        if not battery_list:
             return {
                 "full_text": "",
                 "cached_until": self.py3.time_in(self.cache_timeout),
             }
 
-        self._refresh_battery_info()
+        self._refresh_battery_info(battery_list)
         self._update_icon()
         self._update_ascii_bar()
         self._update_full_text()
@@ -206,7 +212,7 @@ class Py3status:
         if message:
             self.py3.notify_user(message, "info")
 
-    def _extract_battery_information_from_acpi(self):
+    def _extract_battery_info_from_acpi(self):
         """
         Get the battery info from acpi
 
@@ -257,7 +263,7 @@ class Py3status:
 
         return [_parse_battery_info(battery) for battery in acpi_list]
 
-    def _extract_battery_information_from_sys(self):
+    def _extract_battery_info_from_sys(self):
         """
         Extract the percent charged, charging state, time remaining,
         and capacity for a battery, using Linux's kernel /sys interface
@@ -265,6 +271,9 @@ class Py3status:
         Only available in kernel 2.6.24(?) and newer. Before kernel provided
         a similar, yet incompatible interface in /proc
         """
+
+        if not os.listdir(self.sys_battery_path):
+            return []
 
         def _parse_battery_info(sys_path):
             """
@@ -324,12 +333,7 @@ class Py3status:
         h, m = divmod(m, 60)
         return "%d:%02d:%02d" % (h, m, s)
 
-    def _refresh_battery_info(self):
-        if self.measurement_mode == "acpi":
-            battery_list = self._extract_battery_information_from_acpi()
-        else:
-            battery_list = self._extract_battery_information_from_sys()
-
+    def _refresh_battery_info(self, battery_list):
         if type(self.battery_id) == int:
             battery = battery_list[self.battery_id]
             self.percent_charged = battery["percent_charged"]
