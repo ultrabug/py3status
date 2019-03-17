@@ -278,7 +278,7 @@ class Module:
         for method in self.methods.values():
             data = method["last_output"]
             if isinstance(data, list):
-                if self.testing:
+                if self.testing and data:
                     data[0]["cached_until"] = method.get("cached_until")
                 output.extend(data)
             else:
