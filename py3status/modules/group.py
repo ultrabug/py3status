@@ -123,7 +123,6 @@ class Py3status:
         self.cycle_time = time() + self.cycle
         self.cycle_timeout = self.cycle
         self.last_active = 0
-        self.open = bool(self.open)
         self.urgent = False
         self.urgent_history = {}
 
