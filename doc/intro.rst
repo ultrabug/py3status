@@ -119,9 +119,9 @@ The default packages that come with i3 (dmenu, i3status, i3lock) have to be ment
 Support
 -------
 
-Get help, share ideas or feedbacks, join community, report bugs, or others, see:
+Get help, share ideas or feedback, join community, report bugs, or others, see:
 
-Github
+GitHub
 ^^^^^^
 
 `Issues <https://github.com/ultrabug/py3status/issues>`_ /
