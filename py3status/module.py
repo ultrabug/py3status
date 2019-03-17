@@ -443,7 +443,10 @@ class Module:
             raise Exception(err)
 
         # set markup
-        if "markup" in self.py3status_module_options and self.module_name not in ["frame", "group"]:
+        if "markup" in self.py3status_module_options and self.module_name not in [
+            "frame",
+            "group",
+        ]:
             markup = self.py3status_module_options["markup"]
             line = ""
             for item in composite:
