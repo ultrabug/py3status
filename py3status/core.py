@@ -538,6 +538,7 @@ class Py3statusWrapper:
 
         # read i3status.conf
         config_path = self.config["i3status_config_path"]
+        self.log("config file: {}".format(self.config["i3status_config_path"]))
         self.config["py3_config"] = process_config(config_path, self)
 
         # setup i3status thread
@@ -600,6 +601,7 @@ class Py3statusWrapper:
         self.py3_modules = self.config["py3_config"]["py3_modules"]
 
         # get a dict of all user provided modules
+        self.log("modules include paths: {}".format(self.config["include_paths"]))
         user_modules = self.get_user_configured_modules()
         if self.config["debug"]:
             self.log("user_modules={}".format(user_modules))
