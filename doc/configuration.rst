@@ -6,15 +6,22 @@ Using modules
 py3status comes with a large range of :ref:`modules`.
 Modules in py3status are configured using your usual ``i3status.conf``.
 
-py3status tries to find the config in the following locations:
+By default, py3status looks for configuration files in the following order:
 
-- ``~/.i3/i3status.conf``
+- ``~/.config/py3status/config`` (or ``$XDG_CONFIG_HOME/py3status/config`` if set)
+- ``~/.config/i3status/config`` (or ``$XDG_CONFIG_HOME/i3status/config`` if set)
+- ``~/.config/i3/i3status.conf`` (or ``$XDG_CONFIG_HOME/i3/i3status.conf`` if set)
 - ``~/.i3status.conf``
+- ``~/.i3/i3status.conf``
+- ``/etc/xdg/i3status/config`` (or ``$XDG_CONFIG_DIRS/i3status/config`` if set)
 - ``/etc/i3status.conf``
-- ``XDG_CONFIG_HOME/.config/i3status/config``
-- ``~/.config/i3status/config``
-- ``XDG_CONFIG_DIRS/i3status/config``
-- ``/etc/xdg/i3status/config``
+
+By default, py3status looks for module directories in the following order:
+
+- ``~/.config/py3status/modules`` (or ``$XDG_CONFIG_HOME/py3status/modules`` if set)
+- ``~/.config/i3status/py3status`` (or ``$XDG_CONFIG_HOME/i3status/py3status`` if set)
+- ``~/.config/i3/py3status`` (or ``$XDG_CONFIG_HOME/i3/py3status`` if set)
+- ``~/.i3/py3status``
 
 You can also specify the config location using ``py3status -c <path to config
 file>`` in your i3 configuration file.
