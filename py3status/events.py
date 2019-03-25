@@ -240,8 +240,6 @@ class Events(Thread):
 
         default_event = False
         module_info = self.output_modules.get(module_name)
-        if not module_info:
-            return
         module = module_info["module"]
         # execute any configured i3-msg command
         # we do not do this for containers
