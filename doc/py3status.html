@@ -65,21 +65,26 @@ In other words, just replace <i>i3status</i> in your current
 
 <p>Py3status will look for status config file in this order.</p>
 <pre><tt>
-1    $HOME/.i3/i3status.conf
-2    $HOME/.i3status.conf
-3    /etc/i3status.conf
-4    $XDG_CONFIG_HOME/.config/i3status/config
-5    $HOME/.config/i3status/config
-6    $XDG_CONFIG_DIRS/i3status/config
-7    /etc/xdg/i3status/config
+1    ~/.config/py3status/config
+2    ~/.config/i3status/config
+3    ~/.config/i3/i3status.conf
+4    ~/.i3status.conf
+5    ~/.i3/i3status.conf
+6    /etc/xdg/i3status/config
+7    /etc/i3status.conf
 </tt></pre>
 
 <p>Alternatively, you can start from scratch with an empty status config.</p>
 <pre><tt>
 bar {
-    status_command py3status -c ~/.config/i3/py3status.conf
+    status_command py3status -c ~/.config/py3status/config
 }
 </tt></pre>
+
+<p>Learn more about how to configure py3status on the
+<a href="https://py3status.readthedocs.io/en/latest/configuration.html">
+configuration documentation</a>
+</p>
 
 <h2>Using py3status modules</h2>
 
