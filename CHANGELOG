@@ -6,6 +6,7 @@ version 3.17 (2019-03-24)
 * cli, core: refactor cli stuff from core to cli (#1667), by lasers
 * events: remove unused if statement for \$OUTPUT{,_PART} (#1752), by lasers
 * formatter, py3: use color hidden to hide blocks (#1726), by lasers
+* py3status: transform modules and docstring commands (#1677), by lasers
 * module cleanups and tweaks #2 (#1701), by lasers
 * module cleanups and tweaks (#1691), by lasers
 * module: add pango markup conversion (#1723), by lasers
@@ -28,29 +29,29 @@ version 3.17 (2019-03-24)
 * graphite module: use func mapping instead of eval('func') (#1700), by lasers
 * group module: stop cycling on urgent module closes #890 (#1753)
 * hddtemp module: optimize thresholds (#1683), by lasers
+* imap module: fix flake8 F999 errors (#1671), by lasers
 * mail module: raise invalid filters, add log option to print folders (#1708), by lasers
 * mpris module: remove min_width pixels in favor of spaces (#1738), by lasers
 * netdata module: normalize speed rate (#1730), by Ajeet D'Souza
 * netdata module: optimize thresholds (#1679), by lasers
-* py3status: transform modules and docstring commands (#1677), by lasers
 * screenshot module: catch up with the standards (#1714), by lasers
+* sysdata module: add used units (#1715), by lasers
 * sysdata module: optimize cpu_freqs (#1685), by lasers
 * sysdata module: optimize meminfo parsing (#1697), by lasers
-* sysdata module: add used units (#1715), by lasers
 * sysdata module: optimize thresholds (#1678), by lasers
 * thunderbird_todos module: optimize thresholds (#1680), by lasers
-* tor_rate module: allow users to hide socket errors (#1666), by cyrinux* imap: fix flake8 F999 errors (#1671), by lasers
+* tor_rate module: allow users to hide socket errors (#1666), by cyrinux
 * transmission module: optimize thresholds (#1681), by lasers
 * twitch module: clean up some code (#1698), by lasers
 * twitch module: use self.py3.request helper (#1699), by lasers
 * usbguard module: simpler implementation (#1707), by Maxim Baz
 * vnstat module: replace coloring with optimized thresholds (#1686), by lasers
-* weather_owm module: print error message and status code (#1672), by lasers
 * weather_owm module: flip coordinates to (lat, lon) (#1732), by lasers
+* weather_owm module: print error message and status code (#1672), by lasers
 * wifi module: add optimized thresholds (#1688), by lasers
 * wifi module: code cleanup (#1689), by lasers
-* wifi module: switch to wifi device auto detection by default (#1706), by lasers
 * wifi module: remove use_sudo in favor of auto (#1703), by lasers
+* wifi module: switch to wifi device auto detection by default (#1706), by lasers
 
 version 3.16 (2019-01-20)
 * @maximbaz has become the third collaborator of the py3status project !
