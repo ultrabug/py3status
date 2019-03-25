@@ -465,10 +465,10 @@ def parse_list_or_docstring(options, sps):
     home_path = os.path.expanduser("~")
     xdg_home_path = os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
     options.include_paths = [
-        "{}/.i3/py3status/".format(home_path),
-        "{}/.config/i3/py3status/".format(home_path),
+        "{}/py3status/modules".format(xdg_home_path),
         "{}/i3status/py3status".format(xdg_home_path),
         "{}/i3/py3status".format(xdg_home_path),
+        "{}/.i3/py3status".format(home_path),
     ]
     include_paths = []
     for path in options.include_paths:

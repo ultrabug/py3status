@@ -71,12 +71,12 @@ Installation
 |**Void Linux**     |``$ xbps-install -S py3status``|                                     |
 +-------------------+-------------------------------+-------------------------------------+
 |**NixOS**          |``$ nix-env -i``               |Not a global install. See below.     |
-|                   |  ``python3.6-py3status``      |                                     |
+|                   |``python3.6-py3status``        |                                     |
 +-------------------+-------------------------------+-------------------------------------+
 
 
-Debian/Ubuntu
-^^^^^^^^^^^^^
+Note on Debian/Ubuntu
+^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
 
@@ -85,8 +85,8 @@ Debian/Ubuntu
   python package) instead of directly calling pip.
 
 
-NixOS
-^^^^^
+Note on NixOS
+^^^^^^^^^^^^^
 
 To have it globally persistent add to your NixOS configuration file py3status as a Python 3 package with
 
@@ -148,7 +148,7 @@ Usually you have your own i3status configuration, just point to it:
 
 .. code-block:: shell
 
-    status_command py3status -c ~/.i3/i3status.conf
+    status_command py3status -c ~/.config/i3status/config
 
 Available modules
 ^^^^^^^^^^^^^^^^^
@@ -215,10 +215,3 @@ Note that this will also send a SIGUSR1 signal to i3status.
 
     Since version 3.6 py3status can be controlled via the
     :ref:`py3-cmd` which is **recommended**.
-
-
-Contributing
-------------
-
-We value very much any kind of feedback/contribution, see :ref:`contributing` to
-read more about how to help!
