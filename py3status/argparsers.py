@@ -35,10 +35,11 @@ def parse_cli_args():
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
     i3status_config_file_candidates = [
-        "{}/.i3status.conf".format(home_path),
+        "{}/py3status/config".format(xdg_home_path),
         "{}/i3status/config".format(xdg_home_path),
-        "{}/.config/i3/i3status.conf".format(home_path),
-        "{}/.i3/i3status.conf".format(home_path),
+        "{}/i3/i3status.conf".format(xdg_home_path),  # custom
+        "{}/.i3status.conf".format(home_path),
+        "{}/.i3/i3status.conf".format(home_path),  # custom
         "{}/i3status/config".format(xdg_dirs_path),
         "/etc/i3status.conf",
     ]
@@ -200,10 +201,10 @@ def parse_cli_args():
     # make include path to search for user modules if None
     if not options.include_paths:
         options.include_paths = [
-            "{}/.i3/py3status".format(home_path),
-            "{}/.config/i3/py3status".format(home_path),
+            "{}/py3status/modules".format(xdg_home_path),
             "{}/i3status/py3status".format(xdg_home_path),
             "{}/i3/py3status".format(xdg_home_path),
+            "{}/.i3/py3status".format(home_path),
         ]
 
     include_paths = []

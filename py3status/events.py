@@ -209,7 +209,9 @@ class Events(Thread):
         """
         if self.config["debug"]:
             self.py3_wrapper.log("received event {}".format(event))
+
         # usage variables
+        event["index"] = event.get("index", "")
         instance = event.get("instance", "")
         name = event.get("name", "")
 

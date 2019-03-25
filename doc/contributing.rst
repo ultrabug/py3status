@@ -181,8 +181,8 @@ i3status has cap\_net\_admin capabilities, which will make it fail with
     $ getcap `which i3status`
     /usr/sbin/i3status = cap_net_admin+ep
 
-To allow it to run without these capabilites (hence disabling some of the
-functionnalities), remove it with:
+To allow it to run without these capabilities (hence disabling some of the
+functionalities), remove it with:
 
 .. code-block:: shell
 

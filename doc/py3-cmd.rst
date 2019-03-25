@@ -20,25 +20,6 @@ This utility allows you to run a number of commands.
 Commands available
 ------------------
 
-refresh
-^^^^^^^
-
-Cause named module(s) to have their output refreshed.
-
-.. code-block:: shell
-
-    # refresh all instances of the wifi module
-    py3-cmd refresh wifi
-
-    # refresh multiple modules
-    py3-cmd refresh coin_market github weather_yahoo
-
-    # refresh module with instance name
-    py3-cmd refresh "weather_yahoo chicago"
-
-    # refresh all modules
-    py3-cmd refresh --all
-
 
 click
 ^^^^^
@@ -69,6 +50,45 @@ You can specify the button to simulate.
     py3-cmd click --button 4 --index hours timer    # up
     py3-cmd click --button 4 --index minutes timer  # up
     py3-cmd click --button 4 --index seconds timer  # up
+
+
+list
+^^^^
+
+Print a list of modules or module docstrings.
+
+.. code-block:: shell
+
+    # list one or more modules
+    py3-cmd list clock loadavg xrandr  # full
+    py3-cmd list coin* git* window*    # fnmatch
+    py3-cmd list [a-e]*                # abcde
+
+    # list all modules
+    py3-cmd list --all
+
+    # show full (i.e. docstrings)
+    py3-cmd list vnstat uname -f
+
+
+refresh
+^^^^^^^
+
+Cause named module(s) to have their output refreshed.
+
+.. code-block:: shell
+
+    # refresh all instances of the wifi module
+    py3-cmd refresh wifi
+
+    # refresh multiple modules
+    py3-cmd refresh coin_market github weather_yahoo
+
+    # refresh module with instance name
+    py3-cmd refresh "weather_yahoo chicago"
+
+    # refresh all modules
+    py3-cmd refresh --all
 
 
 Calling commands from i3

@@ -7,10 +7,30 @@ Writing custom py3status modules
 
 Writing custom modules for py3status is easy. This guide will teach you how.
 
-Let's start by looking at a simple example.
+Importing custom modules
+------------------------
+
+py3status will try to find custom modules in the following locations:
+
+- ``~/.config/py3status/modules``
+- ``~/.config/i3status/py3status``
+- ``~/.config/i3/py3status``
+- ``~/.i3/py3status``
+
+which if you are used to XDG_CONFIG paths relates to:
+
+- ``XDG_CONFIG_HOME/py3status/modules``
+- ``XDG_CONFIG_HOME/i3status/py3status``
+- ``XDG_CONFIG_HOME/i3/py3status``
+- ``~/.i3/py3status``
+
+You can also specify the modules location using ``py3status -i <path to custom
+modules directory>`` in your i3 configuration file.
 
 Example 1: The basics - Hello World!
 ------------------------------------
+
+Now let's start by looking at a simple example.
 
 Here we start with the most basic module that just outputs a static string to
 the status bar.
