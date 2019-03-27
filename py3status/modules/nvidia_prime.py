@@ -24,9 +24,8 @@ nvidia_prime {
 
 @author Jørn Sandvik Nilsson
 
-SAMPLE_OUTPUT
+SAMPLE OUTPUT
 {'full_text': 'GPU: intel'}
-
 """
 
 from py3status import exceptions
