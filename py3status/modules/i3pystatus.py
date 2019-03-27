@@ -197,7 +197,32 @@ class ClickTimer:
 STRING_NOT_SUPPORTED = "python2 not supported"
 STRING_NOT_INSTALLED = "not installed"
 STRING_MISSING_MODULE = "missing module"
-SKIP_ATTRS = ["on_click", "run", "post_config_hook", "module", "py3"]
+SKIP_ATTRS = [
+    "align",
+    "allow_urgent",
+    "background",
+    "border",
+    "border_bottom",
+    "border_left",
+    "border_right",
+    "border_top",
+    "markup",
+    "min_length",
+    "min_width",
+    "module",
+    "on_click",
+    "position",
+    "post_config_hook",
+    "py3",
+    "run",
+    "separator",
+    "separator_block_width",
+    "urgent_border",
+    "urgent_border_bottom",
+    "urgent_border_left",
+    "urgent_border_right",
+    "urgent_border_top",
+]
 
 
 class Py3status:
@@ -293,6 +318,11 @@ class Py3status:
 
     def run(self):
         output = self.module.output or {"full_text": ""}
+        full_text = output.get("full_text", "")
+
+        # which modules return tuples?
+        if isinstance(full_text, tuple):
+            full_text = full_text[0]
 
         if self._last_content != output:
             self._last_content = output
@@ -302,16 +332,14 @@ class Py3status:
             if self._timeout > MAX_AUTO_TIMEOUT:
                 self._timeout = MAX_AUTO_TIMEOUT
 
-        # some modules return tuples
-        if isinstance(output["full_text"], tuple):
-            output["full_text"] = output["full_text"][0]
-
         if self.is_interval_module:
-            output["cached_until"] = self.py3.time_in(
-                sync_to=min(self._cache_timeout, self._timeout)
-            )
+            interval = min(self._cache_timeout, self._timeout)
         else:
-            output["cached_until"] = self.py3.time_in(sync_to=self._timeout)
+            interval = self._timeout
+
+        if full_text:
+            output["full_text"] = self.py3.safe_format(full_text)
+        output["cached_until"] = self.py3.time_in(sync_to=interval)
 
         return output
 
