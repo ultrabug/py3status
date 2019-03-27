@@ -48,11 +48,10 @@ class Py3status:
             pass
 
         return {
-            'full_text': self.py3.safe_format(
-                self.format,
-                dict(device=device)),
-            'cached_until': self.py3.time_in(self.cache_timeout)
+            "full_text": self.py3.safe_format(self.format, dict(device=device)),
+            "cached_until": self.py3.time_in(self.cache_timeout),
         }
+
 
 if __name__ == "__main__":
     """
