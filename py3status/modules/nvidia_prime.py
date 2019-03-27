@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Display which graphics device is in use, nvidia or intel (for systems supporting prime-select)
+Display which graphics device is in use using prime-select
 
 
 Configuration parameters:
@@ -31,6 +31,7 @@ SAMPLE_OUTPUT
 
 from py3status import exceptions
 
+
 class Py3status:
     """
     """
@@ -44,12 +45,14 @@ class Py3status:
         device = "unknown"
         try:
             device = self.py3.command_output(["prime-select", "query"]).strip()
-        except exceptions.CommandError as e:
+        except exceptions.CommandError:
             pass
 
         return {
-            'full_text': self.py3.safe_format(self.format, dict(device=device)),
-            'cached_until': self.py3.time_in(self.cache_timeout) 
+            'full_text': self.py3.safe_format(
+                self.format,
+                dict(device=device)),
+            'cached_until': self.py3.time_in(self.cache_timeout)
         }
 
 if __name__ == "__main__":
