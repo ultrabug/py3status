@@ -40,7 +40,7 @@ class Py3status:
 
         device = "unknown"
         try:
-            device = self.py3.command_output(["prime-selectt", "query"]).strip()
+            device = self.py3.command_output(["prime-select", "query"]).strip()
         except exceptions.CommandError as e:
             pass
 
