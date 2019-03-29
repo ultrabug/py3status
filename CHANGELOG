@@ -1,3 +1,14 @@
+version 3.18 (2019-03-30)
+* bugfix release: regresion on group cycling
+* group: don't cycle on zero (#1757), by lasers
+* updated configuration and modules paths detection using XDG_CONFIG_HOME (#1694), by lasers
+* reorder docs index
+* update i3wm.github.io py3status page with newer links and doc fix #1010 (#1745)
+* docs: make unordered list, update docs, fix typos (#1754), by lasers
+* parse_config: raise errors when using modules in containers in the order directive (#1747), by lasers
+* frame module: add safeformat for the separator (#1746), by lasers
+* mpris module: handle disconnected players gracefully on clicks (#1759), by lasers
+
 version 3.17 (2019-03-24)
 * IMPORTANT: py3status is now compatible with sway on wayland
 * add sway support with --wm option (#1718), by lasers
