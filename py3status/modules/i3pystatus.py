@@ -194,6 +194,9 @@ class ClickTimer:
             self.timer.start()
 
 
+STRING_NOT_SUPPORTED = "python2 not supported"
+STRING_NOT_INSTALLED = "not installed"
+STRING_MISSING_MODULE = "missing module"
 SKIP_ATTRS = ["on_click", "run", "post_config_hook", "module", "py3"]
 
 
@@ -205,14 +208,12 @@ class Py3status:
     module = None
 
     def post_config_hook(self):
-        if i3pystatus is None:
-            raise Exception("i3pystatus is not installed")
-
         if self.py3.is_python_2():
-            raise Exception("Python 2 not supported by i3pystatus :(")
-
-        if not self.module:
-            raise Exception("No module selected")
+            raise Exception(STRING_NOT_SUPPORTED)
+        elif not i3pystatus:
+            raise Exception(STRING_NOT_INSTALLED)
+        elif not self.module:
+            raise Exception(STRING_MISSING_MODULE)
 
         settings = {}
         for attribute in dir(self):
