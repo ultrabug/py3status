@@ -214,8 +214,8 @@ class Py3status:
         self.urgent_history[self.active] = urgent
         mod_urgent = any(self.urgent_history.values())
 
-        # keep cycling if no urgent
-        if not urgent:
+        # keep cycling if defined and no urgent
+        if self.cycle_timeout and not urgent:
             self.cycle = self.cycle_timeout
             if time() >= self.cycle_time:
                 self._change_active(1)
