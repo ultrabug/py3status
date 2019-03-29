@@ -574,9 +574,12 @@ class Py3status:
         elif button != 1:
             return
 
-        control_state = self._control_states.get(index)
-        if self._player and self._get_button_state(control_state):
-            getattr(self._player, self._control_states[index]["action"])()
+        try:
+            control_state = self._control_states.get(index)
+            if self._player and self._get_button_state(control_state):
+                getattr(self._player, self._control_states[index]["action"])()
+        except GError as err:
+            self.py3.log(str(err).split(":", 1)[-1])
 
 
 if __name__ == "__main__":
