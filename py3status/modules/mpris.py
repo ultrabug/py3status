@@ -12,7 +12,8 @@ Configuration parameters:
     button_stop: mouse button to stop the player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
     format: see placeholders below
-        (default '{previous}{toggle}{next} {state} [{artist} - ][{title}]')
+    format: display format for this module
+        (default '[{artist} - ][{title}] {previous} {toggle} {next}')
     format_none: define output if no player is running
         (default 'no player running')
     icon_next: specify icon for next button (default u'\u25b9')
@@ -24,7 +25,7 @@ Configuration parameters:
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
         paused and bomi is playing than bomi wins. (default [])
-    state_pause: specify icon for pause state (default '\u25eb')
+    state_pause: specify icon for pause state (default u'\u25eb')
     state_play: specify icon for play state (default u'\u25b7')
     state_stop: specify icon for stop state (default u'\u25a1')
 
@@ -135,7 +136,7 @@ class Py3status:
     button_previous = None
     button_stop = None
     button_toggle = 1
-    format = "{previous}{toggle}{next} {state} [{artist} - ][{title}]"
+    format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
     icon_next = u"\u25b9"
     icon_pause = u"\u25eb"
