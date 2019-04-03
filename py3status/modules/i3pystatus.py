@@ -298,9 +298,8 @@ class Py3status:
 
         self.is_interval_module = isinstance(module, i3pystatus.IntervalModule)
         # modules update their output independently so we need to periodically
-        # check if it has been updated.  For modules with long intervals it is
-        # important to do this output check much more regularly thank the
-        # interval.
+        # check if it has been updated. For modules with long intervals it is
+        # important to do output check much more regularly than the interval.
         self._cache_timeout = min(
             getattr(module, "interval", MIN_CHECK_INTERVAL), MIN_CHECK_INTERVAL
         )
@@ -313,20 +312,31 @@ class Py3status:
             callbacks.append((click, dbclick))
 
         self._click_timer = ClickTimer(self, callbacks)
-        self._last_content = None
+        self._last_content = {}
         self._timeout = 1
 
     def run(self):
         output = self.module.output or {"full_text": ""}
-        full_text = output.get("full_text", "")
 
-        # which modules return tuples?
-        if isinstance(full_text, tuple):
-            full_text = full_text[0]
+        variables = []
+        for var in [output, self._last_content]:
+            if "composite" in var:
+                var = var["composite"][0]
+            for key in ["name", "instance"]:
+                if key in var:
+                    del var[key]
+            variables.append(var)
+        output, self._last_content = variables
 
         if self._last_content != output:
             self._last_content = output
             self._timeout = 1
+            full_text = output.get("full_text", "")
+            # which modules return tuples?
+            if isinstance(full_text, tuple):
+                full_text = full_text[0]
+            if full_text:
+                output["full_text"] = self.py3.safe_format(full_text)
         else:
             self._timeout *= 2
             if self._timeout > MAX_AUTO_TIMEOUT:
@@ -337,8 +347,6 @@ class Py3status:
         else:
             interval = self._timeout
 
-        if full_text:
-            output["full_text"] = self.py3.safe_format(full_text)
         output["cached_until"] = self.py3.time_in(sync_to=interval)
 
         return output
