@@ -132,13 +132,15 @@ class Py3status:
                 {"free": free, "used": used, "used_percent": used_percent}
             )
 
-        for x in self.thresholds_init:
+        color = self.py3.COLOR_GOOD
+        for x in (self.thresholds_init + self.thresholds.keys()):
             if x in threshold_data:
-                self.py3.threshold_get_color(threshold_data[x], x)
+                color = self.py3.threshold_get_color(threshold_data[x], x)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(self.format, self.values),
+            "color": color,
         }
 
     def _get_free_space(self, disk):
