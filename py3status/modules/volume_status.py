@@ -198,15 +198,15 @@ class PactlBackend(AudioBackend):
         self.device_type_pl = self.device_type + "s"
         self.device_type_cap = self.device_type[0].upper() + self.device_type[1:]
 
-        self.reinit_device = self.device is None
-        if self.device is None:
+        self.use_default_device = self.device is None
+        if self.use_default_device:
             self.device = self.get_default_device()
         self.update_device()
 
     def update_device(self):
         self.re_volume = re.compile(
-            r"{} \#{}.*?State: (\w+).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%".format(
-                self.device_type_cap, self.device
+            r"{} (?:\#{}|.*?Name: {}).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%".format(
+                self.device_type_cap, self.device, self.device
             ),
             re.M | re.DOTALL,
         )
@@ -245,26 +245,26 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(["pactl", "list", self.device_type_pl]).strip()
-        try:
-            state, muted, perc = self.re_volume.search(output).groups()
-        except AttributeError:
-            state, muted, perc = None, False, 0
-            # if device is unset, try again with possibly
-            # a new default device, otherwise print 0
-        if self.reinit_device and state != "RUNNING":
+        if self.use_default_device:
             self.device = self.get_default_device()
             self.update_device()
+        try:
+            muted, perc = self.re_volume.search(output).groups()
+        except AttributeError:
+            muted, perc = None, None
 
         # muted should be 'on' or 'off'
         if muted in ["yes", "no"]:
             muted = muted == "yes"
-        else:
+        elif muted is not None:
             muted = False
 
         return perc, muted
 
     def volume_up(self, delta):
         perc, muted = self.get_volume()
+        if perc is None:
+            return
         if int(perc) + delta >= self.max_volume:
             change = "{}%".format(self.max_volume)
         else:
@@ -383,14 +383,22 @@ class Py3status:
         perc, muted = self.backend.get_volume()
 
         color = None
-        if muted:
-            color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-        if not self.py3.is_color(color):
-            # determine the color based on the current volume level
-            color = self._perc_to_color(perc)
+        if perc is None or muted is None:
+            color = self.py3.COLOR_BAD
+            perc = "?"
+            if hasattr(self, "format_missing"):
+                text = self._format_output(self.format_missing, perc)
+            else:
+                text = self._format_output(self.format_muted if muted else self.format, perc)
+        else:
+            if muted:
+                color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+            if not self.py3.is_color(color):
+                # determine the color based on the current volume level
+                color = self._perc_to_color(perc)
+            # format the output
+            text = self._format_output(self.format_muted if muted else self.format, perc)
 
-        # format the output
-        text = self._format_output(self.format_muted if muted else self.format, perc)
         # create response dict
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
