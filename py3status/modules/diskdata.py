@@ -133,7 +133,7 @@ class Py3status:
             )
 
         color = self.py3.COLOR_GOOD
-        for x in (self.thresholds_init + self.thresholds.keys()):
+        for x in self.thresholds_init + self.thresholds.keys():
             if x in threshold_data:
                 color = self.py3.threshold_get_color(threshold_data[x], x)
 
