@@ -389,7 +389,9 @@ class Py3status:
             if hasattr(self, "format_missing"):
                 text = self._format_output(self.format_missing, perc)
             else:
-                text = self._format_output(self.format_muted if muted else self.format, perc)
+                text = self._format_output(
+                    self.format_muted if muted else self.format, perc
+                )
         else:
             if muted:
                 color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
@@ -397,7 +399,9 @@ class Py3status:
                 # determine the color based on the current volume level
                 color = self._perc_to_color(perc)
             # format the output
-            text = self._format_output(self.format_muted if muted else self.format, perc)
+            text = self._format_output(
+                self.format_muted if muted else self.format, perc
+            )
 
         # create response dict
         response = {
