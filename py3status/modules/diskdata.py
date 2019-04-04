@@ -150,7 +150,7 @@ class Py3status:
         free = 0
         devs = []
 
-        df = self.py3.command_output("df")
+        df = self.py3.command_output(["df", "-k"])
         for line in df.splitlines():
             if (disk and line.startswith(disk)) or (
                 disk is None and line.startswith("/dev/")
