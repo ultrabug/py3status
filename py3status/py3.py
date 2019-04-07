@@ -449,6 +449,12 @@ class Py3:
         """
         return self._is_python_2
 
+    def gevent_enabled(self):
+        """
+        Checks if gevent is enabled or not.
+        """
+        return self._py3_wrapper.gevent_enabled
+
     def is_my_event(self, event):
         """
         Checks if an event triggered belongs to the module receiving it.  This
