@@ -99,6 +99,11 @@ from time import time
 from gi.repository import GObject
 from gi.repository.GLib import GError
 from threading import Thread
+
+try:
+    import gevent
+except ImportError:
+    pass
 import re
 import sys
 from pydbus import SessionBus
@@ -311,6 +316,14 @@ class Py3status:
             # This branch is only needed for the test mode
             self._kill = True
 
+    def _start_gevent_loop(self):
+        while self._kill is False:
+            self._get_players()
+            if self._data.get("error_occurred"):
+                # this is a bit harsh but it works...
+                self.post_config_hook()
+            gevent.sleep(5)
+
     def _name_owner_changed(self, *args):
         player_id = args[5][0]
         player_add = args[5][2]
@@ -464,9 +477,13 @@ class Py3status:
             self._name_owner_changed,
         )
         self._get_players()
-        t = Thread(target=self._start_loop)
-        t.daemon = True
-        t.start()
+        if self.py3.gevent_enabled() is False:
+            t = Thread(target=self._start_loop)
+            t.daemon = True
+            t.start()
+        else:
+            gevent.spawn(self._start_gevent_loop)
+            gevent.sleep()
 
     def _timeout(self):
         if self._kill:
