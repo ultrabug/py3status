@@ -1112,13 +1112,14 @@ class Py3:
         Plays sound_file if possible.
         """
         self.stop_sound()
-        cmd = self.check_commands(["ffplay", "paplay", "play"])
-        if cmd:
-            if cmd == "ffplay":
-                cmd = "ffplay -autoexit -nodisp -loglevel 0"
-            sound_file = os.path.expanduser(sound_file)
-            c = shlex.split("{} {}".format(cmd, sound_file))
-            self._audio = Popen(c)
+        if sound_file:
+            cmd = self.check_commands(["ffplay", "paplay", "play"])
+            if cmd:
+                if cmd == "ffplay":
+                    cmd = "ffplay -autoexit -nodisp -loglevel 0"
+                sound_file = os.path.expanduser(sound_file)
+                c = shlex.split("{} {}".format(cmd, sound_file))
+                self._audio = Popen(c)
 
     def stop_sound(self):
         """
