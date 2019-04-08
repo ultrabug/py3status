@@ -551,6 +551,8 @@ class Py3statusWrapper:
             self.i3status_thread.mock()
             i3s_mode = "mocked"
         else:
+            for module in i3s_modules:
+                self.log("adding module {}".format(module))
             i3s_mode = "started"
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
