@@ -97,48 +97,13 @@ class Py3status:
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-    def diskdata(self):
-        disk_data = {"disk": self.disk_name}
-        threshold_data = disk_data.copy()
-
-        if self.init["diskstats"]:
-            diskstats = self._calc_diskstats(self._get_diskstats(self.disk))
-            data = dict(zip(self.init["diskstats"]["keys"], diskstats))
-            threshold_data.update(data)
-
-            for x in self.init["diskstats"]["placeholders"]:
-                value, unit = self.py3.format_units(
-                    data[x], unit=self.unit, si=self.si_units
-                )
-                disk_data[x] = self.py3.safe_format(
-                    self.format_rate, {"value": value, "unit": unit}
-                )
-
-        if self.init["df"]:
-            df_usages = self._get_df_usages(self.disk)
-            data = dict(zip(self.init["df"]["keys"], df_usages))
-            threshold_data.update(data)
-
-            for x in self.init["df"]["placeholders"]:
-                disk_data[x] = self.py3.safe_format(
-                    self.format_space, {"value": data[x]}
-                )
-
-        for x in self.thresholds_init:
-            if x in threshold_data:
-                self.py3.threshold_get_color(threshold_data[x], x)
-
-        return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, disk_data),
-        }
-
     def _get_df_usages(self, disk):
         df_usages = self.py3.command_output(["df", "-k"])
         total, used, free, devs = 0, 0, 0, []
 
         if disk and not disk.startswith("/dev/"):
             disk = "/dev/" + disk
+
         for line in df_usages.splitlines():
             if (disk and line.startswith(disk)) or (
                 disk is None and line.startswith("/dev/")
@@ -163,7 +128,8 @@ class Py3status:
 
         if disk and disk.startswith("/dev/"):
             disk = disk[5:]
-        with open("/proc/diskstats", "r") as fd:
+
+        with open("/proc/diskstats") as fd:
             for line in fd:
                 data = line.split()
                 if disk:
@@ -187,6 +153,42 @@ class Py3status:
         self.last_time = current_time
 
         return read, write, total
+
+    def diskdata(self):
+        disk_data = {"disk": self.disk_name}
+        threshold_data = disk_data.copy()
+
+        if self.init["df"]:
+            df_usages = self._get_df_usages(self.disk)
+            data = dict(zip(self.init["df"]["keys"], df_usages))
+            threshold_data.update(data)
+
+            for x in self.init["df"]["placeholders"]:
+                disk_data[x] = self.py3.safe_format(
+                    self.format_space, {"value": data[x]}
+                )
+
+        if self.init["diskstats"]:
+            diskstats = self._calc_diskstats(self._get_diskstats(self.disk))
+            data = dict(zip(self.init["diskstats"]["keys"], diskstats))
+            threshold_data.update(data)
+
+            for x in self.init["diskstats"]["placeholders"]:
+                value, unit = self.py3.format_units(
+                    data[x], unit=self.unit, si=self.si_units
+                )
+                disk_data[x] = self.py3.safe_format(
+                    self.format_rate, {"value": value, "unit": unit}
+                )
+
+        for x in self.thresholds_init:
+            if x in threshold_data:
+                self.py3.threshold_get_color(threshold_data[x], x)
+
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, disk_data),
+        }
 
 
 if __name__ == "__main__":
