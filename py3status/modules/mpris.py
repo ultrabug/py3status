@@ -106,6 +106,7 @@ from pydbus import SessionBus
 
 SERVICE_BUS = "org.mpris.MediaPlayer2"
 SERVICE_BUS_URL = "/org/mpris/MediaPlayer2"
+STRING_GEVENT = "this module does not work with gevent"
 
 WORKING_STATES = ["Playing", "Paused", "Stopped"]
 
@@ -147,6 +148,8 @@ class Py3status:
     state_stop = u"◾"
 
     def post_config_hook(self):
+        if self.py3.is_gevent():
+            raise Exception(STRING_GEVENT)
         self._dbus = None
         self._data = {}
         self._control_states = {}

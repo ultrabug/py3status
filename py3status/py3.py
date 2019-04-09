@@ -449,6 +449,12 @@ class Py3:
         """
         return self._is_python_2
 
+    def is_gevent(self):
+        """
+        Checks if gevent monkey patching is enabled or not.
+        """
+        return self._py3_wrapper.is_gevent
+
     def is_my_event(self, event):
         """
         Checks if an event triggered belongs to the module receiving it.  This

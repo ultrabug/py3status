@@ -425,10 +425,12 @@ class Py3statusWrapper:
 
             if gevent.socket.socket is socket.socket:
                 self.log("gevent monkey patching is active")
+                return True
             else:
                 self.notify_user("gevent monkey patching failed.")
         except ImportError:
             self.notify_user("gevent is not installed, monkey patching failed.")
+        return False
 
     def get_user_modules(self):
         """
@@ -534,7 +536,9 @@ class Py3statusWrapper:
             self.log("py3status started with config {}".format(self.config))
 
         if self.config["gevent"]:
-            self.gevent_monkey_patch_report()
+            self.is_gevent = self.gevent_monkey_patch_report()
+        else:
+            self.is_gevent = False
 
         # read i3status.conf
         config_path = self.config["i3status_config_path"]
