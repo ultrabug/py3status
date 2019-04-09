@@ -536,9 +536,9 @@ class Py3statusWrapper:
             self.log("py3status started with config {}".format(self.config))
 
         if self.config["gevent"]:
-            self.gevent_enabled = self.gevent_monkey_patch_report()
+            self.is_gevent = self.gevent_monkey_patch_report()
         else:
-            self.gevent_enabled = False
+            self.is_gevent = False
 
         # read i3status.conf
         config_path = self.config["i3status_config_path"]

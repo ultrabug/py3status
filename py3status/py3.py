@@ -449,11 +449,11 @@ class Py3:
         """
         return self._is_python_2
 
-    def gevent_enabled(self):
+    def is_gevent(self):
         """
-        Checks if gevent is enabled or not.
+        Checks if gevent monkey patching is enabled or not.
         """
-        return self._py3_wrapper.gevent_enabled
+        return self._py3_wrapper.is_gevent
 
     def is_my_event(self, event):
         """
