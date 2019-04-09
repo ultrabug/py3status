@@ -80,57 +80,49 @@ class Py3status:
     unit = "B/s"
 
     def post_config_hook(self):
-        """
-        Format of total, up and down placeholders under self.format.
-        As default, substitutes self.left_align and self.precision as %s and %s
-        Placeholders:
-            value - value (float)
-            unit - unit (string)
-        """
-        self.last_diskstats = self._get_diskstats(self.disk)
-        self.last_time = time()
+        self.disk_name = self.disk or "all"
+        names_and_matches = [
+            ("df", ["free", "used", "used_percent", "total_space"]),
+            ("diskstats", ["read", "write", "total"]),
+        ]
+        self.init = {x[0]: {} for x in names_and_matches}
+        for name, match in names_and_matches:
+            placeholders = self.py3.get_placeholders_list(self.format, match)
+            if placeholders:
+                self.init[name] = {"placeholders": placeholders, "keys": match}
+
+        if self.init["diskstats"]:
+            self.last_diskstats = self._get_diskstats(self.disk)
+            self.last_time = time()
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def diskdata(self):
-        self.values = {"disk": self.disk if self.disk else "all"}
-        threshold_data = {}
+        disk_data = {"disk": self.disk_name}
+        threshold_data = disk_data.copy()
 
-        if self.py3.format_contains(self.format, ["read", "write", "total"]):
-            diskstats = self._get_diskstats(self.disk)
-            current_time = time()
+        if self.init["diskstats"]:
+            diskstats = self._calc_diskstats(self._get_diskstats(self.disk))
+            data = dict(zip(self.init["diskstats"]["keys"], diskstats))
+            threshold_data.update(data)
 
-            timedelta = current_time - self.last_time
-            read = (diskstats[0] - self.last_diskstats[0]) / timedelta
-            write = (diskstats[1] - self.last_diskstats[1]) / timedelta
-            total = read + write
+            for x in self.init["diskstats"]["placeholders"]:
+                value, unit = self.py3.format_units(
+                    data[x], unit=self.unit, si=self.si_units
+                )
+                disk_data[x] = self.py3.safe_format(
+                    self.format_rate, {"value": value, "unit": unit}
+                )
 
-            self.last_diskstats = diskstats
-            self.last_time = current_time
+        if self.init["df"]:
+            df_usages = self._get_df_usages(self.disk)
+            data = dict(zip(self.init["df"]["keys"], df_usages))
+            threshold_data.update(data)
 
-            self.values["read"] = self._format_rate(read)
-            self.values["total"] = self._format_rate(total)
-            self.values["write"] = self._format_rate(write)
-            threshold_data.update({"read": read, "write": write, "total": total})
-
-        if self.py3.format_contains(self.format, ["free", "used*", "total_space"]):
-            free, used, used_percent, total_space = self._get_free_space(self.disk)
-
-            self.values["free"] = self.py3.safe_format(
-                self.format_space, {"value": free}
-            )
-            self.values["used"] = self.py3.safe_format(
-                self.format_space, {"value": used}
-            )
-            self.values["used_percent"] = self.py3.safe_format(
-                self.format_space, {"value": used_percent}
-            )
-            self.values["total_space"] = self.py3.safe_format(
-                self.format_space, {"value": total_space}
-            )
-            threshold_data.update(
-                {"free": free, "used": used, "used_percent": used_percent}
-            )
+            for x in self.init["df"]["placeholders"]:
+                disk_data[x] = self.py3.safe_format(
+                    self.format_space, {"value": data[x]}
+                )
 
         for x in self.thresholds_init:
             if x in threshold_data:
@@ -138,20 +130,16 @@ class Py3status:
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, self.values),
+            "full_text": self.py3.safe_format(self.format, disk_data),
         }
 
-    def _get_free_space(self, disk):
+    def _get_df_usages(self, disk):
+        df_usages = self.py3.command_output(["df", "-k"])
+        total, used, free, devs = 0, 0, 0, []
+
         if disk and not disk.startswith("/dev/"):
             disk = "/dev/" + disk
-
-        total = 0
-        used = 0
-        free = 0
-        devs = []
-
-        df = self.py3.command_output(["df", "-k"])
-        for line in df.splitlines():
+        for line in df_usages.splitlines():
             if (disk and line.startswith(disk)) or (
                 disk is None and line.startswith("/dev/")
             ):
@@ -171,10 +159,10 @@ class Py3status:
         return free, used, 100 * used / total, total
 
     def _get_diskstats(self, disk):
+        read, write = 0, 0
+
         if disk and disk.startswith("/dev/"):
             disk = disk[5:]
-        read = 0
-        write = 0
         with open("/proc/diskstats", "r") as fd:
             for line in fd:
                 data = line.split()
@@ -186,14 +174,19 @@ class Py3status:
                     if data[1] == "0":
                         read += int(data[5]) * self.sector_size
                         write += int(data[9]) * self.sector_size
+
         return read, write
 
-    def _format_rate(self, value):
-        """
-        Return formatted string
-        """
-        value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
-        return self.py3.safe_format(self.format_rate, {"value": value, "unit": unit})
+    def _calc_diskstats(self, diskstats):
+        current_time = time()
+        timedelta = current_time - self.last_time
+        read = (diskstats[0] - self.last_diskstats[0]) / timedelta
+        write = (diskstats[1] - self.last_diskstats[1]) / timedelta
+        total = read + write
+        self.last_diskstats = diskstats
+        self.last_time = current_time
+
+        return read, write, total
 
 
 if __name__ == "__main__":
