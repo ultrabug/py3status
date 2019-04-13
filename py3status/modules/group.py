@@ -119,6 +119,7 @@ class Py3status:
         if not self.items:
             raise Exception(STRING_ERROR)
 
+        self.first_run = True
         self.active = 0
         self.cycle_time = time() + self.cycle
         self.cycle_timeout = self.cycle
@@ -196,15 +197,14 @@ class Py3status:
         self.last_active = self.active
 
     def group(self):
-        update_time = None
-        self.cycle = 0
-
         # get an output. again if empty (twice).
         for x in range(3):
             output = self._get_output()
             if output:
+                update_time = None
                 break
-            self._change_active(1)
+            elif not self.first_run:
+                self._change_active(1)
         else:
             update_time = MAX_NO_CONTENT_WAIT
 
@@ -214,7 +214,10 @@ class Py3status:
         mod_urgent = any(self.urgent_history.values())
 
         # keep cycling if defined and no urgent
-        if self.cycle_timeout and not urgent:
+        self.cycle = 0
+        if self.first_run:
+            self.first_run = False
+        elif self.cycle_timeout and not urgent:
             current_time = time()
             if current_time >= self.cycle_time - 0.1:
                 self._change_active(1)
@@ -224,11 +227,7 @@ class Py3status:
                 self.cycle = self.cycle_time - current_time
 
         # time
-        update_time = update_time or self.cycle or None
-        if update_time is not None:
-            cached_until = self.py3.time_in(self.cycle)
-        else:
-            cached_until = self.py3.CACHE_FOREVER
+        cached_until = update_time or self.cycle or self.py3.CACHE_FOREVER
 
         if self.open:
             format_control = self.format_button_open
@@ -241,7 +240,7 @@ class Py3status:
 
         button = {"full_text": format_control, "index": "button"}
         response = {
-            "cached_until": cached_until,
+            "cached_until": self.py3.time_in(cached_until),
             "full_text": self.py3.safe_format(
                 current_format,
                 {
