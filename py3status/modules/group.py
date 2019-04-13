@@ -188,9 +188,8 @@ class Py3status:
         return current
 
     def _change_active(self, delta):
-        # we want to ignore any empty outputs
-        # to prevent endless cycling we limit ourselves to only going through
-        # the outputs once.
+        # we want to skip empty outputs. to prevent endless cycling,
+        # we limit ourselves to only going through the outputs once.
         self.active = (self.active + delta) % len(self.items)
         if not self._get_output() and self.last_active != self.active:
             self._change_active(delta)
@@ -216,10 +215,13 @@ class Py3status:
 
         # keep cycling if defined and no urgent
         if self.cycle_timeout and not urgent:
-            self.cycle = self.cycle_timeout
-            if time() >= self.cycle_time:
+            current_time = time()
+            if current_time >= self.cycle_time - 0.1:
                 self._change_active(1)
-                self.cycle_time = time() + self.cycle
+                self.cycle = self.cycle_timeout
+                self.cycle_time = current_time + self.cycle
+            else:
+                self.cycle = self.cycle_time - current_time
 
         # time
         update_time = update_time or self.cycle or None
