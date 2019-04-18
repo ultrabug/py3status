@@ -6,6 +6,7 @@ from math import ceil
 from numbers import Number
 
 from py3status.composite import Composite
+from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED
 
 try:
     from urllib.parse import parse_qsl
@@ -51,6 +52,25 @@ class Formatter:
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]
+
+    def get_color_names(self, format_string):
+        """
+        Parses the format_string and returns a set of color names.
+        """
+        names = set()
+        # Tokenize the format string and process them
+        for token in self.tokens(format_string):
+            if token.group("command"):
+                name = dict(parse_qsl(token.group("command"))).get("color")
+                if (
+                    not name
+                    or name in COLOR_NAMES_EXCLUDED
+                    or name in COLOR_NAMES
+                    or name[0] == "#"
+                ):
+                    continue
+                names.add(name)
+        return names
 
     def get_placeholders(self, format_string):
         """

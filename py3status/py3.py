@@ -730,15 +730,7 @@ class Py3:
             format_strings = [format_strings]
         names = set()
         for string in format_strings:
-            for color in string.replace("&", " ").split("color=")[1::1]:
-                color = color.split()[0]
-                if "#" in color:
-                    continue
-                if color in ["good", "bad", "degraded", "None", "threshold"]:
-                    continue
-                if color in COLOR_NAMES:
-                    continue
-                names.add(color)
+            names.update(self._formatter.get_color_names(string))
         return list(names)
 
     def get_placeholders_list(self, format_string, match=None):
