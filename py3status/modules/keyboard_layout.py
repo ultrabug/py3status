@@ -16,9 +16,9 @@ Color options:
     color_<layout>: colorize the layout. eg color_fr = '#729FCF'
 
 Requires:
-    xkblayout-state:
+    xkblayout-state: (recommended)
         or
-    setxkbmap: and `xset` (works for the first two predefined layouts.)
+    setxkbmap: and `xset` (works for the first two predefined layouts. conflict with xkeyboard layout switching )
 
 Examples:
 ```
@@ -160,7 +160,11 @@ class Py3status:
         self._active += delta
         self._active = self._active % len(self._layouts)
         layout = self._layouts[self._active]
-        self.py3.command_run("setxkbmap -layout {}".format(layout))
+        try:
+            self.py3.command_run("xkblayout-state set {:+}".format(delta))
+        except self.py3.CommandError:
+            # Note: This will override user-defined layout, keyboard shortcut won't work
+            self.py3.command_run("setxkbmap -layout {}".format(layout))
 
     def on_click(self, event):
         button = event["button"]
