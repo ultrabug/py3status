@@ -733,12 +733,13 @@ class Py3:
             names.update(self._formatter.get_color_names(string))
         return list(names)
 
-    def get_placeholders_list(self, format_string, match=None):
+    def get_placeholders_list(self, format_string, matches=None):
         """
         Returns a list of placeholders in ``format_string``.
 
-        If ``match`` is provided then it is used to filter the result using
-        fnmatch so the following patterns can be used:
+        If ``matches`` is provided then it is used to filter the result
+        using fnmatch so the following patterns can be used:
+
 
         .. code-block:: none
 
@@ -757,14 +758,17 @@ class Py3:
         else:
             placeholders = self._format_placeholders[format_string]
 
-        if not match:
+        if not matches:
             return list(placeholders)
+        elif isinstance(matches, basestring):
+            matches = [matches]
         # filter matches
-        found = []
-        for placeholder in placeholders:
-            if fnmatch(placeholder, match):
-                found.append(placeholder)
-        return found
+        found = set()
+        for match in matches:
+            for placeholder in placeholders:
+                if fnmatch(placeholder, match):
+                    found.add(placeholder)
+        return list(found)
 
     def get_placeholder_formats_list(self, format_string):
         """
