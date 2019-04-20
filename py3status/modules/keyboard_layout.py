@@ -16,9 +16,9 @@ Color options:
     color_<layout>: colorize the layout. eg color_fr = '#729FCF'
 
 Requires:
-    xkblayout-state: (recommended)
+    xkblayout-state:
         or
-    setxkbmap: and `xset` (works for the first two predefined layouts. conflict with xkeyboard layout switching )
+    setxkbmap: and `xset` (works for the first two predefined layouts. overrides `XkbLayout` when switching layout.)
 
 Examples:
 ```
