@@ -68,11 +68,14 @@ class Py3status:
 
     def post_config_hook(self):
         self.colors = getattr(self, "colors", None)  # old config
-        try:
-            self._xkblayout()
-            self._command = self._xkblayout
-        except self.py3.CommandError:
-            self._command = self._setxkbmap
+
+        avail_command = {
+            "xkblayout-state": (self._set_xkblayout, self._get_xkblayout),
+            "setxkbmap": (self._set_setxkbmap, self._get_setxkbmap),
+        }
+        self._set_command, self._get_command = avail_command[
+            self.py3.check_commands(avail_command.keys())
+        ]
 
         if not self.layouts:
             self.layouts = []
@@ -91,7 +94,7 @@ class Py3status:
         }
 
     def keyboard_layout(self):
-        layout, variant = self._command()
+        layout, variant = self._get_command()
         # If the current layout is not in our layouts list we need to add it
         if layout not in self._layouts:
             self._layouts = [layout] + self.layouts
@@ -131,7 +134,7 @@ class Py3status:
 
         return response
 
-    def _xkblayout(self):
+    def _get_xkblayout(self):
         layout, variant = [
             x.strip()
             for x in self.py3.command_output(
@@ -140,7 +143,7 @@ class Py3status:
         ]
         return layout, variant
 
-    def _setxkbmap(self):
+    def _get_setxkbmap(self):
         # this method works only for the first two predefined layouts.
         out = self.py3.command_output(["setxkbmap", "-query"])
         layouts = re.match(LAYOUTS_RE, out).group(1).split(",")
@@ -156,15 +159,24 @@ class Py3status:
         led_mask = re.match(LEDMASK_RE, xset_output).groups(0)[0]
         return layouts[int(led_mask)], ""
 
+    def _set_setxkbmap(self):
+        layout = self._layouts[self._active]
+        # Note: This will override user-defined layout, keyboard shortcut won't work
+        self.py3.command_run("setxkbmap -layout {}".format(layout))
+
+    def _set_xkblayout(self):
+        layout = self._layouts[self._active]
+        layout_pos = (
+            self.py3.command_output(["xkblayout-state", "print", "%S"])
+            .split()
+            .index(layout)
+        )
+        self.py3.command_run("xkblayout-state set {}".format(layout_pos))
+
     def _set_active(self, delta):
         self._active += delta
         self._active = self._active % len(self._layouts)
-        layout = self._layouts[self._active]
-        try:
-            self.py3.command_run("xkblayout-state set {:+}".format(delta))
-        except self.py3.CommandError:
-            # Note: This will override user-defined layout, keyboard shortcut won't work
-            self.py3.command_run("setxkbmap -layout {}".format(layout))
+        self._set_command()
 
     def on_click(self, event):
         button = event["button"]
