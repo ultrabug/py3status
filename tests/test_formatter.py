@@ -165,6 +165,20 @@ def update_placeholders(test_dict):
         pytest.fail("Results not as expected")
 
 
+def get_color_names(test_dict):
+    __tracebackhide__ = True
+
+    result = f.get_color_names(test_dict["format"])
+    expected = test_dict.get("expected")
+
+    if result != expected:
+        print("Format\n{}\n".format(test_dict["format"]))
+        print("Expected\n{}".format(pformat(expected)))
+        print("Got\n{}".format(pformat(result)))
+    if result != expected:
+        pytest.fail("Results not as expected")
+
+
 def test_1():
     run_formatter({"format": u"hello ☂", "expected": u"hello ☂"})
 
@@ -1355,6 +1369,42 @@ def test_update_placeholders_5():
             "format": r"\{placeholder\}{placeholder}[\?if=placeholder&color=red something]",
             "updates": {"placeholder": "new_placeholder"},
             "expected": r"\{placeholder\}{new_placeholder}[\?if=new_placeholder&color=red something]",
+        }
+    )
+
+
+def test_get_color_names_1():
+    get_color_names(
+        {
+            "format": r"\?color=red \?color=#0f0 green \?color=#0000ff blue",
+            "expected": set(),
+        }
+    )
+
+
+def test_get_color_names_2():
+    get_color_names(
+        {
+            "format": r"[\?color=tobias funke|\?color=bluemangroup troupe]",
+            "expected": {"tobias", "bluemangroup"},
+        }
+    )
+
+
+def test_get_color_names_3():
+    get_color_names(
+        {
+            "format": r"[\?color=good bonsai tree][\?color=None Saibot]",
+            "expected": set(),
+        }
+    )
+
+
+def test_get_color_names_4():
+    get_color_names(
+        {
+            "format": r"\?color=rebeccapurple \?color=rebecca \?color=purple",
+            "expected": {"rebecca"},
         }
     )
 
