@@ -216,10 +216,9 @@ class Py3status:
 
         # keep cycling if defined and no urgent
         if self.cycle_timeout and not urgent:
+            self._change_active(1)
             self.cycle = self.cycle_timeout
-            if time() >= self.cycle_time:
-                self._change_active(1)
-                self.cycle_time = time() + self.cycle
+            self.cycle_time = time() + self.cycle
 
         # time
         update_time = update_time or self.cycle or None
