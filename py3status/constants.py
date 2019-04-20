@@ -61,6 +61,8 @@ ERROR_CONFIG = """
 }
 """
 
+COLOR_NAMES_EXCLUDED = ["good", "bad", "degraded", "separator", "threshold", "None"]
+
 COLOR_NAMES = {
     "aliceblue": "#f0f8ff",
     "antiquewhite": "#faebd7",
