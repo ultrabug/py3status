@@ -1,20 +1,32 @@
-﻿.. _using_modules:
+﻿.. _configuration:
 
-Using modules
+Configuration
 =============
 
 py3status comes with a large range of :ref:`modules`.
-Modules in py3status are configured using your usual ``i3status.conf``.
 
-py3status tries to find the config in the following locations:
+Modules in py3status are configured using your usual ``i3status.conf`` or your
+own ``py3status.conf`` which follows the exact same format.
 
-- ``~/.i3/i3status.conf``
-- ``~/.i3status.conf``
-- ``/etc/i3status.conf``
-- ``XDG_CONFIG_HOME/.config/i3status/config``
+py3status will try to find its configuration file in the following locations:
+
+- ``~/.config/py3status/config``
 - ``~/.config/i3status/config``
-- ``XDG_CONFIG_DIRS/i3status/config``
+- ``~/.config/i3/i3status.conf``
+- ``~/.i3status.conf``
+- ``~/.i3/i3status.conf``
 - ``/etc/xdg/i3status/config``
+- ``/etc/i3status.conf``
+
+which if you are used to XDG_CONFIG paths relates to:
+
+- ``XDG_CONFIG_HOME/py3status/config``
+- ``XDG_CONFIG_HOME/i3status/config``
+- ``XDG_CONFIG_HOME/i3/i3status.conf``
+- ``~/.i3status.conf``
+- ``~/.i3/i3status.conf``
+- ``XDG_CONFIG_DIRS/i3status/config``
+- ``/etc/i3status.conf``
 
 You can also specify the config location using ``py3status -c <path to config
 file>`` in your i3 configuration file.
@@ -150,26 +162,26 @@ You can specify the options in module or py3status configuration section.
 
 The following options will work on ``i3``.
 
-``align``: Specify how modules should be aligned when the ``min_width``
+- ``align``: Specify how modules should be aligned when the ``min_width``
 is not reached. Either ``left`` (default), ``center``, or ``right``.
-``background``: Specify a background color for py3status modules.
-``markup``: Specify how modules should be parsed.
-``min_width``: Specify a minimum width of pixels for modules.
-``separator``: Specify a separator boolean for modules.
-``separator_block_width``: Specify a separator block width for modules.
+- ``background``: Specify a background color for py3status modules.
+- ``markup``: Specify how modules should be parsed.
+- ``min_width``: Specify a minimum width of pixels for modules.
+- ``separator``: Specify a separator boolean for modules.
+- ``separator_block_width``: Specify a separator block width for modules.
 
 The following options will work on ``i3-gaps``.
 
-``border``: Specify a border color for modules.
-``border_bottom``: Specify a border width for modules
-``border_left``: Specify a border width for modules.
-``border_right``: Specify a border width for modules.
-``border_top``: Specify a border width for modules.
+- ``border``: Specify a border color for modules.
+- ``border_bottom``: Specify a border width for modules
+- ``border_left``: Specify a border width for modules.
+- ``border_right``: Specify a border width for modules.
+- ``border_top``: Specify a border width for modules.
 
 The following options will work on ``py3status``.
 
-``min_length``: Specify a minimum length of characters for modules.
-``position``: Specify how modules should be positioned when the ``min_length``
+- ``min_length``: Specify a minimum length of characters for modules.
+- ``position``: Specify how modules should be positioned when the ``min_length``
 is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
@@ -198,16 +210,16 @@ is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 The following options will work on ``i3bar`` and ``py3status``.
 
-``urgent_background``: Specify urgent background color for modules.
-``urgent_foreground``: Specify urgent foreground color for modules.
-``urgent_border``: Specify urgent border color for modules.
+- ``urgent_background``: Specify urgent background color for modules.
+- ``urgent_foreground``: Specify urgent foreground color for modules.
+- ``urgent_border``: Specify urgent border color for modules.
 
 The following options will work on ``i3bar-gaps`` and ``py3status``.
 
-``urgent_border_bottom``: Specify urgent border width for modules
-``urgent_border_left``: Specify urgent border width for modules.
-``urgent_border_right``: Specify urgent border width for modules.
-``urgent_border_top``: Specify urgent border width for modules.
+- ``urgent_border_bottom``: Specify urgent border width for modules
+- ``urgent_border_left``: Specify urgent border width for modules.
+- ``urgent_border_right``: Specify urgent border width for modules.
+- ``urgent_border_top``: Specify urgent border width for modules.
 
 You lose urgent functionality too that can be sometimes utilized by
 container modules, e.g., frame and group.
@@ -803,7 +815,7 @@ Inline Shell Code
 You can use the standard output of a shell script in your configuration with
 the ``shell(...)`` directive. These values are captured at startup and may be
 converted to the needed datatype (only ``str``, ``int``, ``float``, ``bool``
-and ``auto`` (the default) are currently supported).
+and ``auto`` (default) are currently supported).
 
 The shell script executed must return a single line of text on stdout and
 then terminate. If the type is explicitly declared ``bool``, the exit status
@@ -856,6 +868,7 @@ specific subsystem using the ``on_udev_<subsystem>`` configuration parameter
 and an associated action.
 
 Possible actions:
+
 - ``refresh``: immediately refresh the module and keep on updating it as usual
 - ``refresh_and_freeze``: module is ONLY refreshed when said udev subsystem emits
 an event

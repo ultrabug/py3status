@@ -107,6 +107,8 @@ class Py3status:
         # get the child modules output.
         output = []
         if self.open:
+            if self.format_separator:
+                format_separator = self.py3.safe_format(self.format_separator)
             for item in self.items:
                 out = self.py3.get_output(item)[:]
                 if self.format_separator is None:
@@ -116,9 +118,8 @@ class Py3status:
                         last_item = out[-1].copy()
                         last_item["separator"] = True
                         out[-1] = last_item
-                else:
-                    if self.format_separator:
-                        out += [{"full_text": self.format_separator}]
+                elif self.format_separator:
+                    out += format_separator
                 output += out
             urgent = False
 

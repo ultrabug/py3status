@@ -11,8 +11,8 @@ Welcome to py3status's documentation!
    :caption: Contents:
 
    intro
-   modules
    configuration
+   modules
    py3-cmd
    writing_modules
    py3

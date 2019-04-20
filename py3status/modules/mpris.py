@@ -7,26 +7,27 @@ button in the text information or by using buttons. For former you have
 to define the button parameters in your config.
 
 Configuration parameters:
-    button_next: mouse button to play the next entry (default 4)
-    button_previous: mouse button to play the previous entry (default 5)
+    button_next: mouse button to play the next entry (default None)
+    button_previous: mouse button to play the previous entry (default None)
     button_stop: mouse button to stop the player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
     format: see placeholders below
-        (default '{previous}{toggle}{next} {state} [{artist} - ][{title}]')
+    format: display format for this module
+        (default '[{artist} - ][{title}] {previous} {toggle} {next}')
     format_none: define output if no player is running
         (default 'no player running')
-    icon_next: text for the next button in the button control panel (default '»')
-    icon_pause: text for the pause button in the button control panel (default '▮')
-    icon_play: text for the play button in the button control panel (default '▶')
-    icon_previous: text for the previous button in the button control panel (default '«')
-    icon_stop: text for the stop button in the button control panel (default '◾')
+    icon_next: specify icon for next button (default u'\u25b9')
+    icon_pause: specify icon for pause button (default u'\u25eb')
+    icon_play: specify icon for play button (default u'\u25b7')
+    icon_previous: specify icon for previous button (default u'\u25c3')
+    icon_stop: specify icon for stop button (default u'\u25a1')
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
         paused and bomi is playing than bomi wins. (default [])
-    state_pause: text for placeholder {state} when song is paused (default '▮')
-    state_play: text for placeholder {state} when song is playing (default '▶')
-    state_stop: text for placeholder {state} when song is stopped (default '◾')
+    state_pause: specify icon for pause state (default u'\u25eb')
+    state_play: specify icon for play state (default u'\u25b7')
+    state_stop: specify icon for stop state (default u'\u25a1')
 
 Format placeholders:
     {album} album name
@@ -57,7 +58,7 @@ Requires:
 
 Tested players:
     bomi: powerful and easy-to-use gui multimedia player based on mpv
-    Cantata: qt5 client for the music player daemon (mpd)
+    cantata: qt5 client for the music player daemon (mpd)
     mpdris2: mpris2 support for mpd
     vlc: multi-platform mpeg, vcd/dvd, and divx player
 
@@ -89,13 +90,8 @@ mpris {
 
 SAMPLE OUTPUT
 [
-    {'color': '#00FF00', 'index': 'previous', 'min_width': 20,
-     'align': 'center', 'full_text': u'\xab'},
-    {'color': '#00FF00', 'index': 'toggle', 'min_width': 20,
-     'align': 'center', 'full_text': u'\u25ae'},
-    {'color': '#00FF00', 'index': 'next', 'min_width': 20,
-     'align': 'center', 'full_text': u'\xbb '},
-    {'full_text': u'\u25b6 Happy Mondays - Fat Lady Wrestlers'}
+    {'color': '#00FF00', 'full_text': u'\xab \u25ae \xbb \u25b6 '},
+    {'color': '#00FF00', 'full_text': u'Happy Mondays - Fat Lady Wrestlers'}
 ]
 """
 
@@ -111,6 +107,7 @@ from pydbus import SessionBus
 
 SERVICE_BUS = "org.mpris.MediaPlayer2"
 SERVICE_BUS_URL = "/org/mpris/MediaPlayer2"
+STRING_GEVENT = "this module does not work with gevent"
 
 WORKING_STATES = ["Playing", "Paused", "Stopped"]
 
@@ -135,23 +132,25 @@ class Py3status:
     """
 
     # available configuration parameters
-    button_next = 4
-    button_previous = 5
+    button_next = None
+    button_previous = None
     button_stop = None
     button_toggle = 1
-    format = "{previous}{toggle}{next} {state} [{artist} - ][{title}]"
+    format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
-    icon_next = u"»"
-    icon_pause = u"▮"
-    icon_play = u"▶"
-    icon_previous = u"«"
-    icon_stop = u"◾"
+    icon_next = u"\u25b9"
+    icon_pause = u"\u25eb"
+    icon_play = u"\u25b7"
+    icon_previous = u"\u25c3"
+    icon_stop = u"\u25a1"
     player_priority = []
-    state_pause = u"▮"
-    state_play = u"▶"
-    state_stop = u"◾"
+    state_pause = u"\u25eb"
+    state_play = u"\u25b7"
+    state_stop = u"\u25a1"
 
     def post_config_hook(self):
+        if self.py3.is_gevent():
+            raise Exception(STRING_GEVENT)
         self._dbus = None
         self._data = {}
         self._control_states = {}
@@ -303,8 +302,6 @@ class Py3status:
                 "color": color,
                 "full_text": control_state["icon"],
                 "index": button,
-                "min_width": 20,
-                "align": "center",
             }
 
         return response
@@ -581,9 +578,12 @@ class Py3status:
         elif button != 1:
             return
 
-        control_state = self._control_states.get(index)
-        if self._player and self._get_button_state(control_state):
-            getattr(self._player, self._control_states[index]["action"])()
+        try:
+            control_state = self._control_states.get(index)
+            if self._player and self._get_button_state(control_state):
+                getattr(self._player, self._control_states[index]["action"])()
+        except GError as err:
+            self.py3.log(str(err).split(":", 1)[-1])
 
 
 if __name__ == "__main__":

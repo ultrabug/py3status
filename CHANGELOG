@@ -1,3 +1,69 @@
+version 3.18 (2019-03-30)
+* bugfix release: regresion on group cycling
+* group: don't cycle on zero (#1757), by lasers
+* updated configuration and modules paths detection using XDG_CONFIG_HOME (#1694), by lasers
+* reorder docs index
+* update i3wm.github.io py3status page with newer links and doc fix #1010 (#1745)
+* docs: make unordered list, update docs, fix typos (#1754), by lasers
+* parse_config: raise errors when using modules in containers in the order directive (#1747), by lasers
+* frame module: add safeformat for the separator (#1746), by lasers
+* mpris module: handle disconnected players gracefully on clicks (#1759), by lasers
+
+version 3.17 (2019-03-24)
+* IMPORTANT: py3status is now compatible with sway on wayland
+* add sway support with --wm option (#1718), by lasers
+* argparsers: add slash on paths (#1710), by lasers
+* broken frame modules when pango markup is used fix #1736
+* cli, core: refactor cli stuff from core to cli (#1667), by lasers
+* events: remove unused if statement for \$OUTPUT{,_PART} (#1752), by lasers
+* formatter, py3: use color hidden to hide blocks (#1726), by lasers
+* py3status: transform modules and docstring commands (#1677), by lasers
+* module cleanups and tweaks #2 (#1701), by lasers
+* module cleanups and tweaks (#1691), by lasers
+* module: add pango markup conversion (#1723), by lasers
+* module: add pango markup conversion (py2+module_options) (#1729), by lasers
+* module: fix indexerror exception (#1749), by lasers
+* move list and docstring from py3status to py3-cmd (#1713), by lasers
+* rename cli.py to argparsers.py (#1696), by lasers
+* simplify include_paths early to valid paths (#1695), by lasers
+* tests: add consistency tests for modules (#1690), by lasers
+* new module: scroll (#1748), by lasers
+* air_quality module: expose and optimize thresholds (#1684), by lasers
+* arch_updates module: add auracle support (#1674), by Yaroslav Dronskii
+* arch_updates module: fix SPEC VIOLATION: full_text is NULL! (#1735), by lasers
+* arch_updates module: remove include_aur in favor of auto, refactoring (#1727), by lasers
+* arch_updates module: remove obsolete cower from docs (#1720), by lasers
+* arch_updates module: use py3.command_output helper (#1721), by lasers
+* async_script module: fix typo (#1702), by Cody Hiar
+* battery_level: fix case when an invalid battery is detected (#1751), by Thiago Kenji Okada
+* coin_market module: optimize thresholds (#1682), by lasers
+* graphite module: use func mapping instead of eval('func') (#1700), by lasers
+* group module: stop cycling on urgent module closes #890 (#1753)
+* hddtemp module: optimize thresholds (#1683), by lasers
+* imap module: fix flake8 F999 errors (#1671), by lasers
+* mail module: raise invalid filters, add log option to print folders (#1708), by lasers
+* mpris module: remove min_width pixels in favor of spaces (#1738), by lasers
+* netdata module: normalize speed rate (#1730), by Ajeet D'Souza
+* netdata module: optimize thresholds (#1679), by lasers
+* screenshot module: catch up with the standards (#1714), by lasers
+* sysdata module: add used units (#1715), by lasers
+* sysdata module: optimize cpu_freqs (#1685), by lasers
+* sysdata module: optimize meminfo parsing (#1697), by lasers
+* sysdata module: optimize thresholds (#1678), by lasers
+* thunderbird_todos module: optimize thresholds (#1680), by lasers
+* tor_rate module: allow users to hide socket errors (#1666), by cyrinux
+* transmission module: optimize thresholds (#1681), by lasers
+* twitch module: clean up some code (#1698), by lasers
+* twitch module: use self.py3.request helper (#1699), by lasers
+* usbguard module: simpler implementation (#1707), by Maxim Baz
+* vnstat module: replace coloring with optimized thresholds (#1686), by lasers
+* weather_owm module: flip coordinates to (lat, lon) (#1732), by lasers
+* weather_owm module: print error message and status code (#1672), by lasers
+* wifi module: add optimized thresholds (#1688), by lasers
+* wifi module: code cleanup (#1689), by lasers
+* wifi module: remove use_sudo in favor of auto (#1703), by lasers
+* wifi module: switch to wifi device auto detection by default (#1706), by lasers
+
 version 3.16 (2019-01-20)
 * @maximbaz has become the third collaborator of the py3status project !
 * add -u, --i3status to specify or override i3status path (#1649), by lasers

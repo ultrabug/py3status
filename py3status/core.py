@@ -425,10 +425,12 @@ class Py3statusWrapper:
 
             if gevent.socket.socket is socket.socket:
                 self.log("gevent monkey patching is active")
+                return True
             else:
                 self.notify_user("gevent monkey patching failed.")
         except ImportError:
             self.notify_user("gevent is not installed, monkey patching failed.")
+        return False
 
     def get_user_modules(self):
         """
@@ -534,10 +536,13 @@ class Py3statusWrapper:
             self.log("py3status started with config {}".format(self.config))
 
         if self.config["gevent"]:
-            self.gevent_monkey_patch_report()
+            self.is_gevent = self.gevent_monkey_patch_report()
+        else:
+            self.is_gevent = False
 
         # read i3status.conf
         config_path = self.config["i3status_config_path"]
+        self.log("config file: {}".format(self.config["i3status_config_path"]))
         self.config["py3_config"] = process_config(config_path, self)
 
         # setup i3status thread
@@ -550,6 +555,8 @@ class Py3statusWrapper:
             self.i3status_thread.mock()
             i3s_mode = "mocked"
         else:
+            for module in i3s_modules:
+                self.log("adding module {}".format(module))
             i3s_mode = "started"
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
@@ -600,6 +607,7 @@ class Py3statusWrapper:
         self.py3_modules = self.config["py3_config"]["py3_modules"]
 
         # get a dict of all user provided modules
+        self.log("modules include paths: {}".format(self.config["include_paths"]))
         user_modules = self.get_user_configured_modules()
         if self.config["debug"]:
             self.log("user_modules={}".format(user_modules))

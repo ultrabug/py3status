@@ -194,7 +194,35 @@ class ClickTimer:
             self.timer.start()
 
 
-SKIP_ATTRS = ["on_click", "run", "post_config_hook", "module", "py3"]
+STRING_NOT_SUPPORTED = "python2 not supported"
+STRING_NOT_INSTALLED = "not installed"
+STRING_MISSING_MODULE = "missing module"
+SKIP_ATTRS = [
+    "align",
+    "allow_urgent",
+    "background",
+    "border",
+    "border_bottom",
+    "border_left",
+    "border_right",
+    "border_top",
+    "markup",
+    "min_length",
+    "min_width",
+    "module",
+    "on_click",
+    "position",
+    "post_config_hook",
+    "py3",
+    "run",
+    "separator",
+    "separator_block_width",
+    "urgent_border",
+    "urgent_border_bottom",
+    "urgent_border_left",
+    "urgent_border_right",
+    "urgent_border_top",
+]
 
 
 class Py3status:
@@ -205,14 +233,12 @@ class Py3status:
     module = None
 
     def post_config_hook(self):
-        if i3pystatus is None:
-            raise Exception("i3pystatus is not installed")
-
         if self.py3.is_python_2():
-            raise Exception("Python 2 not supported by i3pystatus :(")
-
-        if not self.module:
-            raise Exception("No module selected")
+            raise Exception(STRING_NOT_SUPPORTED)
+        elif not i3pystatus:
+            raise Exception(STRING_NOT_INSTALLED)
+        elif not self.module:
+            raise Exception(STRING_MISSING_MODULE)
 
         settings = {}
         for attribute in dir(self):
@@ -272,9 +298,8 @@ class Py3status:
 
         self.is_interval_module = isinstance(module, i3pystatus.IntervalModule)
         # modules update their output independently so we need to periodically
-        # check if it has been updated.  For modules with long intervals it is
-        # important to do this output check much more regularly thank the
-        # interval.
+        # check if it has been updated. For modules with long intervals it is
+        # important to do output check much more regularly than the interval.
         self._cache_timeout = min(
             getattr(module, "interval", MIN_CHECK_INTERVAL), MIN_CHECK_INTERVAL
         )
@@ -287,30 +312,42 @@ class Py3status:
             callbacks.append((click, dbclick))
 
         self._click_timer = ClickTimer(self, callbacks)
-        self._last_content = None
+        self._last_content = {}
         self._timeout = 1
 
     def run(self):
         output = self.module.output or {"full_text": ""}
 
+        variables = []
+        for var in [output, self._last_content]:
+            if "composite" in var:
+                var = var["composite"][0]
+            for key in ["name", "instance"]:
+                if key in var:
+                    del var[key]
+            variables.append(var)
+        output, self._last_content = variables
+
         if self._last_content != output:
             self._last_content = output
             self._timeout = 1
+            full_text = output.get("full_text", "")
+            # which modules return tuples?
+            if isinstance(full_text, tuple):
+                full_text = full_text[0]
+            if full_text:
+                output["full_text"] = self.py3.safe_format(full_text)
         else:
             self._timeout *= 2
             if self._timeout > MAX_AUTO_TIMEOUT:
                 self._timeout = MAX_AUTO_TIMEOUT
 
-        # some modules return tuples
-        if isinstance(output["full_text"], tuple):
-            output["full_text"] = output["full_text"][0]
-
         if self.is_interval_module:
-            output["cached_until"] = self.py3.time_in(
-                sync_to=min(self._cache_timeout, self._timeout)
-            )
+            interval = min(self._cache_timeout, self._timeout)
         else:
-            output["cached_until"] = self.py3.time_in(sync_to=self._timeout)
+            interval = self._timeout
+
+        output["cached_until"] = self.py3.time_in(sync_to=interval)
 
         return output
 

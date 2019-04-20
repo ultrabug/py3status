@@ -62,55 +62,6 @@ running
 from math import ceil
 from threading import Timer
 from time import time
-import os
-
-try:
-    from pygame import mixer as pygame_mixer
-except ImportError:
-    pygame_mixer = None
-
-try:
-    import pyglet
-except ImportError:
-    pyglet = None
-
-
-class Player(object):
-    _default = "_silence"
-
-    def __init__(self):
-        if pyglet is not None:
-            pyglet.options["audio"] = ("pulse", "silent")
-            self._player = pyglet.media.Player()
-            self._default = "_pyglet"
-        elif pygame_mixer is not None:
-            pygame_mixer.init()
-            self._default = "_pygame"
-
-    def _silence(self, sound_fname):
-        pass
-
-    def _pygame(self, sound_fname):
-        pygame_mixer.music.load(sound_fname)
-        pygame_mixer.music.play()
-
-    def _pyglet(self, sound_fname):
-        res_dir, f = os.path.split(sound_fname)
-
-        if res_dir not in pyglet.resource.path:
-            pyglet.resource.path = [res_dir]
-            pyglet.resource.reindex()
-
-        self._player.queue(pyglet.resource.media(f, streaming=False))
-        self._player.play()
-
-    @property
-    def available(self):
-        return self._default != "_silence"
-
-    def __call__(self, sound_fname):
-        getattr(self, self._default)(os.path.expanduser(sound_fname))
-
 
 PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
 
@@ -158,7 +109,6 @@ class Py3status:
         self._section_time = self.timer_pomodoro
         self._timer = None
         self._end_time = None
-        self._player = Player()
         self._alert = False
         if self.display_bar is True:
             self.format = u"{bar}"
@@ -176,7 +126,7 @@ class Py3status:
         self._running = False
         if self._active:
             if not user_action:
-                self._play_sound(self.sound_pomodoro_end)
+                self.py3.play_sound(self.sound_pomodoro_end)
             # start break
             self._time_left = self.timer_break
             self._section_time = self.timer_break
@@ -188,7 +138,7 @@ class Py3status:
             self._active = False
         else:
             if not user_action:
-                self._play_sound(self.sound_break_end)
+                self.py3.play_sound(self.sound_break_end)
             self._time_left = self.timer_pomodoro
             self._section_time = self.timer_pomodoro
             self._active = True
@@ -222,7 +172,7 @@ class Py3status:
                 self._timer = Timer(self._time_left, self._time_up)
                 self._timer.start()
                 if self._active:
-                    self._play_sound(self.sound_pomodoro_start)
+                    self.py3.play_sound(self.sound_pomodoro_start)
 
         elif event["button"] == 2:
             # reset
@@ -320,24 +270,6 @@ class Py3status:
                 response["color"] = self.py3.COLOR_DEGRADED
 
         return response
-
-    def _play_sound(self, sound_fname):
-        """Play sound if required
-        """
-        if not sound_fname:
-            return
-
-        if not self._player.available:
-            self.py3.log(
-                "pomodoro module: the pyglet or pygame "
-                "library are required to play sounds"
-            )
-            return
-
-        try:
-            self._player(sound_fname)
-        except Exception:
-            return
 
 
 if __name__ == "__main__":

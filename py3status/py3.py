@@ -449,6 +449,12 @@ class Py3:
         """
         return self._is_python_2
 
+    def is_gevent(self):
+        """
+        Checks if gevent monkey patching is enabled or not.
+        """
+        return self._py3_wrapper.is_gevent
+
     def is_my_event(self, event):
         """
         Checks if an event triggered belongs to the module receiving it.  This
@@ -724,23 +730,16 @@ class Py3:
             format_strings = [format_strings]
         names = set()
         for string in format_strings:
-            for color in string.replace("&", " ").split("color=")[1::1]:
-                color = color.split()[0]
-                if "#" in color:
-                    continue
-                if color in ["good", "bad", "degraded", "None", "threshold"]:
-                    continue
-                if color in COLOR_NAMES:
-                    continue
-                names.add(color)
+            names.update(self._formatter.get_color_names(string))
         return list(names)
 
-    def get_placeholders_list(self, format_string, match=None):
+    def get_placeholders_list(self, format_string, matches=None):
         """
         Returns a list of placeholders in ``format_string``.
 
-        If ``match`` is provided then it is used to filter the result using
-        fnmatch so the following patterns can be used:
+        If ``matches`` is provided then it is used to filter the result
+        using fnmatch so the following patterns can be used:
+
 
         .. code-block:: none
 
@@ -759,14 +758,17 @@ class Py3:
         else:
             placeholders = self._format_placeholders[format_string]
 
-        if not match:
+        if not matches:
             return list(placeholders)
+        elif isinstance(matches, basestring):
+            matches = [matches]
         # filter matches
-        found = []
-        for placeholder in placeholders:
-            if fnmatch(placeholder, match):
-                found.append(placeholder)
-        return found
+        found = set()
+        for match in matches:
+            for placeholder in placeholders:
+                if fnmatch(placeholder, match):
+                    found.add(placeholder)
+        return list(found)
 
     def get_placeholder_formats_list(self, format_string):
         """
@@ -1112,13 +1114,14 @@ class Py3:
         Plays sound_file if possible.
         """
         self.stop_sound()
-        cmd = self.check_commands(["ffplay", "paplay", "play"])
-        if cmd:
-            if cmd == "ffplay":
-                cmd = "ffplay -autoexit -nodisp -loglevel 0"
-            sound_file = os.path.expanduser(sound_file)
-            c = shlex.split("{} {}".format(cmd, sound_file))
-            self._audio = Popen(c)
+        if sound_file:
+            cmd = self.check_commands(["ffplay", "paplay", "play"])
+            if cmd:
+                if cmd == "ffplay":
+                    cmd = "ffplay -autoexit -nodisp -loglevel 0"
+                sound_file = os.path.expanduser(sound_file)
+                c = shlex.split("{} {}".format(cmd, sound_file))
+                self._audio = Popen(c)
 
     def stop_sound(self):
         """

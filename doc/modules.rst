@@ -3,7 +3,7 @@
 Modules
 =======
 
-py3status comes with a large selection of modules ready to use.  For information on their configuration see :ref:`using_modules`.
+py3status comes with a large selection of modules ready to use.  For information on their configuration see :ref:`configuration`.
 
 You can also get a list with short descriptions of all available modules by using the CLI:
 ::
