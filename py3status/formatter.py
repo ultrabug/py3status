@@ -17,6 +17,25 @@ except ImportError:
 python2 = sys.version_info < (3, 0)
 
 
+def expand_color(color, default=None, passthrough=False):
+    """
+    Expand various colors to #RRGGBB.
+    """
+    if color and color[0] == "#":
+        color = color[1:]
+        try:
+            int(color, 16)
+        except ValueError:
+            return
+        length = len(color)
+        if length in [3, 4]:
+            color = "".join(color[x] * 2 for x in range(length))
+        elif length not in [6, 8]:
+            return
+        return "#" + color.upper()
+    return COLOR_NAMES.get(color, color if passthrough else default)
+
+
 class Formatter:
     """
     Formatter for processing format strings via the format method.
@@ -490,7 +509,7 @@ class BlockConfig:
             self._if = Condition(_if)
         self._set_int(commands, "max_length")
         self._set_int(commands, "min_length")
-        self.color = self._check_color(commands.get("color"))
+        self.color = expand_color(commands.get("color"), passthrough=True)
 
         self.not_zero = "not_zero" in commands or self.not_zero
         self.show = "show" in commands or self.show
@@ -506,27 +525,6 @@ class BlockConfig:
                 setattr(self, name, value)
             except ValueError:
                 pass
-
-    def _check_color(self, color):
-        if not color:
-            return self.color
-        # fix any hex colors so they are #RRGGBB
-        if color.startswith("#"):
-            color = color.upper()
-            if len(color) == 4:
-                color = (
-                    "#"
-                    + color[1]
-                    + color[1]
-                    + color[2]
-                    + color[2]
-                    + color[3]
-                    + color[3]
-                )
-            # check color is valid
-            if not self.REGEX_COLOR.match(color):
-                return self.color
-        return color
 
 
 class Block:

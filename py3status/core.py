@@ -15,8 +15,8 @@ from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
 from py3status.command import CommandServer
-from py3status.constants import COLOR_NAMES
 from py3status.events import Events
+from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
@@ -160,20 +160,8 @@ class Common:
             # check py3status general section
             param = config["general"].get(attribute, self.none_setting)
         if param and (attribute == "color" or attribute.startswith("color_")):
-            if param[0] != "#":
-                # named color
-                param = COLOR_NAMES.get(param.lower(), self.none_setting)
-            elif len(param) == 4:
-                # This is a color like #123 convert it to #112233
-                param = (
-                    "#"
-                    + param[1]
-                    + param[1]
-                    + param[2]
-                    + param[2]
-                    + param[3]
-                    + param[3]
-                )
+            # check color value
+            param = expand_color(param.lower(), self.none_setting)
         return param
 
     def report_exception(self, msg, notify_user=True, level="error", error_frame=None):
