@@ -12,6 +12,8 @@ Configuration parameters:
         *(default '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
         '[\?color=memory.used_percent {memory.used_percent}%]')*
     format_gpu_separator: show separator if more than one (default ' ')
+    memory_unit: specify memory unit, eg 'KiB', 'MiB', 'GiB', otherwise auto
+        (default None)
     thresholds: specify color thresholds to use
         (default [(0, 'good'), (65, 'degraded'), (75, 'orange'), (85, 'bad')])
 
@@ -25,9 +27,12 @@ format_gpu placeholders:
     {gpu_name}            The official product name of the GPU
     {gpu_uuid}            Globally unique immutable identifier of the GPU
     {memory.free}         Total free memory
+    {memory.free_unit}    Total free memory unit
     {memory.total}        Total installed GPU memory
+    {memory.total_unit}   Total installed GPU memory unit
     {memory.used}         Total memory allocated by active contexts
     {memory.used_percent} Total memory allocated by active contexts percentage
+    {memory.used_unit}    Total memory unit
     {temperature.gpu}     Core GPU temperature in degrees C
 
     Use `python /path/to/nvidia_smi.py --list-properties` for a full list of
@@ -43,10 +48,10 @@ Requires:
 
 Examples:
 ```
-# add {memory.used}
+# display nvidia properties
 nvidia_smi {
     format_gpu = '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
-    format_gpu += '[\?color=memory.used_percent {memory.used} MiB'
+    format_gpu += '[\?color=memory.used_percent {memory.used} {memory.used_unit}'
     format_gpu += '[\?color=darkgray&show \|]{memory.used_percent:.1f}%]'
 }
 ```
@@ -85,25 +90,34 @@ class Py3status:
         "[\?color=memory.used_percent {memory.used_percent}%]"
     )
     format_gpu_separator = " "
+    memory_unit = None
     thresholds = [(0, "good"), (65, "degraded"), (75, "orange"), (85, "bad")]
 
     def post_config_hook(self):
         command = "nvidia-smi --format=csv,noheader,nounits --query-gpu="
         if not self.py3.check_commands(command.split()[0]):
             raise Exception(STRING_NOT_INSTALLED)
-        self.properties = self.py3.get_placeholders_list(self.format_gpu)
 
-        format_gpu = {x: ":.1f" for x in self.properties if "used_percent" in x}
+        properties = self.py3.get_placeholders_list(self.format_gpu)
+        format_gpu = {x: ":.1f" for x in properties if "used_percent" in x}
         self.format_gpu = self.py3.update_placeholder_formats(
             self.format_gpu, format_gpu
         )
 
-        for name in ["memory.used_percent"]:
-            if name in self.properties:
-                self.properties.remove(name)
-        for name in ["memory.used", "memory.total"]:
-            if name not in self.properties:
-                self.properties.append(name)
+        new_memory_properties = set()
+        new_properties = set(["memory.used", "memory.total"])
+        for name in properties:
+            if "used_percent" in name:
+                continue
+            if name.startswith("memory"):
+                if name.endswith("_unit"):
+                    name = name[:-5]
+                new_memory_properties.add(name)
+            new_properties.add(name)
+
+        self.properties = list(new_properties)
+        self.memory_properties = list(new_memory_properties)
+        self.memory_unit = self.memory_unit or "B"
         self.nvidia_command = command + ",".join(self.properties)
 
         self.thresholds_init = self.py3.get_color_names_list(self.format_gpu)
@@ -120,6 +134,12 @@ class Py3status:
             gpu["memory.used_percent"] = (
                 float(gpu["memory.used"]) / float(gpu["memory.total"]) * 100.0
             )
+
+            for key in self.memory_properties:
+                value, unit_key = float(gpu[key]) * 1024 ** 2, key + "_unit"
+                value, unit_value = self.py3.format_units(value, self.memory_unit)
+                gpu.update({key: value, unit_key: unit_value})
+
             for x in self.thresholds_init:
                 if x in gpu:
                     self.py3.threshold_get_color(gpu[x], x)
