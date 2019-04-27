@@ -120,7 +120,7 @@ class Py3status:
             raise Exception(STRING_ERROR)
 
         self.active = 0
-        self.cycle_time = time() + self.cycle
+        self.cycle_time = int(time()) + self.cycle
         self.cycle_timeout = self.cycle
         self.last_active = 0
         self.urgent = False
@@ -216,14 +216,16 @@ class Py3status:
 
         # keep cycling if defined and no urgent
         if self.cycle_timeout and not urgent:
-            self._change_active(1)
             self.cycle = self.cycle_timeout
-            self.cycle_time = time() + self.cycle
+            if time() >= self.cycle_time:
+                self._change_active(1)
+                self.cycle_time = int(time()) + self.cycle
+                output = self._get_output()
 
         # time
         update_time = update_time or self.cycle or None
         if update_time is not None:
-            cached_until = self.py3.time_in(self.cycle)
+            cached_until = self.py3.time_in(update_time)
         else:
             cached_until = self.py3.CACHE_FOREVER
 
