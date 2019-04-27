@@ -407,6 +407,7 @@ class Module:
                     raise ValueError(err)
                 self.py3status_module_options["position"] = position
 
+        # i3bar, py3status
         markup = fn(self.module_full_name, "markup")
         if not hasattr(markup, "none_setting"):
             if markup not in MARKUP_LANGUAGES:
@@ -414,6 +415,7 @@ class Module:
                 err += make_quotes(MARKUP_LANGUAGES)
                 err += ". Got `{}`.".format(markup)
                 raise ValueError(err)
+            self.i3bar_module_options["markup"] = markup
             self.py3status_module_options["markup"] = markup
 
     def process_composite(self, response):
@@ -445,17 +447,7 @@ class Module:
         # set markup
         if "markup" in self.py3status_module_options:
             markup = self.py3status_module_options["markup"]
-            line = ""
             for item in composite:
-                # validate the response
-                if "full_text" not in item:
-                    raise KeyError('missing "full_text" key in response')
-                color = item.get("color")
-                if color:
-                    span = u"<span fgcolor='{}'>{}</span>"
-                    line += span.format(color, item["full_text"])
-                else:
-                    line += item["full_text"]
                 item["markup"] = markup
 
         # set universal options on last component
