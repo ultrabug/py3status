@@ -110,25 +110,23 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def net_rate(self):
-        ns = self._get_stat()
+        network_stat = self._get_stat()
         deltas = {}
         try:
             # time from previous check
-            timedelta = time() - self.last_time
+            current_time = time()
+            timedelta = current_time - self.last_time
 
             # calculate deltas for all interfaces
-            for old, new in zip(self.last_stat, ns):
-                down = int(new[1]) - int(old[1])
-                up = int(new[9]) - int(old[9])
-
-                down /= timedelta
-                up /= timedelta
+            for old, new in zip(self.last_stat, network_stat):
+                down = (int(new[1]) - int(old[1])) / timedelta
+                up = (int(new[9]) - int(old[9])) / timedelta
 
                 deltas[new[0]] = {"total": up + down, "up": up, "down": down}
 
             # update last_ info
-            self.last_stat = self._get_stat()
-            self.last_time = time()
+            self.last_stat = network_stat
+            self.last_time = current_time
 
             # get the interface with max rate
             if self.sum_values:
