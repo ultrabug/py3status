@@ -375,6 +375,8 @@ class Py3:
                 si = len(unit) > 1 and unit[1] != "i"
                 if si:
                     post = post[1:]
+                    if unit[1] == "b":
+                        value *= 8
                 auto = False
             else:
                 index = 0
