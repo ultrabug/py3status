@@ -196,7 +196,7 @@ class Py3status:
             self._change_active(delta)
         self.last_active = self.active
 
-    def group(self):
+    def _get_output_and_time(self):
         # get an output. again if empty (twice).
         for x in range(3):
             output = self._get_output()
@@ -208,6 +208,11 @@ class Py3status:
         else:
             update_time = MAX_NO_CONTENT_WAIT
 
+        return output, update_time
+
+    def group(self):
+        output, update_time = self._get_output_and_time()
+
         # check for urgents
         urgent = output and output[0].get("urgent")
         self.urgent_history[self.active] = urgent
@@ -217,10 +222,12 @@ class Py3status:
         self.cycle = 0
         if self.first_run:
             self.first_run = False
+            update_time = 1
         elif self.cycle_timeout and not urgent:
             current_time = time()
             if current_time >= self.cycle_time - 0.1:
                 self._change_active(1)
+                output, update_time = self._get_output_and_time()
                 self.cycle = self.cycle_timeout
                 self.cycle_time = current_time + self.cycle
             else:
