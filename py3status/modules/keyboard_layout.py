@@ -167,7 +167,7 @@ class Py3status:
     def _set_xkblayout(self):
         layout = self._layouts[self._active]
         layout_pos = (
-            self.py3.command_output(["xkblayout-state", "print", "%S"])
+            self.py3.command_output(["xkblayout-state", "print", "%E"])
             .split()
             .index(layout)
         )
