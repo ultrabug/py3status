@@ -1,3 +1,27 @@
+version 3.19 (2019-04-30)
+* NEWS: py3status now has a logo thanks to @tobaloidee!
+* constants: QA uppercase hex color codes (#1786), by lasers
+* core: log loaded i3status modules on startup (#1772), by lasers
+* group: calculate remaining times to cycle more accurately (#1785), by lasers
+* logo upload & readme update  (#1768), by tobaloidee
+* module: fix pango markup for non-composite modules (#1784), by lasers
+* py3: move py3.get_color_names helper to formatter (#1778), by lasers
+* py3: support multiple matches on get_placeholders_list (#1773), by lasers
+* py3: support converting bits to bytes on format_units() (#1793), by lasers
+* new module khal: display your khal calendar (#1741), by xenrox
+* diskdata module: explicitly request kb from df (#1763), by Kevin Pulo
+* diskdata module: optimize formatting composites, units, etc  (#1774), by lasers
+* i3pystatus module: check python first before telling python2 users to install (#1760), by lasers
+* i3pystatus module: support universal/py3status module options (#1758), by lasers
+* i3pystatus module: remove composites and keys to make dicts more comparable (#1762), by lasers
+* keyboard_layout module: use xkblayout-state to switch layout (#1780), by Pipat Saengow
+* keyboard_layout module: xkblayout-state should prefer variant if available (#1795), by ecks
+* mpris module: detect and report error when used with gevent (#1771)
+* mpris module: make new default and click buttons changes (#1761), by lasers
+* net_rate module: call functions once instead of twice (#1792), by lasers
+* nvidia_smi module: add memory units placeholders (#1790), by lasers
+* pomodoro module: use py3.play_sound helper (#1770), by lasers
+
 version 3.18 (2019-03-30)
 * bugfix release: regresion on group cycling
 * group: don't cycle on zero (#1757), by lasers
