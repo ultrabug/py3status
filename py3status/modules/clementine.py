@@ -43,7 +43,6 @@ class Py3status:
         internet_radio = False
 
         try:
-            #track_id = self.py3.command_output(CMD + ".GetCurrentTrack")
             metadata = self.py3.command_output(CMD)
             lines = filter(None, metadata.splitlines())
         except self.py3.CommandError:
