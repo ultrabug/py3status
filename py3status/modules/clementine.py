@@ -21,7 +21,7 @@ SAMPLE OUTPUT
 {'full_text': '♫ Music For Programming - Hivemind'}
 """
 
-CMD = "qdbus org.mpris.clementine /TrackList org.freedesktop.MediaPlayer"
+CMD = "qdbus org.mpris.MediaPlayer2.clementine /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player Metadata"
 STRING_NOT_INSTALLED = "not installed"
 INTERNET_RADIO = "Internet Radio"
 
@@ -38,13 +38,13 @@ class Py3status:
         if not self.py3.check_commands("clementine"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def clementine(self):
+    def clementine2(self):
         artist = lines = now_playing = title = ""
         internet_radio = False
 
         try:
-            track_id = self.py3.command_output(CMD + ".GetCurrentTrack")
-            metadata = self.py3.command_output(CMD + ".GetMetadata {}".format(track_id))
+            #track_id = self.py3.command_output(CMD + ".GetCurrentTrack")
+            metadata = self.py3.command_output(CMD)
             lines = filter(None, metadata.splitlines())
         except self.py3.CommandError:
             return {
@@ -54,9 +54,9 @@ class Py3status:
 
         for item in lines:
             if "artist" in item:
-                artist = item[8:]
+                artist = item[14:]
             if "title" in item:
-                title = item[7:]
+                title = item[13:]
 
         if ".mp3" in title or ".wav" in title:
             title = title[:-4]
@@ -77,7 +77,6 @@ class Py3status:
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(self.format, {"current": now_playing}),
         }
-
 
 if __name__ == "__main__":
     """
