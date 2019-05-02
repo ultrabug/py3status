@@ -38,7 +38,7 @@ class Py3status:
         if not self.py3.check_commands("clementine"):
             raise Exception(STRING_NOT_INSTALLED)
 
-    def clementine2(self):
+    def clementine(self):
         artist = lines = now_playing = title = ""
         internet_radio = False
 
