@@ -77,6 +77,7 @@ class Py3status:
             "full_text": self.py3.safe_format(self.format, {"current": now_playing}),
         }
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.
