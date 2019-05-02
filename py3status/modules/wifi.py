@@ -12,15 +12,14 @@ Configuration parameters:
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
     format: Display format for this module
-        (default 'W: {bitrate} {signal_percent} {ssid}|W: down')
-    round_bitrate: If true, bit rate is rounded to the nearest whole number
-        (default True)
+        (default 'W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}|W: down')
     signal_bad: Bad signal strength in percent (default 29)
     signal_degraded: Degraded signal strength in percent (default 49)
     thresholds: specify color thresholds to use (default [])
 
 Format placeholders:
-    {bitrate} Display bit rate
+    {bitrate} Display bitrate
+    {bitrate_unit} Display bitrate unit
     {device} Display device name
     {freq_ghz} Network frequency in Ghz
     {freq_mhz} Network frequency in Mhz
@@ -60,7 +59,7 @@ SAMPLE OUTPUT
 import re
 import math
 
-DEFAULT_FORMAT = "W: {bitrate} {signal_percent} {ssid}|W: down"
+DEFAULT_FORMAT = "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}|W: down"
 STRING_NOT_INSTALLED = "iw not installed"
 STRING_NO_DEVICE = "no available device"
 
@@ -77,13 +76,25 @@ class Py3status:
     device = None
     down_color = "bad"
     format = DEFAULT_FORMAT
-    round_bitrate = True
     signal_bad = 29
     signal_degraded = 49
     thresholds = []
 
     class Meta:
-        deprecated = {"remove": [{"param": "use_sudo", "msg": "obsolete"}]}
+        deprecated = {
+            "remove": [
+                {"param": "use_sudo", "msg": "obsolete"},
+                {"param": "round_bitrate", "msg": "obsolete"},
+            ]
+        }
+        update_config = {
+            "update_placeholder_format": [
+                {
+                    "placeholder_formats": {"signal_percent": ":g", "bitrate": ":g"},
+                    "format_strings": ["format"],
+                }
+            ]
+        }
 
     def post_config_hook(self):
         iw = self.py3.check_commands(["iw", "/sbin/iw"])
@@ -124,7 +135,7 @@ class Py3status:
 
         if format_up or format_down:
             self.format = u"{}|{}".format(
-                format_up or "W: {bitrate} {signal_percent} {ssid}",
+                format_up or "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}",
                 format_down or "W: down",
             )
             msg = "DEPRECATION WARNING: you are using old style configuration "
@@ -169,8 +180,6 @@ class Py3status:
         bitrate_out = re.search(r"tx bitrate: ([^\s]+) ([^\s]+)", iw)
         if bitrate_out:
             bitrate = float(bitrate_out.group(1))
-            if self.round_bitrate:
-                bitrate = round(bitrate)
             bitrate_unit = bitrate_out.group(2)
             if bitrate_unit == "Gbit/s":
                 bitrate *= 1000
@@ -222,22 +231,15 @@ class Py3status:
                     color = self.py3.COLOR_BAD
                 elif bitrate <= self.bitrate_degraded:
                     color = self.py3.COLOR_DEGRADED
-                bitrate = "{} {}".format(bitrate, bitrate_unit)
-            else:
-                bitrate = "? MBit/s"
             if signal_dbm:
                 if signal_dbm <= self.signal_dbm_bad:
                     color = self.py3.COLOR_BAD
                 elif signal_dbm <= self.signal_dbm_degraded:
                     color = self.py3.COLOR_DEGRADED
-                signal_dbm = "{} dBm".format(signal_dbm)
-                signal_percent = "{}%".format(signal_percent)
-            else:
-                signal_dbm = "? dBm"
-                signal_percent = "?%"
 
         wifi_data = {
             "bitrate": bitrate,
+            "bitrate_unit": bitrate_unit,
             "device": self.device,
             "freq_ghz": freq_ghz,
             "freq_mhz": freq_mhz,
