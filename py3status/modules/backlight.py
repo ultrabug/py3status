@@ -154,7 +154,7 @@ class Py3status:
             brightness = int(brightness_line)
         for brightness_max_line in open("%s/max_brightness" % self.device, "rb"):
             brightness_max = int(brightness_max_line)
-        return brightness * 100 / brightness_max
+        return round(brightness * 100 / brightness_max)
 
     # Returns the string array for the command to get the current backlight level
     def _command_get(self):
