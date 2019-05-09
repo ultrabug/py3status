@@ -80,6 +80,8 @@ Configuration parameters:
         (default None)
 
 Dynamic configuration parameters:
+    <OUTPUT>_output: change OUTPUT text
+        Example: DP1_output = "🖵"
     <OUTPUT>_pos: apply the given position to the OUTPUT
         Example: DP1_pos = "-2560x0"
         Example: DP1_pos = "above eDP1"
@@ -273,8 +275,9 @@ class Py3status:
         """
         Construct the string to be displayed and record the max width.
         """
-        show = "{}".format(self._separator(mode)).join(combination)
-        show = show.rstrip("{}".format(self._separator(mode)))
+        show = getattr(self, "icon_{}".format(mode)).join(
+            tuple(getattr(self, "{}_output".format(x), x) for x in combination)
+        )
         self.max_width = max([self.max_width, len(show)])
         return show
 
@@ -429,15 +432,6 @@ class Py3status:
             self._apply(force=True)
             self.py3.update()
         self.force_on_start = None
-
-    def _separator(self, mode):
-        """
-        Return the separator for the given mode.
-        """
-        if mode == "extend":
-            return self.icon_extend
-        if mode == "clone":
-            return self.icon_clone
 
     def _switch_selection(self, direction):
         self.available_combinations.rotate(direction)
