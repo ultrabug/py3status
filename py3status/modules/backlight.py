@@ -109,6 +109,7 @@ class Py3status:
             else:
                 raise Exception(STRING_NOT_AVAILABLE)
 
+
         self.format = self.py3.update_placeholder_formats(self.format, {"level": ":.0f"})
         # check for an error code and an output
         self.command_available = False
