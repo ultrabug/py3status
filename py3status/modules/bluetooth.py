@@ -29,18 +29,15 @@ off
 {'color': '#FF0000', 'full_text': u'BT'}
 """
 
-import dbus
+from pydbus import SystemBus
 
 DEFAULT_FORMAT = "BT[: {format_device}]"
 STRING_NOT_STARTED = "service isn't running"
 
 
 def get_connected_devices():
-    bus = dbus.SystemBus()
-    manager = dbus.Interface(
-        bus.get_object("org.bluez", "/"), "org.freedesktop.DBus.ObjectManager"
-    )
-
+    bus = SystemBus()
+    manager = bus.get("org.bluez", "/")["org.freedesktop.DBus.ObjectManager"]
     objects = manager.GetManagedObjects()
     devices = []
 
