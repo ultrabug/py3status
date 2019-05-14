@@ -118,7 +118,7 @@ class Py3status:
     def bluetooth(self):
         try:
             devices = get_connected_devices()
-        except dbus.DBusException:
+        except Exception:
             self.py3.error(STRING_NOT_STARTED)
 
         if devices:
