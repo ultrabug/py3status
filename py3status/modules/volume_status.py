@@ -90,6 +90,7 @@ class AudioBackend:
         self.channel = parent.channel
         self.device = parent.device
         self.is_input = parent.is_input
+        self.max_volume = parent.max_volume
         self.parent = parent
         self.setup(parent)
 
@@ -159,23 +160,20 @@ class AmixerBackend(AudioBackend):
 
 class PamixerBackend(AudioBackend):
     def setup(self, parent):
-        if self.device is None:
-            self.device = "0"
-        # Ignore channel
-        self.channel = None
         is_input = "--source" if self.is_input else "--sink"
-        self.cmd = ["pamixer", "--allow-boost", is_input, self.device]
-        self.max_volume = parent.max_volume
+        self.cmd = ["pamixer", "--allow-boost", is_input, self.device or "0"]
 
     def get_volume(self):
         try:
-            perc = self.command_output(self.cmd + ["--get-volume"])
+            line = self.command_output(self.cmd + ["--get-mute", "--get-volume"])
         except CommandError as ce:
             # pamixer throws error on zero percent. see #1135
-            perc = ce.output
-
-        perc = perc.strip()
-        muted = self.run_cmd(self.cmd + ["--get-mute"]) == 0
+            line = ce.output
+        try:
+            muted, perc = line.split()
+            muted = muted == "true"
+        except ValueError:
+            muted, perc = None, None
         return perc, muted
 
     def volume_up(self, delta):
@@ -183,14 +181,14 @@ class PamixerBackend(AudioBackend):
         if int(perc) + delta >= self.max_volume:
             options = ["--set-volume", str(self.max_volume)]
         else:
-            options = ["-i", str(delta)]
+            options = ["--increase", str(delta)]
         self.run_cmd(self.cmd + options)
 
     def volume_down(self, delta):
-        self.run_cmd(self.cmd + ["-d", str(delta)])
+        self.run_cmd(self.cmd + ["--decrease", str(delta)])
 
     def toggle_mute(self):
-        self.run_cmd(self.cmd + ["-t"])
+        self.run_cmd(self.cmd + ["--toggle-mute"])
 
 
 class PactlBackend(AudioBackend):
@@ -203,8 +201,6 @@ class PactlBackend(AudioBackend):
         self.reinit_device = self.device is None
         if self.device is None:
             self.device = self.get_default_device()
-
-        self.max_volume = parent.max_volume
         self.update_device()
 
     def update_device(self):
@@ -410,7 +406,10 @@ class Py3status:
         button = event["button"]
         # volume up
         if button == self.button_up:
-            self.backend.volume_up(self.volume_delta)
+            try:
+                self.backend.volume_up(self.volume_delta)
+            except TypeError:
+                pass
         # volume down
         elif button == self.button_down:
             self.backend.volume_down(self.volume_delta)
