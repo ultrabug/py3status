@@ -10,17 +10,17 @@ Module has three modes:
 By default used mode "uptime", and display a full equivalent to module "uptime"
 
 Configuration parameters:
-    view_mode: how uptime will be displayed. Default display uptime as in
-        module uptime (default "uptime")
     format_since: format to use for the time, strftime directives such as `%H`
         can be used, this can be only a string.
-        (default 'since %Y-%m-%d %H:%M:%S [{name}]')
+        (default 'since %Y-%m-%d %H:%M [{name}]')
     format_uptime: display uptime format for this module
         (default 'up {days} days {hours} hours {minutes} minutes')
     format_zone: defines the timezones displayed. This must be a single string.
         (default '{Local}')
+    view_mode: how uptime will be displayed. Default display uptime as in
+        module uptime (default "uptime")
 
-Format placeholders for format_uptime:
+Format placeholders:
     {decades} decades
     {years}   years
     {weeks}   weeks
@@ -28,14 +28,12 @@ Format placeholders for format_uptime:
     {hours}   hours
     {minutes} minutes
     {seconds} seconds
+    {name} friendly timezone name eg `Buenos Aires`
+    {timezone} full timezone name eg `America/Argentina/Buenos_Aires`
 
 Note: If you don't use a placeholder, its value will be carried over
     to the next placeholder. For example, an uptime of 1 hour 30 minutes
     will give you 90 if {minutes} or 1:30 if {hours}:{minutes}.
-
-Format placeholders for format_zone, used in format_since:
-    {name} friendly timezone name eg `Buenos Aires`
-    {timezone} full timezone name eg `America/Argentina/Buenos_Aires`
 
 Timezone are defined in the `format` using the TZ name in squiggly brackets eg
 `{GMT}`, `{Portugal}`, `{Europe/Paris}`, `{America/Argentina/Buenos_Aires}`.
@@ -102,11 +100,11 @@ class Py3status:
     """
     """
 
-    # Available configuration parameters
-    view_mode = "uptime"
+    # available configuration parameters
     format_since = "since %Y-%m-%d %H:%M [{name}]"
     format_uptime = "up {days} days {hours} hours {minutes} minutes"
     format_zone = "{Local}"
+    view_mode = "uptime"
 
     def post_config_hook(self):
         if self.view_mode == "uptime":
@@ -237,8 +235,10 @@ class Py3status:
                 for text in uptime_res["full_text"]:
                     fulltext_up += text["full_text"]
 
-            full_res = {"full_text": fulltext_s + fulltext_up,
-                        "cached_until": since_res["cached_until"]}
+            full_res = {
+                "full_text": fulltext_s + fulltext_up,
+                "cached_until": since_res["cached_until"],
+            }
             return full_res
 
     def _uptime_adv_uptime(self, time_up, delta):
@@ -266,11 +266,7 @@ class Py3status:
             tzname = timezone.split("/")[-1].replace("_", " ")
 
             format_time = self.py3.safe_format(
-                format_time,
-                dict(
-                    name=tzname,
-                    timezone=timezone,
-                ),
+                format_time, dict(name=tzname, timezone=timezone)
             )
 
             if self.py3.is_composite(format_time):
