@@ -85,7 +85,7 @@ class Py3status:
             updates = self.py3.command_output(["auracle", "sync"])
             return len(updates.splitlines())
         except self.py3.CommandError:
-            return None
+            return 0
 
     def _get_cower_updates(self):
         try:
