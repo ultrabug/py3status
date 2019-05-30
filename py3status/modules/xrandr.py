@@ -80,8 +80,8 @@ Configuration parameters:
         (default None)
 
 Dynamic configuration parameters:
-    <OUTPUT>_output: change OUTPUT text
-        Example: DP1_output = "🖵"
+    <OUTPUT>_icon: use this icon instead of OUTPUT name as text
+        Example: DP1_icon = "🖵"
     <OUTPUT>_pos: apply the given position to the OUTPUT
         Example: DP1_pos = "-2560x0"
         Example: DP1_pos = "above eDP1"
@@ -276,7 +276,7 @@ class Py3status:
         Construct the string to be displayed and record the max width.
         """
         show = getattr(self, "icon_{}".format(mode)).join(
-            tuple(getattr(self, "{}_output".format(x), x) for x in combination)
+            tuple(getattr(self, "{}_icon".format(x), x) for x in combination)
         )
         self.max_width = max([self.max_width, len(show)])
         return show
