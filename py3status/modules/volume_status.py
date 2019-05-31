@@ -3,6 +3,8 @@
 Volume control.
 
 Configuration parameters:
+    blocks: a string, where each character represents a volume level
+            (default "_▁▂▃▄▅▆▇█")
     button_down: button to decrease volume (default 5)
     button_mute: button to toggle mute (default 1)
     button_up: button to increase volume (default 4)
@@ -31,6 +33,8 @@ Configuration parameters:
         (default 5)
 
 Format placeholders:
+    {icon} Character representing the volume level,
+            as defined by the 'blocks'
     {percentage} Percentage volume
 
 Color options:
@@ -77,6 +81,7 @@ mute
 """
 
 import re
+import math
 from py3status.exceptions import CommandError
 
 STRING_ERROR = "invalid command `%s`"
@@ -198,15 +203,15 @@ class PactlBackend(AudioBackend):
         self.device_type_pl = self.device_type + "s"
         self.device_type_cap = self.device_type[0].upper() + self.device_type[1:]
 
-        self.reinit_device = self.device is None
-        if self.device is None:
+        self.use_default_device = self.device is None
+        if self.use_default_device:
             self.device = self.get_default_device()
         self.update_device()
 
     def update_device(self):
         self.re_volume = re.compile(
-            r"{} \#{}.*?State: (\w+).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%".format(
-                self.device_type_cap, self.device
+            r"{} (?:\#{}|.*?Name: {}).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%".format(
+                self.device_type_cap, self.device, self.device
             ),
             re.M | re.DOTALL,
         )
@@ -245,22 +250,14 @@ class PactlBackend(AudioBackend):
 
     def get_volume(self):
         output = self.command_output(["pactl", "list", self.device_type_pl]).strip()
-        try:
-            state, muted, perc = self.re_volume.search(output).groups()
-        except AttributeError:
-            state, muted, perc = None, False, 0
-            # if device is unset, try again with possibly
-            # a new default device, otherwise print 0
-        if self.reinit_device and state != "RUNNING":
+        if self.use_default_device:
             self.device = self.get_default_device()
             self.update_device()
-
-        # muted should be 'on' or 'off'
-        if muted in ["yes", "no"]:
+        try:
+            muted, perc = self.re_volume.search(output).groups()
             muted = muted == "yes"
-        else:
-            muted = False
-
+        except AttributeError:
+            muted, perc = None, None
         return perc, muted
 
     def volume_up(self, delta):
@@ -301,6 +298,7 @@ class Py3status:
     """
 
     # available configuration parameters
+    blocks = u"_▁▂▃▄▅▆▇█"
     button_down = 5
     button_mute = 1
     button_up = 4
@@ -374,8 +372,8 @@ class Py3status:
         return self.py3.threshold_get_color(string)
 
     # return the format string formatted with available variables
-    def _format_output(self, format, percentage):
-        text = self.py3.safe_format(format, {"percentage": percentage})
+    def _format_output(self, format, icon, percentage):
+        text = self.py3.safe_format(format, {"icon": icon, "percentage": percentage})
         return text
 
     def volume_status(self):
@@ -383,14 +381,30 @@ class Py3status:
         perc, muted = self.backend.get_volume()
 
         color = None
-        if muted:
-            color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-        if not self.py3.is_color(color):
-            # determine the color based on the current volume level
-            color = self._perc_to_color(perc)
+        icon = None
+
+        if perc is None or muted is None:
+            color = self.py3.COLOR_BAD
+            perc = "?"
+        else:
+            if muted:
+                color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+            else:
+                icon = self.blocks[
+                    min(
+                        len(self.blocks) - 1,
+                        int(math.ceil(int(perc) / 100 * (len(self.blocks) - 1))),
+                    )
+                ]
+            if not self.py3.is_color(color):
+                # determine the color based on the current volume level
+                color = self._perc_to_color(perc)
 
         # format the output
-        text = self._format_output(self.format_muted if muted else self.format, perc)
+        text = self._format_output(
+            self.format_muted if muted else self.format, icon, perc
+        )
+
         # create response dict
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
