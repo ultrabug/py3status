@@ -250,21 +250,13 @@ class PactlBackend(AudioBackend):
             self.update_device()
         try:
             muted, perc = self.re_volume.search(output).groups()
+            muted = muted == "yes"
         except AttributeError:
             muted, perc = None, None
-
-        # muted should be 'on' or 'off'
-        if muted in ["yes", "no"]:
-            muted = muted == "yes"
-        elif muted is not None:
-            muted = False
-
         return perc, muted
 
     def volume_up(self, delta):
         perc, muted = self.get_volume()
-        if perc is None:
-            return
         if int(perc) + delta >= self.max_volume:
             change = "{}%".format(self.max_volume)
         else:
@@ -386,22 +378,15 @@ class Py3status:
         if perc is None or muted is None:
             color = self.py3.COLOR_BAD
             perc = "?"
-            if hasattr(self, "format_missing"):
-                text = self._format_output(self.format_missing, perc)
-            else:
-                text = self._format_output(
-                    self.format_muted if muted else self.format, perc
-                )
         else:
             if muted:
                 color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
             if not self.py3.is_color(color):
                 # determine the color based on the current volume level
                 color = self._perc_to_color(perc)
-            # format the output
-            text = self._format_output(
-                self.format_muted if muted else self.format, perc
-            )
+
+        # format the output
+        text = self._format_output(self.format_muted if muted else self.format, perc)
 
         # create response dict
         response = {
