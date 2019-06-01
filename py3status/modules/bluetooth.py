@@ -19,6 +19,9 @@ Color options:
     color_bad: No connection
     color_good: Active connection
 
+Requires:
+    pydbus: pythonic dbus library
+
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <https://www.gnu.org/licenses/gpl-3.0.txt>
 
@@ -32,7 +35,6 @@ off
 from pydbus import SystemBus
 
 DEFAULT_FORMAT = "BT[: {format_device}]"
-STRING_NOT_STARTED = "service isn't running"
 
 
 def get_connected_devices():
@@ -116,10 +118,7 @@ class Py3status:
             self.py3.log(msg)
 
     def bluetooth(self):
-        try:
-            devices = get_connected_devices()
-        except Exception:
-            self.py3.error(STRING_NOT_STARTED)
+        devices = get_connected_devices()
 
         if devices:
             data = []
