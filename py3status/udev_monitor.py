@@ -1,4 +1,5 @@
 from collections import defaultdict
+from time import sleep
 
 from py3status.constants import ON_TRIGGER_ACTIONS
 
@@ -81,4 +82,5 @@ class UdevMonitor:
                     "%s udev event, refresh consumer %s"
                     % (subsystem, py3_module.module_full_name)
                 )
+                sleep(0.1)
                 py3_module.force_update()
