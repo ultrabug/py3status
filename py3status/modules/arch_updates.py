@@ -14,7 +14,7 @@ Format placeholders:
 
 Requires:
     pacman-contrib: contributed scripts and tools for pacman systems
-    one of the following AUR helpers: 
+    one of the following AUR helpers:
         auracle: a flexible command line client for arch linux's user repository
         trizen: lightweight pacman wrapper and AUR helper
         yay: yet another yogurt. pacman wrapper and aur helper written in go
@@ -102,7 +102,7 @@ class Py3status:
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
-        
+
     def _get_yay_updates(self):
         try:
             updates = self.py3.command_output(["yay", "-Qua"])
