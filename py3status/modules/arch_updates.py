@@ -14,8 +14,10 @@ Format placeholders:
 
 Requires:
     pacman-contrib: contributed scripts and tools for pacman systems
-    auracle: a flexible command line client for arch linux's user repository
-    yay: yet another yogurt. pacman wrapper and aur helper written in go
+    one of the following AUR helpers: 
+        auracle: a flexible command line client for arch linux's user repository
+        trizen: lightweight pacman wrapper and AUR helper
+        yay: yet another yogurt. pacman wrapper and aur helper written in go
 ```
 
 @author Iain Tatch <iain.tatch@gmail.com>
@@ -46,7 +48,7 @@ class Py3status:
     def post_config_hook(self):
         helper = {
             "pacman": self.py3.check_commands(["checkupdates"]),
-            "aur": self.py3.check_commands(["auracle", "yay", "cower"]),
+            "aur": self.py3.check_commands(["auracle", "trizen", "yay", "cower"]),
         }
         if self.format:
             placeholders = self.py3.get_placeholders_list(self.format)
@@ -94,6 +96,13 @@ class Py3status:
         except self.py3.CommandError as ce:
             return len(ce.output.splitlines())
 
+    def _get_trizen_updates(self):
+        try:
+            updates = self.py3.command_output(["trizen", "-Sua"])
+            return len(updates.splitlines())
+        except self.py3.CommandError:
+            return None
+        
     def _get_yay_updates(self):
         try:
             updates = self.py3.command_output(["yay", "-Qua"])
