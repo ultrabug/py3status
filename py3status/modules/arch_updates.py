@@ -14,10 +14,9 @@ Format placeholders:
 
 Requires:
     pacman-contrib: contributed scripts and tools for pacman systems
-    one of the following AUR helpers:
-        auracle: a flexible command line client for arch linux's user repository
-        trizen: lightweight pacman wrapper and AUR helper
-        yay: yet another yogurt. pacman wrapper and aur helper written in go
+    auracle: a flexible command line client for arch linux's user repository
+    trizen: lightweight pacman wrapper and AUR helper
+    yay: yet another yogurt. pacman wrapper and aur helper written in go
 ```
 
 @author Iain Tatch <iain.tatch@gmail.com>
