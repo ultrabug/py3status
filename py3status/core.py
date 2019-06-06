@@ -533,6 +533,15 @@ class Py3statusWrapper:
         self.log("config file: {}".format(self.config["i3status_config_path"]))
         self.config["py3_config"] = process_config(config_path, self)
 
+        # read resources
+        if "resources" in str(self.config["py3_config"].values()):
+            from subprocess import check_output
+
+            resources = check_output(["xrdb", "-query"]).decode().splitlines()
+            self.config["resources"] = {
+                k: v.strip() for k, v in (x.split(":", 1) for x in resources)
+            }
+
         # setup i3status thread
         self.i3status_thread = I3status(self)
 

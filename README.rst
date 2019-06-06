@@ -1,4 +1,4 @@
-.. image:: https://github.com/Tobaloidee/py3status/blob/master/logo/logotype-horizontal.png
+.. image:: https://github.com/ultrabug/py3status/blob/master/logo/logotype-horizontal.png
 *********
 py3status
 *********

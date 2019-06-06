@@ -110,6 +110,7 @@ class Py3:
         self._english_env = dict(os.environ)
         self._english_env["LC_ALL"] = "C"
         self._english_env["LANGUAGE"] = "C"
+        self._format_color_names = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._is_python_2 = sys.version_info < (3, 0)
@@ -706,22 +707,45 @@ class Py3:
         self._format_placeholders_cache[format_string][key] = False
         return False
 
-    def get_color_names_list(self, format_strings):
+    def get_color_names_list(self, format_string, matches=None):
         """
         Returns a list of color names in ``format_string``.
 
-        :param format_strings: Accepts a format string or a list of format strings.
+        :param format_string: Accepts a format string.
+        :param matches: Filter results with a string or a list of strings.
+
+        If ``matches`` is provided then it is used to filter the result
+        using fnmatch so the following patterns can be used:
+
+        .. code-block:: none
+
+            * 	    matches everything
+            ? 	    matches any single character
+            [seq] 	matches any character in seq
+            [!seq] 	matches any character not in seq
         """
-        if not format_strings:
-            return []
         if not getattr(self._py3status_module, "thresholds", None):
             return []
-        if isinstance(format_strings, basestring):
-            format_strings = [format_strings]
-        names = set()
-        for string in format_strings:
-            names.update(self._formatter.get_color_names(string))
-        return list(names)
+        elif not format_string:
+            return []
+
+        if format_string not in self._format_color_names:
+            names = self._formatter.get_color_names(format_string)
+            self._format_color_names[format_string] = names
+        else:
+            names = self._format_color_names[format_string]
+
+        if not matches:
+            return list(names)
+        elif isinstance(matches, basestring):
+            matches = [matches]
+        # filter matches
+        found = set()
+        for match in matches:
+            for name in names:
+                if fnmatch(name, match):
+                    found.add(name)
+        return list(found)
 
     def get_placeholders_list(self, format_string, matches=None):
         """

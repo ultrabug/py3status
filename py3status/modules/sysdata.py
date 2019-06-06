@@ -6,10 +6,14 @@ Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 10)
     cpu_freq_unit: the unit of CPU frequency to use in report, case insensitive.
         ['kHz', 'MHz', 'GHz'] (default 'GHz')
+    cpus: specify a list of CPUs to use (default ['cpu?*'])
     format: output format string
         *(default '[\?color=cpu_used_percent CPU: {cpu_used_percent}%], '
         '[\?color=mem_used_percent Mem: {mem_used}/{mem_total} '
         '{mem_total_unit} ({mem_used_percent}%)]')*
+    format_cpu: display format for CPUs
+        (default '\?color=used_percent {used_percent}%')
+    format_cpu_separator: show separator if more than one (default ' ')
     mem_unit: the unit of memory to use in report, case insensitive.
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     swap_unit: the unit of swap to use in report, case insensitive.
@@ -28,6 +32,7 @@ Format placeholders:
     {cpu_freq_unit} unit for frequency
     {cpu_temp} cpu temperature
     {cpu_used_percent} cpu used percentage
+    {format_cpu} format for CPUs
     {load1} load average over the last minute
     {load5} load average over the five minutes
     {load15} load average over the fifteen minutes
@@ -43,10 +48,48 @@ Format placeholders:
     {swap_used_percent} used swap percentage
     {temp_unit} temperature unit
 
+format_cpu placeholders:
+    {name} cpu name, eg cpu, cpu0, cpu1, cpu2, cpu3
+    {used_percent} cpu used percentage, eg 88.99
+
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
-@author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol, JackDoan <me at jackdoan dot com>
+Examples:
+```
+# specify a list of cpus to use. see "grep cpu /proc/stat"
+sysdata {
+    cpus = []                # avg + all CPUs
+    cpus = ['cpu']           # avg             # same as {cpu_used_percent}
+    cpus = ['cpu0', 'cpu2']  # selective CPUs  # full
+    cpus = ['cpu?*']         # all CPUs        # fnmatch (default)
+}
+
+# display per cpu percents
+sysdata {
+    format = "{format_cpu}"
+    format_cpu = "{name} [\?color=used_percent {used_percent}%]"
+}
+
+# customize per cpu padding, precision, etc
+sysdata {
+    format = "CPU {format_cpu}"
+    format_cpu = "[\?min_length=4 [\?color=used_percent {used_percent:.0f}%]]"
+}
+
+# display per cpu histogram
+sysdata {
+    format = "CPU Histogram [\?color=cpu_used_percent {format_cpu}]"
+    format_cpu = "[\?if=used_percent>80 ⡇|[\?if=used_percent>60 ⡆"
+    format_cpu += "|[\?if=used_percent>40 ⡄|[\?if=used_percent>20 ⡀"
+    format_cpu += "|⠀]]]]"
+    format_cpu_separator = ""
+    thresholds = [(0, "good"), (60, "degraded"), (80, "bad")]
+    cache_timeout = 1
+}
+```
+
+@author Shahin Azad <ishahinism at Gmail>, shrimpza, guiniol, JackDoan <me at jackdoan dot com>, farnoy
 
 SAMPLE OUTPUT
 [
@@ -57,6 +100,7 @@ SAMPLE OUTPUT
 """
 
 from __future__ import division
+from fnmatch import fnmatch
 from os import getloadavg
 
 import re
@@ -69,11 +113,14 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     cpu_freq_unit = "GHz"
+    cpus = ["cpu?*"]
     format = (
         "[\?color=cpu_used_percent CPU: {cpu_used_percent}%], "
         "[\?color=mem_used_percent Mem: {mem_used}/{mem_total} "
         "{mem_total_unit} ({mem_used_percent}%)]"
     )
+    format_cpu = "\?color=used_percent {used_percent}%"
+    format_cpu_separator = " "
     mem_unit = "GiB"
     swap_unit = "GiB"
     temp_unit = u"°C"
@@ -154,12 +201,16 @@ class Py3status:
                         "swap_used_percent": ":.2f",
                     },
                     "format_strings": ["format"],
-                }
+                },
+                {
+                    "placeholder_formats": {"used_percent": ":.2f"},
+                    "format_strings": ["format_cpu"],
+                },
             ]
         }
 
     def post_config_hook(self):
-        self.last_cpu = {}
+        self.first_run = True
         temp_unit = self.temp_unit.upper()
         if temp_unit in ["C", u"°C"]:
             temp_unit = u"°C"
@@ -168,36 +219,50 @@ class Py3status:
         elif not temp_unit == "K":
             temp_unit = "unknown unit"
         self.temp_unit = temp_unit
-        self.init = {"meminfo": []}
+        self.init = {"meminfo": [], "stat": []}
         names_and_matches = [
-            ("cpu_freq", "cpu_freq_*"),
+            ("cpu_freq", ["cpu_freq_avg", "cpu_freq_max"]),
             ("cpu_temp", "cpu_temp"),
             ("cpu_percent", "cpu_used_percent"),
+            ("cpu_per_core", "format_cpu"),
             ("load", "load*"),
             ("mem", "mem_*"),
             ("swap", "swap_*"),
         ]
         for name, match in names_and_matches:
-            self.init[name] = self.py3.get_placeholders_list(self.format, match)
-            if name in ["mem", "swap"] and self.init[name]:
-                self.init["meminfo"].append(name)
+            self.init[name] = list(
+                set(
+                    self.py3.get_placeholders_list(self.format, match)
+                    + self.py3.get_color_names_list(self.format, match)
+                )
+            )
+            if self.init[name]:
+                if name in ["mem", "swap"]:
+                    self.init["meminfo"].append(name)
+                elif name in ["cpu_percent", "cpu_per_core"]:
+                    self.init["stat"].append(name)
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-        self.thresholds_legacy = {
-            "cpu": "cpu_used_percent",
-            "temp": "cpu_temp",
-            "mem": "mem_used_percent",
-            "swap": "swap_used_percent",
-            "load": "load1",
-            "max_cpu_mem": "max_used_percent",
+        self.thresholds_init = {
+            "format": self.py3.get_color_names_list(self.format),
+            "format_cpu": self.py3.get_color_names_list(self.format_cpu),
+            "legacy": {
+                "cpu": "cpu_used_percent",
+                "temp": "cpu_temp",
+                "mem": "mem_used_percent",
+                "swap": "swap_used_percent",
+                "load": "load1",
+                "max_cpu_mem": "max_used_percent",
+            },
         }
-        if "cpu_freq_unit" in self.init["cpu_freq"]:
-            self.init["cpu_freq"].remove("cpu_freq_unit")
-        if self.init["cpu_freq"]:
-            self.thresholds_legacy["cpu_freq"] = sorted(self.init["cpu_freq"])[0]
 
-    @staticmethod
-    def _get_cpuinfo():
+        if self.init["cpu_freq"]:
+            name = sorted(self.init["cpu_freq"])[0]
+            self.thresholds_init["legacy"]["cpu_freq"] = name
+
+        if self.init["stat"]:
+            self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
+
+    def _get_cpuinfo(self):
         with open("/proc/cpuinfo") as f:
             return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
 
@@ -212,12 +277,37 @@ class Py3status:
                 freq_max, _ = self.py3.format_units(value, unit, si=True)
         return freq_avg, freq_max
 
-    @staticmethod
-    def _get_stat():
+    def _get_stat(self):
         # kernel/system statistics. man -P 'less +//proc/stat' procfs
+        stat = []
         with open("/proc/stat") as f:
-            fields = f.readline().split()
-            return {"total": sum(map(int, fields[1:])), "idle": int(fields[4])}
+            for line in f:
+                if "cpu" in line:
+                    stat.append(line)
+                else:
+                    return stat
+
+    def _filter_stat(self, stat, avg=False):
+        # if avg, return (name, idle, total)
+        if avg:
+            fields = stat[0].split()
+            return "avg", int(fields[4]), sum(map(int, fields[1:]))
+
+        # return a list of (name, idle, total)
+        new_stat = []
+        for line in stat:
+            fields = line.split()
+            cpu_name = fields[0]
+            if self.cpus["cpus"]:
+                if self.first_run:
+                    for _filter in self.cpus["cpus"]:
+                        if fnmatch(cpu_name, _filter):
+                            self.cpus["list"].append(cpu_name)
+                if cpu_name not in self.cpus["list"]:
+                    continue
+
+            new_stat.append((cpu_name, int(fields[4]), sum(map(int, fields[1:]))))
+        return new_stat
 
     def _calc_mem_info(self, unit, meminfo, memory):
         """
@@ -253,18 +343,18 @@ class Py3status:
             return {fields[0]: float(fields[1]) for fields in info}
 
     def _calc_cpu_percent(self, cpu):
-        cpu_used_percent = 0
-        if cpu["total"] != self.last_cpu.get("total"):
-            cpu_used_percent = (
-                1
-                - (
-                    (cpu["idle"] - self.last_cpu.get("idle", 0))
-                    / (cpu["total"] - self.last_cpu.get("total", 0))
-                )
-            ) * 100
+        name, idle, total = cpu
+        last_idle = self.cpus["last"].get(name, {}).get("idle", 0)
+        last_total = self.cpus["last"].get(name, {}).get("total", 0)
+        used_percent = 0
 
-        self.last_cpu.update(cpu)
-        return cpu_used_percent
+        if total != last_total:
+            used_percent = (1 - (idle - last_idle) / (total - last_total)) * 100
+
+        self.cpus["last"].setdefault(name, {}).update(
+            zip(["name", "idle", "total"], cpu)
+        )
+        return used_percent
 
     def _get_cputemp_with_lmsensors(self, zone=None):
         """
@@ -324,8 +414,26 @@ class Py3status:
             cpu_freq_keys = ["cpu_freq_avg", "cpu_freq_max"]
             sys.update(zip(cpu_freq_keys, cpu_freqs))
 
-        if self.init["cpu_percent"]:
-            sys["cpu_used_percent"] = self._calc_cpu_percent(self._get_stat())
+        if self.init["stat"]:
+            stat = self._get_stat()
+
+            if self.init["cpu_percent"]:
+                cpu = self._filter_stat(stat, avg=True)
+                sys["cpu_used_percent"] = self._calc_cpu_percent(cpu)
+
+            if self.init["cpu_per_core"]:
+                cpu_keys = ["name", "used_percent"]
+                new_cpu = []
+                for cpu in self._filter_stat(stat):
+                    cpu = dict(zip(cpu_keys, [cpu[0], self._calc_cpu_percent(cpu)]))
+                    for x in self.thresholds_init["format_cpu"]:
+                        if x in cpu:
+                            self.py3.threshold_get_color(cpu[x], x)
+                    new_cpu.append(self.py3.safe_format(self.format_cpu, cpu))
+
+                format_cpu_separator = self.py3.safe_format(self.format_cpu_separator)
+                format_cpu = self.py3.composite_join(format_cpu_separator, new_cpu)
+                sys["format_cpu"] = format_cpu
 
         if self.init["cpu_temp"]:
             sys["cpu_temp"] = self._get_cputemp(self.zone, self.temp_unit)
@@ -363,13 +471,15 @@ class Py3status:
             [perc for name, perc in sys.items() if "used_percent" in name]
         )
 
-        for x in self.thresholds_init:
+        for x in self.thresholds_init["format"]:
             if x in sys:
                 self.py3.threshold_get_color(sys[x], x)
-            elif x in self.thresholds_legacy:
-                y = self.thresholds_legacy[x]
+            elif x in self.thresholds_init["legacy"]:
+                y = self.thresholds_init["legacy"][x]
                 if y in sys:
                     self.py3.threshold_get_color(sys[y], x)
+
+        self.first_run = False
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
