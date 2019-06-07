@@ -97,7 +97,7 @@ class Py3status:
 
     def _get_trizen_updates(self):
         try:
-            updates = self.py3.command_output(["trizen", "-Quaq"])
+            updates = self.py3.command_output(["trizen", "-Suaq"])
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
