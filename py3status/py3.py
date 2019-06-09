@@ -14,8 +14,7 @@ from time import time
 from uuid import uuid4
 
 from py3status import exceptions
-from py3status.constants import COLOR_NAMES
-from py3status.formatter import Formatter, Composite
+from py3status.formatter import Formatter, Composite, expand_color
 from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradients
@@ -158,9 +157,13 @@ class Py3:
                 # use color "hidden" to hide blocks
                 if _name == "hidden":
                     param = "hidden"
+                # TODO: removing this statement does not fail "test_color_10()" but would fail
+                # easily in the bar. the test is there to raise awareness about this.
+                # TODO: "test_color_11()" shows how the tests can be incorrect as it does not print
+                # everything correctly (i.e. orange vs ORaNgE) due to non composite/formatter code.
                 elif hasattr(param, "none_setting"):
                     # see if named color and use if it is
-                    param = COLOR_NAMES.get(_name)
+                    param = expand_color(_name)
                 elif param is None:
                     param = self._none_color
             # if a non-color parameter and was not set then set to default
@@ -170,25 +173,10 @@ class Py3:
         return self._config_setting[name]
 
     def _get_color(self, color):
-        if not color:
-            return
-        # fix any hex colors so they are #RRGGBB
-        if color.startswith("#"):
-            color = color.upper()
-            if len(color) == 4:
-                color = (
-                    "#"
-                    + color[1]
-                    + color[1]
-                    + color[2]
-                    + color[2]
-                    + color[3]
-                    + color[3]
-                )
-            return color
-
-        name = "color_%s" % color
-        return self._get_config_setting(name)
+        if color:
+            if color[0] == "#":
+                return expand_color(color)
+            return self._get_config_setting("color_" + color)
 
     def _thresholds_init(self):
         """
