@@ -174,7 +174,7 @@ class Py3status:
     button_next = 4
     button_prev = 5
     cache_timeout = 10
-    format = "[\?color=cyan {s}][\?color=darkcyan {v}]"
+    format = "[\?color=cyan {s}][\?color=darkcyan  {v}]"
     thresholds = []
 
     def post_config_hook(self):
@@ -189,7 +189,9 @@ class Py3status:
         elif not self.py3.check_commands(self.command):
             raise Exception(COMMAND_NOT_INSTALLED % self.command)
         if not self.command:
-            raise Exception(STRING_NOT_AVAILABLE)
+            raise Exception(
+                "%s (%s)" % (STRING_NOT_AVAILABLE, " or ".join(keyboard_commands))
+            )
 
         self.backend = globals()[self.command.replace("-", "_").title()](self)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
