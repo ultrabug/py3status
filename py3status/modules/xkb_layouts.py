@@ -7,8 +7,8 @@ Configuration parameters:
     button_prev: mouse button to cycle previous layout (default 5)
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module
-        (default "[\?color=cyan {s}][\?color=darkcyan  {v}]")
-    thresholds: specify color thresholds to use (default [])
+        (default "[\?color=s {s}][\?color=v  {v}]")
+    thresholds: specify color thresholds to use (default {'s': [('fr', '#268BD2'), ('ru', '#F75252'), ('ua', '#FCE94F'), ('us', '#729FCF')]})
 
 Format placeholders:
     xkblayout-state:
@@ -174,8 +174,15 @@ class Py3status:
     button_next = 4
     button_prev = 5
     cache_timeout = 10
-    format = "[\?color=cyan {s}][\?color=darkcyan  {v}]"
-    thresholds = []
+    format = "[\?color=s {s}][\?color=v  {v}]"
+    thresholds = {
+        "s": [
+            ("fr", "#268BD2"),
+            ("ru", "#F75252"),
+            ("ua", "#FCE94F"),
+            ("us", "#729FCF"),
+        ]
+    }
 
     def post_config_hook(self):
         # specify xkblayout-state, xkbgroup, or xkb-switch to use, otherwise auto
