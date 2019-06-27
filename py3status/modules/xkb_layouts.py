@@ -6,9 +6,10 @@ Configuration parameters:
     button_next: mouse button to cycle next layout (default 4)
     button_prev: mouse button to cycle previous layout (default 5)
     cache_timeout: refresh interval for this module (default 10)
-    format: display format for this module
-        (default "[\?color=s {s}][\?color=v  {v}]")
-    thresholds: specify color thresholds to use (default {'s': [('fr', '#268BD2'), ('ru', '#F75252'), ('ua', '#FCE94F'), ('us', '#729FCF')]})
+    format: display format for this module (default "[\?color=s {s}][ {v}]")
+    thresholds: specify color thresholds to use
+        *(default [("fr", "#268BD2"), ("ru", "#F75252"),
+        ("ua", "#FCE94F"), ("us", "#729FCF")])*
 
 Format placeholders:
     xkblayout-state:
@@ -38,44 +39,13 @@ Requires:
     xkbgroup: query and change xkb layout state
     xkb-switch: program that allows to query and change the xkb layout state
 
-Examples:
-```
-# add thresholds
-xkb_layouts {
-    format = "Xkb [\?color=s {s}]"
-    thresholds = [
-        ("fr", "#268BD2"),
-        ("ru", "#F75252"),
-        ("ua", "#FCE94F"),
-        ("us", "#729FCF"),
-    ]
-}
-
-# add more thresholds
-xkb_layouts {
-    thresholds = {
-        "s": [
-            ("fr", "#268BD2"),
-            ("ru", "#F75252"),
-            ("ua", "#FCE94F"),
-            ("us", "#729FCF"),
-        ],
-        "v": [
-            ("basic", "#268BD2"),
-            ("nodeadkeys", "#F75252"),
-            ("dvorak", "#FCE94F"),
-        ],
-    }
-}
-```
-
 @author lasers, saengowp
 
 SAMPLE OUTPUT
-[{'full_text': 'Xkb '}, {'color': '#00FFFF', 'full_text': 'us'}]
+[{"full_text": "Xkb "}, {"color": "#00FFFF", "full_text": "us"}]
 
 ru
-[{'full_text': 'Xkb '}, {'color': '#00FFFF', 'full_text': 'ru'}]
+[{"full_text": "Xkb "}, {"color": "#00FFFF", "full_text": "ru"}]
 """
 
 STRING_ERROR = "invalid command `%s`"
@@ -174,15 +144,13 @@ class Py3status:
     button_next = 4
     button_prev = 5
     cache_timeout = 10
-    format = "[\?color=s {s}][\?color=v  {v}]"
-    thresholds = {
-        "s": [
-            ("fr", "#268BD2"),
-            ("ru", "#F75252"),
-            ("ua", "#FCE94F"),
-            ("us", "#729FCF"),
-        ]
-    }
+    format = "[\?color=s {s}][ {v}]"
+    thresholds = [
+        ("fr", "#268BD2"),
+        ("ru", "#F75252"),
+        ("ua", "#FCE94F"),
+        ("us", "#729FCF"),
+    ]
 
     def post_config_hook(self):
         # specify xkblayout-state, xkbgroup, or xkb-switch to use, otherwise auto
