@@ -91,13 +91,13 @@ wwan {
 }
 
 # show internet access technologies name with up/down state.
-wwan
+wwan {
     format = 'WWAN: [\?color=state [{access_technologies_name}]'
     format += '[\?soft  ][\?if=state_name=connected up|down]]'
 }
 
 # show SMS messages only
-wwan
+wwan {
     format = '[SMS: {format_message}]'
 }
 
