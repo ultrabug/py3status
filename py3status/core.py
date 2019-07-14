@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import division
 
 import os
+import pkg_resources
 import sys
 import time
 
@@ -421,6 +422,16 @@ class Py3statusWrapper:
         return False
 
     def get_user_modules(self):
+        """Mapping from module name to relevant objects.
+
+        include from folder: include_path, f_name
+        include from entry point: "entry_point", <Py3Status object>
+        """
+        user_modules = self._get_path_based_modules()
+        user_modules.update(self._get_entry_point_based_modules())
+        return user_modules
+
+    def _get_path_based_modules(self):
         """
         Search configured include directories for user provided modules.
 
@@ -440,10 +451,24 @@ class Py3statusWrapper:
                 user_modules[module_name] = (include_path, f_name)
         return user_modules
 
+    @staticmethod
+    def _get_entry_point_based_modules():
+        classes_from_entry_points = {}
+        for entry_point in pkg_resources.iter_entry_points("py3status"):
+            module = entry_point.load()
+            klass = getattr(module, Module.EXPECTED_CLASS, None)
+            if klass:
+                module_name = entry_point.module_name.split(".")[-1]
+                classes_from_entry_points[module_name] = ("entry_point", klass)
+        return classes_from_entry_points
+
     def get_user_configured_modules(self):
         """
         Get a dict of all available and configured py3status modules
         in the user's i3status.conf.
+
+        As we already have a convenient way of loading the module, we'll
+        populate the map with the Py3Status class right away
         """
         user_modules = {}
         if not self.py3_modules:
@@ -451,8 +476,8 @@ class Py3statusWrapper:
         for module_name, module_info in self.get_user_modules().items():
             for module in self.py3_modules:
                 if module_name == module.split(" ")[0]:
-                    include_path, f_name = module_info
-                    user_modules[module_name] = (include_path, f_name)
+                    source, item = module_info
+                    user_modules[module_name] = (source, item)
         return user_modules
 
     def load_modules(self, modules_list, user_modules):
@@ -470,7 +495,14 @@ class Py3statusWrapper:
             if module in self.modules:
                 continue
             try:
-                my_m = Module(module, user_modules, self)
+                my_m = None
+                payload = user_modules.get(module)
+                if payload:
+                    mtype, klass = payload
+                    if mtype == "entry_point":
+                        my_m = Module(module, {}, self, klass())
+                if not my_m:
+                    my_m = Module(module, user_modules, self)
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m

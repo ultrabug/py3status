@@ -28,6 +28,7 @@ class Module:
 
     PARAMS_NEW = "new"
     PARAMS_LEGACY = "legacy"
+    EXPECTED_CLASS = "Py3status"
 
     def __init__(self, module, user_modules, py3_wrapper, instance=None):
         """
@@ -101,17 +102,16 @@ class Module:
     def __repr__(self):
         return "<Module {}>".format(self.module_full_name)
 
-    @staticmethod
-    def load_from_file(filepath):
+    @classmethod
+    def load_from_file(cls, filepath):
         """
         Return user-written class object from given path.
         """
         class_inst = None
-        expected_class = "Py3status"
         module_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
         if file_ext.lower() == ".py":
             py_mod = imp.load_source(module_name, filepath)
-            if hasattr(py_mod, expected_class):
+            if hasattr(py_mod, cls.EXPECTED_CLASS):
                 class_inst = py_mod.Py3status()
         return class_inst
 
