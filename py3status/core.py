@@ -40,6 +40,9 @@ CONFIG_SPECIAL_SECTIONS = [
     "py3status",
 ]
 
+ENTRY_POINT_NAME = "py3status"
+ENTRY_POINT_KEY = "entry_point"
+
 
 class Runner(Thread):
     """
@@ -424,8 +427,11 @@ class Py3statusWrapper:
     def get_user_modules(self):
         """Mapping from module name to relevant objects.
 
-        include from folder: include_path, f_name
-        include from entry point: "entry_point", <Py3Status object>
+        There are two ways of discovery and storage:
+        `include_paths` (no installation): include_path, f_name
+        `entry_point` (from installed package): "entry_point", <Py3Status class>
+
+        Modules of the same name from entry points shadow all other modules.
         """
         user_modules = self._get_path_based_modules()
         user_modules.update(self._get_entry_point_based_modules())
@@ -454,12 +460,12 @@ class Py3statusWrapper:
     @staticmethod
     def _get_entry_point_based_modules():
         classes_from_entry_points = {}
-        for entry_point in pkg_resources.iter_entry_points("py3status"):
+        for entry_point in pkg_resources.iter_entry_points(ENTRY_POINT_NAME):
             module = entry_point.load()
             klass = getattr(module, Module.EXPECTED_CLASS, None)
             if klass:
                 module_name = entry_point.module_name.split(".")[-1]
-                classes_from_entry_points[module_name] = ("entry_point", klass)
+                classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
         return classes_from_entry_points
 
     def get_user_configured_modules(self):
@@ -485,9 +491,10 @@ class Py3statusWrapper:
         Load the given modules from the list (contains instance name) with
         respect to the user provided modules dict.
 
-        modules_list: ['weather_yahoo paris', 'net_rate']
+        modules_list: ['weather_yahoo paris', 'pewpew', 'net_rate']
         user_modules: {
-            'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py')
+            'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py'),
+            'pewpew': (entry_point', <Py3Status class>),
         }
         """
         for module in modules_list:
@@ -495,14 +502,13 @@ class Py3statusWrapper:
             if module in self.modules:
                 continue
             try:
-                my_m = None
+                instance = None
                 payload = user_modules.get(module)
                 if payload:
-                    mtype, klass = payload
-                    if mtype == "entry_point":
-                        my_m = Module(module, {}, self, klass())
-                if not my_m:
-                    my_m = Module(module, user_modules, self)
+                    kind, Klass = payload
+                    if kind == ENTRY_POINT_KEY:
+                        instance = Klass()
+                my_m = Module(module, user_modules, self, instance=instance)
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m

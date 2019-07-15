@@ -1,19 +1,18 @@
 import argparse
 import os
-import sys
 
 import pkg_resources
 import pytest
 
 import py3status
-from py3status import core
-from py3status.core import Py3statusWrapper
+from py3status.core import Py3statusWrapper, ENTRY_POINT_KEY
 
 
 @pytest.fixture(name="status_wrapper")
 def make_status_wrapper():
     args = argparse.Namespace()
-    return Py3statusWrapper(args)
+    status_wrapper = Py3statusWrapper(args)
+    return status_wrapper
 
 
 def test__get_path_based_modules(status_wrapper):
@@ -28,41 +27,28 @@ def test__get_path_based_modules(status_wrapper):
     assert sorted(modules.keys()) == sorted(expected_keys)
 
 
-@pytest.mark.xfail(reason="needs some work still ...")
 def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
     def return_fake_entry_points(*_):
-        class FakeEntryPoint(object):
+        class FakePy3status(object):
             Py3status = "I am a fake class"
-            module_name = "fake module"
 
             def __init__(self, name):
                 self.name = name
+                self.module_name = "module_name_" + self.name
 
             @staticmethod
             def load():
                 from py3status.modules import air_quality
                 return air_quality
 
-        return [FakeEntryPoint("spam"), FakeEntryPoint("eggs")]
-
-    class FakeModule(object):
-        EXPECTED_CLASS = "Py3status"
-        methods = True
-
-        def __init__(self, *args):
-            if len(args) == 4:
-                assert args[3].__class__.__name__ == self.EXPECTED_CLASS
+        return [FakePy3status("spam"), FakePy3status("eggs")]
 
     monkeypatch.setattr(pkg_resources, "iter_entry_points", return_fake_entry_points)
-    monkeypatch.setattr(core, "Module", FakeModule)
+
     user_modules = status_wrapper._get_entry_point_based_modules()
-    status_wrapper.load_modules(["spam", "eggs"], user_modules)
     assert len(user_modules) == 2
-    assert user_modules["spam"] == py3status
-    assert user_modules["eggs"] == py3status
-
-
-# def test_explorative(monkeypatch):
-#     from py3status import main
-#     monkeypatch.setattr(sys, "argv", ["py3status", "-c", "/home/ob/.i3/config.d/i3bar.full.conf"])
-#     main()
+    for name, info in user_modules.items():
+        assert any(n in name for n in ["spam", "eggs"])
+        kind, Klass = info
+        assert kind == ENTRY_POINT_KEY
+        assert Klass.__name__ == "Py3status"

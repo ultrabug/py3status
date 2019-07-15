@@ -27,6 +27,34 @@ which if you are used to XDG_CONFIG paths relates to:
 You can also specify the modules location using ``py3status -i <path to custom
 modules directory>`` in your i3 configuration file.
 
+Publish your custom modules on PyPI
+-----------------------------------
+
+.. note::
+    TODO add a remark here in which version this functionality was added
+
+To share custom modules that are not directly part of py3status you can create
+a package and publish it to PyPI.
+
+If you have installed py3status in a virtualenv (maybe because your custom module
+has dependencies that need to be available) you can also create an installable
+package from your module and publish it on PyPI.
+
+py3status can discover custom modules if they are installed in the same host interpreter
+and if an entry_point in the package ``setup.py`` is defined::
+
+    setup(
+        entry_points={"py3status": ["module = path.to.py3status_module"]},
+    )
+
+Although it is possible to install packages from PYPi in the distributed Python
+interpreter it is recommended to install py3status into a virtualenv and install
+the custom packages into the same virtuelenv if you want to use this approach.
+
+.. note::
+    to clearly identify your py3status package for others to discover easily it
+    is recommended to name the PyPI package ``py3status-<your module name>``.
+
 Example 1: The basics - Hello World!
 ------------------------------------
 
