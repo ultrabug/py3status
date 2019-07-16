@@ -861,11 +861,22 @@ def test_color_11():
     run_formatter(
         {
             "format": r"[\?color=ORANGE&show orange] [\?color=bLuE&show blue]",
-            "expected": "orange blue",
+            "expected": "orange blue",  # wrong imho
             # "expected": [
             #     {"full_text": "orange", "color": "#FFA500"},
             #     {"full_text": "blue", "color": "#0000FF"},
             # ],
+        }
+    )
+
+
+def test_color_12():
+    run_formatter(
+        {
+            "color_test": "#FFA500",
+            "format": r"\?color=test test",
+            "expected": "test",  # wrong
+            # "expected": [{"full_text": "test", "color": "#FFA500"}]
         }
     )
 
