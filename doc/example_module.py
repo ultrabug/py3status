@@ -69,9 +69,10 @@ class Py3status:
     Some modules have multiple placeholders.  For examples look at the included
     py3status modules.
     """
+
     # available configuration parameters
     cache_timeout = 10
-    format = '{output}'
+    format = "{output}"
 
     def __init__(self):
         """
@@ -113,11 +114,8 @@ class Py3status:
         http://i3wm.org/docs/i3bar-protocol.html
         """
         # create out output text replacing the placeholder
-        full_text = self.format.format(output='example')
-        response = {
-            'cached_until': time() + self.cache_timeout,
-            'full_text': full_text
-        }
+        full_text = self.format.format(output="example")
+        response = {"cached_until": time() + self.cache_timeout, "full_text": full_text}
         return response
 
 
@@ -127,11 +125,12 @@ if __name__ == "__main__":
     This SHOULD work before contributing your module please.
     """
     from time import sleep
+
     x = Py3status()
     config = {
-        'color_bad': '#FF0000',
-        'color_degraded': '#FFFF00',
-        'color_good': '#00FF00'
+        "color_bad": "#FF0000",
+        "color_degraded": "#FFFF00",
+        "color_good": "#00FF00",
     }
     while True:
         print(x.example_method([], config))

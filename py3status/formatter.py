@@ -17,22 +17,25 @@ except ImportError:
 python2 = sys.version_info < (3, 0)
 
 
-def expand_color(color, default=None, passthrough=False):
+def expand_color(color, default=None, passthrough=False, block=None):
     """
     Expand various colors to #RRGGBB.
     """
-    if color and color[0] == "#":
-        color = color[1:]
-        try:
-            int(color, 16)
-        except ValueError:
-            return
-        length = len(color)
-        if length in [3, 4]:
-            color = "".join(color[x] * 2 for x in range(length))
-        elif length not in [6, 8]:
-            return
-        return "#" + color.upper()
+    if color:
+        if color[0] == "#":
+            color = color[1:]
+            try:
+                int(color, 16)
+            except ValueError:
+                return block
+            length = len(color)
+            if length in [3, 4]:
+                color = "".join(color[x] * 2 for x in range(length))
+            elif length not in [6, 8]:
+                return block
+            return "#" + color.upper()
+    elif block:
+        return block
     return COLOR_NAMES.get(color, color if passthrough else default)
 
 
@@ -509,7 +512,9 @@ class BlockConfig:
             self._if = Condition(_if)
         self._set_int(commands, "max_length")
         self._set_int(commands, "min_length")
-        self.color = expand_color(commands.get("color"), passthrough=True)
+        self.color = expand_color(
+            commands.get("color"), passthrough=True, block=self.color
+        )
 
         self.not_zero = "not_zero" in commands or self.not_zero
         self.show = "show" in commands or self.show
