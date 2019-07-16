@@ -47,7 +47,7 @@ and if an entry_point in the package ``setup.py`` is defined::
         entry_points={"py3status": ["module = path.to.py3status_module"]},
     )
 
-Although it is possible to install packages from PYPi in the distributed Python
+Although it is possible to install packages from PyPi in the distributed Python
 interpreter it is recommended to install py3status into a virtualenv and install
 the custom packages into the same virtuelenv if you want to use this approach.
 
