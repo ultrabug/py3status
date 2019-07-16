@@ -39,6 +39,7 @@ def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
             @staticmethod
             def load():
                 from py3status.modules import air_quality
+
                 return air_quality
 
         return [FakePy3status("spam"), FakePy3status("eggs")]
