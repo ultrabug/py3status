@@ -463,7 +463,11 @@ class Py3statusWrapper:
     def _get_entry_point_based_modules(self):
         classes_from_entry_points = {}
         for entry_point in pkg_resources.iter_entry_points(ENTRY_POINT_NAME):
-            module = entry_point.load()
+            try:
+                module = entry_point.load()
+            except Exception as err:
+                self.log("entry_point '{}' error: {}".format(entry_point, err))
+                continue
             klass = getattr(module, Module.EXPECTED_CLASS, None)
             if klass:
                 module_name = entry_point.module_name.split(".")[-1]
