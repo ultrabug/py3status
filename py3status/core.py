@@ -455,10 +455,12 @@ class Py3statusWrapper:
                 if module_name in user_modules:
                     pass
                 user_modules[module_name] = (include_path, f_name)
+                self.log(
+                    "available module from {}: {}".format(include_path, module_name)
+                )
         return user_modules
 
-    @staticmethod
-    def _get_entry_point_based_modules():
+    def _get_entry_point_based_modules(self):
         classes_from_entry_points = {}
         for entry_point in pkg_resources.iter_entry_points(ENTRY_POINT_NAME):
             module = entry_point.load()
@@ -466,6 +468,9 @@ class Py3statusWrapper:
             if klass:
                 module_name = entry_point.module_name.split(".")[-1]
                 classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
+                self.log(
+                    "available module from {}: {}".format(ENTRY_POINT_KEY, module_name)
+                )
         return classes_from_entry_points
 
     def get_user_configured_modules(self):
