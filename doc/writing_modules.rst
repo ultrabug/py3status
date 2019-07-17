@@ -27,33 +27,39 @@ which if you are used to XDG_CONFIG paths relates to:
 You can also specify the modules location using ``py3status -i <path to custom
 modules directory>`` in your i3 configuration file.
 
-Publish your custom modules on PyPI
------------------------------------
+Publishing custom modules on PyPI
+---------------------------------
 
 .. note::
-    TODO add a remark here in which version this functionality was added
+    Available since py3status version 3.20.
 
-To share custom modules that are not directly part of py3status you can create
-a package and publish it to PyPI.
+You can share your custom modules and make them available for py3status users even
+if they are not directly part of the py3status main project!
+
+All you have to do is to package your module and publish it to PyPI.
+
+py3status will discover custom modules if they are installed in the same host
+interpreter and if an entry_point in your package ``setup.py`` is defined::
+
+    setup(
+        entry_points={"py3status": ["module = package_name.py3status_module_name"]},
+    )
+
+The awesome `pewpew` module can be taken as an example on how to do it easily:
+
+- Module repository: https://github.com/obestwalter/pew3wm
+- Example setup.py: https://github.com/obestwalter/pew3wm/blob/master/setup.py
+
+We will gladly add ``extra_requires`` pointing to your modules so that users can require
+them while installing py3status. Just open an issue to request this or propose a PR.
 
 If you have installed py3status in a virtualenv (maybe because your custom module
 has dependencies that need to be available) you can also create an installable
 package from your module and publish it on PyPI.
 
-py3status can discover custom modules if they are installed in the same host interpreter
-and if an entry_point in the package ``setup.py`` is defined::
-
-    setup(
-        entry_points={"py3status": ["module = path.to.py3status_module"]},
-    )
-
-Although it is possible to install packages from PyPi in the distributed Python
-interpreter it is recommended to install py3status into a virtualenv and install
-the custom packages into the same virtuelenv if you want to use this approach.
-
 .. note::
-    to clearly identify your py3status package for others to discover easily it
-    is recommended to name the PyPI package ``py3status-<your module name>``.
+    To clearly identify your py3status package and for others to discover it easily
+    it is recommended to name the PyPI package ``py3status-<your module name>``.
 
 Example 1: The basics - Hello World!
 ------------------------------------
