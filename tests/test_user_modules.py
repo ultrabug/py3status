@@ -50,6 +50,6 @@ def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
     assert len(user_modules) == 2
     for name, info in user_modules.items():
         assert any(n in name for n in ["spam", "eggs"])
-        kind, Klass = info
+        kind, klass = info
         assert kind == ENTRY_POINT_KEY
-        assert Klass.__name__ == "Py3status"
+        assert klass.__name__ == "Py3status"
