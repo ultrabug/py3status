@@ -132,10 +132,10 @@ py3status code, including modules, should run under both python 2 and python 3.
 
 Starting with version 4.0, py3status will only run using python 3.
 
-Tox
+tox
 ---
 
-Py3status uses Tox for testing. All submissions to the project must pass testing.
+Py3status uses tox for testing. All submissions to the project must pass testing.
 To install these via pip use
 
 .. code-block:: shell
