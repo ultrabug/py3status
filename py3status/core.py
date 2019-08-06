@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import division
 
 import os
+import pkg_resources
 import sys
 import time
 
@@ -38,6 +39,9 @@ CONFIG_SPECIAL_SECTIONS = [
     "py3_modules",
     "py3status",
 ]
+
+ENTRY_POINT_NAME = "py3status"
+ENTRY_POINT_KEY = "entry_point"
 
 
 class Runner(Thread):
@@ -421,6 +425,19 @@ class Py3statusWrapper:
         return False
 
     def get_user_modules(self):
+        """Mapping from module name to relevant objects.
+
+        There are two ways of discovery and storage:
+        `include_paths` (no installation): include_path, f_name
+        `entry_point` (from installed package): "entry_point", <Py3Status class>
+
+        Modules of the same name from entry points shadow all other modules.
+        """
+        user_modules = self._get_path_based_modules()
+        user_modules.update(self._get_entry_point_based_modules())
+        return user_modules
+
+    def _get_path_based_modules(self):
         """
         Search configured include directories for user provided modules.
 
@@ -438,12 +455,35 @@ class Py3statusWrapper:
                 if module_name in user_modules:
                     pass
                 user_modules[module_name] = (include_path, f_name)
+                self.log(
+                    "available module from {}: {}".format(include_path, module_name)
+                )
         return user_modules
+
+    def _get_entry_point_based_modules(self):
+        classes_from_entry_points = {}
+        for entry_point in pkg_resources.iter_entry_points(ENTRY_POINT_NAME):
+            try:
+                module = entry_point.load()
+            except Exception as err:
+                self.log("entry_point '{}' error: {}".format(entry_point, err))
+                continue
+            klass = getattr(module, Module.EXPECTED_CLASS, None)
+            if klass:
+                module_name = entry_point.module_name.split(".")[-1]
+                classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
+                self.log(
+                    "available module from {}: {}".format(ENTRY_POINT_KEY, module_name)
+                )
+        return classes_from_entry_points
 
     def get_user_configured_modules(self):
         """
         Get a dict of all available and configured py3status modules
         in the user's i3status.conf.
+
+        As we already have a convenient way of loading the module, we'll
+        populate the map with the Py3Status class right away
         """
         user_modules = {}
         if not self.py3_modules:
@@ -451,8 +491,8 @@ class Py3statusWrapper:
         for module_name, module_info in self.get_user_modules().items():
             for module in self.py3_modules:
                 if module_name == module.split(" ")[0]:
-                    include_path, f_name = module_info
-                    user_modules[module_name] = (include_path, f_name)
+                    source, item = module_info
+                    user_modules[module_name] = (source, item)
         return user_modules
 
     def load_modules(self, modules_list, user_modules):
@@ -460,9 +500,10 @@ class Py3statusWrapper:
         Load the given modules from the list (contains instance name) with
         respect to the user provided modules dict.
 
-        modules_list: ['weather_yahoo paris', 'net_rate']
+        modules_list: ['weather_yahoo paris', 'pewpew', 'net_rate']
         user_modules: {
-            'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py')
+            'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py'),
+            'pewpew': (entry_point', <Py3Status class>),
         }
         """
         for module in modules_list:
@@ -470,7 +511,13 @@ class Py3statusWrapper:
             if module in self.modules:
                 continue
             try:
-                my_m = Module(module, user_modules, self)
+                instance = None
+                payload = user_modules.get(module)
+                if payload:
+                    kind, Klass = payload
+                    if kind == ENTRY_POINT_KEY:
+                        instance = Klass()
+                my_m = Module(module, user_modules, self, instance=instance)
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
