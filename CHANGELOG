@@ -1,3 +1,29 @@
+version 3.20 (2019-08-06)
+* IMPORTANT: py3status now supports importing modules from pypi packages, see 'writing modules' section on docs!
+* introduce entry point based discovery of packaged custom modules (#1823), by Oliver Bestwalter
+* core, module: add an ability to import resources (#1673), by lasers
+* fix logo url in README (#1814), by Daniel Peukert
+* formatter: add expand_color() (#1787), by lasers
+* formatter: fix colors in composites after expand_color addition (#1821), by lasers
+* tox is always lowercase (#1824), by Oliver Bestwalter
+* new module xkb_layouts: to display keyboard layouts and variants (#1817), by lasers
+* add 100ms delay before refreshing modules on udev trigger #1805
+* arch_updates module: add trizen support (#1813), by Daniel Peukert
+* arch_updates module: auracle throws exit code on zero updates (#1809), by Piotr Miller
+* arch_updates module: change trizen command to track exit code (#1815), by Daniel Peukert
+* backlight module: round brightness percentage instead of truncating (#1803), by Piotr Miller
+* bluetooth module: switch to pydbus (#1804), by Maxim Baz
+* clementine module: upgrade to MPRIS2 support (#1797), by Rodrigo Leite
+* sysdata module: add cpus, format_cpu, format_cpu_separator, etc (#1798), by lasers
+* uptime module: specify strftime characters to display system up since (#1810), by lasers
+* volume_status module: pactl improvements (#1765), by Kevin Pulo
+* volume_status module: support icon blocks to reflect volume (#1812), by Daniel Peukert
+* volume_status: pamixer cleanups/improvs (#1806), by lasers
+* weather_owm module: switch from timezoneapi to our own api (Fix #1818) (#1819)
+* wifi module: split up unit placeholders, remove round_bitrate (#1791), by lasers
+* wwan module: add missing curly brackets to examples (#1820), by luto
+* xrandr module: allow users to use an icon instead of OUTPUT text (#1801), by lasers
+
 version 3.19 (2019-04-30)
 * NEWS: py3status now has a logo thanks to @tobaloidee!
 * constants: QA uppercase hex color codes (#1786), by lasers
