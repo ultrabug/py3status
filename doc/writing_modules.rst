@@ -47,8 +47,8 @@ interpreter and if an entry_point in your package ``setup.py`` is defined::
 
 The awesome `pewpew` module can be taken as an example on how to do it easily:
 
-- Module repository: https://github.com/obestwalter/pew3wm
-- Example setup.py: https://github.com/obestwalter/pew3wm/blob/master/setup.py
+- Module repository: https://github.com/obestwalter/py3status-pewpew
+- Example setup.py: https://github.com/obestwalter/py3status-pewpew/blob/master/setup.py
 
 We will gladly add ``extra_requires`` pointing to your modules so that users can require
 them while installing py3status. Just open an issue to request this or propose a PR.
