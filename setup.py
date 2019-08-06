@@ -34,6 +34,7 @@ setup(
     author_email="ultrabug@ultrabug.net",
     description="py3status: an extensible i3status wrapper written in python",
     long_description=read("README.rst"),
+    long_description_content_type="text/x-rst",
     extras_require={"all": req_all, "gevent": req_gevent, "udev": req_udev},
     url="https://github.com/ultrabug/py3status",
     download_url="https://github.com/ultrabug/py3status/tags",
