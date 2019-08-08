@@ -503,7 +503,7 @@ class Py3statusWrapper:
         modules_list: ['weather_yahoo paris', 'pewpew', 'net_rate']
         user_modules: {
             'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py'),
-            'pewpew': (entry_point', <Py3Status class>),
+            'pewpew': ('entry_point', <Py3Status class>),
         }
         """
         for module in modules_list:
