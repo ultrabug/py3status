@@ -166,7 +166,13 @@ class Py3status:
             return (
                 self.py3.safe_format(
                     self.format,
-                    dict(title=title, artist=artist, album=album, time=rtime, paused=paused),
+                    dict(
+                        title=title,
+                        artist=artist,
+                        album=album,
+                        time=rtime,
+                        paused=paused,
+                    ),
                 ),
                 color,
             )
