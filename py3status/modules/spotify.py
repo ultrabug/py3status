@@ -18,12 +18,10 @@ Configuration parameters:
         *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
             'feat', 'mono', 'remaster', 'stereo', 'version'])*
 
-Control placeholders:
-    {paused} true when Spotify is paused
-
 Format placeholders:
     {album} album name
     {artist} artiste name (first one)
+    {state} state of the player: playing, paused, stopped
     {time} time duration of the song
     {title} name of the song
 
@@ -153,13 +151,13 @@ class Py3status:
                 )
                 if playback_status.strip() == "Playing":
                     color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
-                    paused = False
+                    state = "playing"
                 else:
                     color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
-                    paused = True
+                    state = "paused"
             except Exception:
                 return (
-                    self.format_stopped,
+                    self.py3.safe_format(self.format_stopped, dict(state="stopped")),
                     self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED,
                 )
 
@@ -167,11 +165,7 @@ class Py3status:
                 self.py3.safe_format(
                     self.format,
                     dict(
-                        title=title,
-                        artist=artist,
-                        album=album,
-                        time=rtime,
-                        paused=paused,
+                        title=title, artist=artist, album=album, time=rtime, state=state
                     ),
                 ),
                 color,
