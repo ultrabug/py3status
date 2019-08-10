@@ -21,6 +21,7 @@ Configuration parameters:
 Format placeholders:
     {album} album name
     {artist} artiste name (first one)
+    {playback} state of the playback: Playing, Paused
     {time} time duration of the song
     {title} name of the song
 
@@ -55,11 +56,11 @@ stopped
 {'color': '#FF0000', 'full_text': 'Spotify stopped'}
 """
 
-import dbus
 import re
-
 from datetime import timedelta
 from time import sleep
+
+import dbus
 
 SPOTIFY_CMD = """dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify
                  /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
@@ -148,7 +149,7 @@ class Py3status:
                 playback_status = self.player.Get(
                     "org.mpris.MediaPlayer2.Player", "PlaybackStatus"
                 )
-                if playback_status.strip() == "Playing":
+                if playback_status == "Playing":
                     color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
                 else:
                     color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
@@ -161,7 +162,13 @@ class Py3status:
             return (
                 self.py3.safe_format(
                     self.format,
-                    dict(title=title, artist=artist, album=album, time=rtime),
+                    dict(
+                        title=title,
+                        artist=artist,
+                        album=album,
+                        time=rtime,
+                        playback=playback_status,
+                    ),
                 ),
                 color,
             )
