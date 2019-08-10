@@ -21,7 +21,7 @@ Configuration parameters:
 Format placeholders:
     {album} album name
     {artist} artiste name (first one)
-    {state} state of the player: playing, paused, stopped
+    {playback} state of the playback: Playing, Paused
     {time} time duration of the song
     {title} name of the song
 
@@ -149,15 +149,13 @@ class Py3status:
                 playback_status = self.player.Get(
                     "org.mpris.MediaPlayer2.Player", "PlaybackStatus"
                 )
-                if playback_status.strip() == "Playing":
+                if playback_status == "Playing":
                     color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
-                    state = "playing"
                 else:
                     color = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
-                    state = "paused"
             except Exception:
                 return (
-                    self.py3.safe_format(self.format_stopped, dict(state="stopped")),
+                    self.format_stopped,
                     self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED,
                 )
 
@@ -165,7 +163,11 @@ class Py3status:
                 self.py3.safe_format(
                     self.format,
                     dict(
-                        title=title, artist=artist, album=album, time=rtime, state=state
+                        title=title,
+                        artist=artist,
+                        album=album,
+                        time=rtime,
+                        playback=playback_status,
                     ),
                 ),
                 color,
