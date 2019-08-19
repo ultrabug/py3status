@@ -394,7 +394,10 @@ class Py3status:
         if not player_id.startswith(SERVICE_BUS):
             return False
 
-        player = self._dbus.get(player_id, SERVICE_BUS_URL)
+        try:
+            player = self._dbus.get(player_id, SERVICE_BUS_URL)
+        except KeyError:
+            return False
 
         if player.Identity not in self._mpris_names:
             self._mpris_names[player.Identity] = player_id.split(".")[-1]
