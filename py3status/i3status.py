@@ -255,22 +255,6 @@ class I3status(Thread):
         Thread.__init__(self)
         self.error = None
         self.i3modules = {}
-        self.i3status_module_names = [
-            "battery",
-            "cpu_temperature",
-            "cpu_usage",
-            "ddate",
-            "disk",
-            "ethernet",
-            "ipv6",
-            "load",
-            "path_exists",
-            "run_watch",
-            "time",
-            "tztime",
-            "volume",
-            "wireless",
-        ]
         self.i3status_pipe = None
         self.i3status_path = py3_wrapper.config["i3status_path"]
         self.json_list = None
@@ -303,20 +287,6 @@ class I3status(Thread):
             self.i3modules[conf_name] = module
             if module.is_time_module:
                 self.time_modules.append(module)
-
-    def valid_config_param(self, param_name, cleanup=False):
-        """
-        Check if a given section name is a valid parameter for i3status.
-        """
-        if cleanup:
-            valid_config_params = [
-                _
-                for _ in self.i3status_module_names
-                if _ not in ["cpu_usage", "ddate", "ipv6", "load", "time"]
-            ]
-        else:
-            valid_config_params = self.i3status_module_names + ["general", "order"]
-        return param_name.split(" ")[0] in valid_config_params
 
     def set_responses(self, json_list):
         """
