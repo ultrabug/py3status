@@ -34,6 +34,7 @@ class MockPy3statusWrapper:
         self.lock = Event()
         self.output_modules = {}
         self.running = True
+        self.is_gevent = False
 
         self.lock.set()
 
