@@ -23,6 +23,7 @@ I3S_INSTANCE_MODULES = [
     "cpu_temperature",
     "disk",
     "ethernet",
+    "memory",
     "path_exists",
     "run_watch",
     "tztime",
