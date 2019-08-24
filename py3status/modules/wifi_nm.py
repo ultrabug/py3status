@@ -4,7 +4,7 @@ Display WiFi info using NetworkManager.
 
 Configuration parameters:
     cache_timeout: Update interval in seconds (default 5)
-    device: Wireless device name (default "wlan0" or first wifi device)
+    device: Wireless device name (default None)
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
     format: Display format for this module
@@ -42,9 +42,11 @@ SAMPLE OUTPUT
 STRING_ERROR = "nmcli: command failed"
 DEFAULT_FORMAT = "{bars} {signal}% {ssid}|down"
 
+
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 5
     device = None
@@ -56,7 +58,18 @@ class Py3status:
         self.nmcli_cmd = self.py3.check_commands(["nmcli", "/usr/bin/nmcli"])
         if not self.device:
             # Try to guess the wifi interface
-            cmd = [self.nmcli_cmd, "--terse", "-mode", "tabular", "--colors", "no", "--fields", "device,type", "device", "status"]
+            cmd = [
+                self.nmcli_cmd,
+                "--terse",
+                "-mode",
+                "tabular",
+                "--colors",
+                "no",
+                "--fields",
+                "device,type",
+                "device",
+                "status",
+            ]
             try:
                 output = self.py3.command_output(cmd)
                 devices = []
@@ -71,21 +84,35 @@ class Py3status:
             except:
                 pass
 
-    def wifi(self):
+    def wifi_nm(self):
         """
         Get WiFi status using NetworkManager.
         """
-        cmd = [self.nmcli_cmd, "--terse", "--mode", "multiline", "--colors", "no", "--fields", "ap", "device", "show", self.device]
+        cmd = [
+            self.nmcli_cmd,
+            "--terse",
+            "--mode",
+            "multiline",
+            "--colors",
+            "no",
+            "--fields",
+            "ap",
+            "device",
+            "show",
+            self.device,
+        ]
         try:
             output = self.py3.command_output(cmd, localized=True)
-            if not output or not isinstance(output, basestring):
+            if not output or not isinstance(output, str):
                 raise Exception()
         except:
-            return {"cache_until": self.py3.time_in(self.cache_timeout),
-                    "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                    "full_text": STRING_ERROR}
+            return {
+                "cache_until": self.py3.time_in(self.cache_timeout),
+                "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
+                "full_text": STRING_ERROR,
+            }
 
-        data = { }
+        data = {}
         connected_ap = None
         for line in output.splitlines():
             (key, value) = line.split(":", 1)
@@ -99,7 +126,7 @@ class Py3status:
 
         # special case fix some of the chars used by bars.
         # in proportional fonts, underscore can have a different width than lower-eighth-block
-        if "bars" not in data or not isinstance(data["bars"], basestring):
+        if "bars" not in data or not isinstance(data["bars"], str):
             data["bars"] = ""
         data["bars"] = data["bars"].replace(u"_", u"▁")
 
@@ -122,9 +149,11 @@ class Py3status:
             "color": color,
         }
 
+
 if __name__ == "__main__":
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     module_test(Py3status)
