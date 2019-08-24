@@ -1,46 +1,70 @@
 # -*- coding: utf-8 -*-
 """
-Display WiFi info using NetworkManager.
+Display NetworkManager fields via nmcli, a command-line tool.
 
 Configuration parameters:
-    cache_timeout: Update interval in seconds (default 5)
-    device: Wireless device name (default None)
-    down_color: Output color when disconnected, possible values:
-        "good", "degraded", "bad" (default "bad")
-    format: Display format for this module
-        (default '{bars} {signal}% {ssid}|down')
-    thresholds: Color thresholds for signal value.
-        (default [(0, 'bad'), (30, 'degraded'), (55, 'good')])
+    cache_timeout: refresh interval for this module (default 10)
+    devices: specify a list of devices to use (default ['[e|w]*'])
+    format: display format for this module (default '{format_device}')
+    format_device: format for devices
+        *(default "[\?if=general_connection {general_device}[\?soft  ]"
+        "[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
+        "[\?color=good {ip4_address1}]]")*
+    format_device_separator: show separator if more than one (default ' ')
+    thresholds: specify color thresholds to use
+        (default [(0, 'bad'), (30, 'degraded'), (65, 'good')])
 
 Format placeholders:
-    {bars} Graphical signal strength
-    {chan} Channel
-    {device} Device name
-    {mode} Mode ("Infra" or "Adhoc")
-    {rate} Bit rate
-    {security} Security protocols supported
-    {signal} Signal strength
-    {ssid} SSID
+    {format_device} format for devices
 
-    Maybe more, check `nmcli -f ap d show` on your system.
+Format_device placeholders:
+    {general_connection} eg Py3status, Wired Connection 1
+    {general_device}     eg wlp3s0b1, enp2s0
+    {general_type}       eg wifi, ethernet
+    {ap1_bars}           signal strength in bars, eg ▂▄▆_
+    {ap1_chan}           wifi channel, eg 6
+    {ap1_mode}           network mode, eg Adhoc or Infra
+    {ap1_rate}           bitrate, eg 54 Mbit/s
+    {ap1_security}       signal security, eg WPA2
+    {ap1_signal}         signal strength in percentage, eg 63
+    {ap1_ssid}           ssid name, eg Py3status
+    {ip4_address1}       eg 192.168.1.108
+    {ip6_address1}       eg 0000::0000:0000:0000:0000
 
-Color options:
-    color_bad: Signal strength 30 or lower (1 bar)
-    color_degraded: Signal strength 31 -- 54 (2 bars)
-    color_good: Signal strength above 55 (3 or 4 bars)
+    Use `nmcli --terse --fields=general,ap,ip4,ip6 device show` for a full list of
+    supported NetworkManager fields to use. Not all of NetworkManager fields will
+    be usable. See `man nmcli` for more information.
+
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
     nmcli: cli configuration utility for NetworkManager
+
+Examples:
+```
+# specify devices to use
+networkmanager {
+    devices = ['e*']    # ethernet only
+    devices = ['w*']    # wireless only
+    devices = []        # ethernet, wireless, lo, etc
+}
+```
 
 @author Kevin Pulo <kev@pulo.com.au>
 @license BSD
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'\u2582\u2584\u2586\u2588 91% Chicken Remixed'}
+[
+    {'color': 'enp2s0 '}, {'color': '#00FF00', 'full_text': '192.168.1.108 '},
+    {'color': 'wlp3s0b1 '}, {'color': '#FFFF00', 'full_text': 'Py3status ▂▄__ 54%'},
+    {'color': '#00FF00', 'full_text': '192.168.1.106'},
+]
 """
 
-STRING_ERROR = "nmcli: command failed"
-DEFAULT_FORMAT = "{bars} {signal}% {ssid}|down"
+from fnmatch import fnmatch
+
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
@@ -48,105 +72,103 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 5
-    device = None
-    down_color = "bad"
-    format = DEFAULT_FORMAT
-    thresholds = [(0, "bad"), (30, "degraded"), (55, "good")]
+    cache_timeout = 10
+    devices = ["[e|w]*"]
+    format = "{format_device}"
+    format_device = (
+        "[\?if=general_connection {general_device}[\?soft  ]"
+        "[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
+        "[\?color=good {ip4_address1}]]"
+    )
+    format_device_separator = " "
+    thresholds = [(0, "bad"), (30, "degraded"), (65, "good")]
 
     def post_config_hook(self):
-        self.nmcli_cmd = self.py3.check_commands(["nmcli", "/usr/bin/nmcli"])
-        if not self.device:
-            # Try to guess the wifi interface
-            cmd = [
-                self.nmcli_cmd,
-                "--terse",
-                "-mode",
-                "tabular",
-                "--colors",
-                "no",
-                "--fields",
-                "device,type",
-                "device",
-                "status",
-            ]
-            try:
-                output = self.py3.command_output(cmd)
-                devices = []
-                for line in output.splitlines():
-                    (device, _type) = line.split(":", 1)
-                    if _type == "wifi":
-                        devices.append(device)
-                if not devices or "wlan0" in devices:
-                    self.device = "wlan0"
-                else:
-                    self.device = devices[0]
-            except:
-                pass
+        command = "nmcli --terse --colors=no"
+        if not self.py3.check_commands(command.split()[0]):
+            raise Exception(STRING_NOT_INSTALLED)
 
-    def wifi_nm(self):
-        """
-        Get WiFi status using NetworkManager.
-        """
-        cmd = [
-            self.nmcli_cmd,
-            "--terse",
-            "--mode",
-            "multiline",
-            "--colors",
-            "no",
-            "--fields",
-            "ap",
-            "device",
-            "show",
-            self.device,
+        self.first_run = True
+
+        addresses = [
+            x.split("_")[0]
+            for x in self.py3.get_placeholders_list(
+                self.format_device, "ip[46]_address[0123456789]"
+            )
         ]
-        try:
-            output = self.py3.command_output(cmd, localized=True)
-            if not output or not isinstance(output, str):
-                raise Exception()
-        except:
-            return {
-                "cache_until": self.py3.time_in(self.cache_timeout),
-                "color": self.py3.COLOR_ERROR or self.py3.COLOR_BAD,
-                "full_text": STRING_ERROR,
-            }
 
-        data = {}
-        connected_ap = None
-        for line in output.splitlines():
-            (key, value) = line.split(":", 1)
-            (ap, field) = key.split(".", 1)
-            if field == "*" and value == "*":
-                connected_ap = ap
-            elif field == "IN-USE" and value == "*":
-                connected_ap = ap
-            elif ap == connected_ap:
-                data[field.lower()] = value
+        self.nmcli_command = "{} --fields={} device show".format(
+            command, ",".join(["general", "ap"] + addresses)
+        ).split()
+        self.caches = {"lines": {}, "devices": {}}
+        self.devices = {"list": [], "devices": self.devices}
 
-        # special case fix some of the chars used by bars.
-        # in proportional fonts, underscore can have a different width than lower-eighth-block
-        if "bars" not in data or not isinstance(data["bars"], str):
-            data["bars"] = ""
-        data["bars"] = data["bars"].replace(u"_", u"▁")
+        self.thresholds_init = self.py3.get_color_names_list(self.format_device)
 
-        color = self.py3.COLOR_GOOD
-        if connected_ap is None:
-            # wifi down
-            color = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
-            full_text = self.py3.safe_format(self.format)
-        else:
-            # wifi up
+    def _update_key(self, key):
+        for old, new in [("[", ""), ("]", ""), (".", "_"), ("-", "_")]:
+            key = key.replace(old, new)
+        return key.lower()
+
+    def networkmanager(self):
+        nm_data = self.py3.command_output(self.nmcli_command, localized=True)
+        new_device = []
+
+        for chunk in nm_data.split("\n\n"):
+            lines = chunk.splitlines()
+            key, value = lines[0].split(":", 1)
+            if self.first_run:
+                if self.devices["devices"]:
+                    for _filter in self.devices["devices"]:
+                        if fnmatch(value, _filter):
+                            self.devices["list"].append(value)
+            if value not in self.devices["list"]:
+                continue
+
             try:
-                color = self.py3.threshold_get_color(int(data["signal"]))
-            except:
-                pass
-            full_text = self.py3.safe_format(self.format, data)
+                key = self.caches["devices"][key]
+            except KeyError:
+                new_key = self._update_key(key)
+
+                self.caches["devices"][key] = new_key
+                key = self.caches["devices"][key]
+
+            device = {key: value}
+
+            for line in lines[1:]:
+                try:
+                    key, value = self.caches["lines"][line]
+                except (KeyError, ValueError):
+                    key, value = line.split(":", 1)
+                    key = self._update_key(key)
+                    if "IP" in line and "ADDRESS" in line:
+                        value = value.split("/")[0]
+                    else:
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass
+
+                    self.caches["lines"][line] = (key, value)
+
+                device[key] = value
+
+            for x in self.thresholds_init:
+                if x in device:
+                    self.py3.threshold_get_color(device[x], x)
+
+            new_device.append(self.py3.safe_format(self.format_device, device))
+
+        format_device_separator = self.py3.safe_format(self.format_device_separator)
+        format_device = self.py3.composite_join(format_device_separator, new_device)
+
+        self.first_run = False
 
         return {
             "cache_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
-            "color": color,
+            "full_text": self.py3.safe_format(
+                self.format, {"format_device": format_device}
+            ),
         }
 
 
