@@ -8,7 +8,8 @@ Configuration parameters:
     blocks: a string, where each character represents quality level
         (default "_▁▂▃▄▅▆▇█")
     cache_timeout: Update interval in seconds (default 10)
-    device: specify device name to use, otherwise auto (default None)
+    device: specify name or MAC address of device to use, otherwise auto
+        (default None)
     down_color: Output color when disconnected, possible values:
         "good", "degraded", "bad" (default "bad")
     format: Display format for this module
@@ -106,11 +107,14 @@ class Py3status:
             data = self.py3.command_output([iw, "dev"])
         except self.py3.CommandError as ce:
             raise Exception(ce.error.strip())
+        last_device = None
         for line in data.splitlines()[1:]:
-            if "Interface" in line:
-                device = line.split()[-1]
-                if not self.device or device == self.device:
-                    self.device = device
+            if "Interface" in line or "addr" in line:
+                intf_or_addr = line.split()[-1]
+                if "Interface" in line:
+                    last_device = intf_or_addr
+                if not self.device or intf_or_addr.lower() == self.device.lower():
+                    self.device = last_device
                     break
         else:
             device = " `{}`".format(self.device) if self.device else ""
