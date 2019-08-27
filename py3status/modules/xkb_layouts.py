@@ -6,12 +6,18 @@ Configuration parameters:
     button_next: mouse button to cycle next layout (default 4)
     button_prev: mouse button to cycle previous layout (default 5)
     cache_timeout: refresh interval for this module (default 10)
-    format: display format for this module (default "[\?color=s {s}][ {v}]")
+    format: display format for this module (default '{format_input}')
+    format_input: display format for inputs, otherwise auto (default None)
+    format_input_separator: show separator if more than one (default ' ')
+    inputs: specify a list of inputs to use (default [])
     thresholds: specify color thresholds to use
         *(default [("fr", "#268BD2"), ("ru", "#F75252"),
         ("ua", "#FCE94F"), ("us", "#729FCF")])*
 
 Format placeholders:
+    {format_input} format for inputs
+
+format_input placeholders:
     xkblayout-state:
         {c} layout number, eg 0
         {n} layout name, eg English
@@ -30,6 +36,27 @@ Format placeholders:
         {s} layout symbol, eg us
         {e} layout variant, compatibility alias to {s}, eg us
         {C} layout count, eg 2
+    swaymsg:
+        {identifier} eg 162:253 USB-HID Keyboard
+        {name} eg Trackball, Keyboard, etc
+        {vendor}  eg 320
+        {product} eg 556
+        {type} eg pointer, keyboard, touchpad
+        {xkb_layout_names} eg English (US)
+        {xkb_active_layout_index} eg 0
+        {format_libinput} format for libinputs
+
+format_libinput placeholders:
+    {send_event}
+    {accel_speed}
+    {natural_scroll}
+    {left_handed}
+    {middle_emulation}
+    {scroll_method}
+    {scroll_button}
+
+    Use `swaymsg -r -t get_inputs` for a list of placeholders from
+    current sway inputs. Not all of placeholders will be usable.
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
@@ -38,8 +65,9 @@ Requires:
     xkblayout-state: a small command-line program to get/set the current keyboard layout
     xkbgroup: query and change xkb layout state
     xkb-switch: program that allows to query and change the xkb layout state
+    swaymsg: send messages to a running instance of sway over the ipc socket
 
-@author lasers, saengowp
+@author lasers, saengowp, javiertury
 
 SAMPLE OUTPUT
 [{"full_text": "Xkb "}, {"color": "#00FFFF", "full_text": "us"}]
@@ -59,7 +87,11 @@ class Xkb:
         self.setup(parent)
 
     def setup(self, parent):
-        pass
+        if self.format_input is None:
+            self.format_input = "[\?color=s {s}][ {v}]"
+        self.parent.thresholds_init = {
+            "format": self.parent.py3.get_color_names_list(self.parent.format)
+        }
 
 
 class Xkbgroup(Xkb):
@@ -136,6 +168,73 @@ class Xkblayout_State(Xkb):
         )
 
 
+class Swaymsg(Xkb):
+    def setup(self, parent):
+        from json import loads
+        from fnmatch import fnmatch
+
+        self.loads = loads
+        self.fnmatch = fnmatch
+
+        self.swaymsg_command = "swaymsg --raw --type get_inputs".split()
+
+        if self.parent.format is None:
+            self.parent.format = "{format_input}"
+        if self.parent.format_input is None:
+            self.parent.format_input = "{name}"
+
+        self.parent.thresholds_init = {
+            "format": self.parent.py3.get_color_names_list(self.parent.format),
+            "format_input": self.parent.py3.get_color_names_list(
+                self.parent.format_input
+            ),
+        }
+
+    def get_xkb_data(self):
+        xkb_data = self.loads(self.parent.py3.command_output(self.swaymsg_command))
+
+        new_input = []
+        for xkb_input in xkb_data:
+            skip = False
+            for filtered_input in self.parent.inputs:
+                skip = True
+                for k, v in filtered_input.items():
+                    xk = xkb_input.get(k, "")
+                    xv = xkb_input.get(v, "")
+                    self.parent.py3.log("KEY: {} vs {}".format(k, xk))
+                    self.parent.py3.log("VALUE: {} vs {}".format(v, xv))
+                    self.parent.py3.log("-" * 5)
+                    self.parent.py3.log("=" * 10)
+                    if self.fnmatch(xv, v):
+                        skip = False
+                # value = xkb_input.get(v)
+                # self.parent.py3.log(value)
+                # self.parent.py3.log(v)
+                # if self.fnmatch(value, v):
+                #     skip = False
+            if skip:
+                self.parent.py3.log("xxxxxxxxxxxx skipping")
+                continue
+
+                for x in self.parent.thresholds_init["format_input"]:
+                    if x in xkb_input:
+                        self.parent.py3.threshold_get_color(xkb_input[x], x)
+
+                new_input.append(
+                    self.parent.py3.safe_format(self.parent.format_input, xkb_input)
+                )
+
+        format_input_separator = self.parent.py3.safe_format(
+            self.parent.format_input_separator
+        )
+        format_input = self.parent.py3.composite_join(format_input_separator, new_input)
+
+        return {"format_input": format_input}
+
+    def set_xkb_layout(self, delta):
+        pass
+
+
 class Py3status:
     """
     """
@@ -144,7 +243,10 @@ class Py3status:
     button_next = 4
     button_prev = 5
     cache_timeout = 10
-    format = "[\?color=s {s}][ {v}]"
+    format = "{format_input}"
+    format_input = None
+    format_input_separator = " "
+    inputs = []
     thresholds = [
         ("fr", "#268BD2"),
         ("ru", "#F75252"),
@@ -152,29 +254,32 @@ class Py3status:
         ("us", "#729FCF"),
     ]
 
+    # inputs = [{"type": "keyboard", "name": "*pple*"}]
+
     def post_config_hook(self):
-        # specify xkblayout-state, xkbgroup, or xkb-switch to use, otherwise auto
+        # specify xkblayout-state, xkbgroup, xkb-switch, or swaymsg to use, otherwise auto
         self.command = getattr(self, "command", None)
 
-        keyboard_commands = ["xkblayout-state", "xkbgroup", "xkb-switch"]
+        keyboard_commands = ["xkblayout-state", "xkbgroup", "xkb-switch", "swaymsg"]
         if not self.command:
             self.command = self.py3.check_commands(keyboard_commands)
         elif self.command not in keyboard_commands:
             raise Exception(STRING_ERROR % self.command)
         elif not self.py3.check_commands(self.command):
             raise Exception(COMMAND_NOT_INSTALLED % self.command)
-        if not self.command:
+
+        try:
+            self.backend = globals()[self.command.replace("-", "_").title()](self)
+            self.backend.get_xkb_data()
+        except Exception:
             raise Exception(
                 "%s (%s)" % (STRING_NOT_AVAILABLE, " or ".join(keyboard_commands))
             )
 
-        self.backend = globals()[self.command.replace("-", "_").title()](self)
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def xkb_layouts(self):
         xkb_data = self.backend.get_xkb_data()
 
-        for x in self.thresholds_init:
+        for x in self.thresholds_init["format"]:
             if x in xkb_data:
                 self.py3.threshold_get_color(xkb_data[x], x)
 
