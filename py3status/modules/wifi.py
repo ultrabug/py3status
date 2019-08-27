@@ -109,7 +109,9 @@ class Py3status:
             raise Exception(ce.error.strip())
         last_device = None
         for line in data.splitlines()[1:]:
-            if "Interface" in line or "addr" in line:
+            if not line.startswith("\t\t"):
+                last_device = None
+            if "Interface" in line or ("addr" in line and last_device is not None):
                 intf_or_addr = line.split()[-1]
                 if "Interface" in line:
                     last_device = intf_or_addr
