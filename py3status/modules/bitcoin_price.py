@@ -40,7 +40,7 @@ SAMPLE OUTPUT
 """
 
 STRING_UNAVAILABLE = "N/A"
-STRING_ERROR = "bitcoin_price: site unreachable"
+STRING_ERROR = "BTC: ERR"
 
 
 class Py3status:
@@ -104,7 +104,7 @@ class Py3status:
             "YEN": "¥",
         }
         self.last_price = 0
-        self.url = "https://api.bitcoincharts.com/v1/markets.json"
+        self.url = "http://api.bitcoincharts.com/v1/markets.json"
 
     def _get_price(self, data, market, field):
         """
