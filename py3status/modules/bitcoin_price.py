@@ -40,7 +40,6 @@ SAMPLE OUTPUT
 """
 
 STRING_UNAVAILABLE = "N/A"
-STRING_ERROR = "BTC: ERR"
 
 
 class Py3status:
@@ -116,15 +115,18 @@ class Py3status:
                 return m[field]
 
     def bitcoin_price(self):
+        response = {
+            "full_text": "",
+            "cached_until": self.py3.time_in(self.cache_timeout),
+        }
+
         # get the data from bitcoincharts api
         try:
             data = self.py3.request(self.url).json()
-        except self.py3.RequestException:
-            return {
-                "cached_until": self.py3.time_in(self.cache_timeout),
-                "color": self.py3.COLOR_BAD,
-                "full_text": "" if self.hide_on_error else STRING_ERROR,
-            }
+        except self.py3.RequestException as err:
+            if self.hide_on_error:
+                return response
+            self.py3.error(str(err))
 
         # get the rate for each market given
         color_rate, rates, markets = None, [], self.markets.split(",")
@@ -150,8 +152,6 @@ class Py3status:
                     {"market": _market, "price": _price, "symbol": _symbol},
                 )
             )
-
-        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
 
         # colorize if an index is given or only one market is selected
         if len(rates) == 1 or self.color_index > -1:
