@@ -55,9 +55,12 @@ networkmanager {
 @license BSD
 
 SAMPLE OUTPUT
+[{'full_text': 'enp2s0 '}, {'color': '#00FF00', 'full_text': '192.168.1.108'}]
+
+wifi
 [
-    {'color': 'enp2s0 '}, {'color': '#00FF00', 'full_text': '192.168.1.108 '},
-    {'color': 'wlp3s0b1 '}, {'color': '#FFFF00', 'full_text': 'Py3status ▂▄__ 54%'},
+    {'full_text': 'wlp3s0b1 '},
+    {'color': '#FFFF00', 'full_text': 'Py3net ▂▄__ 54% '},
     {'color': '#00FF00', 'full_text': '192.168.1.106'},
 ]
 """
