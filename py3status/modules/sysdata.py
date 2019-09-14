@@ -330,7 +330,10 @@ class Py3status:
             total_mem_kib = meminfo["SwapTotal:"]
             used_mem_kib = total_mem_kib - meminfo["SwapFree:"]
 
-        used_percent = 100 * used_mem_kib / total_mem_kib
+        if total_mem_kib == 0:
+            used_percent = 0
+        else:
+            used_percent = 100 * used_mem_kib / total_mem_kib
 
         unit = "B" if unit == "dynamic" else unit
         (total, total_unit) = self.py3.format_units(total_mem_kib * 1024, unit)
