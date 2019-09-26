@@ -145,6 +145,8 @@ Configuration parameters:
         The tuple should follow the form (latitude, longitude), and if set,
         implicitly disables the Geo API for determining location.
         (default None)
+    request_timeout: The time between reconnects when network failure is detected.
+        (default 30)
     thresholds: Configure temperature colors based on limits
         The numbers specified inherit the unit of the temperature as configured.
         The default below is intended for Fahrenheit. If the set value is empty
@@ -262,7 +264,6 @@ diff
 
 import datetime
 
-
 # API information
 OWM_CURR_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather?"
 OWM_FUTURE_ENDPOINT = "https://api.openweathermap.org/data/2.5/forecast?"
@@ -313,6 +314,7 @@ class Py3status:
     # available configuration parameters
     api_key = None
     cache_timeout = 1800
+    request_timeout = 30
     city = None
     country = None
     forecast_days = 3
@@ -427,7 +429,13 @@ class Py3status:
 
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
-        req = self.py3.request(url, params=params)
+        try:
+            req = self.py3.request(url, params=params)
+        # retry every 10 seconds when the issue is caused by network
+        # (e. g. temporary issue with resolving)
+        except (self.py3.RequestURLError, self.py3.RequestTimeout):
+            return self.py3.error('Error making request', timeout=self.request_timeout)
+
         if req.status_code != 200:
             data = req.json()
             if data and "message" in data:
