@@ -425,6 +425,13 @@ class Py3status:
                 if name not in self.thresholds:
                     self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
+        # Initialize per-format thresholds
+        self.thresholds_init = {}
+        for name in ("format_humidity",):
+            self.thresholds_init[name] = self.py3.get_color_names_list(
+                getattr(self, name)
+            )
+
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
         req = self.py3.request(url, params=params)
@@ -618,11 +625,16 @@ class Py3status:
 
     def _format_humidity(self, wthr):
         # Format the humidity (default zero humidity)
-        humidity = self._jpath(wthr, OWM_HUMIDITY, 0)
+        humidity_data = {
+            "icon": self.icon_humidity,
+            "humidity": self._jpath(wthr, OWM_HUMIDITY, 0),
+        }
 
-        return self.py3.safe_format(
-            self.format_humidity, {"icon": self.icon_humidity, "humidity": humidity}
-        )
+        for x in self.thresholds_init["format_humidity"]:
+            if x in humidity_data:
+                self.py3.threshold_get_color(humidity_data[x], x)
+
+        return self.py3.safe_format(self.format_humidity, humidity_data)
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
