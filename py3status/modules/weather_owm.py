@@ -44,8 +44,6 @@ Configuration parameters:
         (default 3)
     forecast_include_today: Include today in the forecast? (Boolean)
         (default False)
-    forecast_text_separator: Separator between entries in the forecast
-        (default ' ')
     format: How to display the weather
         This also dictates the type of forecast. The placeholders here refer to
         the format_[...] variables found below.
@@ -64,6 +62,8 @@ Configuration parameters:
         for future weather. Notably, this does not include information about
         sunrise or sunset times.
         (default '{icon}')
+    format_forecast_separator: Separator between entries in the forecast
+        (default ' ')
     format_humidity: Formatting for humidity (percentage)
         Available placeholders:
             icon, humidity
@@ -317,10 +317,10 @@ class Py3status:
     country = None
     forecast_days = 3
     forecast_include_today = False
-    forecast_text_separator = " "
     format = "{city} {icon} {temperature}[ {rain}], {description} {forecast}"
     format_clouds = "{icon} {coverage}%"
     format_forecast = "{icon}"
+    format_forecast_separator = " "
     format_humidity = "{icon} {humidity}%"
     format_pressure = "{icon} {pressure} hPa"
     format_rain = "[\?if=amount {icon} {amount:.0f} {unit}]"
@@ -352,7 +352,16 @@ class Py3status:
     unit_wind = "mph"
 
     class Meta:
-        deprecated = {"remove": [{"param": "offset_gmt", "msg": "obsolete"}]}
+        deprecated = {
+            "remove": [{"param": "offset_gmt", "msg": "obsolete"}],
+            "rename": [
+                {
+                    "param": "forecast_text_separator",
+                    "new": "format_forecast_separator",
+                    "msg": "obsolete parameter, use format_forecast_separator",
+                }
+            ],
+        }
 
     def _get_icons(self):
         if self.icons is None:
@@ -737,8 +746,9 @@ class Py3status:
             forecasts.append(self.py3.safe_format(self.format_forecast, future))
 
         # Give the final format
+        format_forecast_separator = self.py3.safe_format(self.format_forecast_separator)
         today["forecast"] = self.py3.composite_join(
-            self.forecast_text_separator, forecasts
+            format_forecast_separator, forecasts
         )
 
         return self.py3.safe_format(self.format, today)
@@ -818,6 +828,6 @@ if __name__ == "__main__":
             "format_forecast": ("{icon} " + all_string),
             # Miscellaneous
             "forecast_days": 1,
-            "forecast_text_separator": "//",
+            "format_forecast_separator": "//",
         },
     )
