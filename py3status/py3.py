@@ -1254,6 +1254,8 @@ class Py3:
         timeout=None,
         auth=None,
         cookiejar=None,
+        retry_times=None,
+        retry_wait=None,
     ):
         """
         Make a request to a url and retrieve the results.
@@ -1289,15 +1291,30 @@ class Py3:
         if timeout is None:
             timeout = getattr(self._py3status_module, "request_timeout", 10)
 
+        if retry_times is None:
+            retry_times = getattr(self._py3status_module, "request_retry_times", 3)
+
+        if retry_wait is None:
+            retry_wait = getattr(self._py3status_module, "request_retry_wait", 2)
+
         if "User-Agent" not in headers:
             headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
 
-        return HttpResponse(
-            url,
-            params=params,
-            data=data,
-            headers=headers,
-            timeout=timeout,
-            auth=auth,
-            cookiejar=cookiejar,
-        )
+        for n in range(1, retry_times + 1):
+            try:
+                return HttpResponse(
+                    url,
+                    params=params,
+                    data=data,
+                    headers=headers,
+                    timeout=timeout,
+                    auth=auth,
+                    cookiejar=cookiejar,
+                )
+            except (self.RequestTimeout, self.RequestURLError):
+                self.log("HTTP request retry {}/{}".format(n, retry_times))
+                if self.is_gevent():
+                    from gevent import sleep
+                else:
+                    from time import sleep
+                sleep(retry_wait)
