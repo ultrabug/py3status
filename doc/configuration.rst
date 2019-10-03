@@ -960,7 +960,7 @@ Retrying Requests
 --------------------------------------------------------------
 
 .. note::
-    New in version 3.20
+    New in version 3.21
 
 Requests failing due to network unavailability or remote server timeouts are
 retried automatically ``request_retry_times`` times (default ``3``) at a
