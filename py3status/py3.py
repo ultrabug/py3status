@@ -1300,16 +1300,21 @@ class Py3:
         if "User-Agent" not in headers:
             headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
 
-        for n in range(1, retry_times + 1):
+        def get_http_response(url, params, data, headers, timeout, auth, cookiejar):
+            return HttpResponse(
+                url,
+                params=params,
+                data=data,
+                headers=headers,
+                timeout=timeout,
+                auth=auth,
+                cookiejar=cookiejar,
+            )
+
+        for n in range(1, retry_times):
             try:
-                return HttpResponse(
-                    url,
-                    params=params,
-                    data=data,
-                    headers=headers,
-                    timeout=timeout,
-                    auth=auth,
-                    cookiejar=cookiejar,
+                return get_http_response(
+                    url, params, data, headers, timeout, auth, cookiejar
                 )
             except (self.RequestTimeout, self.RequestURLError):
                 self.log("HTTP request retry {}/{}".format(n, retry_times))
@@ -1318,3 +1323,5 @@ class Py3:
                 else:
                     from time import sleep
                 sleep(retry_wait)
+        self.log("HTTP request retry {}/{}".format(retry_times, retry_times))
+        return get_http_response(url, params, data, headers, timeout, auth, cookiejar)
