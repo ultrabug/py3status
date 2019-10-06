@@ -6,7 +6,7 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default 'GPU: {format_temp}')
     format_temp: display format for temperatures (default '{temp}°C')
-    temp_separator: temperature separator (if more than one) (default '|')
+    format_temp_separator: show separator if more than one (default ' ')
 
 Format placeholders:
     {format_temp} format for temperatures
@@ -43,7 +43,7 @@ class Py3status:
     cache_timeout = 10
     format = "GPU: {format_temp}"
     format_temp = u"{temp}°C"
-    temp_separator = "|"
+    format_temp_separator = " "
 
     class Meta:
         def deprecate_function(config):
@@ -54,7 +54,16 @@ class Py3status:
                 out["format"] = u"{}{{format_temp}}".format(config["format_prefix"])
             return out
 
-        deprecated = {"function": [{"function": deprecate_function}]}
+        deprecated = {
+            "function": [{"function": deprecate_function}],
+            "rename": [
+                {
+                    "param": "temp_separator",
+                    "new": "format_temp_separator",
+                    "msg": "obsolete parameter, use format_temp_separator",
+                }
+            ],
+        }
 
     def post_config_hook(self):
         if not self.py3.check_commands("nvidia-smi"):
@@ -72,8 +81,10 @@ class Py3status:
         data = []
         for temp in temps:
             data.append(self.py3.safe_format(self.format_temp, {"temp": temp}))
-        data = self.py3.composite_join(self.temp_separator, data)
-        full_text = self.py3.safe_format(self.format, {"format_temp": data})
+
+        format_temp_separator = self.py3.safe_format(self.format_temp_separator)
+        format_temp = self.py3.composite_join(format_temp_separator, data)
+        full_text = self.py3.safe_format(self.format, {"format_temp": format_temp})
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
