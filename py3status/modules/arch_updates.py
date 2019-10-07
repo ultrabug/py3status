@@ -78,8 +78,8 @@ class Py3status:
         try:
             updates = self.py3.command_output(["checkupdates"])
             return len(updates.splitlines())
-        except self.py3.CommandError:
-            return None
+        except self.py3.CommandError as ce:
+            return None if ce.error else 0
 
     def _get_auracle_updates(self):
         try:
