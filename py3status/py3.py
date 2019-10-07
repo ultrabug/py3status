@@ -1272,6 +1272,8 @@ class Py3:
         :param timeout: timeout for the request in seconds
         :param auth: authentication info as tuple `(username, password)`
         :param cookiejar: an object of a CookieJar subclass
+        :param retry_times: how many times to retry the request
+        :param retry_wait: how long to wait between retries in seconds
 
         :returns: HttpResponse
         """
@@ -1300,7 +1302,7 @@ class Py3:
         if "User-Agent" not in headers:
             headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
 
-        def get_http_response(url, params, data, headers, timeout, auth, cookiejar):
+        def get_http_response():
             return HttpResponse(
                 url,
                 params=params,
@@ -1313,9 +1315,7 @@ class Py3:
 
         for n in range(1, retry_times):
             try:
-                return get_http_response(
-                    url, params, data, headers, timeout, auth, cookiejar
-                )
+                return get_http_response()
             except (self.RequestTimeout, self.RequestURLError):
                 self.log("HTTP request retry {}/{}".format(n, retry_times))
                 if self.is_gevent():
@@ -1324,4 +1324,4 @@ class Py3:
                     from time import sleep
                 sleep(retry_wait)
         self.log("HTTP request retry {}/{}".format(retry_times, retry_times))
-        return get_http_response(url, params, data, headers, timeout, auth, cookiejar)
+        return get_http_response()
