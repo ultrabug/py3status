@@ -1324,4 +1324,5 @@ class Py3:
                     from time import sleep
                 sleep(retry_wait)
         self.log("HTTP request retry {}/{}".format(retry_times, retry_times))
+        sleep(retry_wait)
         return get_http_response()
