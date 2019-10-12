@@ -222,7 +222,7 @@ class Py3status:
 
         # first_use bad? the user entered bad markets. stop here (error).
         # otherwise, make a limit for first time on 1000+ coins.
-        if data and self.first_use:
+        if self.first_use:
             self.first_use = False
             if not is_equal:
                 self.py3.error("bad markets")
@@ -271,7 +271,7 @@ class Py3status:
     def coin_market(self):
         # first 1000+ coins (then %s coins)
         coin_data = self._get_coin_data()
-        if not self.limit:
+        if coin_data and not self.limit:
             # strip, compare, and maybe update again
             coin_data = self._organize_data(coin_data)
         data = self._manipulate_data(coin_data)
