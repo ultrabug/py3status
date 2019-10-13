@@ -937,8 +937,13 @@ an event
     by all package managers.
 
 
-Request Timeout
+Request Settings
 --------------------------------------------------------------
+
+Handling timeouts
+^^^^^^^^^^^^^^^^^
+
+Timeouts are handled thanks to the global ``request_timeout`` setting.
 
 .. note::
     New in version 3.16
@@ -953,4 +958,35 @@ module configuration. To find out if your module supports that, look for
     # stop waiting for a response after 10 seconds
     exchange_rate {
         request_timeout = 10
+    }
+
+
+Handling retries
+^^^^^^^^^^^^^^^^
+
+Retries are handled thanks to the global ``request_retry_times`` and
+``request_retry_wait`` settings.
+
+.. note::
+    New in version 3.21
+
+Requests failing due to network unavailability or remote server timeouts are
+retried automatically ``request_retry_times`` times (default ``3``) at a
+``request_retry_wait`` (default ``2``) seconds interval.
+
+This allows to be more graceful to i3 startup when network is not up yet or to
+short network disruptions and not display an error on the bar in that case.
+
+To find out if your module supports that, look for ``self.py3.request`` in the
+code.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # try to contact the OWM API 10 times every 5 seconds before displaying
+    # an error on the bar for the module
+    # that is equivalent to 50 seconds of retrying before an error occurs
+    weather_owm {
+        request_retry_times = 10
+        request_retry_wait = 5
     }
