@@ -89,7 +89,7 @@ STRING_NOT_AVAILABLE = "no available binary"
 COMMAND_NOT_INSTALLED = "command `%s` not installed"
 
 
-class AudioBackend:
+class Audio:
     def __init__(self, parent):
         self.card = parent.card
         self.channel = parent.channel
@@ -109,7 +109,7 @@ class AudioBackend:
         return self.parent.py3.command_output(cmd)
 
 
-class AmixerBackend(AudioBackend):
+class Amixer(Audio):
     def setup(self, parent):
         if self.card is None:
             self.card = "0"
@@ -163,7 +163,7 @@ class AmixerBackend(AudioBackend):
         self.run_cmd(self.cmd + ["toggle"])
 
 
-class PamixerBackend(AudioBackend):
+class Pamixer(Audio):
     def setup(self, parent):
         is_input = "--source" if self.is_input else "--sink"
         self.cmd = ["pamixer", "--allow-boost", is_input, self.device or "0"]
@@ -196,7 +196,7 @@ class PamixerBackend(AudioBackend):
         self.run_cmd(self.cmd + ["--toggle-mute"])
 
 
-class PactlBackend(AudioBackend):
+class Pactl(Audio):
     def setup(self, parent):
         # get available device number if not specified
         self.device_type = "source" if self.is_input else "sink"
@@ -360,12 +360,7 @@ class Py3status:
             self.device = "%s" % self.device
         self.volume_delta = int(self.volume_delta)
 
-        if self.command == "amixer":
-            self.backend = AmixerBackend(self)
-        elif self.command == "pamixer":
-            self.backend = PamixerBackend(self)
-        elif self.command == "pactl":
-            self.backend = PactlBackend(self)
+        self.backend = globals()[self.command.capitalize()](self)
 
     # compares current volume to the thresholds, returns a color code
     def _perc_to_color(self, string):
