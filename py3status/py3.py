@@ -1317,11 +1317,11 @@ class Py3:
             try:
                 return get_http_response()
             except (self.RequestTimeout, self.RequestURLError):
-                self.log("HTTP request retry {}/{}".format(n, retry_times))
                 if self.is_gevent():
                     from gevent import sleep
                 else:
                     from time import sleep
+                self.log("HTTP request retry {}/{}".format(n, retry_times))
                 sleep(retry_wait)
         self.log("HTTP request retry {}/{}".format(retry_times, retry_times))
         sleep(retry_wait)
