@@ -1,3 +1,23 @@
+version 3.21 (2019-10-13)
+* implement global request_retry_times and request_retry_wait options (#1847)
+* arch_updates module: checkupdates throws exit code on zero updates (#1848), by Daniel Jenssen
+* bitcoin_price module: change api request to http (#1836), by dosera
+* coin_market module: skip empty datas (#1849), by lasers
+* fix `long_description_content_type` missing
+* fix entry_point typo in docstring (#1830), by Oliver Bestwalter
+* fix project's long_description has invalid markup which will not be rendered on PyPI
+* i3status: support memory module, remove valid_config_param (#1833), by lasers
+* new module networkmanager: display network status (#1766), by Kevin Pulo
+* module testing: fix testmode fails because it uses is_gevent property. (#1832), by Valdur Kana
+* mpris module: fix KeyError exception closes #1827 (#1831), by lasers
+* nvidia_temp module: add safeformat for separator, rename separator (#1846), by lasers
+* spotify module: add playback placeholder (#1829), by Bazyli Cyran
+* sysdata module: prevent a divide by zero on empty swap (#1838), by Pierre GINDRAUD
+* weather_owm module: add safeformat for separator, rename separator (#1845), by lasers
+* weather_own module: add thresholds for humidity (#1844), by lasers
+* wifi module: fix bug introduced in PR #1834 (#1835), by ownaginatious
+* wifi module: specify device by name or MAC address (#1834), by ownaginatious
+
 version 3.20 (2019-08-06)
 * IMPORTANT: py3status now supports importing modules from pypi packages, see 'writing modules' section on docs!
 * introduce entry point based discovery of packaged custom modules (#1823), by Oliver Bestwalter
