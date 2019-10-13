@@ -355,17 +355,15 @@ class Py3status:
 
         # turn integers to strings
         if self.card is not None:
-            self.card = "%s" % self.card
+            self.card = str(self.card)
         if self.device is not None:
-            self.device = "%s" % self.device
-        self.volume_delta = int(self.volume_delta)
+            self.device = str(self.device)
 
         self.backend = globals()[self.command.capitalize()](self)
+        self.color_muted = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
 
     def volume_status(self):
-        # call backend
         perc, muted = self.backend.get_volume()
-
         color = None
         icon = None
 
@@ -374,7 +372,7 @@ class Py3status:
             perc = "?"
         else:
             if muted:
-                color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+                color = self.color_muted
             else:
                 icon = self.blocks[
                     min(
@@ -383,36 +381,26 @@ class Py3status:
                     )
                 ]
             if not self.py3.is_color(color):
-                # determine the color based on the current volume level
                 color = self.py3.threshold_get_color(perc)
 
-        # format the output
         new_format = self.format_muted if muted else self.format
         volume_data = {"icon": icon, "percentage": perc}
 
-        # create response dict
-        response = {
+        return {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(new_format, volume_data),
             "color": color,
         }
-        return response
 
     def on_click(self, event):
-        """
-        Volume up/down and toggle mute.
-        """
         button = event["button"]
-        # volume up
         if button == self.button_up:
             try:
                 self.backend.volume_up(self.volume_delta)
             except TypeError:
                 pass
-        # volume down
         elif button == self.button_down:
             self.backend.volume_down(self.volume_delta)
-        # toggle mute
         elif button == self.button_mute:
             self.backend.toggle_mute()
 
