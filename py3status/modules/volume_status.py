@@ -366,24 +366,22 @@ class Py3status:
         perc, muted = self.backend.get_volume()
         color = None
         icon = None
+        new_format = self.format
 
-        if perc is None or muted is None:
-            color = self.py3.COLOR_BAD
+        if perc is None:
             perc = "?"
+        elif muted:
+            color = self.color_muted
+            new_format = self.format_muted
         else:
-            if muted:
-                color = self.color_muted
-            else:
-                icon = self.blocks[
-                    min(
-                        len(self.blocks) - 1,
-                        int(math.ceil(int(perc) / 100 * (len(self.blocks) - 1))),
-                    )
-                ]
-            if not self.py3.is_color(color):
-                color = self.py3.threshold_get_color(perc)
+            color = self.py3.threshold_get_color(perc)
+            icon = self.blocks[
+                min(
+                    len(self.blocks) - 1,
+                    int(math.ceil(int(perc) / 100 * (len(self.blocks) - 1))),
+                )
+            ]
 
-        new_format = self.format_muted if muted else self.format
         volume_data = {"icon": icon, "percentage": perc}
 
         return {
