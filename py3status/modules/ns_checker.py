@@ -14,8 +14,8 @@ Configuration parameters:
     domain: domain name to check (default '')
     format: output format string (default '{total_count} NS {status}')
     lifetime: resolver lifetime (default 0.3)
-    nameservers: comma separated list of reference DNS nameservers (default '')
-    resolvers: comma separated list of DNS resolvers to use (default '')
+    nameservers: specify a list of reference DNS nameservers (default [])
+    resolvers: specify a list of DNS resolvers to use (default [])
 
 Format placeholders:
     {nok_count} The number of failed name servers
@@ -49,25 +49,25 @@ class Py3status:
     domain = ""
     format = "{total_count} NS {status}"
     lifetime = 0.3
-    nameservers = ""
-    resolvers = ""
+    nameservers = []
+    resolvers = []
 
-    def ns_checker(self):
-        response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "color": self.py3.COLOR_GOOD,
-            "full_text": "",
-        }
-        count_nok = 0
-        count_ok = 0
-        nameservers = []
-        status = "OK"
-
+    def post_config_hook(self):
         # parse some configuration parameters
         if not isinstance(self.nameservers, list):
             self.nameservers = self.nameservers.split(",")
         if not isinstance(self.resolvers, list):
             self.resolvers = self.resolvers.split(",")
+
+    def ns_checker(self):
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "color": self.py3.COLOR_GOOD,
+        }
+        count_nok = 0
+        count_ok = 0
+        nameservers = []
+        status = "OK"
 
         my_resolver = dns.resolver.Resolver()
         my_resolver.lifetime = self.lifetime
