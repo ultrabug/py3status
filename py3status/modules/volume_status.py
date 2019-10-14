@@ -89,7 +89,7 @@ STRING_NOT_AVAILABLE = "no available binary"
 COMMAND_NOT_INSTALLED = "command `%s` not installed"
 
 
-class AudioBackend:
+class Audio:
     def __init__(self, parent):
         self.card = parent.card
         self.channel = parent.channel
@@ -109,7 +109,7 @@ class AudioBackend:
         return self.parent.py3.command_output(cmd)
 
 
-class AmixerBackend(AudioBackend):
+class Amixer(Audio):
     def setup(self, parent):
         if self.card is None:
             self.card = "0"
@@ -163,7 +163,7 @@ class AmixerBackend(AudioBackend):
         self.run_cmd(self.cmd + ["toggle"])
 
 
-class PamixerBackend(AudioBackend):
+class Pamixer(Audio):
     def setup(self, parent):
         is_input = "--source" if self.is_input else "--sink"
         self.cmd = ["pamixer", "--allow-boost", is_input, self.device or "0"]
@@ -196,7 +196,7 @@ class PamixerBackend(AudioBackend):
         self.run_cmd(self.cmd + ["--toggle-mute"])
 
 
-class PactlBackend(AudioBackend):
+class Pactl(Audio):
     def setup(self, parent):
         # get available device number if not specified
         self.device_type = "source" if self.is_input else "sink"
@@ -355,79 +355,50 @@ class Py3status:
 
         # turn integers to strings
         if self.card is not None:
-            self.card = "%s" % self.card
+            self.card = str(self.card)
         if self.device is not None:
-            self.device = "%s" % self.device
-        self.volume_delta = int(self.volume_delta)
+            self.device = str(self.device)
 
-        if self.command == "amixer":
-            self.backend = AmixerBackend(self)
-        elif self.command == "pamixer":
-            self.backend = PamixerBackend(self)
-        elif self.command == "pactl":
-            self.backend = PactlBackend(self)
-
-    # compares current volume to the thresholds, returns a color code
-    def _perc_to_color(self, string):
-        return self.py3.threshold_get_color(string)
-
-    # return the format string formatted with available variables
-    def _format_output(self, format, icon, percentage):
-        text = self.py3.safe_format(format, {"icon": icon, "percentage": percentage})
-        return text
+        self.backend = globals()[self.command.capitalize()](self)
+        self.color_muted = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
 
     def volume_status(self):
-        # call backend
         perc, muted = self.backend.get_volume()
-
         color = None
         icon = None
+        new_format = self.format
 
-        if perc is None or muted is None:
-            color = self.py3.COLOR_BAD
+        if perc is None:
             perc = "?"
+        elif muted:
+            color = self.color_muted
+            new_format = self.format_muted
         else:
-            if muted:
-                color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-            else:
-                icon = self.blocks[
-                    min(
-                        len(self.blocks) - 1,
-                        int(math.ceil(int(perc) / 100 * (len(self.blocks) - 1))),
-                    )
-                ]
-            if not self.py3.is_color(color):
-                # determine the color based on the current volume level
-                color = self._perc_to_color(perc)
+            color = self.py3.threshold_get_color(perc)
+            icon = self.blocks[
+                min(
+                    len(self.blocks) - 1,
+                    int(math.ceil(int(perc) / 100 * (len(self.blocks) - 1))),
+                )
+            ]
 
-        # format the output
-        text = self._format_output(
-            self.format_muted if muted else self.format, icon, perc
-        )
+        volume_data = {"icon": icon, "percentage": perc}
 
-        # create response dict
-        response = {
+        return {
             "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(new_format, volume_data),
             "color": color,
-            "full_text": text,
         }
-        return response
 
     def on_click(self, event):
-        """
-        Volume up/down and toggle mute.
-        """
         button = event["button"]
-        # volume up
         if button == self.button_up:
             try:
                 self.backend.volume_up(self.volume_delta)
             except TypeError:
                 pass
-        # volume down
         elif button == self.button_down:
             self.backend.volume_down(self.volume_delta)
-        # toggle mute
         elif button == self.button_mute:
             self.backend.toggle_mute()
 
