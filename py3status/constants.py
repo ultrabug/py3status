@@ -219,6 +219,15 @@ ON_TRIGGER_ACTIONS = ["refresh", "refresh_and_freeze"]
 
 POSITIONS = ["left", "center", "right"]
 
-RETIRED_MODULES = {"weather_yahoo": ["weather_owm"]}
+RETIRED_MODULES = {
+    "nvidia_temp": {
+        "new": ["nvidia_smi"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
+    "weather_yahoo": {
+        "new": ["weather_owm"],
+        "msg": "Module {old} is no longer available due to retired Yahoo Weather APIs and new Oath requirements. You can try a different module {new}.",
+    },
+}
 
 MARKUP_LANGUAGES = ["pango", "none"]

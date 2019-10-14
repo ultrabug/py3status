@@ -853,12 +853,12 @@ def process_config(config_path, py3_wrapper=None):
             continue
         module_name = name.split(" ")[0]
         if module_name in RETIRED_MODULES:
-            notify_user(
-                "Module `{}` is no longer available".format(module_name)
-                + ". Alternative modules are: {}.".format(
-                    ", ".join("`{}`".format(x) for x in RETIRED_MODULES[module_name])
-                )
+            old = "`{}`".format(module_name)
+            new = ", ".join(
+                "`{}`".format(x) for x in RETIRED_MODULES[module_name]["new"]
             )
+            msg = RETIRED_MODULES[module_name]["msg"].format(old=old, new=new)
+            notify_user(msg)
             continue
         module = modules.get(name, {})
         config["order"].append(name)
