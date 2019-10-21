@@ -51,14 +51,6 @@ urgent
 {'full_text': '\u232b URGENT 1', 'urgent': True}
 """
 
-try:
-    import i3ipc
-    from threading import Thread
-
-    IPC = "i3ipc"
-except Exception:
-    IPC = "i3msg"
-
 STRING_ERROR = "invalid ipc `{}`"
 
 
@@ -80,13 +72,17 @@ class I3ipc(Ipc):
     """
 
     def setup(self, parent):
+        from threading import Thread
+
         self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
         t = Thread(target=self.start)
         t.daemon = True
         t.start()
 
     def start(self):
-        i3 = i3ipc.Connection()
+        from i3ipc import Connection
+
+        i3 = Connection()
         self.update(i3)
         for event in ["window::move", "window::urgent"]:
             i3.on(event, self.update)
@@ -135,16 +131,21 @@ class Py3status:
 
     def post_config_hook(self):
         # ipc: specify i3ipc or i3-msg, otherwise auto (default None)
-        self.ipc = getattr(self, "ipc", IPC).replace("-", "")
+        self.ipc = getattr(self, "ipc", "").replace("-", "")
+        if self.ipc in ["", "i3ipc"]:
+            try:
+                from i3ipc import Connection  # noqa f401, auto ipc
 
-        self.leaves = []
-        if self.ipc in ["i3ipc", "i3msg"]:
-            if self.ipc == "i3ipc":
-                import i3ipc  # noqa f401, raise exception
-            self.backend = globals()[self.ipc.capitalize()](self)
-        else:
+                self.ipc = "i3ipc"
+            except Exception:
+                if self.ipc in ["i3ipc"]:
+                    raise  # module i3ipc not found
+                self.ipc = "i3msg"
+        elif self.ipc not in ["i3msg"]:
             raise Exception(STRING_ERROR.format(self.ipc))
 
+        self.leaves = []
+        self.backend = globals()[self.ipc.capitalize()](self)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def _get_scratchpad_leaves(self):
