@@ -90,15 +90,15 @@ class Py3status:
             self.bus,
             Gio.DBusProxyFlags.NONE,
             None,
-            "org.usbguard",
-            "/org/usbguard/Devices",
-            "org.usbguard.Devices",
+            "org.usbguard1",
+            "/org/usbguard1/Devices",
+            "org.usbguard.Devices1",
             None,
         )
         for signal in ["DevicePolicyChanged", "DevicePresenceChanged"]:
             self.bus.signal_subscribe(
                 None,
-                "org.usbguard.Devices",
+                "org.usbguard.Devices1",
                 signal,
                 None,
                 None,
