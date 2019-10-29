@@ -3,24 +3,24 @@
 Display window properties (i.e. title, class, instance).
 
 Configuration parameters:
-    cache_timeout: refresh interval for i3-msg (default 1)
-    format: display format for this module (default '{title}')
+    cache_timeout: refresh interval for i3-msg or swaymsg (default 0.5)
+    format: display format for this module (default "{title}")
+    hide_title: hide title on containers with window title (default False)
+    max_width: specify width to truncate title with ellipsis (default None)
 
 Format placeholders:
     {class} window class
     {instance} window instance
     {title} window title
 
+Optional:
+    i3ipc: an improved python library to control i3wm and sway
+
 Examples:
 ```
-# show heart instead of empty title
+# show alternative instead of empty title
 window_title {
     format = '{title}|\u2665'
-}
-
-# specify a length
-window_title {
-    format = '[\?max_length=55 {title}]'
 }
 ```
 
@@ -28,7 +28,10 @@ window_title {
 @license Eclipse Public License (counter), BSD (async)
 
 SAMPLE OUTPUT
-{'full_text': u'business_plan_final_3a.doc'}
+{'full_text': u'scary snake movie - mpv'}
+
+ellipsis
+{'full_text': u'GitHub - ultrabug/py3sta…'}
 """
 
 STRING_ERROR = "invalid ipc `{}`"
@@ -40,37 +43,28 @@ class Ipc:
 
     def __init__(self, parent):
         self.parent = parent
-
-        # deprecations?
-        self.max_width = getattr(parent, "max_width", 120)
-        self.placeholders = dict.fromkeys(
-            self.parent.py3.get_placeholders_list(self.parent.format), ""
-        )
-        self.placeholders.pop("ipc", None)
         self.setup(parent)
 
-    def set_window_properties(self):
-        pass
+    def compatibility(self, window_properties):
+        # specify width to truncate title with ellipsis
+        if self.parent.max_width:
+            title = window_properties["title"]
+            if len(title or "") > self.parent.max_width:
+                window_properties["title"] = title[: self.parent.max_width - 1] + u"…"
 
-    def trim_width(self, string):
-        if len(string) > self.max_width:
-            string = string[: self.max_width - 1] + u"…"
-        return string
+        return window_properties
 
 
 class I3ipc(Ipc):
     """
+    i3ipc - an improved python library to control i3wm and sway
     """
 
     def setup(self, parent):
         from threading import Thread
 
         self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
-        self.last_window_properties = self.placeholders
-
-        # deprecations?
-        self.always_show = getattr(parent, "always_show", False)
-        self.empty_title = getattr(parent, "empty_title", "")
+        self.window_properties = {}
 
         t = Thread(target=self.start)
         t.daemon = True
@@ -87,28 +81,23 @@ class I3ipc(Ipc):
             i3.on(event, self.change_title)
         i3.main()
 
-    def clear_title(self, i3, event):
-        focused = i3.get_tree().find_focused()
-        if not focused.window_class:
-            focused.window_title = self.empty_title
-        self.update(focused)
+    def clear_title(self, i3, event=None):
+        self.update(i3.get_tree().find_focused())
 
     def change_title(self, i3, event=None):
         focused = i3.get_tree().find_focused()
 
-        # do not hide title when it is already visible (e.g. stacked/tabbed layout)
-        if not self.always_show and (
-            focused.border == "normal"
-            or focused.type == "workspace"
-            or (
-                focused.parent.layout in ("stacked", "tabbed")
-                and len(focused.parent.nodes) > 1
-            )
-        ):
-            focused.window_title = self.empty_title
-        else:
-            # deprecation?
-            focused.window_title = self.trim_width(focused.window_title)
+        # hide title on containers with window title
+        if self.parent.hide_title:
+            if (
+                focused.border == "normal"
+                or focused.type == "workspace"
+                or (
+                    focused.parent.layout in ("stacked", "tabbed")
+                    and len(focused.parent.nodes) > 1
+                )
+            ):
+                focused.window_title = None
         self.update(focused)
 
     def update(self, window_properties):
@@ -117,43 +106,65 @@ class I3ipc(Ipc):
             "class": window_properties.window_class,
             "instance": window_properties.window_instance,
         }
-        if window_properties != self.last_window_properties:
-            self.last_window_properties = window_properties
-            self.parent.window_properties = window_properties
+        window_properties = self.compatibility(window_properties)
+        if self.window_properties != window_properties:
+            self.window_properties = window_properties
             self.parent.py3.update()
 
+    def get_window_properties(self):
+        return self.window_properties
 
-class I3msg(Ipc):
+
+class Msg(Ipc):
     """
     i3-msg - send messages to i3 window manager
+    swaymsg - send messages to sway window manager
     """
 
     def setup(self, parent):
         from json import loads as json_loads
 
         self.json_loads = json_loads
-        self.tree_command = [self.parent.py3.get_wm_msg(), "-t", "get_tree"]
+        wm_msg = {"i3msg": "i3-msg"}.get(parent.ipc, parent.ipc)
+        self.tree_command = [wm_msg, "-t", "get_tree"]
 
-    def set_window_properties(self):
+    def get_window_properties(self):
         tree = self.json_loads(self.parent.py3.command_output(self.tree_command))
-        window_properties = self.find_focused(tree).get(
-            "window_properties", self.placeholders
+        focused = self.find_needle(tree)
+        window_properties = focused.get(
+            "window_properties", {"title": None, "class": None, "instance": None}
         )
-        window_properties["title"] = self.trim_width(window_properties.get("title", ""))
-        self.parent.window_properties = {
-            x: window_properties.get(x, "") for x in self.placeholders
-        }
 
-    def find_focused(self, tree):
+        # hide title on containers with window title
+        if self.parent.hide_title:
+            parent = self.find_needle(tree, focused)
+            if (
+                focused["border"] == "normal"
+                or focused["type"] == "workspace"
+                or (
+                    parent["layout"] in ("stacked", "tabbed")
+                    and len(parent["nodes"]) > 1
+                )
+            ):
+                window_properties["title"] = None
+        window_properties = self.compatibility(window_properties)
+        return window_properties
+
+    def find_needle(self, tree, focused=None):
         if isinstance(tree, list):
             for el in tree:
-                res = self.find_focused(el)
+                res = self.find_needle(el, focused)
                 if res:
                     return res
         elif isinstance(tree, dict):
-            if tree["focused"]:
+            nodes = tree["nodes"] + tree["floating_nodes"]
+            if focused:
+                for node in nodes:
+                    if node["id"] == focused["id"]:
+                        return tree
+            elif tree["focused"]:
                 return tree
-            return self.find_focused(tree["nodes"] + tree["floating_nodes"])
+            return self.find_needle(nodes, focused)
         return {}
 
 
@@ -162,33 +173,33 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 1
+    cache_timeout = 0.5
     format = "{title}"
+    hide_title = False
+    max_width = None
 
     def post_config_hook(self):
-        # ipc: specify i3ipc or i3-msg, otherwise auto (default None)
-        self.ipc = getattr(self, "ipc", "").replace("-", "")
+        # ipc: specify i3ipc, i3-msg, or swaymsg, otherwise auto
+        self.ipc = getattr(self, "ipc", "")
         if self.ipc in ["", "i3ipc"]:
             try:
                 from i3ipc import Connection  # noqa f401, auto ipc
 
                 self.ipc = "i3ipc"
             except Exception:
-                if self.ipc in ["i3ipc"]:
-                    raise  # module i3ipc not found
-                self.ipc = "i3msg"
-        elif self.ipc not in ["i3msg"]:
+                if self.ipc:
+                    raise  # module not found
+
+        self.ipc = (self.ipc or self.py3.get_wm_msg()).replace("-", "")
+        if self.ipc in ["i3ipc"]:
+            self.backend = I3ipc(self)
+        elif self.ipc in ["i3msg", "swaymsg"]:
+            self.backend = Msg(self)
+        else:
             raise Exception(STRING_ERROR.format(self.ipc))
 
-        self.window_properties = {}
-        self.backend = globals()[self.ipc.capitalize()](self)
-
-    def _get_window_properties(self):
-        self.backend.set_window_properties()
-        return self.window_properties
-
     def window(self):
-        window_properties = self._get_window_properties()
+        window_properties = self.backend.get_window_properties()
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
@@ -198,9 +209,17 @@ class Py3status:
 
 if __name__ == "__main__":
     """
+    Specify --ipc [i3ipc|i3msg|swaymsg].
+    """
+    from sys import argv
+
+    config = {"format": "\[{ipc}\] [\?color=pink {title}]"}
+    for index, arg in enumerate(argv):
+        if "--ipc" in arg:
+            config["ipc"] = argv[index + 1]
+    """
     Run module in test mode.
     """
     from py3status.module_test import module_test
 
-    config = {"format": "\[{ipc}\] {title}"}
     module_test(Py3status, config=config)
