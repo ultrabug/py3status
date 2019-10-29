@@ -37,6 +37,7 @@ Format placeholders:
     {state} playback status of the player
     {time} played time of the song
     {title} name of the song
+    {nowplaying} now playing field provided by VLC for stream info
 
 Button placeholders:
     {next} play the next title
@@ -197,6 +198,7 @@ class Py3status:
             "player": None,
             "state": STOPPED,
             "title": None,
+            "nowplaying": None,
         }
 
         if self._player is None:
@@ -277,6 +279,7 @@ class Py3status:
             "length": self._data.get("length"),
             "time": ptime,
             "title": self._data.get("title") or "No Track",
+            "nowplaying": self._data.get("nowplaying"),
             "full_name": self._player_details.get("full_name"),  # for debugging ;p
         }
 
@@ -509,6 +512,8 @@ class Py3status:
         if is_stream and self._data.get("title"):
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
+
+            self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def kill(self):
         self._kill = True
