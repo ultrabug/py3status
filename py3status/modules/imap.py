@@ -84,8 +84,8 @@ class Py3status:
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
         self.command_tag = (
-            0
-        )  # IMAPcommands are tagged, so responses can be matched up to requests
+            0  # IMAPcommands are tagged, so responses can be matched up to requests
+        )
         self.idle_thread = Thread()
 
         if self.security not in ["ssl", "starttls"]:
