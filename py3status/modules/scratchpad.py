@@ -22,18 +22,26 @@ Optional:
 Examples:
 ```
 # hide zero scratchpad
-scrathpad {
+scratchpad {
     format = '[\?not_zero \u232b [\?color=scratchpad {scratchpad}]]'
 }
 
-# show urgent scratchpads
-scrathpad {
+# hide non-urgent scratchpad
+scratchpad {
     format = '[\?not_zero \u232b {urgent}]'
 }
 
 # bring up scratchpads on clicks
 scratchpad {
     on_click 1 = 'scratchpad show'
+}
+
+# add more colors
+scratchpad {
+    thresholds = [
+       (0, "darkgray"), (1, "violet"), (2, "deepskyblue"), (3, "lime"),
+       (4, "yellow"), (5, "orange"), (6, "red"), (7, "tomato"),
+    ]
 }
 ```
 
@@ -71,7 +79,7 @@ class I3ipc(Ipc):
         from threading import Thread
 
         self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
-        self.nodes = []
+        self.scratchpad_data = {"scratchpad": 0, "urgent": 0}
 
         t = Thread(target=self.start)
         t.daemon = True
@@ -87,11 +95,18 @@ class I3ipc(Ipc):
         i3.main()
 
     def update(self, i3, event=None):
-        self.nodes = i3.get_tree().scratchpad().leaves()
-        self.parent.py3.update()
+        leaves = i3.get_tree().scratchpad().leaves()
+        temporary = {
+            "ipc": self.parent.ipc,
+            "scratchpad": len(leaves),
+            "urgent": sum(window.urgent for window in leaves),
+        }
+        if self.scratchpad_data != temporary:
+            self.scratchpad_data = temporary
+            self.parent.py3.update()
 
-    def get_scratchpad_nodes(self):
-        return [window.urgent for window in self.nodes]
+    def get_scratchpad_data(self):
+        return self.scratchpad_data
 
 
 class Msg(Ipc):
@@ -107,10 +122,14 @@ class Msg(Ipc):
         wm_msg = {"i3msg": "i3-msg"}.get(parent.ipc, parent.ipc)
         self.tree_command = [wm_msg, "-t", "get_tree"]
 
-    def get_scratchpad_nodes(self):
+    def get_scratchpad_data(self):
         tree = self.json_loads(self.parent.py3.command_output(self.tree_command))
-        nodes = self.find_scratchpad(tree).get("floating_nodes", [])
-        return [window["urgent"] for window in nodes]
+        leaves = self.find_scratchpad(tree).get("floating_nodes", [])
+        return {
+            "ipc": self.parent.ipc,
+            "scratchpad": len(leaves),
+            "urgent": sum([window["urgent"] for window in leaves]),
+        }
 
     def find_scratchpad(self, tree):
         if tree.get("name") == "__i3_scratch":
@@ -132,8 +151,8 @@ class Py3status:
     thresholds = [(0, "darkgray"), (1, "violet")]
 
     def post_config_hook(self):
-        # ipc: specify i3ipc, i3-msg, or swaymsg, otherwise auto (default None)
-        self.ipc = getattr(self, "ipc", "").replace("-", "")
+        # ipc: specify i3ipc, i3-msg, or swaymsg, otherwise auto
+        self.ipc = getattr(self, "ipc", "")
         if self.ipc in ["", "i3ipc"]:
             try:
                 from i3ipc import Connection  # noqa f401
@@ -143,7 +162,7 @@ class Py3status:
                 if self.ipc:
                     raise  # module not found
 
-        self.ipc = self.ipc or self.py3.get_wm_msg().replace("-", "")
+        self.ipc = (self.ipc or self.py3.get_wm_msg()).replace("-", "")
         if self.ipc in ["i3ipc"]:
             self.backend = I3ipc(self)
         elif self.ipc in ["i3msg", "swaymsg"]:
@@ -154,13 +173,7 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def scratchpad(self):
-        scratchpad_nodes = self.backend.get_scratchpad_nodes()
-
-        scratchpad_data = {
-            "ipc": self.ipc,
-            "scratchpad": len(scratchpad_nodes),
-            "urgent": sum(scratchpad_nodes),
-        }
+        scratchpad_data = self.backend.get_scratchpad_data()
 
         for x in self.thresholds_init:
             if x in scratchpad_data:
