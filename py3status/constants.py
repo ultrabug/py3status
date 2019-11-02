@@ -232,6 +232,14 @@ RETIRED_MODULES = {
         "new": ["scratchpad"],
         "msg": "Module {old} has been replaced with a consolidated module {new}.",
     },
+    "window_title": {
+        "new": ["window"],
+        "msg": "Module {old} has been replaced with a consolidated module {new}.",
+    },
+    "window_title_async": {
+        "new": ["window"],
+        "msg": "Module {old} has been replaced with a consolidated module {new}.",
+    },
     "weather_yahoo": {
         "new": ["weather_owm"],
         "msg": "Module {old} is no longer available due to retired Yahoo Weather APIs and new Oath requirements. You can try a different module {new}.",
