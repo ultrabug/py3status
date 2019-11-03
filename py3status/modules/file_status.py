@@ -117,7 +117,7 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def file_status(self):
-        # init datas
+        # init data
         paths = sorted([files for path in self.paths for files in glob(path)])
         count_path = len(paths)
         format_path = None

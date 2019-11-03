@@ -655,13 +655,13 @@ class Block:
             output = [output]
 
         # merge as much output as we can.
-        # we need to convert values to unicode for concatination.
+        # we need to convert values to unicode for concatenation.
         if python2:
             conversion = unicode  # noqa
-            convertables = (str, bool, int, float, unicode)  # noqa
+            convertibles = (str, bool, int, float, unicode)  # noqa
         else:
             conversion = str
-            convertables = (str, bool, int, float, bytes)
+            convertibles = (str, bool, int, float, bytes)
 
         first = True
         last_block = None
@@ -669,7 +669,7 @@ class Block:
             is_block = isinstance(item, Block)
             if not is_block and item:
                 last_block = None
-            if isinstance(item, convertables) or item is None:
+            if isinstance(item, convertibles) or item is None:
                 text += conversion(item)
                 continue
             elif text:

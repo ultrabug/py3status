@@ -223,7 +223,7 @@ class I3statusModule:
         # get datetime and time zone info
         parts = i3s_time.split()
         i3s_datetime = " ".join(parts[:2])
-        # occassionally we do not get the timezone name
+        # occasionally we do not get the timezone name
         if len(parts) < 3:
             return True
         else:

@@ -14,7 +14,7 @@ Configuration parameters:
         once, `repeat` the blocklet will be called constantly, or `persist`
         where the command will be expected to keep providing new data. If this
         is not set or is `None` then the blocklet will not be called unless
-        clicked on. To simplify i3block compatability, this configuration
+        clicked on. To simplify i3block compatibility, this configuration
         parameter can also be provided as `interval`.
         (default None)
     command: Path to blocklet or command (default None)

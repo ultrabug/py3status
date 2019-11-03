@@ -100,7 +100,7 @@ class Py3status:
                     port=self.modem,
                     baudrate=self.baudrate,
                     # Values below work for my modem. Not sure if
-                    # they neccessarily work for all modems
+                    # they necessarily work for all modems
                     parity=serial.PARITY_ODD,
                     stopbits=serial.STOPBITS_ONE,
                     bytesize=serial.EIGHTBITS,
