@@ -27,7 +27,7 @@ Configuration parameters:
         coin balance. Multiple placeholders are allowed, but all balances will
         be fetched from the same host. (default 'LTC: {litecoin}')
     host: The coin-server hostname. Note that all coins will use the same host
-        for their querries. (default 'localhost')
+        for their queries. (default 'localhost')
     password: A string containing the password for all coin-servers. If neither
         this setting, nor a specific coin_password (see above) is specified,
         the password for each coin will be read from the respective standard

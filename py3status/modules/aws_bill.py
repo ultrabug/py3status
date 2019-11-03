@@ -25,7 +25,7 @@ Format placeholders:
 
 Color options:
     color_good: Balance available
-    color_bad: An error has occured
+    color_bad: An error has occurred
 
 Requires:
     boto: a python interface to amazon web services (aws)

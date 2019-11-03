@@ -94,7 +94,7 @@ Dynamic configuration parameters:
     <OUTPUT>_rotate: rotate the output as told
         Example: DP1_rotate = "left"
     <OUTPUT>_mode: define the mode (resolution) for the output
-                   if not specified use --auto : prefered mode
+                   if not specified use --auto : preferred mode
         Example: eDP1_mode = "2560x1440
     <OUTPUT>_primary: apply the primary to the OUTPUT
         Example: DP1_primary = True

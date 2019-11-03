@@ -92,7 +92,7 @@ class Storage:
 
     def fix(self, item):
         """
-        Make sure all strings are unicode for python 2/3 compatability
+        Make sure all strings are unicode for python 2/3 compatibility
         """
         if not self.is_python_2:
             return item

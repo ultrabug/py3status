@@ -77,7 +77,7 @@ class Py3status:
     def current_time(self):
         """Get the current time.
 
-        Using a helper property to make it easy to keep consitency.
+        Using a helper property to make it easy to keep consistency.
         """
         return time.time()
 

@@ -358,7 +358,7 @@ class Py3status:
 
     def _format_timedelta(self, index, time_delta, is_current):
         """
-        Formats the dict time_to containg days/hours/minutes until an
+        Formats the dict time_to containing days/hours/minutes until an
         event starts into a composite according to time_to_formatted.
 
         Returns: A formatted composite.
@@ -380,7 +380,7 @@ class Py3status:
 
     def _build_response(self):
         """
-        Builds the composite reponse to be output by the module by looping
+        Builds the composite response to be output by the module by looping
         through all events and formatting the necessary strings.
 
         Returns: A composite containing the individual response for each event.
@@ -486,7 +486,7 @@ class Py3status:
         if self.is_authorized and self.events is not None:
             """
             If button_refresh is clicked, we allow the events to be updated
-            if the last event update occured at least 1 second ago. This
+            if the last event update occurred at least 1 second ago. This
             prevents a bug that can crash py3status since refreshing the
             module too fast results in incomplete event information being
             fetched as _get_events() is called repeatedly.

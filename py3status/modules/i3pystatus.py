@@ -7,7 +7,7 @@ py3status and provides a variety of modules. This py3status module allows
 these modules to run and be display inside py3status.
 
 Configuration parameters:
-    module: specifiy i3pystatus module to use (default None)
+    module: specify i3pystatus module to use (default None)
 
 Requires:
     i3pystatus: i3status replacement written in python

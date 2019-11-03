@@ -177,7 +177,7 @@ class Py3status:
 
     def _sanitize_title(self, title):
         """
-        Remove redunant meta data from title and return it
+        Remove redundant metadata from title and return it
         """
         title = re.sub(self.inside_brackets, "", title)
         title = re.sub(self.after_delimiter, "", title)

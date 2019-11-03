@@ -331,7 +331,7 @@ class Py3status:
     def _set_player(self):
         """
         Sort the current players into priority order and set self._player
-        Players are ordered by working state then prefernce supplied by user
+        Players are ordered by working state, then by preference supplied by user
         and finally by instance if a player has more than one running.
         """
         players = []
@@ -374,7 +374,7 @@ class Py3status:
                 player = self._mpris_players[player_id]
 
                 # Note: Workaround. Since all players get noted if playback status
-                #       has been changed we have to check if we are the choosen one
+                #       has been changed we have to check if we are the chosen one
                 try:
                     dbus_status = player["_dbus_player"].PlaybackStatus
                 except GError:
@@ -561,7 +561,7 @@ class Py3status:
             "composite": composite,
         }
 
-        # we are outputing so reset tries
+        # we are outputting so reset tries
         self._tries = 0
         return response
 
