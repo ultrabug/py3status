@@ -157,7 +157,7 @@ class Msg(Ipc):
                 if res:
                     return res
         elif isinstance(tree, dict):
-            nodes = tree["nodes"] + tree["floating_nodes"]
+            nodes = tree.get("nodes", []) + tree.get("floating_nodes", [])
             if focused:
                 for node in nodes:
                     if node["id"] == focused["id"]:
