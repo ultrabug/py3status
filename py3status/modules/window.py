@@ -97,12 +97,12 @@ class I3ipc(Ipc):
                     and len(focused.parent.nodes) > 1
                 )
             ):
-                focused.window_title = None
+                focused.name = None
         self.update(focused)
 
     def update(self, window_properties):
         window_properties = {
-            "title": window_properties.window_title,
+            "title": window_properties.name,
             "class": window_properties.window_class,
             "instance": window_properties.window_instance,
         }
