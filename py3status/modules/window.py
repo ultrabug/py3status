@@ -97,12 +97,12 @@ class I3ipc(Ipc):
                     and len(focused.parent.nodes) > 1
                 )
             ):
-                focused.window_title = None
+                focused.name = None
         self.update(focused)
 
     def update(self, window_properties):
         window_properties = {
-            "title": window_properties.window_title,
+            "title": window_properties.name,
             "class": window_properties.window_class,
             "instance": window_properties.window_instance,
         }
@@ -157,7 +157,7 @@ class Msg(Ipc):
                 if res:
                     return res
         elif isinstance(tree, dict):
-            nodes = tree["nodes"] + tree["floating_nodes"]
+            nodes = tree.get("nodes", []) + tree.get("floating_nodes", [])
             if focused:
                 for node in nodes:
                     if node["id"] == focused["id"]:
