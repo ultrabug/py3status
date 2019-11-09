@@ -34,12 +34,15 @@ from os import close
 class Inhibit:
     """
     """
+
     def __init__(self):
         from dbus import SystemBus
+
         self.bus = SystemBus()
         self.fd = None
-        self.proxy = self.bus.get_object("org.freedesktop.login1",
-                                         "/org/freedesktop/login1")
+        self.proxy = self.bus.get_object(
+            "org.freedesktop.login1", "/org/freedesktop/login1"
+        )
 
     def get_state(self):
         return True if self.fd else False
@@ -51,7 +54,8 @@ class Inhibit:
                 "Py3Status",
                 "systemd suspend inhibitor module",
                 "block",
-                dbus_interface="org.freedesktop.login1.Manager").take()
+                dbus_interface="org.freedesktop.login1.Manager",
+            ).take()
         else:
             close(self.fd)
             self.fd = None
@@ -60,6 +64,7 @@ class Inhibit:
 class Py3status:
     """
     """
+
     # available configuration parameters
     cache_timeout = 30
     format = "[\?color=state&show SUSPEND [\?if=state OFF|ON]]"
