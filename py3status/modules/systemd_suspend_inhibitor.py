@@ -6,19 +6,19 @@ Configuration parameters:
     cache_timeout: refresh interval for this module; for xfce4-notifyd
         (default 30)
     format: display format for this module
-        (default '{ [\?color=state&show SUSPEND [\?if=state OFF|ON]]')
+        (default '[\?color=state&show SUSPEND [\?if=state OFF|ON]]')
     thresholds: specify color thresholds to use
-        (default [(0, 'bad'), (1, 'good')])
+        (default [(True, 'bad'), (False, 'good')])
 
 Format placeholders:
     {state} systemd suspend inhibitor state, eg True, False
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
+```
 
 
 Examples:
-```
 # display SUSPEND ON/OFF
 systemd_suspend_inhibitor {
     format = '[\?color=state&show SUSPEND [\?if=state OFF|ON]]'
@@ -26,6 +26,12 @@ systemd_suspend_inhibitor {
 }
 ```
 
+@author Cyrinux https://github.com/cyrinux
+@license BSD
+
+SAMPLE OUTPUT
+[{'full_text': 'SUSPEND ON', 'color': '#00FF00'}]
+[{'full_text': 'SUSPEND OFF', 'color': '#FF0000'}]
 """
 
 from os import close
