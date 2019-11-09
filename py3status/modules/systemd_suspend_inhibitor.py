@@ -56,7 +56,7 @@ class Inhibit:
     def toggle(self):
         if self.fd is None:
             self.fd = self.proxy.Inhibit(
-                "sleep",
+                "handle-lid-switch:idle:sleep",
                 "Py3Status",
                 "systemd suspend inhibitor module",
                 "block",
