@@ -3,10 +3,10 @@
 Turn on and off systemd suspend inhibitor.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module; for xfce4-notifyd
+    cache_timeout: refresh interval for this module
         (default 30)
     format: display format for this module
-        (default '[\?color=state&show SUSPEND [\?if=state OFF|ON]]')
+        (default '[\?color=state SUSPEND [\?if=state OFF|ON]]')
     thresholds: specify color thresholds to use
         (default [(True, 'bad'), (False, 'good')])
 
@@ -21,7 +21,7 @@ Color thresholds:
 Examples:
 # display SUSPEND ON/OFF
 systemd_suspend_inhibitor {
-    format = '[\?color=state&show SUSPEND [\?if=state OFF|ON]]'
+    format = '[\?color=state SUSPEND [\?if=state OFF|ON]]'
     thresholds = [(True, "bad"), (False, "good")]
 }
 ```
@@ -31,40 +31,12 @@ systemd_suspend_inhibitor {
 
 SAMPLE OUTPUT
 [{'full_text': 'SUSPEND ON', 'color': '#00FF00'}]
+off
 [{'full_text': 'SUSPEND OFF', 'color': '#FF0000'}]
 """
 
+from dbus import SystemBus
 from os import close
-
-
-class Inhibit:
-    """
-    """
-
-    def __init__(self):
-        from dbus import SystemBus
-
-        self.bus = SystemBus()
-        self.fd = None
-        self.proxy = self.bus.get_object(
-            "org.freedesktop.login1", "/org/freedesktop/login1"
-        )
-
-    def get_state(self):
-        return True if self.fd else False
-
-    def toggle(self):
-        if self.fd is None:
-            self.fd = self.proxy.Inhibit(
-                "handle-lid-switch:idle:sleep",
-                "Py3Status",
-                "systemd suspend inhibitor module",
-                "block",
-                dbus_interface="org.freedesktop.login1.Manager",
-            ).take()
-        else:
-            close(self.fd)
-            self.fd = None
 
 
 class Py3status:
@@ -73,17 +45,36 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 30
-    format = "[\?color=state&show SUSPEND [\?if=state OFF|ON]]"
+    format = "[\?color=state SUSPEND [\?if=state OFF|ON]]"
     thresholds = [(True, "bad"), (False, "good")]
 
+    def _get_state(self):
+        return bool(self.fd)
+
+    def _toggle(self):
+        if self.fd is None:
+            self.fd = self.login1.Inhibit(
+                "handle-lid-switch:idle:sleep",
+                "Py3Status",
+                "Systemd suspend inhibitor module",
+                "block",
+                dbus_interface="org.freedesktop.login1.Manager",
+            ).take()
+        else:
+            close(self.fd)
+            self.fd = None
+
     def post_config_hook(self):
-        self.inhibit = Inhibit()
-        self.state = None
+        bus = SystemBus()
+        self.fd = None
+        self.login1 = bus.get_object(
+            "org.freedesktop.login1", "/org/freedesktop/login1"
+        )
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def systemd_suspend_inhibitor(self):
-        self.state = self.inhibit.get_state()
-        data = {"state": int(self.state)}
+        state = self._get_state()
+        data = {"state": state}
 
         for x in self.thresholds_init:
             if x in data:
@@ -95,7 +86,7 @@ class Py3status:
         }
 
     def on_click(self, event):
-        self.inhibit.toggle()
+        self._toggle()
 
 
 if __name__ == "__main__":
