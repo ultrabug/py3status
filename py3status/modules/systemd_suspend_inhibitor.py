@@ -3,8 +3,6 @@
 Turn on and off systemd suspend inhibitor.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module
-        (default 30)
     format: display format for this module
         (default '[\?color=state SUSPEND [\?if=state OFF|ON]]')
     thresholds: specify color thresholds to use
@@ -44,7 +42,6 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 30
     format = "[\?color=state SUSPEND [\?if=state OFF|ON]]"
     thresholds = [(True, "bad"), (False, "good")]
 
@@ -81,7 +78,7 @@ class Py3status:
                 self.py3.threshold_get_color(data[x], x)
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
+            "cached_until": self.py3.CACHE_FOREVER,
             "full_text": self.py3.safe_format(self.format, data),
         }
 
