@@ -5,10 +5,11 @@ Turn on and off systemd suspend inhibitor.
 Configuration parameters:
     format: display format for this module
         (default '[\?color=state SUSPEND [\?if=state OFF|ON]]')
+    lock_types: specify state to inhibit, comma separated list
+        https://www.freedesktop.org/wiki/Software/systemd/inhibit/
+        (default 'handle-lid-switch,idle,sleep')
     thresholds: specify color thresholds to use
         (default [(True, 'bad'), (False, 'good')])
-    inhibitor: specify state to inhibit, comma separated list
-        (default 'handle-lid-switch, idle, sleep')
 
 Format placeholders:
     {state} systemd suspend inhibitor state, eg True, False
@@ -48,8 +49,8 @@ class Py3status:
 
     # available configuration parameters
     format = "[\?color=state SUSPEND [\?if=state OFF|ON]]"
+    lock_types = "handle-lid-switch,idle,sleep"
     thresholds = [(True, "bad"), (False, "good")]
-    inhibitor = "handle-lid-switch,idle,sleep"
 
     def _get_state(self):
         return bool(self.fd)
@@ -57,7 +58,7 @@ class Py3status:
     def _toggle(self):
         if self.fd is None:
             self.fd = self.login1.Inhibit(
-                self.inhibitor,
+                self.lock_types,
                 "Py3Status",
                 "Systemd suspend inhibitor module",
                 "block",
@@ -70,7 +71,7 @@ class Py3status:
     def post_config_hook(self):
         bus = SystemBus()
         self.fd = None
-        self.inhibitor = self.inhibitor.replace(" ", "").replace(",", ":")
+        self.lock_types = self.lock_types.replace(" ", "").replace(",", ":")
         try:
             self.login1 = bus.get_object(
                 "org.freedesktop.login1", "/org/freedesktop/login1"
