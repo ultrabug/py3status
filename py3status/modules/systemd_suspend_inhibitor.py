@@ -7,6 +7,8 @@ Configuration parameters:
         (default '[\?color=state SUSPEND [\?if=state OFF|ON]]')
     thresholds: specify color thresholds to use
         (default [(True, 'bad'), (False, 'good')])
+    inhibitor: specify state to inhibit, comma separated list
+        (default 'handle-lid-switch, idle, sleep')
 
 Format placeholders:
     {state} systemd suspend inhibitor state, eg True, False
@@ -37,6 +39,9 @@ from dbus import SystemBus
 from os import close
 
 
+STRING_DBUS_EXCEPTION = "DBUS error, systemd-logind not started?"
+
+
 class Py3status:
     """
     """
@@ -44,6 +49,7 @@ class Py3status:
     # available configuration parameters
     format = "[\?color=state SUSPEND [\?if=state OFF|ON]]"
     thresholds = [(True, "bad"), (False, "good")]
+    inhibitor = "handle-lid-switch,idle,sleep"
 
     def _get_state(self):
         return bool(self.fd)
@@ -51,7 +57,7 @@ class Py3status:
     def _toggle(self):
         if self.fd is None:
             self.fd = self.login1.Inhibit(
-                "handle-lid-switch:idle:sleep",
+                self.inhibitor,
                 "Py3Status",
                 "Systemd suspend inhibitor module",
                 "block",
@@ -64,9 +70,13 @@ class Py3status:
     def post_config_hook(self):
         bus = SystemBus()
         self.fd = None
-        self.login1 = bus.get_object(
-            "org.freedesktop.login1", "/org/freedesktop/login1"
-        )
+        self.inhibitor = self.inhibitor.replace(" ", "").replace(",", ":")
+        try:
+            self.login1 = bus.get_object(
+                "org.freedesktop.login1", "/org/freedesktop/login1"
+            )
+        except Exception:
+            raise Exception(STRING_DBUS_EXCEPTION)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def systemd_suspend_inhibitor(self):
