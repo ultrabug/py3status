@@ -53,8 +53,8 @@ class Py3status:
     thresholds = [(True, "bad"), (False, "good")]
 
     def _toggle(self):
-        if self.fd is None:
-            self.fd = self.login1.Inhibit(
+        if self.lock is None:
+            self.lock = self.login1.Inhibit(
                 self.lock_types,
                 "Py3Status",
                 "Systemd suspend inhibitor module",
@@ -62,12 +62,12 @@ class Py3status:
                 dbus_interface="org.freedesktop.login1.Manager",
             ).take()
         else:
-            close(self.fd)
-            self.fd = None
+            close(self.lock)
+            self.lock = None
 
     def post_config_hook(self):
         bus = SystemBus()
-        self.fd = None
+        self.lock = None
         self.lock_types = self.lock_types.replace(" ", "").replace(",", ":")
         try:
             self.login1 = bus.get_object(
@@ -78,7 +78,7 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def systemd_suspend_inhibitor(self):
-        data = {"state": bool(self.fd)}
+        data = {"state": bool(self.lock)}
 
         for x in self.thresholds_init:
             if x in data:
