@@ -52,19 +52,6 @@ class Py3status:
     lock_types = "handle-lid-switch,idle,sleep"
     thresholds = [(True, "bad"), (False, "good")]
 
-    def _toggle(self):
-        if self.lock is None:
-            self.lock = self.login1.Inhibit(
-                self.lock_types,
-                "Py3Status",
-                "Systemd suspend inhibitor module",
-                "block",
-                dbus_interface="org.freedesktop.login1.Manager",
-            ).take()
-        else:
-            close(self.lock)
-            self.lock = None
-
     def post_config_hook(self):
         bus = SystemBus()
         self.lock = None
@@ -90,7 +77,17 @@ class Py3status:
         }
 
     def on_click(self, event):
-        self._toggle()
+        if self.lock is None:
+            self.lock = self.login1.Inhibit(
+                self.lock_types,
+                "Py3Status",
+                "Systemd suspend inhibitor module",
+                "block",
+                dbus_interface="org.freedesktop.login1.Manager",
+            ).take()
+        else:
+            close(self.lock)
+            self.lock = None
 
 
 if __name__ == "__main__":
