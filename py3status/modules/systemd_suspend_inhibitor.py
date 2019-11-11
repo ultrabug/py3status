@@ -52,9 +52,6 @@ class Py3status:
     lock_types = "handle-lid-switch,idle,sleep"
     thresholds = [(True, "bad"), (False, "good")]
 
-    def _get_state(self):
-        return bool(self.fd)
-
     def _toggle(self):
         if self.fd is None:
             self.fd = self.login1.Inhibit(
@@ -81,8 +78,7 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def systemd_suspend_inhibitor(self):
-        state = self._get_state()
-        data = {"state": state}
+        data = {"state": bool(self.fd)}
 
         for x in self.thresholds_init:
             if x in data:
