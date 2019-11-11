@@ -32,6 +32,7 @@ systemd_suspend_inhibitor {
 
 SAMPLE OUTPUT
 [{'full_text': 'SUSPEND ON', 'color': '#00FF00'}]
+
 off
 [{'full_text': 'SUSPEND OFF', 'color': '#FF0000'}]
 """
