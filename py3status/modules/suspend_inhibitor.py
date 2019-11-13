@@ -7,7 +7,7 @@ Configuration parameters:
         (default '[\?color=state SUSPEND [\?if=state OFF|ON]]')
     lock_types: specify state to inhibit, comma separated list
         https://www.freedesktop.org/wiki/Software/systemd/inhibit/
-        (default 'handle-lid-switch,idle,sleep')
+        (default ['handle-lid-switch', 'idle', 'sleep'])
     thresholds: specify color thresholds to use
         (default [(True, 'bad'), (False, 'good')])
 
@@ -16,16 +16,6 @@ Format placeholders:
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
-```
-
-
-Examples:
-# display SUSPEND ON/OFF
-systemd_suspend_inhibitor {
-    format = '[\?color=state SUSPEND [\?if=state OFF|ON]]'
-    thresholds = [(True, "bad"), (False, "good")]
-}
-```
 
 @author Cyrinux https://github.com/cyrinux
 @license BSD
@@ -42,6 +32,7 @@ from os import close
 
 
 STRING_DBUS_EXCEPTION = "DBUS error, systemd-logind not started?"
+STRING_BAD_LOCK_TYPES = "DBUS error, bad lock types used"
 
 
 class Py3status:
@@ -50,31 +41,30 @@ class Py3status:
 
     # available configuration parameters
     format = "[\?color=state SUSPEND [\?if=state OFF|ON]]"
-    lock_types = "handle-lid-switch,idle,sleep"
+    lock_types = ["handle-lid-switch", "idle", "sleep"]
     thresholds = [(True, "bad"), (False, "good")]
 
     def post_config_hook(self):
-        bus = SystemBus()
-        self.lock = None
-        self.lock_types = self.lock_types.replace(" ", "").replace(",", ":")
         try:
-            self.login1 = bus.get_object(
+            self.login1 = SystemBus().get_object(
                 "org.freedesktop.login1", "/org/freedesktop/login1"
             )
         except Exception:
             raise Exception(STRING_DBUS_EXCEPTION)
+        self.lock = None
+        self.lock_types = ":".join(self.lock_types)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-    def systemd_suspend_inhibitor(self):
-        data = {"state": bool(self.lock)}
+    def suspend_inhibitor(self):
+        suspend_data = {"state": bool(self.lock)}
 
         for x in self.thresholds_init:
-            if x in data:
-                self.py3.threshold_get_color(data[x], x)
+            if x in suspend_data:
+                self.py3.threshold_get_color(suspend_data[x], x)
 
         return {
             "cached_until": self.py3.CACHE_FOREVER,
-            "full_text": self.py3.safe_format(self.format, data),
+            "full_text": self.py3.safe_format(self.format, suspend_data),
         }
 
     def on_click(self, event):
