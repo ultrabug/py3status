@@ -1,3 +1,4 @@
+from ast import literal_eval
 from sys import argv
 from threading import Event
 from time import sleep, time
@@ -61,6 +62,20 @@ def module_test(module_class, config=None):
     if not config:
         config = {}
 
+    # config cli arguments
+    arguments, term = argv[1:], False
+    for index, arg in enumerate(arguments):
+        if "--term" in arg:
+            term = True
+        elif arg[0:2] == "--":
+            key = arguments[index][2:]
+            value = arguments[index + 1]
+            try:
+                value = literal_eval(value)
+            except (SyntaxError, ValueError):
+                pass
+            config[key] = value
+
     py3_config = {
         "general": {
             "color_bad": "#FF0000",
@@ -91,7 +106,7 @@ def module_test(module_class, config=None):
                 if "name" in item:
                     del item["name"]
 
-            if "--term" in argv:
+            if term:
                 line = "\033[0m"
                 for item in output:
                     if item.get("urgent"):
