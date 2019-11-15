@@ -144,9 +144,9 @@ Store per config cache in different directories.
 
 You can specify the following options in module configuration.
 
-``min_length``: Specify a minimum length of characters for modules.
-``position``: Specify how modules should be positioned when the ``min_length``
-is not reached. Either ``left`` (default), ``center``, or ``right``.
+- ``min_length``: Specify a minimum length of characters for modules.
+- ``position``: Specify how modules should be positioned when the ``min_length``
+  is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
 
@@ -163,7 +163,7 @@ You can specify the options in module or py3status configuration section.
 The following options will work on ``i3``.
 
 - ``align``: Specify how modules should be aligned when the ``min_width``
-is not reached. Either ``left`` (default), ``center``, or ``right``.
+  is not reached. Either ``left`` (default), ``center``, or ``right``.
 - ``background``: Specify a background color for py3status modules.
 - ``markup``: Specify how modules should be parsed.
 - ``min_width``: Specify a minimum width of pixels for modules.
@@ -182,7 +182,7 @@ The following options will work on ``py3status``.
 
 - ``min_length``: Specify a minimum length of characters for modules.
 - ``position``: Specify how modules should be positioned when the ``min_length``
-is not reached. Either ``left`` (default), ``center``, or ``right``.
+  is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
 
@@ -244,8 +244,8 @@ container modules, e.g., frame and group.
 
 You can specify the options in module or py3status configuration section.
 
-``resources``: Specify a list of 3-tuples, e.g., ``[(option, resource, fallback)]``,
-to import resources.
+- ``resources``: Specify a list of 3-tuples, e.g., ``[(option, resource, fallback)]``,
+  to import resources.
 
 .. code-block:: py3status
 
@@ -921,7 +921,7 @@ Possible actions:
 
 - ``refresh``: immediately refresh the module and keep on updating it as usual
 - ``refresh_and_freeze``: module is ONLY refreshed when said udev subsystem emits
-an event
+  an event
 
 .. code-block:: py3status
     :caption: Example
