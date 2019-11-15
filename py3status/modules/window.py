@@ -209,17 +209,9 @@ class Py3status:
 
 if __name__ == "__main__":
     """
-    Specify --ipc [i3ipc|i3msg|swaymsg].
-    """
-    from sys import argv
-
-    config = {"format": "\[{ipc}\] [\?color=pink {title}]"}
-    for index, arg in enumerate(argv):
-        if "--ipc" in arg:
-            config["ipc"] = argv[index + 1]
-    """
     Run module in test mode.
     """
     from py3status.module_test import module_test
 
+    config = {"format": "\[{ipc}\] [\?color=pink {title}]"}
     module_test(Py3status, config=config)
