@@ -55,7 +55,7 @@ class Py3status:
         self.lock_types = ":".join(self.lock_types)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
-    def suspend_inhibitor(self):
+    def systemd_suspend_inhibitor(self):
         suspend_data = {"state": bool(self.lock)}
 
         for x in self.thresholds_init:
