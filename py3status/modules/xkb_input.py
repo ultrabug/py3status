@@ -1,28 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Switch keyboard layouts.
+Display and switch inputs.
 
 Configuration parameters:
-    switcher: command used to read and write keyboard state. May be one of 'xkblayout-state', 'xkbgroup', 'xkb-switch' or 'swaymsg', otherwise autodetected (default None)
     button_next: mouse button to cycle next layout (default 4)
     button_prev: mouse button to cycle previous layout (default 5)
     cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default '{format_input}')
-    format_input: display format for inputs, otherwise auto (default None)
+    format_input: display format for inputs, otherwise
+        (default '[{alias}][\?soft  ][\?color=s {s}[ {v}]]')
     format_input_separator: show separator if more than one (default ' ')
     format_libinput: display format for libinputs (default None)
     inputs: specify a list of inputs to use (default [])
+    switcher: specify xkblayout-state, xkbgroup, xkb-switch,
+        or swaymsg to use, otherwise auto (default None)
     thresholds: specify color thresholds to use
-        *(default [("fr", "lightgreen"), ("French", "lightgreen"),
-        ("ru", "lightcoral"), ("Russian", "lightcoral"),
-        ("ua", "khaki"), ("Ukrainian", "khaki"),
-        ("us", "lightskyblue"), ("English", "lightskyblue"),
-        ("English (US)", "lightskyblue"),
-    ])*
+        *(default [("fr", "lightgreen"), ("ru", "lightcoral"),
+        ("ua", "khaki"),  ("us", "lightskyblue")])*
 
 Format placeholders:
     {format_input} format for inputs
     {input}        number of inputs, eg 1
+    {switcher}     eg, xkblayout-state, xkbgroup, xkb-switch, swaymsg
 
 format_input placeholders:
     xkblayout-state:
@@ -33,14 +32,16 @@ format_input placeholders:
         {n} layout name, eg, English (US)
         {s} layout symbol, eg, us
         {v} layout variant, eg, basic
-        {e} layout variant; {v} or {s}, eg, dvorak
+        {e} layout variant, {v} or {s}, eg, dvorak
         {C} layout count, eg, 2
     swaymsg:
+        {alias}                   custom string or {name}
         {identifier}              eg, 162:253 USB-HID Keyboard
         {name}                    eg, Trackball, Keyboard, etc
         {vendor}                  eg, 320
         {product}                 eg, 556
         {type}                    eg, pointer, keyboard, touchpad
+        {xkb_layout_names}        eg, English (US), French, Russian
         {xkb_active_layout_index} eg, 0
         {xkb_active_layout_name}  eg, English (US)
         {format_libinput}         format for libinputs
@@ -69,8 +70,14 @@ Requires:
 
 Examples:
 ```
-# add multiple inputs, aliases, and/or icons
-xkb_inputs {
+# sway users: for best results, add switcher to avoid false positives with `pgrep i3`
+# because sway users can be using scripts, tools, et cetera with `i3` in its name.
+xkb_input {
+    switcher = "swaymsg"
+}
+
+# sway users: add inputs, aliases, icons, et cetera
+xkb_input {
     inputs = [
         {"identifier": "1625:3192:Heng_Yu_Technology_Poker_II","alias": "⌨ Poker 2"},
         {"identifier": "0012:021:USB-HID_Keyboard", "alias": "⌨ Race 3"},
@@ -78,26 +85,35 @@ xkb_inputs {
     ]
 }
 
-# specify inputs to fnmatch
-xkb_inputs {
+# sway users: specify input keys to fnmatch
+xkb_input {
     # display logitech identifiers
     inputs = [{"identifier": "*Logitech*"}]
 
-    # display logitech keyboards
-    inputs = [{"name": "Logitech*", "type": "key*"}]
+    # display logi* keyboards only
+    inputs = [{"name": "Logi*", "type": "key*"}]
 
     # display pointers only
     inputs = [{"type": "pointer"}]
 }
+
+# i3 users: add inputs - see https://wiki.archlinux.org/index.php/X_keyboard_extension
+# setxkbmap -layout "us,fr,ru"
 ```
 
 @author lasers, saengowp, javiertury
 
 SAMPLE OUTPUT
-[{"full_text": "Xkb "}, {"color": "#00FFFF", "full_text": "us"}]
+{"color": "#87CEFA", "full_text": "us"}
+
+fr
+{"color": "#90EE90", "full_text": "fr"}
 
 ru
-[{"full_text": "Xkb "}, {"color": "#00FFFF", "full_text": "ru"}]
+{"color": "#F08080", "full_text": "ru"}
+
+au
+{"color": "#F0E68C", "full_text": "au"}
 """
 
 STRING_ERROR = "invalid command `%s`"
@@ -111,23 +127,18 @@ class Xkb:
 
     def __init__(self, parent):
         self.parent = parent
-        self.post_config_setup(parent)
         self.setup(parent)
-
-    def post_config_setup(self, parent):
-        if not self.parent.format_input:
-            self.parent.format_input = "[\?color=s {s}][ {v}]"
 
     def setup(self, parent):
         pass
 
     def make_format_libinput(self, _input):
-        return _input
+        pass
 
     def make_format_input(self, inputs):
         new_input = []
         for _input in inputs:
-            _input = self.make_format_libinput(_input)
+            _input = self.make_format_libinput(_input) or _input
             for x in self.parent.thresholds_init["format_input"]:
                 if x in _input:
                     self.parent.py3.threshold_get_color(_input[x], x)
@@ -140,7 +151,11 @@ class Xkb:
         )
         format_input = self.parent.py3.composite_join(format_input_separator, new_input)
 
-        return {"format_input": format_input, "input": len(inputs)}
+        return {
+            "format_input": format_input,
+            "input": len(inputs),
+            "switcher": self.parent.switcher,
+        }
 
     def set_xkb_layout(self, delta):
         pass
@@ -218,7 +233,7 @@ class Xkb_Switch(Xkb):
                             if "name" in line:
                                 name = line.split('"')[-2]
                                 break
-                except FileNotFoundError:
+                except IOError:
                     pass
                 self.init["cache"][s] = name
             temporary["n"] = name
@@ -266,27 +281,18 @@ class Swaymsg(Xkb):
     swaymsg - send messages to sway window manager
     """
 
-    def post_config_setup(self, parent):
-        if not self.parent.format_input:
-            self.parent.format_input = "[{alias}][\?soft  ][\?color=s {s}][ {v}]"
-
     def setup(self, parent):
         from json import loads
         from fnmatch import fnmatch
 
         self.fnmatch, self.loads = (fnmatch, loads)
         self.swaymsg_command = ["swaymsg", "--raw", "--type", "get_inputs"]
-        self.init_format_libinput = (
-            self.parent.format_libinput
-            and self.parent.py3.format_contains(
-                self.parent.format_input, "format_libinput"
-            )
-        )
+        if self.parent.format_libinput and self.parent.py3.format_contains(
+            self.parent.format_input, "format_libinput"
+        ):
+            self.make_format_libinput = self.__make_format_libinput
 
-    def make_format_libinput(self, _input):
-        if not self.init_format_libinput:
-            return _input
-
+    def __make_format_libinput(self, _input):
         libinput = _input.pop("libinput", {})
         for x in self.parent.thresholds_init["format_libinput"]:
             if x in libinput:
@@ -312,6 +318,7 @@ class Swaymsg(Xkb):
                 s = n[n.find("(") + 1 : n.find(")")].lower()
                 n = n[: n.find("(") - 1]
 
+            xkb_input["xkb_layout_names"] = ", ".join(xkb_input["xkb_layout_names"])
             xkb_input.update({"c": c, "C": C, "s": s, "e": v or s, "n": n, "v": v})
 
         return xkb_input
@@ -347,33 +354,26 @@ class Py3status:
     button_prev = 5
     cache_timeout = 10
     format = "{format_input}"
-    format_input = None
+    format_input = "[{alias}][\?soft  ][\?color=s {s}[ {v}]]"
     format_input_separator = " "
     format_libinput = None
     inputs = []
+    switcher = None
     thresholds = [
         ("fr", "lightgreen"),
-        ("French", "lightgreen"),
         ("ru", "lightcoral"),
-        ("Russian", "lightcoral"),
         ("ua", "khaki"),
-        ("Ukrainian", "khaki"),
         ("us", "lightskyblue"),
-        ("English", "lightskyblue"),
-        ("English (US)", "lightskyblue"),
     ]
 
     def post_config_hook(self):
-        # specify xkblayout-state, xkbgroup, xkb-switch, or swaymsg to use, otherwise auto
-        self.switcher = getattr(self, "switcher", None)
-
-        keyboard_commands = ["xkblayout-state", "xkbgroup", "xkb-switch", "swaymsg"]
+        switchers = ["xkblayout-state", "xkbgroup", "xkb-switch", "swaymsg"]
         if not self.switcher:
             if self.py3.get_wm_msg() == "swaymsg":
                 self.switcher = "swaymsg"
             else:
-                self.switcher = self.py3.check_commands(keyboard_commands)
-        elif self.switcher not in keyboard_commands:
+                self.switcher = self.py3.check_commands(switchers)
+        elif self.switcher not in switchers:
             raise Exception(STRING_ERROR % self.switcher)
         elif not self.py3.check_commands(self.switcher):
             raise Exception(COMMAND_NOT_INSTALLED % self.switcher)
@@ -386,7 +386,7 @@ class Py3status:
                 getattr(self, name)
             )
 
-    def xkb_layouts(self):
+    def xkb_input(self):
         xkb_data = self.backend.get_xkb_data()
 
         for x in self.thresholds_init["format"]:
