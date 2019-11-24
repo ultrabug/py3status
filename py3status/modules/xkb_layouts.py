@@ -3,6 +3,7 @@
 Switch keyboard layouts.
 
 Configuration parameters:
+    switcher: command used to read and write keyboard state. May be one of 'xkblayout-state', 'xkbgroup', 'xkb-switch' or 'swaymsg', otherwise autodetected (default None)
     button_next: mouse button to cycle next layout (default 4)
     button_prev: mouse button to cycle previous layout (default 5)
     cache_timeout: refresh interval for this module (default 10)
@@ -40,12 +41,12 @@ format_input placeholders:
         {vendor}                  eg, 320
         {product}                 eg, 556
         {type}                    eg, pointer, keyboard, touchpad
-        {xkb_layout_names}        eg, English (US)
         {xkb_active_layout_index} eg, 0
+        {xkb_active_layout_name}  eg, English (US)
         {format_libinput}         format for libinputs
 
 format_libinput placeholders:
-    {send_event}       eg, enabled
+    {send_events}      eg, enabled
     {accel_speed}      eg, 0.0
     {accel_profile}    eg, adaptive
     {natural_scroll}   eg, adaptive
@@ -365,8 +366,6 @@ class Py3status:
     def post_config_hook(self):
         # specify xkblayout-state, xkbgroup, xkb-switch, or swaymsg to use, otherwise auto
         self.switcher = getattr(self, "switcher", None)
-        if getattr(self, "module_test", None) is True:
-            self.format = "\[{switcher}\][\?soft  ]" + self.format
 
         keyboard_commands = ["xkblayout-state", "xkbgroup", "xkb-switch", "swaymsg"]
         if not self.switcher:
@@ -414,5 +413,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    config = {"module_test": True}
-    module_test(Py3status, config=config)
+    module_test(Py3status)
