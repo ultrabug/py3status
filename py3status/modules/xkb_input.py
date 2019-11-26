@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Display and switch inputs.
+Switch inputs.
 
 Configuration parameters:
     button_next: mouse button to cycle next layout (default 4)
     button_prev: mouse button to cycle previous layout (default 5)
-    cache_timeout: refresh interval for this module (default 10)
+    cache_timeout: refresh interval for i3 switchers (default 10)
     format: display format for this module (default '{format_input}')
-    format_input: display format for inputs, otherwise
+    format_input: display format for inputs
         (default '[{alias}][\?soft  ][\?color=s {s}[ {v}]]')
     format_input_separator: show separator if more than one (default ' ')
     format_libinput: display format for libinputs (default None)
@@ -130,6 +130,9 @@ class Xkb:
         self.setup(parent)
 
     def setup(self, parent):
+        pass
+
+    def kill(self):
         pass
 
     def make_format_libinput(self, _input):
@@ -255,18 +258,32 @@ class Xkblayout_State(Xkb):
     """
 
     def setup(self, parent):
-        self.placeholders = self.parent.py3.get_placeholders_list(
+        placeholders = self.parent.py3.get_placeholders_list(
             self.parent.format_input, "[cnsveC]"
         )
-
+        self.placeholders = list(set(placeholders + ["s"]))
         self.separator = "|SEPARATOR|"
         self.xkblayout_command = "xkblayout-state print {}".format(
             self.separator.join(["%" + x for x in self.placeholders])
         )
 
+        self.name_mapping = {}
+        try:
+            with open("/usr/share/X11/xkb/rules/base.lst") as f:
+                for chunk in f.read().split("\n\n"):
+                    if "! layout" in chunk:
+                        for line in chunk.splitlines()[1:]:
+                            line = line.split()
+                            key, value = (line[0], " ".join(line[1:]))
+                            self.name_mapping[key] = value
+                        break
+        except IOError:
+            pass
+
     def get_xkb_data(self):
         line = self.parent.py3.command_output(self.xkblayout_command)
         temporary = dict(zip(self.placeholders, line.split(self.separator)))
+        temporary["n"] = self.name_mapping.get(temporary["s"], temporary.get("n"))
 
         return self.make_format_input([temporary])
 
@@ -284,6 +301,7 @@ class Swaymsg(Xkb):
     def setup(self, parent):
         from json import loads
         from fnmatch import fnmatch
+        from threading import Thread
 
         self.fnmatch, self.loads = (fnmatch, loads)
         self.swaymsg_command = ["swaymsg", "--raw", "--type", "get_inputs"]
@@ -291,6 +309,34 @@ class Swaymsg(Xkb):
             self.parent.format_input, "format_libinput"
         ):
             self.make_format_libinput = self.__make_format_libinput
+
+        self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
+        self.process = None
+
+        t = Thread(target=self.start)
+        t.daemon = True
+        t.start()
+
+    def start(self):
+        from subprocess import Popen, PIPE
+
+        swaymsg_command = ["swaymsg", "--monitor", "--type", "subscribe", "['input']"]
+
+        try:
+            self.process = Popen(swaymsg_command, stdout=PIPE)
+            while True:
+                self.process.stdout.readline()
+                if self.process.poll() is not None:
+                    raise Exception
+                self.parent.py3.update()
+        except Exception as err:
+            self.parent.error = err
+        finally:
+            self.parent.py3.update()
+            self.kill()
+
+    def kill(self):
+        self.process.kill()
 
     def __make_format_libinput(self, _input):
         libinput = _input.pop("libinput", {})
@@ -324,7 +370,12 @@ class Swaymsg(Xkb):
         return xkb_input
 
     def get_xkb_data(self):
-        xkb_data = self.loads(self.parent.py3.command_output(self.swaymsg_command))
+        try:
+            xkb_data = self.loads(self.parent.py3.command_output(self.swaymsg_command))
+        except Exception as err:
+            self.parent.error = err
+            xkb_data = []
+
         excluded = ["alias"]
         new_xkb = []
 
@@ -378,6 +429,7 @@ class Py3status:
         elif not self.py3.check_commands(self.switcher):
             raise Exception(COMMAND_NOT_INSTALLED % self.switcher)
 
+        self.error = None
         self.backend = globals()[self.switcher.replace("-", "_").title()](self)
 
         self.thresholds_init = {}
@@ -387,6 +439,10 @@ class Py3status:
             )
 
     def xkb_input(self):
+        if self.error:
+            self.kill()
+            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
+
         xkb_data = self.backend.get_xkb_data()
 
         for x in self.thresholds_init["format"]:
@@ -397,6 +453,9 @@ class Py3status:
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(self.format, xkb_data),
         }
+
+    def kill(self):
+        self.backend.kill()
 
     def on_click(self, event):
         button = event["button"]
