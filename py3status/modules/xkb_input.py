@@ -310,6 +310,23 @@ class Swaymsg(Xkb):
         ):
             self.make_format_libinput = self.__make_format_libinput
 
+        self.rev_name_mapping = {}
+        try:
+            with open("/usr/share/X11/xkb/rules/base.lst") as f:
+                for chunk in f.read().split("\n\n"):
+                    if "! layout" in chunk:
+                        for line in chunk.splitlines()[1:]:
+                            line = line.split()
+                            symbol, name = (line[0], " ".join(line[1:]))
+                            self.rev_name_mapping[name] = (symbol, None)
+                    if "! variant" in chunk:
+                        for line in chunk.splitlines()[1:]:
+                            line = line.split()
+                            variant, symbol, name = (line[0], line[1][:-1], " ".join(line[2:]))
+                            self.rev_name_mapping[name] = (symbol, variant)
+        except IOError:
+            pass
+
         self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
         self.process = None
 
@@ -357,10 +374,9 @@ class Swaymsg(Xkb):
             c = xkb_input["xkb_active_layout_index"]
             C = len(xkb_input["xkb_layout_names"])
             n = xkb_input["xkb_active_layout_name"]
-            s = n
-            v = None
+            s, v = self.rev_name_mapping.get(n, (None, None))
 
-            if "(" in n and ")" in n:
+            if s is None and "(" in n and ")" in n:
                 s = n[n.find("(") + 1 : n.find(")")].lower()
                 n = n[: n.find("(") - 1]
 
