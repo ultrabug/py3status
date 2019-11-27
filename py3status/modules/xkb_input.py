@@ -121,6 +121,56 @@ STRING_NOT_AVAILABLE = "no available binary"
 COMMAND_NOT_INSTALLED = "command `%s` not installed"
 
 
+class Listener:
+    """
+    swaymsg -m - monitor for responses until killed
+    xkb-switch -W - infinitely waits for group change
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        if self.parent.switcher == "swaymsg":
+            self.listen_command = ["swaymsg", "-m", "-t", "subscribe", "['input']"]
+        elif self.parent.py3.check_commands("xkb-switch"):
+            self.listen_command = ["xkb-switch", "-W"]
+        else:
+            return
+
+        self.setup(parent)
+
+    def setup(self, parent):
+        from threading import Thread
+
+        self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
+        self.process = None
+
+        t = Thread(target=self.start)
+        t.daemon = True
+        t.start()
+
+    def start(self):
+        from subprocess import Popen, PIPE
+
+        try:
+            self.process = Popen(self.listen_command, stdout=PIPE)
+            while True:
+                self.process.stdout.readline()
+                if self.process.poll() is not None:
+                    raise Exception
+                self.parent.py3.update()
+        except Exception as err:
+            self.parent.error = err
+        finally:
+            self.parent.py3.update()
+            self.kill()
+
+    def kill(self):
+        try:
+            self.process.kill()
+        except Exception:
+            pass
+
+
 class Xkb:
     """
     """
@@ -299,7 +349,6 @@ class Swaymsg(Xkb):
     def setup(self, parent):
         from json import loads
         from fnmatch import fnmatch
-        from threading import Thread
 
         self.fnmatch, self.loads = (fnmatch, loads)
         self.swaymsg_command = ["swaymsg", "--raw", "--type", "get_inputs"]
@@ -307,34 +356,6 @@ class Swaymsg(Xkb):
             self.parent.format_input, "format_libinput"
         ):
             self.make_format_libinput = self.__make_format_libinput
-
-        self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
-        self.process = None
-
-        t = Thread(target=self.start)
-        t.daemon = True
-        t.start()
-
-    def start(self):
-        from subprocess import Popen, PIPE
-
-        swaymsg_command = ["swaymsg", "--monitor", "--type", "subscribe", "['input']"]
-
-        try:
-            self.process = Popen(swaymsg_command, stdout=PIPE)
-            while True:
-                self.process.stdout.readline()
-                if self.process.poll() is not None:
-                    raise Exception
-                self.parent.py3.update()
-        except Exception as err:
-            self.parent.error = err
-        finally:
-            self.parent.py3.update()
-            self.kill()
-
-    def kill(self):
-        self.process.kill()
 
     def __make_format_libinput(self, _input):
         libinput = _input.pop("libinput", {})
@@ -428,7 +449,8 @@ class Py3status:
             raise Exception(COMMAND_NOT_INSTALLED % self.switcher)
 
         self.error = None
-        self.backend = globals()[self.switcher.replace("-", "_").title()](self)
+        self.input_backend = globals()[self.switcher.replace("-", "_").title()](self)
+        self.listener_backend = Listener(self)
 
         self.thresholds_init = {}
         for name in ["format", "format_input", "format_libinput"]:
@@ -438,10 +460,10 @@ class Py3status:
 
     def xkb_input(self):
         if self.error:
-            self.backend.kill()
+            self.kill()
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
-        xkb_data = self.backend.get_xkb_data()
+        xkb_data = self.input_backend.get_xkb_data()
 
         for x in self.thresholds_init["format"]:
             if x in xkb_data:
@@ -453,14 +475,15 @@ class Py3status:
         }
 
     def kill(self):
-        self.backend.kill()
+        self.input_backend.kill()
+        self.listener_backend.kill()
 
     def on_click(self, event):
         button = event["button"]
         if button == self.button_next:
-            self.backend.set_xkb_layout(+1)
+            self.input_backend.set_xkb_layout(+1)
         elif button == self.button_prev:
-            self.backend.set_xkb_layout(-1)
+            self.input_backend.set_xkb_layout(-1)
 
 
 if __name__ == "__main__":
