@@ -40,9 +40,9 @@ format_input placeholders:
         {name}                    eg, Trackball, Keyboard, etc
         {vendor}                  eg, 320
         {product}                 eg, 556
-        {type}                    eg, pointer, keyboard, touchpad
+        {type}                    eg, pointer, keyboard, touchpad, etc
         {xkb_layout_names}        eg, English (US), French, Russian
-        {xkb_active_layout_index} eg, 0
+        {xkb_active_layout_index} eg, 0, 1, 2, etc
         {xkb_active_layout_name}  eg, English (US)
         {format_libinput}         format for libinputs
 
@@ -127,7 +127,35 @@ class Xkb:
 
     def __init__(self, parent):
         self.parent = parent
+        self.post_config_setup(parent)
         self.setup(parent)
+
+    def post_config_setup(self, parent):
+        self.name_mapping = {}
+        self.reverse_name_mapping = {}
+        self.variant_mapping = []
+
+        try:
+            with open("/usr/share/X11/xkb/rules/base.lst") as f:
+                for chunk in f.read().split("\n\n"):
+                    if "! layout" in chunk:
+                        for line in chunk.splitlines()[1:]:
+                            fields = line.split()
+                            symbol, name = (fields[0], " ".join(fields[1:]))
+                            self.name_mapping[symbol] = name
+                            self.reverse_name_mapping[name] = (symbol, None)
+                    if "! variant" in chunk:
+                        for line in chunk.splitlines()[1:]:
+                            fields = line.split()
+                            variant, symbol, name = (
+                                fields[0],
+                                fields[1][:-1],
+                                " ".join(fields[2:]),
+                            )
+                            self.reverse_name_mapping[name] = (symbol, variant)
+                            self.variant_mapping.append((variant, symbol, name))
+        except IOError:
+            pass
 
     def setup(self, parent):
         pass
@@ -199,47 +227,33 @@ class Xkb_Switch(Xkb):
     """
 
     def setup(self, parent):
-        self.init = {"cache": {}}
-        for name in ["cC", "n"]:
-            self.init[name] = self.parent.py3.get_placeholders_list(
-                self.parent.format_input, "[{}]".format(name)
-            )
+        self.init_cC = self.parent.py3.format_contains(self.parent.format_input, "[cC]")
 
     def get_xkb_data(self):
-        temporary = {}
-        s = self.parent.py3.command_output("xkb-switch -p").strip()
+        s = output = self.parent.py3.command_output("xkb-switch -p").strip()
         v = None
 
         if "(" in s and ")" in s:
             v = s[s.find("(") + 1 : s.find(")")]
             s = s[: s.find("(")]
 
-        temporary.update({"s": s, "e": v or s, "v": v})
+        for variant, symbol, name in self.variant_mapping:
+            if (v, s) == (variant, symbol):
+                n = name
+                break
+        else:
+            n = self.name_mapping.get(s)
 
-        if self.init["cC"]:
+        temporary = {"s": s, "v": v, "e": v or s, "n": n}
+
+        if self.init_cC:
             layouts = self.parent.py3.command_output("xkb-switch -l").splitlines()
             temporary["C"] = len(layouts)
 
             for index, layout in enumerate(layouts):
-                if s == layout:
+                if layout == output:
                     temporary["c"] = index
                     break
-
-        if self.init["n"]:
-            try:
-                name = self.init["cache"][s]
-            except KeyError:
-                name = None
-                try:
-                    with open("/usr/share/X11/xkb/symbols/{}".format(s)) as f:
-                        for line in f.read().splitlines():
-                            if "name" in line:
-                                name = line.split('"')[-2]
-                                break
-                except IOError:
-                    pass
-                self.init["cache"][s] = name
-            temporary["n"] = name
 
         return self.make_format_input([temporary])
 
@@ -258,32 +272,16 @@ class Xkblayout_State(Xkb):
     """
 
     def setup(self, parent):
-        placeholders = self.parent.py3.get_placeholders_list(
-            self.parent.format_input, "[cnsveC]"
-        )
-        self.placeholders = list(set(placeholders + ["s"]))
+        self.placeholders = list("cnsveC")
         self.separator = "|SEPARATOR|"
         self.xkblayout_command = "xkblayout-state print {}".format(
             self.separator.join(["%" + x for x in self.placeholders])
         )
 
-        self.name_mapping = {}
-        try:
-            with open("/usr/share/X11/xkb/rules/base.lst") as f:
-                for chunk in f.read().split("\n\n"):
-                    if "! layout" in chunk:
-                        for line in chunk.splitlines()[1:]:
-                            line = line.split()
-                            key, value = (line[0], " ".join(line[1:]))
-                            self.name_mapping[key] = value
-                        break
-        except IOError:
-            pass
-
     def get_xkb_data(self):
         line = self.parent.py3.command_output(self.xkblayout_command)
         temporary = dict(zip(self.placeholders, line.split(self.separator)))
-        temporary["n"] = self.name_mapping.get(temporary["s"], temporary.get("n"))
+        temporary["n"] = self.name_mapping.get(temporary["s"], temporary["n"])
 
         return self.make_format_input([temporary])
 
@@ -309,23 +307,6 @@ class Swaymsg(Xkb):
             self.parent.format_input, "format_libinput"
         ):
             self.make_format_libinput = self.__make_format_libinput
-
-        self.rev_name_mapping = {}
-        try:
-            with open("/usr/share/X11/xkb/rules/base.lst") as f:
-                for chunk in f.read().split("\n\n"):
-                    if "! layout" in chunk:
-                        for line in chunk.splitlines()[1:]:
-                            line = line.split()
-                            symbol, name = (line[0], " ".join(line[1:]))
-                            self.rev_name_mapping[name] = (symbol, None)
-                    if "! variant" in chunk:
-                        for line in chunk.splitlines()[1:]:
-                            line = line.split()
-                            variant, symbol, name = (line[0], line[1][:-1], " ".join(line[2:]))
-                            self.rev_name_mapping[name] = (symbol, variant)
-        except IOError:
-            pass
 
         self.parent.cache_timeout = self.parent.py3.CACHE_FOREVER
         self.process = None
@@ -365,6 +346,7 @@ class Swaymsg(Xkb):
             self.parent.format_libinput, libinput
         )
         _input["format_libinput"] = format_libinput
+
         return _input
 
     def update_xkb_input(self, xkb_input, user_input):
@@ -374,7 +356,7 @@ class Swaymsg(Xkb):
             c = xkb_input["xkb_active_layout_index"]
             C = len(xkb_input["xkb_layout_names"])
             n = xkb_input["xkb_active_layout_name"]
-            s, v = self.rev_name_mapping.get(n, (None, None))
+            s, v = self.reverse_name_mapping.get(n, (None, None))
 
             if s is None and "(" in n and ")" in n:
                 s = n[n.find("(") + 1 : n.find(")")].lower()
@@ -456,7 +438,7 @@ class Py3status:
 
     def xkb_input(self):
         if self.error:
-            self.kill()
+            self.backend.kill()
             self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
         xkb_data = self.backend.get_xkb_data()
