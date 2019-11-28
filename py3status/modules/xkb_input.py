@@ -159,10 +159,7 @@ class Listener:
                     raise Exception
                 self.parent.py3.update()
         except Exception as err:
-            self.parent.error = err
-        finally:
-            self.parent.py3.update()
-            self.kill()
+            self.parent._error(err)
 
     def kill(self):
         try:
@@ -179,6 +176,18 @@ class Xkb:
         self.parent = parent
         self.post_config_setup(parent)
         self.setup(parent)
+
+    def py3_command_output(self, *args):
+        try:
+            return self.parent.py3.command_output(*args)
+        except Exception as err:
+            self.parent._error(err)
+
+    def py3_command_run(self, *args):
+        try:
+            return self.parent.py3.command_run(*args)
+        except Exception as err:
+            self.parent._error(err)
 
     def post_config_setup(self, parent):
         self.name_mapping = {}
@@ -216,28 +225,6 @@ class Xkb:
     def make_format_libinput(self, _input):
         pass
 
-    def make_format_input(self, inputs):
-        new_input = []
-        for _input in inputs:
-            _input = self.make_format_libinput(_input) or _input
-            for x in self.parent.thresholds_init["format_input"]:
-                if x in _input:
-                    self.parent.py3.threshold_get_color(_input[x], x)
-            new_input.append(
-                self.parent.py3.safe_format(self.parent.format_input, _input)
-            )
-
-        format_input_separator = self.parent.py3.safe_format(
-            self.parent.format_input_separator
-        )
-        format_input = self.parent.py3.composite_join(format_input_separator, new_input)
-
-        return {
-            "format_input": format_input,
-            "input": len(inputs),
-            "switcher": self.parent.switcher,
-        }
-
     def set_xkb_layout(self, delta):
         pass
 
@@ -254,7 +241,7 @@ class Xkbgroup(Xkb):
         self.active_index = self.xo().group_num
         self.map = {"num": "c", "name": "n", "symbol": "s", "variant": "v"}
 
-    def get_xkb_data(self):
+    def get_xkb_inputs(self):
         xo = self.xo()
         group_data = xo.group_data
         group_data = xo.group_data._asdict()
@@ -262,7 +249,7 @@ class Xkbgroup(Xkb):
         temporary["e"] = temporary["v"] or temporary["s"]
         temporary["C"] = xo.groups_count
 
-        return self.make_format_input([temporary])
+        return [temporary]
 
     def set_xkb_layout(self, delta):
         xo = self.xo()
@@ -279,8 +266,8 @@ class Xkb_Switch(Xkb):
     def setup(self, parent):
         self.init_cC = self.parent.py3.format_contains(self.parent.format_input, "[cC]")
 
-    def get_xkb_data(self):
-        s = output = self.parent.py3.command_output("xkb-switch -p").strip()
+    def get_xkb_inputs(self):
+        s = output = self.py3_command_output("xkb-switch -p").strip()
         v = None
 
         if "(" in s and ")" in s:
@@ -297,7 +284,7 @@ class Xkb_Switch(Xkb):
         temporary = {"s": s, "v": v, "e": v or s, "n": n}
 
         if self.init_cC:
-            layouts = self.parent.py3.command_output("xkb-switch -l").splitlines()
+            layouts = self.py3_command_output("xkb-switch -l").splitlines()
             temporary["C"] = len(layouts)
 
             for index, layout in enumerate(layouts):
@@ -305,15 +292,15 @@ class Xkb_Switch(Xkb):
                     temporary["c"] = index
                     break
 
-        return self.make_format_input([temporary])
+        return [temporary]
 
     def set_xkb_layout(self, delta):
         if delta > 0:
-            self.parent.py3.command_run("xkb-switch -n")
+            self.py3_command_run("xkb-switch -n")
         else:
-            i = self.parent.py3.command_output("xkb-switch -p").strip()
-            s = self.parent.py3.command_output("xkb-switch -l").splitlines()
-            self.parent.py3.command_run("xkb-switch -s {}".format(s[s.index(i) - 1]))
+            i = self.py3_command_output("xkb-switch -p").strip()
+            s = self.py3_command_output("xkb-switch -l").splitlines()
+            self.py3_command_run("xkb-switch -s {}".format(s[s.index(i) - 1]))
 
 
 class Xkblayout_State(Xkb):
@@ -328,15 +315,15 @@ class Xkblayout_State(Xkb):
             self.separator.join(["%" + x for x in self.placeholders])
         )
 
-    def get_xkb_data(self):
-        line = self.parent.py3.command_output(self.xkblayout_command)
+    def get_xkb_inputs(self):
+        line = self.py3_command_output(self.xkblayout_command)
         temporary = dict(zip(self.placeholders, line.split(self.separator)))
         temporary["n"] = self.name_mapping.get(temporary["s"], temporary["n"])
 
-        return self.make_format_input([temporary])
+        return [temporary]
 
     def set_xkb_layout(self, delta):
-        self.parent.py3.command_run(
+        self.py3_command_run(
             "xkblayout-state set {}{}".format({+1: "+", -1: "-"}[delta], abs(delta))
         )
 
@@ -352,6 +339,7 @@ class Swaymsg(Xkb):
 
         self.fnmatch, self.loads = (fnmatch, loads)
         self.swaymsg_command = ["swaymsg", "--raw", "--type", "get_inputs"]
+
         if self.parent.format_libinput and self.parent.py3.format_contains(
             self.parent.format_input, "format_libinput"
         ):
@@ -388,15 +376,10 @@ class Swaymsg(Xkb):
 
         return xkb_input
 
-    def get_xkb_data(self):
-        try:
-            xkb_data = self.loads(self.parent.py3.command_output(self.swaymsg_command))
-        except Exception as err:
-            self.parent.error = err
-            xkb_data = []
-
+    def get_xkb_inputs(self):
+        xkb_data = self.loads(self.py3_command_output(self.swaymsg_command))
         excluded = ["alias"]
-        new_xkb = []
+        new_input = []
 
         for xkb_input in xkb_data:
             if self.parent.inputs:
@@ -407,12 +390,12 @@ class Swaymsg(Xkb):
                         if not self.fnmatch(xkb_input[key], value):
                             break
                     else:
-                        new_xkb.append(self.update_xkb_input(xkb_input, _filter))
+                        new_input.append(self.update_xkb_input(xkb_input, _filter))
             else:
                 _filter = {}
-                new_xkb.append(self.update_xkb_input(xkb_input, _filter))
+                new_input.append(self.update_xkb_input(xkb_input, _filter))
 
-        return self.make_format_input(new_xkb)
+        return new_input
 
 
 class Py3status:
@@ -448,7 +431,6 @@ class Py3status:
         elif not self.py3.check_commands(self.switcher):
             raise Exception(COMMAND_NOT_INSTALLED % self.switcher)
 
-        self.error = None
         self.input_backend = globals()[self.switcher.replace("-", "_").title()](self)
         self.listener_backend = Listener(self)
 
@@ -458,20 +440,37 @@ class Py3status:
                 getattr(self, name)
             )
 
-    def xkb_input(self):
-        if self.error:
-            self.kill()
-            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
+    def _error(self, error):
+        self.kill()
+        self.py3.error(str(error), self.py3.CACHE_FOREVER)
 
-        xkb_data = self.input_backend.get_xkb_data()
+    def xkb_input(self):
+        xkb_inputs = self.input_backend.get_xkb_inputs()
+        new_input = []
+
+        for _input in xkb_inputs:
+            _input = self.input_backend.make_format_libinput(_input) or _input
+            for x in self.thresholds_init["format_input"]:
+                if x in _input:
+                    self.py3.threshold_get_color(_input[x], x)
+            new_input.append(self.py3.safe_format(self.format_input, _input))
+
+        format_input_separator = self.py3.safe_format(self.format_input_separator)
+        format_input = self.py3.composite_join(format_input_separator, new_input)
+
+        input_data = {
+            "format_input": format_input,
+            "input": len(xkb_inputs),
+            "switcher": self.switcher,
+        }
 
         for x in self.thresholds_init["format"]:
-            if x in xkb_data:
-                self.py3.threshold_get_color(xkb_data[x], x)
+            if x in input_data:
+                self.py3.threshold_get_color(input_data[x], x)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, xkb_data),
+            "full_text": self.py3.safe_format(self.format, input_data),
         }
 
     def kill(self):
