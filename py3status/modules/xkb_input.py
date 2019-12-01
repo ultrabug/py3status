@@ -5,14 +5,15 @@ Switch inputs.
 Configuration parameters:
     button_next: mouse button to cycle next layout (default 4)
     button_prev: mouse button to cycle previous layout (default 5)
-    cache_timeout: refresh interval for i3 switchers (default 10)
+    cache_timeout: refresh interval for this module; xkb-switch
+        and swaymsg will listen for new updates instead (default 10)
     format: display format for this module (default '{format_input}')
     format_input: display format for inputs
         (default '[{alias}][\?soft  ][\?color=s {s}[ {v}]]')
     format_input_separator: show separator if more than one (default ' ')
     format_libinput: display format for libinputs (default None)
-    inputs: specify a list of inputs to use (default [])
-    switcher: specify xkblayout-state, xkbgroup, xkb-switch,
+    inputs: specify a list of inputs to use in swaymsg (default [])
+    switcher: specify xkb-switch, xkblayout-state, xkbgroup,
         or swaymsg to use, otherwise auto (default None)
     thresholds: specify color thresholds to use
         *(default [("fr", "lightgreen"), ("ru", "lightcoral"),
@@ -21,12 +22,12 @@ Configuration parameters:
 Format placeholders:
     {format_input} format for inputs
     {input}        number of inputs, eg 1
-    {switcher}     eg, xkblayout-state, xkbgroup, xkb-switch, swaymsg
+    {switcher}     eg, xkb-switch, xkblayout-state, xkbgroup, swaymsg
 
 format_input placeholders:
+    xkb-switch:
     xkblayout-state:
     xkbgroup:
-    xkb-switch:
     swaymsg:
         {c} layout number, eg, 0
         {n} layout name, eg, English (US)
@@ -63,9 +64,9 @@ Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
 Requires:
+    xkb-switch: program that allows to query and change the xkb layout state
     xkblayout-state: a command-line program to get/set the current keyboard layout
     xkbgroup: query and change xkb layout state
-    xkb-switch: program that allows to query and change the xkb layout state
     swaymsg: send messages to sway window manager
 
 Examples:
@@ -98,7 +99,7 @@ xkb_input {
 }
 
 # i3 users: add inputs - see https://wiki.archlinux.org/index.php/X_keyboard_extension
-# setxkbmap -layout "us,fr,ru"
+# $ setxkbmap -layout "us,fr,ru"
 ```
 
 @author lasers, saengowp, javiertury
@@ -158,13 +159,13 @@ class Listener:
                 if self.process.poll() is not None:
                     raise Exception
                 self.parent.py3.update()
-        except Exception as err:
+        except self.parent.py3.CommandError as err:
             self.parent._error(err)
 
     def kill(self):
         try:
             self.process.kill()
-        except Exception:
+        except AttributeError:
             pass
 
 
@@ -180,13 +181,13 @@ class Xkb:
     def py3_command_output(self, *args):
         try:
             return self.parent.py3.command_output(*args)
-        except Exception as err:
+        except self.parent.py3.CommandError as err:
             self.parent._error(err)
 
     def py3_command_run(self, *args):
         try:
             return self.parent.py3.command_run(*args)
-        except Exception as err:
+        except self.parent.py3.CommandError as err:
             self.parent._error(err)
 
     def post_config_setup(self, parent):
@@ -213,13 +214,10 @@ class Xkb:
                             )
                             self.reverse_name_mapping[name] = (symbol, variant)
                             self.variant_mapping.append((variant, symbol, name))
-        except IOError:
-            pass
+        except IOError as err:
+            self.parent._error(err)
 
     def setup(self, parent):
-        pass
-
-    def kill(self):
         pass
 
     def make_format_libinput(self, _input):
@@ -245,11 +243,11 @@ class Xkbgroup(Xkb):
         xo = self.xo()
         group_data = xo.group_data
         group_data = xo.group_data._asdict()
-        temporary = {self.map[k]: v for k, v in group_data.items()}
-        temporary["e"] = temporary["v"] or temporary["s"]
-        temporary["C"] = xo.groups_count
+        xkb_input = {self.map[k]: v for k, v in group_data.items()}
+        xkb_input["e"] = xkb_input["v"] or xkb_input["s"]
+        xkb_input["C"] = xo.groups_count
 
-        return [temporary]
+        return [xkb_input]
 
     def set_xkb_layout(self, delta):
         xo = self.xo()
@@ -281,18 +279,18 @@ class Xkb_Switch(Xkb):
         else:
             n = self.name_mapping.get(s)
 
-        temporary = {"s": s, "v": v, "e": v or s, "n": n}
+        xkb_input = {"s": s, "v": v, "e": v or s, "n": n}
 
         if self.init_cC:
             layouts = self.py3_command_output("xkb-switch -l").splitlines()
-            temporary["C"] = len(layouts)
+            xkb_input["C"] = len(layouts)
 
             for index, layout in enumerate(layouts):
                 if layout == output:
-                    temporary["c"] = index
+                    xkb_input["c"] = index
                     break
 
-        return [temporary]
+        return [xkb_input]
 
     def set_xkb_layout(self, delta):
         if delta > 0:
@@ -317,10 +315,10 @@ class Xkblayout_State(Xkb):
 
     def get_xkb_inputs(self):
         line = self.py3_command_output(self.xkblayout_command)
-        temporary = dict(zip(self.placeholders, line.split(self.separator)))
-        temporary["n"] = self.name_mapping.get(temporary["s"], temporary["n"])
+        xkb_input = dict(zip(self.placeholders, line.split(self.separator)))
+        xkb_input["n"] = self.name_mapping.get(xkb_input["s"], xkb_input["n"])
 
-        return [temporary]
+        return [xkb_input]
 
     def set_xkb_layout(self, delta):
         self.py3_command_run(
@@ -337,6 +335,7 @@ class Swaymsg(Xkb):
         from json import loads
         from fnmatch import fnmatch
 
+        self.excluded = ["alias"]
         self.fnmatch, self.loads = (fnmatch, loads)
         self.swaymsg_command = ["swaymsg", "--raw", "--type", "get_inputs"]
 
@@ -358,8 +357,8 @@ class Swaymsg(Xkb):
 
         return _input
 
-    def update_xkb_input(self, xkb_input, user_input):
-        xkb_input["alias"] = user_input.get("alias", xkb_input["name"])
+    def update_xkb_input(self, xkb_input, _filter):
+        xkb_input["alias"] = _filter.get("alias", xkb_input["name"])
 
         if "xkb_active_layout_name" in xkb_input:
             c = xkb_input["xkb_active_layout_index"]
@@ -378,14 +377,13 @@ class Swaymsg(Xkb):
 
     def get_xkb_inputs(self):
         xkb_data = self.loads(self.py3_command_output(self.swaymsg_command))
-        excluded = ["alias"]
         new_input = []
 
         for xkb_input in xkb_data:
             if self.parent.inputs:
                 for _filter in self.parent.inputs:
                     for key, value in _filter.items():
-                        if key in excluded or key not in xkb_input:
+                        if key in self.excluded or key not in xkb_input:
                             continue
                         if not self.fnmatch(xkb_input[key], value):
                             break
@@ -420,7 +418,7 @@ class Py3status:
     ]
 
     def post_config_hook(self):
-        switchers = ["xkblayout-state", "xkbgroup", "xkb-switch", "swaymsg"]
+        switchers = ["xkb-switch", "xkblayout-state", "xkbgroup", "swaymsg"]
         if not self.switcher:
             if self.py3.get_wm_msg() == "swaymsg":
                 self.switcher = "swaymsg"
@@ -474,8 +472,10 @@ class Py3status:
         }
 
     def kill(self):
-        self.input_backend.kill()
-        self.listener_backend.kill()
+        try:
+            self.listener_backend.kill()
+        except AttributeError:
+            pass
 
     def on_click(self, event):
         button = event["button"]
