@@ -77,28 +77,28 @@ xkb_input {
     switcher = "swaymsg"
 }
 
-# sway users: add inputs, aliases, icons, et cetera
-xkb_input {
-    inputs = [
-        {"identifier": "1625:3192:Heng_Yu_Technology_Poker_II","alias": "⌨ Poker 2"},
-        {"identifier": "0012:021:USB-HID_Keyboard", "alias": "⌨ Race 3"},
-        {"identifier": "0123:45678:Logitech_MX_Ergo", "alias": "🖲️ MX Ergo", "type": "pointer"},
-    ]
-}
-
-# sway users: specify input keys to fnmatch
+# sway users: specify inputs to fnmatch
 xkb_input {
     # display logitech identifiers
     inputs = [{"identifier": "*Logitech*"}]
 
     # display logi* keyboards only
-    inputs = [{"name": "Logi*", "type": "key*"}]
+    inputs = [{"name": "Logi*", "type": "keyb*"}]
 
     # display pointers only
     inputs = [{"type": "pointer"}]
 }
 
-# i3 users: add inputs - see https://wiki.archlinux.org/index.php/X_keyboard_extension
+# sway users: display inputs, optional aliases, et cetera
+xkb_input {
+    inputs = [
+        {"identifier": "1625:3192:Heng_Yu_Technology_Poker_II", "alias": "Poker 2"},
+        {"identifier": "0012:021:USB-HID_Keyboard", "alias": "Race 3"},
+        {"identifier": "0123:45678:Logitech_MX_Ergo", "MX Ergo", "type": "pointer"},
+    ]
+}
+
+# i3 users: display inputs - see https://wiki.archlinux.org/index.php/X_keyboard_extension
 # $ setxkbmap -layout "us,fr,ru"
 ```
 
@@ -117,9 +117,9 @@ au
 {"color": "#F0E68C", "full_text": "au"}
 """
 
-STRING_ERROR = "invalid command `%s`"
+STRING_ERROR = "invalid command `{}`"
 STRING_NOT_AVAILABLE = "no available binary"
-COMMAND_NOT_INSTALLED = "command `%s` not installed"
+STRING_NOT_INSTALLED = "command `{}` not installed"
 
 
 class Listener:
@@ -156,11 +156,16 @@ class Listener:
             self.process = Popen(self.listen_command, stdout=PIPE)
             while True:
                 self.process.stdout.readline()
-                if self.process.poll() is not None:
-                    raise Exception
+                code = self.process.poll()
+                if code is not None:
+                    msg = "Command `{}` terminated with returncode {}"
+                    raise Exception(msg.format(" ".join(self.listen_command), code))
                 self.parent.py3.update()
-        except self.parent.py3.CommandError as err:
-            self.parent._error(err)
+        except Exception as err:
+            self.parent.error = err
+            self.parent.py3.update()
+        finally:
+            self.kill()
 
     def kill(self):
         try:
@@ -182,13 +187,15 @@ class Xkb:
         try:
             return self.parent.py3.command_output(*args)
         except self.parent.py3.CommandError as err:
-            self.parent._error(err)
+            self.parent.error = err
+            raise err
 
     def py3_command_run(self, *args):
         try:
             return self.parent.py3.command_run(*args)
         except self.parent.py3.CommandError as err:
-            self.parent._error(err)
+            self.parent.error = err
+            raise err
 
     def post_config_setup(self, parent):
         self.name_mapping = {}
@@ -215,7 +222,7 @@ class Xkb:
                             self.reverse_name_mapping[name] = (symbol, variant)
                             self.variant_mapping.append((variant, symbol, name))
         except IOError as err:
-            self.parent._error(err)
+            self.parent.error = err
 
     def setup(self, parent):
         pass
@@ -376,8 +383,11 @@ class Swaymsg(Xkb):
         return xkb_input
 
     def get_xkb_inputs(self):
-        xkb_data = self.loads(self.py3_command_output(self.swaymsg_command))
         new_input = []
+        try:
+            xkb_data = self.loads(self.py3_command_output(self.swaymsg_command))
+        except Exception:
+            xkb_data = []
 
         for xkb_input in xkb_data:
             if self.parent.inputs:
@@ -425,12 +435,16 @@ class Py3status:
             else:
                 self.switcher = self.py3.check_commands(switchers)
         elif self.switcher not in switchers:
-            raise Exception(STRING_ERROR % self.switcher)
+            raise Exception(STRING_ERROR.format(self.switcher))
         elif not self.py3.check_commands(self.switcher):
-            raise Exception(COMMAND_NOT_INSTALLED % self.switcher)
+            raise Exception(STRING_NOT_INSTALLED.format(self.switcher))
+        if not self.switcher:
+            raise Exception(STRING_NOT_AVAILABLE)
 
+        self.error = None
         self.input_backend = globals()[self.switcher.replace("-", "_").title()](self)
-        self.listener_backend = Listener(self)
+        if getattr(self, "listener", True):
+            self.listener_backend = Listener(self)
 
         self.thresholds_init = {}
         for name in ["format", "format_input", "format_libinput"]:
@@ -438,12 +452,14 @@ class Py3status:
                 getattr(self, name)
             )
 
-    def _error(self, error):
-        self.kill()
-        self.py3.error(str(error), self.py3.CACHE_FOREVER)
+    def _stop_on_errors(self):
+        if self.error:
+            self.kill()
+            self.py3.error(str(self.error), self.py3.CACHE_FOREVER)
 
     def xkb_input(self):
         xkb_inputs = self.input_backend.get_xkb_inputs()
+        self._stop_on_errors()
         new_input = []
 
         for _input in xkb_inputs:
