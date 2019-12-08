@@ -8,6 +8,7 @@ Configuration parameters:
 
 Format placeholders:
     {current} currently playing
+    {playback_status} icon indicator for current playback status, either '⏸', '▶', or '⏹'
 
 Requires:
     clementine: a modern music player and library organizer
@@ -21,7 +22,8 @@ SAMPLE OUTPUT
 {'full_text': '♫ Music For Programming - Hivemind'}
 """
 
-CMD = "qdbus org.mpris.MediaPlayer2.clementine /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player Metadata"
+CMD_METADATA = "qdbus org.mpris.MediaPlayer2.clementine /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player Metadata"
+CMD_PLAYBACK_STATUS = "qdbus org.mpris.MediaPlayer2.clementine /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player PlaybackStatus"
 STRING_NOT_INSTALLED = "not installed"
 INTERNET_RADIO = "Internet Radio"
 
@@ -39,11 +41,12 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
     def clementine(self):
-        artist = lines = now_playing = title = ""
+        artist = lines = now_playing = title = playback_status_icon = ""
         internet_radio = False
 
         try:
-            metadata = self.py3.command_output(CMD)
+            metadata = self.py3.command_output(CMD_METADATA)
+            playback_status = self.py3.command_output(CMD_PLAYBACK_STATUS).strip()
             lines = filter(None, metadata.splitlines())
         except self.py3.CommandError:
             return {
@@ -72,9 +75,19 @@ class Py3status:
         elif internet_radio:
             now_playing = INTERNET_RADIO
 
+        if playback_status == "Playing":
+            playback_status_icon = u"▶"
+        elif playback_status == "Paused":
+            playback_status_icon = u"⏸"
+        elif playback_status == "Stopped":
+            playback_status_icon = u"⏹"
+
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, {"current": now_playing}),
+            "full_text": self.py3.safe_format(
+                self.format,
+                {"current": now_playing, "playback_status": playback_status_icon},
+            ),
         }
 
 
