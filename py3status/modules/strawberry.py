@@ -1,0 +1,100 @@
+# -*- coding: utf-8 -*-
+"""
+Display song currently playing in Strawberry.
+
+Configuration parameters:
+    cache_timeout: refresh interval for this module (default 5)
+    format: display format for this module (default '♫ {current}')
+
+Format placeholders:
+    {current} currently playing
+    {playback_status} icon indicator for current playback status, either '⏸', '▶', or '⏹'
+
+Requires:
+    strawberry: a modern music player and library organizer forked from clementine
+    qdbus: a communication-interface for qt-based applications
+        (may be part of qt5-tools)
+
+@author NJBS <DoNotTrackMeUsingThis@gmail.com>
+@license GNU GPL https://www.gnu.org/licenses/gpl.html
+
+SAMPLE OUTPUT
+{'full_text': '♫ Music For Programming - Hivemind'}
+"""
+
+CMD_METADATA = "qdbus org.mpris.MediaPlayer2.strawberry /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player Metadata"
+CMD_PLAYBACK_STATUS = "qdbus org.mpris.MediaPlayer2.strawberry /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player PlaybackStatus"
+STRING_NOT_INSTALLED = "not installed"
+INTERNET_RADIO = "Internet Radio"
+
+
+class Py3status:
+    """
+    """
+
+    # available configuration parameters
+    cache_timeout = 5
+    format = u"♫ {current}"
+
+    def post_config_hook(self):
+        if not self.py3.check_commands("strawberry"):
+            raise Exception(STRING_NOT_INSTALLED)
+
+    def strawberry(self):
+        artist = lines = now_playing = title = playback_status_icon = ""
+        internet_radio = False
+
+        try:
+            metadata = self.py3.command_output(CMD_METADATA)
+            playback_status = self.py3.command_output(CMD_PLAYBACK_STATUS).strip()
+            lines = filter(None, metadata.splitlines())
+        except self.py3.CommandError:
+            return {
+                "cached_until": self.py3.time_in(self.cache_timeout),
+                "full_text": "",
+            }
+
+        for item in lines:
+            if "artist" in item:
+                artist = item[14:]
+            if "title" in item:
+                title = item[13:]
+
+        if ".mp3" in title or ".wav" in title:
+            title = title[:-4]
+        if "http" in title:
+            title = ""
+            internet_radio = True
+
+        if artist and title:
+            now_playing = u"{} - {}".format(artist, title)
+        elif artist:
+            now_playing = artist
+        elif title:
+            now_playing = title
+        elif internet_radio:
+            now_playing = INTERNET_RADIO
+
+        if playback_status == "Playing":
+            playback_status_icon = u"▶"
+        elif playback_status == "Paused":
+            playback_status_icon = u"⏸"
+        elif playback_status == "Stopped":
+            playback_status_icon = u"⏹"
+
+        return {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(
+                self.format,
+                {"current": now_playing, "playback_status": playback_status_icon},
+            ),
+        }
+
+
+if __name__ == "__main__":
+    """
+    Run module in test mode.
+    """
+    from py3status.module_test import module_test
+
+    module_test(Py3status)
