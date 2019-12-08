@@ -16,7 +16,8 @@ Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 10)
     command: The program to use to change the backlight.
         Currently xbacklight and light are supported. The program needs
-        to be installed and on your path.
+        to be installed and on your path. If no program is installed, this
+        module will attempt to use logind support instead
         (default 'xbacklight')
     device: Device name or full path to use, eg, acpi_video0 or
         /sys/class/backlight/acpi_video0, otherwise automatic
@@ -32,11 +33,14 @@ Configuration parameters:
 Format placeholders:
     {level} brightness
 
-Requires:
+Requires: one of
     xbacklight: need for changing brightness, not detection
     light: program to easily change brightness on backlight-controllers
+    pydbus + logind v243:
+        python library for dbus access
+        logind allows to change brightness without X
 
-@author Tjaart van der Walt (github:tjaartvdwalt)
+@author Tjaart van der Walt (github:tjaartvdwalt), Jérémy Rosen (github:boucman)
 @license BSD
 
 SAMPLE OUTPUT
@@ -45,6 +49,11 @@ SAMPLE OUTPUT
 
 from __future__ import division
 import os
+
+try:
+    from pydbus import SystemBus
+except ImportError:
+    pass
 
 STRING_NOT_AVAILABLE = "no available device"
 
@@ -99,6 +108,14 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        try:
+            self._logind_proxy = SystemBus().get(
+                bus_name="org.freedesktop.login1",
+                object_path="/org/freedesktop/login1/session/self",
+            )
+        except NameError:
+            self._logind_proxy = None
+
         if not self.device:
             self.device = get_device()
         elif "/" not in self.device:
@@ -124,13 +141,10 @@ class Py3status:
         except self.py3.CommandError:
             pass
 
-        if self.command_available and self.brightness_initial:
+        if self.brightness_initial:
             self._set_backlight_level(self.brightness_initial)
 
     def on_click(self, event):
-        if not self.command_available:
-            return None
-
         level = self._get_backlight_level()
         button = event["button"]
         if button == self.button_up:
@@ -147,7 +161,16 @@ class Py3status:
             self._set_backlight_level(level)
 
     def _set_backlight_level(self, level):
-        self.py3.command_run(self._command_set(level))
+        if self.command_available:
+            self.py3.command_run(self._command_set(level))
+            return
+        if self._logind_proxy:
+            for brightness_max_line in open("%s/max_brightness" % self.device, "rb"):
+                brightness_max = int(brightness_max_line)
+            brightness = brightness_max * level / 100
+            self._logind_proxy.SetBrightness(
+                "backlight", os.path.basename(os.path.normpath(self.device)), brightness
+            )
 
     def _get_backlight_level(self):
         if self.command_available:
