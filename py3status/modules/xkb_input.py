@@ -94,12 +94,12 @@ xkb_input {
     inputs = [
         {"identifier": "1625:3192:Heng_Yu_Technology_Poker_II", "alias": "Poker 2"},
         {"identifier": "0012:021:USB-HID_Keyboard", "alias": "Race 3"},
-        {"identifier": "0123:45678:Logitech_MX_Ergo", "MX Ergo", "type": "pointer"},
+        {"identifier": "0123:45678:Logitech_MX_Ergo", "alias": "MX Ergo", "type": "pointer"},
     ]
 }
 
 # i3 users: display inputs - see https://wiki.archlinux.org/index.php/X_keyboard_extension
-# $ setxkbmap -layout "us,fr,ru"
+# $ setxkbmap -layout "us,fr,ru"  # install xkb-group to enable a listener thread
 ```
 
 @author lasers, saengowp, javiertury
@@ -243,12 +243,10 @@ class Xkbgroup(Xkb):
         from xkbgroup import XKeyboard
 
         self.xo = XKeyboard
-        self.active_index = self.xo().group_num
         self.map = {"num": "c", "name": "n", "symbol": "s", "variant": "v"}
 
     def get_xkb_inputs(self):
         xo = self.xo()
-        group_data = xo.group_data
         group_data = xo.group_data._asdict()
         xkb_input = {self.map[k]: v for k, v in group_data.items()}
         xkb_input["e"] = xkb_input["v"] or xkb_input["s"]
@@ -258,9 +256,7 @@ class Xkbgroup(Xkb):
 
     def set_xkb_layout(self, delta):
         xo = self.xo()
-        self.active_index += delta
-        self.active_index %= xo.groups_count
-        xo.group_num = self.active_index + 1
+        xo.group_num = (xo.group_num + delta) % xo.groups_count
 
 
 class Xkb_Switch(Xkb):
@@ -383,12 +379,12 @@ class Swaymsg(Xkb):
         return xkb_input
 
     def get_xkb_inputs(self):
-        new_input = []
         try:
             xkb_data = self.loads(self.py3_command_output(self.swaymsg_command))
         except Exception:
             xkb_data = []
 
+        new_input = []
         for xkb_input in xkb_data:
             if self.parent.inputs:
                 for _filter in self.parent.inputs:
