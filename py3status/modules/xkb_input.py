@@ -11,7 +11,6 @@ Configuration parameters:
     format_input: display format for inputs
         (default '[{alias}][\?soft  ][\?color=s {s}[ {v}]]')
     format_input_separator: show separator if more than one (default ' ')
-    format_libinput: display format for libinputs (default None)
     inputs: specify a list of inputs to use in swaymsg (default [])
     switcher: specify xkb-switch, xkblayout-state, xkbgroup,
         or swaymsg to use, otherwise auto (default None)
@@ -45,20 +44,17 @@ format_input placeholders:
         {xkb_layout_names}        eg, English (US), French, Russian
         {xkb_active_layout_index} eg, 0, 1, 2, etc
         {xkb_active_layout_name}  eg, English (US)
-        {format_libinput}         format for libinputs
+        {send_events}             eg, True
+        {accel_speed}             eg, 0.0
+        {accel_profile}           eg, adaptive
+        {natural_scroll}          eg, adaptive
+        {left_handed}             eg, False
+        {middle_emulation}        eg, False
+        {scroll_method}           eg, None
+        {scroll_button}           eg, 274
 
-format_libinput placeholders:
-    {send_events}      eg, enabled
-    {accel_speed}      eg, 0.0
-    {accel_profile}    eg, adaptive
-    {natural_scroll}   eg, adaptive
-    {left_handed}      eg, disabled
-    {middle_emulation} eg, disabled
-    {scroll_method}    eg, none
-    {scroll_button}    eg, 274
-
-    Use `swaymsg -r -t get_inputs` to get a list of current sway inputs
-    and for a list of placeholders. Not all of placeholders will be usable.
+        Use `swaymsg -r -t get_inputs` to get a list of current sway inputs
+        and for a list of placeholders. Not all of placeholders will be usable.
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
@@ -227,7 +223,7 @@ class Xkb:
     def setup(self, parent):
         pass
 
-    def make_format_libinput(self, _input):
+    def add_libinput(self, _input):
         pass
 
     def set_xkb_layout(self, delta):
@@ -340,23 +336,12 @@ class Swaymsg(Xkb):
 
         self.excluded = ["alias"]
         self.fnmatch, self.loads = (fnmatch, loads)
+        self.map = {"enabled": True, "disabled": False, "none": None}
         self.swaymsg_command = ["swaymsg", "--raw", "--type", "get_inputs"]
 
-        if self.parent.format_libinput and self.parent.py3.format_contains(
-            self.parent.format_input, "format_libinput"
-        ):
-            self.make_format_libinput = self.__make_format_libinput
-
-    def __make_format_libinput(self, _input):
+    def add_libinput(self, _input):
         libinput = _input.pop("libinput", {})
-        for x in self.parent.thresholds_init["format_libinput"]:
-            if x in libinput:
-                self.parent.py3.threshold_get_color(libinput[x], x)
-
-        format_libinput = self.parent.py3.safe_format(
-            self.parent.format_libinput, libinput
-        )
-        _input["format_libinput"] = format_libinput
+        _input.update({k: self.map.get(v, v) for k, v in libinput.items()})
 
         return _input
 
@@ -413,7 +398,6 @@ class Py3status:
     format = "{format_input}"
     format_input = "[{alias}][\?soft  ][\?color=s {s}[ {v}]]"
     format_input_separator = " "
-    format_libinput = None
     inputs = []
     switcher = None
     thresholds = [
@@ -443,7 +427,7 @@ class Py3status:
             self.listener_backend = Listener(self)
 
         self.thresholds_init = {}
-        for name in ["format", "format_input", "format_libinput"]:
+        for name in ["format", "format_input"]:
             self.thresholds_init[name] = self.py3.get_color_names_list(
                 getattr(self, name)
             )
@@ -459,7 +443,7 @@ class Py3status:
         new_input = []
 
         for _input in xkb_inputs:
-            _input = self.input_backend.make_format_libinput(_input) or _input
+            _input = self.input_backend.add_libinput(_input) or _input
             for x in self.thresholds_init["format_input"]:
                 if x in _input:
                     self.py3.threshold_get_color(_input[x], x)
