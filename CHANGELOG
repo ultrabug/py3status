@@ -1,3 +1,18 @@
+version 3.22 (2019-12-10)
+* doc/configuration.rst: fix unexpected unindents (#1867), by lasers
+* imap module: fix black code formatting to pass tests (#1857), by lasers
+* module_test: support config cli arguments (#1859), by lasers
+* mpris module: add vlc nowplaying field (#1855), by Cedric Girard
+* new module systemd_suspend_inhibitor, to be able to inhibit suspend managed by systemd logind (#1861), by Cyrinux
+* ns_checker module: use post_config_hook (#1850), by lasers
+* remove nvidia_temp in favor of nvidia_smi (#1853), by lasers
+* remove scratchpad_{async,counter} in favor of scratchpad (#1852), by lasers
+* remove window_title{,_async} in favor of window (#1854), by lasers
+* treewide: fix typos, grammar improvements (#1858), by Torstein Husebø
+* usbguard module: update for versioned dbus in 0.7.5 (#1856), by Maxim Baz
+* volume_status module: simplify code (#1851), by lasers
+* window: get name instead of window_title, get nodes or empty lists (#1860), by lasers
+
 version 3.21 (2019-10-13)
 * implement global request_retry_times and request_retry_wait options (#1847)
 * arch_updates module: checkupdates throws exit code on zero updates (#1848), by Daniel Jenssen
