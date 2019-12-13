@@ -245,8 +245,10 @@ class Py3status:
         """
         check if the known monitor setup match current setup
         """
-        return (self.layout["connected"] != self.old_layout["connected"] or
-                self.layout["disconnected"] != self.old_layout["disconnected"])
+        return (
+            self.layout["connected"] != self.old_layout["connected"] or
+            self.layout["disconnected"] != self.old_layout["disconnected"]
+        )
 
     def _set_available_combinations(self):
         """
@@ -513,7 +515,11 @@ class Py3status:
             self._force_force_on_start()
 
         # follow on change
-        if not self._no_force_on_change and self.force_on_change and self._layout_changed():
+        if (
+            not self._no_force_on_change
+            and self.force_on_change
+            and self._layout_changed()
+        ):
             self.py3.log("detected change of monitor setup")
             self._force_on_change()
 
