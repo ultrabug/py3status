@@ -191,6 +191,7 @@ class Py3status:
         self.active_mode = "extend"
         self.displayed = None
         self.max_width = 0
+        self.layout = None
 
     def _get_layout(self):
         """
@@ -203,6 +204,7 @@ class Py3status:
         layout = OrderedDict(
             {"connected": OrderedDict(), "disconnected": OrderedDict()}
         )
+        self.old_layout = self.layout or layout
 
         current = self.py3.command_output("xrandr")
         for line in current.splitlines():
@@ -238,6 +240,13 @@ class Py3status:
             )
 
         return layout
+
+    def _layout_changed(self):
+        """
+        check if the known monitor setup match current setup
+        """
+        return (self.layout["connected"] != self.old_layout["connected"] or
+                self.layout["disconnected"] != self.old_layout["disconnected"])
 
     def _set_available_combinations(self):
         """
@@ -504,7 +513,8 @@ class Py3status:
             self._force_force_on_start()
 
         # follow on change
-        if not self._no_force_on_change and self.force_on_change:
+        if not self._no_force_on_change and self.force_on_change and self._layout_changed():
+            self.py3.log("detected change of monitor setup")
             self._force_on_change()
 
         # this was a click event triggered update
