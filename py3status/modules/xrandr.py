@@ -246,8 +246,8 @@ class Py3status:
         check if the known monitor setup match current setup
         """
         return (
-            self.layout["connected"] != self.old_layout["connected"] or
-            self.layout["disconnected"] != self.old_layout["disconnected"]
+            self.layout["connected"] != self.old_layout["connected"]
+            or self.layout["disconnected"] != self.old_layout["disconnected"]
         )
 
     def _set_available_combinations(self):
