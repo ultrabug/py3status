@@ -86,6 +86,7 @@ class Py3status:
         self.button_refresh = 2
         self.color_open = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD
         self.color_closed = self.py3.COLOR_CLOSED or self.py3.COLOR_BAD
+        self.hackerspace_url = None
 
     def spaceapi(self):
         color = self.color_closed
@@ -94,7 +95,6 @@ class Py3status:
 
         try:
             data = self.py3.request(self.url).json()
-            self._url = data.get("url")
 
             if data["state"]["open"]:
                 color = self.color_open
@@ -113,6 +113,9 @@ class Py3status:
 
         except (self.py3.RequestException, KeyError):
             full_text = STRING_UNAVAILABLE
+            data = {}
+
+        self.hackerspace_url = data.get("url")
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
@@ -122,10 +125,10 @@ class Py3status:
 
     def on_click(self, event):
         button = event["button"]
-        if self._url and self.button_url == button:
-            self.py3.command_run("xdg-open {}".format(self._url))
-            self.py3.prevent_refresh()
-        elif button != self.button_refresh:
+        if button == self.button_url:
+            if self.hackerspace_url:
+                self.py3.command_run("xdg-open {}".format(self.hackerspace_url))
+        if button != self.button_refresh:
             self.py3.prevent_refresh()
 
 
