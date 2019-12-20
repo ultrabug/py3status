@@ -12,7 +12,9 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 30)
     delimiter: the delimiter between parent and child objects (default '-')
     format: display format for this module (default None)
+    password: basic auth password information (default None)
     url: specify URL to fetch JSON from (default None)
+    username: basic auth user information (default None)
 
 Format placeholders:
     Placeholders will be replaced by the JSON keys.
@@ -61,7 +63,9 @@ class Py3status:
     cache_timeout = 30
     delimiter = "-"
     format = None
+    password = None
     url = None
+    username = None
 
     class Meta:
         deprecated = {
@@ -82,7 +86,11 @@ class Py3status:
         """
         """
         try:
-            json_data = self.py3.request(self.url).json()
+            if self.username is not None and self.password is not None:
+                auth = (self.username, self.password)
+            else:
+                auth = None
+            json_data = self.py3.request(self.url, auth=auth).json()
             json_data = self.py3.flatten_dict(json_data, self.delimiter, True)
         except self.py3.RequestException:
             json_data = None
