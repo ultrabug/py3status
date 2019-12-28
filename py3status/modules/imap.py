@@ -4,7 +4,13 @@ Display number of unread messages from IMAP account.
 
 Configuration parameters:
     allow_urgent: display urgency on unread messages (default False)
+    auth_scope: scope to use with OAuth2 (default 'https://mail.google.com/')
+    auth_token: path to where the pickled access/refresh token will be saved
+        after successful credential authorization.
+        (default '~/.config/py3status/imap_auth_token.pickle')
     cache_timeout: refresh interval for this module (default 60)
+    client_secret: the path to the client secret file with OAuth 2.0
+        credentials (if None then OAuth not used) (default None)
     criterion: status of emails to check for (default 'UNSEEN')
     debug: log warnings (default False)
     format: display format for this module (default 'Mail: {unseen}')
@@ -27,12 +33,36 @@ Format placeholders:
 Color options:
     color_new_mail: use color when new mail arrives, default to color_good
 
+OAuth:
+    OAuth2 will be used for authentication instead of a password if the
+    client_secret path is set.
+
+    To create a client_secret for your Google account, visit
+    https://console.developers.google.com/ and create an "OAuth client ID" from
+    the credentials tab.
+
+    This client secret enables the app (in this case, the IMAP py3status module)
+    to request access to a user's email. Therefore the client secret doesn't
+    have to be for the same Google account as the email account being accessed.
+
+    When the IMAP module first tries to access your email account a browser
+    window will open asking for authorization to access your email.
+    After authorization is complete, an access/refresh token will be saved to
+    the path configured in auth_token.
+
+    Requires: Using OAuth requires the google-auth and google-auth-oauthlib
+    libraries to be installed.
+
+    Note: the same client secret file can be used as with the py3status Google
+    Calendar module.
+
 @author obb, girst
 
 SAMPLE OUTPUT
 {'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
 import imaplib
+import os
 from threading import Thread
 from time import sleep
 from ssl import create_default_context
@@ -48,7 +78,10 @@ class Py3status:
 
     # available configuration parameters
     allow_urgent = False
+    auth_scope = "https://mail.google.com/"
+    auth_token = "~/.config/py3status/imap_auth_token.pickle"
     cache_timeout = 60
+    client_secret = None
     criterion = "UNSEEN"
     debug = False
     format = "Mail: {unseen}"
@@ -87,6 +120,10 @@ class Py3status:
             0  # IMAPcommands are tagged, so responses can be matched up to requests
         )
         self.idle_thread = Thread()
+
+        if self.client_secret:
+            self.client_secret = os.path.expanduser(self.client_secret)
+        self.auth_token = os.path.expanduser(self.auth_token)
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -137,7 +174,36 @@ class Py3status:
         if self.use_idle and not supports_idle:
             self.py3.error("Server does not support IDLE")
 
+    def _get_creds(self):
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from google.auth.transport.requests import Request
+        import pickle
+
+        self.creds = None
+
+        # Open pickle file with access and refresh tokens if it exists
+        if os.path.exists(self.auth_token):
+            with open(self.auth_token, "rb") as token:
+                self.creds = pickle.load(token)
+
+        if not self.creds or not self.creds.valid:
+            if self.creds and self.creds.expired and self.creds.refresh_token:
+                # Credentials expired but contain refresh token
+                self.creds.refresh(Request())
+            else:
+                # No valid credentials so open authorisation URL in browser
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    self.client_secret, [self.auth_scope]
+                )
+                self.creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open(self.auth_token, "wb") as token:
+                pickle.dump(self.creds, token)
+
     def _connection_ssl(self):
+        if self.client_secret:
+            # Use OAUTH
+            self._get_creds()
         connection = imaplib.IMAP4_SSL(self.server, int(self.port))
         return connection
 
@@ -236,7 +302,16 @@ class Py3status:
                 if self.connection is None:
                     self._connect()
                 if self.connection.state == "NONAUTH":
-                    self.connection.login(self.user, self.password)
+                    if self.client_secret:
+                        # Authenticate using OAUTH
+                        auth_string = "user=%s\1auth=Bearer %s\1\1" % (
+                            self.user,
+                            self.creds.token,
+                        )
+                        self.connection.authenticate("XOAUTH2", lambda x: auth_string)
+                    else:
+                        # Login with user and password
+                        self.connection.login(self.user, self.password)
 
                 tmp_mail_count = 0
                 directories = self.mailbox.split(",")
