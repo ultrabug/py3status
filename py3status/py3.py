@@ -1027,6 +1027,7 @@ class Py3:
             )
         except Exception as e:
             msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e)
+            self.log(msg)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
@@ -1048,6 +1049,7 @@ class Py3:
                 if output_oneline:
                     msg += " ({output})"
                 msg = msg.format(cmd=pretty_cmd, error=retcode, output=output_oneline)
+                self.log(msg)
                 raise exceptions.CommandError(
                     msg, error_code=retcode, error=error, output=output
                 )
