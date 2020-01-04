@@ -2,6 +2,8 @@
 """
 Perform a bandwidth test with speedtest-cli.
 
+Use middle-click to start the speed test.
+
 Configuration parameters:
     button_share: mouse button to share an URL (default None)
     format: display format for this module
