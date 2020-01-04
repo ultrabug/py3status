@@ -1,3 +1,11 @@
+version 3.23 (2020-01-04)
+* core: report CommandError on logs
+* xkb_input: new module from scratch to support sway too (#1869), by lasers
+* backlight module: use logind as a fallback (#1870), by Boucman
+* spaceapi module: fix offline attributeerror exception (#1872), by lasers
+* getjson module: support basic auth via username/password fix #1875 (#1876)
+* speedtest module: document how to run the test wrt #1878
+
 version 3.22 (2019-12-10)
 * doc/configuration.rst: fix unexpected unindents (#1867), by lasers
 * imap module: fix black code formatting to pass tests (#1857), by lasers
