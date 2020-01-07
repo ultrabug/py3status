@@ -33,7 +33,7 @@ OBSOLETE_PARAM = []
 
 RE_PARAM = re.compile(r"^  - `(?P<name>[^`]*)`.*?(\*\(default (?P<value>(.*))\)\*)?$")
 
-AST_LITERAL_TYPES = {"Num": "n", "Str": "s", "NameConstant": "value"}
+AST_LITERAL_TYPES = {"Num": "n", "Str": "s", "NameConstant": "value", "Constant": "value"}
 
 MODULE_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "py3status", "modules"
