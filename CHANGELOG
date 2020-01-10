@@ -1,3 +1,8 @@
+version 3.24 (2020-01-10)
+* core: some commands expectedly return non 0 output, dont log them, thanks to steinex
+* fix tests and update setup for python 3.8 (#1880), by Maxim Baz
+* imap module: add OAuth2 support (#1879), by Justyn Butler
+
 version 3.23 (2020-01-04)
 * core: report CommandError on logs
 * xkb_input: new module from scratch to support sway too (#1869), by lasers
