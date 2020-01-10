@@ -120,6 +120,11 @@ class Py3status:
             0  # IMAPcommands are tagged, so responses can be matched up to requests
         )
         self.idle_thread = Thread()
+        self.recoverable_errors = [
+            socket_error,
+            imaplib.IMAP4.abort,
+            imaplib.IMAP4.readonly,
+        ]
 
         if self.client_secret:
             self.client_secret = os.path.expanduser(self.client_secret)
@@ -329,7 +334,7 @@ class Py3status:
                     self._idle()
                 else:
                     return
-        except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
+        except tuple(self.recoverable_errors) as e:
             if self.debug:
                 self.py3.log(
                     "Recoverable error - " + str(e), level=self.py3.LOG_WARNING
