@@ -258,7 +258,9 @@ class Py3status:
             except socket_error:
                 raise imaplib.IMAP4.abort("Server didn't respond to 'IDLE' in time")
             if not response.lower().startswith("+ idling"):
-                raise imaplib.IMAP4.abort("While initializing IDLE: {}".format(response))
+                raise imaplib.IMAP4.abort(
+                    "While initializing IDLE: {}".format(response)
+                )
 
             # wait for changes (EXISTS, EXPUNGE, etc.):
             socket.settimeout(self.cache_timeout)
@@ -297,18 +299,17 @@ class Py3status:
                 raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
 
     def _get_mail_count(self):
-      retry_counter = 0
-      retry_max = 3
-      while True:
-        try:
+        retry_counter = 0
+        retry_max = 3
+        while True:
+            try:
                 if self.connection is None:
                     self._connect()
                 if self.connection.state == "NONAUTH":
                     if self.client_secret:
                         # Authenticate using OAUTH
                         auth_string = "user={}\1auth=Bearer {}\1\1".format(
-                            self.user,
-                            self.creds.token,
+                            self.user, self.creds.token,
                         )
                         self.connection.authenticate("XOAUTH2", lambda x: auth_string)
                     else:
@@ -332,33 +333,41 @@ class Py3status:
                     retry_counter = 0
                 else:
                     return
-        except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
-            if self.debug:
-                self.py3.log(
-                    "Recoverable error - {}".format(e), level=self.py3.LOG_WARNING
-                )
-            self._disconnect()
-
-            retry_counter += 1
-            if retry_counter < retry_max:
+            except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
                 if self.debug:
-                    self.py3.log("Retrying ({}/{})".format(retry_counter, retry_max), level=self.py3.LOG_INFO)
-                continue
-            break
-        except (imaplib.IMAP4.error, Exception) as e:
-            self.mail_error = "Fatal error - {}".format(e)
-            self._disconnect()
-            self.mail_count = None
+                    self.py3.log(
+                        "Recoverable error - {}".format(e), level=self.py3.LOG_WARNING
+                    )
+                self._disconnect()
 
-            retry_counter += 1
-            if retry_counter < retry_max:
-                if self.debug:
-                    self.py3.log("Will retry after 60 seconds ({}/{})".format(retry_counter, retry_max), level=self.py3.LOG_INFO)
-                sleep(60)
-                continue
-            break
-        finally:
-            self.py3.update()  # to propagate mail_error
+                retry_counter += 1
+                if retry_counter < retry_max:
+                    if self.debug:
+                        self.py3.log(
+                            "Retrying ({}/{})".format(retry_counter, retry_max),
+                            level=self.py3.LOG_INFO,
+                        )
+                    continue
+                break
+            except (imaplib.IMAP4.error, Exception) as e:
+                self.mail_error = "Fatal error - {}".format(e)
+                self._disconnect()
+                self.mail_count = None
+
+                retry_counter += 1
+                if retry_counter < retry_max:
+                    if self.debug:
+                        self.py3.log(
+                            "Will retry after 60 seconds ({}/{})".format(
+                                retry_counter, retry_max
+                            ),
+                            level=self.py3.LOG_INFO,
+                        )
+                    sleep(60)
+                    continue
+                break
+            finally:
+                self.py3.update()  # to propagate mail_error
 
 
 if __name__ == "__main__":
