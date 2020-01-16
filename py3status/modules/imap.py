@@ -115,7 +115,7 @@ class Py3status:
         # class variables:
         self.mail_count = NO_DATA_YET
         self.connection = None
-        self.mail_error = None  # cannot throw self.py3.error from thread
+        self.mail_error = ""  # cannot throw self.py3.error from thread
         self.command_tag = (
             0  # IMAPcommands are tagged, so responses can be matched up to requests
         )
@@ -134,7 +134,7 @@ class Py3status:
             raise ValueError("Unknown security protocol")
 
     def imap(self):
-        # I -- acquire mail_count
+        # acquire mail_count and start thread if using IDLE
         if self.use_idle is not False:
             if not self.idle_thread.is_alive():
                 sleep(
@@ -146,18 +146,29 @@ class Py3status:
         else:
             self._get_mail_count()
         response = {"cached_until": self.py3.time_in(self.cache_timeout)}
-        if self.mail_error is not None:
+
+        # colors and errors
+        if self.mail_error.startswith("Fatal"):
             self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
             self.py3.error(self.mail_error)
-            self.mail_error = None
+            response["color"] = self.py3.COLOR_BAD
+        elif self.mail_count is None:
+            response["color"] = self.py3.COLOR_BAD
+        elif self.mail_error.startswith("Recoverable"):
+            response["color"] = self.py3.COLOR_DEGRADED
+        elif self.mail_count > 0 and self.py3.COLOR_NEW_MAIL:
+            response["color"] = self.py3.COLOR_NEW_MAIL
+        else:
+            response["color"] = self.py3.COLOR_GOOD
 
-        # II -- format response
+        self.mail_error = ""
+
+        # response text
         response["full_text"] = self.py3.safe_format(
             self.format, {"unseen": self.mail_count}
         )
 
         if self.mail_count is None:
-            response["color"] = (self.py3.COLOR_BAD,)
             response["full_text"] = self.py3.safe_format(
                 self.format, {"unseen": STRING_UNAVAILABLE}
             )
@@ -166,7 +177,6 @@ class Py3status:
         elif self.mail_count == 0 and self.hide_if_zero:
             response["full_text"] = ""
         elif self.mail_count > 0:
-            response["color"] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
             response["urgent"] = self.allow_urgent
 
         return response
@@ -340,9 +350,8 @@ class Py3status:
                     return
         except tuple(self.recoverable_errors) as e:
             if self.debug:
-                self.py3.log(
-                    "Recoverable error - " + str(e), level=self.py3.LOG_WARNING
-                )
+                self.mail_error = "Recoverable error - " + str(e)
+                self.py3.log(self.mail_error, level=self.py3.LOG_WARNING)
             self._disconnect()
         except (imaplib.IMAP4.error, Exception) as e:
             self.mail_error = "Fatal error - " + str(e)
