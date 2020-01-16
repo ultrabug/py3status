@@ -182,7 +182,11 @@ class Py3status:
     def _get_creds(self):
         from google_auth_oauthlib.flow import InstalledAppFlow
         from google.auth.transport.requests import Request
+        from google.auth.exceptions import TransportError
         import pickle
+
+        # Add recoverable errors that could be thrown by auth module
+        self.recoverable_errors += [TransportError]
 
         self.creds = None
 
