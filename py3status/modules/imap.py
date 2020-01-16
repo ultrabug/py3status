@@ -120,6 +120,7 @@ class Py3status:
             0  # IMAPcommands are tagged, so responses can be matched up to requests
         )
         self.idle_thread = Thread()
+        self.idle_thread_ending = False
 
         if self.client_secret:
             self.client_secret = os.path.expanduser(self.client_secret)
@@ -131,10 +132,13 @@ class Py3status:
     def imap(self):
         # I -- acquire mail_count
         if self.use_idle is not False:
-            if not self.idle_thread.is_alive():
+            if not self.idle_thread.is_alive() or self.idle_thread_ending:
+                # if there is no IDLE thread, or if it is marked as ending (in
+                # which case it will soon be done), then start a new IDLE thread
                 sleep(
                     self.read_timeout
                 )  # rate-limit thread-restarting (when network is offline)
+                self.idle_thread_ending = False
                 self.idle_thread = Thread(target=self._get_mail_count)
                 self.idle_thread.daemon = True
                 self.idle_thread.start()
@@ -340,7 +344,10 @@ class Py3status:
             self._disconnect()
             self.mail_count = None
         finally:
-            self.py3.update()  # to propagate mail_error
+            # idle_thread_ending is set to avoid a race condition if the module
+            # is refreshed by py3.update() before the thread is marked un-alive
+            self.idle_thread_ending = True
+            self.py3.update()
 
 
 if __name__ == "__main__":
