@@ -202,74 +202,74 @@ class Py3status:
         return response
 
     def _get_status(self):
-      while True:
-        try:
-            status = self._get_mpd().status()
-            song = int(status.get("song", 0))
-            next_song = int(status.get("nextsong", 0))
+        while True:
+            try:
+                status = self._get_mpd().status()
+                song = int(status.get("song", 0))
+                next_song = int(status.get("nextsong", 0))
 
-            state = status.get("state")
+                state = status.get("state")
 
-            if (state == "pause" and self.hide_when_paused) or (
-                state == "stop" and self.hide_when_stopped
-            ):
-                text = ""
+                if (state == "pause" and self.hide_when_paused) or (
+                    state == "stop" and self.hide_when_stopped
+                ):
+                    text = ""
 
-            else:
-                playlist_info = self._get_mpd().playlistinfo()
-                try:
-                    song = playlist_info[song]
-                except IndexError:
-                    song = {}
-                try:
-                    next_song = playlist_info[next_song]
-                except IndexError:
-                    next_song = {}
+                else:
+                    playlist_info = self._get_mpd().playlistinfo()
+                    try:
+                        song = playlist_info[song]
+                    except IndexError:
+                        song = {}
+                    try:
+                        next_song = playlist_info[next_song]
+                    except IndexError:
+                        next_song = {}
 
-                song["state"] = next_song["state"] = self._state_character(state)
+                    song["state"] = next_song["state"] = self._state_character(state)
 
-                def attr_getter(attr):
-                    if attr.startswith("next_"):
-                        return song_attr(next_song, attr[5:])
-                    return song_attr(song, attr)
+                    def attr_getter(attr):
+                        if attr.startswith("next_"):
+                            return song_attr(next_song, attr[5:])
+                        return song_attr(song, attr)
 
-                text = self.py3.safe_format(self.format, attr_getter=attr_getter)
-                if isinstance(text, Composite):
-                    text = text.text()
+                    text = self.py3.safe_format(self.format, attr_getter=attr_getter)
+                    if isinstance(text, Composite):
+                        text = text.text()
 
-            self.current_status = (text, status)
+                self.current_status = (text, status)
 
-            if self.use_idle:
-                self.py3.update()
-                # Note: mpd2 does not support more than 1 idle subsystem. so if
-                # the user wants to listen on more than one, we listen on all
-                # and loop until one we're interested in changed.
-                # https://github.com/Mic92/python-mpd2/issues/107
-                changed = self._get_mpd().idle()
-                while not any([c in self.idle_subsystems for c in changed]):
+                if self.use_idle:
+                    self.py3.update()
+                    # Note: mpd2 does not support more than 1 idle subsystem. so if
+                    # the user wants to listen on more than one, we listen on all
+                    # and loop until one we're interested in changed.
+                    # https://github.com/Mic92/python-mpd2/issues/107
                     changed = self._get_mpd().idle()
-            else:
+                    while not any([c in self.idle_subsystems for c in changed]):
+                        changed = self._get_mpd().idle()
+                else:
+                    return
+
+            except (ValueError, socket.error, ConnectionError, CommandError) as e:
+                # ValueError can happen when status.get(...) returns None; e.g.
+                # during reversal of playlist
+                if type(e) is ValueError:
+                    text = "No song information!"
+                if type(e) is socket.error:
+                    text = "Failed to connect to mpd!"
+                if type(e) is ConnectionError:
+                    text = "Error while connecting to mpd!"
+                    self._get_mpd(disconnect=True)
+                if type(e) is CommandError:
+                    text = "Failed to authenticate to mpd!"
+                    self._get_mpd(disconnect=True)
+
+                state = None
+                self.current_status = (text, status)
                 return
-
-        except (ValueError, socket.error, ConnectionError, CommandError) as e:
-            # ValueError can happen when status.get(...) returns None; e.g.
-            # during reversal of playlist
-            if type(e) is ValueError:
-                text = "No song information!"
-            if type(e) is socket.error:
-                text = "Failed to connect to mpd!"
-            if type(e) is ConnectionError:
-                text = "Error while connecting to mpd!"
-                self._get_mpd(disconnect=True)
-            if type(e) is CommandError:
-                text = "Failed to authenticate to mpd!"
-                self._get_mpd(disconnect=True)
-
-            state = None
-            self.current_status = (text, status)
-            return
-        finally:
-            self.py3.update()  # to propagate error message
+            finally:
+                self.py3.update()  # to propagate error message
 
     def kill(self):
         self._get_mpd(disconnect=True)
