@@ -254,14 +254,14 @@ class Py3status:
             except (ValueError, socket.error, ConnectionError, CommandError) as e:
                 # ValueError can happen when status.get(...) returns None; e.g.
                 # during reversal of playlist
-                if type(e) is ValueError:
+                if isinstance(e, ValueError):
                     text = "No song information!"
-                if type(e) is socket.error:
+                if isinstance(e, socket.error):
                     text = "Failed to connect to mpd!"
-                if type(e) is ConnectionError:
+                if isinstance(e, ConnectionError):
                     text = "Error while connecting to mpd!"
                     self._get_mpd(disconnect=True)
-                if type(e) is CommandError:
+                if isinstance(e, CommandError):
                     text = "Failed to authenticate to mpd!"
                     self._get_mpd(disconnect=True)
 
