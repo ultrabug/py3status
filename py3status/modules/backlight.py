@@ -36,9 +36,7 @@ Format placeholders:
 Requires: one of
     xbacklight: need for changing brightness, not detection
     light: program to easily change brightness on backlight-controllers
-    pydbus + logind v243:
-        python library for dbus access
-        logind allows to change brightness without X
+    pydbus + logind v243: logind to change brightness without X
 
 @author Tjaart van der Walt (github:tjaartvdwalt), Jérémy Rosen (github:boucman)
 @license BSD
