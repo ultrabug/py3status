@@ -258,7 +258,9 @@ class Py3status:
             except socket_error:
                 raise imaplib.IMAP4.abort("Server didn't respond to 'IDLE' in time")
             if not response.lower().startswith("+ idling"):
-                raise imaplib.IMAP4.abort("While initializing IDLE: " + str(response))
+                raise imaplib.IMAP4.abort(
+                    "While initializing IDLE: {}".format(response)
+                )
 
             # wait for changes (EXISTS, EXPUNGE, etc.):
             socket.settimeout(self.cache_timeout)
@@ -297,16 +299,17 @@ class Py3status:
                 raise imaplib.IMAP4.abort("While terminating IDLE: " + response)
 
     def _get_mail_count(self):
-        try:
-            while True:
+        retry_counter = 0
+        retry_max = 3
+        while True:
+            try:
                 if self.connection is None:
                     self._connect()
                 if self.connection.state == "NONAUTH":
                     if self.client_secret:
                         # Authenticate using OAUTH
-                        auth_string = "user=%s\1auth=Bearer %s\1\1" % (
-                            self.user,
-                            self.creds.token,
+                        auth_string = "user={}\1auth=Bearer {}\1\1".format(
+                            self.user, self.creds.token,
                         )
                         self.connection.authenticate("XOAUTH2", lambda x: auth_string)
                     else:
@@ -327,20 +330,44 @@ class Py3status:
                 if self.use_idle:
                     self.py3.update()
                     self._idle()
+                    retry_counter = 0
                 else:
                     return
-        except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
-            if self.debug:
-                self.py3.log(
-                    "Recoverable error - " + str(e), level=self.py3.LOG_WARNING
-                )
-            self._disconnect()
-        except (imaplib.IMAP4.error, Exception) as e:
-            self.mail_error = "Fatal error - " + str(e)
-            self._disconnect()
-            self.mail_count = None
-        finally:
-            self.py3.update()  # to propagate mail_error
+            except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
+                if self.debug:
+                    self.py3.log(
+                        "Recoverable error - {}".format(e), level=self.py3.LOG_WARNING
+                    )
+                self._disconnect()
+
+                retry_counter += 1
+                if retry_counter < retry_max:
+                    if self.debug:
+                        self.py3.log(
+                            "Retrying ({}/{})".format(retry_counter, retry_max),
+                            level=self.py3.LOG_INFO,
+                        )
+                    continue
+                break
+            except (imaplib.IMAP4.error, Exception) as e:
+                self.mail_error = "Fatal error - {}".format(e)
+                self._disconnect()
+                self.mail_count = None
+
+                retry_counter += 1
+                if retry_counter < retry_max:
+                    if self.debug:
+                        self.py3.log(
+                            "Will retry after 60 seconds ({}/{})".format(
+                                retry_counter, retry_max
+                            ),
+                            level=self.py3.LOG_INFO,
+                        )
+                    sleep(60)
+                    continue
+                break
+            finally:
+                self.py3.update()  # to propagate mail_error
 
 
 if __name__ == "__main__":
