@@ -13,6 +13,7 @@ Configuration parameters:
         credentials (if None then OAuth not used) (default None)
     criterion: status of emails to check for (default 'UNSEEN')
     debug: log warnings (default False)
+    degraded_when_stale: color as degraded when updating failed (default True)
     format: display format for this module (default 'Mail: {unseen}')
     hide_if_zero: hide this module when no new mail (default False)
     mailbox: name of the mailbox to check (default 'INBOX')
@@ -84,6 +85,7 @@ class Py3status:
     client_secret = None
     criterion = "UNSEEN"
     debug = False
+    degraded_when_stale = True
     format = "Mail: {unseen}"
     hide_if_zero = False
     mailbox = "INBOX"
@@ -116,6 +118,7 @@ class Py3status:
         self.mail_count = NO_DATA_YET
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
+        self.network_error = None
         self.command_tag = (
             0  # IMAPcommands are tagged, so responses can be matched up to requests
         )
@@ -163,6 +166,8 @@ class Py3status:
         elif self.mail_count > 0:
             response["color"] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
             response["urgent"] = self.allow_urgent
+        if self.network_error is not None and self.degraded_when_stale:
+            response["color"] = self.py3.COLOR_DEGRADED
 
         return response
 
@@ -326,6 +331,7 @@ class Py3status:
                     tmp_mail_count += len(mails)
 
                 self.mail_count = tmp_mail_count
+                self.network_error = None
 
                 if self.use_idle:
                     self.py3.update()
@@ -334,14 +340,24 @@ class Py3status:
                 else:
                     return
             except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
+                if "didn't respond to 'DONE'" in str(e) or isinstance(e, socket_error):
+                    self.network_error = str(e)
+                    error_type = "Network"
+                else:
+                    error_type = "Recoverable"
+                    # Note: we don't reset network_error, as we want this to persist
+                    # until we either run into a permanent error or successfully receive
+                    # another response from the IMAP server.
+
                 if self.debug:
                     self.py3.log(
-                        "Recoverable error - {}".format(e), level=self.py3.LOG_WARNING
+                        "{} error - {}".format(error_type, e),
+                        level=self.py3.LOG_WARNING,
                     )
                 self._disconnect()
 
                 retry_counter += 1
-                if retry_counter < retry_max:
+                if retry_counter <= retry_max:
                     if self.debug:
                         self.py3.log(
                             "Retrying ({}/{})".format(retry_counter, retry_max),
@@ -355,7 +371,7 @@ class Py3status:
                 self.mail_count = None
 
                 retry_counter += 1
-                if retry_counter < retry_max:
+                if retry_counter <= retry_max:
                     if self.debug:
                         self.py3.log(
                             "Will retry after 60 seconds ({}/{})".format(
