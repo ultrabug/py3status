@@ -1027,6 +1027,7 @@ class Py3:
             )
         except Exception as e:
             msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e)
+            self.log(msg)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
