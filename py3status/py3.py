@@ -1,9 +1,14 @@
 from __future__ import division
 
-import collections
 import os
 import sys
 import shlex
+
+try:
+    # Python 3.3+
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 from copy import deepcopy
 from fnmatch import fnmatch
@@ -315,7 +320,7 @@ class Py3:
                 items.append((k, v))
             if isinstance(v, list):
                 v = dict(enumerate(v))
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 items.extend(
                     self.flatten_dict(v, delimiter, intermediates, str(k)).items()
                 )

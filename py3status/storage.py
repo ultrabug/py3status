@@ -2,7 +2,12 @@ from __future__ import with_statement
 
 import os
 
-from collections import Iterable, Mapping
+try:
+    # Python 3.3+
+    from collections.abc import Iterable, Mapping
+except ImportError:
+    from collections import Iterable, Mapping
+
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
 from time import time
