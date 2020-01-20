@@ -10,12 +10,12 @@ Configuration parameters:
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
     host: mpd host (default 'localhost')
-    idle_subsystems: a space seperated string of subsystems to idle on.
+    idle_subsystems: a list of subsystems to idle on.
         player: changes in song information, play state
         mixer: changes in volume
         options: e.g. repeat mode
         See the MPD protocol documentation for additional events.
-        (default 'player mixer options')
+        (default ['player', 'mixer', 'options'])
     idle_timeout: force idle to reset every n seconds (default 3600)
     max_width: maximum status length (default 120)
     password: mpd password (default None)
@@ -112,7 +112,7 @@ class Py3status:
     hide_when_paused = False
     hide_when_stopped = True
     host = "localhost"
-    idle_subsystems = "player mixer options"
+    idle_subsystems = ["player", "mixer", "options"]
     idle_timeout = 3600
     max_width = 120
     password = None
@@ -241,13 +241,7 @@ class Py3status:
 
                 if self.use_idle:
                     self.py3.update()
-                    # Note: mpd2 does not support more than 1 idle subsystem. so if
-                    # the user wants to listen on more than one, we listen on all
-                    # and loop until one we're interested in changed.
-                    # https://github.com/Mic92/python-mpd2/issues/107
-                    changed = self._get_mpd().idle()
-                    while not any([c in self.idle_subsystems for c in changed]):
-                        changed = self._get_mpd().idle()
+                    self._get_mpd().idle(*self.idle_subsystems)
                 else:
                     return
 
