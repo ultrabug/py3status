@@ -209,7 +209,6 @@ class Py3status:
                 next_song = int(status.get("nextsong", 0))
 
                 state = status.get("state")
-                self.py3.log(state)
 
                 if (state == "pause" and self.hide_when_paused) or (
                     state == "stop" and self.hide_when_stopped
