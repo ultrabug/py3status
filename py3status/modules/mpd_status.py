@@ -73,6 +73,7 @@ from py3status.composite import Composite
 from mpd import MPDClient, CommandError, ConnectionError
 from threading import Thread
 from time import sleep
+import logging
 
 
 def song_attr(song, attr):
@@ -209,6 +210,7 @@ class Py3status:
                 next_song = int(status.get("nextsong", 0))
 
                 state = status.get("state")
+                self.py3.log(state)
 
                 if (state == "pause" and self.hide_when_paused) or (
                     state == "stop" and self.hide_when_stopped
@@ -237,7 +239,7 @@ class Py3status:
                     if isinstance(text, Composite):
                         text = text.text()
 
-                self.current_status = (text, status)
+                self.current_status = (text, state)
 
                 if self.use_idle:
                     self.py3.update()
