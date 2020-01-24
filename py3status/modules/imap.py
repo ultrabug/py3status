@@ -67,7 +67,7 @@ import os
 from threading import Thread
 from time import sleep
 from ssl import create_default_context
-from socket import error as socket_error
+from socket import setdefaulttimeout, error as socket_error
 
 STRING_UNAVAILABLE = "N/A"
 NO_DATA_YET = -1
@@ -209,10 +209,12 @@ class Py3status:
         if self.client_secret:
             # Use OAUTH
             self._get_creds()
+        setdefaulttimeout(self.read_timeout)
         connection = imaplib.IMAP4_SSL(self.server, int(self.port))
         return connection
 
     def _connection_starttls(self):
+        setdefaulttimeout(self.read_timeout)
         connection = imaplib.IMAP4(self.server, int(self.port))
         connection.starttls(create_default_context())
         return connection
