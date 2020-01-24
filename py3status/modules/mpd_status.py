@@ -73,7 +73,6 @@ from py3status.composite import Composite
 from mpd import MPDClient, CommandError, ConnectionError
 from threading import Thread
 from time import sleep
-import logging
 
 
 def song_attr(song, attr):
