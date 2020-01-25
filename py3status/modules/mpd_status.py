@@ -237,7 +237,7 @@ class Py3status:
                     if isinstance(text, Composite):
                         text = text.text()
 
-                self.current_status = (text, status)
+                self.current_status = (text, state)
 
                 if self.use_idle:
                     self.py3.update()
