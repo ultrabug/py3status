@@ -31,6 +31,7 @@ Color options:
     color_playing: Song is playing, defaults to color_good
 
 Requires:
+    python-dbus: to access dbus in python
     spotify: a proprietary music streaming service
 
 Examples:
