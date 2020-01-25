@@ -49,6 +49,7 @@ setup(
             "py3-cmd = py3status.command:send_command",
         ]
     },
+    python_requires=">=3.5",
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Operating System :: POSIX :: Linux",
