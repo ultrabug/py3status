@@ -8,15 +8,9 @@ from random import randint
 
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, POSITIONS
-from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
+from py3status.py3 import Py3, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
-
-# basestring does not exist in python3
-try:
-    basestring
-except NameError:
-    basestring = str
 
 
 class Module:
@@ -262,7 +256,7 @@ class Module:
         if self.cache_time is None:
             return
         # new style modules can signal they want to cache forever
-        if self.cache_time == PY3_CACHE_FOREVER:
+        if self.cache_time == Py3.CACHE_FOREVER:
             return
         # restart
         self._py3_wrapper.timeout_queue_add(self, self.cache_time)
@@ -1028,8 +1022,8 @@ class Module:
                     # module has indicated that it has an error
                     self.runtime_error(e.msg, meth)
                     if e.timeout:
-                        if e.timeout is PY3_CACHE_FOREVER:
-                            cache_time = PY3_CACHE_FOREVER
+                        if e.timeout is Py3.CACHE_FOREVER:
+                            cache_time = Py3.CACHE_FOREVER
                         else:
                             cache_time = time() + e.timeout
                     else:
@@ -1054,7 +1048,7 @@ class Module:
                 cache_time = time() + self.config["cache_timeout"]
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
-            if cache_time == PY3_CACHE_FOREVER:
+            if cache_time == Py3.CACHE_FOREVER:
                 return
             # don't be hasty mate
             # set timeout to do update next time one is needed
@@ -1087,4 +1081,4 @@ class Module:
         if self._py3_wrapper.udev_monitor.subscribe(self, trigger_action, subsystem):
             if trigger_action == "refresh_and_freeze":
                 # FIXME: we may want to disable refresh instead of using cache_timeout
-                self.module_class.cache_timeout = PY3_CACHE_FOREVER
+                self.module_class.cache_timeout = Py3.CACHE_FOREVER

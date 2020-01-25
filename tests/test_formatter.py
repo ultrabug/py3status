@@ -3,7 +3,6 @@ Run formatter tests
 """
 
 import platform
-import sys
 
 from pprint import pformat
 
@@ -15,8 +14,6 @@ from py3status.py3 import NoneColor
 
 is_pypy = platform.python_implementation() == "PyPy"
 f = Formatter()
-
-python2 = sys.version_info < (3, 0)
 
 param_dict = {
     "name": "Björk",
@@ -86,8 +83,6 @@ def attr_getter_fn(attr):
 def run_formatter(test_dict):
     __tracebackhide__ = True
 
-    if test_dict.get("py3only") and python2:
-        return
     if not test_dict.get("pypy", True) and is_pypy:
         return
     if test_dict.get("attr_getter"):
@@ -123,8 +118,6 @@ def run_formatter(test_dict):
         result = result.get_content()
 
     expected = test_dict.get("expected")
-    if python2 and isinstance(expected, str):
-        expected = expected.decode("utf-8")
     if result != expected:
         print("Format\n{}\n".format(test_dict["format"]))
         print("Expected\n{}".format(pformat(expected)))
@@ -152,9 +145,6 @@ def update_placeholders(test_dict):
 
     result = f.update_placeholders(test_dict["format"], test_dict["updates"])
     expected = test_dict.get("expected")
-
-    if python2 and isinstance(expected, str):
-        expected = expected.decode("utf-8")
 
     if result != expected:
         print("Format\n{}\n".format(test_dict["format"]))

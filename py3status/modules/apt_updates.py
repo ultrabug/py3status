@@ -23,9 +23,8 @@ SAMPLE OUTPUT
 """
 
 import subprocess
-import sys
 
-LINE_SEPARATOR = "\\n" if sys.version_info > (3, 0) else "\n"
+LINE_SEPARATOR = "\\n"
 STRING_NOT_INSTALLED = "not installed"
 
 

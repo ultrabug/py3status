@@ -104,11 +104,6 @@ def contains_bad_glyph(glyph_data, data):
 
     for part in data:
         text = part.get("full_text", "")
-        try:
-            # for python 2
-            text = text.decode("utf8")
-        except AttributeError:
-            pass
 
         for char in text:
             if not check_glyph(ord(char)):

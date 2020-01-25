@@ -4,15 +4,9 @@ import sys
 from threading import Thread
 from subprocess import Popen, PIPE
 from json import loads
+from shlex import quote as shell_quote
 
 from py3status.profiling import profile
-
-try:
-    # Python 3
-    from shlex import quote as shell_quote
-except ImportError:
-    # Python 2
-    from pipes import quote as shell_quote
 
 
 class IOPoller:

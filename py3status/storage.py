@@ -1,11 +1,5 @@
 import os
 
-try:
-    # Python 3.3+
-    from collections.abc import Iterable, Mapping
-except ImportError:
-    from collections import Iterable, Mapping
-
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
 from time import time
@@ -16,8 +10,7 @@ class Storage:
     data = {}
     initialized = False
 
-    def init(self, py3_wrapper, is_python_2):
-        self.is_python_2 = is_python_2
+    def init(self, py3_wrapper):
         self.py3_wrapper = py3_wrapper
         self.config = py3_wrapper.config
         py3_config = self.config.get("py3_config", {})
@@ -52,12 +45,7 @@ class Storage:
 
         try:
             with open(self.storage_path, "rb") as f:
-                try:
-                    # python3
-                    self.data = load(f, encoding="bytes")
-                except TypeError:
-                    # python2
-                    self.data = load(f)
+                self.data = load(f, encoding="bytes")
         except OSError:
             pass
 
@@ -93,29 +81,10 @@ class Storage:
             tmppath = f.name
         os.rename(tmppath, self.storage_path)
 
-    def fix(self, item):
-        """
-        Make sure all strings are unicode for python 2/3 compatibility
-        """
-        if not self.is_python_2:
-            return item
-        if isinstance(item, str):
-            return item.decode("utf-8")
-        if isinstance(item, unicode):  # noqa <-- python3 has no unicode
-            return item
-        if isinstance(item, Mapping):
-            return dict(map(self.fix, item.items()))
-        elif isinstance(item, Iterable):
-            return type(item)(map(self.fix, item))
-
-        return item
-
     def storage_set(self, module_name, key, value):
         if key.startswith("_"):
             raise ValueError('cannot set keys starting with an underscore "_"')
 
-        key = self.fix(key)
-        value = self.fix(value)
         if self.data.get(module_name, {}).get(key) == value:
             return
 
@@ -129,11 +98,9 @@ class Storage:
         self.save()
 
     def storage_get(self, module_name, key):
-        key = self.fix(key)
         return self.data.get(module_name, {}).get(key, None)
 
     def storage_del(self, module_name, key=None):
-        key = self.fix(key)
         if module_name in self.data and key in self.data[module_name]:
             del self.data[module_name][key]
             self.save()

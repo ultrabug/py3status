@@ -197,8 +197,6 @@ class Py3status:
                 fcntl.fcntl(fd, fcntl.F_SETFL, fl)
                 if process.poll():
                     break
-                if self.py3.is_python_2():
-                    line = line.decode("utf-8")
                 self.persistent_output = line
                 self.py3.update()
                 if line[-1] == "\n":
@@ -213,8 +211,6 @@ class Py3status:
                 for line in iter(process.stdout.readline, b""):
                     if process.poll():
                         break
-                    if self.py3.is_python_2():
-                        line = line.decode("utf-8")
                     self.persistent_output = line
                     self.py3.update()
         self.py3.log("command exited {cmd}".format(cmd=command))
@@ -245,9 +241,6 @@ class Py3status:
                 raise Exception(msg.format(cmd=command, error=e))
 
             _output, _error = process.communicate()
-            if self.py3.is_python_2():
-                _output = _output.decode("utf-8")
-                _error = _error.decode("utf-8")
             retcode = process.poll()
 
             # return code of 33 means urgent

@@ -27,10 +27,7 @@ off
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-try:
-    from urllib.request import urlopen, URLError  # py3
-except ImportError:
-    from urllib2 import urlopen, URLError  # py2
+from urllib.request import urlopen, URLError
 
 
 class Py3status:

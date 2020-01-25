@@ -2,12 +2,7 @@ import os
 import sys
 import shlex
 
-try:
-    # Python 3.3+
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
-
+from collections.abc import Mapping
 from copy import deepcopy
 from fnmatch import fnmatch
 from math import log10
@@ -22,18 +17,6 @@ from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradients
 from py3status.version import version
-
-
-PY3_CACHE_FOREVER = -1
-PY3_LOG_ERROR = "error"
-PY3_LOG_INFO = "info"
-PY3_LOG_WARNING = "warning"
-
-# basestring does not exist in python3
-try:
-    basestring
-except NameError:
-    basestring = str
 
 
 class ModuleErrorException(Exception):
@@ -80,17 +63,17 @@ class Py3:
     being created.  All methods should work in this situation.
     """
 
-    CACHE_FOREVER = PY3_CACHE_FOREVER
+    CACHE_FOREVER = -1
     """
     Special constant that when returned for ``cached_until`` will cause the
     module to not update unless externally triggered.
     """
 
-    LOG_ERROR = PY3_LOG_ERROR
+    LOG_ERROR = "error"
     """Show as Error"""
-    LOG_INFO = PY3_LOG_INFO
+    LOG_INFO = "info"
     """Show as Informational"""
-    LOG_WARNING = PY3_LOG_WARNING
+    LOG_WARNING = "warning"
     """Show as Warning"""
 
     # Shared by all Py3 Instances
@@ -116,7 +99,6 @@ class Py3:
         self._format_color_names = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
-        self._is_python_2 = sys.version_info < (3, 0)
         self._module = module
         self._report_exception_cache = set()
         self._thresholds = None
@@ -436,13 +418,6 @@ class Py3:
         """
         return self._i3s_config
 
-    def is_python_2(self):
-        """
-        True if the version of python being used is 2.x
-        Can be helpful for fixing python 2 compatibility issues
-        """
-        return self._is_python_2
-
     def is_gevent(self):
         """
         Checks if gevent monkey patching is enabled or not.
@@ -550,12 +525,6 @@ class Py3:
             title = "py3status: {}".format(module_name)
         elif isinstance(title, Composite):
             title = title.text()
-        # force unicode for python2 str
-        if self._is_python_2:
-            if isinstance(msg, str):
-                msg = msg.decode("utf-8")
-            if isinstance(title, str):
-                title = title.decode("utf-8")
         if msg:
             self._py3_wrapper.notify_user(
                 msg=msg,
@@ -740,7 +709,7 @@ class Py3:
 
         if not matches:
             return list(names)
-        elif isinstance(matches, basestring):
+        elif isinstance(matches, str):
             matches = [matches]
         # filter matches
         found = set()
@@ -777,7 +746,7 @@ class Py3:
 
         if not matches:
             return list(placeholders)
-        elif isinstance(matches, basestring):
+        elif isinstance(matches, str):
             matches = [matches]
         # filter matches
         found = set()
@@ -964,7 +933,7 @@ class Py3:
         """
         # if a string is passed then convert it to a list.  This prevents an
         # easy mistake that could be made
-        if isinstance(cmd_list, basestring):
+        if isinstance(cmd_list, str):
             cmd_list = [cmd_list]
 
         for cmd in cmd_list:
@@ -979,13 +948,13 @@ class Py3:
         An Exception is raised if an error occurs
         """
         # convert the command to sequence if a string
-        if isinstance(command, basestring):
+        if isinstance(command, str):
             command = shlex.split(command)
         try:
             return Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True).wait()
         except Exception as e:
             # make a pretty command for error loggings and...
-            if isinstance(command, basestring):
+            if isinstance(command, str):
                 pretty_cmd = command
             else:
                 pretty_cmd = " ".join(command)
@@ -1007,12 +976,12 @@ class Py3:
         A CommandError is raised if an error occurs
         """
         # make a pretty command for error loggings and...
-        if isinstance(command, basestring):
+        if isinstance(command, str):
             pretty_cmd = command
         else:
             pretty_cmd = " ".join(command)
         # convert the non-shell command to sequence if it is a string
-        if not shell and isinstance(command, basestring):
+        if not shell and isinstance(command, str):
             command = shlex.split(command)
 
         stderr = STDOUT if capture_stderr else PIPE
@@ -1034,9 +1003,6 @@ class Py3:
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
-        if self._is_python_2 and isinstance(output, str):
-            output = output.decode("utf-8")
-            error = error.decode("utf-8")
         retcode = process.poll()
         if retcode:
             # under certain conditions a successfully run command may get a
@@ -1062,7 +1028,7 @@ class Py3:
         Ensure that storage is initialized.
         """
         if not self._storage.initialized:
-            self._storage.init(self._module._py3_wrapper, self._is_python_2)
+            self._storage.init(self._module._py3_wrapper)
 
     def storage_set(self, key, value):
         """
@@ -1196,7 +1162,7 @@ class Py3:
         # skip on empty thresholds/values
         if not thresholds or value in [None, ""]:
             pass
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             # string
             for threshold in thresholds:
                 if value == threshold[0]:

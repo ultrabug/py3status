@@ -373,7 +373,7 @@ class Py3status:
         self.tmpfile = NamedTemporaryFile(
             prefix="py3status_conky-", suffix=".conf", delete=False
         )
-        self.tmpfile.write(tmp if self.py3.is_python_2() else str.encode(tmp))
+        self.tmpfile.write(str.encode(tmp))
         self.tmpfile.close()
         self.conky_command = "conky -c {}".format(self.tmpfile.name).split()
 

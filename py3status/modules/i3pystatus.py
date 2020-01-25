@@ -232,9 +232,7 @@ class Py3status:
     module = None
 
     def post_config_hook(self):
-        if self.py3.is_python_2():
-            raise Exception(STRING_NOT_SUPPORTED)
-        elif not i3pystatus:
+        if not i3pystatus:
             raise Exception(STRING_NOT_INSTALLED)
         elif not self.module:
             raise Exception(STRING_MISSING_MODULE)

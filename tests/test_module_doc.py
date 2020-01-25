@@ -77,12 +77,6 @@ def docstring_params(docstring):
                 if match.group("value"):
                     try:
                         value = eval(match.group("value"))
-                        if isinstance(value, str):
-                            try:
-                                value = value.decode("utf-8")
-                            except AttributeError:
-                                # python3
-                                pass
                         try:
                             value = value.replace("&amp;", "&")
                             value = value.replace("&lt;", "<")

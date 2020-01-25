@@ -1,5 +1,4 @@
 import re
-import sys
 
 from math import ceil
 from numbers import Number
@@ -7,13 +6,7 @@ from numbers import Number
 from py3status.composite import Composite
 from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED
 
-try:
-    from urllib.parse import parse_qsl
-except ImportError:
-    from urlparse import parse_qsl
-
-
-python2 = sys.version_info < (3, 0)
+from urllib.parse import parse_qsl
 
 
 def expand_color(color, default=None, passthrough=False, block=None):
@@ -68,8 +61,6 @@ class Formatter:
         Tokenizing is resource intensive so we only do it once and cache it
         """
         if format_string not in self.format_string_cache:
-            if python2 and isinstance(format_string, str):
-                format_string = format_string.decode("utf-8")
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]
@@ -257,10 +248,6 @@ class Formatter:
         param_dict, attributes of the supplied module, or provided via calls to
         the attr_getter function.
         """
-        # fix python 2 unicode issues
-        if python2 and isinstance(format_string, str):
-            format_string = format_string.decode("utf-8")
-
         if param_dict is None:
             param_dict = {}
 
@@ -295,8 +282,6 @@ class Formatter:
                     param = param.copy()
                 else:
                     param = ""
-            elif python2 and isinstance(param, str):
-                param = param.decode("utf-8")
             return param
 
         # render our processed format
@@ -656,22 +641,14 @@ class Block:
             output = [output]
 
         # merge as much output as we can.
-        # we need to convert values to unicode for concatenation.
-        if python2:
-            conversion = unicode  # noqa
-            convertibles = (str, bool, int, float, unicode)  # noqa
-        else:
-            conversion = str
-            convertibles = (str, bool, int, float, bytes)
-
         first = True
         last_block = None
         for index, item in enumerate(output):
             is_block = isinstance(item, Block)
             if not is_block and item:
                 last_block = None
-            if isinstance(item, convertibles) or item is None:
-                text += conversion(item)
+            if isinstance(item, (str, bool, int, float, bytes)) or item is None:
+                text += str(item)
                 continue
             elif text:
                 if not first and (text == "" or out and out[-1].get("color") == color):
