@@ -123,9 +123,6 @@ class Py3status:
     use_idle = None
 
     def post_config_hook(self):
-        # class variables:
-        self.current_status = None
-        self.idle_thread = Thread()
         # Convert from %placeholder% to {placeholder}
         # This is not perfect but should be good enough
         if not self.py3.get_placeholders_list(self.format) and "%" in self.format:
@@ -133,6 +130,8 @@ class Py3status:
             self.py3.log("Old % style format DEPRECATED use { style format")
         # class variables:
         self.client = None
+        self.current_status = None
+        self.idle_thread = Thread()
 
     def _get_mpd(self, disconnect=False):
         if disconnect:
@@ -266,6 +265,10 @@ class Py3status:
                 self.py3.update()  # to propagate error message
 
     def kill(self):
+        if self.idle_thread.is_alive():
+            # otherwise the idling thread will block in mpd.idle() until idle_timeout
+            self._get_mpd()._sock.shutdown(socket.SHUT_RD)
+            self._get_mpd()._sock.close()
         self._get_mpd(disconnect=True)
 
 
