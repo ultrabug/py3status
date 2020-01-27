@@ -56,9 +56,9 @@ do_not_disturb {
 }
 ```
 
-@author Cyrinux https://github.com/cyrinux (mako)
 @author Maxim Baz https://github.com/maximbaz (dunst)
 @author Robert Ricci https://github.com/ricci (xfce4-notifyd)
+@author Cyrinux https://github.com/cyrinux (mako)
 @license BSD
 
 SAMPLE OUTPUT
@@ -109,12 +109,7 @@ class Mako(Notification):
     """
 
     def toggle(self, state):
-        if state:
-            # pause
-            self.parent.py3.command_run("makoctl set invisible=1")
-        else:
-            # resume
-            self.parent.py3.command_run("makoctl set invisible=0")
+        self.parent.py3.command_run("makoctl set invisible={}".format(int(bool(state))))
 
 
 class Xfce4_notifyd(Notification):
