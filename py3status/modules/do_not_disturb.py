@@ -145,7 +145,7 @@ class Py3status:
     thresholds = [(0, "bad"), (1, "good")]
 
     def post_config_hook(self):
-        servers = ["xfce4-notifyd", "dunst", "mako", None]
+        servers = ["dunst", "mako", "xfce4-notifyd", None]
         if not self.server:
             for server in servers:
                 if server:
