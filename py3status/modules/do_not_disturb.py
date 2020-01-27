@@ -10,7 +10,7 @@ Configuration parameters:
     pause: specify whether to pause or kill processes; for dunst
         see `Dunst Miscellaneous` section for more information
         (default False)
-    server: specify server to use, eg dunst or xfce4-notifyd, otherwise auto
+    server: specify server to use, eg dunst, xfce4-notifyd or mako, otherwise auto
         (default None)
     state: specify state to use on startup, otherwise last
         False: disable Do Not Disturb on startup
@@ -56,6 +56,7 @@ do_not_disturb {
 }
 ```
 
+@author Cyrinux https://github.com/cyrinux (mako)
 @author Maxim Baz https://github.com/maximbaz (dunst)
 @author Robert Ricci https://github.com/ricci (xfce4-notifyd)
 @license BSD
@@ -102,6 +103,20 @@ class Dunst(Notification):
                 self.parent.py3.command_run("pkill -SIGTERM dunst")
 
 
+class Mako(Notification):
+    """
+    Mako Notification.
+    """
+
+    def toggle(self, state):
+        if state:
+            # pause
+            self.parent.py3.command_run("makoctl set invisible=1")
+        else:
+            # resume
+            self.parent.py3.command_run("makoctl set invisible=0")
+
+
 class Xfce4_notifyd(Notification):
     """
     XFCE4 Notification.
@@ -135,7 +150,7 @@ class Py3status:
     thresholds = [(0, "bad"), (1, "good")]
 
     def post_config_hook(self):
-        servers = ["xfce4-notifyd", "dunst", None]
+        servers = ["xfce4-notifyd", "dunst", "mako", None]
         if not self.server:
             for server in servers:
                 if server:
@@ -158,6 +173,8 @@ class Py3status:
             self.backend = Dunst(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)
+        elif self.server == "mako":
+            self.backend = Mako(self)
 
         if self.state is not None:
             if self.state == "last":
