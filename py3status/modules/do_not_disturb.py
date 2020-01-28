@@ -109,7 +109,7 @@ class Mako(Notification):
     """
 
     def toggle(self, state):
-        self.parent.py3.command_run("makoctl set invisible={}".format(int(bool(state))))
+        self.parent.py3.command_run("makoctl set invisible={}".format(int(state)))
 
 
 class Xfce4_notifyd(Notification):
