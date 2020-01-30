@@ -257,7 +257,7 @@ class Py3status:
                 response = socket.read(4096).decode("ascii")
             except socket_error:
                 raise imaplib.IMAP4.abort("Server didn't respond to 'IDLE' in time")
-            if not response.lower().startswith("+ idling"):
+            if not response.lower().startswith("+"):
                 raise imaplib.IMAP4.abort(
                     "While initializing IDLE: {}".format(response)
                 )
