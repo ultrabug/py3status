@@ -150,7 +150,7 @@ class Py3status:
             for server in servers:
                 if server:
                     try:
-                        if self.py3.command_output(["pgrep", "-f", server]):
+                        if self.py3.command_output(["pgrep", "-x", server]):
                             self.server = server
                             break
                     except self.py3.CommandError:
@@ -166,10 +166,10 @@ class Py3status:
 
         if self.server == "dunst":
             self.backend = Dunst(self)
-        elif self.server == "xfce4-notifyd":
-            self.backend = Xfce4_notifyd(self)
         elif self.server == "mako":
             self.backend = Mako(self)
+        elif self.server == "xfce4-notifyd":
+            self.backend = Xfce4_notifyd(self)
 
         if self.state is not None:
             if self.state == "last":
