@@ -10,7 +10,7 @@ Configuration parameters:
     pause: specify whether to pause or kill processes; for dunst
         see `Dunst Miscellaneous` section for more information
         (default False)
-    server: specify server to use, eg dunst, xfce4-notifyd or mako, otherwise auto
+    server: specify server to use, eg mako, dunst or xfce4-notifyd, otherwise auto
         (default None)
     state: specify state to use on startup, otherwise last
         False: disable Do Not Disturb on startup
@@ -22,7 +22,7 @@ Configuration parameters:
         (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
-    {name} name, eg Dunst, Xfce4-notifyd
+    {name} name, eg Mako, Dunst, Xfce4-notifyd
     {state} do not disturb state, eg 0, 1
 
 Color thresholds:
