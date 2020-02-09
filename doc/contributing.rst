@@ -74,7 +74,7 @@ rely on the i3bar protocol
 What you will need
 ------------------
 
-- python3/python2
+- python3
 - i3status
     - https://i3wm.org/i3status/
     - https://github.com/i3/i3status
