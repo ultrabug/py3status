@@ -10,7 +10,7 @@ Configuration parameters:
     pause: specify whether to pause or kill processes; for dunst
         see `Dunst Miscellaneous` section for more information
         (default False)
-    server: specify server to use, eg dunst or xfce4-notifyd, otherwise auto
+    server: specify server to use, eg mako, dunst or xfce4-notifyd, otherwise auto
         (default None)
     state: specify state to use on startup, otherwise last
         False: disable Do Not Disturb on startup
@@ -22,7 +22,7 @@ Configuration parameters:
         (default [(0, 'bad'), (1, 'good')])
 
 Format placeholders:
-    {name} name, eg Dunst, Xfce4-notifyd
+    {name} name, eg Mako, Dunst, Xfce4-notifyd
     {state} do not disturb state, eg 0, 1
 
 Color thresholds:
@@ -58,6 +58,7 @@ do_not_disturb {
 
 @author Maxim Baz https://github.com/maximbaz (dunst)
 @author Robert Ricci https://github.com/ricci (xfce4-notifyd)
+@author Cyrinux https://github.com/cyrinux (mako)
 @license BSD
 
 SAMPLE OUTPUT
@@ -102,6 +103,15 @@ class Dunst(Notification):
                 self.parent.py3.command_run("pkill -SIGTERM dunst")
 
 
+class Mako(Notification):
+    """
+    Mako Notification.
+    """
+
+    def toggle(self, state):
+        self.parent.py3.command_run("makoctl set invisible={}".format(int(state)))
+
+
 class Xfce4_notifyd(Notification):
     """
     XFCE4 Notification.
@@ -135,12 +145,12 @@ class Py3status:
     thresholds = [(0, "bad"), (1, "good")]
 
     def post_config_hook(self):
-        servers = ["xfce4-notifyd", "dunst", None]
+        servers = ["dunst", "mako", "xfce4-notifyd", None]
         if not self.server:
             for server in servers:
                 if server:
                     try:
-                        if self.py3.command_output(["pgrep", "-f", server]):
+                        if self.py3.command_output(["pgrep", "-x", server]):
                             self.server = server
                             break
                     except self.py3.CommandError:
@@ -156,6 +166,8 @@ class Py3status:
 
         if self.server == "dunst":
             self.backend = Dunst(self)
+        elif self.server == "mako":
+            self.backend = Mako(self)
         elif self.server == "xfce4-notifyd":
             self.backend = Xfce4_notifyd(self)
 
