@@ -323,7 +323,7 @@ class Py3status:
                     if self.client_secret:
                         # Authenticate using OAUTH
                         auth_string = "user={}\1auth=Bearer {}\1\1".format(
-                            self.user, self.creds.token,
+                            self.user, self.creds.token
                         )
                         self.connection.authenticate("XOAUTH2", lambda x: auth_string)
                     else:
