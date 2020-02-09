@@ -24,6 +24,8 @@ Format placeholders:
     {button} If used a button will be used that can be clicked to hide/show
         the contents of the frame.
     {output} The output of the modules in the frame
+    {output_xxx} The output of the module xxx (even if the button is currently
+        toggled off).
 
 Examples:
 ```
@@ -56,6 +58,17 @@ group {
         battery_level {}
     }
     time {}
+}
+
+# Define a group where the button is colored only if sub module has some output
+frame ipv6 {
+    format = "[\\?if=output_ipv6 {output}{button}|\\?color=#bad {output}{button}]"
+    open = false
+
+    ipv6 {
+        format_up = "%ip"
+        format_down = ""
+    }
 }
 ```
 
@@ -105,27 +118,30 @@ class Py3status:
             return {"full_text": "", "cached_until": self.py3.CACHE_FOREVER}
 
         # get the child modules output.
+        composites = {}
         output = []
-        if self.open:
-            if self.format_separator:
-                format_separator = self.py3.safe_format(self.format_separator)
-            for item in self.items:
-                out = self.py3.get_output(item)[:]
-                if self.format_separator is None:
-                    if out and "separator" not in out[-1]:
-                        # we copy the item as we do not want to change the
-                        # original.
-                        last_item = out[-1].copy()
-                        last_item["separator"] = True
-                        out[-1] = last_item
-                elif self.format_separator:
-                    out += format_separator
-                output += out
-            urgent = False
+        if self.format_separator:
+            format_separator = self.py3.safe_format(self.format_separator)
+        for item in self.items:
+            out = self.py3.get_output(item)[:]
+            for o in out:
+                composites[f'output_{o["name"]}'] = o["full_text"]
+            if self.format_separator is None:
+                if out and "separator" not in out[-1]:
+                    # we copy the item as we do not want to change the
+                    # original.
+                    last_item = out[-1].copy()
+                    last_item["separator"] = True
+                    out[-1] = last_item
+            elif self.format_separator:
+                out += format_separator
+            output += out
 
-            # Remove last separator
-            if self.format_separator:
-                output = output[:-1]
+        # Remove last separator
+        if self.format_separator:
+            output = output[:-1]
+        if self.open:
+            urgent = False
         else:
             urgent = self.urgent
 
@@ -139,10 +155,12 @@ class Py3status:
         else:
             button = None
 
-        composites = {
-            "output": self.py3.composite_create(output),
-            "button": self.py3.composite_create(button),
-        }
+        composites.update(
+            {
+                "output": self.py3.composite_create(output if self.open else []),
+                "button": self.py3.composite_create(button),
+            }
+        )
         output = self.py3.safe_format(self.format, composites)
         response = {"cached_until": self.py3.CACHE_FOREVER, "full_text": output}
 
