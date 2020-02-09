@@ -182,6 +182,7 @@ class Py3status:
     def _get_creds(self):
         from google_auth_oauthlib.flow import InstalledAppFlow
         from google.auth.transport.requests import Request
+        from google.auth.exceptions import TransportError
         import pickle
 
         self.creds = None
@@ -192,18 +193,22 @@ class Py3status:
                 self.creds = pickle.load(token)
 
         if not self.creds or not self.creds.valid:
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                # Credentials expired but contain refresh token
-                self.creds.refresh(Request())
-            else:
-                # No valid credentials so open authorisation URL in browser
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.client_secret, [self.auth_scope]
-                )
-                self.creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open(self.auth_token, "wb") as token:
-                pickle.dump(self.creds, token)
+            try:
+                if self.creds and self.creds.expired and self.creds.refresh_token:
+                    # Credentials expired but contain refresh token
+                    self.creds.refresh(Request())
+                else:
+                    # No valid credentials so open authorisation URL in browser
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        self.client_secret, [self.auth_scope]
+                    )
+                    self.creds = flow.run_local_server(port=0)
+                # Save the credentials for the next run
+                with open(self.auth_token, "wb") as token:
+                    pickle.dump(self.creds, token)
+            except TransportError as e:
+                # Treat the same as a socket_error
+                raise socket_error(e)
 
     def _connection_ssl(self):
         if self.client_secret:
