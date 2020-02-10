@@ -127,7 +127,7 @@ after a reload.
 Python versions
 ---------------
 
-Starting with version 4.0, py3status will only run using python 3.
+Starting with version 3.26, py3status will only run using python 3.
 
 tox
 ---
