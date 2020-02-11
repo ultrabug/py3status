@@ -97,7 +97,7 @@ class Py3status:
                 self.click = 0
             else:
                 value = self.py3.storage_get('0')
-        except Py3Exception as e:
+        except self.py3.Py3Exception as e:
             msg = "Error: click event (%s)" % (str(e))
             self.py3.log(msg)
 
@@ -118,6 +118,7 @@ class Py3status:
     def on_click(self, event):
         self.click = 1
         self.state = self.state + 1
+
 
 if __name__ == "__main__":
     """
