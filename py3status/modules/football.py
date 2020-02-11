@@ -16,6 +16,7 @@ from datetime import datetime
 
 today = datetime.now()
 
+
 class Py3status:
 
     def __init__(self):
@@ -63,8 +64,9 @@ class Py3status:
         # => clean storage then call api.
         try:
             shift = 0
+            mtime = self.py3.storage_get('_mtime')
             if not self.py3.storage_get('_mtime') \
-               or date.fromtimestamp(self.py3.storage_get('_mtime')) != today.date():
+               or date.fromtimestamp(mtime) != today.date():
                 self.py3.log(self.py3.storage_keys())
                 for index in self.py3.storage_keys():
                     self.py3.log(index)
