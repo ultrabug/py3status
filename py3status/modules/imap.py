@@ -13,6 +13,7 @@ Configuration parameters:
         credentials (if None then OAuth not used) (default None)
     criterion: status of emails to check for (default 'UNSEEN')
     debug: log warnings (default False)
+    degraded_when_stale: color as degraded when updating failed (default True)
     format: display format for this module (default 'Mail: {unseen}')
     hide_if_zero: hide this module when no new mail (default False)
     mailbox: name of the mailbox to check (default 'INBOX')
@@ -66,7 +67,7 @@ import os
 from threading import Thread
 from time import sleep
 from ssl import create_default_context
-from socket import error as socket_error
+from socket import setdefaulttimeout, error as socket_error
 
 STRING_UNAVAILABLE = "N/A"
 NO_DATA_YET = -1
@@ -84,6 +85,7 @@ class Py3status:
     client_secret = None
     criterion = "UNSEEN"
     debug = False
+    degraded_when_stale = True
     format = "Mail: {unseen}"
     hide_if_zero = False
     mailbox = "INBOX"
@@ -116,6 +118,7 @@ class Py3status:
         self.mail_count = NO_DATA_YET
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
+        self.network_error = None
         self.command_tag = (
             0  # IMAPcommands are tagged, so responses can be matched up to requests
         )
@@ -163,6 +166,8 @@ class Py3status:
         elif self.mail_count > 0:
             response["color"] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
             response["urgent"] = self.allow_urgent
+        if self.network_error is not None and self.degraded_when_stale:
+            response["color"] = self.py3.COLOR_DEGRADED
 
         return response
 
@@ -177,6 +182,7 @@ class Py3status:
     def _get_creds(self):
         from google_auth_oauthlib.flow import InstalledAppFlow
         from google.auth.transport.requests import Request
+        from google.auth.exceptions import TransportError
         import pickle
 
         self.creds = None
@@ -187,27 +193,33 @@ class Py3status:
                 self.creds = pickle.load(token)
 
         if not self.creds or not self.creds.valid:
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                # Credentials expired but contain refresh token
-                self.creds.refresh(Request())
-            else:
-                # No valid credentials so open authorisation URL in browser
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.client_secret, [self.auth_scope]
-                )
-                self.creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open(self.auth_token, "wb") as token:
-                pickle.dump(self.creds, token)
+            try:
+                if self.creds and self.creds.expired and self.creds.refresh_token:
+                    # Credentials expired but contain refresh token
+                    self.creds.refresh(Request())
+                else:
+                    # No valid credentials so open authorisation URL in browser
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        self.client_secret, [self.auth_scope]
+                    )
+                    self.creds = flow.run_local_server(port=0)
+                # Save the credentials for the next run
+                with open(self.auth_token, "wb") as token:
+                    pickle.dump(self.creds, token)
+            except TransportError as e:
+                # Treat the same as a socket_error
+                raise socket_error(e)
 
     def _connection_ssl(self):
         if self.client_secret:
             # Use OAUTH
             self._get_creds()
+        setdefaulttimeout(self.read_timeout)
         connection = imaplib.IMAP4_SSL(self.server, int(self.port))
         return connection
 
     def _connection_starttls(self):
+        setdefaulttimeout(self.read_timeout)
         connection = imaplib.IMAP4(self.server, int(self.port))
         connection.starttls(create_default_context())
         return connection
@@ -257,7 +269,9 @@ class Py3status:
                 response = socket.read(4096).decode("ascii")
             except socket_error:
                 raise imaplib.IMAP4.abort("Server didn't respond to 'IDLE' in time")
-            if not response.lower().startswith("+ idling"):
+            # Dovecot will responde with "+ idling", courier will return "+ entering idle mode"
+            # RFC 2177 (https://tools.ietf.org/html/rfc2177) only requires the "+" character.
+            if not response.lower().startswith("+"):
                 raise imaplib.IMAP4.abort(
                     "While initializing IDLE: {}".format(response)
                 )
@@ -309,7 +323,7 @@ class Py3status:
                     if self.client_secret:
                         # Authenticate using OAUTH
                         auth_string = "user={}\1auth=Bearer {}\1\1".format(
-                            self.user, self.creds.token,
+                            self.user, self.creds.token
                         )
                         self.connection.authenticate("XOAUTH2", lambda x: auth_string)
                     else:
@@ -326,6 +340,7 @@ class Py3status:
                     tmp_mail_count += len(mails)
 
                 self.mail_count = tmp_mail_count
+                self.network_error = None
 
                 if self.use_idle:
                     self.py3.update()
@@ -334,14 +349,24 @@ class Py3status:
                 else:
                     return
             except (socket_error, imaplib.IMAP4.abort, imaplib.IMAP4.readonly) as e:
+                if "didn't respond to 'DONE'" in str(e) or isinstance(e, socket_error):
+                    self.network_error = str(e)
+                    error_type = "Network"
+                else:
+                    error_type = "Recoverable"
+                    # Note: we don't reset network_error, as we want this to persist
+                    # until we either run into a permanent error or successfully receive
+                    # another response from the IMAP server.
+
                 if self.debug:
                     self.py3.log(
-                        "Recoverable error - {}".format(e), level=self.py3.LOG_WARNING
+                        "{} error - {}".format(error_type, e),
+                        level=self.py3.LOG_WARNING,
                     )
                 self._disconnect()
 
                 retry_counter += 1
-                if retry_counter < retry_max:
+                if retry_counter <= retry_max:
                     if self.debug:
                         self.py3.log(
                             "Retrying ({}/{})".format(retry_counter, retry_max),
@@ -355,7 +380,7 @@ class Py3status:
                 self.mail_count = None
 
                 retry_counter += 1
-                if retry_counter < retry_max:
+                if retry_counter <= retry_max:
                     if self.debug:
                         self.py3.log(
                             "Will retry after 60 seconds ({}/{})".format(
