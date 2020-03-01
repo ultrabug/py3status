@@ -25,6 +25,7 @@ I3S_INSTANCE_MODULES = [
     "ethernet",
     "memory",
     "path_exists",
+    "read_file",
     "run_watch",
     "tztime",
     "volume",
